@@ -1,189 +1,220 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useStore, uid, fmtDate, type WebContent, type ContentStatus } from "@/lib/store";
+import {
+  useStore, fmtDate, ensureSeoChecks,
+  CONTENT_STATUSES, CONTENT_TYPES,
+  type WebContent, type ContentStatus,
+} from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ComingSoon } from "@/components/Common";
+import { ContentForm } from "@/components/ContentForm";
+import { ContentDetail } from "@/components/ContentDetail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ExternalLink, Plus, Pencil, Trash2, LayoutGrid, Table as TableIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  ArrowLeft, ExternalLink, Plus, LayoutGrid, Table as TableIcon, Calendar as CalIcon,
+  Globe, ListChecks, FileText, CheckCircle2, AlertCircle, RefreshCw,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/websites/$id")({
   head: () => ({ meta: [{ title: "Chi tiết website — Base Marketing" }] }),
-  component: WebsiteDetail,
+  component: WebsiteDetail;
 });
 
-const C_STATUS: ContentStatus[] = ["Kế hoạch", "Đã giao", "Đang viết", "Chờ duyệt", "Cần sửa", "Đã duyệt", "Chờ đăng", "Đã đăng", "Hoàn thành"];
-
-function ContentForm({ initial, websiteId, brandId, onSubmit, onClose }: {
-  initial?: Partial<WebContent>; websiteId: string; brandId: string;
-  onSubmit: (c: WebContent) => void; onClose: () => void;
-}) {
-  const { people, plans, topics } = useStore();
-  const [c, setC] = useState<WebContent>({
-    id: initial?.id || uid(),
-    websiteId, brandId,
-    type: initial?.type || "Bài SEO",
-    cluster: initial?.cluster, mainKeyword: initial?.mainKeyword, subKeywords: initial?.subKeywords,
-    title: initial?.title || "", brief: initial?.brief,
-    writer: initial?.writer, reviewer: initial?.reviewer,
-    deadline: initial?.deadline, publishDate: initial?.publishDate,
-    outlineLink: initial?.outlineLink, draftLink: initial?.draftLink,
-    imageLink: initial?.imageLink, publishedLink: initial?.publishedLink,
-    indexStatus: initial?.indexStatus || "Chưa kiểm tra",
-    status: initial?.status || "Kế hoạch",
-    plan: initial?.plan, topic: initial?.topic, notes: initial?.notes,
-  });
-  const set = (p: Partial<WebContent>) => setC({ ...c, ...p });
-  const ps = (val: string | undefined, on: (v?: string) => void) => (
-    <Select value={val || "_"} onValueChange={(v) => on(v === "_" ? undefined : v)}>
-      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-      <SelectContent><SelectItem value="_">—</SelectItem>{people.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
-    </Select>
-  );
-  return (
-    <>
-      <div className="grid gap-3 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1">
-        <div className="sm:col-span-2"><Label>Tiêu đề dự kiến *</Label><Input value={c.title} onChange={(e) => set({ title: e.target.value })} /></div>
-        <div><Label>Loại bài</Label>
-          <Select value={c.type} onValueChange={(v) => set({ type: v as WebContent["type"] })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{["Bài SEO","Bài blog","Landing page","Bài danh mục","Bài sản phẩm","Bài tối ưu lại"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>Cụm chủ đề</Label><Input value={c.cluster || ""} onChange={(e) => set({ cluster: e.target.value })} /></div>
-        <div><Label>Từ khóa chính</Label><Input value={c.mainKeyword || ""} onChange={(e) => set({ mainKeyword: e.target.value })} /></div>
-        <div><Label>Từ khóa phụ</Label><Input value={c.subKeywords || ""} onChange={(e) => set({ subKeywords: e.target.value })} /></div>
-        <div><Label>Người viết</Label>{ps(c.writer, (v) => set({ writer: v }))}</div>
-        <div><Label>Người duyệt</Label>{ps(c.reviewer, (v) => set({ reviewer: v }))}</div>
-        <div><Label>Deadline</Label><Input type="date" value={c.deadline || ""} onChange={(e) => set({ deadline: e.target.value })} /></div>
-        <div><Label>Ngày dự kiến đăng</Label><Input type="date" value={c.publishDate || ""} onChange={(e) => set({ publishDate: e.target.value })} /></div>
-        <div><Label>Trạng thái</Label>
-          <Select value={c.status} onValueChange={(v) => set({ status: v as ContentStatus })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{C_STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>Trạng thái index</Label>
-          <Select value={c.indexStatus} onValueChange={(v) => set({ indexStatus: v as WebContent["indexStatus"] })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{["Chưa kiểm tra","Chưa index","Đã index"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>Plan</Label>
-          <Select value={c.plan || "_"} onValueChange={(v) => set({ plan: v === "_" ? undefined : v })}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent><SelectItem value="_">—</SelectItem>{plans.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>Topic</Label>
-          <Select value={c.topic || "_"} onValueChange={(v) => set({ topic: v === "_" ? undefined : v })}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent><SelectItem value="_">—</SelectItem>{topics.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>Link outline</Label><Input value={c.outlineLink || ""} onChange={(e) => set({ outlineLink: e.target.value })} /></div>
-        <div><Label>Link bài viết</Label><Input value={c.draftLink || ""} onChange={(e) => set({ draftLink: e.target.value })} /></div>
-        <div><Label>Link ảnh</Label><Input value={c.imageLink || ""} onChange={(e) => set({ imageLink: e.target.value })} /></div>
-        <div><Label>Link bài đã đăng</Label><Input value={c.publishedLink || ""} onChange={(e) => set({ publishedLink: e.target.value })} /></div>
-        <div className="sm:col-span-2"><Label>Brief</Label><Textarea rows={3} value={c.brief || ""} onChange={(e) => set({ brief: e.target.value })} /></div>
-        <div className="sm:col-span-2"><Label>Ghi chú</Label><Textarea rows={2} value={c.notes || ""} onChange={(e) => set({ notes: e.target.value })} /></div>
-      </div>
-      <DialogFooter className="mt-4">
-        <Button variant="ghost" onClick={onClose}>Huỷ</Button>
-        <Button onClick={() => { if (c.title.trim()) { onSubmit(c); onClose(); } }}>Lưu</Button>
-      </DialogFooter>
-    </>
-  );
-}
+const PRODUCING_STATUSES: ContentStatus[] = [
+  "Đã giao", "Đang làm outline", "Outline đã duyệt", "Đang viết bài",
+  "Cần sửa outline", "Cần sửa bài",
+];
+const REVIEW_STATUSES: ContentStatus[] = ["Chờ duyệt outline", "Chờ duyệt bài"];
+const FIX_STATUSES: ContentStatus[] = ["Cần sửa outline", "Cần sửa bài"];
+const DONE_STATUSES: ContentStatus[] = ["Đã đăng web", "Kiểm tra index", "Hoàn thành"];
 
 function WebsiteDetail() {
   const { id } = Route.useParams();
   const s = useStore();
   const w = s.websites.find((x) => x.id === id);
-  const [view, setView] = useState<"table" | "kanban">("table");
-  const [editing, setEditing] = useState<WebContent | null>(null);
+  const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
   const [adding, setAdding] = useState(false);
+  const [openContent, setOpenContent] = useState<WebContent | null>(null);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");
+  const [fType, setFType] = useState("all");
+  const [search, setSearch] = useState("");
 
-  if (!w) return <div className="p-10 text-center">Không tìm thấy website. <Link to="/websites" className="text-primary">Quay lại</Link></div>;
+  // Auto-seed SEO checklist if missing
+  useEffect(() => {
+    if (!w) return;
+    const missing = ensureSeoChecks(s.seoChecks, w.id);
+    missing.forEach((c) => s.add("seoChecks", c));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [w?.id]);
+
+  if (!w) {
+    return (
+      <div className="p-10 text-center">
+        Không tìm thấy website. <Link to="/websites" className="text-primary">Quay lại</Link>
+      </div>
+    );
+  }
 
   const brand = s.brands.find((b) => b.id === w.brandId);
   const checks = s.seoChecks.filter((c) => c.websiteId === w.id);
   const groups = Array.from(new Set(checks.map((c) => c.group)));
   const contents = s.webContents.filter((c) => c.websiteId === w.id);
+  const writers = Array.from(new Set(contents.map((c) => c.writer).filter(Boolean))) as string[];
+
   const filteredContents = contents.filter((c) =>
     (fStatus === "all" || c.status === fStatus) &&
-    (fWriter === "all" || c.writer === fWriter)
+    (fWriter === "all" || c.writer === fWriter) &&
+    (fType === "all" || c.type === fType) &&
+    (!search || c.title.toLowerCase().includes(search.toLowerCase()) ||
+      (c.mainKeyword || "").toLowerCase().includes(search.toLowerCase()))
   );
-  const writers = Array.from(new Set(contents.map((c) => c.writer).filter(Boolean))) as string[];
-  const published = contents.filter((c) => c.status === "Đã đăng" || c.status === "Hoàn thành");
+
+  const published = contents.filter((c) => DONE_STATUSES.includes(c.status));
+  const optimizeContents = contents.filter((c) => c.type === "Bài tối ưu lại");
+
+  const seoTotal = checks.length || 1;
+  const seoDone = checks.filter((c) => c.done).length;
+  const seoPct = Math.round((seoDone / seoTotal) * 100);
+
+  const ovw = {
+    total: contents.length,
+    producing: contents.filter((c) => PRODUCING_STATUSES.includes(c.status)).length,
+    review: contents.filter((c) => REVIEW_STATUSES.includes(c.status)).length,
+    fix: contents.filter((c) => FIX_STATUSES.includes(c.status)).length,
+    published: published.length,
+    notIndexed: published.filter((c) => c.indexStatus !== "Đã index").length,
+  };
 
   return (
     <>
       <Link to="/websites" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-3">
-        <ArrowLeft className="h-4 w-4 mr-1" />Tất cả website
+        <ArrowLeft className="h-4 w-4" />Tất cả website
       </Link>
       <PageHeader
         title={w.name}
-        description={brand?.name}
-        actions={<>
-          {w.url && <Button variant="outline" asChild><a href={w.url} target="_blank" rel="noreferrer">Mở website <ExternalLink className="h-3.5 w-3.5 ml-1.5" /></a></Button>}
-          <StatusBadge value={w.status} />
-        </>}
+        description={`${brand?.name || ""} · ${w.type}`}
+        actions={
+          <>
+            {w.url && (
+              <Button variant="outline" asChild>
+                <a href={w.url} target="_blank" rel="noreferrer">Mở website <ExternalLink className="h-3.5 w-3.5" /></a>
+              </Button>
+            )}
+            <StatusBadge value={w.status} />
+          </>
+        }
       />
+
+      {/* Header summary card */}
+      <Card className="mb-4">
+        <CardContent className="p-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+          <div><span className="text-muted-foreground">Thương hiệu:</span> <span className="font-medium">{brand?.name || "—"}</span></div>
+          <div><span className="text-muted-foreground">SEO phụ trách:</span> <span className="font-medium">{w.seoOwner || "—"}</span></div>
+          <div><span className="text-muted-foreground">Content phụ trách:</span> <span className="font-medium">{w.contentOwner || "—"}</span></div>
+          <div><span className="text-muted-foreground">Kỹ thuật:</span> <span className="font-medium">{w.techOwner || "—"}</span></div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="seo">Technical SEO</TabsTrigger>
+          <TabsTrigger value="profile">Hồ sơ Website</TabsTrigger>
+          <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>
           <TabsTrigger value="content">Sản xuất Content ({contents.length})</TabsTrigger>
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
+          <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
           <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4 grid gap-4 lg:grid-cols-2">
-          <Card><CardHeader><CardTitle className="text-base">Thông tin</CardTitle></CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <Row k="Tên" v={w.name} /><Row k="Link" v={w.url} /><Row k="Thương hiệu" v={brand?.name} />
-              <Row k="SEO" v={w.seoOwner} /><Row k="Content" v={w.contentOwner} /><Row k="Kỹ thuật" v={w.techOwner} />
+        {/* TỔNG QUAN */}
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <OvwCard icon={FileText} label="Tổng số content" v={ovw.total} />
+            <OvwCard icon={RefreshCw} label="Đang sản xuất" v={ovw.producing} tone="info" />
+            <OvwCard icon={AlertCircle} label="Chờ duyệt" v={ovw.review} tone="warn" />
+            <OvwCard icon={AlertCircle} label="Cần sửa" v={ovw.fix} tone="danger" />
+            <OvwCard icon={CheckCircle2} label="Đã đăng" v={ovw.published} tone="success" />
+            <OvwCard icon={AlertCircle} label="Chưa index" v={ovw.notIndexed} tone="warn" />
+            <Card className="col-span-2"><CardContent className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm text-muted-foreground">Technical SEO Checklist</div>
+                <div className="text-sm font-semibold">{seoDone}/{checks.length} ({seoPct}%)</div>
+              </div>
+              <Progress value={seoPct} />
+            </CardContent></Card>
+          </div>
+        </TabsContent>
+
+        {/* HỒ SƠ */}
+        <TabsContent value="profile" className="mt-4 grid lg:grid-cols-2 gap-4">
+          <Card><CardHeader><CardTitle className="text-base">Thông tin website</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <Row k="Tên website" v={w.name} />
+              <Row k="Link" v={w.url ? <a href={w.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{w.url}</a> : "—"} />
+              <Row k="Thương hiệu" v={brand?.name} />
+              <Row k="Loại website" v={w.type} />
               <Row k="Trạng thái" v={<StatusBadge value={w.status} />} />
+              <Row k="Mục tiêu" v={w.goal} />
             </CardContent>
           </Card>
-          <Card><CardHeader><CardTitle className="text-base">Tiến độ</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Stat label="Số bài content" v={contents.length} />
-              <Stat label="Bài đã đăng" v={published.length} />
-              <Stat label="SEO checklist hoàn thành" v={`${checks.filter((c) => c.done).length}/${checks.length}`} />
+          <Card><CardHeader><CardTitle className="text-base">Đội ngũ phụ trách</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <Row k="SEO phụ trách" v={w.seoOwner} />
+              <Row k="Content phụ trách" v={w.contentOwner} />
+              <Row k="Kỹ thuật phụ trách" v={w.techOwner} />
+              <Row k="Ghi chú" v={w.notes} />
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* TECHNICAL SEO */}
         <TabsContent value="seo" className="mt-4 space-y-4">
+          <Card><CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-medium">Tiến độ Technical SEO</div>
+              <div className="text-sm text-muted-foreground">{seoDone}/{checks.length} ({seoPct}%)</div>
+            </div>
+            <Progress value={seoPct} />
+          </CardContent></Card>
           {groups.map((g) => {
             const items = checks.filter((c) => c.group === g);
             const done = items.filter((c) => c.done).length;
+            const pct = Math.round((done / (items.length || 1)) * 100);
             return (
               <Card key={g}>
-                <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle className="text-base">{g}</CardTitle>
-                  <span className="text-xs text-muted-foreground">{done}/{items.length}</span>
+                <CardHeader className="flex-row items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base">{g}</CardTitle>
+                    <div className="text-xs text-muted-foreground mt-0.5">{done}/{items.length} hoàn thành</div>
+                  </div>
+                  <div className="w-32"><Progress value={pct} /></div>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="divide-y">
                     {items.map((it) => (
-                      <label key={it.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-muted/30 cursor-pointer">
-                        <Checkbox checked={it.done} onCheckedChange={(v) => s.update("seoChecks", it.id, { done: !!v })} />
-                        <span className={`text-sm flex-1 ${it.done ? "line-through text-muted-foreground" : ""}`}>{it.name}</span>
-                      </label>
+                      <div key={it.id} className="flex items-start gap-3 px-5 py-2.5 hover:bg-muted/30">
+                        <Checkbox checked={it.done} onCheckedChange={(v) => s.update("seoChecks", it.id, { done: !!v, checkedAt: v ? new Date().toISOString().slice(0, 10) : undefined })} className="mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-sm ${it.done ? "line-through text-muted-foreground" : ""}`}>{it.name}</div>
+                          <div className="grid sm:grid-cols-2 gap-2 mt-1.5">
+                            <Input className="h-8 text-xs" placeholder="Ghi chú..." value={it.notes || ""} onChange={(e) => s.update("seoChecks", it.id, { notes: e.target.value })} />
+                            <Input className="h-8 text-xs" placeholder="Link minh chứng..." value={it.proofLink || ""} onChange={(e) => s.update("seoChecks", it.id, { proofLink: e.target.value })} />
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
@@ -192,28 +223,38 @@ function WebsiteDetail() {
           })}
         </TabsContent>
 
+        {/* SẢN XUẤT CONTENT */}
         <TabsContent value="content" className="mt-4">
           <div className="flex flex-wrap items-center gap-2 mb-3">
+            <Input placeholder="Tìm bài..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
             <Select value={fStatus} onValueChange={setFStatus}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+              <SelectTrigger className="w-[170px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                {C_STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {CONTENT_STATUSES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={fType} onValueChange={setFType}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Loại" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                {CONTENT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={fWriter} onValueChange={setFWriter}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Người viết" /></SelectTrigger>
+              <SelectTrigger className="w-[170px]"><SelectValue placeholder="Người viết" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả người viết</SelectItem>
-                {writers.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                {writers.map((wr) => <SelectItem key={wr} value={wr}>{wr}</SelectItem>)}
               </SelectContent>
             </Select>
             <div className="ml-auto inline-flex rounded-md border bg-card p-0.5">
-              <Button size="sm" variant={view === "table" ? "secondary" : "ghost"} onClick={() => setView("table")}><TableIcon className="h-4 w-4 mr-1" />Table</Button>
-              <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} onClick={() => setView("kanban")}><LayoutGrid className="h-4 w-4 mr-1" />Kanban</Button>
+              <Button size="sm" variant={view === "table" ? "secondary" : "ghost"} onClick={() => setView("table")}><TableIcon className="h-4 w-4" />Table</Button>
+              <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} onClick={() => setView("kanban")}><LayoutGrid className="h-4 w-4" />Kanban</Button>
+              <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => setView("calendar")}><CalIcon className="h-4 w-4" />Lịch đăng</Button>
             </div>
             <Dialog open={adding} onOpenChange={setAdding}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1.5" />Thêm bài</Button></DialogTrigger>
+              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <DialogHeader><DialogTitle>Tạo bài content</DialogTitle></DialogHeader>
                 <ContentForm websiteId={w.id} brandId={w.brandId} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
@@ -221,104 +262,279 @@ function WebsiteDetail() {
             </Dialog>
           </div>
 
-          {view === "table" ? (
-            <Card><CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="text-xs text-muted-foreground bg-muted/40">
-                    <tr>
-                      <th className="text-left font-medium px-4 py-2.5">Tiêu đề</th>
-                      <th className="text-left font-medium px-4 py-2.5">Loại</th>
-                      <th className="text-left font-medium px-4 py-2.5">Người viết</th>
-                      <th className="text-left font-medium px-4 py-2.5">Deadline</th>
-                      <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
-                      <th className="text-right font-medium px-4 py-2.5"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {filteredContents.length === 0 && <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Chưa có bài content.</td></tr>}
-                    {filteredContents.map((c) => (
-                      <tr key={c.id} className="hover:bg-muted/30">
-                        <td className="px-4 py-2.5 font-medium">{c.title}{c.mainKeyword && <div className="text-xs text-muted-foreground mt-0.5">KW: {c.mainKeyword}</div>}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{c.type}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.deadline)}</td>
-                        <td className="px-4 py-2.5"><StatusBadge value={c.status} /></td>
-                        <td className="px-4 py-2.5 text-right">
-                          <Button size="icon" variant="ghost" onClick={() => setEditing(c)}><Pencil className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" onClick={() => s.remove("webContents", c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent></Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-              {C_STATUS.map((status) => {
-                const items = filteredContents.filter((c) => c.status === status);
-                return (
-                  <div key={status} className="rounded-xl bg-muted/40 p-3">
-                    <div className="flex items-center justify-between mb-3 px-1">
-                      <StatusBadge value={status} /><span className="text-xs text-muted-foreground">{items.length}</span>
-                    </div>
-                    <div className="space-y-2">
-                      {items.map((c) => (
-                        <button key={c.id} onClick={() => setEditing(c)} className="block w-full text-left rounded-lg bg-card border p-3 hover:border-primary/40 shadow-soft">
-                          <div className="font-medium text-sm">{c.title}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{c.writer || "—"} · {fmtDate(c.deadline)}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {view === "table" && <ContentTable contents={filteredContents} onOpen={setOpenContent} />}
+          {view === "kanban" && <ContentKanban contents={filteredContents} onOpen={setOpenContent} />}
+          {view === "calendar" && <ContentCalendar contents={filteredContents} onOpen={setOpenContent} />}
         </TabsContent>
 
+        {/* PUBLISHED / INDEX */}
         <TabsContent value="published" className="mt-4">
           <Card><CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="text-xs text-muted-foreground bg-muted/40">
-                <tr><th className="text-left font-medium px-4 py-2.5">Bài viết</th><th className="text-left font-medium px-4 py-2.5">Link</th><th className="text-left font-medium px-4 py-2.5">Index</th><th className="text-left font-medium px-4 py-2.5">Ngày đăng</th></tr>
-              </thead>
-              <tbody className="divide-y">
-                {published.length === 0 && <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">Chưa có bài đăng.</td></tr>}
-                {published.map((c) => (
-                  <tr key={c.id}><td className="px-4 py-2.5 font-medium">{c.title}</td>
-                    <td className="px-4 py-2.5">{c.publishedLink ? <a href={c.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline">Mở</a> : "—"}</td>
-                    <td className="px-4 py-2.5"><StatusBadge value={c.indexStatus} /></td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.publishDate)}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs text-muted-foreground bg-muted/40">
+                  <tr>
+                    <th className="text-left font-medium px-4 py-2.5">Bài viết</th>
+                    <th className="text-left font-medium px-4 py-2.5">Từ khóa chính</th>
+                    <th className="text-left font-medium px-4 py-2.5">Người viết</th>
+                    <th className="text-left font-medium px-4 py-2.5">Người đăng</th>
+                    <th className="text-left font-medium px-4 py-2.5">Ngày đăng</th>
+                    <th className="text-left font-medium px-4 py-2.5">Index</th>
+                    <th className="text-left font-medium px-4 py-2.5">Link</th>
+                    <th className="text-right font-medium px-4 py-2.5"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {published.length === 0 && <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Chưa có bài đăng nào.</td></tr>}
+                  {published.map((c) => (
+                    <tr key={c.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-2.5 font-medium">
+                        <button className="text-left hover:text-primary" onClick={() => setOpenContent(c)}>{c.title}</button>
+                      </td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.mainKeyword || "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.publisher || "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.publishedAt || c.publishDate)}</td>
+                      <td className="px-4 py-2.5">
+                        <Select value={c.indexStatus} onValueChange={(v) => s.update("webContents", c.id, { indexStatus: v as any })}>
+                          <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {c.publishedLink ? <a href={c.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Mở <ExternalLink className="h-3 w-3" /></a> : "—"}
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <Button size="sm" variant="ghost" onClick={() => setOpenContent(c)}>Chi tiết</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent></Card>
         </TabsContent>
 
+        {/* OPTIMIZE */}
+        <TabsContent value="optimize" className="mt-4">
+          <div className="flex justify-end mb-3">
+            <Dialog>
+              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài tối ưu</Button></DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader><DialogTitle>Tạo bài tối ưu lại</DialogTitle></DialogHeader>
+                <ContentForm
+                  websiteId={w.id}
+                  brandId={w.brandId}
+                  initial={{ type: "Bài tối ưu lại" }}
+                  onSubmit={(c) => s.add("webContents", c)}
+                  onClose={() => {}}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+          <Card><CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs text-muted-foreground bg-muted/40">
+                  <tr>
+                    <th className="text-left font-medium px-4 py-2.5">Tiêu đề</th>
+                    <th className="text-left font-medium px-4 py-2.5">Lý do tối ưu</th>
+                    <th className="text-left font-medium px-4 py-2.5">Bài cũ</th>
+                    <th className="text-left font-medium px-4 py-2.5">Người phụ trách</th>
+                    <th className="text-left font-medium px-4 py-2.5">Deadline</th>
+                    <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {optimizeContents.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chưa có bài cần tối ưu.</td></tr>}
+                  {optimizeContents.map((c) => (
+                    <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenContent(c)}>
+                      <td className="px-4 py-2.5 font-medium">{c.title}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeReason || "—"}</td>
+                      <td className="px-4 py-2.5">{c.oldLink ? <a href={c.oldLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">Mở</a> : "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.deadline)}</td>
+                      <td className="px-4 py-2.5"><StatusBadge value={c.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+
+        {/* REPORT */}
         <TabsContent value="report" className="mt-4">
-          <ComingSoon title="Báo cáo Web" items={["Lưu lượng truy cập", "Top từ khóa", "Tỉ lệ index", "Hiệu suất bài viết"]} />
+          <ComingSoon
+            title="Báo cáo Web"
+            items={[
+              "Báo cáo Web sẽ được phát triển ở giai đoạn sau",
+              "Theo dõi tăng trưởng website, số bài đã đăng, index",
+              "Traffic, từ khóa và hiệu quả SEO",
+            ]}
+          />
         </TabsContent>
       </Tabs>
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader><DialogTitle>Chỉnh sửa bài</DialogTitle></DialogHeader>
-          {editing && <ContentForm initial={editing} websiteId={w.id} brandId={w.brandId} onSubmit={(c) => s.update("webContents", c.id, c)} onClose={() => setEditing(null)} />}
-        </DialogContent>
-      </Dialog>
+      <ContentDetail content={openContent} open={!!openContent} onClose={() => setOpenContent(null)} />
     </>
   );
 }
 
-function Row({ k, v }: { k: string; v?: React.ReactNode }) {
-  return <div className="flex justify-between gap-3 border-b last:border-0 pb-2 last:pb-0">
-    <span className="text-muted-foreground">{k}</span><span className="font-medium text-right">{v || "—"}</span>
-  </div>;
+function ContentTable({ contents, onOpen }: { contents: WebContent[]; onOpen: (c: WebContent) => void }) {
+  return (
+    <Card><CardContent className="p-0">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-muted-foreground bg-muted/40">
+            <tr>
+              <th className="text-left font-medium px-4 py-2.5">Tiêu đề</th>
+              <th className="text-left font-medium px-4 py-2.5">Loại</th>
+              <th className="text-left font-medium px-4 py-2.5">Từ khóa chính</th>
+              <th className="text-left font-medium px-4 py-2.5">Người viết</th>
+              <th className="text-left font-medium px-4 py-2.5">Deadline</th>
+              <th className="text-left font-medium px-4 py-2.5">Đăng dự kiến</th>
+              <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
+              <th className="text-left font-medium px-4 py-2.5">Index</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {contents.length === 0 && <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Chưa có bài content.</td></tr>}
+            {contents.map((c) => (
+              <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => onOpen(c)}>
+                <td className="px-4 py-2.5 font-medium">
+                  {c.title}
+                  {c.plan && <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">[{c.plan}]</span>}
+                </td>
+                <td className="px-4 py-2.5 text-muted-foreground">{c.type}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{c.mainKeyword || "—"}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.deadline)}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.publishDate)}</td>
+                <td className="px-4 py-2.5"><StatusBadge value={c.status} /></td>
+                <td className="px-4 py-2.5"><StatusBadge value={c.indexStatus} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </CardContent></Card>
+  );
 }
-function Stat({ label, v }: { label: string; v: any }) {
-  return <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2.5">
-    <span className="text-sm text-muted-foreground">{label}</span><span className="text-lg font-semibold">{v}</span>
-  </div>;
+
+function ContentKanban({ contents, onOpen }: { contents: WebContent[]; onOpen: (c: WebContent) => void }) {
+  return (
+    <div className="overflow-x-auto pb-2">
+      <div className="flex gap-3 min-w-max">
+        {CONTENT_STATUSES.map((status) => {
+          const items = contents.filter((c) => c.status === status);
+          return (
+            <div key={status} className="rounded-xl bg-muted/40 p-3 w-[260px] shrink-0">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <StatusBadge value={status} />
+                <span className="text-xs text-muted-foreground">{items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {items.map((c) => (
+                  <button key={c.id} onClick={() => onOpen(c)} className="block w-full text-left rounded-lg bg-card border p-3 hover:border-primary/40 transition-colors">
+                    <div className="font-medium text-sm">{c.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{c.writer || "—"} · {fmtDate(c.deadline)}</div>
+                    {c.mainKeyword && <div className="text-[11px] text-muted-foreground mt-1">KW: {c.mainKeyword}</div>}
+                  </button>
+                ))}
+                {items.length === 0 && <div className="text-xs text-muted-foreground text-center py-4">—</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function ContentCalendar({ contents, onOpen }: { contents: WebContent[]; onOpen: (c: WebContent) => void }) {
+  const [month, setMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const first = new Date(month);
+  const last = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const startWeekday = (first.getDay() + 6) % 7; // Mon=0
+  const days = last.getDate();
+  const cells: (Date | null)[] = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(null);
+  for (let d = 1; d <= days; d++) cells.push(new Date(month.getFullYear(), month.getMonth(), d));
+
+  const itemsOn = (date: Date) => {
+    const ds = date.toISOString().slice(0, 10);
+    return contents.filter((c) => (c.publishedAt && c.publishedAt === ds) || (!c.publishedAt && c.publishDate === ds));
+  };
+
+  return (
+    <Card><CardContent className="p-4">
+      <div className="flex items-center justify-between mb-3">
+        <Button size="sm" variant="outline" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>‹</Button>
+        <div className="font-semibold">{month.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}</div>
+        <Button size="sm" variant="outline" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>›</Button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-xs">
+        {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((d) => (
+          <div key={d} className="text-center text-muted-foreground font-medium py-1">{d}</div>
+        ))}
+        {cells.map((date, i) => (
+          <div key={i} className="min-h-[90px] rounded border bg-card p-1.5">
+            {date && (
+              <>
+                <div className="text-[11px] text-muted-foreground mb-1">{date.getDate()}</div>
+                <div className="space-y-1">
+                  {itemsOn(date).map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => onOpen(c)}
+                      className="w-full text-left text-[11px] truncate rounded bg-primary/10 text-primary px-1.5 py-1 hover:bg-primary/20"
+                      title={c.title}
+                    >
+                      {c.title}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </CardContent></Card>
+  );
+}
+
+function OvwCard({ icon: Icon, label, v, tone = "default" }: any) {
+  const tones: Record<string, string> = {
+    default: "bg-secondary text-secondary-foreground",
+    info: "bg-info/15 text-info",
+    warn: "bg-warning/15 text-[oklch(0.45_0.13_75)]",
+    success: "bg-success/15 text-success",
+    danger: "bg-destructive/10 text-destructive",
+  };
+  return (
+    <Card><CardContent className="p-5 flex items-start justify-between">
+      <div>
+        <div className="text-sm text-muted-foreground">{label}</div>
+        <div className="text-2xl font-semibold mt-1.5 tracking-tight">{v}</div>
+      </div>
+      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${tones[tone]}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+    </CardContent></Card>
+  );
+}
+
+function Row({ k, v }: { k: string; v?: React.ReactNode }) {
+  return (
+    <div className="flex justify-between gap-3 border-b last:border-0 pb-2 last:pb-0">
+      <span className="text-muted-foreground text-sm">{k}</span>
+      <span className="font-medium text-right text-sm">{v || "—"}</span>
+    </div>
+  );
 }
