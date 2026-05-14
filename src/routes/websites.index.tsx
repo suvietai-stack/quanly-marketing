@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Pencil, ExternalLink, FileText, ArrowRight, Globe, FilePlus2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export const Route = createFileRoute("/websites")({
+export const Route = createFileRoute("/websites/")({
   head: () => ({ meta: [{ title: "Dự Án Web — Base Marketing" }] }),
   component: WebsitesPage,
 });
