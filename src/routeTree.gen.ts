@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WebsitesRouteImport } from './routes/websites'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -20,16 +19,12 @@ import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LocalRouteImport } from './routes/local'
 import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 
-const WebsitesRoute = WebsitesRouteImport.update({
-  id: '/websites',
-  path: '/websites',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const WebContentsRoute = WebContentsRouteImport.update({
   id: '/web-contents',
   path: '/web-contents',
@@ -80,10 +75,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WebsitesIndexRoute = WebsitesIndexRouteImport.update({
+  id: '/websites/',
+  path: '/websites/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebsitesIdRoute = WebsitesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => WebsitesRoute,
+  id: '/websites/$id',
+  path: '/websites/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SocialIdRoute = SocialIdRouteImport.update({
   id: '/$id',
@@ -112,11 +112,11 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
-  '/websites': typeof WebsitesRouteWithChildren
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/websites/': typeof WebsitesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -129,11 +129,11 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
-  '/websites': typeof WebsitesRouteWithChildren
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/websites': typeof WebsitesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,11 +147,11 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
-  '/websites': typeof WebsitesRouteWithChildren
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/websites/': typeof WebsitesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,11 +166,11 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/videos'
     | '/web-contents'
-    | '/websites'
     | '/brands/$id'
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/websites/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,11 +183,11 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/videos'
     | '/web-contents'
-    | '/websites'
     | '/brands/$id'
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/websites'
   id:
     | '__root__'
     | '/'
@@ -200,11 +200,11 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/videos'
     | '/web-contents'
-    | '/websites'
     | '/brands/$id'
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/websites/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -218,18 +218,12 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
-  WebsitesRoute: typeof WebsitesRouteWithChildren
+  WebsitesIdRoute: typeof WebsitesIdRoute
+  WebsitesIndexRoute: typeof WebsitesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/websites': {
-      id: '/websites'
-      path: '/websites'
-      fullPath: '/websites'
-      preLoaderRoute: typeof WebsitesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/web-contents': {
       id: '/web-contents'
       path: '/web-contents'
@@ -300,12 +294,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/websites/': {
+      id: '/websites/'
+      path: '/websites'
+      fullPath: '/websites/'
+      preLoaderRoute: typeof WebsitesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/websites/$id': {
       id: '/websites/$id'
-      path: '/$id'
+      path: '/websites/$id'
       fullPath: '/websites/$id'
       preLoaderRoute: typeof WebsitesIdRouteImport
-      parentRoute: typeof WebsitesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/social/$id': {
       id: '/social/$id'
@@ -363,18 +364,6 @@ const SocialRouteChildren: SocialRouteChildren = {
 const SocialRouteWithChildren =
   SocialRoute._addFileChildren(SocialRouteChildren)
 
-interface WebsitesRouteChildren {
-  WebsitesIdRoute: typeof WebsitesIdRoute
-}
-
-const WebsitesRouteChildren: WebsitesRouteChildren = {
-  WebsitesIdRoute: WebsitesIdRoute,
-}
-
-const WebsitesRouteWithChildren = WebsitesRoute._addFileChildren(
-  WebsitesRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BrandsRoute: BrandsRouteWithChildren,
@@ -386,8 +375,19 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
-  WebsitesRoute: WebsitesRouteWithChildren,
+  WebsitesIdRoute: WebsitesIdRoute,
+  WebsitesIndexRoute: WebsitesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
