@@ -313,7 +313,7 @@ function WebsiteDetail() {
                         </Select>
                       </td>
                       <td className="px-4 py-2.5">
-                        <Input className="h-7 text-xs" value={c.indexNote || ""} onChange={(e) => s.update("webContents", c.id, { indexNote: e.target.value })} placeholder="—" />
+                        <Input className="h-7 text-xs" value={c.indexNotes || ""} onChange={(e) => s.update("webContents", c.id, { indexNotes: e.target.value })} placeholder="—" />
                       </td>
                     </tr>
                   ))}
