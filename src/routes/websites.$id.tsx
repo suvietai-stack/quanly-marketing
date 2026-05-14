@@ -4,7 +4,7 @@ import {
   CONTENT_STATUSES, CONTENT_TYPES,
   type WebContent, type ContentStatus,
 } from "@/lib/store";
-import { PageHeader } from "@/components/AppShell";
+
 import { StatusBadge } from "@/components/StatusBadge";
 
 import { ContentForm } from "@/components/ContentForm";
