@@ -16,15 +16,27 @@ export interface Brand {
   notes?: string;
 }
 
+export type WebsiteType =
+  | "Website thương hiệu"
+  | "Website bán hàng"
+  | "Website blog/SEO"
+  | "Landing page"
+  | "Website vệ tinh"
+  | "Khác";
+
+export type WebsiteStatus = "Đang xây dựng" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng" | "Lưu trữ";
+
 export interface Website {
   id: ID;
   name: string;
   url: string;
   brandId: ID;
+  type: WebsiteType;
   seoOwner?: string;
   contentOwner?: string;
   techOwner?: string;
-  status: "Đang xây dựng" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng";
+  status: WebsiteStatus;
+  goal?: string;
   notes?: string;
 }
 
@@ -75,48 +87,106 @@ export interface Task {
 export type ContentStatus =
   | "Kế hoạch"
   | "Đã giao"
-  | "Đang viết"
-  | "Chờ duyệt"
-  | "Cần sửa"
-  | "Đã duyệt"
-  | "Chờ đăng"
-  | "Đã đăng"
+  | "Đang làm outline"
+  | "Chờ duyệt outline"
+  | "Cần sửa outline"
+  | "Outline đã duyệt"
+  | "Đang viết bài"
+  | "Chờ duyệt bài"
+  | "Cần sửa bài"
+  | "Bài đã duyệt"
+  | "Chờ đăng web"
+  | "Đã đăng web"
+  | "Kiểm tra index"
   | "Hoàn thành";
+
+export const CONTENT_STATUSES: ContentStatus[] = [
+  "Kế hoạch", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
+  "Outline đã duyệt", "Đang viết bài", "Chờ duyệt bài", "Cần sửa bài", "Bài đã duyệt",
+  "Chờ đăng web", "Đã đăng web", "Kiểm tra index", "Hoàn thành",
+];
+
+export type ContentType =
+  | "Bài SEO" | "Bài blog" | "Landing page" | "Bài danh mục"
+  | "Bài sản phẩm" | "Bài tối ưu lại" | "Bài tin tức" | "Khác";
+
+export const CONTENT_TYPES: ContentType[] = [
+  "Bài SEO", "Bài blog", "Landing page", "Bài danh mục",
+  "Bài sản phẩm", "Bài tối ưu lại", "Bài tin tức", "Khác",
+];
+
+export type SearchIntent = "Thông tin" | "So sánh" | "Thương mại" | "Mua hàng" | "Điều hướng" | "Khác";
+export const SEARCH_INTENTS: SearchIntent[] = ["Thông tin", "So sánh", "Thương mại", "Mua hàng", "Điều hướng", "Khác"];
+
+export type IndexStatus = "Chưa kiểm tra" | "Chưa index" | "Đã index" | "Cần xử lý";
+export const INDEX_STATUSES: IndexStatus[] = ["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"];
+
+export type OptimizeReason =
+  | "Bài tụt hạng" | "Bài cũ thiếu thông tin" | "Bài chưa có CTA"
+  | "Bài thiếu internal link" | "Bài chưa index"
+  | "Bài cần cập nhật sản phẩm/dịch vụ" | "Bài cần tối ưu chuyển đổi";
+
+export const OPTIMIZE_REASONS: OptimizeReason[] = [
+  "Bài tụt hạng", "Bài cũ thiếu thông tin", "Bài chưa có CTA",
+  "Bài thiếu internal link", "Bài chưa index",
+  "Bài cần cập nhật sản phẩm/dịch vụ", "Bài cần tối ưu chuyển đổi",
+];
 
 export interface WebContent {
   id: ID;
   websiteId: ID;
   brandId: ID;
-  type: "Bài SEO" | "Bài blog" | "Landing page" | "Bài danh mục" | "Bài sản phẩm" | "Bài tối ưu lại";
+  type: ContentType;
   cluster?: string;
   mainKeyword?: string;
   subKeywords?: string;
+  searchIntent?: SearchIntent;
   title: string;
+  url?: string;
   brief?: string;
+  // Phân công
+  assigner?: string;
   writer?: string;
-  reviewer?: string;
+  outlineReviewer?: string;
+  draftReviewer?: string;
+  publisher?: string;
+  // Deadlines
+  outlineDeadline?: string;
   deadline?: string;
   publishDate?: string;
+  publishedAt?: string;
+  completedAt?: string;
+  // Tài liệu
   outlineLink?: string;
   draftLink?: string;
   imageLink?: string;
+  designOrderId?: ID;
   publishedLink?: string;
-  indexStatus: "Chưa kiểm tra" | "Chưa index" | "Đã index";
+  // Xét duyệt
   status: ContentStatus;
+  outlineReviewNotes?: string;
+  draftReviewNotes?: string;
+  outlineRevisions?: number;
+  draftRevisions?: number;
+  // SEO sau đăng
+  indexStatus: IndexStatus;
+  indexNotes?: string;
+  // Liên kết
   plan?: string;
   topic?: string;
   notes?: string;
+  // Thiết kế
+  needsDesign?: boolean;
+  // Tối ưu lại
+  optimizeReason?: OptimizeReason;
+  optimizeGoal?: string;
+  oldLink?: string;
+  optimizeNotes?: string;
 }
 
 export type SocialStatus =
-  | "Ý tưởng"
-  | "Đang làm"
-  | "Chờ duyệt"
-  | "Cần sửa"
-  | "Đã duyệt"
-  | "Đã lên lịch"
-  | "Đã đăng"
-  | "Hoàn thành";
+  | "Ý tưởng" | "Đang làm" | "Chờ duyệt" | "Cần sửa"
+  | "Đã duyệt" | "Đã lên lịch" | "Đã đăng" | "Hoàn thành";
 
 export interface SocialPost {
   id: ID;
@@ -212,6 +282,7 @@ export interface DesignOrder {
   plan?: string;
   topic?: string;
   notes?: string;
+  contentId?: ID;
 }
 
 export interface Person {
@@ -231,6 +302,7 @@ export interface SeoCheckItem {
   name: string;
   done: boolean;
   checker?: string;
+  checkedAt?: string;
   notes?: string;
   proofLink?: string;
 }
@@ -275,6 +347,72 @@ type Collections = {
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
+// SEO checklist template (groups + items)
+export const SEO_CHECK_TEMPLATE: Record<string, string[]> = {
+  "Cài đặt nền tảng": [
+    "Website đã có SSL/HTTPS",
+    "Đã kết nối Google Search Console",
+    "Đã kết nối Google Analytics",
+    "Đã cài plugin SEO",
+    "Đã tạo sitemap.xml",
+  ],
+  "Index / Crawl": [
+    "Đã gửi sitemap lên Search Console",
+    "Website không bị chặn index",
+    "Robots.txt không chặn nhầm",
+    "Trang chủ đã index",
+    "Danh mục chính đã index",
+  ],
+  "Tốc độ website": [
+    "Đã bật cache",
+    "Đã nén ảnh",
+    "Đã bật lazy load",
+    "Đã kiểm tra tốc độ mobile",
+    "Đã kiểm tra tốc độ desktop",
+  ],
+  "Cấu trúc website": [
+    "Menu chính rõ ràng",
+    "Danh mục sản phẩm rõ ràng",
+    "URL thân thiện",
+    "Có breadcrumb",
+    "Không có link menu bị lỗi",
+  ],
+  "Onpage kỹ thuật": [
+    "Trang chủ có title SEO",
+    "Trang chủ có meta description",
+    "Danh mục chính có title SEO",
+    "Danh mục chính có meta description",
+    "Ảnh có ALT",
+    "Có internal link cơ bản",
+  ],
+  "Schema": [
+    "Có schema Organization / Local Business",
+    "Có schema Breadcrumb",
+    "Có schema Article",
+    "Có schema Product",
+    "Schema không báo lỗi nghiêm trọng",
+  ],
+  "WooCommerce SEO": [
+    "Sản phẩm có title rõ ràng",
+    "Sản phẩm có mô tả ngắn",
+    "Sản phẩm có mô tả chi tiết",
+    "Sản phẩm có ảnh đại diện",
+    "Danh mục sản phẩm có mô tả",
+    "Không có quá nhiều sản phẩm trùng nội dung",
+  ],
+  "Tracking / Bảo mật": [
+    "Đã gắn Google Analytics",
+    "Đã gắn Google Search Console",
+    "Form liên hệ hoạt động",
+    "Nút gọi điện hoạt động",
+    "Nút Zalo hoạt động",
+    "Website không báo lỗi bảo mật",
+    "Plugin quan trọng được cập nhật",
+  ],
+};
+
+export const SEO_GROUPS = Object.keys(SEO_CHECK_TEMPLATE);
+
 const seed = () => {
   const brands: Brand[] = [
     { id: "b1", name: "Sứ Việt", field: "Gốm sứ Bát Tràng", website: "xuonggomsuviet.vn", description: "Xưởng gốm Bát Tràng truyền thống", usp: "Sản xuất tại xưởng, gốm thủ công cao cấp", owner: "Nguyễn Văn A", status: "Đang vận hành" },
@@ -284,10 +422,10 @@ const seed = () => {
     { id: "b5", name: "Không Gian Gốm Hà Nội", field: "Showroom gốm sứ", description: "Showroom trưng bày Hà Nội", owner: "Hoàng E", status: "Đang vận hành" },
   ];
   const websites: Website[] = [
-    { id: "w1", name: "Xưởng Gốm Sứ Việt", url: "https://xuonggomsuviet.vn", brandId: "b1", seoOwner: "Nguyễn Văn A", contentOwner: "Mai", techOwner: "Hùng", status: "Đang vận hành" },
-    { id: "w2", name: "Tinh Hoa Bát Tràng", url: "https://tinhhoabattrang.vn", brandId: "b1", status: "Đang xây dựng" },
-    { id: "w3", name: "Sứ Minh Đăng", url: "https://suminhdang.com", brandId: "b2", status: "Đang tối ưu" },
-    { id: "w4", name: "Thổ Tú", url: "https://thotu.vn", brandId: "b3", status: "Đang vận hành" },
+    { id: "w1", name: "xuonggomsuviet.vn", url: "https://xuonggomsuviet.vn", brandId: "b1", type: "Website bán hàng", seoOwner: "Nguyễn Văn SEO", contentOwner: "Trần Thu Content", techOwner: "Lê Minh Tech", status: "Đang vận hành", goal: "Bán hàng online + SEO từ khóa quà tặng" },
+    { id: "w2", name: "tinhhoabattrang.vn", url: "https://tinhhoabattrang.vn", brandId: "b1", type: "Website blog/SEO", seoOwner: "Nguyễn Văn SEO", contentOwner: "Trần Thu Content", status: "Đang xây dựng", goal: "Vệ tinh SEO, blog chuyên sâu Bát Tràng" },
+    { id: "w3", name: "suminhdang.com", url: "https://suminhdang.com", brandId: "b2", type: "Website bán hàng", seoOwner: "Nguyễn Văn SEO", contentOwner: "Hoàng Mai Content", techOwner: "Lê Minh Tech", status: "Đang tối ưu", goal: "Tăng đơn quà tặng doanh nghiệp" },
+    { id: "w4", name: "thotu.vn", url: "https://thotu.vn", brandId: "b3", type: "Website thương hiệu", seoOwner: "Phạm Anh SEO", contentOwner: "Trần Thu Content", techOwner: "Lê Minh Tech", status: "Đang xây dựng", goal: "Thương hiệu tượng phong thủy" },
   ];
   const socials: SocialChannel[] = [
     { id: "s1", name: "TikTok Sứ Việt", platform: "TikTok", brandId: "b1", owner: "Mai", frequency: "5 bài/tuần", status: "Đang vận hành" },
@@ -320,9 +458,71 @@ const seed = () => {
     { id: "o3", title: "Thumbnail video quà tặng Tết", brandId: "b1", type: "Thumbnail video", source: "Video", requester: "Mai", deadline: d(1), status: "Mới tạo", plan: "Tết 2026" },
   ];
   const webContents: WebContent[] = [
-    { id: "wc1", websiteId: "w1", brandId: "b1", type: "Bài SEO", title: "Quà tặng doanh nghiệp bằng gốm sứ Bát Tràng", mainKeyword: "quà tặng doanh nghiệp gốm sứ", writer: "Mai", reviewer: "Nguyễn Văn A", deadline: d(3), status: "Đang viết", indexStatus: "Chưa kiểm tra", plan: "Tết 2026", topic: "Quà tặng doanh nghiệp" },
-    { id: "wc2", websiteId: "w1", brandId: "b1", type: "Bài blog", title: "Cách bảo quản đồ gốm sứ", mainKeyword: "bảo quản gốm sứ", writer: "Mai", deadline: d(-1), status: "Chờ duyệt", indexStatus: "Chưa kiểm tra" },
-    { id: "wc3", websiteId: "w3", brandId: "b2", type: "Landing page", title: "Bộ ấm chén quà tặng cao cấp", writer: "An", reviewer: "Trần Thị B", deadline: d(7), status: "Kế hoạch", indexStatus: "Chưa kiểm tra" },
+    {
+      id: "wc1", websiteId: "w1", brandId: "b1", type: "Bài SEO",
+      title: "Tượng Phật gốm Bát Tràng", mainKeyword: "tượng Phật gốm",
+      subKeywords: "tượng Phật men rạn, tượng Phật bằng gốm",
+      searchIntent: "Thương mại",
+      writer: "Trần Thu Content", outlineReviewer: "Nguyễn Văn SEO", draftReviewer: "Nguyễn Văn SEO",
+      assigner: "Nguyễn Văn A",
+      outlineDeadline: d(-3), deadline: d(0), publishDate: d(2),
+      outlineLink: "https://docs.google.com/outline-tuong-phat",
+      draftLink: "https://docs.google.com/draft-tuong-phat",
+      status: "Chờ duyệt bài", indexStatus: "Chưa kiểm tra",
+      outlineRevisions: 1, draftRevisions: 0,
+      cluster: "Tượng phong thủy",
+    },
+    {
+      id: "wc2", websiteId: "w3", brandId: "b2", type: "Bài SEO",
+      title: "Ấm chén in logo làm quà tặng doanh nghiệp", mainKeyword: "ấm chén in logo",
+      searchIntent: "Mua hàng",
+      writer: "Hoàng Mai Content", outlineReviewer: "Nguyễn Văn SEO", draftReviewer: "Trần Thị B",
+      outlineDeadline: d(-2), deadline: d(3), publishDate: d(5),
+      outlineLink: "https://docs.google.com/outline-am-chen",
+      draftLink: "https://docs.google.com/draft-am-chen",
+      status: "Đang viết bài", indexStatus: "Chưa kiểm tra",
+      cluster: "Quà tặng doanh nghiệp",
+    },
+    {
+      id: "wc3", websiteId: "w4", brandId: "b3", type: "Landing page",
+      title: "Bát đĩa nhà hàng Bát Tràng", mainKeyword: "bát đĩa nhà hàng",
+      searchIntent: "Mua hàng",
+      writer: "Trần Thu Content", outlineReviewer: "Phạm Anh SEO",
+      outlineDeadline: d(0), deadline: d(7), publishDate: d(10),
+      outlineLink: "https://docs.google.com/outline-bat-dia",
+      status: "Đang làm outline", indexStatus: "Chưa kiểm tra",
+    },
+    {
+      id: "wc4", websiteId: "w3", brandId: "b2", type: "Bài SEO",
+      title: "Quà tặng Tết doanh nghiệp bằng gốm sứ", mainKeyword: "quà tặng tết doanh nghiệp",
+      searchIntent: "Mua hàng",
+      plan: "Tết 2026", topic: "Quà tặng doanh nghiệp",
+      writer: "Hoàng Mai Content", outlineReviewer: "Nguyễn Văn SEO",
+      deadline: d(14), publishDate: d(20),
+      status: "Kế hoạch", indexStatus: "Chưa kiểm tra",
+    },
+    {
+      id: "wc5", websiteId: "w1", brandId: "b1", type: "Bài tối ưu lại",
+      title: "Bình hút lộc Bát Tràng", mainKeyword: "bình hút lộc Bát Tràng",
+      searchIntent: "Thương mại",
+      writer: "Trần Thu Content", outlineReviewer: "Nguyễn Văn SEO",
+      deadline: d(5), publishDate: d(8),
+      status: "Đã giao", indexStatus: "Chưa kiểm tra",
+      optimizeReason: "Bài chưa có CTA",
+      optimizeGoal: "Tăng tỷ lệ chuyển đổi, bổ sung internal link sản phẩm",
+      oldLink: "https://xuonggomsuviet.vn/binh-hut-loc",
+      optimizeNotes: "Bài cũ thiếu CTA và internal link tới trang sản phẩm.",
+    },
+    {
+      id: "wc6", websiteId: "w1", brandId: "b1", type: "Bài blog",
+      title: "Cách bảo quản đồ gốm sứ", mainKeyword: "bảo quản gốm sứ",
+      searchIntent: "Thông tin",
+      writer: "Trần Thu Content", draftReviewer: "Nguyễn Văn SEO",
+      deadline: d(-7), publishDate: d(-5), publishedAt: d(-4),
+      publishedLink: "https://xuonggomsuviet.vn/bao-quan-gom-su",
+      status: "Hoàn thành", indexStatus: "Đã index",
+      completedAt: d(-3),
+    },
   ];
   const socialPosts: SocialPost[] = [
     { id: "sp1", title: "Bộ ấm chén Tết 2026", brandId: "b1", channelId: "s1", platform: "TikTok", contentType: "TikTok Video", writer: "Mai", scheduledDate: d(2), status: "Đang làm", plan: "Tết 2026", topic: "Quà tặng doanh nghiệp" },
@@ -345,26 +545,17 @@ const seed = () => {
     { id: "u6", name: "Designer 1", role: "Graphic Designer", status: "Đang làm" },
     { id: "u7", name: "Designer 2", role: "Graphic Designer", status: "Đang làm" },
     { id: "u8", name: "An", role: "Content Writer", status: "Đang làm" },
-  ];
-  const seoGroups = [
-    "Cài đặt nền tảng", "Index / Crawl", "Tốc độ website", "Cấu trúc website",
-    "Onpage kỹ thuật", "Schema", "WooCommerce SEO", "Tracking / Bảo mật",
+    { id: "u9", name: "Nguyễn Văn SEO", role: "SEO Specialist", status: "Đang làm" },
+    { id: "u10", name: "Trần Thu Content", role: "Content Writer Web", status: "Đang làm" },
+    { id: "u11", name: "Hoàng Mai Content", role: "Content Writer Web", status: "Đang làm" },
+    { id: "u12", name: "Lê Minh Tech", role: "Web Developer", status: "Đang làm" },
+    { id: "u13", name: "Phạm Anh SEO", role: "SEO Specialist", status: "Đang làm" },
   ];
   const seoChecks: SeoCheckItem[] = [];
-  const checkItems: Record<string, string[]> = {
-    "Cài đặt nền tảng": ["Cài SSL", "Cài Yoast/RankMath", "Cấu hình permalink"],
-    "Index / Crawl": ["Submit sitemap GSC", "Robots.txt hợp lệ", "Kiểm tra noindex sai"],
-    "Tốc độ website": ["Tối ưu ảnh", "Cache plugin", "Core Web Vitals đạt"],
-    "Cấu trúc website": ["Breadcrumb", "Internal link", "Cấu trúc danh mục"],
-    "Onpage kỹ thuật": ["Title tag", "Meta description", "Heading H1-H3"],
-    "Schema": ["Organization", "Article", "Product"],
-    "WooCommerce SEO": ["Product schema", "Tối ưu trang sản phẩm"],
-    "Tracking / Bảo mật": ["GA4", "GSC", "Backup định kỳ"],
-  };
   websites.forEach((w) => {
-    seoGroups.forEach((g) => {
-      checkItems[g]?.forEach((name) => {
-        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name, done: Math.random() > 0.6 });
+    SEO_GROUPS.forEach((g) => {
+      SEO_CHECK_TEMPLATE[g].forEach((name) => {
+        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name, done: Math.random() > 0.55 });
       });
     });
   });
@@ -389,7 +580,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 1 }
+    { name: "base-mkt-store", version: 3 }
   )
 );
 
@@ -400,7 +591,25 @@ export const fmtDate = (s?: string) => {
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
+export const todayISO = () => new Date().toISOString().slice(0, 10);
+
 export const isOverdue = (deadline?: string, status?: string) => {
   if (!deadline || status === "Hoàn thành") return false;
   return new Date(deadline) < new Date(new Date().toDateString());
+};
+
+export const ensureSeoChecks = (
+  existing: SeoCheckItem[],
+  websiteId: ID,
+): SeoCheckItem[] => {
+  const have = new Set(existing.filter((c) => c.websiteId === websiteId).map((c) => `${c.group}::${c.name}`));
+  const missing: SeoCheckItem[] = [];
+  SEO_GROUPS.forEach((g) => {
+    SEO_CHECK_TEMPLATE[g].forEach((name) => {
+      if (!have.has(`${g}::${name}`)) {
+        missing.push({ id: uid(), websiteId, group: g, name, done: false });
+      }
+    });
+  });
+  return missing;
 };
