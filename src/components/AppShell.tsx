@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, X,
+  Video, Palette, Target, Settings, Menu, FileText,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ const groups = [
     label: "Kênh Marketing",
     items: [
       { to: "/websites", label: "Dự Án Web", icon: Globe },
+      { to: "/web-contents", label: "Tất cả Content Web", icon: FileText },
       { to: "/social", label: "Kênh Social", icon: Share2 },
       { to: "/local", label: "Local Map", icon: MapPin },
     ],

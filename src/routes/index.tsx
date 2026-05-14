@@ -54,7 +54,7 @@ function Dashboard() {
       overdue: overdue.length,
       pending:
         s.tasks.filter((t) => t.status === "Đang làm").length +
-        s.webContents.filter((c) => c.status === "Chờ duyệt").length +
+        s.webContents.filter((c) => c.status === "Chờ duyệt outline" || c.status === "Chờ duyệt bài").length +
         s.socialPosts.filter((p) => p.status === "Chờ duyệt").length +
         s.orders.filter((o) => o.status === "Chờ duyệt").length +
         s.videos.filter((v) => v.status === "Chờ duyệt").length,
@@ -81,7 +81,7 @@ function Dashboard() {
     s.socialPosts.filter((p) => p.status === "Chờ duyệt" || p.status === "Đã lên lịch").forEach((p) =>
       items.push({ type: "Bài social", title: p.title, status: p.status, due: p.scheduledDate, brand: s.brands.find(b => b.id === p.brandId)?.name, href: "/social" })
     );
-    s.webContents.filter((c) => c.status === "Chờ duyệt" || c.status === "Cần sửa").forEach((c) =>
+    s.webContents.filter((c) => c.status.startsWith("Chờ duyệt") || c.status.startsWith("Cần sửa")).forEach((c) =>
       items.push({ type: "Nội dung web", title: c.title, status: c.status, due: c.deadline, brand: s.brands.find(b => b.id === c.brandId)?.name, href: "/websites" })
     );
     return items.slice(0, 12);

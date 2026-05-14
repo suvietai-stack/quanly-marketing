@@ -1,27 +1,51 @@
 import { cn } from "@/lib/utils";
 
 const map: Record<string, string> = {
-  // Generic green = success/done
+  // Success / completed
   "Hoàn thành": "bg-success/15 text-success border-success/30",
   "Đã đăng": "bg-success/15 text-success border-success/30",
+  "Đã đăng web": "bg-[oklch(0.7_0.13_180)]/15 text-[oklch(0.45_0.13_180)] border-[oklch(0.7_0.13_180)]/30",
   "Đã bàn giao": "bg-success/15 text-success border-success/30",
   "Đã duyệt": "bg-success/15 text-success border-success/30",
+  "Outline đã duyệt": "bg-success/15 text-success border-success/30",
+  "Bài đã duyệt": "bg-success/15 text-success border-success/30",
   "Đã xác minh": "bg-success/15 text-success border-success/30",
   "Đã phản hồi": "bg-success/15 text-success border-success/30",
   "Đã index": "bg-success/15 text-success border-success/30",
   "Đang vận hành": "bg-success/15 text-success border-success/30",
+
+  // In progress / info
   "Đang làm": "bg-info/15 text-info border-info/30",
   "Đang viết": "bg-info/15 text-info border-info/30",
+  "Đang viết bài": "bg-info/15 text-info border-info/30",
+  "Đang làm outline": "bg-info/15 text-info border-info/30",
   "Đang sản xuất": "bg-info/15 text-info border-info/30",
   "Đang xây": "bg-info/15 text-info border-info/30",
   "Đang xây dựng": "bg-info/15 text-info border-info/30",
   "Đang tối ưu": "bg-info/15 text-info border-info/30",
   "Đang xử lý": "bg-info/15 text-info border-info/30",
+  "Đã giao": "bg-info/15 text-info border-info/30",
+
+  // Waiting / review
   "Chờ duyệt": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Chờ duyệt outline": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Chờ duyệt bài": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
   "Đã lên lịch": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
   "Chờ đăng": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Chờ đăng web": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Chưa phản hồi": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+
+  // Needs fix / urgent
   "Cần sửa": "bg-destructive/15 text-destructive border-destructive/30",
+  "Cần sửa outline": "bg-destructive/15 text-destructive border-destructive/30",
+  "Cần sửa bài": "bg-destructive/15 text-destructive border-destructive/30",
+  "Cần xử lý": "bg-destructive/15 text-destructive border-destructive/30",
   "Quá hạn": "bg-destructive/15 text-destructive border-destructive/30",
+
+  // Index check (purple)
+  "Kiểm tra index": "bg-[oklch(0.7_0.15_300)]/15 text-[oklch(0.45_0.18_300)] border-[oklch(0.7_0.15_300)]/30",
+
+  // Muted
   "Tạm dừng": "bg-muted text-muted-foreground border-border",
   "Tạm nghỉ": "bg-muted text-muted-foreground border-border",
   "Lưu trữ": "bg-muted text-muted-foreground border-border",
@@ -29,12 +53,13 @@ const map: Record<string, string> = {
   "Chưa kiểm tra": "bg-muted text-muted-foreground border-border",
   "Chưa index": "bg-muted text-muted-foreground border-border",
   "Chưa xác minh": "bg-muted text-muted-foreground border-border",
-  "Chưa phản hồi": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+
+  // Plan / idea
   "Mới tạo": "bg-accent text-accent-foreground border-border",
   "Ý tưởng": "bg-accent text-accent-foreground border-border",
   "Kế hoạch": "bg-accent text-accent-foreground border-border",
-  "Đã giao": "bg-info/15 text-info border-info/30",
-  // priorities
+
+  // Priorities
   "Thấp": "bg-muted text-muted-foreground border-border",
   "Trung bình": "bg-info/15 text-info border-info/30",
   "Cao": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",

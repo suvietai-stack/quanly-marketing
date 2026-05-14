@@ -187,7 +187,7 @@ function QuickAddDialog({ open, onClose, brandId }: {
   const submit = () => {
     if (!name.trim()) return;
     if (open === "web") {
-      const w: Website = { id: uid(), name, url, brandId, status: "Đang xây dựng" };
+      const w: Website = { id: uid(), name, url, brandId, type: "Website thương hiệu", status: "Đang xây dựng" };
       add("websites", w);
     } else if (open === "social") {
       const c: SocialChannel = { id: uid(), name, url, platform, brandId, status: "Đang xây" };
