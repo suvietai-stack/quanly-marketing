@@ -9,38 +9,270 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WebsitesRouteImport } from './routes/websites'
+import { Route as VideosRouteImport } from './routes/videos'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SocialRouteImport } from './routes/social'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OkrsRouteImport } from './routes/okrs'
+import { Route as LocalRouteImport } from './routes/local'
+import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
+import { Route as SocialIdRouteImport } from './routes/social.$id'
+import { Route as LocalIdRouteImport } from './routes/local.$id'
+import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 
+const WebsitesRoute = WebsitesRouteImport.update({
+  id: '/websites',
+  path: '/websites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideosRoute = VideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialRoute = SocialRouteImport.update({
+  id: '/social',
+  path: '/social',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OkrsRoute = OkrsRouteImport.update({
+  id: '/okrs',
+  path: '/okrs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocalRoute = LocalRouteImport.update({
+  id: '/local',
+  path: '/local',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrandsRoute = BrandsRouteImport.update({
+  id: '/brands',
+  path: '/brands',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WebsitesIdRoute = WebsitesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => WebsitesRoute,
+} as any)
+const SocialIdRoute = SocialIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SocialRoute,
+} as any)
+const LocalIdRoute = LocalIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LocalRoute,
+} as any)
+const BrandsIdRoute = BrandsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => BrandsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/brands': typeof BrandsRouteWithChildren
+  '/local': typeof LocalRouteWithChildren
+  '/okrs': typeof OkrsRoute
+  '/orders': typeof OrdersRoute
+  '/settings': typeof SettingsRoute
+  '/social': typeof SocialRouteWithChildren
+  '/tasks': typeof TasksRoute
+  '/videos': typeof VideosRoute
+  '/websites': typeof WebsitesRouteWithChildren
+  '/brands/$id': typeof BrandsIdRoute
+  '/local/$id': typeof LocalIdRoute
+  '/social/$id': typeof SocialIdRoute
+  '/websites/$id': typeof WebsitesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/brands': typeof BrandsRouteWithChildren
+  '/local': typeof LocalRouteWithChildren
+  '/okrs': typeof OkrsRoute
+  '/orders': typeof OrdersRoute
+  '/settings': typeof SettingsRoute
+  '/social': typeof SocialRouteWithChildren
+  '/tasks': typeof TasksRoute
+  '/videos': typeof VideosRoute
+  '/websites': typeof WebsitesRouteWithChildren
+  '/brands/$id': typeof BrandsIdRoute
+  '/local/$id': typeof LocalIdRoute
+  '/social/$id': typeof SocialIdRoute
+  '/websites/$id': typeof WebsitesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/brands': typeof BrandsRouteWithChildren
+  '/local': typeof LocalRouteWithChildren
+  '/okrs': typeof OkrsRoute
+  '/orders': typeof OrdersRoute
+  '/settings': typeof SettingsRoute
+  '/social': typeof SocialRouteWithChildren
+  '/tasks': typeof TasksRoute
+  '/videos': typeof VideosRoute
+  '/websites': typeof WebsitesRouteWithChildren
+  '/brands/$id': typeof BrandsIdRoute
+  '/local/$id': typeof LocalIdRoute
+  '/social/$id': typeof SocialIdRoute
+  '/websites/$id': typeof WebsitesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/brands'
+    | '/local'
+    | '/okrs'
+    | '/orders'
+    | '/settings'
+    | '/social'
+    | '/tasks'
+    | '/videos'
+    | '/websites'
+    | '/brands/$id'
+    | '/local/$id'
+    | '/social/$id'
+    | '/websites/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/brands'
+    | '/local'
+    | '/okrs'
+    | '/orders'
+    | '/settings'
+    | '/social'
+    | '/tasks'
+    | '/videos'
+    | '/websites'
+    | '/brands/$id'
+    | '/local/$id'
+    | '/social/$id'
+    | '/websites/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/brands'
+    | '/local'
+    | '/okrs'
+    | '/orders'
+    | '/settings'
+    | '/social'
+    | '/tasks'
+    | '/videos'
+    | '/websites'
+    | '/brands/$id'
+    | '/local/$id'
+    | '/social/$id'
+    | '/websites/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BrandsRoute: typeof BrandsRouteWithChildren
+  LocalRoute: typeof LocalRouteWithChildren
+  OkrsRoute: typeof OkrsRoute
+  OrdersRoute: typeof OrdersRoute
+  SettingsRoute: typeof SettingsRoute
+  SocialRoute: typeof SocialRouteWithChildren
+  TasksRoute: typeof TasksRoute
+  VideosRoute: typeof VideosRoute
+  WebsitesRoute: typeof WebsitesRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/websites': {
+      id: '/websites'
+      path: '/websites'
+      fullPath: '/websites'
+      preLoaderRoute: typeof WebsitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/videos': {
+      id: '/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof VideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/social': {
+      id: '/social'
+      path: '/social'
+      fullPath: '/social'
+      preLoaderRoute: typeof SocialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/okrs': {
+      id: '/okrs'
+      path: '/okrs'
+      fullPath: '/okrs'
+      preLoaderRoute: typeof OkrsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/local': {
+      id: '/local'
+      path: '/local'
+      fullPath: '/local'
+      preLoaderRoute: typeof LocalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brands': {
+      id: '/brands'
+      path: '/brands'
+      fullPath: '/brands'
+      preLoaderRoute: typeof BrandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +280,93 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/websites/$id': {
+      id: '/websites/$id'
+      path: '/$id'
+      fullPath: '/websites/$id'
+      preLoaderRoute: typeof WebsitesIdRouteImport
+      parentRoute: typeof WebsitesRoute
+    }
+    '/social/$id': {
+      id: '/social/$id'
+      path: '/$id'
+      fullPath: '/social/$id'
+      preLoaderRoute: typeof SocialIdRouteImport
+      parentRoute: typeof SocialRoute
+    }
+    '/local/$id': {
+      id: '/local/$id'
+      path: '/$id'
+      fullPath: '/local/$id'
+      preLoaderRoute: typeof LocalIdRouteImport
+      parentRoute: typeof LocalRoute
+    }
+    '/brands/$id': {
+      id: '/brands/$id'
+      path: '/$id'
+      fullPath: '/brands/$id'
+      preLoaderRoute: typeof BrandsIdRouteImport
+      parentRoute: typeof BrandsRoute
+    }
   }
 }
 
+interface BrandsRouteChildren {
+  BrandsIdRoute: typeof BrandsIdRoute
+}
+
+const BrandsRouteChildren: BrandsRouteChildren = {
+  BrandsIdRoute: BrandsIdRoute,
+}
+
+const BrandsRouteWithChildren =
+  BrandsRoute._addFileChildren(BrandsRouteChildren)
+
+interface LocalRouteChildren {
+  LocalIdRoute: typeof LocalIdRoute
+}
+
+const LocalRouteChildren: LocalRouteChildren = {
+  LocalIdRoute: LocalIdRoute,
+}
+
+const LocalRouteWithChildren = LocalRoute._addFileChildren(LocalRouteChildren)
+
+interface SocialRouteChildren {
+  SocialIdRoute: typeof SocialIdRoute
+}
+
+const SocialRouteChildren: SocialRouteChildren = {
+  SocialIdRoute: SocialIdRoute,
+}
+
+const SocialRouteWithChildren =
+  SocialRoute._addFileChildren(SocialRouteChildren)
+
+interface WebsitesRouteChildren {
+  WebsitesIdRoute: typeof WebsitesIdRoute
+}
+
+const WebsitesRouteChildren: WebsitesRouteChildren = {
+  WebsitesIdRoute: WebsitesIdRoute,
+}
+
+const WebsitesRouteWithChildren = WebsitesRoute._addFileChildren(
+  WebsitesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BrandsRoute: BrandsRouteWithChildren,
+  LocalRoute: LocalRouteWithChildren,
+  OkrsRoute: OkrsRoute,
+  OrdersRoute: OrdersRoute,
+  SettingsRoute: SettingsRoute,
+  SocialRoute: SocialRouteWithChildren,
+  TasksRoute: TasksRoute,
+  VideosRoute: VideosRoute,
+  WebsitesRoute: WebsitesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

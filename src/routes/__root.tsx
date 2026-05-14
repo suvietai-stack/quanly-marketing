@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { AppShell } from "@/components/AppShell";
 
 function NotFoundComponent() {
   return (
@@ -72,11 +73,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Base Marketing — Quản lý công việc Digital Marketing" },
+      { name: "description", content: "App quản lý quy trình thực thi của phòng Digital Marketing: thương hiệu, kênh, sản xuất nội dung, video, thiết kế." },
+      { name: "author", content: "Base Marketing" },
+      { property: "og:title", content: "Base Marketing — Quản lý công việc" },
+      { property: "og:description", content: "Quản lý thương hiệu, kênh triển khai, giao việc, sản xuất nội dung và theo dõi trạng thái công việc." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -113,7 +114,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AppShell>
+        <Outlet />
+      </AppShell>
     </QueryClientProvider>
   );
 }
