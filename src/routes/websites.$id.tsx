@@ -4,7 +4,7 @@ import {
   CONTENT_STATUSES, CONTENT_TYPES,
   type WebContent, type ContentStatus,
 } from "@/lib/store";
-import { PageHeader } from "@/components/AppShell";
+
 import { StatusBadge } from "@/components/StatusBadge";
 
 import { ContentForm } from "@/components/ContentForm";
@@ -98,89 +98,95 @@ function WebsiteDetail() {
     notIndexed: published.filter((c) => c.indexStatus !== "Đã index").length,
   };
 
+  const waitingPublish = contents.filter((c) => c.status === "Chờ đăng web").length;
+
   return (
     <>
       <Link to="/websites" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-3">
-        <ArrowLeft className="h-4 w-4" />Tất cả website
+        <ArrowLeft className="h-4 w-4" />Quay lại danh sách dự án web
       </Link>
-      <PageHeader
-        title={w.name}
-        description={`${brand?.name || ""} · ${w.type}`}
-        actions={
-          <>
-            {w.url && (
-              <Button variant="outline" asChild>
-                <a href={w.url} target="_blank" rel="noreferrer">Mở website <ExternalLink className="h-3.5 w-3.5" /></a>
-              </Button>
-            )}
-            <StatusBadge value={w.status} />
-          </>
-        }
-      />
 
-      {/* Header summary card */}
-      <Card className="mb-4">
-        <CardContent className="p-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-          <div><span className="text-muted-foreground">Thương hiệu:</span> <span className="font-medium">{brand?.name || "—"}</span></div>
-          <div><span className="text-muted-foreground">SEO phụ trách:</span> <span className="font-medium">{w.seoOwner || "—"}</span></div>
-          <div><span className="text-muted-foreground">Content phụ trách:</span> <span className="font-medium">{w.contentOwner || "—"}</span></div>
-          <div><span className="text-muted-foreground">Kỹ thuật:</span> <span className="font-medium">{w.techOwner || "—"}</span></div>
+      {/* Header dự án */}
+      <Card className="mb-4 border-primary/20">
+        <CardContent className="p-5 space-y-3">
+          <div className="flex items-start gap-3 flex-wrap">
+            <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Globe className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-bold leading-tight">{w.name}</h1>
+                <StatusBadge value={w.status} />
+              </div>
+              {w.url && (
+                <a href={w.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mt-1">
+                  {w.url} <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm pt-2 border-t">
+            <div><span className="text-muted-foreground">Thương hiệu:</span> <span className="font-medium">{brand?.name || "—"}</span></div>
+            <div><span className="text-muted-foreground">SEO:</span> <span className="font-medium">{w.seoOwner || "—"}</span></div>
+            <div><span className="text-muted-foreground">Content:</span> <span className="font-medium">{w.contentOwner || "—"}</span></div>
+            <div><span className="text-muted-foreground">Kỹ thuật:</span> <span className="font-medium">{w.techOwner || "—"}</span></div>
+          </div>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="info">
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="profile">Hồ sơ Website</TabsTrigger>
+          <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
           <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>
-          <TabsTrigger value="content">Sản xuất Content ({contents.length})</TabsTrigger>
+          <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+            Sản xuất Content ({contents.length})
+          </TabsTrigger>
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
           <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
         </TabsList>
 
-        {/* TỔNG QUAN */}
-        <TabsContent value="overview" className="mt-4 space-y-4">
+        {/* TAB 1 — THÔNG TIN DỰ ÁN */}
+        <TabsContent value="info" className="mt-4 space-y-4">
+          <div className="grid lg:grid-cols-2 gap-4">
+            <Card><CardHeader><CardTitle className="text-base">Thông tin website</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <Row k="Tên website" v={w.name} />
+                <Row k="Link website" v={w.url ? <a href={w.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{w.url}</a> : "—"} />
+                <Row k="Thương hiệu" v={brand?.name} />
+                <Row k="Loại website" v={w.type} />
+                <Row k="Mục tiêu website" v={w.goal} />
+                <Row k="Trạng thái" v={<StatusBadge value={w.status} />} />
+              </CardContent>
+            </Card>
+            <Card><CardHeader><CardTitle className="text-base">Đội ngũ & vận hành</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <Row k="SEO phụ trách" v={w.seoOwner} />
+                <Row k="Content phụ trách" v={w.contentOwner} />
+                <Row k="Kỹ thuật phụ trách" v={w.techOwner} />
+                <Row k="Ghi chú vận hành" v={w.notes} />
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <OvwCard icon={FileText} label="Tổng số content" v={ovw.total} />
             <OvwCard icon={RefreshCw} label="Đang sản xuất" v={ovw.producing} tone="info" />
             <OvwCard icon={AlertCircle} label="Chờ duyệt" v={ovw.review} tone="warn" />
             <OvwCard icon={AlertCircle} label="Cần sửa" v={ovw.fix} tone="danger" />
+            <OvwCard icon={FileText} label="Chờ đăng" v={waitingPublish} tone="info" />
             <OvwCard icon={CheckCircle2} label="Đã đăng" v={ovw.published} tone="success" />
             <OvwCard icon={AlertCircle} label="Chưa index" v={ovw.notIndexed} tone="warn" />
-            <Card className="col-span-2"><CardContent className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-muted-foreground">Technical SEO Checklist</div>
-                <div className="text-sm font-semibold">{seoDone}/{checks.length} ({seoPct}%)</div>
-              </div>
-              <Progress value={seoPct} />
+            <Card><CardContent className="p-5">
+              <div className="text-sm text-muted-foreground">Tiến độ Technical SEO</div>
+              <div className="text-2xl font-semibold mt-1.5">{seoPct}%</div>
+              <Progress value={seoPct} className="mt-2" />
+              <div className="text-xs text-muted-foreground mt-1">{seoDone}/{checks.length} mục</div>
             </CardContent></Card>
           </div>
         </TabsContent>
 
-        {/* HỒ SƠ */}
-        <TabsContent value="profile" className="mt-4 grid lg:grid-cols-2 gap-4">
-          <Card><CardHeader><CardTitle className="text-base">Thông tin website</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <Row k="Tên website" v={w.name} />
-              <Row k="Link" v={w.url ? <a href={w.url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{w.url}</a> : "—"} />
-              <Row k="Thương hiệu" v={brand?.name} />
-              <Row k="Loại website" v={w.type} />
-              <Row k="Trạng thái" v={<StatusBadge value={w.status} />} />
-              <Row k="Mục tiêu" v={w.goal} />
-            </CardContent>
-          </Card>
-          <Card><CardHeader><CardTitle className="text-base">Đội ngũ phụ trách</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <Row k="SEO phụ trách" v={w.seoOwner} />
-              <Row k="Content phụ trách" v={w.contentOwner} />
-              <Row k="Kỹ thuật phụ trách" v={w.techOwner} />
-              <Row k="Ghi chú" v={w.notes} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* TECHNICAL SEO */}
+        {/* TAB 2 — TECHNICAL SEO */}
         <TabsContent value="seo" className="mt-4 space-y-4">
           <Card><CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
@@ -223,7 +229,7 @@ function WebsiteDetail() {
           })}
         </TabsContent>
 
-        {/* SẢN XUẤT CONTENT */}
+        {/* TAB 3 — SẢN XUẤT CONTENT */}
         <TabsContent value="content" className="mt-4">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <Input placeholder="Tìm bài..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
@@ -267,21 +273,21 @@ function WebsiteDetail() {
           {view === "calendar" && <ContentCalendar contents={filteredContents} onOpen={setOpenContent} />}
         </TabsContent>
 
-        {/* PUBLISHED / INDEX */}
+        {/* TAB 4 — PUBLISHED / INDEX */}
         <TabsContent value="published" className="mt-4">
           <Card><CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground bg-muted/40">
                   <tr>
-                    <th className="text-left font-medium px-4 py-2.5">Bài viết</th>
+                    <th className="text-left font-medium px-4 py-2.5">Tiêu đề bài</th>
+                    <th className="text-left font-medium px-4 py-2.5">Link bài đã đăng</th>
                     <th className="text-left font-medium px-4 py-2.5">Từ khóa chính</th>
+                    <th className="text-left font-medium px-4 py-2.5">Ngày đăng</th>
                     <th className="text-left font-medium px-4 py-2.5">Người viết</th>
                     <th className="text-left font-medium px-4 py-2.5">Người đăng</th>
-                    <th className="text-left font-medium px-4 py-2.5">Ngày đăng</th>
-                    <th className="text-left font-medium px-4 py-2.5">Index</th>
-                    <th className="text-left font-medium px-4 py-2.5">Link</th>
-                    <th className="text-right font-medium px-4 py-2.5"></th>
+                    <th className="text-left font-medium px-4 py-2.5">Trạng thái index</th>
+                    <th className="text-left font-medium px-4 py-2.5">Ghi chú index</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -291,12 +297,15 @@ function WebsiteDetail() {
                       <td className="px-4 py-2.5 font-medium">
                         <button className="text-left hover:text-primary" onClick={() => setOpenContent(c)}>{c.title}</button>
                       </td>
+                      <td className="px-4 py-2.5">
+                        {c.publishedLink ? <a href={c.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Mở <ExternalLink className="h-3 w-3" /></a> : "—"}
+                      </td>
                       <td className="px-4 py-2.5 text-muted-foreground">{c.mainKeyword || "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.publishedAt || c.publishDate)}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{c.publisher || "—"}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.publishedAt || c.publishDate)}</td>
                       <td className="px-4 py-2.5">
-                        <Select value={c.indexStatus} onValueChange={(v) => s.update("webContents", c.id, { indexStatus: v as any })}>
+                        <Select value={c.indexStatus || "Chưa kiểm tra"} onValueChange={(v) => s.update("webContents", c.id, { indexStatus: v as any })}>
                           <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -304,10 +313,7 @@ function WebsiteDetail() {
                         </Select>
                       </td>
                       <td className="px-4 py-2.5">
-                        {c.publishedLink ? <a href={c.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Mở <ExternalLink className="h-3 w-3" /></a> : "—"}
-                      </td>
-                      <td className="px-4 py-2.5 text-right">
-                        <Button size="sm" variant="ghost" onClick={() => setOpenContent(c)}>Chi tiết</Button>
+                        <Input className="h-7 text-xs" value={c.indexNotes || ""} onChange={(e) => s.update("webContents", c.id, { indexNotes: e.target.value })} placeholder="—" />
                       </td>
                     </tr>
                   ))}
@@ -317,7 +323,7 @@ function WebsiteDetail() {
           </CardContent></Card>
         </TabsContent>
 
-        {/* OPTIMIZE */}
+        {/* TAB 5 — OPTIMIZE */}
         <TabsContent value="optimize" className="mt-4">
           <div className="flex justify-end mb-3">
             <Dialog>
@@ -365,18 +371,20 @@ function WebsiteDetail() {
           </CardContent></Card>
         </TabsContent>
 
-        {/* REPORT */}
+        {/* TAB 6 — REPORT (placeholder) */}
         <TabsContent value="report" className="mt-4">
-          <WebsiteReport
-            contents={contents}
-            published={published}
-            seoDone={seoDone}
-            seoTotal={checks.length}
-            seoGroups={groups.map((g) => {
-              const items = checks.filter((c) => c.group === g);
-              return { name: g, done: items.filter((i) => i.done).length, total: items.length };
-            })}
-          />
+          <Card>
+            <CardContent className="p-12 text-center space-y-3">
+              <div className="mx-auto h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                <FileText className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold">Báo cáo Web — Sắp ra mắt</h3>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                Báo cáo Web sẽ được phát triển ở giai đoạn sau để theo dõi tăng trưởng website,
+                số bài đã đăng, index, traffic, từ khóa và hiệu quả SEO.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
