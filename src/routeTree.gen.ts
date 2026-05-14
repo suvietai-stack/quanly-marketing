@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WebsitesRouteImport } from './routes/websites'
+import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SocialRouteImport } from './routes/social'
@@ -27,6 +28,11 @@ import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 const WebsitesRoute = WebsitesRouteImport.update({
   id: '/websites',
   path: '/websites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebContentsRoute = WebContentsRouteImport.update({
+  id: '/web-contents',
+  path: '/web-contents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VideosRoute = VideosRouteImport.update({
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
+  '/web-contents': typeof WebContentsRoute
   '/websites': typeof WebsitesRouteWithChildren
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
+  '/web-contents': typeof WebContentsRoute
   '/websites': typeof WebsitesRouteWithChildren
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
+  '/web-contents': typeof WebContentsRoute
   '/websites': typeof WebsitesRouteWithChildren
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tasks'
     | '/videos'
+    | '/web-contents'
     | '/websites'
     | '/brands/$id'
     | '/local/$id'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tasks'
     | '/videos'
+    | '/web-contents'
     | '/websites'
     | '/brands/$id'
     | '/local/$id'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/tasks'
     | '/videos'
+    | '/web-contents'
     | '/websites'
     | '/brands/$id'
     | '/local/$id'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   SocialRoute: typeof SocialRouteWithChildren
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
+  WebContentsRoute: typeof WebContentsRoute
   WebsitesRoute: typeof WebsitesRouteWithChildren
 }
 
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/websites'
       fullPath: '/websites'
       preLoaderRoute: typeof WebsitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/web-contents': {
+      id: '/web-contents'
+      path: '/web-contents'
+      fullPath: '/web-contents'
+      preLoaderRoute: typeof WebContentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/videos': {
@@ -365,6 +385,7 @@ const rootRouteChildren: RootRouteChildren = {
   SocialRoute: SocialRouteWithChildren,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
+  WebContentsRoute: WebContentsRoute,
   WebsitesRoute: WebsitesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
