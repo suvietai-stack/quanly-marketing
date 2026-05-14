@@ -29,7 +29,7 @@ import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/websites/$id")({
   head: () => ({ meta: [{ title: "Chi tiết website — Base Marketing" }] }),
-  component: WebsiteDetail;
+  component: WebsiteDetail,
 });
 
 const PRODUCING_STATUSES: ContentStatus[] = [
