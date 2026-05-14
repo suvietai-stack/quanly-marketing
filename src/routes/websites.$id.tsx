@@ -367,13 +367,15 @@ function WebsiteDetail() {
 
         {/* REPORT */}
         <TabsContent value="report" className="mt-4">
-          <ComingSoon
-            title="Báo cáo Web"
-            items={[
-              "Báo cáo Web sẽ được phát triển ở giai đoạn sau",
-              "Theo dõi tăng trưởng website, số bài đã đăng, index",
-              "Traffic, từ khóa và hiệu quả SEO",
-            ]}
+          <WebsiteReport
+            contents={contents}
+            published={published}
+            seoDone={seoDone}
+            seoTotal={checks.length}
+            seoGroups={groups.map((g) => {
+              const items = checks.filter((c) => c.group === g);
+              return { name: g, done: items.filter((i) => i.done).length, total: items.length };
+            })}
           />
         </TabsContent>
       </Tabs>
