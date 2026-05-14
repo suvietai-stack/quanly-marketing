@@ -6,7 +6,7 @@ import {
 } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ComingSoon } from "@/components/Common";
+
 import { ContentForm } from "@/components/ContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
 import { Button } from "@/components/ui/button";
@@ -537,6 +537,223 @@ function Row({ k, v }: { k: string; v?: React.ReactNode }) {
     <div className="flex justify-between gap-3 border-b last:border-0 pb-2 last:pb-0">
       <span className="text-muted-foreground text-sm">{k}</span>
       <span className="font-medium text-right text-sm">{v || "—"}</span>
+    </div>
+  );
+}
+
+function WebsiteReport({
+  contents, published, seoDone, seoTotal, seoGroups,
+}: {
+  contents: WebContent[];
+  published: WebContent[];
+  seoDone: number;
+  seoTotal: number;
+  seoGroups: { name: string; done: number; total: number }[];
+}) {
+  // Status distribution
+  const byStatus = CONTENT_STATUSES.map((st) => ({
+    status: st,
+    count: contents.filter((c) => c.status === st).length,
+  })).filter((x) => x.count > 0);
+  const maxStatus = Math.max(1, ...byStatus.map((x) => x.count));
+
+  // By writer
+  const writerMap = new Map<string, { total: number; done: number }>();
+  contents.forEach((c) => {
+    const k = c.writer || "Chưa phân";
+    const e = writerMap.get(k) || { total: 0, done: 0 };
+    e.total++;
+    if (DONE_STATUSES.includes(c.status)) e.done++;
+    writerMap.set(k, e);
+  });
+  const byWriter = Array.from(writerMap.entries())
+    .map(([name, v]) => ({ name, ...v }))
+    .sort((a, b) => b.total - a.total);
+  const maxWriter = Math.max(1, ...byWriter.map((x) => x.total));
+
+  // Index status breakdown
+  const idxList = ["Đã index", "Chưa index", "Chưa kiểm tra", "Cần xử lý"] as const;
+  const idxStats = idxList.map((k) => ({
+    name: k,
+    count: published.filter((c) => (c.indexStatus || "Chưa kiểm tra") === k).length,
+  }));
+  const totalPub = Math.max(1, published.length);
+
+  // Publish trend last 6 months
+  const months: { key: string; label: string; count: number }[] = [];
+  const today = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    months.push({
+      key,
+      label: d.toLocaleDateString("vi-VN", { month: "short", year: "2-digit" }),
+      count: 0,
+    });
+  }
+  published.forEach((c) => {
+    const d = c.publishedAt || c.publishDate;
+    if (!d) return;
+    const key = d.slice(0, 7);
+    const m = months.find((x) => x.key === key);
+    if (m) m.count++;
+  });
+  const maxMonth = Math.max(1, ...months.map((m) => m.count));
+
+  // Top keywords
+  const kwMap = new Map<string, number>();
+  contents.forEach((c) => {
+    if (c.mainKeyword) kwMap.set(c.mainKeyword, (kwMap.get(c.mainKeyword) || 0) + 1);
+  });
+  const topKw = Array.from(kwMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  const seoPct = Math.round((seoDone / Math.max(1, seoTotal)) * 100);
+
+  return (
+    <div className="space-y-4">
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card><CardContent className="p-5">
+          <div className="text-sm text-muted-foreground">Tổng content đã sản xuất</div>
+          <div className="text-2xl font-semibold mt-1.5">{contents.length}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-5">
+          <div className="text-sm text-muted-foreground">Bài đã đăng</div>
+          <div className="text-2xl font-semibold mt-1.5 text-success">{published.length}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-5">
+          <div className="text-sm text-muted-foreground">Tỷ lệ index</div>
+          <div className="text-2xl font-semibold mt-1.5">
+            {Math.round((idxStats[0].count / totalPub) * 100)}%
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5">{idxStats[0].count}/{published.length} đã index</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-5">
+          <div className="text-sm text-muted-foreground">Technical SEO</div>
+          <div className="text-2xl font-semibold mt-1.5">{seoPct}%</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{seoDone}/{seoTotal} mục</div>
+        </CardContent></Card>
+      </div>
+
+      {/* Publish trend */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Bài đăng theo tháng (6 tháng gần nhất)</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-3 h-44">
+            {months.map((m) => (
+              <div key={m.key} className="flex-1 flex flex-col items-center gap-1.5">
+                <div className="text-xs font-medium">{m.count}</div>
+                <div
+                  className="w-full bg-primary/80 rounded-t-md transition-all"
+                  style={{ height: `${(m.count / maxMonth) * 100}%`, minHeight: m.count > 0 ? 4 : 0 }}
+                />
+                <div className="text-[11px] text-muted-foreground">{m.label}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid lg:grid-cols-2 gap-4">
+        {/* Status distribution */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Phân bổ theo trạng thái</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {byStatus.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">Chưa có dữ liệu</div>}
+            {byStatus.map((x) => (
+              <div key={x.status} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <StatusBadge value={x.status} />
+                  <span className="font-medium">{x.count}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: `${(x.count / maxStatus) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Index breakdown */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Tình trạng Index</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {published.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">Chưa có bài đăng</div>}
+            {published.length > 0 && idxStats.map((x) => (
+              <div key={x.name} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{x.name}</span>
+                  <span className="font-medium">{x.count} ({Math.round((x.count / totalPub) * 100)}%)</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${x.name === "Đã index" ? "bg-success" : x.name === "Cần xử lý" ? "bg-destructive" : "bg-warning"}`}
+                    style={{ width: `${(x.count / totalPub) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* By writer */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Năng suất theo người viết</CardTitle></CardHeader>
+          <CardContent>
+            {byWriter.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">Chưa có dữ liệu</div>}
+            <div className="space-y-3">
+              {byWriter.map((w) => (
+                <div key={w.name}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-medium">{w.name}</span>
+                    <span className="text-muted-foreground">{w.done}/{w.total} đã đăng</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden flex">
+                    <div className="h-full bg-success" style={{ width: `${(w.done / maxWriter) * 100}%` }} />
+                    <div className="h-full bg-primary/40" style={{ width: `${((w.total - w.done) / maxWriter) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Technical SEO breakdown */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Technical SEO theo nhóm</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {seoGroups.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">Chưa có checklist</div>}
+            {seoGroups.map((g) => {
+              const pct = Math.round((g.done / Math.max(1, g.total)) * 100);
+              return (
+                <div key={g.name} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">{g.name}</span>
+                    <span className="font-medium">{g.done}/{g.total} ({pct}%)</span>
+                  </div>
+                  <Progress value={pct} />
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top keywords */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Top từ khoá chính ({topKw.length})</CardTitle></CardHeader>
+        <CardContent>
+          {topKw.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">Chưa có từ khoá</div>}
+          <div className="flex flex-wrap gap-2">
+            {topKw.map(([kw, n]) => (
+              <span key={kw} className="inline-flex items-center gap-1.5 rounded-md border bg-muted/40 px-2.5 py-1 text-xs">
+                <span className="font-medium">{kw}</span>
+                <span className="text-muted-foreground">×{n}</span>
+              </span>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
