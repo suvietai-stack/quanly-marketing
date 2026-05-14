@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   useStore, uid, ensureSeoChecks,
   type Website, type WebsiteType, type WebsiteStatus,
@@ -6,6 +6,7 @@ import {
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
+import { ContentForm } from "@/components/ContentForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, ExternalLink, FileText, ListChecks } from "lucide-react";
+import { Plus, Pencil, ExternalLink, FileText, ArrowRight, Globe, FilePlus2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/websites")({
@@ -98,37 +99,34 @@ function WebsiteForm({ initial, onSubmit, onClose }: {
 
 function WebsitesPage() {
   const s = useStore();
+  const navigate = useNavigate();
   const { websites, brands, webContents, seoChecks } = s;
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
   const [fStatus, setFStatus] = useState("all");
   const [fType, setFType] = useState("all");
-  const [fSeo, setFSeo] = useState("all");
-  const [fContent, setFContent] = useState("all");
   const [editing, setEditing] = useState<Website | null>(null);
   const [adding, setAdding] = useState(false);
+  const [addContentFor, setAddContentFor] = useState<Website | null>(null);
 
   const filtered = useMemo(() => websites.filter((w) =>
     (!search || w.name.toLowerCase().includes(search.toLowerCase()) || (w.url || "").toLowerCase().includes(search.toLowerCase())) &&
     (fBrand === "all" || w.brandId === fBrand) &&
     (fStatus === "all" || w.status === fStatus) &&
-    (fType === "all" || w.type === fType) &&
-    (fSeo === "all" || w.seoOwner === fSeo) &&
-    (fContent === "all" || w.contentOwner === fContent)
-  ), [websites, search, fBrand, fStatus, fType, fSeo, fContent]);
-
-  const seoOwners = Array.from(new Set(websites.map((w) => w.seoOwner).filter(Boolean))) as string[];
-  const contentOwners = Array.from(new Set(websites.map((w) => w.contentOwner).filter(Boolean))) as string[];
+    (fType === "all" || w.type === fType)
+  ), [websites, search, fBrand, fStatus, fType]);
 
   const stats = (id: string) => {
     const list = webContents.filter((c) => c.websiteId === id);
+    const published = list.filter((c) => ["Đã đăng web", "Kiểm tra index", "Hoàn thành"].includes(c.status));
     return {
       producing: list.filter((c) =>
-        ["Đã giao", "Đang làm outline", "Outline đã duyệt", "Đang viết bài", "Cần sửa outline", "Cần sửa bài"]
-          .includes(c.status)
+        ["Đã giao", "Đang làm outline", "Outline đã duyệt", "Đang viết bài"].includes(c.status)
       ).length,
       pendingReview: list.filter((c) => c.status === "Chờ duyệt outline" || c.status === "Chờ duyệt bài").length,
-      published: list.filter((c) => ["Đã đăng web", "Kiểm tra index", "Hoàn thành"].includes(c.status)).length,
+      needFix: list.filter((c) => c.status === "Cần sửa outline" || c.status === "Cần sửa bài").length,
+      published: published.length,
+      notIndexed: published.filter((c) => (c.indexStatus || "Chưa kiểm tra") !== "Đã index").length,
     };
   };
 
@@ -141,7 +139,7 @@ function WebsitesPage() {
     <>
       <PageHeader
         title="Dự Án Web"
-        description="Quản lý website của các thương hiệu — kèm Technical SEO, sản xuất content và theo dõi index."
+        description="Mỗi dự án web là một workspace riêng — bấm vào ô để mở chi tiết và quản lý nội dung."
         actions={
           <>
             <Button variant="outline" asChild>
@@ -153,7 +151,6 @@ function WebsitesPage() {
                 <DialogHeader><DialogTitle>Tạo Website</DialogTitle></DialogHeader>
                 <WebsiteForm onSubmit={(w) => {
                   s.add("websites", w);
-                  // Seed SEO checklist for new website
                   ensureSeoChecks(seoChecks, w.id).forEach((c) => s.add("seoChecks", c));
                 }} onClose={() => setAdding(false)} />
               </DialogContent>
@@ -163,14 +160,14 @@ function WebsitesPage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card><CardContent className="p-5"><div className="text-sm text-muted-foreground">Tổng website</div><div className="text-2xl font-semibold mt-1.5">{totalSites}</div></CardContent></Card>
+        <Card><CardContent className="p-5"><div className="text-sm text-muted-foreground">Tổng dự án web</div><div className="text-2xl font-semibold mt-1.5">{totalSites}</div></CardContent></Card>
         <Card><CardContent className="p-5"><div className="text-sm text-muted-foreground">Đang vận hành</div><div className="text-2xl font-semibold mt-1.5 text-success">{operating}</div></CardContent></Card>
         <Card><CardContent className="p-5"><div className="text-sm text-muted-foreground">Tổng content</div><div className="text-2xl font-semibold mt-1.5">{totalContents}</div></CardContent></Card>
         <Card><CardContent className="p-5"><div className="text-sm text-muted-foreground">Chờ duyệt</div><div className="text-2xl font-semibold mt-1.5 text-[oklch(0.45_0.13_75)]">{pendingAll}</div></CardContent></Card>
       </div>
 
       <FilterBar>
-        <Input placeholder="Tìm website..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+        <Input placeholder="Tìm dự án web..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <Select value={fBrand} onValueChange={setFBrand}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả thương hiệu</SelectItem>{brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
@@ -183,73 +180,77 @@ function WebsitesPage() {
           <SelectTrigger className="w-[170px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
         </Select>
-        <Select value={fSeo} onValueChange={setFSeo}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder="SEO phụ trách" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Tất cả SEO</SelectItem>{seoOwners.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={fContent} onValueChange={setFContent}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Content phụ trách" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Tất cả Content</SelectItem>{contentOwners.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-        </Select>
       </FilterBar>
 
-      <Card><CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-xs text-muted-foreground bg-muted/40">
-              <tr>
-                <th className="text-left font-medium px-4 py-2.5">Tên website</th>
-                <th className="text-left font-medium px-4 py-2.5">Thương hiệu</th>
-                <th className="text-left font-medium px-4 py-2.5">Loại</th>
-                <th className="text-left font-medium px-4 py-2.5">SEO</th>
-                <th className="text-left font-medium px-4 py-2.5">Content</th>
-                <th className="text-left font-medium px-4 py-2.5">Kỹ thuật</th>
-                <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
-                <th className="text-center font-medium px-2 py-2.5" title="Đang sản xuất">SX</th>
-                <th className="text-center font-medium px-2 py-2.5" title="Chờ duyệt">Duyệt</th>
-                <th className="text-center font-medium px-2 py-2.5" title="Đã đăng">Đăng</th>
-                <th className="text-right font-medium px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {filtered.length === 0 && <tr><td colSpan={11} className="px-4 py-12 text-center text-muted-foreground">Chưa có website nào.</td></tr>}
-              {filtered.map((w) => {
-                const st = stats(w.id);
-                return (
-                  <tr key={w.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-2.5 font-medium">
-                      <Link to="/websites/$id" params={{ id: w.id }} className="hover:text-primary">{w.name}</Link>
+      {filtered.length === 0 ? (
+        <Card><CardContent className="p-16 text-center text-muted-foreground">Chưa có dự án web nào.</CardContent></Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((w) => {
+            const st = stats(w.id);
+            const brand = brands.find((b) => b.id === w.brandId);
+            return (
+              <Card key={w.id} className="flex flex-col hover:border-primary/40 transition-colors">
+                <CardContent className="p-5 flex-1 flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <Globe className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => navigate({ to: "/websites/$id", params: { id: w.id } })}
+                        className="text-left font-semibold leading-tight hover:text-primary truncate block w-full"
+                        title={w.name}
+                      >
+                        {w.name}
+                      </button>
                       {w.url && (
-                        <a href={w.url} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center text-xs text-muted-foreground hover:text-primary">
-                          <ExternalLink className="h-3 w-3" />
+                        <a href={w.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary truncate max-w-full">
+                          <span className="truncate">{w.url.replace(/^https?:\/\//, "")}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                       )}
-                    </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{brands.find((b) => b.id === w.brandId)?.name || "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{w.type}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{w.seoOwner || "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{w.contentOwner || "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{w.techOwner || "—"}</td>
-                    <td className="px-4 py-2.5"><StatusBadge value={w.status} /></td>
-                    <td className="px-2 py-2.5 text-center font-medium">{st.producing}</td>
-                    <td className="px-2 py-2.5 text-center font-medium text-[oklch(0.45_0.13_75)]">{st.pendingReview}</td>
-                    <td className="px-2 py-2.5 text-center font-medium text-success">{st.published}</td>
-                    <td className="px-4 py-2.5 text-right">
-                      <div className="inline-flex gap-1">
-                        <Button size="icon" variant="ghost" asChild title="Mở chi tiết">
-                          <Link to="/websites/$id" params={{ id: w.id }}><ListChecks className="h-3.5 w-3.5" /></Link>
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => setEditing(w)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => s.remove("websites", w.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                    <StatusBadge value={w.status} />
+                  </div>
+
+                  {/* Meta */}
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                    <div><span className="text-muted-foreground">Thương hiệu:</span> <span className="font-medium">{brand?.name || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Loại:</span> <span className="font-medium">{w.type}</span></div>
+                    <div><span className="text-muted-foreground">SEO:</span> <span className="font-medium">{w.seoOwner || "—"}</span></div>
+                    <div><span className="text-muted-foreground">Content:</span> <span className="font-medium">{w.contentOwner || "—"}</span></div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Kỹ thuật:</span> <span className="font-medium">{w.techOwner || "—"}</span></div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-5 gap-1.5 rounded-lg bg-muted/40 p-2">
+                    <Stat n={st.producing} label="SX" tone="info" />
+                    <Stat n={st.pendingReview} label="Duyệt" tone="warn" />
+                    <Stat n={st.needFix} label="Sửa" tone="danger" />
+                    <Stat n={st.published} label="Đăng" tone="success" />
+                    <Stat n={st.notIndexed} label="Chưa idx" tone="warn" />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-auto pt-1">
+                    <Button size="sm" className="flex-1" onClick={() => navigate({ to: "/websites/$id", params: { id: w.id } })}>
+                      Mở dự án <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setAddContentFor(w)} title="Thêm content">
+                      <FilePlus2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditing(w)} title="Chỉnh sửa">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
-      </CardContent></Card>
+      )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl">
@@ -257,6 +258,35 @@ function WebsitesPage() {
           {editing && <WebsiteForm initial={editing} onSubmit={(w) => s.update("websites", w.id, w)} onClose={() => setEditing(null)} />}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!addContentFor} onOpenChange={(o) => !o && setAddContentFor(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader><DialogTitle>Thêm content cho: {addContentFor?.name}</DialogTitle></DialogHeader>
+          {addContentFor && (
+            <ContentForm
+              websiteId={addContentFor.id}
+              brandId={addContentFor.brandId}
+              onSubmit={(c) => s.add("webContents", c)}
+              onClose={() => setAddContentFor(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
+  );
+}
+
+function Stat({ n, label, tone }: { n: number; label: string; tone: "info" | "warn" | "danger" | "success" }) {
+  const colors: Record<string, string> = {
+    info: "text-info",
+    warn: "text-[oklch(0.45_0.13_75)]",
+    danger: "text-destructive",
+    success: "text-success",
+  };
+  return (
+    <div className="text-center">
+      <div className={`text-base font-semibold leading-none ${colors[tone]}`}>{n}</div>
+      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
+    </div>
   );
 }
