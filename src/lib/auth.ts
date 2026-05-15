@@ -414,7 +414,14 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   updateUser: async (id, patch) => {
-    const dbPatch: Record<string, any> = {};
+    const dbPatch: {
+      full_name?: string;
+      email?: string | null;
+      phone?: string | null;
+      desired_position?: string | null;
+      notes?: string | null;
+      must_change_password?: boolean;
+    } = {};
     if (patch.fullName !== undefined) dbPatch.full_name = patch.fullName;
     if (patch.email !== undefined) dbPatch.email = patch.email || null;
     if (patch.phone !== undefined) dbPatch.phone = patch.phone || null;
@@ -463,7 +470,11 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   updateRole: async (id, patch) => {
-    const dbPatch: Record<string, any> = {};
+    const dbPatch: {
+      name?: string;
+      description?: string | null;
+      permissions?: string[];
+    } = {};
     if (patch.name !== undefined) dbPatch.name = patch.name;
     if (patch.description !== undefined) dbPatch.description = patch.description;
     if (patch.permissions !== undefined) dbPatch.permissions = patch.permissions;
