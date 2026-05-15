@@ -751,7 +751,9 @@ async function loadAllFromSupabase() {
   return { ...collections, plans: catMap.plans ?? [], topics: catMap.topics ?? [] };
 }
 
-async function syncInsert<K extends CollectionKey>(key: K, item: Collections[K]) {
+type TableKey = Exclude<CollectionKey, "people">;
+
+async function syncInsert<K extends TableKey>(key: K, item: Collections[K]) {
   const table = TABLE_FOR[key];
   const { id, ...rest } = item as any;
   const { data: sess } = await supabase.auth.getSession();
@@ -766,7 +768,7 @@ async function syncInsert<K extends CollectionKey>(key: K, item: Collections[K])
   }
 }
 
-async function syncUpdate<K extends CollectionKey>(key: K, id: ID, fullItem: Collections[K]) {
+async function syncUpdate<K extends TableKey>(key: K, id: ID, fullItem: Collections[K]) {
   const table = TABLE_FOR[key];
   const { id: _ignored, ...rest } = fullItem as any;
   const { error } = await (supabase as any)
@@ -780,7 +782,7 @@ async function syncUpdate<K extends CollectionKey>(key: K, id: ID, fullItem: Col
   }
 }
 
-async function syncDelete(key: CollectionKey, id: ID) {
+async function syncDelete(key: TableKey, id: ID) {
   const table = TABLE_FOR[key];
   const { error } = await (supabase as any).from(table).delete().eq("id", id);
   if (error) {
@@ -788,6 +790,12 @@ async function syncDelete(key: CollectionKey, id: ID) {
     toast.error(`Xóa thất bại: ${error.message}`);
     await useStore.getState().reload();
   }
+}
+
+function recomputePeople() {
+  const auth = useAuth.getState();
+  const people = auth.users.map((u) => userToPerson(u, auth.roles));
+  useStore.setState({ people } as any);
 }
 
 export const useStore = create<State>((set, get) => ({
@@ -807,6 +815,9 @@ export const useStore = create<State>((set, get) => ({
         set({ ...emptyCollections(), plans: [], topics: [], loaded: false });
       }
     });
+    // Keep `people` in sync with the auth users list (single source of truth).
+    useAuth.subscribe(() => recomputePeople());
+    recomputePeople();
     const { data: { session } } = await supabase.auth.getSession();
     if (session) await get().reload();
   },
@@ -815,6 +826,7 @@ export const useStore = create<State>((set, get) => ({
     try {
       const next = await loadAllFromSupabase();
       set({ ...next, loaded: true });
+      recomputePeople();
     } catch (e: any) {
       console.error("Reload store failed", e);
       set({ loaded: true });
@@ -822,11 +834,26 @@ export const useStore = create<State>((set, get) => ({
   },
 
   add: (key, item) => {
+    if (key === "people") {
+      toast.error("Tạo nhân sự bằng cách tạo tài khoản mới ở tab Tài khoản & Phân quyền.");
+      return;
+    }
     set((s) => ({ [key]: [item, ...(s[key] as any[])] } as any));
-    void syncInsert(key, item);
+    void syncInsert(key as TableKey, item as any);
   },
 
   update: (key, id, patch) => {
+    if (key === "people") {
+      const p = patch as Partial<Person>;
+      void useAuth.getState().updateUser(id, {
+        fullName: p.name,
+        phone: p.phone,
+        email: p.email,
+        desiredPosition: p.position ?? p.role,
+        notes: p.notes,
+      });
+      return;
+    }
     let updated: any = null;
     set((s) => {
       const list = (s[key] as any[]).map((i) => {
@@ -836,12 +863,16 @@ export const useStore = create<State>((set, get) => ({
       });
       return { [key]: list } as any;
     });
-    if (updated) void syncUpdate(key, id, updated);
+    if (updated) void syncUpdate(key as TableKey, id, updated);
   },
 
   remove: (key, id) => {
+    if (key === "people") {
+      toast.error("Để loại bỏ nhân sự, hãy đổi trạng thái tài khoản sang 'Tạm khóa' hoặc 'Lưu trữ' ở tab Tài khoản.");
+      return;
+    }
     set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any));
-    void syncDelete(key, id);
+    void syncDelete(key as TableKey, id);
   },
 
   setCatalog: async (scope, items) => {
