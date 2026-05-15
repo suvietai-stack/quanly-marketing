@@ -180,6 +180,9 @@ export interface KeywordTrack {
   status: KeywordRankStatus;
   notes?: string;
   plan?: string;
+  contentId?: ID;
+  isMain?: boolean;
+  extra?: boolean;
 }
 
 export type BacklinkType =
