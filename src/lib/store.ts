@@ -951,6 +951,9 @@ async function loadAllFromSupabase() {
       if (key === "videos") {
         items = items.map((v: any) => ({ ...v, status: normalizeVideoStatus(v.status) }));
       }
+      if (key === "orders") {
+        items = items.map((o: any) => ({ ...o, status: normalizeOrderStatus(o.status) }));
+      }
       return [key, items] as const;
     }),
   );
