@@ -247,7 +247,7 @@ function GrowthForm({
   const [form, setForm] = useState<Partial<GrowthMetric>>({});
 
   // reset whenever opened
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setForm(initial ? { ...initial } : { periodType: "Tuần", updatedAt: todayISO() });
     }
