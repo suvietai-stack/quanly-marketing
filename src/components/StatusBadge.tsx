@@ -25,6 +25,8 @@ const map: Record<string, string> = {
   "Đang tối ưu": "bg-info/15 text-info border-info/30",
   "Đang xử lý": "bg-info/15 text-info border-info/30",
   "Đã giao": "bg-info/15 text-info border-info/30",
+  "Đang thực hiện": "bg-info/15 text-info border-info/30",
+  "Chờ nhận việc": "bg-accent text-accent-foreground border-border",
 
   // Waiting / review
   "Chờ duyệt": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
