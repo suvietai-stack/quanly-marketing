@@ -15,6 +15,7 @@ import { BacklinksTab } from "@/components/BacklinksTab";
 import { BasicReportTab } from "@/components/BasicReportTab";
 import { GrowthTab } from "@/components/GrowthTab";
 import { TechnicalSeoTab } from "@/components/TechnicalSeoTab";
+import { KeywordResearchTab } from "@/components/KeywordResearchTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
