@@ -106,6 +106,9 @@ function WebsiteForm({ initial, onSubmit, onClose }: {
 function WebsitesPage() {
   const s = useStore();
   const navigate = useNavigate();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.create");
+  const canEdit = can("web.edit");
   const { websites, brands, webContents, seoChecks } = s;
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
