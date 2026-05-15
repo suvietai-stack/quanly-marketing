@@ -98,6 +98,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   const [addingSubFor, setAddingSubFor] = useState<string | null>(null);
   const [newSub, setNewSub] = useState("");
   const [showExtras, setShowExtras] = useState(true);
+  const [addingKw, setAddingKw] = useState(false);
 
   // Build groups from indexed contents
   const groups: Group[] = useMemo(() => {
@@ -244,19 +245,63 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   const addSub = (cid: string) => {
     const kw = newSub.trim();
     if (!kw) return;
-    s.add("keywords", {
-      id: uid(),
-      websiteId,
-      contentId: cid,
-      keyword: kw,
-      isMain: false,
-      type: "Từ khóa phụ",
-      status: "Chưa check",
-    });
+    // append to content's subKeywords so it persists as part of the article
+    const c = s.webContents.find((x) => x.id === cid);
+    if (c) {
+      const cur = splitSubs(c.subKeywords);
+      if (!cur.some((x) => x.toLowerCase() === kw.toLowerCase())) {
+        s.update("webContents", cid, { subKeywords: [...cur, kw].join(", ") });
+      }
+    }
     setNewSub("");
     setAddingSubFor(null);
     setExpanded((e) => ({ ...e, [cid]: true }));
   };
+
+  const deleteSub = (cid: string, kw: string, trackId?: string) => {
+    if (!confirm(`Xóa từ khóa phụ "${kw}"?`)) return;
+    const c = s.webContents.find((x) => x.id === cid);
+    if (c) {
+      const remaining = splitSubs(c.subKeywords).filter((k) => k.toLowerCase() !== kw.toLowerCase());
+      s.update("webContents", cid, { subKeywords: remaining.join(", ") });
+    }
+    if (trackId) s.remove("keywords", trackId);
+  };
+
+  const deleteMain = (cid: string, kw: string, trackId?: string) => {
+    if (!confirm(`Xóa từ khóa chính "${kw}" khỏi bài viết?`)) return;
+    s.update("webContents", cid, { mainKeyword: "" });
+    if (trackId) s.remove("keywords", trackId);
+  };
+
+  const addManualKeyword = (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => {
+    const kw = p.keyword.trim();
+    if (!kw) return;
+    if (p.contentId) {
+      const c = s.webContents.find((x) => x.id === p.contentId);
+      if (!c) return;
+      if (p.isMain) {
+        s.update("webContents", p.contentId, { mainKeyword: kw });
+      } else {
+        const cur = splitSubs(c.subKeywords);
+        if (!cur.some((x) => x.toLowerCase() === kw.toLowerCase())) {
+          s.update("webContents", p.contentId, { subKeywords: [...cur, kw].join(", ") });
+        }
+      }
+      setExpanded((e) => ({ ...e, [p.contentId!]: true }));
+    } else {
+      s.add("keywords", {
+        id: uid(),
+        websiteId,
+        keyword: kw,
+        isMain: p.isMain,
+        type: p.isMain ? "Từ khóa chính" : "Từ khóa phụ",
+        targetUrl: p.targetUrl,
+        status: "Chưa check",
+      });
+    }
+  };
+
 
   // ===== Render =====
   return (
@@ -313,6 +358,9 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
             setSearch(""); setFStatus("all"); setFOwner("all"); setFTopic("all"); setFPlan("all"); setFDate(""); setQuick("all");
           }}>Xóa lọc</Button>
         )}
+        <Button size="sm" className="ml-auto" onClick={() => setAddingKw(true)}>
+          <Plus className="h-4 w-4" />Thêm từ khóa
+        </Button>
       </div>
 
       {filteredGroups.length === 0 && filteredExtras.length === 0 && (
@@ -387,6 +435,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                           <Button size="sm" variant="outline" onClick={() => setUpdating({ row: g.mainRow })} disabled={noMain}>
                             <RefreshCw className="h-3.5 w-3.5" />Cập nhật TOP
                           </Button>
+                          {!noMain && (
+                            <Button size="icon" variant="ghost" title="Xóa từ khóa chính" onClick={() => deleteMain(g.contentId, g.mainRow.keyword, g.mainRow.track?.id)}>
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          )}
                         </td>
                       </tr>
 
@@ -410,8 +463,8 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                                 <Button size="sm" variant="ghost" onClick={() => setUpdating({ row: r })}>
                                   <RefreshCw className="h-3.5 w-3.5" />Cập nhật
                                 </Button>
-                                {r.track && (
-                                  <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa từ khóa "${r.keyword}"?`)) s.remove("keywords", r.track!.id); }}>
+                                {r.contentId && (
+                                  <Button size="icon" variant="ghost" title="Xóa từ khóa phụ" onClick={() => deleteSub(r.contentId!, r.keyword, r.track?.id)}>
                                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                                   </Button>
                                 )}
@@ -514,6 +567,18 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
           {updating && <UpdateForm row={updating.row} onSubmit={(p) => { saveTop(updating.row, p); setUpdating(null); }} onClose={() => setUpdating(null)} />}
         </DialogContent>
       </Dialog>
+
+      {/* Add keyword dialog */}
+      <Dialog open={addingKw} onOpenChange={setAddingKw}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Thêm từ khóa theo dõi</DialogTitle></DialogHeader>
+          <AddKeywordForm
+            contents={indexedContents}
+            onSubmit={(p) => { addManualKeyword(p); setAddingKw(false); }}
+            onClose={() => setAddingKw(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -568,5 +633,72 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="text-xs text-muted-foreground mb-1">{label}</div>
       {children}
     </label>
+  );
+}
+
+function AddKeywordForm({
+  contents, onSubmit, onClose,
+}: {
+  contents: WebContent[];
+  onSubmit: (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => void;
+  onClose: () => void;
+}) {
+  const [contentId, setContentId] = useState<string>("__none");
+  const [isMain, setIsMain] = useState<string>("sub");
+  const [keyword, setKeyword] = useState("");
+  const [targetUrl, setTargetUrl] = useState("");
+
+  const linkedContent = contentId !== "__none" ? contents.find((c) => c.id === contentId) : undefined;
+  const mainTaken = !!(linkedContent && (linkedContent.mainKeyword || "").trim() && isMain === "main");
+
+  return (
+    <div className="space-y-3">
+      <Field label="Gắn với bài đã index (tùy chọn)">
+        <Select value={contentId} onValueChange={setContentId}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">— Không gắn (từ khóa độc lập) —</SelectItem>
+            {contents.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label="Loại từ khóa">
+        <Select value={isMain} onValueChange={setIsMain}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="main">Từ khóa chính</SelectItem>
+            <SelectItem value="sub">Từ khóa phụ</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
+      {mainTaken && (
+        <div className="text-xs text-warning inline-flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Bài đang có từ khóa chính "{linkedContent?.mainKeyword}". Lưu sẽ ghi đè.
+        </div>
+      )}
+      <Field label="Từ khóa">
+        <Input autoFocus value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Nhập từ khóa..." />
+      </Field>
+      {contentId === "__none" && (
+        <Field label="URL đích (tùy chọn)">
+          <Input value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} placeholder="https://..." />
+        </Field>
+      )}
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Hủy</Button>
+        <Button
+          disabled={!keyword.trim()}
+          onClick={() => onSubmit({
+            contentId: contentId === "__none" ? undefined : contentId,
+            isMain: isMain === "main",
+            keyword: keyword.trim(),
+            targetUrl: targetUrl.trim() || undefined,
+          })}
+        >Thêm</Button>
+      </DialogFooter>
+    </div>
   );
 }
