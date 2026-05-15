@@ -15,6 +15,7 @@ import { BacklinksTab } from "@/components/BacklinksTab";
 import { BasicReportTab } from "@/components/BasicReportTab";
 import { GrowthTab } from "@/components/GrowthTab";
 import { TechnicalSeoTab } from "@/components/TechnicalSeoTab";
+import { KeywordResearchTab } from "@/components/KeywordResearchTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,6 +164,7 @@ function WebsiteDetail() {
           <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại Content ({optimizeContents.length})</TabsTrigger>
+          <TabsTrigger value="research">Nghiên Cứu Keyword ({s.webTopics.filter((t) => t.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="growth">Tăng Trưởng Website ({s.growth.filter((g) => g.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="report">Báo Cáo</TabsTrigger>
         </TabsList>
@@ -329,6 +331,11 @@ function WebsiteDetail() {
               </table>
             </div>
           </CardContent></Card>
+        </TabsContent>
+
+        {/* TAB NGHIÊN CỨU KEYWORD */}
+        <TabsContent value="research" className="mt-4">
+          <KeywordResearchTab websiteId={w.id} />
         </TabsContent>
 
         {/* TAB TĂNG TRƯỞNG WEBSITE */}

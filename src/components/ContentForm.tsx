@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   useStore, uid, todayISO, CONTENT_TYPES, CONTENT_STATUSES, SEARCH_INTENTS,
   INDEX_STATUSES, OPTIMIZE_REASONS,
-  type WebContent, type ContentStatus, type ContentType,
+  type WebContent, type ContentStatus, type ContentType, type WebTopic,
 } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
+import { ExternalLink, Plus } from "lucide-react";
+import { TopicDialog } from "@/components/KeywordResearchTab";
 
 export function ContentForm({
   initial, websiteId, brandId, onSubmit, onClose, lockWebsite = true,
@@ -24,7 +26,7 @@ export function ContentForm({
   onClose: () => void;
   lockWebsite?: boolean;
 }) {
-  const { people, plans, topics, websites, brands } = useStore();
+  const { people, plans, websites, brands, webTopics } = useStore();
   const [c, setC] = useState<WebContent>({
     id: initial?.id || uid(),
     websiteId: initial?.websiteId || websiteId || websites[0]?.id || "",
@@ -179,10 +181,12 @@ export function ContentForm({
         </div>
         <div>
           <Label>Topic</Label>
-          <Select value={c.topic || "_"} onValueChange={(v) => set({ topic: v === "_" ? undefined : v })}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent><SelectItem value="_">—</SelectItem>{topics.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-          </Select>
+          <TopicPicker
+            websiteId={c.websiteId}
+            value={c.topic}
+            onChange={(v) => set({ topic: v })}
+            webTopics={webTopics}
+          />
         </div>
 
         <div className="sm:col-span-2"><Label>Brief</Label><Textarea rows={3} value={c.brief || ""} onChange={(e) => set({ brief: e.target.value })} /></div>
@@ -221,3 +225,81 @@ export function ContentForm({
     </>
   );
 }
+
+function TopicPicker({
+  websiteId, value, onChange, webTopics,
+}: {
+  websiteId: string;
+  value?: string;
+  onChange: (v: string | undefined) => void;
+  webTopics: WebTopic[];
+}) {
+  const list = webTopics.filter((t) => t.websiteId === websiteId);
+  const selected = list.find((t) => t.name === value);
+  const [adding, setAdding] = useState(false);
+  const s = useStore();
+
+  if (list.length === 0) {
+    return (
+      <>
+        <div className="rounded-md border border-dashed p-2.5 text-xs text-muted-foreground space-y-2">
+          <div>Chưa có Topic. Hãy tạo Topic tại tab <strong>Nghiên Cứu Keyword</strong> trước.</div>
+          <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
+            <Plus className="h-3.5 w-3.5" /> Tạo Topic mới
+          </Button>
+        </div>
+        <TopicDialog
+          open={adding}
+          initial={null}
+          websiteId={websiteId}
+          onClose={() => setAdding(false)}
+          onSave={(t) => {
+            const newId = uid();
+            s.add("webTopics", { ...t, id: newId, websiteId });
+            onChange(t.name);
+            setAdding(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex gap-1.5">
+        <Select value={value || "_"} onValueChange={(v) => onChange(v === "_" ? undefined : v)}>
+          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_">—</SelectItem>
+            {list.map((t) => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button type="button" size="icon" variant="outline" onClick={() => setAdding(true)} title="Tạo Topic mới">
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      {selected && (
+        <div className="text-[11px] text-muted-foreground bg-muted/40 rounded px-2 py-1.5 space-y-0.5">
+          <div>Từ khóa chủ đề: <span className="text-foreground font-medium">{selected.mainKeyword || "—"}</span></div>
+          {selected.sheetLink && (
+            <a href={selected.sheetLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+              Mở Sheet keyword <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      )}
+      <TopicDialog
+        open={adding}
+        initial={null}
+        websiteId={websiteId}
+        onClose={() => setAdding(false)}
+        onSave={(t) => {
+          s.add("webTopics", { ...t, id: uid(), websiteId });
+          onChange(t.name);
+          setAdding(false);
+        }}
+      />
+    </div>
+  );
+}
+
