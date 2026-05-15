@@ -343,51 +343,28 @@ export const useAuth = create<AuthState>()(
       seeded: false,
 
       ensureSeed: async () => {
-        if (get().seeded && get().users.length > 0) {
-          // Make sure roles are present (in case of older versions)
-          if (get().roles.length === 0) set({ roles: DEFAULT_ROLES });
-          return;
+        // Chỉ đảm bảo có tài khoản Admin mặc định và bộ role hệ thống.
+        // KHÔNG seed thêm bất kỳ tài khoản demo nào.
+        if (get().roles.length === 0) set({ roles: DEFAULT_ROLES });
+        const hasAdmin = get().users.some((u) => u.id === "user-admin");
+        if (!hasAdmin) {
+          const adminPwd = await hashPassword("Suviet888@@@");
+          const admin: User = {
+            id: "user-admin",
+            username: SYSTEM_ADMIN_USERNAME,
+            fullName: "Quản trị hệ thống",
+            email: "admin@local",
+            roleId: SUPER_ADMIN_ID,
+            status: "Đang hoạt động",
+            system: true,
+            passwordHash: adminPwd.hash,
+            passwordSalt: adminPwd.salt,
+            createdAt: new Date().toISOString(),
+          };
+          set({ users: [...get().users, admin], seeded: true });
+        } else {
+          set({ seeded: true });
         }
-        const adminPwd = await hashPassword("Suviet888@@@");
-        const seoPwd = await hashPassword("123456a@");
-        const contentPwd = await hashPassword("123456a@");
-        const techPwd = await hashPassword("123456a@");
-        const pendingPwd = await hashPassword("123456a@");
-
-        const users: User[] = [
-          {
-            id: "user-admin", username: SYSTEM_ADMIN_USERNAME, fullName: "Quản trị hệ thống",
-            email: "admin@local", roleId: SUPER_ADMIN_ID, status: "Đang hoạt động", system: true,
-            passwordHash: adminPwd.hash, passwordSalt: adminPwd.salt, createdAt: new Date().toISOString(),
-          },
-          {
-            id: "user-seo", username: "seo01", fullName: "Nguyễn Văn SEO", email: "seo@local",
-            roleId: "role-seo", status: "Đang hoạt động",
-            passwordHash: seoPwd.hash, passwordSalt: seoPwd.salt, createdAt: new Date().toISOString(),
-          },
-          {
-            id: "user-content1", username: "content01", fullName: "Trần Thu Content", email: "content1@local",
-            roleId: "role-content", status: "Đang hoạt động",
-            passwordHash: contentPwd.hash, passwordSalt: contentPwd.salt, createdAt: new Date().toISOString(),
-          },
-          {
-            id: "user-content2", username: "content02", fullName: "Hoàng Mai Content", email: "content2@local",
-            roleId: "role-content", status: "Đang hoạt động",
-            passwordHash: contentPwd.hash, passwordSalt: contentPwd.salt, createdAt: new Date().toISOString(),
-          },
-          {
-            id: "user-tech", username: "tech01", fullName: "Lê Minh Tech", email: "tech@local",
-            roleId: ADMIN_ROLE_ID, status: "Đang hoạt động",
-            passwordHash: techPwd.hash, passwordSalt: techPwd.salt, createdAt: new Date().toISOString(),
-          },
-          {
-            id: "user-pending", username: "newuser", fullName: "Phạm Hồng Mới", email: "new@local",
-            phone: "0900000000", desiredPosition: "Content Web",
-            notes: "Mong được tham gia team content.", status: "Chờ duyệt",
-            passwordHash: pendingPwd.hash, passwordSalt: pendingPwd.salt, createdAt: new Date().toISOString(),
-          },
-        ];
-        set({ users, roles: DEFAULT_ROLES, seeded: true });
       },
 
       login: async (username, password) => {
@@ -496,7 +473,17 @@ export const useAuth = create<AuthState>()(
     }),
     {
       name: "base-marketing-auth-v1",
-      version: 1,
+      version: 2,
+      migrate: (persisted: any, fromVersion) => {
+        // v1 -> v2: xoá hết user demo cũ, chỉ giữ Admin (ensureSeed sẽ tạo lại nếu thiếu).
+        if (fromVersion < 2) {
+          const users = Array.isArray(persisted?.users)
+            ? persisted.users.filter((u: any) => u?.id === "user-admin")
+            : [];
+          return { ...persisted, users, seeded: false };
+        }
+        return persisted;
+      },
     }
   )
 );
