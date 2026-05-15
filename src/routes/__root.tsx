@@ -4,12 +4,17 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { AppShell } from "@/components/AppShell";
+import { AuthGate } from "@/components/AuthGate";
+
+const PUBLIC_PATHS = ["/login", "/register"];
 
 function NotFoundComponent() {
   return (
@@ -115,12 +120,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const isPublic = PUBLIC_PATHS.includes(path);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        <Outlet />
-      </AppShell>
+      <AuthGate>
+        {isPublic ? <Outlet /> : <AppShell><Outlet /></AppShell>}
+      </AuthGate>
+      <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
 }
