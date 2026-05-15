@@ -57,14 +57,21 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "web.content_edit", label: "Sửa content web", group: "Dự Án Web" },
   { key: "web.content_delete", label: "Xóa content web", group: "Dự Án Web" },
   { key: "web.content_assign", label: "Giao content web", group: "Dự Án Web" },
+  { key: "web.outline_start", label: "Bắt đầu làm outline", group: "Dự Án Web" },
   { key: "web.outline_submit", label: "Gửi duyệt outline", group: "Dự Án Web" },
   { key: "web.outline_approve", label: "Duyệt outline", group: "Dự Án Web" },
   { key: "web.outline_reject", label: "Yêu cầu sửa outline", group: "Dự Án Web" },
+  { key: "web.outline_resubmit", label: "Gửi duyệt lại outline", group: "Dự Án Web" },
+  { key: "web.post_write_start", label: "Bắt đầu viết bài", group: "Dự Án Web" },
   { key: "web.post_submit", label: "Gửi duyệt bài", group: "Dự Án Web" },
   { key: "web.post_approve", label: "Duyệt bài", group: "Dự Án Web" },
   { key: "web.post_reject", label: "Yêu cầu sửa bài", group: "Dự Án Web" },
-  { key: "web.publish", label: "Đăng bài / cập nhật link bài đã đăng", group: "Dự Án Web" },
-  { key: "web.update_index", label: "Cập nhật index", group: "Dự Án Web" },
+  { key: "web.post_resubmit", label: "Gửi duyệt lại bài", group: "Dự Án Web" },
+  { key: "web.move_pending_publish", label: "Chuyển sang chờ đăng", group: "Dự Án Web" },
+  { key: "web.publish", label: "Xác nhận đã đăng web", group: "Dự Án Web" },
+  { key: "web.update_index", label: "Cập nhật trạng thái index", group: "Dự Án Web" },
+  { key: "web.complete", label: "Hoàn thành content web", group: "Dự Án Web" },
+  { key: "web.force_status", label: "Ép chuyển trạng thái content", group: "Dự Án Web" },
   { key: "web.update_share", label: "Cập nhật Share Social", group: "Dự Án Web" },
   { key: "web.backlink", label: "Quản lý Backlink / PR", group: "Dự Án Web" },
   { key: "web.checktop", label: "Quản lý Check TOP từ khóa", group: "Dự Án Web" },
@@ -500,13 +507,14 @@ export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
-  // Super admin shortcut: always has every permission, regardless of mapped role
   const isSuperAdmin = u?.roleId === SUPER_ADMIN_ID || !!u?.system;
+  const isAdmin = isSuperAdmin || u?.roleId === ADMIN_ROLE_ID;
   return {
     user: u,
     role: u ? roles.find((r) => r.id === u.roleId) : undefined,
     perms,
-    can: (key: PermissionKey) => isSuperAdmin || perms.has(key),
+    can: (key: PermissionKey) => isAdmin || perms.has(key),
     isSuperAdmin,
+    isAdmin,
   };
 }

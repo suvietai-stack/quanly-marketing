@@ -1,8 +1,10 @@
 import { useState } from "react";
 import {
   useStore, uid, todayISO, fmtDate,
-  type WebContent, type ContentStatus,
+  type WebContent, type ContentStatus, type WebContentHistoryEntry,
+  CONTENT_STATUSES,
 } from "@/lib/store";
+import { useCurrentUser, type PermissionKey } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,19 +19,35 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ExternalLink, Pencil, Palette, ArrowRight, Check, X,
+  ExternalLink, Pencil, Palette, ArrowRight, Check, X, ShieldAlert, History,
 } from "lucide-react";
 import { ContentForm } from "@/components/ContentForm";
+import { toast } from "sonner";
 
-function ActionButton({ children, onClick, variant = "default" }: any) {
+type Transition = {
+  to: ContentStatus;
+  action: string;
+  note?: string;
+  extra?: Partial<WebContent>;
+};
+
+function ActionButton({ children, onClick, variant = "default", disabled }: any) {
   return (
-    <Button size="sm" variant={variant} onClick={onClick}>
+    <Button size="sm" variant={variant} onClick={onClick} disabled={disabled}>
       {children}
     </Button>
   );
 }
 
-function WorkflowActions({ c, onPatch }: { c: WebContent; onPatch: (p: Partial<WebContent>) => void }) {
+function WorkflowActions({
+  c,
+  apply,
+  canAct,
+}: {
+  c: WebContent;
+  apply: (t: Transition) => void;
+  canAct: (perm: PermissionKey, isWriterOwned?: boolean) => boolean;
+}) {
   const [outlineLink, setOutlineLink] = useState(c.outlineLink || "");
   const [draftLink, setDraftLink] = useState(c.draftLink || "");
   const [imageLink, setImageLink] = useState(c.imageLink || "");
@@ -37,54 +55,74 @@ function WorkflowActions({ c, onPatch }: { c: WebContent; onPatch: (p: Partial<W
   const [publishedAt, setPublishedAt] = useState(c.publishedAt || todayISO());
   const [reviewNote, setReviewNote] = useState("");
 
-  const next = (status: ContentStatus, extra: Partial<WebContent> = {}) =>
-    onPatch({ status, ...extra });
+  const NoPerm = () => (
+    <div className="text-xs text-muted-foreground italic">
+      Bạn không có quyền thực hiện hành động ở trạng thái này.
+    </div>
+  );
 
   switch (c.status) {
     case "Kế hoạch":
-      return (
-        <div className="flex flex-wrap gap-2">
-          <ActionButton onClick={() => next("Đã giao")}><ArrowRight className="h-4 w-4" />Giao việc</ActionButton>
-        </div>
-      );
+      return canAct("web.content_assign") ? (
+        <ActionButton onClick={() => apply({ to: "Đã giao", action: "Giao bài" })}>
+          <ArrowRight className="h-4 w-4" />Giao bài
+        </ActionButton>
+      ) : <NoPerm />;
     case "Đã giao":
-      return (
-        <ActionButton onClick={() => next("Đang làm outline")}><ArrowRight className="h-4 w-4" />Bắt đầu làm outline</ActionButton>
-      );
+      return canAct("web.outline_start", true) ? (
+        <ActionButton onClick={() => apply({ to: "Đang làm outline", action: "Bắt đầu làm outline" })}>
+          <ArrowRight className="h-4 w-4" />Bắt đầu làm outline
+        </ActionButton>
+      ) : <NoPerm />;
     case "Đang làm outline":
-      return (
+      return canAct("web.outline_submit", true) ? (
         <div className="space-y-2">
           <Label className="text-xs">Link outline</Label>
           <div className="flex gap-2">
             <Input value={outlineLink} onChange={(e) => setOutlineLink(e.target.value)} placeholder="https://..." />
             <Button
               disabled={!outlineLink.trim()}
-              onClick={() => next("Chờ duyệt outline", { outlineLink })}
+              onClick={() => apply({ to: "Chờ duyệt outline", action: "Gửi duyệt outline", extra: { outlineLink } })}
             >Gửi duyệt outline</Button>
           </div>
         </div>
-      );
-    case "Chờ duyệt outline":
+      ) : <NoPerm />;
+    case "Chờ duyệt outline": {
+      const canApprove = canAct("web.outline_approve");
+      const canReject = canAct("web.outline_reject");
+      if (!canApprove && !canReject) return <NoPerm />;
       return (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            <ActionButton onClick={() => next("Outline đã duyệt", { outlineReviewNotes: undefined })}>
-              <Check className="h-4 w-4" />Duyệt outline
-            </ActionButton>
-            <ActionButton variant="destructive" onClick={() => {
-              if (!reviewNote.trim()) return;
-              next("Cần sửa outline", {
-                outlineReviewNotes: reviewNote,
-                outlineRevisions: (c.outlineRevisions || 0) + 1,
-              });
-              setReviewNote("");
-            }}><X className="h-4 w-4" />Yêu cầu sửa outline</ActionButton>
+            {canApprove && (
+              <ActionButton onClick={() => apply({ to: "Outline đã duyệt", action: "Duyệt outline", extra: { outlineReviewNotes: undefined } })}>
+                <Check className="h-4 w-4" />Duyệt outline
+              </ActionButton>
+            )}
+            {canReject && (
+              <ActionButton variant="destructive" onClick={() => {
+                if (!reviewNote.trim()) { toast.error("Vui lòng nhập ghi chú yêu cầu sửa."); return; }
+                apply({
+                  to: "Cần sửa outline",
+                  action: "Yêu cầu sửa outline",
+                  note: reviewNote,
+                  extra: {
+                    outlineReviewNotes: reviewNote,
+                    outlineRevisions: (c.outlineRevisions || 0) + 1,
+                  },
+                });
+                setReviewNote("");
+              }}><X className="h-4 w-4" />Yêu cầu sửa outline</ActionButton>
+            )}
           </div>
-          <Textarea rows={2} placeholder="Ghi chú yêu cầu sửa outline (bắt buộc nếu yêu cầu sửa)..." value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} />
+          {canReject && (
+            <Textarea rows={2} placeholder="Ghi chú yêu cầu sửa outline (bắt buộc nếu yêu cầu sửa)..." value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} />
+          )}
         </div>
       );
+    }
     case "Cần sửa outline":
-      return (
+      return canAct("web.outline_resubmit", true) ? (
         <div className="space-y-2">
           {c.outlineReviewNotes && (
             <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
@@ -95,45 +133,66 @@ function WorkflowActions({ c, onPatch }: { c: WebContent; onPatch: (p: Partial<W
           <Label className="text-xs">Cập nhật link outline</Label>
           <div className="flex gap-2">
             <Input value={outlineLink} onChange={(e) => setOutlineLink(e.target.value)} />
-            <Button onClick={() => next("Chờ duyệt outline", { outlineLink })}>Gửi duyệt lại outline</Button>
+            <Button onClick={() => apply({ to: "Chờ duyệt outline", action: "Gửi duyệt lại outline", extra: { outlineLink } })}>
+              Gửi duyệt lại outline
+            </Button>
           </div>
         </div>
-      );
+      ) : <NoPerm />;
     case "Outline đã duyệt":
-      return <ActionButton onClick={() => next("Đang viết bài")}><ArrowRight className="h-4 w-4" />Bắt đầu viết bài</ActionButton>;
+      return canAct("web.post_write_start", true) ? (
+        <ActionButton onClick={() => apply({ to: "Đang viết bài", action: "Bắt đầu viết bài" })}>
+          <ArrowRight className="h-4 w-4" />Bắt đầu viết bài
+        </ActionButton>
+      ) : <NoPerm />;
     case "Đang viết bài":
-      return (
+      return canAct("web.post_submit", true) ? (
         <div className="space-y-2">
           <Label className="text-xs">Link bài viết</Label>
           <Input value={draftLink} onChange={(e) => setDraftLink(e.target.value)} placeholder="https://..." />
           <Label className="text-xs">Link ảnh (nếu có)</Label>
           <Input value={imageLink} onChange={(e) => setImageLink(e.target.value)} />
-          <Button disabled={!draftLink.trim()} onClick={() => next("Chờ duyệt bài", { draftLink, imageLink })}>
+          <Button disabled={!draftLink.trim()} onClick={() => apply({ to: "Chờ duyệt bài", action: "Gửi duyệt bài", extra: { draftLink, imageLink } })}>
             Gửi duyệt bài
           </Button>
         </div>
-      );
-    case "Chờ duyệt bài":
+      ) : <NoPerm />;
+    case "Chờ duyệt bài": {
+      const canApprove = canAct("web.post_approve");
+      const canReject = canAct("web.post_reject");
+      if (!canApprove && !canReject) return <NoPerm />;
       return (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            <ActionButton onClick={() => next("Bài đã duyệt", { draftReviewNotes: undefined })}>
-              <Check className="h-4 w-4" />Duyệt bài
-            </ActionButton>
-            <ActionButton variant="destructive" onClick={() => {
-              if (!reviewNote.trim()) return;
-              next("Cần sửa bài", {
-                draftReviewNotes: reviewNote,
-                draftRevisions: (c.draftRevisions || 0) + 1,
-              });
-              setReviewNote("");
-            }}><X className="h-4 w-4" />Yêu cầu sửa bài</ActionButton>
+            {canApprove && (
+              <ActionButton onClick={() => apply({ to: "Bài đã duyệt", action: "Duyệt bài", extra: { draftReviewNotes: undefined } })}>
+                <Check className="h-4 w-4" />Duyệt bài
+              </ActionButton>
+            )}
+            {canReject && (
+              <ActionButton variant="destructive" onClick={() => {
+                if (!reviewNote.trim()) { toast.error("Vui lòng nhập ghi chú yêu cầu sửa."); return; }
+                apply({
+                  to: "Cần sửa bài",
+                  action: "Yêu cầu sửa bài",
+                  note: reviewNote,
+                  extra: {
+                    draftReviewNotes: reviewNote,
+                    draftRevisions: (c.draftRevisions || 0) + 1,
+                  },
+                });
+                setReviewNote("");
+              }}><X className="h-4 w-4" />Yêu cầu sửa bài</ActionButton>
+            )}
           </div>
-          <Textarea rows={2} placeholder="Ghi chú yêu cầu sửa bài..." value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} />
+          {canReject && (
+            <Textarea rows={2} placeholder="Ghi chú yêu cầu sửa bài..." value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} />
+          )}
         </div>
       );
+    }
     case "Cần sửa bài":
-      return (
+      return canAct("web.post_resubmit", true) ? (
         <div className="space-y-2">
           {c.draftReviewNotes && (
             <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
@@ -144,55 +203,73 @@ function WorkflowActions({ c, onPatch }: { c: WebContent; onPatch: (p: Partial<W
           <Label className="text-xs">Cập nhật link bài viết</Label>
           <div className="flex gap-2">
             <Input value={draftLink} onChange={(e) => setDraftLink(e.target.value)} />
-            <Button onClick={() => next("Chờ duyệt bài", { draftLink })}>Gửi duyệt lại bài</Button>
+            <Button onClick={() => apply({ to: "Chờ duyệt bài", action: "Gửi duyệt lại bài", extra: { draftLink } })}>
+              Gửi duyệt lại bài
+            </Button>
           </div>
         </div>
-      );
+      ) : <NoPerm />;
     case "Bài đã duyệt":
-      return <ActionButton onClick={() => next("Chờ đăng web")}><ArrowRight className="h-4 w-4" />Chuyển sang chờ đăng</ActionButton>;
+      return canAct("web.move_pending_publish") ? (
+        <ActionButton onClick={() => apply({ to: "Chờ đăng web", action: "Chuyển sang chờ đăng" })}>
+          <ArrowRight className="h-4 w-4" />Chuyển sang chờ đăng
+        </ActionButton>
+      ) : <NoPerm />;
     case "Chờ đăng web":
-      return (
+      return canAct("web.publish") ? (
         <div className="space-y-2">
           <Label className="text-xs">Link bài đã đăng</Label>
           <Input value={publishedLink} onChange={(e) => setPublishedLink(e.target.value)} placeholder="https://..." />
           <Label className="text-xs">Ngày đăng thực tế</Label>
           <Input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
-          <Button disabled={!publishedLink.trim()} onClick={() => next("Đã đăng web", { publishedLink, publishedAt })}>
+          <Button disabled={!publishedLink.trim()} onClick={() => apply({ to: "Đã đăng web", action: "Xác nhận đã đăng web", extra: { publishedLink, publishedAt } })}>
             Xác nhận đã đăng
           </Button>
         </div>
-      );
+      ) : <NoPerm />;
     case "Đã đăng web":
-      return (
+      return canAct("web.update_index") ? (
         <div className="space-y-2">
           <Label className="text-xs">Trạng thái index</Label>
-          <Select value={c.indexStatus} onValueChange={(v) => onPatch({ indexStatus: v as any })}>
+          <Select value={c.indexStatus} onValueChange={(v) => apply({ to: c.status, action: `Cập nhật index: ${v}`, extra: { indexStatus: v as any } })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) =>
                 <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button onClick={() => next("Kiểm tra index")}><ArrowRight className="h-4 w-4" />Chuyển sang kiểm tra index</Button>
-        </div>
-      );
-    case "Kiểm tra index":
-      return (
-        <div className="space-y-2">
-          <Label className="text-xs">Trạng thái index</Label>
-          <Select value={c.indexStatus} onValueChange={(v) => onPatch({ indexStatus: v as any })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) =>
-                <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Input placeholder="Ghi chú index..." value={c.indexNotes || ""} onChange={(e) => onPatch({ indexNotes: e.target.value })} />
-          <Button onClick={() => next("Hoàn thành", { completedAt: todayISO() })}>
-            <Check className="h-4 w-4" />Hoàn thành
+          <Button onClick={() => apply({ to: "Kiểm tra index", action: "Chuyển sang kiểm tra index" })}>
+            <ArrowRight className="h-4 w-4" />Chuyển sang kiểm tra index
           </Button>
         </div>
+      ) : <NoPerm />;
+    case "Kiểm tra index": {
+      const canIndex = canAct("web.update_index");
+      const canComplete = canAct("web.complete");
+      if (!canIndex && !canComplete) return <NoPerm />;
+      return (
+        <div className="space-y-2">
+          {canIndex && (
+            <>
+              <Label className="text-xs">Trạng thái index</Label>
+              <Select value={c.indexStatus} onValueChange={(v) => apply({ to: c.status, action: `Cập nhật index: ${v}`, extra: { indexStatus: v as any } })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) =>
+                    <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input placeholder="Ghi chú index..." defaultValue={c.indexNotes || ""} onBlur={(e) => { if (e.target.value !== (c.indexNotes || "")) apply({ to: c.status, action: "Cập nhật ghi chú index", note: e.target.value, extra: { indexNotes: e.target.value } }); }} />
+            </>
+          )}
+          {canComplete && (
+            <Button onClick={() => apply({ to: "Hoàn thành", action: "Hoàn thành content web", extra: { completedAt: todayISO() } })}>
+              <Check className="h-4 w-4" />Hoàn thành
+            </Button>
+          )}
+        </div>
       );
+    }
     case "Hoàn thành":
       return (
         <div className="rounded-md bg-success/10 border border-success/30 p-3 text-sm text-success font-medium">
@@ -202,13 +279,84 @@ function WorkflowActions({ c, onPatch }: { c: WebContent; onPatch: (p: Partial<W
   }
 }
 
-function FieldRow({ k, v }: { k: string; v?: React.ReactNode }) {
+function ForceStatusPanel({
+  c,
+  apply,
+}: {
+  c: WebContent;
+  apply: (t: Transition & { forced?: boolean }) => void;
+}) {
+  const [target, setTarget] = useState<ContentStatus>(c.status);
+  const [reason, setReason] = useState("");
   return (
-    <div className="flex justify-between gap-3 border-b last:border-0 pb-2 last:pb-0">
-      <span className="text-muted-foreground text-sm">{k}</span>
-      <span className="font-medium text-right text-sm">{v ?? "—"}</span>
+    <div className="rounded-md border border-warning/40 bg-warning/5 p-3 space-y-2">
+      <div className="flex items-center gap-2 text-sm font-semibold text-warning-foreground">
+        <ShieldAlert className="h-4 w-4 text-warning" />
+        Ép chuyển trạng thái (Admin)
+      </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">Trạng thái mới</Label>
+          <Select value={target} onValueChange={(v) => setTarget(v as ContentStatus)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CONTENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Lý do (bắt buộc)</Label>
+          <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Lý do ép chuyển..." />
+        </div>
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          if (!reason.trim()) { toast.error("Vui lòng nhập lý do ép chuyển."); return; }
+          if (target === c.status) { toast.error("Trạng thái mới phải khác trạng thái hiện tại."); return; }
+          apply({ to: target, action: "Ép chuyển trạng thái", note: reason, forced: true });
+          setReason("");
+        }}
+      >Ép chuyển</Button>
     </div>
   );
+}
+
+function HistoryList({ history }: { history?: WebContentHistoryEntry[] }) {
+  if (!history || history.length === 0) {
+    return <div className="text-xs text-muted-foreground">Chưa có lịch sử xử lý.</div>;
+  }
+  return (
+    <div className="space-y-2">
+      {[...history].reverse().map((h, idx) => (
+        <div key={idx} className="rounded-md border bg-card p-3 text-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="font-medium flex items-center gap-2">
+              {h.forced && <ShieldAlert className="h-3.5 w-3.5 text-warning" />}
+              {h.byName || "—"} <span className="text-muted-foreground font-normal">· {h.action}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString("vi-VN")}</div>
+          </div>
+          {(h.fromStatus || h.toStatus) && h.fromStatus !== h.toStatus && (
+            <div className="mt-1 text-xs flex items-center gap-2">
+              <StatusBadge value={h.fromStatus || "—"} />
+              <ArrowRight className="h-3 w-3" />
+              <StatusBadge value={h.toStatus || "—"} />
+            </div>
+          )}
+          {h.note && (
+            <div className="mt-2 rounded bg-muted/50 px-2 py-1 text-xs whitespace-pre-wrap">{h.note}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function isWriterOwned(c: WebContent, currentName?: string): boolean {
+  if (!currentName) return false;
+  return !!c.writer && c.writer.trim() === currentName.trim();
 }
 
 export function ContentDetail({
@@ -219,6 +367,7 @@ export function ContentDetail({
   onClose: () => void;
 }) {
   const s = useStore();
+  const { user, can, isAdmin } = useCurrentUser();
   const [editing, setEditing] = useState(false);
 
   if (!content) return null;
@@ -227,7 +376,34 @@ export function ContentDetail({
   const brand = s.brands.find((b) => b.id === c.brandId);
   const order = c.designOrderId ? s.orders.find((o) => o.id === c.designOrderId) : undefined;
 
-  const patch = (p: Partial<WebContent>) => s.update("webContents", c.id, p);
+  const writerOwned = isWriterOwned(c, user?.fullName) || isWriterOwned(c, user?.username);
+
+  const canAct = (perm: PermissionKey, writerDefault = false) => {
+    if (isAdmin) return true;
+    if (can(perm)) return true;
+    if (writerDefault && writerOwned) return true;
+    return false;
+  };
+
+  const apply = (t: Transition & { forced?: boolean }) => {
+    const fromStatus = c.status;
+    const entry: WebContentHistoryEntry = {
+      at: new Date().toISOString(),
+      byId: user?.id,
+      byName: user?.fullName || user?.username || "—",
+      action: t.action,
+      fromStatus,
+      toStatus: t.to,
+      note: t.note,
+      forced: t.forced,
+    };
+    const history = [...(c.history || []), entry];
+    s.update("webContents", c.id, {
+      status: t.to,
+      ...(t.extra || {}),
+      history,
+    });
+  };
 
   const createDesignOrder = () => {
     const o = {
@@ -245,12 +421,12 @@ export function ContentDetail({
       contentId: c.id,
     };
     s.add("orders", o);
-    patch({ designOrderId: o.id, needsDesign: true });
+    s.update("webContents", c.id, { designOrderId: o.id, needsDesign: true });
   };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && (setEditing(false), onClose())}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 flex-wrap">
             <span>{c.title}</span>
@@ -276,14 +452,18 @@ export function ContentDetail({
               <TabsTrigger value="workflow">Workflow</TabsTrigger>
               <TabsTrigger value="info">Thông tin</TabsTrigger>
               <TabsTrigger value="links">Tài liệu</TabsTrigger>
+              <TabsTrigger value="history"><History className="h-3.5 w-3.5 mr-1" />Lịch sử</TabsTrigger>
               {c.type === "Bài tối ưu lại" && <TabsTrigger value="optimize">Tối ưu</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="workflow" className="mt-3 space-y-4">
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-2">Hành động tiếp theo</div>
-                <Card><CardContent className="p-4"><WorkflowActions c={c} onPatch={patch} /></CardContent></Card>
+                <Card><CardContent className="p-4"><WorkflowActions c={c} apply={apply} canAct={canAct} /></CardContent></Card>
               </div>
+              {can("web.force_status") && c.status !== "Hoàn thành" && (
+                <ForceStatusPanel c={c} apply={apply} />
+              )}
               <div className="grid sm:grid-cols-2 gap-2 text-sm">
                 <FieldRow k="Người viết" v={c.writer} />
                 <FieldRow k="Người duyệt outline" v={c.outlineReviewer} />
@@ -363,6 +543,10 @@ export function ContentDetail({
               </div>
             </TabsContent>
 
+            <TabsContent value="history" className="mt-3">
+              <HistoryList history={c.history} />
+            </TabsContent>
+
             {c.type === "Bài tối ưu lại" && (
               <TabsContent value="optimize" className="mt-3">
                 <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -378,12 +562,25 @@ export function ContentDetail({
 
         {!editing && (
           <DialogFooter>
-            <Button variant="ghost" onClick={() => s.remove("webContents", c.id)}>Xoá</Button>
-            <Button variant="outline" onClick={() => setEditing(true)}><Pencil className="h-4 w-4" />Chỉnh sửa</Button>
+            {can("web.content_delete") && (
+              <Button variant="ghost" onClick={() => s.remove("webContents", c.id)}>Xoá</Button>
+            )}
+            {can("web.content_edit") && (
+              <Button variant="outline" onClick={() => setEditing(true)}><Pencil className="h-4 w-4" />Chỉnh sửa</Button>
+            )}
             <Button onClick={onClose}>Đóng</Button>
           </DialogFooter>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function FieldRow({ k, v }: { k: string; v?: React.ReactNode }) {
+  return (
+    <div className="flex justify-between gap-3 border-b last:border-0 pb-2 last:pb-0">
+      <span className="text-muted-foreground text-sm">{k}</span>
+      <span className="font-medium text-right text-sm">{v ?? "—"}</span>
+    </div>
   );
 }

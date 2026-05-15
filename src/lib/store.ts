@@ -240,6 +240,17 @@ export const OPTIMIZE_REASONS: OptimizeReason[] = [
   "Bài cần cập nhật sản phẩm/dịch vụ", "Bài cần tối ưu chuyển đổi",
 ];
 
+export interface WebContentHistoryEntry {
+  at: string;
+  byId?: ID;
+  byName?: string;
+  action: string;
+  fromStatus?: ContentStatus;
+  toStatus?: ContentStatus;
+  note?: string;
+  forced?: boolean;
+}
+
 export interface WebContent {
   id: ID;
   websiteId: ID;
@@ -296,6 +307,8 @@ export interface WebContent {
   optimizeGoal?: string;
   oldLink?: string;
   optimizeNotes?: string;
+  // Lịch sử xử lý
+  history?: WebContentHistoryEntry[];
 }
 
 export type SocialStatus =
