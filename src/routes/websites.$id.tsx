@@ -751,3 +751,247 @@ function WebsiteReport({
     </div>
   );
 }
+
+function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { id: string; name: string }[] }) {
+  const s = useStore();
+  const all = s.webContents.filter((c) => c.websiteId === websiteId && DONE_STATUSES.includes(c.status));
+
+  const [search, setSearch] = useState("");
+  const [fIdx, setFIdx] = useState("all");
+  const [fShare, setFShare] = useState("all");
+  const [fWriter, setFWriter] = useState("all");
+  const [fPublisher, setFPublisher] = useState("all");
+  const [fEntity, setFEntity] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [shareFrom, setShareFrom] = useState("");
+  const [shareTo, setShareTo] = useState("");
+  const [quick, setQuick] = useState("all");
+  const [editShare, setEditShare] = useState<WebContent | null>(null);
+
+  const writers = Array.from(new Set(all.map((c) => c.writer).filter(Boolean))) as string[];
+  const publishers = Array.from(new Set(all.map((c) => c.publisher).filter(Boolean))) as string[];
+
+  const filtered = useMemo(() => all.filter((c) => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!c.title.toLowerCase().includes(q) && !(c.mainKeyword || "").toLowerCase().includes(q)) return false;
+    }
+    if (fIdx !== "all" && (c.indexStatus || "Chưa kiểm tra") !== fIdx) return false;
+    const shareSt = c.shareSocialStatus || (c.shareSocial ? "Đã share" : "Chưa share");
+    if (fShare !== "all" && shareSt !== fShare) return false;
+    if (fWriter !== "all" && c.writer !== fWriter) return false;
+    if (fPublisher !== "all" && c.publisher !== fPublisher) return false;
+    if (fEntity !== "all" && !(c.sharedEntities || "").includes(fEntity)) return false;
+    const pd = c.publishedAt || c.publishDate;
+    if (dateFrom && (!pd || pd < dateFrom)) return false;
+    if (dateTo && (!pd || pd > dateTo)) return false;
+    if (shareFrom && (!c.shareSocialDate || c.shareSocialDate < shareFrom)) return false;
+    if (shareTo && (!c.shareSocialDate || c.shareSocialDate > shareTo)) return false;
+    if (quick === "indexed_not_shared" && !(c.indexStatus === "Đã index" && !c.shareSocial)) return false;
+    if (quick === "not_indexed" && c.indexStatus === "Đã index") return false;
+    if (quick === "shared" && !c.shareSocial) return false;
+    if (quick === "need_reshare" && c.shareSocialStatus !== "Cần share lại") return false;
+    return true;
+  }), [all, search, fIdx, fShare, fWriter, fPublisher, fEntity, dateFrom, dateTo, shareFrom, shareTo, quick]);
+
+  const counts = {
+    all: all.length,
+    indexed_not_shared: all.filter((c) => c.indexStatus === "Đã index" && !c.shareSocial).length,
+    not_indexed: all.filter((c) => c.indexStatus !== "Đã index").length,
+    shared: all.filter((c) => c.shareSocial).length,
+    need_reshare: all.filter((c) => c.shareSocialStatus === "Cần share lại").length,
+  };
+
+  const QF = ({ id, label, count }: { id: string; label: string; count: number }) => (
+    <button
+      onClick={() => setQuick(id)}
+      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${quick === id ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
+    >
+      {label} <span className={quick === id ? "opacity-80" : "text-muted-foreground"}>({count})</span>
+    </button>
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <QF id="all" label="Tất cả" count={counts.all} />
+        <QF id="indexed_not_shared" label="Đã index, chưa share" count={counts.indexed_not_shared} />
+        <QF id="not_indexed" label="Chưa index" count={counts.not_indexed} />
+        <QF id="shared" label="Đã share social" count={counts.shared} />
+        <QF id="need_reshare" label="Cần share lại" count={counts.need_reshare} />
+      </div>
+
+      <Card><CardContent className="p-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+          <Input className="h-9" placeholder="Tìm tiêu đề / từ khóa..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Select value={fIdx} onValueChange={setFIdx}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Index" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Index: Tất cả</SelectItem>
+              {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={fShare} onValueChange={setFShare}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Share" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Share: Tất cả</SelectItem>
+              {SHARE_SOCIAL_STATUSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={fWriter} onValueChange={setFWriter}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Người viết" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Người viết: Tất cả</SelectItem>
+              {writers.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={fPublisher} onValueChange={setFPublisher}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Người đăng" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Người đăng: Tất cả</SelectItem>
+              {publishers.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={fEntity} onValueChange={setFEntity}>
+            <SelectTrigger className="h-9"><SelectValue placeholder="Entity share" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Entity: Tất cả</SelectItem>
+              {entities.map((e) => <SelectItem key={e.id} value={e.name}>{e.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1 col-span-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Đăng:</span>
+            <Input className="h-9" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            <Input className="h-9" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-1 col-span-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Share:</span>
+            <Input className="h-9" type="date" value={shareFrom} onChange={(e) => setShareFrom(e.target.value)} />
+            <Input className="h-9" type="date" value={shareTo} onChange={(e) => setShareTo(e.target.value)} />
+          </div>
+        </div>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-xs text-muted-foreground bg-muted/40">
+              <tr>
+                <th className="text-left font-medium px-3 py-2.5">Tiêu đề</th>
+                <th className="text-left font-medium px-3 py-2.5">Link</th>
+                <th className="text-left font-medium px-3 py-2.5">Từ khóa</th>
+                <th className="text-left font-medium px-3 py-2.5">Ngày đăng</th>
+                <th className="text-left font-medium px-3 py-2.5">Người viết</th>
+                <th className="text-left font-medium px-3 py-2.5">Người đăng</th>
+                <th className="text-left font-medium px-3 py-2.5">Index</th>
+                <th className="text-center font-medium px-3 py-2.5">Share</th>
+                <th className="text-left font-medium px-3 py-2.5">TT Share</th>
+                <th className="text-left font-medium px-3 py-2.5">Ngày share</th>
+                <th className="text-left font-medium px-3 py-2.5">Entity đã share</th>
+                <th className="text-left font-medium px-3 py-2.5">Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filtered.length === 0 && <tr><td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
+              {filtered.map((c) => (
+                <tr key={c.id} className="hover:bg-muted/30">
+                  <td className="px-3 py-2 font-medium max-w-[200px]">{c.title}</td>
+                  <td className="px-3 py-2">
+                    {c.publishedLink ? <a href={c.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1"><ExternalLink className="h-3 w-3" /></a> : "—"}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">{c.mainKeyword || "—"}</td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDate(c.publishedAt || c.publishDate)}</td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">{c.writer || "—"}</td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">{c.publisher || "—"}</td>
+                  <td className="px-3 py-2">
+                    <Select value={c.indexStatus || "Chưa kiểm tra"} onValueChange={(v) => s.update("webContents", c.id, { indexStatus: v as any })}>
+                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <Switch
+                      checked={!!c.shareSocial}
+                      onCheckedChange={(v) => s.update("webContents", c.id, {
+                        shareSocial: v,
+                        shareSocialStatus: v ? "Đã share" : "Chưa share",
+                        shareSocialDate: v && !c.shareSocialDate ? todayISO() : c.shareSocialDate,
+                      })}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Select value={c.shareSocialStatus || (c.shareSocial ? "Đã share" : "Chưa share")} onValueChange={(v) => s.update("webContents", c.id, { shareSocialStatus: v as any, shareSocial: v === "Đã share" ? true : v === "Chưa share" ? false : c.shareSocial })}>
+                      <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SHARE_SOCIAL_STATUSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input type="date" className="h-7 text-xs w-32" value={c.shareSocialDate || ""} onChange={(e) => s.update("webContents", c.id, { shareSocialDate: e.target.value })} />
+                  </td>
+                  <td className="px-3 py-2">
+                    <button className="text-xs text-primary hover:underline text-left max-w-[180px] truncate block" onClick={() => setEditShare(c)}>
+                      {c.sharedEntities || <span className="text-muted-foreground">+ Chọn entity</span>}
+                    </button>
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input className="h-7 text-xs w-40" value={c.shareNotes || c.indexNotes || ""} onChange={(e) => s.update("webContents", c.id, { shareNotes: e.target.value })} placeholder="—" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent></Card>
+
+      <Dialog open={!!editShare} onOpenChange={(o) => !o && setEditShare(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Entity / Social đã share</DialogTitle></DialogHeader>
+          {editShare && (
+            <ShareEntitiesPicker
+              entities={entities}
+              value={editShare.sharedEntities || ""}
+              onSave={(val) => { s.update("webContents", editShare.id, { sharedEntities: val }); setEditShare(null); }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function ShareEntitiesPicker({
+  entities, value, onSave,
+}: {
+  entities: { id: string; name: string }[];
+  value: string;
+  onSave: (val: string) => void;
+}) {
+  const initial = new Set(value.split(",").map((x) => x.trim()).filter(Boolean));
+  const [sel, setSel] = useState<Set<string>>(initial);
+  const toggle = (n: string) => {
+    const next = new Set(sel);
+    if (next.has(n)) next.delete(n); else next.add(n);
+    setSel(next);
+  };
+  return (
+    <div className="space-y-3">
+      {entities.length === 0 && <div className="text-sm text-muted-foreground">Chưa có entity nào trong dự án này. Hãy thêm ở tab Entity / Social SEO.</div>}
+      <div className="space-y-2 max-h-72 overflow-auto">
+        {entities.map((e) => (
+          <label key={e.id} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-muted">
+            <Checkbox checked={sel.has(e.name)} onCheckedChange={() => toggle(e.name)} />
+            <span className="text-sm">{e.name}</span>
+          </label>
+        ))}
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => onSave(Array.from(sel).join(", "))}>Lưu</Button>
+      </div>
+    </div>
+  );
+}
