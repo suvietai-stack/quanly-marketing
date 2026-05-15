@@ -53,9 +53,47 @@ const groups: { label: string; items: NavItem[] }[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, role, can } = useCurrentUser();
+  const logout = useAuth((s) => s.logout);
 
   const isActive = (to: string, exact?: boolean) =>
     exact ? path === to : path === to || path.startsWith(to + "/");
+
+  const visibleGroups = groups
+    .map((g) => ({ ...g, items: g.items.filter((it) => !it.perm || can(it.perm)) }))
+    .filter((g) => g.items.length > 0);
+
+  const onLogout = () => { logout(); navigate({ to: "/login" }); };
+
+  const UserMenu = user && (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md hover:bg-sidebar-accent text-sm">
+        <div className="h-7 w-7 rounded-full bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center text-xs font-semibold">
+          {user.fullName.slice(0, 1).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <div className="truncate text-sm font-medium">{user.fullName}</div>
+          <div className="truncate text-[11px] text-sidebar-foreground/60">{role?.name || "—"}</div>
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>
+          <div className="text-xs font-normal text-muted-foreground">Đăng nhập với</div>
+          <div>{user.username}</div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {can("settings.view") && (
+          <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+            <UserIcon className="h-4 w-4 mr-2" />Tài khoản & Cài đặt
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
+          <LogOut className="h-4 w-4 mr-2" />Đăng xuất
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   const Sidebar = (
     <aside className="flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground">
@@ -69,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {groups.map((g) => (
+        {visibleGroups.map((g) => (
           <div key={g.label}>
             <div className="px-2 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
               {g.label}
@@ -77,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="space-y-0.5">
               {g.items.map((it) => {
                 const Icon = it.icon;
-                const active = isActive(it.to, (it as any).exact);
+                const active = isActive(it.to, it.exact);
                 return (
                   <Link
                     key={it.to}
@@ -92,9 +130,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="flex-1 truncate">{it.label}</span>
-                    {(it as any).badge && (
+                    {it.badge && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-sidebar-accent/70 text-sidebar-foreground/70">
-                        {(it as any).badge}
+                        {it.badge}
                       </span>
                     )}
                   </Link>
@@ -104,9 +142,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         ))}
       </nav>
-      <div className="px-5 py-3 border-t border-sidebar-border text-[11px] text-sidebar-foreground/45">
-        v1.0 · Bản Base
-      </div>
+      <div className="px-2 py-2 border-t border-sidebar-border">{UserMenu}</div>
     </aside>
   );
 
@@ -130,7 +166,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="font-semibold">Base Marketing</div>
+          <div className="font-semibold flex-1">Base Marketing</div>
+          {user && (
+            <button onClick={onLogout} className="p-2 rounded hover:bg-accent" title="Đăng xuất">
+              <LogOut className="h-5 w-5" />
+            </button>
+          )}
         </header>
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
           {children}
