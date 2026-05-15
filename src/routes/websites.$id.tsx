@@ -311,6 +311,11 @@ function WebsiteDetail() {
           <PublishedTab websiteId={w.id} entities={entitiesList} />
         </TabsContent>
 
+        {/* TAB BACKLINK / PR */}
+        <TabsContent value="backlinks" className="mt-4">
+          <BacklinksTab websiteId={w.id} />
+        </TabsContent>
+
         {/* TAB 5 — OPTIMIZE */}
         <TabsContent value="optimize" className="mt-4">
           <div className="flex justify-end mb-3">
