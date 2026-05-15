@@ -24,7 +24,7 @@ export function ContentForm({
   onClose: () => void;
   lockWebsite?: boolean;
 }) {
-  const { people, plans, topics, websites, brands } = useStore();
+  const { people, plans, websites, brands, webTopics } = useStore();
   const [c, setC] = useState<WebContent>({
     id: initial?.id || uid(),
     websiteId: initial?.websiteId || websiteId || websites[0]?.id || "",
