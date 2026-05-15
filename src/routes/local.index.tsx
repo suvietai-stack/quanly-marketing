@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, MapPin, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export const Route = createFileRoute("/local")({
+export const Route = createFileRoute("/local/")({
   head: () => ({ meta: [{ title: "Local Map — Base Marketing" }] }),
   component: LocalPage,
 });

@@ -15,7 +15,7 @@ import { Plus, Pencil, ExternalLink, Share2, FilePlus2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PostFormDialog } from "@/components/SocialPostDetail";
 
-export const Route = createFileRoute("/social")({
+export const Route = createFileRoute("/social/")({
   head: () => ({ meta: [{ title: "Kênh Social — Base Marketing" }] }),
   component: SocialPage,
 });
