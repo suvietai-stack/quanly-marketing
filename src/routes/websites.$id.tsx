@@ -147,7 +147,7 @@ function WebsiteDetail() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="info">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
           <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>
@@ -159,7 +159,7 @@ function WebsiteDetail() {
           <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
-          <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
+          <TabsTrigger value="report">Báo cáo cơ bản</TabsTrigger>
         </TabsList>
 
         {/* TAB 1 — THÔNG TIN DỰ ÁN */}
