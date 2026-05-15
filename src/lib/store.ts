@@ -448,6 +448,7 @@ interface State {
   entities: EntitySocial[];
   keywords: KeywordTrack[];
   backlinks: Backlink[];
+  growth: GrowthMetric[];
   plans: string[];
   topics: string[];
 
