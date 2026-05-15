@@ -419,26 +419,92 @@ export interface MapReview {
   notes?: string;
 }
 
-export type VideoStatus = "Ý tưởng" | "Đang sản xuất" | "Chờ duyệt" | "Cần sửa" | "Đã bàn giao" | "Hoàn thành";
+export type VideoStatus =
+  | "Kế hoạch" | "Đã giao"
+  | "Đang làm kịch bản" | "Chờ duyệt kịch bản" | "Cần sửa kịch bản" | "Kịch bản đã duyệt"
+  | "Đang quay / thu tư liệu" | "Đang dựng"
+  | "Chờ duyệt video" | "Cần sửa video" | "Video đã duyệt"
+  | "Đã bàn giao" | "Đã đăng" | "Hoàn thành" | "Đã hủy";
+
+export const VIDEO_STATUSES: VideoStatus[] = [
+  "Kế hoạch", "Đã giao",
+  "Đang làm kịch bản", "Chờ duyệt kịch bản", "Cần sửa kịch bản", "Kịch bản đã duyệt",
+  "Đang quay / thu tư liệu", "Đang dựng",
+  "Chờ duyệt video", "Cần sửa video", "Video đã duyệt",
+  "Đã bàn giao", "Đã đăng", "Hoàn thành", "Đã hủy",
+];
+
+export type VideoType =
+  | "Video TikTok" | "Facebook Reels" | "YouTube Shorts" | "Video dài YouTube"
+  | "Video sản phẩm" | "Video quy trình" | "Video feedback khách hàng"
+  | "Video thương hiệu" | "Video quảng cáo" | "Khác";
+export const VIDEO_TYPES: VideoType[] = [
+  "Video TikTok", "Facebook Reels", "YouTube Shorts", "Video dài YouTube",
+  "Video sản phẩm", "Video quy trình", "Video feedback khách hàng",
+  "Video thương hiệu", "Video quảng cáo", "Khác",
+];
+
+export const VIDEO_USE_CHANNELS = [
+  "TikTok", "Facebook", "YouTube", "Website", "Landing page", "Shopee", "Ads", "Khác",
+] as const;
+
+export interface VideoHistoryEntry {
+  at: string;
+  byId?: ID;
+  byName?: string;
+  action: string;
+  fromStatus?: VideoStatus;
+  toStatus?: VideoStatus;
+  note?: string;
+  forced?: boolean;
+}
 
 export interface Video {
   id: ID;
   title: string;
   brandId: ID;
-  channels?: string;
+  channels?: string;            // text list of "kênh sử dụng"
+  videoType?: VideoType;
   purpose?: string;
-  owner?: string;
-  reviewer?: string;
-  deadline?: string;
+  description?: string;
+  assigner?: string;            // người giao việc
+  owner?: string;               // người phụ trách
+  reviewer?: string;            // người duyệt
+  createdAt?: string;
+  scriptDeadline?: string;
+  deadline?: string;            // deadline video
+  scheduledPublishDate?: string;
+  completedAt?: string;
   scriptLink?: string;
   footageLink?: string;
   editLink?: string;
   finalLink?: string;
   publishedLink?: string;
+  resourcesLink?: string;
   status: VideoStatus;
+  reviewNotes?: string;
+  revisions?: number;
   plan?: string;
   topic?: string;
   notes?: string;
+  history?: VideoHistoryEntry[];
+  // Liên kết
+  socialPostId?: ID;
+  socialChannel?: string;
+  socialPublishedLink?: string;
+}
+
+export function normalizeVideoStatus(s?: string): VideoStatus {
+  switch (s) {
+    case "Ý tưởng": return "Kế hoạch";
+    case "Đang sản xuất": return "Đang dựng";
+    case "Chờ duyệt": return "Chờ duyệt video";
+    case "Cần sửa": return "Cần sửa video";
+    default:
+      return (VIDEO_STATUSES as string[]).includes(s ?? "")
+        ? (s as VideoStatus)
+        : "Kế hoạch";
+  }
 }
 
 export type OrderStatus = "Mới tạo" | "Đang làm" | "Chờ duyệt" | "Cần sửa" | "Đã bàn giao" | "Hoàn thành";
