@@ -103,6 +103,15 @@ function WebsiteDetail() {
 
   const waitingPublish = contents.filter((c) => c.status === "Chờ đăng web").length;
 
+  // Entity & keyword stats for this website
+  const entitiesList = s.entities.filter((e) => e.websiteId === w.id);
+  const keywordsList = s.keywords.filter((k) => k.websiteId === w.id);
+  const indexedNotShared = published.filter((c) => c.indexStatus === "Đã index" && !c.shareSocial).length;
+  const sharedCount = published.filter((c) => c.shareSocial).length;
+  const kwTop10 = keywordsList.filter((k) => k.currentTop != null && k.currentTop > 0 && k.currentTop <= 10).length;
+  const kwUp = keywordsList.filter((k) => k.currentTop != null && k.previousTop != null && k.currentTop > 0 && k.currentTop < k.previousTop).length;
+  const kwDown = keywordsList.filter((k) => k.currentTop != null && k.previousTop != null && k.currentTop > k.previousTop).length;
+
   return (
     <>
       <Link to="/websites" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-3">
