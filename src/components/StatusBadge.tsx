@@ -5,7 +5,7 @@ const map: Record<string, string> = {
   "Hoàn thành": "bg-success/15 text-success border-success/30",
   "Đã đăng": "bg-success/15 text-success border-success/30",
   "Đã đăng web": "bg-[oklch(0.7_0.13_180)]/15 text-[oklch(0.45_0.13_180)] border-[oklch(0.7_0.13_180)]/30",
-  "Đã bàn giao": "bg-success/15 text-success border-success/30",
+  "Đã bàn giao": "bg-[oklch(0.7_0.12_180)]/15 text-[oklch(0.45_0.13_180)] border-[oklch(0.7_0.12_180)]/30",
   "Đã duyệt": "bg-success/15 text-success border-success/30",
   "Outline đã duyệt": "bg-success/15 text-success border-success/30",
   "Bài đã duyệt": "bg-success/15 text-success border-success/30",
