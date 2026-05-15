@@ -461,6 +461,7 @@ interface State {
   keywords: KeywordTrack[];
   backlinks: Backlink[];
   growth: GrowthMetric[];
+  webTopics: WebTopic[];
   plans: string[];
   topics: string[];
 
@@ -487,6 +488,7 @@ type Collections = {
   keywords: KeywordTrack;
   backlinks: Backlink;
   growth: GrowthMetric;
+  webTopics: WebTopic;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
