@@ -57,12 +57,12 @@ function Dashboard() {
         s.webContents.filter((c) => c.status === "Chờ duyệt outline" || c.status === "Chờ duyệt bài").length +
         s.socialPosts.filter((p) => p.status === "Chờ duyệt").length +
         s.orders.filter((o) => o.status === "Chờ duyệt").length +
-        s.videos.filter((v) => v.status === "Chờ duyệt").length,
+        s.videos.filter((v) => v.status === "Chờ duyệt video" || v.status === "Chờ duyệt kịch bản").length,
       doneWeek: doneWeek.length,
       sites: s.websites.filter((w) => w.status === "Đang vận hành").length,
       socials: s.socials.filter((c) => c.status === "Đang vận hành").length,
       places: s.places.length,
-      videosProd: s.videos.filter((v) => v.status === "Đang sản xuất").length,
+      videosProd: s.videos.filter((v) => ["Đã giao","Đang làm kịch bản","Đang quay / thu tư liệu","Đang dựng"].includes(v.status)).length,
       ordersWip: s.orders.filter((o) => o.status === "Đang làm" || o.status === "Mới tạo").length,
     };
   }, [s]);
