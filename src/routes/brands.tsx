@@ -96,7 +96,7 @@ function BrandsPage() {
       <PageHeader
         title="Thương Hiệu"
         description="Hồ sơ gốc của từng thương hiệu / dự án marketing."
-        actions={
+        actions={canCreate ? (
           <Dialog open={adding} onOpenChange={setAdding}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1.5" />Thêm thương hiệu</Button>
@@ -106,7 +106,7 @@ function BrandsPage() {
               <BrandForm onSubmit={(b) => add("brands", b)} onClose={() => setAdding(false)} />
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
       <FilterBar>
         <Input placeholder="Tìm theo tên / lĩnh vực..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
