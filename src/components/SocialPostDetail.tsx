@@ -203,33 +203,15 @@ export function PostDetailDialog({
             )}
 
             <div className="flex flex-wrap gap-2">
-              {post.status === "Kế hoạch" && (
-                <>
-                  {canAct("social.post_start", true) && (
-                    <Button onClick={() => transition("Đang làm", "Bắt đầu làm bài")}>
-                      <Play className="h-4 w-4 mr-1" />Bắt đầu làm
-                    </Button>
-                  )}
-                  {canAct("social.post_cancel") && (
-                    <Button variant="destructive" onClick={() => transition("Đã hủy", "Hủy bài", { note: reviewNote })}>
-                      <X className="h-4 w-4 mr-1" />Hủy bài
-                    </Button>
-                  )}
-                </>
+              {post.status === "Kế hoạch" && canAct("social.post_start", true) && (
+                <Button onClick={() => transition("Đang làm", "Bắt đầu làm bài")}>
+                  <Play className="h-4 w-4 mr-1" />Bắt đầu làm
+                </Button>
               )}
-              {post.status === "Đang làm" && (
-                <>
-                  {canAct("social.post_submit", true) && (
-                    <Button onClick={() => transition("Chờ duyệt", "Gửi duyệt", { note: reviewNote })}>
-                      <Send className="h-4 w-4 mr-1" />Gửi duyệt
-                    </Button>
-                  )}
-                  {canAct("social.post_cancel") && (
-                    <Button variant="destructive" onClick={() => transition("Đã hủy", "Hủy bài", { note: reviewNote })}>
-                      <X className="h-4 w-4 mr-1" />Hủy bài
-                    </Button>
-                  )}
-                </>
+              {post.status === "Đang làm" && canAct("social.post_submit", true) && (
+                <Button onClick={() => transition("Chờ duyệt", "Gửi duyệt", { note: reviewNote })}>
+                  <Send className="h-4 w-4 mr-1" />Gửi duyệt
+                </Button>
               )}
               {post.status === "Chờ duyệt" && (
                 <>
@@ -280,6 +262,15 @@ export function PostDetailDialog({
               {post.status === "Đã hủy" && canAct("social.post_restore") && (
                 <Button variant="outline" onClick={() => transition("Kế hoạch", "Khôi phục bài đã hủy")}>
                   <Undo2 className="h-4 w-4 mr-1" />Khôi phục
+                </Button>
+              )}
+              {post.status !== "Đã hủy" && post.status !== "Hoàn thành" && canAct("social.post_cancel") && (
+                <Button variant="destructive" onClick={() => {
+                  const earlyStages = post.status === "Kế hoạch" || post.status === "Đang làm";
+                  if (!earlyStages && !reviewNote.trim()) { toast.error("Nhập lý do hủy"); return; }
+                  transition("Đã hủy", "Hủy bài", { note: reviewNote });
+                }}>
+                  <X className="h-4 w-4 mr-1" />Hủy bài
                 </Button>
               )}
             </div>
