@@ -9,11 +9,27 @@ export function FilterBar({ children }: { children: ReactNode }) {
   );
 }
 
-export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+export function EmptyState({
+  title,
+  hint,
+  icon,
+  action,
+}: {
+  title: string;
+  hint?: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+}) {
   return (
-    <div className="text-center py-16 text-muted-foreground">
+    <div className="rounded-xl border border-dashed bg-card/40 py-16 px-6 text-center">
+      {icon && (
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+          {icon}
+        </div>
+      )}
       <div className="font-medium text-foreground">{title}</div>
-      {hint && <div className="text-sm mt-1">{hint}</div>}
+      {hint && <div className="text-sm text-muted-foreground mt-1.5 max-w-md mx-auto">{hint}</div>}
+      {action && <div className="mt-5 flex justify-center">{action}</div>}
     </div>
   );
 }
