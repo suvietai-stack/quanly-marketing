@@ -179,9 +179,11 @@ export function BasicReportTab({
 
   // ---- Attention rows ----
   const today = toISO(new Date());
+  type AttentionSource = "Sản xuất Content" | "Bài đã đăng / Index" | "Backlink / PR" | "Check TOP từ khóa" | "Technical SEO";
   type AttentionRow = {
     type: string;
     severity: "warn" | "danger" | "info";
+    source: AttentionSource;
     content: string;
     owner?: string;
     date?: string;
@@ -193,37 +195,61 @@ export function BasicReportTab({
     const owner = c.writer || c.publisher || c.assigner;
     const open = () => onOpenContent?.(c);
     if (c.deadline && c.deadline < today && !PUBLISHED_LIKE.includes(c.status))
-      attention.push({ type: "Quá deadline", severity: "danger", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Quá deadline", severity: "danger", source: "Sản xuất Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (c.status === "Chờ duyệt outline")
-      attention.push({ type: "Chờ duyệt outline", severity: "warn", content: c.title, owner: c.outlineReviewer || owner, date: c.outlineDeadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Chờ duyệt outline", severity: "warn", source: "Sản xuất Content", content: c.title, owner: c.outlineReviewer || owner, date: c.outlineDeadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (c.status === "Chờ duyệt bài")
-      attention.push({ type: "Chờ duyệt bài", severity: "warn", content: c.title, owner: c.draftReviewer || owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Chờ duyệt bài", severity: "warn", source: "Sản xuất Content", content: c.title, owner: c.draftReviewer || owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (FIX.includes(c.status))
-      attention.push({ type: "Cần sửa", severity: "warn", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Cần sửa", severity: "warn", source: "Sản xuất Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if ((c.publishedLink || PUBLISHED_LIKE.includes(c.status)) && c.indexStatus === "Chưa kiểm tra")
-      attention.push({ type: "Chưa kiểm tra index", severity: "info", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: c.indexStatus, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Chưa kiểm tra index", severity: "info", source: "Bài đã đăng / Index", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: c.indexStatus, action: { label: "Mở content", onClick: open } });
     if (c.indexStatus === "Đã index" && !c.shareSocial)
-      attention.push({ type: "Index — chưa share social", severity: "info", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: "Chưa share", action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Index — chưa share social", severity: "info", source: "Bài đã đăng / Index", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: "Chưa share", action: { label: "Mở content", onClick: open } });
   });
   fk.forEach((k) => {
     if (k.status === "Tụt hạng")
-      attention.push({ type: "Từ khóa tụt hạng", severity: "warn", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: `${k.previousTop ?? "?"} → ${k.currentTop ?? "?"}`, action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
+      attention.push({ type: "Từ khóa tụt hạng", severity: "warn", source: "Check TOP từ khóa", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: `${k.previousTop ?? "?"} → ${k.currentTop ?? "?"}`, action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
     if (k.status === "Mất top")
-      attention.push({ type: "Từ khóa mất top", severity: "danger", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: "Mất top", action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
+      attention.push({ type: "Từ khóa mất top", severity: "danger", source: "Check TOP từ khóa", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: "Mất top", action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
   });
   fb.forEach((b) => {
     if (b.status === "Lỗi / mất link")
-      attention.push({ type: "Backlink lỗi", severity: "danger", content: b.name, owner: b.owner, date: b.publishDate, status: b.status, action: { label: "Mở Backlink", onClick: () => onJumpTab?.("backlinks") } });
+      attention.push({ type: "Backlink lỗi", severity: "danger", source: "Backlink / PR", content: b.name, owner: b.owner, date: b.publishDate, status: b.status, action: { label: "Mở Backlink", onClick: () => onJumpTab?.("backlinks") } });
   });
   if (seoTotal && seoDone < seoTotal) {
     attention.push({
       type: "Technical SEO chưa xong",
       severity: "info",
+      source: "Technical SEO",
       content: `Còn ${seoTotal - seoDone}/${seoTotal} mục checklist chưa hoàn thành`,
       status: `${seoPct}%`,
       action: { label: "Mở Technical SEO", onClick: () => onJumpTab?.("seo") },
     });
   }
+
+  // Priority order: lost rank > backlink broken > overdue > fix > pending review > index/no share > seo
+  const typePriority: Record<string, number> = {
+    "Từ khóa mất top": 1,
+    "Backlink lỗi": 2,
+    "Quá deadline": 3,
+    "Cần sửa": 4,
+    "Chờ duyệt outline": 5,
+    "Chờ duyệt bài": 5,
+    "Từ khóa tụt hạng": 6,
+    "Index — chưa share social": 7,
+    "Chưa kiểm tra index": 8,
+    "Technical SEO chưa xong": 9,
+  };
+  const sevWeight = { danger: 0, warn: 1, info: 2 } as const;
+  attention.sort((a, b) => {
+    const sv = sevWeight[a.severity] - sevWeight[b.severity];
+    if (sv !== 0) return sv;
+    return (typePriority[a.type] ?? 99) - (typePriority[b.type] ?? 99);
+  });
+  const levelOf = (s: AttentionRow["severity"]) =>
+    s === "danger" ? "Cao" : s === "warn" ? "Trung bình" : "Thấp";
+
 
   // ---- By owner ----
   const owners = Array.from(new Set(fc.map((c) => c.writer || c.publisher || c.assigner).filter(Boolean))) as string[];
