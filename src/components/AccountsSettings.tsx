@@ -15,8 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check,
+  Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check, Search,
 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 
 const STATUSES: AccountStatus[] = ["Chờ duyệt","Đang hoạt động","Tạm khóa","Từ chối","Lưu trữ"];
@@ -415,11 +416,19 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
 function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [group, setGroup] = useState<string>("ALL");
-  const filtered = group === "ALL" ? PERMISSIONS : PERMISSIONS.filter((p) => p.group === group);
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+    return PERMISSIONS.filter((p) => {
+      if (group !== "ALL" && p.group !== group) return false;
+      if (!qq) return true;
+      return p.label.toLowerCase().includes(qq) || p.key.toLowerCase().includes(qq) || (p.subGroup || "").toLowerCase().includes(qq);
+    });
+  }, [group, q]);
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Label className="text-sm">Nhóm quyền:</Label>
         <Select value={group} onValueChange={setGroup}>
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
@@ -428,7 +437,11 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
             {PERMISSION_GROUPS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
-        <span className="text-xs text-muted-foreground ml-auto">Bảng tổng hợp quyền theo từng role. Để chỉnh sửa, vào tab Role.</span>
+        <div className="relative w-[260px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm quyền..." className="pl-8 h-9" />
+        </div>
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} quyền · Chỉnh sửa ở tab Role.</span>
       </div>
       <Card><CardContent className="p-0 overflow-auto max-h-[70vh]">
         <table className="w-full text-xs">
@@ -459,54 +472,116 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
   );
 }
 
-// --------- Permission Matrix editor ---------
+// --------- Permission Matrix editor (grouped + subgroup + search) ---------
 function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChange: (v: PermissionKey[]) => void }) {
+  const [q, setQ] = useState("");
   const set = new Set(value);
   const toggle = (k: PermissionKey) => {
     const next = new Set(set);
     if (next.has(k)) next.delete(k); else next.add(k);
     onChange([...next]);
   };
-  const groups = useMemo(() => {
-    const m: Record<string, typeof PERMISSIONS> = {};
-    for (const p of PERMISSIONS) (m[p.group] ||= []).push(p);
-    return m;
-  }, []);
 
-  const toggleGroup = (g: string, on: boolean) => {
-    const ks = (groups[g] || []).map((x) => x.key);
+  const filtered = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+    if (!qq) return PERMISSIONS;
+    return PERMISSIONS.filter((p) =>
+      p.label.toLowerCase().includes(qq) ||
+      p.key.toLowerCase().includes(qq) ||
+      p.group.toLowerCase().includes(qq) ||
+      (p.subGroup || "").toLowerCase().includes(qq),
+    );
+  }, [q]);
+
+  const groups = useMemo(() => {
+    const m: Record<string, Record<string, typeof PERMISSIONS>> = {};
+    for (const p of filtered) {
+      const g = p.group;
+      const sg = p.subGroup || "—";
+      ((m[g] ||= {})[sg] ||= []).push(p);
+    }
+    return m;
+  }, [filtered]);
+
+  const setMany = (keys: PermissionKey[], on: boolean) => {
     const next = new Set(set);
-    if (on) ks.forEach((k) => next.add(k)); else ks.forEach((k) => next.delete(k));
+    if (on) keys.forEach((k) => next.add(k)); else keys.forEach((k) => next.delete(k));
     onChange([...next]);
   };
 
+  const totalSelected = value.length;
+  const totalAll = PERMISSIONS.length;
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm quyền..." className="pl-8 h-9" />
+        </div>
         <Button size="sm" variant="outline" onClick={() => onChange(ALL_PERMS)}>Chọn tất cả</Button>
         <Button size="sm" variant="outline" onClick={() => onChange([])}>Bỏ chọn tất cả</Button>
+        <Badge variant="secondary" className="ml-auto">{totalSelected}/{totalAll} quyền</Badge>
       </div>
-      {PERMISSION_GROUPS.map((g) => {
-        const ks = groups[g] || [];
-        const allOn = ks.every((p) => set.has(p.key));
-        return (
-          <div key={g} className="border rounded-lg overflow-hidden">
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 border-b">
-              <Checkbox checked={allOn} onCheckedChange={(c) => toggleGroup(g, !!c)} />
-              <div className="font-medium text-sm">{g}</div>
-              <div className="text-xs text-muted-foreground ml-auto">{ks.filter((p) => set.has(p.key)).length}/{ks.length}</div>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 p-3">
-              {ks.map((p) => (
-                <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer">
-                  <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
-                  <span>{p.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+
+      <Accordion type="multiple" className="space-y-2" defaultValue={Object.keys(groups)}>
+        {Object.entries(groups).map(([g, subs]) => {
+          const allKeys = Object.values(subs).flat().map((p) => p.key);
+          const onCount = allKeys.filter((k) => set.has(k)).length;
+          const allOn = onCount === allKeys.length && allKeys.length > 0;
+          const someOn = onCount > 0 && !allOn;
+          return (
+            <AccordionItem key={g} value={g} className="border rounded-lg overflow-hidden bg-card">
+              <div className="flex items-center gap-2 px-3 py-1 bg-muted/40 border-b">
+                <Checkbox
+                  checked={allOn ? true : (someOn ? "indeterminate" : false)}
+                  onCheckedChange={(c) => setMany(allKeys, !!c)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <AccordionTrigger className="flex-1 hover:no-underline py-2 text-sm font-semibold">
+                  <div className="flex items-center gap-2 w-full">
+                    <span>{g}</span>
+                    <Badge variant="outline" className="ml-auto mr-2 text-[10px] font-normal">{onCount}/{allKeys.length}</Badge>
+                  </div>
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="pb-0">
+                <div className="divide-y">
+                  {Object.entries(subs).map(([sg, items]) => {
+                    const ks = items.map((x) => x.key);
+                    const subOn = ks.filter((k) => set.has(k)).length;
+                    const subAll = subOn === ks.length;
+                    const subSome = subOn > 0 && !subAll;
+                    return (
+                      <div key={sg} className="px-3 py-2.5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Checkbox
+                            checked={subAll ? true : (subSome ? "indeterminate" : false)}
+                            onCheckedChange={(c) => setMany(ks, !!c)}
+                          />
+                          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{sg}</div>
+                          <span className="text-[10px] text-muted-foreground ml-auto">{subOn}/{ks.length}</span>
+                        </div>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 pl-6">
+                          {items.map((p) => (
+                            <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
+                              <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
+                              <span title={p.key}>{p.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+        {Object.keys(groups).length === 0 && (
+          <div className="text-center text-sm text-muted-foreground py-8">Không có quyền khớp với tìm kiếm.</div>
+        )}
+      </Accordion>
     </div>
   );
 }
