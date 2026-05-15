@@ -181,7 +181,7 @@ function TasksPage() {
       <PageHeader
         title="Task To-do List"
         description="Việc lẻ, việc nhanh, việc phát sinh hằng ngày."
-        actions={
+        actions={canCreate ? (
           <Dialog open={adding} onOpenChange={setAdding}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1.5" />Thêm task</Button>
@@ -191,7 +191,7 @@ function TasksPage() {
               <TaskForm onSubmit={(t) => add("tasks", t)} onClose={() => setAdding(false)} />
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
