@@ -15,7 +15,11 @@ import { VideoFormDialog, VideoDetailDialog } from "@/components/VideoDetail";
 
 export const Route = createFileRoute("/videos")({
   head: () => ({ meta: [{ title: "Sản Xuất Video — Base Marketing" }] }),
-  component: VideosPage,
+  component: () => (
+    <RequirePermission perm="video.view">
+      <VideosPage />
+    </RequirePermission>
+  ),
 });
 
 type ViewMode = "table" | "kanban" | "calendar";
