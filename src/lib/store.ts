@@ -424,6 +424,7 @@ export interface SeoCheckItem {
   websiteId: ID;
   group: string;
   name: string;
+  description?: string;
   done: boolean;
   checker?: string;
   checkedAt?: string;
