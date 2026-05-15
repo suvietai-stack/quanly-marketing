@@ -388,6 +388,8 @@ interface State {
   orders: DesignOrder[];
   people: Person[];
   seoChecks: SeoCheckItem[];
+  entities: EntitySocial[];
+  keywords: KeywordTrack[];
   plans: string[];
   topics: string[];
 
