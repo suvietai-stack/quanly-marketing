@@ -13,6 +13,7 @@ import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
 import { BacklinksTab } from "@/components/BacklinksTab";
 import { BasicReportTab } from "@/components/BasicReportTab";
+import { GrowthTab } from "@/components/GrowthTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -160,8 +161,9 @@ function WebsiteDetail() {
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
           <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
-          <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
-          <TabsTrigger value="report">Báo cáo cơ bản</TabsTrigger>
+          <TabsTrigger value="optimize">Tối ưu lại Content ({optimizeContents.length})</TabsTrigger>
+          <TabsTrigger value="growth">Tăng Trưởng Website ({s.growth.filter((g) => g.websiteId === w.id).length})</TabsTrigger>
+          <TabsTrigger value="report">Báo Cáo</TabsTrigger>
         </TabsList>
 
         {/* TAB 1 — THÔNG TIN DỰ ÁN */}
@@ -366,7 +368,12 @@ function WebsiteDetail() {
           </CardContent></Card>
         </TabsContent>
 
-        {/* TAB 6 — REPORT (placeholder) */}
+        {/* TAB TĂNG TRƯỞNG WEBSITE */}
+        <TabsContent value="growth" className="mt-4">
+          <GrowthTab websiteId={w.id} />
+        </TabsContent>
+
+        {/* TAB BÁO CÁO */}
         <TabsContent value="report" className="mt-4">
           <BasicReportTab
             websiteId={w.id}

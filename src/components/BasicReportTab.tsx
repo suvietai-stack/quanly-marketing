@@ -13,6 +13,7 @@ import {
   Search, Share2, Link as LinkIcon, TrendingUp, TrendingDown,
   AlertTriangle, ExternalLink, Trophy, Activity, Settings2, AlertCircle,
 } from "lucide-react";
+import { GrowthSummary } from "@/components/GrowthTab";
 
 type DateRange = { from?: string; to?: string };
 type Quick = "all" | "week" | "month" | "custom";
@@ -86,7 +87,7 @@ export function BasicReportTab({
 }: {
   websiteId: string;
   onOpenContent?: (c: WebContent) => void;
-  onJumpTab?: (tab: "seo" | "keywords" | "backlinks" | "published" | "content") => void;
+  onJumpTab?: (tab: "seo" | "keywords" | "backlinks" | "published" | "content" | "growth") => void;
 }) {
   const s = useStore();
   const contents = s.webContents.filter((c) => c.websiteId === websiteId);
@@ -374,6 +375,10 @@ export function BasicReportTab({
         <StatCard icon={AlertCircle} label="Mất top" value={kwStats.lost} accent="danger" />
         <StatCard icon={Eye} label="Chưa check" value={kwStats.unchecked} />
       </div>
+
+      {/* Growth */}
+      <GroupTitle><TrendingUp className="h-4 w-4" />Tăng Trưởng Website</GroupTitle>
+      <GrowthSummary websiteId={websiteId} onJump={() => onJumpTab?.("growth")} />
 
       {/* By owner */}
       <GroupTitle><FileEdit className="h-4 w-4" />Theo người phụ trách</GroupTitle>

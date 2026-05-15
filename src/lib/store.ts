@@ -396,6 +396,29 @@ export interface Person {
   notes?: string;
 }
 
+export type GrowthPeriodType = "Tuần" | "Tháng" | "Quý";
+export const GROWTH_PERIOD_TYPES: GrowthPeriodType[] = ["Tuần", "Tháng", "Quý"];
+
+export interface GrowthMetric {
+  id: ID;
+  websiteId: ID;
+  period: string;            // ví dụ "Tuần 2 tháng 5/2026" hoặc "Tháng 5/2026"
+  periodType: GrowthPeriodType;
+  periodKey?: string;        // YYYY-WW / YYYY-MM / YYYY-Qn — dùng để sắp xếp
+  updatedAt?: string;        // ngày cập nhật
+  totalTraffic?: number;
+  organicTraffic?: number;
+  impressions?: number;
+  clicks?: number;
+  ctr?: number;              // %
+  avgPosition?: number;
+  indexedPages?: number;
+  leads?: number;
+  reportLink?: string;
+  updatedBy?: string;
+  notes?: string;
+}
+
 export interface SeoCheckItem {
   id: ID;
   websiteId: ID;
@@ -425,6 +448,7 @@ interface State {
   entities: EntitySocial[];
   keywords: KeywordTrack[];
   backlinks: Backlink[];
+  growth: GrowthMetric[];
   plans: string[];
   topics: string[];
 
@@ -450,6 +474,7 @@ type Collections = {
   entities: EntitySocial;
   keywords: KeywordTrack;
   backlinks: Backlink;
+  growth: GrowthMetric;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
@@ -722,9 +747,14 @@ const seed = () => {
     { id: "bl6", websiteId: "w3", name: "PR Cafef — quà doanh nghiệp", sourceSite: "cafef.vn", targetUrl: "https://suminhdang.com", anchorText: "quà tặng doanh nghiệp cao cấp", keyword: "quà tặng doanh nghiệp", type: "Bài PR báo chí", cost: 12000000, owner: "Trần Thị B", status: "Đã đặt" },
   ];
 
+  const growth: GrowthMetric[] = [
+    { id: "g1", websiteId: "w1", period: "Tuần 1 tháng 5/2026", periodType: "Tuần", periodKey: "2026-W18", updatedAt: d(-10), totalTraffic: 1200, organicTraffic: 860, impressions: 15000, clicks: 620, ctr: 4.1, avgPosition: 18.5, indexedPages: 42, leads: 12, updatedBy: "Nguyễn Văn SEO" },
+    { id: "g2", websiteId: "w1", period: "Tuần 2 tháng 5/2026", periodType: "Tuần", periodKey: "2026-W19", updatedAt: d(-3), totalTraffic: 1450, organicTraffic: 1020, impressions: 18500, clicks: 710, ctr: 3.8, avgPosition: 16.2, indexedPages: 48, leads: 16, updatedBy: "Nguyễn Văn SEO", notes: "Traffic tăng tốt nhờ bài tượng Phật" },
+  ];
+
   return {
     brands, websites, socials, places, tasks, webContents, socialPosts, mapPosts,
-    reviews, videos, orders, people, seoChecks, entities, keywords, backlinks,
+    reviews, videos, orders, people, seoChecks, entities, keywords, backlinks, growth,
     plans: ["Tết 2026", "Khai trương showroom", "Sale tháng 12", "Brand 2026"],
     topics: ["Quà tặng doanh nghiệp", "Sản phẩm mới", "Văn hóa Bát Tràng", "Phong thủy", "Khuyến mãi"],
   };
@@ -742,7 +772,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 6 }
+    { name: "base-mkt-store", version: 7 }
   )
 );
 
