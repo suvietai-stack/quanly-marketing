@@ -839,17 +839,51 @@ export function getUserPermissions(user: User | null | undefined, roles: Role[])
   return new Set(role.permissions);
 }
 
+/** Returns true if a record is "owned" by the user — used for *.view_mine scoping. */
+export function isOwnRecord(record: any, userId: string | null | undefined): boolean {
+  if (!record || !userId) return false;
+  const fields = [
+    "createdBy", "created_by", "ownerId", "owner",
+    "assignee", "assigneeId", "assignedTo", "assigned_to",
+    "writer", "writerId", "reviewer", "reviewerId",
+    "scriptReviewer", "videoReviewer",
+    "requester", "requesterId",
+    "publisher", "publisherId",
+  ];
+  for (const f of fields) {
+    const v = record[f];
+    if (typeof v === "string" && v === userId) return true;
+    if (Array.isArray(v) && v.includes(userId)) return true;
+  }
+  return false;
+}
+
 export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
   const isSuperAdmin = u?.roleId === SUPER_ADMIN_ID || !!u?.system;
   const isAdmin = isSuperAdmin || u?.roleId === ADMIN_ROLE_ID;
+  const can = (key: PermissionKey) => {
+    if (isAdmin) return true;
+    return perms.has(key) || perms.has(resolvePermKey(key));
+  };
+  const canAny = (...keys: PermissionKey[]) => keys.some(can);
+  const canAll = (...keys: PermissionKey[]) => keys.every(can);
+  const canSee = (record: any, viewAllKey: PermissionKey, viewMineKey: PermissionKey) => {
+    if (isAdmin) return true;
+    if (can(viewAllKey)) return true;
+    if (can(viewMineKey)) return isOwnRecord(record, u?.id);
+    return false;
+  };
   return {
     user: u,
     role: u ? roles.find((r) => r.id === u.roleId) : undefined,
     perms,
-    can: (key: PermissionKey) => isAdmin || perms.has(key),
+    can,
+    canAny,
+    canAll,
+    canSee,
     isSuperAdmin,
     isAdmin,
   };
