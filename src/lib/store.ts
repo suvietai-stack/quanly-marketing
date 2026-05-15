@@ -208,11 +208,22 @@ export interface Backlink {
   targetUrl?: string;
   anchorText?: string;
   keyword?: string;
+  topic?: string;
   type: BacklinkType;
   cost?: number;
   publishDate?: string;
   owner?: string;
   status: BacklinkStatus;
+  notes?: string;
+}
+
+export interface WebTopic {
+  id: ID;
+  websiteId: ID;
+  name: string;            // Topic
+  mainKeyword?: string;    // Từ khóa chủ đề
+  sheetLink?: string;      // Link Sheet
+  updatedAt?: string;      // Ngày cập nhật
   notes?: string;
 }
 
