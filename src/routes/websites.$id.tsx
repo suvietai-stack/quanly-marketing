@@ -12,6 +12,7 @@ import { ContentDetail } from "@/components/ContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
 import { BacklinksTab } from "@/components/BacklinksTab";
+import { BasicReportTab } from "@/components/BasicReportTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
