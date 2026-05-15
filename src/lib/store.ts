@@ -893,10 +893,18 @@ const seed = () => {
   };
 };
 
+const emptyState = () => ({
+  brands: [], websites: [], socials: [], places: [], tasks: [],
+  webContents: [], socialPosts: [], mapPosts: [], reviews: [], videos: [],
+  orders: [], people: [], seoChecks: [], entities: [], keywords: [],
+  backlinks: [], growth: [], webTopics: [],
+  plans: [] as string[], topics: [] as string[],
+});
+
 export const useStore = create<State>()(
   persist(
     (set) => ({
-      ...seed(),
+      ...emptyState(),
       add: (key, item) => set((s) => ({ [key]: [...(s[key] as any[]), item] } as any)),
       update: (key, id, patch) =>
         set((s) => ({
@@ -904,8 +912,9 @@ export const useStore = create<State>()(
         } as any)),
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
+      resetAll: (mode) => set(() => (mode === "demo" ? { ...seed() } : { ...emptyState() }) as any),
     }),
-    { name: "base-mkt-store", version: 9 }
+    { name: "base-mkt-store", version: 10 }
   )
 );
 
