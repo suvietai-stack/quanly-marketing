@@ -104,8 +104,8 @@ function LocalPage() {
           <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
             <span>{posts} bài đăng · {reviews} review</span>
             <div className="flex gap-1">
-              <Button size="icon" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3.5 w-3.5" /></Button>
-              <Button size="icon" variant="ghost" onClick={() => s.remove("places", p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3.5 w-3.5" /></Button>}
+              {canDelete && <Button size="icon" variant="ghost" onClick={() => s.remove("places", p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
             </div>
           </div>
         </CardContent></Card>;
