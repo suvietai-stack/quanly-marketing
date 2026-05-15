@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type DesignOrder, type OrderStatus } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
