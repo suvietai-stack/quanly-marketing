@@ -180,6 +180,9 @@ export interface KeywordTrack {
   status: KeywordRankStatus;
   notes?: string;
   plan?: string;
+  contentId?: ID;
+  isMain?: boolean;
+  extra?: boolean;
 }
 
 export type BacklinkType =
@@ -695,12 +698,19 @@ const seed = () => {
   ];
 
   const keywords: KeywordTrack[] = [
-    { id: "k1", websiteId: "w1", keyword: "tượng Phật gốm", topic: "Tượng phong thủy", targetUrl: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran", type: "Từ khóa chính", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 12, previousTop: 18, status: "Tăng hạng" },
-    { id: "k2", websiteId: "w1", keyword: "ấm chén in logo", topic: "Quà tặng doanh nghiệp", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", type: "Từ khóa sản phẩm", searchIntent: "Mua hàng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 6, previousTop: 9, status: "Top 10" },
-    { id: "k3", websiteId: "w1", keyword: "bát đĩa nhà hàng", topic: "Sản phẩm nhà hàng", targetUrl: "https://xuonggomsuviet.vn/bat-dia-nha-hang", type: "Từ khóa danh mục", searchIntent: "Mua hàng", owner: "Phạm Anh SEO", lastCheckDate: d(-2), currentTop: 15, previousTop: 11, status: "Tụt hạng" },
-    { id: "k4", websiteId: "w1", keyword: "gốm sứ Bát Tràng", topic: "Thương hiệu", type: "Từ khóa thương hiệu", searchIntent: "Điều hướng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-3), currentTop: 3, previousTop: 4, status: "Top 3" },
-    { id: "k5", websiteId: "w1", keyword: "bình hút lộc Bát Tràng", topic: "Phong thủy", type: "Từ khóa phụ", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", currentTop: undefined, previousTop: undefined, status: "Chưa check" },
-    { id: "k6", websiteId: "w1", keyword: "quà tặng tết doanh nghiệp", topic: "Quà tặng doanh nghiệp", type: "Từ khóa chính", plan: "Tết 2026", searchIntent: "Mua hàng", owner: "Hoàng Mai Content", lastCheckDate: d(-5), currentTop: 0, previousTop: 35, status: "Mất top" },
+    // Linked to wc7 (indexed) — main keyword
+    { id: "k1", websiteId: "w1", contentId: "wc7", isMain: true, keyword: "tượng Phật gốm", topic: "Tượng phong thủy", targetUrl: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran", type: "Từ khóa chính", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 3, previousTop: 20, status: "Tăng hạng" },
+    // Sub keywords for wc7
+    { id: "k1a", websiteId: "w1", contentId: "wc7", keyword: "tượng Phật Bát Tràng", type: "Từ khóa phụ", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 8, previousTop: 15, status: "Tăng hạng" },
+    { id: "k1b", websiteId: "w1", contentId: "wc7", keyword: "tượng Phật bằng gốm", type: "Từ khóa phụ", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 12, previousTop: 18, status: "Tăng hạng" },
+    { id: "k1c", websiteId: "w1", contentId: "wc7", keyword: "tượng Phật gốm sứ", type: "Từ khóa phụ", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 25, previousTop: 22, status: "Tụt hạng" },
+
+    // Linked to wc6 (indexed)
+    { id: "k2", websiteId: "w1", contentId: "wc6", isMain: true, keyword: "bảo quản gốm sứ", topic: "Hướng dẫn", targetUrl: "https://xuonggomsuviet.vn/bao-quan-gom-su", type: "Từ khóa chính", owner: "Nguyễn Văn SEO", lastCheckDate: d(-2), currentTop: 5, previousTop: 9, status: "Top 10" },
+
+    // Standalone (no content link) — extra
+    { id: "k4", websiteId: "w1", extra: true, keyword: "gốm sứ Bát Tràng", topic: "Thương hiệu", type: "Từ khóa thương hiệu", searchIntent: "Điều hướng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-3), currentTop: 3, previousTop: 4, status: "Top 3" },
+    { id: "k6", websiteId: "w1", extra: true, keyword: "quà tặng tết doanh nghiệp", topic: "Quà tặng doanh nghiệp", type: "Từ khóa chính", plan: "Tết 2026", searchIntent: "Mua hàng", owner: "Hoàng Mai Content", lastCheckDate: d(-5), currentTop: 0, previousTop: 35, status: "Mất top" },
   ];
 
   const backlinks: Backlink[] = [
@@ -732,7 +742,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 5 }
+    { name: "base-mkt-store", version: 6 }
   )
 );
 
