@@ -76,6 +76,12 @@ const map: Record<string, string> = {
   "Mất top": "bg-destructive/15 text-destructive border-destructive/30",
   "Chưa check": "bg-muted text-muted-foreground border-border",
 
+  // Backlink statuses
+  "Dự kiến": "bg-accent text-accent-foreground border-border",
+  "Đã đặt": "bg-info/15 text-info border-info/30",
+  "Đã kiểm tra link": "bg-success/15 text-success border-success/30",
+  "Lỗi / mất link": "bg-destructive/15 text-destructive border-destructive/30",
+
   // Priorities
   "Thấp": "bg-muted text-muted-foreground border-border",
   "Trung bình": "bg-info/15 text-info border-info/30",
