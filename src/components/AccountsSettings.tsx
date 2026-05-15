@@ -428,7 +428,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Label className="text-sm">Nhóm quyền:</Label>
         <Select value={group} onValueChange={setGroup}>
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
@@ -437,7 +437,11 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
             {PERMISSION_GROUPS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
-        <span className="text-xs text-muted-foreground ml-auto">Bảng tổng hợp quyền theo từng role. Để chỉnh sửa, vào tab Role.</span>
+        <div className="relative w-[260px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm quyền..." className="pl-8 h-9" />
+        </div>
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} quyền · Chỉnh sửa ở tab Role.</span>
       </div>
       <Card><CardContent className="p-0 overflow-auto max-h-[70vh]">
         <table className="w-full text-xs">
