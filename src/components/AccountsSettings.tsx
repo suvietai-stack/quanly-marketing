@@ -15,8 +15,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check,
+  Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check, Search,
 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 
 const STATUSES: AccountStatus[] = ["Chờ duyệt","Đang hoạt động","Tạm khóa","Từ chối","Lưu trữ"];
