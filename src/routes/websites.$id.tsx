@@ -12,6 +12,7 @@ import { ContentDetail } from "@/components/ContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
 import { BacklinksTab } from "@/components/BacklinksTab";
+import { BasicReportTab } from "@/components/BasicReportTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,7 @@ function WebsiteDetail() {
   const w = s.websites.find((x) => x.id === id);
   const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState("info");
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");
@@ -147,7 +149,7 @@ function WebsiteDetail() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="info">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
           <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>
@@ -159,7 +161,7 @@ function WebsiteDetail() {
           <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
-          <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
+          <TabsTrigger value="report">Báo cáo cơ bản</TabsTrigger>
         </TabsList>
 
         {/* TAB 1 — THÔNG TIN DỰ ÁN */}
@@ -366,18 +368,11 @@ function WebsiteDetail() {
 
         {/* TAB 6 — REPORT (placeholder) */}
         <TabsContent value="report" className="mt-4">
-          <Card>
-            <CardContent className="p-12 text-center space-y-3">
-              <div className="mx-auto h-14 w-14 rounded-full bg-muted flex items-center justify-center">
-                <FileText className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">Báo cáo Web — Sắp ra mắt</h3>
-              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-                Báo cáo Web sẽ được phát triển ở giai đoạn sau để theo dõi tăng trưởng website,
-                số bài đã đăng, index, traffic, từ khóa và hiệu quả SEO.
-              </p>
-            </CardContent>
-          </Card>
+          <BasicReportTab
+            websiteId={w.id}
+            onOpenContent={setOpenContent}
+            onJumpTab={(t) => setTab(t)}
+          />
         </TabsContent>
       </Tabs>
 
