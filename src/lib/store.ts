@@ -914,7 +914,7 @@ export const useStore = create<State>()(
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
       resetAll: (mode) => set(() => (mode === "demo" ? { ...seed() } : { ...emptyState() }) as any),
     }),
-    { name: "base-mkt-store", version: 10 }
+    { name: "base-mkt-store", version: 11 }
   )
 );
 
