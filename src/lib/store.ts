@@ -42,16 +42,30 @@ export interface Website {
   notes?: string;
 }
 
+export type SocialPlatform =
+  | "Facebook Page" | "Facebook Group" | "TikTok" | "YouTube"
+  | "Instagram" | "Zalo OA" | "LinkedIn" | "Khác";
+export const SOCIAL_PLATFORMS: SocialPlatform[] = [
+  "Facebook Page", "Facebook Group", "TikTok", "YouTube",
+  "Instagram", "Zalo OA", "LinkedIn", "Khác",
+];
+
+export type SocialChannelStatus =
+  | "Đang xây" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng" | "Lưu trữ";
+export const SOCIAL_CHANNEL_STATUSES: SocialChannelStatus[] = [
+  "Đang xây", "Đang vận hành", "Đang tối ưu", "Tạm dừng", "Lưu trữ",
+];
+
 export interface SocialChannel {
   id: ID;
   name: string;
-  platform: "Facebook Page" | "Facebook Group" | "TikTok" | "YouTube" | "Instagram" | "Zalo OA" | "Khác";
+  platform: SocialPlatform;
   url?: string;
   brandId: ID;
   owner?: string;
   frequency?: string;
   goal?: string;
-  status: "Đang xây" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng";
+  status: SocialChannelStatus;
   notes?: string;
 }
 
