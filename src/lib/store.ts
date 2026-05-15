@@ -307,6 +307,8 @@ export interface WebContent {
   optimizeGoal?: string;
   oldLink?: string;
   optimizeNotes?: string;
+  // Lịch sử xử lý
+  history?: WebContentHistoryEntry[];
 }
 
 export type SocialStatus =
