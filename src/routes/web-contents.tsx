@@ -62,7 +62,7 @@ function AllContents() {
       "web.content_view_all",
       "web.content_view_mine",
       (c) =>
-        !!userName && (c.writer === userName || c.outlineReviewer === userName || c.articleReviewer === userName || c.publisher === userName),
+        !!userName && (c.writer === userName || c.outlineReviewer === userName || c.draftReviewer === userName || c.publisher === userName || c.assigner === userName),
     ),
     [webContents, scopeList, userName],
   );
