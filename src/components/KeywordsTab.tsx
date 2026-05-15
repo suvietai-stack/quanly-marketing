@@ -567,6 +567,18 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
           {updating && <UpdateForm row={updating.row} onSubmit={(p) => { saveTop(updating.row, p); setUpdating(null); }} onClose={() => setUpdating(null)} />}
         </DialogContent>
       </Dialog>
+
+      {/* Add keyword dialog */}
+      <Dialog open={addingKw} onOpenChange={setAddingKw}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Thêm từ khóa theo dõi</DialogTitle></DialogHeader>
+          <AddKeywordForm
+            contents={indexedContents}
+            onSubmit={(p) => { addManualKeyword(p); setAddingKw(false); }}
+            onClose={() => setAddingKw(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
