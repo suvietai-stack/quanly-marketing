@@ -402,11 +402,30 @@ export interface DesignOrder {
 export interface Person {
   id: ID;
   name: string;
-  role?: string;
+  role?: string;            // Role name (Super Admin, Content...) or vị trí
+  position?: string;        // Vị trí / bộ phận
   email?: string;
   phone?: string;
   status: "Đang làm" | "Tạm nghỉ";
+  accountStatus?: "Chờ duyệt" | "Đang hoạt động" | "Tạm khóa" | "Từ chối" | "Lưu trữ";
+  isSystem?: boolean;
   notes?: string;
+}
+
+export function userToPerson(u: AuthUser, roles: AuthRole[]): Person {
+  const role = roles.find((r) => r.id === u.roleId);
+  return {
+    id: u.id,
+    name: u.fullName || u.username,
+    role: role?.name,
+    position: u.desiredPosition,
+    email: u.email,
+    phone: u.phone,
+    status: u.status === "Đang hoạt động" ? "Đang làm" : "Tạm nghỉ",
+    accountStatus: u.status,
+    isSystem: !!u.system,
+    notes: u.notes,
+  };
 }
 
 export type GrowthPeriodType = "Tuần" | "Tháng" | "Quý";
