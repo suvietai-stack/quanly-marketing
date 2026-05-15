@@ -424,6 +424,7 @@ export interface SeoCheckItem {
   websiteId: ID;
   group: string;
   name: string;
+  description?: string;
   done: boolean;
   checker?: string;
   checkedAt?: string;
@@ -479,69 +480,177 @@ type Collections = {
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
-// SEO checklist template (groups + items)
-export const SEO_CHECK_TEMPLATE: Record<string, string[]> = {
-  "Cài đặt nền tảng": [
-    "Website đã có SSL/HTTPS",
-    "Đã kết nối Google Search Console",
-    "Đã kết nối Google Analytics",
-    "Đã cài plugin SEO",
-    "Đã tạo sitemap.xml",
+// SEO checklist template (groups + items with description)
+export type SeoCheckTemplateItem = { name: string; description: string };
+export const SEO_CHECK_TEMPLATE: Record<string, SeoCheckTemplateItem[]> = {
+  "Domain": [
+    { name: "www & non-www", description: "Kiểm tra website đang sử dụng phiên bản nào và phiên bản còn lại đã tự động redirect về phiên bản sử dụng hay chưa." },
+    { name: "http & https", description: "Kiểm tra website đã cài chứng chỉ bảo mật SSL và chuyển hướng đúng sang https hay chưa." },
   ],
-  "Index / Crawl": [
-    "Đã gửi sitemap lên Search Console",
-    "Website không bị chặn index",
-    "Robots.txt không chặn nhầm",
-    "Trang chủ đã index",
-    "Danh mục chính đã index",
+  "Cấu trúc web": [
+    { name: "Có đầy đủ 6 loại trang đích", description: "Kiểm tra website đã có đầy đủ các loại trang đích quan trọng hay chưa." },
   ],
-  "Tốc độ website": [
-    "Đã bật cache",
-    "Đã nén ảnh",
-    "Đã bật lazy load",
-    "Đã kiểm tra tốc độ mobile",
-    "Đã kiểm tra tốc độ desktop",
+  "Trải nghiệm người dùng": [
+    { name: "Giao diện trang chủ", description: "Cần kiểm tra giao diện và nội dung có phù hợp với bộ từ khóa hay chưa." },
+    { name: "Giao diện danh mục cha", description: "Cần kiểm tra giao diện và nội dung danh mục cha có phù hợp với bộ từ khóa hay chưa." },
+    { name: "Giao diện danh mục con", description: "Cần kiểm tra giao diện và nội dung danh mục con có phù hợp với bộ từ khóa hay chưa." },
+    { name: "Giao diện trang sản phẩm", description: "Cần kiểm tra giao diện và nội dung trang sản phẩm có phù hợp với bộ từ khóa hay chưa." },
+    { name: "Giao diện trang bài viết", description: "Cần kiểm tra giao diện và nội dung trang bài viết có phù hợp với bộ từ khóa hay chưa." },
+    { name: "Giao diện thương hiệu", description: "Cần kiểm tra giao diện và nội dung trang thương hiệu có phù hợp với bộ từ khóa hay chưa." },
   ],
-  "Cấu trúc website": [
-    "Menu chính rõ ràng",
-    "Danh mục sản phẩm rõ ràng",
-    "URL thân thiện",
-    "Có breadcrumb",
-    "Không có link menu bị lỗi",
+  "Kiểm tra tính thân thiện và cấu trúc URL": [
+    { name: "Home: domain.com", description: "Kiểm tra URL trang chủ đã được tối ưu theo đúng mẫu hay chưa." },
+    { name: "Danh mục sản phẩm lớn: domain.com/danh-muc-lon/", description: "Kiểm tra URL danh mục lớn đã được tối ưu theo cấu trúc phân tầng hay chưa." },
+    { name: "Danh mục sản phẩm nhỏ: domain.com/danh-muc-lon/danh-muc-nho/", description: "Kiểm tra URL danh mục nhỏ đã được tối ưu theo cấu trúc phân tầng hay chưa." },
+    { name: "Trang sản phẩm", description: "Kiểm tra URL trang sản phẩm đã thân thiện, ngắn gọn và dễ đọc hay chưa." },
+    { name: "Danh mục tin tức", description: "Kiểm tra URL danh mục tin tức đã được tối ưu hay chưa." },
+    { name: "Danh mục nhỏ tin tức", description: "Kiểm tra URL danh mục nhỏ tin tức đã được tối ưu hay chưa." },
+    { name: "Bài viết: domain.com/danh-muc-lon/danh-muc-nho/bai-viet.html", description: "Kiểm tra URL bài viết đã được tối ưu theo đúng mẫu hay chưa." },
+    { name: "TAG: domain.com/tag", description: "Kiểm tra URL tag đã được tối ưu theo đúng mẫu hay chưa." },
+    { name: "Page tĩnh: domain.com/page-tinh.html", description: "Kiểm tra URL page tĩnh đã được tối ưu theo đúng mẫu hay chưa." },
   ],
-  "Onpage kỹ thuật": [
-    "Trang chủ có title SEO",
-    "Trang chủ có meta description",
-    "Danh mục chính có title SEO",
-    "Danh mục chính có meta description",
-    "Ảnh có ALT",
-    "Có internal link cơ bản",
+  "HEADING": [
+    { name: "Heading trang chủ", description: "Kiểm tra tình trạng heading trang chủ." },
+    { name: "Heading trang dịch vụ / sản phẩm", description: "Kiểm tra heading trang dịch vụ hoặc trang sản phẩm." },
+    { name: "Heading trang danh mục con", description: "Kiểm tra heading danh mục con." },
+    { name: "Heading trang danh mục bài viết", description: "Kiểm tra heading trang danh mục bài viết." },
+    { name: "Heading TAG", description: "Kiểm tra heading trang tag." },
+    { name: "Heading Page tĩnh", description: "Kiểm tra heading page tĩnh." },
   ],
-  "Schema": [
-    "Có schema Organization / Local Business",
-    "Có schema Breadcrumb",
-    "Có schema Article",
-    "Có schema Product",
-    "Schema không báo lỗi nghiêm trọng",
+  "Kiểm tra robots.txt": [
+    { name: "Đã có file robots.txt chưa?", description: "Kiểm tra website đã có file robots.txt hay chưa." },
+    { name: "Có link sitemap ở cuối chưa?", description: "Kiểm tra trong robots.txt đã có khai báo sitemap hay chưa." },
+    { name: "File robots.txt chặn gì hay sai?", description: "Kiểm tra robots.txt có chặn nhầm trang quan trọng hay không." },
   ],
-  "WooCommerce SEO": [
-    "Sản phẩm có title rõ ràng",
-    "Sản phẩm có mô tả ngắn",
-    "Sản phẩm có mô tả chi tiết",
-    "Sản phẩm có ảnh đại diện",
-    "Danh mục sản phẩm có mô tả",
-    "Không có quá nhiều sản phẩm trùng nội dung",
+  "Kiểm tra Sitemap": [
+    { name: "Sitemap Google", description: "Kiểm tra website có sitemap XML chưa." },
+    { name: "Sitemap Google đã chuẩn chưa?", description: "Kiểm tra sitemap có đúng cấu trúc và gửi lên Google Search Console được hay chưa." },
+    { name: "Sitemap người dùng", description: "Kiểm tra website có sitemap người dùng hay chưa." },
   ],
-  "Tracking / Bảo mật": [
-    "Đã gắn Google Analytics",
-    "Đã gắn Google Search Console",
-    "Form liên hệ hoạt động",
-    "Nút gọi điện hoạt động",
-    "Nút Zalo hoạt động",
-    "Website không báo lỗi bảo mật",
-    "Plugin quan trọng được cập nhật",
+  "Tốc độ tải trang": [
+    { name: "PageSpeed Insights", description: "Kiểm tra tốc độ tải trang bằng PageSpeed Insights, bao gồm desktop và mobile." },
+  ],
+  "Mobile friendly": [
+    { name: "Kiểm tra giao diện thiết bị di động", description: "Kiểm tra website có thân thiện với thiết bị di động hay chưa." },
+  ],
+  "Đường dẫn ngược Breadcrumb": [
+    { name: "Đường dẫn ngược đúng mẫu", description: "Kiểm tra website đã có đường dẫn ngược Breadcrumb cho danh mục, bài viết, sản phẩm hay chưa." },
+    { name: "Có đường dẫn ngược", description: "Kiểm tra website có hiển thị breadcrumb hay không." },
+    { name: "Gắn link đúng", description: "Kiểm tra breadcrumb có gắn đúng link phân cấp hay chưa." },
+    { name: "Schema cho đường dẫn ngược", description: "Kiểm tra breadcrumb đã có khai báo schema hay chưa." },
+  ],
+  "Rich snippet": [
+    { name: "Đánh giá sao trên trang sản phẩm", description: "Kiểm tra website đã có đánh giá sao cho bài viết hoặc sản phẩm hay chưa." },
+  ],
+  "Instant Article": [
+    { name: "Table of Content trên trang bài viết", description: "Kiểm tra website đã có table of content trong trang bài viết hay chưa." },
+  ],
+  "Kiểm tra thẻ ALT": [
+    { name: "Toàn website", description: "Kiểm tra thẻ ALT trên toàn bộ website đã đầy đủ hay chưa." },
+  ],
+  "Favicon": [
+    { name: "Favicon", description: "Kiểm tra website đã có favicon chưa." },
+  ],
+  "Comment": [
+    { name: "Comment mặc định / Comment mạng xã hội", description: "Kiểm tra website đã có phần comment cho người dùng hay chưa." },
+  ],
+  "Kiểm tra Schema": [
+    { name: "Cấu trúc dữ liệu trên từng loại trang", description: "Kiểm tra dữ liệu có cấu trúc của website." },
+    { name: "Trang chủ", description: "Kiểm tra schema trang chủ." },
+    { name: "Trang sản phẩm", description: "Kiểm tra schema trang sản phẩm." },
+    { name: "Trang bài viết", description: "Kiểm tra schema trang bài viết." },
+  ],
+  "Meta Robots": [
+    { name: "Indexfollow", description: "Kiểm tra tổng số page index/follow của website." },
+    { name: "noindexnofollow", description: "Kiểm tra tổng số page noindex/nofollow và tính hợp lý của các page này." },
+  ],
+  "Kiểm tra thẻ Canonical": [
+    { name: "Trang gốc và phân trang", description: "Kiểm tra các trang phân trang và phiên bản website đã có thẻ canonical hay chưa." },
+    { name: "Bộ lọc trong trang sản phẩm", description: "Kiểm tra canonical của các URL bộ lọc trong trang sản phẩm." },
+    { name: "Các trang sản phẩm canonical về chính nó", description: "Kiểm tra canonical của các trang sản phẩm có trỏ về chính nó hay chưa." },
+  ],
+  "Thẻ ngôn ngữ Hreflang": [
+    { name: "Hreflang", description: "Kiểm tra website đã có thẻ ngôn ngữ hreflang hay chưa." },
+  ],
+  "Thiết lập mã cài đặt Tag Manager": [
+    { name: "Phân tích số liệu và theo dõi tình trạng website", description: "Kiểm tra website đã thiết lập mã cài đặt Tag Manager hay chưa." },
+  ],
+  "Kiểm tra quyền admin website": [
+    { name: "Chỉnh sửa nội dung trên website", description: "Kiểm tra tài khoản được cấp có đủ quyền chỉnh sửa nội dung hay chưa." },
+  ],
+  "Kiểm tra giao diện trên nhiều trình duyệt": [
+    { name: "Google Chrome, Mozilla Firefox, Internet Explorer, Safari, Cốc Cốc...", description: "Sử dụng website trên các trình duyệt khác nhau để xem có lỗi hiển thị hay không." },
+  ],
+  "Kiểm tra các nút Social": [
+    { name: "Like, Share", description: "Kiểm tra website đã có các nút chia sẻ, nút like của mạng xã hội hay chưa." },
+  ],
+  "Liên kết với Fanpage": [
+    { name: "Fanpage Facebook", description: "Kiểm tra website đã có phần liên kết đến Fanpage chưa." },
+  ],
+  "Live chat": [
+    { name: "Live chat", description: "Kiểm tra website đã có phần live chat cho người dùng hay chưa." },
+  ],
+  "Điều hướng Sidebar": [
+    { name: "Điều hướng sidebar", description: "Kiểm tra website đã có thanh điều hướng sidebar hợp lý hay chưa." },
+  ],
+  "Kiểm tra chức năng thanh tìm kiếm": [
+    { name: "Thanh tìm kiếm trên tất cả các trang", description: "Kiểm tra chức năng tìm kiếm trên toàn trang có trả kết quả đúng theo truy vấn hay không." },
+  ],
+  "Kiểm tra và xử lý trang 404": [
+    { name: "Đẹp mắt", description: "Kiểm tra giao diện trang 404 có dễ nhìn hay không." },
+    { name: "Có nút homepage, thanh Search", description: "Kiểm tra trang 404 có nút quay lại trang chủ và thanh tìm kiếm hay không." },
+    { name: "Có gợi ý nội dung hấp dẫn", description: "Kiểm tra trang 404 có gợi ý nội dung khác cho người dùng hay không." },
+    { name: "Mã phản hồi là 404", description: "Kiểm tra trang lỗi có trả đúng mã HTTP 404 hay không." },
+    { name: "URL giữ nguyên", description: "Kiểm tra URL lỗi có giữ nguyên để người dùng nhận biết hay không." },
+    { name: "follow", description: "Kiểm tra cấu hình follow/noindex của trang 404 nếu cần." },
+  ],
+  "Internal Link": [
+    { name: "follow", description: "Kiểm tra số lượng internal link trên website và tình trạng link. Kiểm tra tính hợp lý của internal link." },
+  ],
+  "External Link": [
+    { name: "dofollow/nofollow", description: "Kiểm tra số lượng external link trên website và tình trạng link. Kiểm tra tính hợp lý của external link." },
+  ],
+  "GTmetrix": [
+    { name: "Kiểm tra tốc độ tải trang", description: "Kiểm tra tốc độ tải trang bằng GTmetrix." },
+  ],
+  "Giúp Google tìm thấy các trang trên web": [
+    { name: "Liên kết trong code HTML phải để Google đọc được", description: "Link liên kết tới trang đích nên có cấu trúc chuẩn dạng thẻ a href để Google có thể thu thập dữ liệu." },
+  ],
+  "CMS - Quyền quản trị": [
+    { name: "Quản trị table content", description: "Kiểm tra CMS có quản trị được table content hay không." },
+    { name: "Cho phép hiển thị content hoặc không", description: "Kiểm tra CMS có cho bật/tắt hiển thị nội dung hay không." },
+    { name: "Table content cần phải có đường dẫn đúng chuẩn", description: "Kiểm tra đường dẫn trong table content có đúng chuẩn SEO hay không." },
+  ],
+  "CMS - Meta title, description, keywords, URL tất cả các trang": [
+    { name: "Tất cả dữ liệu bài viết và tin trong bài viết", description: "Kiểm tra có quản trị được Alt, Title, URL ảnh trong bài viết hay không." },
+    { name: "Ảnh sản phẩm và ảnh trong bài viết sản phẩm", description: "Kiểm tra có quản trị được Alt, Title, URL ảnh sản phẩm hay không." },
+    { name: "Thêm mới, xóa, edit bài viết", description: "Kiểm tra CMS có cho thêm mới, xóa và sửa bài viết hay không." },
+  ],
+  "CMS - Tính năng trong một bài viết": [
+    { name: "Liên kết với fanpage", description: "Kiểm tra bài viết có thể liên kết với fanpage hay không." },
+    { name: "Có nút like, share bài đăng lên các mạng xã hội", description: "Kiểm tra bài viết có nút like/share lên mạng xã hội hay không." },
+    { name: "Có chỗ để đăng tạo các thẻ Title, Meta Description, Meta Keywords, dẫn URL, các thẻ tiêu đề H1, H2, H3", description: "Kiểm tra CMS có đầy đủ trường nhập SEO cơ bản cho bài viết hay không." },
+    { name: "Tự động lưu bài viết", description: "Kiểm tra CMS có chức năng tự động lưu bài viết hay không." },
+    { name: "Tính năng xem thử trước khi đăng", description: "Kiểm tra CMS có chức năng xem trước bài viết trước khi đăng hay không." },
+    { name: "Mã HTML trong khi đăng bài không bị lỗi", description: "Kiểm tra mã HTML trong khi đăng bài có bị lỗi hiển thị hay không." },
+    { name: "Live chat trong bài viết", description: "Kiểm tra live chat có hiển thị trong bài viết nếu cần hay không." },
+  ],
+  "CMS - Có đầy đủ tính năng soạn thảo văn bản": [
+    { name: "Có thể thêm video, hình ảnh", description: "Kiểm tra trình soạn thảo có thể thêm video, hình ảnh hay không." },
+    { name: "Định dạng heading", description: "Kiểm tra trình soạn thảo có định dạng heading hay không." },
+    { name: "Phông chữ, kích thước", description: "Kiểm tra trình soạn thảo có chỉnh được phông chữ và kích thước hay không." },
+    { name: "Trình bôi đậm, in nghiêng, gạch chân", description: "Kiểm tra trình soạn thảo có các định dạng cơ bản hay không." },
+    { name: "Tính năng trích dẫn", description: "Kiểm tra trình soạn thảo có tính năng trích dẫn hay không." },
+    { name: "Định dạng UL/LI", description: "Kiểm tra trình soạn thảo có tạo danh sách bullet/number hay không." },
+    { name: "Căn lề trái, phải, giữa, hai bên", description: "Kiểm tra trình soạn thảo có căn lề đầy đủ hay không." },
+    { name: "Màu chữ, màu nền", description: "Kiểm tra trình soạn thảo có chỉnh màu chữ và màu nền hay không." },
+    { name: "Thêm, xóa đường dẫn trong bài", description: "Kiểm tra trình soạn thảo có thêm và xóa link trong bài hay không." },
+    { name: "Kẻ bảng, chỉnh sửa bảng", description: "Kiểm tra trình soạn thảo có tạo và chỉnh sửa bảng hay không." },
+    { name: "Xóa định dạng", description: "Kiểm tra trình soạn thảo có chức năng xóa định dạng hay không." },
+    { name: "Mở link trên tab mới", description: "Kiểm tra link trong bài có thể thiết lập mở ở tab mới hay không." },
   ],
 };
+
 
 export const SEO_GROUPS = Object.keys(SEO_CHECK_TEMPLATE);
 
@@ -707,8 +816,8 @@ const seed = () => {
   const seoChecks: SeoCheckItem[] = [];
   websites.forEach((w) => {
     SEO_GROUPS.forEach((g) => {
-      SEO_CHECK_TEMPLATE[g].forEach((name) => {
-        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name, done: Math.random() > 0.55 });
+      SEO_CHECK_TEMPLATE[g].forEach((it) => {
+        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name: it.name, description: it.description, done: false });
       });
     });
   });
@@ -772,7 +881,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 7 }
+    { name: "base-mkt-store", version: 8 }
   )
 );
 
@@ -797,9 +906,9 @@ export const ensureSeoChecks = (
   const have = new Set(existing.filter((c) => c.websiteId === websiteId).map((c) => `${c.group}::${c.name}`));
   const missing: SeoCheckItem[] = [];
   SEO_GROUPS.forEach((g) => {
-    SEO_CHECK_TEMPLATE[g].forEach((name) => {
-      if (!have.has(`${g}::${name}`)) {
-        missing.push({ id: uid(), websiteId, group: g, name, done: false });
+    SEO_CHECK_TEMPLATE[g].forEach((it) => {
+      if (!have.has(`${g}::${it.name}`)) {
+        missing.push({ id: uid(), websiteId, group: g, name: it.name, description: it.description, done: false });
       }
     });
   });

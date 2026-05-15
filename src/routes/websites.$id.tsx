@@ -14,6 +14,7 @@ import { KeywordsTab } from "@/components/KeywordsTab";
 import { BacklinksTab } from "@/components/BacklinksTab";
 import { BasicReportTab } from "@/components/BasicReportTab";
 import { GrowthTab } from "@/components/GrowthTab";
+import { TechnicalSeoTab } from "@/components/TechnicalSeoTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -224,46 +225,8 @@ function WebsiteDetail() {
         </TabsContent>
 
         {/* TAB 2 — TECHNICAL SEO */}
-        <TabsContent value="seo" className="mt-4 space-y-4">
-          <Card><CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-medium">Tiến độ Technical SEO</div>
-              <div className="text-sm text-muted-foreground">{seoDone}/{checks.length} ({seoPct}%)</div>
-            </div>
-            <Progress value={seoPct} />
-          </CardContent></Card>
-          {groups.map((g) => {
-            const items = checks.filter((c) => c.group === g);
-            const done = items.filter((c) => c.done).length;
-            const pct = Math.round((done / (items.length || 1)) * 100);
-            return (
-              <Card key={g}>
-                <CardHeader className="flex-row items-center justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-base">{g}</CardTitle>
-                    <div className="text-xs text-muted-foreground mt-0.5">{done}/{items.length} hoàn thành</div>
-                  </div>
-                  <div className="w-32"><Progress value={pct} /></div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="divide-y">
-                    {items.map((it) => (
-                      <div key={it.id} className="flex items-start gap-3 px-5 py-2.5 hover:bg-muted/30">
-                        <Checkbox checked={it.done} onCheckedChange={(v) => s.update("seoChecks", it.id, { done: !!v, checkedAt: v ? new Date().toISOString().slice(0, 10) : undefined })} className="mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <div className={`text-sm ${it.done ? "line-through text-muted-foreground" : ""}`}>{it.name}</div>
-                          <div className="grid sm:grid-cols-2 gap-2 mt-1.5">
-                            <Input className="h-8 text-xs" placeholder="Ghi chú..." value={it.notes || ""} onChange={(e) => s.update("seoChecks", it.id, { notes: e.target.value })} />
-                            <Input className="h-8 text-xs" placeholder="Link minh chứng..." value={it.proofLink || ""} onChange={(e) => s.update("seoChecks", it.id, { proofLink: e.target.value })} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <TabsContent value="seo" className="mt-4">
+          <TechnicalSeoTab websiteId={w.id} />
         </TabsContent>
 
         {/* TAB 3 — SẢN XUẤT CONTENT */}
