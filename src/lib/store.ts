@@ -232,6 +232,12 @@ export interface WebContent {
   // SEO sau đăng
   indexStatus: IndexStatus;
   indexNotes?: string;
+  // Share social SEO
+  shareSocial?: boolean;
+  shareSocialStatus?: ShareSocialStatus;
+  shareSocialDate?: string;
+  sharedEntities?: string;
+  shareNotes?: string;
   // Liên kết
   plan?: string;
   topic?: string;
