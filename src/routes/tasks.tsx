@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, fmtDate, isOverdue, uid, type Task, type TaskStatus, type TaskPriority } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -139,6 +140,10 @@ function TaskForm({ initial, onSubmit, onClose }: {
 
 function TasksPage() {
   const { tasks, brands, add, update, remove } = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("task.create");
+  const canEdit = can("task.edit");
+  const canDelete = can("task.delete");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
   const [fAssignee, setFAssignee] = useState("all");
@@ -176,7 +181,7 @@ function TasksPage() {
       <PageHeader
         title="Task To-do List"
         description="Việc lẻ, việc nhanh, việc phát sinh hằng ngày."
-        actions={
+        actions={canCreate ? (
           <Dialog open={adding} onOpenChange={setAdding}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1.5" />Thêm task</Button>
@@ -186,7 +191,7 @@ function TasksPage() {
               <TaskForm onSubmit={(t) => add("tasks", t)} onClose={() => setAdding(false)} />
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -271,7 +276,7 @@ function TasksPage() {
                         icon={<Plus className="h-5 w-5" />}
                         title={tasks.length === 0 ? "Chưa có task" : "Không có task phù hợp bộ lọc"}
                         hint={tasks.length === 0 ? "Tạo task đầu tiên để bắt đầu quản lý công việc." : undefined}
-                        action={tasks.length === 0 ? (
+                        action={tasks.length === 0 && canCreate ? (
                           <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo task đầu tiên</Button>
                         ) : undefined}
                       />
@@ -299,12 +304,16 @@ function TasksPage() {
                         <td className="px-4 py-2.5"><StatusBadge value={t.status} /></td>
                         <td className="px-4 py-2.5 text-right">
                           <div className="inline-flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => setEditing(t)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => remove("tasks", t.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            {canEdit && (
+                              <Button size="icon" variant="ghost" onClick={() => setEditing(t)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button size="icon" variant="ghost" onClick={() => remove("tasks", t.id)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

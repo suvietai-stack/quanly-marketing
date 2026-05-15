@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type LocalPlace, type MapPost, type MapReview } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -48,6 +49,10 @@ function PlaceForm({ initial, onSubmit, onClose }: { initial?: Partial<LocalPlac
 
 function LocalPage() {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("local.create");
+  const canEdit = can("local.edit");
+  const canDelete = can("local.delete");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
   const [fStatus, setFStatus] = useState("all");
@@ -62,11 +67,11 @@ function LocalPage() {
 
   return <>
     <PageHeader title="Local Map" description="Quản lý Google Map / Google Business Profile và công việc local marketing."
-      actions={<Dialog open={adding} onOpenChange={setAdding}>
+      actions={canCreate ? <Dialog open={adding} onOpenChange={setAdding}>
         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1.5" />Thêm địa điểm</Button></DialogTrigger>
         <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Tạo địa điểm</DialogTitle></DialogHeader>
           <PlaceForm onSubmit={(p) => s.add("places", p)} onClose={() => setAdding(false)} /></DialogContent>
-      </Dialog>} />
+      </Dialog> : undefined} />
     <FilterBar>
       <Input placeholder="Tìm địa điểm..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
       <Select value={fBrand} onValueChange={setFBrand}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
@@ -79,7 +84,7 @@ function LocalPage() {
         icon={<MapPin className="h-5 w-5" />}
         title={s.places.length === 0 ? "Chưa có địa điểm" : "Không có địa điểm phù hợp bộ lọc"}
         hint={s.places.length === 0 ? "Tạo địa điểm Google Map / GBP đầu tiên để bắt đầu quản lý local SEO." : undefined}
-        action={s.places.length === 0 ? (
+        action={s.places.length === 0 && canCreate ? (
           <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo địa điểm đầu tiên</Button>
         ) : undefined}
       />
@@ -99,8 +104,8 @@ function LocalPage() {
           <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
             <span>{posts} bài đăng · {reviews} review</span>
             <div className="flex gap-1">
-              <Button size="icon" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3.5 w-3.5" /></Button>
-              <Button size="icon" variant="ghost" onClick={() => s.remove("places", p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3.5 w-3.5" /></Button>}
+              {canDelete && <Button size="icon" variant="ghost" onClick={() => s.remove("places", p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
             </div>
           </div>
         </CardContent></Card>;

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, type Brand } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -76,6 +77,10 @@ function BrandForm({ initial, onSubmit, onClose }: {
 
 function BrandsPage() {
   const { brands, websites, socials, places, add, update, remove } = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("brand.create");
+  const canEdit = can("brand.edit");
+  const canDelete = can("brand.delete");
   const [search, setSearch] = useState("");
   const [fStatus, setFStatus] = useState("all");
   const [editing, setEditing] = useState<Brand | null>(null);
@@ -91,7 +96,7 @@ function BrandsPage() {
       <PageHeader
         title="Thương Hiệu"
         description="Hồ sơ gốc của từng thương hiệu / dự án marketing."
-        actions={
+        actions={canCreate ? (
           <Dialog open={adding} onOpenChange={setAdding}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1.5" />Thêm thương hiệu</Button>
@@ -101,7 +106,7 @@ function BrandsPage() {
               <BrandForm onSubmit={(b) => add("brands", b)} onClose={() => setAdding(false)} />
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
       <FilterBar>
         <Input placeholder="Tìm theo tên / lĩnh vực..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
@@ -119,7 +124,7 @@ function BrandsPage() {
           icon={<Plus className="h-5 w-5" />}
           title={brands.length === 0 ? "Chưa có thương hiệu" : "Không có thương hiệu phù hợp bộ lọc"}
           hint={brands.length === 0 ? "Tạo thương hiệu đầu tiên để bắt đầu quản lý dự án marketing." : "Thử bỏ bộ lọc hoặc tìm với từ khoá khác."}
-          action={brands.length === 0 ? (
+          action={brands.length === 0 && canCreate ? (
             <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo thương hiệu đầu tiên</Button>
           ) : undefined}
         />
@@ -159,8 +164,8 @@ function BrandsPage() {
                 <div className="flex items-center justify-between mt-4 pt-3 border-t">
                   <span className="text-xs text-muted-foreground">PT: {b.owner || "—"}</span>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(b)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove("brands", b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(b)}><Pencil className="h-3.5 w-3.5" /></Button>}
+                    {canDelete && <Button size="icon" variant="ghost" onClick={() => remove("brands", b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
                     <Button size="sm" variant="ghost" asChild>
                       <Link to="/brands/$id" params={{ id: b.id }}>Mở<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
                     </Button>

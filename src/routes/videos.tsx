@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type Video, type VideoStatus } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
@@ -71,6 +72,10 @@ function VideoForm({ initial, onSubmit, onClose }: { initial?: Partial<Video>; o
 
 function VideosPage() {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("video.create");
+  const canEdit = can("video.edit");
+  const canDelete = can("video.delete");
   const [view, setView] = useState<"table" | "kanban">("table");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
@@ -85,11 +90,11 @@ function VideosPage() {
 
   return <>
     <PageHeader title="Sản Xuất Video" description="Quản lý các đầu việc sản xuất video phục vụ social, web, ads."
-      actions={<Dialog open={adding} onOpenChange={setAdding}>
+      actions={canCreate ? <Dialog open={adding} onOpenChange={setAdding}>
         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1.5" />Thêm video</Button></DialogTrigger>
         <DialogContent className="max-w-3xl"><DialogHeader><DialogTitle>Tạo video</DialogTitle></DialogHeader>
           <VideoForm onSubmit={(v) => s.add("videos", v)} onClose={() => setAdding(false)} /></DialogContent>
-      </Dialog>} />
+      </Dialog> : undefined} />
     <FilterBar>
       <Input placeholder="Tìm video..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
       <Select value={fBrand} onValueChange={setFBrand}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
@@ -117,8 +122,8 @@ function VideosPage() {
             <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(v.deadline)}</td>
             <td className="px-4 py-2.5"><StatusBadge value={v.status} /></td>
             <td className="px-4 py-2.5 text-right">
-              <Button size="icon" variant="ghost" onClick={() => setEditing(v)}><Pencil className="h-3.5 w-3.5" /></Button>
-              <Button size="icon" variant="ghost" onClick={() => s.remove("videos", v.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(v)}><Pencil className="h-3.5 w-3.5" /></Button>}
+              {canDelete && <Button size="icon" variant="ghost" onClick={() => s.remove("videos", v.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
             </td>
           </tr>))}
         </tbody></table></div></CardContent></Card>
