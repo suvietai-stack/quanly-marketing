@@ -862,19 +862,38 @@ export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
+  // Only Super Admin (and the system-marked Admin account) bypasses permission checks.
+  // Role "Admin" is just a default permission bundle — it must still grant perms explicitly.
   const isSuperAdmin = u?.roleId === SUPER_ADMIN_ID || !!u?.system;
-  const isAdmin = isSuperAdmin || u?.roleId === ADMIN_ROLE_ID;
+  const isAdmin = u?.roleId === ADMIN_ROLE_ID || isSuperAdmin;
   const can = (key: PermissionKey) => {
-    if (isAdmin) return true;
+    if (isSuperAdmin) return true;
     return perms.has(key) || perms.has(resolvePermKey(key));
   };
   const canAny = (...keys: PermissionKey[]) => keys.some(can);
   const canAll = (...keys: PermissionKey[]) => keys.every(can);
   const canSee = (record: any, viewAllKey: PermissionKey, viewMineKey: PermissionKey) => {
-    if (isAdmin) return true;
+    if (isSuperAdmin) return true;
     if (can(viewAllKey)) return true;
     if (can(viewMineKey)) return isOwnRecord(record, u?.id);
     return false;
+  };
+  /**
+   * Filter a record list by data scope:
+   *   - Super Admin / view_all → return all
+   *   - view_mine → only records where the user is creator/assignee/writer/reviewer/etc
+   *   - matchOwn(item) — extra owner predicate to handle name-based matches (when records store
+   *     "owner" as a person *name* string instead of user id)
+   */
+  const scopeList = <T,>(
+    list: T[],
+    viewAllKey: PermissionKey,
+    viewMineKey: PermissionKey,
+    matchOwn?: (item: T) => boolean,
+  ): T[] => {
+    if (isSuperAdmin || can(viewAllKey)) return list;
+    if (!can(viewMineKey)) return [];
+    return list.filter((it) => isOwnRecord(it as any, u?.id) || (matchOwn ? matchOwn(it) : false));
   };
   return {
     user: u,
@@ -884,6 +903,7 @@ export function useCurrentUser() {
     canAny,
     canAll,
     canSee,
+    scopeList,
     isSuperAdmin,
     isAdmin,
   };
