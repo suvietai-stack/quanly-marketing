@@ -134,14 +134,10 @@ export function TopicDialog({
     id: "", websiteId, name: "", mainKeyword: "", sheetLink: "", updatedAt: todayISO(),
   };
   const [form, setForm] = useState<WebTopic>(initial || empty);
-  const key = (initial?.id || "new") + (open ? "-open" : "");
-  // reset form when opening
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useState(() => {});
-  if (open && form.id !== (initial?.id || "")) {
-    // Re-init when initial changes
-    setTimeout(() => setForm(initial || { ...empty }), 0);
-  }
+  useEffect(() => {
+    if (open) setForm(initial || { ...empty, updatedAt: todayISO() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial?.id]);
   const set = <K extends keyof WebTopic>(k: K, v: WebTopic[K]) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
