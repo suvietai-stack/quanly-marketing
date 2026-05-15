@@ -302,6 +302,9 @@ function BacklinkDialog({
           <Field label="Từ khóa liên quan">
             <Input value={form.keyword || ""} onChange={(e) => set("keyword", e.target.value)} />
           </Field>
+          <Field label="Topic (chọn từ tab Nghiên Cứu Keyword)" className="md:col-span-2">
+            <TopicSelect websiteId={websiteId} value={form.topic} onChange={(v) => set("topic", v)} />
+          </Field>
 
           <Field label="Loại backlink">
             <Select value={form.type} onValueChange={(v) => set("type", v as BacklinkType)}>
