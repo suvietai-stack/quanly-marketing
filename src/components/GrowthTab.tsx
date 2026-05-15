@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useStore, fmtDate, todayISO, uid,
   GROWTH_PERIOD_TYPES, type GrowthMetric, type GrowthPeriodType,
