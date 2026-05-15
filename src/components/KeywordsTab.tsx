@@ -98,6 +98,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   const [addingSubFor, setAddingSubFor] = useState<string | null>(null);
   const [newSub, setNewSub] = useState("");
   const [showExtras, setShowExtras] = useState(true);
+  const [addingKw, setAddingKw] = useState(false);
 
   // Build groups from indexed contents
   const groups: Group[] = useMemo(() => {
