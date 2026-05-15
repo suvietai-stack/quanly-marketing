@@ -18,7 +18,11 @@ import { PostFormDialog } from "@/components/SocialPostDetail";
 
 export const Route = createFileRoute("/social/")({
   head: () => ({ meta: [{ title: "Kênh Social — Base Marketing" }] }),
-  component: SocialPage,
+  component: () => (
+    <RequirePermission perm="social.view">
+      <SocialPage />
+    </RequirePermission>
+  ),
 });
 
 function ChannelForm({ initial, onSubmit, onClose }: { initial?: Partial<SocialChannel>; onSubmit: (c: SocialChannel) => void; onClose: () => void }) {
