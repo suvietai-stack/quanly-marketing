@@ -124,7 +124,7 @@ function BrandsPage() {
           icon={<Plus className="h-5 w-5" />}
           title={brands.length === 0 ? "Chưa có thương hiệu" : "Không có thương hiệu phù hợp bộ lọc"}
           hint={brands.length === 0 ? "Tạo thương hiệu đầu tiên để bắt đầu quản lý dự án marketing." : "Thử bỏ bộ lọc hoặc tìm với từ khoá khác."}
-          action={brands.length === 0 ? (
+          action={brands.length === 0 && canCreate ? (
             <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo thương hiệu đầu tiên</Button>
           ) : undefined}
         />
