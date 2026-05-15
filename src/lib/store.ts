@@ -474,6 +474,7 @@ type Collections = {
   entities: EntitySocial;
   keywords: KeywordTrack;
   backlinks: Backlink;
+  growth: GrowthMetric;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
