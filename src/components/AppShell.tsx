@@ -1,47 +1,54 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth, useCurrentUser, type PermissionKey } from "@/lib/auth";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const groups = [
+type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey };
+
+const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Điều hành",
     items: [
-      { to: "/", label: "Tổng Quan", icon: LayoutDashboard, exact: true },
-      { to: "/tasks", label: "Task To-do List", icon: ListChecks },
+      { to: "/", label: "Tổng Quan", icon: LayoutDashboard, exact: true, perm: "overview.view" },
+      { to: "/tasks", label: "Task To-do List", icon: ListChecks, perm: "task.view" },
     ],
   },
   {
     label: "Nền tảng",
-    items: [{ to: "/brands", label: "Thương Hiệu", icon: Building2 }],
+    items: [{ to: "/brands", label: "Thương Hiệu", icon: Building2, perm: "brand.view" }],
   },
   {
     label: "Kênh Marketing",
     items: [
-      { to: "/websites", label: "Dự Án Web", icon: Globe },
-      { to: "/web-contents", label: "Tất cả Content Web", icon: FileText },
-      { to: "/social", label: "Kênh Social", icon: Share2 },
-      { to: "/local", label: "Local Map", icon: MapPin },
+      { to: "/websites", label: "Dự Án Web", icon: Globe, perm: "web.view" },
+      { to: "/web-contents", label: "Tất cả Content Web", icon: FileText, perm: "web.view" },
+      { to: "/social", label: "Kênh Social", icon: Share2, perm: "social.view" },
+      { to: "/local", label: "Local Map", icon: MapPin, perm: "local.view" },
     ],
   },
   {
     label: "Sản xuất nội dung",
     items: [
-      { to: "/videos", label: "Sản Xuất Video", icon: Video },
-      { to: "/orders", label: "Order Thiết Kế", icon: Palette },
+      { to: "/videos", label: "Sản Xuất Video", icon: Video, perm: "video.view" },
+      { to: "/orders", label: "Order Thiết Kế", icon: Palette, perm: "order.view" },
     ],
   },
   {
     label: "Mở rộng & Hệ thống",
     items: [
       { to: "/okrs", label: "OKRs", icon: Target, badge: "Sắp ra mắt" },
-      { to: "/settings", label: "Cài Đặt", icon: Settings },
+      { to: "/settings", label: "Cài Đặt", icon: Settings, perm: "settings.view" },
     ],
   },
-] as const;
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
