@@ -747,7 +747,7 @@ async function loadAllFromSupabase() {
   for (const row of cat.data ?? []) {
     catMap[(row as any).scope] = ((row as any).items as string[]) ?? [];
   }
-  const collections = Object.fromEntries(results) as { [K in CollectionKey]: Collections[K][] };
+  const collections = Object.fromEntries(results) as Partial<{ [K in CollectionKey]: Collections[K][] }>;
   return { ...collections, plans: catMap.plans ?? [], topics: catMap.topics ?? [] };
 }
 
