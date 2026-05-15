@@ -101,6 +101,12 @@ export function BasicReportTab({
   const [quick, setQuick] = useState<Quick>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [allOpen, setAllOpen] = useState(false);
+  const [aSearch, setASearch] = useState("");
+  const [aQuick, setAQuick] = useState<string>("Tất cả");
+  const [aType, setAType] = useState<string>("all");
+  const [aOwner, setAOwner] = useState<string>("all");
+  const [aLevel, setALevel] = useState<string>("all");
 
   const range: DateRange = useMemo(() => {
     const today = toISO(new Date());
