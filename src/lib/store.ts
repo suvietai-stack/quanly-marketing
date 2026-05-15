@@ -887,6 +887,9 @@ async function loadAllFromSupabase() {
       if (key === "socialPosts") {
         items = items.map((p: any) => ({ ...p, status: normalizeSocialStatus(p.status) }));
       }
+      if (key === "videos") {
+        items = items.map((v: any) => ({ ...v, status: normalizeVideoStatus(v.status) }));
+      }
       return [key, items] as const;
     }),
   );
