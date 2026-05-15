@@ -371,8 +371,9 @@ export function VideoDetailDialog({
               )}
 
               {video.status !== "Đã hủy" && video.status !== "Hoàn thành" && canAct("video.cancel") && (
-                <Button variant="ghost" className="text-destructive" onClick={() => {
-                  if (!reviewNote.trim()) { toast.error("Nhập lý do hủy"); return; }
+                <Button variant="destructive" onClick={() => {
+                  const earlyStages = video.status === "Kế hoạch" || video.status === "Đã giao";
+                  if (!earlyStages && !reviewNote.trim()) { toast.error("Nhập lý do hủy"); return; }
                   transition("Đã hủy", "Hủy video", { note: reviewNote });
                 }}><X className="h-4 w-4 mr-1" />Hủy video</Button>
               )}
