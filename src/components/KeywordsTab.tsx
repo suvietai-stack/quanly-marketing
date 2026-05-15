@@ -435,6 +435,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                           <Button size="sm" variant="outline" onClick={() => setUpdating({ row: g.mainRow })} disabled={noMain}>
                             <RefreshCw className="h-3.5 w-3.5" />Cập nhật TOP
                           </Button>
+                          {!noMain && (
+                            <Button size="icon" variant="ghost" title="Xóa từ khóa chính" onClick={() => deleteMain(g.contentId, g.mainRow.keyword, g.mainRow.track?.id)}>
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          )}
                         </td>
                       </tr>
 
