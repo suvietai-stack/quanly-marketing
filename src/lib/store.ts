@@ -182,6 +182,37 @@ export interface KeywordTrack {
   plan?: string;
 }
 
+export type BacklinkType =
+  | "Bài PR báo chí" | "Guest post" | "Backlink website ngành"
+  | "Backlink forum" | "Backlink social" | "Khác";
+export const BACKLINK_TYPES: BacklinkType[] = [
+  "Bài PR báo chí", "Guest post", "Backlink website ngành",
+  "Backlink forum", "Backlink social", "Khác",
+];
+
+export type BacklinkStatus =
+  | "Dự kiến" | "Đã đặt" | "Đã đăng" | "Đã kiểm tra link" | "Lỗi / mất link";
+export const BACKLINK_STATUSES: BacklinkStatus[] = [
+  "Dự kiến", "Đã đặt", "Đã đăng", "Đã kiểm tra link", "Lỗi / mất link",
+];
+
+export interface Backlink {
+  id: ID;
+  websiteId: ID;
+  name: string;
+  sourceSite?: string;
+  publishedLink?: string;
+  targetUrl?: string;
+  anchorText?: string;
+  keyword?: string;
+  type: BacklinkType;
+  cost?: number;
+  publishDate?: string;
+  owner?: string;
+  status: BacklinkStatus;
+  notes?: string;
+}
+
 export type OptimizeReason =
   | "Bài tụt hạng" | "Bài cũ thiếu thông tin" | "Bài chưa có CTA"
   | "Bài thiếu internal link" | "Bài chưa index"
