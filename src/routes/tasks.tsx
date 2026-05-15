@@ -276,7 +276,7 @@ function TasksPage() {
                         icon={<Plus className="h-5 w-5" />}
                         title={tasks.length === 0 ? "Chưa có task" : "Không có task phù hợp bộ lọc"}
                         hint={tasks.length === 0 ? "Tạo task đầu tiên để bắt đầu quản lý công việc." : undefined}
-                        action={tasks.length === 0 ? (
+                        action={tasks.length === 0 && canCreate ? (
                           <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo task đầu tiên</Button>
                         ) : undefined}
                       />
