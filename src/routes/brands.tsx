@@ -164,8 +164,8 @@ function BrandsPage() {
                 <div className="flex items-center justify-between mt-4 pt-3 border-t">
                   <span className="text-xs text-muted-foreground">PT: {b.owner || "—"}</span>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(b)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove("brands", b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(b)}><Pencil className="h-3.5 w-3.5" /></Button>}
+                    {canDelete && <Button size="icon" variant="ghost" onClick={() => remove("brands", b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
                     <Button size="sm" variant="ghost" asChild>
                       <Link to="/brands/$id" params={{ id: b.id }}>Mở<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
                     </Button>
