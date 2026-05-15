@@ -121,6 +121,67 @@ export const SEARCH_INTENTS: SearchIntent[] = ["Thông tin", "So sánh", "Thươ
 export type IndexStatus = "Chưa kiểm tra" | "Chưa index" | "Đã index" | "Cần xử lý";
 export const INDEX_STATUSES: IndexStatus[] = ["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"];
 
+export type ShareSocialStatus = "Chưa share" | "Đã share" | "Cần share lại";
+export const SHARE_SOCIAL_STATUSES: ShareSocialStatus[] = ["Chưa share", "Đã share", "Cần share lại"];
+
+export type EntityPlatform =
+  | "Facebook" | "Pinterest" | "LinkedIn" | "Twitter/X" | "YouTube" | "TikTok"
+  | "Zalo" | "Medium" | "Blogspot" | "WordPress" | "Google Site" | "Reddit" | "Khác";
+export const ENTITY_PLATFORMS: EntityPlatform[] = [
+  "Facebook", "Pinterest", "LinkedIn", "Twitter/X", "YouTube", "TikTok",
+  "Zalo", "Medium", "Blogspot", "WordPress", "Google Site", "Reddit", "Khác",
+];
+
+export type EntityStatus = "Đang dùng" | "Chưa dùng" | "Cần kiểm tra" | "Lỗi đăng nhập" | "Tạm dừng";
+export const ENTITY_STATUSES: EntityStatus[] = ["Đang dùng", "Chưa dùng", "Cần kiểm tra", "Lỗi đăng nhập", "Tạm dừng"];
+
+export interface EntitySocial {
+  id: ID;
+  websiteId: ID;
+  name: string;
+  platform: EntityPlatform;
+  url?: string;
+  account?: string;
+  password?: string;
+  email?: string;
+  phone?: string;
+  status: EntityStatus;
+  notes?: string;
+}
+
+export type KeywordType =
+  | "Từ khóa chính" | "Từ khóa phụ" | "Từ khóa sản phẩm" | "Từ khóa danh mục"
+  | "Từ khóa local" | "Từ khóa thương hiệu" | "Khác";
+export const KEYWORD_TYPES: KeywordType[] = [
+  "Từ khóa chính", "Từ khóa phụ", "Từ khóa sản phẩm", "Từ khóa danh mục",
+  "Từ khóa local", "Từ khóa thương hiệu", "Khác",
+];
+
+export type KeywordRankStatus =
+  | "Chưa check" | "Top 3" | "Top 10" | "Top 20" | "Top 50"
+  | "Ngoài top 50" | "Tăng hạng" | "Tụt hạng" | "Mất top";
+export const KEYWORD_RANK_STATUSES: KeywordRankStatus[] = [
+  "Chưa check", "Top 3", "Top 10", "Top 20", "Top 50",
+  "Ngoài top 50", "Tăng hạng", "Tụt hạng", "Mất top",
+];
+
+export interface KeywordTrack {
+  id: ID;
+  websiteId: ID;
+  keyword: string;
+  topic?: string;
+  targetUrl?: string;
+  type: KeywordType;
+  searchIntent?: SearchIntent;
+  owner?: string;
+  lastCheckDate?: string;
+  currentTop?: number;
+  previousTop?: number;
+  status: KeywordRankStatus;
+  notes?: string;
+  plan?: string;
+}
+
 export type OptimizeReason =
   | "Bài tụt hạng" | "Bài cũ thiếu thông tin" | "Bài chưa có CTA"
   | "Bài thiếu internal link" | "Bài chưa index"
@@ -171,6 +232,12 @@ export interface WebContent {
   // SEO sau đăng
   indexStatus: IndexStatus;
   indexNotes?: string;
+  // Share social SEO
+  shareSocial?: boolean;
+  shareSocialStatus?: ShareSocialStatus;
+  shareSocialDate?: string;
+  sharedEntities?: string;
+  shareNotes?: string;
   // Liên kết
   plan?: string;
   topic?: string;
@@ -321,6 +388,8 @@ interface State {
   orders: DesignOrder[];
   people: Person[];
   seoChecks: SeoCheckItem[];
+  entities: EntitySocial[];
+  keywords: KeywordTrack[];
   plans: string[];
   topics: string[];
 
@@ -343,6 +412,8 @@ type Collections = {
   orders: DesignOrder;
   people: Person;
   seoChecks: SeoCheckItem;
+  entities: EntitySocial;
+  keywords: KeywordTrack;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
@@ -521,7 +592,28 @@ const seed = () => {
       deadline: d(-7), publishDate: d(-5), publishedAt: d(-4),
       publishedLink: "https://xuonggomsuviet.vn/bao-quan-gom-su",
       status: "Hoàn thành", indexStatus: "Đã index",
-      completedAt: d(-3),
+      completedAt: d(-3), publisher: "Lê Minh Tech",
+      shareSocial: true, shareSocialStatus: "Đã share", shareSocialDate: d(-2),
+      sharedEntities: "Facebook Entity Sứ Việt, Pinterest Sứ Việt",
+    },
+    {
+      id: "wc7", websiteId: "w1", brandId: "b1", type: "Bài SEO",
+      title: "Tượng Phật gốm Bát Tràng – men rạn cao cấp", mainKeyword: "tượng Phật gốm",
+      searchIntent: "Thương mại", writer: "Trần Thu Content", publisher: "Lê Minh Tech",
+      deadline: d(-12), publishDate: d(-10), publishedAt: d(-9),
+      publishedLink: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran",
+      status: "Hoàn thành", indexStatus: "Đã index", completedAt: d(-8),
+      shareSocialStatus: "Chưa share",
+    },
+    {
+      id: "wc8", websiteId: "w1", brandId: "b1", type: "Bài danh mục",
+      title: "Bộ ấm chén in logo làm quà tặng doanh nghiệp", mainKeyword: "ấm chén in logo",
+      searchIntent: "Mua hàng", writer: "Hoàng Mai Content", publisher: "Lê Minh Tech",
+      deadline: d(-6), publishDate: d(-4), publishedAt: d(-4),
+      publishedLink: "https://xuonggomsuviet.vn/am-chen-in-logo",
+      status: "Đã đăng web", indexStatus: "Chưa index",
+      shareSocial: true, shareSocialStatus: "Cần share lại", shareSocialDate: d(-3),
+      sharedEntities: "Facebook Entity Sứ Việt",
     },
   ];
   const socialPosts: SocialPost[] = [
@@ -560,9 +652,27 @@ const seed = () => {
     });
   });
 
+  const entities: EntitySocial[] = [
+    { id: "e1", websiteId: "w1", name: "Facebook Entity Sứ Việt", platform: "Facebook", url: "https://facebook.com/suviet", account: "suviet.content", password: "Suviet@2025", email: "suviet.ai@gmail.com", phone: "0987123456", status: "Đang dùng", notes: "Tài khoản chính dùng share bài SEO" },
+    { id: "e2", websiteId: "w1", name: "Pinterest Sứ Việt", platform: "Pinterest", url: "https://pinterest.com/suviet", account: "suviet.pin", password: "Pin@Suviet1", email: "suviet.ai@gmail.com", status: "Đang dùng" },
+    { id: "e3", websiteId: "w1", name: "Google Site Sứ Việt", platform: "Google Site", url: "https://sites.google.com/view/suviet", account: "suviet.gsite", password: "Gsite@2025", email: "suviet.ai@gmail.com", status: "Cần kiểm tra", notes: "Cần check lại quyền truy cập" },
+    { id: "e4", websiteId: "w1", name: "Medium Sứ Việt", platform: "Medium", url: "https://medium.com/@suviet", account: "@suviet", password: "Med@Suviet", email: "suviet.ai@gmail.com", status: "Chưa dùng" },
+    { id: "e5", websiteId: "w1", name: "LinkedIn Brand Sứ Việt", platform: "LinkedIn", url: "https://linkedin.com/company/suviet", account: "admin.suviet", password: "Lk@Suviet1", email: "suviet.ai@gmail.com", status: "Đang dùng" },
+    { id: "e6", websiteId: "w3", name: "Facebook Sứ Minh Đăng", platform: "Facebook", url: "https://facebook.com/suminhdang", account: "smd.admin", password: "Smd@2025", email: "smd@minhdang.vn", status: "Đang dùng" },
+  ];
+
+  const keywords: KeywordTrack[] = [
+    { id: "k1", websiteId: "w1", keyword: "tượng Phật gốm", topic: "Tượng phong thủy", targetUrl: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran", type: "Từ khóa chính", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 12, previousTop: 18, status: "Tăng hạng" },
+    { id: "k2", websiteId: "w1", keyword: "ấm chén in logo", topic: "Quà tặng doanh nghiệp", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", type: "Từ khóa sản phẩm", searchIntent: "Mua hàng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 6, previousTop: 9, status: "Top 10" },
+    { id: "k3", websiteId: "w1", keyword: "bát đĩa nhà hàng", topic: "Sản phẩm nhà hàng", targetUrl: "https://xuonggomsuviet.vn/bat-dia-nha-hang", type: "Từ khóa danh mục", searchIntent: "Mua hàng", owner: "Phạm Anh SEO", lastCheckDate: d(-2), currentTop: 15, previousTop: 11, status: "Tụt hạng" },
+    { id: "k4", websiteId: "w1", keyword: "gốm sứ Bát Tràng", topic: "Thương hiệu", type: "Từ khóa thương hiệu", searchIntent: "Điều hướng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-3), currentTop: 3, previousTop: 4, status: "Top 3" },
+    { id: "k5", websiteId: "w1", keyword: "bình hút lộc Bát Tràng", topic: "Phong thủy", type: "Từ khóa phụ", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", currentTop: undefined, previousTop: undefined, status: "Chưa check" },
+    { id: "k6", websiteId: "w1", keyword: "quà tặng tết doanh nghiệp", topic: "Quà tặng doanh nghiệp", type: "Từ khóa chính", plan: "Tết 2026", searchIntent: "Mua hàng", owner: "Hoàng Mai Content", lastCheckDate: d(-5), currentTop: 0, previousTop: 35, status: "Mất top" },
+  ];
+
   return {
     brands, websites, socials, places, tasks, webContents, socialPosts, mapPosts,
-    reviews, videos, orders, people, seoChecks,
+    reviews, videos, orders, people, seoChecks, entities, keywords,
     plans: ["Tết 2026", "Khai trương showroom", "Sale tháng 12", "Brand 2026"],
     topics: ["Quà tặng doanh nghiệp", "Sản phẩm mới", "Văn hóa Bát Tràng", "Phong thủy", "Khuyến mãi"],
   };
@@ -580,7 +690,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 3 }
+    { name: "base-mkt-store", version: 4 }
   )
 );
 
