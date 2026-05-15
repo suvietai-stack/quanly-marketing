@@ -421,6 +421,7 @@ interface State {
   seoChecks: SeoCheckItem[];
   entities: EntitySocial[];
   keywords: KeywordTrack[];
+  backlinks: Backlink[];
   plans: string[];
   topics: string[];
 
@@ -445,6 +446,7 @@ type Collections = {
   seoChecks: SeoCheckItem;
   entities: EntitySocial;
   keywords: KeywordTrack;
+  backlinks: Backlink;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
