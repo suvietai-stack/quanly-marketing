@@ -15,11 +15,12 @@ import { toast } from "sonner";
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const s = useStore();
   const { user, can, isAdmin } = useCurrentUser();
-  const order = orderId ? s.orders.find((o) => o.id === orderId) : null;
+  const found = orderId ? s.orders.find((o) => o.id === orderId) : null;
   const [draft, setDraft] = useState<Partial<DesignOrder>>({});
   const [reviewNote, setReviewNote] = useState("");
 
-  if (!order) return null;
+  if (!found) return null;
+  const order: DesignOrder = found;
 
   const o: DesignOrder = { ...order, ...draft };
   const setField = (patch: Partial<DesignOrder>) => setDraft((d) => ({ ...d, ...patch }));
