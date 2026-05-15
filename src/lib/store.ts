@@ -182,6 +182,37 @@ export interface KeywordTrack {
   plan?: string;
 }
 
+export type BacklinkType =
+  | "Bài PR báo chí" | "Guest post" | "Backlink website ngành"
+  | "Backlink forum" | "Backlink social" | "Khác";
+export const BACKLINK_TYPES: BacklinkType[] = [
+  "Bài PR báo chí", "Guest post", "Backlink website ngành",
+  "Backlink forum", "Backlink social", "Khác",
+];
+
+export type BacklinkStatus =
+  | "Dự kiến" | "Đã đặt" | "Đã đăng" | "Đã kiểm tra link" | "Lỗi / mất link";
+export const BACKLINK_STATUSES: BacklinkStatus[] = [
+  "Dự kiến", "Đã đặt", "Đã đăng", "Đã kiểm tra link", "Lỗi / mất link",
+];
+
+export interface Backlink {
+  id: ID;
+  websiteId: ID;
+  name: string;
+  sourceSite?: string;
+  publishedLink?: string;
+  targetUrl?: string;
+  anchorText?: string;
+  keyword?: string;
+  type: BacklinkType;
+  cost?: number;
+  publishDate?: string;
+  owner?: string;
+  status: BacklinkStatus;
+  notes?: string;
+}
+
 export type OptimizeReason =
   | "Bài tụt hạng" | "Bài cũ thiếu thông tin" | "Bài chưa có CTA"
   | "Bài thiếu internal link" | "Bài chưa index"
@@ -390,6 +421,7 @@ interface State {
   seoChecks: SeoCheckItem[];
   entities: EntitySocial[];
   keywords: KeywordTrack[];
+  backlinks: Backlink[];
   plans: string[];
   topics: string[];
 
@@ -414,6 +446,7 @@ type Collections = {
   seoChecks: SeoCheckItem;
   entities: EntitySocial;
   keywords: KeywordTrack;
+  backlinks: Backlink;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
@@ -670,9 +703,18 @@ const seed = () => {
     { id: "k6", websiteId: "w1", keyword: "quà tặng tết doanh nghiệp", topic: "Quà tặng doanh nghiệp", type: "Từ khóa chính", plan: "Tết 2026", searchIntent: "Mua hàng", owner: "Hoàng Mai Content", lastCheckDate: d(-5), currentTop: 0, previousTop: 35, status: "Mất top" },
   ];
 
+  const backlinks: Backlink[] = [
+    { id: "bl1", websiteId: "w1", name: "PR báo Dân Trí — gốm Bát Tràng", sourceSite: "dantri.com.vn", publishedLink: "https://dantri.com.vn/pr/gom-bat-trang.html", targetUrl: "https://xuonggomsuviet.vn", anchorText: "xưởng gốm Bát Tràng", keyword: "gốm sứ Bát Tràng", type: "Bài PR báo chí", cost: 8000000, publishDate: d(-10), owner: "Nguyễn Văn SEO", status: "Đã kiểm tra link", notes: "Bài PR chính tháng 11" },
+    { id: "bl2", websiteId: "w1", name: "Guest post Webgomsu", sourceSite: "webgomsu.vn", publishedLink: "https://webgomsu.vn/am-chen-in-logo", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", anchorText: "ấm chén in logo", keyword: "ấm chén in logo", type: "Guest post", cost: 1500000, publishDate: d(-6), owner: "Trần Thu Content", status: "Đã đăng" },
+    { id: "bl3", websiteId: "w1", name: "Forum Webtretho — quà tặng Tết", sourceSite: "webtretho.com", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", anchorText: "quà tặng Tết doanh nghiệp", keyword: "quà tặng tết doanh nghiệp", type: "Backlink forum", cost: 0, owner: "Hoàng Mai Content", status: "Dự kiến" },
+    { id: "bl4", websiteId: "w1", name: "Backlink site ngành nội thất", sourceSite: "noithatdep.vn", publishedLink: "https://noithatdep.vn/blog/binh-hut-loc", targetUrl: "https://xuonggomsuviet.vn/binh-hut-loc", anchorText: "bình hút lộc Bát Tràng", keyword: "bình hút lộc Bát Tràng", type: "Backlink website ngành", cost: 500000, publishDate: d(-2), owner: "Nguyễn Văn SEO", status: "Đã đăng" },
+    { id: "bl5", websiteId: "w1", name: "Share Medium Sứ Việt", sourceSite: "medium.com", publishedLink: "https://medium.com/@suviet/bao-quan-gom", targetUrl: "https://xuonggomsuviet.vn/bao-quan-gom-su", anchorText: "bảo quản gốm sứ", keyword: "bảo quản gốm sứ", type: "Backlink social", cost: 0, publishDate: d(-15), owner: "Trần Thu Content", status: "Lỗi / mất link", notes: "Bài bị Medium ẩn" },
+    { id: "bl6", websiteId: "w3", name: "PR Cafef — quà doanh nghiệp", sourceSite: "cafef.vn", targetUrl: "https://suminhdang.com", anchorText: "quà tặng doanh nghiệp cao cấp", keyword: "quà tặng doanh nghiệp", type: "Bài PR báo chí", cost: 12000000, owner: "Trần Thị B", status: "Đã đặt" },
+  ];
+
   return {
     brands, websites, socials, places, tasks, webContents, socialPosts, mapPosts,
-    reviews, videos, orders, people, seoChecks, entities, keywords,
+    reviews, videos, orders, people, seoChecks, entities, keywords, backlinks,
     plans: ["Tết 2026", "Khai trương showroom", "Sale tháng 12", "Brand 2026"],
     topics: ["Quà tặng doanh nghiệp", "Sản phẩm mới", "Văn hóa Bát Tràng", "Phong thủy", "Khuyến mãi"],
   };
@@ -690,7 +732,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 4 }
+    { name: "base-mkt-store", version: 5 }
   )
 );
 

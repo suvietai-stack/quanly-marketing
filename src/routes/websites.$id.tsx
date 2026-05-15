@@ -11,6 +11,7 @@ import { ContentForm } from "@/components/ContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
+import { BacklinksTab } from "@/components/BacklinksTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,6 +156,7 @@ function WebsiteDetail() {
             Sản xuất Content ({contents.length})
           </TabsTrigger>
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
+          <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
           <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
@@ -307,6 +309,11 @@ function WebsiteDetail() {
         {/* TAB BÀI ĐÃ ĐĂNG / INDEX */}
         <TabsContent value="published" className="mt-4">
           <PublishedTab websiteId={w.id} entities={entitiesList} />
+        </TabsContent>
+
+        {/* TAB BACKLINK / PR */}
+        <TabsContent value="backlinks" className="mt-4">
+          <BacklinksTab websiteId={w.id} />
         </TabsContent>
 
         {/* TAB 5 — OPTIMIZE */}
