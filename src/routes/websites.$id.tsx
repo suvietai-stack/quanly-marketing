@@ -368,18 +368,11 @@ function WebsiteDetail() {
 
         {/* TAB 6 — REPORT (placeholder) */}
         <TabsContent value="report" className="mt-4">
-          <Card>
-            <CardContent className="p-12 text-center space-y-3">
-              <div className="mx-auto h-14 w-14 rounded-full bg-muted flex items-center justify-center">
-                <FileText className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">Báo cáo Web — Sắp ra mắt</h3>
-              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-                Báo cáo Web sẽ được phát triển ở giai đoạn sau để theo dõi tăng trưởng website,
-                số bài đã đăng, index, traffic, từ khóa và hiệu quả SEO.
-              </p>
-            </CardContent>
-          </Card>
+          <BasicReportTab
+            websiteId={w.id}
+            onOpenContent={setOpenContent}
+            onJumpTab={(t) => setTab(t)}
+          />
         </TabsContent>
       </Tabs>
 
