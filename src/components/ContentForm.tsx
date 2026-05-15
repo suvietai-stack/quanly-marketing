@@ -179,10 +179,12 @@ export function ContentForm({
         </div>
         <div>
           <Label>Topic</Label>
-          <Select value={c.topic || "_"} onValueChange={(v) => set({ topic: v === "_" ? undefined : v })}>
-            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-            <SelectContent><SelectItem value="_">—</SelectItem>{topics.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-          </Select>
+          <TopicPicker
+            websiteId={c.websiteId}
+            value={c.topic}
+            onChange={(v) => set({ topic: v })}
+            webTopics={webTopics}
+          />
         </div>
 
         <div className="sm:col-span-2"><Label>Brief</Label><Textarea rows={3} value={c.brief || ""} onChange={(e) => set({ brief: e.target.value })} /></div>
