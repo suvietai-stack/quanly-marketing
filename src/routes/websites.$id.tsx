@@ -333,6 +333,11 @@ function WebsiteDetail() {
           </CardContent></Card>
         </TabsContent>
 
+        {/* TAB NGHIÊN CỨU KEYWORD */}
+        <TabsContent value="research" className="mt-4">
+          <KeywordResearchTab websiteId={w.id} />
+        </TabsContent>
+
         {/* TAB TĂNG TRƯỞNG WEBSITE */}
         <TabsContent value="growth" className="mt-4">
           <GrowthTab websiteId={w.id} />
