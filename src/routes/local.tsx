@@ -84,7 +84,7 @@ function LocalPage() {
         icon={<MapPin className="h-5 w-5" />}
         title={s.places.length === 0 ? "Chưa có địa điểm" : "Không có địa điểm phù hợp bộ lọc"}
         hint={s.places.length === 0 ? "Tạo địa điểm Google Map / GBP đầu tiên để bắt đầu quản lý local SEO." : undefined}
-        action={s.places.length === 0 ? (
+        action={s.places.length === 0 && canCreate ? (
           <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo địa điểm đầu tiên</Button>
         ) : undefined}
       />
