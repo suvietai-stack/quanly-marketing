@@ -906,9 +906,9 @@ export const ensureSeoChecks = (
   const have = new Set(existing.filter((c) => c.websiteId === websiteId).map((c) => `${c.group}::${c.name}`));
   const missing: SeoCheckItem[] = [];
   SEO_GROUPS.forEach((g) => {
-    SEO_CHECK_TEMPLATE[g].forEach((name) => {
-      if (!have.has(`${g}::${name}`)) {
-        missing.push({ id: uid(), websiteId, group: g, name, done: false });
+    SEO_CHECK_TEMPLATE[g].forEach((it) => {
+      if (!have.has(`${g}::${it.name}`)) {
+        missing.push({ id: uid(), websiteId, group: g, name: it.name, description: it.description, done: false });
       }
     });
   });
