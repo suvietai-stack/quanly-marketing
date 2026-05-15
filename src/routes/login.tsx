@@ -16,7 +16,6 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const login = useAuth((s) => s.login);
-  const ensureSeed = useAuth((s) => s.ensureSeed);
   const currentUserId = useAuth((s) => s.currentUserId);
 
   const [username, setU] = useState("");
@@ -24,8 +23,9 @@ function LoginPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { ensureSeed(); }, [ensureSeed]);
-  useEffect(() => { if (currentUserId) navigate({ to: "/" }); }, [currentUserId, navigate]);
+  useEffect(() => {
+    if (currentUserId) navigate({ to: "/" });
+  }, [currentUserId, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +33,10 @@ function LoginPage() {
     setLoading(true);
     const res = await login(username.trim(), password);
     setLoading(false);
-    if (!res.ok) { setErr(res.error || "Lỗi đăng nhập"); return; }
+    if (!res.ok) {
+      setErr(res.error || "Lỗi đăng nhập");
+      return;
+    }
     toast.success("Đăng nhập thành công");
     navigate({ to: "/" });
   };
