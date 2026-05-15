@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
+import { useStore } from "@/lib/store";
 
 const PUBLIC_PATHS = ["/login", "/register"];
 
@@ -12,9 +13,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const loaded = useAuth((s) => s.loaded);
   const init = useAuth((s) => s.init);
 
+  const initStore = useStore((s) => s.init);
+
   useEffect(() => {
     init();
-  }, [init]);
+    initStore();
+  }, [init, initStore]);
 
   const isPublic = PUBLIC_PATHS.includes(path);
 
