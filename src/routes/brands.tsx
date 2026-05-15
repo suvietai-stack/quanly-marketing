@@ -77,6 +77,10 @@ function BrandForm({ initial, onSubmit, onClose }: {
 
 function BrandsPage() {
   const { brands, websites, socials, places, add, update, remove } = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("brand.create");
+  const canEdit = can("brand.edit");
+  const canDelete = can("brand.delete");
   const [search, setSearch] = useState("");
   const [fStatus, setFStatus] = useState("all");
   const [editing, setEditing] = useState<Brand | null>(null);
