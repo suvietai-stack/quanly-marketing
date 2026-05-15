@@ -39,8 +39,20 @@ const map: Record<string, string> = {
   "Cần sửa": "bg-destructive/15 text-destructive border-destructive/30",
   "Cần sửa outline": "bg-destructive/15 text-destructive border-destructive/30",
   "Cần sửa bài": "bg-destructive/15 text-destructive border-destructive/30",
+  "Cần sửa kịch bản": "bg-destructive/15 text-destructive border-destructive/30",
+  "Cần sửa video": "bg-destructive/15 text-destructive border-destructive/30",
   "Cần xử lý": "bg-destructive/15 text-destructive border-destructive/30",
   "Quá hạn": "bg-destructive/15 text-destructive border-destructive/30",
+
+  // Video workflow extras
+  "Đang làm kịch bản": "bg-info/15 text-info border-info/30",
+  "Đang quay / thu tư liệu": "bg-info/15 text-info border-info/30",
+  "Đang dựng": "bg-info/15 text-info border-info/30",
+  "Chờ duyệt kịch bản": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Chờ duyệt video": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Kịch bản đã duyệt": "bg-success/15 text-success border-success/30",
+  "Video đã duyệt": "bg-success/15 text-success border-success/30",
+  "Đã hủy": "bg-muted text-muted-foreground border-border",
 
   // Index check (purple)
   "Kiểm tra index": "bg-[oklch(0.7_0.15_300)]/15 text-[oklch(0.45_0.18_300)] border-[oklch(0.7_0.15_300)]/30",
