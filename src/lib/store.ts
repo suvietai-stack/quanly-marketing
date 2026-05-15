@@ -468,6 +468,7 @@ interface State {
   add: <K extends keyof Collections>(key: K, item: Collections[K]) => void;
   update: <K extends keyof Collections>(key: K, id: ID, patch: Partial<Collections[K]>) => void;
   remove: <K extends keyof Collections>(key: K, id: ID) => void;
+  resetAll: (mode: "empty" | "demo") => void;
 }
 
 type Collections = {
