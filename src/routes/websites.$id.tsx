@@ -150,10 +150,12 @@ function WebsiteDetail() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
           <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>
+          <TabsTrigger value="entity">Entity / Social SEO ({entitiesList.length})</TabsTrigger>
           <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
             Sản xuất Content ({contents.length})
           </TabsTrigger>
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
+          <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
           <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
         </TabsList>
