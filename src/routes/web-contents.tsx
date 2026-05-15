@@ -3,6 +3,8 @@ import {
   useStore, fmtDate, CONTENT_STATUSES, CONTENT_TYPES,
   type WebContent,
 } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
@@ -25,11 +27,18 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/web-contents")({
   head: () => ({ meta: [{ title: "Tất cả Content Web — Base Marketing" }] }),
-  component: AllContents,
+  component: () => (
+    <RequirePermission perm={["web.content_view", "web.content_view_all", "web.content_view_mine"]}>
+      <AllContents />
+    </RequirePermission>
+  ),
 });
 
 function AllContents() {
   const s = useStore();
+  const { user, can, scopeList } = useCurrentUser();
+  const userName = user?.fullName || user?.username || "";
+  const canCreate = can("web.content_create");
   const { webContents, websites, brands, plans, topics } = s;
   const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
   const [adding, setAdding] = useState(false);
