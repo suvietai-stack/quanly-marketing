@@ -258,7 +258,7 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
   const [assignFor, setAssignFor] = useState<User | null>(null);
   const [roleId, setRoleId] = useState("");
 
-  return (
+  return (<>
     <Card><CardContent className="p-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground bg-muted/40"><tr>
