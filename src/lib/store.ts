@@ -507,28 +507,89 @@ export function normalizeVideoStatus(s?: string): VideoStatus {
   }
 }
 
-export type OrderStatus = "Mới tạo" | "Đang làm" | "Chờ duyệt" | "Cần sửa" | "Đã bàn giao" | "Hoàn thành";
+export const ORDER_STATUSES = [
+  "Mới tạo",
+  "Chờ nhận việc",
+  "Đang thực hiện",
+  "Chờ duyệt",
+  "Cần sửa",
+  "Đã duyệt",
+  "Đã bàn giao",
+  "Hoàn thành",
+  "Đã hủy",
+] as const;
+export type OrderStatus = typeof ORDER_STATUSES[number];
+
+export const ORDER_TYPES = [
+  "Banner website", "Ảnh bài web", "Ảnh social", "Thumbnail video",
+  "Ảnh sản phẩm", "Catalogue / profile", "Chụp ảnh", "Retouch ảnh",
+  "Ảnh Google Map", "Khác",
+] as const;
+export type OrderType = typeof ORDER_TYPES[number];
+
+export const ORDER_SOURCES = ["Web", "Social", "Video", "Local", "Leader", "Task lẻ", "Khác"] as const;
+export type OrderSource = typeof ORDER_SOURCES[number];
+
+export const ORDER_PRIORITIES = ["Thấp", "Trung bình", "Cao", "Gấp"] as const;
+export type OrderPriority = typeof ORDER_PRIORITIES[number];
+
+export interface OrderHistoryEntry {
+  at: string;
+  byId?: ID;
+  byName: string;
+  action: string;
+  fromStatus?: OrderStatus;
+  toStatus?: OrderStatus;
+  note?: string;
+  forced?: boolean;
+}
 
 export interface DesignOrder {
   id: ID;
   title: string;
   brandId: ID;
-  type: "Banner website" | "Ảnh bài web" | "Ảnh social" | "Thumbnail video" | "Ảnh sản phẩm" | "Catalogue / profile" | "Chụp ảnh" | "Retouch ảnh" | "Khác";
-  source: "Web" | "Social" | "Video" | "Local" | "Leader" | "Khác";
+  type: OrderType;
+  source: OrderSource;
+  sourceModule?: string;
+  refLinkObject?: string;
   requester?: string;
+  assigner?: string;
   assignee?: string;
   reviewer?: string;
   deadline?: string;
+  priority?: OrderPriority;
   brief?: string;
+  styleNote?: string;
   size?: string;
   quantity?: number;
   refLink?: string;
+  draftLink?: string;
   deliverLink?: string;
+  reviseLink?: string;
+  usedLink?: string;
   status: OrderStatus;
+  reviewNotes?: string;
+  revisions?: number;
+  cancelReason?: string;
+  takenAt?: string;
+  submittedAt?: string;
+  deliveredAt?: string;
+  completedAt?: string;
+  history?: OrderHistoryEntry[];
   plan?: string;
   topic?: string;
   notes?: string;
   contentId?: ID;
+  videoId?: ID;
+  socialPostId?: ID;
+  mapPostId?: ID;
+  taskId?: ID;
+}
+
+export function normalizeOrderStatus(s: any): OrderStatus {
+  if (s === "Đang làm") return "Đang thực hiện";
+  if ((ORDER_STATUSES as readonly string[]).includes(s)) return s as OrderStatus;
+  return "Mới tạo";
 }
 
 export interface Person {
@@ -889,6 +950,9 @@ async function loadAllFromSupabase() {
       }
       if (key === "videos") {
         items = items.map((v: any) => ({ ...v, status: normalizeVideoStatus(v.status) }));
+      }
+      if (key === "orders") {
+        items = items.map((o: any) => ({ ...o, status: normalizeOrderStatus(o.status) }));
       }
       return [key, items] as const;
     }),

@@ -63,7 +63,7 @@ function Dashboard() {
       socials: s.socials.filter((c) => c.status === "Đang vận hành").length,
       places: s.places.length,
       videosProd: s.videos.filter((v) => ["Đã giao","Đang làm kịch bản","Đang quay / thu tư liệu","Đang dựng"].includes(v.status)).length,
-      ordersWip: s.orders.filter((o) => o.status === "Đang làm" || o.status === "Mới tạo").length,
+      ordersWip: s.orders.filter((o) => ["Mới tạo","Chờ nhận việc","Đang thực hiện","Cần sửa"].includes(o.status)).length,
     };
   }, [s]);
 
