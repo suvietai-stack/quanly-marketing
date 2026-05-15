@@ -246,21 +246,12 @@ export function VideoDetailDialog({
             )}
 
             <div className="flex flex-wrap gap-2">
-              {video.status === "Kế hoạch" && (
-                <>
-                  {canAct("video.assign") && (
-                    <Button onClick={() => {
-                      if (!draft.owner || !draft.deadline) { toast.error("Cần có người phụ trách & deadline trước khi giao"); return; }
-                      saveDraft();
-                      transition("Đã giao", "Giao video");
-                    }}><Send className="h-4 w-4 mr-1" />Giao video</Button>
-                  )}
-                  {canAct("video.cancel") && (
-                    <Button variant="destructive" onClick={() => transition("Đã hủy", "Hủy video", { note: reviewNote })}>
-                      <X className="h-4 w-4 mr-1" />Hủy video
-                    </Button>
-                  )}
-                </>
+              {video.status === "Kế hoạch" && canAct("video.assign") && (
+                <Button onClick={() => {
+                  if (!draft.owner || !draft.deadline) { toast.error("Cần có người phụ trách & deadline trước khi giao"); return; }
+                  saveDraft();
+                  transition("Đã giao", "Giao video");
+                }}><Send className="h-4 w-4 mr-1" />Giao video</Button>
               )}
 
               {video.status === "Đã giao" && canAct("video.script_start", true) && (
@@ -380,8 +371,9 @@ export function VideoDetailDialog({
               )}
 
               {video.status !== "Đã hủy" && video.status !== "Hoàn thành" && canAct("video.cancel") && (
-                <Button variant="ghost" className="text-destructive" onClick={() => {
-                  if (!reviewNote.trim()) { toast.error("Nhập lý do hủy"); return; }
+                <Button variant="destructive" onClick={() => {
+                  const earlyStages = video.status === "Kế hoạch" || video.status === "Đã giao";
+                  if (!earlyStages && !reviewNote.trim()) { toast.error("Nhập lý do hủy"); return; }
                   transition("Đã hủy", "Hủy video", { note: reviewNote });
                 }}><X className="h-4 w-4 mr-1" />Hủy video</Button>
               )}

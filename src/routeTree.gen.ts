@@ -12,16 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as TasksRouteImport } from './routes/tasks'
-import { Route as SocialRouteImport } from './routes/social'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LocalRouteImport } from './routes/local'
 import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
+import { Route as SocialIndexRouteImport } from './routes/social.index'
+import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
@@ -40,11 +40,6 @@ const VideosRoute = VideosRouteImport.update({
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SocialRoute = SocialRouteImport.update({
-  id: '/social',
-  path: '/social',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -72,11 +67,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LocalRoute = LocalRouteImport.update({
-  id: '/local',
-  path: '/local',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BrandsRoute = BrandsRouteImport.update({
   id: '/brands',
   path: '/brands',
@@ -92,20 +82,30 @@ const WebsitesIndexRoute = WebsitesIndexRouteImport.update({
   path: '/websites/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SocialIndexRoute = SocialIndexRouteImport.update({
+  id: '/social/',
+  path: '/social/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocalIndexRoute = LocalIndexRouteImport.update({
+  id: '/local/',
+  path: '/local/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebsitesIdRoute = WebsitesIdRouteImport.update({
   id: '/websites/$id',
   path: '/websites/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SocialIdRoute = SocialIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => SocialRoute,
+  id: '/social/$id',
+  path: '/social/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LocalIdRoute = LocalIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LocalRoute,
+  id: '/local/$id',
+  path: '/local/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BrandsIdRoute = BrandsIdRouteImport.update({
   id: '/$id',
@@ -116,13 +116,11 @@ const BrandsIdRoute = BrandsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brands': typeof BrandsRouteWithChildren
-  '/local': typeof LocalRouteWithChildren
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
@@ -130,18 +128,18 @@ export interface FileRoutesByFullPath {
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/local/': typeof LocalIndexRoute
+  '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brands': typeof BrandsRouteWithChildren
-  '/local': typeof LocalRouteWithChildren
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
@@ -149,19 +147,19 @@ export interface FileRoutesByTo {
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/local': typeof LocalIndexRoute
+  '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/brands': typeof BrandsRouteWithChildren
-  '/local': typeof LocalRouteWithChildren
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
-  '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
@@ -169,6 +167,8 @@ export interface FileRoutesById {
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/local/': typeof LocalIndexRoute
+  '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
 }
 export interface FileRouteTypes {
@@ -176,13 +176,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/brands'
-    | '/local'
     | '/login'
     | '/okrs'
     | '/orders'
     | '/register'
     | '/settings'
-    | '/social'
     | '/tasks'
     | '/videos'
     | '/web-contents'
@@ -190,18 +188,18 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/local/'
+    | '/social/'
     | '/websites/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/brands'
-    | '/local'
     | '/login'
     | '/okrs'
     | '/orders'
     | '/register'
     | '/settings'
-    | '/social'
     | '/tasks'
     | '/videos'
     | '/web-contents'
@@ -209,18 +207,18 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/local'
+    | '/social'
     | '/websites'
   id:
     | '__root__'
     | '/'
     | '/brands'
-    | '/local'
     | '/login'
     | '/okrs'
     | '/orders'
     | '/register'
     | '/settings'
-    | '/social'
     | '/tasks'
     | '/videos'
     | '/web-contents'
@@ -228,23 +226,27 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/local/'
+    | '/social/'
     | '/websites/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BrandsRoute: typeof BrandsRouteWithChildren
-  LocalRoute: typeof LocalRouteWithChildren
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
-  SocialRoute: typeof SocialRouteWithChildren
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
+  LocalIdRoute: typeof LocalIdRoute
+  SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
+  LocalIndexRoute: typeof LocalIndexRoute
+  SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
 }
 
@@ -269,13 +271,6 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof TasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/social': {
-      id: '/social'
-      path: '/social'
-      fullPath: '/social'
-      preLoaderRoute: typeof SocialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -313,13 +308,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/local': {
-      id: '/local'
-      path: '/local'
-      fullPath: '/local'
-      preLoaderRoute: typeof LocalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/brands': {
       id: '/brands'
       path: '/brands'
@@ -341,6 +329,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebsitesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/social/': {
+      id: '/social/'
+      path: '/social'
+      fullPath: '/social/'
+      preLoaderRoute: typeof SocialIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/local/': {
+      id: '/local/'
+      path: '/local'
+      fullPath: '/local/'
+      preLoaderRoute: typeof LocalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/websites/$id': {
       id: '/websites/$id'
       path: '/websites/$id'
@@ -350,17 +352,17 @@ declare module '@tanstack/react-router' {
     }
     '/social/$id': {
       id: '/social/$id'
-      path: '/$id'
+      path: '/social/$id'
       fullPath: '/social/$id'
       preLoaderRoute: typeof SocialIdRouteImport
-      parentRoute: typeof SocialRoute
+      parentRoute: typeof rootRouteImport
     }
     '/local/$id': {
       id: '/local/$id'
-      path: '/$id'
+      path: '/local/$id'
       fullPath: '/local/$id'
       preLoaderRoute: typeof LocalIdRouteImport
-      parentRoute: typeof LocalRoute
+      parentRoute: typeof rootRouteImport
     }
     '/brands/$id': {
       id: '/brands/$id'
@@ -383,43 +385,34 @@ const BrandsRouteChildren: BrandsRouteChildren = {
 const BrandsRouteWithChildren =
   BrandsRoute._addFileChildren(BrandsRouteChildren)
 
-interface LocalRouteChildren {
-  LocalIdRoute: typeof LocalIdRoute
-}
-
-const LocalRouteChildren: LocalRouteChildren = {
-  LocalIdRoute: LocalIdRoute,
-}
-
-const LocalRouteWithChildren = LocalRoute._addFileChildren(LocalRouteChildren)
-
-interface SocialRouteChildren {
-  SocialIdRoute: typeof SocialIdRoute
-}
-
-const SocialRouteChildren: SocialRouteChildren = {
-  SocialIdRoute: SocialIdRoute,
-}
-
-const SocialRouteWithChildren =
-  SocialRoute._addFileChildren(SocialRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BrandsRoute: BrandsRouteWithChildren,
-  LocalRoute: LocalRouteWithChildren,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
-  SocialRoute: SocialRouteWithChildren,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
+  LocalIdRoute: LocalIdRoute,
+  SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
+  LocalIndexRoute: LocalIndexRoute,
+  SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

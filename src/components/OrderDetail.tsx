@@ -92,24 +92,12 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
       onClick: () => transition("Chờ nhận việc", "Gửi yêu cầu"),
       show: allow("order.send_request", isRequester),
     });
-    actions.push({
-      label: "Hủy order",
-      variant: "destructive",
-      onClick: () => transition("Đã hủy", "Hủy order", { cancelReason: reviewNote }, reviewNote),
-      show: allow("order.cancel", isRequester),
-    });
   }
   if (status === "Chờ nhận việc") {
     actions.push({
       label: "Nhận việc",
       onClick: () => transition("Đang thực hiện", "Nhận việc", { takenAt: new Date().toISOString(), assignee: o.assignee || userName }),
       show: allow("order.take", isOwner || (!o.assignee)),
-    });
-    actions.push({
-      label: "Hủy order",
-      variant: "destructive",
-      onClick: () => transition("Đã hủy", "Hủy order", { cancelReason: reviewNote }, reviewNote),
-      show: allow("order.cancel", isRequester),
     });
   }
   if (status === "Đang thực hiện") {
@@ -127,7 +115,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
     });
     actions.push({
       label: "Yêu cầu sửa",
-      variant: "destructive",
+      variant: "outline",
       onClick: requestChanges,
       show: allow("order.request_changes", isApprover),
     });
@@ -154,17 +142,32 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
     });
     actions.push({
       label: "Yêu cầu sửa lại",
-      variant: "destructive",
+      variant: "outline",
       onClick: requestChanges,
       show: allow("order.request_changes", isApprover || isRequester),
     });
   }
+  // Single global cancel button — only shown when allowed and order is still active.
   if (status !== "Đã hủy" && status !== "Hoàn thành") {
     actions.push({
       label: "Hủy order",
-      variant: "outline",
-      onClick: () => transition("Đã hủy", "Hủy order", { cancelReason: reviewNote }, reviewNote),
-      show: allow("order.cancel", false),
+      variant: "destructive",
+      onClick: () => {
+        const earlyStages = status === "Mới tạo" || status === "Chờ nhận việc";
+        if (!earlyStages && !reviewNote.trim()) {
+          toast.error("Nhập lý do hủy ở ô ghi chú trước");
+          return;
+        }
+        transition("Đã hủy", "Hủy order", { cancelReason: reviewNote }, reviewNote);
+      },
+      show: allow("order.cancel", isRequester),
+    });
+  }
+  if (status === "Đã hủy") {
+    actions.push({
+      label: "Khôi phục",
+      onClick: () => transition("Mới tạo", "Khôi phục order"),
+      show: allow("order.restore", false),
     });
   }
   if (status === "Đã hủy") {
