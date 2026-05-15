@@ -507,13 +507,14 @@ export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
-  // Super admin shortcut: always has every permission, regardless of mapped role
   const isSuperAdmin = u?.roleId === SUPER_ADMIN_ID || !!u?.system;
+  const isAdmin = isSuperAdmin || u?.roleId === ADMIN_ROLE_ID;
   return {
     user: u,
     role: u ? roles.find((r) => r.id === u.roleId) : undefined,
     perms,
-    can: (key: PermissionKey) => isSuperAdmin || perms.has(key),
+    can: (key: PermissionKey) => isAdmin || perms.has(key),
     isSuperAdmin,
+    isAdmin,
   };
 }
