@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   useStore, uid, todayISO, CONTENT_TYPES, CONTENT_STATUSES, SEARCH_INTENTS,
   INDEX_STATUSES, OPTIMIZE_REASONS,
-  type WebContent, type ContentStatus, type ContentType,
+  type WebContent, type ContentStatus, type ContentType, type WebTopic,
 } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
+import { ExternalLink, Plus } from "lucide-react";
+import { TopicDialog } from "@/components/KeywordResearchTab";
 
 export function ContentForm({
   initial, websiteId, brandId, onSubmit, onClose, lockWebsite = true,
