@@ -17,7 +17,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/local/")({
   head: () => ({ meta: [{ title: "Local Map — Base Marketing" }] }),
-  component: LocalPage,
+  component: () => (
+    <RequirePermission perm="local.view">
+      <LocalPage />
+    </RequirePermission>
+  ),
 });
 
 function PlaceForm({ initial, onSubmit, onClose }: { initial?: Partial<LocalPlace>; onSubmit: (p: LocalPlace) => void; onClose: () => void }) {
