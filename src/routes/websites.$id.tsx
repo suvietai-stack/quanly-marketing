@@ -51,6 +51,7 @@ function WebsiteDetail() {
   const w = s.websites.find((x) => x.id === id);
   const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState("info");
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");
