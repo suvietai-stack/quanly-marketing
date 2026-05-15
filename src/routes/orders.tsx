@@ -94,11 +94,11 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
 
 function OrdersPage() {
   const s = useStore();
-  const { user, can, isAdmin } = useCurrentUser();
+  const { user, can } = useCurrentUser();
   const userName = user?.fullName || user?.username || "";
-  const canCreate = isAdmin || can("order.create");
-  const canDelete = isAdmin || can("order.delete");
-  const canViewAll = isAdmin || can("order.view_all");
+  const canCreate = can("order.create");
+  const canDelete = can("order.delete");
+  const canViewAll = can("order.view_all");
 
   const [view, setView] = useState<"table" | "kanban">("table");
   const [tab, setTab] = useState<ViewKey>("all");
