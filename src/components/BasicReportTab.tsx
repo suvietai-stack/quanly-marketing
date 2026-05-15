@@ -376,6 +376,10 @@ export function BasicReportTab({
         <StatCard icon={Eye} label="Chưa check" value={kwStats.unchecked} />
       </div>
 
+      {/* Growth */}
+      <GroupTitle><TrendingUp className="h-4 w-4" />Tăng Trưởng Website</GroupTitle>
+      <GrowthSummary websiteId={websiteId} onJump={() => onJumpTab?.("growth")} />
+
       {/* By owner */}
       <GroupTitle><FileEdit className="h-4 w-4" />Theo người phụ trách</GroupTitle>
       <Card><CardContent className="p-0">
