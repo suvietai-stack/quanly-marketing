@@ -105,10 +105,33 @@ function SettingsPage() {
         <ListEditor items={s.topics} onAdd={(v) => setTopics([...s.topics, v])} onRemove={(v) => setTopics(s.topics.filter((x) => x !== v))} />
       </CardContent></Card></TabsContent>
 
-      <TabsContent value="info" className="mt-4"><Card><CardContent className="p-5 text-sm text-muted-foreground space-y-2">
-        <p>Bản base chưa làm phân quyền (Admin / Leader / Nhân sự / Viewer). Sẽ phát triển ở giai đoạn sau.</p>
-        <p>Dữ liệu hiện đang được lưu trong trình duyệt (localStorage). Để chia sẻ giữa nhiều người, sẽ kết nối backend ở giai đoạn sau.</p>
-      </CardContent></Card></TabsContent>
+      <TabsContent value="info" className="mt-4 space-y-4">
+        <Card><CardContent className="p-5 text-sm text-muted-foreground space-y-2">
+          <p>Dữ liệu được lưu trong trình duyệt (localStorage) và sẽ được giữ lại giữa các phiên làm việc.</p>
+          <p>Để chia sẻ giữa nhiều người, sẽ kết nối backend ở giai đoạn sau.</p>
+        </CardContent></Card>
+
+        <Card><CardContent className="p-5 space-y-4">
+          <div>
+            <h3 className="font-semibold text-base">Quản lý dữ liệu</h3>
+            <p className="text-sm text-muted-foreground mt-1">Reset toàn bộ dữ liệu nghiệp vụ (không ảnh hưởng tài khoản đăng nhập).</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="destructive" onClick={() => {
+              if (confirm("Xoá toàn bộ dữ liệu nghiệp vụ và bắt đầu với cơ sở dữ liệu trống?\n\nHành động này không thể hoàn tác.")) {
+                useStore.getState().resetAll("empty");
+                window.location.reload();
+              }
+            }}><RotateCcw className="h-4 w-4 mr-1.5" />Reset về dữ liệu trống</Button>
+            <Button variant="outline" onClick={() => {
+              if (confirm("Khôi phục dữ liệu mẫu (demo)? Mọi dữ liệu hiện tại sẽ bị thay thế.")) {
+                useStore.getState().resetAll("demo");
+                window.location.reload();
+              }
+            }}><Database className="h-4 w-4 mr-1.5" />Khôi phục dữ liệu demo</Button>
+          </div>
+        </CardContent></Card>
+      </TabsContent>
     </Tabs>
 
     <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
