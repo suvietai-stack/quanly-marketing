@@ -358,6 +358,9 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
             setSearch(""); setFStatus("all"); setFOwner("all"); setFTopic("all"); setFPlan("all"); setFDate(""); setQuick("all");
           }}>Xóa lọc</Button>
         )}
+        <Button size="sm" className="ml-auto" onClick={() => setAddingKw(true)}>
+          <Plus className="h-4 w-4" />Thêm từ khóa
+        </Button>
       </div>
 
       {filteredGroups.length === 0 && filteredExtras.length === 0 && (
