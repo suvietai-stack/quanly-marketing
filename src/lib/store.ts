@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth, type User as AuthUser, type Role as AuthRole } from "@/lib/auth";
 
 export type ID = string;
 
