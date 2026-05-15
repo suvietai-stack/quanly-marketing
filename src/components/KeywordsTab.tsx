@@ -245,19 +245,63 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   const addSub = (cid: string) => {
     const kw = newSub.trim();
     if (!kw) return;
-    s.add("keywords", {
-      id: uid(),
-      websiteId,
-      contentId: cid,
-      keyword: kw,
-      isMain: false,
-      type: "Từ khóa phụ",
-      status: "Chưa check",
-    });
+    // append to content's subKeywords so it persists as part of the article
+    const c = s.webContents.find((x) => x.id === cid);
+    if (c) {
+      const cur = splitSubs(c.subKeywords);
+      if (!cur.some((x) => x.toLowerCase() === kw.toLowerCase())) {
+        s.update("webContents", cid, { subKeywords: [...cur, kw].join(", ") });
+      }
+    }
     setNewSub("");
     setAddingSubFor(null);
     setExpanded((e) => ({ ...e, [cid]: true }));
   };
+
+  const deleteSub = (cid: string, kw: string, trackId?: string) => {
+    if (!confirm(`Xóa từ khóa phụ "${kw}"?`)) return;
+    const c = s.webContents.find((x) => x.id === cid);
+    if (c) {
+      const remaining = splitSubs(c.subKeywords).filter((k) => k.toLowerCase() !== kw.toLowerCase());
+      s.update("webContents", cid, { subKeywords: remaining.join(", ") });
+    }
+    if (trackId) s.remove("keywords", trackId);
+  };
+
+  const deleteMain = (cid: string, kw: string, trackId?: string) => {
+    if (!confirm(`Xóa từ khóa chính "${kw}" khỏi bài viết?`)) return;
+    s.update("webContents", cid, { mainKeyword: "" });
+    if (trackId) s.remove("keywords", trackId);
+  };
+
+  const addManualKeyword = (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => {
+    const kw = p.keyword.trim();
+    if (!kw) return;
+    if (p.contentId) {
+      const c = s.webContents.find((x) => x.id === p.contentId);
+      if (!c) return;
+      if (p.isMain) {
+        s.update("webContents", p.contentId, { mainKeyword: kw });
+      } else {
+        const cur = splitSubs(c.subKeywords);
+        if (!cur.some((x) => x.toLowerCase() === kw.toLowerCase())) {
+          s.update("webContents", p.contentId, { subKeywords: [...cur, kw].join(", ") });
+        }
+      }
+      setExpanded((e) => ({ ...e, [p.contentId!]: true }));
+    } else {
+      s.add("keywords", {
+        id: uid(),
+        websiteId,
+        keyword: kw,
+        isMain: p.isMain,
+        type: p.isMain ? "Từ khóa chính" : "Từ khóa phụ",
+        targetUrl: p.targetUrl,
+        status: "Chưa check",
+      });
+    }
+  };
+
 
   // ===== Render =====
   return (
