@@ -368,7 +368,12 @@ function WebsiteDetail() {
           </CardContent></Card>
         </TabsContent>
 
-        {/* TAB 6 — REPORT (placeholder) */}
+        {/* TAB TĂNG TRƯỞNG WEBSITE */}
+        <TabsContent value="growth" className="mt-4">
+          <GrowthTab websiteId={w.id} />
+        </TabsContent>
+
+        {/* TAB BÁO CÁO */}
         <TabsContent value="report" className="mt-4">
           <BasicReportTab
             websiteId={w.id}
