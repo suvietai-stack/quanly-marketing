@@ -49,6 +49,10 @@ function PlaceForm({ initial, onSubmit, onClose }: { initial?: Partial<LocalPlac
 
 function LocalPage() {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("local.create");
+  const canEdit = can("local.edit");
+  const canDelete = can("local.delete");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
   const [fStatus, setFStatus] = useState("all");
