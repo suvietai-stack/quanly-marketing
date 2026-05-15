@@ -145,7 +145,7 @@ function TaskForm({ initial, onSubmit, onClose }: {
 
 function TasksPage() {
   const { tasks, brands, add, update, remove } = useStore();
-  const { can } = useCurrentUser();
+  const { user, can, scopeList } = useCurrentUser();
   const canCreate = can("task.create");
   const canEdit = can("task.edit");
   const canDelete = can("task.delete");
@@ -159,10 +159,18 @@ function TasksPage() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const ME = "Nguyễn Văn A";
+  const ME = user?.fullName || user?.username || "";
+
+  // Apply permission scope: task.view_all sees everything, task.view_mine only own/assigned
+  const scopedTasks = useMemo(
+    () => scopeList(tasks, "task.view_all", "task.view_mine", (t) =>
+      !!ME && (t.assignee === ME || t.reporter === ME)
+    ),
+    [tasks, scopeList, ME]
+  );
 
   const filtered = useMemo(() => {
-    return tasks.filter((t) => {
+    return scopedTasks.filter((t) => {
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
       if (fBrand !== "all" && t.brandId !== fBrand) return false;
       if (fAssignee !== "all" && t.assignee !== fAssignee) return false;
@@ -174,11 +182,11 @@ function TasksPage() {
       if (fScope === "done" && t.status !== "Hoàn thành") return false;
       return true;
     });
-  }, [tasks, search, fBrand, fAssignee, fStatus, fPriority, fScope]);
+  }, [scopedTasks, search, fBrand, fAssignee, fStatus, fPriority, fScope, ME]);
 
   const assignees = useMemo(
-    () => Array.from(new Set(tasks.map((t) => t.assignee).filter(Boolean))) as string[],
-    [tasks]
+    () => Array.from(new Set(scopedTasks.map((t) => t.assignee).filter(Boolean))) as string[],
+    [scopedTasks]
   );
 
   return (
