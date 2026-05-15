@@ -463,8 +463,8 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                                 <Button size="sm" variant="ghost" onClick={() => setUpdating({ row: r })}>
                                   <RefreshCw className="h-3.5 w-3.5" />Cập nhật
                                 </Button>
-                                {r.track && (
-                                  <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa từ khóa "${r.keyword}"?`)) s.remove("keywords", r.track!.id); }}>
+                                {r.contentId && (
+                                  <Button size="icon" variant="ghost" title="Xóa từ khóa phụ" onClick={() => deleteSub(r.contentId!, r.keyword, r.track?.id)}>
                                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                                   </Button>
                                 )}
