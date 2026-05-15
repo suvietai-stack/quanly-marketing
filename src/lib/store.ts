@@ -772,7 +772,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 6 }
+    { name: "base-mkt-store", version: 7 }
   )
 );
 
