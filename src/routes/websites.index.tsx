@@ -3,6 +3,8 @@ import {
   useStore, uid, ensureSeoChecks,
   type Website, type WebsiteType, type WebsiteStatus,
 } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -19,7 +21,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/websites/")({
   head: () => ({ meta: [{ title: "Dự Án Web — Base Marketing" }] }),
-  component: WebsitesPage,
+  component: () => (
+    <RequirePermission perm={["web.view", "web.view_all", "web.view_mine"]}>
+      <WebsitesPage />
+    </RequirePermission>
+  ),
 });
 
 const TYPES: WebsiteType[] = [
