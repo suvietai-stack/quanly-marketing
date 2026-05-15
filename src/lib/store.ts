@@ -652,9 +652,27 @@ const seed = () => {
     });
   });
 
+  const entities: EntitySocial[] = [
+    { id: "e1", websiteId: "w1", name: "Facebook Entity Sứ Việt", platform: "Facebook", url: "https://facebook.com/suviet", account: "suviet.content", password: "Suviet@2025", email: "suviet.ai@gmail.com", phone: "0987123456", status: "Đang dùng", notes: "Tài khoản chính dùng share bài SEO" },
+    { id: "e2", websiteId: "w1", name: "Pinterest Sứ Việt", platform: "Pinterest", url: "https://pinterest.com/suviet", account: "suviet.pin", password: "Pin@Suviet1", email: "suviet.ai@gmail.com", status: "Đang dùng" },
+    { id: "e3", websiteId: "w1", name: "Google Site Sứ Việt", platform: "Google Site", url: "https://sites.google.com/view/suviet", account: "suviet.gsite", password: "Gsite@2025", email: "suviet.ai@gmail.com", status: "Cần kiểm tra", notes: "Cần check lại quyền truy cập" },
+    { id: "e4", websiteId: "w1", name: "Medium Sứ Việt", platform: "Medium", url: "https://medium.com/@suviet", account: "@suviet", password: "Med@Suviet", email: "suviet.ai@gmail.com", status: "Chưa dùng" },
+    { id: "e5", websiteId: "w1", name: "LinkedIn Brand Sứ Việt", platform: "LinkedIn", url: "https://linkedin.com/company/suviet", account: "admin.suviet", password: "Lk@Suviet1", email: "suviet.ai@gmail.com", status: "Đang dùng" },
+    { id: "e6", websiteId: "w3", name: "Facebook Sứ Minh Đăng", platform: "Facebook", url: "https://facebook.com/suminhdang", account: "smd.admin", password: "Smd@2025", email: "smd@minhdang.vn", status: "Đang dùng" },
+  ];
+
+  const keywords: KeywordTrack[] = [
+    { id: "k1", websiteId: "w1", keyword: "tượng Phật gốm", topic: "Tượng phong thủy", targetUrl: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran", type: "Từ khóa chính", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 12, previousTop: 18, status: "Tăng hạng" },
+    { id: "k2", websiteId: "w1", keyword: "ấm chén in logo", topic: "Quà tặng doanh nghiệp", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", type: "Từ khóa sản phẩm", searchIntent: "Mua hàng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 6, previousTop: 9, status: "Top 10" },
+    { id: "k3", websiteId: "w1", keyword: "bát đĩa nhà hàng", topic: "Sản phẩm nhà hàng", targetUrl: "https://xuonggomsuviet.vn/bat-dia-nha-hang", type: "Từ khóa danh mục", searchIntent: "Mua hàng", owner: "Phạm Anh SEO", lastCheckDate: d(-2), currentTop: 15, previousTop: 11, status: "Tụt hạng" },
+    { id: "k4", websiteId: "w1", keyword: "gốm sứ Bát Tràng", topic: "Thương hiệu", type: "Từ khóa thương hiệu", searchIntent: "Điều hướng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-3), currentTop: 3, previousTop: 4, status: "Top 3" },
+    { id: "k5", websiteId: "w1", keyword: "bình hút lộc Bát Tràng", topic: "Phong thủy", type: "Từ khóa phụ", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", currentTop: undefined, previousTop: undefined, status: "Chưa check" },
+    { id: "k6", websiteId: "w1", keyword: "quà tặng tết doanh nghiệp", topic: "Quà tặng doanh nghiệp", type: "Từ khóa chính", plan: "Tết 2026", searchIntent: "Mua hàng", owner: "Hoàng Mai Content", lastCheckDate: d(-5), currentTop: 0, previousTop: 35, status: "Mất top" },
+  ];
+
   return {
     brands, websites, socials, places, tasks, webContents, socialPosts, mapPosts,
-    reviews, videos, orders, people, seoChecks,
+    reviews, videos, orders, people, seoChecks, entities, keywords,
     plans: ["Tết 2026", "Khai trương showroom", "Sale tháng 12", "Brand 2026"],
     topics: ["Quà tặng doanh nghiệp", "Sản phẩm mới", "Văn hóa Bát Tràng", "Phong thủy", "Khuyến mãi"],
   };
