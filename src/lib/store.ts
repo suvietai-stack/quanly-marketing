@@ -396,6 +396,29 @@ export interface Person {
   notes?: string;
 }
 
+export type GrowthPeriodType = "Tuần" | "Tháng" | "Quý";
+export const GROWTH_PERIOD_TYPES: GrowthPeriodType[] = ["Tuần", "Tháng", "Quý"];
+
+export interface GrowthMetric {
+  id: ID;
+  websiteId: ID;
+  period: string;            // ví dụ "Tuần 2 tháng 5/2026" hoặc "Tháng 5/2026"
+  periodType: GrowthPeriodType;
+  periodKey?: string;        // YYYY-WW / YYYY-MM / YYYY-Qn — dùng để sắp xếp
+  updatedAt?: string;        // ngày cập nhật
+  totalTraffic?: number;
+  organicTraffic?: number;
+  impressions?: number;
+  clicks?: number;
+  ctr?: number;              // %
+  avgPosition?: number;
+  indexedPages?: number;
+  leads?: number;
+  reportLink?: string;
+  updatedBy?: string;
+  notes?: string;
+}
+
 export interface SeoCheckItem {
   id: ID;
   websiteId: ID;
