@@ -121,6 +121,67 @@ export const SEARCH_INTENTS: SearchIntent[] = ["Thông tin", "So sánh", "Thươ
 export type IndexStatus = "Chưa kiểm tra" | "Chưa index" | "Đã index" | "Cần xử lý";
 export const INDEX_STATUSES: IndexStatus[] = ["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"];
 
+export type ShareSocialStatus = "Chưa share" | "Đã share" | "Cần share lại";
+export const SHARE_SOCIAL_STATUSES: ShareSocialStatus[] = ["Chưa share", "Đã share", "Cần share lại"];
+
+export type EntityPlatform =
+  | "Facebook" | "Pinterest" | "LinkedIn" | "Twitter/X" | "YouTube" | "TikTok"
+  | "Zalo" | "Medium" | "Blogspot" | "WordPress" | "Google Site" | "Reddit" | "Khác";
+export const ENTITY_PLATFORMS: EntityPlatform[] = [
+  "Facebook", "Pinterest", "LinkedIn", "Twitter/X", "YouTube", "TikTok",
+  "Zalo", "Medium", "Blogspot", "WordPress", "Google Site", "Reddit", "Khác",
+];
+
+export type EntityStatus = "Đang dùng" | "Chưa dùng" | "Cần kiểm tra" | "Lỗi đăng nhập" | "Tạm dừng";
+export const ENTITY_STATUSES: EntityStatus[] = ["Đang dùng", "Chưa dùng", "Cần kiểm tra", "Lỗi đăng nhập", "Tạm dừng"];
+
+export interface EntitySocial {
+  id: ID;
+  websiteId: ID;
+  name: string;
+  platform: EntityPlatform;
+  url?: string;
+  account?: string;
+  password?: string;
+  email?: string;
+  phone?: string;
+  status: EntityStatus;
+  notes?: string;
+}
+
+export type KeywordType =
+  | "Từ khóa chính" | "Từ khóa phụ" | "Từ khóa sản phẩm" | "Từ khóa danh mục"
+  | "Từ khóa local" | "Từ khóa thương hiệu" | "Khác";
+export const KEYWORD_TYPES: KeywordType[] = [
+  "Từ khóa chính", "Từ khóa phụ", "Từ khóa sản phẩm", "Từ khóa danh mục",
+  "Từ khóa local", "Từ khóa thương hiệu", "Khác",
+];
+
+export type KeywordRankStatus =
+  | "Chưa check" | "Top 3" | "Top 10" | "Top 20" | "Top 50"
+  | "Ngoài top 50" | "Tăng hạng" | "Tụt hạng" | "Mất top";
+export const KEYWORD_RANK_STATUSES: KeywordRankStatus[] = [
+  "Chưa check", "Top 3", "Top 10", "Top 20", "Top 50",
+  "Ngoài top 50", "Tăng hạng", "Tụt hạng", "Mất top",
+];
+
+export interface KeywordTrack {
+  id: ID;
+  websiteId: ID;
+  keyword: string;
+  topic?: string;
+  targetUrl?: string;
+  type: KeywordType;
+  searchIntent?: SearchIntent;
+  owner?: string;
+  lastCheckDate?: string;
+  currentTop?: number;
+  previousTop?: number;
+  status: KeywordRankStatus;
+  notes?: string;
+  plan?: string;
+}
+
 export type OptimizeReason =
   | "Bài tụt hạng" | "Bài cũ thiếu thông tin" | "Bài chưa có CTA"
   | "Bài thiếu internal link" | "Bài chưa index"
