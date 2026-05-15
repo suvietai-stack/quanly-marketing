@@ -1,74 +1,60 @@
-## Bối cảnh
+## Phạm vi cập nhật module Kênh Social
 
-App hiện tại lưu **toàn bộ** dữ liệu trong localStorage (Zustand persist):
-- `src/lib/auth.ts` — users, roles, permissions, session
-- `src/lib/store.ts` — 18 collection nghiệp vụ (brands, websites, contents, tasks, socials, places, videos, orders, keywords, backlinks, growth, technical SEO, entities, web topics, plans, topics, people, reviews, mapPosts, socialPosts, seoChecks)
+### 1. Data model (src/lib/store.ts)
+- Mở rộng `SocialStatus`: `Kế hoạch | Đang làm | Chờ duyệt | Cần sửa | Đã duyệt | Chờ đăng | Đã đăng | Hoàn thành | Đã hủy`. Map các giá trị cũ (`Ý tưởng`→`Kế hoạch`, `Đã lên lịch`→`Chờ đăng`) khi load.
+- Mở rộng `SocialChannel.platform` thêm `LinkedIn`; thêm trạng thái `Lưu trữ`.
+- Thêm vào `SocialPost`: `revisions?: number`, `reviewNotes?: string`, `history?: SocialPostHistoryEntry[]` (at, byId, byName, action, fromStatus, toStatus, note, forced).
+- Thêm bảng `SocialGrowth` (kỳ, loại kỳ, ngày, follower đầu/cuối, bài đăng, view, tương tác, like/comment/share, inbox, link, người cập nhật, ghi chú) — lưu trên Lovable Cloud (bảng `growth` đã có; tái dùng bằng prefix khóa hoặc thêm bảng mới `social_growth`).
 
-Lovable Cloud đã bật nhưng database trống — chưa có bảng nào. Cần build từ đầu.
+### 2. Permission keys (src/lib/auth.ts)
+Thêm nhóm `social.*`:
+`social.view, social.channel.create/edit/delete, social.post.create/edit/delete, social.start, social.submit, social.resubmit, social.approve, social.request_changes, social.move_pending_publish, social.confirm_published, social.complete, social.cancel, social.restore, social.force_status, social.growth.update`. Admin/Super Admin tự động full quyền (đã có).
 
-## Vì sao phải chia đợt
+### 3. Màn chính `/social` (src/routes/social.tsx)
+- Bỏ tabs hiện tại. Hiển thị danh sách card kênh social.
+- Card hiển thị: tên, nền tảng, thương hiệu, link, người PT, tần suất, trạng thái, đếm bài theo nhóm (đang sản xuất / chờ duyệt / chờ đăng / đã đăng).
+- Mỗi card có nút **Mở kênh**, **Thêm bài**, **Chỉnh sửa kênh**.
+- Nút chung **+ Thêm kênh**. Bộ lọc: tìm, thương hiệu, nền tảng, trạng thái, người PT.
+- Empty state đẹp.
 
-- 18 bảng + RLS + ~30 server functions + refactor 20 file route/component = vượt xa giới hạn 1 lượt an toàn
-- Auth phải migrate trước, nếu không các tính năng nghiệp vụ không có ai để gắn ownership
-- Mỗi đợt cần test riêng (đăng nhập, CRUD, reload còn dữ liệu) trước khi sang đợt tiếp
+### 4. Workspace `/social/$id` (src/routes/social.$id.tsx)
+Header gồm thông tin kênh + nút quay lại. 3 tab:
+1. **Thông tin dự án**: card thông tin, mục tiêu, ghi chú; cards tổng quan (tổng bài, đang sản xuất, chờ duyệt, cần sửa, chờ đăng, đã đăng, hoàn thành).
+2. **Sản xuất nội dung**: chỉ bài của kênh hiện tại, 3 view: **Table / Kanban / Lịch đăng**. Bộ lọc trạng thái, người viết, người duyệt, loại nội dung, ngày, chủ đề, plan. Click bài mở dialog chi tiết.
+3. **Theo dõi tăng trưởng**: nút thêm kỳ báo cáo, bảng danh sách kỳ, card so sánh kỳ mới nhất với kỳ trước (badge tăng/giảm/không đổi).
 
-## Đợt 1 — Auth + Role + Phân quyền (lượt này)
+### 5. Dialog chi tiết bài social (component mới `SocialPostDetail`)
+- Form đầy đủ trường (caption, media, link bài đã đăng, người viết/duyệt/đăng, ngày dự kiến/thực, plan, topic…).
+- Khu vực workflow: hiển thị nút theo trạng thái hiện tại + permission:
+  - Kế hoạch → `Bắt đầu làm` (social.start), `Hủy bài` (social.cancel).
+  - Đang làm → `Gửi duyệt` (social.submit), `Hủy bài`.
+  - Chờ duyệt → `Duyệt bài` (social.approve), `Yêu cầu sửa` (social.request_changes) + ô ghi chú.
+  - Cần sửa → `Gửi duyệt lại` (social.resubmit) — tăng `revisions`.
+  - Đã duyệt → `Chuyển sang chờ đăng` (social.move_pending_publish).
+  - Chờ đăng → `Xác nhận đã đăng` (social.confirm_published) — yêu cầu link/ngày.
+  - Đã đăng → `Hoàn thành` (social.complete).
+  - Đã hủy → `Khôi phục` (social.restore).
+- Khu vực ép trạng thái cho người có `social.force_status` (chọn trạng thái + lý do bắt buộc).
+- Tab **Lịch sử xử lý**: list các bước chuyển trạng thái.
 
-**Database:**
-- `profiles` (1-1 với `auth.users`: full_name, username, phone, desired_position, notes, status `Chờ duyệt|Đang hoạt động|Tạm khóa|Từ chối|Lưu trữ`, is_system_admin, must_change_password)
-- `app_roles` (id, name, description, is_system, permissions text[]) — seed 10 role mặc định (Super Admin, Admin, Leader Marketing, SEO, Content Web, Social, Local SEO, Designer, Video, Viewer)
-- `user_roles` (user_id, role_id)
-- `user_permission_overrides` (user_id, use_custom bool, permissions text[])
-- Functions: `has_permission(user_id, perm)`, `is_super_admin(user_id)` — SECURITY DEFINER
-- Trigger `handle_new_user` → tạo profile với status `Chờ duyệt`
-- Seed Admin: tạo `auth.users` với email `admin@local`, password `Suviet888@@@`, gắn role Super Admin, status `Đang hoạt động`, is_system_admin=true
+### 6. Liên kết thương hiệu
+Trang `brands.$id` (tab “Kênh liên kết → Social”) đã đọc từ `s.socials` theo `brandId` — không cần đổi schema, đảm bảo kênh tạo mới hiển thị đúng.
 
-**Code:**
-- Bỏ `src/lib/auth.ts` Zustand → viết lại bằng `supabase.auth` + React Query
-- `login.tsx` dùng `signInWithPassword` (map "Admin" → `admin@local` trong nội bộ)
-- `register.tsx` dùng `signUp` với metadata (full_name, phone, desired_position) + redirect `emailRedirectTo`
-- `AuthGate.tsx` dùng `onAuthStateChange` + check status `Đang hoạt động`
-- `AccountsSettings.tsx` refactor đầy đủ: list profiles, duyệt, khóa, set role, custom permissions, reset password
-- Server functions: `accounts.functions.ts` (approve, reject, lock, setRole, setCustomPerms, resetPassword) — dùng `requireSupabaseAuth` + check `is_super_admin`
-- `src/start.ts` thêm `attachSupabaseAuth` middleware
-- Cấu hình auth: `auto_confirm_email=true`, `disable_signup=false`, `password_hibp_enabled=true`
-- Nhắc nhở "đổi mật khẩu mặc định" sau khi Admin login lần đầu
+### 7. Migration / dữ liệu
+- Không seed thêm dữ liệu demo.
+- Trong store, normalize trạng thái cũ khi đọc từ Cloud về để không vỡ giao diện.
 
-**Kết quả:** Tài khoản dùng chung trên mọi máy. Đăng ký mới → chờ duyệt. Admin không thể bị xóa/khóa. Dữ liệu nghiệp vụ vẫn ở localStorage tạm thời (sẽ migrate ở đợt 2).
+### 8. Files dự kiến
+- edit `src/lib/store.ts` (types, normalize, growth helpers).
+- edit `src/lib/auth.ts` (PERMISSION list + nhóm Social).
+- new `src/components/SocialPostDetail.tsx`.
+- rewrite `src/routes/social.tsx` (chỉ còn list card).
+- rewrite `src/routes/social.$id.tsx` (workspace 3 tab).
+- (tuỳ) edit `src/routes/settings.tsx` để hiển thị nhóm permission Social trong ma trận.
 
-## Đợt 2 — Database nghiệp vụ + Server functions (lượt sau)
+### Ngoài phạm vi
+- Không tạo bảng DB mới phía Supabase (tái dùng `socials`, `social_posts`, `growth` JSONB).
+- Không đụng các module khác (Web/Local/Video/Order/Task).
+- Không thêm view “Tất cả bài đăng” toàn cục — bỏ luôn theo yêu cầu.
 
-**18 bảng** (tất cả có RLS, FK đến auth.users qua profiles, có cột `is_demo bool default false`):
-- `brands`, `websites`, `web_topics`, `web_keywords`, `web_backlinks`, `web_growth`, `web_technical_seo`
-- `web_contents` (kèm các trường outline/draft/publish/index/share)
-- `socials`, `social_posts`
-- `places`, `map_posts`, `map_reviews`
-- `videos`, `design_orders`
-- `tasks`, `people`
-- `entity_socials`
-- Catalog: `plans` (text), `topics` (text)
-
-**RLS policy:** mọi user đã đăng nhập + status `Đang hoạt động` có thể đọc; thao tác ghi check qua `has_permission()`.
-
-**Server functions:** 1 cặp `<resource>.functions.ts` cho mỗi bảng (list/get/create/update/delete) + `requireSupabaseAuth`.
-
-**Refactor `src/lib/store.ts`:** giữ nguyên API `useStore().add/update/remove/...` nhưng đổi internals sang React Query + server functions, để các route/component không phải thay đổi nhiều.
-
-## Đợt 3 — Reset demo + Empty states (lượt sau cùng)
-
-- Trang Cài Đặt → "Reset dữ liệu demo" với modal yêu cầu nhập `RESET DEMO`
-- Server function `resetDemoData()` (chỉ Super Admin/Admin) → `DELETE FROM <table> WHERE is_demo = true` cho 18 bảng. KHÔNG đụng profiles/roles/Admin/catalog defaults.
-- Sau reset hiện toast "Đã reset dữ liệu demo. App đã sẵn sàng để nhập dữ liệu thật."
-- Empty states với CTA cho từng màn (Brands, Websites, Tasks, Socials, Orders, ...)
-- Bỏ hoàn toàn code seed demo trong `store.ts` (đã làm 1 phần ở turn trước)
-
-## Phạm vi lượt này
-
-**Chỉ Đợt 1.** Sau khi Đợt 1 chạy được (đăng nhập Admin, đăng ký + duyệt tài khoản hoạt động trên cả 2 máy khác nhau), tôi sẽ bắt đầu Đợt 2.
-
-## Rủi ro / lưu ý kỹ thuật
-
-- Username "Admin" sẽ được map sang email `admin@local` ở tầng client. Form đăng nhập vẫn nhận "Admin" hoặc email.
-- Trong thời gian giữa Đợt 1 và Đợt 2, dữ liệu nghiệp vụ vẫn ở localStorage (theo máy). Đăng nhập máy mới sẽ thấy nghiệp vụ trống cho đến khi xong Đợt 2.
-- `auto_confirm_email=true` để admin duyệt tài khoản trong app, không phải vào email. Nếu sau này muốn xác minh email, có thể bật lại.
-- Tất cả mật khẩu do Supabase Auth quản lý (bcrypt server-side), không lưu hash trong frontend nữa.
+Xác nhận để mình triển khai theo plan này nhé?

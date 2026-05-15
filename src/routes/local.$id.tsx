@@ -19,7 +19,7 @@ export const Route = createFileRoute("/local/$id")({
   component: PlaceDetail,
 });
 
-const M_STATUS: SocialStatus[] = ["Ý tưởng", "Đang làm", "Chờ duyệt", "Cần sửa", "Đã duyệt", "Đã lên lịch", "Đã đăng", "Hoàn thành"];
+const M_STATUS: SocialStatus[] = ["Kế hoạch", "Đang làm", "Chờ duyệt", "Cần sửa", "Đã duyệt", "Chờ đăng", "Đã đăng", "Hoàn thành"];
 
 function PostForm({ placeId, brandId, initial, onSubmit, onClose }: any) {
   const { people, plans, topics } = useStore();

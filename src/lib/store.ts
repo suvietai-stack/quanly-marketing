@@ -42,16 +42,30 @@ export interface Website {
   notes?: string;
 }
 
+export type SocialPlatform =
+  | "Facebook Page" | "Facebook Group" | "TikTok" | "YouTube"
+  | "Instagram" | "Zalo OA" | "LinkedIn" | "Khác";
+export const SOCIAL_PLATFORMS: SocialPlatform[] = [
+  "Facebook Page", "Facebook Group", "TikTok", "YouTube",
+  "Instagram", "Zalo OA", "LinkedIn", "Khác",
+];
+
+export type SocialChannelStatus =
+  | "Đang xây" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng" | "Lưu trữ";
+export const SOCIAL_CHANNEL_STATUSES: SocialChannelStatus[] = [
+  "Đang xây", "Đang vận hành", "Đang tối ưu", "Tạm dừng", "Lưu trữ",
+];
+
 export interface SocialChannel {
   id: ID;
   name: string;
-  platform: "Facebook Page" | "Facebook Group" | "TikTok" | "YouTube" | "Instagram" | "Zalo OA" | "Khác";
+  platform: SocialPlatform;
   url?: string;
   brandId: ID;
   owner?: string;
   frequency?: string;
   goal?: string;
-  status: "Đang xây" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng";
+  status: SocialChannelStatus;
   notes?: string;
 }
 
@@ -312,8 +326,32 @@ export interface WebContent {
 }
 
 export type SocialStatus =
-  | "Ý tưởng" | "Đang làm" | "Chờ duyệt" | "Cần sửa"
-  | "Đã duyệt" | "Đã lên lịch" | "Đã đăng" | "Hoàn thành";
+  | "Kế hoạch" | "Đang làm" | "Chờ duyệt" | "Cần sửa"
+  | "Đã duyệt" | "Chờ đăng" | "Đã đăng" | "Hoàn thành" | "Đã hủy";
+
+export const SOCIAL_STATUSES: SocialStatus[] = [
+  "Kế hoạch", "Đang làm", "Chờ duyệt", "Cần sửa",
+  "Đã duyệt", "Chờ đăng", "Đã đăng", "Hoàn thành", "Đã hủy",
+];
+
+export type SocialContentType =
+  | "Bài ảnh đơn" | "Album" | "Carousel" | "Text post"
+  | "Reels" | "TikTok Video" | "YouTube Shorts" | "Story" | "Livestream" | "Khác";
+export const SOCIAL_CONTENT_TYPES: SocialContentType[] = [
+  "Bài ảnh đơn", "Album", "Carousel", "Text post",
+  "Reels", "TikTok Video", "YouTube Shorts", "Story", "Livestream", "Khác",
+];
+
+export interface SocialPostHistoryEntry {
+  at: string;
+  byId?: ID;
+  byName?: string;
+  action: string;
+  fromStatus?: SocialStatus;
+  toStatus?: SocialStatus;
+  note?: string;
+  forced?: boolean;
+}
 
 export interface SocialPost {
   id: ID;
@@ -321,19 +359,34 @@ export interface SocialPost {
   brandId: ID;
   channelId: ID;
   platform: string;
-  contentType: "Bài ảnh đơn" | "Album" | "Carousel" | "Text" | "Reels" | "TikTok Video" | "YouTube Shorts" | "Story" | "Livestream" | "Khác";
+  contentType: SocialContentType;
   topic?: string;
   plan?: string;
   writer?: string;
   designer?: string;
   reviewer?: string;
+  publisher?: string;
   scheduledDate?: string;
   publishedDate?: string;
   caption?: string;
   mediaLink?: string;
   publishedLink?: string;
   status: SocialStatus;
+  reviewNotes?: string;
+  revisions?: number;
   notes?: string;
+  history?: SocialPostHistoryEntry[];
+}
+
+export function normalizeSocialStatus(s?: string): SocialStatus {
+  switch (s) {
+    case "Ý tưởng": return "Kế hoạch";
+    case "Đã lên lịch": return "Chờ đăng";
+    default:
+      return (SOCIAL_STATUSES as string[]).includes(s ?? "")
+        ? (s as SocialStatus)
+        : "Kế hoạch";
+  }
 }
 
 export interface MapPost {
@@ -446,11 +499,13 @@ export const GROWTH_PERIOD_TYPES: GrowthPeriodType[] = ["Tuần", "Tháng", "Qu�
 
 export interface GrowthMetric {
   id: ID;
-  websiteId: ID;
+  websiteId?: ID;          // dùng cho web
+  channelId?: ID;          // dùng cho social
   period: string;            // ví dụ "Tuần 2 tháng 5/2026" hoặc "Tháng 5/2026"
   periodType: GrowthPeriodType;
   periodKey?: string;        // YYYY-WW / YYYY-MM / YYYY-Qn — dùng để sắp xếp
   updatedAt?: string;        // ngày cập nhật
+  // Web metrics
   totalTraffic?: number;
   organicTraffic?: number;
   impressions?: number;
@@ -459,6 +514,17 @@ export interface GrowthMetric {
   avgPosition?: number;
   indexedPages?: number;
   leads?: number;
+  // Social metrics
+  followerStart?: number;
+  followerEnd?: number;
+  postsInPeriod?: number;
+  totalViews?: number;
+  totalEngagements?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  inboxes?: number;
+  // Common
   reportLink?: string;
   updatedBy?: string;
   notes?: string;
@@ -751,7 +817,10 @@ async function loadAllFromSupabase() {
         console.error(`Load ${table} failed:`, error.message);
         return [key, [] as any[]] as const;
       }
-      const items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}) }));
+      let items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}) }));
+      if (key === "socialPosts") {
+        items = items.map((p: any) => ({ ...p, status: normalizeSocialStatus(p.status) }));
+      }
       return [key, items] as const;
     }),
   );
