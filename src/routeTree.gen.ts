@@ -14,8 +14,10 @@ import { Route as VideosRouteImport } from './routes/videos'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SocialRouteImport } from './routes/social'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OkrsRouteImport } from './routes/okrs'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LocalRouteImport } from './routes/local'
 import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as IndexRouteImport } from './routes/index'
@@ -50,6 +52,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -58,6 +65,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const OkrsRoute = OkrsRouteImport.update({
   id: '/okrs',
   path: '/okrs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocalRoute = LocalRouteImport.update({
@@ -105,8 +117,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brands': typeof BrandsRouteWithChildren
   '/local': typeof LocalRouteWithChildren
+  '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
+  '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
@@ -122,8 +136,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brands': typeof BrandsRouteWithChildren
   '/local': typeof LocalRouteWithChildren
+  '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
+  '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
@@ -140,8 +156,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/brands': typeof BrandsRouteWithChildren
   '/local': typeof LocalRouteWithChildren
+  '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
+  '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/social': typeof SocialRouteWithChildren
   '/tasks': typeof TasksRoute
@@ -159,8 +177,10 @@ export interface FileRouteTypes {
     | '/'
     | '/brands'
     | '/local'
+    | '/login'
     | '/okrs'
     | '/orders'
+    | '/register'
     | '/settings'
     | '/social'
     | '/tasks'
@@ -176,8 +196,10 @@ export interface FileRouteTypes {
     | '/'
     | '/brands'
     | '/local'
+    | '/login'
     | '/okrs'
     | '/orders'
+    | '/register'
     | '/settings'
     | '/social'
     | '/tasks'
@@ -193,8 +215,10 @@ export interface FileRouteTypes {
     | '/'
     | '/brands'
     | '/local'
+    | '/login'
     | '/okrs'
     | '/orders'
+    | '/register'
     | '/settings'
     | '/social'
     | '/tasks'
@@ -211,8 +235,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BrandsRoute: typeof BrandsRouteWithChildren
   LocalRoute: typeof LocalRouteWithChildren
+  LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
+  RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   SocialRoute: typeof SocialRouteWithChildren
   TasksRoute: typeof TasksRoute
@@ -259,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders': {
       id: '/orders'
       path: '/orders'
@@ -271,6 +304,13 @@ declare module '@tanstack/react-router' {
       path: '/okrs'
       fullPath: '/okrs'
       preLoaderRoute: typeof OkrsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/local': {
@@ -368,8 +408,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BrandsRoute: BrandsRouteWithChildren,
   LocalRoute: LocalRouteWithChildren,
+  LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
+  RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   SocialRoute: SocialRouteWithChildren,
   TasksRoute: TasksRoute,

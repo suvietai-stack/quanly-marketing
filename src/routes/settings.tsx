@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { AccountsSettings } from "@/components/AccountsSettings";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
@@ -58,13 +59,18 @@ function SettingsPage() {
 
   return <>
     <PageHeader title="Cài Đặt" description="Quản lý danh mục dùng chung — nhân sự, plan, topic..." />
-    <Tabs defaultValue="people">
+    <Tabs defaultValue="accounts">
       <TabsList className="flex-wrap h-auto">
+        <TabsTrigger value="accounts">Tài khoản & Phân quyền</TabsTrigger>
         <TabsTrigger value="people">Nhân sự</TabsTrigger>
         <TabsTrigger value="plans">Plan</TabsTrigger>
         <TabsTrigger value="topics">Topic</TabsTrigger>
         <TabsTrigger value="info">Thông tin hệ thống</TabsTrigger>
       </TabsList>
+
+      <TabsContent value="accounts" className="mt-4">
+        <AccountsSettings />
+      </TabsContent>
 
       <TabsContent value="people" className="mt-4">
         <div className="flex justify-end mb-3"><Dialog open={adding} onOpenChange={setAdding}>
