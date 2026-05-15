@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText, FileEdit, Eye, Wrench, Send, CheckCircle2, ListChecks,
   Search, Share2, Link as LinkIcon, TrendingUp, TrendingDown,
@@ -98,6 +101,12 @@ export function BasicReportTab({
   const [quick, setQuick] = useState<Quick>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [allOpen, setAllOpen] = useState(false);
+  const [aSearch, setASearch] = useState("");
+  const [aQuick, setAQuick] = useState<string>("Tất cả");
+  const [aType, setAType] = useState<string>("all");
+  const [aOwner, setAOwner] = useState<string>("all");
+  const [aLevel, setALevel] = useState<string>("all");
 
   const range: DateRange = useMemo(() => {
     const today = toISO(new Date());
@@ -176,9 +185,11 @@ export function BasicReportTab({
 
   // ---- Attention rows ----
   const today = toISO(new Date());
+  type AttentionSource = "Sản xuất Content" | "Bài đã đăng / Index" | "Backlink / PR" | "Check TOP từ khóa" | "Technical SEO";
   type AttentionRow = {
     type: string;
     severity: "warn" | "danger" | "info";
+    source: AttentionSource;
     content: string;
     owner?: string;
     date?: string;
@@ -190,37 +201,61 @@ export function BasicReportTab({
     const owner = c.writer || c.publisher || c.assigner;
     const open = () => onOpenContent?.(c);
     if (c.deadline && c.deadline < today && !PUBLISHED_LIKE.includes(c.status))
-      attention.push({ type: "Quá deadline", severity: "danger", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Quá deadline", severity: "danger", source: "Sản xuất Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (c.status === "Chờ duyệt outline")
-      attention.push({ type: "Chờ duyệt outline", severity: "warn", content: c.title, owner: c.outlineReviewer || owner, date: c.outlineDeadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Chờ duyệt outline", severity: "warn", source: "Sản xuất Content", content: c.title, owner: c.outlineReviewer || owner, date: c.outlineDeadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (c.status === "Chờ duyệt bài")
-      attention.push({ type: "Chờ duyệt bài", severity: "warn", content: c.title, owner: c.draftReviewer || owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Chờ duyệt bài", severity: "warn", source: "Sản xuất Content", content: c.title, owner: c.draftReviewer || owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (FIX.includes(c.status))
-      attention.push({ type: "Cần sửa", severity: "warn", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Cần sửa", severity: "warn", source: "Sản xuất Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if ((c.publishedLink || PUBLISHED_LIKE.includes(c.status)) && c.indexStatus === "Chưa kiểm tra")
-      attention.push({ type: "Chưa kiểm tra index", severity: "info", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: c.indexStatus, action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Chưa kiểm tra index", severity: "info", source: "Bài đã đăng / Index", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: c.indexStatus, action: { label: "Mở content", onClick: open } });
     if (c.indexStatus === "Đã index" && !c.shareSocial)
-      attention.push({ type: "Index — chưa share social", severity: "info", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: "Chưa share", action: { label: "Mở content", onClick: open } });
+      attention.push({ type: "Index — chưa share social", severity: "info", source: "Bài đã đăng / Index", content: c.title, owner: c.publisher || owner, date: c.publishedAt, status: "Chưa share", action: { label: "Mở content", onClick: open } });
   });
   fk.forEach((k) => {
     if (k.status === "Tụt hạng")
-      attention.push({ type: "Từ khóa tụt hạng", severity: "warn", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: `${k.previousTop ?? "?"} → ${k.currentTop ?? "?"}`, action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
+      attention.push({ type: "Từ khóa tụt hạng", severity: "warn", source: "Check TOP từ khóa", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: `${k.previousTop ?? "?"} → ${k.currentTop ?? "?"}`, action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
     if (k.status === "Mất top")
-      attention.push({ type: "Từ khóa mất top", severity: "danger", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: "Mất top", action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
+      attention.push({ type: "Từ khóa mất top", severity: "danger", source: "Check TOP từ khóa", content: k.keyword, owner: k.owner, date: k.lastCheckDate, status: "Mất top", action: { label: "Mở Check TOP", onClick: () => onJumpTab?.("keywords") } });
   });
   fb.forEach((b) => {
     if (b.status === "Lỗi / mất link")
-      attention.push({ type: "Backlink lỗi", severity: "danger", content: b.name, owner: b.owner, date: b.publishDate, status: b.status, action: { label: "Mở Backlink", onClick: () => onJumpTab?.("backlinks") } });
+      attention.push({ type: "Backlink lỗi", severity: "danger", source: "Backlink / PR", content: b.name, owner: b.owner, date: b.publishDate, status: b.status, action: { label: "Mở Backlink", onClick: () => onJumpTab?.("backlinks") } });
   });
   if (seoTotal && seoDone < seoTotal) {
     attention.push({
       type: "Technical SEO chưa xong",
       severity: "info",
+      source: "Technical SEO",
       content: `Còn ${seoTotal - seoDone}/${seoTotal} mục checklist chưa hoàn thành`,
       status: `${seoPct}%`,
       action: { label: "Mở Technical SEO", onClick: () => onJumpTab?.("seo") },
     });
   }
+
+  // Priority order: lost rank > backlink broken > overdue > fix > pending review > index/no share > seo
+  const typePriority: Record<string, number> = {
+    "Từ khóa mất top": 1,
+    "Backlink lỗi": 2,
+    "Quá deadline": 3,
+    "Cần sửa": 4,
+    "Chờ duyệt outline": 5,
+    "Chờ duyệt bài": 5,
+    "Từ khóa tụt hạng": 6,
+    "Index — chưa share social": 7,
+    "Chưa kiểm tra index": 8,
+    "Technical SEO chưa xong": 9,
+  };
+  const sevWeight = { danger: 0, warn: 1, info: 2 } as const;
+  attention.sort((a, b) => {
+    const sv = sevWeight[a.severity] - sevWeight[b.severity];
+    if (sv !== 0) return sv;
+    return (typePriority[a.type] ?? 99) - (typePriority[b.type] ?? 99);
+  });
+  const levelOf = (s: AttentionRow["severity"]) =>
+    s === "danger" ? "Cao" : s === "warn" ? "Trung bình" : "Thấp";
+
 
   // ---- By owner ----
   const owners = Array.from(new Set(fc.map((c) => c.writer || c.publisher || c.assigner).filter(Boolean))) as string[];
@@ -266,53 +301,177 @@ export function BasicReportTab({
         </CardContent>
       </Card>
 
-      {/* Attention */}
-      {attention.length > 0 && (
-        <Card className="border-warning/40">
-          <CardContent className="p-0">
-            <div className="px-4 py-2.5 border-b bg-warning/10 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-[oklch(0.45_0.13_75)]" />
-              <h3 className="text-sm font-semibold">Việc cần chú ý ({attention.length})</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted-foreground bg-muted/30">
-                  <tr>
-                    <th className="text-left font-medium px-3 py-2">Loại</th>
-                    <th className="text-left font-medium px-3 py-2">Nội dung</th>
-                    <th className="text-left font-medium px-3 py-2">Phụ trách</th>
-                    <th className="text-left font-medium px-3 py-2">Ngày</th>
-                    <th className="text-left font-medium px-3 py-2">Trạng thái</th>
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {attention.slice(0, 30).map((a, i) => {
-                    const tone =
-                      a.severity === "danger" ? "text-destructive" :
-                      a.severity === "warn" ? "text-[oklch(0.45_0.13_75)]" : "text-info";
-                    return (
-                      <tr key={i} className="hover:bg-muted/30">
-                        <td className={`px-3 py-2 font-medium whitespace-nowrap ${tone}`}>{a.type}</td>
-                        <td className="px-3 py-2">{a.content}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{a.owner || "—"}</td>
-                        <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDate(a.date)}</td>
-                        <td className="px-3 py-2">{a.status ? <StatusBadge value={a.status} /> : "—"}</td>
-                        <td className="px-3 py-2 text-right">
-                          {a.action && <Button size="sm" variant="ghost" onClick={a.action.onClick}>{a.action.label} <ExternalLink className="h-3 w-3" /></Button>}
-                        </td>
+      {/* Attention — summary only */}
+      {attention.length > 0 && (() => {
+        const summary = attention.slice(0, 6);
+        const owners2 = Array.from(new Set(attention.map((a) => a.owner).filter(Boolean))) as string[];
+        const types2 = Array.from(new Set(attention.map((a) => a.type)));
+        const QUICKS = ["Tất cả", "Content", "Index / Share Social", "Check TOP", "Backlink", "Technical SEO", "Quá hạn", "Nghiêm trọng"];
+        const matchesQuick = (a: AttentionRow) => {
+          switch (aQuick) {
+            case "Content": return a.source === "Sản xuất Content";
+            case "Index / Share Social": return a.source === "Bài đã đăng / Index";
+            case "Check TOP": return a.source === "Check TOP từ khóa";
+            case "Backlink": return a.source === "Backlink / PR";
+            case "Technical SEO": return a.source === "Technical SEO";
+            case "Quá hạn": return a.type === "Quá deadline";
+            case "Nghiêm trọng": return a.severity === "danger";
+            default: return true;
+          }
+        };
+        const filtered = attention.filter((a) => {
+          if (!matchesQuick(a)) return false;
+          if (aType !== "all" && a.type !== aType) return false;
+          if (aOwner !== "all" && a.owner !== aOwner) return false;
+          if (aLevel !== "all" && levelOf(a.severity) !== aLevel) return false;
+          if (aSearch && !`${a.content} ${a.type}`.toLowerCase().includes(aSearch.toLowerCase())) return false;
+          return true;
+        });
+        const toneOf = (s: AttentionRow["severity"]) =>
+          s === "danger" ? "text-destructive" :
+          s === "warn" ? "text-[oklch(0.45_0.13_75)]" : "text-info";
+        const levelBadge = (s: AttentionRow["severity"]) => {
+          const lvl = levelOf(s);
+          const cls =
+            s === "danger" ? "bg-destructive/15 text-destructive border-destructive/30" :
+            s === "warn" ? "bg-warning/15 text-[oklch(0.45_0.13_75)] border-warning/40" :
+                          "bg-muted text-muted-foreground border-border";
+          return <Badge variant="outline" className={cls}>{lvl}</Badge>;
+        };
+        return (
+          <>
+            <Card className="border-warning/40">
+              <CardContent className="p-0">
+                <div className="px-4 py-2.5 border-b bg-warning/10 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-[oklch(0.45_0.13_75)]" />
+                  <h3 className="text-sm font-semibold">Việc cần chú ý</h3>
+                  <Badge variant="outline" className="ml-1">{attention.length}</Badge>
+                  <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setAllOpen(true)}>
+                    Xem tất cả <ExternalLink className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-muted-foreground bg-muted/30">
+                      <tr>
+                        <th className="text-left font-medium px-3 py-2">Loại</th>
+                        <th className="text-left font-medium px-3 py-2">Nội dung</th>
+                        <th className="text-left font-medium px-3 py-2">Phụ trách</th>
+                        <th className="text-left font-medium px-3 py-2">Ngày</th>
+                        <th className="text-left font-medium px-3 py-2">Trạng thái</th>
+                        <th className="px-3 py-2"></th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {attention.length > 30 && (
-                <div className="text-xs text-muted-foreground text-center py-2">Và {attention.length - 30} mục khác…</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                    </thead>
+                    <tbody className="divide-y">
+                      {summary.map((a, i) => (
+                        <tr key={i} className="hover:bg-muted/30">
+                          <td className={`px-3 py-2 font-medium whitespace-nowrap ${toneOf(a.severity)}`}>{a.type}</td>
+                          <td className="px-3 py-2">{a.content}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{a.owner || "—"}</td>
+                          <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDate(a.date)}</td>
+                          <td className="px-3 py-2">{a.status ? <StatusBadge value={a.status} /> : "—"}</td>
+                          <td className="px-3 py-2 text-right">
+                            {a.action && <Button size="sm" variant="ghost" onClick={a.action.onClick}>{a.action.label} <ExternalLink className="h-3 w-3" /></Button>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {attention.length > summary.length && (
+                    <div className="px-3 py-2 border-t bg-muted/20 text-xs text-muted-foreground flex items-center justify-between">
+                      <span>Còn {attention.length - summary.length} cảnh báo khác</span>
+                      <Button size="sm" variant="link" className="h-auto p-0" onClick={() => setAllOpen(true)}>Xem tất cả →</Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Sheet open={allOpen} onOpenChange={setAllOpen}>
+              <SheetContent side="right" className="w-full sm:max-w-3xl lg:max-w-5xl overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-[oklch(0.45_0.13_75)]" />
+                    Tất cả việc cần chú ý
+                    <Badge variant="outline">{filtered.length}/{attention.length}</Badge>
+                  </SheetTitle>
+                  <SheetDescription>Toàn bộ cảnh báo của website hiện tại.</SheetDescription>
+                </SheetHeader>
+
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {QUICKS.map((q) => (
+                    <Button key={q} size="sm" variant={aQuick === q ? "secondary" : "outline"} onClick={() => setAQuick(q)}>{q}</Button>
+                  ))}
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                  <Input placeholder="Tìm theo nội dung…" value={aSearch} onChange={(e) => setASearch(e.target.value)} />
+                  <Select value={aType} onValueChange={setAType}>
+                    <SelectTrigger><SelectValue placeholder="Loại cảnh báo" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả loại</SelectItem>
+                      {types2.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={aOwner} onValueChange={setAOwner}>
+                    <SelectTrigger><SelectValue placeholder="Phụ trách" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả phụ trách</SelectItem>
+                      {owners2.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={aLevel} onValueChange={setALevel}>
+                    <SelectTrigger><SelectValue placeholder="Mức độ" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả mức độ</SelectItem>
+                      <SelectItem value="Cao">Cao</SelectItem>
+                      <SelectItem value="Trung bình">Trung bình</SelectItem>
+                      <SelectItem value="Thấp">Thấp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="mt-4 border rounded-md overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs text-muted-foreground bg-muted/40">
+                      <tr>
+                        <th className="text-left font-medium px-3 py-2">Loại</th>
+                        <th className="text-left font-medium px-3 py-2">Nội dung</th>
+                        <th className="text-left font-medium px-3 py-2">Nguồn</th>
+                        <th className="text-left font-medium px-3 py-2">Phụ trách</th>
+                        <th className="text-left font-medium px-3 py-2">Ngày</th>
+                        <th className="text-left font-medium px-3 py-2">Trạng thái</th>
+                        <th className="text-left font-medium px-3 py-2">Mức độ</th>
+                        <th className="px-3 py-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filtered.map((a, i) => (
+                        <tr key={i} className="hover:bg-muted/30">
+                          <td className={`px-3 py-2 font-medium whitespace-nowrap ${toneOf(a.severity)}`}>{a.type}</td>
+                          <td className="px-3 py-2">{a.content}</td>
+                          <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{a.source}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{a.owner || "—"}</td>
+                          <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDate(a.date)}</td>
+                          <td className="px-3 py-2">{a.status ? <StatusBadge value={a.status} /> : "—"}</td>
+                          <td className="px-3 py-2">{levelBadge(a.severity)}</td>
+                          <td className="px-3 py-2 text-right">
+                            {a.action && <Button size="sm" variant="ghost" onClick={() => { a.action!.onClick(); setAllOpen(false); }}>{a.action.label} <ExternalLink className="h-3 w-3" /></Button>}
+                          </td>
+                        </tr>
+                      ))}
+                      {filtered.length === 0 && (
+                        <tr><td colSpan={8} className="text-center text-sm text-muted-foreground py-8">Không có cảnh báo nào khớp bộ lọc.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </>
+        );
+      })()}
+
 
       {/* Content */}
       <GroupTitle><FileText className="h-4 w-4" />Sản xuất Content</GroupTitle>
