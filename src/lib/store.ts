@@ -697,7 +697,7 @@ export const SEO_GROUPS = Object.keys(SEO_CHECK_TEMPLATE);
 
 type CollectionKey = keyof Collections;
 
-const TABLE_FOR: Record<CollectionKey, string> = {
+const TABLE_FOR: Record<Exclude<CollectionKey, "people">, string> = {
   brands: "brands",
   websites: "websites",
   socials: "socials",
@@ -709,7 +709,6 @@ const TABLE_FOR: Record<CollectionKey, string> = {
   reviews: "reviews",
   videos: "videos",
   orders: "orders",
-  people: "people",
   seoChecks: "seo_checks",
   entities: "entities",
   keywords: "keywords",
@@ -718,7 +717,7 @@ const TABLE_FOR: Record<CollectionKey, string> = {
   webTopics: "web_topics",
 };
 
-const COLLECTION_KEYS = Object.keys(TABLE_FOR) as CollectionKey[];
+const COLLECTION_KEYS = Object.keys(TABLE_FOR) as Exclude<CollectionKey, "people">[];
 
 const emptyCollections = (): { [K in CollectionKey]: Collections[K][] } => ({
   brands: [], websites: [], socials: [], places: [], tasks: [],
