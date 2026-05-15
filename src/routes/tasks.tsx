@@ -304,12 +304,16 @@ function TasksPage() {
                         <td className="px-4 py-2.5"><StatusBadge value={t.status} /></td>
                         <td className="px-4 py-2.5 text-right">
                           <div className="inline-flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => setEditing(t)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => remove("tasks", t.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            {canEdit && (
+                              <Button size="icon" variant="ghost" onClick={() => setEditing(t)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button size="icon" variant="ghost" onClick={() => remove("tasks", t.id)}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
