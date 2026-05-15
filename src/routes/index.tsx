@@ -75,7 +75,7 @@ function Dashboard() {
     s.orders.filter((o) => o.status === "Chờ duyệt").forEach((o) =>
       items.push({ type: "Order thiết kế", title: o.title, status: o.status, due: o.deadline, brand: s.brands.find(b => b.id === o.brandId)?.name, href: "/orders" })
     );
-    s.videos.filter((v) => v.status === "Chờ duyệt").forEach((v) =>
+    s.videos.filter((v) => v.status === "Chờ duyệt video" || v.status === "Chờ duyệt kịch bản").forEach((v) =>
       items.push({ type: "Video chờ duyệt", title: v.title, status: v.status, due: v.deadline, brand: s.brands.find(b => b.id === v.brandId)?.name, href: "/videos" })
     );
     s.socialPosts.filter((p) => p.status === "Chờ duyệt" || p.status === "Chờ đăng").forEach((p) =>
