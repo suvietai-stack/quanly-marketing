@@ -1,16 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore, uid, type Person } from "@/lib/store";
+import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
-import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Trash2, ShieldCheck, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AccountsSettings } from "@/components/AccountsSettings";
 
 export const Route = createFileRoute("/settings")({
