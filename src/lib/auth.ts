@@ -27,9 +27,33 @@ export type PermissionGroup =
   | "Video"
   | "Thiết Kế"
   | "Báo Cáo"
-  | "Cài Đặt";
+  | "Cài Đặt"
+  | "Tài khoản";
+
+export interface PermissionDef {
+  key: PermissionKey;
+  label: string;
+  group: PermissionGroup;
+  subGroup?: string;
+  description?: string;
+}
+
+const P = (
+  key: string,
+  label: string,
+  group: PermissionGroup,
+  subGroup?: string,
+): PermissionDef => ({ key, label, group, subGroup });
 
 export const PERMISSIONS: PermissionDef[] = [
+  // ===== A. Tổng Quan =====
+  P("overview.view", "Xem Tổng Quan", "Tổng Quan", "Tổng quan"),
+  P("overview.alerts", "Xem việc cần chú ý", "Tổng Quan", "Tổng quan"),
+  P("overview.all_dept", "Xem việc của toàn phòng", "Tổng Quan", "Tổng quan"),
+  P("overview.own_only", "Chỉ xem việc liên quan đến mình", "Tổng Quan", "Tổng quan"),
+  P("overview.brand_summary", "Thống kê theo thương hiệu", "Tổng Quan", "Thống kê"),
+  P("overview.module_summary", "Thống kê theo module", "Tổng Quan", "Thống kê"),
+  P("overview.staff_summary", "Thống kê theo người phụ trách", "Tổng Quan", "Thống kê"),
   { key: "overview.view", label: "Xem Tổng Quan", group: "Tổng Quan" },
   { key: "task.view", label: "Xem task", group: "Task" },
   { key: "task.view_all", label: "Xem tất cả task", group: "Task" },
