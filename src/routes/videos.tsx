@@ -90,11 +90,11 @@ function VideosPage() {
 
   return <>
     <PageHeader title="Sản Xuất Video" description="Quản lý các đầu việc sản xuất video phục vụ social, web, ads."
-      actions={<Dialog open={adding} onOpenChange={setAdding}>
+      actions={canCreate ? <Dialog open={adding} onOpenChange={setAdding}>
         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1.5" />Thêm video</Button></DialogTrigger>
         <DialogContent className="max-w-3xl"><DialogHeader><DialogTitle>Tạo video</DialogTitle></DialogHeader>
           <VideoForm onSubmit={(v) => s.add("videos", v)} onClose={() => setAdding(false)} /></DialogContent>
-      </Dialog>} />
+      </Dialog> : undefined} />
     <FilterBar>
       <Input placeholder="Tìm video..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
       <Select value={fBrand} onValueChange={setFBrand}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
