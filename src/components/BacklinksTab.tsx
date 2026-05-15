@@ -17,6 +17,22 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { Plus, ExternalLink, Pencil, Trash2, Link2 } from "lucide-react";
 
+function TopicSelect({ websiteId, value, onChange }: { websiteId: string; value?: string; onChange: (v: string | undefined) => void }) {
+  const list = useStore((st) => st.webTopics).filter((t) => t.websiteId === websiteId);
+  if (list.length === 0) {
+    return <div className="text-xs text-muted-foreground">Chưa có Topic. Hãy tạo tại tab <strong>Nghiên Cứu Keyword</strong>.</div>;
+  }
+  return (
+    <Select value={value || "_"} onValueChange={(v) => onChange(v === "_" ? undefined : v)}>
+      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value="_">—</SelectItem>
+        {list.map((t) => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
+}
+
 const fmtMoney = (n?: number) =>
   n == null ? "—" : n.toLocaleString("vi-VN") + " đ";
 
