@@ -19,7 +19,11 @@ import { OrderDetailDialog } from "@/components/OrderDetail";
 
 export const Route = createFileRoute("/orders")({
   head: () => ({ meta: [{ title: "Order Thiết Kế — Base Marketing" }] }),
-  component: OrdersPage,
+  component: () => (
+    <RequirePermission perm="order.view">
+      <OrdersPage />
+    </RequirePermission>
+  ),
 });
 
 type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed";
