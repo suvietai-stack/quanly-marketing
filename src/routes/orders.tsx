@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type DesignOrder, type OrderStatus } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
@@ -76,6 +77,10 @@ function OrderForm({ initial, onSubmit, onClose }: { initial?: Partial<DesignOrd
 
 function OrdersPage() {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("order.create");
+  const canEdit = can("order.edit");
+  const canDelete = can("order.delete");
   const [view, setView] = useState<"table" | "kanban">("table");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
