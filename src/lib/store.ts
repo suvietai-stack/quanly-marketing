@@ -874,9 +874,19 @@ const seed = () => {
     { id: "g2", websiteId: "w1", period: "Tuần 2 tháng 5/2026", periodType: "Tuần", periodKey: "2026-W19", updatedAt: d(-3), totalTraffic: 1450, organicTraffic: 1020, impressions: 18500, clicks: 710, ctr: 3.8, avgPosition: 16.2, indexedPages: 48, leads: 16, updatedBy: "Nguyễn Văn SEO", notes: "Traffic tăng tốt nhờ bài tượng Phật" },
   ];
 
+  const webTopics: WebTopic[] = [
+    { id: "wt1", websiteId: "w1", name: "Tượng Phật gốm", mainKeyword: "tượng Phật gốm", sheetLink: "https://docs.google.com/spreadsheets/d/wt-tuongphatgom", updatedAt: d(-10) },
+    { id: "wt2", websiteId: "w1", name: "Bảo quản gốm sứ", mainKeyword: "bảo quản gốm sứ", sheetLink: "https://docs.google.com/spreadsheets/d/wt-baoquan", updatedAt: d(-7) },
+    { id: "wt3", websiteId: "w1", name: "Bình hút lộc Bát Tràng", mainKeyword: "bình hút lộc Bát Tràng", sheetLink: "https://docs.google.com/spreadsheets/d/wt-binhhutloc", updatedAt: d(-6) },
+    { id: "wt4", websiteId: "w3", name: "Ấm chén in logo", mainKeyword: "ấm chén in logo", sheetLink: "https://docs.google.com/spreadsheets/d/wt-amchen", updatedAt: d(-5) },
+    { id: "wt5", websiteId: "w3", name: "Quà tặng doanh nghiệp", mainKeyword: "quà tặng doanh nghiệp", sheetLink: "https://docs.google.com/spreadsheets/d/wt-quatang", updatedAt: d(-3) },
+    { id: "wt6", websiteId: "w4", name: "Bát đĩa nhà hàng", mainKeyword: "bát đĩa nhà hàng", sheetLink: "https://docs.google.com/spreadsheets/d/wt-batdia", updatedAt: d(-2) },
+  ];
+
   return {
     brands, websites, socials, places, tasks, webContents, socialPosts, mapPosts,
     reviews, videos, orders, people, seoChecks, entities, keywords, backlinks, growth,
+    webTopics,
     plans: ["Tết 2026", "Khai trương showroom", "Sale tháng 12", "Brand 2026"],
     topics: ["Quà tặng doanh nghiệp", "Sản phẩm mới", "Văn hóa Bát Tràng", "Phong thủy", "Khuyến mãi"],
   };
@@ -894,7 +904,7 @@ export const useStore = create<State>()(
       remove: (key, id) =>
         set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
     }),
-    { name: "base-mkt-store", version: 8 }
+    { name: "base-mkt-store", version: 9 }
   )
 );
 
