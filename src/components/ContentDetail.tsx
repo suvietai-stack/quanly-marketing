@@ -259,7 +259,7 @@ function WorkflowActions({
                     <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Input placeholder="Ghi chú index..." value={c.indexNotes || ""} onChange={(e) => apply({ to: c.status, action: "Cập nhật ghi chú index", extra: { indexNotes: e.target.value } })} />
+              <Input placeholder="Ghi chú index..." defaultValue={c.indexNotes || ""} onBlur={(e) => { if (e.target.value !== (c.indexNotes || "")) apply({ to: c.status, action: "Cập nhật ghi chú index", note: e.target.value, extra: { indexNotes: e.target.value } }); }} />
             </>
           )}
           {canComplete && (
