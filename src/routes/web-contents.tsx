@@ -56,7 +56,18 @@ function AllContents() {
 
   const writers = Array.from(new Set(webContents.map((c) => c.writer).filter(Boolean))) as string[];
 
-  const filtered = useMemo(() => webContents.filter((c) =>
+  const scoped = useMemo(
+    () => scopeList(
+      webContents,
+      "web.content_view_all",
+      "web.content_view_mine",
+      (c) =>
+        !!userName && (c.writer === userName || c.outlineReviewer === userName || c.articleReviewer === userName || c.publisher === userName),
+    ),
+    [webContents, scopeList, userName],
+  );
+
+  const filtered = useMemo(() => scoped.filter((c) =>
     (!search || c.title.toLowerCase().includes(search.toLowerCase()) || (c.mainKeyword || "").toLowerCase().includes(search.toLowerCase())) &&
     (fWebsite === "all" || c.websiteId === fWebsite) &&
     (fBrand === "all" || c.brandId === fBrand) &&
@@ -66,14 +77,14 @@ function AllContents() {
     (fPlan === "all" || c.plan === fPlan) &&
     (fTopic === "all" || c.topic === fTopic) &&
     (fWriter === "all" || c.writer === fWriter)
-  ), [webContents, search, fWebsite, fBrand, fStatus, fType, fIndex, fPlan, fTopic, fWriter]);
+  ), [scoped, search, fWebsite, fBrand, fStatus, fType, fIndex, fPlan, fTopic, fWriter]);
 
   return (
     <>
       <PageHeader
         title="Tất cả Content Web"
         description="Tổng hợp toàn bộ content của mọi website — leader xem nhanh tình hình sản xuất và xét duyệt."
-        actions={
+        actions={canCreate ? (
           <Dialog open={adding} onOpenChange={setAdding}>
             <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
             <DialogContent className="max-w-3xl">
@@ -81,8 +92,9 @@ function AllContents() {
               <ContentForm lockWebsite={false} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
             </DialogContent>
           </Dialog>
-        }
+        ) : undefined}
       />
+
 
       <FilterBar>
         <Input placeholder="Tìm tiêu đề, từ khóa..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
