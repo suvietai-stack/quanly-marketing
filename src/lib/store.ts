@@ -412,6 +412,8 @@ type Collections = {
   orders: DesignOrder;
   people: Person;
   seoChecks: SeoCheckItem;
+  entities: EntitySocial;
+  keywords: KeywordTrack;
 };
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
