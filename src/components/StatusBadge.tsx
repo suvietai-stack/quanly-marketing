@@ -59,6 +59,23 @@ const map: Record<string, string> = {
   "Ý tưởng": "bg-accent text-accent-foreground border-border",
   "Kế hoạch": "bg-accent text-accent-foreground border-border",
 
+  // Entity / share / rank
+  "Đang dùng": "bg-success/15 text-success border-success/30",
+  "Chưa dùng": "bg-muted text-muted-foreground border-border",
+  "Lỗi đăng nhập": "bg-destructive/15 text-destructive border-destructive/30",
+  "Đã share": "bg-success/15 text-success border-success/30",
+  "Chưa share": "bg-muted text-muted-foreground border-border",
+  "Cần share lại": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Top 3": "bg-success/15 text-success border-success/30",
+  "Top 10": "bg-success/15 text-success border-success/30",
+  "Top 20": "bg-info/15 text-info border-info/30",
+  "Top 50": "bg-info/15 text-info border-info/30",
+  "Ngoài top 50": "bg-muted text-muted-foreground border-border",
+  "Tăng hạng": "bg-success/15 text-success border-success/30",
+  "Tụt hạng": "bg-destructive/15 text-destructive border-destructive/30",
+  "Mất top": "bg-destructive/15 text-destructive border-destructive/30",
+  "Chưa check": "bg-muted text-muted-foreground border-border",
+
   // Priorities
   "Thấp": "bg-muted text-muted-foreground border-border",
   "Trung bình": "bg-info/15 text-info border-info/30",
