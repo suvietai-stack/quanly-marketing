@@ -5,7 +5,7 @@ import {
 } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FilterBar } from "@/components/Common";
+import { FilterBar, EmptyState } from "@/components/Common";
 import { ContentForm } from "@/components/ContentForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -183,7 +183,14 @@ function WebsitesPage() {
       </FilterBar>
 
       {filtered.length === 0 ? (
-        <Card><CardContent className="p-16 text-center text-muted-foreground">Chưa có dự án web nào.</CardContent></Card>
+        <EmptyState
+          icon={<Globe className="h-5 w-5" />}
+          title={s.websites.length === 0 ? "Chưa có dự án web" : "Không có dự án phù hợp bộ lọc"}
+          hint={s.websites.length === 0 ? "Tạo dự án web đầu tiên để bắt đầu quản lý nội dung, SEO và tăng trưởng." : "Thử bỏ bộ lọc."}
+          action={s.websites.length === 0 ? (
+            <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo dự án web đầu tiên</Button>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((w) => {

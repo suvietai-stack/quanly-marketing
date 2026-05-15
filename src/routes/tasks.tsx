@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useStore, fmtDate, isOverdue, uid, type Task, type TaskStatus, type TaskPriority } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FilterBar } from "@/components/Common";
+import { FilterBar, EmptyState } from "@/components/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -266,7 +266,16 @@ function TasksPage() {
                 </thead>
                 <tbody className="divide-y">
                   {filtered.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Không có task nào.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-12">
+                      <EmptyState
+                        icon={<Plus className="h-5 w-5" />}
+                        title={tasks.length === 0 ? "Chưa có task" : "Không có task phù hợp bộ lọc"}
+                        hint={tasks.length === 0 ? "Tạo task đầu tiên để bắt đầu quản lý công việc." : undefined}
+                        action={tasks.length === 0 ? (
+                          <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo task đầu tiên</Button>
+                        ) : undefined}
+                      />
+                    </td></tr>
                   )}
                   {filtered.map((t) => {
                     const brand = brands.find((b) => b.id === t.brandId);

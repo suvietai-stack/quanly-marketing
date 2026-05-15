@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type SocialChannel, type SocialPost, type SocialStatus } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FilterBar } from "@/components/Common";
+import { FilterBar, EmptyState } from "@/components/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -160,6 +160,16 @@ function SocialPage() {
           <Select value={fPlatform} onValueChange={setFPlatform}><SelectTrigger className="w-[180px]"><SelectValue placeholder="Nền tảng" /></SelectTrigger>
             <SelectContent><SelectItem value="all">Tất cả nền tảng</SelectItem>{PLATFORMS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
         </FilterBar>
+        {channels.length === 0 ? (
+          <EmptyState
+            icon={<Plus className="h-5 w-5" />}
+            title={s.socials.length === 0 ? "Chưa có kênh social" : "Không có kênh phù hợp bộ lọc"}
+            hint={s.socials.length === 0 ? "Tạo kênh social đầu tiên để bắt đầu quản lý nội dung đa nền tảng." : undefined}
+            action={s.socials.length === 0 ? (
+              <Button onClick={() => setAddingCh(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo kênh social đầu tiên</Button>
+            ) : undefined}
+          />
+        ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {channels.map((c) => {
             const brand = s.brands.find(b => b.id === c.brandId);
@@ -181,6 +191,7 @@ function SocialPage() {
             </CardContent></Card>;
           })}
         </div>
+        )}
       </TabsContent>
 
       <TabsContent value="posts" className="mt-4">

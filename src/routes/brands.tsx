@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, type Brand } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FilterBar } from "@/components/Common";
+import { FilterBar, EmptyState } from "@/components/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -114,6 +114,16 @@ function BrandsPage() {
         </Select>
       </FilterBar>
 
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<Plus className="h-5 w-5" />}
+          title={brands.length === 0 ? "Chưa có thương hiệu" : "Không có thương hiệu phù hợp bộ lọc"}
+          hint={brands.length === 0 ? "Tạo thương hiệu đầu tiên để bắt đầu quản lý dự án marketing." : "Thử bỏ bộ lọc hoặc tìm với từ khoá khác."}
+          action={brands.length === 0 ? (
+            <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo thương hiệu đầu tiên</Button>
+          ) : undefined}
+        />
+      ) : (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((b) => {
           const wCount = websites.filter((w) => w.brandId === b.id).length;
@@ -161,6 +171,7 @@ function BrandsPage() {
           );
         })}
       </div>
+      )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-2xl">
