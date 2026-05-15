@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type ID = string;
 
@@ -465,10 +466,14 @@ interface State {
   plans: string[];
   topics: string[];
 
+  loaded: boolean;
+  initialized: boolean;
+  init: () => Promise<void>;
+  reload: () => Promise<void>;
   add: <K extends keyof Collections>(key: K, item: Collections[K]) => void;
   update: <K extends keyof Collections>(key: K, id: ID, patch: Partial<Collections[K]>) => void;
   remove: <K extends keyof Collections>(key: K, id: ID) => void;
-  resetAll: (mode: "empty" | "demo") => void;
+  setCatalog: (scope: "plans" | "topics", items: string[]) => Promise<void>;
 }
 
 type Collections = {
@@ -668,255 +673,169 @@ export const SEO_CHECK_TEMPLATE: Record<string, SeoCheckTemplateItem[]> = {
 
 export const SEO_GROUPS = Object.keys(SEO_CHECK_TEMPLATE);
 
-const seed = () => {
-  const brands: Brand[] = [
-    { id: "b1", name: "Sứ Việt", field: "Gốm sứ Bát Tràng", website: "xuonggomsuviet.vn", description: "Xưởng gốm Bát Tràng truyền thống", usp: "Sản xuất tại xưởng, gốm thủ công cao cấp", owner: "Nguyễn Văn A", status: "Đang vận hành" },
-    { id: "b2", name: "Sứ Minh Đăng", field: "Gốm sứ cao cấp", website: "suminhdang.com", description: "Gốm sứ Minh Đăng - quà tặng doanh nghiệp", owner: "Trần Thị B", status: "Đang tối ưu" },
-    { id: "b3", name: "Thổ Tú", field: "Tượng gốm phong thủy", website: "thotu.vn", description: "Tượng gốm phong thủy Thổ Tú", owner: "Lê Văn C", status: "Đang vận hành" },
-    { id: "b4", name: "Đồ Thờ Tín Tâm", field: "Đồ thờ gốm sứ", description: "Bộ đồ thờ Tín Tâm", owner: "Phạm D", status: "Đang xây dựng" },
-    { id: "b5", name: "Không Gian Gốm Hà Nội", field: "Showroom gốm sứ", description: "Showroom trưng bày Hà Nội", owner: "Hoàng E", status: "Đang vận hành" },
-  ];
-  const websites: Website[] = [
-    { id: "w1", name: "xuonggomsuviet.vn", url: "https://xuonggomsuviet.vn", brandId: "b1", type: "Website bán hàng", seoOwner: "Nguyễn Văn SEO", contentOwner: "Trần Thu Content", techOwner: "Lê Minh Tech", status: "Đang vận hành", goal: "Bán hàng online + SEO từ khóa quà tặng" },
-    { id: "w2", name: "tinhhoabattrang.vn", url: "https://tinhhoabattrang.vn", brandId: "b1", type: "Website blog/SEO", seoOwner: "Nguyễn Văn SEO", contentOwner: "Trần Thu Content", status: "Đang xây dựng", goal: "Vệ tinh SEO, blog chuyên sâu Bát Tràng" },
-    { id: "w3", name: "suminhdang.com", url: "https://suminhdang.com", brandId: "b2", type: "Website bán hàng", seoOwner: "Nguyễn Văn SEO", contentOwner: "Hoàng Mai Content", techOwner: "Lê Minh Tech", status: "Đang tối ưu", goal: "Tăng đơn quà tặng doanh nghiệp" },
-    { id: "w4", name: "thotu.vn", url: "https://thotu.vn", brandId: "b3", type: "Website thương hiệu", seoOwner: "Phạm Anh SEO", contentOwner: "Trần Thu Content", techOwner: "Lê Minh Tech", status: "Đang xây dựng", goal: "Thương hiệu tượng phong thủy" },
-  ];
-  const socials: SocialChannel[] = [
-    { id: "s1", name: "TikTok Sứ Việt", platform: "TikTok", brandId: "b1", owner: "Mai", frequency: "5 bài/tuần", status: "Đang vận hành" },
-    { id: "s2", name: "Facebook Page Sứ Minh Đăng", platform: "Facebook Page", brandId: "b2", owner: "Trần Thị B", frequency: "3 bài/tuần", status: "Đang vận hành" },
-    { id: "s3", name: "YouTube Thổ Tú", platform: "YouTube", brandId: "b3", owner: "Lê Văn C", status: "Đang xây" },
-    { id: "s4", name: "Facebook Page Sứ Việt", platform: "Facebook Page", brandId: "b1", owner: "Mai", status: "Đang vận hành" },
-  ];
-  const places: LocalPlace[] = [
-    { id: "p1", name: "Xưởng Gốm Sứ Việt Bát Tràng", brandId: "b1", address: "Bát Tràng, Gia Lâm, Hà Nội", phone: "0987xxxx", verifyStatus: "Đã xác minh", owner: "Hùng" },
-    { id: "p2", name: "Showroom Không Gian Gốm Hà Nội", brandId: "b5", address: "Cầu Giấy, Hà Nội", verifyStatus: "Đã xác minh", owner: "Hoàng E" },
-  ];
-  const today = new Date();
-  const d = (n: number) => new Date(today.getTime() + n * 86400000).toISOString().slice(0, 10);
-  const tasks: Task[] = [
-    { id: "t1", title: "Sửa banner trang chủ", brandId: "b1", assignee: "Hùng", reporter: "Nguyễn Văn A", deadline: d(-2), priority: "Cao", status: "Đang làm" },
-    { id: "t2", title: "Kiểm tra link bài viết", brandId: "b2", assignee: "Mai", reporter: "Trần Thị B", deadline: d(1), priority: "Trung bình", status: "Chưa làm" },
-    { id: "t3", title: "Cập nhật ảnh Google Map", brandId: "b1", assignee: "Hùng", deadline: d(3), priority: "Thấp", status: "Chưa làm" },
-    { id: "t4", title: "Gửi brief cho designer", brandId: "b3", assignee: "Lê Văn C", deadline: d(0), priority: "Gấp", status: "Đang làm" },
-    { id: "t5", title: "Duyệt bài SEO Tết", brandId: "b1", assignee: "Mai", deadline: d(-1), priority: "Cao", status: "Chưa làm", plan: "Tết 2026", topic: "Quà tặng doanh nghiệp" },
-    { id: "t6", title: "Lên lịch đăng tuần", brandId: "b2", assignee: "Mai", deadline: d(2), priority: "Trung bình", status: "Hoàn thành", completedAt: d(-1) },
-  ];
-  const videos: Video[] = [
-    { id: "v1", title: "Quy trình làm gốm Bát Tràng", brandId: "b1", channels: "TikTok, YouTube", purpose: "Tăng nhận diện", owner: "Hùng", deadline: d(5), status: "Đang sản xuất" },
-    { id: "v2", title: "Gợi ý quà tặng doanh nghiệp", brandId: "b2", channels: "Facebook, Web", purpose: "Bán hàng", owner: "Mai", deadline: d(7), status: "Chờ duyệt", plan: "Tết 2026", topic: "Quà tặng doanh nghiệp" },
-    { id: "v3", title: "Tượng Phật gốm trong không gian thờ", brandId: "b3", channels: "YouTube", purpose: "Branding", owner: "Lê Văn C", deadline: d(10), status: "Ý tưởng" },
-  ];
-  const orders: DesignOrder[] = [
-    { id: "o1", title: "Banner trang chủ Sứ Việt", brandId: "b1", type: "Banner website", source: "Web", requester: "Nguyễn Văn A", assignee: "Designer 1", deadline: d(2), status: "Đang làm" },
-    { id: "o2", title: "Ảnh social bộ ấm chén in logo", brandId: "b2", type: "Ảnh social", source: "Social", requester: "Mai", assignee: "Designer 2", deadline: d(4), status: "Chờ duyệt" },
-    { id: "o3", title: "Thumbnail video quà tặng Tết", brandId: "b1", type: "Thumbnail video", source: "Video", requester: "Mai", deadline: d(1), status: "Mới tạo", plan: "Tết 2026" },
-  ];
-  const webContents: WebContent[] = [
-    {
-      id: "wc1", websiteId: "w1", brandId: "b1", type: "Bài SEO",
-      title: "Tượng Phật gốm Bát Tràng", mainKeyword: "tượng Phật gốm",
-      subKeywords: "tượng Phật men rạn, tượng Phật bằng gốm",
-      searchIntent: "Thương mại",
-      writer: "Trần Thu Content", outlineReviewer: "Nguyễn Văn SEO", draftReviewer: "Nguyễn Văn SEO",
-      assigner: "Nguyễn Văn A",
-      outlineDeadline: d(-3), deadline: d(0), publishDate: d(2),
-      outlineLink: "https://docs.google.com/outline-tuong-phat",
-      draftLink: "https://docs.google.com/draft-tuong-phat",
-      status: "Chờ duyệt bài", indexStatus: "Chưa kiểm tra",
-      outlineRevisions: 1, draftRevisions: 0,
-      cluster: "Tượng phong thủy",
-    },
-    {
-      id: "wc2", websiteId: "w3", brandId: "b2", type: "Bài SEO",
-      title: "Ấm chén in logo làm quà tặng doanh nghiệp", mainKeyword: "ấm chén in logo",
-      searchIntent: "Mua hàng",
-      writer: "Hoàng Mai Content", outlineReviewer: "Nguyễn Văn SEO", draftReviewer: "Trần Thị B",
-      outlineDeadline: d(-2), deadline: d(3), publishDate: d(5),
-      outlineLink: "https://docs.google.com/outline-am-chen",
-      draftLink: "https://docs.google.com/draft-am-chen",
-      status: "Đang viết bài", indexStatus: "Chưa kiểm tra",
-      cluster: "Quà tặng doanh nghiệp",
-    },
-    {
-      id: "wc3", websiteId: "w4", brandId: "b3", type: "Landing page",
-      title: "Bát đĩa nhà hàng Bát Tràng", mainKeyword: "bát đĩa nhà hàng",
-      searchIntent: "Mua hàng",
-      writer: "Trần Thu Content", outlineReviewer: "Phạm Anh SEO",
-      outlineDeadline: d(0), deadline: d(7), publishDate: d(10),
-      outlineLink: "https://docs.google.com/outline-bat-dia",
-      status: "Đang làm outline", indexStatus: "Chưa kiểm tra",
-    },
-    {
-      id: "wc4", websiteId: "w3", brandId: "b2", type: "Bài SEO",
-      title: "Quà tặng Tết doanh nghiệp bằng gốm sứ", mainKeyword: "quà tặng tết doanh nghiệp",
-      searchIntent: "Mua hàng",
-      plan: "Tết 2026", topic: "Quà tặng doanh nghiệp",
-      writer: "Hoàng Mai Content", outlineReviewer: "Nguyễn Văn SEO",
-      deadline: d(14), publishDate: d(20),
-      status: "Kế hoạch", indexStatus: "Chưa kiểm tra",
-    },
-    {
-      id: "wc5", websiteId: "w1", brandId: "b1", type: "Bài tối ưu lại",
-      title: "Bình hút lộc Bát Tràng", mainKeyword: "bình hút lộc Bát Tràng",
-      searchIntent: "Thương mại",
-      writer: "Trần Thu Content", outlineReviewer: "Nguyễn Văn SEO",
-      deadline: d(5), publishDate: d(8),
-      status: "Đã giao", indexStatus: "Chưa kiểm tra",
-      optimizeReason: "Bài chưa có CTA",
-      optimizeGoal: "Tăng tỷ lệ chuyển đổi, bổ sung internal link sản phẩm",
-      oldLink: "https://xuonggomsuviet.vn/binh-hut-loc",
-      optimizeNotes: "Bài cũ thiếu CTA và internal link tới trang sản phẩm.",
-    },
-    {
-      id: "wc6", websiteId: "w1", brandId: "b1", type: "Bài blog",
-      title: "Cách bảo quản đồ gốm sứ", mainKeyword: "bảo quản gốm sứ",
-      searchIntent: "Thông tin",
-      writer: "Trần Thu Content", draftReviewer: "Nguyễn Văn SEO",
-      deadline: d(-7), publishDate: d(-5), publishedAt: d(-4),
-      publishedLink: "https://xuonggomsuviet.vn/bao-quan-gom-su",
-      status: "Hoàn thành", indexStatus: "Đã index",
-      completedAt: d(-3), publisher: "Lê Minh Tech",
-      shareSocial: true, shareSocialStatus: "Đã share", shareSocialDate: d(-2),
-      sharedEntities: "Facebook Entity Sứ Việt, Pinterest Sứ Việt",
-    },
-    {
-      id: "wc7", websiteId: "w1", brandId: "b1", type: "Bài SEO",
-      title: "Tượng Phật gốm Bát Tràng – men rạn cao cấp", mainKeyword: "tượng Phật gốm",
-      searchIntent: "Thương mại", writer: "Trần Thu Content", publisher: "Lê Minh Tech",
-      deadline: d(-12), publishDate: d(-10), publishedAt: d(-9),
-      publishedLink: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran",
-      status: "Hoàn thành", indexStatus: "Đã index", completedAt: d(-8),
-      shareSocialStatus: "Chưa share",
-    },
-    {
-      id: "wc8", websiteId: "w1", brandId: "b1", type: "Bài danh mục",
-      title: "Bộ ấm chén in logo làm quà tặng doanh nghiệp", mainKeyword: "ấm chén in logo",
-      searchIntent: "Mua hàng", writer: "Hoàng Mai Content", publisher: "Lê Minh Tech",
-      deadline: d(-6), publishDate: d(-4), publishedAt: d(-4),
-      publishedLink: "https://xuonggomsuviet.vn/am-chen-in-logo",
-      status: "Đã đăng web", indexStatus: "Chưa index",
-      shareSocial: true, shareSocialStatus: "Cần share lại", shareSocialDate: d(-3),
-      sharedEntities: "Facebook Entity Sứ Việt",
-    },
-  ];
-  const socialPosts: SocialPost[] = [
-    { id: "sp1", title: "Bộ ấm chén Tết 2026", brandId: "b1", channelId: "s1", platform: "TikTok", contentType: "TikTok Video", writer: "Mai", scheduledDate: d(2), status: "Đang làm", plan: "Tết 2026", topic: "Quà tặng doanh nghiệp" },
-    { id: "sp2", title: "Khám phá xưởng gốm Bát Tràng", brandId: "b1", channelId: "s4", platform: "Facebook Page", contentType: "Album", writer: "Mai", scheduledDate: d(1), status: "Đã lên lịch" },
-    { id: "sp3", title: "Quà tặng doanh nghiệp - Sứ Minh Đăng", brandId: "b2", channelId: "s2", platform: "Facebook Page", contentType: "Carousel", writer: "An", scheduledDate: d(3), status: "Chờ duyệt" },
-  ];
-  const mapPosts: MapPost[] = [
-    { id: "mp1", title: "Ưu đãi tháng 12 tại xưởng", placeId: "p1", brandId: "b1", type: "Ưu đãi", owner: "Hùng", scheduledDate: d(2), status: "Đã lên lịch" },
-  ];
-  const reviews: MapReview[] = [
-    { id: "r1", placeId: "p1", reviewer: "Nguyễn Khách", stars: 5, content: "Sản phẩm đẹp, chất lượng cao", date: d(-3), responseStatus: "Đã phản hồi", responder: "Hùng" },
-    { id: "r2", placeId: "p2", reviewer: "Trần Khách", stars: 4, content: "Showroom đẹp, nhân viên thân thiện", date: d(-1), responseStatus: "Chưa phản hồi" },
-  ];
-  const people: Person[] = [
-    { id: "u1", name: "Nguyễn Văn A", role: "Trưởng phòng Marketing", email: "a@suviet.vn", status: "Đang làm" },
-    { id: "u2", name: "Trần Thị B", role: "Brand Manager", email: "b@minhdang.vn", status: "Đang làm" },
-    { id: "u3", name: "Mai", role: "Content Lead", email: "mai@company.vn", status: "Đang làm" },
-    { id: "u4", name: "Hùng", role: "SEO/Tech", email: "hung@company.vn", status: "Đang làm" },
-    { id: "u5", name: "Lê Văn C", role: "Video Editor", status: "Đang làm" },
-    { id: "u6", name: "Designer 1", role: "Graphic Designer", status: "Đang làm" },
-    { id: "u7", name: "Designer 2", role: "Graphic Designer", status: "Đang làm" },
-    { id: "u8", name: "An", role: "Content Writer", status: "Đang làm" },
-    { id: "u9", name: "Nguyễn Văn SEO", role: "SEO Specialist", status: "Đang làm" },
-    { id: "u10", name: "Trần Thu Content", role: "Content Writer Web", status: "Đang làm" },
-    { id: "u11", name: "Hoàng Mai Content", role: "Content Writer Web", status: "Đang làm" },
-    { id: "u12", name: "Lê Minh Tech", role: "Web Developer", status: "Đang làm" },
-    { id: "u13", name: "Phạm Anh SEO", role: "SEO Specialist", status: "Đang làm" },
-  ];
-  const seoChecks: SeoCheckItem[] = [];
-  websites.forEach((w) => {
-    SEO_GROUPS.forEach((g) => {
-      SEO_CHECK_TEMPLATE[g].forEach((it) => {
-        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name: it.name, description: it.description, done: false });
-      });
-    });
-  });
+// ============ Supabase-backed store ============
 
-  const entities: EntitySocial[] = [
-    { id: "e1", websiteId: "w1", name: "Facebook Entity Sứ Việt", platform: "Facebook", url: "https://facebook.com/suviet", account: "suviet.content", password: "Suviet@2025", email: "suviet.ai@gmail.com", phone: "0987123456", status: "Đang dùng", notes: "Tài khoản chính dùng share bài SEO" },
-    { id: "e2", websiteId: "w1", name: "Pinterest Sứ Việt", platform: "Pinterest", url: "https://pinterest.com/suviet", account: "suviet.pin", password: "Pin@Suviet1", email: "suviet.ai@gmail.com", status: "Đang dùng" },
-    { id: "e3", websiteId: "w1", name: "Google Site Sứ Việt", platform: "Google Site", url: "https://sites.google.com/view/suviet", account: "suviet.gsite", password: "Gsite@2025", email: "suviet.ai@gmail.com", status: "Cần kiểm tra", notes: "Cần check lại quyền truy cập" },
-    { id: "e4", websiteId: "w1", name: "Medium Sứ Việt", platform: "Medium", url: "https://medium.com/@suviet", account: "@suviet", password: "Med@Suviet", email: "suviet.ai@gmail.com", status: "Chưa dùng" },
-    { id: "e5", websiteId: "w1", name: "LinkedIn Brand Sứ Việt", platform: "LinkedIn", url: "https://linkedin.com/company/suviet", account: "admin.suviet", password: "Lk@Suviet1", email: "suviet.ai@gmail.com", status: "Đang dùng" },
-    { id: "e6", websiteId: "w3", name: "Facebook Sứ Minh Đăng", platform: "Facebook", url: "https://facebook.com/suminhdang", account: "smd.admin", password: "Smd@2025", email: "smd@minhdang.vn", status: "Đang dùng" },
-  ];
+type CollectionKey = keyof Collections;
 
-  const keywords: KeywordTrack[] = [
-    // Linked to wc7 (indexed) — main keyword
-    { id: "k1", websiteId: "w1", contentId: "wc7", isMain: true, keyword: "tượng Phật gốm", topic: "Tượng phong thủy", targetUrl: "https://xuonggomsuviet.vn/tuong-phat-gom-men-ran", type: "Từ khóa chính", searchIntent: "Thương mại", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 3, previousTop: 20, status: "Tăng hạng" },
-    // Sub keywords for wc7
-    { id: "k1a", websiteId: "w1", contentId: "wc7", keyword: "tượng Phật Bát Tràng", type: "Từ khóa phụ", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 8, previousTop: 15, status: "Tăng hạng" },
-    { id: "k1b", websiteId: "w1", contentId: "wc7", keyword: "tượng Phật bằng gốm", type: "Từ khóa phụ", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 12, previousTop: 18, status: "Tăng hạng" },
-    { id: "k1c", websiteId: "w1", contentId: "wc7", keyword: "tượng Phật gốm sứ", type: "Từ khóa phụ", owner: "Nguyễn Văn SEO", lastCheckDate: d(-1), currentTop: 25, previousTop: 22, status: "Tụt hạng" },
-
-    // Linked to wc6 (indexed)
-    { id: "k2", websiteId: "w1", contentId: "wc6", isMain: true, keyword: "bảo quản gốm sứ", topic: "Hướng dẫn", targetUrl: "https://xuonggomsuviet.vn/bao-quan-gom-su", type: "Từ khóa chính", owner: "Nguyễn Văn SEO", lastCheckDate: d(-2), currentTop: 5, previousTop: 9, status: "Top 10" },
-
-    // Standalone (no content link) — extra
-    { id: "k4", websiteId: "w1", extra: true, keyword: "gốm sứ Bát Tràng", topic: "Thương hiệu", type: "Từ khóa thương hiệu", searchIntent: "Điều hướng", owner: "Nguyễn Văn SEO", lastCheckDate: d(-3), currentTop: 3, previousTop: 4, status: "Top 3" },
-    { id: "k6", websiteId: "w1", extra: true, keyword: "quà tặng tết doanh nghiệp", topic: "Quà tặng doanh nghiệp", type: "Từ khóa chính", plan: "Tết 2026", searchIntent: "Mua hàng", owner: "Hoàng Mai Content", lastCheckDate: d(-5), currentTop: 0, previousTop: 35, status: "Mất top" },
-  ];
-
-  const backlinks: Backlink[] = [
-    { id: "bl1", websiteId: "w1", name: "PR báo Dân Trí — gốm Bát Tràng", sourceSite: "dantri.com.vn", publishedLink: "https://dantri.com.vn/pr/gom-bat-trang.html", targetUrl: "https://xuonggomsuviet.vn", anchorText: "xưởng gốm Bát Tràng", keyword: "gốm sứ Bát Tràng", type: "Bài PR báo chí", cost: 8000000, publishDate: d(-10), owner: "Nguyễn Văn SEO", status: "Đã kiểm tra link", notes: "Bài PR chính tháng 11" },
-    { id: "bl2", websiteId: "w1", name: "Guest post Webgomsu", sourceSite: "webgomsu.vn", publishedLink: "https://webgomsu.vn/am-chen-in-logo", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", anchorText: "ấm chén in logo", keyword: "ấm chén in logo", type: "Guest post", cost: 1500000, publishDate: d(-6), owner: "Trần Thu Content", status: "Đã đăng" },
-    { id: "bl3", websiteId: "w1", name: "Forum Webtretho — quà tặng Tết", sourceSite: "webtretho.com", targetUrl: "https://xuonggomsuviet.vn/am-chen-in-logo", anchorText: "quà tặng Tết doanh nghiệp", keyword: "quà tặng tết doanh nghiệp", type: "Backlink forum", cost: 0, owner: "Hoàng Mai Content", status: "Dự kiến" },
-    { id: "bl4", websiteId: "w1", name: "Backlink site ngành nội thất", sourceSite: "noithatdep.vn", publishedLink: "https://noithatdep.vn/blog/binh-hut-loc", targetUrl: "https://xuonggomsuviet.vn/binh-hut-loc", anchorText: "bình hút lộc Bát Tràng", keyword: "bình hút lộc Bát Tràng", type: "Backlink website ngành", cost: 500000, publishDate: d(-2), owner: "Nguyễn Văn SEO", status: "Đã đăng" },
-    { id: "bl5", websiteId: "w1", name: "Share Medium Sứ Việt", sourceSite: "medium.com", publishedLink: "https://medium.com/@suviet/bao-quan-gom", targetUrl: "https://xuonggomsuviet.vn/bao-quan-gom-su", anchorText: "bảo quản gốm sứ", keyword: "bảo quản gốm sứ", type: "Backlink social", cost: 0, publishDate: d(-15), owner: "Trần Thu Content", status: "Lỗi / mất link", notes: "Bài bị Medium ẩn" },
-    { id: "bl6", websiteId: "w3", name: "PR Cafef — quà doanh nghiệp", sourceSite: "cafef.vn", targetUrl: "https://suminhdang.com", anchorText: "quà tặng doanh nghiệp cao cấp", keyword: "quà tặng doanh nghiệp", type: "Bài PR báo chí", cost: 12000000, owner: "Trần Thị B", status: "Đã đặt" },
-  ];
-
-  const growth: GrowthMetric[] = [
-    { id: "g1", websiteId: "w1", period: "Tuần 1 tháng 5/2026", periodType: "Tuần", periodKey: "2026-W18", updatedAt: d(-10), totalTraffic: 1200, organicTraffic: 860, impressions: 15000, clicks: 620, ctr: 4.1, avgPosition: 18.5, indexedPages: 42, leads: 12, updatedBy: "Nguyễn Văn SEO" },
-    { id: "g2", websiteId: "w1", period: "Tuần 2 tháng 5/2026", periodType: "Tuần", periodKey: "2026-W19", updatedAt: d(-3), totalTraffic: 1450, organicTraffic: 1020, impressions: 18500, clicks: 710, ctr: 3.8, avgPosition: 16.2, indexedPages: 48, leads: 16, updatedBy: "Nguyễn Văn SEO", notes: "Traffic tăng tốt nhờ bài tượng Phật" },
-  ];
-
-  const webTopics: WebTopic[] = [
-    { id: "wt1", websiteId: "w1", name: "Tượng Phật gốm", mainKeyword: "tượng Phật gốm", sheetLink: "https://docs.google.com/spreadsheets/d/wt-tuongphatgom", updatedAt: d(-10) },
-    { id: "wt2", websiteId: "w1", name: "Bảo quản gốm sứ", mainKeyword: "bảo quản gốm sứ", sheetLink: "https://docs.google.com/spreadsheets/d/wt-baoquan", updatedAt: d(-7) },
-    { id: "wt3", websiteId: "w1", name: "Bình hút lộc Bát Tràng", mainKeyword: "bình hút lộc Bát Tràng", sheetLink: "https://docs.google.com/spreadsheets/d/wt-binhhutloc", updatedAt: d(-6) },
-    { id: "wt4", websiteId: "w3", name: "Ấm chén in logo", mainKeyword: "ấm chén in logo", sheetLink: "https://docs.google.com/spreadsheets/d/wt-amchen", updatedAt: d(-5) },
-    { id: "wt5", websiteId: "w3", name: "Quà tặng doanh nghiệp", mainKeyword: "quà tặng doanh nghiệp", sheetLink: "https://docs.google.com/spreadsheets/d/wt-quatang", updatedAt: d(-3) },
-    { id: "wt6", websiteId: "w4", name: "Bát đĩa nhà hàng", mainKeyword: "bát đĩa nhà hàng", sheetLink: "https://docs.google.com/spreadsheets/d/wt-batdia", updatedAt: d(-2) },
-  ];
-
-  return {
-    brands, websites, socials, places, tasks, webContents, socialPosts, mapPosts,
-    reviews, videos, orders, people, seoChecks, entities, keywords, backlinks, growth,
-    webTopics,
-    plans: ["Tết 2026", "Khai trương showroom", "Sale tháng 12", "Brand 2026"],
-    topics: ["Quà tặng doanh nghiệp", "Sản phẩm mới", "Văn hóa Bát Tràng", "Phong thủy", "Khuyến mãi"],
-  };
+const TABLE_FOR: Record<CollectionKey, string> = {
+  brands: "brands",
+  websites: "websites",
+  socials: "socials",
+  places: "places",
+  tasks: "tasks",
+  webContents: "web_contents",
+  socialPosts: "social_posts",
+  mapPosts: "map_posts",
+  reviews: "reviews",
+  videos: "videos",
+  orders: "orders",
+  people: "people",
+  seoChecks: "seo_checks",
+  entities: "entities",
+  keywords: "keywords",
+  backlinks: "backlinks",
+  growth: "growth",
+  webTopics: "web_topics",
 };
 
-const emptyState = () => ({
+const COLLECTION_KEYS = Object.keys(TABLE_FOR) as CollectionKey[];
+
+const emptyCollections = (): { [K in CollectionKey]: Collections[K][] } => ({
   brands: [], websites: [], socials: [], places: [], tasks: [],
   webContents: [], socialPosts: [], mapPosts: [], reviews: [], videos: [],
   orders: [], people: [], seoChecks: [], entities: [], keywords: [],
   backlinks: [], growth: [], webTopics: [],
-  plans: [] as string[], topics: [] as string[],
 });
 
-export const useStore = create<State>()(
-  persist(
-    (set) => ({
-      ...emptyState(),
-      add: (key, item) => set((s) => ({ [key]: [...(s[key] as any[]), item] } as any)),
-      update: (key, id, patch) =>
-        set((s) => ({
-          [key]: (s[key] as any[]).map((i) => (i.id === id ? { ...i, ...patch } : i)),
-        } as any)),
-      remove: (key, id) =>
-        set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any)),
-      resetAll: (mode) => set(() => (mode === "demo" ? { ...seed() } : { ...emptyState() }) as any),
+async function loadAllFromSupabase() {
+  const results = await Promise.all(
+    COLLECTION_KEYS.map(async (key) => {
+      const table = TABLE_FOR[key];
+      const { data, error } = await (supabase as any)
+        .from(table)
+        .select("id, data")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error(`Load ${table} failed:`, error.message);
+        return [key, [] as any[]] as const;
+      }
+      const items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}) }));
+      return [key, items] as const;
     }),
-    { name: "base-mkt-store", version: 11 }
-  )
-);
+  );
+  const cat = await supabase.from("catalogs").select("scope, items");
+  const catMap: Record<string, string[]> = { plans: [], topics: [] };
+  for (const row of cat.data ?? []) {
+    catMap[(row as any).scope] = ((row as any).items as string[]) ?? [];
+  }
+  const collections = Object.fromEntries(results) as { [K in CollectionKey]: Collections[K][] };
+  return { ...collections, plans: catMap.plans ?? [], topics: catMap.topics ?? [] };
+}
+
+async function syncInsert<K extends CollectionKey>(key: K, item: Collections[K]) {
+  const table = TABLE_FOR[key];
+  const { id, ...rest } = item as any;
+  const { data: sess } = await supabase.auth.getSession();
+  const userId = sess.session?.user?.id;
+  const { error } = await (supabase as any)
+    .from(table)
+    .insert({ id, data: rest, created_by: userId });
+  if (error) {
+    console.error(`Insert ${table} failed:`, error.message);
+    toast.error(`Lưu thất bại: ${error.message}`);
+    await useStore.getState().reload();
+  }
+}
+
+async function syncUpdate<K extends CollectionKey>(key: K, id: ID, fullItem: Collections[K]) {
+  const table = TABLE_FOR[key];
+  const { id: _ignored, ...rest } = fullItem as any;
+  const { error } = await (supabase as any)
+    .from(table)
+    .update({ data: rest })
+    .eq("id", id);
+  if (error) {
+    console.error(`Update ${table} failed:`, error.message);
+    toast.error(`Cập nhật thất bại: ${error.message}`);
+    await useStore.getState().reload();
+  }
+}
+
+async function syncDelete(key: CollectionKey, id: ID) {
+  const table = TABLE_FOR[key];
+  const { error } = await (supabase as any).from(table).delete().eq("id", id);
+  if (error) {
+    console.error(`Delete ${table} failed:`, error.message);
+    toast.error(`Xóa thất bại: ${error.message}`);
+    await useStore.getState().reload();
+  }
+}
+
+export const useStore = create<State>((set, get) => ({
+  ...emptyCollections(),
+  plans: [] as string[],
+  topics: [] as string[],
+  loaded: false,
+  initialized: false,
+
+  init: async () => {
+    if (get().initialized) return;
+    set({ initialized: true });
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        get().reload();
+      } else {
+        set({ ...emptyCollections(), plans: [], topics: [], loaded: false });
+      }
+    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) await get().reload();
+  },
+
+  reload: async () => {
+    try {
+      const next = await loadAllFromSupabase();
+      set({ ...next, loaded: true });
+    } catch (e: any) {
+      console.error("Reload store failed", e);
+      set({ loaded: true });
+    }
+  },
+
+  add: (key, item) => {
+    set((s) => ({ [key]: [item, ...(s[key] as any[])] } as any));
+    void syncInsert(key, item);
+  },
+
+  update: (key, id, patch) => {
+    let updated: any = null;
+    set((s) => {
+      const list = (s[key] as any[]).map((i) => {
+        if (i.id !== id) return i;
+        updated = { ...i, ...patch };
+        return updated;
+      });
+      return { [key]: list } as any;
+    });
+    if (updated) void syncUpdate(key, id, updated);
+  },
+
+  remove: (key, id) => {
+    set((s) => ({ [key]: (s[key] as any[]).filter((i) => i.id !== id) } as any));
+    void syncDelete(key, id);
+  },
+
+  setCatalog: async (scope, items) => {
+    set({ [scope]: items } as any);
+    const { error } = await supabase
+      .from("catalogs")
+      .upsert({ scope, items: items as any }, { onConflict: "scope" });
+    if (error) {
+      toast.error(`Lưu danh mục thất bại: ${error.message}`);
+      await get().reload();
+    }
+  },
+}));
 
 export const fmtDate = (s?: string) => {
   if (!s) return "—";

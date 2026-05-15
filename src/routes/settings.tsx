@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, RotateCcw, Database } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AccountsSettings } from "@/components/AccountsSettings";
 
@@ -54,8 +54,8 @@ function SettingsPage() {
   const s = useStore();
   const [editing, setEditing] = useState<Person | null>(null);
   const [adding, setAdding] = useState(false);
-  const setPlans = (next: string[]) => useStore.setState({ plans: next });
-  const setTopics = (next: string[]) => useStore.setState({ topics: next });
+  const setPlans = (next: string[]) => s.setCatalog("plans", next);
+  const setTopics = (next: string[]) => s.setCatalog("topics", next);
 
   return <>
     <PageHeader title="Cài Đặt" description="Quản lý danh mục dùng chung — nhân sự, plan, topic..." />
@@ -107,29 +107,8 @@ function SettingsPage() {
 
       <TabsContent value="info" className="mt-4 space-y-4">
         <Card><CardContent className="p-5 text-sm text-muted-foreground space-y-2">
-          <p>Dữ liệu được lưu trong trình duyệt (localStorage) và sẽ được giữ lại giữa các phiên làm việc.</p>
-          <p>Để chia sẻ giữa nhiều người, sẽ kết nối backend ở giai đoạn sau.</p>
-        </CardContent></Card>
-
-        <Card><CardContent className="p-5 space-y-4">
-          <div>
-            <h3 className="font-semibold text-base">Quản lý dữ liệu</h3>
-            <p className="text-sm text-muted-foreground mt-1">Reset toàn bộ dữ liệu nghiệp vụ (không ảnh hưởng tài khoản đăng nhập).</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="destructive" onClick={() => {
-              if (confirm("Xoá toàn bộ dữ liệu nghiệp vụ và bắt đầu với cơ sở dữ liệu trống?\n\nHành động này không thể hoàn tác.")) {
-                useStore.getState().resetAll("empty");
-                window.location.reload();
-              }
-            }}><RotateCcw className="h-4 w-4 mr-1.5" />Reset về dữ liệu trống</Button>
-            <Button variant="outline" onClick={() => {
-              if (confirm("Khôi phục dữ liệu mẫu (demo)? Mọi dữ liệu hiện tại sẽ bị thay thế.")) {
-                useStore.getState().resetAll("demo");
-                window.location.reload();
-              }
-            }}><Database className="h-4 w-4 mr-1.5" />Khôi phục dữ liệu demo</Button>
-          </div>
+          <p>Dữ liệu được lưu trên Lovable Cloud — chia sẻ giữa tất cả người dùng và thiết bị.</p>
+          <p>Mọi thay đổi (thêm / sửa / xóa) được đồng bộ tức thời lên cơ sở dữ liệu.</p>
         </CardContent></Card>
       </TabsContent>
     </Tabs>
