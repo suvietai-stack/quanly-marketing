@@ -17,7 +17,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/brands")({
   head: () => ({ meta: [{ title: "Thương Hiệu — Base Marketing" }] }),
-  component: BrandsPage,
+  component: () => (
+    <RequirePermission perm="brand.view">
+      <BrandsPage />
+    </RequirePermission>
+  ),
 });
 
 const BRAND_STATUS = ["Đang xây dựng", "Đang vận hành", "Đang tối ưu", "Tạm dừng", "Lưu trữ"] as const;
