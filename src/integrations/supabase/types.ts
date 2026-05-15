@@ -14,16 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          name: string
+          permissions: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: string
+          is_system?: boolean
+          name: string
+          permissions?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          permissions?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          desired_position: string | null
+          email: string | null
+          full_name: string
+          id: string
+          is_system_admin: boolean
+          must_change_password: boolean
+          notes: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          desired_position?: string | null
+          email?: string | null
+          full_name?: string
+          id: string
+          is_system_admin?: boolean
+          must_change_password?: boolean
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          desired_position?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_system_admin?: boolean
+          must_change_password?: boolean
+          notes?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_permission_overrides: {
+        Row: {
+          permissions: string[]
+          updated_at: string
+          use_custom: boolean
+          user_id: string
+        }
+        Insert: {
+          permissions?: string[]
+          updated_at?: string
+          use_custom?: boolean
+          user_id: string
+        }
+        Update: {
+          permissions?: string[]
+          updated_at?: string
+          use_custom?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
+      is_active: { Args: { _user_id: string }; Returns: boolean }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      account_status:
+        | "Chờ duyệt"
+        | "Đang hoạt động"
+        | "Tạm khóa"
+        | "Từ chối"
+        | "Lưu trữ"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +282,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: [
+        "Chờ duyệt",
+        "Đang hoạt động",
+        "Tạm khóa",
+        "Từ chối",
+        "Lưu trữ",
+      ],
+    },
   },
 } as const

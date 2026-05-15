@@ -1,8 +1,12 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  adminResetPassword,
+  adminDeleteUser,
+  adminLookupEmailByUsername,
+} from "@/lib/accounts.functions";
 
 export type ID = string;
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 // ============ Permissions registry ============
 export type PermissionKey = string;
@@ -26,9 +30,7 @@ export type PermissionGroup =
   | "Cài Đặt";
 
 export const PERMISSIONS: PermissionDef[] = [
-  // Tổng quan
   { key: "overview.view", label: "Xem Tổng Quan", group: "Tổng Quan" },
-  // Task
   { key: "task.view", label: "Xem task", group: "Task" },
   { key: "task.view_all", label: "Xem tất cả task", group: "Task" },
   { key: "task.view_mine", label: "Chỉ xem task liên quan đến mình", group: "Task" },
@@ -37,14 +39,12 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "task.delete", label: "Xóa task", group: "Task" },
   { key: "task.assign", label: "Giao task", group: "Task" },
   { key: "task.update_status", label: "Cập nhật trạng thái task", group: "Task" },
-  // Brand
   { key: "brand.view", label: "Xem thương hiệu", group: "Thương Hiệu" },
   { key: "brand.create", label: "Tạo thương hiệu", group: "Thương Hiệu" },
   { key: "brand.edit", label: "Sửa thương hiệu", group: "Thương Hiệu" },
   { key: "brand.delete", label: "Xóa thương hiệu", group: "Thương Hiệu" },
   { key: "brand.view_channels", label: "Xem kênh liên kết", group: "Thương Hiệu" },
   { key: "brand.docs", label: "Quản lý tài liệu/guideline", group: "Thương Hiệu" },
-  // Web
   { key: "web.view", label: "Xem dự án web", group: "Dự Án Web" },
   { key: "web.create", label: "Tạo dự án web", group: "Dự Án Web" },
   { key: "web.edit", label: "Sửa dự án web", group: "Dự Án Web" },
@@ -72,7 +72,6 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "web.growth_view", label: "Xem Tăng Trưởng Website", group: "Dự Án Web" },
   { key: "web.growth_edit", label: "Cập nhật Tăng Trưởng Website", group: "Dự Án Web" },
   { key: "web.report_view", label: "Xem Báo Cáo Web", group: "Dự Án Web" },
-  // Social
   { key: "social.view", label: "Xem kênh social", group: "Social" },
   { key: "social.create", label: "Tạo kênh social", group: "Social" },
   { key: "social.edit", label: "Sửa kênh social", group: "Social" },
@@ -85,7 +84,6 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "social.schedule", label: "Lên lịch đăng", group: "Social" },
   { key: "social.publish", label: "Cập nhật link bài đã đăng", group: "Social" },
   { key: "social.report", label: "Xem báo cáo social", group: "Social" },
-  // Local
   { key: "local.view", label: "Xem local map", group: "Local" },
   { key: "local.create", label: "Tạo địa điểm", group: "Local" },
   { key: "local.edit", label: "Sửa địa điểm", group: "Local" },
@@ -97,7 +95,6 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "local.review", label: "Quản lý review", group: "Local" },
   { key: "local.review_reply", label: "Phản hồi review", group: "Local" },
   { key: "local.report", label: "Xem báo cáo local", group: "Local" },
-  // Video
   { key: "video.view", label: "Xem video", group: "Video" },
   { key: "video.create", label: "Tạo video", group: "Video" },
   { key: "video.edit", label: "Sửa video", group: "Video" },
@@ -109,7 +106,6 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "video.approve", label: "Duyệt video", group: "Video" },
   { key: "video.reject", label: "Yêu cầu sửa video", group: "Video" },
   { key: "video.publish", label: "Cập nhật link video đã đăng", group: "Video" },
-  // Design / Order
   { key: "order.view", label: "Xem order", group: "Thiết Kế" },
   { key: "order.create", label: "Tạo order", group: "Thiết Kế" },
   { key: "order.edit", label: "Sửa order", group: "Thiết Kế" },
@@ -120,12 +116,10 @@ export const PERMISSIONS: PermissionDef[] = [
   { key: "order.approve", label: "Duyệt thiết kế", group: "Thiết Kế" },
   { key: "order.reject", label: "Yêu cầu sửa thiết kế", group: "Thiết Kế" },
   { key: "order.update_status", label: "Cập nhật trạng thái order", group: "Thiết Kế" },
-  // Báo cáo
   { key: "report.view", label: "Xem báo cáo", group: "Báo Cáo" },
   { key: "report.attention", label: "Xem việc cần chú ý", group: "Báo Cáo" },
   { key: "report.attention_all", label: "Xem tất cả việc cần chú ý", group: "Báo Cáo" },
   { key: "report.export", label: "Xuất báo cáo", group: "Báo Cáo" },
-  // Cài đặt
   { key: "settings.view", label: "Xem cài đặt", group: "Cài Đặt" },
   { key: "settings.people", label: "Quản lý nhân sự", group: "Cài Đặt" },
   { key: "settings.catalog", label: "Quản lý danh mục", group: "Cài Đặt" },
@@ -139,123 +133,23 @@ export const PERMISSIONS: PermissionDef[] = [
 
 export const ALL_PERMS = PERMISSIONS.map((p) => p.key);
 
-// ============ Roles ============
+export const PERMISSION_GROUPS: PermissionGroup[] = [
+  "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local", "Video", "Thiết Kế", "Báo Cáo", "Cài Đặt",
+];
+
+export const SUPER_ADMIN_ID = "role-super-admin";
+export const ADMIN_ROLE_ID = "role-admin";
+export const SYSTEM_ADMIN_USERNAME = "Admin";
+
+// ============ Types ============
 export interface Role {
   id: ID;
   name: string;
   description?: string;
   permissions: PermissionKey[];
-  system?: boolean; // system roles: cannot delete/rename critical
+  system?: boolean;
 }
 
-const PRESET = (keys: string[]): PermissionKey[] => keys;
-
-const SUPER_ADMIN_ID = "role-super-admin";
-const ADMIN_ROLE_ID = "role-admin";
-
-const DEFAULT_ROLES: Role[] = [
-  { id: SUPER_ADMIN_ID, name: "Super Admin", description: "Toàn quyền hệ thống", permissions: ALL_PERMS, system: true },
-  { id: ADMIN_ROLE_ID, name: "Admin", description: "Quản trị toàn bộ app, không can thiệp Super Admin", permissions: ALL_PERMS, system: true },
-  {
-    id: "role-leader",
-    name: "Leader Marketing",
-    description: "Quản lý thương hiệu, task, web, social, local, video, thiết kế",
-    permissions: PRESET([
-      "overview.view",
-      "task.view","task.view_all","task.create","task.edit","task.assign","task.update_status",
-      "brand.view","brand.create","brand.edit","brand.view_channels","brand.docs",
-      "web.view","web.create","web.edit","web.tech_view","web.tech_check","web.entity","web.keyword",
-      "web.content_create","web.content_edit","web.content_assign","web.outline_approve","web.outline_reject",
-      "web.post_approve","web.post_reject","web.publish","web.update_index","web.update_share",
-      "web.backlink","web.checktop","web.reoptimize","web.growth_view","web.report_view",
-      "social.view","social.create","social.edit","social.post_create","social.post_edit","social.post_approve","social.schedule","social.publish","social.report",
-      "local.view","local.create","local.edit","local.post_create","local.post_edit","local.review","local.review_reply","local.report",
-      "video.view","video.create","video.edit","video.approve","video.reject","video.publish",
-      "order.view","order.create","order.edit","order.approve","order.reject","order.update_status",
-      "report.view","report.attention","report.attention_all","report.export",
-      "settings.view","settings.people","settings.catalog","settings.plan_topic","settings.template",
-    ]),
-  },
-  {
-    id: "role-seo",
-    name: "SEO",
-    description: "Quản lý phần Dự Án Web liên quan SEO",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_mine","task.update_status",
-      "brand.view","brand.view_channels",
-      "web.view","web.tech_view","web.tech_check","web.entity","web.keyword",
-      "web.content_create","web.content_edit","web.outline_submit","web.post_submit",
-      "web.publish","web.update_index","web.update_share","web.backlink","web.checktop","web.reoptimize",
-      "web.growth_view","web.growth_edit","web.report_view",
-      "report.view","report.attention",
-    ]),
-  },
-  {
-    id: "role-content",
-    name: "Content Web",
-    description: "Nhận việc và xử lý content web",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_mine","task.update_status",
-      "brand.view","web.view","web.content_create","web.content_edit","web.outline_submit","web.post_submit",
-      "report.view","report.attention",
-    ]),
-  },
-  {
-    id: "role-social",
-    name: "Social",
-    description: "Quản lý kênh social và sản xuất bài đăng social",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_mine","task.update_status",
-      "brand.view","social.view","social.post_create","social.post_edit","social.post_submit","social.publish","social.report",
-      "report.view","report.attention",
-    ]),
-  },
-  {
-    id: "role-local",
-    name: "Local SEO",
-    description: "Quản lý Local Map, bài đăng Map, ảnh, review",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_mine","task.update_status",
-      "brand.view","local.view","local.create","local.edit","local.post_create","local.post_edit",
-      "local.photo","local.review","local.review_reply","local.report",
-      "report.view","report.attention",
-    ]),
-  },
-  {
-    id: "role-designer",
-    name: "Designer / Chụp ảnh",
-    description: "Quản lý các order thiết kế/chụp ảnh được giao",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_mine","task.update_status",
-      "order.view","order.take","order.deliver","order.submit","order.update_status",
-      "report.view",
-    ]),
-  },
-  {
-    id: "role-video",
-    name: "Video",
-    description: "Quản lý việc sản xuất video",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_mine","task.update_status",
-      "video.view","video.script","video.footage","video.edit_cut","video.submit","video.publish",
-      "report.view",
-    ]),
-  },
-  {
-    id: "role-viewer",
-    name: "Viewer / Ban Giám Đốc",
-    description: "Chỉ xem dữ liệu tổng quan, báo cáo, danh sách công việc",
-    permissions: PRESET([
-      "overview.view","task.view","task.view_all",
-      "brand.view","brand.view_channels",
-      "web.view","web.report_view","web.growth_view",
-      "social.view","social.report","local.view","local.report","video.view","order.view",
-      "report.view","report.attention","report.attention_all",
-    ]),
-  },
-];
-
-// ============ Users ============
 export type AccountStatus = "Chờ duyệt" | "Đang hoạt động" | "Tạm khóa" | "Từ chối" | "Lưu trữ";
 
 export interface User {
@@ -266,227 +160,325 @@ export interface User {
   phone?: string;
   desiredPosition?: string;
   notes?: string;
+  // Legacy fields kept for type compatibility (no longer used — Supabase Auth manages passwords)
   passwordHash: string;
   passwordSalt: string;
   roleId?: ID;
-  customPermissions?: PermissionKey[]; // override role
+  customPermissions?: PermissionKey[];
   useCustom?: boolean;
   status: AccountStatus;
   createdAt: string;
-  system?: boolean; // system Admin account
+  system?: boolean;
+  mustChangePassword?: boolean;
 }
 
-// ============ Hashing (Web Crypto SHA-256, salted) ============
-function toHex(buf: ArrayBuffer): string {
-  const b = new Uint8Array(buf);
-  let s = "";
-  for (let i = 0; i < b.length; i++) s += b[i].toString(16).padStart(2, "0");
-  return s;
-}
-
-export async function sha256(text: string): Promise<string> {
-  if (typeof crypto !== "undefined" && crypto.subtle) {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-    return toHex(buf);
-  }
-  // Fallback (very unlikely)
-  let h = 0;
-  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
-  return String(h);
-}
-
-export async function hashPassword(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
-  const s = salt || uid() + uid();
-  const hash = await sha256(s + ":" + password);
-  return { hash, salt: s };
-}
-
-export async function verifyPassword(password: string, hash: string, salt: string): Promise<boolean> {
-  const computed = await sha256(salt + ":" + password);
-  return computed === hash;
-}
-
-// ============ Auth Store ============
+// ============ Store ============
 interface AuthState {
   users: User[];
   roles: Role[];
   currentUserId: ID | null;
-  seeded: boolean;
-  // actions
-  login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => void;
-  register: (input: Omit<User, "id" | "passwordHash" | "passwordSalt" | "status" | "createdAt"> & { password: string }) => Promise<{ ok: boolean; error?: string }>;
-  approve: (id: ID, roleId?: ID) => void;
-  reject: (id: ID) => void;
-  setStatus: (id: ID, status: AccountStatus) => void;
-  setRole: (id: ID, roleId: ID) => void;
-  setUseCustom: (id: ID, useCustom: boolean) => void;
-  setCustomPerms: (id: ID, perms: PermissionKey[]) => void;
-  updateUser: (id: ID, patch: Partial<User>) => void;
+  loaded: boolean;
+  initialized: boolean;
+
+  init: () => Promise<void>;
+  reload: () => Promise<void>;
+
+  login: (usernameOrEmail: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  register: (input: {
+    username: string; fullName: string; email?: string; phone?: string;
+    desiredPosition?: string; notes?: string; password: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
+
+  approve: (id: ID, roleId?: ID) => Promise<void>;
+  reject: (id: ID) => Promise<void>;
+  setStatus: (id: ID, status: AccountStatus) => Promise<void>;
+  setRole: (id: ID, roleId: ID) => Promise<void>;
+  setUseCustom: (id: ID, useCustom: boolean) => Promise<void>;
+  setCustomPerms: (id: ID, perms: PermissionKey[]) => Promise<void>;
+  updateUser: (id: ID, patch: Partial<User>) => Promise<void>;
   resetPassword: (id: ID, newPassword: string) => Promise<void>;
   changeOwnPassword: (oldPwd: string, newPwd: string) => Promise<{ ok: boolean; error?: string }>;
-  removeUser: (id: ID) => void;
-  addRole: (r: Omit<Role, "id">) => void;
-  updateRole: (id: ID, patch: Partial<Role>) => void;
-  removeRole: (id: ID) => void;
+  removeUser: (id: ID) => Promise<void>;
+
+  addRole: (r: Omit<Role, "id">) => Promise<void>;
+  updateRole: (id: ID, patch: Partial<Role>) => Promise<void>;
+  removeRole: (id: ID) => Promise<void>;
+
+  // Compatibility no-op (used by existing code paths)
   ensureSeed: () => Promise<void>;
 }
 
-export const SYSTEM_ADMIN_USERNAME = "Admin";
+function genRoleId() {
+  return "role-" + Math.random().toString(36).slice(2, 10);
+}
 
-export const useAuth = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      users: [],
-      roles: DEFAULT_ROLES,
-      currentUserId: null,
-      seeded: false,
+function mapProfileToUser(
+  p: any,
+  userRoles: { user_id: string; role_id: string }[],
+  overrides: { user_id: string; use_custom: boolean; permissions: string[] }[],
+): User {
+  const ur = userRoles.find((x) => x.user_id === p.id);
+  const ov = overrides.find((x) => x.user_id === p.id);
+  return {
+    id: p.id,
+    username: p.username || "",
+    fullName: p.full_name || "",
+    email: p.email || undefined,
+    phone: p.phone || undefined,
+    desiredPosition: p.desired_position || undefined,
+    notes: p.notes || undefined,
+    passwordHash: "",
+    passwordSalt: "",
+    roleId: ur?.role_id,
+    useCustom: ov?.use_custom ?? false,
+    customPermissions: ov?.permissions ?? [],
+    status: p.status,
+    createdAt: p.created_at,
+    system: !!p.is_system_admin,
+    mustChangePassword: !!p.must_change_password,
+  };
+}
 
-      ensureSeed: async () => {
-        // Chỉ đảm bảo có tài khoản Admin mặc định và bộ role hệ thống.
-        // KHÔNG seed thêm bất kỳ tài khoản demo nào.
-        if (get().roles.length === 0) set({ roles: DEFAULT_ROLES });
-        const hasAdmin = get().users.some((u) => u.id === "user-admin");
-        if (!hasAdmin) {
-          const adminPwd = await hashPassword("Suviet888@@@");
-          const admin: User = {
-            id: "user-admin",
-            username: SYSTEM_ADMIN_USERNAME,
-            fullName: "Quản trị hệ thống",
-            email: "admin@local",
-            roleId: SUPER_ADMIN_ID,
-            status: "Đang hoạt động",
-            system: true,
-            passwordHash: adminPwd.hash,
-            passwordSalt: adminPwd.salt,
-            createdAt: new Date().toISOString(),
-          };
-          set({ users: [...get().users, admin], seeded: true });
-        } else {
-          set({ seeded: true });
-        }
-      },
+export const useAuth = create<AuthState>((set, get) => ({
+  users: [],
+  roles: [],
+  currentUserId: null,
+  loaded: false,
+  initialized: false,
 
-      login: async (username, password) => {
-        const u = get().users.find(
-          (x) => x.username.toLowerCase() === username.toLowerCase() || x.email?.toLowerCase() === username.toLowerCase()
-        );
-        if (!u) return { ok: false, error: "Sai tên đăng nhập hoặc mật khẩu." };
-        const ok = await verifyPassword(password, u.passwordHash, u.passwordSalt);
-        if (!ok) return { ok: false, error: "Sai tên đăng nhập hoặc mật khẩu." };
-        if (u.status === "Chờ duyệt") return { ok: false, error: "Tài khoản của bạn đang chờ Admin duyệt." };
-        if (u.status === "Tạm khóa") return { ok: false, error: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin." };
-        if (u.status === "Từ chối") return { ok: false, error: "Tài khoản đã bị từ chối." };
-        if (u.status === "Lưu trữ") return { ok: false, error: "Tài khoản đã được lưu trữ." };
-        set({ currentUserId: u.id });
-        return { ok: true };
-      },
+  init: async () => {
+    if (get().initialized) return;
+    set({ initialized: true });
+    supabase.auth.onAuthStateChange((_event, session) => {
+      set({ currentUserId: session?.user?.id ?? null });
+      if (session) {
+        get().reload();
+      } else {
+        set({ users: [], roles: [], loaded: false });
+      }
+    });
+    const { data: { session } } = await supabase.auth.getSession();
+    set({ currentUserId: session?.user?.id ?? null });
+    if (session) await get().reload();
+  },
 
-      logout: () => set({ currentUserId: null }),
+  reload: async () => {
+    const [profilesRes, rolesRes, urRes, ovRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("app_roles").select("*").order("name"),
+      supabase.from("user_roles").select("*"),
+      supabase.from("user_permission_overrides").select("*"),
+    ]);
+    const profiles = profilesRes.data ?? [];
+    const userRoles = (urRes.data ?? []) as { user_id: string; role_id: string }[];
+    const overrides = (ovRes.data ?? []) as { user_id: string; use_custom: boolean; permissions: string[] }[];
+    const users = profiles.map((p) => mapProfileToUser(p, userRoles, overrides));
+    const roles: Role[] = (rolesRes.data ?? []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description ?? undefined,
+      permissions: r.permissions ?? [],
+      system: !!r.is_system,
+    }));
+    set({ users, roles, loaded: true });
+  },
 
-      register: async (input) => {
-        const exists = get().users.some(
-          (u) => u.username.toLowerCase() === input.username.toLowerCase() ||
-                 (input.email && u.email?.toLowerCase() === input.email.toLowerCase())
-        );
-        if (exists) return { ok: false, error: "Tên đăng nhập hoặc email đã tồn tại." };
-        const { hash, salt } = await hashPassword(input.password);
-        const u: User = {
-          id: uid(), username: input.username, fullName: input.fullName,
-          email: input.email, phone: input.phone, desiredPosition: input.desiredPosition,
-          notes: input.notes, passwordHash: hash, passwordSalt: salt,
-          status: "Chờ duyệt", createdAt: new Date().toISOString(),
-        };
-        set({ users: [...get().users, u] });
-        return { ok: true };
-      },
+  ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
 
-      approve: (id, roleId) => set({
-        users: get().users.map((u) => u.id === id ? { ...u, status: "Đang hoạt động", roleId: roleId || u.roleId } : u),
-      }),
-      reject: (id) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system) return;
-        set({ users: get().users.map((x) => x.id === id ? { ...x, status: "Từ chối" } : x) });
-      },
-      setStatus: (id, status) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system && status !== "Đang hoạt động") return;
-        set({ users: get().users.map((x) => x.id === id ? { ...x, status } : x) });
-      },
-      setRole: (id, roleId) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system) return;
-        set({ users: get().users.map((x) => x.id === id ? { ...x, roleId } : x) });
-      },
-      setUseCustom: (id, useCustom) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system) return;
-        set({ users: get().users.map((x) => x.id === id ? { ...x, useCustom } : x) });
-      },
-      setCustomPerms: (id, perms) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system) return;
-        set({ users: get().users.map((x) => x.id === id ? { ...x, customPermissions: perms } : x) });
-      },
-      updateUser: (id, patch) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system) {
-          // disallow changing username/role/status for system Admin
-          const { username: _u, roleId: _r, status: _s, system: _sy, ...safe } = patch as any;
-          patch = safe;
-        }
-        set({ users: get().users.map((x) => x.id === id ? { ...x, ...patch } : x) });
-      },
-      resetPassword: async (id, newPassword) => {
-        const { hash, salt } = await hashPassword(newPassword);
-        set({ users: get().users.map((x) => x.id === id ? { ...x, passwordHash: hash, passwordSalt: salt } : x) });
-      },
-      changeOwnPassword: async (oldPwd, newPwd) => {
-        const u = get().users.find((x) => x.id === get().currentUserId);
-        if (!u) return { ok: false, error: "Chưa đăng nhập." };
-        const ok = await verifyPassword(oldPwd, u.passwordHash, u.passwordSalt);
-        if (!ok) return { ok: false, error: "Mật khẩu hiện tại không đúng." };
-        const { hash, salt } = await hashPassword(newPwd);
-        set({ users: get().users.map((x) => x.id === u.id ? { ...x, passwordHash: hash, passwordSalt: salt } : x) });
-        return { ok: true };
-      },
-      removeUser: (id) => {
-        const u = get().users.find((x) => x.id === id);
-        if (u?.system) return;
-        set({ users: get().users.filter((x) => x.id !== id) });
-      },
-      addRole: (r) => set({ roles: [...get().roles, { ...r, id: "role-" + uid() }] }),
-      updateRole: (id, patch) => {
-        const r = get().roles.find((x) => x.id === id);
-        if (!r) return;
-        if (r.system && patch.name) delete (patch as any).name;
-        set({ roles: get().roles.map((x) => x.id === id ? { ...x, ...patch } : x) });
-      },
-      removeRole: (id) => {
-        const r = get().roles.find((x) => x.id === id);
-        if (!r || r.system) return;
-        const used = get().users.some((u) => u.roleId === id);
-        if (used) return;
-        set({ roles: get().roles.filter((x) => x.id !== id) });
-      },
-    }),
-    {
-      name: "base-marketing-auth-v1",
-      version: 2,
-      migrate: (persisted: any, fromVersion) => {
-        // v1 -> v2: xoá hết user demo cũ, chỉ giữ Admin (ensureSeed sẽ tạo lại nếu thiếu).
-        if (fromVersion < 2) {
-          const users = Array.isArray(persisted?.users)
-            ? persisted.users.filter((u: any) => u?.id === "user-admin")
-            : [];
-          return { ...persisted, users, seeded: false };
-        }
-        return persisted;
-      },
+  login: async (usernameOrEmail, password) => {
+    const input = usernameOrEmail.trim();
+    let email = input.includes("@") ? input.toLowerCase() : "";
+    if (!email) {
+      // Special case for system Admin
+      if (input.toLowerCase() === "admin") {
+        email = "admin@local";
+      } else {
+        const res = await adminLookupEmailByUsername({ data: { username: input } });
+        if (!res.email) return { ok: false, error: "Sai tên đăng nhập hoặc mật khẩu." };
+        email = res.email;
+      }
     }
-  )
-);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.user) return { ok: false, error: "Sai tên đăng nhập hoặc mật khẩu." };
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    const status = prof?.status as AccountStatus | undefined;
+    if (status !== "Đang hoạt động") {
+      await supabase.auth.signOut();
+      const msg =
+        status === "Chờ duyệt" ? "Tài khoản của bạn đang chờ Admin duyệt." :
+        status === "Tạm khóa" ? "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin." :
+        status === "Từ chối" ? "Tài khoản của bạn đã bị từ chối." :
+        status === "Lưu trữ" ? "Tài khoản đã được lưu trữ." :
+        "Tài khoản không khả dụng.";
+      return { ok: false, error: msg };
+    }
+    return { ok: true };
+  },
+
+  logout: async () => {
+    await supabase.auth.signOut();
+  },
+
+  register: async (input) => {
+    const username = input.username.trim();
+    if (!username) return { ok: false, error: "Vui lòng nhập tên đăng nhập." };
+    if (username.toLowerCase() === "admin") return { ok: false, error: "Tên đăng nhập 'Admin' đã được hệ thống sử dụng." };
+    // Check username uniqueness
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("username", username)
+      .maybeSingle();
+    if (existing) return { ok: false, error: "Tên đăng nhập đã tồn tại." };
+
+    const email = input.email?.trim().toLowerCase() || `${username.toLowerCase()}@user.local`;
+    const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: input.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          username,
+          full_name: input.fullName,
+          phone: input.phone,
+          desired_position: input.desiredPosition,
+          notes: input.notes,
+        },
+      },
+    });
+    if (error) {
+      const msg = error.message?.includes("already") ? "Email hoặc tài khoản đã tồn tại." : error.message;
+      return { ok: false, error: msg };
+    }
+    // Sign out immediately — account must be approved before login
+    await supabase.auth.signOut();
+    return { ok: true };
+  },
+
+  approve: async (id, roleId) => {
+    const { error: e1 } = await supabase
+      .from("profiles")
+      .update({ status: "Đang hoạt động" })
+      .eq("id", id);
+    if (e1) throw new Error(e1.message);
+    if (roleId) {
+      await supabase.from("user_roles").delete().eq("user_id", id);
+      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: id, role_id: roleId });
+      if (e2) throw new Error(e2.message);
+    }
+    await get().reload();
+  },
+
+  reject: async (id) => {
+    const { error } = await supabase.from("profiles").update({ status: "Từ chối" }).eq("id", id);
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  setStatus: async (id, status) => {
+    const { error } = await supabase.from("profiles").update({ status }).eq("id", id);
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  setRole: async (id, roleId) => {
+    await supabase.from("user_roles").delete().eq("user_id", id);
+    const { error } = await supabase.from("user_roles").insert({ user_id: id, role_id: roleId });
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  setUseCustom: async (id, useCustom) => {
+    const existing = get().users.find((u) => u.id === id);
+    const perms = existing?.customPermissions ?? [];
+    const { error } = await supabase
+      .from("user_permission_overrides")
+      .upsert({ user_id: id, use_custom: useCustom, permissions: perms });
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  setCustomPerms: async (id, perms) => {
+    const { error } = await supabase
+      .from("user_permission_overrides")
+      .upsert({ user_id: id, use_custom: true, permissions: perms });
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  updateUser: async (id, patch) => {
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.fullName !== undefined) dbPatch.full_name = patch.fullName;
+    if (patch.email !== undefined) dbPatch.email = patch.email || null;
+    if (patch.phone !== undefined) dbPatch.phone = patch.phone || null;
+    if (patch.desiredPosition !== undefined) dbPatch.desired_position = patch.desiredPosition || null;
+    if (patch.notes !== undefined) dbPatch.notes = patch.notes || null;
+    if (patch.mustChangePassword !== undefined) dbPatch.must_change_password = patch.mustChangePassword;
+    if (Object.keys(dbPatch).length === 0) return;
+    const { error } = await supabase.from("profiles").update(dbPatch).eq("id", id);
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  resetPassword: async (id, newPassword) => {
+    await adminResetPassword({ data: { userId: id, newPassword } });
+  },
+
+  changeOwnPassword: async (oldPwd, newPwd) => {
+    const { data: sess } = await supabase.auth.getSession();
+    const email = sess.session?.user?.email;
+    const userId = sess.session?.user?.id;
+    if (!email || !userId) return { ok: false, error: "Chưa đăng nhập." };
+    const { error: e1 } = await supabase.auth.signInWithPassword({ email, password: oldPwd });
+    if (e1) return { ok: false, error: "Mật khẩu hiện tại không đúng." };
+    const { error: e2 } = await supabase.auth.updateUser({ password: newPwd });
+    if (e2) return { ok: false, error: e2.message };
+    await supabase.from("profiles").update({ must_change_password: false }).eq("id", userId);
+    await get().reload();
+    return { ok: true };
+  },
+
+  removeUser: async (id) => {
+    await adminDeleteUser({ data: { userId: id } });
+    await get().reload();
+  },
+
+  addRole: async (r) => {
+    const { error } = await supabase.from("app_roles").insert({
+      id: genRoleId(),
+      name: r.name,
+      description: r.description ?? null,
+      permissions: r.permissions ?? [],
+      is_system: false,
+    });
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  updateRole: async (id, patch) => {
+    const dbPatch: Record<string, unknown> = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.description !== undefined) dbPatch.description = patch.description;
+    if (patch.permissions !== undefined) dbPatch.permissions = patch.permissions;
+    if (Object.keys(dbPatch).length === 0) return;
+    const { error } = await supabase.from("app_roles").update(dbPatch).eq("id", id);
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+
+  removeRole: async (id) => {
+    const { error } = await supabase.from("app_roles").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+    await get().reload();
+  },
+}));
 
 // ============ Helpers ============
 export function getUserPermissions(user: User | null | undefined, roles: Role[]): Set<PermissionKey> {
@@ -501,17 +493,13 @@ export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
+  // Super admin shortcut: always has every permission, regardless of mapped role
+  const isSuperAdmin = u?.roleId === SUPER_ADMIN_ID || !!u?.system;
   return {
     user: u,
     role: u ? roles.find((r) => r.id === u.roleId) : undefined,
     perms,
-    can: (key: PermissionKey) => perms.has(key),
-    isSuperAdmin: u?.roleId === SUPER_ADMIN_ID,
+    can: (key: PermissionKey) => isSuperAdmin || perms.has(key),
+    isSuperAdmin,
   };
 }
-
-export const PERMISSION_GROUPS: PermissionGroup[] = [
-  "Tổng Quan","Task","Thương Hiệu","Dự Án Web","Social","Local","Video","Thiết Kế","Báo Cáo","Cài Đặt",
-];
-
-export { SUPER_ADMIN_ID, ADMIN_ROLE_ID };
