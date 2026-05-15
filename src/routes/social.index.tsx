@@ -61,11 +61,12 @@ function ChannelForm({ initial, onSubmit, onClose }: { initial?: Partial<SocialC
 
 function SocialPage() {
   const s = useStore();
-  const { can } = useCurrentUser();
+  const { user, can, scopeList } = useCurrentUser();
   const navigate = useNavigate();
   const canCreate = can("social.create");
   const canEdit = can("social.edit");
   const canPostCreate = can("social.post_create");
+  const ME = user?.fullName || user?.username || "";
 
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
@@ -76,13 +77,18 @@ function SocialPage() {
   const [addingCh, setAddingCh] = useState(false);
   const [addingPostFor, setAddingPostFor] = useState<SocialChannel | null>(null);
 
-  const channels = useMemo(() => s.socials.filter((c) =>
+  const scopedSocials = useMemo(
+    () => scopeList(s.socials, "social.view_all", "social.view_mine", (c) => !!ME && c.owner === ME),
+    [s.socials, scopeList, ME]
+  );
+
+  const channels = useMemo(() => scopedSocials.filter((c) =>
     (!search || c.name.toLowerCase().includes(search.toLowerCase())) &&
     (fBrand === "all" || c.brandId === fBrand) &&
     (fPlatform === "all" || c.platform === fPlatform) &&
     (fStatus === "all" || c.status === fStatus) &&
     (fOwner === "all" || c.owner === fOwner)
-  ), [s.socials, search, fBrand, fPlatform, fStatus, fOwner]);
+  ), [scopedSocials, search, fBrand, fPlatform, fStatus, fOwner]);
 
   const owners = useMemo(() => Array.from(new Set(s.socials.map((c) => c.owner).filter(Boolean) as string[])), [s.socials]);
 
