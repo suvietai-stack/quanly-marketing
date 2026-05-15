@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  useStore, fmtDate, ensureSeoChecks,
-  CONTENT_STATUSES, CONTENT_TYPES,
+  useStore, fmtDate, ensureSeoChecks, todayISO,
+  CONTENT_STATUSES, CONTENT_TYPES, SHARE_SOCIAL_STATUSES,
   type WebContent, type ContentStatus,
 } from "@/lib/store";
 
@@ -9,6 +9,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 
 import { ContentForm } from "@/components/ContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
+import { EntitySocialTab } from "@/components/EntitySocialTab";
+import { KeywordsTab } from "@/components/KeywordsTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,9 +22,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, ExternalLink, Plus, LayoutGrid, Table as TableIcon, Calendar as CalIcon,
-  Globe, ListChecks, FileText, CheckCircle2, AlertCircle, RefreshCw,
+  Globe, FileText, CheckCircle2, AlertCircle, RefreshCw, Share2, TrendingUp, Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Progress } from "@/components/ui/progress";
