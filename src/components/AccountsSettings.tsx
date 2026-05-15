@@ -82,7 +82,7 @@ function AllAccountsTab({ users, canLock }: { users: User[]; canLock: boolean })
   const s = useAuth();
   const [editing, setEditing] = useState<User | null>(null);
 
-  return (
+  return (<>
     <Card><CardContent className="p-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground bg-muted/40"><tr>
