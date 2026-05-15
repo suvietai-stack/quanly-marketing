@@ -54,14 +54,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, role, can } = useCurrentUser();
+  const { user, role, can, isSuperAdmin } = useCurrentUser();
   const logout = useAuth((s) => s.logout);
+  const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
+  const canApprove = isSuperAdmin || can("settings.account_approve");
 
   const isActive = (to: string, exact?: boolean) =>
     exact ? path === to : path === to || path.startsWith(to + "/");
 
   const visibleGroups = groups
-    .map((g) => ({ ...g, items: g.items.filter((it) => !it.perm || can(it.perm)) }))
+    .map((g) => ({
+      ...g,
+      items: g.items
+        .filter((it) => !it.perm || can(it.perm))
+        .map((it) =>
+          it.to === "/settings" && canApprove && pendingCount > 0
+            ? { ...it, badge: `${pendingCount} chờ duyệt` }
+            : it
+        ),
+    }))
     .filter((g) => g.items.length > 0);
 
   const onLogout = () => { logout(); navigate({ to: "/login" }); };

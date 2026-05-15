@@ -43,10 +43,12 @@ export function AccountsSettings() {
   const others = s.users.filter((u) => u.status !== "Chờ duyệt");
 
   return (
-    <Tabs defaultValue="all">
+    <Tabs defaultValue={pending.length > 0 && canApprove ? "pending" : "all"}>
       <TabsList className="flex-wrap h-auto">
         <TabsTrigger value="all">Tất cả tài khoản ({s.users.length})</TabsTrigger>
-        <TabsTrigger value="pending">Chờ duyệt {pending.length > 0 && <Badge className="ml-1.5" variant="secondary">{pending.length}</Badge>}</TabsTrigger>
+        <TabsTrigger value="pending" className={pending.length > 0 ? "data-[state=inactive]:text-amber-700 dark:data-[state=inactive]:text-amber-400" : ""}>
+          Chờ duyệt {pending.length > 0 && <Badge className="ml-1.5 bg-amber-500 text-white hover:bg-amber-500">{pending.length}</Badge>}
+        </TabsTrigger>
         <TabsTrigger value="roles">Role</TabsTrigger>
         <TabsTrigger value="matrix">Ma trận phân quyền</TabsTrigger>
         {me && <TabsTrigger value="me">Đổi mật khẩu</TabsTrigger>}
