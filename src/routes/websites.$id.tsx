@@ -197,7 +197,24 @@ function WebsiteDetail() {
               <Progress value={seoPct} className="mt-2" />
               <div className="text-xs text-muted-foreground mt-1">{seoDone}/{checks.length} mục</div>
             </CardContent></Card>
+            <OvwCard icon={Users} label="Entity / Social SEO" v={entitiesList.length} tone="info" />
+            <OvwCard icon={Share2} label="Đã index, chưa share" v={indexedNotShared} tone="warn" />
+            <OvwCard icon={Share2} label="Đã share social" v={sharedCount} tone="success" />
+            <OvwCard icon={TrendingUp} label="Từ khóa theo dõi" v={keywordsList.length} />
+            <OvwCard icon={TrendingUp} label="Từ khóa Top 10" v={kwTop10} tone="success" />
+            <OvwCard icon={TrendingUp} label="Tăng hạng" v={kwUp} tone="success" />
+            <OvwCard icon={TrendingUp} label="Tụt hạng" v={kwDown} tone="danger" />
           </div>
+        </TabsContent>
+
+        {/* TAB ENTITY / SOCIAL SEO */}
+        <TabsContent value="entity" className="mt-4">
+          <EntitySocialTab websiteId={w.id} />
+        </TabsContent>
+
+        {/* TAB CHECK TOP TỪ KHÓA */}
+        <TabsContent value="keywords" className="mt-4">
+          <KeywordsTab websiteId={w.id} />
         </TabsContent>
 
         {/* TAB 2 — TECHNICAL SEO */}
