@@ -156,6 +156,7 @@ function WebsiteDetail() {
             Sản xuất Content ({contents.length})
           </TabsTrigger>
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
+          <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
           <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
           <TabsTrigger value="report">Báo cáo Web</TabsTrigger>
