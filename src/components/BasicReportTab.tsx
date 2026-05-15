@@ -13,6 +13,7 @@ import {
   Search, Share2, Link as LinkIcon, TrendingUp, TrendingDown,
   AlertTriangle, ExternalLink, Trophy, Activity, Settings2, AlertCircle,
 } from "lucide-react";
+import { GrowthSummary } from "@/components/GrowthTab";
 
 type DateRange = { from?: string; to?: string };
 type Quick = "all" | "week" | "month" | "custom";
