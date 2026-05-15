@@ -122,8 +122,8 @@ function VideosPage() {
             <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(v.deadline)}</td>
             <td className="px-4 py-2.5"><StatusBadge value={v.status} /></td>
             <td className="px-4 py-2.5 text-right">
-              <Button size="icon" variant="ghost" onClick={() => setEditing(v)}><Pencil className="h-3.5 w-3.5" /></Button>
-              <Button size="icon" variant="ghost" onClick={() => s.remove("videos", v.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(v)}><Pencil className="h-3.5 w-3.5" /></Button>}
+              {canDelete && <Button size="icon" variant="ghost" onClick={() => s.remove("videos", v.id)}><Trash2 className="h-3.5 w-3.5" /></Button>}
             </td>
           </tr>))}
         </tbody></table></div></CardContent></Card>
