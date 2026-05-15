@@ -77,6 +77,10 @@ function OrderForm({ initial, onSubmit, onClose }: { initial?: Partial<DesignOrd
 
 function OrdersPage() {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("order.create");
+  const canEdit = can("order.edit");
+  const canDelete = can("order.delete");
   const [view, setView] = useState<"table" | "kanban">("table");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
