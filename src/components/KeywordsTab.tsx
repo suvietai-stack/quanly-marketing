@@ -635,3 +635,70 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
+function AddKeywordForm({
+  contents, onSubmit, onClose,
+}: {
+  contents: WebContent[];
+  onSubmit: (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => void;
+  onClose: () => void;
+}) {
+  const [contentId, setContentId] = useState<string>("__none");
+  const [isMain, setIsMain] = useState<string>("sub");
+  const [keyword, setKeyword] = useState("");
+  const [targetUrl, setTargetUrl] = useState("");
+
+  const linkedContent = contentId !== "__none" ? contents.find((c) => c.id === contentId) : undefined;
+  const mainTaken = !!(linkedContent && (linkedContent.mainKeyword || "").trim() && isMain === "main");
+
+  return (
+    <div className="space-y-3">
+      <Field label="Gắn với bài đã index (tùy chọn)">
+        <Select value={contentId} onValueChange={setContentId}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none">— Không gắn (từ khóa độc lập) —</SelectItem>
+            {contents.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label="Loại từ khóa">
+        <Select value={isMain} onValueChange={setIsMain}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="main">Từ khóa chính</SelectItem>
+            <SelectItem value="sub">Từ khóa phụ</SelectItem>
+          </SelectContent>
+        </Select>
+      </Field>
+      {mainTaken && (
+        <div className="text-xs text-warning inline-flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Bài đang có từ khóa chính "{linkedContent?.mainKeyword}". Lưu sẽ ghi đè.
+        </div>
+      )}
+      <Field label="Từ khóa">
+        <Input autoFocus value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Nhập từ khóa..." />
+      </Field>
+      {contentId === "__none" && (
+        <Field label="URL đích (tùy chọn)">
+          <Input value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} placeholder="https://..." />
+        </Field>
+      )}
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Hủy</Button>
+        <Button
+          disabled={!keyword.trim()}
+          onClick={() => onSubmit({
+            contentId: contentId === "__none" ? undefined : contentId,
+            isMain: isMain === "main",
+            keyword: keyword.trim(),
+            targetUrl: targetUrl.trim() || undefined,
+          })}
+        >Thêm</Button>
+      </DialogFooter>
+    </div>
+  );
+}
