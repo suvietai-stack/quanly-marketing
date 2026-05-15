@@ -473,7 +473,17 @@ export const useAuth = create<AuthState>()(
     }),
     {
       name: "base-marketing-auth-v1",
-      version: 1,
+      version: 2,
+      migrate: (persisted: any, fromVersion) => {
+        // v1 -> v2: xoá hết user demo cũ, chỉ giữ Admin (ensureSeed sẽ tạo lại nếu thiếu).
+        if (fromVersion < 2) {
+          const users = Array.isArray(persisted?.users)
+            ? persisted.users.filter((u: any) => u?.id === "user-admin")
+            : [];
+          return { ...persisted, users, seeded: false };
+        }
+        return persisted;
+      },
     }
   )
 );
