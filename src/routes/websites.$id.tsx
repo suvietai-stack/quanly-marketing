@@ -161,8 +161,9 @@ function WebsiteDetail() {
           <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
           <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
           <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
-          <TabsTrigger value="optimize">Tối ưu lại ({optimizeContents.length})</TabsTrigger>
-          <TabsTrigger value="report">Báo cáo cơ bản</TabsTrigger>
+          <TabsTrigger value="optimize">Tối ưu lại Content ({optimizeContents.length})</TabsTrigger>
+          <TabsTrigger value="growth">Tăng Trưởng Website ({s.growth.filter((g) => g.websiteId === w.id).length})</TabsTrigger>
+          <TabsTrigger value="report">Báo Cáo</TabsTrigger>
         </TabsList>
 
         {/* TAB 1 — THÔNG TIN DỰ ÁN */}
