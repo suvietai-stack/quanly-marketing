@@ -140,6 +140,10 @@ function TaskForm({ initial, onSubmit, onClose }: {
 
 function TasksPage() {
   const { tasks, brands, add, update, remove } = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("task.create");
+  const canEdit = can("task.edit");
+  const canDelete = can("task.delete");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
   const [fAssignee, setFAssignee] = useState("all");
