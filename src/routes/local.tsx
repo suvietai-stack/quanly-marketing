@@ -67,11 +67,11 @@ function LocalPage() {
 
   return <>
     <PageHeader title="Local Map" description="Quản lý Google Map / Google Business Profile và công việc local marketing."
-      actions={<Dialog open={adding} onOpenChange={setAdding}>
+      actions={canCreate ? <Dialog open={adding} onOpenChange={setAdding}>
         <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1.5" />Thêm địa điểm</Button></DialogTrigger>
         <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Tạo địa điểm</DialogTitle></DialogHeader>
           <PlaceForm onSubmit={(p) => s.add("places", p)} onClose={() => setAdding(false)} /></DialogContent>
-      </Dialog>} />
+      </Dialog> : undefined} />
     <FilterBar>
       <Input placeholder="Tìm địa điểm..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
       <Select value={fBrand} onValueChange={setFBrand}><SelectTrigger className="w-[200px]"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
