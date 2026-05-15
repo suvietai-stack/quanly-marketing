@@ -72,6 +72,10 @@ function VideoForm({ initial, onSubmit, onClose }: { initial?: Partial<Video>; o
 
 function VideosPage() {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("video.create");
+  const canEdit = can("video.edit");
+  const canDelete = can("video.delete");
   const [view, setView] = useState<"table" | "kanban">("table");
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
