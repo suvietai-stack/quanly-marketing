@@ -817,7 +817,10 @@ async function loadAllFromSupabase() {
         console.error(`Load ${table} failed:`, error.message);
         return [key, [] as any[]] as const;
       }
-      const items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}) }));
+      let items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}) }));
+      if (key === "socialPosts") {
+        items = items.map((p: any) => ({ ...p, status: normalizeSocialStatus(p.status) }));
+      }
       return [key, items] as const;
     }),
   );
