@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type LocalPlace, type MapPost, type MapReview } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FilterBar } from "@/components/Common";
+import { FilterBar, EmptyState } from "@/components/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,6 +74,16 @@ function LocalPage() {
       <Select value={fStatus} onValueChange={setFStatus}><SelectTrigger className="w-[180px]"><SelectValue placeholder="Xác minh" /></SelectTrigger>
         <SelectContent><SelectItem value="all">Tất cả</SelectItem>{["Đã xác minh","Chưa xác minh","Đang xử lý"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
     </FilterBar>
+    {filtered.length === 0 ? (
+      <EmptyState
+        icon={<MapPin className="h-5 w-5" />}
+        title={s.places.length === 0 ? "Chưa có địa điểm" : "Không có địa điểm phù hợp bộ lọc"}
+        hint={s.places.length === 0 ? "Tạo địa điểm Google Map / GBP đầu tiên để bắt đầu quản lý local SEO." : undefined}
+        action={s.places.length === 0 ? (
+          <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Tạo địa điểm đầu tiên</Button>
+        ) : undefined}
+      />
+    ) : (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {filtered.map((p) => {
         const brand = s.brands.find((b) => b.id === p.brandId);
@@ -96,6 +106,7 @@ function LocalPage() {
         </CardContent></Card>;
       })}
     </div>
+    )}
     <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
       <DialogContent className="max-w-2xl"><DialogHeader><DialogTitle>Chỉnh sửa địa điểm</DialogTitle></DialogHeader>
         {editing && <PlaceForm initial={editing} onSubmit={(p) => s.update("places", p.id, p)} onClose={() => setEditing(null)} />}</DialogContent>
