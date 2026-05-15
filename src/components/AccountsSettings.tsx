@@ -416,7 +416,15 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
 function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [group, setGroup] = useState<string>("ALL");
-  const filtered = group === "ALL" ? PERMISSIONS : PERMISSIONS.filter((p) => p.group === group);
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+    return PERMISSIONS.filter((p) => {
+      if (group !== "ALL" && p.group !== group) return false;
+      if (!qq) return true;
+      return p.label.toLowerCase().includes(qq) || p.key.toLowerCase().includes(qq) || (p.subGroup || "").toLowerCase().includes(qq);
+    });
+  }, [group, q]);
 
   return (
     <div className="space-y-3">
