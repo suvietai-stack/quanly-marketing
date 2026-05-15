@@ -87,7 +87,7 @@ export function BasicReportTab({
 }: {
   websiteId: string;
   onOpenContent?: (c: WebContent) => void;
-  onJumpTab?: (tab: "seo" | "keywords" | "backlinks" | "published" | "content") => void;
+  onJumpTab?: (tab: "seo" | "keywords" | "backlinks" | "published" | "content" | "growth") => void;
 }) {
   const s = useStore();
   const contents = s.webContents.filter((c) => c.websiteId === websiteId);
