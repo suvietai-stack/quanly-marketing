@@ -816,8 +816,8 @@ const seed = () => {
   const seoChecks: SeoCheckItem[] = [];
   websites.forEach((w) => {
     SEO_GROUPS.forEach((g) => {
-      SEO_CHECK_TEMPLATE[g].forEach((name) => {
-        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name, done: Math.random() > 0.55 });
+      SEO_CHECK_TEMPLATE[g].forEach((it) => {
+        seoChecks.push({ id: uid(), websiteId: w.id, group: g, name: it.name, description: it.description, done: false });
       });
     });
   });
