@@ -256,12 +256,16 @@ function WebsitesPage() {
                     <Button size="sm" className="flex-1" onClick={() => navigate({ to: "/websites/$id", params: { id: w.id } })}>
                       Mở dự án <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setAddContentFor(w)} title="Thêm content">
-                      <FilePlus2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditing(w)} title="Chỉnh sửa">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    {can("web.content_create") && (
+                      <Button size="sm" variant="outline" onClick={() => setAddContentFor(w)} title="Thêm content">
+                        <FilePlus2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <Button size="sm" variant="outline" onClick={() => setEditing(w)} title="Chỉnh sửa">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
