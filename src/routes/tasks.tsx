@@ -21,7 +21,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/tasks")({
   head: () => ({ meta: [{ title: "Task To-do List — Base Marketing" }] }),
-  component: TasksPage,
+  component: () => (
+    <RequirePermission perm="task.view">
+      <TasksPage />
+    </RequirePermission>
+  ),
 });
 
 const PRIORITIES: TaskPriority[] = ["Thấp", "Trung bình", "Cao", "Gấp"];
