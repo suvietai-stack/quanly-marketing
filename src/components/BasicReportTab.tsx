@@ -301,12 +301,6 @@ export function BasicReportTab({
         </CardContent>
       </Card>
 
-      {/* Attention */}
-      {attention.length > 0 && (
-        <Card className="border-warning/40">
-          <CardContent className="p-0">
-            <div className="px-4 py-2.5 border-b bg-warning/10 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-[oklch(0.45_0.13_75)]" />
       {/* Attention — summary only */}
       {attention.length > 0 && (() => {
         const summary = attention.slice(0, 6);
