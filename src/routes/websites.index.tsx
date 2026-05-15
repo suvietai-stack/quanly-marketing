@@ -154,16 +154,18 @@ function WebsitesPage() {
             <Button variant="outline" asChild>
               <Link to="/web-contents"><FileText className="h-4 w-4" />Tất cả Content Web</Link>
             </Button>
-            <Dialog open={adding} onOpenChange={setAdding}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm Website</Button></DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader><DialogTitle>Tạo Website</DialogTitle></DialogHeader>
-                <WebsiteForm onSubmit={(w) => {
-                  s.add("websites", w);
-                  ensureSeoChecks(seoChecks, w.id).forEach((c) => s.add("seoChecks", c));
-                }} onClose={() => setAdding(false)} />
-              </DialogContent>
-            </Dialog>
+            {canCreate && (
+              <Dialog open={adding} onOpenChange={setAdding}>
+                <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm Website</Button></DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader><DialogTitle>Tạo Website</DialogTitle></DialogHeader>
+                  <WebsiteForm onSubmit={(w) => {
+                    s.add("websites", w);
+                    ensureSeoChecks(seoChecks, w.id).forEach((c) => s.add("seoChecks", c));
+                  }} onClose={() => setAdding(false)} />
+                </DialogContent>
+              </Dialog>
+            )}
           </>
         }
       />
