@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,11 @@ import { AccountsSettings } from "@/components/AccountsSettings";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
-  component: SettingsPage,
+  component: () => (
+    <RequirePermission perm="settings.view">
+      <SettingsPage />
+    </RequirePermission>
+  ),
 });
 
 interface PersonEdit {
@@ -98,7 +103,13 @@ function SettingsPage() {
   const s = useStore();
   const auth = useAuth();
   const [editing, setEditing] = useState<PersonEdit | null>(null);
-  const [tab, setTab] = useState("accounts");
+  const { can } = useCurrentUser();
+  const showAccounts = can("settings.user_view") || can("settings.role") || can("settings.permission");
+  const showPeople = can("settings.people");
+  const showCatalog = can("settings.catalog") || can("settings.plan_topic");
+  const showInfo = can("settings.system_view");
+  const initialTab = showAccounts ? "accounts" : showPeople ? "people" : showCatalog ? "plans" : "info";
+  const [tab, setTab] = useState(initialTab);
   const setPlans = (next: string[]) => s.setCatalog("plans", next);
   const setTopics = (next: string[]) => s.setCatalog("topics", next);
 
@@ -106,16 +117,16 @@ function SettingsPage() {
     <PageHeader title="Cài Đặt" description="Tài khoản, phân quyền, hồ sơ nhân sự và danh mục dùng chung." />
     <Tabs value={tab} onValueChange={setTab}>
       <TabsList className="flex-wrap h-auto">
-        <TabsTrigger value="accounts">Tài khoản & Phân quyền</TabsTrigger>
-        <TabsTrigger value="people">Nhân sự</TabsTrigger>
-        <TabsTrigger value="plans">Plan</TabsTrigger>
-        <TabsTrigger value="topics">Topic</TabsTrigger>
-        <TabsTrigger value="info">Thông tin hệ thống</TabsTrigger>
+        {showAccounts && <TabsTrigger value="accounts">Tài khoản & Phân quyền</TabsTrigger>}
+        {showPeople && <TabsTrigger value="people">Nhân sự</TabsTrigger>}
+        {showCatalog && <TabsTrigger value="plans">Plan</TabsTrigger>}
+        {showCatalog && <TabsTrigger value="topics">Topic</TabsTrigger>}
+        {showInfo && <TabsTrigger value="info">Thông tin hệ thống</TabsTrigger>}
       </TabsList>
 
-      <TabsContent value="accounts" className="mt-4">
+      {showAccounts && <TabsContent value="accounts" className="mt-4">
         <AccountsSettings />
-      </TabsContent>
+      </TabsContent>}
 
       <TabsContent value="people" className="mt-4">
         <div className="flex items-center justify-between mb-3">

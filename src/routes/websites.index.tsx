@@ -3,6 +3,8 @@ import {
   useStore, uid, ensureSeoChecks,
   type Website, type WebsiteType, type WebsiteStatus,
 } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -19,7 +21,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/websites/")({
   head: () => ({ meta: [{ title: "Dự Án Web — Base Marketing" }] }),
-  component: WebsitesPage,
+  component: () => (
+    <RequirePermission perm={["web.view", "web.view_all", "web.view_mine"]}>
+      <WebsitesPage />
+    </RequirePermission>
+  ),
 });
 
 const TYPES: WebsiteType[] = [
@@ -100,6 +106,9 @@ function WebsiteForm({ initial, onSubmit, onClose }: {
 function WebsitesPage() {
   const s = useStore();
   const navigate = useNavigate();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.create");
+  const canEdit = can("web.edit");
   const { websites, brands, webContents, seoChecks } = s;
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
@@ -145,16 +154,18 @@ function WebsitesPage() {
             <Button variant="outline" asChild>
               <Link to="/web-contents"><FileText className="h-4 w-4" />Tất cả Content Web</Link>
             </Button>
-            <Dialog open={adding} onOpenChange={setAdding}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm Website</Button></DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader><DialogTitle>Tạo Website</DialogTitle></DialogHeader>
-                <WebsiteForm onSubmit={(w) => {
-                  s.add("websites", w);
-                  ensureSeoChecks(seoChecks, w.id).forEach((c) => s.add("seoChecks", c));
-                }} onClose={() => setAdding(false)} />
-              </DialogContent>
-            </Dialog>
+            {canCreate && (
+              <Dialog open={adding} onOpenChange={setAdding}>
+                <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm Website</Button></DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader><DialogTitle>Tạo Website</DialogTitle></DialogHeader>
+                  <WebsiteForm onSubmit={(w) => {
+                    s.add("websites", w);
+                    ensureSeoChecks(seoChecks, w.id).forEach((c) => s.add("seoChecks", c));
+                  }} onClose={() => setAdding(false)} />
+                </DialogContent>
+              </Dialog>
+            )}
           </>
         }
       />
@@ -245,12 +256,16 @@ function WebsitesPage() {
                     <Button size="sm" className="flex-1" onClick={() => navigate({ to: "/websites/$id", params: { id: w.id } })}>
                       Mở dự án <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setAddContentFor(w)} title="Thêm content">
-                      <FilePlus2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditing(w)} title="Chỉnh sửa">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    {can("web.content_create") && (
+                      <Button size="sm" variant="outline" onClick={() => setAddContentFor(w)} title="Thêm content">
+                        <FilePlus2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {canEdit && (
+                      <Button size="sm" variant="outline" onClick={() => setEditing(w)} title="Chỉnh sửa">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
