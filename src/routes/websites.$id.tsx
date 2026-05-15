@@ -304,54 +304,9 @@ function WebsiteDetail() {
           {view === "calendar" && <ContentCalendar contents={filteredContents} onOpen={setOpenContent} />}
         </TabsContent>
 
-        {/* TAB 4 — PUBLISHED / INDEX */}
+        {/* TAB BÀI ĐÃ ĐĂNG / INDEX */}
         <TabsContent value="published" className="mt-4">
-          <Card><CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted-foreground bg-muted/40">
-                  <tr>
-                    <th className="text-left font-medium px-4 py-2.5">Tiêu đề bài</th>
-                    <th className="text-left font-medium px-4 py-2.5">Link bài đã đăng</th>
-                    <th className="text-left font-medium px-4 py-2.5">Từ khóa chính</th>
-                    <th className="text-left font-medium px-4 py-2.5">Ngày đăng</th>
-                    <th className="text-left font-medium px-4 py-2.5">Người viết</th>
-                    <th className="text-left font-medium px-4 py-2.5">Người đăng</th>
-                    <th className="text-left font-medium px-4 py-2.5">Trạng thái index</th>
-                    <th className="text-left font-medium px-4 py-2.5">Ghi chú index</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {published.length === 0 && <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Chưa có bài đăng nào.</td></tr>}
-                  {published.map((c) => (
-                    <tr key={c.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-2.5 font-medium">
-                        <button className="text-left hover:text-primary" onClick={() => setOpenContent(c)}>{c.title}</button>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        {c.publishedLink ? <a href={c.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Mở <ExternalLink className="h-3 w-3" /></a> : "—"}
-                      </td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{c.mainKeyword || "—"}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.publishedAt || c.publishDate)}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{c.publisher || "—"}</td>
-                      <td className="px-4 py-2.5">
-                        <Select value={c.indexStatus || "Chưa kiểm tra"} onValueChange={(v) => s.update("webContents", c.id, { indexStatus: v as any })}>
-                          <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Input className="h-7 text-xs" value={c.indexNotes || ""} onChange={(e) => s.update("webContents", c.id, { indexNotes: e.target.value })} placeholder="—" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent></Card>
+          <PublishedTab websiteId={w.id} entities={entitiesList} />
         </TabsContent>
 
         {/* TAB 5 — OPTIMIZE */}
