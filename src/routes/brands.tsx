@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, type Brand } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -16,7 +17,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/brands")({
   head: () => ({ meta: [{ title: "Thương Hiệu — Base Marketing" }] }),
-  component: BrandsPage,
+  component: () => (
+    <RequirePermission perm="brand.view">
+      <BrandsPage />
+    </RequirePermission>
+  ),
 });
 
 const BRAND_STATUS = ["Đang xây dựng", "Đang vận hành", "Đang tối ưu", "Tạm dừng", "Lưu trữ"] as const;

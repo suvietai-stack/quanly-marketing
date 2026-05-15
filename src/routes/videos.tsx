@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, fmtDate, type Video, type VideoStatus, VIDEO_STATUSES } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
@@ -14,17 +15,22 @@ import { VideoFormDialog, VideoDetailDialog } from "@/components/VideoDetail";
 
 export const Route = createFileRoute("/videos")({
   head: () => ({ meta: [{ title: "Sản Xuất Video — Base Marketing" }] }),
-  component: VideosPage,
+  component: () => (
+    <RequirePermission perm="video.view">
+      <VideosPage />
+    </RequirePermission>
+  ),
 });
 
 type ViewMode = "table" | "kanban" | "calendar";
 
 function VideosPage() {
   const s = useStore();
-  const { can } = useCurrentUser();
+  const { user, can, scopeList } = useCurrentUser();
   const canCreate = can("video.create");
   const canEdit = can("video.edit");
   const canDelete = can("video.delete");
+  const ME = user?.fullName || user?.username || "";
 
   const [view, setView] = useState<ViewMode>("table");
   const [search, setSearch] = useState("");
@@ -35,12 +41,19 @@ function VideosPage() {
   const [editing, setEditing] = useState<Video | null>(null);
   const [opened, setOpened] = useState<Video | null>(null);
 
-  const filtered = useMemo(() => s.videos.filter((v) =>
+  const scopedVideos = useMemo(
+    () => scopeList(s.videos, "video.view_all", "video.view_mine", (v) =>
+      !!ME && (v.owner === ME || v.reviewer === ME)
+    ),
+    [s.videos, scopeList, ME]
+  );
+
+  const filtered = useMemo(() => scopedVideos.filter((v) =>
     (!search || v.title.toLowerCase().includes(search.toLowerCase())) &&
     (fBrand === "all" || v.brandId === fBrand) &&
     (fStatus === "all" || v.status === fStatus) &&
     (fOwner === "all" || v.owner === fOwner)
-  ), [s.videos, search, fBrand, fStatus, fOwner]);
+  ), [scopedVideos, search, fBrand, fStatus, fOwner]);
 
   return (
     <>

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type LocalPlace, type MapPost, type MapReview } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar, EmptyState } from "@/components/Common";
@@ -16,7 +17,11 @@ import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/local/")({
   head: () => ({ meta: [{ title: "Local Map — Base Marketing" }] }),
-  component: LocalPage,
+  component: () => (
+    <RequirePermission perm="local.view">
+      <LocalPage />
+    </RequirePermission>
+  ),
 });
 
 function PlaceForm({ initial, onSubmit, onClose }: { initial?: Partial<LocalPlace>; onSubmit: (p: LocalPlace) => void; onClose: () => void }) {
@@ -49,21 +54,27 @@ function PlaceForm({ initial, onSubmit, onClose }: { initial?: Partial<LocalPlac
 
 function LocalPage() {
   const s = useStore();
-  const { can } = useCurrentUser();
+  const { user, can, scopeList } = useCurrentUser();
   const canCreate = can("local.create");
   const canEdit = can("local.edit");
   const canDelete = can("local.delete");
+  const ME = user?.fullName || user?.username || "";
   const [search, setSearch] = useState("");
   const [fBrand, setFBrand] = useState("all");
   const [fStatus, setFStatus] = useState("all");
   const [editing, setEditing] = useState<LocalPlace | null>(null);
   const [adding, setAdding] = useState(false);
 
-  const filtered = useMemo(() => s.places.filter((p) =>
+  const scopedPlaces = useMemo(
+    () => scopeList(s.places, "local.view_all", "local.view_mine", (p) => !!ME && p.owner === ME),
+    [s.places, scopeList, ME]
+  );
+
+  const filtered = useMemo(() => scopedPlaces.filter((p) =>
     (!search || p.name.toLowerCase().includes(search.toLowerCase())) &&
     (fBrand === "all" || p.brandId === fBrand) &&
     (fStatus === "all" || p.verifyStatus === fStatus)
-  ), [s.places, search, fBrand, fStatus]);
+  ), [scopedPlaces, search, fBrand, fStatus]);
 
   return <>
     <PageHeader title="Local Map" description="Quản lý Google Map / Google Business Profile và công việc local marketing."

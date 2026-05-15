@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, uid, fmtDate, type DesignOrder, type OrderStatus, ORDER_STATUSES, ORDER_TYPES, ORDER_SOURCES, ORDER_PRIORITIES } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterBar } from "@/components/Common";
@@ -18,7 +19,11 @@ import { OrderDetailDialog } from "@/components/OrderDetail";
 
 export const Route = createFileRoute("/orders")({
   head: () => ({ meta: [{ title: "Order Thiết Kế — Base Marketing" }] }),
-  component: OrdersPage,
+  component: () => (
+    <RequirePermission perm="order.view">
+      <OrdersPage />
+    </RequirePermission>
+  ),
 });
 
 type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed";
@@ -89,11 +94,11 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
 
 function OrdersPage() {
   const s = useStore();
-  const { user, can, isAdmin } = useCurrentUser();
+  const { user, can } = useCurrentUser();
   const userName = user?.fullName || user?.username || "";
-  const canCreate = isAdmin || can("order.create");
-  const canDelete = isAdmin || can("order.delete");
-  const canViewAll = isAdmin || can("order.view_all");
+  const canCreate = can("order.create");
+  const canDelete = can("order.delete");
+  const canViewAll = can("order.view_all");
 
   const [view, setView] = useState<"table" | "kanban">("table");
   const [tab, setTab] = useState<ViewKey>("all");
