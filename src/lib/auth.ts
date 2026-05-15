@@ -328,13 +328,9 @@ export const useAuth = create<AuthState>((set, get) => ({
     const username = input.username.trim();
     if (!username) return { ok: false, error: "Vui lòng nhập tên đăng nhập." };
     if (username.toLowerCase() === "admin") return { ok: false, error: "Tên đăng nhập 'Admin' đã được hệ thống sử dụng." };
-    // Check username uniqueness
-    const { data: existing } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("username", username)
-      .maybeSingle();
-    if (existing) return { ok: false, error: "Tên đăng nhập đã tồn tại." };
+    // Check username uniqueness via server function (bypasses RLS)
+    const lookup = await adminLookupEmailByUsername({ data: { username } });
+    if (lookup.email) return { ok: false, error: "Tên đăng nhập đã tồn tại." };
 
     const email = input.email?.trim().toLowerCase() || `${username.toLowerCase()}@user.local`;
     const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
