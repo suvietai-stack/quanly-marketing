@@ -145,7 +145,7 @@ export function TopicDialog({
       open={open}
       onOpenChange={(o) => { if (!o) onClose(); }}
     >
-      <DialogContent className="max-w-lg" key={key}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{initial ? "Sửa Topic" : "Thêm Topic mới"}</DialogTitle>
         </DialogHeader>
