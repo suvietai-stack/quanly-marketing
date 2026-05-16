@@ -865,7 +865,9 @@ export function useCurrentUser() {
   // Only Super Admin (and the system-marked Admin account) bypasses permission checks.
   // Role "Admin" is just a default permission bundle — it must still grant perms explicitly.
   const isSuperAdmin = u?.roleId === SUPER_ADMIN_ID || !!u?.system;
-  const isAdmin = u?.roleId === ADMIN_ROLE_ID || isSuperAdmin;
+  // NOTE: `isAdmin` is kept for API compatibility but no longer grants a blanket bypass.
+  // It is now an alias of `isSuperAdmin` so legacy `isAdmin || can(...)` checks behave correctly.
+  const isAdmin = isSuperAdmin;
   const can = (key: PermissionKey) => {
     if (isSuperAdmin) return true;
     return perms.has(key) || perms.has(resolvePermKey(key));
