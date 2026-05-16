@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, isOverdue, fmtDate } from "@/lib/store";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { RequirePermission } from "@/components/PermissionGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ListChecks, AlertTriangle, Clock, CheckCircle2, Globe, Share2,
@@ -11,7 +12,11 @@ import { useMemo } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Tổng Quan — Base Marketing" }] }),
-  component: Dashboard,
+  component: () => (
+    <RequirePermission perm="overview.view">
+      <Dashboard />
+    </RequirePermission>
+  ),
 });
 
 function Stat({ label, value, icon: Icon, tone = "default" }: {
