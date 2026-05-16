@@ -37,39 +37,65 @@ export function AccountsSettings() {
   const s = useAuth();
   const { user: me, isSuperAdmin, can } = useCurrentUser();
   const canManageRoles = isSuperAdmin || can("settings.role");
+  const canManageMatrix = isSuperAdmin || can("settings.permission");
   const canApprove = isSuperAdmin || can("settings.account_approve");
   const canLock = isSuperAdmin || can("settings.account_lock");
+  const canViewUsers = isSuperAdmin || can("settings.user_view");
 
   const pending = s.users.filter((u) => u.status === "Chờ duyệt");
   const others = s.users.filter((u) => u.status !== "Chờ duyệt");
 
+  const defaultTab =
+    pending.length > 0 && canApprove ? "pending"
+    : canViewUsers ? "all"
+    : canManageRoles ? "roles"
+    : canManageMatrix ? "matrix"
+    : "me";
+
   return (
-    <Tabs defaultValue={pending.length > 0 && canApprove ? "pending" : "all"}>
+    <Tabs defaultValue={defaultTab}>
       <TabsList className="flex-wrap h-auto">
-        <TabsTrigger value="all">Tất cả tài khoản ({s.users.length})</TabsTrigger>
-        <TabsTrigger value="pending" className={pending.length > 0 ? "data-[state=inactive]:text-amber-700 dark:data-[state=inactive]:text-amber-400" : ""}>
-          Chờ duyệt {pending.length > 0 && <Badge className="ml-1.5 bg-amber-500 text-white hover:bg-amber-500">{pending.length}</Badge>}
-        </TabsTrigger>
-        <TabsTrigger value="roles">Role</TabsTrigger>
-        <TabsTrigger value="matrix">Ma trận phân quyền</TabsTrigger>
+        {canViewUsers && <TabsTrigger value="all">Tất cả tài khoản ({s.users.length})</TabsTrigger>}
+        {canApprove && (
+          <TabsTrigger value="pending" className={pending.length > 0 ? "data-[state=inactive]:text-amber-700 dark:data-[state=inactive]:text-amber-400" : ""}>
+            Chờ duyệt {pending.length > 0 && <Badge className="ml-1.5 bg-amber-500 text-white hover:bg-amber-500">{pending.length}</Badge>}
+          </TabsTrigger>
+        )}
+        {canManageRoles && <TabsTrigger value="roles">Role</TabsTrigger>}
+        {canManageMatrix && <TabsTrigger value="matrix">Ma trận phân quyền</TabsTrigger>}
+        {isSuperAdmin && <TabsTrigger value="debug">Debug quyền</TabsTrigger>}
         {me && <TabsTrigger value="me">Đổi mật khẩu</TabsTrigger>}
       </TabsList>
 
-      <TabsContent value="all" className="mt-4">
-        <AllAccountsTab users={others.concat(pending)} canLock={canLock} />
-      </TabsContent>
+      {canViewUsers && (
+        <TabsContent value="all" className="mt-4">
+          <AllAccountsTab users={others.concat(pending)} canLock={canLock} />
+        </TabsContent>
+      )}
 
-      <TabsContent value="pending" className="mt-4">
-        <PendingTab users={pending} canApprove={canApprove} />
-      </TabsContent>
+      {canApprove && (
+        <TabsContent value="pending" className="mt-4">
+          <PendingTab users={pending} canApprove={canApprove} />
+        </TabsContent>
+      )}
 
-      <TabsContent value="roles" className="mt-4">
-        <RolesTab canManage={canManageRoles} />
-      </TabsContent>
+      {canManageRoles && (
+        <TabsContent value="roles" className="mt-4">
+          <RolesTab canManage={canManageRoles} />
+        </TabsContent>
+      )}
 
-      <TabsContent value="matrix" className="mt-4">
-        <MatrixTab canManage={canManageRoles} />
-      </TabsContent>
+      {canManageMatrix && (
+        <TabsContent value="matrix" className="mt-4">
+          <MatrixTab canManage={canManageMatrix} />
+        </TabsContent>
+      )}
+
+      {isSuperAdmin && (
+        <TabsContent value="debug" className="mt-4">
+          <PermissionDebugTab />
+        </TabsContent>
+      )}
 
       {me && (
         <TabsContent value="me" className="mt-4">
@@ -77,6 +103,110 @@ export function AccountsSettings() {
         </TabsContent>
       )}
     </Tabs>
+  );
+}
+
+// --------- Permission Debug (Super Admin only) ---------
+function PermissionDebugTab() {
+  const s = useAuth();
+  const [uid, setUid] = useState<string>("");
+  const [testKey, setTestKey] = useState<string>("");
+  const target = useMemo(() => s.users.find((u) => u.id === uid), [s.users, uid]);
+  const role = target ? s.roles.find((r) => r.id === target.roleId) : undefined;
+
+  const effective = useMemo<Set<string>>(() => {
+    if (!target) return new Set();
+    if (target.system || target.roleId === SUPER_ADMIN_ID) return new Set(ALL_PERMS);
+    if (target.useCustom) return new Set(target.customPermissions ?? []);
+    return new Set(role?.permissions ?? []);
+  }, [target, role]);
+
+  const source: string = !target ? "—"
+    : target.system ? "Tài khoản hệ thống — toàn quyền"
+    : target.roleId === SUPER_ADMIN_ID ? "Super Admin — toàn quyền"
+    : target.useCustom ? "Quyền riêng (ghi đè role)"
+    : `Theo role: ${role?.name ?? "(chưa gán)"}`;
+
+  const testResult = testKey ? (effective.has(testKey) || (target?.system || target?.roleId === SUPER_ADMIN_ID)) : null;
+
+  return (
+    <Card><CardContent className="p-5 space-y-4">
+      <div className="text-sm text-muted-foreground">
+        Công cụ này chỉ Super Admin xem được. Dùng để kiểm tra vì sao một tài khoản thấy/không thấy được một chức năng.
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <Label>Chọn tài khoản</Label>
+          <Select value={uid} onValueChange={setUid}>
+            <SelectTrigger><SelectValue placeholder="— chọn user —" /></SelectTrigger>
+            <SelectContent>
+              {s.users.map((u) => (
+                <SelectItem key={u.id} value={u.id}>{u.fullName || u.username} ({u.username})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Test can(permissionKey)</Label>
+          <Select value={testKey} onValueChange={setTestKey}>
+            <SelectTrigger><SelectValue placeholder="— chọn quyền để test —" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {PERMISSIONS.map((p) => (
+                <SelectItem key={p.key} value={p.key}>{p.key} — {p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {target && (
+        <div className="space-y-3">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Nguồn quyền: </span>
+            <span className="font-medium">{source}</span>
+          </div>
+          <div className="text-sm">
+            <span className="text-muted-foreground">Trạng thái: </span>
+            <StatusBadge value={target.status} />
+          </div>
+          {testKey && (
+            <div className={`text-sm font-medium ${testResult ? "text-emerald-600" : "text-rose-600"}`}>
+              can("{testKey}") = {testResult ? "TRUE — được phép" : "FALSE — bị chặn"}
+            </div>
+          )}
+          <div>
+            <Label className="text-xs">Quyền hiệu lực ({effective.size}/{ALL_PERMS.length})</Label>
+            <div className="mt-2 max-h-96 overflow-y-auto border rounded p-2">
+              {PERMISSION_GROUPS.map((g) => {
+                const items = PERMISSIONS.filter((p) => p.group === g);
+                const granted = items.filter((p) => effective.has(p.key));
+                if (granted.length === 0) return null;
+                return (
+                  <div key={g} className="mb-2">
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">{g} ({granted.length}/{items.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {items.map((p) => (
+                        <span
+                          key={p.key}
+                          title={p.label}
+                          className={`text-[11px] px-1.5 py-0.5 rounded border ${
+                            effective.has(p.key)
+                              ? "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
+                              : "bg-muted/40 border-border text-muted-foreground line-through"
+                          }`}
+                        >
+                          {p.key}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </CardContent></Card>
   );
 }
 
