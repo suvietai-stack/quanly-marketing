@@ -1,92 +1,110 @@
-# Kế hoạch hoàn thiện Role & Phân quyền
 
-Đây là thay đổi lớn xuyên suốt app. Mình sẽ chia làm 4 đợt để dễ kiểm soát, mỗi đợt build xong là quyền đã chạy thật, không bị "nửa vời".
+# Kế hoạch rà soát & thực thi Role/Phân quyền (đợt sâu)
+
+Mục tiêu: ma trận quyền ↔ permissionKey trong code ↔ `can()` ↔ UI ↔ action lưu DB phải khớp 100%. Không còn chuyện không tick quyền mà vẫn dùng được.
+
+## 1. PERMISSION_REGISTRY là nguồn sự thật duy nhất
+
+- Trong `src/lib/auth.ts`, mở rộng `PermissionDef` thêm các trường:
+  - `description?: string`
+  - `dependsOn?: PermissionKey[]` (quyền cha bắt buộc, ví dụ `web.tech_check` → `web.tech_view`)
+- Bổ sung `dependsOn` cho tất cả quyền hành động (create/edit/delete/update/status/approve/...) trỏ về quyền `*_view` tương ứng.
+- Xuất `PERMISSIONS` (đã có) làm registry chuẩn. Ma trận phân quyền (`AccountsSettings.tsx`) render checkbox **chỉ** từ registry này.
+- Map các key trong tài liệu yêu cầu (`view_technical_seo`, `update_index_status`, ...) sang key chuẩn đang dùng trong code (`web.tech_view`, `web.update_index`, ...). Không đổi tên hàng loạt key đang lưu DB; thay vào đó dùng một bảng alias để chấp nhận cả tên cũ → mới khi đọc, và **chuẩn hóa khi ghi**. (Đổi key trực tiếp sẽ làm mất quyền của role đã lưu trên cloud.)
+
+## 2. Logic dependsOn
+
+- Trong `can(key)`:
+  - Nếu `key` có `dependsOn`, mọi parent đều phải `can(parent)` mới trả `true`.
+- Trong UI ma trận quyền:
+  - Tick con → auto tick toàn bộ cha.
+  - Bỏ tick cha → auto bỏ tick toàn bộ con phụ thuộc.
+  - Hiển thị badge cảnh báo nếu lưu ra trạng thái không hợp lệ (con bật, cha tắt) — auto sửa khi Save.
+
+## 3. Reset quyền mặc định role Content Web & SEO
+
+- Trong store/migration seed của `app_roles`, cập nhật quyền mặc định **chỉ** cho 2 role hệ thống `role-content-web` và `role-seo` theo đúng danh sách bạn cung cấp ở mục 4 và 5. Không đụng vào role do user tự tạo.
+- Thực hiện bằng `supabase--insert` (UPDATE `app_roles` SET permissions = ...).
+
+## 4. `can()` strict + effective permissions
+
+- Refactor `can()`:
+  ```ts
+  if (!user) return false;
+  if (user.status !== "Đang hoạt động") return false;
+  if (isSuperAdmin) return true;
+  const eff = user.useCustom ? user.customPermissions : rolePermissions;
+  if (!eff.includes(key)) return false;
+  // check dependsOn
+  return (PERMISSION_BY_KEY[key]?.dependsOn ?? []).every((p) => can(p));
+  ```
+- Bỏ hoàn toàn fallback theo role name (trừ Super Admin).
+- Bỏ blanket `isAdmin` bypass đã xóa ở đợt trước — giữ nguyên.
+
+## 5. Gate UI + action ở các module còn lỏng
+
+Tập trung các điểm bạn nêu (Content Web vẫn sửa được vùng không thuộc):
+
+- **TechnicalSeoTab.tsx**:
+  - Render tab cha chỉ khi `can("web.tech_view")` (gate ở `websites.$id.tsx`).
+  - Checkbox `disabled={!can("web.tech_check")}`; handler chặn + toast.
+  - Textarea diễn giải `readOnly` + `disabled` nếu `!can("web.tech_edit_desc")`.
+  - Nút Reset ẩn nếu `!can("web.tech_reset")`.
+- **BasicReportTab / Index tab** (`web.index_view`, `web.update_index`, `web.update_share`, `web.update_share_date`, `web.edit_published_url`).
+- **KeywordsTab (Check TOP)**: nút "Cập nhật TOP chính/phụ", thêm/sửa/xóa từ khóa phụ.
+- **KeywordResearchTab**: thêm/sửa/xóa Topic + mở sheet.
+- **BacklinksTab**: create/edit/delete/status/open.
+- **GrowthTab**: create/edit/delete kỳ báo cáo.
+- **EntitySocialTab**: create/edit/delete/open link/reveal password.
+- **ContentForm / ContentDetail**: nút approve/reject outline & post, force status, publish, cancel, restore — gate cả nút lẫn handler.
+
+Mỗi handler: `if (!can(key)) { toast.error("Bạn không có quyền ..."); return; }` trước khi gọi store/Supabase.
+
+## 6. Công cụ Dò quyền (Super Admin)
+
+Trong `AccountsSettings.tsx` (đã có tab "Permission Debug" sơ khai từ đợt trước):
+- Chọn user → hiển thị: role, mode (role/custom), danh sách effective permissions (group theo module).
+- Ô input key + nút Test → trả về `true/false` + lý do:
+  - "Super Admin override" / "Có từ role <name>" / "Có từ quyền riêng" / "Thiếu quyền cha: X" / "Không có quyền".
+
+## 7. Báo cáo audit "Kiểm tra khớp quyền"
+
+Thêm sub-tab cho Super Admin:
+- Kiểm 1: key dùng trong code (grep static list của `can(...)` calls) không có trong registry.
+- Kiểm 2: key trong registry không xuất hiện trong codebase (cảnh báo có thể chết).
+- Kiểm 3: role/user có quyền con bật mà quyền cha tắt (dùng `dependsOn`).
+- Kiểm 4: role (không phải Super Admin) có ≥ 95% tổng quyền → cảnh báo "near full".
+- Kiểm 5: user `useCustom=true` có quyền không nằm trong role gốc → liệt kê.
+
+Hiển thị bảng warning + nút "Auto-fix dependency" cho từng dòng.
+
+## 8. Đếm số quyền role chính xác
+
+- Trong danh sách role, đếm `permissions.filter(k => registry has k && deps satisfied within set).length`.
+- Hiển thị badge "X quyền · Y cảnh báo" nếu có dependency lỗi.
+
+## 9. Test case Content Web (ngoc)
+
+Sau khi xong, test thủ công với user `ngoc`:
+- Không thấy tab Technical SEO / Check TOP / Index / Backlink / Growth / Keyword Research nếu role không cấp `*_view`.
+- Thấy tab nhưng không tích/sửa được nếu chỉ có view.
+- Workflow outline/bài hoạt động bình thường.
+
+## 10. Phạm vi & rủi ro
+
+- File sẽ chạm: `src/lib/auth.ts`, `src/components/AccountsSettings.tsx`, `TechnicalSeoTab.tsx`, `BasicReportTab.tsx`, `KeywordsTab.tsx`, `KeywordResearchTab.tsx`, `BacklinksTab.tsx`, `GrowthTab.tsx`, `EntitySocialTab.tsx`, `ContentDetail.tsx`, `ContentForm.tsx`, `websites.$id.tsx`, `web-contents.tsx` + 1 migration cập nhật permissions mặc định cho 2 role hệ thống.
+- Rủi ro lớn nhất: đổi default permissions sẽ làm Content Web/SEO **mất quyền** đang dùng trên cloud nếu Admin đã chỉnh tay. Mình sẽ chỉ reset 2 role hệ thống có id cố định (`role-content-web`, `role-seo`), không đụng custom roles.
+
+## Thứ tự thực thi (đề xuất)
+
+1. Mở rộng registry + `dependsOn` + strict `can()` (foundation).
+2. Migration reset permissions Content Web + SEO.
+3. Gate UI + action cho TechnicalSeoTab, KeywordsTab, BasicReportTab (3 vùng bạn nêu cụ thể).
+4. Gate UI + action cho các tab còn lại (Backlink, Growth, Keyword Research, Entity).
+5. UI dependency auto-tick/untick + warning trong ma trận quyền.
+6. Permission Debugger nâng cấp + Audit report.
+7. Test bằng user ngoc.
 
 ---
 
-## Đợt 1 — Nền tảng quyền (bắt buộc làm trước)
-
-**Mục tiêu**: tạo "nguồn sự thật" duy nhất cho toàn bộ permission key + helper `can()`.
-
-1. Viết lại `src/lib/auth.ts`:
-   - Định nghĩa lại toàn bộ `PermissionKey` theo đúng danh sách trong yêu cầu (A → K, ~250 quyền), gom theo nhóm module: `overview / task / brand / web (D1–D11) / social (E1–E3) / local / video / order / report / settings / account`.
-   - Mỗi quyền có metadata: `{ key, group, subGroup, label, description }` để render ma trận đẹp.
-   - `DEFAULT_ROLE_PERMISSIONS` cho 10 role mặc định (Super Admin, Admin, Leader Marketing, SEO, Content Web, Social, Local SEO, Designer, Video, Viewer) đúng theo gợi ý mục 5.
-   - Logic `can(key)`:
-     - Super Admin → true
-     - User có `useCustomPermissions = true` → check trong `customPermissions`
-     - Ngược lại → check trong permissions của role
-   - Hook `useCurrentUser()` trả về `{ user, role, can, canAny, canAll, isSuperAdmin, isAdmin }`.
-   - Hàm scope dữ liệu: `canSeeRecord(record, scopeKey, ownAlternativeKey)` — nếu user chỉ có `view_own_*` thì lọc theo `createdBy / assignee / writer / reviewer / owner...`.
-
-2. Migration map quyền cũ → quyền mới (giữ data role cũ trong Supabase không vỡ).
-
-3. Bổ sung component dùng chung:
-   - `<PermissionGate perm="..."><Button/></PermissionGate>` — ẩn/disable + tooltip "Bạn không có quyền…".
-   - `<RestrictedAction perm="..." onAction={...}>` cho onClick handlers.
-
----
-
-## Đợt 2 — UI Cài Đặt: Ma trận phân quyền + Tùy chỉnh quyền theo user
-
-1. `src/components/AccountsSettings.tsx` (hoặc tạo `PermissionMatrix.tsx`):
-   - Layout 2 cột: trái chọn Role, phải hiện ma trận.
-   - Accordion theo nhóm A–K, mỗi nhóm có sub-group (D1…D11, E1…E3…).
-   - Tìm kiếm quyền + filter nhóm.
-   - "Chọn tất cả / Bỏ chọn tất cả" cho mỗi nhóm và sub-group.
-   - Nút: Lưu, Khôi phục mặc định, Sao chép từ role khác.
-   - Khóa hoàn toàn role Super Admin (read-only, mọi checkbox tick + disable).
-
-2. Chi tiết tài khoản:
-   - Toggle "Dùng quyền theo role" / "Tùy chỉnh quyền riêng".
-   - Khi bật custom: hiện cùng ma trận, có nút "Copy quyền từ role hiện tại", banner cảnh báo ghi đè.
-   - Bảo vệ Super Admin hệ thống: không xóa, không khóa, không đổi role, không hạ quyền.
-
-3. Migration Supabase: cột `use_custom` + `permissions` đã có trong `user_permission_overrides` → tận dụng nguyên trạng.
-
----
-
-## Đợt 3 — Áp quyền vào toàn app (sidebar + route guard + tab + nút)
-
-1. **Sidebar** (`AppShell.tsx`): map lại `perm` cho từng item theo key mới (`view_dashboard, view_tasks, view_brands, view_web_projects, view_social_channels, view_local_maps, view_videos, view_design_orders, view_settings`).
-
-2. **Route guard**: HOC `<RequirePermission perm="...">` bọc các route; nếu thiếu quyền → trang 403 thân thiện.
-
-3. **Tab trong từng module**:
-   - Web detail: tab Technical SEO / Entity / Keyword / Content / Index / Backlink / Check TOP / Tăng trưởng / Báo cáo — ẩn nếu thiếu `view_*`.
-   - Social detail: tab Thông tin / Sản xuất / Tăng trưởng.
-   - Brand detail, Local detail tương tự.
-
-4. **Nút hành động & workflow** (rà từng route):
-   - `tasks.tsx`, `brands.tsx`, `websites.*`, `web-contents.tsx`, `ContentDetail.tsx`, `social.*`, `SocialPostDetail.tsx`, `local.*`, `videos.tsx`, `VideoDetail.tsx`, `orders.tsx`, `OrderDetail.tsx`.
-   - Mỗi nút Tạo / Sửa / Xóa / Giao / Nhận / Gửi duyệt / Duyệt / Yêu cầu sửa / Bàn giao / Hoàn thành / Hủy / Khôi phục / Ép trạng thái → bọc `PermissionGate` + check trong handler.
-   - Form: disable input nếu không có quyền `edit_*`.
-
-5. **Scope dữ liệu**: list trong tasks/web-contents/social posts/videos/orders áp dụng `view_own_*` — chỉ trả record user có vai trò liên quan.
-
----
-
-## Đợt 4 — Kiểm thử + tinh chỉnh
-
-- Kịch bản test 5 tài khoản theo mục 8 (Admin, SEO Julia, Content ngoc, Designer, Viewer).
-- Sửa các chỗ sót (đặc biệt: nút trong Dropdown, Context menu, action ẩn trong dialog).
-- Toast/tooltip "Bạn không có quyền thực hiện hành động này" thống nhất.
-
----
-
-## Chi tiết kỹ thuật
-
-- Tổng số permission key dự kiến: **~250**, gom thành ~30 sub-group.
-- Lưu trong Supabase: `app_roles.permissions text[]` + `user_permission_overrides.permissions text[]` (đã có sẵn schema, không cần migration mới).
-- Bản đồ quyền cũ → mới giữ trong `auth.ts` để không vỡ role đã lưu.
-- Performance: `can()` dùng `Set` trong memo theo user.
-
----
-
-## Cách triển khai
-
-Mình sẽ làm tuần tự **Đợt 1 → 4**. Mỗi đợt là 1 lượt commit lớn. Đợt 3 là đợt nặng nhất (đụng ~12 file route + dialog).
-
-**Ước tính**: 4 lượt làm việc, mỗi lượt 5–15 phút build/verify.
-
-Bạn duyệt plan này thì mình bắt đầu Đợt 1 ngay (viết lại `auth.ts` + helper). Nếu muốn gộp/đổi thứ tự (ví dụ làm UI ma trận trước), nói mình biết.
+**Bạn xác nhận plan này để mình triển khai theo thứ tự trên?** Nếu muốn ưu tiên/cắt giảm phần nào (ví dụ chỉ làm bước 1-4 trước, để Debug/Audit sang sau) thì báo mình.
