@@ -1052,9 +1052,17 @@ export function useCurrentUser() {
   // NOTE: `isAdmin` is kept for API compatibility but no longer grants a blanket bypass.
   // It is now an alias of `isSuperAdmin` so legacy `isAdmin || can(...)` checks behave correctly.
   const isAdmin = isSuperAdmin;
-  const can = (key: PermissionKey) => {
+  const hasRaw = (key: PermissionKey) =>
+    perms.has(key) || perms.has(resolvePermKey(key));
+  const can = (key: PermissionKey): boolean => {
     if (isSuperAdmin) return true;
-    return perms.has(key) || perms.has(resolvePermKey(key));
+    const resolved = resolvePermKey(key);
+    if (!hasRaw(resolved)) return false;
+    // Dependency check — every parent must also be granted.
+    for (const parent of PERMISSION_DEPENDS[resolved] ?? []) {
+      if (!hasRaw(parent)) return false;
+    }
+    return true;
   };
   const canAny = (...keys: PermissionKey[]) => keys.some(can);
   const canAll = (...keys: PermissionKey[]) => keys.every(can);
