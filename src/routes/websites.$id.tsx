@@ -4,6 +4,9 @@ import {
   CONTENT_STATUSES, CONTENT_TYPES, SHARE_SOCIAL_STATUSES,
   type WebContent, type ContentStatus,
 } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
+import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -37,7 +40,11 @@ import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/websites/$id")({
   head: () => ({ meta: [{ title: "Chi tiết website — Base Marketing" }] }),
-  component: WebsiteDetail,
+  component: () => (
+    <RequirePermission perm="web.view">
+      <WebsiteDetail />
+    </RequirePermission>
+  ),
 });
 
 const PRODUCING_STATUSES: ContentStatus[] = [
