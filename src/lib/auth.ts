@@ -1042,7 +1042,84 @@ export function isOwnRecord(record: any, userId: string | null | undefined): boo
   return false;
 }
 
-export function useCurrentUser() {
+export type PermissionExplain = {
+  ok: boolean;
+  reason: string;
+  source: "super_admin" | "system" | "role" | "custom" | "missing" | "dep_missing" | "inactive";
+  missingDeps?: PermissionKey[];
+  roleName?: string;
+};
+
+/**
+ * Explain WHY a given user has / does not have a permission.
+ * Used by the Super Admin "Dò quyền" tool to make permission troubleshooting trivial.
+ */
+export function explainPermission(
+  user: User | null | undefined,
+  roles: Role[],
+  key: PermissionKey,
+): PermissionExplain {
+  if (!user) return { ok: false, reason: "Chưa đăng nhập", source: "missing" };
+  if (user.status !== "Đang hoạt động") {
+    return { ok: false, reason: `Tài khoản trạng thái "${user.status}" — không có quyền nào hoạt động`, source: "inactive" };
+  }
+  if (user.system || user.roleId === SUPER_ADMIN_ID) {
+    return { ok: true, reason: "Super Admin / Tài khoản hệ thống — bypass mọi check quyền", source: "super_admin" };
+  }
+  const resolved = resolvePermKey(key);
+  const role = roles.find((r) => r.id === user.roleId);
+  const source: "role" | "custom" = user.useCustom ? "custom" : "role";
+  const granted = user.useCustom
+    ? new Set(user.customPermissions ?? [])
+    : new Set(role?.permissions ?? []);
+  if (!granted.has(resolved)) {
+    return {
+      ok: false,
+      reason: source === "custom"
+        ? `Không có trong quyền riêng của user`
+        : `Không có trong role "${role?.name ?? "(chưa gán)"}"`,
+      source: "missing",
+      roleName: role?.name,
+    };
+  }
+  // Check deps
+  const missing: PermissionKey[] = [];
+  for (const parent of PERMISSION_DEPENDS[resolved] ?? []) {
+    if (!granted.has(parent)) missing.push(parent);
+  }
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      reason: `Thiếu quyền cha: ${missing.join(", ")}`,
+      source: "dep_missing",
+      missingDeps: missing,
+      roleName: role?.name,
+    };
+  }
+  return {
+    ok: true,
+    reason: source === "custom"
+      ? "Cấp qua quyền riêng (ghi đè role)"
+      : `Cấp qua role "${role?.name ?? ""}"`,
+    source,
+    roleName: role?.name,
+  };
+}
+
+/**
+ * Run a dependency audit on a permission set: list every key that is "on"
+ * but is missing one or more parents.
+ */
+export function auditDependencies(perms: PermissionKey[]): { key: PermissionKey; missing: PermissionKey[] }[] {
+  const set = new Set(perms);
+  const out: { key: PermissionKey; missing: PermissionKey[] }[] = [];
+  for (const k of perms) {
+    const parents = PERMISSION_DEPENDS[k] ?? [];
+    const missing = parents.filter((p) => !set.has(p));
+    if (missing.length > 0) out.push({ key: k, missing });
+  }
+  return out;
+}
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
