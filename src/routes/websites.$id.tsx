@@ -6,7 +6,6 @@ import {
 } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";
-import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/StatusBadge";
 
