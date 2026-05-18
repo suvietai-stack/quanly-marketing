@@ -1120,6 +1120,8 @@ export function auditDependencies(perms: PermissionKey[]): { key: PermissionKey;
   }
   return out;
 }
+
+export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const perms = getUserPermissions(u, roles);
