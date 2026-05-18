@@ -4,6 +4,8 @@ import {
   CONTENT_STATUSES, CONTENT_TYPES, SHARE_SOCIAL_STATUSES,
   type WebContent, type ContentStatus,
 } from "@/lib/store";
+import { useCurrentUser } from "@/lib/auth";
+import { RequirePermission } from "@/components/PermissionGate";
 
 import { StatusBadge } from "@/components/StatusBadge";
 
@@ -37,7 +39,11 @@ import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/websites/$id")({
   head: () => ({ meta: [{ title: "Chi tiết website — Base Marketing" }] }),
-  component: WebsiteDetail,
+  component: () => (
+    <RequirePermission perm="web.view">
+      <WebsiteDetail />
+    </RequirePermission>
+  ),
 });
 
 const PRODUCING_STATUSES: ContentStatus[] = [
@@ -51,6 +57,7 @@ const DONE_STATUSES: ContentStatus[] = ["Đã đăng web", "Kiểm tra index", "
 function WebsiteDetail() {
   const { id } = Route.useParams();
   const s = useStore();
+  const { can } = useCurrentUser();
   const w = s.websites.find((x) => x.id === id);
   const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
   const [adding, setAdding] = useState(false);
@@ -155,18 +162,20 @@ function WebsiteDetail() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
-          <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>
-          <TabsTrigger value="entity">Entity / Social SEO ({entitiesList.length})</TabsTrigger>
-          <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
-            Sản xuất Content ({contents.length})
-          </TabsTrigger>
-          <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>
-          <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>
-          <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>
-          <TabsTrigger value="optimize">Tối ưu lại Content ({optimizeContents.length})</TabsTrigger>
-          <TabsTrigger value="research">Nghiên Cứu Keyword ({s.webTopics.filter((t) => t.websiteId === w.id).length})</TabsTrigger>
-          <TabsTrigger value="growth">Tăng Trưởng Website ({s.growth.filter((g) => g.websiteId === w.id).length})</TabsTrigger>
-          <TabsTrigger value="report">Báo Cáo</TabsTrigger>
+          {can("web.tech_view") && <TabsTrigger value="seo">Technical SEO ({seoDone}/{checks.length})</TabsTrigger>}
+          {can("web.entity_view") && <TabsTrigger value="entity">Entity / Social SEO ({entitiesList.length})</TabsTrigger>}
+          {can("web.content_view") && (
+            <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+              Sản xuất Content ({contents.length})
+            </TabsTrigger>
+          )}
+          {can("web.index_view") && <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>}
+          {can("web.backlink_view") && <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>}
+          {can("web.checktop_view") && <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>}
+          {can("web.reopt_view") && <TabsTrigger value="optimize">Tối ưu lại Content ({optimizeContents.length})</TabsTrigger>}
+          {can("web.keyword_view") && <TabsTrigger value="research">Nghiên Cứu Keyword ({s.webTopics.filter((t) => t.websiteId === w.id).length})</TabsTrigger>}
+          {can("web.growth_view") && <TabsTrigger value="growth">Tăng Trưởng Website ({s.growth.filter((g) => g.websiteId === w.id).length})</TabsTrigger>}
+          {can("web.report_view") && <TabsTrigger value="report">Báo Cáo</TabsTrigger>}
         </TabsList>
 
         {/* TAB 1 — THÔNG TIN DỰ ÁN */}
@@ -261,13 +270,15 @@ function WebsiteDetail() {
               <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} onClick={() => setView("kanban")}><LayoutGrid className="h-4 w-4" />Kanban</Button>
               <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => setView("calendar")}><CalIcon className="h-4 w-4" />Lịch đăng</Button>
             </div>
-            <Dialog open={adding} onOpenChange={setAdding}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader><DialogTitle>Tạo bài content</DialogTitle></DialogHeader>
-                <ContentForm websiteId={w.id} brandId={w.brandId} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
-              </DialogContent>
-            </Dialog>
+            {can("web.content_create") && (
+              <Dialog open={adding} onOpenChange={setAdding}>
+                <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader><DialogTitle>Tạo bài content</DialogTitle></DialogHeader>
+                  <ContentForm websiteId={w.id} brandId={w.brandId} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           {view === "table" && <ContentTable contents={filteredContents} onOpen={setOpenContent} />}

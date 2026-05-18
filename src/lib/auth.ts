@@ -348,6 +348,190 @@ export const PERMISSIONS: PermissionDef[] = [
 ];
 
 export const ALL_PERMS = PERMISSIONS.map((p) => p.key);
+export const PERMISSION_BY_KEY: Record<string, PermissionDef> = Object.fromEntries(
+  PERMISSIONS.map((p) => [p.key, p]),
+);
+
+/**
+ * Parent → required parent permissions. A user only effectively HAS the child
+ * permission if they also have every parent listed here.
+ * This is the single source of truth for the auto-tick/untick logic in the
+ * permission matrix UI, the strict `can()` check, and the audit report.
+ */
+export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
+  const m: Record<string, PermissionKey[]> = {};
+  // ------- Dự Án Web -------
+  // Most web.* sub-permissions require web.view (module access)
+  const webViewKey = "web.view";
+  // D2 Technical SEO
+  ["web.tech_check", "web.tech_edit_desc", "web.tech_reset", "web.tech_template"].forEach((k) => {
+    m[k] = ["web.tech_view", webViewKey];
+  });
+  m["web.tech_view"] = [webViewKey];
+  // D3 Entity / Social SEO
+  ["web.entity_create", "web.entity_edit", "web.entity_delete", "web.entity_open_link",
+   "web.entity_view_account", "web.entity_reveal_password"].forEach((k) => {
+    m[k] = ["web.entity_view", webViewKey];
+  });
+  m["web.entity_view"] = [webViewKey];
+  m["web.entity_reveal_password"] = ["web.entity_view_account", "web.entity_view", webViewKey];
+  // D4 Keyword research
+  ["web.keyword_topic_create", "web.keyword_topic_edit", "web.keyword_topic_delete",
+   "web.keyword_open_sheet", "web.keyword_manage_sheet"].forEach((k) => {
+    m[k] = ["web.keyword_view", webViewKey];
+  });
+  m["web.keyword_view"] = [webViewKey];
+  // D5 Content web
+  ["web.content_create", "web.content_edit", "web.content_delete", "web.content_assign",
+   "web.content_edit_brief", "web.content_edit_deadline", "web.content_edit_writer",
+   "web.content_edit_outline_reviewer", "web.content_edit_article_reviewer", "web.content_edit_publisher",
+   "web.outline_start", "web.outline_submit", "web.outline_approve", "web.outline_reject", "web.outline_resubmit",
+   "web.post_write_start", "web.post_submit", "web.post_approve", "web.post_reject", "web.post_resubmit",
+   "web.move_pending_publish", "web.publish", "web.complete",
+   "web.content_cancel", "web.content_restore", "web.force_status",
+   "web.content_history", "web.content_note"].forEach((k) => {
+    m[k] = ["web.content_view", webViewKey];
+  });
+  m["web.content_view"] = [webViewKey];
+  // D6 Index / share
+  ["web.update_index", "web.update_share", "web.update_share_date",
+   "web.select_shared_entity", "web.edit_published_url", "web.open_published_url"].forEach((k) => {
+    m[k] = ["web.index_view", webViewKey];
+  });
+  m["web.index_view"] = [webViewKey];
+  // D7 Backlink
+  ["web.backlink_create", "web.backlink_edit", "web.backlink_delete",
+   "web.backlink_status", "web.backlink_open", "web.backlink_cost"].forEach((k) => {
+    m[k] = ["web.backlink_view", webViewKey];
+  });
+  m["web.backlink_view"] = [webViewKey];
+  // D8 Check TOP
+  ["web.checktop_primary", "web.checktop_secondary",
+   "web.checktop_kw_create", "web.checktop_kw_edit", "web.checktop_kw_delete",
+   "web.checktop_open_url", "web.checktop_filter_topic"].forEach((k) => {
+    m[k] = ["web.checktop_view", webViewKey];
+  });
+  m["web.checktop_view"] = [webViewKey];
+  // D9 Reoptimize
+  ["web.reopt_create", "web.reopt_edit", "web.reopt_delete",
+   "web.reopt_assign", "web.reopt_status", "web.reopt_complete"].forEach((k) => {
+    m[k] = ["web.reopt_view", webViewKey];
+  });
+  m["web.reopt_view"] = [webViewKey];
+  // D10 Growth
+  ["web.growth_create", "web.growth_edit", "web.growth_delete", "web.growth_open"].forEach((k) => {
+    m[k] = ["web.growth_view", webViewKey];
+  });
+  m["web.growth_view"] = [webViewKey];
+  // D11 Report
+  ["web.report_alerts", "web.report_alerts_all", "web.report_action",
+   "web.report_by_topic", "web.report_by_staff"].forEach((k) => {
+    m[k] = ["web.report_view", webViewKey];
+  });
+  m["web.report_view"] = [webViewKey];
+
+  // ------- Task -------
+  ["task.create", "task.edit", "task.delete", "task.assign", "task.accept",
+   "task.update_status", "task.complete", "task.restore", "task.force_status"].forEach((k) => {
+    m[k] = ["task.view"];
+  });
+
+  // ------- Brand -------
+  ["brand.create", "brand.edit", "brand.delete", "brand.profile", "brand.identity",
+   "brand.view_channels", "brand.docs", "brand.staff"].forEach((k) => {
+    m[k] = ["brand.view"];
+  });
+
+  // ------- Social -------
+  ["social.create", "social.edit", "social.delete", "social.manage_info", "social.assign_owner"].forEach((k) => {
+    m[k] = ["social.view"];
+  });
+  ["social.post_create", "social.post_edit", "social.post_delete", "social.post_assign",
+   "social.post_start", "social.post_submit", "social.post_resubmit", "social.post_approve",
+   "social.post_request_changes", "social.post_move_pending_publish", "social.post_confirm_published",
+   "social.post_complete", "social.post_cancel", "social.post_restore", "social.post_force_status",
+   "social.post_history"].forEach((k) => {
+    m[k] = ["social.post_view"];
+  });
+  ["social.growth_create", "social.growth_edit", "social.growth_delete",
+   "social.growth_update", "social.growth_open"].forEach((k) => {
+    m[k] = ["social.growth_view"];
+  });
+
+  // ------- Local -------
+  ["local.create", "local.edit", "local.delete", "local.assign_owner",
+   "local.post_create", "local.post_edit", "local.post_delete", "local.photo", "local.products"].forEach((k) => {
+    m[k] = ["local.view"];
+  });
+  ["local.review_create", "local.review_reply", "local.review_status"].forEach((k) => {
+    m[k] = ["local.review", "local.view"];
+  });
+  ["local.growth_create", "local.growth_edit", "local.growth_delete"].forEach((k) => {
+    m[k] = ["local.growth_view", "local.view"];
+  });
+
+  // ------- Video -------
+  ["video.create", "video.edit", "video.delete", "video.assign",
+   "video.script_start", "video.script_submit", "video.script_resubmit", "video.script_approve",
+   "video.script_reject", "video.move_shooting", "video.footage", "video.move_editing",
+   "video.edit_cut", "video.submit", "video.resubmit", "video.approve", "video.reject",
+   "video.deliver", "video.confirm_published", "video.complete", "video.cancel",
+   "video.restore", "video.force_status", "video.history", "video.create_design_order"].forEach((k) => {
+    m[k] = ["video.view"];
+  });
+
+  // ------- Order -------
+  ["order.create", "order.edit", "order.delete", "order.send_request", "order.assign",
+   "order.take", "order.update_draft", "order.submit", "order.resubmit", "order.approve",
+   "order.request_changes", "order.deliver", "order.complete", "order.cancel",
+   "order.restore", "order.force_status", "order.history", "order.open_delivery"].forEach((k) => {
+    m[k] = ["order.view"];
+  });
+
+  // ------- Settings & accounts -------
+  ["settings.people", "settings.catalog", "settings.brand_types", "settings.web_types",
+   "settings.social_types", "settings.task_types", "settings.video_types", "settings.design_types",
+   "settings.priority", "settings.plan_topic", "settings.template",
+   "settings.system_view", "settings.system_edit"].forEach((k) => {
+    m[k] = ["settings.view"];
+  });
+  ["settings.user_create", "settings.user_edit", "settings.user_delete",
+   "settings.account_lock", "settings.user_reset_password",
+   "settings.account_approve", "settings.account_reject",
+   "settings.assign_role"].forEach((k) => {
+    m[k] = ["settings.user_view"];
+  });
+  m["settings.permission"] = ["settings.role"];
+  m["settings.user_custom_perm"] = ["settings.user_view"];
+
+  return m;
+})();
+
+/** Compute the transitive closure of dependencies for a key (used by UI auto-tick). */
+export function allDependencies(key: PermissionKey): PermissionKey[] {
+  const out = new Set<PermissionKey>();
+  const walk = (k: PermissionKey) => {
+    for (const parent of PERMISSION_DEPENDS[k] ?? []) {
+      if (!out.has(parent)) { out.add(parent); walk(parent); }
+    }
+  };
+  walk(key);
+  return [...out];
+}
+
+/** Return all keys that transitively depend on the given parent (used by UI auto-untick). */
+export function allDependents(parentKey: PermissionKey): PermissionKey[] {
+  const direct = new Set<PermissionKey>();
+  for (const [child, parents] of Object.entries(PERMISSION_DEPENDS)) {
+    if (parents.includes(parentKey)) direct.add(child);
+  }
+  // recurse
+  const out = new Set(direct);
+  for (const c of direct) {
+    for (const d of allDependents(c)) out.add(d);
+  }
+  return [...out];
+}
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
@@ -858,6 +1042,85 @@ export function isOwnRecord(record: any, userId: string | null | undefined): boo
   return false;
 }
 
+export type PermissionExplain = {
+  ok: boolean;
+  reason: string;
+  source: "super_admin" | "system" | "role" | "custom" | "missing" | "dep_missing" | "inactive";
+  missingDeps?: PermissionKey[];
+  roleName?: string;
+};
+
+/**
+ * Explain WHY a given user has / does not have a permission.
+ * Used by the Super Admin "Dò quyền" tool to make permission troubleshooting trivial.
+ */
+export function explainPermission(
+  user: User | null | undefined,
+  roles: Role[],
+  key: PermissionKey,
+): PermissionExplain {
+  if (!user) return { ok: false, reason: "Chưa đăng nhập", source: "missing" };
+  if (user.status !== "Đang hoạt động") {
+    return { ok: false, reason: `Tài khoản trạng thái "${user.status}" — không có quyền nào hoạt động`, source: "inactive" };
+  }
+  if (user.system || user.roleId === SUPER_ADMIN_ID) {
+    return { ok: true, reason: "Super Admin / Tài khoản hệ thống — bypass mọi check quyền", source: "super_admin" };
+  }
+  const resolved = resolvePermKey(key);
+  const role = roles.find((r) => r.id === user.roleId);
+  const source: "role" | "custom" = user.useCustom ? "custom" : "role";
+  const granted = user.useCustom
+    ? new Set(user.customPermissions ?? [])
+    : new Set(role?.permissions ?? []);
+  if (!granted.has(resolved)) {
+    return {
+      ok: false,
+      reason: source === "custom"
+        ? `Không có trong quyền riêng của user`
+        : `Không có trong role "${role?.name ?? "(chưa gán)"}"`,
+      source: "missing",
+      roleName: role?.name,
+    };
+  }
+  // Check deps
+  const missing: PermissionKey[] = [];
+  for (const parent of PERMISSION_DEPENDS[resolved] ?? []) {
+    if (!granted.has(parent)) missing.push(parent);
+  }
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      reason: `Thiếu quyền cha: ${missing.join(", ")}`,
+      source: "dep_missing",
+      missingDeps: missing,
+      roleName: role?.name,
+    };
+  }
+  return {
+    ok: true,
+    reason: source === "custom"
+      ? "Cấp qua quyền riêng (ghi đè role)"
+      : `Cấp qua role "${role?.name ?? ""}"`,
+    source,
+    roleName: role?.name,
+  };
+}
+
+/**
+ * Run a dependency audit on a permission set: list every key that is "on"
+ * but is missing one or more parents.
+ */
+export function auditDependencies(perms: PermissionKey[]): { key: PermissionKey; missing: PermissionKey[] }[] {
+  const set = new Set(perms);
+  const out: { key: PermissionKey; missing: PermissionKey[] }[] = [];
+  for (const k of perms) {
+    const parents = PERMISSION_DEPENDS[k] ?? [];
+    const missing = parents.filter((p) => !set.has(p));
+    if (missing.length > 0) out.push({ key: k, missing });
+  }
+  return out;
+}
+
 export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
@@ -868,9 +1131,17 @@ export function useCurrentUser() {
   // NOTE: `isAdmin` is kept for API compatibility but no longer grants a blanket bypass.
   // It is now an alias of `isSuperAdmin` so legacy `isAdmin || can(...)` checks behave correctly.
   const isAdmin = isSuperAdmin;
-  const can = (key: PermissionKey) => {
+  const hasRaw = (key: PermissionKey) =>
+    perms.has(key) || perms.has(resolvePermKey(key));
+  const can = (key: PermissionKey): boolean => {
     if (isSuperAdmin) return true;
-    return perms.has(key) || perms.has(resolvePermKey(key));
+    const resolved = resolvePermKey(key);
+    if (!hasRaw(resolved)) return false;
+    // Dependency check — every parent must also be granted.
+    for (const parent of PERMISSION_DEPENDS[resolved] ?? []) {
+      if (!hasRaw(parent)) return false;
+    }
+    return true;
   };
   const canAny = (...keys: PermissionKey[]) => keys.some(can);
   const canAll = (...keys: PermissionKey[]) => keys.every(can);
