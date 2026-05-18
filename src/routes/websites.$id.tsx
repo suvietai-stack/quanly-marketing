@@ -58,6 +58,7 @@ const DONE_STATUSES: ContentStatus[] = ["Đã đăng web", "Kiểm tra index", "
 function WebsiteDetail() {
   const { id } = Route.useParams();
   const s = useStore();
+  const { can } = useCurrentUser();
   const w = s.websites.find((x) => x.id === id);
   const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
   const [adding, setAdding] = useState(false);
