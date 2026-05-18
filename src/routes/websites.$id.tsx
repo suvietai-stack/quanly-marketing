@@ -271,13 +271,15 @@ function WebsiteDetail() {
               <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} onClick={() => setView("kanban")}><LayoutGrid className="h-4 w-4" />Kanban</Button>
               <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => setView("calendar")}><CalIcon className="h-4 w-4" />Lịch đăng</Button>
             </div>
-            <Dialog open={adding} onOpenChange={setAdding}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader><DialogTitle>Tạo bài content</DialogTitle></DialogHeader>
-                <ContentForm websiteId={w.id} brandId={w.brandId} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
-              </DialogContent>
-            </Dialog>
+            {can("web.content_create") && (
+              <Dialog open={adding} onOpenChange={setAdding}>
+                <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader><DialogTitle>Tạo bài content</DialogTitle></DialogHeader>
+                  <ContentForm websiteId={w.id} brandId={w.brandId} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           {view === "table" && <ContentTable contents={filteredContents} onOpen={setOpenContent} />}
