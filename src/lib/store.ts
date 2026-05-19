@@ -306,6 +306,14 @@ export interface WebContent {
   imageLink?: string;
   designOrderId?: ID;
   publishedLink?: string;
+  // Bản nháp web (trình bày trước khi đăng)
+  webDraftLink?: string;
+  webDraftLayoutBy?: string;
+  webDraftReviewer?: string;
+  webDraftReviewNotes?: string;
+  webDraftRevisions?: number;
+  webDraftSubmittedAt?: string;
+  webDraftApprovedAt?: string;
   // Xét duyệt
   status: ContentStatus;
   outlineReviewNotes?: string;
