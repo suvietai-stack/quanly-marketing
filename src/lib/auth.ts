@@ -400,7 +400,12 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
    "web.post_write_start", "web.post_submit", "web.post_approve", "web.post_reject", "web.post_resubmit",
    "web.move_pending_publish", "web.publish", "web.complete",
    "web.content_cancel", "web.content_restore", "web.force_status",
-   "web.content_history", "web.content_note"].forEach((k) => {
+   "web.content_history", "web.content_note",
+   "web.view_web_draft_url", "web.edit_web_draft_url", "web.start_web_draft_layout",
+   "web.submit_web_draft_review", "web.resubmit_web_draft_review",
+   "web.approve_web_draft", "web.request_web_draft_revision",
+   "web.view_web_draft_revision_note", "web.edit_web_draft_note",
+   "web.force_change_web_draft_status"].forEach((k) => {
     m[k] = ["web.content_view", webViewKey];
   });
   m["web.content_view"] = [webViewKey];
