@@ -70,10 +70,15 @@ function norm(s?: string): string {
 function buildMyNames(user: { id: string; fullName?: string; username?: string } | null) {
   if (!user) return new Set<string>();
   const out = new Set<string>();
-  if (user.id) out.add(user.id.toLowerCase());
-  if (user.fullName) out.add(user.fullName.toLowerCase());
-  if (user.username) out.add(user.username.toLowerCase());
+  if (user.id) out.add(norm(user.id));
+  if (user.fullName) out.add(norm(user.fullName));
+  if (user.username) out.add(norm(user.username));
   return out;
+}
+
+function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
+  if (!value) return false;
+  return mine.has(norm(value));
 }
 
 function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
