@@ -60,6 +60,7 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
   }, [filtered, groups]);
 
   const reset = () => {
+    if (!canReset) { toast.error("Bạn không có quyền reset checklist Technical SEO."); return; }
     if (!confirm("Reset checklist Technical SEO về mặc định? Trạng thái và ghi chú sẽ bị xóa.")) return;
     checks.forEach((c) => s.remove("seoChecks", c.id));
     // re-seed from template
