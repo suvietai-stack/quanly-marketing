@@ -144,7 +144,7 @@ export function GrowthTab({ websiteId }: { websiteId: string }) {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Thêm kỳ báo cáo</Button>
+            {canCreate && <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Thêm kỳ báo cáo</Button>}
           </div>
         </CardContent>
       </Card>
