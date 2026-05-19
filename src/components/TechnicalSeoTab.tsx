@@ -109,7 +109,9 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" />Reset checklist</Button>
+            {canReset && (
+              <Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" />Reset checklist</Button>
+            )}
           </div>
         </CardContent>
       </Card>
