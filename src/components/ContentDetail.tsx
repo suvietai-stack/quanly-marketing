@@ -427,13 +427,9 @@ export function ContentDetail({
 
   const cancelContent = () => {
     if (!can("web.content_cancel")) { toast.error("Bạn không có quyền hủy Content Web"); return; }
-    const reason = prompt("Lý do hủy?");
-    if (reason === null) return;
-    apply({ to: "Hủy" as ContentStatus, action: "Hủy Content Web", note: reason || undefined });
-  };
-  const restoreContent = () => {
-    if (!can("web.content_restore")) { toast.error("Bạn không có quyền khôi phục Content Web"); return; }
-    apply({ to: "Kế hoạch" as ContentStatus, action: "Khôi phục Content Web" });
+    if (!confirm(`Hủy bài "${c.title}"? Hành động này sẽ xóa bài khỏi danh sách.`)) return;
+    s.remove("webContents", c.id);
+    onClose();
   };
 
   return (
