@@ -122,9 +122,11 @@ export function BacklinksTab({ websiteId }: { websiteId: string }) {
           <QF id="not_checked" label="Chưa kiểm tra link" count={counts.not_checked} />
           <QF id="broken" label="Lỗi / mất link" count={counts.broken} />
         </div>
-        <Button onClick={() => setAdding(true)}>
-          <Plus className="h-4 w-4" /> Thêm backlink
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setAdding(true)}>
+            <Plus className="h-4 w-4" /> Thêm backlink
+          </Button>
+        )}
       </div>
 
       <Card><CardContent className="p-3">
