@@ -527,7 +527,7 @@ export function ContentDetail({
               <div className="rounded-md border bg-card px-3 py-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-sm font-medium">Order thiết kế</div>
-                  {!order && (
+                  {!order && can("order.create") && (
                     <Button size="sm" variant="outline" onClick={createDesignOrder}>
                       <Palette className="h-4 w-4" />Tạo Order Thiết Kế
                     </Button>
@@ -538,7 +538,9 @@ export function ContentDetail({
                     <span>{order.title} — <StatusBadge value={order.status} /></span>
                   </div>
                 ) : (
-                  <div className="text-xs text-muted-foreground">Chưa có order thiết kế nào liên kết.</div>
+                  <div className="text-xs text-muted-foreground">
+                    {can("order.create") ? "Chưa có order thiết kế nào liên kết." : "Chưa có order thiết kế và bạn không được cấp quyền tạo order."}
+                  </div>
                 )}
               </div>
             </TabsContent>
