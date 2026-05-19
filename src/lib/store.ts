@@ -110,7 +110,11 @@ export type ContentStatus =
   | "Đang viết bài"
   | "Chờ duyệt bài"
   | "Cần sửa bài"
-  | "Bài đã duyệt"
+  | "Bài viết đã duyệt"
+  | "Đang trình bày nháp web"
+  | "Chờ duyệt bản nháp web"
+  | "Cần sửa bản nháp web"
+  | "Bản nháp web đã duyệt"
   | "Chờ đăng web"
   | "Đã đăng web"
   | "Kiểm tra index"
@@ -118,9 +122,16 @@ export type ContentStatus =
 
 export const CONTENT_STATUSES: ContentStatus[] = [
   "Kế hoạch", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
-  "Outline đã duyệt", "Đang viết bài", "Chờ duyệt bài", "Cần sửa bài", "Bài đã duyệt",
+  "Outline đã duyệt", "Đang viết bài", "Chờ duyệt bài", "Cần sửa bài", "Bài viết đã duyệt",
+  "Đang trình bày nháp web", "Chờ duyệt bản nháp web", "Cần sửa bản nháp web", "Bản nháp web đã duyệt",
   "Chờ đăng web", "Đã đăng web", "Kiểm tra index", "Hoàn thành",
 ];
+
+/** Map các trạng thái cũ → trạng thái mới khi đọc từ DB (giữ tương thích ngược). */
+export function normalizeContentStatus(s: string | undefined): ContentStatus {
+  if (s === "Bài đã duyệt") return "Bài viết đã duyệt";
+  return (s as ContentStatus) ?? "Kế hoạch";
+}
 
 export type ContentType =
   | "Bài SEO" | "Bài blog" | "Landing page" | "Bài danh mục"
