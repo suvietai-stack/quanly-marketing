@@ -438,10 +438,14 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                         </td>
                         <td className="px-3 py-2.5 align-top max-w-[220px]">
                           {g.content.publishedLink ? (
-                            <a href={g.content.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
-                              <span className="truncate max-w-[180px]">{g.content.publishedLink.replace(/^https?:\/\//, "")}</span>
-                              <ExternalLink className="h-3 w-3 shrink-0" />
-                            </a>
+                            canOpenUrl ? (
+                              <a href={g.content.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
+                                <span className="truncate max-w-[180px]">{g.content.publishedLink.replace(/^https?:\/\//, "")}</span>
+                                <ExternalLink className="h-3 w-3 shrink-0" />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-muted-foreground truncate inline-block max-w-[180px]" title="Bạn không có quyền mở URL">{g.content.publishedLink.replace(/^https?:\/\//, "")}</span>
+                            )
                           ) : "—"}
                         </td>
                         <td className="px-3 py-2.5 align-top text-muted-foreground text-xs">{t?.topic || g.content.topic || "—"}</td>
