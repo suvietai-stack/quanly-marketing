@@ -834,10 +834,11 @@ export const useAuth = create<AuthState>((set, get) => ({
       .eq("id", data.user.id)
       .maybeSingle();
     const status = prof?.status as AccountStatus | undefined;
-    if (status !== "Đang hoạt động") {
+    // Cho phép "Chờ duyệt" đăng nhập để hiển thị màn chờ duyệt.
+    // Các trạng thái còn lại (Tạm khóa / Từ chối / Lưu trữ) vẫn chặn đăng nhập.
+    if (status && status !== "Đang hoạt động" && status !== "Chờ duyệt") {
       await supabase.auth.signOut();
       const msg =
-        status === "Chờ duyệt" ? "Tài khoản của bạn đang chờ Admin duyệt." :
         status === "Tạm khóa" ? "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin." :
         status === "Từ chối" ? "Tài khoản của bạn đã bị từ chối." :
         status === "Lưu trữ" ? "Tài khoản đã được lưu trữ." :
