@@ -228,6 +228,29 @@ function PermissionDebugTab() {
           </div>
         </div>
       )}
+
+      <div className="border-t pt-4">
+        <div className="text-sm font-semibold mb-2">Kiểm tra khớp quyền (toàn hệ thống)</div>
+        {audit.length === 0 ? (
+          <div className="text-xs text-emerald-600">✓ Tất cả role và quyền riêng đều khớp dependency.</div>
+        ) : (
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {audit.map((row, i) => (
+              <div key={i} className="rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-2 text-xs">
+                <div className="font-medium">{row.kind}: {row.name}</div>
+                <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                  {row.issues.map((it) => (
+                    <li key={it.key}>
+                      <span className="font-mono">{it.key}</span> — thiếu quyền cha:{" "}
+                      <span className="font-mono text-amber-700 dark:text-amber-400">{it.missing.join(", ")}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </CardContent></Card>
   );
 }
