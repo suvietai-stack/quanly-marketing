@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
-  SUPER_ADMIN_ID,
+  SUPER_ADMIN_ID, PERMISSION_DEPENDS, allDependencies, allDependents,
+  auditDependencies, explainPermission,
 } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,7 +128,27 @@ function PermissionDebugTab() {
     : target.useCustom ? "Quyền riêng (ghi đè role)"
     : `Theo role: ${role?.name ?? "(chưa gán)"}`;
 
-  const testResult = testKey ? (effective.has(testKey) || (target?.system || target?.roleId === SUPER_ADMIN_ID)) : null;
+  const explained = useMemo(() => {
+    if (!target || !testKey) return null;
+    return explainPermission(target, s.roles, testKey);
+  }, [target, testKey, s.roles]);
+  const testResult = explained?.ok ?? null;
+
+  // Audit across roles + users with custom perms
+  const audit = useMemo(() => {
+    const rows: { kind: string; name: string; issues: { key: string; missing: string[] }[] }[] = [];
+    for (const r of s.roles) {
+      if (r.id === SUPER_ADMIN_ID) continue;
+      const issues = auditDependencies(r.permissions || []);
+      if (issues.length) rows.push({ kind: "Role", name: r.name, issues });
+    }
+    for (const u of s.users) {
+      if (!u.useCustom) continue;
+      const issues = auditDependencies(u.customPermissions || []);
+      if (issues.length) rows.push({ kind: "User (quyền riêng)", name: u.fullName || u.username, issues });
+    }
+    return rows;
+  }, [s.roles, s.users]);
 
   return (
     <Card><CardContent className="p-5 space-y-4">
@@ -169,9 +190,10 @@ function PermissionDebugTab() {
             <span className="text-muted-foreground">Trạng thái: </span>
             <StatusBadge value={target.status} />
           </div>
-          {testKey && (
+          {testKey && explained && (
             <div className={`text-sm font-medium ${testResult ? "text-emerald-600" : "text-rose-600"}`}>
               can("{testKey}") = {testResult ? "TRUE — được phép" : "FALSE — bị chặn"}
+              <div className="text-xs text-muted-foreground font-normal mt-0.5">Lý do: {explained.reason}</div>
             </div>
           )}
           <div>
@@ -206,6 +228,29 @@ function PermissionDebugTab() {
           </div>
         </div>
       )}
+
+      <div className="border-t pt-4">
+        <div className="text-sm font-semibold mb-2">Kiểm tra khớp quyền (toàn hệ thống)</div>
+        {audit.length === 0 ? (
+          <div className="text-xs text-emerald-600">✓ Tất cả role và quyền riêng đều khớp dependency.</div>
+        ) : (
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {audit.map((row, i) => (
+              <div key={i} className="rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-2 text-xs">
+                <div className="font-medium">{row.kind}: {row.name}</div>
+                <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                  {row.issues.map((it) => (
+                    <li key={it.key}>
+                      <span className="font-mono">{it.key}</span> — thiếu quyền cha:{" "}
+                      <span className="font-mono text-amber-700 dark:text-amber-400">{it.missing.join(", ")}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </CardContent></Card>
   );
 }
@@ -608,7 +653,15 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
   const set = new Set(value);
   const toggle = (k: PermissionKey) => {
     const next = new Set(set);
-    if (next.has(k)) next.delete(k); else next.add(k);
+    if (next.has(k)) {
+      // Untick: also untick all dependents (children that require this key)
+      next.delete(k);
+      for (const dep of allDependents(k)) next.delete(dep);
+    } else {
+      // Tick: also tick all parent dependencies
+      next.add(k);
+      for (const parent of allDependencies(k)) next.add(parent);
+    }
     onChange([...next]);
   };
 
@@ -635,9 +688,22 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
 
   const setMany = (keys: PermissionKey[], on: boolean) => {
     const next = new Set(set);
-    if (on) keys.forEach((k) => next.add(k)); else keys.forEach((k) => next.delete(k));
+    if (on) {
+      keys.forEach((k) => {
+        next.add(k);
+        for (const p of allDependencies(k)) next.add(p);
+      });
+    } else {
+      keys.forEach((k) => {
+        next.delete(k);
+        for (const d of allDependents(k)) next.delete(d);
+      });
+    }
     onChange([...next]);
   };
+
+  // Audit broken deps to surface visual warnings
+  const broken = useMemo(() => new Map(auditDependencies(value).map((b) => [b.key, b.missing])), [value]);
 
   const totalSelected = value.length;
   const totalAll = PERMISSIONS.length;
@@ -693,12 +759,18 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
                           <span className="text-[10px] text-muted-foreground ml-auto">{subOn}/{ks.length}</span>
                         </div>
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 pl-6">
-                          {items.map((p) => (
-                            <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
-                              <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
-                              <span title={p.key}>{p.label}</span>
-                            </label>
-                          ))}
+                          {items.map((p) => {
+                            const miss = broken.get(p.key);
+                            return (
+                              <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
+                                <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
+                                <span title={p.key} className={miss ? "text-amber-700 dark:text-amber-400" : ""}>
+                                  {p.label}
+                                  {miss && <span className="ml-1 text-[10px]" title={`Thiếu quyền cha: ${miss.join(", ")}`}>⚠</span>}
+                                </span>
+                              </label>
+                            );
+                          })}
                         </div>
                       </div>
                     );

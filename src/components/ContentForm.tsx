@@ -15,6 +15,7 @@ import {
 import { DialogFooter } from "@/components/ui/dialog";
 import { ExternalLink, Plus } from "lucide-react";
 import { TopicDialog } from "@/components/KeywordResearchTab";
+import { useCurrentUser } from "@/lib/auth";
 
 export function ContentForm({
   initial, websiteId, brandId, onSubmit, onClose, lockWebsite = true,
@@ -238,28 +239,40 @@ function TopicPicker({
   const selected = list.find((t) => t.name === value);
   const [adding, setAdding] = useState(false);
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreateTopic = can("web.keyword_topic_create");
+  const canOpenSheet = can("web.keyword_open_sheet");
 
   if (list.length === 0) {
     return (
       <>
         <div className="rounded-md border border-dashed p-2.5 text-xs text-muted-foreground space-y-2">
-          <div>Chưa có Topic. Hãy tạo Topic tại tab <strong>Nghiên Cứu Keyword</strong> trước.</div>
-          <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
-            <Plus className="h-3.5 w-3.5" /> Tạo Topic mới
-          </Button>
+          <div>
+            Chưa có Topic.{" "}
+            {canCreateTopic
+              ? <>Hãy tạo Topic tại tab <strong>Nghiên Cứu Keyword</strong> trước.</>
+              : "Bạn không có quyền tạo Topic — hãy liên hệ người phụ trách."}
+          </div>
+          {canCreateTopic && (
+            <Button type="button" size="sm" variant="outline" onClick={() => setAdding(true)}>
+              <Plus className="h-3.5 w-3.5" /> Tạo Topic mới
+            </Button>
+          )}
         </div>
-        <TopicDialog
-          open={adding}
-          initial={null}
-          websiteId={websiteId}
-          onClose={() => setAdding(false)}
-          onSave={(t) => {
-            const newId = uid();
-            s.add("webTopics", { ...t, id: newId, websiteId });
-            onChange(t.name);
-            setAdding(false);
-          }}
-        />
+        {canCreateTopic && (
+          <TopicDialog
+            open={adding}
+            initial={null}
+            websiteId={websiteId}
+            onClose={() => setAdding(false)}
+            onSave={(t) => {
+              const newId = uid();
+              s.add("webTopics", { ...t, id: newId, websiteId });
+              onChange(t.name);
+              setAdding(false);
+            }}
+          />
+        )}
       </>
     );
   }
@@ -274,31 +287,35 @@ function TopicPicker({
             {list.map((t) => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button type="button" size="icon" variant="outline" onClick={() => setAdding(true)} title="Tạo Topic mới">
-          <Plus className="h-4 w-4" />
-        </Button>
+        {canCreateTopic && (
+          <Button type="button" size="icon" variant="outline" onClick={() => setAdding(true)} title="Tạo Topic mới">
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       {selected && (
         <div className="text-[11px] text-muted-foreground bg-muted/40 rounded px-2 py-1.5 space-y-0.5">
           <div>Từ khóa chủ đề: <span className="text-foreground font-medium">{selected.mainKeyword || "—"}</span></div>
-          {selected.sheetLink && (
+          {selected.sheetLink && canOpenSheet && (
             <a href={selected.sheetLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
               Mở Sheet keyword <ExternalLink className="h-3 w-3" />
             </a>
           )}
         </div>
       )}
-      <TopicDialog
-        open={adding}
-        initial={null}
-        websiteId={websiteId}
-        onClose={() => setAdding(false)}
-        onSave={(t) => {
-          s.add("webTopics", { ...t, id: uid(), websiteId });
-          onChange(t.name);
-          setAdding(false);
-        }}
-      />
+      {canCreateTopic && (
+        <TopicDialog
+          open={adding}
+          initial={null}
+          websiteId={websiteId}
+          onClose={() => setAdding(false)}
+          onSave={(t) => {
+            s.add("webTopics", { ...t, id: uid(), websiteId });
+            onChange(t.name);
+            setAdding(false);
+          }}
+        />
+      )}
     </div>
   );
 }

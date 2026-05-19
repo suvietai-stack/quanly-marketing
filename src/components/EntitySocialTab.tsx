@@ -7,10 +7,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Plus, ExternalLink, Pencil, Trash2, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { Plus, ExternalLink, Pencil, Trash2, Eye, EyeOff, ShieldAlert, Lock } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 
 export function EntitySocialTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.entity_create");
+  const canEdit = can("web.entity_edit");
+  const canDelete = can("web.entity_delete");
+  const canOpenLink = can("web.entity_open_link");
+  const canViewAccount = can("web.entity_view_account");
+  const canRevealPassword = can("web.entity_reveal_password");
+
   const list = s.entities.filter((e) => e.websiteId === websiteId);
   const [search, setSearch] = useState("");
   const [fPlatform, setFPlatform] = useState("all");
@@ -50,13 +60,15 @@ export function EntitySocialTab({ websiteId }: { websiteId: string }) {
             {ENTITY_STATUSES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Dialog open={adding} onOpenChange={setAdding}>
-          <DialogTrigger asChild><Button className="ml-auto"><Plus className="h-4 w-4" />Thêm Entity</Button></DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Thêm Entity / Social SEO</DialogTitle></DialogHeader>
-            <EntityForm websiteId={websiteId} onSubmit={(e) => { s.add("entities", e); setAdding(false); }} onClose={() => setAdding(false)} />
-          </DialogContent>
-        </Dialog>
+        {canCreate && (
+          <Dialog open={adding} onOpenChange={setAdding}>
+            <DialogTrigger asChild><Button className="ml-auto"><Plus className="h-4 w-4" />Thêm Entity</Button></DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader><DialogTitle>Thêm Entity / Social SEO</DialogTitle></DialogHeader>
+              <EntityForm websiteId={websiteId} onSubmit={(e) => { s.add("entities", e); setAdding(false); }} onClose={() => setAdding(false)} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Card><CardContent className="p-0">
@@ -82,27 +94,42 @@ export function EntitySocialTab({ websiteId }: { websiteId: string }) {
                   <td className="px-4 py-2.5 font-medium">{e.name}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{e.platform}</td>
                   <td className="px-4 py-2.5">
-                    {e.url ? <a href={e.url} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Mở <ExternalLink className="h-3 w-3" /></a> : "—"}
+                    {e.url ? (
+                      canOpenLink ? (
+                        <a href={e.url} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Mở <ExternalLink className="h-3 w-3" /></a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Không có quyền mở link Entity"><Lock className="h-3 w-3" />Có link</span>
+                      )
+                    ) : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{e.account || "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {canViewAccount ? (e.account || "—") : (e.account ? <span className="inline-flex items-center gap-1 text-xs"><Lock className="h-3 w-3" />Ẩn</span> : "—")}
+                  </td>
                   <td className="px-4 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setRevealed((r) => ({ ...r, [e.id]: !r[e.id] }))}
-                      className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-mono text-xs"
-                    >
-                      <span>{revealed[e.id] ? (e.password || "—") : "••••••••"}</span>
-                      {revealed[e.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    </button>
+                    {!e.password ? <span className="text-muted-foreground text-xs">—</span> : canRevealPassword ? (
+                      <button
+                        type="button"
+                        onClick={() => setRevealed((r) => ({ ...r, [e.id]: !r[e.id] }))}
+                        className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-mono text-xs"
+                      >
+                        <span>{revealed[e.id] ? e.password : "••••••••"}</span>
+                        {revealed[e.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Không có quyền xem mật khẩu Entity"><Lock className="h-3 w-3" />Ẩn</span>
+                    )}
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{e.email || "—"}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{e.phone || "—"}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{canViewAccount ? (e.email || "—") : (e.email ? "•••" : "—")}</td>
+                  <td className="px-4 py-2.5 text-muted-foreground">{canViewAccount ? (e.phone || "—") : (e.phone ? "•••" : "—")}</td>
                   <td className="px-4 py-2.5"><StatusBadge value={e.status} /></td>
                   <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(e)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa "${e.name}"?`)) s.remove("entities", e.id); }}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(e)}><Pencil className="h-4 w-4" /></Button>}
+                    {canDelete && (
+                      <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa "${e.name}"?`)) s.remove("entities", e.id); }}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                    {!canEdit && !canDelete && <span className="text-xs text-muted-foreground italic">Chỉ xem</span>}
                   </td>
                 </tr>
               ))}
@@ -118,7 +145,11 @@ export function EntitySocialTab({ websiteId }: { websiteId: string }) {
             <EntityForm
               websiteId={websiteId}
               initial={editing}
-              onSubmit={(e) => { s.update("entities", editing.id, e); setEditing(null); }}
+              canRevealPassword={canRevealPassword}
+              onSubmit={(e) => {
+                if (!canEdit) { toast.error("Bạn không có quyền sửa Entity"); return; }
+                s.update("entities", editing.id, e); setEditing(null);
+              }}
               onClose={() => setEditing(null)}
             />
           )}
@@ -129,12 +160,13 @@ export function EntitySocialTab({ websiteId }: { websiteId: string }) {
 }
 
 function EntityForm({
-  websiteId, initial, onSubmit, onClose,
+  websiteId, initial, onSubmit, onClose, canRevealPassword = true,
 }: {
   websiteId: string;
   initial?: Partial<EntitySocial>;
   onSubmit: (e: EntitySocial) => void;
   onClose: () => void;
+  canRevealPassword?: boolean;
 }) {
   const [v, setV] = useState<EntitySocial>({
     id: initial?.id || uid(),
@@ -166,10 +198,12 @@ function EntityForm({
         <Field label="Tài khoản"><Input value={v.account} onChange={(e) => set("account", e.target.value)} /></Field>
         <Field label="Mật khẩu">
           <div className="flex gap-1">
-            <Input type={showPw ? "text" : "password"} value={v.password} onChange={(e) => set("password", e.target.value)} />
-            <Button type="button" size="icon" variant="ghost" onClick={() => setShowPw((x) => !x)}>
-              {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
+            <Input type={showPw && canRevealPassword ? "text" : "password"} value={v.password} onChange={(e) => set("password", e.target.value)} />
+            {canRevealPassword && (
+              <Button type="button" size="icon" variant="ghost" onClick={() => setShowPw((x) => !x)}>
+                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            )}
           </div>
         </Field>
         <Field label="Email"><Input value={v.email} onChange={(e) => set("email", e.target.value)} /></Field>

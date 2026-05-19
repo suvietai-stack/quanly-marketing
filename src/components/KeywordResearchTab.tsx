@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, ExternalLink, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search, Lock } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 
 export function KeywordResearchTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
@@ -39,9 +40,11 @@ export function KeywordResearchTab({ websiteId }: { websiteId: string }) {
           Tab nguồn quản lý <strong>Topic</strong> cho dự án web. Các tab khác (Sản xuất Content, Bài đã đăng,
           Backlink, Check TOP, Tối ưu lại) sẽ chọn Topic từ danh sách này.
         </div>
-        <Button onClick={() => setAdding(true)}>
-          <Plus className="h-4 w-4" /> Thêm Topic
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setAdding(true)}>
+            <Plus className="h-4 w-4" /> Thêm Topic
+          </Button>
+        )}
       </div>
 
       <Card><CardContent className="p-3">
@@ -72,7 +75,9 @@ export function KeywordResearchTab({ websiteId }: { websiteId: string }) {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                    Chưa có Topic nào. Bấm <strong>Thêm Topic</strong> để tạo Topic đầu tiên cho dự án web này.
+                    {canCreate
+                      ? <>Chưa có Topic nào. Bấm <strong>Thêm Topic</strong> để tạo Topic đầu tiên cho dự án web này.</>
+                      : "Chưa có Topic nào và bạn không được cấp quyền tạo Topic."}
                   </td>
                 </tr>
               )}
@@ -82,28 +87,41 @@ export function KeywordResearchTab({ websiteId }: { websiteId: string }) {
                   <td className="px-3 py-2.5 text-muted-foreground">{t.mainKeyword || "—"}</td>
                   <td className="px-3 py-2.5">
                     {t.sheetLink ? (
-                      <a href={t.sheetLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
-                        Mở Sheet <ExternalLink className="h-3 w-3" />
-                      </a>
+                      canOpenSheet ? (
+                        <a href={t.sheetLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
+                          Mở Sheet <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Không có quyền mở Sheet">
+                          <Lock className="h-3 w-3" /> Có Sheet
+                        </span>
+                      )
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-muted-foreground text-xs">{fmtDate(t.updatedAt)}</td>
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(t)} title="Sửa">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon" variant="ghost"
-                      onClick={() => {
-                        if (confirm(`Xóa Topic "${t.name}"?\nLưu ý: các bài content / backlink đang dùng topic này sẽ vẫn giữ tên topic cũ.`))
-                          s.remove("webTopics", t.id);
-                      }}
-                      title="Xóa"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {canEdit && (
+                      <Button size="icon" variant="ghost" onClick={() => setEditing(t)} title="Sửa">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {canDelete && (
+                      <Button
+                        size="icon" variant="ghost"
+                        onClick={() => {
+                          if (confirm(`Xóa Topic "${t.name}"?\nLưu ý: các bài content / backlink đang dùng topic này sẽ vẫn giữ tên topic cũ.`))
+                            s.remove("webTopics", t.id);
+                        }}
+                        title="Xóa"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                    {!canEdit && !canDelete && (
+                      <span className="text-xs text-muted-foreground italic">Chỉ xem</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -118,8 +136,13 @@ export function KeywordResearchTab({ websiteId }: { websiteId: string }) {
         websiteId={websiteId}
         onClose={() => { setAdding(false); setEditing(null); }}
         onSave={(t) => {
-          if (editing) s.update("webTopics", editing.id, t);
-          else s.add("webTopics", { ...t, id: uid(), websiteId });
+          if (editing) {
+            if (!canEdit) { toast.error("Bạn không có quyền sửa Topic"); return; }
+            s.update("webTopics", editing.id, t);
+          } else {
+            if (!canCreate) { toast.error("Bạn không có quyền tạo Topic"); return; }
+            s.add("webTopics", { ...t, id: uid(), websiteId });
+          }
           setAdding(false); setEditing(null);
         }}
       />
