@@ -406,6 +406,7 @@ export function ContentDetail({
   };
 
   const createDesignOrder = () => {
+    if (!can("order.create")) { toast.error("Bạn không có quyền tạo Order thiết kế"); return; }
     const o = {
       id: uid(),
       title: `Ảnh cho bài: ${c.title}`,
@@ -422,6 +423,17 @@ export function ContentDetail({
     };
     s.add("orders", o);
     s.update("webContents", c.id, { designOrderId: o.id, needsDesign: true });
+  };
+
+  const cancelContent = () => {
+    if (!can("web.content_cancel")) { toast.error("Bạn không có quyền hủy Content Web"); return; }
+    const reason = prompt("Lý do hủy?");
+    if (reason === null) return;
+    apply({ to: "Hủy" as ContentStatus, action: "Hủy Content Web", note: reason || undefined });
+  };
+  const restoreContent = () => {
+    if (!can("web.content_restore")) { toast.error("Bạn không có quyền khôi phục Content Web"); return; }
+    apply({ to: "Kế hoạch" as ContentStatus, action: "Khôi phục Content Web" });
   };
 
   return (
