@@ -21,10 +21,10 @@ import { GrowthSummary } from "@/components/GrowthTab";
 type DateRange = { from?: string; to?: string };
 type Quick = "all" | "week" | "month" | "custom";
 
-const PRODUCING: ContentStatus[] = ["Đã giao", "Đang làm outline", "Outline đã duyệt", "Đang viết bài"];
-const REVIEW: ContentStatus[] = ["Chờ duyệt outline", "Chờ duyệt bài"];
-const FIX: ContentStatus[] = ["Cần sửa outline", "Cần sửa bài"];
-const WAIT_PUBLISH: ContentStatus[] = ["Bài đã duyệt", "Chờ đăng web"];
+const PRODUCING: ContentStatus[] = ["Đã giao", "Đang làm outline", "Outline đã duyệt", "Đang viết bài", "Đang trình bày nháp web"];
+const REVIEW: ContentStatus[] = ["Chờ duyệt outline", "Chờ duyệt bài", "Chờ duyệt bản nháp web"];
+const FIX: ContentStatus[] = ["Cần sửa outline", "Cần sửa bài", "Cần sửa bản nháp web"];
+const WAIT_PUBLISH: ContentStatus[] = ["Bài viết đã duyệt", "Bản nháp web đã duyệt", "Chờ đăng web"];
 const PUBLISHED_LIKE: ContentStatus[] = ["Đã đăng web", "Kiểm tra index", "Hoàn thành"];
 
 function startOfWeek(): Date {
