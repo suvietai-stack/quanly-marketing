@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
-  SUPER_ADMIN_ID,
+  SUPER_ADMIN_ID, PERMISSION_DEPENDS, allDependencies, allDependents,
+  auditDependencies, explainPermission,
 } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
