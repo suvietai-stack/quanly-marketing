@@ -14,7 +14,7 @@ import appCss from "../styles.css?url";
 import { AppShell } from "@/components/AppShell";
 import { AuthGate } from "@/components/AuthGate";
 
-const PUBLIC_PATHS = ["/login", "/register"];
+const PUBLIC_PATHS = ["/login", "/register", "/pending"];
 
 function NotFoundComponent() {
   return (
