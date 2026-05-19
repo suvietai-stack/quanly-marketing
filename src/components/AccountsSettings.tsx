@@ -715,12 +715,18 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
                           <span className="text-[10px] text-muted-foreground ml-auto">{subOn}/{ks.length}</span>
                         </div>
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1.5 pl-6">
-                          {items.map((p) => (
-                            <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
-                              <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
-                              <span title={p.key}>{p.label}</span>
-                            </label>
-                          ))}
+                          {items.map((p) => {
+                            const miss = broken.get(p.key);
+                            return (
+                              <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
+                                <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
+                                <span title={p.key} className={miss ? "text-amber-700 dark:text-amber-400" : ""}>
+                                  {p.label}
+                                  {miss && <span className="ml-1 text-[10px]" title={`Thiếu quyền cha: ${miss.join(", ")}`}>⚠</span>}
+                                </span>
+                              </label>
+                            );
+                          })}
                         </div>
                       </div>
                     );
