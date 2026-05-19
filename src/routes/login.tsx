@@ -71,9 +71,6 @@ function LoginPage() {
             </form>
           </CardContent>
         </Card>
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          Tài khoản hệ thống mặc định: <span className="font-mono">Admin / Suviet888@@@</span>
-        </p>
       </div>
     </div>
   );
