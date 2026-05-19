@@ -1061,6 +1061,13 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (error) throw new Error(error.message);
     await get().reload();
   },
+
+  restoreDefaultRoles: async () => {
+    const { restoreDefaultRoles: callRestore } = await import("@/lib/roles.functions");
+    const res = await callRestore({ data: { roles: buildDefaultRolesPayload() } });
+    await get().reload();
+    return res;
+  },
 }));
 
 // ============ Helpers ============
