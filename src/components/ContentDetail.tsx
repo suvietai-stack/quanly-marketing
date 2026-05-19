@@ -43,16 +43,19 @@ function WorkflowActions({
   c,
   apply,
   canAct,
+  can,
 }: {
   c: WebContent;
   apply: (t: Transition) => void;
   canAct: (perm: PermissionKey, isWriterOwned?: boolean) => boolean;
+  can: (perm: PermissionKey) => boolean;
 }) {
   const [outlineLink, setOutlineLink] = useState(c.outlineLink || "");
   const [draftLink, setDraftLink] = useState(c.draftLink || "");
   const [imageLink, setImageLink] = useState(c.imageLink || "");
   const [publishedLink, setPublishedLink] = useState(c.publishedLink || "");
   const [publishedAt, setPublishedAt] = useState(c.publishedAt || todayISO());
+  const [webDraftLink, setWebDraftLink] = useState(c.webDraftLink || "");
   const [reviewNote, setReviewNote] = useState("");
 
   const NoPerm = () => (
