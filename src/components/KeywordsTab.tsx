@@ -15,6 +15,8 @@ import {
   ChevronDown, ChevronRight, RefreshCw, ArrowUp, ArrowDown, Minus,
   ExternalLink, Plus, AlertTriangle, Trash2,
 } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 
 // ----- helpers -----
 function deriveStatus(cur?: number, prev?: number): KeywordRankStatus {
@@ -81,6 +83,12 @@ function matchesQuick(quick: string, t?: KeywordTrack): boolean {
 
 export function KeywordsTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canPrimary = can("web.checktop_primary");
+  const canSecondary = can("web.checktop_secondary");
+  const canKwCreate = can("web.checktop_kw_create");
+  const canKwDelete = can("web.checktop_kw_delete");
+  const canOpenUrl = can("web.checktop_open_url");
   const allKw = s.keywords.filter((k) => k.websiteId === websiteId);
   const indexedContents = s.webContents.filter(
     (c) => c.websiteId === websiteId && c.indexStatus === "Đã index",
@@ -198,6 +206,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
 
   // ----- Save TOP update -----
   const saveTop = (row: Row, payload: { cur?: number; date: string; note: string; targetUrl?: string }) => {
+    const requiredPerm = row.isMain ? canPrimary : canSecondary;
+    if (!requiredPerm) {
+      toast.error(`Bạn không có quyền cập nhật TOP từ khóa ${row.isMain ? "chính" : "phụ"}.`);
+      return;
+    }
     const existing = row.track;
     const prev = existing?.currentTop;
     const finalStatus: KeywordRankStatus = (() => {
@@ -243,6 +256,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   };
 
   const addSub = (cid: string) => {
+    if (!canKwCreate) { toast.error("Bạn không có quyền thêm từ khóa phụ."); return; }
     const kw = newSub.trim();
     if (!kw) return;
     // append to content's subKeywords so it persists as part of the article
@@ -259,6 +273,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   };
 
   const deleteSub = (cid: string, kw: string, trackId?: string) => {
+    if (!canKwDelete) { toast.error("Bạn không có quyền xóa từ khóa phụ."); return; }
     if (!confirm(`Xóa từ khóa phụ "${kw}"?`)) return;
     const c = s.webContents.find((x) => x.id === cid);
     if (c) {
@@ -269,12 +284,15 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   };
 
   const deleteMain = (cid: string, kw: string, trackId?: string) => {
+    if (!canKwDelete) { toast.error("Bạn không có quyền xóa từ khóa chính."); return; }
     if (!confirm(`Xóa từ khóa chính "${kw}" khỏi bài viết?`)) return;
     s.update("webContents", cid, { mainKeyword: "" });
     if (trackId) s.remove("keywords", trackId);
   };
 
+
   const addManualKeyword = (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => {
+    if (!canKwCreate) { toast.error("Bạn không có quyền thêm từ khóa."); return; }
     const kw = p.keyword.trim();
     if (!kw) return;
     if (p.contentId) {
@@ -358,9 +376,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
             setSearch(""); setFStatus("all"); setFOwner("all"); setFTopic("all"); setFPlan("all"); setFDate(""); setQuick("all");
           }}>Xóa lọc</Button>
         )}
-        <Button size="sm" className="ml-auto" onClick={() => setAddingKw(true)}>
-          <Plus className="h-4 w-4" />Thêm từ khóa
-        </Button>
+        {canKwCreate && (
+          <Button size="sm" className="ml-auto" onClick={() => setAddingKw(true)}>
+            <Plus className="h-4 w-4" />Thêm từ khóa
+          </Button>
+        )}
       </div>
 
       {filteredGroups.length === 0 && filteredExtras.length === 0 && (
@@ -418,10 +438,14 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                         </td>
                         <td className="px-3 py-2.5 align-top max-w-[220px]">
                           {g.content.publishedLink ? (
-                            <a href={g.content.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
-                              <span className="truncate max-w-[180px]">{g.content.publishedLink.replace(/^https?:\/\//, "")}</span>
-                              <ExternalLink className="h-3 w-3 shrink-0" />
-                            </a>
+                            canOpenUrl ? (
+                              <a href={g.content.publishedLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1 text-xs">
+                                <span className="truncate max-w-[180px]">{g.content.publishedLink.replace(/^https?:\/\//, "")}</span>
+                                <ExternalLink className="h-3 w-3 shrink-0" />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-muted-foreground truncate inline-block max-w-[180px]" title="Bạn không có quyền mở URL">{g.content.publishedLink.replace(/^https?:\/\//, "")}</span>
+                            )
                           ) : "—"}
                         </td>
                         <td className="px-3 py-2.5 align-top text-muted-foreground text-xs">{t?.topic || g.content.topic || "—"}</td>
@@ -432,10 +456,12 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                         <td className="px-3 py-2.5 align-top"><StatusBadge value={t?.status || "Chưa check"} /></td>
                         <td className="px-3 py-2.5 align-top text-muted-foreground text-xs">{t?.owner || "—"}</td>
                         <td className="px-3 py-2.5 align-top text-right whitespace-nowrap">
-                          <Button size="sm" variant="outline" onClick={() => setUpdating({ row: g.mainRow })} disabled={noMain}>
-                            <RefreshCw className="h-3.5 w-3.5" />Cập nhật TOP
-                          </Button>
-                          {!noMain && (
+                          {canPrimary && (
+                            <Button size="sm" variant="outline" onClick={() => setUpdating({ row: g.mainRow })} disabled={noMain}>
+                              <RefreshCw className="h-3.5 w-3.5" />Cập nhật TOP
+                            </Button>
+                          )}
+                          {!noMain && canKwDelete && (
                             <Button size="icon" variant="ghost" title="Xóa từ khóa chính" onClick={() => deleteMain(g.contentId, g.mainRow.keyword, g.mainRow.track?.id)}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
@@ -460,10 +486,12 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                               <td className="px-3 py-2"><StatusBadge value={r.track?.status || "Chưa check"} /></td>
                               <td className="px-3 py-2 text-muted-foreground text-xs">{r.track?.notes ? <span title={r.track.notes}>📝</span> : "—"}</td>
                               <td className="px-3 py-2 text-right whitespace-nowrap">
-                                <Button size="sm" variant="ghost" onClick={() => setUpdating({ row: r })}>
-                                  <RefreshCw className="h-3.5 w-3.5" />Cập nhật
-                                </Button>
-                                {r.contentId && (
+                                {canSecondary && (
+                                  <Button size="sm" variant="ghost" onClick={() => setUpdating({ row: r })}>
+                                    <RefreshCw className="h-3.5 w-3.5" />Cập nhật
+                                  </Button>
+                                )}
+                                {r.contentId && canKwDelete && (
                                   <Button size="icon" variant="ghost" title="Xóa từ khóa phụ" onClick={() => deleteSub(r.contentId!, r.keyword, r.track?.id)}>
                                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                                   </Button>
@@ -487,9 +515,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                                   <Button size="sm" variant="ghost" onClick={() => { setAddingSubFor(null); setNewSub(""); }}>Hủy</Button>
                                 </div>
                               ) : (
-                                <Button size="sm" variant="ghost" className="text-xs" onClick={() => setAddingSubFor(g.contentId)}>
-                                  <Plus className="h-3.5 w-3.5" />Thêm từ khóa phụ
-                                </Button>
+                                canKwCreate && (
+                                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => setAddingSubFor(g.contentId)}>
+                                    <Plus className="h-3.5 w-3.5" />Thêm từ khóa phụ
+                                  </Button>
+                                )
                               )}
                             </td>
                           </tr>
@@ -542,12 +572,16 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                           <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDate(k.lastCheckDate)}</td>
                           <td className="px-3 py-2"><StatusBadge value={k.status} /></td>
                           <td className="px-3 py-2 text-right whitespace-nowrap">
-                            <Button size="sm" variant="ghost" onClick={() => setUpdating({ row })}>
-                              <RefreshCw className="h-3.5 w-3.5" />Cập nhật
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa "${k.keyword}"?`)) s.remove("keywords", k.id); }}>
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
+                            {(k.isMain ? canPrimary : canSecondary) && (
+                              <Button size="sm" variant="ghost" onClick={() => setUpdating({ row })}>
+                                <RefreshCw className="h-3.5 w-3.5" />Cập nhật
+                              </Button>
+                            )}
+                            {canKwDelete && (
+                              <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa "${k.keyword}"?`)) s.remove("keywords", k.id); }}>
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       );

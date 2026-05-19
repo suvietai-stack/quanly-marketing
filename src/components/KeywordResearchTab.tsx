@@ -8,9 +8,15 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, ExternalLink, Search } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
 
 export function KeywordResearchTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.keyword_topic_create");
+  const canEdit = can("web.keyword_topic_edit");
+  const canDelete = can("web.keyword_topic_delete");
+  const canOpenSheet = can("web.keyword_open_sheet");
   const list = s.webTopics.filter((t) => t.websiteId === websiteId);
 
   const [editing, setEditing] = useState<WebTopic | null>(null);

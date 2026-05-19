@@ -84,8 +84,15 @@ function MetricCompareCard({
   );
 }
 
+import { useCurrentUser } from "@/lib/auth";
+
 export function GrowthTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.growth_create");
+  const canEdit = can("web.growth_edit");
+  const canDelete = can("web.growth_delete");
+  const canOpen = can("web.growth_open");
   const all = s.growth.filter((g) => g.websiteId === websiteId);
 
   const [filterType, setFilterType] = useState<"all" | GrowthPeriodType>("all");
@@ -137,7 +144,7 @@ export function GrowthTab({ websiteId }: { websiteId: string }) {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Thêm kỳ báo cáo</Button>
+            {canCreate && <Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Thêm kỳ báo cáo</Button>}
           </div>
         </CardContent>
       </Card>
@@ -209,11 +216,11 @@ export function GrowthTab({ websiteId }: { websiteId: string }) {
                   <td className="px-3 py-2 text-muted-foreground text-xs whitespace-nowrap">{fmtDate(g.updatedAt)}</td>
                   <td className="px-3 py-2 text-muted-foreground text-xs max-w-[200px] truncate" title={g.notes}>{g.notes || "—"}</td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
-                    {g.reportLink && (
+                    {g.reportLink && canOpen && (
                       <Button asChild size="sm" variant="ghost"><a href={g.reportLink} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(g)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => { if (confirm("Xóa kỳ báo cáo này?")) s.remove("growth", g.id); }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                    {canEdit && <Button size="sm" variant="ghost" onClick={() => setEditing(g)}><Pencil className="h-3.5 w-3.5" /></Button>}
+                    {canDelete && <Button size="sm" variant="ghost" onClick={() => { if (confirm("Xóa kỳ báo cáo này?")) s.remove("growth", g.id); }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
                   </td>
                 </tr>
               ))}

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Plus, ExternalLink, Pencil, Trash2, Link2 } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
 
 function TopicSelect({ websiteId, value, onChange }: { websiteId: string; value?: string; onChange: (v: string | undefined) => void }) {
   const list = useStore((st) => st.webTopics).filter((t) => t.websiteId === websiteId);
@@ -38,6 +39,11 @@ const fmtMoney = (n?: number) =>
 
 export function BacklinksTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.backlink_create");
+  const canEdit = can("web.backlink_edit");
+  const canDelete = can("web.backlink_delete");
+  const canOpen = can("web.backlink_open");
   const all = s.backlinks.filter((b) => b.websiteId === websiteId);
   const publishedContents = s.webContents.filter(
     (c) => c.websiteId === websiteId && c.publishedLink
@@ -116,9 +122,11 @@ export function BacklinksTab({ websiteId }: { websiteId: string }) {
           <QF id="not_checked" label="Chưa kiểm tra link" count={counts.not_checked} />
           <QF id="broken" label="Lỗi / mất link" count={counts.broken} />
         </div>
-        <Button onClick={() => setAdding(true)}>
-          <Plus className="h-4 w-4" /> Thêm backlink
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setAdding(true)}>
+            <Plus className="h-4 w-4" /> Thêm backlink
+          </Button>
+        )}
       </div>
 
       <Card><CardContent className="p-3">
@@ -191,20 +199,26 @@ export function BacklinksTab({ websiteId }: { websiteId: string }) {
                   <td className="px-3 py-2"><StatusBadge value={b.status} /></td>
                   <td className="px-3 py-2 text-center">
                     {b.publishedLink ? (
-                      <a href={b.publishedLink} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center text-primary hover:underline" title="Mở link bài đã đăng">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
+                      canOpen ? (
+                        <a href={b.publishedLink} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center text-primary hover:underline" title="Mở link bài đã đăng">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground" title="Không có quyền mở link"><Link2 className="h-4 w-4 inline opacity-40" /></span>
+                      )
                     ) : (
                       <span className="text-muted-foreground"><Link2 className="h-4 w-4 inline opacity-40" /></span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(b)} title="Sửa"><Pencil className="h-4 w-4" /></Button>
-                    <Button
-                      size="icon" variant="ghost"
-                      onClick={() => { if (confirm(`Xóa backlink "${b.name}"?`)) s.remove("backlinks", b.id); }}
-                      title="Xóa"
-                    ><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(b)} title="Sửa"><Pencil className="h-4 w-4" /></Button>}
+                    {canDelete && (
+                      <Button
+                        size="icon" variant="ghost"
+                        onClick={() => { if (confirm(`Xóa backlink "${b.name}"?`)) s.remove("backlinks", b.id); }}
+                        title="Xóa"
+                      ><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    )}
                   </td>
                 </tr>
               ))}

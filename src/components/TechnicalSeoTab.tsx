@@ -13,10 +13,16 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Search, RotateCcw, CheckCircle2 } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 
 type StatusFilter = "all" | "done" | "todo";
 
 export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
+  const { can } = useCurrentUser();
+  const canCheck = can("web.tech_check");
+  const canEditDesc = can("web.tech_edit_desc");
+  const canReset = can("web.tech_reset");
   const s = useStore();
   const checks = s.seoChecks.filter((c) => c.websiteId === websiteId);
 
@@ -54,6 +60,7 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
   }, [filtered, groups]);
 
   const reset = () => {
+    if (!canReset) { toast.error("Bạn không có quyền reset checklist Technical SEO."); return; }
     if (!confirm("Reset checklist Technical SEO về mặc định? Trạng thái và ghi chú sẽ bị xóa.")) return;
     checks.forEach((c) => s.remove("seoChecks", c.id));
     // re-seed from template
@@ -102,7 +109,9 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
             </SelectContent>
           </Select>
           <div className="ml-auto">
-            <Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" />Reset checklist</Button>
+            {canReset && (
+              <Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" />Reset checklist</Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -146,6 +155,7 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
                                 className="h-7 text-xs mt-1.5"
                                 placeholder="Ghi chú nội bộ (tuỳ chọn)..."
                                 value={it.notes || ""}
+                                disabled={!canEditDesc}
                                 onChange={(e) => s.update("seoChecks", it.id, { notes: e.target.value })}
                               />
                             </td>
@@ -153,7 +163,11 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
                               <div className="flex items-center justify-center gap-1.5">
                                 <Checkbox
                                   checked={it.done}
-                                  onCheckedChange={(v) => s.update("seoChecks", it.id, { done: !!v, checkedAt: v ? todayISO() : undefined })}
+                                  disabled={!canCheck}
+                                  onCheckedChange={(v) => {
+                                    if (!canCheck) { toast.error("Bạn không có quyền tick checklist Technical SEO."); return; }
+                                    s.update("seoChecks", it.id, { done: !!v, checkedAt: v ? todayISO() : undefined });
+                                  }}
                                 />
                                 {it.done && <CheckCircle2 className="h-4 w-4 text-success" />}
                               </div>
@@ -163,6 +177,7 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
                                 rows={2}
                                 className="text-xs min-h-0 resize-y"
                                 value={it.description || ""}
+                                readOnly={!canEditDesc}
                                 onChange={(e) => s.update("seoChecks", it.id, { description: e.target.value })}
                               />
                             </td>
