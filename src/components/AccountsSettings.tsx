@@ -190,9 +190,10 @@ function PermissionDebugTab() {
             <span className="text-muted-foreground">Trạng thái: </span>
             <StatusBadge value={target.status} />
           </div>
-          {testKey && (
+          {testKey && explained && (
             <div className={`text-sm font-medium ${testResult ? "text-emerald-600" : "text-rose-600"}`}>
               can("{testKey}") = {testResult ? "TRUE — được phép" : "FALSE — bị chặn"}
+              <div className="text-xs text-muted-foreground font-normal mt-0.5">Lý do: {explained.reason}</div>
             </div>
           )}
           <div>
