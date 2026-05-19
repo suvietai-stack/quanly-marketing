@@ -639,6 +639,7 @@ export function ContentDetail({
                 { label: "Outline", v: c.outlineLink },
                 { label: "Bài viết", v: c.draftLink },
                 { label: "Ảnh", v: c.imageLink },
+                { label: "Bản nháp web", v: can("web.view_web_draft_url") ? c.webDraftLink : undefined },
                 { label: "Bài đã đăng", v: c.publishedLink },
                 { label: "Bài cũ (tối ưu)", v: c.oldLink },
               ].map((l) => (
