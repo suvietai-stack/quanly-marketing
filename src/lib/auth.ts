@@ -778,6 +778,7 @@ interface AuthState {
   addRole: (r: Omit<Role, "id">) => Promise<void>;
   updateRole: (id: ID, patch: Partial<Role>) => Promise<void>;
   removeRole: (id: ID) => Promise<void>;
+  restoreDefaultRoles: () => Promise<{ ok: boolean; count: number }>;
 
   // Compatibility no-op (used by existing code paths)
   ensureSeed: () => Promise<void>;
