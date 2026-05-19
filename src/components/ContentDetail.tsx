@@ -572,11 +572,8 @@ export function ContentDetail({
 
         {!editing && (
           <DialogFooter>
-            {can("web.content_cancel") && c.status !== "Hủy" && c.status !== "Hoàn thành" && (
+            {can("web.content_cancel") && c.status !== "Hoàn thành" && (
               <Button variant="ghost" onClick={cancelContent}>Hủy bài</Button>
-            )}
-            {can("web.content_restore") && c.status === "Hủy" && (
-              <Button variant="outline" onClick={restoreContent}>Khôi phục</Button>
             )}
             {can("web.content_delete") && (
               <Button variant="ghost" onClick={() => s.remove("webContents", c.id)}>Xoá</Button>
