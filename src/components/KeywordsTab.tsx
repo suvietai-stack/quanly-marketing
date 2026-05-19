@@ -456,10 +456,12 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                         <td className="px-3 py-2.5 align-top"><StatusBadge value={t?.status || "Chưa check"} /></td>
                         <td className="px-3 py-2.5 align-top text-muted-foreground text-xs">{t?.owner || "—"}</td>
                         <td className="px-3 py-2.5 align-top text-right whitespace-nowrap">
-                          <Button size="sm" variant="outline" onClick={() => setUpdating({ row: g.mainRow })} disabled={noMain}>
-                            <RefreshCw className="h-3.5 w-3.5" />Cập nhật TOP
-                          </Button>
-                          {!noMain && (
+                          {canPrimary && (
+                            <Button size="sm" variant="outline" onClick={() => setUpdating({ row: g.mainRow })} disabled={noMain}>
+                              <RefreshCw className="h-3.5 w-3.5" />Cập nhật TOP
+                            </Button>
+                          )}
+                          {!noMain && canKwDelete && (
                             <Button size="icon" variant="ghost" title="Xóa từ khóa chính" onClick={() => deleteMain(g.contentId, g.mainRow.keyword, g.mainRow.track?.id)}>
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
