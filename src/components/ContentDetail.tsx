@@ -168,7 +168,7 @@ function WorkflowActions({
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
             {canApprove && (
-              <ActionButton onClick={() => apply({ to: "Bài đã duyệt", action: "Duyệt bài", extra: { draftReviewNotes: undefined } })}>
+              <ActionButton onClick={() => apply({ to: "Bài viết đã duyệt", action: "Duyệt bài", extra: { draftReviewNotes: undefined } })}>
                 <Check className="h-4 w-4" />Duyệt bài
               </ActionButton>
             )}
@@ -212,7 +212,112 @@ function WorkflowActions({
           </div>
         </div>
       ) : <NoPerm />;
-    case "Bài đã duyệt":
+    case "Bài viết đã duyệt":
+      return canAct("web.start_web_draft_layout") ? (
+        <ActionButton onClick={() => apply({ to: "Đang trình bày nháp web", action: "Bắt đầu trình bày nháp web" })}>
+          <ArrowRight className="h-4 w-4" />Bắt đầu trình bày nháp web
+        </ActionButton>
+      ) : <NoPerm />;
+    case "Đang trình bày nháp web": {
+      const canEditUrl = can("web.edit_web_draft_url");
+      const canSubmit = canAct("web.submit_web_draft_review");
+      if (!canSubmit && !canEditUrl) return <NoPerm />;
+      return (
+        <div className="space-y-2">
+          <Label className="text-xs">Link bản nháp web</Label>
+          <Input
+            value={webDraftLink}
+            onChange={(e) => setWebDraftLink(e.target.value)}
+            placeholder="https://... (URL preview/draft)"
+            readOnly={!canEditUrl}
+            disabled={!canEditUrl}
+          />
+          {canSubmit && (
+            <Button
+              disabled={!webDraftLink.trim()}
+              onClick={() => apply({
+                to: "Chờ duyệt bản nháp web",
+                action: "Gửi duyệt bản nháp web",
+                extra: { webDraftLink, webDraftSubmittedAt: new Date().toISOString() },
+              })}
+            >Gửi duyệt bản nháp web</Button>
+          )}
+        </div>
+      );
+    }
+    case "Chờ duyệt bản nháp web": {
+      const canApprove = canAct("web.approve_web_draft");
+      const canReject = canAct("web.request_web_draft_revision");
+      if (!canApprove && !canReject) return <NoPerm />;
+      return (
+        <div className="space-y-2">
+          {c.webDraftLink && (
+            <div className="text-xs">
+              Bản nháp:{" "}
+              <a href={c.webDraftLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                {c.webDraftLink} <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {canApprove && (
+              <ActionButton onClick={() => apply({
+                to: "Bản nháp web đã duyệt",
+                action: "Duyệt bản nháp web",
+                extra: { webDraftReviewNotes: undefined, webDraftApprovedAt: new Date().toISOString() },
+              })}>
+                <Check className="h-4 w-4" />Duyệt bản nháp web
+              </ActionButton>
+            )}
+            {canReject && (
+              <ActionButton variant="destructive" onClick={() => {
+                if (!reviewNote.trim()) { toast.error("Vui lòng nhập ghi chú yêu cầu sửa."); return; }
+                apply({
+                  to: "Cần sửa bản nháp web",
+                  action: "Yêu cầu sửa bản nháp web",
+                  note: reviewNote,
+                  extra: {
+                    webDraftReviewNotes: reviewNote,
+                    webDraftRevisions: (c.webDraftRevisions || 0) + 1,
+                  },
+                });
+                setReviewNote("");
+              }}><X className="h-4 w-4" />Yêu cầu sửa bản nháp web</ActionButton>
+            )}
+          </div>
+          {canReject && (
+            <Textarea rows={2} placeholder="Ghi chú yêu cầu sửa bản nháp web (bắt buộc)..." value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} />
+          )}
+        </div>
+      );
+    }
+    case "Cần sửa bản nháp web":
+      return canAct("web.resubmit_web_draft_review") ? (
+        <div className="space-y-2">
+          {c.webDraftReviewNotes && can("web.view_web_draft_revision_note") && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+              <div className="text-xs font-semibold text-destructive mb-1">Yêu cầu sửa bản nháp web (lần {c.webDraftRevisions}):</div>
+              {c.webDraftReviewNotes}
+            </div>
+          )}
+          <Label className="text-xs">Cập nhật link bản nháp web</Label>
+          <Input
+            value={webDraftLink}
+            onChange={(e) => setWebDraftLink(e.target.value)}
+            readOnly={!can("web.edit_web_draft_url")}
+            disabled={!can("web.edit_web_draft_url")}
+          />
+          <Button
+            disabled={!webDraftLink.trim()}
+            onClick={() => apply({
+              to: "Chờ duyệt bản nháp web",
+              action: "Gửi duyệt lại bản nháp web",
+              extra: { webDraftLink, webDraftSubmittedAt: new Date().toISOString() },
+            })}
+          >Gửi duyệt lại bản nháp web</Button>
+        </div>
+      ) : <NoPerm />;
+    case "Bản nháp web đã duyệt":
       return canAct("web.move_pending_publish") ? (
         <ActionButton onClick={() => apply({ to: "Chờ đăng web", action: "Chuyển sang chờ đăng" })}>
           <ArrowRight className="h-4 w-4" />Chuyển sang chờ đăng
