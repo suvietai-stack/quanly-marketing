@@ -15,6 +15,8 @@ import {
   ChevronDown, ChevronRight, RefreshCw, ArrowUp, ArrowDown, Minus,
   ExternalLink, Plus, AlertTriangle, Trash2,
 } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 
 // ----- helpers -----
 function deriveStatus(cur?: number, prev?: number): KeywordRankStatus {
