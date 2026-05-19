@@ -206,6 +206,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
 
   // ----- Save TOP update -----
   const saveTop = (row: Row, payload: { cur?: number; date: string; note: string; targetUrl?: string }) => {
+    const requiredPerm = row.isMain ? canPrimary : canSecondary;
+    if (!requiredPerm) {
+      toast.error(`Bạn không có quyền cập nhật TOP từ khóa ${row.isMain ? "chính" : "phụ"}.`);
+      return;
+    }
     const existing = row.track;
     const prev = existing?.currentTop;
     const finalStatus: KeywordRankStatus = (() => {
