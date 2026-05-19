@@ -502,6 +502,7 @@ function RolesTab({ canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [editing, setEditing] = useState<Role | null>(null);
   const [adding, setAdding] = useState(false);
+  const isSuperAdmin = !!s.currentUser?.isSystemAdmin || s.roles.find((r) => r.id === s.currentUser?.roleId)?.name === "Super Admin";
 
   return <>
     {canManage && (
