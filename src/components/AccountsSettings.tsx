@@ -609,7 +609,15 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
   const set = new Set(value);
   const toggle = (k: PermissionKey) => {
     const next = new Set(set);
-    if (next.has(k)) next.delete(k); else next.add(k);
+    if (next.has(k)) {
+      // Untick: also untick all dependents (children that require this key)
+      next.delete(k);
+      for (const dep of allDependents(k)) next.delete(dep);
+    } else {
+      // Tick: also tick all parent dependencies
+      next.add(k);
+      for (const parent of allDependencies(k)) next.add(parent);
+    }
     onChange([...next]);
   };
 
@@ -636,9 +644,22 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
 
   const setMany = (keys: PermissionKey[], on: boolean) => {
     const next = new Set(set);
-    if (on) keys.forEach((k) => next.add(k)); else keys.forEach((k) => next.delete(k));
+    if (on) {
+      keys.forEach((k) => {
+        next.add(k);
+        for (const p of allDependencies(k)) next.add(p);
+      });
+    } else {
+      keys.forEach((k) => {
+        next.delete(k);
+        for (const d of allDependents(k)) next.delete(d);
+      });
+    }
     onChange([...next]);
   };
+
+  // Audit broken deps to surface visual warnings
+  const broken = useMemo(() => new Map(auditDependencies(value).map((b) => [b.key, b.missing])), [value]);
 
   const totalSelected = value.length;
   const totalAll = PERMISSIONS.length;
