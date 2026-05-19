@@ -251,6 +251,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   };
 
   const addSub = (cid: string) => {
+    if (!canKwCreate) { toast.error("Bạn không có quyền thêm từ khóa phụ."); return; }
     const kw = newSub.trim();
     if (!kw) return;
     // append to content's subKeywords so it persists as part of the article
@@ -267,6 +268,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   };
 
   const deleteSub = (cid: string, kw: string, trackId?: string) => {
+    if (!canKwDelete) { toast.error("Bạn không có quyền xóa từ khóa phụ."); return; }
     if (!confirm(`Xóa từ khóa phụ "${kw}"?`)) return;
     const c = s.webContents.find((x) => x.id === cid);
     if (c) {
@@ -277,10 +279,12 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
   };
 
   const deleteMain = (cid: string, kw: string, trackId?: string) => {
+    if (!canKwDelete) { toast.error("Bạn không có quyền xóa từ khóa chính."); return; }
     if (!confirm(`Xóa từ khóa chính "${kw}" khỏi bài viết?`)) return;
     s.update("webContents", cid, { mainKeyword: "" });
     if (trackId) s.remove("keywords", trackId);
   };
+
 
   const addManualKeyword = (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => {
     const kw = p.keyword.trim();
