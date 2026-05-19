@@ -13,10 +13,16 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Search, RotateCcw, CheckCircle2 } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
+import { toast } from "sonner";
 
 type StatusFilter = "all" | "done" | "todo";
 
 export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
+  const { can } = useCurrentUser();
+  const canCheck = can("web.tech_check");
+  const canEditDesc = can("web.tech_edit_desc");
+  const canReset = can("web.tech_reset");
   const s = useStore();
   const checks = s.seoChecks.filter((c) => c.websiteId === websiteId);
 
