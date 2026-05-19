@@ -83,6 +83,12 @@ function matchesQuick(quick: string, t?: KeywordTrack): boolean {
 
 export function KeywordsTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canPrimary = can("web.checktop_primary");
+  const canSecondary = can("web.checktop_secondary");
+  const canKwCreate = can("web.checktop_kw_create");
+  const canKwDelete = can("web.checktop_kw_delete");
+  const canOpenUrl = can("web.checktop_open_url");
   const allKw = s.keywords.filter((k) => k.websiteId === websiteId);
   const indexedContents = s.webContents.filter(
     (c) => c.websiteId === websiteId && c.indexStatus === "Đã index",
