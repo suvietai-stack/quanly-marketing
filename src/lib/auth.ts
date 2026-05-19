@@ -545,7 +545,12 @@ const taskMine = ["task.view", "task.view_mine", "task.accept", "task.update_sta
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   // Super Admin handled at runtime (returns true for any key) — also gets ALL_PERMS persisted.
   "role-super-admin": ALL_PERMS.slice(),
-  "role-admin": ALL_PERMS.filter((k) => k !== "settings.user_delete"),
+  // Admin: gần như toàn quyền, NHƯNG không quản lý role/ma trận/quyền riêng — chỉ Super Admin.
+  "role-admin": ALL_PERMS.filter((k) => ![
+    "settings.role",
+    "settings.permission",
+    "settings.user_custom_perm",
+  ].includes(k)),
   "role-leader-marketing": [
     ...ALL_PERMS.filter((k) =>
       k.startsWith("overview.") ||
@@ -563,6 +568,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     !["web.force_status", "social.post_force_status", "video.force_status", "order.force_status",
       "settings.user_delete", "settings.user_create", "settings.role", "settings.permission",
       "settings.user_custom_perm", "settings.assign_role", "settings.account_approve",
+      "settings.user_reset_password",
     ].includes(k)
   ),
   "role-seo": [
@@ -576,6 +582,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "web.keyword_view", "web.keyword_topic_create", "web.keyword_topic_edit", "web.keyword_topic_delete",
     "web.keyword_open_sheet", "web.keyword_manage_sheet",
     "web.content_view", "web.content_view_all", "web.content_history",
+    // SEO mặc định có thể duyệt / yêu cầu sửa outline (theo spec)
+    "web.outline_approve", "web.outline_reject",
     "web.index_view", "web.update_index", "web.update_share", "web.update_share_date",
     "web.select_shared_entity", "web.edit_published_url", "web.open_published_url",
     "web.backlink_view", "web.backlink_create", "web.backlink_edit", "web.backlink_delete",
@@ -606,17 +614,22 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "social.view", "social.view_mine", "social.manage_info",
     "social.post_view", "social.post_view_mine", "social.post_create", "social.post_edit",
     "social.post_start", "social.post_submit", "social.post_resubmit",
+    // Chuyển chờ đăng / xác nhận đã đăng / hoàn thành — theo spec
+    "social.post_move_pending_publish", "social.post_confirm_published", "social.post_complete",
     "social.post_history",
-    "social.growth_view",
+    "social.growth_view", "social.growth_create", "social.growth_edit", "social.growth_update", "social.growth_open",
   ],
   "role-local-seo": [
     ...overviewMine,
     ...taskMine,
     "brand.view",
     "local.view", "local.view_mine",
+    // Tạo/sửa địa điểm nếu được giao — theo spec
+    "local.create", "local.edit",
     "local.post_create", "local.post_edit", "local.photo", "local.products",
-    "local.review", "local.review_reply",
-    "local.growth_view",
+    "local.review", "local.review_reply", "local.review_status",
+    "local.growth_view", "local.growth_create", "local.growth_edit",
+    "local.report",
   ],
   "role-designer": [
     ...overviewMine,
@@ -647,6 +660,40 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "order.view", "order.view_all",
   ],
 };
+
+/**
+ * 10 role mặc định của hệ thống — id ổn định, dùng cho seed + nút "Khôi phục quyền mặc định".
+ * is_system = true → không cho phép xóa/đổi tên ở UI (chỉ Super Admin & Admin).
+ */
+export interface DefaultRoleMeta {
+  id: string;
+  name: string;
+  description: string;
+  is_system: boolean;
+}
+export const DEFAULT_ROLES_META: DefaultRoleMeta[] = [
+  { id: "role-super-admin",      name: "Super Admin",           description: "Toàn quyền hệ thống, không thể bị hạn chế.", is_system: true },
+  { id: "role-admin",            name: "Admin",                 description: "Quản trị app hằng ngày — gần như toàn quyền, không quản lý role/phân quyền.", is_system: true },
+  { id: "role-leader-marketing", name: "Leader Marketing",      description: "Điều phối, giao việc, duyệt workflow toàn phòng marketing.", is_system: false },
+  { id: "role-seo",              name: "SEO",                   description: "Phụ trách SEO website (technical, entity, keyword, backlink, check top, tăng trưởng).", is_system: false },
+  { id: "role-content-web",      name: "Content Web",           description: "Viết & gửi duyệt content website.", is_system: false },
+  { id: "role-social",           name: "Social",                description: "Sản xuất & vận hành nội dung social.", is_system: false },
+  { id: "role-local-seo",        name: "Local SEO",             description: "Quản lý Google Map / Local Map.", is_system: false },
+  { id: "role-designer",         name: "Designer / Chụp ảnh",   description: "Xử lý order thiết kế, chụp ảnh, retouch.", is_system: false },
+  { id: "role-video",            name: "Video",                 description: "Sản xuất video.", is_system: false },
+  { id: "role-viewer",           name: "Viewer / Ban Giám Đốc", description: "Chỉ xem tổng quan, báo cáo, tình hình vận hành.", is_system: false },
+];
+
+/** Payload dùng khi gọi restoreDefaultRoles — client gửi nguồn TS cho server upsert. */
+export function buildDefaultRolesPayload() {
+  return DEFAULT_ROLES_META.map((r) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    is_system: r.is_system,
+    permissions: DEFAULT_ROLE_PERMISSIONS[r.id] ?? [],
+  }));
+}
 
 // Map legacy permission keys → new keys, so old code keeps working.
 export const PERMISSION_ALIAS: Record<string, string> = {
@@ -731,6 +778,7 @@ interface AuthState {
   addRole: (r: Omit<Role, "id">) => Promise<void>;
   updateRole: (id: ID, patch: Partial<Role>) => Promise<void>;
   removeRole: (id: ID) => Promise<void>;
+  restoreDefaultRoles: () => Promise<{ ok: boolean; count: number }>;
 
   // Compatibility no-op (used by existing code paths)
   ensureSeed: () => Promise<void>;
@@ -809,6 +857,21 @@ export const useAuth = create<AuthState>((set, get) => ({
       system: !!r.is_system,
     }));
     set({ users, roles, loaded: true });
+
+    // Auto-bootstrap: nếu Super Admin / tài khoản hệ thống đăng nhập mà các role
+    // mặc định chưa có permissions → tự nạp một lần.
+    const me = users.find((u) => u.id === get().currentUserId);
+    const iAmSuper = me?.system || me?.roleId === SUPER_ADMIN_ID;
+    const needsSeed = roles.some(
+      (r) => DEFAULT_ROLES_META.some((d) => d.id === r.id) && r.permissions.length === 0,
+    );
+    if (iAmSuper && needsSeed) {
+      try {
+        await get().restoreDefaultRoles();
+      } catch (e) {
+        console.warn("Auto bootstrap roles failed:", e);
+      }
+    }
   },
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
@@ -1012,6 +1075,13 @@ export const useAuth = create<AuthState>((set, get) => ({
     const { error } = await supabase.from("app_roles").delete().eq("id", id);
     if (error) throw new Error(error.message);
     await get().reload();
+  },
+
+  restoreDefaultRoles: async () => {
+    const { restoreDefaultRoles: callRestore } = await import("@/lib/roles.functions");
+    const res = await callRestore({ data: { roles: buildDefaultRolesPayload() } });
+    await get().reload();
+    return res;
   },
 }));
 

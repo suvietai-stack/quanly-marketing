@@ -505,7 +505,18 @@ function RolesTab({ canManage }: { canManage: boolean }) {
 
   return <>
     {canManage && (
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-end mb-3 gap-2">
+        {isSuperAdmin && (
+          <Button size="sm" variant="outline" onClick={async () => {
+            if (!confirm("Khôi phục quyền mặc định cho 10 role hệ thống?\n\n• Ghi đè permissions của các role mặc định về đúng bản gốc.\n• Không xóa user, không xóa dữ liệu, không ảnh hưởng quyền riêng theo user.")) return;
+            try {
+              const res = await s.restoreDefaultRoles();
+              toast.success(`Đã khôi phục ${res.count} role mặc định.`);
+            } catch (e: any) {
+              toast.error(e?.message || "Khôi phục thất bại");
+            }
+          }}><Shield className="h-4 w-4 mr-1.5" />Khôi phục quyền mặc định</Button>
+        )}
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm role</Button>
       </div>
     )}
