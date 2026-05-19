@@ -575,7 +575,7 @@ export function ContentDetail({
             <TabsContent value="workflow" className="mt-3 space-y-4">
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-2">Hành động tiếp theo</div>
-                <Card><CardContent className="p-4"><WorkflowActions c={c} apply={apply} canAct={canAct} /></CardContent></Card>
+                <Card><CardContent className="p-4"><WorkflowActions c={c} apply={apply} canAct={canAct} can={can} /></CardContent></Card>
               </div>
               {can("web.force_status") && c.status !== "Hoàn thành" && (
                 <ForceStatusPanel c={c} apply={apply} />
