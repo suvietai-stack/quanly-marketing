@@ -15,6 +15,7 @@ import {
 import { DialogFooter } from "@/components/ui/dialog";
 import { ExternalLink, Plus } from "lucide-react";
 import { TopicDialog } from "@/components/KeywordResearchTab";
+import { useCurrentUser } from "@/lib/auth";
 
 export function ContentForm({
   initial, websiteId, brandId, onSubmit, onClose, lockWebsite = true,
