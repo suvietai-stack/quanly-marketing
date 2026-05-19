@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Plus, ExternalLink, Pencil, Trash2, Link2 } from "lucide-react";
+import { useCurrentUser } from "@/lib/auth";
 
 function TopicSelect({ websiteId, value, onChange }: { websiteId: string; value?: string; onChange: (v: string | undefined) => void }) {
   const list = useStore((st) => st.webTopics).filter((t) => t.websiteId === websiteId);
