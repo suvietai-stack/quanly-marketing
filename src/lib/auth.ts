@@ -600,6 +600,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "web.content_view", "web.content_view_all", "web.content_history",
     // SEO mặc định có thể duyệt / yêu cầu sửa outline (theo spec)
     "web.outline_approve", "web.outline_reject",
+    // SEO kiểm tra onpage trước đăng
+    "web.view_web_draft_url", "web.approve_web_draft", "web.request_web_draft_revision",
+    "web.view_web_draft_revision_note",
     "web.index_view", "web.update_index", "web.update_share", "web.update_share_date",
     "web.select_shared_entity", "web.edit_published_url", "web.open_published_url",
     "web.backlink_view", "web.backlink_create", "web.backlink_edit", "web.backlink_delete",
@@ -621,6 +624,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "web.content_history", "web.content_note",
     "web.outline_start", "web.outline_submit", "web.outline_resubmit",
     "web.post_write_start", "web.post_submit", "web.post_resubmit",
+    "web.move_pending_publish", "web.publish",
+    "web.view_web_draft_url", "web.edit_web_draft_url", "web.start_web_draft_layout",
+    "web.submit_web_draft_review", "web.resubmit_web_draft_review",
+    "web.view_web_draft_revision_note",
     "web.index_view", "web.open_published_url",
   ],
   "role-social": [
