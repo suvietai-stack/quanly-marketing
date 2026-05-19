@@ -155,6 +155,7 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
                                 className="h-7 text-xs mt-1.5"
                                 placeholder="Ghi chú nội bộ (tuỳ chọn)..."
                                 value={it.notes || ""}
+                                disabled={!canEditDesc}
                                 onChange={(e) => s.update("seoChecks", it.id, { notes: e.target.value })}
                               />
                             </td>
@@ -162,7 +163,11 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
                               <div className="flex items-center justify-center gap-1.5">
                                 <Checkbox
                                   checked={it.done}
-                                  onCheckedChange={(v) => s.update("seoChecks", it.id, { done: !!v, checkedAt: v ? todayISO() : undefined })}
+                                  disabled={!canCheck}
+                                  onCheckedChange={(v) => {
+                                    if (!canCheck) { toast.error("Bạn không có quyền tick checklist Technical SEO."); return; }
+                                    s.update("seoChecks", it.id, { done: !!v, checkedAt: v ? todayISO() : undefined });
+                                  }}
                                 />
                                 {it.done && <CheckCircle2 className="h-4 w-4 text-success" />}
                               </div>
@@ -172,6 +177,7 @@ export function TechnicalSeoTab({ websiteId }: { websiteId: string }) {
                                 rows={2}
                                 className="text-xs min-h-0 resize-y"
                                 value={it.description || ""}
+                                readOnly={!canEditDesc}
                                 onChange={(e) => s.update("seoChecks", it.id, { description: e.target.value })}
                               />
                             </td>
