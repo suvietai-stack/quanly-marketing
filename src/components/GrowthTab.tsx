@@ -84,8 +84,15 @@ function MetricCompareCard({
   );
 }
 
+import { useCurrentUser } from "@/lib/auth";
+
 export function GrowthTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.growth_create");
+  const canEdit = can("web.growth_edit");
+  const canDelete = can("web.growth_delete");
+  const canOpen = can("web.growth_open");
   const all = s.growth.filter((g) => g.websiteId === websiteId);
 
   const [filterType, setFilterType] = useState<"all" | GrowthPeriodType>("all");
