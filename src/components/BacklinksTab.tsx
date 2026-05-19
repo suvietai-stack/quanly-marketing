@@ -39,6 +39,11 @@ const fmtMoney = (n?: number) =>
 
 export function BacklinksTab({ websiteId }: { websiteId: string }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canCreate = can("web.backlink_create");
+  const canEdit = can("web.backlink_edit");
+  const canDelete = can("web.backlink_delete");
+  const canOpen = can("web.backlink_open");
   const all = s.backlinks.filter((b) => b.websiteId === websiteId);
   const publishedContents = s.webContents.filter(
     (c) => c.websiteId === websiteId && c.publishedLink
