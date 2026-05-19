@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   ListChecks, AlertTriangle, Clock, CheckCircle2, Globe, Share2,
-  MapPin, Video, Palette, Inbox, ShieldCheck, Hourglass, ArrowRight,
+  MapPin, Video, Palette, Inbox, Hourglass, ArrowRight,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
