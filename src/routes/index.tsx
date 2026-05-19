@@ -86,7 +86,8 @@ function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
 function Overview() {
   const { user, can, isSuperAdmin } = useCurrentUser();
   const canSeeAllDept = isSuperAdmin || can("overview.all_dept") || can("report.view");
-  const [tab, setTab] = useState<"mine" | "all">(canSeeAllDept && !user ? "all" : "mine");
+  const [tab, setTab] = useState<"mine" | "all">("mine");
+  void user;
 
   return (
     <>
