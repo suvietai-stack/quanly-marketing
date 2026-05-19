@@ -857,6 +857,21 @@ export const useAuth = create<AuthState>((set, get) => ({
       system: !!r.is_system,
     }));
     set({ users, roles, loaded: true });
+
+    // Auto-bootstrap: nếu Super Admin / tài khoản hệ thống đăng nhập mà các role
+    // mặc định chưa có permissions → tự nạp một lần.
+    const me = users.find((u) => u.id === get().currentUserId);
+    const iAmSuper = me?.system || me?.roleId === SUPER_ADMIN_ID;
+    const needsSeed = roles.some(
+      (r) => DEFAULT_ROLES_META.some((d) => d.id === r.id) && r.permissions.length === 0,
+    );
+    if (iAmSuper && needsSeed) {
+      try {
+        await get().restoreDefaultRoles();
+      } catch (e) {
+        console.warn("Auto bootstrap roles failed:", e);
+      }
+    }
   },
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
