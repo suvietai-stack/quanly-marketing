@@ -216,11 +216,11 @@ export function GrowthTab({ websiteId }: { websiteId: string }) {
                   <td className="px-3 py-2 text-muted-foreground text-xs whitespace-nowrap">{fmtDate(g.updatedAt)}</td>
                   <td className="px-3 py-2 text-muted-foreground text-xs max-w-[200px] truncate" title={g.notes}>{g.notes || "—"}</td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
-                    {g.reportLink && (
+                    {g.reportLink && canOpen && (
                       <Button asChild size="sm" variant="ghost"><a href={g.reportLink} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(g)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => { if (confirm("Xóa kỳ báo cáo này?")) s.remove("growth", g.id); }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                    {canEdit && <Button size="sm" variant="ghost" onClick={() => setEditing(g)}><Pencil className="h-3.5 w-3.5" /></Button>}
+                    {canDelete && <Button size="sm" variant="ghost" onClick={() => { if (confirm("Xóa kỳ báo cáo này?")) s.remove("growth", g.id); }}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>}
                   </td>
                 </tr>
               ))}
