@@ -585,10 +585,15 @@ export function ContentDetail({
                 <FieldRow k="Người duyệt outline" v={c.outlineReviewer} />
                 <FieldRow k="Người duyệt bài" v={c.draftReviewer} />
                 <FieldRow k="Người đăng" v={c.publisher} />
+                <FieldRow k="Người trình bày nháp web" v={c.webDraftLayoutBy || c.publisher} />
+                <FieldRow k="Người duyệt bản nháp web" v={c.webDraftReviewer} />
                 <FieldRow k="Deadline outline" v={fmtDate(c.outlineDeadline)} />
                 <FieldRow k="Deadline bài viết" v={fmtDate(c.deadline)} />
                 <FieldRow k="Số lần sửa outline" v={c.outlineRevisions || 0} />
                 <FieldRow k="Số lần sửa bài" v={c.draftRevisions || 0} />
+                <FieldRow k="Số lần sửa nháp web" v={c.webDraftRevisions || 0} />
+                <FieldRow k="Ngày gửi duyệt nháp web" v={c.webDraftSubmittedAt ? new Date(c.webDraftSubmittedAt).toLocaleString("vi-VN") : "—"} />
+                <FieldRow k="Ngày duyệt nháp web" v={c.webDraftApprovedAt ? new Date(c.webDraftApprovedAt).toLocaleString("vi-VN") : "—"} />
               </div>
               {c.outlineReviewNotes && (
                 <div className="rounded-md border border-warning/30 bg-warning/5 p-3 text-sm">
@@ -600,6 +605,12 @@ export function ContentDetail({
                 <div className="rounded-md border border-warning/30 bg-warning/5 p-3 text-sm">
                   <div className="text-xs font-semibold mb-1">Ghi chú sửa bài gần nhất</div>
                   {c.draftReviewNotes}
+                </div>
+              )}
+              {c.webDraftReviewNotes && can("web.view_web_draft_revision_note") && (
+                <div className="rounded-md border border-warning/30 bg-warning/5 p-3 text-sm">
+                  <div className="text-xs font-semibold mb-1">Ghi chú sửa bản nháp web gần nhất</div>
+                  {c.webDraftReviewNotes}
                 </div>
               )}
             </TabsContent>
