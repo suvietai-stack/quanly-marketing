@@ -81,15 +81,6 @@ function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
   return mine.has(norm(value));
 }
 
-function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
-  if (!value) return false;
-  return mine.has(value.toLowerCase());
-}
-
-function anyMine(values: (string | undefined)[], mine: Set<string>): boolean {
-  return values.some((v) => isMineByNames(v, mine));
-}
-
 // ============ Component ============
 
 function Overview() {
