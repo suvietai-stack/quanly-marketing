@@ -287,6 +287,7 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
 
 
   const addManualKeyword = (p: { contentId?: string; isMain: boolean; keyword: string; targetUrl?: string }) => {
+    if (!canKwCreate) { toast.error("Bạn không có quyền thêm từ khóa."); return; }
     const kw = p.keyword.trim();
     if (!kw) return;
     if (p.contentId) {
