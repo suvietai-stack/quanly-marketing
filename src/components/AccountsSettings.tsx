@@ -128,7 +128,27 @@ function PermissionDebugTab() {
     : target.useCustom ? "Quyền riêng (ghi đè role)"
     : `Theo role: ${role?.name ?? "(chưa gán)"}`;
 
-  const testResult = testKey ? (effective.has(testKey) || (target?.system || target?.roleId === SUPER_ADMIN_ID)) : null;
+  const explained = useMemo(() => {
+    if (!target || !testKey) return null;
+    return explainPermission(target, s.roles, testKey);
+  }, [target, testKey, s.roles]);
+  const testResult = explained?.ok ?? null;
+
+  // Audit across roles + users with custom perms
+  const audit = useMemo(() => {
+    const rows: { kind: string; name: string; issues: { key: string; missing: string[] }[] }[] = [];
+    for (const r of s.roles) {
+      if (r.id === SUPER_ADMIN_ID) continue;
+      const issues = auditDependencies(r.permissions || []);
+      if (issues.length) rows.push({ kind: "Role", name: r.name, issues });
+    }
+    for (const u of s.users) {
+      if (!u.useCustom) continue;
+      const issues = auditDependencies(u.customPermissions || []);
+      if (issues.length) rows.push({ kind: "User (quyền riêng)", name: u.fullName || u.username, issues });
+    }
+    return rows;
+  }, [s.roles, s.users]);
 
   return (
     <Card><CardContent className="p-5 space-y-4">
