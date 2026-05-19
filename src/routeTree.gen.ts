@@ -14,6 +14,7 @@ import { Route as VideosRouteImport } from './routes/videos'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PendingRouteImport } from './routes/pending'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
@@ -50,6 +51,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendingRoute = PendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersRoute = OrdersRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
+  '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
+  '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
+  '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/okrs'
     | '/orders'
+    | '/pending'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/okrs'
     | '/orders'
+    | '/pending'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/okrs'
     | '/orders'
+    | '/pending'
     | '/register'
     | '/settings'
     | '/tasks'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
+  PendingRoute: typeof PendingRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pending': {
+      id: '/pending'
+      path: '/pending'
+      fullPath: '/pending'
+      preLoaderRoute: typeof PendingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orders': {
@@ -391,6 +411,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
+  PendingRoute: PendingRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
@@ -406,3 +427,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
