@@ -199,20 +199,26 @@ export function BacklinksTab({ websiteId }: { websiteId: string }) {
                   <td className="px-3 py-2"><StatusBadge value={b.status} /></td>
                   <td className="px-3 py-2 text-center">
                     {b.publishedLink ? (
-                      <a href={b.publishedLink} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center text-primary hover:underline" title="Mở link bài đã đăng">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
+                      canOpen ? (
+                        <a href={b.publishedLink} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center text-primary hover:underline" title="Mở link bài đã đăng">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground" title="Không có quyền mở link"><Link2 className="h-4 w-4 inline opacity-40" /></span>
+                      )
                     ) : (
                       <span className="text-muted-foreground"><Link2 className="h-4 w-4 inline opacity-40" /></span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" onClick={() => setEditing(b)} title="Sửa"><Pencil className="h-4 w-4" /></Button>
-                    <Button
-                      size="icon" variant="ghost"
-                      onClick={() => { if (confirm(`Xóa backlink "${b.name}"?`)) s.remove("backlinks", b.id); }}
-                      title="Xóa"
-                    ><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    {canEdit && <Button size="icon" variant="ghost" onClick={() => setEditing(b)} title="Sửa"><Pencil className="h-4 w-4" /></Button>}
+                    {canDelete && (
+                      <Button
+                        size="icon" variant="ghost"
+                        onClick={() => { if (confirm(`Xóa backlink "${b.name}"?`)) s.remove("backlinks", b.id); }}
+                        title="Xóa"
+                      ><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    )}
                   </td>
                 </tr>
               ))}
