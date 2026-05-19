@@ -515,9 +515,11 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                                   <Button size="sm" variant="ghost" onClick={() => { setAddingSubFor(null); setNewSub(""); }}>Hủy</Button>
                                 </div>
                               ) : (
-                                <Button size="sm" variant="ghost" className="text-xs" onClick={() => setAddingSubFor(g.contentId)}>
-                                  <Plus className="h-3.5 w-3.5" />Thêm từ khóa phụ
-                                </Button>
+                                canKwCreate && (
+                                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => setAddingSubFor(g.contentId)}>
+                                    <Plus className="h-3.5 w-3.5" />Thêm từ khóa phụ
+                                  </Button>
+                                )
                               )}
                             </td>
                           </tr>
