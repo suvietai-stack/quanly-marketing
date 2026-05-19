@@ -572,12 +572,16 @@ export function KeywordsTab({ websiteId }: { websiteId: string }) {
                           <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDate(k.lastCheckDate)}</td>
                           <td className="px-3 py-2"><StatusBadge value={k.status} /></td>
                           <td className="px-3 py-2 text-right whitespace-nowrap">
-                            <Button size="sm" variant="ghost" onClick={() => setUpdating({ row })}>
-                              <RefreshCw className="h-3.5 w-3.5" />Cập nhật
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa "${k.keyword}"?`)) s.remove("keywords", k.id); }}>
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
+                            {(k.isMain ? canPrimary : canSecondary) && (
+                              <Button size="sm" variant="ghost" onClick={() => setUpdating({ row })}>
+                                <RefreshCw className="h-3.5 w-3.5" />Cập nhật
+                              </Button>
+                            )}
+                            {canKwDelete && (
+                              <Button size="icon" variant="ghost" onClick={() => { if (confirm(`Xóa "${k.keyword}"?`)) s.remove("keywords", k.id); }}>
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       );
