@@ -24,11 +24,11 @@ function makeEmptyPost(channel: SocialChannel): SocialPost {
   };
 }
 
-function PostFormFields({ value, onChange }: { value: SocialPost; onChange: (p: SocialPost) => void }) {
+function InfoFields({ value, onChange }: { value: SocialPost; onChange: (p: SocialPost) => void }) {
   const { people, plans, topics } = useStore();
   const set = (x: Partial<SocialPost>) => onChange({ ...value, ...x });
   return (
-    <div className="grid gap-3 sm:grid-cols-2 max-h-[60vh] overflow-y-auto pr-1">
+    <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2"><Label>Tên bài đăng *</Label>
         <Input value={value.title} onChange={(e) => set({ title: e.target.value })} /></div>
       <div><Label>Loại nội dung</Label>
@@ -72,15 +72,33 @@ function PostFormFields({ value, onChange }: { value: SocialPost; onChange: (p: 
         <Input type="date" value={value.publishedDate || ""} onChange={(e) => set({ publishedDate: e.target.value })} /></div>
       <div className="sm:col-span-2"><Label>Caption / Nội dung</Label>
         <Textarea rows={3} value={value.caption || ""} onChange={(e) => set({ caption: e.target.value })} /></div>
-      <div><Label>Link ảnh / video</Label>
-        <Input value={value.mediaLink || ""} onChange={(e) => set({ mediaLink: e.target.value })} /></div>
-      <div><Label>Link bài đã đăng</Label>
-        <Input value={value.publishedLink || ""} onChange={(e) => set({ publishedLink: e.target.value })} /></div>
       <div className="sm:col-span-2"><Label>Ghi chú</Label>
         <Textarea rows={2} value={value.notes || ""} onChange={(e) => set({ notes: e.target.value })} /></div>
     </div>
   );
 }
+
+function DocsFields({ value, onChange }: { value: SocialPost; onChange: (p: SocialPost) => void }) {
+  const set = (x: Partial<SocialPost>) => onChange({ ...value, ...x });
+  return (
+    <div className="grid gap-3">
+      <div><Label>Link ảnh / video</Label>
+        <Input value={value.mediaLink || ""} onChange={(e) => set({ mediaLink: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+      <div><Label>Link bài đã đăng</Label>
+        <Input value={value.publishedLink || ""} onChange={(e) => set({ publishedLink: e.target.value })} placeholder="https://facebook.com/..." /></div>
+    </div>
+  );
+}
+
+function PostFormFields({ value, onChange }: { value: SocialPost; onChange: (p: SocialPost) => void }) {
+  return (
+    <div className="max-h-[60vh] overflow-y-auto pr-1 space-y-4">
+      <InfoFields value={value} onChange={onChange} />
+      <DocsFields value={value} onChange={onChange} />
+    </div>
+  );
+}
+
 
 /** Dialog tạo bài mới — dùng từ trang danh sách kênh và workspace */
 export function PostFormDialog({
