@@ -373,7 +373,7 @@ function WorkTable({ items, empty }: { items: WorkItem[]; empty: string }) {
   );
 }
 
-}
+
 
 // ============ Department Dashboard ============
 
