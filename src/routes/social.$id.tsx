@@ -27,7 +27,7 @@ export const Route = createFileRoute("/social/$id")({
 function ChannelWorkspace() {
   const { id } = Route.useParams();
   const s = useStore();
-  const { can } = useCurrentUser();
+  const { can, scopeList, user } = useCurrentUser();
   const navigate = useNavigate();
   const c = s.socials.find((x) => x.id === id);
 
@@ -40,14 +40,23 @@ function ChannelWorkspace() {
   }
 
   const brand = s.brands.find((b) => b.id === c.brandId);
-  const posts = s.socialPosts.filter((p) => p.channelId === c.id);
+  const me = user?.fullName || user?.username;
+  const allChannelPosts = s.socialPosts.filter((p) => p.channelId === c.id);
+  const posts = scopeList(
+    allChannelPosts,
+    "social.post_view_all",
+    "social.post_view_mine",
+    (p) => !!me && (p.writer === me || p.reviewer === me || p.publisher === me || p.designer === me),
+  );
   const [adding, setAdding] = useState(false);
   const [editPost, setEditPost] = useState<SocialPost | null>(null);
   const [openPost, setOpenPost] = useState<SocialPost | null>(null);
 
+  const canPostView = can("social.post_view");
   const canPostCreate = can("social.post_create");
   const canPostEdit = can("social.post_edit");
   const canPostDelete = can("social.post_delete");
+
 
   return (
     <>
@@ -74,9 +83,10 @@ function ChannelWorkspace() {
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
-          <TabsTrigger value="production">Sản xuất nội dung ({posts.length})</TabsTrigger>
+          {canPostView && <TabsTrigger value="production">Sản xuất nội dung ({posts.length})</TabsTrigger>}
           <TabsTrigger value="growth">Theo dõi tăng trưởng</TabsTrigger>
         </TabsList>
+
 
         {/* TAB 1 */}
         <TabsContent value="info" className="mt-4 grid gap-4 lg:grid-cols-2">
