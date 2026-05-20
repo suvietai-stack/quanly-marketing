@@ -579,7 +579,30 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
 
 // ============ Default permissions per role ============
 const overviewMine = ["overview.view", "overview.alerts", "overview.own_only"];
-const taskMine = ["task.view", "task.view_mine", "task.accept", "task.update_status", "task.complete"];
+// Default Task perms for "doer" roles (Content/Social/Designer/Video/Local SEO).
+const taskMine = [
+  "task.view", "task.view_mine",
+  "task.start", "task.update_result",
+  "task.submit_completion", "task.resubmit_completion",
+  "task.view_history", "task.add_note",
+];
+// Default Task perms for SEO (có tạo + có thể tự sửa task của mình).
+const taskSeo = [
+  "task.view", "task.view_mine", "task.view_created_by_me",
+  "task.create", "task.edit",
+  "task.start", "task.update_result",
+  "task.submit_completion", "task.resubmit_completion",
+  "task.view_history", "task.add_note",
+];
+// Default Task perms cho Leader Marketing (giao việc + duyệt).
+const taskLeader = [
+  "task.view", "task.view_all",
+  "task.create", "task.edit",
+  "task.assign", "task.edit_assignee", "task.edit_deadline", "task.edit_priority",
+  "task.approve_completion", "task.request_revision",
+  "task.cancel", "task.reopen_completed",
+  "task.view_history", "task.add_note",
+];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   // Super Admin handled at runtime (returns true for any key) — also gets ALL_PERMS persisted.
