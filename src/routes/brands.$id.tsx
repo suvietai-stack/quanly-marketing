@@ -59,8 +59,8 @@ function BrandDetail() {
   const orders = s.orders.filter((o) => o.brandId === brand.id);
 
   const openTasks = tasks.filter((t) => t.status !== "Hoàn thành" && t.status !== "Đã hủy").length;
-  const producingContents = contents.filter((c) => c.status !== "Đã xuất bản" && c.status !== "Hủy").length;
-  const openOrders = orders.filter((o) => o.status !== "Hoàn thành" && o.status !== "Đã huỷ").length;
+  const producingContents = contents.filter((c) => c.status !== "Hoàn thành").length;
+  const openOrders = orders.filter((o) => o.status !== "Đã duyệt" && o.status !== "Đã hủy").length;
 
   const update = (patch: Partial<Brand>) => s.update("brands", brand.id, { ...brand, ...patch });
 
