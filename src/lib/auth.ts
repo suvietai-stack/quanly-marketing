@@ -636,7 +636,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   ),
   "role-seo": [
     ...overviewMine,
-    ...taskMine,
+    ...taskSeo,
     "brand.view",
     "web.view", "web.view_all", "web.open_detail", "web.manage_info",
     "web.tech_view", "web.tech_check", "web.tech_edit_desc",
