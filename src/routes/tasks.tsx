@@ -605,12 +605,45 @@ function Field({ label, value }: { label: string; value?: string }) {
 function DocRow({ label, url }: { label: string; url?: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground w-32 shrink-0">{label}</span>
+      <span className="text-xs text-muted-foreground w-40 shrink-0">{label}</span>
       {url ? (
-        <a href={url} target="_blank" rel="noreferrer" className="text-primary underline break-all">{url}</a>
+        <>
+          <a href={url} target="_blank" rel="noreferrer" className="text-primary underline break-all flex-1">{url}</a>
+          <Button size="sm" variant="outline" asChild><a href={url} target="_blank" rel="noreferrer">Mở link</a></Button>
+        </>
       ) : (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">Chưa có</span>
       )}
+    </div>
+  );
+}
+
+function FilesRow({ label, files }: { label: string; files?: { name?: string; url: string }[] }) {
+  if (!files || files.length === 0) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground w-40 shrink-0">{label}</span>
+        <span className="text-muted-foreground">Chưa có</span>
+      </div>
+    );
+  }
+  const isImg = (u: string) => /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(u);
+  return (
+    <div className="flex items-start gap-2">
+      <span className="text-xs text-muted-foreground w-40 shrink-0 pt-1">{label}</span>
+      <ul className="space-y-1 flex-1">
+        {files.map((f, i) => (
+          <li key={i} className="flex items-center gap-2 rounded border px-2 py-1">
+            {isImg(f.url) && (
+              <img src={f.url} alt={f.name || ""} className="h-10 w-10 object-cover rounded" loading="lazy" />
+            )}
+            <a href={f.url} target="_blank" rel="noreferrer" className="text-primary underline truncate flex-1">
+              {f.name || f.url}
+            </a>
+            <Button size="sm" variant="outline" asChild><a href={f.url} target="_blank" rel="noreferrer">Xem</a></Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
