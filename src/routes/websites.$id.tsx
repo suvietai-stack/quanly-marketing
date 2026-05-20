@@ -119,11 +119,20 @@ function WebsiteDetail() {
   // Entity & keyword stats for this website
   const entitiesList = s.entities.filter((e) => e.websiteId === w.id);
   const keywordsList = s.keywords.filter((k) => k.websiteId === w.id && isActiveKeywordTrack(k, s.webContents));
+  // Visible Check TOP rows = main keywords on indexed contents + sub keywords + standalone tracks
+  const indexedContents = contents.filter((c) => c.indexStatus === "Đã index");
+  const splitSubsCount = (str?: string) =>
+    (str || "").split(/[,;\n]/).map((x) => x.trim()).filter(Boolean).length;
+  const checkTopMainCount = indexedContents.filter((c) => (c.mainKeyword || "").trim()).length;
+  const checkTopSubCount = indexedContents.reduce((n, c) => n + splitSubsCount(c.subKeywords), 0);
+  const checkTopStandalone = s.keywords.filter((k) => k.websiteId === w.id && !k.contentId).length;
+  const checkTopVisibleCount = checkTopMainCount + checkTopSubCount + checkTopStandalone;
   const indexedNotShared = published.filter((c) => c.indexStatus === "Đã index" && !c.shareSocial).length;
   const sharedCount = published.filter((c) => c.shareSocial).length;
   const kwTop10 = keywordsList.filter((k) => k.currentTop != null && k.currentTop > 0 && k.currentTop <= 10).length;
   const kwUp = keywordsList.filter((k) => k.currentTop != null && k.previousTop != null && k.currentTop > 0 && k.currentTop < k.previousTop).length;
   const kwDown = keywordsList.filter((k) => k.currentTop != null && k.previousTop != null && k.currentTop > k.previousTop).length;
+
 
   return (
     <>
