@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, LayoutGrid, Table as TableIcon, ExternalLink } from "lucide-react";
+import { Plus, Trash2, LayoutGrid, Table as TableIcon, ExternalLink, BarChart3 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { OrderDetailDialog } from "@/components/OrderDetail";
+import { OrderReport } from "@/components/OrderReport";
 
 export const Route = createFileRoute("/orders")({
   head: () => ({ meta: [{ title: "Order Thiết Kế — Base Marketing" }] }),
