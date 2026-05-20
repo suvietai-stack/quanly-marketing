@@ -450,6 +450,28 @@ export interface WebContent {
   history?: WebContentHistoryEntry[];
 }
 
+// Returns true if a KeywordTrack still corresponds to a real keyword the
+// user can see in Check TOP. Used to filter out orphan tracks (e.g. when the
+// underlying content was un-indexed, deleted, or the keyword text removed).
+export function isActiveKeywordTrack(k: KeywordTrack, contents: WebContent[]): boolean {
+  if (!k.contentId) return true; // standalone keyword
+  const c = contents.find((x) => x.id === k.contentId);
+  if (!c) return false;
+  if (c.indexStatus !== "Đã index") return false;
+  const kw = (k.keyword || "").trim().toLowerCase();
+  if (!kw) return false;
+  if (k.isMain) {
+    return (c.mainKeyword || "").trim().toLowerCase() === kw;
+  }
+  const subs = (c.subKeywords || "")
+    .split(/[,;\n]/)
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return subs.includes(kw);
+}
+
+
+
 export type SocialStatus =
   | "Kế hoạch" | "Đang làm" | "Chờ duyệt" | "Cần sửa"
   | "Đã duyệt" | "Chờ đăng" | "Đã đăng" | "Hoàn thành" | "Đã hủy";

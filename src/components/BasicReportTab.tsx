@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  useStore, fmtDate,
+  useStore, fmtDate, isActiveKeywordTrack,
   type WebContent, type ContentStatus, type Backlink, type KeywordTrack,
 } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
@@ -96,7 +96,7 @@ export function BasicReportTab({
   const contents = s.webContents.filter((c) => c.websiteId === websiteId);
   const checks = s.seoChecks.filter((c) => c.websiteId === websiteId);
   const backlinks = s.backlinks.filter((b) => b.websiteId === websiteId);
-  const keywords = s.keywords.filter((k) => k.websiteId === websiteId);
+  const keywords = s.keywords.filter((k) => k.websiteId === websiteId && isActiveKeywordTrack(k, s.webContents));
 
   const [quick, setQuick] = useState<Quick>("all");
   const [from, setFrom] = useState("");
