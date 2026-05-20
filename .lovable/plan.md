@@ -1,110 +1,61 @@
+## Plan: Nâng cấp module Task To-do List với workflow + phân quyền
 
-# Kế hoạch rà soát & thực thi Role/Phân quyền (đợt sâu)
+### 1. Mở rộng data model (`src/lib/store.ts`)
 
-Mục tiêu: ma trận quyền ↔ permissionKey trong code ↔ `can()` ↔ UI ↔ action lưu DB phải khớp 100%. Không còn chuyện không tick quyền mà vẫn dùng được.
+Mở rộng `Task` interface:
+- **Status mới**: `"Mới tạo" | "Đã giao" | "Đang làm" | "Chờ xác nhận" | "Cần sửa" | "Hoàn thành" | "Đã hủy"` (thay cho `"Chưa làm" | "Đang làm" | "Hoàn thành"`)
+- **Fields mới**: `description`, `module`, `relatedLink`, `approver`, `relatedPeople[]`, `inputLink`, `resultLink`, `handoverLink`, `processNote`, `revisionNote`, `revisions`, `createdAt`, `acceptedAt`, `submittedAt`, `completedAt`, `cancelledAt`, `history[]` (mỗi entry: `{ by, action, fromStatus, toStatus, time, note }`)
+- Thêm hàm `normalizeTaskStatus()` để map status cũ → mới (Chưa làm→Mới tạo, Đang làm→Đang làm, Hoàn thành→Hoàn thành)
+- Helper `appendTaskHistory(task, entry)`
 
-## 1. PERMISSION_REGISTRY là nguồn sự thật duy nhất
+### 2. Bổ sung permissions (`src/lib/auth.ts`)
 
-- Trong `src/lib/auth.ts`, mở rộng `PermissionDef` thêm các trường:
-  - `description?: string`
-  - `dependsOn?: PermissionKey[]` (quyền cha bắt buộc, ví dụ `web.tech_check` → `web.tech_view`)
-- Bổ sung `dependsOn` cho tất cả quyền hành động (create/edit/delete/update/status/approve/...) trỏ về quyền `*_view` tương ứng.
-- Xuất `PERMISSIONS` (đã có) làm registry chuẩn. Ma trận phân quyền (`AccountsSettings.tsx`) render checkbox **chỉ** từ registry này.
-- Map các key trong tài liệu yêu cầu (`view_technical_seo`, `update_index_status`, ...) sang key chuẩn đang dùng trong code (`web.tech_view`, `web.update_index`, ...). Không đổi tên hàng loạt key đang lưu DB; thay vào đó dùng một bảng alias để chấp nhận cả tên cũ → mới khi đọc, và **chuẩn hóa khi ghi**. (Đổi key trực tiếp sẽ làm mất quyền của role đã lưu trên cloud.)
+Thêm nhóm `Task To-do List` với các permission key (giữ namespace `task.*` đã có, bổ sung mới):
+- View: `task.view`, `task.view_all`, `task.view_mine`, `task.view_created_by_me`
+- Data: `task.create`, `task.edit`, `task.delete`, `task.assign`, `task.edit_assignee`, `task.edit_deadline`, `task.edit_priority`
+- Workflow: `task.start`, `task.update_result`, `task.submit_completion`, `task.resubmit_completion`, `task.approve_completion`, `task.request_revision`, `task.cancel`, `task.restore`, `task.reopen_completed`, `task.force_change_status`
+- History: `task.view_history`, `task.add_note`
 
-## 2. Logic dependsOn
+Cập nhật default permissions cho 8 role theo bảng spec (Super Admin/Admin full, Leader/SEO/Content Web/Social/Local SEO/Designer/Video theo spec, Viewer chỉ view nếu được cấp).
 
-- Trong `can(key)`:
-  - Nếu `key` có `dependsOn`, mọi parent đều phải `can(parent)` mới trả `true`.
-- Trong UI ma trận quyền:
-  - Tick con → auto tick toàn bộ cha.
-  - Bỏ tick cha → auto bỏ tick toàn bộ con phụ thuộc.
-  - Hiển thị badge cảnh báo nếu lưu ra trạng thái không hợp lệ (con bật, cha tắt) — auto sửa khi Save.
+### 3. UI Workflow trên trang Tasks (`src/routes/tasks.tsx` + form mới)
 
-## 3. Reset quyền mặc định role Content Web & SEO
+- Mở rộng `TaskForm`: thêm fields mô tả, approver, module, link tài liệu (input/result/handover), ghi chú; ẩn/disable theo `can()`.
+- Thay cột "Hành động" trong table: hiển thị nút workflow tương ứng status hiện tại (Giao / Bắt đầu làm / Gửi hoàn thành / Xác nhận / Yêu cầu sửa / Gửi lại / Hủy / Khôi phục / Mở lại / Ép trạng thái).
+- Mỗi action gọi handler chung `transitionTask(task, action)`:
+  - Check permission, nếu thiếu → `toast.error("Bạn không có quyền thực hiện hành động này.")` và return.
+  - "Yêu cầu sửa" mở modal nhập ghi chú bắt buộc → tăng `revisions`.
+  - Update status, timestamps, push history entry.
+- Kanban: 7 cột theo status mới.
+- Tab nhanh: ẩn "Tất cả task" nếu thiếu `task.view_all`. "Việc của tôi" gồm assignee/approver/relatedPeople. "Việc tôi giao" gồm reporter/createdBy.
+- Hằng số `STATUSES` + màu `StatusBadge` thêm các status mới.
 
-- Trong store/migration seed của `app_roles`, cập nhật quyền mặc định **chỉ** cho 2 role hệ thống `role-content-web` và `role-seo` theo đúng danh sách bạn cung cấp ở mục 4 và 5. Không đụng vào role do user tự tạo.
-- Thực hiện bằng `supabase--insert` (UPDATE `app_roles` SET permissions = ...).
+### 4. Chi tiết task + lịch sử
 
-## 4. `can()` strict + effective permissions
+- Thêm modal "Chi tiết Task" với tabs: **Thông tin / Tài liệu / Lịch sử xử lý** (chỉ hiện history nếu có `task.view_history`).
+- Lịch sử render dạng timeline từ `task.history[]`.
 
-- Refactor `can()`:
-  ```ts
-  if (!user) return false;
-  if (user.status !== "Đang hoạt động") return false;
-  if (isSuperAdmin) return true;
-  const eff = user.useCustom ? user.customPermissions : rolePermissions;
-  if (!eff.includes(key)) return false;
-  // check dependsOn
-  return (PERMISSION_BY_KEY[key]?.dependsOn ?? []).every((p) => can(p));
-  ```
-- Bỏ hoàn toàn fallback theo role name (trừ Super Admin).
-- Bỏ blanket `isAdmin` bypass đã xóa ở đợt trước — giữ nguyên.
+### 5. Liên kết Tổng Quan (`src/routes/index.tsx`)
 
-## 5. Gate UI + action ở các module còn lỏng
+Thêm 5 nhóm cá nhân dựa trên task:
+- Cần tôi xử lý (assignee, status ∈ Đã giao/Đang làm/Cần sửa)
+- Cần duyệt (approver, status = Chờ xác nhận)
+- Chờ người khác (reporter/createdBy, status ≠ Hoàn thành/Đã hủy, assignee ≠ me)
+- Quá hạn (liên quan tôi, overdue)
+- Hoàn thành gần đây (7 ngày)
 
-Tập trung các điểm bạn nêu (Content Web vẫn sửa được vùng không thuộc):
+### 6. Áp dụng quyền cho action lưu dữ liệu
 
-- **TechnicalSeoTab.tsx**:
-  - Render tab cha chỉ khi `can("web.tech_view")` (gate ở `websites.$id.tsx`).
-  - Checkbox `disabled={!can("web.tech_check")}`; handler chặn + toast.
-  - Textarea diễn giải `readOnly` + `disabled` nếu `!can("web.tech_edit_desc")`.
-  - Nút Reset ẩn nếu `!can("web.tech_reset")`.
-- **BasicReportTab / Index tab** (`web.index_view`, `web.update_index`, `web.update_share`, `web.update_share_date`, `web.edit_published_url`).
-- **KeywordsTab (Check TOP)**: nút "Cập nhật TOP chính/phụ", thêm/sửa/xóa từ khóa phụ.
-- **KeywordResearchTab**: thêm/sửa/xóa Topic + mở sheet.
-- **BacklinksTab**: create/edit/delete/status/open.
-- **GrowthTab**: create/edit/delete kỳ báo cáo.
-- **EntitySocialTab**: create/edit/delete/open link/reveal password.
-- **ContentForm / ContentDetail**: nút approve/reject outline & post, force status, publish, cancel, restore — gate cả nút lẫn handler.
+Bọc `add/update/remove` cho tasks bằng wrapper `guardedTaskMutation` kiểm tra perm trước; toast khi reject.
 
-Mỗi handler: `if (!can(key)) { toast.error("Bạn không có quyền ..."); return; }` trước khi gọi store/Supabase.
+### Files dự kiến chỉnh
+- `src/lib/store.ts` — Task interface, status, normalize, history helper
+- `src/lib/auth.ts` — permissions + default role mapping
+- `src/components/StatusBadge.tsx` — màu cho status mới
+- `src/routes/tasks.tsx` — form, workflow buttons, tabs, kanban
+- `src/components/TaskDetail.tsx` (mới) — chi tiết + lịch sử
+- `src/routes/index.tsx` — bổ sung khối task cá nhân
 
-## 6. Công cụ Dò quyền (Super Admin)
+Không tạo migration mới (task data đã ở `tasks.data jsonb`, mở rộng field tự nhiên). Status cũ trong DB được normalize ở runtime.
 
-Trong `AccountsSettings.tsx` (đã có tab "Permission Debug" sơ khai từ đợt trước):
-- Chọn user → hiển thị: role, mode (role/custom), danh sách effective permissions (group theo module).
-- Ô input key + nút Test → trả về `true/false` + lý do:
-  - "Super Admin override" / "Có từ role <name>" / "Có từ quyền riêng" / "Thiếu quyền cha: X" / "Không có quyền".
-
-## 7. Báo cáo audit "Kiểm tra khớp quyền"
-
-Thêm sub-tab cho Super Admin:
-- Kiểm 1: key dùng trong code (grep static list của `can(...)` calls) không có trong registry.
-- Kiểm 2: key trong registry không xuất hiện trong codebase (cảnh báo có thể chết).
-- Kiểm 3: role/user có quyền con bật mà quyền cha tắt (dùng `dependsOn`).
-- Kiểm 4: role (không phải Super Admin) có ≥ 95% tổng quyền → cảnh báo "near full".
-- Kiểm 5: user `useCustom=true` có quyền không nằm trong role gốc → liệt kê.
-
-Hiển thị bảng warning + nút "Auto-fix dependency" cho từng dòng.
-
-## 8. Đếm số quyền role chính xác
-
-- Trong danh sách role, đếm `permissions.filter(k => registry has k && deps satisfied within set).length`.
-- Hiển thị badge "X quyền · Y cảnh báo" nếu có dependency lỗi.
-
-## 9. Test case Content Web (ngoc)
-
-Sau khi xong, test thủ công với user `ngoc`:
-- Không thấy tab Technical SEO / Check TOP / Index / Backlink / Growth / Keyword Research nếu role không cấp `*_view`.
-- Thấy tab nhưng không tích/sửa được nếu chỉ có view.
-- Workflow outline/bài hoạt động bình thường.
-
-## 10. Phạm vi & rủi ro
-
-- File sẽ chạm: `src/lib/auth.ts`, `src/components/AccountsSettings.tsx`, `TechnicalSeoTab.tsx`, `BasicReportTab.tsx`, `KeywordsTab.tsx`, `KeywordResearchTab.tsx`, `BacklinksTab.tsx`, `GrowthTab.tsx`, `EntitySocialTab.tsx`, `ContentDetail.tsx`, `ContentForm.tsx`, `websites.$id.tsx`, `web-contents.tsx` + 1 migration cập nhật permissions mặc định cho 2 role hệ thống.
-- Rủi ro lớn nhất: đổi default permissions sẽ làm Content Web/SEO **mất quyền** đang dùng trên cloud nếu Admin đã chỉnh tay. Mình sẽ chỉ reset 2 role hệ thống có id cố định (`role-content-web`, `role-seo`), không đụng custom roles.
-
-## Thứ tự thực thi (đề xuất)
-
-1. Mở rộng registry + `dependsOn` + strict `can()` (foundation).
-2. Migration reset permissions Content Web + SEO.
-3. Gate UI + action cho TechnicalSeoTab, KeywordsTab, BasicReportTab (3 vùng bạn nêu cụ thể).
-4. Gate UI + action cho các tab còn lại (Backlink, Growth, Keyword Research, Entity).
-5. UI dependency auto-tick/untick + warning trong ma trận quyền.
-6. Permission Debugger nâng cấp + Audit report.
-7. Test bằng user ngoc.
-
----
-
-**Bạn xác nhận plan này để mình triển khai theo thứ tự trên?** Nếu muốn ưu tiên/cắt giảm phần nào (ví dụ chỉ làm bước 1-4 trước, để Debug/Audit sang sau) thì báo mình.
+Bạn duyệt plan này để mình bắt tay vào code nhé?

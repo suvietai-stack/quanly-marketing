@@ -36,6 +36,7 @@ const map: Record<string, string> = {
   "Chờ đăng": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
   "Chờ đăng web": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
   "Chưa phản hồi": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Chờ xác nhận": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
 
   // Needs fix / urgent
   "Cần sửa": "bg-destructive/15 text-destructive border-destructive/30",

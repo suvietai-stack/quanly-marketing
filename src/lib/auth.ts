@@ -53,15 +53,32 @@ export const PERMISSIONS: PermissionDef[] = [
   P("task.view", "Xem task", "Task", "Dữ liệu"),
   P("task.view_all", "Xem tất cả task", "Task", "Dữ liệu"),
   P("task.view_mine", "Chỉ xem task liên quan đến mình", "Task", "Dữ liệu"),
+  P("task.view_created_by_me", "Xem task tôi giao", "Task", "Dữ liệu"),
   P("task.create", "Tạo task", "Task", "CRUD"),
   P("task.edit", "Sửa task", "Task", "CRUD"),
   P("task.delete", "Xóa task", "Task", "CRUD"),
-  P("task.assign", "Giao task", "Task", "Workflow"),
-  P("task.accept", "Nhận task", "Task", "Workflow"),
-  P("task.update_status", "Cập nhật trạng thái task", "Task", "Workflow"),
-  P("task.complete", "Hoàn thành task", "Task", "Workflow"),
-  P("task.restore", "Khôi phục task đã xóa/hủy", "Task", "Workflow"),
+  P("task.assign", "Giao task", "Task", "CRUD"),
+  P("task.edit_assignee", "Sửa người phụ trách task", "Task", "CRUD"),
+  P("task.edit_deadline", "Sửa deadline task", "Task", "CRUD"),
+  P("task.edit_priority", "Sửa mức ưu tiên task", "Task", "CRUD"),
+  // Legacy keys kept for backward compatibility
+  P("task.accept", "Nhận task (legacy)", "Task", "Workflow"),
+  P("task.update_status", "Cập nhật trạng thái task (legacy)", "Task", "Workflow"),
+  P("task.complete", "Hoàn thành task (legacy)", "Task", "Workflow"),
+  // New workflow keys
+  P("task.start", "Bắt đầu làm task", "Task", "Workflow"),
+  P("task.update_result", "Cập nhật kết quả task", "Task", "Workflow"),
+  P("task.submit_completion", "Gửi hoàn thành task", "Task", "Workflow"),
+  P("task.resubmit_completion", "Gửi lại hoàn thành task", "Task", "Workflow"),
+  P("task.approve_completion", "Xác nhận hoàn thành task", "Task", "Workflow"),
+  P("task.request_revision", "Yêu cầu sửa task", "Task", "Workflow"),
+  P("task.cancel", "Hủy task", "Task", "Workflow"),
+  P("task.restore", "Khôi phục task đã hủy", "Task", "Workflow"),
+  P("task.reopen_completed", "Mở lại task đã hoàn thành", "Task", "Workflow"),
   P("task.force_status", "Ép chuyển trạng thái task", "Task", "Workflow"),
+  P("task.force_change_status", "Ép chuyển trạng thái task (alias)", "Task", "Workflow"),
+  P("task.view_history", "Xem lịch sử xử lý task", "Task", "Lịch sử"),
+  P("task.add_note", "Ghi chú xử lý task", "Task", "Lịch sử"),
 
   // ===== C. Thương Hiệu =====
   P("brand.view", "Xem thương hiệu", "Thương Hiệu", "Dữ liệu"),
@@ -447,8 +464,14 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   m["web.report_view"] = [webViewKey];
 
   // ------- Task -------
-  ["task.create", "task.edit", "task.delete", "task.assign", "task.accept",
-   "task.update_status", "task.complete", "task.restore", "task.force_status"].forEach((k) => {
+  ["task.create", "task.edit", "task.delete", "task.assign",
+   "task.edit_assignee", "task.edit_deadline", "task.edit_priority",
+   "task.accept", "task.update_status", "task.complete", "task.restore", "task.force_status",
+   "task.start", "task.update_result", "task.submit_completion", "task.resubmit_completion",
+   "task.approve_completion", "task.request_revision", "task.cancel",
+   "task.reopen_completed", "task.force_change_status",
+   "task.view_history", "task.add_note",
+   "task.view_all", "task.view_mine", "task.view_created_by_me"].forEach((k) => {
     m[k] = ["task.view"];
   });
 
@@ -556,7 +579,22 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
 
 // ============ Default permissions per role ============
 const overviewMine = ["overview.view", "overview.alerts", "overview.own_only"];
-const taskMine = ["task.view", "task.view_mine", "task.accept", "task.update_status", "task.complete"];
+// Default Task perms for "doer" roles (Content/Social/Designer/Video/Local SEO).
+const taskMine = [
+  "task.view", "task.view_mine",
+  "task.start", "task.update_result",
+  "task.submit_completion", "task.resubmit_completion",
+  "task.view_history", "task.add_note",
+];
+// Default Task perms for SEO (có tạo + có thể tự sửa task của mình).
+const taskSeo = [
+  "task.view", "task.view_mine", "task.view_created_by_me",
+  "task.create", "task.edit",
+  "task.start", "task.update_result",
+  "task.submit_completion", "task.resubmit_completion",
+  "task.view_history", "task.add_note",
+];
+// Leader Marketing inherits all task.* via filter in role definition below.
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   // Super Admin handled at runtime (returns true for any key) — also gets ALL_PERMS persisted.
@@ -582,6 +620,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "settings.view",
   ].filter((k) =>
     !["web.force_status", "social.post_force_status", "video.force_status", "order.force_status",
+      "task.force_status", "task.force_change_status",
       "settings.user_delete", "settings.user_create", "settings.role", "settings.permission",
       "settings.user_custom_perm", "settings.assign_role", "settings.account_approve",
       "settings.user_reset_password",
@@ -589,7 +628,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   ),
   "role-seo": [
     ...overviewMine,
-    ...taskMine,
+    ...taskSeo,
     "brand.view",
     "web.view", "web.view_all", "web.open_detail", "web.manage_info",
     "web.tech_view", "web.tech_check", "web.tech_edit_desc",

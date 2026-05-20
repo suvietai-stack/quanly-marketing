@@ -82,14 +82,49 @@ export interface LocalPlace {
 }
 
 export type TaskPriority = "Thấp" | "Trung bình" | "Cao" | "Gấp";
-export type TaskStatus = "Chưa làm" | "Đang làm" | "Hoàn thành";
+export type TaskStatus =
+  | "Mới tạo"
+  | "Đã giao"
+  | "Đang làm"
+  | "Chờ xác nhận"
+  | "Cần sửa"
+  | "Hoàn thành"
+  | "Đã hủy";
+
+export const TASK_STATUSES: TaskStatus[] = [
+  "Mới tạo", "Đã giao", "Đang làm", "Chờ xác nhận", "Cần sửa", "Hoàn thành", "Đã hủy",
+];
+
+/** Map các trạng thái Task cũ → mới (giữ tương thích ngược với dữ liệu trước workflow). */
+export function normalizeTaskStatus(s: string | undefined): TaskStatus {
+  if (!s) return "Mới tạo";
+  if (s === "Chưa làm") return "Mới tạo";
+  if ((TASK_STATUSES as string[]).includes(s)) return s as TaskStatus;
+  return "Mới tạo";
+}
+
+export interface TaskHistoryEntry {
+  at: string;
+  byId?: ID;
+  byName?: string;
+  action: string;
+  fromStatus?: TaskStatus;
+  toStatus?: TaskStatus;
+  note?: string;
+  forced?: boolean;
+}
 
 export interface Task {
   id: ID;
   title: string;
+  description?: string;
   brandId?: ID;
+  module?: string;
+  relatedLink?: string;
   assignee?: string;
   reporter?: string;
+  approver?: string;
+  relatedPeople?: string[];
   deadline?: string;
   priority: TaskPriority;
   status: TaskStatus;
@@ -97,7 +132,18 @@ export interface Task {
   link?: string;
   plan?: string;
   topic?: string;
+  inputLink?: string;
+  resultLink?: string;
+  handoverLink?: string;
+  processNote?: string;
+  revisionNote?: string;
+  revisions?: number;
+  createdAt?: string;
+  acceptedAt?: string;
+  submittedAt?: string;
   completedAt?: string;
+  cancelledAt?: string;
+  history?: TaskHistoryEntry[];
 }
 
 export type ContentStatus =
@@ -975,6 +1021,9 @@ async function loadAllFromSupabase() {
       }
       if (key === "webContents") {
         items = items.map((c: any) => ({ ...c, status: normalizeContentStatus(c.status) }));
+      }
+      if (key === "tasks") {
+        items = items.map((t: any) => ({ ...t, status: normalizeTaskStatus(t.status) }));
       }
       return [key, items] as const;
     }),
