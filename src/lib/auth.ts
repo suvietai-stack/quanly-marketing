@@ -594,15 +594,7 @@ const taskSeo = [
   "task.submit_completion", "task.resubmit_completion",
   "task.view_history", "task.add_note",
 ];
-// Default Task perms cho Leader Marketing (giao việc + duyệt).
-const taskLeader = [
-  "task.view", "task.view_all",
-  "task.create", "task.edit",
-  "task.assign", "task.edit_assignee", "task.edit_deadline", "task.edit_priority",
-  "task.approve_completion", "task.request_revision",
-  "task.cancel", "task.reopen_completed",
-  "task.view_history", "task.add_note",
-];
+// Leader Marketing inherits all task.* via filter in role definition below.
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   // Super Admin handled at runtime (returns true for any key) — also gets ALL_PERMS persisted.
