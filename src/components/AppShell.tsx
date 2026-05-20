@@ -17,7 +17,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Điều hành",
     items: [
-      { to: "/", label: "Tổng Quan", icon: LayoutDashboard, exact: true, perm: "overview.view" },
+      { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true, perm: "overview.view" },
       { to: "/tasks", label: "Task To-do List", icon: ListChecks, perm: "task.view" },
     ],
   },
