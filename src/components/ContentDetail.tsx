@@ -709,6 +709,13 @@ export function ContentDetail({
           </DialogFooter>
         )}
       </DialogContent>
+      {orderFormOpen && (
+        <DesignOrderFormFromContent
+          content={c}
+          open={orderFormOpen}
+          onClose={() => setOrderFormOpen(false)}
+        />
+      )}
     </Dialog>
   );
 }
