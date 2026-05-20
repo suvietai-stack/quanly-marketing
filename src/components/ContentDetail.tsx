@@ -515,25 +515,8 @@ export function ContentDetail({
     });
   };
 
-  const createDesignOrder = () => {
-    if (!can("order.create")) { toast.error("Bạn không có quyền tạo Order thiết kế"); return; }
-    const o = {
-      id: uid(),
-      title: `Ảnh cho bài: ${c.title}`,
-      brandId: c.brandId,
-      type: "Ảnh bài web" as const,
-      source: "Web" as const,
-      requester: c.assigner || c.writer,
-      assignee: undefined,
-      reviewer: c.draftReviewer,
-      deadline: c.deadline,
-      brief: `Thiết kế ảnh cho bài viết: ${c.title}\nTừ khoá: ${c.mainKeyword || "—"}`,
-      status: "Mới tạo" as const,
-      contentId: c.id,
-    };
-    s.add("orders", o);
-    s.update("webContents", c.id, { designOrderId: o.id, needsDesign: true });
-  };
+
+
 
   const cancelContent = () => {
     if (!can("web.content_cancel")) { toast.error("Bạn không có quyền hủy Content Web"); return; }
