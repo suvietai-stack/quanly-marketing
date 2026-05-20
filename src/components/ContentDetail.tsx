@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useStore, uid, todayISO, fmtDate,
+  useStore, todayISO, fmtDate,
   type WebContent, type ContentStatus, type WebContentHistoryEntry,
   CONTENT_STATUSES,
 } from "@/lib/store";
