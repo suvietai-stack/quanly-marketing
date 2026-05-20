@@ -114,9 +114,9 @@ const LocalIdRoute = LocalIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrandsIdRoute = BrandsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => BrandsRoute,
+  id: '/brands/$id',
+  path: '/brands/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -254,6 +254,7 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
+  BrandsIdRoute: typeof BrandsIdRoute
   LocalIdRoute: typeof LocalIdRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
@@ -386,10 +387,10 @@ declare module '@tanstack/react-router' {
     }
     '/brands/$id': {
       id: '/brands/$id'
-      path: '/$id'
+      path: '/brands/$id'
       fullPath: '/brands/$id'
       preLoaderRoute: typeof BrandsIdRouteImport
-      parentRoute: typeof BrandsRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -405,6 +406,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
+  BrandsIdRoute: BrandsIdRoute,
   LocalIdRoute: LocalIdRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
@@ -416,13 +418,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
