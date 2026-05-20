@@ -373,31 +373,6 @@ function WorkTable({ items, empty }: { items: WorkItem[]; empty: string }) {
   );
 }
 
-// ============ Department (existing dashboard) ============
-
-function Stat({ label, value, icon: Icon, tone = "default" }: {
-  label: string; value: number | string; icon: any; tone?: "default" | "warn" | "danger" | "success" | "info";
-}) {
-  const tones: Record<string, string> = {
-    default: "bg-secondary text-secondary-foreground",
-    warn: "bg-warning/15 text-[oklch(0.45_0.13_75)]",
-    danger: "bg-destructive/10 text-destructive",
-    success: "bg-success/15 text-success",
-    info: "bg-info/15 text-info",
-  };
-  return (
-    <Card>
-      <CardContent className="p-5 flex items-start justify-between">
-        <div>
-          <div className="text-sm text-muted-foreground">{label}</div>
-          <div className="text-2xl font-semibold mt-1.5 tracking-tight">{value}</div>
-        </div>
-        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${tones[tone]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 // ============ Department Dashboard ============
