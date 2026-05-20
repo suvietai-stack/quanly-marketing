@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useStore, uid, todayISO, fmtDate,
+  useStore, todayISO, fmtDate,
   type WebContent, type ContentStatus, type WebContentHistoryEntry,
   CONTENT_STATUSES,
 } from "@/lib/store";
@@ -22,6 +22,7 @@ import {
   ExternalLink, Pencil, Palette, ArrowRight, Check, X, ShieldAlert, History,
 } from "lucide-react";
 import { ContentForm } from "@/components/ContentForm";
+import { DesignOrderFormFromContent } from "@/components/DesignOrderForm";
 import { toast } from "sonner";
 
 type Transition = {
@@ -477,12 +478,13 @@ export function ContentDetail({
   const s = useStore();
   const { user, can, isAdmin } = useCurrentUser();
   const [editing, setEditing] = useState(false);
+  const [orderFormOpen, setOrderFormOpen] = useState(false);
 
   if (!content) return null;
   const c = s.webContents.find((x) => x.id === content.id) || content;
   const website = s.websites.find((w) => w.id === c.websiteId);
   const brand = s.brands.find((b) => b.id === c.brandId);
-  const order = c.designOrderId ? s.orders.find((o) => o.id === c.designOrderId) : undefined;
+  const linkedOrders = s.orders.filter((o) => o.contentId === c.id || (c.designOrderId && o.id === c.designOrderId));
 
   const writerOwned = isWriterOwned(c, user?.fullName) || isWriterOwned(c, user?.username);
 
@@ -513,25 +515,8 @@ export function ContentDetail({
     });
   };
 
-  const createDesignOrder = () => {
-    if (!can("order.create")) { toast.error("Bạn không có quyền tạo Order thiết kế"); return; }
-    const o = {
-      id: uid(),
-      title: `Ảnh cho bài: ${c.title}`,
-      brandId: c.brandId,
-      type: "Ảnh bài web" as const,
-      source: "Web" as const,
-      requester: c.assigner || c.writer,
-      assignee: undefined,
-      reviewer: c.draftReviewer,
-      deadline: c.deadline,
-      brief: `Thiết kế ảnh cho bài viết: ${c.title}\nTừ khoá: ${c.mainKeyword || "—"}`,
-      status: "Mới tạo" as const,
-      contentId: c.id,
-    };
-    s.add("orders", o);
-    s.update("webContents", c.id, { designOrderId: o.id, needsDesign: true });
-  };
+
+
 
   const cancelContent = () => {
     if (!can("web.content_cancel")) { toast.error("Bạn không có quyền hủy Content Web"); return; }
@@ -655,15 +640,34 @@ export function ContentDetail({
               <div className="rounded-md border bg-card px-3 py-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-sm font-medium">Order thiết kế</div>
-                  {!order && can("order.create") && (
-                    <Button size="sm" variant="outline" onClick={createDesignOrder}>
+                  {can("order.create") && (
+                    <Button size="sm" variant="outline" onClick={() => setOrderFormOpen(true)}>
                       <Palette className="h-4 w-4" />Tạo Order Thiết Kế
                     </Button>
                   )}
                 </div>
-                {order ? (
-                  <div className="text-sm text-muted-foreground flex items-center justify-between">
-                    <span>{order.title} — <StatusBadge value={order.status} /></span>
+                {linkedOrders.length > 0 ? (
+                  <div className="space-y-2">
+                    {linkedOrders.map((o) => (
+                      <div key={o.id} className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{o.title}</div>
+                          <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-0.5">
+                            <StatusBadge value={o.status} />
+                            {o.assignee && <span>· PT: {o.assignee}</span>}
+                            {o.deadline && <span>· DL: {fmtDate(o.deadline)}</span>}
+                            {o.deliverLink && (
+                              <a href={o.deliverLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                                File bàn giao <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={`/orders?open=${o.id}`}>Mở order</a>
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground">
@@ -705,6 +709,13 @@ export function ContentDetail({
           </DialogFooter>
         )}
       </DialogContent>
+      {orderFormOpen && (
+        <DesignOrderFormFromContent
+          content={c}
+          open={orderFormOpen}
+          onClose={() => setOrderFormOpen(false)}
+        />
+      )}
     </Dialog>
   );
 }
