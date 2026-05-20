@@ -335,9 +335,7 @@ function WorkflowButtons({ task, onChange, onClose }: {
   }
   if (s === "Đang làm") {
     buttons.push(
-      <Button key="submit" size="sm" onClick={() =>
-        transition("task.submit_completion", "Chờ xác nhận", "Gửi hoàn thành", { submittedAt: todayISO() })
-      }>Gửi hoàn thành</Button>,
+      <Button key="submit" size="sm" onClick={() => openSubmit("submit")}>Gửi hoàn thành</Button>,
     );
   }
   if (s === "Chờ xác nhận") {
@@ -353,9 +351,7 @@ function WorkflowButtons({ task, onChange, onClose }: {
   }
   if (s === "Cần sửa") {
     buttons.push(
-      <Button key="resubmit" size="sm" onClick={() =>
-        transition("task.resubmit_completion", "Chờ xác nhận", "Gửi lại hoàn thành", { submittedAt: todayISO() })
-      }>Gửi lại hoàn thành</Button>,
+      <Button key="resubmit" size="sm" onClick={() => openSubmit("resubmit")}>Gửi lại hoàn thành</Button>,
     );
   }
   if (s === "Hoàn thành") {
