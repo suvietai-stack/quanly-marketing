@@ -137,21 +137,31 @@ function MineOverview() {
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     // ---- Tasks ----
-    if (isSuperAdmin || can("task.view")) {
+    if (isSuperAdmin || can("task.view") || can("task.view_mine") || can("task.view_all") || can("task.view_created_by_me")) {
+      const PENDING_OWN_TASK = new Set(["Đã giao", "Đang làm", "Cần sửa"]);
       for (const t of s.tasks) {
-        const isMine = isMineByNames(t.assignee, mine) || isMineByNames(t.reporter, mine);
-        if (!isMine) continue;
+        const asAssignee = isMineByNames(t.assignee, mine);
+        const asReporter = isMineByNames(t.reporter, mine);
+        const asApprover = isMineByNames((t as any).approver, mine);
+        const involved = asAssignee || asReporter || asApprover;
+        if (!involved) continue;
         const wi: WorkItem = {
           id: `task-${t.id}`, kind: "Task", module: "Task", title: t.title,
           brand: brandName(t.brandId), status: t.status, due: t.deadline,
-          href: "/tasks", mineAs: isMineByNames(t.assignee, mine) ? "Người phụ trách" : "Người giao",
+          href: "/tasks",
+          mineAs: asAssignee ? "Người phụ trách" : asApprover ? "Người xác nhận" : "Người giao",
         };
         if (t.status === "Hoàn thành") {
           if (t.completedAt && new Date(t.completedAt) >= weekAgo) out.doneRecent.push(wi);
-        } else {
-          if (isMineByNames(t.assignee, mine)) out.mine.push(wi);
-          if (isOverdue(t.deadline, t.status)) out.overdue.push(wi);
-          if (NEEDS_FIX_KEYWORDS.some((k) => t.status.includes(k))) out.needsFix.push(wi);
+          continue;
+        }
+        if (t.status === "Đã hủy") continue;
+        if (isOverdue(t.deadline, t.status)) out.overdue.push(wi);
+        if (asAssignee && PENDING_OWN_TASK.has(t.status)) out.mine.push(wi);
+        if (asAssignee && t.status === "Cần sửa") out.needsFix.push(wi);
+        if (t.status === "Chờ xác nhận") {
+          if ((asApprover || asReporter) && (isSuperAdmin || can("task.approve_completion"))) out.toReview.push(wi);
+          else if (asAssignee) out.waiting.push(wi);
         }
       }
     }
