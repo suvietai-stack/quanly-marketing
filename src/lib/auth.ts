@@ -479,7 +479,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
 
   // ------- Brand -------
   ["brand.create", "brand.edit", "brand.delete", "brand.profile", "brand.identity",
-   "brand.view_channels", "brand.docs", "brand.staff"].forEach((k) => {
+   "brand.view_channels", "brand.docs", "brand.staff", "brand.contact", "brand.notes"].forEach((k) => {
     m[k] = ["brand.view"];
   });
 
