@@ -91,6 +91,8 @@ export const PERMISSIONS: PermissionDef[] = [
   P("brand.view_channels", "Quản lý kênh liên kết", "Thương Hiệu", "Quản lý"),
   P("brand.docs", "Quản lý tài liệu/guideline", "Thương Hiệu", "Quản lý"),
   P("brand.staff", "Quản lý nhân sự phụ trách", "Thương Hiệu", "Quản lý"),
+  P("brand.contact", "Quản lý thông tin liên hệ", "Thương Hiệu", "Quản lý"),
+  P("brand.notes", "Quản lý ghi chú vận hành", "Thương Hiệu", "Quản lý"),
 
   // ===== D. Dự Án Web =====
   // D1. Chung
