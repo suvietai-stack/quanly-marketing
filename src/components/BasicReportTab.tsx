@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  useStore, fmtDate,
+  useStore, fmtDate, isActiveKeywordTrack,
   type WebContent, type ContentStatus, type Backlink, type KeywordTrack,
 } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
