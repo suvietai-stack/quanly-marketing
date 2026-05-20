@@ -261,7 +261,9 @@ function OrdersPage() {
         })}
       </div>
     )}
+    </>)}
 
     <OrderDetailDialog orderId={openId} open={!!openId} onOpenChange={(v) => !v && setOpenId(null)} />
   </>;
+
 }
