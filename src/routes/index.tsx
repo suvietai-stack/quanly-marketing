@@ -7,9 +7,13 @@ import { RequirePermission } from "@/components/PermissionGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   ListChecks, AlertTriangle, Clock, CheckCircle2, Globe, Share2,
-  MapPin, Video, Palette, Inbox, Hourglass, ArrowRight,
+  MapPin, Video, Inbox, Hourglass, ArrowRight, FileEdit, ClipboardCheck,
+  Briefcase, RefreshCw, X, ExternalLink,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
