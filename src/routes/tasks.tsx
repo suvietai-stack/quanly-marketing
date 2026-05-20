@@ -522,9 +522,17 @@ function TaskDetailDialog({ task, open, onOpenChange }: {
               <Field label="Số lần sửa" value={String(task.revisions ?? 0)} />
               <Field label="Ngày tạo" value={fmtDate(task.createdAt)} />
               <Field label="Nhận việc" value={fmtDate(task.acceptedAt)} />
-              <Field label="Gửi hoàn thành" value={fmtDate(task.submittedAt)} />
+              <Field label="Ngày gửi hoàn thành" value={fmtDate(task.submittedAt)} />
+              <Field label="Người gửi hoàn thành" value={task.submittedBy} />
               <Field label="Hoàn thành" value={fmtDate(task.completedAt)} />
             </div>
+            {task.status === "Chờ xác nhận" && (task.completionNote || task.resultLink || (task.completionFiles?.length ?? 0) > 0) && (
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-2 space-y-1">
+                <div className="text-xs font-medium text-primary">Thông tin gửi hoàn thành</div>
+                {task.completionNote && <div className="text-sm whitespace-pre-wrap">{task.completionNote}</div>}
+                {task.resultLink && <div className="text-xs">Kết quả: <a href={task.resultLink} target="_blank" rel="noreferrer" className="text-primary underline break-all">{task.resultLink}</a></div>}
+              </div>
+            )}
             {task.revisionNote && (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2">
                 <div className="text-xs font-medium text-destructive">Ghi chú yêu cầu sửa gần nhất</div>
@@ -539,9 +547,18 @@ function TaskDetailDialog({ task, open, onOpenChange }: {
           <TabsContent value="docs" className="space-y-2 text-sm">
             <DocRow label="Tài liệu đầu vào" url={task.inputLink} />
             <DocRow label="Link kết quả" url={task.resultLink} />
+            <FilesRow label="File/ảnh minh chứng" files={task.completionFiles} />
             <DocRow label="File bàn giao" url={task.handoverLink} />
+            <DocRow label="Link tài liệu liên quan" url={task.relatedDocumentLink} />
             <DocRow label="Link liên quan" url={task.link || task.relatedLink} />
+            <div className="pt-2">
+              <div className="text-xs text-muted-foreground mb-1">Ghi chú hoàn thành</div>
+              <div className="text-sm whitespace-pre-wrap rounded border p-2 bg-muted/30">
+                {task.completionNote || "Chưa có"}
+              </div>
+            </div>
           </TabsContent>
+
 
           {canHistory && (
             <TabsContent value="history">
