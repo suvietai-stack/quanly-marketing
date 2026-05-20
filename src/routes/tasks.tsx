@@ -415,6 +415,65 @@ function WorkflowButtons({ task, onChange, onClose }: {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!submitOpen} onOpenChange={(o) => !o && setSubmitOpen(false)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              {submitOpen === "resubmit" ? "Gửi lại hoàn thành task" : "Gửi hoàn thành task"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Bạn có thể gửi kèm ghi chú, link kết quả hoặc ảnh/file minh chứng nếu cần. Tất cả các trường đều không bắt buộc.
+          </p>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-1">
+              <Label>Ghi chú hoàn thành</Label>
+              <Textarea rows={3} value={sNote} onChange={(e) => setSNote(e.target.value)} placeholder="Tóm tắt kết quả, lưu ý khi bàn giao…" />
+            </div>
+            <div className="space-y-1">
+              <Label>Link kết quả</Label>
+              <Input value={sResultLink} onChange={(e) => setSResultLink(e.target.value)} placeholder="https://…" />
+            </div>
+            <div className="space-y-1">
+              <Label>Link tài liệu liên quan</Label>
+              <Input value={sRelatedDoc} onChange={(e) => setSRelatedDoc(e.target.value)} placeholder="https://drive.google.com/…" />
+            </div>
+            <div className="space-y-1">
+              <Label>File/ảnh minh chứng (dán link)</Label>
+              <div className="flex gap-2">
+                <Input value={sFileName} onChange={(e) => setSFileName(e.target.value)} placeholder="Tên (tuỳ chọn)" className="w-40" />
+                <Input value={sFileUrl} onChange={(e) => setSFileUrl(e.target.value)} placeholder="https://…" />
+                <Button type="button" size="sm" variant="outline" onClick={() => {
+                  if (!sFileUrl.trim()) return;
+                  setSFiles([...sFiles, { name: sFileName.trim(), url: sFileUrl.trim() }]);
+                  setSFileName(""); setSFileUrl("");
+                }}>Thêm</Button>
+              </div>
+              {sFiles.length > 0 && (
+                <ul className="text-xs space-y-1 mt-1">
+                  {sFiles.map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 rounded border px-2 py-1">
+                      <a href={f.url} target="_blank" rel="noreferrer" className="text-primary underline truncate flex-1">
+                        {f.name || f.url}
+                      </a>
+                      <button type="button" className="text-destructive" onClick={() => setSFiles(sFiles.filter((_, j) => j !== i))}>Xoá</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label>Ghi chú thêm</Label>
+              <Textarea rows={2} value={sExtraNote} onChange={(e) => setSExtraNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSubmitOpen(false)}>Hủy</Button>
+            <Button onClick={confirmSubmit}>Xác nhận gửi hoàn thành</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
