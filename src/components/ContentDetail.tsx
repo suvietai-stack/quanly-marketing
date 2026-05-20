@@ -657,15 +657,34 @@ export function ContentDetail({
               <div className="rounded-md border bg-card px-3 py-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-sm font-medium">Order thiết kế</div>
-                  {!order && can("order.create") && (
-                    <Button size="sm" variant="outline" onClick={createDesignOrder}>
+                  {can("order.create") && (
+                    <Button size="sm" variant="outline" onClick={() => setOrderFormOpen(true)}>
                       <Palette className="h-4 w-4" />Tạo Order Thiết Kế
                     </Button>
                   )}
                 </div>
-                {order ? (
-                  <div className="text-sm text-muted-foreground flex items-center justify-between">
-                    <span>{order.title} — <StatusBadge value={order.status} /></span>
+                {linkedOrders.length > 0 ? (
+                  <div className="space-y-2">
+                    {linkedOrders.map((o) => (
+                      <div key={o.id} className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{o.title}</div>
+                          <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-0.5">
+                            <StatusBadge value={o.status} />
+                            {o.assignee && <span>· PT: {o.assignee}</span>}
+                            {o.deadline && <span>· DL: {fmtDate(o.deadline)}</span>}
+                            {o.deliverLink && (
+                              <a href={o.deliverLink} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                                File bàn giao <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" asChild>
+                          <a href={`/orders?open=${o.id}`}>Mở order</a>
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground">
