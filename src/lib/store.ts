@@ -1022,6 +1022,9 @@ async function loadAllFromSupabase() {
       if (key === "webContents") {
         items = items.map((c: any) => ({ ...c, status: normalizeContentStatus(c.status) }));
       }
+      if (key === "tasks") {
+        items = items.map((t: any) => ({ ...t, status: normalizeTaskStatus(t.status) }));
+      }
       return [key, items] as const;
     }),
   );
