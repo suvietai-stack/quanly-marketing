@@ -198,19 +198,30 @@ export function PostDetailDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="info">
+        <Tabs defaultValue="workflow">
           <TabsList>
-            <TabsTrigger value="info">Thông tin & nội dung</TabsTrigger>
             <TabsTrigger value="workflow">Workflow</TabsTrigger>
+            <TabsTrigger value="info">Thông tin</TabsTrigger>
+            <TabsTrigger value="docs">Tài liệu</TabsTrigger>
             <TabsTrigger value="history"><HistoryIcon className="h-3.5 w-3.5 mr-1" />Lịch sử xử lý</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="mt-3">
-            <PostFormFields value={draft} onChange={setDraft} />
+            <div className="max-h-[60vh] overflow-y-auto pr-1">
+              <InfoFields value={draft} onChange={setDraft} />
+            </div>
             <div className="flex justify-end mt-3">
               <Button onClick={saveDraft} variant="outline">Lưu thay đổi</Button>
             </div>
           </TabsContent>
+
+          <TabsContent value="docs" className="mt-3">
+            <DocsFields value={draft} onChange={setDraft} />
+            <div className="flex justify-end mt-3">
+              <Button onClick={saveDraft} variant="outline">Lưu tài liệu</Button>
+            </div>
+          </TabsContent>
+
 
           <TabsContent value="workflow" className="mt-3 space-y-4">
             {(post.status === "Chờ duyệt" || post.status === "Đang làm" || post.status === "Cần sửa") && (
