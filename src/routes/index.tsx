@@ -638,14 +638,14 @@ function DeptOverview() {
     for (const w of s.websites) {
       if (brandId && w.brandId !== brandId) continue;
       const posts = s.webContents.filter((c) => c.websiteId === w.id && (isDoneStatus(c.status) ? inRange(c.completedAt) : true)).length;
-      const lastGrowth = s.growth.filter((g) => g.scope === "Website" && g.entityId === w.id).slice(-1)[0];
-      rows.push({ id: w.id, name: w.name, type: "Website", brand: brandName(w.brandId), owner: w.seoOwner || w.contentOwner, url: w.url, posts, growth: lastGrowth ? `${lastGrowth.metric}: ${lastGrowth.value}` : undefined, status: w.status, href: `/websites/${w.id}` });
+      const lastGrowth = s.growth.filter((g) => g.websiteId === w.id).slice(-1)[0];
+      rows.push({ id: w.id, name: w.name, type: "Website", brand: brandName(w.brandId), owner: w.seoOwner || w.contentOwner, url: w.url, posts, growth: lastGrowth?.organicTraffic != null ? `Organic: ${lastGrowth.organicTraffic.toLocaleString()}` : (lastGrowth?.totalTraffic != null ? `Traffic: ${lastGrowth.totalTraffic.toLocaleString()}` : undefined), status: w.status, href: `/websites/${w.id}` });
     }
     for (const c of s.socials) {
       if (brandId && c.brandId !== brandId) continue;
       const posts = s.socialPosts.filter((p) => p.channelId === c.id && (isDoneStatus(p.status) ? inRange(p.publishedDate) : true)).length;
-      const lastGrowth = s.growth.filter((g) => g.scope === "Social" && g.entityId === c.id).slice(-1)[0];
-      rows.push({ id: c.id, name: c.name, type: "Social", brand: brandName(c.brandId), owner: c.owner, url: c.url, posts, growth: lastGrowth ? `${lastGrowth.metric}: ${lastGrowth.value}` : undefined, status: c.status, href: `/social/${c.id}` });
+      const lastGrowth = s.growth.filter((g) => g.channelId === c.id).slice(-1)[0];
+      rows.push({ id: c.id, name: c.name, type: "Social", brand: brandName(c.brandId), owner: c.owner, url: c.url, posts, growth: lastGrowth?.followerEnd != null ? `Follower: ${lastGrowth.followerEnd.toLocaleString()}` : undefined, status: c.status, href: `/social/${c.id}` });
     }
     for (const pl of s.places) {
       if (brandId && pl.brandId !== brandId) continue;
