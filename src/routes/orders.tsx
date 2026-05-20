@@ -27,7 +27,7 @@ export const Route = createFileRoute("/orders")({
   ),
 });
 
-type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed";
+type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed" | "report";
 
 function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => void; onClose: () => void }) {
   const { brands, people } = useStore();
