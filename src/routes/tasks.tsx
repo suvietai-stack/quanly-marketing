@@ -241,6 +241,48 @@ function WorkflowButtons({ task, onChange, onClose }: {
   const meName = user?.fullName || user?.username || "";
   const [revOpen, setRevOpen] = useState(false);
   const [revNote, setRevNote] = useState("");
+  const [submitOpen, setSubmitOpen] = useState<false | "submit" | "resubmit">(false);
+  const [sNote, setSNote] = useState("");
+  const [sResultLink, setSResultLink] = useState("");
+  const [sRelatedDoc, setSRelatedDoc] = useState("");
+  const [sExtraNote, setSExtraNote] = useState("");
+  const [sFiles, setSFiles] = useState<{ name: string; url: string }[]>([]);
+  const [sFileName, setSFileName] = useState("");
+  const [sFileUrl, setSFileUrl] = useState("");
+
+  const openSubmit = (mode: "submit" | "resubmit") => {
+    const permKey = mode === "submit" ? "task.submit_completion" : "task.resubmit_completion";
+    if (!isSuperAdmin && !can(permKey)) { denyToast(); return; }
+    setSNote(task.completionNote ?? "");
+    setSResultLink(task.resultLink ?? "");
+    setSRelatedDoc(task.relatedDocumentLink ?? "");
+    setSExtraNote("");
+    setSFiles(task.completionFiles?.map((f) => ({ name: f.name ?? "", url: f.url })) ?? []);
+    setSFileName(""); setSFileUrl("");
+    setSubmitOpen(mode);
+  };
+
+  const confirmSubmit = () => {
+    const mode = submitOpen;
+    if (!mode) return;
+    const permKey = mode === "submit" ? "task.submit_completion" : "task.resubmit_completion";
+    const action = mode === "submit" ? "Gửi hoàn thành" : "Gửi lại hoàn thành";
+    const nowISO = new Date().toISOString();
+    const noteParts: string[] = [];
+    if (sNote.trim()) noteParts.push(`Ghi chú: ${sNote.trim()}`);
+    if (sResultLink.trim()) noteParts.push(`Kết quả: ${sResultLink.trim()}`);
+    if (sExtraNote.trim()) noteParts.push(`Ghi chú thêm: ${sExtraNote.trim()}`);
+    transition(permKey, "Chờ xác nhận", action, {
+      submittedAt: nowISO,
+      submittedBy: meName,
+      completionNote: sNote.trim() || undefined,
+      resultLink: sResultLink.trim() || task.resultLink,
+      relatedDocumentLink: sRelatedDoc.trim() || undefined,
+      completionFiles: sFiles.length ? sFiles.map((f) => ({ name: f.name || undefined, url: f.url })) : undefined,
+    }, noteParts.join(" • ") || undefined);
+    setSubmitOpen(false);
+  };
+
 
   const transition = (
     permKey: string,
