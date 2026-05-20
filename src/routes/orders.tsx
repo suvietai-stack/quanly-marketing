@@ -166,8 +166,16 @@ function OrdersPage() {
         <TabsTrigger value="needs_fix">Cần sửa</TabsTrigger>
         <TabsTrigger value="delivered">Đã bàn giao</TabsTrigger>
         <TabsTrigger value="completed">Hoàn thành</TabsTrigger>
+        {can("order.report_view") && <TabsTrigger value="report"><BarChart3 className="h-3.5 w-3.5 mr-1" />Báo Cáo</TabsTrigger>}
       </TabsList>
     </Tabs>
+
+    {tab === "report" ? (
+      can("order.report_view")
+        ? <OrderReport />
+        : <Card><CardContent className="py-16 text-center text-muted-foreground">Bạn không có quyền xem báo cáo này.</CardContent></Card>
+    ) : (<>
+
 
     <FilterBar>
       <Input placeholder="Tìm..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
