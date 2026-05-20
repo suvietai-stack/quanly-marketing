@@ -628,6 +628,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "settings.view",
   ].filter((k) =>
     !["web.force_status", "social.post_force_status", "video.force_status", "order.force_status",
+      "task.force_status", "task.force_change_status",
       "settings.user_delete", "settings.user_create", "settings.role", "settings.permission",
       "settings.user_custom_perm", "settings.assign_role", "settings.account_approve",
       "settings.user_reset_password",
