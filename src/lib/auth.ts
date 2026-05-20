@@ -464,8 +464,14 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   m["web.report_view"] = [webViewKey];
 
   // ------- Task -------
-  ["task.create", "task.edit", "task.delete", "task.assign", "task.accept",
-   "task.update_status", "task.complete", "task.restore", "task.force_status"].forEach((k) => {
+  ["task.create", "task.edit", "task.delete", "task.assign",
+   "task.edit_assignee", "task.edit_deadline", "task.edit_priority",
+   "task.accept", "task.update_status", "task.complete", "task.restore", "task.force_status",
+   "task.start", "task.update_result", "task.submit_completion", "task.resubmit_completion",
+   "task.approve_completion", "task.request_revision", "task.cancel",
+   "task.reopen_completed", "task.force_change_status",
+   "task.view_history", "task.add_note",
+   "task.view_all", "task.view_mine", "task.view_created_by_me"].forEach((k) => {
     m[k] = ["task.view"];
   });
 
