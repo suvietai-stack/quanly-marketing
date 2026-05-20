@@ -27,7 +27,7 @@ export const Route = createFileRoute("/social/$id")({
 function ChannelWorkspace() {
   const { id } = Route.useParams();
   const s = useStore();
-  const { can } = useCurrentUser();
+  const { can, scopeList, user } = useCurrentUser();
   const navigate = useNavigate();
   const c = s.socials.find((x) => x.id === id);
 
@@ -40,14 +40,23 @@ function ChannelWorkspace() {
   }
 
   const brand = s.brands.find((b) => b.id === c.brandId);
-  const posts = s.socialPosts.filter((p) => p.channelId === c.id);
+  const me = user?.fullName || user?.username;
+  const allChannelPosts = s.socialPosts.filter((p) => p.channelId === c.id);
+  const posts = scopeList(
+    allChannelPosts,
+    "social.post_view_all",
+    "social.post_view_mine",
+    (p) => !!me && (p.writer === me || p.reviewer === me || p.publisher === me || p.designer === me),
+  );
   const [adding, setAdding] = useState(false);
   const [editPost, setEditPost] = useState<SocialPost | null>(null);
   const [openPost, setOpenPost] = useState<SocialPost | null>(null);
 
+  const canPostView = can("social.post_view");
   const canPostCreate = can("social.post_create");
   const canPostEdit = can("social.post_edit");
   const canPostDelete = can("social.post_delete");
+
 
   return (
     <>
