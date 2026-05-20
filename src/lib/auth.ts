@@ -722,7 +722,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "social.view", "social.view_all",
     "local.view", "local.view_all",
     "video.view", "video.view_all",
-    "order.view", "order.view_all",
+    "order.view", "order.view_all", "order.report_view",
   ],
 };
 
