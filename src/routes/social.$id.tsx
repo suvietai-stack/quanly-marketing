@@ -83,9 +83,10 @@ function ChannelWorkspace() {
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">Thông tin dự án</TabsTrigger>
-          <TabsTrigger value="production">Sản xuất nội dung ({posts.length})</TabsTrigger>
+          {canPostView && <TabsTrigger value="production">Sản xuất nội dung ({posts.length})</TabsTrigger>}
           <TabsTrigger value="growth">Theo dõi tăng trưởng</TabsTrigger>
         </TabsList>
+
 
         {/* TAB 1 */}
         <TabsContent value="info" className="mt-4 grid gap-4 lg:grid-cols-2">
