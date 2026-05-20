@@ -5,6 +5,25 @@ import { useAuth, type User as AuthUser, type Role as AuthRole } from "@/lib/aut
 
 export type ID = string;
 
+export interface BrandDocument {
+  id: ID;
+  name: string;
+  type?: "Brand guideline" | "Content guideline" | "SEO guideline" | "Social guideline" | "Hình ảnh sản phẩm" | "Catalogue/Profile" | "Báo giá" | "Tài liệu khác";
+  url?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  notes?: string;
+}
+
+export interface BrandNote {
+  id: ID;
+  content: string;
+  createdBy?: string;
+  createdAt?: string;
+  importance?: "Thông thường" | "Quan trọng" | "Cần chú ý";
+  status?: "Mở" | "Đã xử lý" | "Đóng";
+}
+
 export interface Brand {
   id: ID;
   name: string;
@@ -16,6 +35,42 @@ export interface Brand {
   status: "Đang xây dựng" | "Đang vận hành" | "Đang tối ưu" | "Tạm dừng" | "Lưu trữ";
   docLink?: string;
   notes?: string;
+  // Profile extras
+  projectName?: string;
+  longDescription?: string;
+  marketingGoal?: string;
+  targetAudience?: string;
+  mainProducts?: string;
+  startDate?: string;
+  // Contact
+  legalName?: string;
+  contactPerson?: string;
+  mainPhone?: string;
+  hotline?: string;
+  email?: string;
+  officeAddress?: string;
+  warehouseAddress?: string;
+  serviceArea?: string;
+  zalo?: string;
+  fanpage?: string;
+  mapLink?: string;
+  taxCode?: string;
+  contactNotes?: string;
+  // Identity
+  logoMain?: string;
+  logoSecondary?: string;
+  colorPrimary?: string;
+  colorSecondary?: string;
+  brandFont?: string;
+  toneOfVoice?: string;
+  imageStyle?: string;
+  brandKeywords?: string;
+  slogan?: string;
+  logoUsage?: string;
+  identityNotes?: string;
+  // Docs & operational notes
+  documents?: BrandDocument[];
+  operationalNotes?: BrandNote[];
 }
 
 export type WebsiteType =
