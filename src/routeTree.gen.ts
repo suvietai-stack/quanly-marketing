@@ -18,11 +18,11 @@ import { Route as PendingRouteImport } from './routes/pending'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as BrandsRouteImport } from './routes/brands'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
+import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
@@ -73,11 +73,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BrandsRoute = BrandsRouteImport.update({
-  id: '/brands',
-  path: '/brands',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -98,6 +93,11 @@ const LocalIndexRoute = LocalIndexRouteImport.update({
   path: '/local/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrandsIndexRoute = BrandsIndexRouteImport.update({
+  id: '/brands/',
+  path: '/brands/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebsitesIdRoute = WebsitesIdRouteImport.update({
   id: '/websites/$id',
   path: '/websites/$id',
@@ -114,14 +114,13 @@ const LocalIdRoute = LocalIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrandsIdRoute = BrandsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => BrandsRoute,
+  id: '/brands/$id',
+  path: '/brands/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/brands': typeof BrandsRouteWithChildren
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -135,13 +134,13 @@ export interface FileRoutesByFullPath {
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/brands': typeof BrandsRouteWithChildren
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -155,6 +154,7 @@ export interface FileRoutesByTo {
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/brands': typeof BrandsIndexRoute
   '/local': typeof LocalIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
@@ -162,7 +162,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/brands': typeof BrandsRouteWithChildren
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -176,6 +175,7 @@ export interface FileRoutesById {
   '/local/$id': typeof LocalIdRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -184,7 +184,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/brands'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -198,13 +197,13 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/brands/'
     | '/local/'
     | '/social/'
     | '/websites/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/brands'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -218,13 +217,13 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/brands'
     | '/local'
     | '/social'
     | '/websites'
   id:
     | '__root__'
     | '/'
-    | '/brands'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -238,6 +237,7 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/social/$id'
     | '/websites/$id'
+    | '/brands/'
     | '/local/'
     | '/social/'
     | '/websites/'
@@ -245,7 +245,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BrandsRoute: typeof BrandsRouteWithChildren
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
@@ -255,9 +254,11 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
+  BrandsIdRoute: typeof BrandsIdRoute
   LocalIdRoute: typeof LocalIdRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
+  BrandsIndexRoute: typeof BrandsIndexRoute
   LocalIndexRoute: typeof LocalIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
@@ -328,13 +329,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/brands': {
-      id: '/brands'
-      path: '/brands'
-      fullPath: '/brands'
-      preLoaderRoute: typeof BrandsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -363,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocalIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/brands/': {
+      id: '/brands/'
+      path: '/brands'
+      fullPath: '/brands/'
+      preLoaderRoute: typeof BrandsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/websites/$id': {
       id: '/websites/$id'
       path: '/websites/$id'
@@ -386,28 +387,16 @@ declare module '@tanstack/react-router' {
     }
     '/brands/$id': {
       id: '/brands/$id'
-      path: '/$id'
+      path: '/brands/$id'
       fullPath: '/brands/$id'
       preLoaderRoute: typeof BrandsIdRouteImport
-      parentRoute: typeof BrandsRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface BrandsRouteChildren {
-  BrandsIdRoute: typeof BrandsIdRoute
-}
-
-const BrandsRouteChildren: BrandsRouteChildren = {
-  BrandsIdRoute: BrandsIdRoute,
-}
-
-const BrandsRouteWithChildren =
-  BrandsRoute._addFileChildren(BrandsRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BrandsRoute: BrandsRouteWithChildren,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
@@ -417,9 +406,11 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
+  BrandsIdRoute: BrandsIdRoute,
   LocalIdRoute: LocalIdRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
+  BrandsIndexRoute: BrandsIndexRoute,
   LocalIndexRoute: LocalIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,

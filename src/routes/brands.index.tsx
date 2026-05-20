@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Globe, Share2, MapPin, ArrowRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export const Route = createFileRoute("/brands")({
+export const Route = createFileRoute("/brands/")({
   head: () => ({ meta: [{ title: "Thương Hiệu — Base Marketing" }] }),
   component: () => (
     <RequirePermission perm="brand.view">
