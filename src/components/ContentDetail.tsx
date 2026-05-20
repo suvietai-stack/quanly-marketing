@@ -478,12 +478,13 @@ export function ContentDetail({
   const s = useStore();
   const { user, can, isAdmin } = useCurrentUser();
   const [editing, setEditing] = useState(false);
+  const [orderFormOpen, setOrderFormOpen] = useState(false);
 
   if (!content) return null;
   const c = s.webContents.find((x) => x.id === content.id) || content;
   const website = s.websites.find((w) => w.id === c.websiteId);
   const brand = s.brands.find((b) => b.id === c.brandId);
-  const order = c.designOrderId ? s.orders.find((o) => o.id === c.designOrderId) : undefined;
+  const linkedOrders = s.orders.filter((o) => o.contentId === c.id || (c.designOrderId && o.id === c.designOrderId));
 
   const writerOwned = isWriterOwned(c, user?.fullName) || isWriterOwned(c, user?.username);
 
