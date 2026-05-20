@@ -30,6 +30,9 @@ function ChannelWorkspace() {
   const { can, scopeList, user } = useCurrentUser();
   const navigate = useNavigate();
   const c = s.socials.find((x) => x.id === id);
+  const [adding, setAdding] = useState(false);
+  const [editPost, setEditPost] = useState<SocialPost | null>(null);
+  const [openPost, setOpenPost] = useState<SocialPost | null>(null);
 
   if (!c) {
     return (
@@ -48,14 +51,12 @@ function ChannelWorkspace() {
     "social.post_view_mine",
     (p) => !!me && (p.writer === me || p.reviewer === me || p.publisher === me || p.designer === me),
   );
-  const [adding, setAdding] = useState(false);
-  const [editPost, setEditPost] = useState<SocialPost | null>(null);
-  const [openPost, setOpenPost] = useState<SocialPost | null>(null);
 
   const canPostView = can("social.post_view");
   const canPostCreate = can("social.post_create");
   const canPostEdit = can("social.post_edit");
   const canPostDelete = can("social.post_delete");
+
 
 
   return (
