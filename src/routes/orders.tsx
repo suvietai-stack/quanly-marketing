@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, LayoutGrid, Table as TableIcon, ExternalLink } from "lucide-react";
+import { Plus, Trash2, LayoutGrid, Table as TableIcon, ExternalLink, BarChart3 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { OrderDetailDialog } from "@/components/OrderDetail";
+import { OrderReport } from "@/components/OrderReport";
 
 export const Route = createFileRoute("/orders")({
   head: () => ({ meta: [{ title: "Order Thiết Kế — Base Marketing" }] }),
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/orders")({
   ),
 });
 
-type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed";
+type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed" | "report";
 
 function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => void; onClose: () => void }) {
   const { brands, people } = useStore();
@@ -165,8 +166,16 @@ function OrdersPage() {
         <TabsTrigger value="needs_fix">Cần sửa</TabsTrigger>
         <TabsTrigger value="delivered">Đã bàn giao</TabsTrigger>
         <TabsTrigger value="completed">Hoàn thành</TabsTrigger>
+        {can("order.report_view") && <TabsTrigger value="report"><BarChart3 className="h-3.5 w-3.5 mr-1" />Báo Cáo</TabsTrigger>}
       </TabsList>
     </Tabs>
+
+    {tab === "report" ? (
+      can("order.report_view")
+        ? <OrderReport />
+        : <Card><CardContent className="py-16 text-center text-muted-foreground">Bạn không có quyền xem báo cáo này.</CardContent></Card>
+    ) : (<>
+
 
     <FilterBar>
       <Input placeholder="Tìm..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
@@ -252,7 +261,9 @@ function OrdersPage() {
         })}
       </div>
     )}
+    </>)}
 
     <OrderDetailDialog orderId={openId} open={!!openId} onOpenChange={(v) => !v && setOpenId(null)} />
   </>;
+
 }

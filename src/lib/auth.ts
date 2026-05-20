@@ -333,6 +333,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("order.force_status", "Ép chuyển trạng thái order", "Thiết Kế", "Workflow"),
   P("order.history", "Xem lịch sử xử lý order", "Thiết Kế", "Lịch sử"),
   P("order.open_delivery", "Mở link file bàn giao", "Thiết Kế", "Lịch sử"),
+  P("order.report_view", "Xem báo cáo Order Thiết Kế", "Thiết Kế", "Báo cáo"),
 
   // ===== I. Báo Cáo =====
   P("report.view", "Xem báo cáo tổng quan", "Báo Cáo", "Báo cáo"),
@@ -721,7 +722,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "social.view", "social.view_all",
     "local.view", "local.view_all",
     "video.view", "video.view_all",
-    "order.view", "order.view_all",
+    "order.view", "order.view_all", "order.report_view",
   ],
 };
 
