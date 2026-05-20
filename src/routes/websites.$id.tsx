@@ -180,7 +180,7 @@ function WebsiteDetail() {
           )}
           {can("web.index_view") && <TabsTrigger value="published">Bài đã đăng / Index ({published.length})</TabsTrigger>}
           {can("web.backlink_view") && <TabsTrigger value="backlinks">Backlink / PR ({s.backlinks.filter((b) => b.websiteId === w.id).length})</TabsTrigger>}
-          {can("web.checktop_view") && <TabsTrigger value="keywords">Check TOP từ khóa ({keywordsList.length})</TabsTrigger>}
+          {can("web.checktop_view") && <TabsTrigger value="keywords">Check TOP từ khóa ({checkTopVisibleCount})</TabsTrigger>}
           {can("web.reopt_view") && <TabsTrigger value="optimize">Tối ưu lại Content ({optimizeContents.length})</TabsTrigger>}
           {can("web.keyword_view") && <TabsTrigger value="research">Nghiên Cứu Keyword ({s.webTopics.filter((t) => t.websiteId === w.id).length})</TabsTrigger>}
           {can("web.growth_view") && <TabsTrigger value="growth">Tăng Trưởng Website ({s.growth.filter((g) => g.websiteId === w.id).length})</TabsTrigger>}
