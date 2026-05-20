@@ -22,6 +22,7 @@ import {
   ExternalLink, Pencil, Palette, ArrowRight, Check, X, ShieldAlert, History,
 } from "lucide-react";
 import { ContentForm } from "@/components/ContentForm";
+import { DesignOrderFormFromContent } from "@/components/DesignOrderForm";
 import { toast } from "sonner";
 
 type Transition = {
