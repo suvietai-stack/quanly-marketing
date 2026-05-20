@@ -241,6 +241,48 @@ function WorkflowButtons({ task, onChange, onClose }: {
   const meName = user?.fullName || user?.username || "";
   const [revOpen, setRevOpen] = useState(false);
   const [revNote, setRevNote] = useState("");
+  const [submitOpen, setSubmitOpen] = useState<false | "submit" | "resubmit">(false);
+  const [sNote, setSNote] = useState("");
+  const [sResultLink, setSResultLink] = useState("");
+  const [sRelatedDoc, setSRelatedDoc] = useState("");
+  const [sExtraNote, setSExtraNote] = useState("");
+  const [sFiles, setSFiles] = useState<{ name: string; url: string }[]>([]);
+  const [sFileName, setSFileName] = useState("");
+  const [sFileUrl, setSFileUrl] = useState("");
+
+  const openSubmit = (mode: "submit" | "resubmit") => {
+    const permKey = mode === "submit" ? "task.submit_completion" : "task.resubmit_completion";
+    if (!isSuperAdmin && !can(permKey)) { denyToast(); return; }
+    setSNote(task.completionNote ?? "");
+    setSResultLink(task.resultLink ?? "");
+    setSRelatedDoc(task.relatedDocumentLink ?? "");
+    setSExtraNote("");
+    setSFiles(task.completionFiles?.map((f) => ({ name: f.name ?? "", url: f.url })) ?? []);
+    setSFileName(""); setSFileUrl("");
+    setSubmitOpen(mode);
+  };
+
+  const confirmSubmit = () => {
+    const mode = submitOpen;
+    if (!mode) return;
+    const permKey = mode === "submit" ? "task.submit_completion" : "task.resubmit_completion";
+    const action = mode === "submit" ? "Gửi hoàn thành" : "Gửi lại hoàn thành";
+    const nowISO = new Date().toISOString();
+    const noteParts: string[] = [];
+    if (sNote.trim()) noteParts.push(`Ghi chú: ${sNote.trim()}`);
+    if (sResultLink.trim()) noteParts.push(`Kết quả: ${sResultLink.trim()}`);
+    if (sExtraNote.trim()) noteParts.push(`Ghi chú thêm: ${sExtraNote.trim()}`);
+    transition(permKey, "Chờ xác nhận", action, {
+      submittedAt: nowISO,
+      submittedBy: meName,
+      completionNote: sNote.trim() || undefined,
+      resultLink: sResultLink.trim() || task.resultLink,
+      relatedDocumentLink: sRelatedDoc.trim() || undefined,
+      completionFiles: sFiles.length ? sFiles.map((f) => ({ name: f.name || undefined, url: f.url })) : undefined,
+    }, noteParts.join(" • ") || undefined);
+    setSubmitOpen(false);
+  };
+
 
   const transition = (
     permKey: string,
@@ -293,9 +335,7 @@ function WorkflowButtons({ task, onChange, onClose }: {
   }
   if (s === "Đang làm") {
     buttons.push(
-      <Button key="submit" size="sm" onClick={() =>
-        transition("task.submit_completion", "Chờ xác nhận", "Gửi hoàn thành", { submittedAt: todayISO() })
-      }>Gửi hoàn thành</Button>,
+      <Button key="submit" size="sm" onClick={() => openSubmit("submit")}>Gửi hoàn thành</Button>,
     );
   }
   if (s === "Chờ xác nhận") {
@@ -311,9 +351,7 @@ function WorkflowButtons({ task, onChange, onClose }: {
   }
   if (s === "Cần sửa") {
     buttons.push(
-      <Button key="resubmit" size="sm" onClick={() =>
-        transition("task.resubmit_completion", "Chờ xác nhận", "Gửi lại hoàn thành", { submittedAt: todayISO() })
-      }>Gửi lại hoàn thành</Button>,
+      <Button key="resubmit" size="sm" onClick={() => openSubmit("resubmit")}>Gửi lại hoàn thành</Button>,
     );
   }
   if (s === "Hoàn thành") {
@@ -377,6 +415,65 @@ function WorkflowButtons({ task, onChange, onClose }: {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!submitOpen} onOpenChange={(o) => !o && setSubmitOpen(false)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              {submitOpen === "resubmit" ? "Gửi lại hoàn thành task" : "Gửi hoàn thành task"}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Bạn có thể gửi kèm ghi chú, link kết quả hoặc ảnh/file minh chứng nếu cần. Tất cả các trường đều không bắt buộc.
+          </p>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <div className="space-y-1">
+              <Label>Ghi chú hoàn thành</Label>
+              <Textarea rows={3} value={sNote} onChange={(e) => setSNote(e.target.value)} placeholder="Tóm tắt kết quả, lưu ý khi bàn giao…" />
+            </div>
+            <div className="space-y-1">
+              <Label>Link kết quả</Label>
+              <Input value={sResultLink} onChange={(e) => setSResultLink(e.target.value)} placeholder="https://…" />
+            </div>
+            <div className="space-y-1">
+              <Label>Link tài liệu liên quan</Label>
+              <Input value={sRelatedDoc} onChange={(e) => setSRelatedDoc(e.target.value)} placeholder="https://drive.google.com/…" />
+            </div>
+            <div className="space-y-1">
+              <Label>File/ảnh minh chứng (dán link)</Label>
+              <div className="flex gap-2">
+                <Input value={sFileName} onChange={(e) => setSFileName(e.target.value)} placeholder="Tên (tuỳ chọn)" className="w-40" />
+                <Input value={sFileUrl} onChange={(e) => setSFileUrl(e.target.value)} placeholder="https://…" />
+                <Button type="button" size="sm" variant="outline" onClick={() => {
+                  if (!sFileUrl.trim()) return;
+                  setSFiles([...sFiles, { name: sFileName.trim(), url: sFileUrl.trim() }]);
+                  setSFileName(""); setSFileUrl("");
+                }}>Thêm</Button>
+              </div>
+              {sFiles.length > 0 && (
+                <ul className="text-xs space-y-1 mt-1">
+                  {sFiles.map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 rounded border px-2 py-1">
+                      <a href={f.url} target="_blank" rel="noreferrer" className="text-primary underline truncate flex-1">
+                        {f.name || f.url}
+                      </a>
+                      <button type="button" className="text-destructive" onClick={() => setSFiles(sFiles.filter((_, j) => j !== i))}>Xoá</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label>Ghi chú thêm</Label>
+              <Textarea rows={2} value={sExtraNote} onChange={(e) => setSExtraNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSubmitOpen(false)}>Hủy</Button>
+            <Button onClick={confirmSubmit}>Xác nhận gửi hoàn thành</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -425,9 +522,17 @@ function TaskDetailDialog({ task, open, onOpenChange }: {
               <Field label="Số lần sửa" value={String(task.revisions ?? 0)} />
               <Field label="Ngày tạo" value={fmtDate(task.createdAt)} />
               <Field label="Nhận việc" value={fmtDate(task.acceptedAt)} />
-              <Field label="Gửi hoàn thành" value={fmtDate(task.submittedAt)} />
+              <Field label="Ngày gửi hoàn thành" value={fmtDate(task.submittedAt)} />
+              <Field label="Người gửi hoàn thành" value={task.submittedBy} />
               <Field label="Hoàn thành" value={fmtDate(task.completedAt)} />
             </div>
+            {task.status === "Chờ xác nhận" && (task.completionNote || task.resultLink || (task.completionFiles?.length ?? 0) > 0) && (
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-2 space-y-1">
+                <div className="text-xs font-medium text-primary">Thông tin gửi hoàn thành</div>
+                {task.completionNote && <div className="text-sm whitespace-pre-wrap">{task.completionNote}</div>}
+                {task.resultLink && <div className="text-xs">Kết quả: <a href={task.resultLink} target="_blank" rel="noreferrer" className="text-primary underline break-all">{task.resultLink}</a></div>}
+              </div>
+            )}
             {task.revisionNote && (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2">
                 <div className="text-xs font-medium text-destructive">Ghi chú yêu cầu sửa gần nhất</div>
@@ -442,9 +547,18 @@ function TaskDetailDialog({ task, open, onOpenChange }: {
           <TabsContent value="docs" className="space-y-2 text-sm">
             <DocRow label="Tài liệu đầu vào" url={task.inputLink} />
             <DocRow label="Link kết quả" url={task.resultLink} />
+            <FilesRow label="File/ảnh minh chứng" files={task.completionFiles} />
             <DocRow label="File bàn giao" url={task.handoverLink} />
+            <DocRow label="Link tài liệu liên quan" url={task.relatedDocumentLink} />
             <DocRow label="Link liên quan" url={task.link || task.relatedLink} />
+            <div className="pt-2">
+              <div className="text-xs text-muted-foreground mb-1">Ghi chú hoàn thành</div>
+              <div className="text-sm whitespace-pre-wrap rounded border p-2 bg-muted/30">
+                {task.completionNote || "Chưa có"}
+              </div>
+            </div>
           </TabsContent>
+
 
           {canHistory && (
             <TabsContent value="history">
@@ -491,12 +605,45 @@ function Field({ label, value }: { label: string; value?: string }) {
 function DocRow({ label, url }: { label: string; url?: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground w-32 shrink-0">{label}</span>
+      <span className="text-xs text-muted-foreground w-40 shrink-0">{label}</span>
       {url ? (
-        <a href={url} target="_blank" rel="noreferrer" className="text-primary underline break-all">{url}</a>
+        <>
+          <a href={url} target="_blank" rel="noreferrer" className="text-primary underline break-all flex-1">{url}</a>
+          <Button size="sm" variant="outline" asChild><a href={url} target="_blank" rel="noreferrer">Mở link</a></Button>
+        </>
       ) : (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">Chưa có</span>
       )}
+    </div>
+  );
+}
+
+function FilesRow({ label, files }: { label: string; files?: { name?: string; url: string }[] }) {
+  if (!files || files.length === 0) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground w-40 shrink-0">{label}</span>
+        <span className="text-muted-foreground">Chưa có</span>
+      </div>
+    );
+  }
+  const isImg = (u: string) => /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(u);
+  return (
+    <div className="flex items-start gap-2">
+      <span className="text-xs text-muted-foreground w-40 shrink-0 pt-1">{label}</span>
+      <ul className="space-y-1 flex-1">
+        {files.map((f, i) => (
+          <li key={i} className="flex items-center gap-2 rounded border px-2 py-1">
+            {isImg(f.url) && (
+              <img src={f.url} alt={f.name || ""} className="h-10 w-10 object-cover rounded" loading="lazy" />
+            )}
+            <a href={f.url} target="_blank" rel="noreferrer" className="text-primary underline truncate flex-1">
+              {f.name || f.url}
+            </a>
+            <Button size="sm" variant="outline" asChild><a href={f.url} target="_blank" rel="noreferrer">Xem</a></Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

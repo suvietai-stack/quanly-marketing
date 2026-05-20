@@ -144,6 +144,11 @@ export interface Task {
   completedAt?: string;
   cancelledAt?: string;
   history?: TaskHistoryEntry[];
+  // Submit-completion fields
+  completionNote?: string;
+  completionFiles?: { name?: string; url: string }[];
+  relatedDocumentLink?: string;
+  submittedBy?: string;
 }
 
 export type ContentStatus =
