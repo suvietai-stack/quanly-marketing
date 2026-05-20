@@ -131,12 +131,12 @@ function BrandDetail() {
 
         {/* ===== TAB 5: DOCS ===== */}
         <TabsContent value="docs" className="mt-4">
-          <DocsTab brand={brand} update={update} canEdit={canDocs} meName={user?.name || ""} />
+          <DocsTab brand={brand} update={update} canEdit={canDocs} meName={user?.fullName || ""} />
         </TabsContent>
 
         {/* ===== TAB 6: NOTES ===== */}
         <TabsContent value="notes" className="mt-4">
-          <NotesTab brand={brand} update={update} canEdit={canNotes} meName={user?.name || ""} />
+          <NotesTab brand={brand} update={update} canEdit={canNotes} meName={user?.fullName || ""} />
         </TabsContent>
       </Tabs>
     </>
