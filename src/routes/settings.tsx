@@ -158,7 +158,7 @@ function SettingsPage() {
 
   // Tick every 30s so "x phút trước" stays fresh without a full reload.
   const [, setTick] = useState(0);
-  React.useEffect(() => {
+  useEffect(() => {
     const iv = setInterval(() => setTick((n) => n + 1), 30_000);
     return () => clearInterval(iv);
   }, []);
