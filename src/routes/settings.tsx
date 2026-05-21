@@ -149,10 +149,26 @@ function SettingsPage() {
   const showPeople = can("settings.people");
   const showCatalog = can("settings.catalog") || can("settings.plan_topic");
   const showInfo = can("settings.system_view");
+  const canPresence = can("settings.view_presence");
   const initialTab = showAccounts ? "accounts" : showPeople ? "people" : showCatalog ? "plans" : "info";
   const [tab, setTab] = useState(initialTab);
+  const [presenceFilter, setPresenceFilter] = useState<"all" | "online" | "offline">("all");
   const setPlans = (next: string[]) => s.setCatalog("plans", next);
   const setTopics = (next: string[]) => s.setCatalog("topics", next);
+
+  // Tick every 30s so "x phút trước" stays fresh without a full reload.
+  const [, setTick] = useState(0);
+  React.useEffect(() => {
+    const iv = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const filteredUsers = auth.users.filter((u) => {
+    if (!canPresence || presenceFilter === "all") return true;
+    const online = isOnline(u.lastSeenAt);
+    return presenceFilter === "online" ? online : !online;
+  });
+  const colSpan = canPresence ? 8 : 7;
 
   return <>
     <PageHeader title="Cài Đặt" description="Tài khoản, phân quyền, hồ sơ nhân sự và danh mục dùng chung." />
@@ -170,13 +186,25 @@ function SettingsPage() {
       </TabsContent>}
 
       <TabsContent value="people" className="mt-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
           <p className="text-sm text-muted-foreground">
             Mỗi tài khoản đã duyệt là một nhân sự. Tạo mới hoặc duyệt tài khoản tại tab <strong>Tài khoản & Phân quyền</strong>.
           </p>
-          <Button variant="outline" onClick={() => setTab("accounts")}>
-            <UserPlus className="h-4 w-4 mr-1.5" />Tạo tài khoản mới
-          </Button>
+          <div className="flex items-center gap-2">
+            {canPresence && (
+              <Select value={presenceFilter} onValueChange={(v) => setPresenceFilter(v as typeof presenceFilter)}>
+                <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="online">Đang online</SelectItem>
+                  <SelectItem value="offline">Đang offline</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            <Button variant="outline" onClick={() => setTab("accounts")}>
+              <UserPlus className="h-4 w-4 mr-1.5" />Tạo tài khoản mới
+            </Button>
+          </div>
         </div>
         <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full text-sm">
           <thead className="text-xs text-muted-foreground bg-muted/40"><tr>
@@ -186,9 +214,10 @@ function SettingsPage() {
             <th className="text-left font-medium px-4 py-2.5">SĐT</th>
             <th className="text-left font-medium px-4 py-2.5">Role</th>
             <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
+            {canPresence && <th className="text-left font-medium px-4 py-2.5">Hoạt động</th>}
             <th className="text-right font-medium px-4 py-2.5"></th>
           </tr></thead><tbody className="divide-y">
-            {auth.users.map((u) => {
+            {filteredUsers.map((u) => {
               const role = auth.roles.find((r) => r.id === u.roleId);
               return (
                 <tr key={u.id} className="hover:bg-muted/30">
@@ -205,6 +234,11 @@ function SettingsPage() {
                   <td className="px-4 py-2.5">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLOR[u.status] || ""}`}>{u.status}</span>
                   </td>
+                  {canPresence && (
+                    <td className="px-4 py-2.5">
+                      <PresenceCell lastSeenAt={u.lastSeenAt} />
+                    </td>
+                  )}
                   <td className="px-4 py-2.5 text-right">
                     <Button size="icon" variant="ghost" onClick={() => setEditing({
                       id: u.id, fullName: u.fullName, phone: u.phone || "",
@@ -215,9 +249,10 @@ function SettingsPage() {
                 </tr>
               );
             })}
-            {auth.users.length === 0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground text-sm">Chưa có tài khoản nào.</td></tr>}
+            {filteredUsers.length === 0 && <tr><td colSpan={colSpan} className="px-4 py-10 text-center text-muted-foreground text-sm">Không có nhân sự phù hợp.</td></tr>}
           </tbody></table></CardContent></Card>
       </TabsContent>
+
 
       <TabsContent value="plans" className="mt-4"><Card><CardContent className="p-5">
         <ListEditor items={s.plans} onAdd={(v) => setPlans([...s.plans, v])} onRemove={(v) => setPlans(s.plans.filter((x) => x !== v))} />
