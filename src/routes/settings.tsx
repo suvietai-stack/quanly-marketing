@@ -55,6 +55,47 @@ const STATUS_COLOR: Record<string, string> = {
   "Lưu trữ": "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
 };
 
+const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+
+function isOnline(lastSeenAt?: string) {
+  if (!lastSeenAt) return false;
+  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_WINDOW_MS;
+}
+
+function timeAgo(iso?: string) {
+  if (!iso) return "chưa đăng nhập";
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "vừa xong";
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  const d = Math.floor(h / 24);
+  return `${d} ngày trước`;
+}
+
+function PresenceCell({ lastSeenAt }: { lastSeenAt?: string }) {
+  const online = isOnline(lastSeenAt);
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-1.5">
+        <span
+          className={`inline-block h-2 w-2 rounded-full ${online ? "bg-emerald-500" : "bg-zinc-400"}`}
+          aria-hidden
+        />
+        <span className={`text-xs font-medium ${online ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground"}`}>
+          {online ? "Online" : "Offline"}
+        </span>
+      </div>
+      {!online && (
+        <span className="text-[11px] text-muted-foreground">
+          Hoạt động lần cuối: {timeAgo(lastSeenAt)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function PersonEditDialog({ edit, onClose }: { edit: PersonEdit; onClose: () => void }) {
   const auth = useAuth();
   const user = auth.users.find((u) => u.id === edit.id);
