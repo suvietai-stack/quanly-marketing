@@ -360,6 +360,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("settings.template", "Quản lý template checklist", "Cài Đặt", "Danh mục"),
   P("settings.system_view", "Xem thông tin hệ thống", "Cài Đặt", "Hệ thống"),
   P("settings.system_edit", "Chỉnh thông tin hệ thống", "Cài Đặt", "Hệ thống"),
+  P("settings.view_presence", "Xem trạng thái online nhân sự", "Cài Đặt", "Nhân sự"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
@@ -534,7 +535,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   ["settings.people", "settings.catalog", "settings.brand_types", "settings.web_types",
    "settings.social_types", "settings.task_types", "settings.video_types", "settings.design_types",
    "settings.priority", "settings.plan_topic", "settings.template",
-   "settings.system_view", "settings.system_edit"].forEach((k) => {
+   "settings.system_view", "settings.system_edit", "settings.view_presence"].forEach((k) => {
     m[k] = ["settings.view"];
   });
   ["settings.user_create", "settings.user_edit", "settings.user_delete",
@@ -620,7 +621,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
       k.startsWith("order.") ||
       k.startsWith("report.")
     ),
-    "settings.view",
+    "settings.view", "settings.view_presence",
   ].filter((k) =>
     !["web.force_status", "social.post_force_status", "video.force_status", "order.force_status",
       "task.force_status", "task.force_change_status",
@@ -809,6 +810,7 @@ export interface User {
   createdAt: string;
   system?: boolean;
   mustChangePassword?: boolean;
+  lastSeenAt?: string;
 }
 
 // ============ Store ============
@@ -847,6 +849,9 @@ interface AuthState {
 
   // Compatibility no-op (used by existing code paths)
   ensureSeed: () => Promise<void>;
+
+  // Presence (Online/Offline)
+  touchPresence: () => Promise<void>;
 }
 
 function genRoleId() {
@@ -877,6 +882,7 @@ function mapProfileToUser(
     createdAt: p.created_at,
     system: !!p.is_system_admin,
     mustChangePassword: !!p.must_change_password,
+    lastSeenAt: p.last_seen_at || undefined,
   };
 }
 
@@ -940,6 +946,21 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
+
+  touchPresence: async () => {
+    const uid = get().currentUserId;
+    if (!uid) return;
+    const nowIso = new Date().toISOString();
+    try {
+      await supabase.from("profiles").update({ last_seen_at: nowIso }).eq("id", uid);
+      // Optimistic local update (avoid full reload)
+      set((s) => ({
+        users: s.users.map((u) => (u.id === uid ? { ...u, lastSeenAt: nowIso } : u)),
+      }));
+    } catch (e) {
+      // silent
+    }
+  },
 
   login: async (usernameOrEmail, password) => {
     const input = usernameOrEmail.trim();

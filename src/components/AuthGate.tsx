@@ -13,6 +13,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const initialized = useAuth((s) => s.initialized);
   const loaded = useAuth((s) => s.loaded);
   const init = useAuth((s) => s.init);
+  const touchPresence = useAuth((s) => s.touchPresence);
   const currentUser = useAuth((s) =>
     s.currentUserId ? s.users.find((u) => u.id === s.currentUserId) : null
   );
@@ -23,6 +24,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     init();
     initStore();
   }, [init, initStore]);
+
+  // Presence heartbeat: ping every 60s while signed-in; also on focus/visibility.
+  useEffect(() => {
+    if (!currentUserId) return;
+    touchPresence();
+    const iv = setInterval(() => touchPresence(), 60_000);
+    const onVis = () => { if (!document.hidden) touchPresence(); };
+    window.addEventListener("focus", onVis);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(iv);
+      window.removeEventListener("focus", onVis);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [currentUserId, touchPresence]);
 
   const isPublic = PUBLIC_PATHS.includes(path);
   const isPending = path === PENDING_PATH;
