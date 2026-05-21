@@ -535,7 +535,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   ["settings.people", "settings.catalog", "settings.brand_types", "settings.web_types",
    "settings.social_types", "settings.task_types", "settings.video_types", "settings.design_types",
    "settings.priority", "settings.plan_topic", "settings.template",
-   "settings.system_view", "settings.system_edit"].forEach((k) => {
+   "settings.system_view", "settings.system_edit", "settings.view_presence"].forEach((k) => {
     m[k] = ["settings.view"];
   });
   ["settings.user_create", "settings.user_edit", "settings.user_delete",
