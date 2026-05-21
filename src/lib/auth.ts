@@ -879,6 +879,7 @@ function mapProfileToUser(
     createdAt: p.created_at,
     system: !!p.is_system_admin,
     mustChangePassword: !!p.must_change_password,
+    lastSeenAt: p.last_seen_at || undefined,
   };
 }
 
