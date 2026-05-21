@@ -360,6 +360,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("settings.template", "Quản lý template checklist", "Cài Đặt", "Danh mục"),
   P("settings.system_view", "Xem thông tin hệ thống", "Cài Đặt", "Hệ thống"),
   P("settings.system_edit", "Chỉnh thông tin hệ thống", "Cài Đặt", "Hệ thống"),
+  P("settings.view_presence", "Xem trạng thái online nhân sự", "Cài Đặt", "Nhân sự"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
