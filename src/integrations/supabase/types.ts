@@ -313,6 +313,7 @@ export type Database = {
           full_name: string
           id: string
           is_system_admin: boolean
+          last_seen_at: string | null
           must_change_password: boolean
           notes: string | null
           phone: string | null
@@ -327,6 +328,7 @@ export type Database = {
           full_name?: string
           id: string
           is_system_admin?: boolean
+          last_seen_at?: string | null
           must_change_password?: boolean
           notes?: string | null
           phone?: string | null
@@ -341,6 +343,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_system_admin?: boolean
+          last_seen_at?: string | null
           must_change_password?: boolean
           notes?: string | null
           phone?: string | null
