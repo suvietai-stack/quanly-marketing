@@ -947,6 +947,21 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
 
+  touchPresence: async () => {
+    const uid = get().currentUserId;
+    if (!uid) return;
+    const nowIso = new Date().toISOString();
+    try {
+      await supabase.from("profiles").update({ last_seen_at: nowIso }).eq("id", uid);
+      // Optimistic local update (avoid full reload)
+      set((s) => ({
+        users: s.users.map((u) => (u.id === uid ? { ...u, lastSeenAt: nowIso } : u)),
+      }));
+    } catch (e) {
+      // silent
+    }
+  },
+
   login: async (usernameOrEmail, password) => {
     const input = usernameOrEmail.trim();
     let email = input.includes("@") ? input.toLowerCase() : "";
