@@ -849,6 +849,9 @@ interface AuthState {
 
   // Compatibility no-op (used by existing code paths)
   ensureSeed: () => Promise<void>;
+
+  // Presence (Online/Offline)
+  touchPresence: () => Promise<void>;
 }
 
 function genRoleId() {
