@@ -810,6 +810,7 @@ export interface User {
   createdAt: string;
   system?: boolean;
   mustChangePassword?: boolean;
+  lastSeenAt?: string;
 }
 
 // ============ Store ============
