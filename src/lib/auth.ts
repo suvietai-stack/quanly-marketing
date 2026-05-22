@@ -525,7 +525,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   });
 
   // ------- Order -------
-  ["order.create", "order.edit", "order.delete", "order.send_request", "order.assign",
+  ["order.create", "order.edit", "order.edit_reviewer", "order.delete", "order.send_request", "order.assign",
    "order.take", "order.update_draft", "order.submit", "order.resubmit", "order.approve",
    "order.request_changes", "order.deliver", "order.complete", "order.cancel",
    "order.restore", "order.force_status", "order.history", "order.open_delivery"].forEach((k) => {
