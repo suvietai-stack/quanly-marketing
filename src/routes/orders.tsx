@@ -88,7 +88,16 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
     </div>
     <DialogFooter className="mt-4">
       <Button variant="ghost" onClick={onClose}>Huỷ</Button>
-      <Button onClick={() => { if (o.title.trim() && o.brandId) { onSubmit(o); onClose(); }}}>Tạo order</Button>
+      <Button onClick={() => {
+        if (!o.title.trim() || !o.brandId) return;
+        const reviewer = o.reviewer || o.requester;
+        if (o.assignee && reviewer && o.assignee === reviewer) {
+          alert("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
+          return;
+        }
+        onSubmit({ ...o, reviewer });
+        onClose();
+      }}>Tạo order</Button>
     </DialogFooter>
   </>;
 }
