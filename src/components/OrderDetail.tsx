@@ -100,24 +100,39 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
       show: allow("order.take", isOwner || (!o.assignee)),
     });
   }
+  const effectiveReviewer = o.reviewer || o.requester;
+  const selfApproval = !!o.assignee && !!effectiveReviewer && o.assignee === effectiveReviewer;
+
   if (status === "Đang thực hiện") {
     actions.push({
       label: "Gửi duyệt",
-      onClick: () => transition("Chờ duyệt", "Gửi duyệt", { submittedAt: new Date().toISOString() }),
+      onClick: () => {
+        if (selfApproval) {
+          toast.error("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
+          return;
+        }
+        transition("Chờ duyệt", "Gửi duyệt", { submittedAt: new Date().toISOString() });
+      },
       show: allow("order.submit", isOwner),
     });
   }
   if (status === "Chờ duyệt") {
     actions.push({
       label: "Duyệt",
-      onClick: () => transition("Đã duyệt", "Duyệt order"),
-      show: allow("order.approve", isApprover),
+      onClick: () => {
+        if (selfApproval) {
+          toast.error("Người phụ trách không thể đồng thời duyệt Order của chính mình.");
+          return;
+        }
+        transition("Đã duyệt", "Duyệt order");
+      },
+      show: allow("order.approve", isApprover) && !selfApproval,
     });
     actions.push({
       label: "Yêu cầu sửa",
       variant: "outline",
       onClick: requestChanges,
-      show: allow("order.request_changes", isApprover),
+      show: allow("order.request_changes", isApprover) && !selfApproval,
     });
   }
   if (status === "Cần sửa") {
