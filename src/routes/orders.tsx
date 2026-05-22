@@ -78,7 +78,7 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
         </Select></div>
       <div><Label>Người yêu cầu</Label>{ps(o.requester, (x) => set({ requester: x }))}</div>
       <div><Label>Người phụ trách</Label>{ps(o.assignee, (x) => set({ assignee: x }))}</div>
-      <div><Label>Người duyệt</Label>{ps(o.reviewer, (x) => set({ reviewer: x }))}</div>
+      <div><Label>Người duyệt <span className="text-xs text-muted-foreground font-normal">(mặc định: Người yêu cầu)</span></Label>{ps(o.reviewer, (x) => set({ reviewer: x }))}</div>
       <div><Label>Deadline</Label><Input type="date" value={o.deadline || ""} onChange={(e) => set({ deadline: e.target.value })} /></div>
       <div><Label>Kích thước</Label><Input value={o.size || ""} onChange={(e) => set({ size: e.target.value })} placeholder="VD: 1920x1080" /></div>
       <div><Label>Số lượng</Label><Input type="number" value={o.quantity ?? ""} onChange={(e) => set({ quantity: e.target.value ? Number(e.target.value) : undefined })} /></div>
