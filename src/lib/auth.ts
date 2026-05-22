@@ -317,6 +317,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("order.view_mine", "Chỉ xem order liên quan", "Thiết Kế", "Dữ liệu"),
   P("order.create", "Tạo order thiết kế", "Thiết Kế", "CRUD"),
   P("order.edit", "Sửa order thiết kế", "Thiết Kế", "CRUD"),
+  P("order.edit_reviewer", "Chỉnh Người duyệt order", "Thiết Kế", "CRUD"),
   P("order.delete", "Xóa order thiết kế", "Thiết Kế", "CRUD"),
   P("order.send_request", "Gửi yêu cầu order", "Thiết Kế", "Workflow"),
   P("order.assign", "Gán người phụ trách order", "Thiết Kế", "Workflow"),
@@ -524,7 +525,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   });
 
   // ------- Order -------
-  ["order.create", "order.edit", "order.delete", "order.send_request", "order.assign",
+  ["order.create", "order.edit", "order.edit_reviewer", "order.delete", "order.send_request", "order.assign",
    "order.take", "order.update_draft", "order.submit", "order.resubmit", "order.approve",
    "order.request_changes", "order.deliver", "order.complete", "order.cancel",
    "order.restore", "order.force_status", "order.history", "order.open_delivery"].forEach((k) => {

@@ -701,6 +701,8 @@ export interface DesignOrder {
   refLinkObject?: string;
   requester?: string;
   assigner?: string;
+  assignedBy?: string;
+  assignedAt?: string;
   assignee?: string;
   reviewer?: string;
   deadline?: string;

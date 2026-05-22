@@ -100,24 +100,39 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
       show: allow("order.take", isOwner || (!o.assignee)),
     });
   }
+  const effectiveReviewer = o.reviewer || o.requester;
+  const selfApproval = !!o.assignee && !!effectiveReviewer && o.assignee === effectiveReviewer;
+
   if (status === "Đang thực hiện") {
     actions.push({
       label: "Gửi duyệt",
-      onClick: () => transition("Chờ duyệt", "Gửi duyệt", { submittedAt: new Date().toISOString() }),
+      onClick: () => {
+        if (selfApproval) {
+          toast.error("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
+          return;
+        }
+        transition("Chờ duyệt", "Gửi duyệt", { submittedAt: new Date().toISOString() });
+      },
       show: allow("order.submit", isOwner),
     });
   }
   if (status === "Chờ duyệt") {
     actions.push({
       label: "Duyệt",
-      onClick: () => transition("Đã duyệt", "Duyệt order"),
-      show: allow("order.approve", isApprover),
+      onClick: () => {
+        if (selfApproval) {
+          toast.error("Người phụ trách không thể đồng thời duyệt Order của chính mình.");
+          return;
+        }
+        transition("Đã duyệt", "Duyệt order");
+      },
+      show: allow("order.approve", isApprover) && !selfApproval,
     });
     actions.push({
       label: "Yêu cầu sửa",
       variant: "outline",
       onClick: requestChanges,
-      show: allow("order.request_changes", isApprover),
+      show: allow("order.request_changes", isApprover) && !selfApproval,
     });
   }
   if (status === "Cần sửa") {
@@ -235,9 +250,31 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 <Input type="number" value={o.quantity ?? ""} disabled={!canEdit} onChange={(e) => setField({ quantity: e.target.value ? Number(e.target.value) : undefined })} /></div>
 
               <PersonSelect label="Người yêu cầu" value={o.requester} onChange={(v) => setField({ requester: v })} disabled={!canEdit} />
-              <PersonSelect label="Người phụ trách" value={o.assignee} onChange={(v) => setField({ assignee: v })} disabled={!(isAdmin || can("order.assign") || isRequester)} />
-              <PersonSelect label="Người duyệt" value={o.reviewer} onChange={(v) => setField({ reviewer: v })} disabled={!canEdit} />
-              <PersonSelect label="Người giao việc" value={o.assigner} onChange={(v) => setField({ assigner: v })} disabled={!canEdit} />
+              <PersonSelect label="Người phụ trách" value={o.assignee} onChange={(v) => {
+                if (v && o.reviewer && v === o.reviewer) {
+                  toast.error("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
+                  return;
+                }
+                if (order.assignee !== v) {
+                  const history = pushHistory(
+                    order.assignee ? `Đổi người phụ trách: ${order.assignee || "—"} → ${v || "—"}` : `Gán người phụ trách: ${v || "—"}`,
+                  );
+                  s.update("orders", order.id, { assignee: v, assignedBy: userName, assignedAt: new Date().toISOString(), history });
+                }
+                setField({ assignee: v });
+              }} disabled={!(isAdmin || can("order.assign"))} />
+              <PersonSelect
+                label="Người duyệt"
+                value={o.reviewer || o.requester}
+                onChange={(v) => {
+                  if (v && o.assignee && v === o.assignee) {
+                    toast.error("Người duyệt không thể đồng thời là Người phụ trách. Vui lòng chọn người khác.");
+                    return;
+                  }
+                  setField({ reviewer: v });
+                }}
+                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Mới tạo" || order.status === "Chờ nhận việc")))}
+              />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
                 <Textarea rows={3} value={o.brief || ""} disabled={!canEdit} onChange={(e) => setField({ brief: e.target.value })} /></div>
