@@ -317,6 +317,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("order.view_mine", "Chỉ xem order liên quan", "Thiết Kế", "Dữ liệu"),
   P("order.create", "Tạo order thiết kế", "Thiết Kế", "CRUD"),
   P("order.edit", "Sửa order thiết kế", "Thiết Kế", "CRUD"),
+  P("order.edit_reviewer", "Chỉnh Người duyệt order", "Thiết Kế", "CRUD"),
   P("order.delete", "Xóa order thiết kế", "Thiết Kế", "CRUD"),
   P("order.send_request", "Gửi yêu cầu order", "Thiết Kế", "Workflow"),
   P("order.assign", "Gán người phụ trách order", "Thiết Kế", "Workflow"),
