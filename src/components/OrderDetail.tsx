@@ -235,9 +235,31 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 <Input type="number" value={o.quantity ?? ""} disabled={!canEdit} onChange={(e) => setField({ quantity: e.target.value ? Number(e.target.value) : undefined })} /></div>
 
               <PersonSelect label="Người yêu cầu" value={o.requester} onChange={(v) => setField({ requester: v })} disabled={!canEdit} />
-              <PersonSelect label="Người phụ trách" value={o.assignee} onChange={(v) => setField({ assignee: v })} disabled={!(isAdmin || can("order.assign") || isRequester)} />
-              <PersonSelect label="Người duyệt" value={o.reviewer} onChange={(v) => setField({ reviewer: v })} disabled={!canEdit} />
-              <PersonSelect label="Người giao việc" value={o.assigner} onChange={(v) => setField({ assigner: v })} disabled={!canEdit} />
+              <PersonSelect label="Người phụ trách" value={o.assignee} onChange={(v) => {
+                if (v && o.reviewer && v === o.reviewer) {
+                  toast.error("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
+                  return;
+                }
+                if (order.assignee !== v) {
+                  const history = pushHistory(
+                    order.assignee ? `Đổi người phụ trách: ${order.assignee || "—"} → ${v || "—"}` : `Gán người phụ trách: ${v || "—"}`,
+                  );
+                  s.update("orders", order.id, { assignee: v, assignedBy: userName, assignedAt: new Date().toISOString(), history });
+                }
+                setField({ assignee: v });
+              }} disabled={!(isAdmin || can("order.assign"))} />
+              <PersonSelect
+                label="Người duyệt"
+                value={o.reviewer || o.requester}
+                onChange={(v) => {
+                  if (v && o.assignee && v === o.assignee) {
+                    toast.error("Người duyệt không thể đồng thời là Người phụ trách. Vui lòng chọn người khác.");
+                    return;
+                  }
+                  setField({ reviewer: v });
+                }}
+                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Mới tạo" || order.status === "Chờ nhận việc")))}
+              />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
                 <Textarea rows={3} value={o.brief || ""} disabled={!canEdit} onChange={(e) => setField({ brief: e.target.value })} /></div>
