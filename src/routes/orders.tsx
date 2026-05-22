@@ -118,7 +118,7 @@ function OrdersPage() {
     // base scope: if user does not have view_all, only show related
     if (!canViewAll && userName) {
       list = list.filter((o) =>
-        o.requester === userName || o.assignee === userName || o.reviewer === userName || o.assigner === userName
+        o.requester === userName || o.assignee === userName || o.reviewer === userName
       );
     }
     if (tab === "mine_created") list = list.filter((o) => o.requester === userName);
