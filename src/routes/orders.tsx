@@ -162,8 +162,17 @@ function OrdersPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Tạo order thiết kế</DialogTitle></DialogHeader>
           <NewOrderForm onSubmit={(o) => {
-            const history = [{ at: new Date().toISOString(), byId: user?.id, byName: userName || "—", action: "Tạo order", toStatus: o.status }];
-            s.add("orders", { ...o, history });
+            const now = new Date().toISOString();
+            const history: any[] = [];
+            if (o.assignee) {
+              history.push({ at: now, byId: user?.id, byName: userName || "—", action: `Tạo và giao order cho ${o.assignee}`, toStatus: o.status });
+            } else {
+              history.push({ at: now, byId: user?.id, byName: userName || "—", action: "Tạo order", toStatus: o.status });
+            }
+            const extra: Partial<DesignOrder> = o.assignee
+              ? { assignedBy: userName, assignedAt: now }
+              : {};
+            s.add("orders", { ...o, ...extra, history });
           }} onClose={() => setAdding(false)} />
         </DialogContent>
       </Dialog>}
