@@ -655,7 +655,7 @@ export function normalizeVideoStatus(s?: string): VideoStatus {
 }
 
 export const ORDER_STATUSES = [
-  "Mới tạo",
+  "Chờ phân công",
   "Chờ nhận việc",
   "Đang thực hiện",
   "Chờ duyệt",
