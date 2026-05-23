@@ -181,14 +181,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   if (status === "Đã hủy") {
     actions.push({
       label: "Khôi phục",
-      onClick: () => transition("Mới tạo", "Khôi phục order"),
-      show: allow("order.restore", false),
-    });
-  }
-  if (status === "Đã hủy") {
-    actions.push({
-      label: "Khôi phục",
-      onClick: () => transition("Mới tạo", "Khôi phục order"),
+      onClick: () => transition(order.assignee ? "Chờ nhận việc" : "Chờ phân công", "Khôi phục order"),
       show: allow("order.restore", false),
     });
   }
