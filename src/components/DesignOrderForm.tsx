@@ -263,7 +263,7 @@ export function DesignOrderFormFromContent({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input value="Sẽ ở trạng thái Mới tạo / Chờ phân công" disabled />
+                  <Input value="Sẽ ở trạng thái Chờ phân công" disabled />
                 )}
               </div>
               <div>
