@@ -335,7 +335,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   <Textarea rows={2} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Mô tả phần cần chỉnh sửa..." />
                 </div>
               )}
-              {(status === "Mới tạo" || status === "Chờ nhận việc") && (
+              {(status === "Chờ phân công" || status === "Chờ nhận việc") && (
                 <div>
                   <Label>Lý do hủy (nếu hủy)</Label>
                   <Input value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Lý do..." />
