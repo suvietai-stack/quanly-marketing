@@ -737,8 +737,9 @@ export interface DesignOrder {
 
 export function normalizeOrderStatus(s: any): OrderStatus {
   if (s === "Đang làm") return "Đang thực hiện";
+  if (s === "Mới tạo") return "Chờ phân công";
   if ((ORDER_STATUSES as readonly string[]).includes(s)) return s as OrderStatus;
-  return "Mới tạo";
+  return "Chờ phân công";
 }
 
 export interface Person {
