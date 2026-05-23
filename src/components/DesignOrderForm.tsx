@@ -86,7 +86,7 @@ export function DesignOrderFormFromContent({
       (draftLink ? `\nLink bài viết: ${draftLink}` : "");
 
     const finalAssignee = canAssign ? (assignee || undefined) : undefined;
-    const status = finalAssignee ? "Chờ nhận việc" : "Mới tạo";
+    const status = finalAssignee ? "Chờ nhận việc" : "Chờ phân công";
 
     const order: DesignOrder = {
       id: uid(),
