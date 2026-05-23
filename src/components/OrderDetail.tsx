@@ -86,11 +86,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const status = order.status;
   const actions: { label: string; onClick: () => void; variant?: "default" | "outline" | "destructive" | "secondary"; show: boolean }[] = [];
 
-  if (status === "Mới tạo") {
+  if (status === "Chờ phân công") {
     actions.push({
       label: "Gửi yêu cầu",
       onClick: () => transition("Chờ nhận việc", "Gửi yêu cầu"),
-      show: allow("order.send_request", isRequester),
+      show: allow("order.send_request", isRequester) && !!o.assignee,
     });
   }
   if (status === "Chờ nhận việc") {
