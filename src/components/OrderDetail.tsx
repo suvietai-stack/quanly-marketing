@@ -168,7 +168,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
       label: "Hủy order",
       variant: "destructive",
       onClick: () => {
-        const earlyStages = status === "Mới tạo" || status === "Chờ nhận việc";
+        const earlyStages = status === "Chờ phân công" || status === "Chờ nhận việc";
         if (!earlyStages && !reviewNote.trim()) {
           toast.error("Nhập lý do hủy ở ô ghi chú trước");
           return;
