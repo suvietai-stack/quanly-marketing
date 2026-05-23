@@ -86,11 +86,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const status = order.status;
   const actions: { label: string; onClick: () => void; variant?: "default" | "outline" | "destructive" | "secondary"; show: boolean }[] = [];
 
-  if (status === "Mới tạo") {
+  if (status === "Chờ phân công") {
     actions.push({
       label: "Gửi yêu cầu",
       onClick: () => transition("Chờ nhận việc", "Gửi yêu cầu"),
-      show: allow("order.send_request", isRequester),
+      show: allow("order.send_request", isRequester) && !!o.assignee,
     });
   }
   if (status === "Chờ nhận việc") {
@@ -168,7 +168,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
       label: "Hủy order",
       variant: "destructive",
       onClick: () => {
-        const earlyStages = status === "Mới tạo" || status === "Chờ nhận việc";
+        const earlyStages = status === "Chờ phân công" || status === "Chờ nhận việc";
         if (!earlyStages && !reviewNote.trim()) {
           toast.error("Nhập lý do hủy ở ô ghi chú trước");
           return;
@@ -181,14 +181,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   if (status === "Đã hủy") {
     actions.push({
       label: "Khôi phục",
-      onClick: () => transition("Mới tạo", "Khôi phục order"),
-      show: allow("order.restore", false),
-    });
-  }
-  if (status === "Đã hủy") {
-    actions.push({
-      label: "Khôi phục",
-      onClick: () => transition("Mới tạo", "Khôi phục order"),
+      onClick: () => transition(order.assignee ? "Chờ nhận việc" : "Chờ phân công", "Khôi phục order"),
       show: allow("order.restore", false),
     });
   }
@@ -256,10 +249,26 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   return;
                 }
                 if (order.assignee !== v) {
-                  const history = pushHistory(
-                    order.assignee ? `Đổi người phụ trách: ${order.assignee || "—"} → ${v || "—"}` : `Gán người phụ trách: ${v || "—"}`,
-                  );
-                  s.update("orders", order.id, { assignee: v, assignedBy: userName, assignedAt: new Date().toISOString(), history });
+                  const now = new Date().toISOString();
+                  let newStatus: OrderStatus = order.status;
+                  let actionLabel: string;
+                  if (!order.assignee && v) {
+                    actionLabel = `${userName} đã phân công order cho ${v}`;
+                    if (order.status === "Chờ phân công") newStatus = "Chờ nhận việc";
+                  } else if (order.assignee && v && order.assignee !== v) {
+                    actionLabel = `Đổi người phụ trách: ${order.assignee} → ${v}`;
+                    if (order.status === "Đang thực hiện") newStatus = "Chờ nhận việc";
+                  } else if (order.assignee && !v) {
+                    actionLabel = `Gỡ phân công (trước: ${order.assignee})`;
+                    if (order.status === "Chờ nhận việc" || order.status === "Đang thực hiện") newStatus = "Chờ phân công";
+                  } else {
+                    actionLabel = `Cập nhật người phụ trách: ${v || "—"}`;
+                  }
+                  const history = pushHistory(actionLabel, order.status, newStatus !== order.status ? newStatus : undefined);
+                  const patch: Partial<DesignOrder> = { assignee: v, history };
+                  if (v && order.assignee !== v) { patch.assignedBy = userName; patch.assignedAt = now; }
+                  if (newStatus !== order.status) patch.status = newStatus;
+                  s.update("orders", order.id, patch);
                 }
                 setField({ assignee: v });
               }} disabled={!(isAdmin || can("order.assign"))} />
@@ -273,7 +282,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   }
                   setField({ reviewer: v });
                 }}
-                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Mới tạo" || order.status === "Chờ nhận việc")))}
+                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Chờ phân công" || order.status === "Chờ nhận việc")))}
               />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
@@ -326,7 +335,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   <Textarea rows={2} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Mô tả phần cần chỉnh sửa..." />
                 </div>
               )}
-              {(status === "Mới tạo" || status === "Chờ nhận việc") && (
+              {(status === "Chờ phân công" || status === "Chờ nhận việc") && (
                 <div>
                   <Label>Lý do hủy (nếu hủy)</Label>
                   <Input value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Lý do..." />

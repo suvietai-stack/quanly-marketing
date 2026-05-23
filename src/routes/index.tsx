@@ -60,7 +60,7 @@ const PENDING_OWN_ORDER_STATUSES = new Set([
 const WAIT_OTHERS_CONTENT = new Set(["Chờ duyệt outline", "Chờ duyệt bài", "Chờ đăng web"]);
 const WAIT_OTHERS_SOCIAL = new Set(["Chờ duyệt", "Chờ đăng"]);
 const WAIT_OTHERS_VIDEO = new Set(["Chờ duyệt kịch bản", "Chờ duyệt video", "Đã bàn giao"]);
-const WAIT_OTHERS_ORDER = new Set(["Mới tạo", "Chờ nhận việc", "Đang thực hiện", "Chờ duyệt"]);
+const WAIT_OTHERS_ORDER = new Set(["Chờ phân công", "Chờ nhận việc", "Đang thực hiện", "Chờ duyệt"]);
 
 const NEEDS_FIX_KEYWORDS = ["Cần sửa"];
 

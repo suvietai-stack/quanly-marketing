@@ -86,7 +86,7 @@ export function DesignOrderFormFromContent({
       (draftLink ? `\nLink bài viết: ${draftLink}` : "");
 
     const finalAssignee = canAssign ? (assignee || undefined) : undefined;
-    const status = finalAssignee ? "Chờ nhận việc" : "Mới tạo";
+    const status = finalAssignee ? "Chờ nhận việc" : "Chờ phân công";
 
     const order: DesignOrder = {
       id: uid(),
@@ -263,7 +263,7 @@ export function DesignOrderFormFromContent({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input value="Sẽ ở trạng thái Mới tạo / Chờ phân công" disabled />
+                  <Input value="Sẽ ở trạng thái Chờ phân công" disabled />
                 )}
               </div>
               <div>
