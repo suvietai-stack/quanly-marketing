@@ -183,6 +183,7 @@ function OrdersPage() {
         <TabsTrigger value="all">Tất cả</TabsTrigger>
         <TabsTrigger value="mine_created">Tôi tạo</TabsTrigger>
         <TabsTrigger value="mine_assigned">Tôi phụ trách</TabsTrigger>
+        <TabsTrigger value="waiting_assign">Chờ phân công</TabsTrigger>
         <TabsTrigger value="waiting_take">Chờ nhận việc</TabsTrigger>
         <TabsTrigger value="pending_review">Chờ duyệt</TabsTrigger>
         <TabsTrigger value="needs_fix">Cần sửa</TabsTrigger>
