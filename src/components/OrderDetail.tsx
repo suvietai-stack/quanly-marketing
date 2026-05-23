@@ -249,10 +249,26 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   return;
                 }
                 if (order.assignee !== v) {
-                  const history = pushHistory(
-                    order.assignee ? `Đổi người phụ trách: ${order.assignee || "—"} → ${v || "—"}` : `Gán người phụ trách: ${v || "—"}`,
-                  );
-                  s.update("orders", order.id, { assignee: v, assignedBy: userName, assignedAt: new Date().toISOString(), history });
+                  const now = new Date().toISOString();
+                  let newStatus: OrderStatus = order.status;
+                  let actionLabel: string;
+                  if (!order.assignee && v) {
+                    actionLabel = `${userName} đã phân công order cho ${v}`;
+                    if (order.status === "Chờ phân công") newStatus = "Chờ nhận việc";
+                  } else if (order.assignee && v && order.assignee !== v) {
+                    actionLabel = `Đổi người phụ trách: ${order.assignee} → ${v}`;
+                    if (order.status === "Đang thực hiện") newStatus = "Chờ nhận việc";
+                  } else if (order.assignee && !v) {
+                    actionLabel = `Gỡ phân công (trước: ${order.assignee})`;
+                    if (order.status === "Chờ nhận việc" || order.status === "Đang thực hiện") newStatus = "Chờ phân công";
+                  } else {
+                    actionLabel = `Cập nhật người phụ trách: ${v || "—"}`;
+                  }
+                  const history = pushHistory(actionLabel, order.status, newStatus !== order.status ? newStatus : undefined);
+                  const patch: Partial<DesignOrder> = { assignee: v, history };
+                  if (v && order.assignee !== v) { patch.assignedBy = userName; patch.assignedAt = now; }
+                  if (newStatus !== order.status) patch.status = newStatus;
+                  s.update("orders", order.id, patch);
                 }
                 setField({ assignee: v });
               }} disabled={!(isAdmin || can("order.assign"))} />
@@ -266,7 +282,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   }
                   setField({ reviewer: v });
                 }}
-                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Mới tạo" || order.status === "Chờ nhận việc")))}
+                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Chờ phân công" || order.status === "Chờ nhận việc")))}
               />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
