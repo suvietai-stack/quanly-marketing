@@ -27,12 +27,13 @@ export const Route = createFileRoute("/orders")({
   ),
 });
 
-type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed" | "report";
+type ViewKey = "all" | "mine_created" | "mine_assigned" | "waiting_assign" | "waiting_take" | "pending_review" | "needs_fix" | "delivered" | "completed" | "report";
 
 function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => void; onClose: () => void }) {
   const { brands, people } = useStore();
-  const { user } = useCurrentUser();
+  const { user, can, isAdmin } = useCurrentUser();
   const userName = user?.fullName || user?.username || "";
+  const canAssign = isAdmin || can("order.assign");
   const [o, setO] = useState<DesignOrder>({
     id: uid(),
     title: "",
@@ -40,14 +41,15 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
     type: "Banner website",
     source: "Web",
     requester: userName || undefined,
+    reviewer: userName || undefined,
     priority: "Trung bình",
-    status: "Mới tạo",
+    status: "Chờ phân công",
     revisions: 0,
     history: [],
   });
   const set = (x: Partial<DesignOrder>) => setO({ ...o, ...x });
-  const ps = (val: string | undefined, on: (v?: string) => void) => (
-    <Select value={val || "_"} onValueChange={(x) => on(x === "_" ? undefined : x)}>
+  const ps = (val: string | undefined, on: (v?: string) => void, disabled?: boolean) => (
+    <Select value={val || "_"} onValueChange={(x) => on(x === "_" ? undefined : x)} disabled={disabled}>
       <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
       <SelectContent><SelectItem value="_">—</SelectItem>{people.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}</SelectContent>
     </Select>
@@ -76,9 +78,9 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>{ORDER_PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
         </Select></div>
-      <div><Label>Người yêu cầu</Label>{ps(o.requester, (x) => set({ requester: x }))}</div>
-      <div><Label>Người phụ trách</Label>{ps(o.assignee, (x) => set({ assignee: x }))}</div>
-      <div><Label>Người duyệt <span className="text-xs text-muted-foreground font-normal">(mặc định: Người yêu cầu)</span></Label>{ps(o.reviewer, (x) => set({ reviewer: x }))}</div>
+      <div><Label>Người yêu cầu</Label>{ps(o.requester, (x) => set({ requester: x, reviewer: o.reviewer || x }))}</div>
+      <div><Label>Người phụ trách {canAssign ? "" : <span className="text-xs text-muted-foreground font-normal">(cần quyền phân công)</span>}</Label>{ps(o.assignee, (x) => set({ assignee: x }), !canAssign)}</div>
+      <div><Label>Người duyệt <span className="text-xs text-muted-foreground font-normal">(mặc định: Người yêu cầu)</span></Label>{ps(o.reviewer || o.requester, (x) => set({ reviewer: x }))}</div>
       <div><Label>Deadline</Label><Input type="date" value={o.deadline || ""} onChange={(e) => set({ deadline: e.target.value })} /></div>
       <div><Label>Kích thước</Label><Input value={o.size || ""} onChange={(e) => set({ size: e.target.value })} placeholder="VD: 1920x1080" /></div>
       <div><Label>Số lượng</Label><Input type="number" value={o.quantity ?? ""} onChange={(e) => set({ quantity: e.target.value ? Number(e.target.value) : undefined })} /></div>
@@ -91,11 +93,13 @@ function NewOrderForm({ onSubmit, onClose }: { onSubmit: (o: DesignOrder) => voi
       <Button onClick={() => {
         if (!o.title.trim() || !o.brandId) return;
         const reviewer = o.reviewer || o.requester;
-        if (o.assignee && reviewer && o.assignee === reviewer) {
-          alert("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
+        const assignee = canAssign ? o.assignee : undefined;
+        if (assignee && reviewer && assignee === reviewer) {
+          alert("Người phụ trách không thể đồng thời là người duyệt. Vui lòng chọn người duyệt khác.");
           return;
         }
-        onSubmit({ ...o, reviewer });
+        const status: OrderStatus = assignee ? "Chờ nhận việc" : "Chờ phân công";
+        onSubmit({ ...o, assignee, reviewer, status });
         onClose();
       }}>Tạo order</Button>
     </DialogFooter>
