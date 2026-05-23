@@ -136,6 +136,7 @@ function OrdersPage() {
     }
     if (tab === "mine_created") list = list.filter((o) => o.requester === userName);
     if (tab === "mine_assigned") list = list.filter((o) => o.assignee === userName);
+    if (tab === "waiting_assign") list = list.filter((o) => o.status === "Chờ phân công");
     if (tab === "waiting_take") list = list.filter((o) => o.status === "Chờ nhận việc");
     if (tab === "pending_review") list = list.filter((o) => o.status === "Chờ duyệt");
     if (tab === "needs_fix") list = list.filter((o) => o.status === "Cần sửa");
