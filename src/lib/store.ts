@@ -208,6 +208,7 @@ export interface Task {
 
 export type ContentStatus =
   | "Kế hoạch"
+  | "Đã tạo"
   | "Đã giao"
   | "Đang làm outline"
   | "Chờ duyệt outline"
@@ -227,7 +228,7 @@ export type ContentStatus =
   | "Hoàn thành";
 
 export const CONTENT_STATUSES: ContentStatus[] = [
-  "Kế hoạch", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
+  "Kế hoạch", "Đã tạo", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
   "Outline đã duyệt", "Đang viết bài", "Chờ duyệt bài", "Cần sửa bài", "Bài viết đã duyệt",
   "Đang trình bày nháp web", "Chờ duyệt bản nháp web", "Cần sửa bản nháp web", "Bản nháp web đã duyệt",
   "Chờ đăng web", "Đã đăng web", "Kiểm tra index", "Hoàn thành",
