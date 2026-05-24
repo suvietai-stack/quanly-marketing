@@ -482,6 +482,13 @@ export interface WebContent {
   optimizeGoal?: string;
   oldLink?: string;
   optimizeNotes?: string;
+  optimizeSource?: OptimizeSource;
+  sourceContentId?: ID;
+  optimizeTargets?: OptimizeTarget[];
+  optimizeRefLink?: string;
+  optimizeRecurring?: boolean;
+  optimizeRecurringPeriod?: OptimizeRecurringPeriod;
+  nextOptimizeAt?: string;
   // Lịch sử xử lý
   history?: WebContentHistoryEntry[];
 }
