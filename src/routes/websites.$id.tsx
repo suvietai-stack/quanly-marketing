@@ -64,6 +64,7 @@ function WebsiteDetail() {
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState("info");
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
+  const [openOptimize, setOpenOptimize] = useState(false);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");
   const [fType, setFType] = useState("all");
