@@ -208,6 +208,7 @@ export interface Task {
 
 export type ContentStatus =
   | "Kế hoạch"
+  | "Đã tạo"
   | "Đã giao"
   | "Đang làm outline"
   | "Chờ duyệt outline"
@@ -227,7 +228,7 @@ export type ContentStatus =
   | "Hoàn thành";
 
 export const CONTENT_STATUSES: ContentStatus[] = [
-  "Kế hoạch", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
+  "Kế hoạch", "Đã tạo", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
   "Outline đã duyệt", "Đang viết bài", "Chờ duyệt bài", "Cần sửa bài", "Bài viết đã duyệt",
   "Đang trình bày nháp web", "Chờ duyệt bản nháp web", "Cần sửa bản nháp web", "Bản nháp web đã duyệt",
   "Chờ đăng web", "Đã đăng web", "Kiểm tra index", "Hoàn thành",
@@ -361,15 +362,50 @@ export interface WebTopic {
 }
 
 export type OptimizeReason =
+  | "Tối ưu định kỳ"
+  | "Từ khóa tụt hạng"
+  | "Từ khóa mất TOP"
+  | "Cập nhật sản phẩm/dịch vụ"
+  | "Cập nhật thông tin thương hiệu"
+  | "Bổ sung internal link"
+  | "Cải thiện CTA/chuyển đổi"
+  | "Cập nhật hình ảnh"
+  | "Khác"
+  // Legacy values (giữ tương thích ngược)
   | "Bài tụt hạng" | "Bài cũ thiếu thông tin" | "Bài chưa có CTA"
   | "Bài thiếu internal link" | "Bài chưa index"
   | "Bài cần cập nhật sản phẩm/dịch vụ" | "Bài cần tối ưu chuyển đổi";
 
 export const OPTIMIZE_REASONS: OptimizeReason[] = [
-  "Bài tụt hạng", "Bài cũ thiếu thông tin", "Bài chưa có CTA",
-  "Bài thiếu internal link", "Bài chưa index",
-  "Bài cần cập nhật sản phẩm/dịch vụ", "Bài cần tối ưu chuyển đổi",
+  "Tối ưu định kỳ",
+  "Từ khóa tụt hạng",
+  "Từ khóa mất TOP",
+  "Cập nhật sản phẩm/dịch vụ",
+  "Cập nhật thông tin thương hiệu",
+  "Bổ sung internal link",
+  "Cải thiện CTA/chuyển đổi",
+  "Cập nhật hình ảnh",
+  "Khác",
 ];
+
+export type OptimizeSource = "Thủ công" | "Theo lịch tối ưu" | "Từ Check TOP";
+export const OPTIMIZE_SOURCES: OptimizeSource[] = ["Thủ công", "Theo lịch tối ưu", "Từ Check TOP"];
+
+export type OptimizeTarget =
+  | "Tiêu đề/H1" | "Nội dung bài viết" | "Meta title/meta description"
+  | "Internal link" | "CTA" | "Hình ảnh" | "Sản phẩm/dịch vụ"
+  | "Bố cục trình bày" | "Từ khóa" | "Khác";
+export const OPTIMIZE_TARGETS: OptimizeTarget[] = [
+  "Tiêu đề/H1", "Nội dung bài viết", "Meta title/meta description",
+  "Internal link", "CTA", "Hình ảnh", "Sản phẩm/dịch vụ",
+  "Bố cục trình bày", "Từ khóa", "Khác",
+];
+
+export type OptimizeRecurringPeriod = "Hàng tháng" | "Mỗi 3 tháng" | "Mỗi 6 tháng" | "Mỗi 1 năm";
+export const OPTIMIZE_RECURRING_PERIODS: OptimizeRecurringPeriod[] = [
+  "Hàng tháng", "Mỗi 3 tháng", "Mỗi 6 tháng", "Mỗi 1 năm",
+];
+
 
 export interface WebContentHistoryEntry {
   at: string;
@@ -446,6 +482,13 @@ export interface WebContent {
   optimizeGoal?: string;
   oldLink?: string;
   optimizeNotes?: string;
+  optimizeSource?: OptimizeSource;
+  sourceContentId?: ID;
+  optimizeTargets?: OptimizeTarget[];
+  optimizeRefLink?: string;
+  optimizeRecurring?: boolean;
+  optimizeRecurringPeriod?: OptimizeRecurringPeriod;
+  nextOptimizeAt?: string;
   // Lịch sử xử lý
   history?: WebContentHistoryEntry[];
 }

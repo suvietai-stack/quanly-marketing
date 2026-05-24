@@ -10,6 +10,7 @@ import { RequirePermission } from "@/components/PermissionGate";
 import { StatusBadge } from "@/components/StatusBadge";
 
 import { ContentForm } from "@/components/ContentForm";
+import { OptimizeContentForm } from "@/components/OptimizeContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
@@ -63,6 +64,7 @@ function WebsiteDetail() {
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState("info");
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
+  const [openOptimize, setOpenOptimize] = useState(false);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");
   const [fType, setFType] = useState("all");
@@ -308,16 +310,15 @@ function WebsiteDetail() {
         {/* TAB 5 — OPTIMIZE */}
         <TabsContent value="optimize" className="mt-4">
           <div className="flex justify-end mb-3">
-            <Dialog>
+            <Dialog open={openOptimize} onOpenChange={setOpenOptimize}>
               <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài tối ưu</Button></DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <DialogHeader><DialogTitle>Tạo bài tối ưu lại</DialogTitle></DialogHeader>
-                <ContentForm
+                <OptimizeContentForm
                   websiteId={w.id}
                   brandId={w.brandId}
-                  initial={{ type: "Bài tối ưu lại" }}
                   onSubmit={(c) => s.add("webContents", c)}
-                  onClose={() => {}}
+                  onClose={() => setOpenOptimize(false)}
                 />
               </DialogContent>
             </Dialog>
@@ -327,31 +328,39 @@ function WebsiteDetail() {
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground bg-muted/40">
                   <tr>
-                    <th className="text-left font-medium px-4 py-2.5">Tiêu đề</th>
+                    <th className="text-left font-medium px-4 py-2.5">Tiêu đề bài</th>
+                    <th className="text-left font-medium px-4 py-2.5">Nguồn tạo</th>
                     <th className="text-left font-medium px-4 py-2.5">Lý do tối ưu</th>
-                    <th className="text-left font-medium px-4 py-2.5">Bài cũ</th>
+                    <th className="text-left font-medium px-4 py-2.5">Bài gốc / URL</th>
                     <th className="text-left font-medium px-4 py-2.5">Người phụ trách</th>
                     <th className="text-left font-medium px-4 py-2.5">Deadline</th>
                     <th className="text-left font-medium px-4 py-2.5">Trạng thái</th>
+                    <th className="text-left font-medium px-4 py-2.5">Lịch tiếp theo</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {optimizeContents.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chưa có bài cần tối ưu.</td></tr>}
-                  {optimizeContents.map((c) => (
-                    <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenContent(c)}>
-                      <td className="px-4 py-2.5 font-medium">{c.title}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeReason || "—"}</td>
-                      <td className="px-4 py-2.5">{c.oldLink ? <a href={c.oldLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">Mở</a> : "—"}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{c.writer || "—"}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{fmtDate(c.deadline)}</td>
-                      <td className="px-4 py-2.5"><StatusBadge value={c.status} /></td>
-                    </tr>
-                  ))}
+                  {optimizeContents.length === 0 && <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">Chưa có bài cần tối ưu.</td></tr>}
+                  {optimizeContents.map((c) => {
+                    const link = c.oldLink || c.publishedLink || c.url;
+                    return (
+                      <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenContent(c)}>
+                        <td className="px-4 py-2.5 font-medium">{c.title}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeSource || "Thủ công"}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeReason || "—"}</td>
+                        <td className="px-4 py-2.5">{link ? <a href={link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-primary hover:underline">Mở</a> : "—"}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{c.writer || <span className="italic">Chưa phân công</span>}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{c.deadline ? fmtDate(c.deadline) : "—"}</td>
+                        <td className="px-4 py-2.5"><StatusBadge value={c.status} /></td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeRecurring ? (c.optimizeRecurringPeriod || "—") : "—"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </CardContent></Card>
         </TabsContent>
+
 
         {/* TAB NGHIÊN CỨU KEYWORD */}
         <TabsContent value="research" className="mt-4">
