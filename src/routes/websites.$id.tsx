@@ -10,6 +10,7 @@ import { RequirePermission } from "@/components/PermissionGate";
 import { StatusBadge } from "@/components/StatusBadge";
 
 import { ContentForm } from "@/components/ContentForm";
+import { OptimizeContentForm } from "@/components/OptimizeContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
