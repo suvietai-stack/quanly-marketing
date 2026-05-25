@@ -345,7 +345,7 @@ function WebsiteDetail() {
                   {optimizeContents.map((c) => {
                     const link = c.oldLink || c.publishedLink || c.url;
                     return (
-                      <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenContent(c)}>
+                      <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenOptimizeContent(c)}>
                         <td className="px-4 py-2.5 font-medium">{c.title}</td>
                         <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeSource || "Thủ công"}</td>
                         <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeReason || "—"}</td>
