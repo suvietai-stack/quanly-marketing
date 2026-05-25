@@ -497,6 +497,14 @@ export interface WebContent {
   optimizeRecurring?: boolean;
   optimizeRecurringPeriod?: OptimizeRecurringPeriod;
   nextOptimizeAt?: string;
+  // Optimize workflow (only for "Bài tối ưu lại")
+  optimizeReviewer?: string;
+  optimizeAssignNote?: string;
+  optimizeResultLink?: string;
+  optimizeResultNote?: string;
+  optimizeReviewNotes?: string;
+  optimizeRevisions?: number;
+
   // Lịch sử xử lý
   history?: WebContentHistoryEntry[];
 }
