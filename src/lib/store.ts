@@ -225,14 +225,22 @@ export type ContentStatus =
   | "Chờ đăng web"
   | "Đã đăng web"
   | "Kiểm tra index"
-  | "Hoàn thành";
+  | "Hoàn thành"
+  // Optimize-only workflow
+  | "Đang tối ưu"
+  | "Chờ duyệt tối ưu"
+  | "Cần sửa tối ưu"
+  | "Đã duyệt tối ưu"
+  | "Đã hủy";
 
 export const CONTENT_STATUSES: ContentStatus[] = [
   "Kế hoạch", "Đã tạo", "Đã giao", "Đang làm outline", "Chờ duyệt outline", "Cần sửa outline",
   "Outline đã duyệt", "Đang viết bài", "Chờ duyệt bài", "Cần sửa bài", "Bài viết đã duyệt",
   "Đang trình bày nháp web", "Chờ duyệt bản nháp web", "Cần sửa bản nháp web", "Bản nháp web đã duyệt",
   "Chờ đăng web", "Đã đăng web", "Kiểm tra index", "Hoàn thành",
+  "Đang tối ưu", "Chờ duyệt tối ưu", "Cần sửa tối ưu", "Đã duyệt tối ưu", "Đã hủy",
 ];
+
 
 /** Map các trạng thái cũ → trạng thái mới khi đọc từ DB (giữ tương thích ngược). */
 export function normalizeContentStatus(s: string | undefined): ContentStatus {
