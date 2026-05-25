@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ContentForm } from "@/components/ContentForm";
 import { OptimizeContentForm } from "@/components/OptimizeContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
+import { OptimizeContentDetail } from "@/components/OptimizeContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
 import { BacklinksTab } from "@/components/BacklinksTab";
@@ -64,6 +65,7 @@ function WebsiteDetail() {
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState("info");
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
+  const [openOptimizeContent, setOpenOptimizeContent] = useState<WebContent | null>(null);
   const [openOptimize, setOpenOptimize] = useState(false);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");
@@ -343,7 +345,7 @@ function WebsiteDetail() {
                   {optimizeContents.map((c) => {
                     const link = c.oldLink || c.publishedLink || c.url;
                     return (
-                      <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenContent(c)}>
+                      <tr key={c.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setOpenOptimizeContent(c)}>
                         <td className="px-4 py-2.5 font-medium">{c.title}</td>
                         <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeSource || "Thủ công"}</td>
                         <td className="px-4 py-2.5 text-muted-foreground">{c.optimizeReason || "—"}</td>
@@ -383,6 +385,7 @@ function WebsiteDetail() {
       </Tabs>
 
       <ContentDetail content={openContent} open={!!openContent} onClose={() => setOpenContent(null)} />
+      <OptimizeContentDetail content={openOptimizeContent} open={!!openOptimizeContent} onClose={() => setOpenOptimizeContent(null)} />
     </>
   );
 }
