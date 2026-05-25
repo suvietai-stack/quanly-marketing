@@ -385,6 +385,7 @@ function WebsiteDetail() {
       </Tabs>
 
       <ContentDetail content={openContent} open={!!openContent} onClose={() => setOpenContent(null)} />
+      <OptimizeContentDetail content={openOptimizeContent} open={!!openOptimizeContent} onClose={() => setOpenOptimizeContent(null)} />
     </>
   );
 }
