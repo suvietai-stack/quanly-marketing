@@ -56,6 +56,9 @@ const map: Record<string, string> = {
   "Kịch bản đã duyệt": "bg-success/15 text-success border-success/30",
   "Video đã duyệt": "bg-success/15 text-success border-success/30",
   "Đã hủy": "bg-muted text-muted-foreground border-border",
+  "Chờ duyệt tối ưu": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Cần sửa tối ưu": "bg-destructive/15 text-destructive border-destructive/30",
+  "Đã duyệt tối ưu": "bg-success/15 text-success border-success/30",
 
   // Index check (purple)
   "Kiểm tra index": "bg-[oklch(0.7_0.15_300)]/15 text-[oklch(0.45_0.18_300)] border-[oklch(0.7_0.15_300)]/30",
