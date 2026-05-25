@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ContentForm } from "@/components/ContentForm";
 import { OptimizeContentForm } from "@/components/OptimizeContentForm";
 import { ContentDetail } from "@/components/ContentDetail";
+import { OptimizeContentDetail } from "@/components/OptimizeContentDetail";
 import { EntitySocialTab } from "@/components/EntitySocialTab";
 import { KeywordsTab } from "@/components/KeywordsTab";
 import { BacklinksTab } from "@/components/BacklinksTab";
