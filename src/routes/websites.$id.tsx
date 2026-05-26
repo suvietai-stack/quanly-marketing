@@ -994,6 +994,36 @@ function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { 
                   <td className="px-3 py-2">
                     <Input className="h-7 text-xs w-40" value={c.shareNotes || c.indexNotes || ""} onChange={(e) => s.update("webContents", c.id, { shareNotes: e.target.value })} placeholder="—" />
                   </td>
+                  <td className="px-3 py-2">
+                    <Select
+                      value={c.optimizeRecurring && c.optimizeRecurringPeriod ? c.optimizeRecurringPeriod : "Không thiết lập"}
+                      onValueChange={(v) => handleScheduleChange(c, v)}
+                      disabled={!canSetSchedule}
+                    >
+                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SCHEDULE_OPTIONS.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {c.optimizeRecurring && c.indexStatus !== "Đã index" && (
+                      <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px]">Sẽ kích hoạt khi bài đã index.</div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">
+                    {c.nextOptimizeAt ? fmtDate(c.nextOptimizeAt) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Select
+                      value={c.optimizeScheduleTrackStatus || "Chưa thiết lập"}
+                      onValueChange={(v) => handleTrackStatusChange(c, v as OptimizeScheduleTrackStatus)}
+                      disabled={!canPauseSchedule || !c.optimizeRecurring}
+                    >
+                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Chưa thiết lập", "Đang theo dõi", "Tạm dừng"].map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </td>
                 </tr>
               ))}
             </tbody>
