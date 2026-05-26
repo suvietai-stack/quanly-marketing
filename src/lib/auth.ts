@@ -626,6 +626,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
       k.startsWith("report.")
     ),
     "settings.view", "settings.view_presence",
+    "set_content_optimization_schedule", "pause_content_optimization_schedule",
   ].filter((k) =>
     !["web.force_status", "social.post_force_status", "video.force_status", "order.force_status",
       "task.force_status", "task.force_change_status",
