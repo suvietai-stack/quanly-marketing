@@ -519,6 +519,8 @@ export interface WebContent {
   optimizeRecurring?: boolean;
   optimizeRecurringPeriod?: OptimizeRecurringPeriod;
   nextOptimizeAt?: string;
+  optimizeScheduleTrackStatus?: OptimizeScheduleTrackStatus;
+  optimizeScheduleSetAt?: string;
   // Optimize workflow (only for "Bài tối ưu lại")
   optimizeReviewer?: string;
   optimizeAssignNote?: string;
