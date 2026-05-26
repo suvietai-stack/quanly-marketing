@@ -767,7 +767,44 @@ function WebsiteReport({
 
 function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { id: string; name: string }[] }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canSetSchedule = can("set_content_optimization_schedule");
+  const canPauseSchedule = can("pause_content_optimization_schedule");
   const all = s.webContents.filter((c) => c.websiteId === websiteId && DONE_STATUSES.includes(c.status));
+
+  const SCHEDULE_OPTIONS = ["Không thiết lập", ...OPTIMIZE_RECURRING_PERIODS] as const;
+
+  const handleScheduleChange = (c: WebContent, v: string) => {
+    if (v === "Không thiết lập") {
+      s.update("webContents", c.id, {
+        optimizeRecurring: false,
+        optimizeRecurringPeriod: undefined,
+        nextOptimizeAt: undefined,
+        optimizeScheduleTrackStatus: "Chưa thiết lập",
+        optimizeScheduleSetAt: undefined,
+      });
+      return;
+    }
+    const period = v as OptimizeRecurringPeriod;
+    const isIndexed = c.indexStatus === "Đã index";
+    const base = todayISO();
+    s.update("webContents", c.id, {
+      optimizeRecurring: true,
+      optimizeRecurringPeriod: period,
+      optimizeScheduleSetAt: base,
+      optimizeScheduleTrackStatus: isIndexed ? "Đang theo dõi" : "Chưa thiết lập",
+      nextOptimizeAt: isIndexed ? computeNextOptimizeDate(base, period) : undefined,
+    });
+  };
+
+  const handleTrackStatusChange = (c: WebContent, v: OptimizeScheduleTrackStatus) => {
+    const isIndexed = c.indexStatus === "Đã index";
+    const patch: Partial<WebContent> = { optimizeScheduleTrackStatus: v };
+    if (v === "Đang theo dõi" && isIndexed && c.optimizeRecurringPeriod && !c.nextOptimizeAt) {
+      patch.nextOptimizeAt = computeNextOptimizeDate(c.optimizeScheduleSetAt || todayISO(), c.optimizeRecurringPeriod);
+    }
+    s.update("webContents", c.id, patch);
+  };
 
   const [search, setSearch] = useState("");
   const [fIdx, setFIdx] = useState("all");
