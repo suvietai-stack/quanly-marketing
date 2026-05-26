@@ -205,6 +205,8 @@ export const PERMISSIONS: PermissionDef[] = [
   P("web.reopt_assign", "Giao tối ưu lại", "Dự Án Web", "D9. Tối ưu lại"),
   P("web.reopt_status", "Cập nhật trạng thái tối ưu lại", "Dự Án Web", "D9. Tối ưu lại"),
   P("web.reopt_complete", "Hoàn thành tối ưu lại", "Dự Án Web", "D9. Tối ưu lại"),
+  P("set_content_optimization_schedule", "Thiết lập lịch tối ưu từ Bài đã đăng", "Dự Án Web", "D9. Tối ưu lại"),
+  P("pause_content_optimization_schedule", "Tạm dừng/khôi phục lịch tối ưu", "Dự Án Web", "D9. Tối ưu lại"),
   // D10. Tăng trưởng
   P("web.growth_view", "Xem Tăng Trưởng Website", "Dự Án Web", "D10. Tăng trưởng"),
   P("web.growth_create", "Thêm kỳ báo cáo tăng trưởng", "Dự Án Web", "D10. Tăng trưởng"),
