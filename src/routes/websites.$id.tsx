@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   useStore, fmtDate, ensureSeoChecks, todayISO, isActiveKeywordTrack,
   CONTENT_STATUSES, CONTENT_TYPES, SHARE_SOCIAL_STATUSES,
+  OPTIMIZE_RECURRING_PERIODS, computeNextOptimizeDate,
   type WebContent, type ContentStatus,
+  type OptimizeRecurringPeriod, type OptimizeScheduleTrackStatus,
 } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -765,7 +767,44 @@ function WebsiteReport({
 
 function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { id: string; name: string }[] }) {
   const s = useStore();
+  const { can } = useCurrentUser();
+  const canSetSchedule = can("set_content_optimization_schedule");
+  const canPauseSchedule = can("pause_content_optimization_schedule");
   const all = s.webContents.filter((c) => c.websiteId === websiteId && DONE_STATUSES.includes(c.status));
+
+  const SCHEDULE_OPTIONS = ["Không thiết lập", ...OPTIMIZE_RECURRING_PERIODS] as const;
+
+  const handleScheduleChange = (c: WebContent, v: string) => {
+    if (v === "Không thiết lập") {
+      s.update("webContents", c.id, {
+        optimizeRecurring: false,
+        optimizeRecurringPeriod: undefined,
+        nextOptimizeAt: undefined,
+        optimizeScheduleTrackStatus: "Chưa thiết lập",
+        optimizeScheduleSetAt: undefined,
+      });
+      return;
+    }
+    const period = v as OptimizeRecurringPeriod;
+    const isIndexed = c.indexStatus === "Đã index";
+    const base = todayISO();
+    s.update("webContents", c.id, {
+      optimizeRecurring: true,
+      optimizeRecurringPeriod: period,
+      optimizeScheduleSetAt: base,
+      optimizeScheduleTrackStatus: isIndexed ? "Đang theo dõi" : "Chưa thiết lập",
+      nextOptimizeAt: isIndexed ? computeNextOptimizeDate(base, period) : undefined,
+    });
+  };
+
+  const handleTrackStatusChange = (c: WebContent, v: OptimizeScheduleTrackStatus) => {
+    const isIndexed = c.indexStatus === "Đã index";
+    const patch: Partial<WebContent> = { optimizeScheduleTrackStatus: v };
+    if (v === "Đang theo dõi" && isIndexed && c.optimizeRecurringPeriod && !c.nextOptimizeAt) {
+      patch.nextOptimizeAt = computeNextOptimizeDate(c.optimizeScheduleSetAt || todayISO(), c.optimizeRecurringPeriod);
+    }
+    s.update("webContents", c.id, patch);
+  };
 
   const [search, setSearch] = useState("");
   const [fIdx, setFIdx] = useState("all");
@@ -901,10 +940,13 @@ function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { 
                 <th className="text-left font-medium px-3 py-2.5">Ngày share</th>
                 <th className="text-left font-medium px-3 py-2.5">Entity đã share</th>
                 <th className="text-left font-medium px-3 py-2.5">Ghi chú</th>
+                <th className="text-left font-medium px-3 py-2.5">Lịch tối ưu</th>
+                <th className="text-left font-medium px-3 py-2.5">Tối ưu tiếp theo</th>
+                <th className="text-left font-medium px-3 py-2.5">Theo dõi tối ưu</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.length === 0 && <tr><td colSpan={12} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={15} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
               {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-muted/30">
                   <td className="px-3 py-2 font-medium max-w-[200px]">{c.title}</td>
@@ -951,6 +993,36 @@ function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { 
                   </td>
                   <td className="px-3 py-2">
                     <Input className="h-7 text-xs w-40" value={c.shareNotes || c.indexNotes || ""} onChange={(e) => s.update("webContents", c.id, { shareNotes: e.target.value })} placeholder="—" />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Select
+                      value={c.optimizeRecurring && c.optimizeRecurringPeriod ? c.optimizeRecurringPeriod : "Không thiết lập"}
+                      onValueChange={(v) => handleScheduleChange(c, v)}
+                      disabled={!canSetSchedule}
+                    >
+                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SCHEDULE_OPTIONS.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {c.optimizeRecurring && c.indexStatus !== "Đã index" && (
+                      <div className="text-[10px] text-muted-foreground mt-1 max-w-[180px]">Sẽ kích hoạt khi bài đã index.</div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">
+                    {c.nextOptimizeAt ? fmtDate(c.nextOptimizeAt) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Select
+                      value={c.optimizeScheduleTrackStatus || "Chưa thiết lập"}
+                      onValueChange={(v) => handleTrackStatusChange(c, v as OptimizeScheduleTrackStatus)}
+                      disabled={!canPauseSchedule || !c.optimizeRecurring}
+                    >
+                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["Chưa thiết lập", "Đang theo dõi", "Tạm dừng"].map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </td>
                 </tr>
               ))}

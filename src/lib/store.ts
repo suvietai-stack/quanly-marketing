@@ -414,6 +414,28 @@ export const OPTIMIZE_RECURRING_PERIODS: OptimizeRecurringPeriod[] = [
   "Hàng tháng", "Mỗi 3 tháng", "Mỗi 6 tháng", "Mỗi 1 năm",
 ];
 
+export type OptimizeScheduleTrackStatus = "Chưa thiết lập" | "Đang theo dõi" | "Tạm dừng";
+export const OPTIMIZE_SCHEDULE_TRACK_STATUSES: OptimizeScheduleTrackStatus[] = [
+  "Chưa thiết lập", "Đang theo dõi", "Tạm dừng",
+];
+
+export function periodToMonths(p: OptimizeRecurringPeriod): number {
+  switch (p) {
+    case "Hàng tháng": return 1;
+    case "Mỗi 3 tháng": return 3;
+    case "Mỗi 6 tháng": return 6;
+    case "Mỗi 1 năm": return 12;
+  }
+}
+
+/** Tính ngày tối ưu tiếp theo (ISO yyyy-mm-dd) cộng N tháng từ baseISO. */
+export function computeNextOptimizeDate(baseISO: string, period: OptimizeRecurringPeriod): string {
+  const d = new Date(baseISO);
+  if (isNaN(d.getTime())) return "";
+  d.setMonth(d.getMonth() + periodToMonths(period));
+  return d.toISOString().slice(0, 10);
+}
+
 
 export interface WebContentHistoryEntry {
   at: string;
@@ -497,6 +519,8 @@ export interface WebContent {
   optimizeRecurring?: boolean;
   optimizeRecurringPeriod?: OptimizeRecurringPeriod;
   nextOptimizeAt?: string;
+  optimizeScheduleTrackStatus?: OptimizeScheduleTrackStatus;
+  optimizeScheduleSetAt?: string;
   // Optimize workflow (only for "Bài tối ưu lại")
   optimizeReviewer?: string;
   optimizeAssignNote?: string;
