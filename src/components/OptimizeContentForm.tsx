@@ -20,11 +20,14 @@ const DONE_STATUSES = new Set(["Đã đăng web", "Kiểm tra index", "Hoàn th�
 
 export function OptimizeContentForm({
   websiteId, brandId, onSubmit, onClose,
+  initialSourceContentId, lockSource = false,
 }: {
   websiteId: string;
   brandId: string;
   onSubmit: (c: WebContent) => void;
   onClose: () => void;
+  initialSourceContentId?: string;
+  lockSource?: boolean;
 }) {
   const { webContents, websites, brands } = useStore();
   const website = websites.find((w) => w.id === websiteId);
@@ -36,20 +39,26 @@ export function OptimizeContentForm({
     [webContents, websiteId],
   );
 
-  const [sourceContentId, setSourceContentId] = useState<string>("");
+  const initial = initialSourceContentId
+    ? webContents.find((c) => c.id === initialSourceContentId)
+    : undefined;
+
+  const [sourceContentId, setSourceContentId] = useState<string>(initialSourceContentId || "");
   const [optimizeSource, setOptimizeSource] = useState<OptimizeSource>("Thủ công");
-  const [title, setTitle] = useState("");
-  const [oldLink, setOldLink] = useState("");
-  const [mainKeyword, setMainKeyword] = useState("");
-  const [subKeywords, setSubKeywords] = useState("");
+  const [title, setTitle] = useState(initial?.title || "");
+  const [oldLink, setOldLink] = useState(initial?.publishedLink || initial?.url || "");
+  const [mainKeyword, setMainKeyword] = useState(initial?.mainKeyword || "");
+  const [subKeywords, setSubKeywords] = useState(initial?.subKeywords || "");
 
   const [reason, setReason] = useState<OptimizeReason | "">("");
   const [targets, setTargets] = useState<OptimizeTarget[]>([]);
   const [notes, setNotes] = useState("");
   const [refLink, setRefLink] = useState("");
 
-  const [recurring, setRecurring] = useState(false);
-  const [period, setPeriod] = useState<OptimizeRecurringPeriod>("Mỗi 3 tháng");
+  const [recurring, setRecurring] = useState(!!initial?.optimizeRecurring);
+  const [period, setPeriod] = useState<OptimizeRecurringPeriod>(
+    (initial?.optimizeRecurringPeriod as OptimizeRecurringPeriod) || "Mỗi 3 tháng",
+  );
 
   const onPickSource = (v: string) => {
     setSourceContentId(v === "_" ? "" : v);
@@ -118,7 +127,7 @@ export function OptimizeContentForm({
             </div>
             <div>
               <Label>Bài gốc trong hệ thống</Label>
-              <Select value={sourceContentId || "_"} onValueChange={onPickSource}>
+              <Select value={sourceContentId || "_"} onValueChange={onPickSource} disabled={lockSource}>
                 <SelectTrigger><SelectValue placeholder="— Không chọn —" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="_">— Không chọn —</SelectItem>

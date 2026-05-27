@@ -303,7 +303,7 @@ function WebsiteDetail() {
 
         {/* TAB BÀI ĐÃ ĐĂNG / INDEX */}
         <TabsContent value="published" className="mt-4">
-          <PublishedTab websiteId={w.id} entities={entitiesList} />
+          <PublishedTab websiteId={w.id} entities={entitiesList} onOpenOptimize={setOpenOptimizeContent} />
         </TabsContent>
 
         {/* TAB BACKLINK / PR */}
@@ -765,12 +765,33 @@ function WebsiteReport({
   );
 }
 
-function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { id: string; name: string }[] }) {
+function PublishedTab({ websiteId, entities, onOpenOptimize }: { websiteId: string; entities: { id: string; name: string }[]; onOpenOptimize: (c: WebContent) => void }) {
   const s = useStore();
   const { can } = useCurrentUser();
   const canSetSchedule = can("set_content_optimization_schedule");
   const canPauseSchedule = can("pause_content_optimization_schedule");
+  const canCreateOpt = can("create_content_optimization");
   const all = s.webContents.filter((c) => c.websiteId === websiteId && DONE_STATUSES.includes(c.status));
+
+  // Map nguồn → việc tối ưu đang mở (chưa hoàn thành)
+  const OPEN_OPT_STATUSES: ContentStatus[] = [
+    "Đã tạo", "Đã giao", "Đang tối ưu", "Chờ duyệt tối ưu",
+    "Cần sửa tối ưu", "Đã duyệt tối ưu",
+  ];
+  const openOptBySource = useMemo(() => {
+    const map = new Map<string, WebContent>();
+    for (const c of s.webContents) {
+      if (c.type !== "Bài tối ưu lại") continue;
+      if (!c.sourceContentId) continue;
+      if (!OPEN_OPT_STATUSES.includes(c.status)) continue;
+      if (!map.has(c.sourceContentId)) map.set(c.sourceContentId, c);
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.webContents]);
+
+  const [createOptFor, setCreateOptFor] = useState<WebContent | null>(null);
+
 
   const SCHEDULE_OPTIONS = ["Không thiết lập", ...OPTIMIZE_RECURRING_PERIODS] as const;
 
@@ -943,10 +964,11 @@ function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { 
                 <th className="text-left font-medium px-3 py-2.5">Lịch tối ưu</th>
                 <th className="text-left font-medium px-3 py-2.5">Tối ưu tiếp theo</th>
                 <th className="text-left font-medium px-3 py-2.5">Theo dõi tối ưu</th>
+                <th className="text-left font-medium px-3 py-2.5">Tối ưu</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.length === 0 && <tr><td colSpan={15} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={16} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
               {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-muted/30">
                   <td className="px-3 py-2 font-medium max-w-[200px]">{c.title}</td>
@@ -1024,6 +1046,27 @@ function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { 
                       </SelectContent>
                     </Select>
                   </td>
+                  <td className="px-3 py-2">
+                    {(() => {
+                      const openOpt = openOptBySource.get(c.id);
+                      if (openOpt) {
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 text-[10px] font-semibold">Đang tối ưu</span>
+                            <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => onOpenOptimize(openOpt)}>
+                              Mở việc
+                            </Button>
+                          </div>
+                        );
+                      }
+                      if (!canCreateOpt) return <span className="text-xs text-muted-foreground">—</span>;
+                      return (
+                        <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => setCreateOptFor(c)}>
+                          <Plus className="h-3 w-3" />Tạo việc tối ưu
+                        </Button>
+                      );
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1041,6 +1084,39 @@ function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { 
               onSave={(val) => { s.update("webContents", editShare.id, { sharedEntities: val }); setEditShare(null); }}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!createOptFor} onOpenChange={(o) => !o && setCreateOptFor(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader><DialogTitle>Tạo việc tối ưu từ bài đã đăng</DialogTitle></DialogHeader>
+          {createOptFor && (() => {
+            // Double-check chống tạo trùng tại thời điểm mở form
+            const existing = openOptBySource.get(createOptFor.id);
+            if (existing) {
+              return (
+                <div className="space-y-4">
+                  <div className="text-sm">Bài viết này đang có một việc tối ưu chưa hoàn thành.</div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setCreateOptFor(null)}>Đóng</Button>
+                    <Button onClick={() => { onOpenOptimize(existing); setCreateOptFor(null); }}>
+                      Mở việc tối ưu hiện tại
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <OptimizeContentForm
+                websiteId={createOptFor.websiteId}
+                brandId={createOptFor.brandId}
+                initialSourceContentId={createOptFor.id}
+                lockSource
+                onSubmit={(nc) => s.add("webContents", nc)}
+                onClose={() => setCreateOptFor(null)}
+              />
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
