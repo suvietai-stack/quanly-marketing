@@ -964,10 +964,11 @@ function PublishedTab({ websiteId, entities, onOpenOptimize }: { websiteId: stri
                 <th className="text-left font-medium px-3 py-2.5">Lịch tối ưu</th>
                 <th className="text-left font-medium px-3 py-2.5">Tối ưu tiếp theo</th>
                 <th className="text-left font-medium px-3 py-2.5">Theo dõi tối ưu</th>
+                <th className="text-left font-medium px-3 py-2.5">Tối ưu</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.length === 0 && <tr><td colSpan={15} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={16} className="px-4 py-12 text-center text-muted-foreground">Không có bài nào khớp bộ lọc.</td></tr>}
               {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-muted/30">
                   <td className="px-3 py-2 font-medium max-w-[200px]">{c.title}</td>
