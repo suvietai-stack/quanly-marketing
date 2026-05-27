@@ -765,12 +765,33 @@ function WebsiteReport({
   );
 }
 
-function PublishedTab({ websiteId, entities }: { websiteId: string; entities: { id: string; name: string }[] }) {
+function PublishedTab({ websiteId, entities, onOpenOptimize }: { websiteId: string; entities: { id: string; name: string }[]; onOpenOptimize: (c: WebContent) => void }) {
   const s = useStore();
   const { can } = useCurrentUser();
   const canSetSchedule = can("set_content_optimization_schedule");
   const canPauseSchedule = can("pause_content_optimization_schedule");
+  const canCreateOpt = can("create_content_optimization");
   const all = s.webContents.filter((c) => c.websiteId === websiteId && DONE_STATUSES.includes(c.status));
+
+  // Map nguồn → việc tối ưu đang mở (chưa hoàn thành)
+  const OPEN_OPT_STATUSES: ContentStatus[] = [
+    "Đã tạo", "Đã giao", "Đang tối ưu", "Chờ duyệt tối ưu",
+    "Cần sửa tối ưu", "Đã duyệt tối ưu",
+  ];
+  const openOptBySource = useMemo(() => {
+    const map = new Map<string, WebContent>();
+    for (const c of s.webContents) {
+      if (c.type !== "Bài tối ưu lại") continue;
+      if (!c.sourceContentId) continue;
+      if (!OPEN_OPT_STATUSES.includes(c.status)) continue;
+      if (!map.has(c.sourceContentId)) map.set(c.sourceContentId, c);
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.webContents]);
+
+  const [createOptFor, setCreateOptFor] = useState<WebContent | null>(null);
+
 
   const SCHEDULE_OPTIONS = ["Không thiết lập", ...OPTIMIZE_RECURRING_PERIODS] as const;
 
