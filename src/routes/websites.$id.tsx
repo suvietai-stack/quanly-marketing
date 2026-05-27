@@ -1046,6 +1046,27 @@ function PublishedTab({ websiteId, entities, onOpenOptimize }: { websiteId: stri
                       </SelectContent>
                     </Select>
                   </td>
+                  <td className="px-3 py-2">
+                    {(() => {
+                      const openOpt = openOptBySource.get(c.id);
+                      if (openOpt) {
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-0.5 text-[10px] font-semibold">Đang tối ưu</span>
+                            <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => onOpenOptimize(openOpt)}>
+                              Mở việc
+                            </Button>
+                          </div>
+                        );
+                      }
+                      if (!canCreateOpt) return <span className="text-xs text-muted-foreground">—</span>;
+                      return (
+                        <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => setCreateOptFor(c)}>
+                          <Plus className="h-3 w-3" />Tạo việc tối ưu
+                        </Button>
+                      );
+                    })()}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1063,6 +1084,39 @@ function PublishedTab({ websiteId, entities, onOpenOptimize }: { websiteId: stri
               onSave={(val) => { s.update("webContents", editShare.id, { sharedEntities: val }); setEditShare(null); }}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!createOptFor} onOpenChange={(o) => !o && setCreateOptFor(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader><DialogTitle>Tạo việc tối ưu từ bài đã đăng</DialogTitle></DialogHeader>
+          {createOptFor && (() => {
+            // Double-check chống tạo trùng tại thời điểm mở form
+            const existing = openOptBySource.get(createOptFor.id);
+            if (existing) {
+              return (
+                <div className="space-y-4">
+                  <div className="text-sm">Bài viết này đang có một việc tối ưu chưa hoàn thành.</div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setCreateOptFor(null)}>Đóng</Button>
+                    <Button onClick={() => { onOpenOptimize(existing); setCreateOptFor(null); }}>
+                      Mở việc tối ưu hiện tại
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <OptimizeContentForm
+                websiteId={createOptFor.websiteId}
+                brandId={createOptFor.brandId}
+                initialSourceContentId={createOptFor.id}
+                lockSource
+                onSubmit={(nc) => s.add("webContents", nc)}
+                onClose={() => setCreateOptFor(null)}
+              />
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
