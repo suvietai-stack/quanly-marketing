@@ -303,7 +303,7 @@ function WebsiteDetail() {
 
         {/* TAB BÀI ĐÃ ĐĂNG / INDEX */}
         <TabsContent value="published" className="mt-4">
-          <PublishedTab websiteId={w.id} entities={entitiesList} />
+          <PublishedTab websiteId={w.id} entities={entitiesList} onOpenOptimize={setOpenOptimizeContent} />
         </TabsContent>
 
         {/* TAB BACKLINK / PR */}
