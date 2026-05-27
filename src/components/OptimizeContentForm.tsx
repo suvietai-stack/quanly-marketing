@@ -127,7 +127,7 @@ export function OptimizeContentForm({
             </div>
             <div>
               <Label>Bài gốc trong hệ thống</Label>
-              <Select value={sourceContentId || "_"} onValueChange={onPickSource}>
+              <Select value={sourceContentId || "_"} onValueChange={onPickSource} disabled={lockSource}>
                 <SelectTrigger><SelectValue placeholder="— Không chọn —" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="_">— Không chọn —</SelectItem>
