@@ -662,7 +662,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "web.checktop_kw_create", "web.checktop_kw_edit", "web.checktop_kw_delete",
     "web.checktop_open_url", "web.checktop_filter_topic",
     "web.reopt_view", "web.reopt_create", "web.reopt_edit", "web.reopt_assign", "web.reopt_status",
-    "set_content_optimization_schedule", "pause_content_optimization_schedule",
+    "set_content_optimization_schedule", "pause_content_optimization_schedule", "create_content_optimization",
     "web.growth_view", "web.growth_create", "web.growth_edit", "web.growth_open",
     "web.report_view", "web.report_alerts", "web.report_action", "web.report_by_topic", "web.report_by_staff",
   ],
