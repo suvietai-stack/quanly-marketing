@@ -460,7 +460,6 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
    "create_content_optimization"].forEach((k) => {
     m[k] = ["web.reopt_view", webViewKey];
   });
-  });
   m["web.reopt_view"] = [webViewKey];
   // D10 Growth
   ["web.growth_create", "web.growth_edit", "web.growth_delete", "web.growth_open"].forEach((k) => {
