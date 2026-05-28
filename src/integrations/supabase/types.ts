@@ -645,35 +645,20 @@ export type Database = {
       }
     }
     Views: {
-      profiles_directory: {
-        Row: {
-          created_at: string | null
-          full_name: string | null
-          id: string | null
-          last_seen_at: string | null
-          status: Database["public"]["Enums"]["account_status"] | null
-          username: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          last_seen_at?: string | null
-          status?: Database["public"]["Enums"]["account_status"] | null
-          username?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          last_seen_at?: string | null
-          status?: Database["public"]["Enums"]["account_status"] | null
-          username?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_profiles_directory: {
+        Args: never
+        Returns: {
+          created_at: string
+          full_name: string
+          id: string
+          last_seen_at: string
+          status: Database["public"]["Enums"]["account_status"]
+          username: string
+        }[]
+      }
       has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
