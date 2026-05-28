@@ -645,7 +645,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_directory: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          last_seen_at: string | null
+          status: Database["public"]["Enums"]["account_status"] | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          last_seen_at?: string | null
+          status?: Database["public"]["Enums"]["account_status"] | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          last_seen_at?: string | null
+          status?: Database["public"]["Enums"]["account_status"] | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_permission: {
