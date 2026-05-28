@@ -920,16 +920,24 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   reload: async () => {
-    const [profilesRes, rolesRes, urRes, ovRes] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+    const [dirRes, fullProfRes, rolesRes, urRes, ovRes] = await Promise.all([
+      supabase.rpc("get_profiles_directory"),
+      // RLS limits this to self + (admins see all). Sensitive fields are merged in for those rows.
+      supabase.from("profiles").select("*"),
       supabase.from("app_roles").select("*").order("name"),
       supabase.from("user_roles").select("*"),
       supabase.from("user_permission_overrides").select("*"),
     ]);
-    const profiles = profilesRes.data ?? [];
+    const directory = (dirRes.data ?? []) as any[];
+    const fullProfiles = (fullProfRes.data ?? []) as any[];
+    const fullById = new Map(fullProfiles.map((p) => [p.id, p]));
+    // Merge: prefer full row (with email/phone/notes/etc.) when accessible; otherwise use directory entry.
+    const merged = directory
+      .map((d) => fullById.get(d.id) ?? d)
+      .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     const userRoles = (urRes.data ?? []) as { user_id: string; role_id: string }[];
     const overrides = (ovRes.data ?? []) as { user_id: string; use_custom: boolean; permissions: string[] }[];
-    const users = profiles.map((p) => mapProfileToUser(p, userRoles, overrides));
+    const users = merged.map((p) => mapProfileToUser(p, userRoles, overrides));
     const roles: Role[] = (rolesRes.data ?? []).map((r: any) => ({
       id: r.id,
       name: r.name,
@@ -938,6 +946,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       system: !!r.is_system,
     }));
     set({ users, roles, loaded: true });
+
 
     // Auto-bootstrap: nếu Super Admin / tài khoản hệ thống đăng nhập mà các role
     // mặc định chưa có permissions → tự nạp một lần.
