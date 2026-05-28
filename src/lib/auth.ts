@@ -458,7 +458,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   ["web.reopt_create", "web.reopt_edit", "web.reopt_delete",
    "web.reopt_assign", "web.reopt_status", "web.reopt_complete",
    "set_content_optimization_schedule", "pause_content_optimization_schedule",
-   "create_content_optimization"].forEach((k) => {
+   "create_content_optimization", "create_scheduled_content_optimization"].forEach((k) => {
     m[k] = ["web.reopt_view", webViewKey];
   });
   m["web.reopt_view"] = [webViewKey];
