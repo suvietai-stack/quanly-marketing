@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  useStore, fmtDate, ensureSeoChecks, todayISO, isActiveKeywordTrack,
+  useStore, fmtDate, ensureSeoChecks, todayISO, isActiveKeywordTrack, uid,
   CONTENT_STATUSES, CONTENT_TYPES, SHARE_SOCIAL_STATUSES,
   OPTIMIZE_RECURRING_PERIODS, computeNextOptimizeDate,
   type WebContent, type ContentStatus,
