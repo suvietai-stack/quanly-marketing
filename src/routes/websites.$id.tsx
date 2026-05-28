@@ -313,7 +313,59 @@ function WebsiteDetail() {
 
         {/* TAB 5 — OPTIMIZE */}
         <TabsContent value="optimize" className="mt-4">
-          <div className="flex justify-end mb-3">
+          <div className="flex justify-end mb-3 gap-2">
+            {can("create_scheduled_content_optimization") && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const today = todayISO();
+                  const OPEN_OPT: ContentStatus[] = [
+                    "Đã tạo", "Đã giao", "Đang tối ưu", "Chờ duyệt tối ưu",
+                    "Cần sửa tối ưu", "Đã duyệt tối ưu",
+                  ];
+                  const openBySource = new Set<string>();
+                  for (const c of s.webContents) {
+                    if (c.type === "Bài tối ưu lại" && c.sourceContentId && OPEN_OPT.includes(c.status)) {
+                      openBySource.add(c.sourceContentId);
+                    }
+                  }
+                  const due = contents.filter((c) =>
+                    DONE_STATUSES.includes(c.status) &&
+                    c.optimizeScheduleTrackStatus === "Đang theo dõi" &&
+                    c.nextOptimizeAt && c.nextOptimizeAt <= today
+                  );
+                  let created = 0, skipped = 0;
+                  for (const src of due) {
+                    if (openBySource.has(src.id)) { skipped++; continue; }
+                    const task: WebContent = {
+                      id: uid(),
+                      websiteId: src.websiteId,
+                      brandId: src.brandId,
+                      type: "Bài tối ưu lại",
+                      title: src.title,
+                      status: "Đã tạo",
+                      indexStatus: "Chưa kiểm tra",
+                      mainKeyword: src.mainKeyword,
+                      subKeywords: src.subKeywords,
+                      oldLink: src.publishedLink || src.url,
+                      sourceContentId: src.id,
+                      optimizeSource: "Theo lịch tối ưu",
+                      optimizeReason: "Tối ưu định kỳ",
+                    };
+                    s.add("webContents", task);
+                    openBySource.add(src.id);
+                    created++;
+                  }
+                  alert(
+                    `Có ${due.length} bài đến lịch tối ưu.\n` +
+                    `Đã tạo ${created} việc tối ưu mới.\n` +
+                    `Bỏ qua ${skipped} bài vì đang có việc tối ưu xử lý.`
+                  );
+                }}
+              >
+                <CalIcon className="h-4 w-4" />Kiểm tra lịch đến hạn
+              </Button>
+            )}
             <Dialog open={openOptimize} onOpenChange={setOpenOptimize}>
               <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài tối ưu</Button></DialogTrigger>
               <DialogContent className="max-w-3xl">
