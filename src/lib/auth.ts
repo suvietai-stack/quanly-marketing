@@ -208,6 +208,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("set_content_optimization_schedule", "Thiết lập lịch tối ưu từ Bài đã đăng", "Dự Án Web", "D9. Tối ưu lại"),
   P("pause_content_optimization_schedule", "Tạm dừng/khôi phục lịch tối ưu", "Dự Án Web", "D9. Tối ưu lại"),
   P("create_content_optimization", "Tạo việc tối ưu từ Bài đã đăng", "Dự Án Web", "D9. Tối ưu lại"),
+  P("create_scheduled_content_optimization", "Kiểm tra & tạo việc tối ưu theo lịch", "Dự Án Web", "D9. Tối ưu lại"),
   // D10. Tăng trưởng
   P("web.growth_view", "Xem Tăng Trưởng Website", "Dự Án Web", "D10. Tăng trưởng"),
   P("web.growth_create", "Thêm kỳ báo cáo tăng trưởng", "Dự Án Web", "D10. Tăng trưởng"),
@@ -457,7 +458,7 @@ export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   ["web.reopt_create", "web.reopt_edit", "web.reopt_delete",
    "web.reopt_assign", "web.reopt_status", "web.reopt_complete",
    "set_content_optimization_schedule", "pause_content_optimization_schedule",
-   "create_content_optimization"].forEach((k) => {
+   "create_content_optimization", "create_scheduled_content_optimization"].forEach((k) => {
     m[k] = ["web.reopt_view", webViewKey];
   });
   m["web.reopt_view"] = [webViewKey];
@@ -629,7 +630,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     ),
     "settings.view", "settings.view_presence",
     "set_content_optimization_schedule", "pause_content_optimization_schedule",
-    "create_content_optimization",
+    "create_content_optimization", "create_scheduled_content_optimization",
   ].filter((k) =>
     !["web.force_status", "social.post_force_status", "video.force_status", "order.force_status",
       "task.force_status", "task.force_change_status",
@@ -662,7 +663,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "web.checktop_kw_create", "web.checktop_kw_edit", "web.checktop_kw_delete",
     "web.checktop_open_url", "web.checktop_filter_topic",
     "web.reopt_view", "web.reopt_create", "web.reopt_edit", "web.reopt_assign", "web.reopt_status",
-    "set_content_optimization_schedule", "pause_content_optimization_schedule", "create_content_optimization",
+    "set_content_optimization_schedule", "pause_content_optimization_schedule", "create_content_optimization", "create_scheduled_content_optimization",
     "web.growth_view", "web.growth_create", "web.growth_edit", "web.growth_open",
     "web.report_view", "web.report_alerts", "web.report_action", "web.report_by_topic", "web.report_by_staff",
   ],
