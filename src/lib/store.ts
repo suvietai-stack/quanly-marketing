@@ -448,6 +448,28 @@ export interface WebContentHistoryEntry {
   forced?: boolean;
 }
 
+export interface OptimizeHistoryEntry {
+  at: string;                 // ISO timestamp when this completion was recorded
+  optimizeContentId?: ID;     // id của task "Bài tối ưu lại"
+  optimizeTitle?: string;
+  websiteId?: ID;
+  brandId?: ID;
+  sourceContentId?: ID;       // bài gốc đã đăng
+  oldLink?: string;
+  optimizeSource?: OptimizeSource;
+  optimizeReason?: OptimizeReason;
+  writer?: string;            // người phụ trách tối ưu
+  optimizeReviewer?: string;  // người duyệt
+  completedAt: string;        // ngày hoàn thành (YYYY-MM-DD)
+  resultLink?: string;        // link bài sau cập nhật
+  resultNote?: string;        // ghi chú kết quả
+  optimizeTargetsActual?: OptimizeTarget[];
+  recurringPeriod?: OptimizeRecurringPeriod;
+  continueTracking?: boolean;
+  nextOptimizeAt?: string;
+}
+
+
 export interface WebContent {
   id: ID;
   websiteId: ID;
