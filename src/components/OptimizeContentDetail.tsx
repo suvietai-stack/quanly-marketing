@@ -1,7 +1,10 @@
 import { useState } from "react";
 import {
   useStore, todayISO, fmtDate,
+  computeNextOptimizeDate,
+  OPTIMIZE_TARGETS,
   type WebContent, type ContentStatus, type WebContentHistoryEntry,
+  type OptimizeHistoryEntry, type OptimizeTarget,
 } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -9,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -19,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, ExternalLink, History } from "lucide-react";
 import { toast } from "sonner";
+
 
 type Transition = {
   to: ContentStatus;
