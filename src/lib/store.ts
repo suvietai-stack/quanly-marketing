@@ -448,6 +448,28 @@ export interface WebContentHistoryEntry {
   forced?: boolean;
 }
 
+export interface OptimizeHistoryEntry {
+  at: string;                 // ISO timestamp when this completion was recorded
+  optimizeContentId?: ID;     // id của task "Bài tối ưu lại"
+  optimizeTitle?: string;
+  websiteId?: ID;
+  brandId?: ID;
+  sourceContentId?: ID;       // bài gốc đã đăng
+  oldLink?: string;
+  optimizeSource?: OptimizeSource;
+  optimizeReason?: OptimizeReason;
+  writer?: string;            // người phụ trách tối ưu
+  optimizeReviewer?: string;  // người duyệt
+  completedAt: string;        // ngày hoàn thành (YYYY-MM-DD)
+  resultLink?: string;        // link bài sau cập nhật
+  resultNote?: string;        // ghi chú kết quả
+  optimizeTargetsActual?: OptimizeTarget[];
+  recurringPeriod?: OptimizeRecurringPeriod;
+  continueTracking?: boolean;
+  nextOptimizeAt?: string;
+}
+
+
 export interface WebContent {
   id: ID;
   websiteId: ID;
@@ -528,10 +550,14 @@ export interface WebContent {
   optimizeResultNote?: string;
   optimizeReviewNotes?: string;
   optimizeRevisions?: number;
+  optimizeTargetsActual?: OptimizeTarget[];   // hạng mục thực tế đã tối ưu (lần này)
 
-  // Lịch sử xử lý
+  // Lịch sử xử lý workflow
   history?: WebContentHistoryEntry[];
+  // Lịch sử các lần tối ưu hoàn thành (chủ yếu lưu trên bài gốc / bài đã đăng)
+  optimizeHistory?: OptimizeHistoryEntry[];
 }
+
 
 // Returns true if a KeywordTrack still corresponds to a real keyword the
 // user can see in Check TOP. Used to filter out orphan tracks (e.g. when the
