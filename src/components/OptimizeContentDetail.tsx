@@ -325,7 +325,8 @@ export function OptimizeContentDetail({
       }
       case "Đã duyệt tối ưu":
         if (!(isAdmin || isAssignee || isReviewer)) return <NoPerm />;
-        return <Button onClick={completeOptimize}>Xác nhận hoàn thành</Button>;
+        return <Button onClick={openCompleteDialog}>Xác nhận hoàn thành</Button>;
+
       case "Hoàn thành":
         return <div className="text-sm text-muted-foreground">Bài tối ưu đã hoàn thành.</div>;
       case "Đã hủy":
