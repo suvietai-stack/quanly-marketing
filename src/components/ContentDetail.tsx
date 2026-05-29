@@ -555,6 +555,9 @@ export function ContentDetail({
               <TabsTrigger value="links">Tài liệu</TabsTrigger>
               <TabsTrigger value="history"><History className="h-3.5 w-3.5 mr-1" />Lịch sử</TabsTrigger>
               {c.type === "Bài tối ưu lại" && <TabsTrigger value="optimize">Tối ưu</TabsTrigger>}
+              {(c.optimizeHistory?.length || 0) > 0 && (
+                <TabsTrigger value="opt-history">Lịch sử tối ưu</TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="workflow" className="mt-3 space-y-4">
