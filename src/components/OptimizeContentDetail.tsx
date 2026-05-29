@@ -453,6 +453,90 @@ export function OptimizeContentDetail({
           <Button onClick={onClose}>Đóng</Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Dialog xác nhận hoàn thành tối ưu */}
+      <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Xác nhận hoàn thành tối ưu</DialogTitle>
+            <div className="text-xs text-muted-foreground">{c.title}</div>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label>Ngày hoàn thành tối ưu *</Label>
+                <Input type="date" value={doneDate} onChange={(e) => setDoneDate(e.target.value)} />
+              </div>
+              <div>
+                <Label>Link bài sau khi cập nhật *</Label>
+                <Input value={doneLink} onChange={(e) => setDoneLink(e.target.value)} placeholder="https://..." />
+              </div>
+            </div>
+            <div>
+              <Label>Ghi chú kết quả tối ưu</Label>
+              <Textarea rows={3} value={doneNote} onChange={(e) => setDoneNote(e.target.value)} />
+            </div>
+            <div>
+              <Label>Hạng mục thực tế đã tối ưu</Label>
+              <div className="grid sm:grid-cols-2 gap-2 mt-1">
+                {OPTIMIZE_TARGETS.map((t) => {
+                  const checked = doneTargets.includes(t);
+                  return (
+                    <label key={t} className="flex items-center gap-2 text-sm rounded border bg-card px-2 py-1.5 cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          setDoneTargets((prev) =>
+                            v ? [...prev, t] : prev.filter((x) => x !== t),
+                          );
+                        }}
+                      />
+                      <span>{t}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            {(() => {
+              const src = c.sourceContentId ? s.webContents.find((x) => x.id === c.sourceContentId) : null;
+              const period = src?.optimizeRecurringPeriod;
+              const preview = continueTracking && period ? computeNextOptimizeDate(doneDate, period) : "";
+              return (
+                <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-medium">Tiếp tục theo dõi định kỳ</div>
+                      <div className="text-xs text-muted-foreground">
+                        {period ? `Chu kỳ hiện tại: ${period}` : "Bài gốc chưa thiết lập chu kỳ tối ưu định kỳ."}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={continueTracking}
+                      onCheckedChange={setContinueTracking}
+                      disabled={!period}
+                    />
+                  </div>
+                  {continueTracking && period && preview && (
+                    <div className="text-xs text-muted-foreground">
+                      Ngày tối ưu tiếp theo dự kiến: <span className="font-medium text-foreground">{fmtDate(preview)}</span>
+                    </div>
+                  )}
+                  {!continueTracking && period && (
+                    <div className="text-xs text-muted-foreground">
+                      Trạng thái theo dõi sẽ chuyển sang <span className="font-medium text-foreground">Tạm dừng</span>.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteOpen(false)}>Đóng</Button>
+            <Button onClick={confirmComplete}>Xác nhận hoàn thành</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
+
