@@ -694,6 +694,52 @@ export function ContentDetail({
                 {c.optimizeNotes && <div className="mt-3 rounded-md bg-muted/40 p-3 text-sm whitespace-pre-wrap">{c.optimizeNotes}</div>}
               </TabsContent>
             )}
+
+            {(c.optimizeHistory?.length || 0) > 0 && (
+              <TabsContent value="opt-history" className="mt-3">
+                <div className="space-y-2">
+                  {(c.optimizeHistory || []).slice().reverse().map((h, i) => (
+                    <div key={i} className="rounded-md border bg-card px-3 py-2 text-sm">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="font-medium">
+                          {h.optimizeTitle || "Bài tối ưu"}
+                          {h.optimizeReason ? <span className="text-xs text-muted-foreground ml-2">· {h.optimizeReason}</span> : null}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Hoàn thành: {fmtDate(h.completedAt)}
+                        </div>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                        {h.writer && <div>Người phụ trách: <span className="text-foreground">{h.writer}</span></div>}
+                        {h.optimizeReviewer && <div>Người duyệt: <span className="text-foreground">{h.optimizeReviewer}</span></div>}
+                        {h.optimizeSource && <div>Nguồn: <span className="text-foreground">{h.optimizeSource}</span></div>}
+                        {h.recurringPeriod && <div>Chu kỳ: <span className="text-foreground">{h.recurringPeriod}</span></div>}
+                        {h.nextOptimizeAt && <div>Lần tối ưu kế tiếp: <span className="text-foreground">{fmtDate(h.nextOptimizeAt)}</span></div>}
+                        {typeof h.continueTracking === "boolean" && (
+                          <div>Tiếp tục theo dõi: <span className="text-foreground">{h.continueTracking ? "Có" : "Tạm dừng"}</span></div>
+                        )}
+                      </div>
+                      {h.optimizeTargetsActual && h.optimizeTargetsActual.length > 0 && (
+                        <div className="mt-2 text-xs">
+                          <span className="text-muted-foreground">Hạng mục đã tối ưu: </span>
+                          <span>{h.optimizeTargetsActual.join(", ")}</span>
+                        </div>
+                      )}
+                      {h.resultLink && (
+                        <div className="mt-1 text-xs">
+                          <a href={h.resultLink} target="_blank" rel="noreferrer" className="text-primary inline-flex items-center gap-1 hover:underline">
+                            Mở bài sau cập nhật <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                      {h.resultNote && (
+                        <div className="mt-2 rounded bg-muted/50 px-2 py-1 text-xs whitespace-pre-wrap">{h.resultNote}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         )}
 
