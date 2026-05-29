@@ -79,6 +79,15 @@ export function OptimizeContentDetail({
   const [resultNote, setResultNote] = useState("");
   const [reviewNote, setReviewNote] = useState("");
 
+  // completion dialog state
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [doneDate, setDoneDate] = useState(todayISO());
+  const [doneLink, setDoneLink] = useState("");
+  const [doneNote, setDoneNote] = useState("");
+  const [doneTargets, setDoneTargets] = useState<OptimizeTarget[]>([]);
+  const [continueTracking, setContinueTracking] = useState(true);
+
+
   if (!content) return null;
   const c = s.webContents.find((x) => x.id === content.id) || content;
   const website = s.websites.find((w) => w.id === c.websiteId);
