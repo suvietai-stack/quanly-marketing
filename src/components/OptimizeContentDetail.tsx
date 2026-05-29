@@ -162,7 +162,82 @@ export function OptimizeContentDetail({
   };
 
   const startOptimize = () => apply({ to: "Đang tối ưu", action: "Bắt đầu tối ưu" });
-  const completeOptimize = () => apply({ to: "Hoàn thành", action: "Xác nhận hoàn thành", extra: { completedAt: todayISO() } });
+
+  const openCompleteDialog = () => {
+    setDoneDate(todayISO());
+    setDoneLink(c.optimizeResultLink || "");
+    setDoneNote(c.optimizeResultNote || "");
+    setDoneTargets(c.optimizeTargetsActual?.length ? c.optimizeTargetsActual : (c.optimizeTargets || []));
+    const src = c.sourceContentId ? s.webContents.find((x) => x.id === c.sourceContentId) : null;
+    setContinueTracking(!!(src?.optimizeRecurring && src?.optimizeRecurringPeriod));
+    setCompleteOpen(true);
+  };
+
+  const confirmComplete = () => {
+    if (!doneDate) { toast.error("Nhập ngày hoàn thành tối ưu"); return; }
+    if (!doneLink.trim()) { toast.error("Nhập link bài sau khi cập nhật"); return; }
+
+    const src = c.sourceContentId ? s.webContents.find((x) => x.id === c.sourceContentId) : null;
+    const period = src?.optimizeRecurringPeriod;
+    const willTrack = continueTracking && !!period;
+    const nextDate = willTrack && period ? computeNextOptimizeDate(doneDate, period) : undefined;
+
+    const historyEntry: OptimizeHistoryEntry = {
+      at: new Date().toISOString(),
+      optimizeContentId: c.id,
+      optimizeTitle: c.title,
+      websiteId: c.websiteId,
+      brandId: c.brandId,
+      sourceContentId: c.sourceContentId,
+      oldLink: c.oldLink || c.url,
+      optimizeSource: c.optimizeSource,
+      optimizeReason: c.optimizeReason,
+      writer: c.writer,
+      optimizeReviewer: c.optimizeReviewer,
+      completedAt: doneDate,
+      resultLink: doneLink.trim(),
+      resultNote: doneNote.trim() || undefined,
+      optimizeTargetsActual: doneTargets,
+      recurringPeriod: period,
+      continueTracking: willTrack,
+      nextOptimizeAt: nextDate,
+    };
+
+    // Cập nhật task tối ưu → Hoàn thành
+    apply({
+      to: "Hoàn thành",
+      action: "Xác nhận hoàn thành tối ưu",
+      note: doneNote.trim() || undefined,
+      extra: {
+        completedAt: doneDate,
+        optimizeResultLink: doneLink.trim(),
+        optimizeResultNote: doneNote.trim() || undefined,
+        optimizeTargetsActual: doneTargets,
+      },
+    });
+
+    // Cập nhật bài gốc: lịch sử tối ưu + ngày tối ưu tiếp theo
+    if (src) {
+      const patch: Partial<WebContent> = {
+        optimizeHistory: [...(src.optimizeHistory || []), historyEntry],
+      };
+      if (src.optimizeRecurring && period) {
+        if (willTrack) {
+          patch.nextOptimizeAt = nextDate;
+          patch.optimizeScheduleTrackStatus = "Đang theo dõi";
+        } else {
+          patch.nextOptimizeAt = undefined;
+          patch.optimizeScheduleTrackStatus = "Tạm dừng";
+        }
+      }
+      s.update("webContents", src.id, patch);
+    }
+
+    setCompleteOpen(false);
+    toast.success("Đã ghi nhận hoàn thành tối ưu");
+  };
+
+
   const cancelOptimize = () => {
     if (!confirm("Hủy bài tối ưu này?")) return;
     apply({ to: "Đã hủy", action: "Hủy bài tối ưu" });
