@@ -550,10 +550,14 @@ export interface WebContent {
   optimizeResultNote?: string;
   optimizeReviewNotes?: string;
   optimizeRevisions?: number;
+  optimizeTargetsActual?: OptimizeTarget[];   // hạng mục thực tế đã tối ưu (lần này)
 
-  // Lịch sử xử lý
+  // Lịch sử xử lý workflow
   history?: WebContentHistoryEntry[];
+  // Lịch sử các lần tối ưu hoàn thành (chủ yếu lưu trên bài gốc / bài đã đăng)
+  optimizeHistory?: OptimizeHistoryEntry[];
 }
+
 
 // Returns true if a KeywordTrack still corresponds to a real keyword the
 // user can see in Check TOP. Used to filter out orphan tracks (e.g. when the
