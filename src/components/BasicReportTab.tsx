@@ -149,6 +149,21 @@ export function BasicReportTab({
     done: cnt(fc, (c) => c.status === "Hoàn thành"),
   };
 
+  // ---- Optimize content metrics (loại Đã hủy) ----
+  const todayISO0 = toISO(new Date());
+  const optAll = fc.filter((c) => isOptimize(c) && c.status !== "Đã hủy");
+  const optStats = {
+    waitingAssign: cnt(optAll, (c) => c.status === "Đã tạo"),
+    doing: cnt(optAll, (c) => OPT_DOING.includes(c.status)),
+    pendingReview: cnt(optAll, (c) => c.status === "Chờ duyệt tối ưu"),
+    needFix: cnt(optAll, (c) => c.status === "Cần sửa tối ưu"),
+    overdue: cnt(optAll, (c) =>
+      OPT_OPEN.includes(c.status) && !!c.deadline && c.deadline < todayISO0,
+    ),
+  };
+
+
+
   // ---- Index & share ----
   const publishedList = fc.filter((c) => !!c.publishedLink || PUBLISHED_LIKE.includes(c.status));
   const indexStats = {
