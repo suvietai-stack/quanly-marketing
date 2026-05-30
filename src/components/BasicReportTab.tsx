@@ -15,6 +15,7 @@ import {
   FileText, FileEdit, Eye, Wrench, Send, CheckCircle2, ListChecks,
   Search, Share2, Link as LinkIcon, TrendingUp, TrendingDown,
   AlertTriangle, ExternalLink, Trophy, Activity, Settings2, AlertCircle,
+  RefreshCw as RefreshCwIcon, Inbox,
 } from "lucide-react";
 import { GrowthSummary } from "@/components/GrowthTab";
 
