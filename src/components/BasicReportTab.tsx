@@ -344,15 +344,16 @@ export function BasicReportTab({
         const summary = attention.slice(0, 6);
         const owners2 = Array.from(new Set(attention.map((a) => a.owner).filter(Boolean))) as string[];
         const types2 = Array.from(new Set(attention.map((a) => a.type)));
-        const QUICKS = ["Tất cả", "Content", "Index / Share Social", "Check TOP", "Backlink", "Technical SEO", "Quá hạn", "Nghiêm trọng"];
+        const QUICKS = ["Tất cả", "Content", "Tối ưu Content", "Index / Share Social", "Check TOP", "Backlink", "Technical SEO", "Quá hạn", "Nghiêm trọng"];
         const matchesQuick = (a: AttentionRow) => {
           switch (aQuick) {
             case "Content": return a.source === "Sản xuất Content";
+            case "Tối ưu Content": return a.source === "Tối ưu lại Content";
             case "Index / Share Social": return a.source === "Bài đã đăng / Index";
             case "Check TOP": return a.source === "Check TOP từ khóa";
             case "Backlink": return a.source === "Backlink / PR";
             case "Technical SEO": return a.source === "Technical SEO";
-            case "Quá hạn": return a.type === "Quá deadline";
+            case "Quá hạn": return a.type === "Quá deadline" || a.type === "Tối ưu quá hạn";
             case "Nghiêm trọng": return a.severity === "danger";
             default: return true;
           }
