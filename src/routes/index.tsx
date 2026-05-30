@@ -508,9 +508,11 @@ function DeptOverview() {
       });
     }
     for (const c of s.webContents) {
+      // Task tối ưu "Đã tạo" chưa giao → không gắn vào hiệu suất nhân viên nào
+      const isOptCreated = c.type === "Bài tối ưu lại" && c.status === "Đã tạo";
       jobs.push({
         id: `web-${c.id}`, kind: "Content Web", module: "Dự án Web", title: c.title,
-        brandId: c.brandId, assignee: c.writer, status: c.status,
+        brandId: c.brandId, assignee: isOptCreated ? undefined : c.writer, status: c.status,
         deadline: c.deadline || c.outlineDeadline, completedAt: c.completedAt,
         href: "/web-contents",
       });
