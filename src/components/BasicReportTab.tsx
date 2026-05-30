@@ -525,6 +525,18 @@ export function BasicReportTab({
         <StatCard icon={Trophy} label="Hoàn thành" value={contentStats.done} accent="success" />
       </div>
 
+      {/* Optimize content */}
+      <GroupTitle><RefreshCwIcon className="h-4 w-4" />Tối ưu lại Content</GroupTitle>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <StatCard icon={Inbox} label="Chờ phân công tối ưu" value={optStats.waitingAssign} accent="warning" />
+        <StatCard icon={FileEdit} label="Đang tối ưu" value={optStats.doing} accent="info" />
+        <StatCard icon={Eye} label="Chờ duyệt tối ưu" value={optStats.pendingReview} accent="warning" />
+        <StatCard icon={Wrench} label="Cần sửa tối ưu" value={optStats.needFix} accent="danger" />
+        <StatCard icon={AlertCircle} label="Tối ưu quá hạn" value={optStats.overdue} accent="danger" />
+      </div>
+
+
+
       {/* Index & share */}
       <GroupTitle><Search className="h-4 w-4" />Index & Share Social</GroupTitle>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
