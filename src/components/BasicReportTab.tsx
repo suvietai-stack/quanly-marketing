@@ -15,6 +15,7 @@ import {
   FileText, FileEdit, Eye, Wrench, Send, CheckCircle2, ListChecks,
   Search, Share2, Link as LinkIcon, TrendingUp, TrendingDown,
   AlertTriangle, ExternalLink, Trophy, Activity, Settings2, AlertCircle,
+  RefreshCw as RefreshCwIcon, Inbox,
 } from "lucide-react";
 import { GrowthSummary } from "@/components/GrowthTab";
 
@@ -26,6 +27,11 @@ const REVIEW: ContentStatus[] = ["Chờ duyệt outline", "Chờ duyệt bài", 
 const FIX: ContentStatus[] = ["Cần sửa outline", "Cần sửa bài", "Cần sửa bản nháp web"];
 const WAIT_PUBLISH: ContentStatus[] = ["Bài viết đã duyệt", "Bản nháp web đã duyệt", "Chờ đăng web"];
 const PUBLISHED_LIKE: ContentStatus[] = ["Đã đăng web", "Kiểm tra index", "Hoàn thành"];
+
+// Optimize-only workflow buckets (loại trừ "Đã hủy" khỏi mọi cảnh báo & thống kê)
+const OPT_OPEN: ContentStatus[] = ["Đã tạo", "Đã giao", "Đang tối ưu", "Chờ duyệt tối ưu", "Cần sửa tối ưu", "Đã duyệt tối ưu"];
+const OPT_DOING: ContentStatus[] = ["Đã giao", "Đang tối ưu"];
+const isOptimize = (c: WebContent) => c.type === "Bài tối ưu lại";
 
 function startOfWeek(): Date {
   const d = new Date();
@@ -144,6 +150,21 @@ export function BasicReportTab({
     done: cnt(fc, (c) => c.status === "Hoàn thành"),
   };
 
+  // ---- Optimize content metrics (loại Đã hủy) ----
+  const todayISO0 = toISO(new Date());
+  const optAll = fc.filter((c) => isOptimize(c) && c.status !== "Đã hủy");
+  const optStats = {
+    waitingAssign: cnt(optAll, (c) => c.status === "Đã tạo"),
+    doing: cnt(optAll, (c) => OPT_DOING.includes(c.status)),
+    pendingReview: cnt(optAll, (c) => c.status === "Chờ duyệt tối ưu"),
+    needFix: cnt(optAll, (c) => c.status === "Cần sửa tối ưu"),
+    overdue: cnt(optAll, (c) =>
+      OPT_OPEN.includes(c.status) && !!c.deadline && c.deadline < todayISO0,
+    ),
+  };
+
+
+
   // ---- Index & share ----
   const publishedList = fc.filter((c) => !!c.publishedLink || PUBLISHED_LIKE.includes(c.status));
   const indexStats = {
@@ -185,7 +206,7 @@ export function BasicReportTab({
 
   // ---- Attention rows ----
   const today = toISO(new Date());
-  type AttentionSource = "Sản xuất Content" | "Bài đã đăng / Index" | "Backlink / PR" | "Check TOP từ khóa" | "Technical SEO";
+  type AttentionSource = "Sản xuất Content" | "Bài đã đăng / Index" | "Backlink / PR" | "Check TOP từ khóa" | "Technical SEO" | "Tối ưu lại Content";
   type AttentionRow = {
     type: string;
     severity: "warn" | "danger" | "info";
@@ -200,6 +221,20 @@ export function BasicReportTab({
   fc.forEach((c) => {
     const owner = c.writer || c.publisher || c.assigner;
     const open = () => onOpenContent?.(c);
+    // Bỏ qua hoàn toàn item đã hủy
+    if (c.status === "Đã hủy") return;
+    // Việc tối ưu lại Content — cảnh báo riêng, không trộn với Sản xuất Content
+    if (isOptimize(c)) {
+      if (c.status === "Đã tạo" && !c.writer)
+        attention.push({ type: "Tối ưu chưa phân công", severity: "warn", source: "Tối ưu lại Content", content: c.title, owner: undefined, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      if (c.deadline && c.deadline < today && OPT_OPEN.includes(c.status))
+        attention.push({ type: "Tối ưu quá hạn", severity: "danger", source: "Tối ưu lại Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      if (c.status === "Chờ duyệt tối ưu")
+        attention.push({ type: "Tối ưu chờ duyệt", severity: "warn", source: "Tối ưu lại Content", content: c.title, owner: c.optimizeReviewer || owner, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      if (c.status === "Cần sửa tối ưu")
+        attention.push({ type: "Tối ưu cần sửa", severity: "warn", source: "Tối ưu lại Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      return;
+    }
     if (c.deadline && c.deadline < today && !PUBLISHED_LIKE.includes(c.status))
       attention.push({ type: "Quá deadline", severity: "danger", source: "Sản xuất Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (c.status === "Chờ duyệt outline")
@@ -238,8 +273,12 @@ export function BasicReportTab({
   const typePriority: Record<string, number> = {
     "Từ khóa mất top": 1,
     "Backlink lỗi": 2,
+    "Tối ưu quá hạn": 2.5,
     "Quá deadline": 3,
     "Cần sửa": 4,
+    "Tối ưu cần sửa": 4.2,
+    "Tối ưu chưa phân công": 4.5,
+    "Tối ưu chờ duyệt": 4.8,
     "Chờ duyệt outline": 5,
     "Chờ duyệt bài": 5,
     "Từ khóa tụt hạng": 6,
@@ -306,15 +345,16 @@ export function BasicReportTab({
         const summary = attention.slice(0, 6);
         const owners2 = Array.from(new Set(attention.map((a) => a.owner).filter(Boolean))) as string[];
         const types2 = Array.from(new Set(attention.map((a) => a.type)));
-        const QUICKS = ["Tất cả", "Content", "Index / Share Social", "Check TOP", "Backlink", "Technical SEO", "Quá hạn", "Nghiêm trọng"];
+        const QUICKS = ["Tất cả", "Content", "Tối ưu Content", "Index / Share Social", "Check TOP", "Backlink", "Technical SEO", "Quá hạn", "Nghiêm trọng"];
         const matchesQuick = (a: AttentionRow) => {
           switch (aQuick) {
             case "Content": return a.source === "Sản xuất Content";
+            case "Tối ưu Content": return a.source === "Tối ưu lại Content";
             case "Index / Share Social": return a.source === "Bài đã đăng / Index";
             case "Check TOP": return a.source === "Check TOP từ khóa";
             case "Backlink": return a.source === "Backlink / PR";
             case "Technical SEO": return a.source === "Technical SEO";
-            case "Quá hạn": return a.type === "Quá deadline";
+            case "Quá hạn": return a.type === "Quá deadline" || a.type === "Tối ưu quá hạn";
             case "Nghiêm trọng": return a.severity === "danger";
             default: return true;
           }
@@ -485,6 +525,18 @@ export function BasicReportTab({
         <StatCard icon={CheckCircle2} label="Đã đăng" value={contentStats.published} accent="success" />
         <StatCard icon={Trophy} label="Hoàn thành" value={contentStats.done} accent="success" />
       </div>
+
+      {/* Optimize content */}
+      <GroupTitle><RefreshCwIcon className="h-4 w-4" />Tối ưu lại Content</GroupTitle>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <StatCard icon={Inbox} label="Chờ phân công tối ưu" value={optStats.waitingAssign} accent="warning" />
+        <StatCard icon={FileEdit} label="Đang tối ưu" value={optStats.doing} accent="info" />
+        <StatCard icon={Eye} label="Chờ duyệt tối ưu" value={optStats.pendingReview} accent="warning" />
+        <StatCard icon={Wrench} label="Cần sửa tối ưu" value={optStats.needFix} accent="danger" />
+        <StatCard icon={AlertCircle} label="Tối ưu quá hạn" value={optStats.overdue} accent="danger" />
+      </div>
+
+
 
       {/* Index & share */}
       <GroupTitle><Search className="h-4 w-4" />Index & Share Social</GroupTitle>

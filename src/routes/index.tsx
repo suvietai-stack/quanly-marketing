@@ -508,9 +508,11 @@ function DeptOverview() {
       });
     }
     for (const c of s.webContents) {
+      // Task tối ưu "Đã tạo" chưa giao → không gắn vào hiệu suất nhân viên nào
+      const isOptCreated = c.type === "Bài tối ưu lại" && c.status === "Đã tạo";
       jobs.push({
         id: `web-${c.id}`, kind: "Content Web", module: "Dự án Web", title: c.title,
-        brandId: c.brandId, assignee: c.writer, status: c.status,
+        brandId: c.brandId, assignee: isOptCreated ? undefined : c.writer, status: c.status,
         deadline: c.deadline || c.outlineDeadline, completedAt: c.completedAt,
         href: "/web-contents",
       });
@@ -680,6 +682,26 @@ function DeptOverview() {
       if ((c.status === "Đã đăng web" || c.status === "Hoàn thành") && c.indexStatus && c.indexStatus !== "Đã index") {
         if (brandId && c.brandId !== brandId) continue;
         list.push({ sev: "Trung bình", type: "Chưa index", title: c.title, module: "Dự án Web", assignee: c.writer || c.publisher, brand: brandName(c.brandId), due: c.publishedAt, status: c.indexStatus, href: "/web-contents" });
+      }
+    }
+    // Tối ưu Content — điểm nghẽn riêng (loại Đã hủy)
+    const today0 = new Date().toISOString().slice(0, 10);
+    for (const c of s.webContents) {
+      if (c.type !== "Bài tối ưu lại") continue;
+      if (c.status === "Đã hủy" || c.status === "Hoàn thành") continue;
+      if (brandId && c.brandId !== brandId) continue;
+      const assignee = c.status === "Đã tạo" ? undefined : c.writer;
+      if (c.status === "Đã tạo" && !c.writer) {
+        list.push({ sev: "Trung bình", type: "Tối ưu Content chờ phân công", title: c.title, module: "Dự án Web", assignee: undefined, brand: brandName(c.brandId), due: c.deadline, status: c.status, href: "/web-contents" });
+      }
+      if (c.deadline && c.deadline < today0) {
+        list.push({ sev: "Cao", type: "Tối ưu Content quá hạn", title: c.title, module: "Dự án Web", assignee, brand: brandName(c.brandId), due: c.deadline, status: c.status, href: "/web-contents" });
+      }
+      if (c.status === "Chờ duyệt tối ưu") {
+        list.push({ sev: "Thấp", type: "Tối ưu Content chờ duyệt", title: c.title, module: "Dự án Web", assignee: c.optimizeReviewer || assignee, brand: brandName(c.brandId), due: c.deadline, status: c.status, href: "/web-contents" });
+      }
+      if (c.status === "Cần sửa tối ưu") {
+        list.push({ sev: "Trung bình", type: "Tối ưu Content cần sửa", title: c.title, module: "Dự án Web", assignee, brand: brandName(c.brandId), due: c.deadline, status: c.status, href: "/web-contents" });
       }
     }
     const sevOrder: Record<string, number> = { Cao: 0, "Trung bình": 1, Thấp: 2 };
