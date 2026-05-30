@@ -272,8 +272,12 @@ export function BasicReportTab({
   const typePriority: Record<string, number> = {
     "Từ khóa mất top": 1,
     "Backlink lỗi": 2,
+    "Tối ưu quá hạn": 2.5,
     "Quá deadline": 3,
     "Cần sửa": 4,
+    "Tối ưu cần sửa": 4.2,
+    "Tối ưu chưa phân công": 4.5,
+    "Tối ưu chờ duyệt": 4.8,
     "Chờ duyệt outline": 5,
     "Chờ duyệt bài": 5,
     "Từ khóa tụt hạng": 6,
