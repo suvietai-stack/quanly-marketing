@@ -106,6 +106,8 @@ function WebsiteDetail() {
 
   const published = contents.filter((c) => DONE_STATUSES.includes(c.status));
   const optimizeContents = contents.filter((c) => c.type === "Bài tối ưu lại");
+  // Badge "Tối ưu lại Content (x)" chỉ đếm các việc đang tồn tại hợp lệ (loại bỏ Đã hủy)
+  const optimizeBadgeCount = optimizeContents.filter((c) => c.status !== "Đã hủy").length;
 
   const seoTotal = checks.length || 1;
   const seoDone = checks.filter((c) => c.done).length;
