@@ -27,6 +27,11 @@ const FIX: ContentStatus[] = ["Cần sửa outline", "Cần sửa bài", "Cần 
 const WAIT_PUBLISH: ContentStatus[] = ["Bài viết đã duyệt", "Bản nháp web đã duyệt", "Chờ đăng web"];
 const PUBLISHED_LIKE: ContentStatus[] = ["Đã đăng web", "Kiểm tra index", "Hoàn thành"];
 
+// Optimize-only workflow buckets (loại trừ "Đã hủy" khỏi mọi cảnh báo & thống kê)
+const OPT_OPEN: ContentStatus[] = ["Đã tạo", "Đã giao", "Đang tối ưu", "Chờ duyệt tối ưu", "Cần sửa tối ưu", "Đã duyệt tối ưu"];
+const OPT_DOING: ContentStatus[] = ["Đã giao", "Đang tối ưu"];
+const isOptimize = (c: WebContent) => c.type === "Bài tối ưu lại";
+
 function startOfWeek(): Date {
   const d = new Date();
   const day = (d.getDay() + 6) % 7; // Monday-based
