@@ -205,7 +205,7 @@ export function BasicReportTab({
 
   // ---- Attention rows ----
   const today = toISO(new Date());
-  type AttentionSource = "Sản xuất Content" | "Bài đã đăng / Index" | "Backlink / PR" | "Check TOP từ khóa" | "Technical SEO";
+  type AttentionSource = "Sản xuất Content" | "Bài đã đăng / Index" | "Backlink / PR" | "Check TOP từ khóa" | "Technical SEO" | "Tối ưu lại Content";
   type AttentionRow = {
     type: string;
     severity: "warn" | "danger" | "info";
@@ -220,6 +220,20 @@ export function BasicReportTab({
   fc.forEach((c) => {
     const owner = c.writer || c.publisher || c.assigner;
     const open = () => onOpenContent?.(c);
+    // Bỏ qua hoàn toàn item đã hủy
+    if (c.status === "Đã hủy") return;
+    // Việc tối ưu lại Content — cảnh báo riêng, không trộn với Sản xuất Content
+    if (isOptimize(c)) {
+      if (c.status === "Đã tạo" && !c.writer)
+        attention.push({ type: "Tối ưu chưa phân công", severity: "warn", source: "Tối ưu lại Content", content: c.title, owner: undefined, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      if (c.deadline && c.deadline < today && OPT_OPEN.includes(c.status))
+        attention.push({ type: "Tối ưu quá hạn", severity: "danger", source: "Tối ưu lại Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      if (c.status === "Chờ duyệt tối ưu")
+        attention.push({ type: "Tối ưu chờ duyệt", severity: "warn", source: "Tối ưu lại Content", content: c.title, owner: c.optimizeReviewer || owner, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      if (c.status === "Cần sửa tối ưu")
+        attention.push({ type: "Tối ưu cần sửa", severity: "warn", source: "Tối ưu lại Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở việc tối ưu", onClick: open } });
+      return;
+    }
     if (c.deadline && c.deadline < today && !PUBLISHED_LIKE.includes(c.status))
       attention.push({ type: "Quá deadline", severity: "danger", source: "Sản xuất Content", content: c.title, owner, date: c.deadline, status: c.status, action: { label: "Mở content", onClick: open } });
     if (c.status === "Chờ duyệt outline")
