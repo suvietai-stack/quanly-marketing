@@ -66,7 +66,11 @@ export function OptimizeContentDetail({
   onClose: () => void;
 }) {
   const s = useStore();
-  const { user, isAdmin } = useCurrentUser();
+  const { user, isAdmin, can } = useCurrentUser();
+  const canAssign = isAdmin || can("web.reopt_assign");
+  const canStatus = isAdmin || can("web.reopt_status");
+  const canComplete = isAdmin || can("web.reopt_complete");
+  const canCancel = isAdmin || can("web.reopt_delete");
 
   // assign-form state
   const [assignee, setAssignee] = useState<string | undefined>(undefined);
