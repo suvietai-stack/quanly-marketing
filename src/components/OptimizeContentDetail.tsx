@@ -451,7 +451,7 @@ export function OptimizeContentDetail({
         </Tabs>
 
         <DialogFooter>
-          {isAdmin && c.status !== "Hoàn thành" && c.status !== "Đã hủy" && (
+          {canCancel && c.status !== "Hoàn thành" && c.status !== "Đã hủy" && (
             <Button variant="ghost" onClick={cancelOptimize}>Hủy bài</Button>
           )}
           <Button onClick={onClose}>Đóng</Button>
