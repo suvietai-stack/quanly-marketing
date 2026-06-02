@@ -333,7 +333,9 @@ function WebsiteDetail() {
                   }
                   const due = contents.filter((c) =>
                     DONE_STATUSES.includes(c.status) &&
+                    c.optimizeRecurring === true &&
                     c.optimizeScheduleTrackStatus === "Đang theo dõi" &&
+                    c.indexStatus === "Đã index" &&
                     c.nextOptimizeAt && c.nextOptimizeAt <= today
                   );
                   let created = 0, skipped = 0;
@@ -368,18 +370,20 @@ function WebsiteDetail() {
                 <CalIcon className="h-4 w-4" />Kiểm tra lịch đến hạn
               </Button>
             )}
-            <Dialog open={openOptimize} onOpenChange={setOpenOptimize}>
-              <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài tối ưu</Button></DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader><DialogTitle>Tạo bài tối ưu lại</DialogTitle></DialogHeader>
-                <OptimizeContentForm
-                  websiteId={w.id}
-                  brandId={w.brandId}
-                  onSubmit={(c) => s.add("webContents", c)}
-                  onClose={() => setOpenOptimize(false)}
-                />
-              </DialogContent>
-            </Dialog>
+            {can("web.reopt_create") && (
+              <Dialog open={openOptimize} onOpenChange={setOpenOptimize}>
+                <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài tối ưu</Button></DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader><DialogTitle>Tạo bài tối ưu lại</DialogTitle></DialogHeader>
+                  <OptimizeContentForm
+                    websiteId={w.id}
+                    brandId={w.brandId}
+                    onSubmit={(c) => s.add("webContents", c)}
+                    onClose={() => setOpenOptimize(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
           <Card><CardContent className="p-0">
             <div className="overflow-x-auto">
