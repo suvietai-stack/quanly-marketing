@@ -257,7 +257,7 @@ export function OptimizeContentDetail({
     switch (c.status) {
       case "Đã tạo":
       case "Kế hoạch": {
-        if (!isAdmin) return <NoPerm />;
+        if (!canAssign) return <NoPerm />;
         return (
           <div className="space-y-3">
             <div className="grid sm:grid-cols-2 gap-3">
@@ -277,13 +277,13 @@ export function OptimizeContentDetail({
         );
       }
       case "Đã giao":
-        if (!(isAdmin || isAssignee)) return <NoPerm />;
+        if (!(isAdmin || (isAssignee && canStatus))) return <NoPerm />;
         return (
           <Button onClick={startOptimize}><ArrowRight className="h-4 w-4" />Bắt đầu tối ưu</Button>
         );
       case "Đang tối ưu":
       case "Cần sửa tối ưu": {
-        if (!(isAdmin || isAssignee)) return <NoPerm />;
+        if (!(isAdmin || (isAssignee && canStatus))) return <NoPerm />;
         return (
           <div className="space-y-3">
             {c.status === "Cần sửa tối ưu" && c.optimizeReviewNotes && (
@@ -308,7 +308,7 @@ export function OptimizeContentDetail({
         );
       }
       case "Chờ duyệt tối ưu": {
-        if (!(isAdmin || isReviewer)) return <NoPerm />;
+        if (!(isAdmin || (isReviewer && canStatus))) return <NoPerm />;
         return (
           <div className="space-y-3">
             {c.optimizeResultLink && (
@@ -328,7 +328,7 @@ export function OptimizeContentDetail({
         );
       }
       case "Đã duyệt tối ưu":
-        if (!(isAdmin || isAssignee || isReviewer)) return <NoPerm />;
+        if (!canComplete) return <NoPerm />;
         return <Button onClick={openCompleteDialog}>Xác nhận hoàn thành</Button>;
 
       case "Hoàn thành":
