@@ -333,7 +333,9 @@ function WebsiteDetail() {
                   }
                   const due = contents.filter((c) =>
                     DONE_STATUSES.includes(c.status) &&
+                    c.optimizeRecurring === true &&
                     c.optimizeScheduleTrackStatus === "Đang theo dõi" &&
+                    c.indexStatus === "Đã index" &&
                     c.nextOptimizeAt && c.nextOptimizeAt <= today
                   );
                   let created = 0, skipped = 0;
