@@ -8,6 +8,13 @@
       "when": 1790149840892,
       "tag": "0000_kpi_v2_data_model",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790149870839,
+      "tag": "0001_app_roles_select_permission",
+      "breakpoints": true
     }
   ]
 }
