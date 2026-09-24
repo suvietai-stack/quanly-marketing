@@ -67,7 +67,7 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
         <select className={inp} value={group} onChange={(e) => setGroup(e.target.value)}>
           <option value="">Mọi nhóm</option><option value="web">Web</option><option value="social">Social</option><option value="video">Video</option><option value="design">Thiết kế</option><option value="task">Task</option>
         </select>
-        <Link to="/overview-v2" search={{ from: ps, to: pe, brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, metric: metric || undefined, userId: userId || undefined, group: group || undefined }} className="self-center text-xs text-primary hover:underline">→ Tổng quan V2 (giữ bộ lọc)</Link>
+        <Link to="/overview-v2" search={{ from: ps, to: pe, brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, metric: metric || undefined, userId: userId || undefined, group: group || undefined }} className="self-center text-xs text-primary hover:underline">→ Xem Tổng quan (giữ bộ lọc)</Link>
       </div>
       {metric && <p className="text-xs">Đang lọc chỉ tiêu: <b>{metric}</b> <button className="text-primary underline" onClick={() => setMetric("")}>bỏ lọc</button></p>}
       <p className="text-xs text-muted-foreground">Ngày tính theo giờ Việt Nam. Việc được credit theo ngày <b>nộp bản được duyệt</b> — bài nộp cuối kỳ nhưng duyệt sang kỳ sau vẫn thuộc kỳ nộp; bài đang chờ duyệt chưa tính vào hoàn thành và nằm ở cột “Chờ duyệt”.</p>
@@ -75,7 +75,7 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-muted text-left text-xs text-muted-foreground">
-            <tr><th className="px-3 py-2">Nhân sự</th><th>KPI (đạt / giao)</th><th>Sản lượng có evidence</th><th>Đúng hạn</th><th>Duyệt lần đầu</th><th>Tồn / Quá hạn</th><th>Chờ duyệt</th></tr>
+            <tr><th className="px-3 py-2">Nhân sự</th><th>Sản lượng / Chỉ tiêu</th><th>Đúng hạn</th><th>Duyệt lần đầu</th><th>Quá hạn</th></tr>
           </thead>
           <tbody>
             {reports.map(({ u, r }) => {
@@ -87,12 +87,15 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
                       <button className="font-medium hover:underline" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? "▾" : "▸"} {u.fullName || u.username}</button>
                       {r.ambiguousName && <div className="text-xs text-muted-foreground">Trùng tên — chỉ khớp theo tài khoản</div>}
                     </td>
-                    <td>{r.achievedCount} / {r.assignedCount} chỉ tiêu</td>
-                    <td><span className={chip} onClick={() => setDrill({ kind: "evidence", title: `Evidence — ${u.fullName}`, rows: allEv })}>{r.output}</span></td>
+                    <td>
+                      {r.items.filter((i) => !i.contributionOnly).map((i) => (
+                        <div key={i.item.id} className="text-xs"><span className="text-muted-foreground">{i.label}:</span> <span className={chip} onClick={() => setDrill({ kind: "evidence", title: i.label, rows: i.evidence })}>{i.actual === null ? "Chưa đủ dữ liệu" : i.actual}</span> / {i.target}</div>
+                      ))}
+                      {!r.items.some((i) => !i.contributionOnly) && <span className={chip} onClick={() => setDrill({ kind: "evidence", title: `Sản lượng — ${u.fullName}`, rows: allEv })}>{r.output} <span className="text-xs text-muted-foreground">(không có chỉ tiêu trong phạm vi lọc)</span></span>}
+                    </td>
                     <td><span className={chip} onClick={() => setDrill({ kind: "ratio", title: "Đúng hạn", r: r.onTime, rows: allEv, field: "onTime" })}>{pctText(r.onTime)}</span></td>
                     <td><span className={chip} onClick={() => setDrill({ kind: "ratio", title: "Duyệt lần đầu", r: r.quality, rows: allEv, field: "firstPass" })}>{pctText(r.quality)}</span></td>
-                    <td><span className={chip} onClick={() => setDrill({ kind: "work", title: "Tồn việc", rows: r.backlog })}>{r.backlog.length}</span> / <span className={chip} onClick={() => setDrill({ kind: "work", title: "Quá hạn", rows: r.overdue })}>{r.overdue.length}</span></td>
-                    <td><span className={chip} onClick={() => setDrill({ kind: "work", title: "Đang chờ người duyệt", rows: r.waitingReview })}>{r.waitingReview.length}</span></td>
+                    <td><span className={chip} onClick={() => setDrill({ kind: "work", title: "Quá hạn", rows: r.overdue })}>{r.overdue.length}</span></td>
                   </tr>
                   {open === u.id && r.items.map((it) => {
                     const p = r.periods.find((x) => x.id === it.item.kpiPeriodId)!;
@@ -104,10 +107,14 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
                           {it.lockedTarget !== null && <span className="ml-1 text-muted-foreground">(snapshot khi khóa)</span>}
                           {it.adjustments.length > 0 && <span className="ml-1 text-muted-foreground" title={it.adjustments.map((a) => `${a.at.slice(0, 10)}: ${a.from}→${a.to}`).join("\n")}>· {it.adjustments.length} điều chỉnh</span>}
                         </td>
-                        <td colSpan={5} className="text-muted-foreground">{it.contributionOnly ? "Chỉ đóng góp" : it.achieved === null ? (it.warnings ? "Chưa kết luận (còn mục chưa xác minh)" : "—") : it.achieved ? "Đạt" : "Chưa đạt"}{it.warnings ? ` · ${it.warnings} mục chưa xác minh` : ""} · kỳ {p.status}</td>
+                        <td colSpan={3} className="text-muted-foreground">{it.contributionOnly ? "Chỉ đóng góp" : it.achieved === null ? (it.warnings ? "Chưa kết luận (còn mục chưa xác minh)" : "—") : it.achieved ? "Đạt" : "Chưa đạt"}{it.warnings ? ` · ${it.warnings} mục chưa xác minh` : ""} · kỳ {p.status}</td>
                       </tr>
                     );
                   })}
+                  {open === u.id && (
+                    <tr className="border-t border-border bg-muted/40 text-xs"><td className="px-6 py-1.5 text-muted-foreground">Trạng thái chi tiết</td>
+                      <td colSpan={4}>Tồn việc: <span className={chip} onClick={() => setDrill({ kind: "work", title: "Tồn việc", rows: r.backlog })}>{r.backlog.length}</span> · Đang chờ người duyệt: <span className={chip} onClick={() => setDrill({ kind: "work", title: "Đang chờ người duyệt", rows: r.waitingReview })}>{r.waitingReview.length}</span> · Chỉ tiêu đạt: {r.achievedCount}/{r.assignedCount}</td></tr>
+                  )}
                 </Fragment>
               );
             })}

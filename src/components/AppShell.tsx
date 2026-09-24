@@ -45,10 +45,9 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "KPI",
     items: [
-      { to: "/goals-v2", label: "Mục tiêu", icon: Target, kpi: true },
-      { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, adminOnly: true },
+      { to: "/overview-v2", label: "Tổng quan", icon: Globe, kpi: true },
+      { to: "/settings/kpi-v2", label: "Giao chỉ tiêu", icon: Target, kpi: true },
       { to: "/reports-v2", label: "Báo cáo nhân sự", icon: FileText, kpi: true },
-      { to: "/overview-v2", label: "Tổng quan KPI", icon: Globe, kpi: true },
     ],
   },
   {
@@ -78,6 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       ...g,
       items: g.items
         .filter((it: any) => (!it.perm || can(it.perm)) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
+        .map((it) => (it.to === "/settings/kpi-v2" && !isKpiAdmin ? { ...it, label: "KPI của tôi" } : it))
         .map((it) =>
           it.to === "/settings" && canApprove && pendingCount > 0
             ? { ...it, badge: `${pendingCount} chờ duyệt` }
