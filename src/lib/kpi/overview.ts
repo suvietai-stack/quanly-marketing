@@ -126,12 +126,14 @@ export function buildOverview(args: {
 }
 
 /** Query params liên thông (được validate ở cả 2 route). */
-export interface V2Search { from?: string; to?: string; brandId?: string; websiteId?: string; socialId?: string; metric?: string; userId?: string }
+export interface V2Search { from?: string; to?: string; brandId?: string; websiteId?: string; socialId?: string; metric?: string; userId?: string; group?: string }
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const ID = /^[\w-]{1,64}$/;
+const GROUPS = ["web", "social", "video", "design", "task"];
 export function validateV2Search(s: Record<string, unknown>): V2Search {
   const pick = (k: string, re: RegExp) => (typeof s[k] === "string" && re.test(s[k] as string) ? (s[k] as string) : undefined);
-  const out: V2Search = { from: pick("from", DATE), to: pick("to", DATE), brandId: pick("brandId", ID), websiteId: pick("websiteId", ID), socialId: pick("socialId", ID), metric: pick("metric", ID), userId: pick("userId", ID) };
+  const out: V2Search = { from: pick("from", DATE), to: pick("to", DATE), brandId: pick("brandId", ID), websiteId: pick("websiteId", ID), socialId: pick("socialId", ID), metric: pick("metric", ID), userId: pick("userId", ID),
+    group: GROUPS.includes(String(s.group)) ? String(s.group) : undefined };
   if (out.websiteId && out.socialId) out.socialId = undefined;
   return Object.fromEntries(Object.entries(out).filter(([, v]) => v)) as V2Search;
 }
