@@ -61,28 +61,36 @@ export interface KpiDataContext {
   tasks: Task[];
 }
 
-type HistoryLike = { at: string; toStatus?: string };
+type HistoryLike = { at: string; toStatus?: string; byId?: string; byName?: string };
 
 /**
- * Tìm lần transition tới `submitStatus` CUỐI CÙNG trước lần transition tới `approvedStatus` CUỐI CÙNG.
- * Trả null nếu history không chứa lần duyệt, hoặc không có lần gửi duyệt trước đó.
+ * Credit tối đa MỘT lần: lần approve thành công ĐẦU TIÊN.
+ * Ngày credit = lần gửi duyệt CUỐI trước lần approve đầu tiên đó; kèm người gửi (byId/byName) làm bằng chứng.
+ * Approve/re-submit sau đó KHÔNG chuyển credit sang kỳ khác.
  */
-function findCreditFromHistory(
+export function findCreditFromHistory(
   history: HistoryLike[] | undefined,
   submitStatus: string,
   approvedStatus: string,
-): { found: "none" | "approved_no_submit" | "ok"; submittedAt?: string } {
+): { found: "none" | "approved_no_submit" | "ok"; submittedAt?: string; byId?: string; byName?: string } {
   const h = (history ?? []).filter((e) => e && e.at && !Number.isNaN(timeOf(e.at)))
     .slice().sort((a, b) => timeOf(a.at) - timeOf(b.at));
-  let approvedIdx = -1;
-  for (let i = h.length - 1; i >= 0; i--) {
-    if (h[i].toStatus === approvedStatus) { approvedIdx = i; break; }
-  }
+  const approvedIdx = h.findIndex((e) => e.toStatus === approvedStatus);
   if (approvedIdx < 0) return { found: "none" };
   for (let i = approvedIdx - 1; i >= 0; i--) {
-    if (h[i].toStatus === submitStatus) return { found: "ok", submittedAt: h[i].at };
+    if (h[i].toStatus === submitStatus) return { found: "ok", submittedAt: h[i].at, byId: h[i].byId, byName: h[i].byName };
   }
   return { found: "approved_no_submit" };
+}
+
+/** Người nộp lịch sử: byId ưu tiên; byName chỉ khi employee có fullName (không trùng tên). Không fuzzy. */
+export function submitterMatches(ev: { byId?: string; byName?: string }, emp: KpiEmployee): "yes" | "no" | "unknown" {
+  if (ev.byId) return ev.byId === emp.id ? "yes" : "no";
+  if (ev.byName) {
+    if (!emp.fullName) return matchesEmployee(ev.byName, { id: emp.id, username: emp.username }) ? "yes" : "unknown";
+    return matchesEmployee(ev.byName, emp) ? "yes" : "no";
+  }
+  return "unknown";
 }
 
 function scopeOk(item: KpiItemInput, rec: { brandId?: string | null; websiteId?: string | null; socialId?: string | null }): boolean {
@@ -112,20 +120,23 @@ export function calcWebContentCompleted(
   for (const c of data.webContents) {
     if (c.status === "Đã hủy") continue;
     if (c.type === "Bài tối ưu lại") continue; // workflow tối ưu riêng, không phải sản lượng viết mới
-    if (!matchesEmployee(c.writer, employee)) continue;
     if (!scopeOk(item, { brandId: c.brandId, websiteId: c.websiteId })) continue;
-
+    const isWriter = matchesEmployee(c.writer, employee);
     const r = findCreditFromHistory(c.history, "Chờ duyệt bài", "Bài viết đã duyệt");
     let credited: string | null = null;
-    let basis: KpiEvidence["basis"] = "history";
+    const basis: KpiEvidence["basis"] = "history";
     if (r.found === "ok") {
+      const who = submitterMatches(r, employee);
+      if (who === "no") continue; // người khác nộp — không cộng cho writer hiện tại
+      if (who === "unknown") {
+        if (isWriter) warnings.push({ sourceType: "web_content", sourceId: c.id, title: c.title, code: "unverified_no_history",
+          message: "Không xác định được người gửi bản được duyệt — Chưa xác minh, không tính." });
+        continue;
+      }
       credited = toDateKey(r.submittedAt);
-    } else if (r.found === "none" && c.status === "Hoàn thành" && c.completedAt) {
-      credited = toDateKey(c.completedAt); // legacy fallback thận trọng
-      basis = "legacy_completedAt";
-    } else if (WEB_POST_APPROVAL.has(c.status)) {
+    } else if (isWriter && (WEB_POST_APPROVAL.has(c.status))) {
       warnings.push({ sourceType: "web_content", sourceId: c.id, title: c.title, code: "unverified_no_history",
-        message: "Bài đã qua bước duyệt nhưng không xác định được ngày gửi bản cuối — không tính." });
+        message: "Bài đã qua bước duyệt nhưng thiếu lịch sử gửi duyệt — Chưa xác minh, không tính." });
     }
     if (!credited || !isWithinPeriod(credited, period.periodStart, period.periodEnd)) continue;
     const revisions = c.draftRevisions ?? 0;
@@ -147,14 +158,15 @@ export function calcSocialPostCompleted(
   const warnings: KpiWarning[] = [];
   for (const p of data.socialPosts) {
     if (p.status === "Đã hủy") continue;
-    if (!matchesEmployee(p.writer, employee)) continue;
     if (!scopeOk(item, { brandId: p.brandId, socialId: p.channelId })) continue;
-
+    const isWriter = matchesEmployee(p.writer, employee);
     const r = findCreditFromHistory(p.history, "Chờ duyệt", "Đã duyệt");
-    if (r.found !== "ok") {
-      if (SOCIAL_POST_APPROVAL.has(p.status)) {
+    const who = r.found === "ok" ? submitterMatches(r, employee) : "unknown";
+    if (who === "no") continue;
+    if (r.found !== "ok" || who === "unknown") {
+      if (isWriter && SOCIAL_POST_APPROVAL.has(p.status)) {
         warnings.push({ sourceType: "social_post", sourceId: p.id, title: p.title, code: "unverified_no_history",
-          message: "Bài đã qua bước duyệt nhưng không có lịch sử gửi duyệt — không tính." });
+          message: "Không xác định được người/ngày gửi bản được duyệt — Chưa xác minh, không tính." });
       }
       continue;
     }
