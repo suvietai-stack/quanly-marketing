@@ -73,11 +73,17 @@ async function push(prev: KpiDb, next: KpiDb) {
   const delG = removed(prev.goals, next.goals); if (delG.length) ok(await db.from("goals").delete().in("id", delG));
 }
 
+let lastSave: Promise<void> = Promise.resolve();
+/** Chờ lần ghi gần nhất được cơ sở dữ liệu xác nhận; ném lỗi nếu ghi thất bại. */
+export const flushKpi = () => lastSave;
+
 export const cloudRepository: KpiRepository = {
   load: () => structuredClone(cache),
   save(next) {
     const prev = cache; cache = structuredClone(next);
-    queue = queue.then(() => push(prev, next)).then(
+    const p = queue.then(() => push(prev, next));
+    lastSave = p;
+    queue = p.then(
       () => listeners.forEach((f) => f()),
       async (e: Error) => { await hydrateKpi().catch(() => {}); listeners.forEach((f) => f(`Không lưu được: ${e.message}`)); },
     );
