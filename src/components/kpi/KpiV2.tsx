@@ -182,7 +182,7 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
             return (
               <div key={i} className="grid gap-2 md:grid-cols-6">
                 <select className={`${inp} md:col-span-2`} value={r.metricKey} onChange={(e) => setRow(i, { metricKey: e.target.value })}>
-                  {KPI_METRIC_LIST.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
+                  {KPI_METRIC_LIST.map((x) => <option key={x.key} value={x.key} disabled={!!x.notReady} title={x.notReady}>{x.label}{x.notReady ? " (chưa sẵn sàng)" : ""}</option>)}
                 </select>
                 <input type="number" min={1} className={inp} value={r.targetValue} onChange={(e) => setRow(i, { targetValue: Number(e.target.value) })} />
                 <select className={inp} value={r.brandId ?? ""} onChange={(e) => setRow(i, { brandId: e.target.value || null, websiteId: null, socialId: null })}>
