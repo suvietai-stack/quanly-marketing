@@ -36,11 +36,12 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
   const ov = buildOverview({
     users, goals: db.goals.filter((g) => g.periodStart <= pe && g.periodEnd >= ps), periods, items: db.items, adjustments: db.adjustments,
     data: { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders },
-    filters: { brandId: brandId || undefined, websiteId, socialId, metricKey: metric || undefined, userId: userCtx }, today: todayVN(),
+    filters: { brandId: brandId || undefined, websiteId, socialId, metricKey: metric || undefined, userId: userCtx, group: group || undefined }, today: todayVN(),
   });
   const bname = (id: string | null) => store.brands.find((b) => b.id === id)?.name ?? "—";
   const aname = (w: string | null, s: string | null) => (w ? `Web: ${store.websites.find((x) => x.id === w)?.name ?? w}` : s ? `Page: ${store.socials.find((x) => x.id === s)?.name ?? s}` : "—");
-  const repSearch = (userId: string, metricKey?: string) => ({ from: ps, to: pe, brandId: brandId || undefined, websiteId, socialId, metric: metricKey, userId });
+  const repSearch = (userId?: string, metricKey?: string, asset?: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
+    ({ from: ps, to: pe, brandId: asset?.brandId ?? brandId ?? undefined || undefined, websiteId: asset ? asset.websiteId ?? undefined : websiteId, socialId: asset ? asset.socialId ?? undefined : socialId, metric: metricKey, userId, group: group || undefined });
 
   if (!periodKeys.length) return <p className="text-sm text-muted-foreground">Chưa có kỳ KPI nào.</p>;
 
