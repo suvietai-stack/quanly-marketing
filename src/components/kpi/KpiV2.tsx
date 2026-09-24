@@ -69,3 +69,263 @@ function quarterRange(d = new Date()) {
   return [f(s), f(e)] as const;
 }
 
+/* ---------------- Tiện ích kỳ ---------------- */
+function monthOptions() {
+  const out: { key: string; label: string }[] = [];
+  const d = new Date();
+  for (let k = -3; k <= 3; k++) {
+    const x = new Date(d.getFullYear(), d.getMonth() + k, 1);
+    const [a, b] = monthRange(x);
+    out.push({ key: `${a}|${b}`, label: `Tháng ${x.getMonth() + 1}/${x.getFullYear()}` });
+  }
+  return out.reverse();
+}
+const GOAL_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang thực hiện", closed: "Đã đóng", cancelled: "Đã hủy" };
+const PERIOD_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang áp dụng", locked: "Đã khóa", closed: "Đã đóng" };
+const NEXT_LABEL: Record<string, string> = { active: "Áp dụng", locked: "Khóa kỳ", closed: "Đóng kỳ" };
+
+/* ---------------- Mục tiêu (gọn) ---------------- */
+export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string; isAdmin: boolean }; periodKey?: string; brandFilter?: string }) {
+  const { db, refresh } = useKpiDb();
+  const brands = useStore((s) => s.brands);
+  const websites = useStore((s) => s.websites);
+  const socials = useStore((s) => s.socials);
+  const [m0, m1] = monthRange();
+  const [ps, pe] = (periodKey ?? `${m0}|${m1}`).split("|");
+  const [f, setF] = useState({ title: "", brandId: "", channel: "" });
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  if (!db) return null;
+  const goals = db.goals.filter((g) => (!periodKey || (g.periodStart <= pe && g.periodEnd >= ps)) && (!brandFilter || g.brandId === brandFilter));
+  const linked = (gid: string) => db.items.filter((i) => (i.metadata as { goalId?: string }).goalId === gid || db.periods.find((p) => p.id === i.kpiPeriodId)?.goalId === gid).length;
+  const chName = (g: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
+    g.websiteId ? websites.find((w) => w.id === g.websiteId)?.name : g.socialId ? socials.find((s) => s.id === g.socialId)?.name : brands.find((b) => b.id === g.brandId)?.name ?? "—";
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Mục tiêu là thông tin quản trị bổ sung — không bắt buộc khi giao KPI. Mục tiêu không tự tính là hoàn thành nếu thiếu dữ liệu xác minh.</p>
+      {actor.isAdmin && (
+        <div className="grid gap-2 rounded-xl border border-border bg-card p-4 md:grid-cols-[2fr_1fr_1fr_auto]">
+          <input className={inp} placeholder="VD: Phát triển hệ thống Content Website Xưởng Gốm" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} />
+          <select className={inp} value={f.brandId} onChange={(e) => setF({ ...f, brandId: e.target.value, channel: "" })}>
+            <option value="">Thương hiệu (tùy chọn)</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+          <select className={inp} value={f.channel} disabled={!f.brandId} onChange={(e) => setF({ ...f, channel: e.target.value })}>
+            <option value="">Kênh (tùy chọn)</option>
+            {websites.filter((w) => w.brandId === f.brandId).map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
+            {socials.filter((s) => s.brandId === f.brandId).map((s) => <option key={s.id} value={`s:${s.id}`}>Page: {s.name}</option>)}
+          </select>
+          <button className={btn} disabled={!f.title.trim()} onClick={() => {
+            const [t, id] = f.channel.split(":");
+            run(() => svc.saveGoal(actor, { title: f.title, periodStart: ps, periodEnd: pe, status: "active", brandId: f.brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null }),
+              "Đã lưu mục tiêu", refresh).then((ok) => ok && setF({ title: "", brandId: "", channel: "" }));
+          }}>+ Tạo mục tiêu</button>
+        </div>
+      )}
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full min-w-[560px] text-sm">
+          <thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2.5 font-medium">Mục tiêu</th><th className="font-medium">Phạm vi</th><th className="font-medium">KPI liên kết</th><th className="font-medium">Trạng thái</th><th /></tr></thead>
+          <tbody>
+            {goals.map((g) => (
+              <tr key={g.id} className="border-t border-border">
+                <td className="px-4 py-2.5">
+                  {editing === g.id
+                    ? <input autoFocus className={`${inp} w-full`} value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+                        onBlur={() => { setEditing(null); if (editTitle.trim() && editTitle !== g.title) run(() => svc.saveGoal(actor, { ...g, title: editTitle }), "Đã cập nhật mục tiêu", refresh); }} />
+                    : <div className="font-medium">{g.title}</div>}
+                  <div className="text-xs text-muted-foreground">{g.periodStart.split("-").reverse().join("/")} → {g.periodEnd.split("-").reverse().join("/")}</div>
+                </td>
+                <td>{chName(g)}</td>
+                <td>{linked(g.id)}</td>
+                <td>{actor.isAdmin
+                  ? <select className={`${inp} h-8`} value={g.status} onChange={(e) => run(() => svc.saveGoal(actor, { ...g, status: e.target.value as GoalStatus }), "Đã cập nhật trạng thái", refresh)}>
+                      {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  : GOAL_STATUS[g.status] ?? g.status}</td>
+                <td className="pr-3 text-right">{actor.isAdmin && editing !== g.id && <button className={btn2} onClick={() => { setEditing(g.id); setEditTitle(g.title); }}>Sửa</button>}</td>
+              </tr>
+            ))}
+            {!goals.length && <tr><td colSpan={5} className="py-6 text-center text-muted-foreground">Chưa có mục tiêu trong kỳ này.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Giao KPI ---------------- */
+function useActual() {
+  const s = useStore();
+  const users = useAuth((x) => x.users);
+  return (userId: string, it: EmployeeKpiItem, periodStart: string, periodEnd: string): { value: number | null; warnings: number } => {
+    const u = users.find((x) => x.id === userId);
+    const emp = { id: userId, fullName: u?.fullName, username: u?.username };
+    const period = { periodStart, periodEnd };
+    const item = { metricKey: it.metricKey, targetValue: it.targetValue, brandId: it.brandId, websiteId: it.websiteId, socialId: it.socialId };
+    if (["web_content_completed", "social_post_completed", "task_completed"].includes(it.metricKey)) {
+      const r = calculateKpiItem(emp, item, period, { webContents: s.webContents, socialPosts: s.socialPosts, tasks: s.tasks });
+      return { value: r.evidence.length === 0 && r.warnings.length ? null : r.actualValue, warnings: r.warnings.length };
+    }
+    const r = calculateVideoDesignItem(emp, item, period, { videos: s.videos, designOrders: s.orders, socialPosts: s.socialPosts });
+    return { value: r.actualValue, warnings: r.warnings.length };
+  };
+}
+
+export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean } }) {
+  const [tab, setTab] = useState<"kpi" | "goals">("kpi");
+  const months = useMemo(monthOptions, []);
+  const [m0, m1] = monthRange();
+  const [pk, setPk] = useState(`${m0}|${m1}`);
+  const [brandF, setBrandF] = useState("");
+  const brands = useStore((s) => s.brands);
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {actor.isAdmin && (
+          <div className="inline-flex rounded-lg bg-muted p-1 text-sm">
+            {(["kpi", "goals"] as const).map((t) => (
+              <button key={t} onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 ${tab === t ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{t === "kpi" ? "Giao KPI" : "Mục tiêu"}</button>
+            ))}
+          </div>
+        )}
+        <select className={inp} value={pk} onChange={(e) => setPk(e.target.value)}>{months.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}</select>
+        <select className={inp} value={brandF} onChange={(e) => setBrandF(e.target.value)}>
+          <option value="">Tất cả thương hiệu</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+      </div>
+      {tab === "kpi" ? <KpiList actor={actor} periodKey={pk} brandFilter={brandF} /> : <GoalsV2 actor={actor} periodKey={pk} brandFilter={brandF} />}
+    </div>
+  );
+}
+
+function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdmin: boolean }; periodKey: string; brandFilter: string }) {
+  const { db, refresh } = useKpiDb();
+  const users = useAuth((s) => s.users);
+  const roles = useAuth((s) => s.roles);
+  const brands = useStore((s) => s.brands);
+  const websites = useStore((s) => s.websites);
+  const socials = useStore((s) => s.socials);
+  const actual = useActual();
+  const [formOpen, setFormOpen] = useState(false);
+  const empty = { userId: "", brandId: "", channel: "", metricKey: KPI_METRIC_LIST[0].key, target: 10, goalId: "" };
+  const [f, setF] = useState(empty);
+  const [saving, setSaving] = useState(false);
+  const view = useMemo(() => (db ? svc.listForActor(actor) : null), [db, actor]);
+  if (!db || !view) return null;
+  const [ps, pe] = periodKey.split("|");
+  const periods = view.periods.filter((p) => p.periodStart === ps && p.periodEnd === pe);
+  const pmap = new Map(periods.map((p) => [p.id, p]));
+  const rows = view.items.filter((i) => pmap.has(i.kpiPeriodId) && (!brandFilter || i.brandId === brandFilter))
+    .map((it) => ({ it, p: pmap.get(it.kpiPeriodId)! }))
+    .sort((a, b) => (users.find((u) => u.id === a.p.userId)?.fullName ?? "").localeCompare(users.find((u) => u.id === b.p.userId)?.fullName ?? ""));
+  const nested = new Set<string>();
+  for (const p of periods) for (const id of findNestedItems(view.items.filter((i) => i.kpiPeriodId === p.id), pmap)) nested.add(id);
+  const m = getKpiMetric(f.metricKey);
+  const chOpts = [
+    ...(m?.scopes.includes("website") ? websites.filter((w) => w.brandId === f.brandId).map((w) => ({ v: `w:${w.id}`, l: `Web: ${w.name}` })) : []),
+    ...(m?.scopes.includes("social") ? socials.filter((s) => s.brandId === f.brandId).map((s) => ({ v: `s:${s.id}`, l: `Page: ${s.name}` })) : []),
+  ];
+  const chName = (it: EmployeeKpiItem) => it.websiteId ? websites.find((w) => w.id === it.websiteId)?.name ?? "Website" : it.socialId ? socials.find((s) => s.id === it.socialId)?.name ?? "Page" : it.brandId ? `${brands.find((b) => b.id === it.brandId)?.name ?? "?"} (toàn thương hiệu)` : "Tất cả thương hiệu";
+  const selUser = users.find((u) => u.id === f.userId);
+  const template = ROLE_KPI_TEMPLATES[roles.find((r) => r.id === selUser?.roleId)?.name ?? ""];
+  const goals = db.goals.filter((g) => g.periodStart <= pe && g.periodEnd >= ps);
+
+  const submit = async () => {
+    const [t, id] = f.channel.split(":");
+    setSaving(true);
+    const ok = await run(() => svc.assign(actor, { userId: f.userId, periodType: "month", periodStart: ps, periodEnd: pe, goalId: f.goalId || null,
+      items: [{ metricKey: f.metricKey, targetValue: f.target, brandId: f.brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null }] }), "Đã giao KPI", refresh);
+    setSaving(false);
+    if (ok) setF({ ...empty, userId: f.userId, brandId: f.brandId });
+  };
+
+  return (
+    <div className="space-y-4">
+      {actor.isAdmin && (
+        <div className="rounded-xl border border-border bg-card">
+          <button onClick={() => setFormOpen(!formOpen)} className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium">
+            <span className="text-primary">+ Giao KPI</span><span className="text-xs text-muted-foreground">{formOpen ? "Thu gọn" : "Mở biểu mẫu"}</span>
+          </button>
+          {formOpen && (
+            <div className="space-y-3 border-t border-border p-4">
+              <div className="grid gap-2 md:grid-cols-5">
+                <label className="space-y-1 text-xs text-muted-foreground">1. Nhân sự
+                  <select className={`${inp} w-full`} value={f.userId} onChange={(e) => setF({ ...f, userId: e.target.value })}>
+                    <option value="">— Chọn —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}
+                  </select></label>
+                <label className="space-y-1 text-xs text-muted-foreground">2. Thương hiệu
+                  <select className={`${inp} w-full`} value={f.brandId} onChange={(e) => setF({ ...f, brandId: e.target.value, channel: "" })}>
+                    <option value="">Tất cả</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select></label>
+                <label className="space-y-1 text-xs text-muted-foreground">4. Loại công việc
+                  <select className={`${inp} w-full`} value={f.metricKey} onChange={(e) => setF({ ...f, metricKey: e.target.value, channel: "" })}>
+                    {KPI_METRIC_LIST.map((x) => <option key={x.key} value={x.key} disabled={!!x.notReady} title={x.notReady}>{x.label}{x.notReady ? " (chưa khả dụng)" : ""}</option>)}
+                  </select></label>
+                {f.brandId && chOpts.length > 0 ? (
+                  <label className="space-y-1 text-xs text-muted-foreground">3. Website / Page
+                    <select className={`${inp} w-full`} value={f.channel} onChange={(e) => setF({ ...f, channel: e.target.value })}>
+                      <option value="">Toàn thương hiệu</option>{chOpts.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                    </select></label>
+                ) : <div className="hidden md:block" />}
+                <label className="space-y-1 text-xs text-muted-foreground">5. Số lượng ({m?.unit === "point" ? "điểm" : "sản phẩm"})
+                  <input type="number" min={1} className={`${inp} w-full`} value={f.target} onChange={(e) => setF({ ...f, target: Number(e.target.value) })} /></label>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select className={inp} value={f.goalId} onChange={(e) => setF({ ...f, goalId: e.target.value })}>
+                  <option value="">Mục tiêu: không gắn (tùy chọn)</option>{goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+                </select>
+                {template && <button className={btn2} disabled={saving} onClick={async () => {
+                  setSaving(true);
+                  await run(() => svc.assign(actor, { userId: f.userId, periodType: "month", periodStart: ps, periodEnd: pe, goalId: f.goalId || null, items: template }), `Đã giao ${template.length} KPI gợi ý`, refresh);
+                  setSaving(false);
+                }}>Giao nhanh theo vai trò</button>}
+                <button className={`${btn} ml-auto`} disabled={saving || !f.userId || !(f.target > 0)} onClick={submit}>{saving ? "Đang lưu…" : "Giao KPI"}</button>
+              </div>
+              <p className="text-xs text-muted-foreground">Kỳ KPI lấy theo bộ lọc tháng phía trên. Một người có thể nhận nhiều KPI; hệ thống chặn KPI trùng cùng loại và cùng phạm vi.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full min-w-[680px] text-sm">
+          <thead className="border-b border-border text-left text-xs text-muted-foreground">
+            <tr><th className="px-4 py-2.5 font-medium">Nhân sự</th><th className="font-medium">Kênh</th><th className="font-medium">KPI</th><th className="font-medium">Chỉ tiêu</th><th className="font-medium">Kết quả</th><th className="font-medium">Kỳ</th><th /></tr>
+          </thead>
+          <tbody>
+            {rows.map(({ it, p }) => {
+              const u = users.find((x) => x.id === p.userId);
+              const locked = p.status === "locked" || p.status === "closed";
+              const a = actual(p.userId, it, p.periodStart, p.periodEnd);
+              const next = ({ draft: "active", active: "locked", locked: "closed" } as const)[p.status as "draft"];
+              const first = rows.find((r) => r.p.id === p.id)?.it.id === it.id;
+              return (
+                <tr key={it.id} className="border-t border-border">
+                  <td className="px-4 py-2.5 font-medium">{u?.fullName || u?.username || "—"}</td>
+                  <td>{chName(it)}</td>
+                  <td>{getKpiMetric(it.metricKey)?.label ?? it.metricKey}{nested.has(it.id) && <div className="text-[11px] text-warning-foreground">Nằm trong KPI rộng hơn — không cộng trùng</div>}</td>
+                  <td>{actor.isAdmin && !locked
+                    ? <input type="number" min={1} className={`${inp} h-8 w-20`} defaultValue={it.targetValue} key={`${it.id}${it.targetValue}`}
+                        onBlur={(e) => { const v = Number(e.target.value); if (v !== it.targetValue) run(() => svc.updateTarget(actor, it.id, v), "Đã cập nhật chỉ tiêu", refresh); }} />
+                    : it.targetValue}</td>
+                  <td className="tabular-nums">{a.value === null ? <span className="text-muted-foreground">Chưa đủ dữ liệu</span> : <b>{a.value}/{it.targetValue}</b>}</td>
+                  <td className="text-xs">
+                    <span className={`rounded px-1.5 py-0.5 ${locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{PERIOD_STATUS[p.status] ?? p.status}</span>
+                    {actor.isAdmin && first && next && <button className="ml-2 text-primary hover:underline" onClick={() => {
+                      if (next === "locked" && !confirm(`Khóa kỳ KPI của ${u?.fullName}? Sau khi khóa không thể sửa chỉ tiêu.`)) return;
+                      run(() => svc.setStatus(actor, p.id, next), `Đã chuyển: ${PERIOD_STATUS[next]}`, refresh);
+                    }}>{NEXT_LABEL[next]}</button>}
+                  </td>
+                  <td className="pr-3 text-right">{actor.isAdmin && !locked && <button className={btn2} onClick={() => confirm("Xóa KPI này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa KPI", refresh)}>Xóa</button>}</td>
+                </tr>
+              );
+            })}
+            {!rows.length && <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">{actor.isAdmin ? "Chưa có KPI trong kỳ này. Nhấn “+ Giao KPI” để bắt đầu." : "Bạn chưa được giao KPI trong kỳ này."}</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground">Hôm nay: {today().split("-").reverse().join("/")} · Kết quả tự động cập nhật khi công việc được duyệt trong các module.</p>
+    </div>
+  );
+}
