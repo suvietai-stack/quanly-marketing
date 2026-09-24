@@ -74,11 +74,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
             <tbody>{ov.metrics.map((m) => (
               <tr key={m.metricKey} className="border-t border-border">
                 <td className="px-3 py-2"><span className={chip} onClick={() => setDrill({ title: m.label, metric: m })}>{m.label}</span> <span className="text-xs text-muted-foreground">({m.unit})</span></td>
-                <td>{m.actual} / {m.target}{m.unverifiedAssignments > 0 && <span className="ml-1 text-xs text-muted-foreground">· {m.unverifiedAssignments} phần chưa đủ dữ liệu</span>}</td>
-                <td>{m.pct === null ? "N/A" : `${m.pct}%`}</td>
+                <td>{m.target > 0 ? <>{m.actual} / {m.target}</> : <span title="KPI toàn cục chưa phân bổ cho phạm vi đang lọc">{m.contributionActual} / N/A (đóng góp)</span>}
+                  {m.unverifiedAssignments > 0 && <span className="ml-1 text-xs text-muted-foreground">· {m.unverifiedAssignments} phần chưa đủ dữ liệu</span>}
+                  {m.target > 0 && m.contributionItems > 0 && <span className="ml-1 text-xs text-muted-foreground">· +{m.contributionActual} đóng góp từ KPI toàn cục</span>}</td>
+                <td>{m.target === 0 ? "N/A" : m.pct === null ? "N/A" : `${m.pct}%`}</td>
                 <td><span className={chip} onClick={() => setDrill({ title: `Sản phẩm — ${m.label}`, rows: m.evidence })}>{m.uniqueAssets}</span></td>
                 <td className="text-xs">{m.contributions.map((c) => (
-                  <Link key={c.itemId} to="/reports-v2" search={repSearch(c.userId, m.metricKey)} className="mr-2 text-primary hover:underline">{c.userName} {c.actual ?? "N/A"}/{c.target}</Link>
+                  <Link key={c.itemId} to="/reports-v2" search={repSearch(c.userId, m.metricKey)} className="mr-2 text-primary hover:underline">{c.userName} {c.actual ?? "N/A"}/{c.contributionOnly ? "N/A" : c.target}</Link>
                 ))}</td>
                 <td className="text-xs">{m.unallocatedTarget > 0 ? `${m.unallocatedTarget} chưa phân bổ xuống Web/Page` : "—"}</td>
               </tr>
