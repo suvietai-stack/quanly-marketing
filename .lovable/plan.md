@@ -1,61 +1,66 @@
-## Plan: Nâng cấp module Task To-do List với workflow + phân quyền
+# Nâng cấp Mục tiêu – KR – KPI – Dashboard – Báo cáo
 
-### 1. Mở rộng data model (`src/lib/store.ts`)
+Mở rộng KPI V2 đang có. Không xây lại, không tạo engine KPI thứ hai, không đổi workflow cũ, không tạo bảng mới trong đợt này.
 
-Mở rộng `Task` interface:
-- **Status mới**: `"Mới tạo" | "Đã giao" | "Đang làm" | "Chờ xác nhận" | "Cần sửa" | "Hoàn thành" | "Đã hủy"` (thay cho `"Chưa làm" | "Đang làm" | "Hoàn thành"`)
-- **Fields mới**: `description`, `module`, `relatedLink`, `approver`, `relatedPeople[]`, `inputLink`, `resultLink`, `handoverLink`, `processNote`, `revisionNote`, `revisions`, `createdAt`, `acceptedAt`, `submittedAt`, `completedAt`, `cancelledAt`, `history[]` (mỗi entry: `{ by, action, fromStatus, toStatus, time, note }`)
-- Thêm hàm `normalizeTaskStatus()` để map status cũ → mới (Chưa làm→Mới tạo, Đang làm→Đang làm, Hoàn thành→Hoàn thành)
-- Helper `appendTaskHistory(task, entry)`
+## Giai đoạn 1 – Đối chiếu nguồn dữ liệu (đã khảo sát)
 
-### 2. Bổ sung permissions (`src/lib/auth.ts`)
+| Nhóm | Chỉ số KR | Nguồn trong Base | Trạng thái |
+|---|---|---|---|
+| Content Web | Bài được duyệt | Content Web + lịch sử gửi/duyệt | Đã liên kết |
+| Content Web | Bài hoàn thành tối ưu | Bài tối ưu (lịch sử) | Đã liên kết |
+| Content Web | Sản phẩm đăng/cập nhật, trang cập nhật | Không có module riêng | Chưa tích hợp (dùng KR tùy chỉnh qua Task) |
+| SEO | Từ khóa Top 3/5/10, thứ hạng từ khóa cụ thể | Check Top (thứ hạng hiện tại) | Đã liên kết (chỉ thứ hạng mới nhất, chưa có lịch sử từng ngày) |
+| SEO | Organic clicks/traffic + tăng trưởng | Số liệu tăng trưởng nhập tay theo kỳ | Cần cấu hình (nhập tay, chưa nối Search Console) |
+| SEO | Bộ nghiên cứu từ khóa, audit, onpage | Task | Qua KR tùy chỉnh |
+| Social | Bài được duyệt / đã đăng | Social | Đã liên kết |
+| Social | Tiếp cận, tương tác, follower, lượt xem | Số liệu tăng trưởng kênh nhập tay | Cần cấu hình |
+| Video | Kịch bản duyệt, dựng xong, đã đăng | Video | Đã liên kết |
+| Video | Quay xong | Chưa ghi nhận người quay | Chưa tích hợp |
+| Thiết kế | Order hoàn thành / nghiệm thu | Order | Đã liên kết |
+| Thiết kế | Điểm thiết kế | Chưa lưu điểm duyệt | Chưa tích hợp |
+| Local SEO | Bài Google Business đã đăng | Bài đăng Map | Đã liên kết |
+| Local SEO | Tương tác hồ sơ, cuộc gọi | Không có | Chưa tích hợp |
+| Hiệu suất | Task hoàn thành, đúng hạn, duyệt lần đầu, phải sửa, quá hạn, thời gian xử lý | Task + lịch sử | Đã liên kết (không tính thời gian chờ người duyệt) |
+| Marketing | Leads | Số liệu tăng trưởng web (nhập tay) | Cần cấu hình |
+| Marketing | Chuyển đổi, CPL | Không có | Chưa tích hợp |
 
-Thêm nhóm `Task To-do List` với các permission key (giữ namespace `task.*` đã có, bổ sung mới):
-- View: `task.view`, `task.view_all`, `task.view_mine`, `task.view_created_by_me`
-- Data: `task.create`, `task.edit`, `task.delete`, `task.assign`, `task.edit_assignee`, `task.edit_deadline`, `task.edit_priority`
-- Workflow: `task.start`, `task.update_result`, `task.submit_completion`, `task.resubmit_completion`, `task.approve_completion`, `task.request_revision`, `task.cancel`, `task.restore`, `task.reopen_completed`, `task.force_change_status`
-- History: `task.view_history`, `task.add_note`
+## Giai đoạn 2 – Cấu trúc liên kết (không đổi cơ sở dữ liệu)
 
-Cập nhật default permissions cho 8 role theo bảng spec (Super Admin/Admin full, Leader/SEO/Content Web/Social/Local SEO/Designer/Video theo spec, Viewer chỉ view nếu được cấp).
+```text
+Mục tiêu (bảng goals có sẵn)
+  └─ KR = chỉ tiêu KPI có sẵn, gắn goalId
+       ├─ chỉ số thư viện → tính từ module nguồn (engine hiện tại)
+       └─ KR tùy chỉnh → liên kết Task đã chọn (lưu mã Task trong KR)
+```
 
-### 3. UI Workflow trên trang Tasks (`src/routes/tasks.tsx` + form mới)
+- Thư viện KR: mở rộng danh sách chỉ số hiện có với mã, nhóm, đơn vị, nguồn, quy tắc, hướng mục tiêu (ít nhất / không vượt quá / đạt ngưỡng / tăng so với kỳ gốc), trạng thái khả dụng.
+- Chỉ số "Chưa tích hợp" hiện trong thư viện nhưng không giao được (như đang làm với "Quay video").
+- KR thứ hạng SEO lưu mã từ khóa; đạt khi thứ hạng hiện tại ≤ ngưỡng; "Top 3 ≠ đã hoàn thành" nếu kỳ chưa kết thúc.
+- KR tùy chỉnh: người quản lý chọn Task có sẵn hoặc tạo Task mới qua luồng tạo Task hiện tại; kết quả = số Task liên kết đã "Hoàn thành" (có bằng chứng), không tự hiểu 1 Task = toàn bộ chỉ tiêu.
+- Mọi liên kết bằng mã, không đoán theo tên.
 
-- Mở rộng `TaskForm`: thêm fields mô tả, approver, module, link tài liệu (input/result/handover), ghi chú; ẩn/disable theo `can()`.
-- Thay cột "Hành động" trong table: hiển thị nút workflow tương ứng status hiện tại (Giao / Bắt đầu làm / Gửi hoàn thành / Xác nhận / Yêu cầu sửa / Gửi lại / Hủy / Khôi phục / Mở lại / Ép trạng thái).
-- Mỗi action gọi handler chung `transitionTask(task, action)`:
-  - Check permission, nếu thiếu → `toast.error("Bạn không có quyền thực hiện hành động này.")` và return.
-  - "Yêu cầu sửa" mở modal nhập ghi chú bắt buộc → tăng `revisions`.
-  - Update status, timestamps, push history entry.
-- Kanban: 7 cột theo status mới.
-- Tab nhanh: ẩn "Tất cả task" nếu thiếu `task.view_all`. "Việc của tôi" gồm assignee/approver/relatedPeople. "Việc tôi giao" gồm reporter/createdBy.
-- Hằng số `STATUSES` + màu `StatusBadge` thêm các status mới.
+## Giai đoạn 3–4 – Giao diện
 
-### 4. Chi tiết task + lịch sử
+- **Trang Mục tiêu** (thay thế trang Giao KPI hiện tại, vẫn ở menu KPI): danh sách Mục tiêu → mở ra thấy các KR, tiến độ, người phụ trách, deadline, trạng thái nguồn; nút "Thêm KR" mở thư viện có tìm kiếm + phân nhóm hoặc "KR tùy chỉnh".
+- **Dashboard**: thẻ Mục tiêu/KR của tôi (nhân viên) và tổng hợp toàn phòng (quản lý), dùng cùng số liệu với Báo cáo.
+- **Báo cáo**: thêm nhóm theo Mục tiêu/KR; mỗi số liệu bấm được xuống dữ liệu gốc.
+- Hiện rõ nhãn Đã liên kết / Cần cấu hình / Chưa tích hợp; không tạo số liệu giả. Tối ưu cho điện thoại.
 
-- Thêm modal "Chi tiết Task" với tabs: **Thông tin / Tài liệu / Lịch sử xử lý** (chỉ hiện history nếu có `task.view_history`).
-- Lịch sử render dạng timeline từ `task.history[]`.
+## Giai đoạn 5 – Kiểm thử
 
-### 5. Liên kết Tổng Quan (`src/routes/index.tsx`)
+- Bổ sung test: KR từ khóa Top 3, KR tùy chỉnh qua Task, hiệu suất đúng hạn không tính thời gian chờ duyệt, KR chưa tích hợp không giao được; chạy lại 14 test cũ + kiểm tra kiểu.
+- Đăng nhập thử Super Admin và nhân viên trên bản xem trước, cả máy tính và điện thoại.
 
-Thêm 5 nhóm cá nhân dựa trên task:
-- Cần tôi xử lý (assignee, status ∈ Đã giao/Đang làm/Cần sửa)
-- Cần duyệt (approver, status = Chờ xác nhận)
-- Chờ người khác (reporter/createdBy, status ≠ Hoàn thành/Đã hủy, assignee ≠ me)
-- Quá hạn (liên quan tôi, overdue)
-- Hoàn thành gần đây (7 ngày)
+## Cần bạn phê duyệt riêng (sẽ dừng, không tự làm)
 
-### 6. Áp dụng quyền cho action lưu dữ liệu
+- Lưu lịch sử thứ hạng từ khóa theo ngày (để tính "tăng/giảm so với kỳ gốc" chính xác).
+- Kết nối Search Console / Analytics tự động.
+- Ghi nhận người quay video và điểm thiết kế đã duyệt.
 
-Bọc `add/update/remove` cho tasks bằng wrapper `guardedTaskMutation` kiểm tra perm trước; toast khi reject.
+## Chi tiết kỹ thuật
 
-### Files dự kiến chỉnh
-- `src/lib/store.ts` — Task interface, status, normalize, history helper
-- `src/lib/auth.ts` — permissions + default role mapping
-- `src/components/StatusBadge.tsx` — màu cho status mới
-- `src/routes/tasks.tsx` — form, workflow buttons, tabs, kanban
-- `src/components/TaskDetail.tsx` (mới) — chi tiết + lịch sử
-- `src/routes/index.tsx` — bổ sung khối task cá nhân
-
-Không tạo migration mới (task data đã ở `tasks.data jsonb`, mở rộng field tự nhiên). Status cũ trong DB được normalize ở runtime.
-
-Bạn duyệt plan này để mình bắt tay vào code nhé?
+- Thư viện: mở rộng `src/lib/kpi/metrics.ts` + `types.ts` (thêm `direction`, `availability`, `source`, `rule`).
+- Engine: thêm bộ tính SEO rank, task-linked, task-performance vào `calculateKpi.ts`; dùng chung cho Dashboard/Báo cáo.
+- KR tùy chỉnh và từ khóa lưu trong `employee_kpi_items.metadata` (`taskIds`, `keywordId`, `threshold`, `customTitle`) — không cần migration; RLS và trigger khóa kỳ giữ nguyên.
+- UI: `KpiV2.tsx` (trang Mục tiêu/KR), `PersonalKpi.tsx`, `PlanProgress.tsx`, `ReportV2.tsx`.
+- Không Publish.
