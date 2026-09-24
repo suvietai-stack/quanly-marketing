@@ -45,9 +45,8 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "KPI",
     items: [
-      { to: "/overview-v2", label: "Tổng quan", icon: Globe, kpi: true },
-      { to: "/settings/kpi-v2", label: "Giao chỉ tiêu", icon: Target, kpi: true },
-      { to: "/reports-v2", label: "Báo cáo nhân sự", icon: FileText, kpi: true },
+      { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true },
+      { to: "/reports-v2", label: "Báo cáo", icon: FileText, kpi: true },
     ],
   },
   {
