@@ -208,7 +208,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
   const socials = useStore((s) => s.socials);
   const actual = useActual();
   const [formOpen, setFormOpen] = useState(false);
-  const empty = { userId: "", brandId: "", channel: "", metricKey: KPI_METRIC_LIST[0].key, target: 10, goalId: "" };
+  const empty = { userId: "", brandId: "", channel: "", metricKey: KPI_METRIC_LIST[0].key as string, target: 10, goalId: "" };
   const [f, setF] = useState(empty);
   const [saving, setSaving] = useState(false);
   const view = useMemo(() => (db ? svc.listForActor(actor) : null), [db, actor]);
@@ -298,7 +298,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
               const u = users.find((x) => x.id === p.userId);
               const locked = p.status === "locked" || p.status === "closed";
               const a = actual(p.userId, it, p.periodStart, p.periodEnd);
-              const next = ({ draft: "active", active: "locked", locked: "closed" } as const)[p.status as "draft"];
+              const next = ({ draft: "active", active: "locked", locked: "closed" } as Record<string, "active" | "locked" | "closed">)[p.status];
               const first = rows.find((r) => r.p.id === p.id)?.it.id === it.id;
               return (
                 <tr key={it.id} className="border-t border-border">
