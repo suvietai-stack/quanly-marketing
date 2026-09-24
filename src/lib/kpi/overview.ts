@@ -39,7 +39,7 @@ export function buildOverview(args: {
   data: ReportData; filters: OverviewFilters; today: string;
 }): Overview {
   const f = args.filters;
-  const scope = { brandId: f.brandId, websiteId: f.websiteId, socialId: f.socialId };
+  const scope = { brandId: f.brandId, websiteId: f.websiteId, socialId: f.socialId, group: (f.group || undefined) as ReportData extends never ? never : Parameters<typeof buildEmployeeReport>[0]["filters"]["group"] };
   const periods = args.periods.filter((p) => !f.userId || p.userId === f.userId);
   const byMetric = new Map<string, MetricRow>();
   const work: WorkRow[] = [];
