@@ -18,6 +18,7 @@ import { Route as PendingRouteImport } from './routes/pending'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GoalsV2RouteImport } from './routes/goals-v2'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
@@ -25,6 +26,7 @@ import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
+import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 
@@ -73,6 +75,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GoalsV2Route = GoalsV2RouteImport.update({
+  id: '/goals-v2',
+  path: '/goals-v2',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -108,6 +115,11 @@ const SocialIdRoute = SocialIdRouteImport.update({
   path: '/social/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
+  id: '/settings_/kpi-v2',
+  path: '/settings/kpi-v2',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LocalIdRoute = LocalIdRouteImport.update({
   id: '/local/$id',
   path: '/local/$id',
@@ -121,6 +133,7 @@ const BrandsIdRoute = BrandsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/goals-v2': typeof GoalsV2Route
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -132,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
+  '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
   '/brands/': typeof BrandsIndexRoute
@@ -141,6 +155,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/goals-v2': typeof GoalsV2Route
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -152,6 +167,7 @@ export interface FileRoutesByTo {
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
+  '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
   '/brands': typeof BrandsIndexRoute
@@ -162,6 +178,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/goals-v2': typeof GoalsV2Route
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -173,6 +190,7 @@ export interface FileRoutesById {
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
+  '/settings_/kpi-v2': typeof SettingsKpiV2Route
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
   '/brands/': typeof BrandsIndexRoute
@@ -184,6 +202,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/goals-v2'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -195,6 +214,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/brands/$id'
     | '/local/$id'
+    | '/settings/kpi-v2'
     | '/social/$id'
     | '/websites/$id'
     | '/brands/'
@@ -204,6 +224,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/goals-v2'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -215,6 +236,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/brands/$id'
     | '/local/$id'
+    | '/settings/kpi-v2'
     | '/social/$id'
     | '/websites/$id'
     | '/brands'
@@ -224,6 +246,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/goals-v2'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -235,6 +258,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/brands/$id'
     | '/local/$id'
+    | '/settings_/kpi-v2'
     | '/social/$id'
     | '/websites/$id'
     | '/brands/'
@@ -245,6 +269,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GoalsV2Route: typeof GoalsV2Route
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
@@ -256,6 +281,7 @@ export interface RootRouteChildren {
   WebContentsRoute: typeof WebContentsRoute
   BrandsIdRoute: typeof BrandsIdRoute
   LocalIdRoute: typeof LocalIdRoute
+  SettingsKpiV2Route: typeof SettingsKpiV2Route
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
   BrandsIndexRoute: typeof BrandsIndexRoute
@@ -329,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/goals-v2': {
+      id: '/goals-v2'
+      path: '/goals-v2'
+      fullPath: '/goals-v2'
+      preLoaderRoute: typeof GoalsV2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -378,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SocialIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings_/kpi-v2': {
+      id: '/settings_/kpi-v2'
+      path: '/settings/kpi-v2'
+      fullPath: '/settings/kpi-v2'
+      preLoaderRoute: typeof SettingsKpiV2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/local/$id': {
       id: '/local/$id'
       path: '/local/$id'
@@ -397,6 +437,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GoalsV2Route: GoalsV2Route,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
@@ -408,6 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebContentsRoute: WebContentsRoute,
   BrandsIdRoute: BrandsIdRoute,
   LocalIdRoute: LocalIdRoute,
+  SettingsKpiV2Route: SettingsKpiV2Route,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
   BrandsIndexRoute: BrandsIndexRoute,
