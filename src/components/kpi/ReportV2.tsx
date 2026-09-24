@@ -119,7 +119,7 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
           {drill.kind === "ratio" && <p className="mb-2 text-xs text-muted-foreground">Tử số {drill.r.num} / mẫu số {drill.r.den} (chỉ việc có {drill.field === "onTime" ? "deadline hợp lệ" : "lịch sử duyệt tin cậy"}). {drill.r.den === 0 && "Mẫu số 0 → N/A."}</p>}
           {drill.kind === "breakdown" ? (
             <ul className="space-y-1 text-sm">{drill.item.breakdown.map((b) => (
-              <li key={b.key}>{bname(b.brandId)} · {cname(b.websiteId, b.socialId)}: <b>{b.count}</b> <Link to="/overview-v2" search={{ from: drill.period.periodStart, to: drill.period.periodEnd, brandId: b.brandId ?? undefined, websiteId: b.websiteId ?? undefined, socialId: b.socialId ?? undefined, metric: drill.item.item.metricKey, userId: drill.item.item.kpiPeriodId ? undefined : undefined }} className="text-xs text-primary hover:underline">→ Tổng quan V2</Link></li>
+              <li key={b.key}>{bname(b.brandId)} · {cname(b.websiteId, b.socialId)}: <b>{b.count}</b> <Link to="/overview-v2" search={{ from: drill.period.periodStart, to: drill.period.periodEnd, brandId: b.brandId ?? undefined, websiteId: b.websiteId ?? undefined, socialId: b.socialId ?? undefined, metric: drill.item.item.metricKey }} className="text-xs text-primary hover:underline">→ Tổng quan V2</Link></li>
             ))}{!drill.item.breakdown.length && <li className="text-muted-foreground">Không có evidence.</li>}</ul>
           ) : (
             <table className="w-full text-sm"><tbody>
