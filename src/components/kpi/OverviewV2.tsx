@@ -25,6 +25,7 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
   const [brandId, setBrandId] = useState(search.brandId ?? "");
   const [channel, setChannel] = useState(search.websiteId ? `w:${search.websiteId}` : search.socialId ? `s:${search.socialId}` : "");
   const [metric, setMetric] = useState(search.metric ?? "");
+  const [group, setGroup] = useState(search.group ?? "");
   const userCtx = actor.isAdmin ? search.userId : undefined;
   const [drill, setDrill] = useState<Drill | null>(null);
 
@@ -35,11 +36,12 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
   const ov = buildOverview({
     users, goals: db.goals.filter((g) => g.periodStart <= pe && g.periodEnd >= ps), periods, items: db.items, adjustments: db.adjustments,
     data: { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders },
-    filters: { brandId: brandId || undefined, websiteId, socialId, metricKey: metric || undefined, userId: userCtx }, today: todayVN(),
+    filters: { brandId: brandId || undefined, websiteId, socialId, metricKey: metric || undefined, userId: userCtx, group: group || undefined }, today: todayVN(),
   });
   const bname = (id: string | null) => store.brands.find((b) => b.id === id)?.name ?? "—";
   const aname = (w: string | null, s: string | null) => (w ? `Web: ${store.websites.find((x) => x.id === w)?.name ?? w}` : s ? `Page: ${store.socials.find((x) => x.id === s)?.name ?? s}` : "—");
-  const repSearch = (userId: string, metricKey?: string) => ({ from: ps, to: pe, brandId: brandId || undefined, websiteId, socialId, metric: metricKey, userId });
+  const repSearch = (userId?: string, metricKey?: string, asset?: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
+    ({ from: ps, to: pe, brandId: (asset?.brandId ?? brandId) || undefined, websiteId: asset ? asset.websiteId ?? undefined : websiteId, socialId: asset ? asset.socialId ?? undefined : socialId, metric: metricKey, userId, group: group || undefined });
 
   if (!periodKeys.length) return <p className="text-sm text-muted-foreground">Chưa có kỳ KPI nào.</p>;
 
@@ -53,8 +55,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
           {store.websites.filter((w) => w.brandId === brandId).map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
           {store.socials.filter((s) => s.brandId === brandId).map((s) => <option key={s.id} value={`s:${s.id}`}>Page: {s.name}</option>)}
         </select>
+        <select className={inp} value={group} onChange={(e) => setGroup(e.target.value)}>
+          <option value="">Tất cả nhóm chỉ số</option>
+          <option value="web">Website</option><option value="social">Social</option><option value="video">Video</option><option value="design">Thiết kế</option><option value="task">Công việc</option>
+        </select>
         {metric && <button className={`${inp} text-xs`} onClick={() => setMetric("")}>Chỉ tiêu: {metric} ✕</button>}
         {userCtx && <span className="self-center text-xs text-muted-foreground">Ngữ cảnh nhân sự: {users.find((u) => u.id === userCtx)?.fullName ?? userCtx}</span>}
+        <Link to="/reports-v2" search={repSearch(userCtx, metric || undefined)} className="self-center text-xs text-primary hover:underline">→ Báo cáo nhân sự V2 (giữ bộ lọc)</Link>
       </div>
       {!actor.isAdmin && <p className="text-xs text-muted-foreground">Bạn chỉ thấy phần KPI được giao cho chính mình.</p>}
 
@@ -67,11 +74,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
             <tbody>{ov.metrics.map((m) => (
               <tr key={m.metricKey} className="border-t border-border">
                 <td className="px-3 py-2"><span className={chip} onClick={() => setDrill({ title: m.label, metric: m })}>{m.label}</span> <span className="text-xs text-muted-foreground">({m.unit})</span></td>
-                <td>{m.actual} / {m.target}{m.unverifiedAssignments > 0 && <span className="ml-1 text-xs text-muted-foreground">· {m.unverifiedAssignments} phần chưa đủ dữ liệu</span>}</td>
-                <td>{m.pct === null ? "N/A" : `${m.pct}%`}</td>
+                <td>{m.target > 0 ? <>{m.actual} / {m.target}</> : <span title="KPI toàn cục chưa phân bổ cho phạm vi đang lọc">{m.contributionActual} / N/A (đóng góp)</span>}
+                  {m.unverifiedAssignments > 0 && <span className="ml-1 text-xs text-muted-foreground">· {m.unverifiedAssignments} phần chưa đủ dữ liệu</span>}
+                  {m.target > 0 && m.contributionItems > 0 && <span className="ml-1 text-xs text-muted-foreground">· +{m.contributionActual} đóng góp từ KPI toàn cục</span>}</td>
+                <td>{m.target === 0 ? "N/A" : m.pct === null ? "N/A" : `${m.pct}%`}</td>
                 <td><span className={chip} onClick={() => setDrill({ title: `Sản phẩm — ${m.label}`, rows: m.evidence })}>{m.uniqueAssets}</span></td>
                 <td className="text-xs">{m.contributions.map((c) => (
-                  <Link key={c.itemId} to="/reports-v2" search={repSearch(c.userId, m.metricKey)} className="mr-2 text-primary hover:underline">{c.userName} {c.actual ?? "N/A"}/{c.target}</Link>
+                  <Link key={c.itemId} to="/reports-v2" search={repSearch(c.userId, m.metricKey)} className="mr-2 text-primary hover:underline">{c.userName} {c.actual ?? "N/A"}/{c.contributionOnly ? "N/A" : c.target}</Link>
                 ))}</td>
                 <td className="text-xs">{m.unallocatedTarget > 0 ? `${m.unallocatedTarget} chưa phân bổ xuống Web/Page` : "—"}</td>
               </tr>
@@ -87,6 +96,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
           </button>
         ))}
       </section>
+
+      {(ov.videoTouched > 0 || ov.videoDelivered > 0) && (
+        <section className="rounded-lg border border-border p-3 text-sm">
+          <b className="text-sm">Video (chẩn đoán công đoạn)</b>
+          <p className="mt-1 text-xs text-muted-foreground">Video bàn giao: <b>{ov.videoDelivered}</b> · Video có người tham gia ở ít nhất một công đoạn: <b>{ov.videoTouched}</b>. Nhiều công đoạn trên cùng một video KHÔNG cộng thành nhiều sản phẩm bàn giao.</p>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">Mục tiêu</h2>
@@ -110,7 +126,9 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
           <div className="mb-2 flex items-center justify-between"><h3 className="font-medium">{drill.title}</h3><button className="text-xs text-muted-foreground" onClick={() => setDrill(null)}>Đóng</button></div>
           {"metric" in drill ? (
             <ul className="space-y-1 text-sm">
-              {drill.metric.assets.map((a) => <li key={a.key}>{bname(a.brandId)} · {aname(a.websiteId, a.socialId)}: <span className={chip} onClick={() => setDrill({ title: aname(a.websiteId, a.socialId), rows: a.evidence })}><b>{a.actual}</b></span> / {a.target ?? "Chưa phân bổ"}</li>)}
+              {drill.metric.assets.map((a) => <li key={a.key}>{bname(a.brandId)} · {aname(a.websiteId, a.socialId)}: <span className={chip} onClick={() => setDrill({ title: aname(a.websiteId, a.socialId), rows: a.evidence })}><b>{a.actual}</b></span> / {a.target ?? "Chưa phân bổ"}{" "}
+                <Link to="/reports-v2" search={repSearch(userCtx, drill.metric.metricKey, a)} className="text-xs text-primary hover:underline">→ Báo cáo V2</Link></li>)}
+              {drill.metric.contributionItems > 0 && <li className="text-muted-foreground">Đóng góp từ KPI toàn cục (không có mục tiêu riêng ở phạm vi này): {drill.metric.contributionActual}</li>}
               {drill.metric.unallocatedTarget > 0 && <li className="text-muted-foreground">Chưa phân bổ xuống Web/Page: {drill.metric.unallocatedTarget}</li>}
               {!drill.metric.assets.length && <li className="text-muted-foreground">Chưa có dữ liệu theo kênh.</li>}
             </ul>
