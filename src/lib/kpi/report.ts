@@ -18,13 +18,15 @@ export type SourceType = "task" | "web_content" | "social_post" | "video" | "des
 export interface EvidenceRow {
   sourceType: SourceType; sourceId: string; title: string; creditedAt: string;
   brandId: string | null; websiteId: string | null; socialId: string | null;
-  deadline: string | null; onTime: boolean | null; firstPass: boolean | null;
+  deadline: string | null; onTime: boolean | null; firstPass: boolean | null; points?: number;
 }
 export interface Ratio { num: number; den: number; pct: number | null }
 export interface ItemReport {
   item: EmployeeKpiItem; label: string; unit: string; category: KpiMetricCategory | "?";
   target: number; lockedTarget: number | null; adjustments: KpiAdjustment[];
   actual: number | null; achieved: boolean | null; supported: boolean;
+  /** Item global/rộng hơn bộ lọc: actual = đóng góp trong phạm vi lọc, target N/A. */
+  contributionOnly: boolean;
   evidence: EvidenceRow[]; warnings: number;
   breakdown: { key: string; brandId: string | null; websiteId: string | null; socialId: string | null; count: number }[];
 }
@@ -81,13 +83,19 @@ export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period:
     const r = calculateVideoDesignItem(emp, input, p, { videos: data.videos, designOrders: data.orders, socialPosts: data.socialPosts });
     warnings = r.warnings.length; supported = r.supported; actual = r.actualValue;
     raw = r.evidence.map((e) => ({ sourceType: e.sourceType, sourceId: e.sourceId, title: e.title, creditedAt: e.creditedAt, brandId: e.brandId,
-      ...look(e.sourceType, e.sourceId), deadline: e.deadline, onTime: e.onTime, firstPass: e.firstPass }));
+      ...look(e.sourceType, e.sourceId), deadline: e.deadline, onTime: e.onTime, firstPass: e.firstPass, points: e.points }));
   }
   if (!supported) actual = null;
-  // Bộ lọc brand/kênh chỉ thu hẹp evidence hiển thị; actual tính lại trên evidence đã lọc.
-  const filtered = f.brandId || f.websiteId || f.socialId;
+  // Bộ lọc: nếu item có phạm vi riêng đã nằm trong bộ lọc → giữ target; nếu rộng hơn → chỉ là đóng góp.
+  const filtered = !!(f.brandId || f.websiteId || f.socialId);
+  const itemWithin = (!f.brandId || item.brandId === f.brandId) && (!f.websiteId || item.websiteId === f.websiteId) && (!f.socialId || item.socialId === f.socialId);
+  const contributionOnly = filtered && !itemWithin;
   const evidence = raw.filter((e) => filterMatch(f, e));
-  if (filtered && actual !== null) actual = item.metricKey === "design_points_completed" ? actual : evidence.length;
+  if (filtered && actual !== null) {
+    if (item.metricKey === "design_points_completed") {
+      actual = evidence.some((e) => e.points === undefined) ? null : evidence.reduce((s, e) => s + (e.points ?? 0), 0);
+    } else actual = evidence.length;
+  }
   const lockedTarget = typeof item.metadata?.lockedTarget === "number" ? (item.metadata.lockedTarget as number) : null;
   const target = lockedTarget ?? item.targetValue;
   const bmap = new Map<string, ItemReport["breakdown"][number]>();
@@ -99,7 +107,9 @@ export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period:
   return {
     item, label: item.label || m?.label || item.metricKey, unit: m?.unit ?? item.unit, category: m?.category ?? "?",
     target, lockedTarget, adjustments: adjustments.filter((a) => a.itemId === item.id),
-    actual, achieved: actual === null ? null : actual >= target, supported, evidence, warnings, breakdown: [...bmap.values()],
+    // Coverage: có mục chưa xác minh có thể đổi kết luận → không chấm Chưa đạt chắc chắn.
+    actual, contributionOnly,
+    achieved: contributionOnly || actual === null ? null : actual >= target ? true : warnings > 0 ? null : false, supported, evidence, warnings, breakdown: [...bmap.values()],
   };
 }
 
@@ -118,9 +128,9 @@ export function buildWork(emp: KpiEmployee, d: ReportData, f: ReportFilters, tod
   for (const c of d.webContents) if (matchesEmployee(c.writer, emp) && c.type !== "Bài tối ưu lại" && (WEB_WRITER_OPEN.has(c.status) || c.status === "Chờ duyệt bài"))
     push({ sourceType: "web_content", sourceId: c.id, title: c.title, status: c.status, deadline: c.deadline ?? null, brandId: c.brandId ?? null, websiteId: c.websiteId ?? null, socialId: null });
   for (const p of d.socialPosts) if (matchesEmployee(p.writer, emp) && ["Kế hoạch", "Đang làm", "Cần sửa", "Chờ duyệt"].includes(p.status))
-    push({ sourceType: "social_post", sourceId: p.id, title: p.title, status: p.status, deadline: p.scheduledDate ?? null, brandId: p.brandId ?? null, websiteId: null, socialId: p.channelId ?? null });
+    push({ sourceType: "social_post", sourceId: p.id, title: p.title, status: p.status, deadline: null /* scheduledDate là lịch đăng, không phải deadline viết */, brandId: p.brandId ?? null, websiteId: null, socialId: p.channelId ?? null });
   for (const v of d.videos) if (matchesEmployee(v.owner, emp) && !["Video đã duyệt", "Đã bàn giao", "Đã đăng", "Hoàn thành", "Đã hủy", "Kế hoạch"].includes(v.status))
-    push({ sourceType: "video", sourceId: v.id, title: v.title, status: v.status, deadline: (v.status.includes("kịch bản") ? v.scriptDeadline : v.deadline) ?? null, brandId: v.brandId ?? null, websiteId: null, socialId: null });
+    push({ sourceType: "video", sourceId: v.id, title: v.title, status: v.status, deadline: v.status.includes("kịch bản") ? v.scriptDeadline ?? null : null /* không quy owner thành quay/dựng/đăng */, brandId: v.brandId ?? null, websiteId: null, socialId: null });
   for (const o of d.orders) if (matchesEmployee(o.assignee, emp) && ["Chờ nhận việc", "Đang thực hiện", "Cần sửa", "Chờ duyệt"].includes(o.status))
     push({ sourceType: "design_order", sourceId: o.id, title: o.title, status: o.status, deadline: o.deadline ?? null, brandId: o.brandId ?? null, websiteId: null, socialId: null });
   return { backlog: out.filter((r) => !isWaiting(r.status)), overdue: out.filter((r) => r.overdue), waitingReview: out.filter((r) => isWaiting(r.status)) };
@@ -135,6 +145,8 @@ export function buildEmployeeReport(args: {
   const periods = args.periods.filter((p) => p.userId === args.user.id);
   const items: ItemReport[] = [];
   for (const p of periods) for (const it of args.items.filter((i) => i.kpiPeriodId === p.id)) {
+    const f = args.filters;
+    if ((f.brandId && it.brandId && it.brandId !== f.brandId) || (f.websiteId && it.websiteId && it.websiteId !== f.websiteId) || (f.socialId && it.socialId && it.socialId !== f.socialId) || (f.websiteId && it.socialId) || (f.socialId && it.websiteId)) continue;
     const r = buildItemReport(emp, it, p, args.data, args.filters, args.adjustments);
     if (args.filters.group && r.category !== args.filters.group) continue;
     items.push(r);
@@ -148,7 +160,7 @@ export function buildEmployeeReport(args: {
   const work = buildWork(emp, args.data, args.filters, args.today);
   return {
     userId: args.user.id, ambiguousName: ambiguous, periods, items,
-    achievedCount: items.filter((i) => i.achieved === true).length, assignedCount: items.length,
+    achievedCount: items.filter((i) => i.achieved === true).length, assignedCount: items.filter((i) => !i.contributionOnly).length,
     output: ev.length, onTime: ratio(withDl.filter((e) => e.onTime).length, withDl.length),
     quality: ratio(withQ.filter((e) => e.firstPass).length, withQ.length), ...work,
   };

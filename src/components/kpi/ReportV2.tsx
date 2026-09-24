@@ -98,11 +98,11 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
                       <tr key={it.item.id} className="border-t border-border bg-muted/40 text-xs">
                         <td className="px-6 py-1.5"><span className={chip} onClick={() => setDrill({ kind: "breakdown", title: `Phân bổ — ${it.label}`, item: it, period: p })}>{it.label}</span> <span className="text-muted-foreground">({it.unit})</span></td>
                         <td>
-                          <span className={chip} onClick={() => setDrill({ kind: "evidence", title: it.label, rows: it.evidence })}>{it.actual === null ? "Chưa đủ dữ liệu" : it.actual}</span> / {it.target}
+                          <span className={chip} onClick={() => setDrill({ kind: "evidence", title: it.label, rows: it.evidence })}>{it.actual === null ? "Chưa đủ dữ liệu" : it.actual}</span> / {it.contributionOnly ? <span title="KPI toàn cục — đây chỉ là đóng góp trong phạm vi lọc">N/A (Đóng góp hiện tại · target toàn cục {it.target})</span> : it.target}
                           {it.lockedTarget !== null && <span className="ml-1 text-muted-foreground">(snapshot khi khóa)</span>}
                           {it.adjustments.length > 0 && <span className="ml-1 text-muted-foreground" title={it.adjustments.map((a) => `${a.at.slice(0, 10)}: ${a.from}→${a.to}`).join("\n")}>· {it.adjustments.length} điều chỉnh</span>}
                         </td>
-                        <td colSpan={5} className="text-muted-foreground">{it.achieved === null ? "—" : it.achieved ? "Đạt" : "Chưa đạt"}{it.warnings ? ` · ${it.warnings} mục chưa xác minh` : ""} · kỳ {p.status}</td>
+                        <td colSpan={5} className="text-muted-foreground">{it.contributionOnly ? "Chỉ đóng góp" : it.achieved === null ? (it.warnings ? "Chưa kết luận (còn mục chưa xác minh)" : "—") : it.achieved ? "Đạt" : "Chưa đạt"}{it.warnings ? ` · ${it.warnings} mục chưa xác minh` : ""} · kỳ {p.status}</td>
                       </tr>
                     );
                   })}
