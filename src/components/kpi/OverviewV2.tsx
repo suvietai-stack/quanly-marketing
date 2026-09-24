@@ -3,12 +3,13 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
-import { createKpiService, mockRepository } from "@/lib/kpi/service";
+import { createKpiService } from "@/lib/kpi/service";
+import { cloudRepository } from "@/lib/kpi/cloudRepository";
 import { buildOverview, type MetricRow, type V2Search } from "@/lib/kpi/overview";
 import type { EvidenceRow, WorkRow } from "@/lib/kpi/report";
 import { SourceLink } from "./ReportV2";
 
-const svc = createKpiService(mockRepository);
+const svc = createKpiService(cloudRepository);
 const inp = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 const chip = "cursor-pointer underline-offset-2 hover:underline";
 const todayVN = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
