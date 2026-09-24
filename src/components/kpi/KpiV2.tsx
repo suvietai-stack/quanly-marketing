@@ -19,12 +19,14 @@ const btn2 = "h-8 rounded-md border border-input px-2 text-xs";
 export function useKpiDb() {
   const [db, setDb] = useState<KpiDb | null>(null);
   const refresh = () => setDb(svc.list());
-  useEffect(() => { refresh(); return onCloudSync((err) => { if (err) toast.error(err); refresh(); }); }, []);
+  useEffect(() => { refresh(); return onCloudSync(() => refresh()); }, []);
   return { db, refresh };
 }
 
-function run(fn: () => void, ok: string, after: () => void) {
-  try { fn(); toast.success(ok); after(); } catch (e) { toast.error(e instanceof KpiError ? e.message : String(e)); }
+/** Chỉ báo "thành công" sau khi cơ sở dữ liệu xác nhận; lỗi hiển thị rõ ràng. */
+async function run(fn: () => void, ok: string, after: () => void): Promise<boolean> {
+  try { fn(); await flushKpi(); toast.success(ok); after(); return true; }
+  catch (e) { toast.error(e instanceof KpiError ? e.message : `Không lưu được: ${(e as Error).message ?? e}`); after(); return false; }
 }
 
 export function KpiV2Gate({ title, children }: { title: string; children: (actor: { id: string; isAdmin: boolean }) => ReactNode }) {
