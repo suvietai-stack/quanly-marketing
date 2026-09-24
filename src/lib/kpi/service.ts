@@ -98,6 +98,7 @@ export function createKpiService(repo: KpiRepository) {
       if (input.periodEnd < input.periodStart) throw new KpiError("Kỳ không hợp lệ.");
       if (!input.items.length) throw new KpiError("Chưa có chỉ tiêu nào.");
       input.items.forEach(validateItem);
+      for (const it of input.items) { const nr = getKpiMetric(it.metricKey)?.notReady; if (nr) throw new KpiError(nr); }
       return mutate((db) => {
         let period = db.periods.find((p) => p.userId === input.userId && p.periodStart === input.periodStart && p.periodEnd === input.periodEnd);
         if (period && (period.status === "locked" || period.status === "closed")) throw new KpiError("Kỳ đã khóa — không thêm chỉ tiêu.");
