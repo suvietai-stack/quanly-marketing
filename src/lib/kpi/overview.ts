@@ -7,7 +7,7 @@ import type { EmployeeKpiItem, EmployeeKpiPeriod, Goal } from "./types";
 import type { KpiAdjustment } from "./service";
 import { buildEmployeeReport, type EvidenceRow, type ReportData, type WorkRow } from "./report";
 
-export interface OverviewFilters { brandId?: string; websiteId?: string; socialId?: string; metricKey?: string; userId?: string }
+export interface OverviewFilters { brandId?: string; websiteId?: string; socialId?: string; metricKey?: string; userId?: string; group?: string }
 export interface Contribution { userId: string; userName: string; itemId: string; actual: number | null; target: number; contributionOnly: boolean }
 export interface AssetRow { key: string; brandId: string | null; websiteId: string | null; socialId: string | null; actual: number; target: number | null; evidence: EvidenceRow[] }
 export interface MetricRow {
