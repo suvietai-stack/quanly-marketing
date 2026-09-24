@@ -16,10 +16,18 @@ import {
   Briefcase, RefreshCw, X, ExternalLink,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PlanProgress } from "@/components/kpi/PlanProgress";
+import { isKpiV2Enabled } from "@/lib/kpi/service";
+import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Tổng Quan — Base Marketing" }] }),
+  head: () => ({ meta: [
+    { title: "Tổng Quan — Base Marketing" },
+    { name: "description", content: "Công việc, KPI và tiến độ triển khai Marketing Sứ Việt." },
+    { property: "og:title", content: "Tổng Quan — Base Marketing" },
+    { property: "og:description", content: "Công việc, KPI và tiến độ triển khai Marketing Sứ Việt." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: () => (
     <RequirePermission perm="overview.view">
       <Overview />
@@ -91,36 +99,31 @@ function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
 function Overview() {
   const { user, can, isSuperAdmin } = useCurrentUser();
   const canSeeAllDept = isSuperAdmin || can("overview.all_dept") || can("report.view");
-  const [tab, setTab] = useState<"mine" | "all" | "plan">("mine");
-  void user;
+  const isKpiManager = !!user && (isSuperAdmin || user.roleId === "role-admin");
+  const [tab, setTab] = useState<"mine" | "summary" | "staff" | "ops">("mine");
+
+  const desc = {
+    mine: "Công việc và KPI của bạn — cập nhật tự động từ công việc thực tế.",
+    summary: "Tiến độ triển khai theo thương hiệu và kênh.",
+    staff: "Tiến độ KPI của từng nhân sự.",
+    ops: "Tình hình vận hành phòng Digital Marketing.",
+  }[tab];
 
   return (
     <>
-      <PageHeader
-        title="Tổng Quan"
-        description={
-          tab === "mine"
-            ? "Việc liên quan trực tiếp đến bạn — cập nhật theo thời gian thực."
-            : tab === "plan" ? "Tiến độ kế hoạch theo Thương hiệu, Website và Page — tính tự động từ công việc thực tế."
-            : "Tình hình vận hành phòng Digital Marketing."
-        }
-      />
+      <PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} />
       {canSeeAllDept ? (
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList>
-            <TabsTrigger value="mine">Tổng quan của tôi</TabsTrigger>
-            <TabsTrigger value="all">Tổng quan toàn phòng</TabsTrigger>
-            <TabsTrigger value="plan">Tiến độ kế hoạch</TabsTrigger>
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="mine">Của tôi</TabsTrigger>
+            {isKpiV2Enabled() && <TabsTrigger value="summary">Tổng hợp</TabsTrigger>}
+            {isKpiV2Enabled() && isKpiManager && <TabsTrigger value="staff">Nhân sự</TabsTrigger>}
+            <TabsTrigger value="ops">Vận hành</TabsTrigger>
           </TabsList>
-          <TabsContent value="mine" className="mt-6">
-            <MineOverview />
-          </TabsContent>
-          <TabsContent value="all" className="mt-6">
-            <DeptOverview />
-          </TabsContent>
-          <TabsContent value="plan" className="mt-6">
-            <PlanProgress />
-          </TabsContent>
+          <TabsContent value="mine" className="mt-6"><MineOverview /></TabsContent>
+          <TabsContent value="summary" className="mt-6"><ManagerSummary /></TabsContent>
+          {isKpiManager && <TabsContent value="staff" className="mt-6"><StaffTable /></TabsContent>}
+          <TabsContent value="ops" className="mt-6"><DeptOverview /></TabsContent>
         </Tabs>
       ) : (
         <MineOverview />
@@ -131,7 +134,7 @@ function Overview() {
 
 // ============ Mine ============
 
-function MineOverview() {
+function useMyWork() {
   const s = useStore();
   const { user, can, isSuperAdmin } = useCurrentUser();
   const mine = useMemo(() => buildMyNames(user as any), [user]);
@@ -297,39 +300,143 @@ function MineOverview() {
     return out;
   }, [s, mine, can, isSuperAdmin]);
 
-  return (
-    <>
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Stat label="Việc tôi cần xử lý" value={items.mine.length} icon={Inbox} tone="info" />
-        <Stat label="Việc quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" />
-        <Stat label="Chờ người khác" value={items.waiting.length} icon={Hourglass} tone="warn" />
-        <Stat label="Hoàn thành 7 ngày" value={items.doneRecent.length} icon={CheckCircle2} tone="success" />
-      </div>
+  return items;
+}
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Việc của tôi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="mine">
-            <TabsList className="flex-wrap h-auto">
-              <TabsTrigger value="mine">Cần tôi xử lý ({items.mine.length})</TabsTrigger>
-              <TabsTrigger value="review">Cần duyệt ({items.toReview.length})</TabsTrigger>
-              <TabsTrigger value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
-              <TabsTrigger value="waiting">Chờ người khác ({items.waiting.length})</TabsTrigger>
-              <TabsTrigger value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
-              <TabsTrigger value="done">Hoàn thành gần đây ({items.doneRecent.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="mine"><WorkTable items={items.mine} empty="Hiện chưa có việc nào cần bạn xử lý." /></TabsContent>
-            <TabsContent value="review"><WorkTable items={items.toReview} empty="Không có việc nào đang chờ bạn duyệt." /></TabsContent>
-            <TabsContent value="fix"><WorkTable items={items.needsFix} empty="Không có việc nào cần sửa." /></TabsContent>
-            <TabsContent value="waiting"><WorkTable items={items.waiting} empty="Không có việc nào đang chờ người khác." /></TabsContent>
-            <TabsContent value="overdue"><WorkTable items={items.overdue} empty="Tuyệt vời! Không có việc nào quá hạn." /></TabsContent>
-            <TabsContent value="done"><WorkTable items={items.doneRecent} empty="Chưa có việc hoàn thành trong 7 ngày." /></TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </>
+type WorkTab = "mine" | "review" | "fix" | "waiting" | "overdue" | "done";
+
+function MineOverview() {
+  const items = useMyWork();
+  const { user } = useCurrentUser();
+  const [tab, setTab] = useState<WorkTab>("overdue");
+  const needAction = items.needsFix.length + items.toReview.length;
+  const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <SectionTitle>Công việc</SectionTitle>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+          <ClickStat label="Đang thực hiện" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
+          <ClickStat label="Cần xử lý" hint="Cần sửa + chờ tôi duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
+          <ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} />
+        </div>
+      </section>
+
+      {isKpiV2Enabled() && user && (
+        <section>
+          <SectionTitle>KPI của tôi</SectionTitle>
+          <PersonalKpi userId={user.id} />
+        </section>
+      )}
+
+      <section id="my-work">
+        <SectionTitle>Việc cần làm</SectionTitle>
+        <Card>
+          <CardContent className="pt-6">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as WorkTab)}>
+              <TabsList className="flex-wrap h-auto">
+                <TabsTrigger value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
+                <TabsTrigger value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
+                <TabsTrigger value="mine">Đang thực hiện ({items.mine.length})</TabsTrigger>
+                <TabsTrigger value="review">Chờ tôi duyệt ({items.toReview.length})</TabsTrigger>
+                <TabsTrigger value="waiting">Chờ người khác ({items.waiting.length})</TabsTrigger>
+                <TabsTrigger value="done">Hoàn thành 7 ngày ({items.doneRecent.length})</TabsTrigger>
+              </TabsList>
+              <TabsContent value="mine"><WorkTable items={sortByDue(items.mine)} empty="Hiện chưa có việc nào bạn đang thực hiện." /></TabsContent>
+              <TabsContent value="review"><WorkTable items={items.toReview} empty="Không có việc nào đang chờ bạn duyệt." /></TabsContent>
+              <TabsContent value="fix"><WorkTable items={items.needsFix} empty="Không có việc nào cần sửa." /></TabsContent>
+              <TabsContent value="waiting"><WorkTable items={items.waiting} empty="Không có việc nào đang chờ người khác." /></TabsContent>
+              <TabsContent value="overdue"><WorkTable items={sortByDue(items.overdue)} empty="Tuyệt vời! Không có việc nào quá hạn." /></TabsContent>
+              <TabsContent value="done"><WorkTable items={items.doneRecent} empty="Chưa có việc hoàn thành trong 7 ngày." /></TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}
+
+function sortByDue(list: WorkItem[]) {
+  return [...list].sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
+}
+
+function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success"; hint?: string; onClick?: () => void }) {
+  const toneCls = { info: "bg-primary/10 text-primary", warn: "bg-warning/15 text-warning-foreground", danger: "bg-destructive/10 text-destructive", success: "bg-success/10 text-success" }[tone];
+  return (
+    <button onClick={onClick} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/40 hover:shadow-sm">
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${toneCls}`}><Icon className="h-5 w-5" /></div>
+      <div className="min-w-0">
+        <div className="text-2xl font-semibold tabular-nums leading-tight">{value}</div>
+        <div className="text-sm text-muted-foreground">{label}</div>
+        {hint && <div className="text-[11px] text-muted-foreground/80">{hint}</div>}
+      </div>
+    </button>
+  );
+}
+
+// ============ Quản lý: Tổng hợp ============
+
+function ManagerSummary() {
+  const s = useStore();
+  const my = useMyWork();
+  const { db } = useKpiView();
+  const [pk, setPk] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [sheet, setSheet] = useState<null | "review" | "overdue">(null);
+  const keys = db ? periodKeysOf(db) : [];
+  const key = pk || currentKey(keys);
+  const progress = useChannelProgress(key, brandId);
+  const brandName = (id?: string) => s.brands.find((b) => b.id === id)?.name;
+
+  const overdueAll = useMemo(() => {
+    const out: WorkItem[] = [];
+    for (const t of s.tasks) if (isOverdue(t.deadline, t.status) && t.status !== "Đã hủy") out.push({ id: `task-${t.id}`, kind: "Task", module: "Task", title: t.title, brand: brandName(t.brandId), status: t.status, due: t.deadline, href: "/tasks", mineAs: t.assignee });
+    for (const c of s.webContents) if (isOverdue(c.deadline || c.outlineDeadline, c.status)) out.push({ id: `web-${c.id}`, kind: "Content Web", module: "Dự án Web", title: c.title, brand: brandName(c.brandId), status: c.status, due: c.deadline || c.outlineDeadline, href: "/web-contents", mineAs: c.writer });
+    for (const v of s.videos) if (isOverdue(v.deadline || v.scriptDeadline, v.status) && v.status !== "Đã hủy") out.push({ id: `vd-${v.id}`, kind: "Video", module: "Video", title: v.title, brand: brandName(v.brandId), status: v.status, due: v.deadline || v.scriptDeadline, href: "/videos", mineAs: v.owner });
+    for (const o of s.orders) if (isOverdue(o.deadline, o.status) && o.status !== "Đã hủy") out.push({ id: `od-${o.id}`, kind: "Order Thiết Kế", module: "Thiết Kế", title: o.title, brand: brandName(o.brandId), status: o.status, due: o.deadline, href: "/orders", mineAs: o.assignee });
+    return sortByDue(out);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s]);
+
+  const withData = progress?.rows.filter((r) => r.tone !== "none") ?? [];
+  const atRisk = withData.filter((r) => r.tone === "warn" || r.tone === "bad");
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap gap-2">
+        {keys.length > 0 && <PeriodSelect keys={keys} value={key} onChange={setPk} />}
+        <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
+          <option value="">Tất cả thương hiệu</option>
+          {s.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+      </div>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+        <ClickStat label="Chỉ tiêu có nguy cơ chậm" icon={Clock} tone="warn"
+          value={withData.length ? atRisk.length : <span className="text-base font-medium text-muted-foreground">Chưa đủ dữ liệu</span>}
+          hint={withData.length ? `Trên ${withData.length} chỉ tiêu đo được, so với thời gian đã trôi qua` : undefined}
+          onClick={() => document.getElementById("channel-progress")?.scrollIntoView({ behavior: "smooth" })} />
+        <ClickStat label="Công việc chờ tôi duyệt" value={my.toReview.length} icon={ClipboardCheck} tone="info" onClick={() => setSheet("review")} />
+        <ClickStat label="Công việc quá hạn" value={overdueAll.length} icon={AlertTriangle} tone="danger" onClick={() => setSheet("overdue")} />
+      </div>
+      <section id="channel-progress">
+        <SectionTitle>Tiến độ triển khai theo thương hiệu và kênh</SectionTitle>
+        <ChannelProgress periodKey={key} brandId={brandId} />
+      </section>
+      <Sheet open={!!sheet} onOpenChange={(v) => !v && setSheet(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>{sheet === "review" ? "Công việc chờ tôi duyệt" : "Công việc quá hạn"}</SheetTitle>
+            <SheetDescription>{sheet === "overdue" ? "Cột “Vai trò” hiển thị người phụ trách." : "Nhấn để mở công việc."}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4"><WorkTable items={sheet === "review" ? my.toReview : overdueAll} empty="Không có công việc." /></div>
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }
 
