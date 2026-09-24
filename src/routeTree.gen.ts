@@ -13,6 +13,7 @@ import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportsV2RouteImport } from './routes/reports-v2'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as OrdersRouteImport } from './routes/orders'
@@ -48,6 +49,11 @@ const TasksRoute = TasksRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsV2Route = ReportsV2RouteImport.update({
+  id: '/reports-v2',
+  path: '/reports-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/reports-v2': typeof ReportsV2Route
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/reports-v2': typeof ReportsV2Route
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/reports-v2': typeof ReportsV2Route
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/pending'
     | '/register'
+    | '/reports-v2'
     | '/settings'
     | '/tasks'
     | '/videos'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/pending'
     | '/register'
+    | '/reports-v2'
     | '/settings'
     | '/tasks'
     | '/videos'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/pending'
     | '/register'
+    | '/reports-v2'
     | '/settings'
     | '/tasks'
     | '/videos'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   OrdersRoute: typeof OrdersRoute
   PendingRoute: typeof PendingRoute
   RegisterRoute: typeof RegisterRoute
+  ReportsV2Route: typeof ReportsV2Route
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports-v2': {
+      id: '/reports-v2'
+      path: '/reports-v2'
+      fullPath: '/reports-v2'
+      preLoaderRoute: typeof ReportsV2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersRoute: OrdersRoute,
   PendingRoute: PendingRoute,
   RegisterRoute: RegisterRoute,
+  ReportsV2Route: ReportsV2Route,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
