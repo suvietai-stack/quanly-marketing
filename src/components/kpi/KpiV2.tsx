@@ -257,7 +257,7 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
               {!plan.size && <tr><td colSpan={5} className="py-4 text-center text-muted-foreground">Chưa có chỉ tiêu trong kỳ này.</td></tr>}
             </tbody>
           </table>
-          {nestedCount > 0 && <p className="border-t border-border px-4 py-2 text-xs text-amber-600">Có {nestedCount} chỉ tiêu nằm trong một chỉ tiêu rộng hơn của cùng nhân sự (chồng phạm vi) — không cộng thêm vào kế hoạch để tránh tính trùng.</p>}
+          {nestedCount > 0 && <p className="border-t border-border px-4 py-2 text-xs text-destructive">Có {nestedCount} chỉ tiêu nằm trong một chỉ tiêu rộng hơn của cùng nhân sự (chồng phạm vi) — không cộng thêm vào kế hoạch để tránh tính trùng.</p>}
         </div>
       )}
 
