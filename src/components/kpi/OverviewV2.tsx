@@ -25,6 +25,7 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
   const [brandId, setBrandId] = useState(search.brandId ?? "");
   const [channel, setChannel] = useState(search.websiteId ? `w:${search.websiteId}` : search.socialId ? `s:${search.socialId}` : "");
   const [metric, setMetric] = useState(search.metric ?? "");
+  const [group, setGroup] = useState(search.group ?? "");
   const userCtx = actor.isAdmin ? search.userId : undefined;
   const [drill, setDrill] = useState<Drill | null>(null);
 
