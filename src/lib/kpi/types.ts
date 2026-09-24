@@ -57,7 +57,7 @@ export interface EmployeeKpiItem {
   updatedAt: string;
 }
 
-export type KpiMetricCategory = "web" | "social" | "video" | "design" | "task";
+export type KpiMetricCategory = "web" | "social" | "video" | "design" | "task" | "seo" | "local" | "marketing";
 
 export interface KpiMetricDefinition {
   key: KpiMetricKey;
@@ -69,7 +69,21 @@ export interface KpiMetricDefinition {
   description?: string;
   /** Có giá trị = metric chưa có nguồn dữ liệu tin cậy → không cho giao KPI demo. */
   notReady?: string;
+  /** Thư viện KR */
+  group?: KrGroup;
+  direction?: KrDirection;
+  availability?: KrAvailability;
+  source?: string;
+  rule?: string;
+  /** Cấu hình bắt buộc khi giao */
+  needs?: "keyword" | "tasks";
 }
+
+export type KrGroup = "Website & Content" | "SEO" | "Social" | "Video" | "Thiết kế" | "Local SEO" | "Hiệu suất" | "Marketing";
+/** at_least: đạt ít nhất · at_most: không vượt quá · threshold: đạt ngưỡng · growth: tăng so với kỳ gốc */
+export type KrDirection = "at_least" | "at_most" | "threshold" | "growth";
+/** linked: Đã liên kết · configure: Cần cấu hình · none: Chưa tích hợp */
+export type KrAvailability = "linked" | "configure" | "none";
 
 export type KpiMetricKey =
   | "web_content_completed"
@@ -80,4 +94,20 @@ export type KpiMetricKey =
   | "video_published"
   | "design_order_completed"
   | "design_points_completed"
-  | "task_completed";
+  | "task_completed"
+  | "seo_keyword_top"
+  | "custom_task_result"
+  | "task_on_time_rate"
+  | "task_first_pass_rate"
+  | "task_overdue"
+  | "map_post_published"
+  | "web_product_published"
+  | "seo_organic_clicks"
+  | "seo_organic_traffic"
+  | "social_reach"
+  | "social_engagement"
+  | "social_followers_growth"
+  | "local_profile_interactions"
+  | "mkt_leads"
+  | "mkt_conversions"
+  | "mkt_cpl";
