@@ -112,12 +112,16 @@ export function buildOverview(args: {
         achieved: !list.length || list.some((x) => x.unverified) ? null : list.every((x) => x.actual >= x.target) };
     });
 
+  // Video: mỗi video chỉ đếm 1 lần dù chạy qua nhiều công đoạn (chẩn đoán, không phải deliverable).
+  const videoTouched = new Set(metrics.filter((m) => m.category === "video").flatMap((m) => m.evidence.filter((e) => e.sourceType === "video").map((e) => e.sourceId))).size;
+  const videoDelivered = new Set((byMetric.get("video_published")?.evidence ?? []).map((e) => `${e.sourceType}:${e.sourceId}`)).size;
+
   return {
-    metrics, goals,
+    metrics, goals, videoTouched, videoDelivered,
     backlog: all.filter((r) => !r.status.startsWith("Chờ duyệt") && r.status !== "Chờ xác nhận"),
     overdue: all.filter((r) => r.overdue),
     waitingReview: all.filter((r) => r.status.startsWith("Chờ duyệt") || r.status === "Chờ xác nhận"),
-    unmet: metrics.filter((m) => m.actual < m.target || m.unallocatedTarget > 0),
+    unmet: metrics.filter((m) => m.target > 0 && (m.actual < m.target || m.unallocatedTarget > 0)),
   };
 }
 
