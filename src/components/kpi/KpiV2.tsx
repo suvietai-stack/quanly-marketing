@@ -6,7 +6,6 @@ import { useStore } from "@/lib/store";
 import { KPI_METRIC_LIST, getKpiMetric } from "@/lib/kpi/metrics";
 import { createKpiService, isKpiV2Enabled, KpiError, ROLE_KPI_TEMPLATES, scopeOf, type KpiDb, type NewItem } from "@/lib/kpi/service";
 import { cloudRepository, hydrateKpi, onCloudSync } from "@/lib/kpi/cloudRepository";
-import { supabase } from "@/integrations/supabase/client";
 import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
 import type { EmployeeKpiItem, GoalStatus, KpiPeriodType } from "@/lib/kpi/types";
