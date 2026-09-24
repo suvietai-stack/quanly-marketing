@@ -66,6 +66,7 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
         <select className={inp} value={group} onChange={(e) => setGroup(e.target.value)}>
           <option value="">Mọi nhóm</option><option value="web">Web</option><option value="social">Social</option><option value="video">Video</option><option value="design">Thiết kế</option><option value="task">Task</option>
         </select>
+        <Link to="/overview-v2" search={{ from: ps, to: pe, brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, metric: metric || undefined, userId: userId || undefined, group: group || undefined }} className="self-center text-xs text-primary hover:underline">→ Tổng quan V2 (giữ bộ lọc)</Link>
       </div>
       {metric && <p className="text-xs">Đang lọc chỉ tiêu: <b>{metric}</b> <button className="text-primary underline" onClick={() => setMetric("")}>bỏ lọc</button></p>}
       <p className="text-xs text-muted-foreground">Ngày tính theo giờ Việt Nam. Việc được credit theo ngày <b>nộp bản được duyệt</b> — bài nộp cuối kỳ nhưng duyệt sang kỳ sau vẫn thuộc kỳ nộp; bài đang chờ duyệt chưa tính vào hoàn thành và nằm ở cột “Chờ duyệt”.</p>
