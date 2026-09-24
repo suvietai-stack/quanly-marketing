@@ -29,27 +29,27 @@ function run(fn: () => void, ok: string, after: () => void) {
 
 export function KpiV2Gate({ title, children }: { title: string; children: (actor: { id: string; isAdmin: boolean }) => ReactNode }) {
   const me = useAuth((s) => s.users.find((x) => x.id === s.currentUserId));
-  const [state, setState] = useState<{ on: boolean; ready: boolean; isAdmin: boolean; error?: string } | null>(null);
+  const [state, setState] = useState<{ on: boolean; ready: boolean; error?: string } | null>(null);
   useEffect(() => {
     const on = isKpiV2Enabled();
-    if (!on) { setState({ on, ready: false, isAdmin: false }); return; }
+    if (!on) { setState({ on, ready: false }); return; }
     (async () => {
       try {
-        const { data: u } = await supabase.auth.getUser();
-        // Quyền Admin lấy từ máy chủ (cùng hàm RLS dùng), không tin giao diện
-        const { data: adm } = u.user ? await supabase.rpc("is_admin", { _user_id: u.user.id }) : { data: false };
         await hydrateKpi();
-        setState({ on, ready: true, isAdmin: !!adm });
-      } catch (e) { setState({ on, ready: false, isAdmin: false, error: String((e as Error).message ?? e) }); }
+        setState({ on, ready: true });
+      } catch (e) { setState({ on, ready: false, error: String((e as Error).message ?? e) }); }
     })();
   }, []);
+  // Quyền hiển thị lấy từ role đã tải trong useAuth (role-super-admin / role-admin / tài khoản hệ thống).
+  // Quyền GHI dữ liệu vẫn do RLS phía database kiểm soát — giao diện chỉ quyết định hiện/ẩn biểu mẫu.
+  const isAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
   if (!state) return <div className="p-8 text-sm text-muted-foreground">Đang tải…</div>;
   if (!state.on || !me) return <div className="p-8 text-sm text-muted-foreground">Trang không khả dụng.</div>;
   if (state.error) return <div className="p-8 text-sm text-destructive">Không tải được KPI: {state.error}</div>;
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-xl font-semibold">{title}</h1>
-      {children({ id: me.id, isAdmin: state.isAdmin })}
+      {children({ id: me.id, isAdmin })}
     </div>
   );
 }
