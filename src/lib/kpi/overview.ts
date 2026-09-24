@@ -55,19 +55,25 @@ export function buildOverview(args: {
       if (f.websiteId && it.item.websiteId && it.item.websiteId !== f.websiteId) continue;
       if (f.socialId && it.item.socialId && it.item.socialId !== f.socialId) continue;
       if (f.metricKey && it.item.metricKey !== f.metricKey) continue;
-      itemRes.set(it.item.id, { actual: it.actual, target: it.target });
-      const m = byMetric.get(it.item.metricKey) ?? { metricKey: it.item.metricKey, label: it.label, unit: it.unit, category: it.category, actual: 0, target: 0, pct: null,
-        unverifiedAssignments: 0, uniqueAssets: 0, contributions: [], assets: [], unallocatedTarget: 0, evidence: [] };
-      m.target += it.target;
-      if (it.actual === null) m.unverifiedAssignments++; else m.actual += it.actual;
-      m.contributions.push({ userId: u.id, userName: u.fullName || u.username || u.id, itemId: it.item.id, actual: it.actual, target: it.target });
+      itemRes.set(it.item.id, { actual: it.actual, target: it.contributionOnly ? 0 : it.target });
+      const m: MetricRow = byMetric.get(it.item.metricKey) ?? { metricKey: it.item.metricKey, label: it.label, unit: it.unit, category: it.category, actual: 0, target: 0, pct: null,
+        unverifiedAssignments: 0, contributionActual: 0, contributionItems: 0, uniqueAssets: 0, contributions: [], assets: [], unallocatedTarget: 0, evidence: [] };
+      m.contributions.push({ userId: u.id, userName: u.fullName || u.username || u.id, itemId: it.item.id, actual: it.actual, target: it.target, contributionOnly: it.contributionOnly });
       m.evidence.push(...it.evidence);
-      const scoped = it.item.websiteId || it.item.socialId;
-      if (!scoped) m.unallocatedTarget += it.target;
-      else {
-        const k = assetKey(it.item);
-        const a = m.assets.find((x) => x.key === k) ?? (m.assets.push({ key: k, brandId: it.item.brandId, websiteId: it.item.websiteId, socialId: it.item.socialId, actual: 0, target: 0, evidence: [] }), m.assets[m.assets.length - 1]);
-        a.target = (a.target ?? 0) + it.target;
+      if (it.contributionOnly) {
+        // KPI toàn cục/ngoài phạm vi: chỉ ghi nhận đóng góp, KHÔNG nhân bản target xuống Brand/Web/Page.
+        m.contributionItems++;
+        m.contributionActual += it.actual ?? 0;
+      } else {
+        m.target += it.target;
+        if (it.actual === null) m.unverifiedAssignments++; else m.actual += it.actual;
+        const scoped = it.item.websiteId || it.item.socialId;
+        if (!scoped) m.unallocatedTarget += it.target;
+        else {
+          const k = assetKey(it.item);
+          const a = m.assets.find((x) => x.key === k) ?? (m.assets.push({ key: k, brandId: it.item.brandId, websiteId: it.item.websiteId, socialId: it.item.socialId, actual: 0, target: 0, evidence: [] }), m.assets[m.assets.length - 1]);
+          a.target = (a.target ?? 0) + it.target;
+        }
       }
       byMetric.set(it.item.metricKey, m);
     }
