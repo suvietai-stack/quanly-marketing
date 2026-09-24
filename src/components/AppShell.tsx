@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey };
+type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey; kpi?: boolean; adminOnly?: boolean };
 
 const groups: { label: string; items: NavItem[] }[] = [
   {
