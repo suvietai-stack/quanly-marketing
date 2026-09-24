@@ -19,7 +19,7 @@ describe("KR engine", () => {
     expect(r2.status).toBeUndefined();
   });
   it("KR tùy chỉnh: chỉ đếm Task liên kết đã hoàn thành", () => {
-    const tasks = [task({ id: "a" }), task({ id: "b", status: "Đang làm" }), task({ id: "c" })];
+    const tasks = [task({ id: "a", submittedAt: "2026-09-10" }), task({ id: "b", status: "Đang làm" }), task({ id: "c" })];
     const r = calculateKrItem(emp, { metricKey: "custom_task_result", metadata: { taskIds: ["a", "b"] } }, P, { tasks });
     expect(r.actualValue).toBe(1);
   });

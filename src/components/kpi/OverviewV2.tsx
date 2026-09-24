@@ -73,13 +73,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-muted text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Chỉ tiêu</th><th>Thực hiện / Mục tiêu</th><th>%</th><th>Sản phẩm duy nhất</th><th>Nhân sự</th><th>Chưa phân bổ</th></tr></thead>
             <tbody>{ov.metrics.map((m) => (
-              <tr key={m.metricKey} className="border-t border-border">
+              <tr key={m.key} className="border-t border-border">
                 <td className="px-3 py-2"><span className={chip} onClick={() => setDrill({ title: m.label, metric: m })}>{m.label}</span> <span className="text-xs text-muted-foreground">({m.unit})</span></td>
                 <td>{m.target > 0 ? <>{m.actual}{m.status !== "ok" ? " (đã xác minh, một phần)" : ""} / {m.target}</> : <span title="KPI toàn cục chưa phân bổ cho phạm vi đang lọc">{m.contributionActual} / N/A (đóng góp)</span>}
                   {m.unverifiedAssignments > 0 && <span className="ml-1 text-xs text-muted-foreground">· {m.unverifiedAssignments} phần chưa đủ dữ liệu</span>}
                   {m.target > 0 && m.contributionItems > 0 && <span className="ml-1 text-xs text-muted-foreground">· +{m.contributionActual} đóng góp từ KPI toàn cục</span>}</td>
                 <td>{m.status === "reconciling" ? <span title={`${m.overlapItems} KPI phạm vi hẹp nằm trong KPI rộng hơn của cùng người — coi là breakdown, không cộng lại`}>Đang đối soát</span>
-                  : m.status === "insufficient" ? "Chưa đủ dữ liệu" : m.pct === null ? "N/A" : `${m.pct}%`}</td>
+                  : m.status === "insufficient" ? "Chưa đủ dữ liệu" : m.pct === null ? (m.achieved === null ? "N/A" : m.achieved ? "Đạt" : "Không đạt") : `${m.pct}%`}</td>
                 <td><span className={chip} onClick={() => setDrill({ title: `Sản phẩm — ${m.label}`, rows: m.evidence })}>{m.uniqueAssets}</span></td>
                 <td className="text-xs">{m.contributions.map((c) => (
                   <Link key={c.itemId} to="/reports-v2" search={repSearch(c.userId, m.metricKey)} className="mr-2 text-primary hover:underline">{c.userName} {c.actual ?? "N/A"}/{c.contributionOnly ? "N/A" : c.target}</Link>
@@ -111,7 +111,7 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
         <ul className="space-y-2 text-sm">{ov.goals.map((g) => (
           <li key={g.goal.id} className="rounded-lg border border-border p-3">
             <div className="flex justify-between"><b>{g.goal.title}</b><span className="text-xs text-muted-foreground">{bname(g.goal.brandId)} · {g.people} nhân sự · {g.achieved === null ? "N/A" : g.achieved ? "Đạt" : "Chưa đạt"}</span></div>
-            <div className="mt-1 text-xs">{g.metrics.length ? g.metrics.map((m) => <span key={m.metricKey} className="mr-3">{m.label}: {m.actual}/{m.target} {m.unit}{m.unverified ? " (thiếu dữ liệu)" : ""}</span>) : <span className="text-muted-foreground">Chưa phân bổ KPI</span>}</div>
+            <div className="mt-1 text-xs">{g.metrics.length ? g.metrics.map((m) => <span key={m.key} className="mr-3">{m.label}: {m.actual}/{m.target} {m.unit}{m.unverified ? " (thiếu dữ liệu)" : ""}</span>) : <span className="text-muted-foreground">Chưa phân bổ KPI</span>}</div>
           </li>
         ))}{!ov.goals.length && <li className="text-muted-foreground">Không có mục tiêu trong kỳ.</li>}</ul>
       </section>
@@ -119,7 +119,7 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
       {ov.unmet.length > 0 && (
         <section>
           <h2 className="mb-2 text-sm font-semibold">Chưa đạt / chưa phân bổ</h2>
-          <ul className="text-sm">{ov.unmet.map((m) => <li key={m.metricKey}>{m.label}: thiếu {Math.max(0, m.target - m.actual)} {m.unit}{m.unallocatedTarget ? ` · ${m.unallocatedTarget} chưa phân bổ` : ""}</li>)}</ul>
+          <ul className="text-sm">{ov.unmet.map((m) => <li key={m.key}>{m.label}: {m.direction === "at_most" ? `vượt ${m.actual - m.target}` : `thiếu ${Math.max(0, m.target - m.actual)}`} {m.unit}{m.unallocatedTarget ? ` · ${m.unallocatedTarget} chưa phân bổ` : ""}</li>)}</ul>
         </section>
       )}
 

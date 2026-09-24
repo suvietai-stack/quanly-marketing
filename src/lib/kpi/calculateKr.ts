@@ -45,12 +45,19 @@ export function calculateKrItem(emp: KpiEmployee, item: KrItem, period: { period
       const siteBrand = (wid: string) => data.websites?.find((w) => w.id === wid)?.brandId ?? null;
       const warnings = ids.filter((id) => !kws.some((k) => k.id === id)).map((id) => ({ sourceId: id, title: id, message: "Từ khóa không còn trong Check Top." }));
       const evidence: KrEvidence[] = [];
+      let valid = 0;
       for (const k of kws) {
-        if (!k.currentTop || !k.lastCheckDate) { warnings.push({ sourceId: k.id, title: k.keyword, message: "Chưa có thứ hạng đã kiểm tra." }); continue; }
+        if (item.websiteId && k.websiteId !== item.websiteId) { warnings.push({ sourceId: k.id, title: k.keyword, message: "Từ khóa thuộc Website khác — không tính." }); continue; }
+        if (item.brandId && siteBrand(k.websiteId) !== item.brandId) { warnings.push({ sourceId: k.id, title: k.keyword, message: "Từ khóa thuộc thương hiệu khác — không tính." }); continue; }
+        const checked = toDateKey(k.lastCheckDate);
+        if (!k.currentTop || !checked) { warnings.push({ sourceId: k.id, title: k.keyword, message: "Chưa có thứ hạng đã kiểm tra." }); continue; }
+        if (!isWithinPeriod(checked, period.periodStart, period.periodEnd)) { warnings.push({ sourceId: k.id, title: k.keyword, message: `Lần kiểm tra ${checked} nằm ngoài thời gian KR — dữ liệu cũ, không tính.` }); continue; }
+        valid++;
         if (k.currentTop <= n) evidence.push({ sourceType: "keyword", sourceId: k.id, title: `${k.keyword} — Top ${k.currentTop}`, creditedAt: toDateKey(k.lastCheckDate) ?? "",
           brandId: siteBrand(k.websiteId), websiteId: k.websiteId, deadline: null, onTime: null, firstPass: null, note: `Kiểm tra ${k.lastCheckDate}` });
       }
       const ended = today > period.periodEnd;
+      if (!valid) return { ...base, actualValue: null, evidence: [], warnings, status: "Chưa đủ dữ liệu: chưa có lần Check Top hợp lệ trong thời gian KR" };
       return { ...base, actualValue: evidence.length, evidence, warnings,
         status: ended ? undefined : `Thứ hạng hiện tại — đạt Top ${n} chưa đồng nghĩa hoàn thành khi kỳ chưa kết thúc` };
     }
@@ -58,8 +65,14 @@ export function calculateKrItem(emp: KpiEmployee, item: KrItem, period: { period
       const ids = meta.taskIds ?? [];
       if (!ids.length) return { ...base, actualValue: null, evidence: [], status: "Chưa liên kết Task" };
       const linked = data.tasks.filter((t) => ids.includes(t.id));
-      const evidence = linked.filter((t) => t.status === "Hoàn thành").map((t) => taskEv(t));
-      return { ...base, actualValue: evidence.length, evidence, status: `${evidence.length}/${linked.length} Task liên kết đã hoàn thành` };
+      const warnings: KrResult["warnings"] = [];
+      const ok = linked.filter((t) => {
+        if (!matchesEmployee(t.assignee, emp)) { warnings.push({ sourceId: t.id, title: t.title, message: "Task giao cho người khác — không tính." }); return false; }
+        if (!brandOk(item, t.brandId)) { warnings.push({ sourceId: t.id, title: t.title, message: "Task thuộc dự án khác — không tính." }); return false; }
+        return true;
+      });
+      const evidence = ok.filter((t) => t.status === "Hoàn thành" && isWithinPeriod(toDateKey(t.submittedAt), period.periodStart, period.periodEnd)).map((t) => taskEv(t));
+      return { ...base, actualValue: evidence.length, evidence, warnings, status: `${evidence.length}/${ok.length} Task liên kết đã hoàn thành trong kỳ` };
     }
     case "task_on_time_rate": {
       const done = completedTasks(emp, item, period, data.tasks).filter((t) => t.deadline).map((t) => taskEv(t));
