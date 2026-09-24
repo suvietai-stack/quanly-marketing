@@ -16,10 +16,18 @@ import {
   Briefcase, RefreshCw, X, ExternalLink,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { PlanProgress } from "@/components/kpi/PlanProgress";
+import { isKpiV2Enabled } from "@/lib/kpi/service";
+import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Tổng Quan — Base Marketing" }] }),
+  head: () => ({ meta: [
+    { title: "Tổng Quan — Base Marketing" },
+    { name: "description", content: "Công việc, KPI và tiến độ triển khai Marketing Sứ Việt." },
+    { property: "og:title", content: "Tổng Quan — Base Marketing" },
+    { property: "og:description", content: "Công việc, KPI và tiến độ triển khai Marketing Sứ Việt." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: () => (
     <RequirePermission perm="overview.view">
       <Overview />
@@ -91,36 +99,31 @@ function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
 function Overview() {
   const { user, can, isSuperAdmin } = useCurrentUser();
   const canSeeAllDept = isSuperAdmin || can("overview.all_dept") || can("report.view");
-  const [tab, setTab] = useState<"mine" | "all" | "plan">("mine");
-  void user;
+  const isKpiManager = !!user && (isSuperAdmin || user.roleId === "role-admin");
+  const [tab, setTab] = useState<"mine" | "summary" | "staff" | "ops">("mine");
+
+  const desc = {
+    mine: "Công việc và KPI của bạn — cập nhật tự động từ công việc thực tế.",
+    summary: "Tiến độ triển khai theo thương hiệu và kênh.",
+    staff: "Tiến độ KPI của từng nhân sự.",
+    ops: "Tình hình vận hành phòng Digital Marketing.",
+  }[tab];
 
   return (
     <>
-      <PageHeader
-        title="Tổng Quan"
-        description={
-          tab === "mine"
-            ? "Việc liên quan trực tiếp đến bạn — cập nhật theo thời gian thực."
-            : tab === "plan" ? "Tiến độ kế hoạch theo Thương hiệu, Website và Page — tính tự động từ công việc thực tế."
-            : "Tình hình vận hành phòng Digital Marketing."
-        }
-      />
+      <PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} />
       {canSeeAllDept ? (
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList>
-            <TabsTrigger value="mine">Tổng quan của tôi</TabsTrigger>
-            <TabsTrigger value="all">Tổng quan toàn phòng</TabsTrigger>
-            <TabsTrigger value="plan">Tiến độ kế hoạch</TabsTrigger>
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="mine">Của tôi</TabsTrigger>
+            {isKpiV2Enabled() && <TabsTrigger value="summary">Tổng hợp</TabsTrigger>}
+            {isKpiV2Enabled() && isKpiManager && <TabsTrigger value="staff">Nhân sự</TabsTrigger>}
+            <TabsTrigger value="ops">Vận hành</TabsTrigger>
           </TabsList>
-          <TabsContent value="mine" className="mt-6">
-            <MineOverview />
-          </TabsContent>
-          <TabsContent value="all" className="mt-6">
-            <DeptOverview />
-          </TabsContent>
-          <TabsContent value="plan" className="mt-6">
-            <PlanProgress />
-          </TabsContent>
+          <TabsContent value="mine" className="mt-6"><MineOverview /></TabsContent>
+          <TabsContent value="summary" className="mt-6"><ManagerSummary /></TabsContent>
+          {isKpiManager && <TabsContent value="staff" className="mt-6"><StaffTable /></TabsContent>}
+          <TabsContent value="ops" className="mt-6"><DeptOverview /></TabsContent>
         </Tabs>
       ) : (
         <MineOverview />
@@ -131,7 +134,7 @@ function Overview() {
 
 // ============ Mine ============
 
-function MineOverview() {
+function useMyWork() {
   const s = useStore();
   const { user, can, isSuperAdmin } = useCurrentUser();
   const mine = useMemo(() => buildMyNames(user as any), [user]);
