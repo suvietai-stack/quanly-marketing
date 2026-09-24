@@ -20,6 +20,12 @@ export interface MetricRow {
   /** số asset/item nguồn duy nhất (1 video nhiều stage = 1) */
   uniqueAssets: number;
   contributions: Contribution[]; assets: AssetRow[]; unallocatedTarget: number; evidence: EvidenceRow[];
+  /** Tổng cảnh báo (thiếu lịch sử, trùng tên...) của các item được tính */
+  warnings: number;
+  /** Item phạm vi hẹp nằm trong KPI rộng hơn của CÙNG người/metric/kỳ → coi là breakdown, không cộng thêm */
+  overlapItems: number;
+  /** ok = % chính thức; insufficient = Chưa đủ dữ liệu; reconciling = Đang đối soát (chồng phạm vi); na = không có target */
+  status: "ok" | "insufficient" | "reconciling" | "na";
 }
 export interface GoalRow { goal: Goal; metrics: { metricKey: string; label: string; unit: string; actual: number; target: number; unverified: number }[]; people: number; achieved: boolean | null }
 export interface Overview { metrics: MetricRow[]; backlog: WorkRow[]; overdue: WorkRow[]; waitingReview: WorkRow[]; goals: GoalRow[]; unmet: MetricRow[];
@@ -45,10 +51,12 @@ export function buildOverview(args: {
   const work: WorkRow[] = [];
   const itemRes = new Map<string, { actual: number | null; target: number }>();
 
+  const periodById = new Map(args.periods.map((p) => [p.id, p]));
   for (const u of args.users) {
     if (!periods.some((p) => p.userId === u.id)) continue;
     const r = buildEmployeeReport({ user: u, allUsers: args.users, periods, items: args.items, adjustments: args.adjustments, data: args.data, filters: scope, today: args.today });
     work.push(...r.backlog, ...r.waitingReview);
+    const breakdownIds = findNestedItems(r.items.map((x) => x.item), periodById);
     for (const it of r.items) {
       // Item có scope khác bộ lọc brand/asset → không thuộc tổng quan này.
       if (f.brandId && it.item.brandId && it.item.brandId !== f.brandId) continue;
@@ -57,15 +65,21 @@ export function buildOverview(args: {
       if (f.metricKey && it.item.metricKey !== f.metricKey) continue;
       itemRes.set(it.item.id, { actual: it.actual, target: it.contributionOnly ? 0 : it.target });
       const m: MetricRow = byMetric.get(it.item.metricKey) ?? { metricKey: it.item.metricKey, label: it.label, unit: it.unit, category: it.category, actual: 0, target: 0, pct: null,
-        unverifiedAssignments: 0, contributionActual: 0, contributionItems: 0, uniqueAssets: 0, contributions: [], assets: [], unallocatedTarget: 0, evidence: [] };
+        unverifiedAssignments: 0, contributionActual: 0, contributionItems: 0, uniqueAssets: 0, contributions: [], assets: [], unallocatedTarget: 0, evidence: [],
+        warnings: 0, overlapItems: 0, status: "na" };
       m.contributions.push({ userId: u.id, userName: u.fullName || u.username || u.id, itemId: it.item.id, actual: it.actual, target: it.target, contributionOnly: it.contributionOnly });
       m.evidence.push(...it.evidence);
-      if (it.contributionOnly) {
+      if (!it.contributionOnly && breakdownIds.has(it.item.id)) {
+        // Chồng phạm vi: target hẹp là breakdown của KPI rộng hơn → không cộng actual/target lần 2.
+        m.overlapItems++;
+        itemRes.delete(it.item.id);
+      } else if (it.contributionOnly) {
         // KPI toàn cục/ngoài phạm vi: chỉ ghi nhận đóng góp, KHÔNG nhân bản target xuống Brand/Web/Page.
         m.contributionItems++;
         m.contributionActual += it.actual ?? 0;
       } else {
         m.target += it.target;
+        m.warnings += it.warnings;
         if (it.actual === null) m.unverifiedAssignments++; else m.actual += it.actual;
         const scoped = it.item.websiteId || it.item.socialId;
         if (!scoped) m.unallocatedTarget += it.target;
@@ -82,7 +96,9 @@ export function buildOverview(args: {
   for (const m of byMetric.values()) {
     m.evidence = dedup(m.evidence);
     m.uniqueAssets = m.evidence.length;
-    m.pct = pct(m.actual, m.target);
+    m.status = m.overlapItems > 0 ? "reconciling" : m.target <= 0 ? "na" : m.unverifiedAssignments > 0 || m.warnings > 0 ? "insufficient" : "ok";
+    // Chỉ hiển thị % chính thức khi đủ dữ liệu & không chồng phạm vi; actual vẫn là "số đã xác minh (một phần)".
+    m.pct = m.status === "ok" ? pct(m.actual, m.target) : null;
     for (const e of m.evidence) {
       if (!e.websiteId && !e.socialId) continue;
       const k = assetKey(e);
@@ -121,8 +137,27 @@ export function buildOverview(args: {
     backlog: all.filter((r) => !r.status.startsWith("Chờ duyệt") && r.status !== "Chờ xác nhận"),
     overdue: all.filter((r) => r.overdue),
     waitingReview: all.filter((r) => r.status.startsWith("Chờ duyệt") || r.status === "Chờ xác nhận"),
-    unmet: metrics.filter((m) => m.target > 0 && (m.actual < m.target || m.unallocatedTarget > 0)),
+    unmet: metrics.filter((m) => m.status === "ok" && (m.actual < m.target || m.unallocatedTarget > 0)),
   };
+}
+
+/** Phạm vi a chứa (rộng hơn hẳn) phạm vi b? global ⊃ brand ⊃ website/page. */
+function scopeContains(a: EmployeeKpiItem, b: EmployeeKpiItem) {
+  const lvl = (x: EmployeeKpiItem) => (x.websiteId || x.socialId ? 2 : x.brandId ? 1 : 0);
+  if (lvl(a) >= lvl(b)) return false;
+  if (lvl(a) === 0) return true;
+  return a.brandId === b.brandId;
+}
+/** Item hẹp nằm trong item rộng hơn cùng metric + kỳ giao nhau (của cùng 1 người). */
+export function findNestedItems(items: EmployeeKpiItem[], periods: Map<string, EmployeeKpiPeriod>): Set<string> {
+  const out = new Set<string>();
+  const overlapDates = (x: EmployeeKpiItem, y: EmployeeKpiItem) => {
+    const p = periods.get(x.kpiPeriodId), q = periods.get(y.kpiPeriodId);
+    return !p || !q || (p.periodStart <= q.periodEnd && q.periodStart <= p.periodEnd);
+  };
+  for (const b of items) for (const a of items)
+    if (a.id !== b.id && a.metricKey === b.metricKey && overlapDates(a, b) && scopeContains(a, b)) out.add(b.id);
+  return out;
 }
 
 /** Query params liên thông (được validate ở cả 2 route). */

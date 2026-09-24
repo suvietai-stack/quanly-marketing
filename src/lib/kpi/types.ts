@@ -67,6 +67,8 @@ export interface KpiMetricDefinition {
   /** Các phạm vi được phép gắn cho chỉ tiêu này */
   scopes: KpiScope[];
   description?: string;
+  /** Có giá trị = metric chưa có nguồn dữ liệu tin cậy → không cho giao KPI demo. */
+  notReady?: string;
 }
 
 export type KpiMetricKey =

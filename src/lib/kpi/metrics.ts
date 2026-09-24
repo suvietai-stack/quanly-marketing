@@ -31,6 +31,7 @@ export const KPI_METRICS: Record<KpiMetricKey, KpiMetricDefinition> = {
     unit: "count",
     category: "video",
     scopes: ["global", "brand"],
+    notReady: "Chưa sẵn sàng: cần sự kiện ghi nhận người quay (stage event) — chưa có dữ liệu.",
   },
   video_edit_completed: {
     key: "video_edit_completed",
@@ -59,6 +60,7 @@ export const KPI_METRICS: Record<KpiMetricKey, KpiMetricDefinition> = {
     unit: "point",
     category: "design",
     scopes: ["global", "brand"],
+    notReady: "Chưa sẵn sàng: cần điểm order đã được Admin duyệt (snapshot) — chưa có dữ liệu.",
   },
   task_completed: {
     key: "task_completed",
