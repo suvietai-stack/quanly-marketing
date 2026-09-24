@@ -97,6 +97,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
         ))}
       </section>
 
+      {(ov.videoTouched > 0 || ov.videoDelivered > 0) && (
+        <section className="rounded-lg border border-border p-3 text-sm">
+          <b className="text-sm">Video (chẩn đoán công đoạn)</b>
+          <p className="mt-1 text-xs text-muted-foreground">Video bàn giao: <b>{ov.videoDelivered}</b> · Video có người tham gia ở ít nhất một công đoạn: <b>{ov.videoTouched}</b>. Nhiều công đoạn trên cùng một video KHÔNG cộng thành nhiều sản phẩm bàn giao.</p>
+        </section>
+      )}
+
       <section>
         <h2 className="mb-2 text-sm font-semibold">Mục tiêu</h2>
         <ul className="space-y-2 text-sm">{ov.goals.map((g) => (
