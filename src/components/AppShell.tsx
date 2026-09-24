@@ -1,3 +1,4 @@
+import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
@@ -11,7 +12,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey };
+type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey; kpi?: boolean; adminOnly?: boolean };
 
 const groups: { label: string; items: NavItem[] }[] = [
   {
@@ -42,6 +43,15 @@ const groups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: "KPI",
+    items: [
+      { to: "/goals-v2", label: "Mục tiêu", icon: Target, kpi: true },
+      { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, adminOnly: true },
+      { to: "/reports-v2", label: "Báo cáo nhân sự", icon: FileText, kpi: true },
+      { to: "/overview-v2", label: "Tổng quan KPI", icon: Globe, kpi: true },
+    ],
+  },
+  {
     label: "Mở rộng & Hệ thống",
     items: [
       { to: "/okrs", label: "OKRs", icon: Target, badge: "Sắp ra mắt" },
@@ -57,6 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, role, can, isSuperAdmin } = useCurrentUser();
   const logout = useAuth((s) => s.logout);
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
+  const isKpiAdmin = isSuperAdmin || user?.roleId === "role-admin";
   const canApprove = isSuperAdmin || can("settings.account_approve");
 
   const isActive = (to: string, exact?: boolean) =>
@@ -66,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((g) => ({
       ...g,
       items: g.items
-        .filter((it) => !it.perm || can(it.perm))
+        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
         .map((it) =>
           it.to === "/settings" && canApprove && pendingCount > 0
             ? { ...it, badge: `${pendingCount} chờ duyệt` }
