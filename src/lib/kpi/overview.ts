@@ -5,14 +5,19 @@
  */
 import type { EmployeeKpiItem, EmployeeKpiPeriod, Goal } from "./types";
 import type { KpiAdjustment } from "./service";
+import { getKpiMetric } from "./metrics";
+import { krAchieved } from "./calculateKr";
 import { buildEmployeeReport, type EvidenceRow, type ReportData, type ReportFilters, type WorkRow } from "./report";
 
 export interface OverviewFilters { brandId?: string; websiteId?: string; socialId?: string; metricKey?: string; userId?: string; group?: string }
 export interface Contribution { userId: string; userName: string; itemId: string; actual: number | null; target: number; contributionOnly: boolean }
 export interface AssetRow { key: string; brandId: string | null; websiteId: string | null; socialId: string | null; actual: number; target: number | null; evidence: EvidenceRow[] }
 export interface MetricRow {
-  metricKey: string; label: string; unit: string; category: string;
+  /** key gom nhóm: metricKey cho chỉ số cộng được; metricKey#itemId cho %/Top N/KR tùy chỉnh */
+  key: string; metricKey: string; label: string; unit: string; category: string; direction: string;
   actual: number; target: number; pct: number | null;
+  /** Đạt/không đạt theo hướng mục tiêu (at_most: thực tế ≤ chỉ tiêu) — null khi chưa đủ dữ liệu */
+  achieved: boolean | null;
   /** assignment không có evidence đáng tin → không cộng vào actual */
   unverifiedAssignments: number;
   /** KPI toàn cục/ngoài phạm vi lọc: chỉ ghi đóng góp, KHÔNG nhân bản target xuống Brand/Asset */
@@ -27,7 +32,7 @@ export interface MetricRow {
   /** ok = % chính thức; insufficient = Chưa đủ dữ liệu; reconciling = Đang đối soát (chồng phạm vi); na = không có target */
   status: "ok" | "insufficient" | "reconciling" | "na";
 }
-export interface GoalRow { goal: Goal; metrics: { metricKey: string; label: string; unit: string; actual: number; target: number; unverified: number }[]; people: number; achieved: boolean | null }
+export interface GoalRow { goal: Goal; metrics: { key: string; direction: string; metricKey: string; label: string; unit: string; actual: number; target: number; unverified: number }[]; people: number; achieved: boolean | null }
 export interface Overview { metrics: MetricRow[]; backlog: WorkRow[]; overdue: WorkRow[]; waitingReview: WorkRow[]; goals: GoalRow[]; unmet: MetricRow[];
   /** CHẨN ĐOÁN: số video duy nhất xuất hiện ở mọi công đoạn (không cộng stage thành nhiều video giao hàng) */
   videoTouched: number;
@@ -37,6 +42,10 @@ export interface Overview { metrics: MetricRow[]; backlog: WorkRow[]; overdue: W
 
 const pct = (a: number, t: number) => (t > 0 ? Math.round((a / t) * 1000) / 10 : null);
 const assetKey = (r: { brandId: string | null; websiteId: string | null; socialId: string | null }) => `${r.brandId}|${r.websiteId}|${r.socialId}`;
+/** KR khác nhau không gộp chỉ vì cùng loại chỉ số: % không cộng; Top N / KR tùy chỉnh mỗi KR một dòng. */
+const NON_ADDITIVE = new Set(["seo_keyword_top", "custom_task_result"]);
+export const aggKey = (it: { id: string; metricKey: string }, unit?: string) =>
+  unit === "percent" || NON_ADDITIVE.has(it.metricKey) ? `${it.metricKey}#${it.id}` : it.metricKey;
 const dedup = <T extends { sourceType: string; sourceId: string }>(rows: T[]) => [...new Map(rows.map((r) => [`${r.sourceType}:${r.sourceId}`, r])).values()];
 
 export function buildOverview(args: {
@@ -64,7 +73,9 @@ export function buildOverview(args: {
       if (f.socialId && it.item.socialId && it.item.socialId !== f.socialId) continue;
       if (f.metricKey && it.item.metricKey !== f.metricKey) continue;
       itemRes.set(it.item.id, { actual: it.actual, target: it.contributionOnly ? 0 : it.target });
-      const m: MetricRow = byMetric.get(it.item.metricKey) ?? { metricKey: it.item.metricKey, label: it.label, unit: it.unit, category: it.category, actual: 0, target: 0, pct: null,
+      const key = aggKey(it.item, it.unit);
+      const dir = getKpiMetric(it.item.metricKey)?.direction ?? "at_least";
+      const m: MetricRow = byMetric.get(key) ?? { key, metricKey: it.item.metricKey, label: it.label, unit: it.unit, category: it.category, direction: dir, actual: 0, target: 0, pct: null, achieved: null,
         unverifiedAssignments: 0, contributionActual: 0, contributionItems: 0, uniqueAssets: 0, contributions: [], assets: [], unallocatedTarget: 0, evidence: [],
         warnings: 0, overlapItems: 0, status: "na" };
       m.contributions.push({ userId: u.id, userName: u.fullName || u.username || u.id, itemId: it.item.id, actual: it.actual, target: it.target, contributionOnly: it.contributionOnly });
@@ -89,7 +100,7 @@ export function buildOverview(args: {
           a.target = (a.target ?? 0) + it.target;
         }
       }
-      byMetric.set(it.item.metricKey, m);
+      byMetric.set(key, m);
     }
   }
 
@@ -98,7 +109,9 @@ export function buildOverview(args: {
     m.uniqueAssets = m.evidence.length;
     m.status = m.overlapItems > 0 ? "reconciling" : m.target <= 0 ? "na" : m.unverifiedAssignments > 0 || m.warnings > 0 ? "insufficient" : "ok";
     // Chỉ hiển thị % chính thức khi đủ dữ liệu & không chồng phạm vi; actual vẫn là "số đã xác minh (một phần)".
-    m.pct = m.status === "ok" ? pct(m.actual, m.target) : null;
+    m.achieved = m.status === "ok" ? krAchieved(m.actual, m.target, m.direction) : null;
+    // "Không vượt quá": % không có nghĩa (3/1 = 300% không phải vượt chỉ tiêu) → chỉ hiện Đạt/Không đạt.
+    m.pct = m.status === "ok" && m.direction !== "at_most" ? pct(m.actual, m.target) : null;
     for (const e of m.evidence) {
       if (!e.websiteId && !e.socialId) continue;
       const k = assetKey(e);
@@ -118,14 +131,15 @@ export function buildOverview(args: {
       const ms = new Map<string, GoalRow["metrics"][number]>();
       for (const p of gp) for (const it of args.items.filter((i) => i.kpiPeriodId === p.id)) {
         const r = itemRes.get(it.id); if (!r) continue;
-        const m = byMetric.get(it.metricKey)!;
-        const row = ms.get(it.metricKey) ?? { metricKey: it.metricKey, label: m.label, unit: m.unit, actual: 0, target: 0, unverified: 0 };
+        const key = aggKey(it, getKpiMetric(it.metricKey)?.unit);
+        const m = byMetric.get(key); if (!m) continue;
+        const row = ms.get(key) ?? { key, direction: m.direction, metricKey: it.metricKey, label: m.label, unit: m.unit, actual: 0, target: 0, unverified: 0 };
         row.target += r.target; if (r.actual === null) row.unverified++; else row.actual += r.actual;
-        ms.set(it.metricKey, row);
+        ms.set(key, row);
       }
       const list = [...ms.values()];
       return { goal: g, metrics: list, people: new Set(gp.map((p) => p.userId)).size,
-        achieved: !list.length || list.some((x) => x.unverified) ? null : list.every((x) => x.actual >= x.target) };
+        achieved: !list.length || list.some((x) => x.unverified) ? null : list.every((x) => krAchieved(x.actual, x.target, x.direction) === true) };
     });
 
   // Video: mỗi video chỉ đếm 1 lần dù chạy qua nhiều công đoạn (chẩn đoán, không phải deliverable).
@@ -137,7 +151,7 @@ export function buildOverview(args: {
     backlog: all.filter((r) => !r.status.startsWith("Chờ duyệt") && r.status !== "Chờ xác nhận"),
     overdue: all.filter((r) => r.overdue),
     waitingReview: all.filter((r) => r.status.startsWith("Chờ duyệt") || r.status === "Chờ xác nhận"),
-    unmet: metrics.filter((m) => m.status === "ok" && (m.actual < m.target || m.unallocatedTarget > 0)),
+    unmet: metrics.filter((m) => m.status === "ok" && (m.achieved === false || m.unallocatedTarget > 0)),
   };
 }
 
