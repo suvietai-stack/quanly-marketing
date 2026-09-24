@@ -83,7 +83,7 @@ export function calculateKrItem(emp: KpiEmployee, item: KrItem, period: { period
       return { ...base, actualValue: evidence.length, evidence };
     }
     case "map_post_published": {
-      const evidence = (data.mapPosts ?? []).filter((p) => p.status === "Đã đăng" && matchesEmployee(p.owner, emp) && brandOk(item, p.brandId)
+      const evidence = (data.mapPosts ?? []).filter((p) => (p.status === "Đã đăng" || p.status === "Hoàn thành") && matchesEmployee(p.owner, emp) && brandOk(item, p.brandId)
         && isWithinPeriod(toDateKey(p.publishedDate), period.periodStart, period.periodEnd))
         .map((p): KrEvidence => ({ sourceType: "map_post", sourceId: p.id, title: p.title, creditedAt: toDateKey(p.publishedDate)!, brandId: p.brandId,
           websiteId: null, deadline: null, onTime: null, firstPass: null }));

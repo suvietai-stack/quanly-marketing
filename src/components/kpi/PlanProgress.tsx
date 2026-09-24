@@ -39,7 +39,7 @@ export function PlanProgress() {
   const pIds = new Set(periods.map((p) => p.id));
   const scopes = new Map<string, { brandId: string | null; websiteId: string | null; socialId: string | null }>();
   for (const it of db.items) if (pIds.has(it.kpiPeriodId)) scopes.set(`${it.brandId}|${it.websiteId}|${it.socialId}`, { brandId: it.brandId ?? null, websiteId: it.websiteId ?? null, socialId: it.socialId ?? null });
-  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders };
+  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites };
   const sorted = [...scopes.values()].sort((a, b) => `${a.brandId ?? ""}${a.websiteId ?? ""}${a.socialId ?? ""}`.localeCompare(`${b.brandId ?? ""}${b.websiteId ?? ""}${b.socialId ?? ""}`));
   const rows = sorted.flatMap((sc) => {
     const ov = buildOverview({ users, goals: [], periods, items: db.items, adjustments: db.adjustments, data, today,

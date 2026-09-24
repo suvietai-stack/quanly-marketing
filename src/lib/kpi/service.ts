@@ -4,7 +4,7 @@
  * Đổi sang Supabase staging sau này bằng cách implement lại KpiRepository.
  */
 import type { Goal, EmployeeKpiPeriod, EmployeeKpiItem, KpiPeriodStatus, KpiScope } from "./types";
-import { getKpiMetric } from "./metrics";
+import { getKpiMetric, isAssignable } from "./metrics";
 
 export const KPI_V2_MODE = "cloud" as const;
 
@@ -43,10 +43,10 @@ export function scopeOf(i: { brandId?: string | null; websiteId?: string | null;
   if (i.brandId) return "brand";
   return "global";
 }
-const scopeKey = (i: { brandId?: string | null; websiteId?: string | null; socialId?: string | null }) =>
-  `${i.brandId ?? ""}|${i.websiteId ?? ""}|${i.socialId ?? ""}`;
+const scopeKey = (i: { brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> }) =>
+  `${i.brandId ?? ""}|${i.websiteId ?? ""}|${i.socialId ?? ""}|${i.label ?? ""}|${JSON.stringify((i.metadata as { keywordIds?: unknown })?.keywordIds ?? "")}`;
 
-export type NewItem = { metricKey: string; targetValue: number; brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null };
+export type NewItem = { metricKey: string; targetValue: number; brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> };
 
 export function createKpiService(repo: KpiRepository) {
   const requireAdmin = (a: KpiActor) => { if (!a.isAdmin) throw new KpiError("Chỉ Admin được quản lý KPI."); };
@@ -60,6 +60,11 @@ export function createKpiService(repo: KpiRepository) {
     if ((it.websiteId || it.socialId) && !it.brandId) throw new KpiError("Website/Social phải thuộc một thương hiệu.");
     const sc = scopeOf(it);
     if (!m.scopes.includes(sc)) throw new KpiError(`"${m.label}" không hỗ trợ phạm vi ${sc}.`);
+    if (!m.notReady && !isAssignable(m)) throw new KpiError(`"${m.label}" chưa có nguồn dữ liệu tự động — chưa thể giao.`);
+    const md = (it.metadata ?? {}) as { keywordIds?: string[]; taskIds?: string[] };
+    if (m.needs === "keyword" && !md.keywordIds?.length) throw new KpiError("KR thứ hạng cần chọn ít nhất một từ khóa.");
+    if (m.needs === "tasks" && !md.taskIds?.length) throw new KpiError("KR tùy chỉnh cần liên kết ít nhất một Task.");
+    if (m.needs === "tasks" && !it.label?.trim()) throw new KpiError("KR tùy chỉnh cần tên kết quả.");
     return m;
   }
 
@@ -117,7 +122,7 @@ export function createKpiService(repo: KpiRepository) {
         const created = input.items.map((it): EmployeeKpiItem => ({
           id: uid(), kpiPeriodId: pid, metricKey: it.metricKey, label: it.label ?? null, targetValue: it.targetValue,
           unit: getKpiMetric(it.metricKey)!.unit, targetOperator: ">=", brandId: it.brandId ?? null, websiteId: it.websiteId ?? null,
-          socialId: it.socialId ?? null, metadata: input.goalId ? { goalId: input.goalId } : {}, createdAt: now(), updatedAt: now(),
+          socialId: it.socialId ?? null, metadata: { ...(it.metadata ?? {}), ...(input.goalId ? { goalId: input.goalId } : {}) }, createdAt: now(), updatedAt: now(),
         }));
         db.items.push(...created);
         return { period, items: created };
