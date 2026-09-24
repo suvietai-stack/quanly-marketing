@@ -11,7 +11,7 @@ import { calculateVideoDesignItem } from "./calculateVideoDesign";
 import { matchesEmployee, type KpiEmployee } from "./identity";
 import { toDateKey } from "./date";
 
-export interface ReportData { tasks: Task[]; webContents: WebContent[]; socialPosts: SocialPost[]; videos: Video[]; orders: DesignOrder[] }
+export interface ReportData { tasks: Task[]; webContents: WebContent[]; socialPosts: SocialPost[]; videos: Video[]; orders: DesignOrder[]; /** snapshot điểm order (sidecar đã duyệt); thiếu → N/A */ designPoints?: Record<string, number> }
 export interface ReportFilters { brandId?: string; websiteId?: string; socialId?: string; group?: KpiMetricCategory | "" }
 export type SourceType = "task" | "web_content" | "social_post" | "video" | "design_order";
 
@@ -80,7 +80,7 @@ export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period:
       websiteId: e.websiteId ?? null, socialId: e.socialId ?? null, deadline: e.deadline, onTime: e.onTime,
       firstPass: e.basis === "history" || e.basis === "submittedAt" ? e.firstPass : null }));
   } else {
-    const r = calculateVideoDesignItem(emp, input, p, { videos: data.videos, designOrders: data.orders, socialPosts: data.socialPosts });
+    const r = calculateVideoDesignItem(emp, input, p, { videos: data.videos, designOrders: data.orders, socialPosts: data.socialPosts, designPoints: data.designPoints });
     warnings = r.warnings.length; supported = r.supported; actual = r.actualValue;
     raw = r.evidence.map((e) => ({ sourceType: e.sourceType, sourceId: e.sourceId, title: e.title, creditedAt: e.creditedAt, brandId: e.brandId,
       ...look(e.sourceType, e.sourceId), deadline: e.deadline, onTime: e.onTime, firstPass: e.firstPass, points: e.points }));
