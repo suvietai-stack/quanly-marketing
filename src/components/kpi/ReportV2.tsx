@@ -4,7 +4,8 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { createKpiService, mockRepository } from "@/lib/kpi/service";
-import { buildEmployeeReport, overviewV2Href, type EvidenceRow, type WorkRow, type ItemReport, type Ratio } from "@/lib/kpi/report";
+import type { V2Search } from "@/lib/kpi/overview";
+import { buildEmployeeReport, type EvidenceRow, type WorkRow, type ItemReport, type Ratio } from "@/lib/kpi/report";
 
 const svc = createKpiService(mockRepository);
 const inp = "h-9 rounded-md border border-input bg-background px-2 text-sm";
@@ -14,7 +15,7 @@ const pctText = (r: Ratio) => (r.pct === null ? "N/A" : `${r.pct}%`);
 
 type Drill = { title: string; kind: "evidence"; rows: EvidenceRow[] } | { title: string; kind: "work"; rows: WorkRow[] } | { title: string; kind: "breakdown"; item: ItemReport; period: { periodStart: string; periodEnd: string } } | { title: string; kind: "ratio"; r: Ratio; rows: EvidenceRow[]; field: "onTime" | "firstPass" };
 
-function SourceLink({ t, id, websiteId, socialId, children }: { t: string; id: string; websiteId: string | null; socialId: string | null; children: React.ReactNode }) {
+export function SourceLink({ t, id, websiteId, socialId, children }: { t: string; id: string; websiteId: string | null; socialId: string | null; children: React.ReactNode }) {
   void id;
   if (t === "web_content" && websiteId) return <Link to="/websites/$id" params={{ id: websiteId }} className="text-primary hover:underline">{children}</Link>;
   if (t === "social_post" && socialId) return <Link to="/social/$id" params={{ id: socialId }} className="text-primary hover:underline">{children}</Link>;
@@ -24,15 +25,17 @@ function SourceLink({ t, id, websiteId, socialId, children }: { t: string; id: s
   return <Link to="/web-contents" className="text-primary hover:underline">{children}</Link>;
 }
 
-export function ReportV2({ actor }: { actor: { id: string; isAdmin: boolean } }) {
+export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin: boolean }; search?: V2Search }) {
   const users = useAuth((s) => s.users);
   const store = useStore();
   const db = useMemo(() => svc.listForActor(actor), [actor]); // quyền: Admin tất cả, còn lại chỉ bản thân
   const periodKeys = [...new Set(db.periods.map((p) => `${p.periodStart}|${p.periodEnd}`))].sort().reverse();
-  const [pk, setPk] = useState(periodKeys[0] ?? "");
-  const [userId, setUserId] = useState("");
-  const [brandId, setBrandId] = useState("");
-  const [channel, setChannel] = useState("");
+  const sk = search.from && search.to ? `${search.from}|${search.to}` : "";
+  const [pk, setPk] = useState(periodKeys.includes(sk) ? sk : periodKeys[0] ?? "");
+  const [metric, setMetric] = useState(search.metric ?? "");
+  const [userId, setUserId] = useState(actor.isAdmin ? search.userId ?? "" : "");
+  const [brandId, setBrandId] = useState(search.brandId ?? "");
+  const [channel, setChannel] = useState(search.websiteId ? `w:${search.websiteId}` : search.socialId ? `s:${search.socialId}` : "");
   const [group, setGroup] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [drill, setDrill] = useState<Drill | null>(null);
@@ -43,7 +46,7 @@ export function ReportV2({ actor }: { actor: { id: string; isAdmin: boolean } })
   const visibleUsers = users.filter((u) => periods.some((p) => p.userId === u.id) && (!userId || u.id === userId));
   const filters = { brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, group: group as never };
   const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders };
-  const reports = visibleUsers.map((u) => ({ u, r: buildEmployeeReport({ user: u, allUsers: users, periods, items: db.items, adjustments: db.adjustments, data, filters, today }) }));
+  const reports = visibleUsers.map((u) => ({ u, r: buildEmployeeReport({ user: u, allUsers: users, periods, items: metric ? db.items.filter((i) => i.metricKey === metric) : db.items, adjustments: db.adjustments, data, filters, today }) }));
   const bname = (id: string | null) => store.brands.find((b) => b.id === id)?.name ?? "—";
   const cname = (w: string | null, s: string | null) => (w ? `Web: ${store.websites.find((x) => x.id === w)?.name ?? w}` : s ? `Page: ${store.socials.find((x) => x.id === s)?.name ?? s}` : "—");
 
@@ -64,6 +67,7 @@ export function ReportV2({ actor }: { actor: { id: string; isAdmin: boolean } })
           <option value="">Mọi nhóm</option><option value="web">Web</option><option value="social">Social</option><option value="video">Video</option><option value="design">Thiết kế</option><option value="task">Task</option>
         </select>
       </div>
+      {metric && <p className="text-xs">Đang lọc chỉ tiêu: <b>{metric}</b> <button className="text-primary underline" onClick={() => setMetric("")}>bỏ lọc</button></p>}
       <p className="text-xs text-muted-foreground">Ngày tính theo giờ Việt Nam. Việc được credit theo ngày <b>nộp bản được duyệt</b> — bài nộp cuối kỳ nhưng duyệt sang kỳ sau vẫn thuộc kỳ nộp; bài đang chờ duyệt chưa tính vào hoàn thành và nằm ở cột “Chờ duyệt”.</p>
 
       <div className="overflow-x-auto rounded-lg border border-border">
@@ -115,7 +119,7 @@ export function ReportV2({ actor }: { actor: { id: string; isAdmin: boolean } })
           {drill.kind === "ratio" && <p className="mb-2 text-xs text-muted-foreground">Tử số {drill.r.num} / mẫu số {drill.r.den} (chỉ việc có {drill.field === "onTime" ? "deadline hợp lệ" : "lịch sử duyệt tin cậy"}). {drill.r.den === 0 && "Mẫu số 0 → N/A."}</p>}
           {drill.kind === "breakdown" ? (
             <ul className="space-y-1 text-sm">{drill.item.breakdown.map((b) => (
-              <li key={b.key}>{bname(b.brandId)} · {cname(b.websiteId, b.socialId)}: <b>{b.count}</b> <span className="text-xs text-muted-foreground">→ Overview V2: <code>{overviewV2Href(b, drill.period)}</code></span></li>
+              <li key={b.key}>{bname(b.brandId)} · {cname(b.websiteId, b.socialId)}: <b>{b.count}</b> <Link to="/overview-v2" search={{ from: drill.period.periodStart, to: drill.period.periodEnd, brandId: b.brandId ?? undefined, websiteId: b.websiteId ?? undefined, socialId: b.socialId ?? undefined, metric: drill.item.item.metricKey }} className="text-xs text-primary hover:underline">→ Tổng quan V2</Link></li>
             ))}{!drill.item.breakdown.length && <li className="text-muted-foreground">Không có evidence.</li>}</ul>
           ) : (
             <table className="w-full text-sm"><tbody>
