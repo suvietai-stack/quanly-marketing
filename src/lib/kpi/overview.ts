@@ -8,19 +8,26 @@ import type { KpiAdjustment } from "./service";
 import { buildEmployeeReport, type EvidenceRow, type ReportData, type WorkRow } from "./report";
 
 export interface OverviewFilters { brandId?: string; websiteId?: string; socialId?: string; metricKey?: string; userId?: string }
-export interface Contribution { userId: string; userName: string; itemId: string; actual: number | null; target: number }
+export interface Contribution { userId: string; userName: string; itemId: string; actual: number | null; target: number; contributionOnly: boolean }
 export interface AssetRow { key: string; brandId: string | null; websiteId: string | null; socialId: string | null; actual: number; target: number | null; evidence: EvidenceRow[] }
 export interface MetricRow {
   metricKey: string; label: string; unit: string; category: string;
   actual: number; target: number; pct: number | null;
   /** assignment không có evidence đáng tin → không cộng vào actual */
   unverifiedAssignments: number;
+  /** KPI toàn cục/ngoài phạm vi lọc: chỉ ghi đóng góp, KHÔNG nhân bản target xuống Brand/Asset */
+  contributionActual: number; contributionItems: number;
   /** số asset/item nguồn duy nhất (1 video nhiều stage = 1) */
   uniqueAssets: number;
   contributions: Contribution[]; assets: AssetRow[]; unallocatedTarget: number; evidence: EvidenceRow[];
 }
 export interface GoalRow { goal: Goal; metrics: { metricKey: string; label: string; unit: string; actual: number; target: number; unverified: number }[]; people: number; achieved: boolean | null }
-export interface Overview { metrics: MetricRow[]; backlog: WorkRow[]; overdue: WorkRow[]; waitingReview: WorkRow[]; goals: GoalRow[]; unmet: MetricRow[] }
+export interface Overview { metrics: MetricRow[]; backlog: WorkRow[]; overdue: WorkRow[]; waitingReview: WorkRow[]; goals: GoalRow[]; unmet: MetricRow[];
+  /** CHẨN ĐOÁN: số video duy nhất xuất hiện ở mọi công đoạn (không cộng stage thành nhiều video giao hàng) */
+  videoTouched: number;
+  /** Video thực sự bàn giao = evidence của chỉ tiêu video_published (duy nhất) */
+  videoDelivered: number;
+}
 
 const pct = (a: number, t: number) => (t > 0 ? Math.round((a / t) * 1000) / 10 : null);
 const assetKey = (r: { brandId: string | null; websiteId: string | null; socialId: string | null }) => `${r.brandId}|${r.websiteId}|${r.socialId}`;
