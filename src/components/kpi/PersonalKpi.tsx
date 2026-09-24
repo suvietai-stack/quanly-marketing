@@ -301,10 +301,10 @@ export function ChannelProgress({ periodKey, brandId }: { periodKey: string; bra
             {rows.map(({ sc, m, tone }) => {
               const title = `${cname(sc.websiteId, sc.socialId)} — ${m.label}`;
               return (
-                <button key={`${sc.websiteId}|${sc.socialId}|${m.metricKey}`} onClick={() => setSel({ title, m })} className="block w-full rounded-lg p-2 text-left hover:bg-muted/50">
+                <button key={`${sc.websiteId}|${sc.socialId}|${m.key}`} onClick={() => setSel({ title, m })} className="block w-full rounded-lg p-2 text-left hover:bg-muted/50">
                   <div className="flex items-baseline justify-between gap-2 text-sm">
                     <span className="truncate"><span className="font-medium">{cname(sc.websiteId, sc.socialId)}</span> <span className="text-muted-foreground">· {m.label}</span></span>
-                    <span className="shrink-0 tabular-nums">{m.actual} / {m.target} {m.status === "ok" ? <b className={toneText[tone]}>{m.pct}%</b> : <span className="text-xs text-muted-foreground">{m.status === "reconciling" ? "Đang đối soát" : "Chưa đủ dữ liệu"}</span>}</span>
+                    <span className="shrink-0 tabular-nums">{m.actual} / {m.target} {m.status === "ok" ? <b className={toneText[tone]}>{m.pct === null ? (m.achieved ? "Đạt" : "Không đạt") : `${m.pct}%`}</b> : <span className="text-xs text-muted-foreground">{m.status === "reconciling" ? "Đang đối soát" : "Chưa đủ dữ liệu"}</span>}</span>
                   </div>
                   <div className="mt-1.5"><Bar value={m.target ? (m.actual / m.target) * 100 : 0} tone={tone} /></div>
                 </button>

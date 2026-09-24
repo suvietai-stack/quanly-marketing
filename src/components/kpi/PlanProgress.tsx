@@ -59,10 +59,10 @@ export function PlanProgress() {
           <thead className="bg-muted text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Thương hiệu</th><th>Website/Page</th><th>Loại công việc</th><th>Đã làm / Kế hoạch</th><th>Tiến độ</th><th>Nhân sự</th><th /></tr></thead>
           <tbody>
             {rows.map(({ sc, m }) => (
-              <tr key={`${sc.brandId}|${sc.websiteId}|${sc.socialId}|${m.metricKey}`} className="border-t border-border">
+              <tr key={`${sc.brandId}|${sc.websiteId}|${sc.socialId}|${m.key}`} className="border-t border-border">
                 <td className="px-3 py-2">{bname(sc.brandId)}</td><td>{cname(sc.websiteId, sc.socialId)}</td><td>{m.label}</td>
                 <td className="font-medium">{m.actual} / {m.target}</td>
-                <td>{m.status === "ok" ? `${m.pct}%` : m.status === "reconciling" ? <span className="text-muted-foreground">Đang đối soát (chồng phạm vi)</span> : <span className="text-muted-foreground">Chưa đủ dữ liệu</span>}</td>
+                <td>{m.status === "ok" ? (m.pct === null ? (m.achieved ? "Đạt" : "Không đạt") : `${m.pct}%`) : m.status === "reconciling" ? <span className="text-muted-foreground">Đang đối soát (chồng phạm vi)</span> : <span className="text-muted-foreground">Chưa đủ dữ liệu</span>}</td>
                 <td>{new Set(m.contributions.map((c) => c.userId)).size}</td>
                 <td className="text-xs">
                   <Link to="/overview-v2" search={{ from: ps, to: pe, brandId: sc.brandId ?? undefined, websiteId: sc.websiteId ?? undefined, socialId: sc.socialId ?? undefined, metric: m.metricKey }} className="text-primary hover:underline">Công việc</Link>
