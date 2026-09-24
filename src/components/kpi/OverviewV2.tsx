@@ -36,7 +36,7 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
   const socialId = channel.startsWith("s:") ? channel.slice(2) : undefined;
   const ov = buildOverview({
     users, goals: db.goals.filter((g) => g.periodStart <= pe && g.periodEnd >= ps), periods, items: db.items, adjustments: db.adjustments,
-    data: { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders },
+    data: { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites },
     filters: { brandId: brandId || undefined, websiteId, socialId, metricKey: metric || undefined, userId: userCtx, group: group || undefined }, today: todayVN(),
   });
   const bname = (id: string | null) => store.brands.find((b) => b.id === id)?.name ?? "—";
