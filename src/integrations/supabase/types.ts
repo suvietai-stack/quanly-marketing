@@ -116,6 +116,47 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_kpi_adjustments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          field: string
+          from_value: number
+          id: string
+          item_id: string
+          reason: string
+          to_value: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          field?: string
+          from_value: number
+          id?: string
+          item_id: string
+          reason?: string
+          to_value: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          field?: string
+          from_value?: number
+          id?: string
+          item_id?: string
+          reason?: string
+          to_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_kpi_adjustments_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "employee_kpi_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_kpi_items: {
         Row: {
           brand_id: string | null
@@ -215,6 +256,41 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_kpi_snapshots: {
+        Row: {
+          data: Json
+          engine_version: string
+          id: string
+          kpi_period_id: string
+          locked_at: string
+          locked_by: string | null
+        }
+        Insert: {
+          data?: Json
+          engine_version: string
+          id?: string
+          kpi_period_id: string
+          locked_at?: string
+          locked_by?: string | null
+        }
+        Update: {
+          data?: Json
+          engine_version?: string
+          id?: string
+          kpi_period_id?: string
+          locked_at?: string
+          locked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_kpi_snapshots_kpi_period_id_fkey"
+            columns: ["kpi_period_id"]
+            isOneToOne: true
+            referencedRelation: "employee_kpi_periods"
             referencedColumns: ["id"]
           },
         ]

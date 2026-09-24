@@ -15,6 +15,13 @@
       "when": 1790149870839,
       "tag": "0001_app_roles_select_permission",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790235949871,
+      "tag": "0002_kpi_v2_adjustments_snapshots_lock",
+      "breakpoints": true
     }
   ]
 }
