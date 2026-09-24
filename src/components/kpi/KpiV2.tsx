@@ -8,6 +8,7 @@ import { createKpiService, isKpiV2Enabled, KpiError, ROLE_KPI_TEMPLATES, scopeOf
 import { cloudRepository, hydrateKpi, onCloudSync } from "@/lib/kpi/cloudRepository";
 import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
+import { findNestedItems } from "@/lib/kpi/overview";
 import type { EmployeeKpiItem, GoalStatus, KpiPeriodType } from "@/lib/kpi/types";
 
 const svc = createKpiService(cloudRepository);
@@ -157,7 +158,8 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
   const [ptype, setPtype] = useState<KpiPeriodType>("month");
   const [range, setRange] = useState<readonly [string, string]>(monthRange());
   const [goalId, setGoalId] = useState("");
-  const [rows, setRows] = useState<NewItem[]>([]);
+  const [newGoal, setNewGoal] = useState("");
+  const [rows, setRows] = useState<NewItem[]>([{ metricKey: KPI_METRIC_LIST[0].key, targetValue: 10 }]);
   const selUser = users.find((u) => u.id === userId);
   const roleName = roles.find((r) => r.id === selUser?.roleId)?.name ?? "";
   const template = ROLE_KPI_TEMPLATES[roleName];
@@ -165,55 +167,100 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
   const view = useMemo(() => (db ? svc.listForActor(actor) : null), [db, actor]);
   if (!db || !view) return null;
   const setRow = (i: number, p: Partial<NewItem>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
+  const submit = () => run(() => {
+    let gid = goalId === "__new" ? "" : goalId;
+    if (goalId === "__new" && newGoal.trim()) gid = svc.saveGoal(actor, { title: newGoal, periodStart: range[0], periodEnd: range[1], status: "active" }).id;
+    svc.assign(actor, { userId, periodType: ptype, periodStart: range[0], periodEnd: range[1], goalId: gid || null, items: rows });
+  }, "Đã giao chỉ tiêu", () => { refresh(); setRows([{ metricKey: KPI_METRIC_LIST[0].key, targetValue: 10 }]); setNewGoal(""); if (goalId === "__new") setGoalId(""); });
+
+  // Kế hoạch tổng hợp tự động từ chỉ tiêu đã phân bổ (cùng kỳ đang chọn). Item nằm trong KPI rộng hơn của cùng người → không cộng thêm.
+  const planPeriods = view.periods.filter((p) => p.periodStart === range[0] && p.periodEnd === range[1]);
+  const pmap = new Map(planPeriods.map((p) => [p.id, p]));
+  const plan = new Map<string, { brandId: string | null; websiteId: string | null; socialId: string | null; metricKey: string; target: number; people: Set<string> }>();
+  let nestedCount = 0;
+  for (const p of planPeriods) {
+    const its = view.items.filter((i) => i.kpiPeriodId === p.id);
+    const nested = findNestedItems(its, pmap);
+    for (const it of its) {
+      if (nested.has(it.id)) { nestedCount++; continue; }
+      const k = `${it.brandId}|${it.websiteId}|${it.socialId}|${it.metricKey}`;
+      const row = plan.get(k) ?? { brandId: it.brandId ?? null, websiteId: it.websiteId ?? null, socialId: it.socialId ?? null, metricKey: it.metricKey, target: 0, people: new Set() };
+      row.target += it.targetValue; row.people.add(p.userId); plan.set(k, row);
+    }
+  }
+  const scopeName = (r: { brandId: string | null; websiteId: string | null; socialId: string | null }) =>
+    r.websiteId ? `Web: ${websites.find((w) => w.id === r.websiteId)?.name ?? "?"}` : r.socialId ? `Page: ${socials.find((s) => s.id === r.socialId)?.name ?? "?"}` : "—";
 
   return (
     <div className="space-y-6">
       {actor.isAdmin && (
         <div className="space-y-3 rounded-lg border border-border p-4">
           <div className="grid gap-2 md:grid-cols-5">
-            <select className={inp} value={userId} onChange={(e) => setUserId(e.target.value)}>
-              <option value="">— Nhân sự —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}
-            </select>
             <select className={inp} value={ptype} onChange={(e) => { const t = e.target.value as KpiPeriodType; setPtype(t); if (t === "month") setRange(monthRange()); if (t === "quarter") setRange(quarterRange()); }}>
-              <option value="month">Tháng</option><option value="quarter">Quý</option><option value="custom">Tùy chỉnh</option>
+              <option value="month">Kỳ: Tháng này</option><option value="quarter">Kỳ: Quý này</option><option value="custom">Kỳ: Tùy chỉnh</option>
             </select>
             <input type="date" className={inp} value={range[0]} disabled={ptype !== "custom"} onChange={(e) => setRange([e.target.value, range[1]])} />
             <input type="date" className={inp} value={range[1]} disabled={ptype !== "custom"} onChange={(e) => setRange([range[0], e.target.value])} />
+            <select className={inp} value={userId} onChange={(e) => setUserId(e.target.value)}>
+              <option value="">— Nhân sự —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}
+            </select>
             <select className={inp} value={goalId} onChange={(e) => setGoalId(e.target.value)}>
-              <option value="">— Mục tiêu (tùy chọn) —</option>{db.goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+              <option value="">Mục tiêu: không gắn</option>
+              {db.goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+              <option value="__new">+ Tạo mục tiêu mới…</option>
             </select>
           </div>
-          {template && <button className={btn2} onClick={() => setRows([...rows, ...template])}>Gợi ý theo role “{roleName}” (chỉ gợi ý)</button>}
+          {goalId === "__new" && <input className={`${inp} w-full`} placeholder="Tên mục tiêu mới (vd: Tăng nội dung Website Sứ Việt)" value={newGoal} onChange={(e) => setNewGoal(e.target.value)} />}
+          <div className="grid gap-2 text-xs text-muted-foreground md:grid-cols-6"><span>Thương hiệu</span><span>Website/Page</span><span className="md:col-span-2">Loại công việc</span><span>Số lượng</span><span /></div>
           {rows.map((r, i) => {
             const m = getKpiMetric(r.metricKey);
             return (
               <div key={i} className="grid gap-2 md:grid-cols-6">
-                <select className={`${inp} md:col-span-2`} value={r.metricKey} onChange={(e) => setRow(i, { metricKey: e.target.value })}>
-                  {KPI_METRIC_LIST.map((x) => <option key={x.key} value={x.key} disabled={!!x.notReady} title={x.notReady}>{x.label}{x.notReady ? " (chưa sẵn sàng)" : ""}</option>)}
-                </select>
-                <input type="number" min={1} className={inp} value={r.targetValue} onChange={(e) => setRow(i, { targetValue: Number(e.target.value) })} />
                 <select className={inp} value={r.brandId ?? ""} onChange={(e) => setRow(i, { brandId: e.target.value || null, websiteId: null, socialId: null })}>
                   <option value="">Toàn bộ</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
                 <select className={inp} disabled={!r.brandId} value={r.websiteId ? `w:${r.websiteId}` : r.socialId ? `s:${r.socialId}` : ""}
                   onChange={(e) => { const [t, id] = e.target.value.split(":"); setRow(i, { websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null }); }}>
-                  <option value="">— Kênh —</option>
+                  <option value="">— Tất cả kênh —</option>
                   {m?.scopes.includes("website") && websites.filter((w) => w.brandId === r.brandId).map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
                   {m?.scopes.includes("social") && socials.filter((s) => s.brandId === r.brandId).map((s) => <option key={s.id} value={`s:${s.id}`}>Page: {s.name}</option>)}
                 </select>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">{m?.unit}
-                  <button className={btn2} onClick={() => setRows(rows.filter((_, j) => j !== i))}>Xóa</button></div>
+                <select className={`${inp} md:col-span-2`} value={r.metricKey} onChange={(e) => setRow(i, { metricKey: e.target.value, websiteId: null, socialId: null })}>
+                  {KPI_METRIC_LIST.map((x) => <option key={x.key} value={x.key} disabled={!!x.notReady} title={x.notReady}>{x.label}{x.notReady ? " (chưa khả dụng)" : ""}</option>)}
+                </select>
+                <input type="number" min={1} className={inp} value={r.targetValue} onChange={(e) => setRow(i, { targetValue: Number(e.target.value) })} />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">{m?.unit === "point" ? "điểm" : "sản phẩm"}
+                  {rows.length > 1 && <button className={btn2} onClick={() => setRows(rows.filter((_, j) => j !== i))}>Xóa</button>}</div>
               </div>
             );
           })}
-          <div className="flex gap-2">
-            <button className={btn2} onClick={() => setRows([...rows, { metricKey: KPI_METRIC_LIST[0].key, targetValue: 10 }])}>+ Thêm chỉ tiêu</button>
-            <button className={btn} disabled={!userId || !rows.length} onClick={() => run(() => svc.assign(actor, {
-              userId, periodType: ptype, periodStart: range[0], periodEnd: range[1], goalId: goalId || null, items: rows,
-            }), "Đã giao KPI", () => { refresh(); setRows([]); })}>Giao KPI</button>
+          <div className="flex flex-wrap gap-2">
+            <button className={btn2} onClick={() => setRows([...rows, { metricKey: KPI_METRIC_LIST[0].key, targetValue: 10 }])}>+ Thêm dòng</button>
+            {template && <button className={btn2} onClick={() => setRows([...rows, ...template])}>Gợi ý theo vai trò “{roleName}”</button>}
+            <button className={btn} disabled={!userId || !rows.length || (goalId === "__new" && !newGoal.trim())} onClick={submit}>Giao chỉ tiêu</button>
           </div>
         </div>
       )}
+
+      {actor.isAdmin && (
+        <div className="rounded-lg border border-border">
+          <div className="border-b border-border px-4 py-2 text-sm font-medium">Kế hoạch tổng hợp kỳ {range[0]} → {range[1]} <span className="font-normal text-muted-foreground">(tự cộng từ chỉ tiêu đã giao)</span></div>
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2">Thương hiệu</th><th>Website/Page</th><th>Loại công việc</th><th>Tổng chỉ tiêu</th><th>Số nhân sự</th></tr></thead>
+            <tbody>
+              {[...plan.values()].map((r) => (
+                <tr key={`${r.brandId}|${r.websiteId}|${r.socialId}|${r.metricKey}`} className="border-t border-border">
+                  <td className="px-4 py-2">{r.brandId ? brands.find((b) => b.id === r.brandId)?.name ?? "?" : "Toàn bộ"}</td>
+                  <td>{scopeName(r)}</td><td>{getKpiMetric(r.metricKey)?.label ?? r.metricKey}</td><td className="font-medium">{r.target}</td><td>{r.people.size}</td>
+                </tr>
+              ))}
+              {!plan.size && <tr><td colSpan={5} className="py-4 text-center text-muted-foreground">Chưa có chỉ tiêu trong kỳ này.</td></tr>}
+            </tbody>
+          </table>
+          {nestedCount > 0 && <p className="border-t border-border px-4 py-2 text-xs text-destructive">Có {nestedCount} chỉ tiêu nằm trong một chỉ tiêu rộng hơn của cùng nhân sự (chồng phạm vi) — không cộng thêm vào kế hoạch để tránh tính trùng.</p>}
+        </div>
+      )}
+
 
       {view.periods.map((p) => {
         const u = users.find((x) => x.id === p.userId);

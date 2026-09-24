@@ -16,6 +16,7 @@ import {
   Briefcase, RefreshCw, X, ExternalLink,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PlanProgress } from "@/components/kpi/PlanProgress";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Tổng Quan — Base Marketing" }] }),
@@ -90,7 +91,7 @@ function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
 function Overview() {
   const { user, can, isSuperAdmin } = useCurrentUser();
   const canSeeAllDept = isSuperAdmin || can("overview.all_dept") || can("report.view");
-  const [tab, setTab] = useState<"mine" | "all">("mine");
+  const [tab, setTab] = useState<"mine" | "all" | "plan">("mine");
   void user;
 
   return (
@@ -100,6 +101,7 @@ function Overview() {
         description={
           tab === "mine"
             ? "Việc liên quan trực tiếp đến bạn — cập nhật theo thời gian thực."
+            : tab === "plan" ? "Tiến độ kế hoạch theo Thương hiệu, Website và Page — tính tự động từ công việc thực tế."
             : "Tình hình vận hành phòng Digital Marketing."
         }
       />
@@ -108,12 +110,16 @@ function Overview() {
           <TabsList>
             <TabsTrigger value="mine">Tổng quan của tôi</TabsTrigger>
             <TabsTrigger value="all">Tổng quan toàn phòng</TabsTrigger>
+            <TabsTrigger value="plan">Tiến độ kế hoạch</TabsTrigger>
           </TabsList>
           <TabsContent value="mine" className="mt-6">
             <MineOverview />
           </TabsContent>
           <TabsContent value="all" className="mt-6">
             <DeptOverview />
+          </TabsContent>
+          <TabsContent value="plan" className="mt-6">
+            <PlanProgress />
           </TabsContent>
         </Tabs>
       ) : (
