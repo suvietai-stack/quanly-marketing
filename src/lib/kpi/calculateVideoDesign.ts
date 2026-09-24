@@ -57,11 +57,10 @@ export interface VDData {
 
 type H = { at: string; byId?: string; byName?: string; toStatus?: string };
 
-/** Lần nộp CUỐI trước lần duyệt CUỐI (theo history). */
+/** Lần nộp CUỐI trước lần duyệt ĐẦU TIÊN (credit tối đa 1 lần, không dời kỳ khi duyệt lại). */
 function lastSubmitBeforeApproval(history: H[] | undefined, submit: string, approved: string) {
   const h = (history ?? []).filter((e) => e?.at && !Number.isNaN(timeOf(e.at))).slice().sort((a, b) => timeOf(a.at) - timeOf(b.at));
-  let ai = -1;
-  for (let i = h.length - 1; i >= 0; i--) if (h[i].toStatus === approved) { ai = i; break; }
+  const ai = h.findIndex((e) => e.toStatus === approved);
   if (ai < 0) return { found: "none" as const };
   for (let i = ai - 1; i >= 0; i--) if (h[i].toStatus === submit) return { found: "ok" as const, entry: h[i] };
   return { found: "approved_no_submit" as const };
@@ -74,7 +73,8 @@ function firstTransition(history: H[] | undefined, to: string): H | null {
 }
 
 function byMatches(e: H, emp: KpiEmployee): boolean {
-  return matchesEmployee(e.byId, emp) || matchesEmployee(e.byName, emp);
+  if (e.byId) return e.byId === emp.id;
+  return !!emp.fullName && matchesEmployee(e.byName, emp);
 }
 
 function onTime(deadline: string | null | undefined, credited: string): boolean | null {
@@ -98,7 +98,7 @@ function fromStageEvents(emp: KpiEmployee, stage: KpiStage, events: KpiStageEven
   const bySrc = new Map<string, KpiStageEvent[]>();
   for (const e of events ?? []) if (e.stage === stage) bySrc.set(e.sourceId, [...(bySrc.get(e.sourceId) ?? []), e]);
   for (const [sid, evs] of bySrc) {
-    const approved = evs.filter((e) => e.eventType === "approved" || e.eventType === "published").sort((a, b) => timeOf(b.occurredAt) - timeOf(a.occurredAt))[0];
+    const approved = evs.filter((e) => e.eventType === "approved" || e.eventType === "published").sort((a, b) => timeOf(a.occurredAt) - timeOf(b.occurredAt))[0];
     if (!approved) continue;
     const submit = stage === "video_publish" || stage === "video_shoot"
       ? approved
