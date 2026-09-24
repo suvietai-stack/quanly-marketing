@@ -55,8 +55,13 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
           {store.websites.filter((w) => w.brandId === brandId).map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
           {store.socials.filter((s) => s.brandId === brandId).map((s) => <option key={s.id} value={`s:${s.id}`}>Page: {s.name}</option>)}
         </select>
+        <select className={inp} value={group} onChange={(e) => setGroup(e.target.value)}>
+          <option value="">Tất cả nhóm chỉ số</option>
+          <option value="web">Website</option><option value="social">Social</option><option value="video">Video</option><option value="design">Thiết kế</option><option value="task">Công việc</option>
+        </select>
         {metric && <button className={`${inp} text-xs`} onClick={() => setMetric("")}>Chỉ tiêu: {metric} ✕</button>}
         {userCtx && <span className="self-center text-xs text-muted-foreground">Ngữ cảnh nhân sự: {users.find((u) => u.id === userCtx)?.fullName ?? userCtx}</span>}
+        <Link to="/reports-v2" search={repSearch(userCtx, metric || undefined)} className="self-center text-xs text-primary hover:underline">→ Báo cáo nhân sự V2 (giữ bộ lọc)</Link>
       </div>
       {!actor.isAdmin && <p className="text-xs text-muted-foreground">Bạn chỉ thấy phần KPI được giao cho chính mình.</p>}
 
