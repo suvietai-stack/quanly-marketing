@@ -126,7 +126,9 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
           <div className="mb-2 flex items-center justify-between"><h3 className="font-medium">{drill.title}</h3><button className="text-xs text-muted-foreground" onClick={() => setDrill(null)}>Đóng</button></div>
           {"metric" in drill ? (
             <ul className="space-y-1 text-sm">
-              {drill.metric.assets.map((a) => <li key={a.key}>{bname(a.brandId)} · {aname(a.websiteId, a.socialId)}: <span className={chip} onClick={() => setDrill({ title: aname(a.websiteId, a.socialId), rows: a.evidence })}><b>{a.actual}</b></span> / {a.target ?? "Chưa phân bổ"}</li>)}
+              {drill.metric.assets.map((a) => <li key={a.key}>{bname(a.brandId)} · {aname(a.websiteId, a.socialId)}: <span className={chip} onClick={() => setDrill({ title: aname(a.websiteId, a.socialId), rows: a.evidence })}><b>{a.actual}</b></span> / {a.target ?? "Chưa phân bổ"}{" "}
+                <Link to="/reports-v2" search={repSearch(userCtx, drill.metric.metricKey, a)} className="text-xs text-primary hover:underline">→ Báo cáo V2</Link></li>)}
+              {drill.metric.contributionItems > 0 && <li className="text-muted-foreground">Đóng góp từ KPI toàn cục (không có mục tiêu riêng ở phạm vi này): {drill.metric.contributionActual}</li>}
               {drill.metric.unallocatedTarget > 0 && <li className="text-muted-foreground">Chưa phân bổ xuống Web/Page: {drill.metric.unallocatedTarget}</li>}
               {!drill.metric.assets.length && <li className="text-muted-foreground">Chưa có dữ liệu theo kênh.</li>}
             </ul>
