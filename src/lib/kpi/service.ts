@@ -6,7 +6,7 @@
 import type { Goal, EmployeeKpiPeriod, EmployeeKpiItem, KpiPeriodStatus, KpiScope } from "./types";
 import { getKpiMetric } from "./metrics";
 
-export const KPI_V2_MODE = "mock" as const;
+export const KPI_V2_MODE = "cloud" as const;
 
 export interface KpiAdjustment { id: string; itemId: string; field: "targetValue"; from: number; to: number; by: string; at: string; reason: string }
 export interface KpiDb { goals: Goal[]; periods: EmployeeKpiPeriod[]; items: EmployeeKpiItem[]; adjustments: KpiAdjustment[] }
@@ -179,8 +179,7 @@ export const ROLE_KPI_TEMPLATES: Record<string, NewItem[]> = {
   "Video": [{ metricKey: "video_edit_completed", targetValue: 12 }, { metricKey: "video_published", targetValue: 12 }],
 };
 
+/** Feature flag: BẬT mặc định. Tắt nhanh toàn bộ KPI V2 bằng VITE_KPI_V2=0. */
 export function isKpiV2Enabled(): boolean {
-  if (import.meta.env.VITE_KPI_V2 === "1") return true;
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem("kpi_v2_flag") === "on";
+  return import.meta.env.VITE_KPI_V2 !== "0";
 }

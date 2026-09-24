@@ -1,7 +1,7 @@
 /** KPI V2 — UI ẩn (feature flag OFF mặc định, không có trong menu). Dữ liệu MOCK, không ghi production. */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { useCurrentUser, useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { KPI_METRIC_LIST, getKpiMetric } from "@/lib/kpi/metrics";
 import { createKpiService, isKpiV2Enabled, KpiError, ROLE_KPI_TEMPLATES, scopeOf, type KpiDb, type NewItem } from "@/lib/kpi/service";
@@ -19,7 +19,7 @@ const btn2 = "h-8 rounded-md border border-input px-2 text-xs";
 export function useKpiDb() {
   const [db, setDb] = useState<KpiDb | null>(null);
   const refresh = () => setDb(svc.list());
-  useEffect(refresh, []);
+  useEffect(() => { refresh(); return onCloudSync((err) => { if (err) toast.error(err); refresh(); }); }, []);
   return { db, refresh };
 }
 
@@ -28,22 +28,28 @@ function run(fn: () => void, ok: string, after: () => void) {
 }
 
 export function KpiV2Gate({ title, children }: { title: string; children: (actor: { id: string; isAdmin: boolean }) => ReactNode }) {
-  const { user, isSuperAdmin } = useCurrentUser() as ReturnType<typeof useCurrentUser> & { user?: { id: string } };
   const me = useAuth((s) => s.users.find((x) => x.id === s.currentUserId));
-  const [on, setOn] = useState<boolean | null>(null);
-  useEffect(() => setOn(isKpiV2Enabled()), []);
-  void user;
-  if (on === null) return null;
-  if (!on || !me) return <div className="p-8 text-sm text-muted-foreground">Trang không khả dụng.</div>;
+  const [state, setState] = useState<{ on: boolean; ready: boolean; isAdmin: boolean; error?: string } | null>(null);
+  useEffect(() => {
+    const on = isKpiV2Enabled();
+    if (!on) { setState({ on, ready: false, isAdmin: false }); return; }
+    (async () => {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        // Quyền Admin lấy từ máy chủ (cùng hàm RLS dùng), không tin giao diện
+        const { data: adm } = u.user ? await supabase.rpc("is_admin", { _user_id: u.user.id }) : { data: false };
+        await hydrateKpi();
+        setState({ on, ready: true, isAdmin: !!adm });
+      } catch (e) { setState({ on, ready: false, isAdmin: false, error: String((e as Error).message ?? e) }); }
+    })();
+  }, []);
+  if (!state) return <div className="p-8 text-sm text-muted-foreground">Đang tải…</div>;
+  if (!state.on || !me) return <div className="p-8 text-sm text-muted-foreground">Trang không khả dụng.</div>;
+  if (state.error) return <div className="p-8 text-sm text-destructive">Không tải được KPI: {state.error}</div>;
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
-        <p className="mt-1 rounded-md border border-dashed border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Bản thử KPI V2 — dữ liệu MẪU chỉ lưu trên trình duyệt này, không ghi vào hệ thống thật.
-        </p>
-      </div>
-      {children({ id: me.id, isAdmin: isSuperAdmin })}
+      <h1 className="text-xl font-semibold">{title}</h1>
+      {children({ id: me.id, isAdmin: state.isAdmin })}
     </div>
   );
 }
