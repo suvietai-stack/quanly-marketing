@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
-import { KPI_METRIC_LIST, getKpiMetric } from "@/lib/kpi/metrics";
+import { KPI_METRIC_LIST, KR_GROUPS, AVAILABILITY_LABEL, DIRECTION_LABEL, getKpiMetric, isAssignable } from "@/lib/kpi/metrics";
+import { calculateKrItem, KR_ENGINE_KEYS } from "@/lib/kpi/calculateKr";
 import { createKpiService, isKpiV2Enabled, KpiError, ROLE_KPI_TEMPLATES, scopeOf, type KpiDb, type NewItem } from "@/lib/kpi/service";
 import { cloudRepository, hydrateKpi, onCloudSync, flushKpi } from "@/lib/kpi/cloudRepository";
 import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
@@ -97,7 +98,8 @@ export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string
   const [editTitle, setEditTitle] = useState("");
   if (!db) return null;
   const goals = db.goals.filter((g) => (!periodKey || (g.periodStart <= pe && g.periodEnd >= ps)) && (!brandFilter || g.brandId === brandFilter));
-  const linked = (gid: string) => db.items.filter((i) => (i.metadata as { goalId?: string }).goalId === gid || db.periods.find((p) => p.id === i.kpiPeriodId)?.goalId === gid).length;
+  const krsOf = (gid: string) => db.items.filter((i) => (i.metadata as { goalId?: string }).goalId === gid || db.periods.find((p) => p.id === i.kpiPeriodId)?.goalId === gid);
+  const linked = (gid: string) => krsOf(gid).length;
   const chName = (g: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
     g.websiteId ? websites.find((w) => w.id === g.websiteId)?.name : g.socialId ? socials.find((s) => s.id === g.socialId)?.name : brands.find((b) => b.id === g.brandId)?.name ?? "—";
 
@@ -124,7 +126,7 @@ export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string
       )}
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full min-w-[560px] text-sm">
-          <thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2.5 font-medium">Mục tiêu</th><th className="font-medium">Phạm vi</th><th className="font-medium">KPI liên kết</th><th className="font-medium">Trạng thái</th><th /></tr></thead>
+          <thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2.5 font-medium">Mục tiêu</th><th className="font-medium">Phạm vi</th><th className="font-medium">Kết quả then chốt (KR)</th><th className="font-medium">Trạng thái</th><th /></tr></thead>
           <tbody>
             {goals.map((g) => (
               <tr key={g.id} className="border-t border-border">
@@ -137,7 +139,7 @@ export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string
                   <div className="text-xs text-muted-foreground">{g.periodStart.split("-").reverse().join("/")} → {g.periodEnd.split("-").reverse().join("/")}</div>
                 </td>
                 <td>{chName(g)}</td>
-                <td>{linked(g.id)}</td>
+                <td><GoalKrs items={krsOf(g.id)} db={db} /></td>
                 <td>{actor.isAdmin
                   ? <select className={`${inp} h-8`} value={g.status} onChange={(e) => run(() => svc.saveGoal(actor, { ...g, status: e.target.value as GoalStatus }), "Đã cập nhật trạng thái", refresh)}>
                       {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -158,11 +160,15 @@ export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string
 function useActual() {
   const s = useStore();
   const users = useAuth((x) => x.users);
-  return (userId: string, it: EmployeeKpiItem, periodStart: string, periodEnd: string): { value: number | null; warnings: number } => {
+  return (userId: string, it: EmployeeKpiItem, periodStart: string, periodEnd: string): { value: number | null; warnings: number; status?: string } => {
     const u = users.find((x) => x.id === userId);
     const emp = { id: userId, fullName: u?.fullName, username: u?.username };
     const period = { periodStart, periodEnd };
     const item = { metricKey: it.metricKey, targetValue: it.targetValue, brandId: it.brandId, websiteId: it.websiteId, socialId: it.socialId };
+    if (KR_ENGINE_KEYS.has(it.metricKey)) {
+      const r = calculateKrItem(emp, { ...item, metadata: it.metadata }, period, { tasks: s.tasks, keywords: s.keywords, mapPosts: s.mapPosts, websites: s.websites });
+      return { value: r.actualValue, warnings: r.warnings.length, status: r.status };
+    }
     if (["web_content_completed", "social_post_completed", "task_completed"].includes(it.metricKey)) {
       const r = calculateKpiItem(emp, item, period, { webContents: s.webContents, socialPosts: s.socialPosts, tasks: s.tasks });
       return { value: r.evidence.length === 0 && r.warnings.length ? null : r.actualValue, warnings: r.warnings.length };
@@ -173,7 +179,7 @@ function useActual() {
 }
 
 export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean } }) {
-  const [tab, setTab] = useState<"kpi" | "goals">("kpi");
+  const [tab, setTab] = useState<"kpi" | "goals" | "library">("kpi");
   const months = useMemo(monthOptions, []);
   const [m0, m1] = monthRange();
   const [pk, setPk] = useState(`${m0}|${m1}`);
@@ -184,8 +190,8 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
       <div className="flex flex-wrap items-center gap-2">
         {actor.isAdmin && (
           <div className="inline-flex rounded-lg bg-muted p-1 text-sm">
-            {(["kpi", "goals"] as const).map((t) => (
-              <button key={t} onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 ${tab === t ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{t === "kpi" ? "Giao KPI" : "Mục tiêu"}</button>
+            {(["goals", "kpi", "library"] as const).map((t) => (
+              <button key={t} onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 ${tab === t ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{t === "kpi" ? "Giao KR / KPI" : t === "goals" ? "Mục tiêu" : "Thư viện KR"}</button>
             ))}
           </div>
         )}
@@ -194,7 +200,7 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
           <option value="">Tất cả thương hiệu</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
-      {tab === "kpi" ? <KpiList actor={actor} periodKey={pk} brandFilter={brandF} /> : <GoalsV2 actor={actor} periodKey={pk} brandFilter={brandF} />}
+      {tab === "library" ? <KrLibrary /> : tab === "kpi" ? <KpiList actor={actor} periodKey={pk} brandFilter={brandF} /> : <GoalsV2 actor={actor} periodKey={pk} brandFilter={brandF} />}
     </div>
   );
 }
@@ -208,7 +214,9 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
   const socials = useStore((s) => s.socials);
   const actual = useActual();
   const [formOpen, setFormOpen] = useState(false);
-  const empty = { userId: "", brandId: "", channel: "", metricKey: KPI_METRIC_LIST[0].key as string, target: 10, goalId: "" };
+  const empty = { userId: "", brandId: "", channel: "", metricKey: KPI_METRIC_LIST[0].key as string, target: 10, goalId: "", label: "", keywordIds: [] as string[], threshold: 3, taskIds: [] as string[] };
+  const keywords = useStore((s) => s.keywords);
+  const tasks = useStore((s) => s.tasks);
   const [f, setF] = useState(empty);
   const [saving, setSaving] = useState(false);
   const view = useMemo(() => (db ? svc.listForActor(actor) : null), [db, actor]);
@@ -235,7 +243,9 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
     const [t, id] = f.channel.split(":");
     setSaving(true);
     const ok = await run(() => svc.assign(actor, { userId: f.userId, periodType: "month", periodStart: ps, periodEnd: pe, goalId: f.goalId || null,
-      items: [{ metricKey: f.metricKey, targetValue: f.target, brandId: f.brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null }] }), "Đã giao KPI", refresh);
+      items: [{ metricKey: f.metricKey, targetValue: f.target, brandId: f.brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null,
+        label: f.label.trim() || null,
+        metadata: m?.needs === "keyword" ? { keywordIds: f.keywordIds, threshold: f.threshold } : m?.needs === "tasks" ? { taskIds: f.taskIds } : {} }] }), "Đã giao KPI", refresh);
     setSaving(false);
     if (ok) setF({ ...empty, userId: f.userId, brandId: f.brandId });
   };
@@ -260,7 +270,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
                   </select></label>
                 <label className="space-y-1 text-xs text-muted-foreground">4. Loại công việc
                   <select className={`${inp} w-full`} value={f.metricKey} onChange={(e) => setF({ ...f, metricKey: e.target.value, channel: "" })}>
-                    {KPI_METRIC_LIST.map((x) => <option key={x.key} value={x.key} disabled={!!x.notReady} title={x.notReady}>{x.label}{x.notReady ? " (chưa khả dụng)" : ""}</option>)}
+                    {KR_GROUPS.map((g) => <optgroup key={g} label={g}>{KPI_METRIC_LIST.filter((x) => x.group === g).map((x) => <option key={x.key} value={x.key} disabled={!isAssignable(x)} title={x.notReady ?? x.rule}>{x.label}{isAssignable(x) ? "" : ` (${AVAILABILITY_LABEL[x.availability!]})`}</option>)}</optgroup>)}
                   </select></label>
                 {f.brandId && chOpts.length > 0 ? (
                   <label className="space-y-1 text-xs text-muted-foreground">3. Website / Page
@@ -271,6 +281,35 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
                 <label className="space-y-1 text-xs text-muted-foreground">5. Số lượng ({m?.unit === "point" ? "điểm" : "sản phẩm"})
                   <input type="number" min={1} className={`${inp} w-full`} value={f.target} onChange={(e) => setF({ ...f, target: Number(e.target.value) })} /></label>
               </div>
+              {m?.rule && <p className="text-xs text-muted-foreground">Quy tắc: {m.rule} · Nguồn: {m.source} · {DIRECTION_LABEL[m.direction ?? "at_least"]}</p>}
+              {m?.needs === "keyword" && (() => {
+                const kws = keywords.filter((k) => (!f.channel.startsWith("w:") || k.websiteId === f.channel.slice(2)) && (!f.brandId || websites.find((w) => w.id === k.websiteId)?.brandId === f.brandId));
+                return (
+                  <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                    <label className="space-y-1 text-xs text-muted-foreground">Từ khóa (giữ Ctrl để chọn nhiều) — {kws.length} từ khóa
+                      <select multiple className={`${inp} h-28 w-full`} value={f.keywordIds} onChange={(e) => setF({ ...f, keywordIds: Array.from(e.target.selectedOptions).map((o) => o.value) })}>
+                        {kws.map((k) => <option key={k.id} value={k.id}>{k.keyword}{k.currentTop ? ` — hiện Top ${k.currentTop}` : " — chưa kiểm tra"}</option>)}
+                      </select></label>
+                    <label className="space-y-1 text-xs text-muted-foreground">Ngưỡng Top
+                      <select className={`${inp} w-full`} value={f.threshold} onChange={(e) => setF({ ...f, threshold: Number(e.target.value) })}>
+                        {[1, 3, 5, 10, 20].map((n) => <option key={n} value={n}>Top {n}</option>)}
+                      </select></label>
+                  </div>
+                );
+              })()}
+              {m?.needs === "tasks" && (() => {
+                const ts = tasks.filter((t) => t.status !== "Đã hủy" && (!f.brandId || t.brandId === f.brandId) && (!selUser || !t.assignee || t.assignee === selUser.fullName || t.assignee === selUser.username));
+                return (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <label className="space-y-1 text-xs text-muted-foreground">Tên kết quả cần đạt
+                      <input className={`${inp} w-full`} placeholder="VD: Nghiên cứu 3 bộ từ khóa" value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} /></label>
+                    <label className="space-y-1 text-xs text-muted-foreground">Liên kết Task có sẵn (giữ Ctrl để chọn nhiều) — tạo Task mới ở trang Task
+                      <select multiple className={`${inp} h-28 w-full`} value={f.taskIds} onChange={(e) => setF({ ...f, taskIds: Array.from(e.target.selectedOptions).map((o) => o.value) })}>
+                        {ts.map((t) => <option key={t.id} value={t.id}>{t.title} · {t.status}</option>)}
+                      </select></label>
+                  </div>
+                );
+              })()}
               <div className="flex flex-wrap items-center gap-2">
                 <select className={inp} value={f.goalId} onChange={(e) => setF({ ...f, goalId: e.target.value })}>
                   <option value="">Mục tiêu: không gắn (tùy chọn)</option>{goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
@@ -304,12 +343,12 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
                 <tr key={it.id} className="border-t border-border">
                   <td className="px-4 py-2.5 font-medium">{u?.fullName || u?.username || "—"}</td>
                   <td>{chName(it)}</td>
-                  <td>{getKpiMetric(it.metricKey)?.label ?? it.metricKey}{nested.has(it.id) && <div className="text-[11px] text-warning-foreground">Nằm trong KPI rộng hơn — không cộng trùng</div>}</td>
+                  <td>{it.label || getKpiMetric(it.metricKey)?.label || it.metricKey}{a.status && <div className="text-[11px] text-muted-foreground">{a.status}</div>}{nested.has(it.id) && <div className="text-[11px] text-warning-foreground">Nằm trong KPI rộng hơn — không cộng trùng</div>}</td>
                   <td>{actor.isAdmin && !locked
                     ? <input type="number" min={1} className={`${inp} h-8 w-20`} defaultValue={it.targetValue} key={`${it.id}${it.targetValue}`}
                         onBlur={(e) => { const v = Number(e.target.value); if (v !== it.targetValue) run(() => svc.updateTarget(actor, it.id, v), "Đã cập nhật chỉ tiêu", refresh); }} />
                     : it.targetValue}</td>
-                  <td className="tabular-nums">{a.value === null ? <span className="text-muted-foreground">Chưa đủ dữ liệu</span> : <b>{a.value}/{it.targetValue}</b>}</td>
+                  <td className="tabular-nums">{a.value === null ? <span className="text-muted-foreground">Chưa đủ dữ liệu</span> : <b>{a.value}{it.unit === "percent" ? "%" : ""} / {getKpiMetric(it.metricKey)?.direction === "at_most" ? "≤ " : ""}{it.targetValue}{it.unit === "percent" ? "%" : ""}</b>}</td>
                   <td className="text-xs">
                     <span className={`rounded px-1.5 py-0.5 ${locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{PERIOD_STATUS[p.status] ?? p.status}</span>
                     {actor.isAdmin && first && next && <button className="ml-2 text-primary hover:underline" onClick={() => {
@@ -326,6 +365,59 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
         </table>
       </div>
       <p className="text-xs text-muted-foreground">Hôm nay: {today().split("-").reverse().join("/")} · Kết quả tự động cập nhật khi công việc được duyệt trong các module.</p>
+    </div>
+  );
+}
+
+/* ---------------- KR dưới mỗi Mục tiêu ---------------- */
+function GoalKrs({ items, db }: { items: EmployeeKpiItem[]; db: KpiDb }) {
+  const users = useAuth((s) => s.users);
+  const actual = useActual();
+  if (!items.length) return <span className="text-xs text-muted-foreground">Chưa có KR</span>;
+  return (
+    <ul className="space-y-1 py-2 text-xs">
+      {items.map((it) => {
+        const p = db.periods.find((x) => x.id === it.kpiPeriodId);
+        if (!p) return null;
+        const u = users.find((x) => x.id === p.userId);
+        const a = actual(p.userId, it, p.periodStart, p.periodEnd);
+        return (
+          <li key={it.id} className="flex flex-wrap gap-x-2">
+            <span className="font-medium">{it.label || getKpiMetric(it.metricKey)?.label}</span>
+            <span className="text-muted-foreground">· {u?.fullName || u?.username || "—"} · đến {p.periodEnd.split("-").reverse().join("/")}</span>
+            <span className="tabular-nums">{a.value === null ? "Chưa đủ dữ liệu" : `${a.value}/${it.targetValue}`}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/* ---------------- Thư viện KR ---------------- */
+export function KrLibrary() {
+  const [q, setQ] = useState("");
+  const [g, setG] = useState("");
+  const list = KPI_METRIC_LIST.filter((m) => (!g || m.group === g) && (!q || m.label.toLowerCase().includes(q.toLowerCase())));
+  const tone = { linked: "bg-primary/10 text-primary", configure: "bg-warning/15 text-warning-foreground", none: "bg-muted text-muted-foreground" } as const;
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <input className={inp} placeholder="Tìm chỉ số…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select className={inp} value={g} onChange={(e) => setG(e.target.value)}><option value="">Tất cả nhóm</option>{KR_GROUPS.map((x) => <option key={x}>{x}</option>)}</select>
+      </div>
+      <div className="grid gap-2 md:grid-cols-2">
+        {list.map((m) => (
+          <div key={m.key} className="rounded-lg border border-border bg-card p-3 text-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="font-medium">{m.label}</div>
+              <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${tone[m.availability!]}`}>{AVAILABILITY_LABEL[m.availability!]}</span>
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">{m.group} · {DIRECTION_LABEL[m.direction ?? "at_least"]} · Nguồn: {m.source ?? "—"}</div>
+            {(m.rule || m.notReady) && <div className="mt-1 text-xs text-muted-foreground">{m.notReady ?? m.rule}</div>}
+            <div className="mt-1 font-mono text-[10px] text-muted-foreground">{m.key}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
