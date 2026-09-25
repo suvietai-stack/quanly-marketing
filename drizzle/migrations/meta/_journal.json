@@ -43,6 +43,13 @@
       "when": 1790311679969,
       "tag": "0005_opportunity_signals",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790318485081,
+      "tag": "0006_signals_seven_status_journal",
+      "breakpoints": true
     }
   ]
 }

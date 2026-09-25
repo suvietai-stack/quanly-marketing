@@ -1,12 +1,32 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Signal, SignalStatus } from "./catalog";
+import type { LastNote, Signal, SignalStatus } from "./catalog";
 
 const db = supabase as any;
+const PAGE = 1000;
+
+/** Tải theo trang cho đến hết — không cắt ngầm dữ liệu. RLS vẫn giới hạn phạm vi. */
+export async function fetchAll<T>(build: (from: number, to: number) => any): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await build(from, from + PAGE - 1);
+    if (error) throw error;
+    out.push(...(data ?? []));
+    if (!data || data.length < PAGE) return out;
+  }
+}
 
 export async function listSignals(): Promise<Signal[]> {
-  const { data, error } = await db.from("opportunity_signals").select("*").order("detected_on", { ascending: false }).order("created_at", { ascending: false }).limit(2000);
-  if (error) throw error;
-  return data as Signal[];
+  return fetchAll<Signal>((a, b) => db.from("opportunity_signals").select("*")
+    .order("detected_on", { ascending: false }).order("created_at", { ascending: false }).order("id").range(a, b));
+}
+
+/** Diễn biến gần nhất của mỗi tín hiệu (trong phạm vi được xem). */
+export async function listLastNotes(): Promise<Record<string, LastNote>> {
+  const rows = await fetchAll<LastNote>((a, b) => db.from("opportunity_signal_notes")
+    .select("signal_id,created_at,event_type,note").order("created_at", { ascending: false }).order("id").range(a, b));
+  const m: Record<string, LastNote> = {};
+  for (const r of rows) if (!m[r.signal_id]) m[r.signal_id] = r;
+  return m;
 }
 
 export interface SignalInput {
@@ -30,8 +50,17 @@ export async function assignSignal(id: string, userId: string | null) {
   if (error) throw error;
 }
 
-export async function saleUpdate(id: string, p: { status: SignalStatus; note: string; next: string | null; revenue: number | null; lostReason: string | null }) {
-  const { error } = await db.rpc("signal_sale_update", { _id: id, _status: p.status, _note: p.note, _next: p.next, _revenue: p.revenue, _lost_reason: p.lostReason });
+export interface SaleUpdate {
+  status: SignalStatus; note: string; event: string | null; channel: string;
+  nextAt: string | null; // ISO datetime hoặc null
+  next: string | null;   // YYYY-MM-DD
+  revenue: number | null; lostReason: string | null;
+}
+export async function saleUpdate(id: string, p: SaleUpdate) {
+  const { error } = await db.rpc("signal_sale_update", {
+    _id: id, _status: p.status, _note: p.note, _next: p.next, _revenue: p.revenue, _lost_reason: p.lostReason,
+    _event: p.event, _channel: p.channel, _next_at: p.nextAt,
+  });
   if (error) throw error;
 }
 
@@ -40,12 +69,11 @@ export async function reopenSignal(id: string, reason: string) {
   if (error) throw error;
 }
 
-export async function deleteSignal(id: string) {
-  const { error } = await db.from("opportunity_signals").delete().eq("id", id);
-  if (error) throw error;
+export interface SignalNote {
+  id: string; author_id: string; note: string | null; status_from: string | null; status_to: string | null;
+  next_contact_on: string | null; next_contact_at: string | null; revenue: number | null; lost_reason: string | null;
+  event_type: string | null; channel: string | null; created_at: string;
 }
-
-export interface SignalNote { id: string; author_id: string; note: string | null; status_from: string | null; status_to: string | null; next_contact_on: string | null; revenue: number | null; lost_reason: string | null; created_at: string }
 export interface SignalEvent { id: string; actor_id: string | null; kind: string; detail: any; created_at: string }
 
 export async function signalHistory(id: string): Promise<{ notes: SignalNote[]; events: SignalEvent[] }> {
@@ -60,6 +88,15 @@ export async function signalHistory(id: string): Promise<{ notes: SignalNote[]; 
 
 export async function salesList(): Promise<{ id: string; full_name: string }[]> {
   const { data, error } = await db.rpc("signal_sales_list");
+  if (error) return [];
+  return data ?? [];
+}
+
+/** Chỉ đối chiếu trong những tín hiệu người dùng được phép xem (RLS). */
+export async function findSamePhone(phone: string, exceptId?: string): Promise<Pick<Signal, "id" | "customer_name" | "status" | "detected_on">[]> {
+  let q = db.from("opportunity_signals").select("id,customer_name,status,detected_on").eq("phone", phone).limit(5);
+  if (exceptId) q = q.neq("id", exceptId);
+  const { data, error } = await q;
   if (error) return [];
   return data ?? [];
 }

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SignalCacheGuard } from "@/components/signals/SignalsUi";
 import {
   Outlet,
   Link,
@@ -125,6 +126,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SignalCacheGuard />
       <AuthGate>
         {isPublic ? <Outlet /> : <AppShell><Outlet /></AppShell>}
       </AuthGate>
