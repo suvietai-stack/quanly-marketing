@@ -1212,43 +1212,58 @@ export type Database = {
       zalo_oa_config: {
         Row: {
           access_token: string | null
+          app_id: string | null
+          app_secret: string | null
           auto_send: boolean
+          base_url: string | null
           id: number
           last_error: string | null
           oa_id: string | null
           oa_name: string | null
+          oa_secret_key: string | null
           oauth_state: string | null
           oauth_verifier: string | null
           refresh_token: string | null
           status: string
+          test_send_at: string | null
           token_expires_at: string | null
           updated_at: string
         }
         Insert: {
           access_token?: string | null
+          app_id?: string | null
+          app_secret?: string | null
           auto_send?: boolean
+          base_url?: string | null
           id?: number
           last_error?: string | null
           oa_id?: string | null
           oa_name?: string | null
+          oa_secret_key?: string | null
           oauth_state?: string | null
           oauth_verifier?: string | null
           refresh_token?: string | null
           status?: string
+          test_send_at?: string | null
           token_expires_at?: string | null
           updated_at?: string
         }
         Update: {
           access_token?: string | null
+          app_id?: string | null
+          app_secret?: string | null
           auto_send?: boolean
+          base_url?: string | null
           id?: number
           last_error?: string | null
           oa_id?: string | null
           oa_name?: string | null
+          oa_secret_key?: string | null
           oauth_state?: string | null
           oauth_verifier?: string | null
           refresh_token?: string | null
           status?: string
+          test_send_at?: string | null
           token_expires_at?: string | null
           updated_at?: string
         }
