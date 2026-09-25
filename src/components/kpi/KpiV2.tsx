@@ -11,6 +11,7 @@ import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
 import { findNestedItems } from "@/lib/kpi/overview";
 import { GoalsBoard, useKrActual } from "./GoalsOkr";
+import { isAchieved, directionOf } from "@/lib/kpi/evaluate";
 import type { EmployeeKpiItem, GoalStatus, KpiPeriodType } from "@/lib/kpi/types";
 
 const svc = createKpiService(cloudRepository);
@@ -96,7 +97,7 @@ export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string
 /* ---------------- Giao KPI ---------------- */
 function useActual() {
   const f = useKrActual();
-  return (userId: string, it: EmployeeKpiItem, ps: string, pe: string) => f(userId, it, ps, pe);
+  return (userId: string, it: EmployeeKpiItem, ps: string, pe: string, locked = false) => f(userId, it, ps, pe, locked);
 }
 
 export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean } }) {
@@ -257,7 +258,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
             {rows.map(({ it, p }) => {
               const u = users.find((x) => x.id === p.userId);
               const locked = p.status === "locked" || p.status === "closed";
-              const a = actual(p.userId, it, p.periodStart, p.periodEnd);
+              const a = actual(p.userId, it, p.periodStart, p.periodEnd, locked);
               const next = ({ draft: "active", active: "locked", locked: "closed" } as Record<string, "active" | "locked" | "closed">)[p.status];
               const first = rows.find((r) => r.p.id === p.id)?.it.id === it.id;
               return (
@@ -274,7 +275,12 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
                     <span className={`rounded px-1.5 py-0.5 ${locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{PERIOD_STATUS[p.status] ?? p.status}</span>
                     {actor.isAdmin && first && next && <button className="ml-2 text-primary hover:underline" onClick={() => {
                       if (next === "locked" && !confirm(`Khóa kỳ KPI của ${u?.fullName}? Sau khi khóa không thể sửa chỉ tiêu.`)) return;
-                      run(() => svc.setStatus(actor, p.id, next), `Đã chuyển: ${PERIOD_STATUS[next]}`, refresh);
+                      // Khóa kỳ: chốt kết quả thực tế của từng KR vào snapshot để báo cáo lịch sử không đổi theo dữ liệu nguồn sau này.
+                      const results = next === "locked" ? Object.fromEntries(db.items.filter((x) => x.kpiPeriodId === p.id).map((x) => {
+                        const r = actual(p.userId, x, p.periodStart, p.periodEnd);
+                        return [x.id, { actual: r.value, achieved: isAchieved(r.value, x.targetValue, directionOf(x.metricKey)), evidence: r.evidence.map((e) => ({ type: e.type, id: e.id, at: e.at })) }];
+                      })) : undefined;
+                      run(() => svc.setStatus(actor, p.id, next, results), `Đã chuyển: ${PERIOD_STATUS[next]}`, refresh);
                     }}>{NEXT_LABEL[next]}</button>}
                   </td>
                   <td className="pr-3 text-right">{actor.isAdmin && !locked && <button className={btn2} onClick={() => confirm("Xóa KPI này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa KPI", refresh)}>Xóa</button>}</td>
@@ -301,7 +307,7 @@ function GoalKrs({ items, db }: { items: EmployeeKpiItem[]; db: KpiDb }) {
         const p = db.periods.find((x) => x.id === it.kpiPeriodId);
         if (!p) return null;
         const u = users.find((x) => x.id === p.userId);
-        const a = actual(p.userId, it, p.periodStart, p.periodEnd);
+        const a = actual(p.userId, it, p.periodStart, p.periodEnd, p.status === "locked" || p.status === "closed");
         return (
           <li key={it.id} className="flex flex-wrap gap-x-2">
             <span className="font-medium">{it.label || getKpiMetric(it.metricKey)?.label}</span>

@@ -5,6 +5,10 @@
  */
 import type { Goal, EmployeeKpiPeriod, EmployeeKpiItem, KpiPeriodStatus, KpiScope } from "./types";
 import { getKpiMetric, isAssignable } from "./metrics";
+import { monthsIn } from "./calculateKr";
+
+/** Chỉ số lấy từ báo cáo tăng trưởng nhập theo Tháng. */
+export const MONTHLY_SOURCE = new Set(["seo_organic_clicks", "social_views", "mkt_leads"]);
 
 export const KPI_V2_MODE = "cloud" as const;
 
@@ -63,6 +67,9 @@ export function createKpiService(repo: KpiRepository) {
     if (!m.notReady && !isAssignable(m)) throw new KpiError(`"${m.label}" chưa có nguồn dữ liệu tự động — chưa thể giao.`);
     const md = (it.metadata ?? {}) as { keywordIds?: string[]; taskIds?: string[] };
     if (m.needs === "keyword" && !md.keywordIds?.length) throw new KpiError("KR thứ hạng cần chọn ít nhất một từ khóa.");
+    if (m.needs === "keyword" && md.keywordIds?.length && it.targetValue > md.keywordIds.length) throw new KpiError(`Chỉ tiêu (${it.targetValue}) vượt quá số từ khóa đã chọn (${md.keywordIds.length}).`);
+    const dl = (it.metadata as { deadline?: string })?.deadline;
+    if (dl !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(dl))) throw new KpiError("Deadline KR không hợp lệ.");
     if (m.needs === "tasks" && !md.taskIds?.length) throw new KpiError("KR tùy chỉnh cần liên kết ít nhất một Task.");
     if (m.needs === "tasks" && !it.label?.trim()) throw new KpiError("KR tùy chỉnh cần tên kết quả.");
     if (m.needs === "label" && !it.label?.trim()) throw new KpiError("KR tùy chỉnh cần tên kết quả.");
@@ -107,10 +114,21 @@ export function createKpiService(repo: KpiRepository) {
       if (input.periodEnd < input.periodStart) throw new KpiError("Kỳ không hợp lệ.");
       if (!input.items.length) throw new KpiError("Chưa có chỉ tiêu nào.");
       input.items.forEach(validateItem);
+      for (const it of input.items) {
+        const dl = (it.metadata as { deadline?: string })?.deadline;
+        if (dl && (dl < input.periodStart || dl > input.periodEnd)) throw new KpiError(`Deadline của "${getKpiMetric(it.metricKey)!.label}" phải nằm trong kỳ ${input.periodStart} → ${input.periodEnd}.`);
+        if (MONTHLY_SOURCE.has(it.metricKey) && !monthsIn(input.periodStart, input.periodEnd))
+          throw new KpiError(`"${getKpiMetric(it.metricKey)!.label}" lấy số liệu theo tháng — hãy chọn kỳ Tháng hoặc Quý (không tự chia ra tuần/ngày).`);
+      }
       for (const it of input.items) { const nr = getKpiMetric(it.metricKey)?.notReady; if (nr) throw new KpiError(nr); }
       return mutate((db) => {
         let period = db.periods.find((p) => p.userId === input.userId && p.periodStart === input.periodStart && p.periodEnd === input.periodEnd);
         if (period && (period.status === "locked" || period.status === "closed")) throw new KpiError("Kỳ đã khóa — không thêm chỉ tiêu.");
+        // Chống tạo trùng khi bấm thử lại: KR đã lưu với cùng clientKey được bỏ qua.
+        const keyOf = (x: { metadata?: Record<string, unknown> | null }) => (x.metadata as { clientKey?: string } | null)?.clientKey;
+        const saved = new Set(db.items.map(keyOf).filter(Boolean));
+        input = { ...input, items: input.items.filter((it) => !keyOf(it) || !saved.has(keyOf(it))) };
+        if (!input.items.length) return { period: period ?? null, items: [] as EmployeeKpiItem[] };
         const seen = new Set(period ? db.items.filter((i) => i.kpiPeriodId === period!.id).map((i) => `${i.metricKey}#${scopeKey(i)}`) : []);
         for (const it of input.items) {
           const k = `${it.metricKey}#${scopeKey(it)}`;
@@ -126,7 +144,7 @@ export function createKpiService(repo: KpiRepository) {
         const created = input.items.map((it): EmployeeKpiItem => ({
           id: uid(), kpiPeriodId: pid, metricKey: it.metricKey, label: it.label ?? null, targetValue: it.targetValue,
           unit: getKpiMetric(it.metricKey)!.unit, targetOperator: ">=", brandId: it.brandId ?? null, websiteId: it.websiteId ?? null,
-          socialId: it.socialId ?? null, metadata: { ...(it.metadata ?? {}), ...(input.goalId ? { goalId: input.goalId } : {}) }, createdAt: now(), updatedAt: now(),
+          socialId: it.socialId ?? null, metadata: { ...(it.metadata ?? {}), goalId: input.goalId ?? null }, createdAt: now(), updatedAt: now(),
         }));
         db.items.push(...created);
         return { period, items: created };
@@ -172,7 +190,7 @@ export function createKpiService(repo: KpiRepository) {
     },
 
     /** draft → active → locked → closed (một chiều). Khi khóa: snapshot target vào metadata. */
-    setStatus(a: KpiActor, periodId: string, status: KpiPeriodStatus) {
+    setStatus(a: KpiActor, periodId: string, status: KpiPeriodStatus, results?: Record<string, { actual: number | null; achieved: boolean | null; evidence: { type: string; id: string; at: string }[] }>) {
       requireAdmin(a);
       const order: KpiPeriodStatus[] = ["draft", "active", "locked", "closed"];
       return mutate((db) => {
@@ -180,7 +198,11 @@ export function createKpiService(repo: KpiRepository) {
         if (!p) throw new KpiError("Không tìm thấy kỳ.");
         if (order.indexOf(status) < order.indexOf(p.status)) throw new KpiError("Không mở lại kỳ đã khóa — lịch sử không được viết lại.");
         if (status === "locked") {
-          for (const it of db.items.filter((i) => i.kpiPeriodId === p.id)) it.metadata = { ...it.metadata, lockedTarget: it.targetValue, lockedAt: now() };
+          for (const it of db.items.filter((i) => i.kpiPeriodId === p.id)) {
+            const r = results?.[it.id];
+            it.metadata = { ...it.metadata, lockedTarget: it.targetValue, lockedAt: now(),
+              ...(r ? { lockedActual: r.actual, lockedAchieved: r.achieved, lockedEvidence: r.evidence.slice(0, 500) } : {}) };
+          }
         }
         p.status = status; p.updatedAt = now();
         return p;

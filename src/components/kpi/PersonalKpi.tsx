@@ -1,4 +1,5 @@
 /** KPI V2 — thẻ KPI cá nhân, bảng nhân sự, tiến độ theo Brand/kênh. Chỉ giao diện: dùng lại buildEmployeeReport/buildOverview. */
+import { directionOf, KR_STATE_TONE, krGoalId } from "@/lib/kpi/evaluate";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Target, Users } from "lucide-react";
@@ -104,9 +105,12 @@ export function PersonalKpi({ userId, periodKey, compact }: { userId: string; pe
       <div className={cn("grid gap-3", compact ? "sm:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-3")}>
         {r.items.map((it) => {
           const unit = unitWord(it.unit, it.category);
-          const pct = it.actual !== null && it.target > 0 ? Math.round((it.actual / it.target) * 100) : null;
-          const tone = paceTone(it.actual, it.target, ps, pe, today);
-          const left = it.actual !== null ? Math.max(0, it.target - it.actual) : null;
+          const ev = it.evaluation;
+          const atMost = directionOf(it.item.metricKey) === "at_most";
+          const pct = ev.pct;
+          const t = KR_STATE_TONE[ev.state];
+          const tone: Tone = atMost || ev.state !== "in_progress" ? (t === "good" ? "good" : t === "bad" ? "bad" : t === "warn" ? "warn" : "none") : paceTone(it.actual, it.target, ps, ev.deadline, today);
+          const left = it.actual !== null && !atMost ? Math.max(0, it.target - it.actual) : null;
           return (
             <button key={it.item.id} onClick={() => setOpen(it)} className="group rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/40 hover:shadow-sm">
               <div className="flex items-start justify-between gap-2">
@@ -114,19 +118,20 @@ export function PersonalKpi({ userId, periodKey, compact }: { userId: string; pe
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{CAT[it.category] ?? "KPI"}</div>
                   <div className="truncate text-sm font-medium">{scopeText(it.item as never, store)}</div>
                   <div className="truncate text-xs text-muted-foreground">{it.label}</div>
-                  {(() => { const md = it.item.metadata as { goalId?: string; deadline?: string }; const g = md.goalId ? db.goals.find((x) => x.id === md.goalId) : undefined;
-                    return g ? <div className="truncate text-[11px] text-primary">Mục tiêu: {g.title}{md.deadline ? ` · hạn ${md.deadline.split("-").reverse().join("/")}` : ""}</div> : null; })()}
+                  {(() => { const md = it.item.metadata as { deadline?: string }; const gid = krGoalId(it.item, db.periods); const g = gid ? db.goals.find((x) => x.id === gid) : undefined;
+                    return g ? <div className="truncate text-[11px] text-primary">Mục tiêu: {g.title}{""}{void md}</div> : null; })()}
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
               </div>
               <div className="mt-3 flex items-baseline gap-1">
                 <span className="text-2xl font-semibold tabular-nums">{it.actual ?? "—"}</span>
-                <span className="text-sm text-muted-foreground">/ {it.target} {unit}</span>
-                {pct !== null && <span className={cn("ml-auto text-sm font-semibold", toneText[tone])}>{pct}%</span>}
+                <span className="text-sm text-muted-foreground">/ {atMost ? "≤ " : ""}{it.target} {unit}</span>
+                <span className={cn("ml-auto text-sm font-semibold", toneText[tone])}>{pct !== null && ev.state === "in_progress" ? `${pct}%` : ev.label}</span>
               </div>
-              <div className="mt-2"><Bar value={pct ?? 0} tone={tone} /></div>
+              {pct !== null && <div className="mt-2"><Bar value={pct} tone={tone} /></div>}
               <div className="mt-2 text-xs text-muted-foreground">
-                {it.actual === null ? "Chưa đủ dữ liệu để xác minh." : left === 0 ? "Đã đạt chỉ tiêu." : `Còn ${left} ${unit} để hoàn thành chỉ tiêu.`}
+                {it.actual === null ? "Chưa đủ dữ liệu để xác minh." : atMost ? (it.actual > it.target ? `Vượt ngưỡng ${it.actual - it.target} ${unit}.` : "Đang trong ngưỡng cho phép.") : left === 0 ? "Đã đạt chỉ tiêu." : `Còn ${left} ${unit} để hoàn thành chỉ tiêu.`}
+                {` · hạn ${ev.deadline.split("-").reverse().join("/")}`}{it.lockedSource === "snapshot" ? " · đã chốt khi khóa kỳ" : ""}
                 {it.warnings > 0 && it.actual !== null && ` · ${it.warnings} mục chưa xác minh`}
               </div>
             </button>

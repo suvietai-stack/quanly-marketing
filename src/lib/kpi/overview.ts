@@ -7,6 +7,7 @@ import type { EmployeeKpiItem, EmployeeKpiPeriod, Goal } from "./types";
 import type { KpiAdjustment } from "./service";
 import { getKpiMetric } from "./metrics";
 import { krAchieved } from "./calculateKr";
+import { krsOfGoal } from "./evaluate";
 import { buildEmployeeReport, type EvidenceRow, type ReportData, type ReportFilters, type WorkRow } from "./report";
 
 export interface OverviewFilters { brandId?: string; websiteId?: string; socialId?: string; metricKey?: string; userId?: string; group?: string }
@@ -127,9 +128,11 @@ export function buildOverview(args: {
   const goals: GoalRow[] = args.goals
     .filter((g) => (!f.brandId || g.brandId === f.brandId))
     .map((g) => {
-      const gp = periods.filter((p) => p.goalId === g.id);
+      // KR thuộc mục tiêu theo quan hệ trực tiếp (goalId trên KR); kỳ chỉ dùng cho dữ liệu cũ thiếu goalId.
+      const goalItems = krsOfGoal(g.id, args.items, periods);
+      const gp = periods.filter((p) => goalItems.some((i) => i.kpiPeriodId === p.id));
       const ms = new Map<string, GoalRow["metrics"][number]>();
-      for (const p of gp) for (const it of args.items.filter((i) => i.kpiPeriodId === p.id)) {
+      for (const it of goalItems) {
         const r = itemRes.get(it.id); if (!r) continue;
         const key = aggKey(it, getKpiMetric(it.metricKey)?.unit);
         const m = byMetric.get(key); if (!m) continue;
