@@ -1,24 +1,26 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
-import { filterSignals, groupBy, summarize, type ReportFilter, type Summary } from "@/lib/signals/report";
+import { SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
+import { filterSignals, groupBy, lostReasons, summarize, type ReportFilter, type Summary } from "@/lib/signals/report";
 import { errMsg } from "@/lib/signals/api";
-import { useSignalPerms, useSignals, useUserName } from "./SignalsUi";
+import { useLastNotes, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toFixed(1)}%`);
 
 export function SignalsReport() {
   const p = useSignalPerms();
   const name = useUserName();
-  const { data = [], isLoading, error } = useSignals(!!p.userId);
+  const { data = [], isLoading, error } = useSignals();
+  const { data: last = {} } = useLastNotes();
   const t = todayKey();
   const [f, setF] = useState<ReportFilter>({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
   const set = (k: keyof ReportFilter, v: string) => setF((x) => ({ ...x, [k]: v || undefined }));
   const list = useMemo(() => filterSignals(data, f), [data, f]);
-  const sum = summarize(list);
+  const sum = summarize(list, t, last);
   const bySource = groupBy(list, (s) => s.source);
   const byCreator = groupBy(list, (s) => s.created_by);
   const bySale = groupBy(list, (s) => s.assigned_to);
+  const lost = lostReasons(list);
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => ({ id, n: name(id) }));
 
   if (!p.report) return <p className="py-16 text-center text-muted-foreground">Bạn không có quyền xem báo cáo tín hiệu.</p>;
@@ -27,7 +29,9 @@ export function SignalsReport() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Báo cáo tín hiệu</h1>
-        <p className="text-sm text-muted-foreground">Doanh số là số Sale khai báo khi Chốt, chưa phải doanh thu kế toán xác nhận.</p>
+        <p className="text-sm text-muted-foreground">
+          Đang tính theo <b>{f.basis === "created" ? "ngày tạo tín hiệu" : "ngày Chốt / Trượt"}</b>. Doanh số là số Sale khai báo khi Chốt, chưa phải doanh thu kế toán xác nhận. Dữ liệu tải đủ, không giới hạn số dòng.
+        </p>
       </div>
 
       <div className="rounded-lg border bg-card p-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 text-sm">
@@ -40,30 +44,56 @@ export function SignalsReport() {
         <Sel label="Sale phụ trách" value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to)).map((x) => [x.id, x.n])} />
         <Sel label="Người tạo" value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by)).map((x) => [x.id, x.n])} />
         <Sel label="Trạng thái" value={f.status} onChange={(v) => set("status", v)} opts={[["unassigned", "Chưa phân công"], ...Object.entries(STATUS_LABEL)]} />
+        <Sel label="Lý do trượt" value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={SIGNAL_LOST_REASONS.map((x) => [x, x])} />
       </div>
 
       {isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : error ? <p className="text-sm text-destructive">{errMsg(error)}</p> : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <H>Tổng quan</H>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             <Card k="Tổng tín hiệu" v={sum.total} />
             <Card k="Chưa phân công" v={sum.unassigned} />
             <Card k="Chờ nhận" v={sum.waiting} />
+            <Card k="Đang liên hệ" v={sum.contacting} />
             <Card k="Đang tư vấn" v={sum.consulting} />
-            <Card k="Đã chốt" v={sum.won} />
+            <Card k="Đã báo giá" v={sum.quoted} />
+            <Card k="Chờ xác nhận / cọc" v={sum.deposit} />
+            <Card k="Chốt" v={sum.won} />
             <Card k="Trượt" v={sum.lost} />
-            <Card k="Tỷ lệ chốt" v={pct(sum)} hint="Chốt / (Chốt + Trượt)" />
-            <Card k="Doanh số chốt" v={fmtVnd(sum.revenue)} />
+            <Card k="Doanh số chốt" v={fmtVnd(sum.revenue)} hint={`Tỷ lệ chốt: ${pct(sum)}`} />
+          </div>
+
+          <H>Theo dõi quá trình (trạng thái hiện tại)</H>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <Card k="Chưa có diễn biến" v={sum.noNote} hint="Đã giao, Sale chưa cập nhật" />
+            <Card k="Cần liên hệ hôm nay" v={sum.dueToday} />
+            <Card k="Quá lịch hẹn" v={sum.overdue} />
+            <Card k="Đã báo giá" v={sum.quoted} />
+            <Card k="Đang chờ cọc" v={sum.deposit} />
+          </div>
+
+          <div className="rounded-lg border bg-card overflow-x-auto">
+            <div className="px-3 py-2 font-medium text-sm border-b">Phân tích lý do trượt</div>
+            {lost.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có tín hiệu trượt.</p> : (
+              <table className="w-full text-sm"><tbody>
+                {lost.map((r) => <tr key={r.key} className="border-t first:border-t-0"><td className="px-3 py-2">{r.key}</td><td className="px-3 py-2 text-right">{r.n}</td></tr>)}
+              </tbody></table>
+            )}
           </div>
 
           <Tbl title="Hiệu quả Marketing — theo nguồn" first="Nguồn" rows={bySource.map((r) => [r.key, r.s])} cols="mkt" />
           <Tbl title="Hiệu quả Marketing — theo người tạo" first="Nhân viên tạo" rows={byCreator.map((r) => [name(r.key), r.s])} cols="mkt" />
           <Tbl title="Hiệu quả Sale" first="Sale" rows={bySale.map((r) => [name(r.key), r.s])} cols="sale" />
+          <p className="text-xs text-muted-foreground">Số lượng ghi chú không được dùng làm chỉ tiêu đánh giá Sale. Mở chi tiết tín hiệu ở trang danh sách để xem nhật ký tư vấn.</p>
         </>
       )}
     </div>
   );
 }
 
+function H({ children }: { children: React.ReactNode }) {
+  return <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</div>;
+}
 function Sel({ label, value, onChange, opts, noEmpty }: { label: string; value?: string; onChange: (v: string) => void; opts: string[][]; noEmpty?: boolean }) {
   return (
     <label className="space-y-1">
@@ -79,7 +109,9 @@ function Card({ k, v, hint }: { k: string; v: string | number; hint?: string }) 
   return <div className="rounded-xl border bg-card p-3"><div className="text-xs text-muted-foreground">{k}</div><div className="text-xl font-semibold mt-0.5">{v}</div>{hint && <div className="text-[11px] text-muted-foreground">{hint}</div>}</div>;
 }
 function Tbl({ title, first, rows, cols }: { title: string; first: string; rows: [string, Summary][]; cols: "mkt" | "sale" }) {
-  const head = cols === "mkt" ? ["Tín hiệu", "Chốt", "Tỷ lệ chốt", "Doanh số"] : ["Được giao", "Đã nhận", "Đang tư vấn", "Chốt", "Trượt", "Tỷ lệ chốt", "Doanh số", "Quá lịch"];
+  const head = cols === "mkt"
+    ? ["Tín hiệu", "Chốt", "Trượt", "Tỷ lệ chốt", "Doanh số"]
+    : ["Được giao", "Chờ nhận", "Đang xử lý", "Chốt", "Trượt", "Tỷ lệ chốt", "Doanh số", "Quá lịch"];
   return (
     <div className="rounded-lg border bg-card overflow-x-auto">
       <div className="px-3 py-2 font-medium text-sm border-b">{title}</div>
@@ -91,8 +123,8 @@ function Tbl({ title, first, rows, cols }: { title: string; first: string; rows:
               <tr key={k} className="border-t">
                 <td className="px-3 py-2">{k}</td>
                 {(cols === "mkt"
-                  ? [s.total, s.won, pct(s), fmtVnd(s.revenue)]
-                  : [s.total, s.consulting + s.won + s.lost, s.consulting, s.won, s.lost, pct(s), fmtVnd(s.revenue), s.overdue]
+                  ? [s.total, s.won, s.lost, pct(s), fmtVnd(s.revenue)]
+                  : [s.total, s.waiting, s.contacting + s.consulting + s.quoted + s.deposit, s.won, s.lost, pct(s), fmtVnd(s.revenue), s.overdue]
                 ).map((v, i) => <td key={i} className="px-3 py-2 text-right whitespace-nowrap">{v}</td>)}
               </tr>
             ))}

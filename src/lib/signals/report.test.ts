@@ -5,7 +5,7 @@ import { normalizePhone, type Signal } from "./catalog";
 const mk = (o: Partial<Signal>): Signal => ({
   id: Math.random().toString(), detected_on: "2026-09-10", customer_name: "A", phone: "0965000256", address: null,
   need_detail: null, products: [], need_group: null, source: "Website", marketing_note: null, created_by: "m1",
-  assigned_to: null, assigned_at: null, status: null, next_contact_on: null, revenue: null, lost_reason: null,
+  assigned_to: null, assigned_at: null, status: null, next_contact_on: null, next_contact_at: null, revenue: null, lost_reason: null,
   closed_at: null, created_at: "2026-09-10T02:00:00Z", updated_at: "2026-09-10T02:00:00Z", ...o,
 });
 
