@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { applyListFilter, lostReasons, summarize } from "./report";
+import { applyListFilter, filterSignals, lostReasons, summarize } from "./report";
 import { SIGNAL_STATUSES, STATUS_LABEL, isOpen, zaloLink, type Signal } from "./catalog";
 import { fetchAll } from "./api";
 
@@ -66,4 +66,13 @@ describe("tải dữ liệu không bị cắt", () => {
 
 it("link Zalo đổi 0 đầu thành 84", () => {
   expect(zaloLink("0965 000 256")).toBe("https://zalo.me/84965000256");
+});
+
+describe("hủy tín hiệu", () => {
+  const list = [mk({ id: "x", status: "lost", lost_reason: "Giá không phù hợp" }), mk({ id: "y", status: "lost", lost_reason: "Khác", cancelled_at: "2026-09-21T00:00:00Z" })];
+  it("hủy không bị tính là Trượt, ẩn khỏi danh sách thường", () => {
+    expect(summarize(filterSignals(list, { basis: "created" }), T).lost).toBe(1);
+    expect(applyListFilter(list, { quick: "all", time: "" }, T).map((s) => s.id)).toEqual(["x"]);
+    expect(applyListFilter(list, { quick: "all", time: "", cancelled: true }, T).map((s) => s.id)).toEqual(["y"]);
+  });
 });
