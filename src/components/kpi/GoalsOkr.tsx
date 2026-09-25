@@ -12,6 +12,9 @@ import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
 import { createKpiService, KpiError, type KpiDb, type NewItem } from "@/lib/kpi/service";
 import { cloudRepository, flushKpi } from "@/lib/kpi/cloudRepository";
+import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
+import { monthsIn } from "@/lib/kpi/calculateKr";
+import { MONTHLY_SOURCE } from "@/lib/kpi/service";
 import type { EmployeeKpiItem, GoalStatus, KpiMetricDefinition, KpiPeriodType } from "@/lib/kpi/types";
 
 const svc = createKpiService(cloudRepository);
@@ -41,7 +44,10 @@ export type KrActual = { value: number | null; warnings: number; status?: string
 export function useKrActual() {
   const s = useStore();
   const users = useAuth((x) => x.users);
-  return (userId: string, it: EmployeeKpiItem, periodStart: string, periodEnd: string): KrActual => {
+  return (userId: string, it: EmployeeKpiItem, periodStart: string, periodEnd: string, locked = false): KrActual => {
+    const snap = locked ? lockedResultOf(it) : null;
+    if (snap) return { value: snap.actual, warnings: 0, status: `Kết quả đã chốt khi khóa kỳ${snap.lockedAt ? ` (${snap.lockedAt.slice(0, 10).split("-").reverse().join("/")})` : ""}`,
+      evidence: snap.evidence.map((e) => ({ id: e.id, title: `${e.type} · ${e.id}`, at: e.at, type: e.type })) };
     const u = users.find((x) => x.id === userId);
     const emp = { id: userId, fullName: u?.fullName, username: u?.username };
     const period = { periodStart, periodEnd };
@@ -60,14 +66,13 @@ export function useKrActual() {
   };
 }
 
-function krState(m: KpiMetricDefinition | undefined, a: KrActual, target: number, end: string) {
-  const dir = m?.direction === "at_most" ? "at_most" : "at_least";
-  const ok = krAchieved(a.value, target, dir);
-  const pct = a.value === null ? null : dir === "at_most" ? null : Math.min(100, Math.round((a.value / target) * 100));
-  const ended = new Date().toISOString().slice(0, 10) > end;
-  const label = a.value === null ? "Chưa đủ dữ liệu" : ok ? "Đạt" : ended ? "Chưa đạt" : "Đang thực hiện";
-  const tone = a.value === null ? "text-muted-foreground" : ok ? "text-success" : ended ? "text-destructive" : "text-primary";
-  return { pct, label, tone, dir };
+function krState(m: KpiMetricDefinition | undefined, a: KrActual, it: EmployeeKpiItem, end: string) {
+  const dir = directionOf(it.metricKey);
+  const ev = evaluateKr({ actual: a.value, target: it.targetValue, direction: dir, deadline: krDeadline(it, end), today: new Date().toISOString().slice(0, 10),
+    unit: m?.unit ?? it.unit, evidenceDates: a.evidence.map((x) => x.at), warnings: a.warnings });
+  const t = KR_STATE_TONE[ev.state];
+  const tone = t === "good" ? "text-success" : t === "warn" ? "text-warning-foreground" : t === "bad" ? "text-destructive" : t === "info" ? "text-primary" : "text-muted-foreground";
+  return { pct: ev.pct, label: ev.label, tone, dir, state: ev.state, deadline: ev.deadline, completedAt: ev.completedAt };
 }
 const unitTxt = (u: string) => (u === "percent" ? "%" : u === "currency" ? " đ" : u === "point" ? " điểm" : "");
 
@@ -80,11 +85,11 @@ function priorityKeys(kind: "web" | "facebook" | "tiktok" | "") {
 }
 
 /* ---------- Bản nháp KR ---------- */
-type Draft = { key: string; metricKey: string; ownerId: string; channel: string; target: number; label: string; keywordIds: string[]; threshold: number; taskIds: string[]; viewThreshold: number; mode: "value" | "growth" };
-const newDraft = (metricKey: string, ownerId: string, channel = ""): Draft => {
+type Draft = { key: string; deadline: string; metricKey: string; ownerId: string; channel: string; target: number; label: string; keywordIds: string[]; threshold: number; taskIds: string[]; viewThreshold: number; mode: "value" | "growth" };
+const newDraft = (metricKey: string, ownerId: string, channel = "", deadline = ""): Draft => {
   const m = getKpiMetric(metricKey);
-  return { key: Math.random().toString(36).slice(2), metricKey, ownerId, channel: m && (m.scopes.includes("website") || m.scopes.includes("social")) ? channel : "",
-    target: metricKey === "task_on_time_rate" ? 95 : metricKey === "task_first_pass_rate" ? 90 : 10, label: "", keywordIds: [], threshold: 3, taskIds: [], viewThreshold: 10000, mode: "value" };
+  return { key: globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2), deadline, metricKey, ownerId, channel: m && (m.scopes.includes("website") || m.scopes.includes("social")) ? channel : "",
+    target: metricKey === "task_on_time_rate" ? 95 : metricKey === "task_first_pass_rate" ? 90 : m?.direction === "at_most" ? 1 : m?.needs === "keyword" ? 1 : 10, label: "", keywordIds: [], threshold: 3, taskIds: [], viewThreshold: 10000, mode: "value" };
 };
 function draftToItem(d: Draft, brandId: string): NewItem {
   const m = getKpiMetric(d.metricKey)!;
@@ -94,6 +99,8 @@ function draftToItem(d: Draft, brandId: string): NewItem {
   if (m.needs === "tasks") meta.taskIds = d.taskIds;
   if (m.needs === "views") meta.viewThreshold = d.viewThreshold;
   if (["seo_organic_clicks", "social_views"].includes(d.metricKey)) meta.mode = d.mode;
+  if (d.deadline) meta.deadline = d.deadline;
+  meta.clientKey = d.key;
   return { metricKey: d.metricKey, targetValue: d.target, brandId: brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null, label: d.label.trim() || null, metadata: meta };
 }
 
@@ -132,7 +139,7 @@ function KrPicker({ onPick, kind }: { onPick: (key: string) => void; kind: "web"
 }
 
 /* ---------- Bước 3: trường nhập theo loại KR ---------- */
-function KrFields({ d, set, brandId, onRemove }: { d: Draft; set: (d: Draft) => void; brandId: string; onRemove: () => void }) {
+function KrFields({ d, set, brandId, onRemove, start, end }: { d: Draft; set: (d: Draft) => void; brandId: string; onRemove: () => void; start: string; end: string }) {
   const users = useAuth((s) => s.users);
   const { websites, socials, keywords, tasks } = useStore();
   const m = getKpiMetric(d.metricKey)!;
@@ -179,8 +186,13 @@ function KrFields({ d, set, brandId, onRemove }: { d: Draft; set: (d: Draft) => 
             <select className={inp} value={d.threshold} onChange={(e) => set({ ...d, threshold: Number(e.target.value) })}>{[1, 3, 5, 10, 20].map((n) => <option key={n} value={n}>Top {n}</option>)}</select></label>
         )}
         <label className={lbl}>{m.needs === "keyword" ? "Số từ khóa đạt Top" : m.needs === "views" ? "Số video đạt ngưỡng" : m.direction === "at_most" ? "Không vượt quá" : "Chỉ tiêu"}{pctTarget ? " (%)" : m.unit === "currency" ? " (đ)" : ""}
-          <input type="number" min={1} className={inp} value={d.target} onChange={(e) => set({ ...d, target: Number(e.target.value) })} /></label>
+          <input type="number" min={1} max={m.needs === "keyword" && d.keywordIds.length ? d.keywordIds.length : undefined} className={inp} value={d.target} onChange={(e) => set({ ...d, target: Number(e.target.value) })} /></label>
+        <label className={lbl}>Deadline KR
+          <input type="date" className={inp} min={start} max={end} value={d.deadline || end} onChange={(e) => set({ ...d, deadline: e.target.value })} /></label>
       </div>
+      {m.needs === "keyword" && d.keywordIds.length > 0 && d.target > d.keywordIds.length && <p className="text-[11px] text-destructive">Chỉ tiêu không được vượt quá {d.keywordIds.length} từ khóa đã chọn.</p>}
+      {MONTHLY_SOURCE.has(d.metricKey) && !monthsIn(start, end) && <p className="text-[11px] text-destructive">Chỉ số này lấy số liệu theo tháng. Kỳ hiện tại không trọn tháng — hãy chọn kỳ Tháng hoặc Quý.</p>}
+      {(d.deadline || end) > end || (d.deadline && d.deadline < start) ? <p className="text-[11px] text-destructive">Deadline phải nằm trong kỳ thực hiện.</p> : null}
       {(m.needs === "tasks" || m.needs === "label") && (
         <label className={lbl}>Tên kết quả cần đạt
           <input className={inp} placeholder="VD: Nghiên cứu 3 bộ từ khóa" value={d.label} onChange={(e) => set({ ...d, label: e.target.value })} /></label>
@@ -188,7 +200,7 @@ function KrFields({ d, set, brandId, onRemove }: { d: Draft; set: (d: Draft) => 
       {m.needs === "keyword" && (
         <div className={lbl}>Từ khóa từ Check Top ({d.keywordIds.length} đã chọn)
           <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-input p-2">
-            {kws.map((k) => <label key={k.id} className="flex items-center gap-2 text-sm font-normal text-foreground"><input type="checkbox" checked={d.keywordIds.includes(k.id)} onChange={() => set({ ...d, keywordIds: toggle(d.keywordIds, k.id) })} />{k.keyword}<span className="text-xs text-muted-foreground">{k.currentTop ? `hiện Top ${k.currentTop}` : "chưa kiểm tra"}</span></label>)}
+            {kws.map((k) => <label key={k.id} className="flex items-center gap-2 text-sm font-normal text-foreground"><input type="checkbox" checked={d.keywordIds.includes(k.id)} onChange={() => { const ids = toggle(d.keywordIds, k.id); set({ ...d, keywordIds: ids, target: Math.max(1, Math.min(d.target, ids.length || 1)) }); }} />{k.keyword}<span className="text-xs text-muted-foreground">{k.currentTop ? `hiện Top ${k.currentTop}` : "chưa kiểm tra"}</span></label>)}
             {!kws.length && <p className="text-xs">Chưa có từ khóa trong Check Top của phạm vi này.</p>}
           </div></div>
       )}
@@ -215,26 +227,52 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [saving, setSaving] = useState(false);
   const kind = g.channel.startsWith("w:") ? "web" : g.channel.startsWith("s:") ? (socials.find((s) => s.id === g.channel.slice(2))?.platform === "TikTok" ? "tiktok" : "facebook") : "";
-  const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t); setG({ ...g, start: s, end: e, deadline: e }); } };
+  const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t); setG({ ...g, start: s, end: e, deadline: e }); setDrafts(drafts.map((d) => ({ ...d, deadline: e }))); } };
   const info = g.title.trim() && g.ownerId && g.start && g.end && g.end >= g.start;
 
-  const save = async () => {
-    setSaving(true);
-    let goalId = "";
-    const [t, id] = g.channel.split(":");
-    const ok = await run(() => { goalId = svc.saveGoal(actor, { title: g.title, periodStart: g.start, periodEnd: g.end, status: "active", brandId: g.brandId || null,
-      websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null, metadata: { ownerId: g.ownerId, deadline: g.deadline, periodType: ptype } }).id; }, "Đã tạo mục tiêu", () => {});
-    if (ok && drafts.length) {
-      const byOwner = new Map<string, Draft[]>();
-      drafts.forEach((d) => byOwner.set(d.ownerId, [...(byOwner.get(d.ownerId) ?? []), d]));
-      for (const [uid, ds] of byOwner) {
-        await run(() => svc.assign(actor, { userId: uid, periodType: ptype, periodStart: g.start, periodEnd: g.end, goalId,
-          items: ds.map((d) => ({ ...draftToItem(d, g.brandId), metadata: { ...draftToItem(d, g.brandId).metadata, deadline: g.deadline } })) }),
-          `Đã giao ${ds.length} KR cho ${users.find((u) => u.id === uid)?.fullName ?? "nhân sự"}`, () => {});
-      }
+  const [savedGoalId, setSavedGoalId] = useState<string | null>(null);
+  const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
+  const [result, setResult] = useState<{ ok: string[]; failed: string[] } | null>(null);
+  const draftName = (d: Draft) => `${d.label || getKpiMetric(d.metricKey)?.label} — ${users.find((u) => u.id === d.ownerId)?.fullName ?? "?"}`;
+  /** Kiểm tra toàn bộ trước khi lưu (không ghi gì nếu còn lỗi). */
+  const validateAll = (): string[] => {
+    const errs: string[] = [];
+    if (g.deadline < g.start || g.deadline > g.end) errs.push("Deadline mục tiêu phải nằm trong kỳ.");
+    const probe = createKpiService({ load: () => ({ goals: [], periods: [], items: [], adjustments: [] }), save: () => {} });
+    for (const d of drafts) {
+      if (!d.ownerId) { errs.push(`${draftName(d)}: chưa chọn người phụ trách.`); continue; }
+      try { probe.assign({ id: actor.id, isAdmin: true }, { userId: d.ownerId, periodType: ptype, periodStart: g.start, periodEnd: g.end, items: [draftToItem(d, g.brandId)] }); }
+      catch (e) { errs.push(`${draftName(d)}: ${(e as Error).message}`); }
     }
-    setSaving(false);
-    if (ok) onDone();
+    return errs;
+  };
+  const save = async () => {
+    const errs = validateAll();
+    if (errs.length) { toast.error(`Chưa lưu gì — cần sửa ${errs.length} lỗi`, { description: errs.join("\n") }); return; }
+    setSaving(true);
+    let goalId = savedGoalId;
+    const [t, id] = g.channel.split(":");
+    if (!goalId) {
+      try {
+        goalId = svc.saveGoal(actor, { title: g.title, periodStart: g.start, periodEnd: g.end, status: "active", brandId: g.brandId || null,
+          websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null, metadata: { ownerId: g.ownerId, deadline: g.deadline, periodType: ptype } }).id;
+        await flushKpi();
+        setSavedGoalId(goalId);
+      } catch (e) { toast.error(`Chưa tạo được mục tiêu: ${(e as Error).message}`); setSaving(false); return; }
+    }
+    // Lưu từng KR riêng để biết chính xác KR nào lỗi; KR đã lưu không lưu lại khi bấm thử lại.
+    const okNames: string[] = []; const failed: string[] = []; const done = new Set(savedKeys);
+    for (const d of drafts.filter((x) => !done.has(x.key))) {
+      try {
+        svc.assign(actor, { userId: d.ownerId, periodType: ptype, periodStart: g.start, periodEnd: g.end, goalId, items: [draftToItem(d, g.brandId)] });
+        await flushKpi();
+        done.add(d.key); okNames.push(draftName(d));
+      } catch (e) { failed.push(`${draftName(d)}: ${e instanceof KpiError ? e.message : (e as Error).message}`); }
+    }
+    setSavedKeys(done); setSaving(false);
+    if (failed.length) { setResult({ ok: okNames, failed }); toast.error(`Mục tiêu đã lưu, còn ${failed.length} KR chưa lưu được`, { description: "Bấm \"Lưu lại KR lỗi\" sau khi sửa — KR đã lưu sẽ không bị tạo trùng." }); return; }
+    toast.success(`Đã lưu mục tiêu${drafts.length ? ` và ${drafts.length} KR` : ""}`);
+    onDone();
   };
 
   const Steps = (
@@ -272,18 +310,24 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
             <input type="date" className={inp} value={g.deadline} onChange={(e) => setG({ ...g, deadline: e.target.value })} /></label>
         </div>
       )}
-      {step === 2 && <KrPicker kind={kind} onPick={(k) => { setDrafts([...drafts, newDraft(k, g.ownerId, g.channel)]); setStep(3); }} />}
+      {step === 2 && <KrPicker kind={kind} onPick={(k) => { setDrafts([...drafts, newDraft(k, g.ownerId, g.channel, g.deadline)]); setStep(3); }} />}
       {step === 3 && (
         <div className="space-y-3">
-          {drafts.map((d, i) => <KrFields key={d.key} d={d} brandId={g.brandId} set={(nd) => setDrafts(drafts.map((x, j) => (j === i ? nd : x)))} onRemove={() => setDrafts(drafts.filter((_, j) => j !== i))} />)}
+          {drafts.map((d, i) => <KrFields key={d.key} d={d} brandId={g.brandId} start={g.start} end={g.end} set={(nd) => setDrafts(drafts.map((x, j) => (j === i ? nd : x)))} onRemove={() => setDrafts(drafts.filter((_, j) => j !== i))} />)}
           {!drafts.length && <p className="text-sm text-muted-foreground">Chưa chọn KR nào.</p>}
           <button className={btn2} onClick={() => setStep(2)}><Plus className="h-3.5 w-3.5" />Chọn thêm KR</button>
         </div>
       )}
+      {result && result.failed.length > 0 && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs">
+          <div className="font-semibold text-destructive">Mục tiêu đã lưu. {savedKeys.size}/{drafts.length} KR đã lưu, {result.failed.length} KR chưa lưu được:</div>
+          <ul className="mt-1 list-disc pl-4">{result.failed.map((f) => <li key={f}>{f}</li>)}</ul>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-3">
-        <button className={btn2} onClick={onDone}>Hủy</button>
+        <button className={btn2} onClick={onDone}>{savedGoalId ? "Đóng" : "Hủy"}</button>
         {step === 1 && <button className={btn} disabled={!info} onClick={() => setStep(2)}>Tiếp: chọn KR</button>}
-        {step === 3 && <button className={btn} disabled={saving || !info || drafts.some((d) => !d.ownerId || !(d.target > 0))} onClick={save}>{saving ? "Đang lưu…" : `Lưu mục tiêu${drafts.length ? ` + ${drafts.length} KR` : ""}`}</button>}
+        {step === 3 && <button className={btn} disabled={saving || !info || drafts.some((d) => !d.ownerId || !(d.target > 0))} onClick={save}>{saving ? "Đang lưu…" : savedGoalId ? "Lưu lại KR lỗi" : `Lưu mục tiêu${drafts.length ? ` + ${drafts.length} KR` : ""}`}</button>}
       </div>
     </div>
   );
@@ -303,14 +347,14 @@ function AddKrSheet({ actor, goal, onClose, db }: { actor: Actor; goal: KpiDb["g
       <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader><SheetTitle>Thêm KR</SheetTitle><SheetDescription>{goal.title} · {fmtD(goal.periodStart)} → {fmtD(goal.periodEnd)}</SheetDescription></SheetHeader>
         <div className="mt-4 space-y-3">
-          {!d ? <KrPicker kind={kind} onPick={(k) => setD(newDraft(k, meta.ownerId ?? actor.id, ch))} />
+          {!d ? <KrPicker kind={kind} onPick={(k) => setD(newDraft(k, meta.ownerId ?? actor.id, ch, meta.deadline ?? goal.periodEnd))} />
             : <>
-              <KrFields d={d} set={setD} brandId={goal.brandId ?? ""} onRemove={() => setD(null)} />
+              <KrFields d={d} set={setD} brandId={goal.brandId ?? ""} start={goal.periodStart} end={goal.periodEnd} onRemove={() => setD(null)} />
               <div className="flex justify-end"><button className={btn} disabled={saving || !d.ownerId || !(d.target > 0)} onClick={async () => {
                 setSaving(true);
                 const it = draftToItem(d, goal.brandId ?? "");
                 const ok = await run(() => svc.assign(actor, { userId: d.ownerId, periodType: meta.periodType ?? "custom", periodStart: goal.periodStart, periodEnd: goal.periodEnd, goalId: goal.id,
-                  items: [{ ...it, metadata: { ...it.metadata, deadline: meta.deadline ?? goal.periodEnd } }] }), "Đã thêm KR", () => {});
+                  items: [it] }), "Đã thêm KR", () => {});
                 setSaving(false); if (ok) onClose();
               }}>{saving ? "Đang lưu…" : "Lưu KR"}</button></div>
             </>}
@@ -326,7 +370,7 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
   const users = useAuth((s) => s.users);
   const m = getKpiMetric(it.metricKey);
   const a = actualOf(userId, it, start, end);
-  const st = krState(m, a, it.targetValue, end);
+  const st = krState(m, a, it, end);
   const entries = ((it.metadata as { entries?: KrEntry[] }).entries ?? []);
   const [e, setE] = useState({ value: "", numerator: "", denominator: "", link: "", note: "", date: new Date().toISOString().slice(0, 10) });
   const nameOf = (id?: string | null) => users.find((u) => u.id === id)?.fullName ?? "—";
@@ -362,13 +406,29 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
                 <div key={x.id} className="rounded-md border border-border px-3 py-2 text-xs">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{ratio ? `${ratio.numerator}: ${x.numerator ?? 0} · ${ratio.denominator}: ${x.denominator ?? 0}` : `${(x.value ?? 0).toLocaleString("vi-VN")}${it.metricKey === "video_view_threshold" ? " lượt xem" : ""}`}</span>
-                    {x.confirmedBy ? <span className="text-success">Đã xác nhận · {nameOf(x.confirmedBy)}</span>
-                      : actor.isAdmin ? <button className="text-primary hover:underline" onClick={() => save(entries.map((y) => (y.id === x.id ? { ...y, confirmedBy: actor.id, confirmedAt: new Date().toISOString() } : y)), "Đã xác nhận kết quả")}>Xác nhận</button>
-                      : <span className="text-muted-foreground">Chờ xác nhận</span>}
+                    {(() => {
+                      const stt = entryStatus(x);
+                      if (stt === "confirmed") return <span className="text-success">Đã xác nhận · {nameOf(x.confirmedBy)}</span>;
+                      if (stt === "rejected") return <span className="text-destructive">Đã từ chối</span>;
+                      const canReview = actor.isAdmin && x.recordedBy !== userId;
+                      const review = (status: "confirmed" | "needs_info" | "rejected", msg: string) => {
+                        const note = status === "confirmed" ? undefined : prompt(status === "rejected" ? "Lý do từ chối" : "Cần bổ sung gì?") ?? undefined;
+                        if (status !== "confirmed" && note === undefined) return;
+                        save(entries.map((y) => (y.id === x.id ? { ...y, status, reviewNote: note, ...(status === "confirmed" ? { confirmedBy: actor.id, confirmedAt: new Date().toISOString() } : {}) } : y)), msg);
+                      };
+                      return canReview ? (
+                        <span className="flex gap-2">
+                          <button className="text-primary hover:underline" onClick={() => review("confirmed", "Đã xác nhận kết quả")}>Xác nhận</button>
+                          <button className="text-warning-foreground hover:underline" onClick={() => review("needs_info", "Đã yêu cầu bổ sung")}>Yêu cầu bổ sung</button>
+                          <button className="text-destructive hover:underline" onClick={() => review("rejected", "Đã từ chối")}>Từ chối</button>
+                        </span>
+                      ) : <span className="text-muted-foreground">{stt === "needs_info" ? "Cần bổ sung" : "Chờ xác nhận"}</span>;
+                    })()}
                   </div>
+                  {x.reviewNote && <div className="text-warning-foreground">Phản hồi: {x.reviewNote}</div>}
                   <div className="text-muted-foreground">{fmtD(x.recordedAt.slice(0, 10))} · {nameOf(x.recordedBy)}{x.note ? ` · ${x.note}` : ""}</div>
                   {x.link && <a href={x.link} target="_blank" rel="noreferrer" className="break-all text-primary hover:underline">{x.link}</a>}
-                  {actor.isAdmin && <button className="mt-1 text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa ghi nhận này?") && save(entries.filter((y) => y.id !== x.id), "Đã xóa ghi nhận")}>Xóa</button>}
+                  {actor.isAdmin && entryStatus(x) !== "confirmed" && <button className="mt-1 text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa ghi nhận này?") && save(entries.filter((y) => y.id !== x.id), "Đã xóa ghi nhận")}>Xóa</button>}
                 </div>
               ))}
               {actor.isAdmin ? (
@@ -387,7 +447,7 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
                   }}>Ghi nhận kết quả</button>
                   <p className="text-[11px] text-muted-foreground sm:col-span-2">Kết quả chỉ được tính sau khi bấm "Xác nhận". Cần có bằng chứng.</p>
                 </div>
-              ) : <p className="text-xs text-muted-foreground">Gửi bằng chứng cho quản lý để được ghi nhận.</p>}
+              ) : <p className="text-xs text-muted-foreground">Chức năng tự gửi kết quả cho nhân viên đang chờ mở quyền trên hệ thống. Tạm thời gửi bằng chứng cho quản lý để ghi nhận.</p>}
             </div>
           )}
         </div>
@@ -407,7 +467,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   const [ps, pe] = (periodKey ?? "|").split("|");
   const goals = useMemo(() => db.goals.filter((g) => (!periodKey || (g.periodStart <= pe && g.periodEnd >= ps)) && (!brandFilter || g.brandId === brandFilter))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [db, periodKey, brandFilter, ps, pe]);
-  const krsOf = (gid: string) => db.items.filter((i) => (i.metadata as { goalId?: string }).goalId === gid || db.periods.find((p) => p.id === i.kpiPeriodId)?.goalId === gid);
+  // Quan hệ Goal–KR trực tiếp; không dùng điều kiện OR theo kỳ (tránh lẫn KR giữa các mục tiêu cùng người, cùng kỳ).
+  const krsOf = (gid: string) => krsOfGoal(gid, db.items, db.periods);
   const scope = (x: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
     x.websiteId ? websites.find((w) => w.id === x.websiteId)?.name ?? "Website" : x.socialId ? socials.find((s) => s.id === x.socialId)?.name ?? "Kênh" : x.brandId ? brands.find((b) => b.id === x.brandId)?.name ?? "Dự án" : "Toàn phòng";
   const goalAdd = adding ? db.goals.find((g) => g.id === adding) : null;
@@ -421,8 +482,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
         {goals.map((g) => {
           const meta = g.metadata as { ownerId?: string; deadline?: string };
           const krs = krsOf(g.id);
-          const states = krs.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it.targetValue, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
-          const done = states.filter((s) => s.st.label === "Đạt").length;
+          const states = krs.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, p.status === "locked" || p.status === "closed"); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
+          const done = states.filter((s) => s.st.state === "achieved" || s.st.state === "late").length;
           return (
             <div key={g.id} className="rounded-xl border border-border bg-card">
               <div className="flex items-start justify-between gap-3 border-b border-border p-4">
@@ -446,11 +507,12 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         <div className="flex items-center gap-2"><span className="truncate text-sm font-medium">{it.label || m?.label}</span>
                           {m && m.availability !== "linked" && <span className={cn("shrink-0 rounded px-1 py-0.5 text-[10px]", AV_TONE[m.availability!])}>{AVAILABILITY_LABEL[m.availability!]}</span>}</div>
                         <div className="truncate text-[11px] text-muted-foreground">{users.find((u) => u.id === p.userId)?.fullName ?? "—"} · {scope(it)}{a.status ? ` · ${a.status}` : ""}</div>
-                        {st.pct !== null && <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", st.label === "Đạt" ? "bg-success" : "bg-primary")} style={{ width: `${st.pct}%` }} /></div>}
+                        {st.pct !== null && <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", st.state === "achieved" ? "bg-success" : st.state === "late" ? "bg-warning" : st.state === "overdue" ? "bg-destructive" : "bg-primary")} style={{ width: `${st.pct}%` }} /></div>}
                       </div>
                       <div className="shrink-0 text-right">
                         <div className="text-sm font-semibold tabular-nums">{a.value ?? "—"}{a.value !== null ? unitTxt(it.unit) : ""}<span className="font-normal text-muted-foreground"> / {st.dir === "at_most" ? "≤" : ""}{it.targetValue}{unitTxt(it.unit)}</span></div>
                         <div className={cn("text-[11px] font-medium", st.tone)}>{st.label}</div>
+                        <div className="text-[10px] text-muted-foreground">hạn {fmtD(st.deadline)}</div>
                       </div>
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
                     </button>
