@@ -14,6 +14,7 @@ import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
 import { createKpiService, KpiError, type KpiDb, type NewItem } from "@/lib/kpi/service";
 import { cloudRepository, flushKpi } from "@/lib/kpi/cloudRepository";
+import { goalCaps, goalLocked } from "@/lib/kpi/goalPolicy";
 import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
 import { monthsIn } from "@/lib/kpi/calculateKr";
 import { MONTHLY_SOURCE } from "@/lib/kpi/service";
@@ -38,7 +39,7 @@ function rangeOf(t: KpiPeriodType, d = new Date()): [string, string] {
   return [f2(new Date(d.getFullYear(), d.getMonth(), 1)), f2(new Date(d.getFullYear(), d.getMonth() + 1, 0))];
 }
 const PERIOD_T: [KpiPeriodType, string][] = [["week", "Tuần"], ["month", "Tháng"], ["quarter", "Quý"], ["custom", "Tùy chỉnh"]];
-const GOAL_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang thực hiện", closed: "Đã đóng", cancelled: "Đã hủy" };
+const GOAL_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang thực hiện", closed: "Hoàn thành", cancelled: "Đã hủy" };
 const AV_TONE: Record<string, string> = { linked: "bg-primary/10 text-primary", periodic: "bg-accent text-accent-foreground", manual: "bg-warning/15 text-warning-foreground", pending: "bg-muted text-muted-foreground", configure: "bg-muted text-muted-foreground", none: "bg-muted text-muted-foreground" };
 
 /* ---------- Kết quả KR — một hàm dùng chung ---------- */
@@ -608,7 +609,7 @@ function KrEditSheet({ actor, kr, goal, onClose }: { actor: Actor; kr: GoalKr; g
 const locked = (p?: { status: string }) => p?.status === "locked" || p?.status === "closed";
 
 /* ---------- Thẻ KR chung + bảng phân bổ ---------- */
-function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit }: { actor: Actor; kr: GoalKr; goal: Goal; db: KpiDb; refresh: () => void; onOpen: (x: { it: EmployeeKpiItem; userId: string; start: string; end: string }) => void; onEdit: () => void }) {
+function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit, readOnly }: { readOnly: boolean; actor: Actor; kr: GoalKr; goal: Goal; db: KpiDb; refresh: () => void; onOpen: (x: { it: EmployeeKpiItem; userId: string; start: string; end: string }) => void; onEdit: () => void }) {
   const users = useAuth((s) => s.users);
   const { brands, websites, socials } = useStore();
   const brandOf = useBrandOf();
@@ -632,7 +633,8 @@ function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit }: { actor: Actor
   const anyLocked = rows.some((r) => locked(r.p));
   const webOpts = kr.websiteId || kr.socialId || !m?.scopes.includes("website") ? [] : websites.filter((w) => !kr.brandId || w.brandId === kr.brandId);
   const socOpts = kr.websiteId || kr.socialId || !m?.scopes.includes("social") ? [] : socials.filter((s) => !kr.brandId || s.brandId === kr.brandId);
-  const inactive = kr.status !== "active";
+  const inactive = kr.status !== "active" || readOnly;
+  const krLocked = readOnly;
 
   const saveAlloc = async () => {
     if (!add) return;
@@ -667,15 +669,16 @@ function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit }: { actor: Actor
         {actor.isAdmin && (
           <DropdownMenu><DropdownMenuTrigger className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Thao tác KR"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>Sửa KR / chỉ tiêu / deadline</DropdownMenuItem>
-              <DropdownMenuItem disabled={inactive} onClick={() => { setOpen(true); setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" }); }}>Phân bổ nhân sự</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {kr.status === "active" ? <>
-                <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "cancelled"), "Đã hủy KR", refresh)}>Hủy KR</DropdownMenuItem>
+              {!krLocked && <DropdownMenuItem onClick={onEdit}>Sửa KR / chỉ tiêu / deadline</DropdownMenuItem>}
+              {!inactive && <DropdownMenuItem onClick={() => { setOpen(true); setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" }); }}>Phân bổ nhân sự</DropdownMenuItem>}
+              {!krLocked && <DropdownMenuSeparator />}
+              {krLocked ? (kr.status !== "archived" ? <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "archived"), "Đã lưu trữ KR", refresh)}>Lưu trữ</DropdownMenuItem> : <DropdownMenuItem disabled>Chỉ xem (mục tiêu không còn hoạt động)</DropdownMenuItem>)
+              : kr.status === "active" ? <>
+                <DropdownMenuItem onClick={() => confirm("Hủy KR này? Kết quả đã có vẫn được giữ.") && run(() => svc.setKrStatus(actor, kr.id, "cancelled"), "Đã hủy KR", refresh)}>Hủy KR</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "archived"), "Đã lưu trữ KR", refresh)}>Lưu trữ</DropdownMenuItem>
               </> : <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "active"), "Đã mở lại KR", refresh)}>Khôi phục</DropdownMenuItem>}
-              <DropdownMenuItem className="text-destructive" disabled={!canHardDelete(hasResult, anyLocked)} onClick={() => confirm("Xóa KR và các dòng phân bổ chưa có kết quả?") && run(() => { rows.forEach((r) => svc.removeItem(actor, r.it.id)); svc.deleteKr(actor, kr.id); }, "Đã xóa KR", refresh)}>
-                Xóa{!canHardDelete(hasResult, anyLocked) ? " (đã có kết quả/khóa kỳ)" : ""}</DropdownMenuItem>
+              {!krLocked && <DropdownMenuItem className="text-destructive" disabled={!canHardDelete(hasResult, anyLocked)} onClick={() => confirm("Xóa KR và các dòng phân bổ chưa có kết quả?") && run(() => { rows.forEach((r) => svc.removeItem(actor, r.it.id)); svc.deleteKr(actor, kr.id); }, "Đã xóa KR", refresh)}>
+                Xóa{!canHardDelete(hasResult, anyLocked) ? " (đã có kết quả/khóa kỳ)" : ""}</DropdownMenuItem>}
             </DropdownMenuContent></DropdownMenu>
         )}
       </div>
@@ -693,8 +696,8 @@ function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit }: { actor: Actor
                     <td className="px-2 text-right tabular-nums"><span className="font-semibold">{a.value ?? "—"}</span>/{div ? it.targetValue : kr.targetValue} <span className={rs.tone}>· {rs.label}</span></td>
                     <td className="px-2">{fmtD(krDeadline(it, p?.periodEnd ?? goal.periodEnd))}</td>
                     <td className="whitespace-nowrap px-2 text-right">
-                      {actor.isAdmin && div && !locked(p) && <button className="mr-2 text-primary hover:underline" onClick={() => { const v = prompt("Chỉ tiêu mới cho dòng này", String(it.targetValue)); if (!v) return; const reason = prompt("Lý do thay đổi") ?? ""; run(() => svc.updateTarget(actor, it.id, Number(v), reason), "Đã sửa phân bổ", refresh); }}>Sửa</button>}
-                      {actor.isAdmin && canHardDelete(res, locked(p)) && <button className="text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa dòng phân bổ này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa dòng phân bổ", refresh)}>Xóa</button>}
+                      {actor.isAdmin && !krLocked && div && !locked(p) && <button className="mr-2 text-primary hover:underline" onClick={() => { const v = prompt("Chỉ tiêu mới cho dòng này", String(it.targetValue)); if (!v) return; const reason = prompt("Lý do thay đổi") ?? ""; run(() => svc.updateTarget(actor, it.id, Number(v), reason), "Đã sửa phân bổ", refresh); }}>Sửa</button>}
+                      {actor.isAdmin && !krLocked && canHardDelete(res, locked(p)) && <button className="text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa dòng phân bổ này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa dòng phân bổ", refresh)}>Xóa</button>}
                     </td>
                   </tr>
                 );
@@ -738,11 +741,11 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   const legacyOf = (gid: string) => krsOfGoal(gid, db.items, db.periods).filter((i) => !i.krId);
   const krsOfG = (gid: string) => (db.krs ?? []).filter((k) => k.goalId === gid && (showArchived || k.status !== "archived"));
   const scope = (x: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
-    x.websiteId ? websites.find((w) => w.id === x.websiteId)?.name ?? "Website" : x.socialId ? socials.find((s) => s.id === x.socialId)?.name ?? "Kênh" : x.brandId ? brands.find((b) => b.id === x.brandId)?.name ?? "Dự án" : "Toàn phòng";
+    x.websiteId ? websites.find((w) => w.id === x.websiteId)?.name ?? "Website" : x.socialId ? socials.find((s) => s.id === x.socialId)?.name ?? "Kênh" : x.brandId ? brands.find((b) => b.id === x.brandId)?.name ?? "Dự án" : "Toàn phạm vi mục tiêu";
   const nameOf = (id?: string | null) => users.find((u) => u.id === id)?.fullName ?? users.find((u) => u.id === id)?.username;
   const scopeText = (g: Goal) => {
     const m = g.metadata as GoalMeta;
-    if (!m.scope) return m.ownerId ? `Cá nhân: ${nameOf(m.ownerId) ?? "—"}` : scope(g);
+    if (!m.scope) return `Chưa đặt phạm vi (dữ liệu cũ)${g.brandId ? ` · ${scope(g)}` : ""}${m.ownerId ? ` · Phụ trách: ${nameOf(m.ownerId) ?? "—"}` : ""}`;
     const ref = m.scope === "project" ? brands.find((b) => b.id === m.scopeRef)?.name : m.scope === "personal" ? nameOf(m.scopeRef) : m.scopeRef;
     return `${SCOPE_LABEL[m.scope]}${ref ? `: ${ref}` : ""}`;
   };
@@ -761,8 +764,15 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
       const bad = krsOfG(g.id).filter((k) => k.status === "active" && !allocationSummary(k, db.items.filter((i) => i.krId === k.id)).balanced);
       if (bad.length) { toast.error(`Chưa thể giao chính thức: ${bad.length} KR phân bổ chưa khớp chỉ tiêu`, { description: bad.map((k) => `${k.label || getKpiMetric(k.metricKey)?.label}: ${allocationSummary(k, db.items.filter((i) => i.krId === k.id)).message}`).join("\n") }); return; }
     }
+    if (status === "cancelled" && !confirm(`Hủy mục tiêu "${g.title}"? Mục tiêu chuyển sang chỉ xem, KR và kết quả cũ vẫn được giữ.`)) return;
     run(() => svc.saveGoal(actor, { ...g, status }), "Đã cập nhật trạng thái", refresh);
   };
+  const restore = (g: Goal) => {
+    if (!confirm(`Khôi phục mục tiêu "${g.title}"? Kỳ đã khóa sẽ không được mở lại.`)) return;
+    const ok = krsOfG(g.id).filter((k) => k.status === "active").every((k) => allocationSummary(k, db.items.filter((i) => i.krId === k.id)).balanced);
+    run(() => svc.saveGoal(actor, { ...g, status: ok ? "active" : "draft" }), ok ? "Đã khôi phục — Đang thực hiện" : "Đã khôi phục về Nháp (phân bổ chưa khớp)", refresh);
+  };
+  const toggleArchive = (g: Goal, archived: boolean) => run(() => svc.saveGoal(actor, { ...g, metadata: { ...g.metadata, archived: !archived } }), archived ? "Đã bỏ lưu trữ (trạng thái giữ nguyên)" : "Đã lưu trữ (trạng thái giữ nguyên)", refresh);
 
   return (
     <div className="space-y-4">
@@ -778,6 +788,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
           const krs = krsOfG(g.id);
           const legacy = legacyOf(g.id);
           const states = legacy.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, locked(p)); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
+          const caps = goalCaps(g, db, actor.isAdmin);
+          const gLocked = goalLocked(g.id, db);
           const hasLinks = krs.length > 0 || legacy.length > 0 || db.items.some((i) => (i.metadata as { goalId?: string }).goalId === g.id) || db.periods.some((p) => p.goalId === g.id);
           return (
             <div key={g.id} className={cn("rounded-xl border border-border bg-card", meta.archived && "opacity-60")}>
@@ -788,27 +800,29 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                 </div>
                 <div className="flex shrink-0 items-start gap-1 text-right">
                   <div>
-                    {actor.isAdmin ? <select className="h-7 rounded-md border border-input bg-background px-1.5 text-xs" value={g.status} onChange={(e) => setGoalStatus(g, e.target.value as GoalStatus)}>
+                    {actor.isAdmin && !caps.readOnly ? <select className="h-7 rounded-md border border-input bg-background px-1.5 text-xs" value={g.status} onChange={(e) => setGoalStatus(g, e.target.value as GoalStatus)}>
                       {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-                      : <span className="text-xs">{GOAL_STATUS[g.status]}</span>}
+                      : <span className={cn("rounded px-1.5 py-0.5 text-xs", g.status === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-muted")}>{GOAL_STATUS[g.status]}{gLocked ? " · Kỳ đã khóa" : ""}</span>}
                     <div className="mt-1 text-xs text-muted-foreground">{krs.length + states.length} KR</div>
                   </div>
                   {actor.isAdmin && (
                     <DropdownMenu><DropdownMenuTrigger className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Thao tác mục tiêu"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditGoal(g.id)}>Sửa mục tiêu</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setAdding(g.id)}>Thêm KR</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => duplicate(g)}>Nhân bản</DropdownMenuItem>
+                        {caps.readOnly && <DropdownMenuItem disabled>{caps.reason ?? "Chỉ xem"}</DropdownMenuItem>}
+                        {caps.edit && <DropdownMenuItem onClick={() => setEditGoal(g.id)}>Sửa mục tiêu</DropdownMenuItem>}
+                        {caps.addKr && <DropdownMenuItem onClick={() => setAdding(g.id)}>Thêm KR</DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => duplicate(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        {g.status !== "cancelled" && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => run(() => svc.saveGoal(actor, { ...g, metadata: { ...g.metadata, archived: !meta.archived } }), meta.archived ? "Đã khôi phục" : "Đã lưu trữ", refresh)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" disabled={hasLinks} onClick={() => confirm("Xóa vĩnh viễn mục tiêu này?") && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa{hasLinks ? " (còn KR — dùng Hủy/Lưu trữ)" : ""}</DropdownMenuItem>
+                        {caps.cancel && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
+                        {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" disabled={!caps.delete} onClick={() => confirm("Xóa vĩnh viễn mục tiêu này?") && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa{hasLinks ? " (còn KR — dùng Hủy/Lưu trữ)" : gLocked ? " (kỳ đã khóa)" : ""}</DropdownMenuItem>
                       </DropdownMenuContent></DropdownMenu>
                   )}
                 </div>
               </div>
               <div className="divide-y divide-border">
-                {krs.map((k) => <KrCard key={k.id} actor={actor} kr={k} goal={g} db={db} refresh={refresh} onOpen={setDetail} onEdit={() => setEditKr(k.id)} />)}
+                {krs.map((k) => <KrCard key={k.id} actor={actor} kr={k} goal={g} db={db} refresh={refresh} onOpen={setDetail} onEdit={() => setEditKr(k.id)} readOnly={caps.readOnly} />)}
                 {states.map(({ it, p, a, st }) => {
                   const m = getKpiMetric(it.metricKey);
                   return (
@@ -830,7 +844,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                 })}
                 {!krs.length && !states.length && <p className="px-4 py-3 text-xs text-muted-foreground">Chưa có KR.</p>}
               </div>
-              {actor.isAdmin && <div className="border-t border-border px-4 py-2"><button className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={() => setAdding(g.id)}><Plus className="h-3.5 w-3.5" />Thêm KR</button></div>}
+              {caps.readOnly && caps.reason && <div className="border-t border-border px-4 py-2 text-[11px] text-muted-foreground">{caps.reason}</div>}
+              {caps.addKr && <div className="border-t border-border px-4 py-2"><button className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={() => setAdding(g.id)}><Plus className="h-3.5 w-3.5" />Thêm KR</button></div>}
             </div>
           );
         })}
