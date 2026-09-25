@@ -12,6 +12,20 @@ import type { KeywordTrack, MapPost, Website, GrowthMetric } from "@/lib/store";
 import { calculateVideoDesignItem } from "./calculateVideoDesign";
 import { matchesEmployee, type KpiEmployee } from "./identity";
 import { toDateKey } from "./date";
+import { directionOf, evaluateKr, krDeadline, isLockedPeriod, lockedResultOf, type KrEvaluation } from "./evaluate";
+
+const RATE_FIELD: Record<string, "onTime" | "firstPass"> = { task_on_time_rate: "onTime", task_first_pass_rate: "firstPass" };
+/** Tính lại kết quả theo công thức của chỉ số trên evidence đã lọc. null = không đủ dữ liệu để tính lại theo bộ lọc. */
+export function recomputeFiltered(metricKey: string, unit: string, evidence: EvidenceRow[]): number | null {
+  const rf = RATE_FIELD[metricKey];
+  if (rf) { const den = evidence.filter((e) => e[rf] !== null); return den.length ? Math.round((den.filter((e) => e[rf]).length / den.length) * 1000) / 10 : null; }
+  if (metricKey === "design_points_completed") return evidence.some((e) => e.points === undefined) ? null : evidence.reduce((s, e) => s + (e.points ?? 0), 0);
+  // Chỉ số đếm sản lượng/số lỗi: mỗi evidence = một kết quả hợp lệ.
+  const COUNTABLE_KR = ["seo_keyword_top", "custom_task_result", "task_overdue", "map_post_published", "web_post_published", "social_post_published"];
+  if (unit === "count" && (!KR_ENGINE_KEYS.has(metricKey) || COUNTABLE_KR.includes(metricKey))) return evidence.length;
+  // Clicks, lượt xem, Lead, doanh thu, CPL, tỷ lệ chuyển đổi, số liệu nhập tay: không suy ra từ số bản ghi.
+  return null;
+}
 
 export interface ReportData { tasks: Task[]; webContents: WebContent[]; socialPosts: SocialPost[]; videos: Video[]; orders: DesignOrder[]; /** snapshot điểm order (sidecar đã duyệt); thiếu → N/A */ designPoints?: Record<string, number>; keywords?: KeywordTrack[]; mapPosts?: MapPost[]; websites?: Website[]; growth?: GrowthMetric[] }
 export interface ReportFilters { brandId?: string; websiteId?: string; socialId?: string; group?: KpiMetricCategory | "" }
@@ -29,6 +43,10 @@ export interface ItemReport {
   actual: number | null; achieved: boolean | null; supported: boolean;
   /** Item global/rộng hơn bộ lọc: actual = đóng góp trong phạm vi lọc, target N/A. */
   contributionOnly: boolean;
+  /** Đánh giá thống nhất (hướng + deadline). */
+  evaluation: KrEvaluation; deadline: string;
+  /** Kỳ khóa: "snapshot" = kết quả đã chốt; "live" = kỳ khóa cũ thiếu snapshot, đang tính lại. */
+  lockedSource: "snapshot" | "live" | null;
   evidence: EvidenceRow[]; warnings: number;
   breakdown: { key: string; brandId: string | null; websiteId: string | null; socialId: string | null; count: number }[];
 }
@@ -68,7 +86,7 @@ function sourceLookup(d: ReportData) {
   };
 }
 
-export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period: EmployeeKpiPeriod, data: ReportData, f: ReportFilters, adjustments: KpiAdjustment[]): ItemReport {
+export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period: EmployeeKpiPeriod, data: ReportData, f: ReportFilters, adjustments: KpiAdjustment[], today = new Date().toISOString().slice(0, 10)): ItemReport {
   const m = getKpiMetric(item.metricKey);
   const p = { periodStart: period.periodStart, periodEnd: period.periodEnd };
   const input = { metricKey: item.metricKey, targetValue: item.targetValue, brandId: item.brandId, websiteId: item.websiteId, socialId: item.socialId };
@@ -98,13 +116,20 @@ export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period:
   const itemWithin = (!f.brandId || item.brandId === f.brandId) && (!f.websiteId || item.websiteId === f.websiteId) && (!f.socialId || item.socialId === f.socialId);
   const contributionOnly = filtered && !itemWithin;
   const evidence = raw.filter((e) => filterMatch(f, e));
-  if (filtered && actual !== null) {
-    if (item.metricKey === "design_points_completed") {
-      actual = evidence.some((e) => e.points === undefined) ? null : evidence.reduce((s, e) => s + (e.points ?? 0), 0);
-    } else actual = evidence.length;
-  }
+  // Bộ lọc KHÔNG đổi công thức: KR nằm trọn trong bộ lọc → giữ nguyên kết quả đã tính.
+  // KR rộng hơn bộ lọc → tính lại theo đúng công thức của chỉ số trên dữ liệu đã lọc; không tính được → null (Chưa đủ dữ liệu).
+  if (contributionOnly && actual !== null) actual = recomputeFiltered(item.metricKey, m?.unit ?? item.unit, evidence);
   const lockedTarget = typeof item.metadata?.lockedTarget === "number" ? (item.metadata.lockedTarget as number) : null;
   const target = lockedTarget ?? item.targetValue;
+  // Kỳ đã khóa: dùng kết quả snapshot (nếu có), không tính lại từ dữ liệu hiện tại.
+  let lockedSource: ItemReport["lockedSource"] = null;
+  if (isLockedPeriod(period)) {
+    const snap = lockedResultOf(item);
+    if (snap && !contributionOnly) { actual = snap.actual; lockedSource = "snapshot"; } else if (!snap) lockedSource = "live";
+  }
+  const direction = directionOf(item.metricKey);
+  const ev = evaluateKr({ actual, target, direction, deadline: krDeadline(item, period.periodEnd), today, unit: m?.unit ?? item.unit,
+    evidenceDates: evidence.map((e) => e.creditedAt), warnings, contributionOnly });
   const bmap = new Map<string, ItemReport["breakdown"][number]>();
   for (const e of evidence) {
     const key = `${e.brandId}|${e.websiteId}|${e.socialId}`;
@@ -116,7 +141,7 @@ export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period:
     target, lockedTarget, adjustments: adjustments.filter((a) => a.itemId === item.id),
     // Coverage: có mục chưa xác minh có thể đổi kết luận → không chấm Chưa đạt chắc chắn.
     actual, contributionOnly,
-    achieved: contributionOnly || actual === null ? null : actual >= target ? true : warnings > 0 ? null : false, supported, evidence, warnings, breakdown: [...bmap.values()],
+    achieved: ev.achieved, evaluation: ev, deadline: ev.deadline, lockedSource, supported, evidence, warnings, breakdown: [...bmap.values()],
   };
 }
 
