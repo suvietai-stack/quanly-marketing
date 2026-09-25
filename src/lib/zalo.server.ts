@@ -1,8 +1,26 @@
 // Chỉ chạy phía máy chủ. Không log token / SĐT / nội dung khách hàng.
 import { createHash, randomBytes } from "crypto";
 
-export const SITE_URL = "https://basemarketing.suviet.vn";
-export const CALLBACK_URL = `${SITE_URL}/api/public/zalo/oauth-callback`;
+// Địa chỉ backend cố định (không đổi theo tên miền giao diện) — dùng cho OAuth Callback / Webhook.
+export const BACKEND_URL = "https://project--32968bd6-6ca2-45ac-99ce-8a48c617e3d0.lovable.app";
+export const CALLBACK_URL = `${BACKEND_URL}/api/public/zalo/oauth-callback`;
+export const WEBHOOK_URL = `${BACKEND_URL}/api/public/zalo/webhook`;
+export const DEFAULT_BASE_URL = "https://base.suviet.vn";
+
+/** Chỉ chấp nhận https + tên miền, không path/query — tránh chuyển hướng độc hại. */
+export function normalizeBaseUrl(v: string): string | null {
+  try {
+    const u = new URL(v.trim());
+    if (u.protocol !== "https:" || u.username || u.password || u.port) return null;
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(u.hostname)) return null;
+    if ((u.pathname && u.pathname !== "/") || u.search || u.hash) return null;
+    return `https://${u.hostname.toLowerCase()}`;
+  } catch { return null; }
+}
+export async function baseUrl() {
+  const cfg: any = await getConfig();
+  return (cfg?.base_url && normalizeBaseUrl(cfg.base_url)) || DEFAULT_BASE_URL;
+}
 const MAX_ATTEMPTS = 3;
 
 async function admin() {
@@ -10,11 +28,13 @@ async function admin() {
   return supabaseAdmin as any;
 }
 
-export function zaloEnv() {
+/** Ưu tiên cấu hình Admin lưu ở bảng chỉ backend đọc được; dự phòng bằng Secrets. */
+export async function zaloEnv() {
+  const cfg: any = await getConfig();
   return {
-    appId: process.env["ZALO_APP_ID"] || "",
-    appSecret: process.env["ZALO_APP_SECRET"] || "",
-    oaSecret: process.env["ZALO_OA_SECRET_KEY"] || "",
+    appId: cfg?.app_id || process.env["ZALO_APP_ID"] || "",
+    appSecret: cfg?.app_secret || process.env["ZALO_APP_SECRET"] || "",
+    oaSecret: cfg?.oa_secret_key || process.env["ZALO_OA_SECRET_KEY"] || "",
   };
 }
 
@@ -37,8 +57,8 @@ export async function saveConfig(patch: Record<string, unknown>) {
 const b64url = (b: Buffer) => b.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
 export async function buildConnectUrl() {
-  const { appId } = zaloEnv();
-  if (!appId) throw new Error("Chưa cấu hình ZALO_APP_ID");
+  const { appId, appSecret } = await zaloEnv();
+  if (!appId || !appSecret) throw new Error("Chưa cấu hình App ID / App Secret");
   const verifier = b64url(randomBytes(32));
   const challenge = b64url(createHash("sha256").update(verifier).digest());
   const state = b64url(randomBytes(16));
@@ -48,7 +68,7 @@ export async function buildConnectUrl() {
 }
 
 async function tokenRequest(body: Record<string, string>) {
-  const { appId, appSecret } = zaloEnv();
+  const { appId, appSecret } = await zaloEnv();
   const res = await fetch("https://oauth.zaloapp.com/v4/oa/access_token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", secret_key: appSecret },
@@ -85,8 +105,18 @@ export async function getAccessToken(): Promise<string | null> {
   const exp = cfg.token_expires_at ? new Date(cfg.token_expires_at).getTime() : 0;
   if (exp - Date.now() > 10 * 60 * 1000) return cfg.access_token;
   if (!cfg.refresh_token) return null;
+  const oldRefresh = cfg.refresh_token;
   try {
-    const t = await tokenRequest({ refresh_token: cfg.refresh_token, grant_type: "refresh_token" });
+    // Giữ chỗ: chỉ một tiến trình được dùng refresh token này
+    const db = await admin();
+    const claim = `claim:${Date.now()}:${Math.random()}`;
+    const { data: got } = await db.from("zalo_oa_config").update({ refresh_token: claim }).eq("id", 1).eq("refresh_token", oldRefresh).select("id");
+    if (!got?.length) {
+      await new Promise((r) => setTimeout(r, 1500));
+      const again = await getConfig();
+      return again?.status === "connected" && again.access_token && !String(again.refresh_token).startsWith("claim:") ? again.access_token : null;
+    }
+    const t = await tokenRequest({ refresh_token: oldRefresh, grant_type: "refresh_token" });
     await saveConfig({ ...t, last_error: null });
     return t.access_token;
   } catch {
@@ -164,13 +194,14 @@ export async function processPending(limit = 20) {
       await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }).eq("id", n.id);
       continue;
     }
-    const r = await sendCs(link.zalo_user_id, TEXT[n.kind] ?? "Có thông báo mới.", `${SITE_URL}/signals?open=${n.signal_id}`);
+    const r = await sendCs(link.zalo_user_id, TEXT[n.kind] ?? "Có thông báo mới.", `${await baseUrl()}/signals?open=${n.signal_id}`);
     processed++;
     if (r.ok) {
       await db.from("notifications").update({ zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_error: null, zalo_attempts: n.zalo_attempts + 1 }).eq("id", n.id);
     } else {
       // -213/-230: người dùng chưa quan tâm OA / quá khung tương tác → không đủ điều kiện, không thử lại
       const ineligible = [-213, -230, -201].includes(r.code);
+      if (!ineligible) await saveConfig({ last_error: `Gửi tin thất bại (${r.code})` }).catch(() => {});
       await db.from("notifications").update({
         zalo_status: ineligible ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: n.zalo_attempts + 1,
       }).eq("id", n.id);
@@ -179,8 +210,8 @@ export async function processPending(limit = 20) {
   return { processed };
 }
 
-export function verifyWebhook(raw: string, signature: string | null, timestamp: string) {
-  const { appId, oaSecret } = zaloEnv();
+export async function verifyWebhook(raw: string, signature: string | null, timestamp: string) {
+  const { appId, oaSecret } = await zaloEnv();
   if (!signature || !oaSecret) return false;
   const expected = "mac=" + createHash("sha256").update(appId + raw + timestamp + oaSecret).digest("hex");
   const a = signature.startsWith("mac=") ? signature : "mac=" + signature;

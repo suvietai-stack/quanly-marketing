@@ -9,14 +9,14 @@ export const Route = createFileRoute("/api/public/zalo/webhook")({
         let body: any;
         try { body = JSON.parse(raw); } catch { return new Response("bad", { status: 400 }); }
         const s = await import("@/lib/zalo.server");
-        if (!s.verifyWebhook(raw, request.headers.get("x-zevent-signature"), String(body?.timestamp ?? ""))) {
+        if (!(await s.verifyWebhook(raw, request.headers.get("x-zevent-signature"), String(body?.timestamp ?? "")))) {
           return new Response("invalid signature", { status: 401 });
         }
         // Chỉ dùng tin nhắn để nhận mã liên kết; không lưu nội dung tin nhắn.
         if (body?.event_name === "user_send_text" && typeof body?.sender?.id === "string") {
           const result = await s.handleLinkMessage(body.sender.id, String(body?.message?.text ?? "").slice(0, 200));
           if (result === "linked") {
-            await s.sendCs(body.sender.id, "Đã liên kết Zalo với tài khoản Base. Bạn sẽ nhận thông báo tín hiệu tại đây.", `${s.SITE_URL}/settings`);
+            await s.sendCs(body.sender.id, "Đã liên kết Zalo với tài khoản Base. Bạn sẽ nhận thông báo tín hiệu tại đây.", `${await s.baseUrl()}/settings`);
           }
         }
         return new Response("ok");
