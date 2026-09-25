@@ -57,6 +57,13 @@
       "when": 1790319851512,
       "tag": "0007_signals_edit_delete_cancel",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790320953125,
+      "tag": "0008_signal_catalog_perms",
+      "breakpoints": true
     }
   ]
 }
