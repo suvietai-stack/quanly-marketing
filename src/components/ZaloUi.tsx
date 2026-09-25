@@ -9,11 +9,13 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   zaloAdminStatus, zaloConnectUrl, zaloCheck, zaloSendTest, zaloDisconnect, zaloSetAuto, zaloRetryFailed,
-  zaloMyLink, zaloCreateLinkCode, zaloUnlink,
+  zaloMyLink, zaloCreateLinkCode, zaloUnlink, zaloSaveAppConfig, zaloSaveBaseUrl, zaloSaveWebhookSecret,
 } from "@/lib/zalo.functions";
 
 const LABEL: Record<string, string> = {
@@ -126,6 +128,27 @@ export function ZaloLinkCard() {
   );
 }
 
+function CopyRow({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="space-y-1">
+      <div className="text-xs font-medium">{label}</div>
+      <div className="flex gap-2">
+        <Input readOnly value={value} className="font-mono text-xs" />
+        <Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(value).then(() => toast.success("Đã sao chép"))}>Sao chép</Button>
+      </div>
+      <div className="text-xs text-muted-foreground">{hint}</div>
+    </div>
+  );
+}
+
+const STATE: Record<string, { label: string; tone: "default" | "secondary" | "destructive" }> = {
+  unconfigured: { label: "Chưa cấu hình", tone: "secondary" },
+  disconnected: { label: "Chưa kết nối", tone: "secondary" },
+  connected: { label: "Đã kết nối", tone: "default" },
+  reconnect: { label: "Cần kết nối lại", tone: "destructive" },
+  send_failed: { label: "Gửi tin thất bại", tone: "destructive" },
+};
+
 export function ZaloAdminCard() {
   const status = useServerFn(zaloAdminStatus);
   const connect = useServerFn(zaloConnectUrl);
@@ -134,58 +157,95 @@ export function ZaloAdminCard() {
   const disc = useServerFn(zaloDisconnect);
   const setAuto = useServerFn(zaloSetAuto);
   const retry = useServerFn(zaloRetryFailed);
+  const saveApp = useServerFn(zaloSaveAppConfig);
+  const saveBase = useServerFn(zaloSaveBaseUrl);
+  const saveHook = useServerFn(zaloSaveWebhookSecret);
   const [s, setS] = useState<Awaited<ReturnType<typeof zaloAdminStatus>> | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const load = () => status().then(setS).catch((e) => setErr(e.message));
+  const [appId, setAppId] = useState("");
+  const [secret, setSecret] = useState("");
+  const [base, setBase] = useState("");
+  const [hook, setHook] = useState("");
+  const load = () => status().then((r) => { setS(r); setAppId(r.appId); setBase(r.baseUrl); }).catch((e) => setErr(e.message));
   useEffect(() => {
     load();
     const r = new URLSearchParams(window.location.search).get("zalo");
     if (r === "connected") toast.success("Đã kết nối Zalo OA");
     if (r === "error") toast.error("Kết nối Zalo OA thất bại — thử lại");
   }, []);
-  if (err) return null;
-  if (!s) return null;
+  if (err || !s) return null;
   const run = (p: Promise<any>) => p.then((r) => { if (r?.message) (r.ok ? toast.success : toast.error)(r.message); load(); }).catch((e) => toast.error(e.message));
-  const stLabel = s.status === "connected" ? "Đã kết nối" : s.status === "expired" ? "Hết hiệu lực — cần kết nối lại" : "Chưa kết nối";
+  const st = STATE[s.state] ?? STATE.disconnected;
   return (
-    <Card><CardContent className="p-5 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">Tích hợp Zalo OA (Admin)</h3>
-        <Badge variant={s.status === "connected" ? "default" : "secondary"}>{stLabel}</Badge>
-      </div>
-      {!s.secretsReady && <p className="text-sm text-destructive">Chưa có đủ thông tin ứng dụng Zalo (App ID, App Secret, OA Secret Key) ở hệ thống.</p>}
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="text-muted-foreground">Tên OA</div><div>{s.oaName ?? "—"}</div>
-        <div className="text-muted-foreground">Quyền gửi tin</div><div>{s.status === "connected" ? "Tin tư vấn (trong khung tương tác)" : "—"}</div>
-        <div className="text-muted-foreground">Nhân viên đã liên kết</div><div>{s.linkedCount}</div>
-        <div className="text-muted-foreground">7 ngày qua</div>
-        <div>Đã gửi {s.stats7d.sent ?? 0} · Thất bại {s.stats7d.failed ?? 0} · Không đủ ĐK {s.stats7d.ineligible ?? 0} · Chưa gửi {s.stats7d.pending ?? 0}</div>
-      </div>
-      {s.lastError && <p className="text-xs text-destructive">{s.lastError}</p>}
-      <div className="flex items-center justify-between rounded-md border p-3">
-        <div>
-          <div className="text-sm font-medium">Gửi tự động</div>
-          <div className="text-xs text-muted-foreground">Chỉ bật sau khi đã gửi tin thử thành công.</div>
+    <div className="space-y-4">
+      <Card><CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold">Cấu hình ứng dụng Zalo</h3>
+          <Badge variant={s.configured ? "default" : "secondary"}>{s.configured ? "Đã cấu hình" : "Chưa cấu hình"}</Badge>
         </div>
-        <Switch checked={s.autoSend} disabled={s.status !== "connected"} onCheckedChange={(on) => run(setAuto({ data: { on } }))} />
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        <Button disabled={!s.secretsReady} onClick={() => connect().then((r) => { window.location.href = r.url; }).catch((e) => toast.error(e.message))}>
-          {s.status === "connected" ? "Kết nối lại" : "Kết nối OA"}
-        </Button>
-        <Button variant="outline" onClick={() => run(check())}>Kiểm tra kết nối</Button>
-        <Button variant="outline" onClick={() => run(test())}>Gửi tin thử</Button>
-        <Button variant="outline" onClick={() => run(retry().then((r) => ({ ok: true, message: `Đã xử lý ${r.processed} thông báo` })))}>Thử gửi lại</Button>
-        {s.status !== "disconnected" && <Button variant="ghost" onClick={() => confirm("Ngắt kết nối Zalo OA?") && run(disc())}>Ngắt kết nối</Button>}
-      </div>
-      <details className="text-xs text-muted-foreground">
-        <summary className="cursor-pointer">Thông tin cấu hình trên Zalo for Developers</summary>
-        <div className="mt-2 space-y-1 break-all">
-          <div>Callback URL: <code>{s.callbackUrl}</code></div>
-          <div>Webhook URL: <code>{s.webhookUrl}</code> (sự kiện: người dùng gửi tin nhắn văn bản)</div>
+        {!s.dbReady && <p className="text-xs text-destructive">Chưa lưu được từ giao diện: cơ sở dữ liệu cần một cập nhật nhỏ đang chờ phê duyệt. Trong lúc chờ, có thể nhập App ID / App Secret qua mục Bí mật (Secrets) của hệ thống.</p>}
+        <div className="space-y-1"><Label>Zalo App ID</Label><Input value={appId} onChange={(e) => setAppId(e.target.value)} inputMode="numeric" /></div>
+        <div className="space-y-1">
+          <Label>App Secret</Label>
+          <Input type="password" autoComplete="new-password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder={s.appSecretSet ? `Đã lưu (${s.appSecretHint}) — để trống nếu không đổi` : "Nhập App Secret"} />
+          <div className="text-xs text-muted-foreground">App Secret không bao giờ hiển thị lại. Đổi App ID/Secret sẽ yêu cầu kết nối lại OA.</div>
         </div>
-      </details>
-    </CardContent></Card>
+        <Button disabled={!s.dbReady} onClick={() => run(saveApp({ data: { appId, appSecret: secret || undefined } }).then((r) => { setSecret(""); return r; }))}>Lưu cấu hình</Button>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-5 space-y-3">
+        <h3 className="font-semibold">Đường dẫn ứng dụng Base</h3>
+        <div className="flex gap-2">
+          <Input value={base} onChange={(e) => setBase(e.target.value)} placeholder="https://base.suviet.vn" />
+          <Button variant="outline" disabled={!s.dbReady} onClick={() => run(saveBase({ data: { url: base } }))}>Lưu</Button>
+        </div>
+        <div className="text-xs text-muted-foreground">Mọi nút "Xem tín hiệu" trong Zalo mở trên tên miền này. Đổi tên miền không làm mất kết nối OA.</div>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-5 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold">Kết nối Zalo OA</h3>
+          <Badge variant={st.tone}>{st.label}</Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="text-muted-foreground">Tên OA</div><div>{s.oaName ?? "—"}</div>
+          <div className="text-muted-foreground">Nhân viên đã liên kết</div><div>{s.linkedCount}</div>
+          <div className="text-muted-foreground">Gửi thử</div><div>{s.testOk ? "Đã thành công" : "Chưa thành công"}</div>
+          <div className="text-muted-foreground">7 ngày qua</div>
+          <div>Đã gửi {s.stats7d.sent ?? 0} · Thất bại {s.stats7d.failed ?? 0} · Không đủ ĐK {s.stats7d.ineligible ?? 0} · Chưa gửi {s.stats7d.pending ?? 0}</div>
+        </div>
+        {s.lastError && <p className="text-xs text-destructive">{s.lastError}</p>}
+        <div className="flex gap-2 flex-wrap">
+          <Button disabled={!s.configured} onClick={() => connect().then((r) => { window.location.href = r.url; }).catch((e) => toast.error(e.message))}>
+            {s.status === "disconnected" ? "Kết nối OA" : "Kết nối lại"}
+          </Button>
+          <Button variant="outline" onClick={() => run(check())}>Kiểm tra kết nối</Button>
+          <Button variant="outline" onClick={() => run(test())}>Gửi thử</Button>
+          <Button variant="outline" onClick={() => run(retry().then((r) => ({ ok: true, message: `Đã xử lý ${r.processed} thông báo` })))}>Thử gửi lại</Button>
+          {s.status !== "disconnected" && <Button variant="ghost" onClick={() => confirm("Ngắt kết nối Zalo OA?") && run(disc())}>Ngắt kết nối</Button>}
+        </div>
+        <div className="flex items-center justify-between rounded-md border p-3">
+          <div>
+            <div className="text-sm font-medium">Gửi tự động</div>
+            <div className="text-xs text-muted-foreground">{s.testOk ? "Có thể bật." : "Chỉ bật được sau khi Gửi thử thành công."}</div>
+          </div>
+          <Switch checked={s.autoSend} disabled={s.status !== "connected" || (!s.testOk && !s.autoSend)} onCheckedChange={(on) => run(setAuto({ data: { on } }))} />
+        </div>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-5 space-y-4">
+        <h3 className="font-semibold">Khai báo trên Zalo for Developers</h3>
+        <CopyRow label="OAuth Callback URL" value={s.callbackUrl} hint="Dán vào mục Official Account → Callback URL. Cố định, không đổi khi đổi tên miền Base." />
+        <CopyRow label="Webhook URL" value={s.webhookUrl} hint="Dùng để nhân viên liên kết Zalo bằng mã. Bật sự kiện “Người dùng gửi tin nhắn văn bản”." />
+        <div className="space-y-1">
+          <Label>Khóa Webhook (OA Secret Key)</Label>
+          <div className="flex gap-2">
+            <Input type="password" autoComplete="new-password" value={hook} onChange={(e) => setHook(e.target.value)} placeholder={s.webhookReady ? "Đã lưu — để trống nếu không đổi" : "Chỉ cần để nhân viên liên kết Zalo"} />
+            <Button variant="outline" disabled={!s.dbReady || !hook} onClick={() => run(saveHook({ data: { secret: hook } }).then((r) => { setHook(""); return r; }))}>Lưu</Button>
+          </div>
+        </div>
+      </CardContent></Card>
+    </div>
   );
 }
 
