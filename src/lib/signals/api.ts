@@ -101,4 +101,27 @@ export async function findSamePhone(phone: string, exceptId?: string): Promise<P
   return data ?? [];
 }
 
+/** Xóa: DB chỉ cho phép khi chưa có nhật ký và chưa Chốt/Trượt. Trả false nếu bị chặn. */
+export async function deleteSignal(id: string): Promise<boolean> {
+  const { data, error } = await db.from("opportunity_signals").delete().eq("id", id).select("id");
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+export async function cancelSignal(id: string, reason: string, undo = false) {
+  const { error } = await db.rpc("signal_cancel", { _id: id, _reason: reason, _undo: undo });
+  if (error) throw error;
+}
+
+/** Lý do trượt tùy chỉnh do quản lý bổ sung — lưu trong danh mục dùng chung. */
+export const LOST_REASON_SCOPE = "signal_lost_reasons";
+export async function getCustomLostReasons(): Promise<string[]> {
+  const { data } = await db.from("catalogs").select("items").eq("scope", LOST_REASON_SCOPE).maybeSingle();
+  return Array.isArray(data?.items) ? data.items : [];
+}
+export async function setCustomLostReasons(items: string[]) {
+  const { error } = await db.from("catalogs").upsert({ scope: LOST_REASON_SCOPE, items }, { onConflict: "scope" });
+  if (error) throw error;
+}
+
 export const errMsg = (e: any) => e?.message || "Có lỗi xảy ra";

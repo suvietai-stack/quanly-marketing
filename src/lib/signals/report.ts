@@ -15,6 +15,7 @@ export const reasonGroup = (r: string | null) => (!r ? null : r.startsWith("Khá
 
 export function filterSignals(list: Signal[], f: ReportFilter): Signal[] {
   return list.filter((s) => {
+    if (s.cancelled_at) return false; // Hủy ≠ Trượt: loại khỏi báo cáo thường
     if (f.from || f.to) {
       const d = dateOf(s, f.basis);
       if (!d) return false;
@@ -78,7 +79,7 @@ export type TimeRange = "" | "today" | "7d" | "month" | "custom";
 export interface ListFilter {
   q?: string; quick: Quick; time: TimeRange; from?: string; to?: string;
   source?: string; product?: string; needGroup?: string; saleId?: string; creatorId?: string;
-  lostReason?: string; unassigned?: boolean;
+  lostReason?: string; unassigned?: boolean; cancelled?: boolean;
 }
 
 function addDays(key: string, n: number) {
@@ -104,6 +105,7 @@ export function applyDetailFilter(list: Signal[], f: ListFilter, today = todayKe
   const [from, to] = timeBounds(f, today);
   return list.filter((s) => {
     if (t && !(s.customer_name.toLowerCase().includes(t) || s.phone.includes(t))) return false;
+    if (!!f.cancelled !== !!s.cancelled_at) return false;
     if (f.unassigned && s.assigned_to !== null) return false;
     if (from && s.detected_on < from) return false;
     if (to && s.detected_on > to) return false;
