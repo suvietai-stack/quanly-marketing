@@ -520,6 +520,56 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          dedup_key: string
+          id: string
+          kind: string
+          read_at: string | null
+          recipient_id: string
+          signal_id: string | null
+          zalo_attempts: number
+          zalo_error: string | null
+          zalo_sent_at: string | null
+          zalo_status: string
+        }
+        Insert: {
+          created_at?: string
+          dedup_key: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          recipient_id: string
+          signal_id?: string | null
+          zalo_attempts?: number
+          zalo_error?: string | null
+          zalo_sent_at?: string | null
+          zalo_status?: string
+        }
+        Update: {
+          created_at?: string
+          dedup_key?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          recipient_id?: string
+          signal_id?: string | null
+          zalo_attempts?: number
+          zalo_error?: string | null
+          zalo_sent_at?: string | null
+          zalo_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunity_signal_events: {
         Row: {
           actor_id: string | null
@@ -1110,6 +1160,96 @@ export type Database = {
           data?: Json
           id?: string
           is_demo?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      zalo_link_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zalo_links: {
+        Row: {
+          last_interaction_at: string | null
+          linked_at: string
+          status: string
+          user_id: string
+          zalo_user_id: string
+        }
+        Insert: {
+          last_interaction_at?: string | null
+          linked_at?: string
+          status?: string
+          user_id: string
+          zalo_user_id: string
+        }
+        Update: {
+          last_interaction_at?: string | null
+          linked_at?: string
+          status?: string
+          user_id?: string
+          zalo_user_id?: string
+        }
+        Relationships: []
+      }
+      zalo_oa_config: {
+        Row: {
+          access_token: string | null
+          auto_send: boolean
+          id: number
+          last_error: string | null
+          oa_id: string | null
+          oa_name: string | null
+          oauth_state: string | null
+          oauth_verifier: string | null
+          refresh_token: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          auto_send?: boolean
+          id?: number
+          last_error?: string | null
+          oa_id?: string | null
+          oa_name?: string | null
+          oauth_state?: string | null
+          oauth_verifier?: string | null
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          auto_send?: boolean
+          id?: number
+          last_error?: string | null
+          oa_id?: string | null
+          oa_name?: string | null
+          oauth_state?: string | null
+          oauth_verifier?: string | null
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -16,6 +16,7 @@ import { Plus, Pencil, Trash2, ShieldCheck, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AccountsSettings } from "@/components/AccountsSettings";
+import { ZaloSettingsTab } from "@/components/ZaloUi";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
@@ -151,7 +152,9 @@ function SettingsPage() {
   const showInfo = can("settings.system_view");
   const canPresence = can("settings.view_presence");
   const initialTab = showAccounts ? "accounts" : showPeople ? "people" : showCatalog ? "plans" : "info";
-  const [tab, setTab] = useState(initialTab);
+  const me = auth.users.find((u) => u.id === auth.currentUserId);
+  const zaloAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
+  const [tab, setTab] = useState(() => (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("zalo") ? "zalo" : initialTab));
   const [presenceFilter, setPresenceFilter] = useState<"all" | "online" | "offline">("all");
   const setPlans = (next: string[]) => s.setCatalog("plans", next);
   const setTopics = (next: string[]) => s.setCatalog("topics", next);
@@ -179,7 +182,9 @@ function SettingsPage() {
         {showCatalog && <TabsTrigger value="plans">Plan</TabsTrigger>}
         {showCatalog && <TabsTrigger value="topics">Topic</TabsTrigger>}
         {showInfo && <TabsTrigger value="info">Thông tin hệ thống</TabsTrigger>}
+        <TabsTrigger value="zalo">Thông báo Zalo</TabsTrigger>
       </TabsList>
+      <TabsContent value="zalo" className="mt-4"><ZaloSettingsTab isAdmin={zaloAdmin} /></TabsContent>
 
       {showAccounts && <TabsContent value="accounts" className="mt-4">
         <AccountsSettings />

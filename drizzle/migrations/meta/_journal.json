@@ -64,6 +64,13 @@
       "when": 1790320953125,
       "tag": "0008_signal_catalog_perms",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790323708266,
+      "tag": "0009_zalo_signal_notifications",
+      "breakpoints": true
     }
   ]
 }

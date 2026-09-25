@@ -33,6 +33,8 @@ import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
+import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo/webhook'
+import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
 
 const WebContentsRoute = WebContentsRouteImport.update({
   id: '/web-contents',
@@ -154,6 +156,17 @@ const BrandsIdRoute = BrandsIdRouteImport.update({
   path: '/brands/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
+  id: '/api/public/zalo/webhook',
+  path: '/api/public/zalo/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicZaloOauthCallbackRoute =
+  ApiPublicZaloOauthCallbackRouteImport.update({
+    id: '/api/public/zalo/oauth-callback',
+    path: '/api/public/zalo/oauth-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -180,6 +193,8 @@ export interface FileRoutesByFullPath {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
+  '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -206,6 +221,8 @@ export interface FileRoutesByTo {
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
+  '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
+  '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -233,6 +250,8 @@ export interface FileRoutesById {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
+  '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -261,6 +280,8 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/zalo/oauth-callback'
+    | '/api/public/zalo/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +308,8 @@ export interface FileRouteTypes {
     | '/signals'
     | '/social'
     | '/websites'
+    | '/api/public/zalo/oauth-callback'
+    | '/api/public/zalo/webhook'
   id:
     | '__root__'
     | '/'
@@ -313,6 +336,8 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/zalo/oauth-callback'
+    | '/api/public/zalo/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -340,6 +365,8 @@ export interface RootRouteChildren {
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
+  ApiPublicZaloOauthCallbackRoute: typeof ApiPublicZaloOauthCallbackRoute
+  ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -512,6 +539,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BrandsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zalo/webhook': {
+      id: '/api/public/zalo/webhook'
+      path: '/api/public/zalo/webhook'
+      fullPath: '/api/public/zalo/webhook'
+      preLoaderRoute: typeof ApiPublicZaloWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zalo/oauth-callback': {
+      id: '/api/public/zalo/oauth-callback'
+      path: '/api/public/zalo/oauth-callback'
+      fullPath: '/api/public/zalo/oauth-callback'
+      preLoaderRoute: typeof ApiPublicZaloOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -540,6 +581,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
+  ApiPublicZaloOauthCallbackRoute: ApiPublicZaloOauthCallbackRoute,
+  ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
