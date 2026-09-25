@@ -307,7 +307,7 @@ function GoalKrs({ items, db }: { items: EmployeeKpiItem[]; db: KpiDb }) {
         const p = db.periods.find((x) => x.id === it.kpiPeriodId);
         if (!p) return null;
         const u = users.find((x) => x.id === p.userId);
-        const a = actual(p.userId, it, p.periodStart, p.periodEnd, locked);
+        const a = actual(p.userId, it, p.periodStart, p.periodEnd, p.status === "locked" || p.status === "closed");
         return (
           <li key={it.id} className="flex flex-wrap gap-x-2">
             <span className="font-medium">{it.label || getKpiMetric(it.metricKey)?.label}</span>
