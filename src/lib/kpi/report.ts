@@ -179,7 +179,7 @@ export function buildEmployeeReport(args: {
   for (const p of periods) for (const it of args.items.filter((i) => i.kpiPeriodId === p.id)) {
     const f = args.filters;
     if ((f.brandId && it.brandId && it.brandId !== f.brandId) || (f.websiteId && it.websiteId && it.websiteId !== f.websiteId) || (f.socialId && it.socialId && it.socialId !== f.socialId) || (f.websiteId && it.socialId) || (f.socialId && it.websiteId)) continue;
-    const r = buildItemReport(emp, it, p, args.data, args.filters, args.adjustments);
+    const r = buildItemReport(emp, it, p, args.data, args.filters, args.adjustments, args.today);
     if (args.filters.group && r.category !== args.filters.group) continue;
     items.push(r);
   }
