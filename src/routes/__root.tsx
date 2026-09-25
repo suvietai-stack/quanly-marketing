@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SignalCacheGuard } from "@/components/signals/SignalsUi";
 import {
   Outlet,
   Link,
