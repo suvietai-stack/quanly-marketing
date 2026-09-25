@@ -549,6 +549,177 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
   );
 }
 
+/* ---------- Sửa mục tiêu ---------- */
+function GoalEditSheet({ actor, goal, onClose }: { actor: Actor; goal: Goal; onClose: () => void }) {
+  const meta = goal.metadata as GoalMeta;
+  const [v, setV] = useState({ title: goal.title, description: goal.description ?? "", scope: meta.scope ?? (meta.ownerId ? "personal" : "department") as GoalScope,
+    scopeRef: meta.scopeRef ?? meta.ownerId ?? "Phòng Marketing", coordinatorId: meta.coordinatorId ?? "", start: goal.periodStart, end: goal.periodEnd, deadline: meta.deadline ?? goal.periodEnd });
+  const [saving, setSaving] = useState(false);
+  return (
+    <Sheet open onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+        <SheetHeader><SheetTitle>Sửa mục tiêu</SheetTitle><SheetDescription>Thay đổi kỳ không làm thay đổi kỳ của các chỉ tiêu đã giao.</SheetDescription></SheetHeader>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className={`${lbl} sm:col-span-2`}>Tên mục tiêu<input className={inp} value={v.title} onChange={(e) => setV({ ...v, title: e.target.value })} /></label>
+          <ScopeFields v={v} set={(p) => setV({ ...v, ...p })} />
+          <label className={lbl}>Từ ngày<input type="date" className={inp} value={v.start} onChange={(e) => setV({ ...v, start: e.target.value })} /></label>
+          <label className={lbl}>Đến ngày<input type="date" className={inp} value={v.end} onChange={(e) => setV({ ...v, end: e.target.value })} /></label>
+          <label className={lbl}>Deadline<input type="date" className={inp} value={v.deadline} onChange={(e) => setV({ ...v, deadline: e.target.value })} /></label>
+          <label className={`${lbl} sm:col-span-2`}>Nội dung liên quan<textarea className={`${inp} h-20 py-1.5`} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} /></label>
+        </div>
+        <div className="mt-4 flex justify-end"><button className={btn} disabled={saving || !v.title.trim()} onClick={async () => {
+          if (v.deadline < v.start || v.deadline > v.end) { toast.error("Deadline phải nằm trong kỳ."); return; }
+          setSaving(true);
+          const ok = await run(() => svc.saveGoal(actor, { ...goal, title: v.title, description: v.description || null, periodStart: v.start, periodEnd: v.end,
+            metadata: { scope: v.scope, scopeRef: v.scopeRef, coordinatorId: v.coordinatorId || null, deadline: v.deadline } }), "Đã lưu mục tiêu", () => {});
+          setSaving(false); if (ok) onClose();
+        }}>{saving ? "Đang lưu…" : "Lưu"}</button></div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/* ---------- Sửa KR chung ---------- */
+function KrEditSheet({ actor, kr, goal, onClose }: { actor: Actor; kr: GoalKr; goal: Goal; onClose: () => void }) {
+  const [v, setV] = useState({ label: kr.label ?? "", target: kr.targetValue, deadline: kr.deadline ?? "", reason: "" });
+  const [saving, setSaving] = useState(false);
+  const history = ((kr.metadata as { history?: { from: number; to: number; at: string; reason?: string }[] }).history ?? []);
+  return (
+    <Sheet open onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader><SheetTitle>Sửa KR</SheetTitle><SheetDescription>{getKpiMetric(kr.metricKey)?.label} · Sửa chỉ tiêu chung không tự đổi phân bổ của nhân viên.</SheetDescription></SheetHeader>
+        <div className="mt-4 space-y-3">
+          <label className={lbl}>Tên hiển thị<input className={inp} value={v.label} placeholder={getKpiMetric(kr.metricKey)?.label} onChange={(e) => setV({ ...v, label: e.target.value })} /></label>
+          <label className={lbl}>Chỉ tiêu chung<input type="number" min={1} className={inp} value={v.target} onChange={(e) => setV({ ...v, target: Number(e.target.value) })} /></label>
+          {v.target !== kr.targetValue && <label className={lbl}>Lý do thay đổi<input className={inp} value={v.reason} onChange={(e) => setV({ ...v, reason: e.target.value })} /></label>}
+          <label className={lbl}>Deadline KR<input type="date" className={inp} min={goal.periodStart} max={goal.periodEnd} value={v.deadline || goal.periodEnd} onChange={(e) => setV({ ...v, deadline: e.target.value })} /></label>
+          {history.length > 0 && <div className="text-xs text-muted-foreground"><div className="font-semibold">Lịch sử chỉ tiêu</div>{history.map((h, i) => <div key={i}>{fmtD(h.at.slice(0, 10))}: {h.from} → {h.to}{h.reason ? ` · ${h.reason}` : ""}</div>)}</div>}
+        </div>
+        <div className="mt-4 flex justify-end"><button className={btn} disabled={saving || !(v.target > 0) || (v.target !== kr.targetValue && !v.reason.trim())} onClick={async () => {
+          setSaving(true);
+          const ok = await run(() => svc.saveKr(actor, { ...kr, label: v.label.trim() || null, targetValue: v.target, deadline: v.deadline || null }, v.reason), "Đã lưu KR", () => {});
+          setSaving(false); if (ok) onClose();
+        }}>{saving ? "Đang lưu…" : "Lưu"}</button></div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+const locked = (p?: { status: string }) => p?.status === "locked" || p?.status === "closed";
+
+/* ---------- Thẻ KR chung + bảng phân bổ ---------- */
+function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit }: { actor: Actor; kr: GoalKr; goal: Goal; db: KpiDb; refresh: () => void; onOpen: (x: { it: EmployeeKpiItem; userId: string; start: string; end: string }) => void; onEdit: () => void }) {
+  const users = useAuth((s) => s.users);
+  const { brands, websites, socials } = useStore();
+  const brandOf = useBrandOf();
+  const actualOf = useKrActual();
+  const [open, setOpen] = useState(false);
+  const [add, setAdd] = useState<{ userId: string; channel: string; target: number; deadline: string } | null>(null);
+  const m = getKpiMetric(kr.metricKey);
+  const div = isDivisible(kr.metricKey);
+  const rows = db.items.filter((i) => i.krId === kr.id).map((it) => {
+    const p = db.periods.find((x) => x.id === it.kpiPeriodId);
+    const a = p ? actualOf(p.userId, it, p.periodStart, p.periodEnd, locked(p)) : { value: null, warnings: 0, evidence: [] } as KrActual;
+    return { it, p, a, st: krState(m, a, it, p?.periodEnd ?? goal.periodEnd) };
+  });
+  const sum = allocationSummary(kr, rows.map((r) => r.it));
+  const total = aggregateKr(kr.metricKey, rows.map((r) => ({ value: r.a.value, evidence: r.a.evidence.map((e) => ({ type: e.type, id: e.id })) })));
+  const pseudo = { ...rows[0]?.it, metricKey: kr.metricKey, targetValue: kr.targetValue, unit: m?.unit ?? "count", metadata: { deadline: kr.deadline ?? undefined } } as EmployeeKpiItem;
+  const st = krState(m, { value: total, warnings: 0, evidence: rows.flatMap((r) => r.a.evidence) }, pseudo, goal.periodEnd);
+  const where = kr.websiteId ? websites.find((w) => w.id === kr.websiteId)?.name ?? "Website" : kr.socialId ? socials.find((s) => s.id === kr.socialId)?.name ?? "Kênh" : kr.brandId ? brands.find((b) => b.id === kr.brandId)?.name ?? "Dự án" : "Nhiều dự án";
+  const chName = (it: EmployeeKpiItem) => it.websiteId ? websites.find((w) => w.id === it.websiteId)?.name ?? "Website" : it.socialId ? socials.find((s) => s.id === it.socialId)?.name ?? "Kênh" : "Toàn phạm vi KR";
+  const hasResult = rows.some((r) => r.a.evidence.length > 0 || (r.a.value ?? 0) > 0);
+  const anyLocked = rows.some((r) => locked(r.p));
+  const webOpts = kr.websiteId || kr.socialId || !m?.scopes.includes("website") ? [] : websites.filter((w) => !kr.brandId || w.brandId === kr.brandId);
+  const socOpts = kr.websiteId || kr.socialId || !m?.scopes.includes("social") ? [] : socials.filter((s) => !kr.brandId || s.brandId === kr.brandId);
+  const inactive = kr.status !== "active";
+
+  const saveAlloc = async () => {
+    if (!add) return;
+    const ch = add.channel || (kr.websiteId ? `w:${kr.websiteId}` : kr.socialId ? `s:${kr.socialId}` : "");
+    const [t, id] = ch.split(":");
+    const item: NewItem = { krId: kr.id, metricKey: kr.metricKey, targetValue: div ? add.target : kr.targetValue, brandId: kr.brandId, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null,
+      label: kr.label, metadata: { ...Object.fromEntries(Object.entries(kr.metadata).filter(([k]) => !["history", "clientKey"].includes(k))), ...(add.deadline ? { deadline: add.deadline } : {}), clientKey: rid() } };
+    const sc = checkAllocationScope(kr, item, brandOf); if (sc) { toast.error(sc); return; }
+    if (!div && rows.length) { toast.error("KR này không chia theo nhân sự — đã có người chịu trách nhiệm."); return; }
+    const ok = await run(() => svc.assign(actor, { userId: add.userId, periodType: (goal.metadata as GoalMeta).periodType ?? "custom", periodStart: goal.periodStart, periodEnd: goal.periodEnd, goalId: goal.id, items: [item] }), "Đã phân bổ", refresh);
+    if (ok) setAdd(null);
+  };
+
+  return (
+    <div className={cn("px-4 py-2.5", inactive && "opacity-60")}>
+      <div className="flex items-center gap-3">
+        <button className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => setOpen(!open)}>
+          {open ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2"><span className="truncate text-sm font-medium">{kr.label || m?.label}</span>
+              {m && m.availability !== "linked" && <span className={cn("shrink-0 rounded px-1 py-0.5 text-[10px]", AV_TONE[m.availability!])}>{AVAILABILITY_LABEL[m.availability!]}</span>}
+              {inactive && <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px]">{kr.status === "cancelled" ? "Đã hủy" : "Lưu trữ"}</span>}</div>
+            <div className="truncate text-[11px] text-muted-foreground">{where} · {rows.length} nhân sự{sum.message ? ` · ${sum.message}` : ""}{!div ? " · Không phân bổ theo nhân sự" : ""}</div>
+            {st.pct !== null && <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", st.state === "achieved" ? "bg-success" : st.state === "overdue" ? "bg-destructive" : "bg-primary")} style={{ width: `${st.pct}%` }} /></div>}
+          </div>
+        </button>
+        <div className="shrink-0 text-right">
+          <div className="text-sm font-semibold tabular-nums">{total ?? "—"}<span className="font-normal text-muted-foreground"> / {st.dir === "at_most" ? "≤" : ""}{kr.targetValue}{unitTxt(m?.unit ?? "count")}</span></div>
+          <div className={cn("text-[11px] font-medium", st.tone)}>{st.label}</div>
+          <div className="text-[10px] text-muted-foreground">hạn {fmtD(kr.deadline ?? goal.periodEnd)}</div>
+        </div>
+        {actor.isAdmin && (
+          <DropdownMenu><DropdownMenuTrigger className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Thao tác KR"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>Sửa KR / chỉ tiêu / deadline</DropdownMenuItem>
+              <DropdownMenuItem disabled={inactive} onClick={() => { setOpen(true); setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" }); }}>Phân bổ nhân sự</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {kr.status === "active" ? <>
+                <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "cancelled"), "Đã hủy KR", refresh)}>Hủy KR</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "archived"), "Đã lưu trữ KR", refresh)}>Lưu trữ</DropdownMenuItem>
+              </> : <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "active"), "Đã mở lại KR", refresh)}>Khôi phục</DropdownMenuItem>}
+              <DropdownMenuItem className="text-destructive" disabled={!canHardDelete(hasResult, anyLocked)} onClick={() => confirm("Xóa KR và các dòng phân bổ chưa có kết quả?") && run(() => { rows.forEach((r) => svc.removeItem(actor, r.it.id)); svc.deleteKr(actor, kr.id); }, "Đã xóa KR", refresh)}>
+                Xóa{!canHardDelete(hasResult, anyLocked) ? " (đã có kết quả/khóa kỳ)" : ""}</DropdownMenuItem>
+            </DropdownMenuContent></DropdownMenu>
+        )}
+      </div>
+      {open && (
+        <div className="mt-2 overflow-x-auto rounded-md border border-border">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/50 text-muted-foreground"><tr><th className="px-2 py-1.5 text-left font-medium">Nhân sự</th><th className="px-2 text-left font-medium">Website / Kênh</th><th className="px-2 text-right font-medium">Hoàn thành</th><th className="px-2 text-left font-medium">Deadline</th><th className="px-2" /></tr></thead>
+            <tbody className="divide-y divide-border">
+              {rows.map(({ it, p, a, st: rs }) => {
+                const res = a.evidence.length > 0 || (a.value ?? 0) > 0;
+                return (
+                  <tr key={it.id} className="hover:bg-muted/30">
+                    <td className="px-2 py-1.5"><button className="text-left hover:text-primary hover:underline" onClick={() => p && onOpen({ it, userId: p.userId, start: p.periodStart, end: p.periodEnd })}>{users.find((u) => u.id === p?.userId)?.fullName ?? "—"}</button></td>
+                    <td className="px-2">{chName(it)}</td>
+                    <td className="px-2 text-right tabular-nums"><span className="font-semibold">{a.value ?? "—"}</span>/{div ? it.targetValue : kr.targetValue} <span className={rs.tone}>· {rs.label}</span></td>
+                    <td className="px-2">{fmtD(krDeadline(it, p?.periodEnd ?? goal.periodEnd))}</td>
+                    <td className="whitespace-nowrap px-2 text-right">
+                      {actor.isAdmin && div && !locked(p) && <button className="mr-2 text-primary hover:underline" onClick={() => { const v = prompt("Chỉ tiêu mới cho dòng này", String(it.targetValue)); if (!v) return; const reason = prompt("Lý do thay đổi") ?? ""; run(() => svc.updateTarget(actor, it.id, Number(v), reason), "Đã sửa phân bổ", refresh); }}>Sửa</button>}
+                      {actor.isAdmin && canHardDelete(res, locked(p)) && <button className="text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa dòng phân bổ này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa dòng phân bổ", refresh)}>Xóa</button>}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!rows.length && <tr><td colSpan={5} className="px-2 py-2 text-muted-foreground">Chưa phân bổ cho nhân sự nào.</td></tr>}
+            </tbody>
+          </table>
+          {add ? (
+            <div className="grid gap-1.5 border-t border-border p-2 sm:grid-cols-[1.3fr_1.3fr_80px_130px_auto]">
+              <select className={inp} value={add.userId} onChange={(e) => setAdd({ ...add, userId: e.target.value })}><option value="">— Nhân sự —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}</select>
+              {(webOpts.length || socOpts.length) ? <select className={inp} value={add.channel} onChange={(e) => setAdd({ ...add, channel: e.target.value })}><option value="">Toàn phạm vi KR</option>
+                {webOpts.map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}{socOpts.map((x) => <option key={x.id} value={`s:${x.id}`}>{x.platform}: {x.name}</option>)}</select> : <span className="flex items-center text-muted-foreground">{where}</span>}
+              {div ? <input type="number" min={1} className={inp} value={add.target} onChange={(e) => setAdd({ ...add, target: Number(e.target.value) })} /> : <span />}
+              <input type="date" className={inp} title="Deadline riêng (tùy chọn)" min={goal.periodStart} max={goal.periodEnd} value={add.deadline} onChange={(e) => setAdd({ ...add, deadline: e.target.value })} />
+              <div className="flex gap-1"><button className={btn} disabled={!add.userId || (div && !(add.target > 0))} onClick={saveAlloc}>Lưu</button><button className={btn2} onClick={() => setAdd(null)}>Hủy</button></div>
+            </div>
+          ) : actor.isAdmin && !inactive && (div || !rows.length) && (
+            <button className="w-full border-t border-border px-2 py-1.5 text-left text-xs font-medium text-primary hover:bg-muted/40" onClick={() => setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" })}>+ Phân bổ chỉ tiêu</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------- Danh sách mục tiêu ---------- */
 export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { actor: Actor; db: KpiDb; refresh: () => void; periodKey?: string; brandFilter?: string }) {
   const users = useAuth((s) => s.users);
@@ -556,42 +727,88 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   const actualOf = useKrActual();
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
+  const [editGoal, setEditGoal] = useState<string | null>(null);
+  const [editKr, setEditKr] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const [detail, setDetail] = useState<{ it: EmployeeKpiItem; userId: string; start: string; end: string } | null>(null);
   const [ps, pe] = (periodKey ?? "|").split("|");
-  const goals = useMemo(() => db.goals.filter((g) => (!periodKey || (g.periodStart <= pe && g.periodEnd >= ps)) && (!brandFilter || g.brandId === brandFilter))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [db, periodKey, brandFilter, ps, pe]);
-  // Quan hệ Goal–KR trực tiếp; không dùng điều kiện OR theo kỳ (tránh lẫn KR giữa các mục tiêu cùng người, cùng kỳ).
-  const krsOf = (gid: string) => krsOfGoal(gid, db.items, db.periods);
+  const goals = useMemo(() => db.goals.filter((g) => (!periodKey || (g.periodStart <= pe && g.periodEnd >= ps)) && (!brandFilter || g.brandId === brandFilter) && (showArchived || !(g.metadata as GoalMeta).archived))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [db, periodKey, brandFilter, ps, pe, showArchived]);
+  // KR cũ (giao 1 người, chưa có KR chung) — liên kết Goal trực tiếp.
+  const legacyOf = (gid: string) => krsOfGoal(gid, db.items, db.periods).filter((i) => !i.krId);
+  const krsOfG = (gid: string) => (db.krs ?? []).filter((k) => k.goalId === gid && (showArchived || k.status !== "archived"));
   const scope = (x: { websiteId: string | null; socialId: string | null; brandId: string | null }) =>
     x.websiteId ? websites.find((w) => w.id === x.websiteId)?.name ?? "Website" : x.socialId ? socials.find((s) => s.id === x.socialId)?.name ?? "Kênh" : x.brandId ? brands.find((b) => b.id === x.brandId)?.name ?? "Dự án" : "Toàn phòng";
+  const nameOf = (id?: string | null) => users.find((u) => u.id === id)?.fullName ?? users.find((u) => u.id === id)?.username;
+  const scopeText = (g: Goal) => {
+    const m = g.metadata as GoalMeta;
+    if (!m.scope) return m.ownerId ? `Cá nhân: ${nameOf(m.ownerId) ?? "—"}` : scope(g);
+    const ref = m.scope === "project" ? brands.find((b) => b.id === m.scopeRef)?.name : m.scope === "personal" ? nameOf(m.scopeRef) : m.scopeRef;
+    return `${SCOPE_LABEL[m.scope]}${ref ? `: ${ref}` : ""}`;
+  };
   const goalAdd = adding ? db.goals.find((g) => g.id === adding) : null;
+  const goalEdit = editGoal ? db.goals.find((g) => g.id === editGoal) : null;
+  const krEdit = editKr ? (db.krs ?? []).find((k) => k.id === editKr) : null;
+
+  const duplicate = (g: Goal) => run(() => {
+    const ng = svc.saveGoal(actor, { title: `${g.title} (bản sao)`, description: g.description, periodStart: g.periodStart, periodEnd: g.periodEnd, status: "draft", brandId: g.brandId, websiteId: g.websiteId, socialId: g.socialId,
+      metadata: { ...g.metadata, archived: false } });
+    for (const k of krsOfG(g.id).filter((x) => x.status === "active")) svc.saveKr(actor, { goalId: ng.id, metricKey: k.metricKey, label: k.label, targetValue: k.targetValue, brandId: k.brandId, websiteId: k.websiteId, socialId: k.socialId, deadline: k.deadline,
+      metadata: Object.fromEntries(Object.entries(k.metadata).filter(([x]) => !["history", "clientKey"].includes(x))) });
+  }, "Đã nhân bản mục tiêu (dạng Nháp, chưa phân bổ nhân sự)", refresh);
+  const setGoalStatus = (g: Goal, status: GoalStatus) => {
+    if (status === "active") {
+      const bad = krsOfG(g.id).filter((k) => k.status === "active" && !allocationSummary(k, db.items.filter((i) => i.krId === k.id)).balanced);
+      if (bad.length) { toast.error(`Chưa thể giao chính thức: ${bad.length} KR phân bổ chưa khớp chỉ tiêu`, { description: bad.map((k) => `${k.label || getKpiMetric(k.metricKey)?.label}: ${allocationSummary(k, db.items.filter((i) => i.krId === k.id)).message}`).join("\n") }); return; }
+    }
+    run(() => svc.saveGoal(actor, { ...g, status }), "Đã cập nhật trạng thái", refresh);
+  };
 
   return (
     <div className="space-y-4">
-      {actor.isAdmin && (creating ? <GoalWizard actor={actor} onDone={() => { setCreating(false); refresh(); }} />
-        : <button className={btn} onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Tạo mục tiêu</button>)}
+      <div className="flex flex-wrap items-center gap-3">
+        {actor.isAdmin && !creating && <button className={btn} onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Tạo mục tiêu</button>}
+        <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />Hiện mục đã lưu trữ</label>
+      </div>
+      {actor.isAdmin && creating && <GoalWizard actor={actor} onDone={() => { setCreating(false); refresh(); }} />}
       {!goals.length && <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Chưa có mục tiêu trong kỳ này.</div>}
       <div className="grid gap-4 lg:grid-cols-2">
         {goals.map((g) => {
-          const meta = g.metadata as { ownerId?: string; deadline?: string };
-          const krs = krsOf(g.id);
-          const states = krs.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, p.status === "locked" || p.status === "closed"); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
-          const done = states.filter((s) => s.st.state === "achieved" || s.st.state === "late").length;
+          const meta = g.metadata as GoalMeta;
+          const krs = krsOfG(g.id);
+          const legacy = legacyOf(g.id);
+          const states = legacy.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, locked(p)); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
+          const hasLinks = krs.length > 0 || legacy.length > 0 || db.items.some((i) => (i.metadata as { goalId?: string }).goalId === g.id) || db.periods.some((p) => p.goalId === g.id);
           return (
-            <div key={g.id} className="rounded-xl border border-border bg-card">
+            <div key={g.id} className={cn("rounded-xl border border-border bg-card", meta.archived && "opacity-60")}>
               <div className="flex items-start justify-between gap-3 border-b border-border p-4">
                 <div className="min-w-0">
-                  <div className="font-semibold">{g.title}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{scope(g)} · {users.find((u) => u.id === meta.ownerId)?.fullName ?? "—"} · {fmtD(g.periodStart)} → {fmtD(g.periodEnd)} · Deadline {fmtD(meta.deadline ?? g.periodEnd)}</div>
+                  <div className="font-semibold">{g.title}{meta.archived && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal">Lưu trữ</span>}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{scopeText(g)}{meta.coordinatorId ? ` · Điều phối: ${nameOf(meta.coordinatorId) ?? "—"}` : ""} · {fmtD(g.periodStart)} → {fmtD(g.periodEnd)} · Deadline {fmtD(meta.deadline ?? g.periodEnd)}</div>
                 </div>
-                <div className="shrink-0 text-right">
-                  {actor.isAdmin ? <select className="h-7 rounded-md border border-input bg-background px-1.5 text-xs" value={g.status} onChange={(e) => run(() => svc.saveGoal(actor, { ...g, status: e.target.value as GoalStatus }), "Đã cập nhật trạng thái", refresh)}>
-                    {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-                    : <span className="text-xs">{GOAL_STATUS[g.status]}</span>}
-                  <div className="mt-1 text-xs text-muted-foreground">{done}/{states.length} KR đạt</div>
+                <div className="flex shrink-0 items-start gap-1 text-right">
+                  <div>
+                    {actor.isAdmin ? <select className="h-7 rounded-md border border-input bg-background px-1.5 text-xs" value={g.status} onChange={(e) => setGoalStatus(g, e.target.value as GoalStatus)}>
+                      {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+                      : <span className="text-xs">{GOAL_STATUS[g.status]}</span>}
+                    <div className="mt-1 text-xs text-muted-foreground">{krs.length + states.length} KR</div>
+                  </div>
+                  {actor.isAdmin && (
+                    <DropdownMenu><DropdownMenuTrigger className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Thao tác mục tiêu"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditGoal(g.id)}>Sửa mục tiêu</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setAdding(g.id)}>Thêm KR</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicate(g)}>Nhân bản</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {g.status !== "cancelled" && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => run(() => svc.saveGoal(actor, { ...g, metadata: { ...g.metadata, archived: !meta.archived } }), meta.archived ? "Đã khôi phục" : "Đã lưu trữ", refresh)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" disabled={hasLinks} onClick={() => confirm("Xóa vĩnh viễn mục tiêu này?") && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa{hasLinks ? " (còn KR — dùng Hủy/Lưu trữ)" : ""}</DropdownMenuItem>
+                      </DropdownMenuContent></DropdownMenu>
+                  )}
                 </div>
               </div>
               <div className="divide-y divide-border">
+                {krs.map((k) => <KrCard key={k.id} actor={actor} kr={k} goal={g} db={db} refresh={refresh} onOpen={setDetail} onEdit={() => setEditKr(k.id)} />)}
                 {states.map(({ it, p, a, st }) => {
                   const m = getKpiMetric(it.metricKey);
                   return (
@@ -599,7 +816,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2"><span className="truncate text-sm font-medium">{it.label || m?.label}</span>
                           {m && m.availability !== "linked" && <span className={cn("shrink-0 rounded px-1 py-0.5 text-[10px]", AV_TONE[m.availability!])}>{AVAILABILITY_LABEL[m.availability!]}</span>}</div>
-                        <div className="truncate text-[11px] text-muted-foreground">{users.find((u) => u.id === p.userId)?.fullName ?? "—"} · {scope(it)}{a.status ? ` · ${a.status}` : ""}</div>
+                        <div className="truncate text-[11px] text-muted-foreground">{nameOf(p.userId) ?? "—"} · {scope(it)}{a.status ? ` · ${a.status}` : ""}</div>
                         {st.pct !== null && <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full", st.state === "achieved" ? "bg-success" : st.state === "late" ? "bg-warning" : st.state === "overdue" ? "bg-destructive" : "bg-primary")} style={{ width: `${st.pct}%` }} /></div>}
                       </div>
                       <div className="shrink-0 text-right">
@@ -611,7 +828,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                     </button>
                   );
                 })}
-                {!states.length && <p className="px-4 py-3 text-xs text-muted-foreground">Chưa có KR.</p>}
+                {!krs.length && !states.length && <p className="px-4 py-3 text-xs text-muted-foreground">Chưa có KR.</p>}
               </div>
               {actor.isAdmin && <div className="border-t border-border px-4 py-2"><button className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={() => setAdding(g.id)}><Plus className="h-3.5 w-3.5" />Thêm KR</button></div>}
             </div>
@@ -619,6 +836,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
         })}
       </div>
       {goalAdd && <AddKrSheet actor={actor} goal={goalAdd} db={db} onClose={() => { setAdding(null); refresh(); }} />}
+      {goalEdit && <GoalEditSheet actor={actor} goal={goalEdit} onClose={() => { setEditGoal(null); refresh(); }} />}
+      {krEdit && <KrEditSheet actor={actor} kr={krEdit} goal={db.goals.find((g) => g.id === krEdit.goalId)!} onClose={() => { setEditKr(null); refresh(); }} />}
       {detail && <KrDetail actor={actor} {...detail} it={db.items.find((i) => i.id === detail.it.id) ?? detail.it} onSaved={refresh} onClose={() => { setDetail(null); refresh(); }} />}
     </div>
   );
