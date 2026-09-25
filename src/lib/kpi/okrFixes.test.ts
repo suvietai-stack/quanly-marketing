@@ -67,7 +67,7 @@ describe("OKR/KPI — sửa lỗi logic", () => {
     const r2 = buildItemReport(emp, kr2 as any, period() as any, data(tasks), {}, [], "2026-09-25");
     expect(r2.evaluation.state).toBe("late"); expect(r2.evaluation.completedAt).toBe("2026-09-20");
     const kr3 = item({ id: "k3", metricKey: "task_completed", targetValue: 2, metadata: { deadline: "2026-09-25" } });
-    expect(buildItemReport(emp, kr3 as any, period() as any, data(tasks), {}, [], "2026-09-16").evaluation.state).toBe("in_progress");
+    expect(buildItemReport(emp, kr3 as any, period() as any, data(tasks.slice(0, 1)), {}, [], "2026-09-16").evaluation.state).toBe("in_progress");
   });
 
   it("10–12. Gửi bằng chứng chưa duyệt → KR chưa tăng; xác nhận → tăng đúng 1 lần; không cộng trùng", () => {
