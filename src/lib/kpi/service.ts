@@ -95,6 +95,14 @@ export function createKpiService(repo: KpiRepository) {
       if (g.periodEnd < g.periodStart) throw new KpiError("Kỳ không hợp lệ.");
       return mutate((db) => {
         const existing = g.id ? db.goals.find((x) => x.id === g.id) : undefined;
+        if (existing) {
+          const locked = goalLocked(existing.id, db);
+          const err = checkGoalTransition(existing.status, g.status ?? existing.status, locked);
+          if (err) throw new KpiError(err);
+          const onlyArchive = g.title.trim() === existing.title && g.periodStart === existing.periodStart && g.periodEnd === existing.periodEnd && (g.status ?? existing.status) === existing.status;
+          const editable = (existing.status === "draft" || existing.status === "active") && !locked;
+          if (!editable && !onlyArchive && (g.status ?? existing.status) === existing.status) throw new KpiError("Mục tiêu đang ở chế độ chỉ xem — không sửa được.");
+        }
         const rec: Goal = {
           id: existing?.id ?? uid(), title: g.title.trim(), description: g.description ?? null,
           periodStart: g.periodStart, periodEnd: g.periodEnd, status: g.status ?? "draft",
@@ -122,6 +130,10 @@ export function createKpiService(repo: KpiRepository) {
       }
       for (const it of input.items) { const nr = getKpiMetric(it.metricKey)?.notReady; if (nr) throw new KpiError(nr); }
       return mutate((db) => {
+        if (input.goalId) {
+          const g = db.goals.find((x) => x.id === input.goalId);
+          if (g && (!(g.status === "draft" || g.status === "active") || goalLocked(g.id, db))) throw new KpiError("Mục tiêu đã hủy/hoàn thành/khóa kỳ — không phân bổ thêm.");
+        }
         let period = db.periods.find((p) => p.userId === input.userId && p.periodStart === input.periodStart && p.periodEnd === input.periodEnd);
         if (period && (period.status === "locked" || period.status === "closed")) throw new KpiError("Kỳ đã khóa — không thêm chỉ tiêu.");
         // Chống tạo trùng khi bấm thử lại: KR đã lưu với cùng clientKey được bỏ qua.
@@ -222,6 +234,7 @@ export function createKpiService(repo: KpiRepository) {
         if (!goal) throw new KpiError("Không tìm thấy mục tiêu.");
         if (k.deadline && (k.deadline < goal.periodStart || k.deadline > goal.periodEnd)) throw new KpiError("Deadline KR phải nằm trong kỳ của mục tiêu.");
         const ex = k.id ? db.krs.find((x) => x.id === k.id) : undefined;
+        if (!(goal.status === "draft" || goal.status === "active") || goalLocked(goal.id, db)) throw new KpiError("Mục tiêu đã hủy/hoàn thành/khóa kỳ — không thêm hoặc sửa KR.");
         if (ex && (ex.websiteId !== (k.websiteId ?? ex.websiteId) || ex.socialId !== (k.socialId ?? ex.socialId)) && db.items.some((i) => i.krId === ex.id))
           throw new KpiError("KR đã có phân bổ — không đổi Website/Social. Hãy tạo KR mới.");
         const history = [...(((ex?.metadata as { history?: unknown[] })?.history) ?? [])];
@@ -237,12 +250,17 @@ export function createKpiService(repo: KpiRepository) {
     },
     setKrStatus(a: KpiActor, krId: string, status: GoalKrStatus) {
       requireAdmin(a);
-      return mutate((db) => { const k = (db.krs ?? []).find((x) => x.id === krId); if (!k) throw new KpiError("Không tìm thấy KR."); k.status = status; k.updatedAt = now(); return k; });
+      return mutate((db) => { const k = (db.krs ?? []).find((x) => x.id === krId); if (!k) throw new KpiError("Không tìm thấy KR.");
+        const g = db.goals.find((x) => x.id === k.goalId);
+        if (g && goalLocked(g.id, db) && status !== "archived") throw new KpiError("Kỳ đã khóa — chỉ được lưu trữ KR.");
+        if (g && status === "active" && !(g.status === "draft" || g.status === "active")) throw new KpiError("Mục tiêu đã hủy/hoàn thành — không khôi phục KR."); k.status = status; k.updatedAt = now(); return k; });
     },
     /** Xóa KR: chỉ khi chưa có dòng phân bổ nào. */
     deleteKr(a: KpiActor, krId: string) {
       requireAdmin(a);
       mutate((db) => {
+        const kr = (db.krs ?? []).find((x) => x.id === krId);
+        if (kr && goalLocked(kr.goalId, db)) throw new KpiError("Kỳ đã khóa — không xóa KR.");
         if (db.items.some((i) => i.krId === krId)) throw new KpiError("KR đã có phân bổ — hãy xóa các dòng chưa có kết quả hoặc chọn Hủy/Lưu trữ.");
         db.krs = (db.krs ?? []).filter((x) => x.id !== krId);
       });
