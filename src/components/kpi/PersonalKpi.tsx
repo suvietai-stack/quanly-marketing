@@ -114,6 +114,8 @@ export function PersonalKpi({ userId, periodKey, compact }: { userId: string; pe
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{CAT[it.category] ?? "KPI"}</div>
                   <div className="truncate text-sm font-medium">{scopeText(it.item as never, store)}</div>
                   <div className="truncate text-xs text-muted-foreground">{it.label}</div>
+                  {(() => { const md = it.item.metadata as { goalId?: string; deadline?: string }; const g = md.goalId ? db.goals.find((x) => x.id === md.goalId) : undefined;
+                    return g ? <div className="truncate text-[11px] text-primary">Mục tiêu: {g.title}{md.deadline ? ` · hạn ${md.deadline.split("-").reverse().join("/")}` : ""}</div> : null; })()}
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
               </div>
