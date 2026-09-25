@@ -65,6 +65,10 @@ export function createKpiService(repo: KpiRepository) {
     if (m.needs === "keyword" && !md.keywordIds?.length) throw new KpiError("KR thứ hạng cần chọn ít nhất một từ khóa.");
     if (m.needs === "tasks" && !md.taskIds?.length) throw new KpiError("KR tùy chỉnh cần liên kết ít nhất một Task.");
     if (m.needs === "tasks" && !it.label?.trim()) throw new KpiError("KR tùy chỉnh cần tên kết quả.");
+    if (m.needs === "label" && !it.label?.trim()) throw new KpiError("KR tùy chỉnh cần tên kết quả.");
+    if (m.needs === "website" && !it.websiteId) throw new KpiError(`"${m.label}" cần chọn Website.`);
+    if ((m.needs === "social" || m.needs === "views") && !it.socialId) throw new KpiError(`"${m.label}" cần chọn tài khoản Social.`);
+    if (m.needs === "views" && !((it.metadata as { viewThreshold?: number })?.viewThreshold! > 0)) throw new KpiError("Cần đặt ngưỡng lượt xem mỗi video.");
     return m;
   }
 
@@ -140,6 +144,19 @@ export function createKpiService(repo: KpiRepository) {
         if (p.status === "locked" || p.status === "closed") throw new KpiError("Kỳ đã khóa — không sửa target.");
         db.adjustments.push({ id: uid(), itemId, field: "targetValue", from: it.targetValue, to, by: a.id, at: now(), reason });
         it.targetValue = to; it.updatedAt = now();
+        return it;
+      });
+    },
+
+    /** Cập nhật metadata KR (ghi nhận/xác nhận kết quả thủ công). Chỉ Admin; kỳ khóa → chặn. */
+    updateItemMetadata(a: KpiActor, itemId: string, patch: Record<string, unknown>) {
+      requireAdmin(a);
+      return mutate((db) => {
+        const it = db.items.find((i) => i.id === itemId);
+        if (!it) throw new KpiError("Không tìm thấy KR.");
+        const p = db.periods.find((x) => x.id === it.kpiPeriodId)!;
+        if (p.status === "locked" || p.status === "closed") throw new KpiError("Kỳ đã khóa — không cập nhật kết quả.");
+        it.metadata = { ...(it.metadata ?? {}), ...patch }; it.updatedAt = now();
         return it;
       });
     },

@@ -76,14 +76,20 @@ export interface KpiMetricDefinition {
   source?: string;
   rule?: string;
   /** Cấu hình bắt buộc khi giao */
-  needs?: "keyword" | "tasks";
+  needs?: "keyword" | "tasks" | "website" | "social" | "views" | "label";
+  /** Thứ tự trong thư viện 19 KR cơ bản (không có = chỉ số mở rộng, vẫn dùng trong báo cáo nghiệp vụ). */
+  basic?: number;
+  krGroup?: KrBasicGroup;
+  /** Định nghĩa rõ tử số / mẫu số cho chỉ số tỷ lệ hoặc chi phí. */
+  ratio?: { numerator: string; denominator: string; multiplier?: number };
 }
 
 export type KrGroup = "Website & Content" | "SEO" | "Social" | "Video" | "Thiết kế" | "Local SEO" | "Hiệu suất" | "Marketing";
 /** at_least: đạt ít nhất · at_most: không vượt quá · threshold: đạt ngưỡng · growth: tăng so với kỳ gốc */
 export type KrDirection = "at_least" | "at_most" | "threshold" | "growth";
-/** linked: Đã liên kết · configure: Cần cấu hình · none: Chưa tích hợp */
-export type KrAvailability = "linked" | "configure" | "none";
+/** linked: Đã liên kết · periodic: số liệu nhập theo kỳ · manual: xác nhận thủ công · pending: chờ kết nối (cho phép xác nhận thủ công) · configure: Cần cấu hình · none: Chưa tích hợp */
+export type KrAvailability = "linked" | "periodic" | "manual" | "pending" | "configure" | "none";
+export type KrBasicGroup = "Sản lượng" | "Hiệu suất" | "Kết quả Marketing" | "Chuyển đổi" | "Tùy chỉnh";
 
 export type KpiMetricKey =
   | "web_content_completed"
@@ -110,4 +116,13 @@ export type KpiMetricKey =
   | "local_profile_interactions"
   | "mkt_leads"
   | "mkt_conversions"
-  | "mkt_cpl";
+  | "mkt_cpl"
+  | "web_post_published"
+  | "social_post_published"
+  | "social_views"
+  | "video_view_threshold"
+  | "mkt_quality_leads"
+  | "mkt_conversion_rate"
+  | "mkt_orders"
+  | "mkt_revenue"
+  | "custom_confirmed";
