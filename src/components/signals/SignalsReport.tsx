@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import { filterSignals, groupBy, lostReasons, summarize, type ReportFilter, type Summary } from "@/lib/signals/report";
 import { errMsg } from "@/lib/signals/api";
-import { useLastNotes, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
+import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
+import { needGroupsOf } from "@/lib/signals/catalog";
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toFixed(1)}%`);
 
@@ -18,11 +19,14 @@ export function SignalsReport() {
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
   const bySource = groupBy(list, (s) => s.source);
-  const byNeed = groupBy(list, (s) => s.need_group);
-  const byProduct = useMemo(() => {
-    const keys = [...new Set(list.flatMap((s) => s.products))];
-    return keys.map((k) => ({ key: k, s: summarize(list.filter((s) => s.products.includes(k))) })).sort((a, b) => b.s.total - a.s.total);
-  }, [list]);
+  const prodOpts = useOptions("signal_products");
+  const needOpts = useOptions("signal_need_groups");
+  const multi = (get: (s: (typeof list)[number]) => string[]) => {
+    const keys = [...new Set(list.flatMap((s) => get(s).map((k) => (k.startsWith("Khác") ? "Khác" : k))))];
+    return keys.map((k) => ({ key: k, s: summarize(list.filter((s) => get(s).some((x) => (x.startsWith("Khác") ? "Khác" : x) === k))) })).sort((a, b) => b.s.total - a.s.total);
+  };
+  const byProduct = multi((s) => s.products);
+  const byNeed = multi(needGroupsOf);
   const bySale = groupBy(list, (s) => s.assigned_to);
   const lost = lostReasons(list);
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => ({ id, n: name(id) }));
@@ -43,8 +47,8 @@ export function SignalsReport() {
         <label className="space-y-1"><span className="text-xs text-muted-foreground">Từ ngày</span><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></label>
         <label className="space-y-1"><span className="text-xs text-muted-foreground">Đến ngày</span><Input type="date" value={f.to ?? ""} onChange={(e) => set("to", e.target.value)} /></label>
         <Sel label="Nguồn" value={f.source} onChange={(v) => set("source", v)} opts={SIGNAL_SOURCES.map((x) => [x, x])} />
-        <Sel label="Sản phẩm" value={f.product} onChange={(v) => set("product", v)} opts={SIGNAL_PRODUCTS.map((x) => [x, x])} />
-        <Sel label="Nhóm nhu cầu" value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={SIGNAL_NEED_GROUPS.map((x) => [x, x])} />
+        <Sel label="Sản phẩm" value={f.product} onChange={(v) => set("product", v)} opts={prodOpts.names.map((x) => [x, x])} />
+        <Sel label="Nhóm nhu cầu" value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={needOpts.names.map((x) => [x, x])} />
         <Sel label="Sale phụ trách" value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to)).map((x) => [x.id, x.n])} />
         <Sel label="Người tạo" value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by)).map((x) => [x.id, x.n])} />
         <Sel label="Trạng thái" value={f.status} onChange={(v) => set("status", v)} opts={[["unassigned", "Chưa phân công"], ...Object.entries(STATUS_LABEL)]} />
@@ -74,7 +78,7 @@ export function SignalsReport() {
           <H>Phân tích tín hiệu</H>
           <Tbl title="Theo nguồn tín hiệu" first="Nguồn" rows={bySource.map((r) => [r.key, r.s])} cols="mkt" />
           <Tbl title="Theo nhóm sản phẩm" first="Sản phẩm" rows={byProduct.map((r) => [r.key, r.s])} cols="mkt" />
-          <p className="text-xs text-muted-foreground -mt-3">Một tín hiệu chọn nhiều sản phẩm được đếm ở mỗi dòng sản phẩm, nên cộng các dòng có thể lớn hơn tổng tín hiệu. Tổng số ở phần Tổng quan luôn đếm mỗi tín hiệu một lần.</p>
+          <p className="text-xs text-muted-foreground -mt-3">Một tín hiệu chọn nhiều sản phẩm / nhóm nhu cầu được đếm ở mỗi dòng tương ứng, nên cộng các dòng có thể lớn hơn tổng tín hiệu. Tổng số ở phần Tổng quan luôn đếm mỗi tín hiệu một lần.</p>
           <Tbl title="Theo nhóm nhu cầu" first="Nhóm nhu cầu" rows={byNeed.map((r) => [r.key, r.s])} cols="mkt" />
           <div className="rounded-lg border bg-card overflow-x-auto">
             <div className="px-3 py-2 font-medium text-sm border-b">Theo lý do trượt</div>
