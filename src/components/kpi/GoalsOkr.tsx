@@ -155,7 +155,7 @@ function KrPicker({ onPick, kind }: { onPick: (key: string) => void; kind: "web"
 function AllocEditor({ d, set, webOpts, socOpts }: { d: Draft; set: (d: Draft) => void; webOpts: { id: string; name: string }[]; socOpts: { id: string; name: string; platform: string }[] }) {
   const users = useAuth((s) => s.users);
   const div = isDivisible(d.metricKey);
-  const sum = allocationSummary({ targetValue: d.target, metricKey: d.metricKey }, d.allocs);
+  const sum = allocationSummary({ targetValue: d.target, metricKey: d.metricKey }, d.allocs.map((x) => ({ targetValue: x.target })));
   const upd = (allocs: Alloc[]) => set({ ...d, allocs, ownerId: allocs[0]?.userId ?? "" });
   return (
     <div className="space-y-1.5 rounded-md border border-border p-2.5">
@@ -343,7 +343,7 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
     const errs = validateAll();
     if (errs.length) { toast.error(`Chưa lưu gì — cần sửa ${errs.length} lỗi`, { description: errs.join("\n") }); return; }
     setSaving(true);
-    const unbalanced = drafts.filter((d) => !allocationSummary({ targetValue: d.target, metricKey: d.metricKey }, d.allocs).balanced);
+    const unbalanced = drafts.filter((d) => !allocationSummary({ targetValue: d.target, metricKey: d.metricKey }, d.allocs.map((x) => ({ targetValue: x.target }))).balanced);
     let goalId = savedGoalId;
     const [t, id] = g.channel.split(":");
     if (!goalId) {
