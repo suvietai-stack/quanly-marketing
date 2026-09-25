@@ -22,6 +22,7 @@ export type PermissionGroup =
   | "Thiết Kế"
   | "Báo Cáo"
   | "Cài Đặt"
+  | "Tín Hiệu Cơ Hội"
   | "Tài khoản";
 
 export interface PermissionDef {
@@ -593,7 +594,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
