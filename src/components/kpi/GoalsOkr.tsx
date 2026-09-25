@@ -427,26 +427,28 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
 /* ---------- Thêm KR vào mục tiêu có sẵn ---------- */
 function AddKrSheet({ actor, goal, onClose, db }: { actor: Actor; goal: KpiDb["goals"][number]; onClose: () => void; db: KpiDb }) {
   const { socials } = useStore();
-  const meta = goal.metadata as { ownerId?: string; deadline?: string; periodType?: KpiPeriodType };
+  const meta = goal.metadata as GoalMeta;
   const ch = goal.websiteId ? `w:${goal.websiteId}` : goal.socialId ? `s:${goal.socialId}` : "";
   const kind = goal.websiteId ? "web" : goal.socialId ? (socials.find((s) => s.id === goal.socialId)?.platform === "TikTok" ? "tiktok" : "facebook") : "";
   const [d, setD] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const brandOf = useBrandOf();
   void db;
   return (
     <Sheet open onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader><SheetTitle>Thêm KR</SheetTitle><SheetDescription>{goal.title} · {fmtD(goal.periodStart)} → {fmtD(goal.periodEnd)}</SheetDescription></SheetHeader>
         <div className="mt-4 space-y-3">
-          {!d ? <KrPicker kind={kind} onPick={(k) => setD(newDraft(k, meta.ownerId ?? actor.id, ch, meta.deadline ?? goal.periodEnd))} />
+          {!d ? <KrPicker kind={kind} onPick={(k) => setD(newDraft(k, meta.scope === "personal" ? meta.scopeRef ?? "" : meta.ownerId ?? "", ch, meta.deadline ?? goal.periodEnd))} />
             : <>
               <KrFields d={d} set={setD} brandId={goal.brandId ?? ""} start={goal.periodStart} end={goal.periodEnd} onRemove={() => setD(null)} />
-              <div className="flex justify-end"><button className={btn} disabled={saving || !d.ownerId || !(d.target > 0)} onClick={async () => {
+              <div className="flex justify-end"><button className={btn} disabled={saving || d.allocs.some((x) => !x.userId) || !(d.target > 0)} onClick={async () => {
+                const errs = validateDraft(actor, d, goal.brandId ?? "", meta.periodType ?? "custom", goal.periodStart, goal.periodEnd, brandOf);
+                if (errs.length) { toast.error("Chưa lưu — cần sửa", { description: errs.join("\n") }); return; }
                 setSaving(true);
-                const it = draftToItem(d, goal.brandId ?? "");
-                const ok = await run(() => svc.assign(actor, { userId: d.ownerId, periodType: meta.periodType ?? "custom", periodStart: goal.periodStart, periodEnd: goal.periodEnd, goalId: goal.id,
-                  items: [it] }), "Đã thêm KR", () => {});
-                setSaving(false); if (ok) onClose();
+                try { await saveDraftKr(actor, goal.id, d, goal.brandId ?? "", meta.periodType ?? "custom", goal.periodStart, goal.periodEnd); toast.success("Đã thêm KR"); onClose(); }
+                catch (e) { toast.error(e instanceof KpiError ? e.message : `Không lưu được: ${(e as Error).message}`); }
+                setSaving(false);
               }}>{saving ? "Đang lưu…" : "Lưu KR"}</button></div>
             </>}
         </div>
