@@ -18,7 +18,11 @@ export function SignalsReport() {
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
   const bySource = groupBy(list, (s) => s.source);
-  const byCreator = groupBy(list, (s) => s.created_by);
+  const byNeed = groupBy(list, (s) => s.need_group);
+  const byProduct = useMemo(() => {
+    const keys = [...new Set(list.flatMap((s) => s.products))];
+    return keys.map((k) => ({ key: k, s: summarize(list.filter((s) => s.products.includes(k))) })).sort((a, b) => b.s.total - a.s.total);
+  }, [list]);
   const bySale = groupBy(list, (s) => s.assigned_to);
   const lost = lostReasons(list);
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => ({ id, n: name(id) }));
@@ -64,19 +68,22 @@ export function SignalsReport() {
           </div>
 
 
+          <H>Hiệu quả Sale</H>
+          <Tbl title="Theo Sale được phân công" first="Sale" rows={bySale.map((r) => [name(r.key), r.s])} cols="sale" />
+
+          <H>Phân tích tín hiệu</H>
+          <Tbl title="Theo nguồn tín hiệu" first="Nguồn" rows={bySource.map((r) => [r.key, r.s])} cols="mkt" />
+          <Tbl title="Theo nhóm sản phẩm" first="Sản phẩm" rows={byProduct.map((r) => [r.key, r.s])} cols="mkt" />
+          <p className="text-xs text-muted-foreground -mt-3">Một tín hiệu chọn nhiều sản phẩm được đếm ở mỗi dòng sản phẩm, nên cộng các dòng có thể lớn hơn tổng tín hiệu. Tổng số ở phần Tổng quan luôn đếm mỗi tín hiệu một lần.</p>
+          <Tbl title="Theo nhóm nhu cầu" first="Nhóm nhu cầu" rows={byNeed.map((r) => [r.key, r.s])} cols="mkt" />
           <div className="rounded-lg border bg-card overflow-x-auto">
-            <div className="px-3 py-2 font-medium text-sm border-b">Phân tích lý do trượt</div>
+            <div className="px-3 py-2 font-medium text-sm border-b">Theo lý do trượt</div>
             {lost.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có tín hiệu trượt.</p> : (
               <table className="w-full text-sm"><tbody>
                 {lost.map((r) => <tr key={r.key} className="border-t first:border-t-0"><td className="px-3 py-2">{r.key}</td><td className="px-3 py-2 text-right">{r.n}</td></tr>)}
               </tbody></table>
             )}
           </div>
-
-          <Tbl title="Hiệu quả Marketing — theo nguồn" first="Nguồn" rows={bySource.map((r) => [r.key, r.s])} cols="mkt" />
-          <Tbl title="Hiệu quả Marketing — theo người tạo" first="Nhân viên tạo" rows={byCreator.map((r) => [name(r.key), r.s])} cols="mkt" />
-          <Tbl title="Hiệu quả Sale" first="Sale" rows={bySale.map((r) => [name(r.key), r.s])} cols="sale" />
-          <p className="text-xs text-muted-foreground">Số lượng ghi chú không được dùng làm chỉ tiêu đánh giá Sale. Mở chi tiết tín hiệu ở trang danh sách để xem nhật ký tư vấn.</p>
         </>
       )}
     </div>
