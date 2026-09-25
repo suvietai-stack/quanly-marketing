@@ -15,7 +15,7 @@ import { toDateKey } from "./date";
 
 export interface ReportData { tasks: Task[]; webContents: WebContent[]; socialPosts: SocialPost[]; videos: Video[]; orders: DesignOrder[]; /** snapshot điểm order (sidecar đã duyệt); thiếu → N/A */ designPoints?: Record<string, number>; keywords?: KeywordTrack[]; mapPosts?: MapPost[]; websites?: Website[]; growth?: GrowthMetric[] }
 export interface ReportFilters { brandId?: string; websiteId?: string; socialId?: string; group?: KpiMetricCategory | "" }
-export type SourceType = "task" | "web_content" | "social_post" | "video" | "design_order" | "keyword" | "map_post";
+export type SourceType = "task" | "web_content" | "social_post" | "video" | "design_order" | "keyword" | "map_post" | "growth" | "entry";
 
 export interface EvidenceRow {
   sourceType: SourceType; sourceId: string; title: string; creditedAt: string;
