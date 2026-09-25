@@ -71,12 +71,13 @@ export function lostReasons(list: Signal[]): { key: string; n: number }[] {
 }
 
 /* ---------- Bộ lọc trang danh sách ---------- */
-export type Quick = "all" | "waiting" | "due" | "overdue" | "quoted" | "deposit";
+/** Lọc nhanh chỉ theo trạng thái (không còn lọc lịch hẹn). */
+export type Quick = "all" | SignalStatus;
 export type TimeRange = "" | "today" | "7d" | "month" | "custom";
 export interface ListFilter {
-  q?: string; quick: Quick; status?: string; time: TimeRange; from?: string; to?: string;
+  q?: string; quick: Quick; time: TimeRange; from?: string; to?: string;
   source?: string; product?: string; needGroup?: string; saleId?: string; creatorId?: string;
-  nextFrom?: string; nextTo?: string; lostReason?: string; noNote?: boolean;
+  lostReason?: string; unassigned?: boolean;
 }
 
 function addDays(key: string, n: number) {
@@ -92,19 +93,17 @@ export function timeBounds(f: Pick<ListFilter, "time" | "from" | "to">, today: s
   }
 }
 
-export function applyListFilter(list: Signal[], f: ListFilter, today = todayKey(), last: Record<string, LastNote> = {}): Signal[] {
+/** Thời điểm cập nhật gần nhất = mới hơn giữa bản ghi và diễn biến cuối. */
+export const lastActivity = (s: Signal, last?: LastNote) =>
+  last?.created_at && last.created_at > s.updated_at ? last.created_at : s.updated_at;
+
+/** Lọc chi tiết (không gồm lọc nhanh trạng thái) — dùng để đếm số theo trạng thái. */
+export function applyDetailFilter(list: Signal[], f: ListFilter, today = todayKey()): Signal[] {
   const t = f.q?.trim().toLowerCase();
   const [from, to] = timeBounds(f, today);
   return list.filter((s) => {
     if (t && !(s.customer_name.toLowerCase().includes(t) || s.phone.includes(t))) return false;
-    switch (f.quick) {
-      case "waiting": if (s.status !== "waiting") return false; break;
-      case "quoted": if (s.status !== "quoted") return false; break;
-      case "deposit": if (s.status !== "deposit") return false; break;
-      case "due": if (!isDueToday(s, today)) return false; break;
-      case "overdue": if (!isOverdue(s, today)) return false; break;
-    }
-    if (f.status && (f.status === "unassigned" ? s.assigned_to !== null : s.status !== f.status)) return false;
+    if (f.unassigned && s.assigned_to !== null) return false;
     if (from && s.detected_on < from) return false;
     if (to && s.detected_on > to) return false;
     if (f.source && s.source !== f.source) return false;
@@ -112,10 +111,13 @@ export function applyListFilter(list: Signal[], f: ListFilter, today = todayKey(
     if (f.needGroup && s.need_group !== f.needGroup) return false;
     if (f.saleId && s.assigned_to !== f.saleId) return false;
     if (f.creatorId && s.created_by !== f.creatorId) return false;
-    if (f.nextFrom && (!s.next_contact_on || s.next_contact_on < f.nextFrom)) return false;
-    if (f.nextTo && (!s.next_contact_on || s.next_contact_on > f.nextTo)) return false;
     if (f.lostReason && reasonGroup(s.lost_reason) !== f.lostReason) return false;
-    if (f.noNote && (!s.assigned_to || last[s.id])) return false;
     return true;
   });
+}
+
+export function applyListFilter(list: Signal[], f: ListFilter, today = todayKey(), last: Record<string, LastNote> = {}): Signal[] {
+  return applyDetailFilter(list, f, today)
+    .filter((s) => f.quick === "all" || s.status === f.quick)
+    .sort((a, b) => lastActivity(b, last[b.id]).localeCompare(lastActivity(a, last[a.id])));
 }
