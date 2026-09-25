@@ -1,4 +1,4 @@
-import { isDueToday, isOverdue, todayKey, type LastNote, type Signal, type SignalStatus } from "./catalog";
+import { needGroupsOf, isDueToday, isOverdue, todayKey, type LastNote, type Signal, type SignalStatus } from "./catalog";
 
 export type DateBasis = "created" | "closed";
 export interface ReportFilter {
@@ -24,7 +24,7 @@ export function filterSignals(list: Signal[], f: ReportFilter): Signal[] {
     }
     if (f.source && s.source !== f.source) return false;
     if (f.product && !s.products.includes(f.product)) return false;
-    if (f.needGroup && s.need_group !== f.needGroup) return false;
+    if (f.needGroup && !needGroupsOf(s).includes(f.needGroup)) return false;
     if (f.saleId && s.assigned_to !== f.saleId) return false;
     if (f.creatorId && s.created_by !== f.creatorId) return false;
     if (f.lostReason && reasonGroup(s.lost_reason) !== f.lostReason) return false;
@@ -111,7 +111,7 @@ export function applyDetailFilter(list: Signal[], f: ListFilter, today = todayKe
     if (to && s.detected_on > to) return false;
     if (f.source && s.source !== f.source) return false;
     if (f.product && !s.products.includes(f.product)) return false;
-    if (f.needGroup && s.need_group !== f.needGroup) return false;
+    if (f.needGroup && !needGroupsOf(s).includes(f.needGroup)) return false;
     if (f.saleId && s.assigned_to !== f.saleId) return false;
     if (f.creatorId && s.created_by !== f.creatorId) return false;
     if (f.lostReason && reasonGroup(s.lost_reason) !== f.lostReason) return false;

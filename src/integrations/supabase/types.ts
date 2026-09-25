@@ -629,6 +629,7 @@ export type Database = {
           marketing_note: string | null
           need_detail: string | null
           need_group: string | null
+          need_groups: string[]
           next_contact_at: string | null
           next_contact_on: string | null
           phone: string
@@ -655,6 +656,7 @@ export type Database = {
           marketing_note?: string | null
           need_detail?: string | null
           need_group?: string | null
+          need_groups?: string[]
           next_contact_at?: string | null
           next_contact_on?: string | null
           phone: string
@@ -681,6 +683,7 @@ export type Database = {
           marketing_note?: string | null
           need_detail?: string | null
           need_group?: string | null
+          need_groups?: string[]
           next_contact_at?: string | null
           next_contact_on?: string | null
           phone?: string
@@ -1116,6 +1119,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
       get_profiles_directory: {
         Args: never
         Returns: {
@@ -1140,6 +1144,10 @@ export type Database = {
       }
       signal_cancel: {
         Args: { _id: string; _reason: string; _undo?: boolean }
+        Returns: undefined
+      }
+      signal_catalog_rename: {
+        Args: { _new: string; _old: string; _scope: string }
         Returns: undefined
       }
       signal_reopen: {

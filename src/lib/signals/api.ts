@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { LastNote, Signal, SignalStatus } from "./catalog";
+import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
 
 const db = supabase as any;
 const PAGE = 1000;
@@ -31,7 +31,7 @@ export async function listLastNotes(): Promise<Record<string, LastNote>> {
 
 export interface SignalInput {
   detected_on: string; customer_name: string; phone: string; address: string | null;
-  need_detail: string | null; products: string[]; need_group: string | null; source: string; marketing_note: string | null;
+  need_detail: string | null; products: string[]; need_group: string | null; need_groups: string[]; source: string; marketing_note: string | null;
 }
 
 export async function createSignal(input: SignalInput, userId: string): Promise<Signal> {
@@ -125,3 +125,18 @@ export async function setCustomLostReasons(items: string[]) {
 }
 
 export const errMsg = (e: any) => e?.message || "Có lỗi xảy ra";
+
+export async function getOptions(scope: OptionScope): Promise<CatOption[]> {
+  const { data } = await db.from("catalogs").select("items").eq("scope", scope).maybeSingle();
+  return resolveOptions(data?.items, scope);
+}
+export async function saveOptions(scope: OptionScope, items: CatOption[]) {
+  const { error } = await db.from("catalogs").upsert({ scope, items }, { onConflict: "scope" });
+  if (error) throw error;
+}
+/** Đổi tên: cập nhật cả tín hiệu cũ (kiểm tra quyền phía máy chủ), rồi lưu danh mục. */
+export async function renameOptionEverywhere(scope: OptionScope, from: string, to: string, items: CatOption[]) {
+  const { error } = await db.rpc("signal_catalog_rename", { _scope: scope, _old: from, _new: to });
+  if (error) throw error;
+  await saveOptions(scope, items);
+}

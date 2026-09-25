@@ -42,6 +42,7 @@ export interface Signal {
   need_detail: string | null;
   products: string[];
   need_group: string | null;
+  need_groups?: string[];
   source: string;
   marketing_note: string | null;
   created_by: string;
@@ -94,3 +95,34 @@ export function isOverdue(s: Pick<Signal, "status" | "next_contact_on">, today =
 export function isDueToday(s: Pick<Signal, "status" | "next_contact_on">, today = todayKey()): boolean {
   return !!s.next_contact_on && s.next_contact_on === today && isOpen(s.status);
 }
+
+/* ---------- Danh mục tùy chỉnh: Nhóm sản phẩm / Nhóm nhu cầu ---------- */
+export type OptionScope = "signal_products" | "signal_need_groups";
+export interface CatOption { name: string; active: boolean }
+export const DEFAULT_OPTIONS: Record<OptionScope, readonly string[]> = { signal_products: SIGNAL_PRODUCTS, signal_need_groups: SIGNAL_NEED_GROUPS };
+/** So khớp tên không phân biệt hoa/thường và khoảng trắng thừa. */
+export const normName = (s: string) => s.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
+export const cleanName = (s: string) => s.trim().replace(/\s+/g, " ");
+/** Danh mục lưu trữ; chưa có thì dùng mặc định. "Khác" luôn ở cuối. */
+export function resolveOptions(stored: unknown, scope: OptionScope): CatOption[] {
+  const list: CatOption[] = Array.isArray(stored) && stored.length
+    ? stored.filter((x: any) => x && typeof x.name === "string").map((x: any) => ({ name: x.name, active: x.active !== false }))
+    : DEFAULT_OPTIONS[scope].map((name) => ({ name, active: true }));
+  return [...list.filter((o) => o.name !== "Khác"), ...list.filter((o) => o.name === "Khác")];
+}
+export function addOption(list: CatOption[], name: string): CatOption[] {
+  const n = cleanName(name);
+  if (!n) throw new Error("Tên không được để trống");
+  if (list.some((o) => normName(o.name) === normName(n))) throw new Error("Lựa chọn này đã có trong danh mục");
+  return [...list, { name: n, active: true }];
+}
+export function renameOption(list: CatOption[], from: string, to: string): CatOption[] {
+  const n = cleanName(to);
+  if (!n) throw new Error("Tên không được để trống");
+  if (list.some((o) => o.name !== from && normName(o.name) === normName(n))) throw new Error("Tên này đã tồn tại");
+  return list.map((o) => (o.name === from ? { ...o, name: n } : o));
+}
+export const toggleOption = (list: CatOption[], name: string): CatOption[] => list.map((o) => (o.name === name ? { ...o, active: !o.active } : o));
+/** Nhóm nhu cầu của tín hiệu (hỗ trợ dữ liệu cũ chỉ có 1 nhóm). */
+export const needGroupsOf = (s: { need_groups?: string[] | null; need_group: string | null }) =>
+  s.need_groups && s.need_groups.length ? s.need_groups : s.need_group ? [s.need_group] : [];
