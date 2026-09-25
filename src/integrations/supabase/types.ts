@@ -163,6 +163,7 @@ export type Database = {
           created_at: string
           id: string
           kpi_period_id: string
+          kr_id: string | null
           label: string | null
           metadata: Json
           metric_key: string
@@ -178,6 +179,7 @@ export type Database = {
           created_at?: string
           id?: string
           kpi_period_id: string
+          kr_id?: string | null
           label?: string | null
           metadata?: Json
           metric_key: string
@@ -193,6 +195,7 @@ export type Database = {
           created_at?: string
           id?: string
           kpi_period_id?: string
+          kr_id?: string | null
           label?: string | null
           metadata?: Json
           metric_key?: string
@@ -209,6 +212,13 @@ export type Database = {
             columns: ["kpi_period_id"]
             isOneToOne: false
             referencedRelation: "employee_kpi_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_kpi_items_kr_id_fkey"
+            columns: ["kr_id"]
+            isOneToOne: false
+            referencedRelation: "goal_krs"
             referencedColumns: ["id"]
           },
         ]
@@ -321,6 +331,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      goal_krs: {
+        Row: {
+          brand_id: string | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          goal_id: string
+          id: string
+          label: string | null
+          metadata: Json
+          metric_key: string
+          social_id: string | null
+          status: string
+          target_value: number
+          updated_at: string
+          website_id: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          goal_id: string
+          id?: string
+          label?: string | null
+          metadata?: Json
+          metric_key: string
+          social_id?: string | null
+          status?: string
+          target_value?: number
+          updated_at?: string
+          website_id?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          goal_id?: string
+          id?: string
+          label?: string | null
+          metadata?: Json
+          metric_key?: string
+          social_id?: string | null
+          status?: string
+          target_value?: number
+          updated_at?: string
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_krs_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goals: {
         Row: {
