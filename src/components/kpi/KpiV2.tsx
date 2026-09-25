@@ -319,7 +319,7 @@ export function KrLibrary() {
   const [q, setQ] = useState("");
   const [g, setG] = useState("");
   const list = KPI_METRIC_LIST.filter((m) => (!g || m.group === g) && (!q || m.label.toLowerCase().includes(q.toLowerCase())));
-  const tone = { linked: "bg-primary/10 text-primary", configure: "bg-warning/15 text-warning-foreground", none: "bg-muted text-muted-foreground" } as const;
+  const tone: Record<string, string> = { linked: "bg-primary/10 text-primary", periodic: "bg-accent text-accent-foreground", manual: "bg-warning/15 text-warning-foreground", pending: "bg-muted text-muted-foreground", configure: "bg-muted text-muted-foreground", none: "bg-muted text-muted-foreground" };
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
