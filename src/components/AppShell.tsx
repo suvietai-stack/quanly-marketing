@@ -2,7 +2,7 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey; kpi?: boolean; adminOnly?: boolean };
+type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey; anyPerm?: PermissionKey[]; kpi?: boolean; adminOnly?: boolean };
 
 const groups: { label: string; items: NavItem[] }[] = [
   {
@@ -40,6 +40,13 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/videos", label: "Sản Xuất Video", icon: Video, perm: "video.view" },
       { to: "/orders", label: "Order Thiết Kế", icon: Palette, perm: "order.view" },
+    ],
+  },
+  {
+    label: "Tín hiệu cơ hội",
+    items: [
+      { to: "/signals", label: "Danh sách tín hiệu", icon: Radar, anyPerm: ["signal.create", "signal.view_all", "signal.manage", "signal.sale", "signal.assign"] },
+      { to: "/signals/report", label: "Báo cáo tín hiệu", icon: FileText, anyPerm: ["signal.report", "signal.manage"] },
     ],
   },
   {
@@ -75,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((g) => ({
       ...g,
       items: g.items
-        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
+        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
         .map((it) => (it.to === "/settings/kpi-v2" && !isKpiAdmin ? { ...it, label: "KPI của tôi" } : it))
         .map((it) =>
           it.to === "/settings" && canApprove && pendingCount > 0
