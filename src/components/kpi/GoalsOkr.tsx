@@ -151,6 +151,73 @@ function KrPicker({ onPick, kind }: { onPick: (key: string) => void; kind: "web"
   );
 }
 
+/* ---------- Phân bổ chỉ tiêu (trong form KR) ---------- */
+function AllocEditor({ d, set, webOpts, socOpts }: { d: Draft; set: (d: Draft) => void; webOpts: { id: string; name: string }[]; socOpts: { id: string; name: string; platform: string }[] }) {
+  const users = useAuth((s) => s.users);
+  const div = isDivisible(d.metricKey);
+  const sum = allocationSummary({ targetValue: d.target, metricKey: d.metricKey }, d.allocs);
+  const upd = (allocs: Alloc[]) => set({ ...d, allocs, ownerId: allocs[0]?.userId ?? "" });
+  return (
+    <div className="space-y-1.5 rounded-md border border-border p-2.5">
+      <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <span>{div ? "Phân bổ chỉ tiêu cho nhân sự" : "Người chịu trách nhiệm (KR này không chia theo nhân sự)"}</span>
+        {div && <span className={cn("font-semibold", sum.diff === 0 ? "text-success" : "text-warning-foreground")}>Đã phân bổ {sum.allocated}/{d.target}{sum.message ? ` · ${sum.message}` : ""}</span>}
+      </div>
+      {d.allocs.map((a, i) => (
+        <div key={a.key} className="grid grid-cols-[1fr_auto] gap-1.5 sm:grid-cols-[1.4fr_1.4fr_90px_auto]">
+          <select className={inp} value={a.userId} onChange={(e) => upd(d.allocs.map((x, j) => (j === i ? { ...x, userId: e.target.value } : x)))}>
+            <option value="">— Nhân sự —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}
+          </select>
+          {(webOpts.length > 0 || socOpts.length > 0) ? (
+            <select className={inp} value={a.channel} onChange={(e) => upd(d.allocs.map((x, j) => (j === i ? { ...x, channel: e.target.value } : x)))}>
+              <option value="">Toàn phạm vi KR</option>
+              {webOpts.map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
+              {socOpts.map((s) => <option key={s.id} value={`s:${s.id}`}>{s.platform}: {s.name}</option>)}
+            </select>) : <span className="hidden text-xs text-muted-foreground sm:flex sm:items-center">Theo phạm vi KR</span>}
+          {div ? <input type="number" min={1} className={inp} value={a.target} onChange={(e) => upd(d.allocs.map((x, j) => (j === i ? { ...x, target: Number(e.target.value) } : x)))} /> : <span className="hidden sm:block" />}
+          <button className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-30" disabled={d.allocs.length === 1} onClick={() => upd(d.allocs.filter((_, j) => j !== i))} aria-label="Bỏ dòng"><X className="h-4 w-4" /></button>
+        </div>
+      ))}
+      {div && <button className={btn2} onClick={() => upd([...d.allocs, { key: rid(), userId: "", target: Math.max(1, -sum.diff || 1), channel: "" }])}><Plus className="h-3.5 w-3.5" />Thêm nhân sự</button>}
+    </div>
+  );
+}
+
+/** Lưu 1 KR chung + các dòng phân bổ. Thử lại không tạo trùng (clientKey). */
+async function saveDraftKr(actor: Actor, goalId: string, d: Draft, brandId: string, ptype: KpiPeriodType, start: string, end: string) {
+  let krId = (svc.list().krs ?? []).find((k) => (k.metadata as { clientKey?: string }).clientKey === d.key)?.id;
+  if (!krId) {
+    const [t, id] = d.channel.split(":");
+    const base = draftToItem(d, brandId);
+    krId = svc.saveKr(actor, { goalId, metricKey: d.metricKey, targetValue: d.target, label: base.label, brandId: brandId || null, websiteId: t === "w" ? id : null,
+      socialId: t === "s" ? id : null, deadline: d.deadline || null, metadata: { ...base.metadata, clientKey: d.key } }).id;
+    await flushKpi();
+  }
+  for (const a of d.allocs) {
+    svc.assign(actor, { userId: a.userId, periodType: ptype, periodStart: start, periodEnd: end, goalId, items: [allocItem(d, a, brandId, krId)] });
+    await flushKpi();
+  }
+  return krId;
+}
+
+/** Kiểm tra 1 KR nháp (không ghi gì). */
+function validateDraft(actor: Actor, d: Draft, brandId: string, ptype: KpiPeriodType, start: string, end: string, brandOf: (k: "website" | "social", id: string) => string | null | undefined): string[] {
+  const errs: string[] = [];
+  const probe = createKpiService({ load: () => ({ goals: [], periods: [], items: [], adjustments: [] }), save: () => {} });
+  const [t, id] = d.channel.split(":");
+  const kr = { brandId: brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null };
+  const users = new Set<string>();
+  for (const a of d.allocs) {
+    if (!a.userId) { errs.push("Có dòng phân bổ chưa chọn nhân sự."); continue; }
+    const it = allocItem(d, a, brandId, null);
+    const sc = checkAllocationScope(kr, it, brandOf); if (sc) errs.push(sc);
+    const k = `${a.userId}|${a.channel}`; if (users.has(k)) errs.push("Một nhân sự bị phân bổ 2 lần cùng phạm vi — hãy gộp lại."); users.add(k);
+    try { probe.assign({ id: actor.id, isAdmin: true }, { userId: a.userId, periodType: ptype, periodStart: start, periodEnd: end, items: [it] }); }
+    catch (e) { errs.push((e as Error).message); }
+  }
+  return [...new Set(errs)];
+}
+
 /* ---------- Bước 3: trường nhập theo loại KR ---------- */
 function KrFields({ d, set, brandId, onRemove, start, end }: { d: Draft; set: (d: Draft) => void; brandId: string; onRemove: () => void; start: string; end: string }) {
   const users = useAuth((s) => s.users);
