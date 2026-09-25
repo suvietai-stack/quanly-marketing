@@ -1,5 +1,6 @@
 /** Quy tắc thao tác Mục tiêu theo trạng thái + khóa kỳ (pure, dùng cho cả giao diện và service). */
-import type { Goal, GoalStatus, KpiDb } from "./types";
+import type { Goal, GoalStatus } from "./types";
+import type { KpiDb } from "./service";
 
 export type GoalCaps = {
   edit: boolean; addKr: boolean; allocate: boolean; duplicate: boolean;
