@@ -63,14 +63,6 @@ export function SignalsReport() {
             <Card k="Doanh số chốt" v={fmtVnd(sum.revenue)} hint={`Tỷ lệ chốt: ${pct(sum)}`} />
           </div>
 
-          <H>Theo dõi quá trình (trạng thái hiện tại)</H>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <Card k="Chưa có diễn biến" v={sum.noNote} hint="Đã giao, Sale chưa cập nhật" />
-            <Card k="Cần liên hệ hôm nay" v={sum.dueToday} />
-            <Card k="Quá lịch hẹn" v={sum.overdue} />
-            <Card k="Đã báo giá" v={sum.quoted} />
-            <Card k="Đang chờ cọc" v={sum.deposit} />
-          </div>
 
           <div className="rounded-lg border bg-card overflow-x-auto">
             <div className="px-3 py-2 font-medium text-sm border-b">Phân tích lý do trượt</div>
@@ -111,7 +103,7 @@ function Card({ k, v, hint }: { k: string; v: string | number; hint?: string }) 
 function Tbl({ title, first, rows, cols }: { title: string; first: string; rows: [string, Summary][]; cols: "mkt" | "sale" }) {
   const head = cols === "mkt"
     ? ["Tín hiệu", "Chốt", "Trượt", "Tỷ lệ chốt", "Doanh số"]
-    : ["Được giao", "Chờ nhận", "Đang xử lý", "Chốt", "Trượt", "Tỷ lệ chốt", "Doanh số", "Quá lịch"];
+    : ["Được giao", "Đã tiếp nhận", "Đang liên hệ", "Đang tư vấn", "Đã báo giá", "Chờ xác nhận / cọc", "Chốt", "Trượt", "Doanh số"];
   return (
     <div className="rounded-lg border bg-card overflow-x-auto">
       <div className="px-3 py-2 font-medium text-sm border-b">{title}</div>
@@ -124,7 +116,7 @@ function Tbl({ title, first, rows, cols }: { title: string; first: string; rows:
                 <td className="px-3 py-2">{k}</td>
                 {(cols === "mkt"
                   ? [s.total, s.won, s.lost, pct(s), fmtVnd(s.revenue)]
-                  : [s.total, s.waiting, s.contacting + s.consulting + s.quoted + s.deposit, s.won, s.lost, pct(s), fmtVnd(s.revenue), s.overdue]
+                  : [s.total - s.unassigned, s.accepted, s.contacting, s.consulting, s.quoted, s.deposit, s.won, s.lost, fmtVnd(s.revenue)]
                 ).map((v, i) => <td key={i} className="px-3 py-2 text-right whitespace-nowrap">{v}</td>)}
               </tr>
             ))}

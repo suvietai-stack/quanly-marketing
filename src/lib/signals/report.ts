@@ -1,4 +1,4 @@
-import { isDueToday, isOverdue, todayKey, type LastNote, type Signal } from "./catalog";
+import { isDueToday, isOverdue, todayKey, type LastNote, type Signal, type SignalStatus } from "./catalog";
 
 export type DateBasis = "created" | "closed";
 export interface ReportFilter {
@@ -35,15 +35,16 @@ export function filterSignals(list: Signal[], f: ReportFilter): Signal[] {
 }
 
 export interface Summary {
-  total: number; unassigned: number; waiting: number; contacting: number; consulting: number; quoted: number; deposit: number;
+  total: number; unassigned: number; accepted: number; waiting: number; contacting: number; consulting: number; quoted: number; deposit: number;
   won: number; lost: number; closeRate: number | null; revenue: number; overdue: number; dueToday: number; noNote: number;
 }
 
 export function summarize(list: Signal[], today = todayKey(), last?: Record<string, LastNote>): Summary {
-  const r: Summary = { total: list.length, unassigned: 0, waiting: 0, contacting: 0, consulting: 0, quoted: 0, deposit: 0, won: 0, lost: 0, closeRate: null, revenue: 0, overdue: 0, dueToday: 0, noNote: 0 };
+  const r: Summary = { total: list.length, unassigned: 0, accepted: 0, waiting: 0, contacting: 0, consulting: 0, quoted: 0, deposit: 0, won: 0, lost: 0, closeRate: null, revenue: 0, overdue: 0, dueToday: 0, noNote: 0 };
   for (const s of list) {
     if (!s.assigned_to) r.unassigned++;
     else if (s.status && s.status !== "won" && s.status !== "lost") r[s.status]++;
+    if (s.assigned_to && s.status && s.status !== "waiting") r.accepted++;
     if (s.status === "won") { r.won++; r.revenue += Number(s.revenue || 0); }
     if (s.status === "lost") r.lost++;
     if (isOverdue(s, today)) r.overdue++;
