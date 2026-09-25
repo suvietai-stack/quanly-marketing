@@ -174,7 +174,11 @@ export function ZaloAdminCard() {
     if (r === "error") toast.error("Kết nối Zalo OA thất bại — thử lại");
   }, []);
   if (err || !s) return null;
-  const run = (p: Promise<any>) => p.then((r) => { if (r?.message) (r.ok ? toast.success : toast.error)(r.message); load(); }).catch((e) => toast.error(e.message));
+  const run = (p: Promise<any>) => p.then((r) => { if (r?.message) (r.ok ? toast.success : toast.error)(r.message); load(); }).catch((e) => {
+    const m = String(e?.message ?? e);
+    const zod = m.match(/"message":\s*"([^"]+)"/);
+    toast.error(zod ? zod[1] : m);
+  });
   const st = STATE[s.state] ?? STATE.disconnected;
   return (
     <div className="space-y-4">
@@ -190,7 +194,10 @@ export function ZaloAdminCard() {
           <Input type="password" autoComplete="new-password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder={s.appSecretSet ? `Đã lưu (${s.appSecretHint}) — để trống nếu không đổi` : "Nhập App Secret"} />
           <div className="text-xs text-muted-foreground">App Secret không bao giờ hiển thị lại. Đổi App ID/Secret sẽ yêu cầu kết nối lại OA.</div>
         </div>
-        <Button disabled={!s.dbReady} onClick={() => run(saveApp({ data: { appId, appSecret: secret || undefined } }).then((r) => { setSecret(""); return r; }))}>Lưu cấu hình</Button>
+        <Button disabled={!s.dbReady} onClick={() => {
+          if (!/^\d{5,30}$/.test(appId.trim())) { toast.error("App ID chỉ gồm chữ số (5–30 ký tự)"); return; }
+          run(saveApp({ data: { appId: appId.trim(), appSecret: secret || undefined } }).then((r) => { setSecret(""); return r; }));
+        }}>Lưu cấu hình</Button>
       </CardContent></Card>
 
       <Card><CardContent className="p-5 space-y-3">

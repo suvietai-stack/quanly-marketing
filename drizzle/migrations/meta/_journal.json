@@ -71,6 +71,13 @@
       "when": 1790323708266,
       "tag": "0009_zalo_signal_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790325810275,
+      "tag": "0010_zalo_oa_config_admin_fields",
+      "breakpoints": true
     }
   ]
 }
