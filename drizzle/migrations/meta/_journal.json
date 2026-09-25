@@ -36,6 +36,13 @@
       "when": 1790302884186,
       "tag": "0004_goal_krs_allocations",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790311679969,
+      "tag": "0005_opportunity_signals",
+      "breakpoints": true
     }
   ]
 }
