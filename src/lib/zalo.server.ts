@@ -1,8 +1,9 @@
 // Chỉ chạy phía máy chủ. Không log token / SĐT / nội dung khách hàng.
 import { createHash, randomBytes } from "crypto";
 
-// Địa chỉ backend cố định (không đổi theo tên miền giao diện) — dùng cho OAuth Callback / Webhook.
-export const BACKEND_URL = "https://project--32968bd6-6ca2-45ac-99ce-8a48c617e3d0.lovable.app";
+// Địa chỉ backend cố định trên tên miền của Sứ Việt (Zalo yêu cầu domain đã xác thực) — dùng cho OAuth Callback / Webhook.
+// Không đổi theo "Đường dẫn ứng dụng Base" để redirect_uri luôn khớp với khai báo trên Zalo Developers.
+export const BACKEND_URL = "https://base.suviet.vn";
 export const CALLBACK_URL = `${BACKEND_URL}/api/public/zalo/oauth-callback`;
 export const WEBHOOK_URL = `${BACKEND_URL}/api/public/zalo/webhook`;
 export const DEFAULT_BASE_URL = "https://base.suviet.vn";
