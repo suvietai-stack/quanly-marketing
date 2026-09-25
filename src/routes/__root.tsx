@@ -125,6 +125,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SignalCacheGuard />
       <AuthGate>
         {isPublic ? <Outlet /> : <AppShell><Outlet /></AppShell>}
       </AuthGate>

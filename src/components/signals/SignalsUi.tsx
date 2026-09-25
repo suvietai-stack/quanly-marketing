@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone, Plus, Search, Eye, RotateCcw } from "lucide-react";
+import { Phone, Plus, Search, RotateCcw, MessageCircle, PencilLine, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +10,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cn } from "@/lib/utils";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import {
-  SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, STATUS_TONE,
-  fmtVnd, isDueToday, isOverdue, normalizePhone, todayKey, type Signal, type SignalStatus,
+  OPEN_STATUSES, SIGNAL_CHANNELS, SIGNAL_EVENTS, SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES,
+  STATUS_LABEL, STATUS_TONE, fmtVnd, isOpen, isOverdue, normalizePhone, statusLabel, todayKey, zaloLink,
+  type LastNote, type Signal, type SignalStatus,
 } from "@/lib/signals/catalog";
 import {
-  assignSignal, createSignal, errMsg, listSignals, reopenSignal, saleUpdate, salesList, signalHistory,
-  updateSignalInfo, type SignalInput,
+  assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
+  signalHistory, updateSignalInfo, type SignalInput,
 } from "@/lib/signals/api";
+import { applyListFilter, type ListFilter, type Quick } from "@/lib/signals/report";
 
 export function useSignalPerms() {
   const { user, can } = useCurrentUser();
@@ -31,9 +33,33 @@ export function useSignalPerms() {
   };
 }
 
-export const signalsKey = ["opportunity_signals"] as const;
+/** Mọi khóa bộ nhớ tạm của module đều bắt đầu bằng "sig:" và gắn mã người dùng. */
+const SIG = "sig:";
+export const signalsKey = (uid: string | null) => [`${SIG}list`, uid] as const;
 export function useSignals(enabled = true) {
-  return useQuery({ queryKey: signalsKey, queryFn: listSignals, enabled });
+  const { userId } = useSignalPerms();
+  return useQuery({ queryKey: signalsKey(userId), queryFn: listSignals, enabled: enabled && !!userId });
+}
+export function useLastNotes(enabled = true) {
+  const { userId } = useSignalPerms();
+  return useQuery({ queryKey: [`${SIG}last`, userId], queryFn: listLastNotes, enabled: enabled && !!userId });
+}
+const invalidateSig = (qc: ReturnType<typeof useQueryClient>) =>
+  qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith(SIG) });
+
+/** Xóa dữ liệu tín hiệu khi đăng xuất hoặc đổi tài khoản (không cần tải lại trang). */
+export function SignalCacheGuard() {
+  const { user } = useCurrentUser();
+  const qc = useQueryClient();
+  const prev = useRef<string | null | undefined>(undefined);
+  const uid = user?.id ?? null;
+  useEffect(() => {
+    if (prev.current !== undefined && prev.current !== uid) {
+      qc.removeQueries({ predicate: (q) => String(q.queryKey[0]).startsWith(SIG) });
+    }
+    prev.current = uid;
+  }, [uid, qc]);
+  return null;
 }
 
 export function useUserName() {
@@ -42,49 +68,42 @@ export function useUserName() {
 }
 
 export function StatusPill({ s }: { s: Pick<Signal, "status" | "assigned_to"> }) {
-  const key = s.status ?? "none";
+  const key = (s.status ?? "none") as keyof typeof STATUS_TONE;
   return (
-    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_TONE[key])}>
-      {s.status ? STATUS_LABEL[s.status] : "Chưa phân công"}
+    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap", STATUS_TONE[key] ?? STATUS_TONE.none)}>
+      {s.status ? statusLabel(s.status) : "Chưa phân công"}
     </span>
   );
 }
 
-const fmtDate = (d: string | null) => (d ? d.split("-").reverse().join("/") : "—");
+const fmtDate = (d: string | null | undefined) => (d ? d.split("-").reverse().join("/") : "—");
 const fmtTime = (iso: string) => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+const fmtNext = (s: Pick<Signal, "next_contact_on" | "next_contact_at">) =>
+  s.next_contact_at ? fmtTime(s.next_contact_at) : fmtDate(s.next_contact_on);
+const lastText = (n?: LastNote) => (n ? [n.event_type, n.note].filter(Boolean).join(" — ") || "Đã cập nhật" : null);
 
-type Quick = "all" | "unassigned" | "waiting" | "consulting" | "due" | "won" | "lost";
 const QUICK: { k: Quick; label: string }[] = [
-  { k: "all", label: "Tất cả" }, { k: "unassigned", label: "Chưa phân công" }, { k: "waiting", label: "Chờ nhận" },
-  { k: "consulting", label: "Đang tư vấn" }, { k: "due", label: "Cần liên hệ" }, { k: "won", label: "Chốt" }, { k: "lost", label: "Trượt" },
+  { k: "all", label: "Tất cả" }, { k: "waiting", label: "Chờ nhận" }, { k: "due", label: "Cần liên hệ hôm nay" },
+  { k: "overdue", label: "Quá lịch hẹn" }, { k: "quoted", label: "Đã báo giá" }, { k: "deposit", label: "Chờ xác nhận / cọc" },
 ];
+const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 
 export function SignalsPage() {
   const p = useSignalPerms();
   const name = useUserName();
-  const { data = [], isLoading, error } = useSignals(!!p.userId);
-  const [q, setQ] = useState("");
-  const [quick, setQuick] = useState<Quick>("all");
+  const { data = [], isLoading, error } = useSignals();
+  const { data: last = {} } = useLastNotes();
+  const [f, setF] = useState<ListFilter>(emptyFilter());
+  const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const today = todayKey();
   const saleOnly = p.sale && !p.viewAll && !p.create;
 
   const mine = useMemo(() => data.filter((s) => s.assigned_to === p.userId), [data, p.userId]);
-  const list = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    return data.filter((s) => {
-      if (t && !(s.customer_name.toLowerCase().includes(t) || s.phone.includes(t))) return false;
-      switch (quick) {
-        case "unassigned": return !s.assigned_to;
-        case "waiting": case "consulting": case "won": case "lost": return s.status === quick;
-        case "due": return isDueToday(s, today);
-        default: return true;
-      }
-    });
-  }, [data, q, quick, today]);
-  const quickOpts = QUICK.filter((x) => !(saleOnly && x.k === "unassigned"));
+  const list = useMemo(() => applyListFilter(data, f, today, last), [data, f, today, last]);
   const open = data.find((s) => s.id === openId) || null;
+  const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
 
   return (
     <div className="space-y-4 pb-20 md:pb-0">
@@ -93,70 +112,70 @@ export function SignalsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{saleOnly ? "Tín hiệu của tôi" : "Tín hiệu cơ hội"}</h1>
           <p className="text-sm text-muted-foreground">Tín hiệu có khả năng phát sinh đơn hàng, giao Kinh doanh tư vấn.</p>
         </div>
-        {p.create && (
-          <Button size="lg" onClick={() => setCreating(true)} className="hidden md:inline-flex"><Plus className="h-4 w-4 mr-1" />Thêm tín hiệu</Button>
-        )}
+        {p.create && <Button size="lg" onClick={() => setCreating(true)} className="hidden md:inline-flex"><Plus className="h-4 w-4 mr-1" />Thêm tín hiệu</Button>}
       </div>
 
       {p.sale && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <Stat label="Chờ nhận" v={mine.filter((s) => s.status === "waiting").length} onClick={() => setQuick("waiting")} />
-          <Stat label="Đang tư vấn" v={mine.filter((s) => s.status === "consulting").length} onClick={() => setQuick("consulting")} />
-          <Stat label="Cần liên hệ hôm nay" v={mine.filter((s) => isDueToday(s, today)).length} onClick={() => setQuick("due")} tone="warn" />
-          <Stat label="Đã chốt tháng này" v={mine.filter((s) => s.status === "won" && s.closed_at && todayKey(new Date(s.closed_at)).slice(0, 7) === today.slice(0, 7)).length} onClick={() => setQuick("won")} />
+          <Stat label="Chờ nhận" v={mine.filter((s) => s.status === "waiting").length} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
+          <Stat label="Đang xử lý" v={mine.filter((s) => isOpen(s.status) && s.status !== "waiting").length} />
+          <Stat label="Cần liên hệ hôm nay" v={mine.filter((s) => s.next_contact_on && s.next_contact_on <= today && isOpen(s.status)).length} onClick={() => setF({ ...emptyFilter(), quick: "due" })} tone="warn" />
+          <Stat label="Đã chốt tháng này" v={mine.filter((s) => s.status === "won" && s.closed_at && todayKey(new Date(s.closed_at)).slice(0, 7) === today.slice(0, 7)).length} />
         </div>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm khách hàng hoặc SĐT" className="pl-9 h-11" />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={f.q ?? ""} onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))} placeholder="Tìm khách hàng hoặc SĐT" className="pl-9 h-11" />
+        </div>
+        <Button variant="outline" className="h-11" onClick={() => setFilterOpen(true)}>
+          <SlidersHorizontal className="h-4 w-4 mr-1" />Bộ lọc{extra ? ` (${extra})` : ""}
+        </Button>
       </div>
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-        {quickOpts.map((x) => (
-          <button key={x.k} onClick={() => setQuick(x.k)} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label}</button>
+        {QUICK.map((x) => (
+          <button key={x.k} onClick={() => setF((y) => ({ ...y, quick: x.k }))} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label}</button>
         ))}
       </div>
 
       {isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
         : error ? <p className="text-sm text-destructive py-8 text-center">{errMsg(error)}</p>
-        : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Chưa có tín hiệu nào.</p>
+        : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
           <>
             <div className="md:hidden space-y-2">
               {list.map((s) => (
-                <div key={s.id} className="rounded-xl border bg-card p-3.5 space-y-2">
+                <button key={s.id} onClick={() => setOpenId(s.id)} className="w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="font-semibold leading-tight">{s.customer_name}</div>
                     <StatusPill s={s} />
                   </div>
-                  <div className="text-sm text-muted-foreground line-clamp-2">{s.need_group || s.products.join(", ") || s.need_detail || "—"}</div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-mono">{s.phone}</span>
-                    {s.next_contact_on && <span className={cn(isOverdue(s, today) && "text-destructive font-medium")}>Hẹn {fmtDate(s.next_contact_on)}</span>}
+                  <div className="text-sm text-muted-foreground line-clamp-1">{s.need_group || s.products.join(", ") || s.need_detail || "—"}</div>
+                  <div className="text-sm line-clamp-1">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
+                    {s.next_contact_on && <span className={cn(isOverdue(s, today) && "text-destructive font-medium")}>Hẹn {fmtNext(s)}</span>}
                   </div>
-                  {!saleOnly && <div className="text-xs text-muted-foreground">Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}</div>}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <Button asChild size="lg" variant="outline"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1" />Gọi điện</a></Button>
-                    <Button size="lg" onClick={() => setOpenId(s.id)}><Eye className="h-4 w-4 mr-1" />Xem chi tiết</Button>
-                  </div>
-                </div>
+                </button>
               ))}
             </div>
             <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>{["Ngày", "Khách hàng", "Sản phẩm", "Nguồn", "Sale phụ trách", "Trạng thái", "Liên hệ tiếp", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
+                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Liên hệ tiếp", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {list.map((s) => (
                     <tr key={s.id} className="border-t hover:bg-muted/30">
                       <td className="px-3 py-2 whitespace-nowrap">{fmtDate(s.detected_on)}</td>
                       <td className="px-3 py-2"><div className="font-medium">{s.customer_name}</div><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
-                      <td className="px-3 py-2 max-w-[200px] truncate">{s.products.join(", ") || "—"}</td>
+                      <td className="px-3 py-2 max-w-[180px] truncate">{s.need_group || s.products.join(", ") || "—"}</td>
                       <td className="px-3 py-2">{s.source}</td>
                       <td className="px-3 py-2">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
                       <td className="px-3 py-2"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
-                      <td className={cn("px-3 py-2 whitespace-nowrap", isOverdue(s, today) && "text-destructive font-medium")}>{fmtDate(s.next_contact_on)}</td>
+                      <td className="px-3 py-2 max-w-[220px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
+                      <td className={cn("px-3 py-2 whitespace-nowrap", isOverdue(s, today) && "text-destructive font-medium")}>{s.next_contact_on ? fmtNext(s) : "—"}</td>
                       <td className="px-3 py-2 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
                     </tr>
                   ))}
@@ -170,6 +189,7 @@ export function SignalsPage() {
         <Button size="lg" onClick={() => setCreating(true)} className="md:hidden fixed bottom-4 right-4 z-30 rounded-full shadow-lg h-14 px-5"><Plus className="h-5 w-5 mr-1" />Thêm tín hiệu</Button>
       )}
 
+      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} />
       <Sheet open={creating} onOpenChange={setCreating}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader><SheetTitle>Thêm tín hiệu</SheetTitle></SheetHeader>
@@ -178,10 +198,53 @@ export function SignalsPage() {
       </Sheet>
       <Sheet open={!!open} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0">
-          {open && <SignalDetail s={open} />}
+          {open && <SignalDetail s={open} last={last[open.id]} />}
         </SheetContent>
       </Sheet>
     </div>
+  );
+}
+
+function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
+  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean;
+}) {
+  const name = useUserName();
+  const [f, setF] = useState<ListFilter>(value);
+  useEffect(() => { if (open) setF(value); }, [open, value]);
+  const set = (k: keyof ListFilter, v: any) => setF((x) => ({ ...x, [k]: v || undefined }));
+  const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => [id, name(id)] as [string, string]);
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+        <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
+        <div className="px-4 grid grid-cols-2 gap-3 pb-4">
+          <Field label="Trạng thái"><Pick value={f.status} onChange={(v) => set("status", v)} opts={[["unassigned", "Chưa phân công"], ...Object.entries(STATUS_LABEL)]} /></Field>
+          <Field label="Thời gian (ngày tạo)"><Pick value={f.time} onChange={(v) => setF((x) => ({ ...x, time: (v || "") as any }))} opts={[["today", "Hôm nay"], ["7d", "7 ngày"], ["month", "Tháng này"], ["custom", "Tùy chỉnh"]]} /></Field>
+          {f.time === "custom" && <>
+            <Field label="Từ ngày"><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></Field>
+            <Field label="Đến ngày"><Input type="date" value={f.to ?? ""} onChange={(e) => set("to", e.target.value)} /></Field>
+          </>}
+          <Field label="Nguồn"><Pick value={f.source} onChange={(v) => set("source", v)} opts={SIGNAL_SOURCES.map((x) => [x, x])} /></Field>
+          <Field label="Sản phẩm"><Pick value={f.product} onChange={(v) => set("product", v)} opts={SIGNAL_PRODUCTS.map((x) => [x, x])} /></Field>
+          <Field label="Nhóm nhu cầu"><Pick value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={SIGNAL_NEED_GROUPS.map((x) => [x, x])} /></Field>
+          <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={SIGNAL_LOST_REASONS.map((x) => [x, x])} /></Field>
+          {showPeople && <>
+            <Field label="Sale phụ trách"><Pick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} /></Field>
+            <Field label="Marketing tạo"><Pick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} /></Field>
+          </>}
+          <Field label="Hẹn từ ngày"><Input type="date" value={f.nextFrom ?? ""} onChange={(e) => set("nextFrom", e.target.value)} /></Field>
+          <Field label="Hẹn đến ngày"><Input type="date" value={f.nextTo ?? ""} onChange={(e) => set("nextTo", e.target.value)} /></Field>
+          <label className="col-span-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" className="h-4 w-4" checked={!!f.noNote} onChange={(e) => set("noNote", e.target.checked)} />
+            Chưa có diễn biến (đã giao nhưng Sale chưa cập nhật)
+          </label>
+        </div>
+        <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
+          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOpenChange(false); }}>Xóa bộ lọc</Button>
+          <Button size="lg" onClick={() => { onApply(f); onOpenChange(false); }}>Áp dụng</Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -202,37 +265,85 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
   const [f, setF] = useState<SignalInput>(initial ?? emptyInput());
   const [sale, setSale] = useState("");
   const [busy, setBusy] = useState(false);
-  const sales = useQuery({ queryKey: ["signal_sales"], queryFn: salesList, enabled: p.assign && !id });
+  const [createdId, setCreatedId] = useState<string | null>(null); // đã tạo, chờ phân công lại
+  const [dups, setDups] = useState<{ id: string; customer_name: string; status: string | null; detected_on: string }[]>([]);
+  const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign && !id });
   const set = <K extends keyof SignalInput>(k: K, v: SignalInput[K]) => setF((x) => ({ ...x, [k]: v }));
+
+  const checkDup = async () => {
+    const phone = normalizePhone(f.phone);
+    setDups(phone ? await findSamePhone(phone, id) : []);
+  };
+
+  const retryAssign = async () => {
+    if (!createdId || !sale) return;
+    setBusy(true);
+    try { await assignSignal(createdId, sale); await invalidateSig(qc); toast.success("Đã phân công"); onDone(); }
+    catch (e) { toast.error(`Chưa phân công được: ${errMsg(e)}`); } finally { setBusy(false); }
+  };
 
   const submit = async () => {
     const name = f.customer_name.trim();
     const phone = normalizePhone(f.phone);
     if (!name) return toast.error("Nhập tên khách hàng");
-    if (name.length > 200) return toast.error("Tên quá dài");
     if (!phone) return toast.error("Số điện thoại không hợp lệ (9–15 chữ số)");
     if (!f.source) return toast.error("Chọn nguồn tín hiệu");
     if (!f.detected_on) return toast.error("Chọn ngày phát hiện");
     const clean: SignalInput = { ...f, customer_name: name, phone, address: f.address?.trim() || null, need_detail: f.need_detail?.trim() || null, marketing_note: f.marketing_note?.trim() || null };
     setBusy(true);
     try {
-      if (id) await updateSignalInfo(id, clean);
-      else {
+      if (id) {
+        await updateSignalInfo(id, clean);
+      } else {
         const s = await createSignal(clean, p.userId!);
-        if (sale) await assignSignal(s.id, sale);
+        if (sale) {
+          try { await assignSignal(s.id, sale); }
+          catch (e) {
+            setCreatedId(s.id);
+            await invalidateSig(qc);
+            toast.error(`Đã tạo tín hiệu, chưa phân công thành công: ${errMsg(e)}`);
+            return;
+          }
+        }
       }
-      await qc.invalidateQueries({ queryKey: signalsKey });
+      await invalidateSig(qc);
       toast.success(id ? "Đã cập nhật tín hiệu" : "Đã thêm tín hiệu");
       onDone();
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
+
+  if (createdId) return (
+    <div className="space-y-4 p-4 pt-2">
+      <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+        <b>Đã tạo tín hiệu, chưa phân công thành công.</b> Tín hiệu đã được lưu — thử phân công lại, không tạo thêm bản trùng.
+      </div>
+      <Field label="Sale phụ trách">
+        <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={sale} onChange={(e) => setSale(e.target.value)}>
+          <option value="">— Chọn Sale —</option>
+          {(sales.data ?? []).map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}
+        </select>
+      </Field>
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" size="lg" onClick={onDone}>Để sau</Button>
+        <Button size="lg" disabled={busy || !sale} onClick={retryAssign}>{busy ? "Đang lưu…" : "Thử phân công lại"}</Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4 p-4 pt-2">
       <Section title="Khách hàng">
         <Field label="Ngày phát hiện"><Input type="date" value={f.detected_on} onChange={(e) => set("detected_on", e.target.value)} /></Field>
         <Field label="Đơn vị / Khách hàng *"><Input value={f.customer_name} maxLength={200} onChange={(e) => set("customer_name", e.target.value)} /></Field>
-        <Field label="Số điện thoại *"><Input type="tel" inputMode="tel" value={f.phone} maxLength={20} onChange={(e) => set("phone", e.target.value)} placeholder="0965..." /></Field>
+        <Field label="Số điện thoại *">
+          <Input type="tel" inputMode="tel" value={f.phone} maxLength={20} onChange={(e) => { set("phone", e.target.value); setDups([]); }} onBlur={checkDup} placeholder="0965..." />
+          {dups.length > 0 && (
+            <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs space-y-0.5">
+              <div className="flex items-center gap-1 font-medium"><AlertTriangle className="h-3.5 w-3.5" />SĐT này đã có trong tín hiệu khác. Vẫn có thể tạo nếu là nhu cầu mới.</div>
+              {dups.map((d) => <div key={d.id}>• {d.customer_name} · {fmtDate(d.detected_on)} · {d.status ? statusLabel(d.status) : "Chưa phân công"}</div>)}
+            </div>
+          )}
+        </Field>
         <Field label="Địa chỉ"><Input value={f.address ?? ""} maxLength={500} onChange={(e) => set("address", e.target.value)} /></Field>
       </Section>
       <Section title="Nhu cầu">
@@ -278,18 +389,28 @@ function Select({ value, onChange, opts }: { value: string; onChange: (v: string
     </select>
   );
 }
+function Pick({ value, onChange, opts }: { value?: string; onChange: (v: string) => void; opts: [string, string][] }) {
+  return (
+    <select className="h-11 w-full rounded-md border bg-background px-2 text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Tất cả</option>
+      {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+    </select>
+  );
+}
 
-function SignalDetail({ s }: { s: Signal }) {
+function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const p = useSignalPerms();
   const name = useUserName();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const hist = useQuery({ queryKey: ["signal_hist", s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
-  const sales = useQuery({ queryKey: ["signal_sales"], queryFn: salesList, enabled: p.assign });
+  const [updating, setUpdating] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const hist = useQuery({ queryKey: [`${SIG}hist`, p.userId, s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
+  const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
   const canEditInfo = !closed && (p.manage || (p.create && s.created_by === p.userId));
   const canConsult = !closed && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
-  const refresh = () => qc.invalidateQueries({ queryKey: signalsKey });
+  const refresh = () => invalidateSig(qc);
 
   const doAssign = async (uid: string) => {
     try { await assignSignal(s.id, uid || null); await refresh(); toast.success(uid ? "Đã phân công" : "Đã bỏ phân công"); }
@@ -298,7 +419,13 @@ function SignalDetail({ s }: { s: Signal }) {
   const doReopen = async () => {
     const r = window.prompt("Lý do mở lại tín hiệu?");
     if (!r?.trim()) return;
-    try { await reopenSignal(s.id, r.trim()); await refresh(); toast.success("Đã mở lại"); } catch (e) { toast.error(errMsg(e)); }
+    try { await reopenSignal(s.id, r.trim()); await refresh(); toast.success("Đã mở lại — lịch sử chốt/trượt cũ vẫn giữ trong nhật ký"); } catch (e) { toast.error(errMsg(e)); }
+  };
+  const accept = async () => {
+    try {
+      await saleUpdate(s.id, { status: "contacting", note: "", event: "Đã tiếp nhận", channel: "Zalo", next: s.next_contact_on, nextAt: s.next_contact_at ?? null, revenue: null, lostReason: null });
+      toast.success("Đã tiếp nhận"); refresh();
+    } catch (e) { toast.error(errMsg(e)); }
   };
 
   if (editing) return (
@@ -310,42 +437,68 @@ function SignalDetail({ s }: { s: Signal }) {
   const timeline = [
     ...(hist.data?.notes ?? []).map((n) => ({ t: n.created_at, who: n.author_id, body: (
       <>
-        {n.status_from !== n.status_to && n.status_to && <div className="text-xs text-muted-foreground">{n.status_from ? STATUS_LABEL[n.status_from as SignalStatus] : "—"} → <b>{STATUS_LABEL[n.status_to as SignalStatus]}</b>{n.revenue ? ` · ${fmtVnd(n.revenue)}` : ""}{n.lost_reason ? ` · ${n.lost_reason}` : ""}</div>}
+        <div className="text-xs text-muted-foreground">{fmtTime(n.created_at)} · <b className="text-foreground uppercase">{name(n.author_id)}</b>{n.channel ? ` | ${n.channel.toUpperCase()}` : ""}</div>
+        {n.event_type && <div className="font-semibold uppercase text-[13px]">{n.event_type}</div>}
+        {n.status_from !== n.status_to && n.status_to && <div className="text-xs text-muted-foreground">{statusLabel(n.status_from)} → <b>{statusLabel(n.status_to)}</b>{n.revenue ? ` · ${fmtVnd(n.revenue)}` : ""}{n.lost_reason ? ` · ${n.lost_reason}` : ""}</div>}
         {n.note && <div className="whitespace-pre-wrap">{n.note}</div>}
-        {n.next_contact_on && <div className="text-xs text-muted-foreground">Hẹn liên hệ: {fmtDate(n.next_contact_on)}</div>}
+        {(n.next_contact_at || n.next_contact_on) && <div className="text-xs text-muted-foreground">Hẹn liên hệ: {n.next_contact_at ? fmtTime(n.next_contact_at) : fmtDate(n.next_contact_on)}</div>}
       </>
     ) })),
     ...(hist.data?.events ?? []).map((e) => ({ t: e.created_at, who: e.actor_id, body: (
-      <div className="text-xs text-muted-foreground italic">
-        {e.kind === "assign" ? `Phân công: ${e.detail?.from ? name(e.detail.from) : "Chưa phân công"} → ${e.detail?.to ? name(e.detail.to) : "Chưa phân công"}`
-          : e.kind === "reopen" ? `Mở lại tín hiệu (trước: ${STATUS_LABEL[e.detail?.prev_status as SignalStatus] ?? "—"}). Lý do: ${e.detail?.reason}`
-          : "Cập nhật thông tin khách hàng"}
-      </div>
+      <>
+        <div className="text-xs text-muted-foreground">{fmtTime(e.created_at)} · <b className="text-foreground uppercase">{name(e.actor_id)}</b></div>
+        <div className="text-xs text-muted-foreground italic">
+          {e.kind === "assign" ? `Phân công: ${e.detail?.from ? name(e.detail.from) : "Chưa phân công"} → ${e.detail?.to ? name(e.detail.to) : "Chưa phân công"}`
+            : e.kind === "reopen" ? `Mở lại tín hiệu (trước: ${statusLabel(e.detail?.prev_status)}${e.detail?.prev_revenue ? ` · ${fmtVnd(e.detail.prev_revenue)}` : ""}${e.detail?.prev_lost_reason ? ` · ${e.detail.prev_lost_reason}` : ""}). Lý do: ${e.detail?.reason}`
+            : "Cập nhật thông tin khách hàng"}
+        </div>
+      </>
     ) })),
   ].sort((a, b) => b.t.localeCompare(a.t));
+  const shown = showAll ? timeline : timeline.slice(0, 3);
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="p-4 border-b space-y-1">
+      <div className="p-4 border-b space-y-2">
         <div className="flex items-start justify-between gap-2 pr-8"><h2 className="text-lg font-semibold leading-tight">{s.customer_name}</h2><StatusPill s={s} /></div>
-        <div className="text-sm text-muted-foreground">Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}{s.status === "won" && s.revenue ? ` · Doanh số ${fmtVnd(s.revenue)}` : ""}{s.lost_reason ? ` · ${s.lost_reason}` : ""}</div>
+        <a href={`tel:${s.phone}`} className="block font-mono text-base text-primary">{s.phone}</a>
+        <div className="text-sm">{[s.products.join(", "), s.need_group].filter(Boolean).join(" · ") || "—"}</div>
+        <div className="text-sm text-muted-foreground">Gần nhất: {lastText(last) ?? "Chưa có diễn biến"}</div>
+        <div className="text-sm text-muted-foreground">
+          Hẹn tiếp: {s.next_contact_on ? fmtNext(s) : "—"} · Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}
+          {s.status === "won" && s.revenue ? ` · Doanh số ${fmtVnd(s.revenue)}` : ""}{s.lost_reason ? ` · ${s.lost_reason}` : ""}
+        </div>
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <Button asChild size="lg" className="h-12 px-2"><a href={zaloLink(s.phone)} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4 mr-1" />Zalo</a></Button>
+          <Button asChild size="lg" variant="outline" className="h-12 px-2"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1" />Gọi</a></Button>
+          <Button size="lg" variant="secondary" className="h-12 px-2" disabled={!canConsult} onClick={() => setUpdating(true)}><PencilLine className="h-4 w-4 mr-1" />Cập nhật</Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">Nút Zalo mở trang Zalo theo số điện thoại; tùy thiết lập của khách, có thể không mở thẳng được cuộc trò chuyện.</p>
+        {canConsult && s.status === "waiting" && <Button size="lg" className="w-full" onClick={accept}>Tiếp nhận tín hiệu</Button>}
       </div>
 
       <div className="p-4 space-y-5 flex-1">
-        <Section title="1. Thông tin khách hàng">
+        <Section title="Nhật ký tư vấn">
+          {hist.isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : timeline.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có diễn biến.</p> : (
+            <>
+              <ol className="space-y-3 border-l pl-4">
+                {shown.map((x, i) => <li key={i} className="text-sm space-y-0.5">{x.body}</li>)}
+              </ol>
+              {timeline.length > 3 && <Button variant="ghost" size="sm" onClick={() => setShowAll((v) => !v)}>{showAll ? "Thu gọn" : `Xem toàn bộ nhật ký (${timeline.length})`}</Button>}
+            </>
+          )}
+        </Section>
+
+        <Section title="Thông tin khách hàng">
           <div className="rounded-lg border bg-muted/20 p-3 text-sm space-y-1.5">
-            <Row k="Số điện thoại"><a href={`tel:${s.phone}`} className="font-mono text-primary underline-offset-2 hover:underline">{s.phone}</a></Row>
             <Row k="Địa chỉ">{s.address || "—"}</Row>
             <Row k="Ngày phát hiện">{fmtDate(s.detected_on)}</Row>
             <Row k="Nguồn">{s.source}</Row>
-            <Row k="Sản phẩm">{s.products.join(", ") || "—"}</Row>
-            <Row k="Nhóm nhu cầu">{s.need_group || "—"}</Row>
             <Row k="Chi tiết nhu cầu"><span className="whitespace-pre-wrap">{s.need_detail || "—"}</span></Row>
             <Row k="Ghi chú Marketing"><span className="whitespace-pre-wrap">{s.marketing_note || "—"}</span></Row>
             <Row k="Người tạo">{name(s.created_by)} · {fmtTime(s.created_at)}</Row>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="md:hidden"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1" />Gọi điện</a></Button>
             {canEditInfo && <Button variant="outline" onClick={() => setEditing(true)}>Sửa thông tin</Button>}
             {closed && p.manage && <Button variant="outline" onClick={doReopen}><RotateCcw className="h-4 w-4 mr-1" />Mở lại</Button>}
           </div>
@@ -359,22 +512,14 @@ function SignalDetail({ s }: { s: Signal }) {
             </Field>
           )}
         </Section>
-
-        <Section title="2. Lịch sử tư vấn">
-          {hist.isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : timeline.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có cập nhật.</p> : (
-            <ol className="space-y-3 border-l pl-4">
-              {timeline.map((x, i) => (
-                <li key={i} className="text-sm">
-                  <div className="text-xs text-muted-foreground">{fmtTime(x.t)} · <b className="text-foreground">{name(x.who)}</b></div>
-                  {x.body}
-                </li>
-              ))}
-            </ol>
-          )}
-        </Section>
-
-        {canConsult && <ConsultForm s={s} onSaved={refresh} />}
       </div>
+
+      <Sheet open={updating} onOpenChange={setUpdating}>
+        <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+          <SheetHeader className="p-4 pb-2"><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader>
+          {updating && <UpdateForm s={s} onSaved={() => { setUpdating(false); refresh(); }} />}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -383,49 +528,83 @@ function Row({ k, children }: { k: string; children: React.ReactNode }) {
   return <div className="grid grid-cols-[120px_1fr] gap-2"><span className="text-muted-foreground">{k}</span><span>{children}</span></div>;
 }
 
-function ConsultForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
-  const [status, setStatus] = useState<SignalStatus>(s.status === "waiting" ? "consulting" : (s.status as SignalStatus));
+const CH_KEY = "sig_last_channel";
+/** "YYYY-MM-DDTHH:mm" (giờ Việt Nam) → ISO */
+const vnLocalToIso = (v: string) => new Date(`${v}:00+07:00`).toISOString();
+
+function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
+  const [event, setEvent] = useState("");
   const [note, setNote] = useState("");
-  const [next, setNext] = useState(s.next_contact_on ?? "");
+  const [channel, setChannel] = useState("Zalo");
+  const [status, setStatus] = useState<SignalStatus>(s.status as SignalStatus);
+  const [nextDate, setNextDate] = useState("");
+  const [nextTime, setNextTime] = useState("");
   const [revenue, setRevenue] = useState("");
   const [reason, setReason] = useState("");
+  const [reasonOther, setReasonOther] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setNext(s.next_contact_on ?? ""); }, [s.next_contact_on]);
-  const opts: SignalStatus[] = s.status === "waiting" ? ["waiting", "consulting", "won", "lost"] : ["consulting", "won", "lost"];
+  useEffect(() => { const c = localStorage.getItem(CH_KEY); if (c) setChannel(c); }, []);
+  const closing = status === "won" || status === "lost";
 
   const save = async () => {
     const rev = status === "won" ? Number(revenue.replace(/[^\d]/g, "")) : null;
     if (status === "won" && (!rev || rev <= 0)) return toast.error("Chốt bắt buộc nhập doanh số");
-    if (status === "lost" && !reason) return toast.error("Trượt bắt buộc chọn lý do");
+    const lost = status === "lost" ? (reason === "Khác" ? (reasonOther.trim() ? `Khác: ${reasonOther.trim()}` : "") : reason) : null;
+    if (status === "lost" && !lost) return toast.error(reason === "Khác" ? "Nhập lý do trượt cụ thể" : "Trượt bắt buộc chọn lý do");
+    if (!closing && nextTime && !nextDate) return toast.error("Chọn ngày hẹn");
+    if (status === s.status && !event && !note.trim() && !nextDate) return toast.error("Chọn diễn biến hoặc nhập nội dung");
     setBusy(true);
     try {
-      await saleUpdate(s.id, { status, note, next: status === "won" || status === "lost" ? null : next || null, revenue: rev, lostReason: status === "lost" ? reason : null });
-      setNote(""); setRevenue(""); setReason("");
-      toast.success("Đã lưu cập nhật");
+      await saleUpdate(s.id, {
+        status, note, event: event || null, channel,
+        next: closing ? null : nextDate || s.next_contact_on,
+        nextAt: closing || !nextDate ? (nextDate ? null : s.next_contact_at ?? null) : nextTime ? vnLocalToIso(`${nextDate}T${nextTime}`) : null,
+        revenue: rev, lostReason: lost,
+      });
+      localStorage.setItem(CH_KEY, channel);
+      toast.success("Đã lưu diễn biến");
       onSaved();
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
 
   return (
-    <Section title="3. Cập nhật tư vấn">
-      {s.status === "waiting" && (
-        <Button size="lg" variant="secondary" className="w-full" disabled={busy} onClick={async () => {
-          setBusy(true);
-          try { await saleUpdate(s.id, { status: "consulting", note: "Đã tiếp nhận", next: s.next_contact_on, revenue: null, lostReason: null }); toast.success("Đã tiếp nhận"); onSaved(); }
-          catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
-        }}>Tiếp nhận</Button>
-      )}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-        {opts.map((o) => <button key={o} type="button" onClick={() => setStatus(o)} className={cn("rounded-lg border py-2.5 text-sm font-medium", status === o ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{STATUS_LABEL[o]}</button>)}
+    <div>
+      <div className="px-4 space-y-4 pb-4">
+        <Field label="Diễn biến">
+          <div className="flex flex-wrap gap-1.5">
+            {SIGNAL_EVENTS.map((x) => <button key={x} type="button" onClick={() => setEvent(event === x ? "" : x)} className={cn("rounded-full border px-3 py-1.5 text-sm", event === x ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x}</button>)}
+          </div>
+        </Field>
+        <Field label="Nội dung trao đổi"><Textarea rows={3} maxLength={3000} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Thông tin quan trọng cần lưu lại…" /></Field>
+        <Field label="Phương thức">
+          <div className="flex flex-wrap gap-1.5">
+            {SIGNAL_CHANNELS.map((x) => <button key={x} type="button" onClick={() => setChannel(x)} className={cn("rounded-full border px-3 py-1.5 text-sm", channel === x ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x}</button>)}
+          </div>
+        </Field>
+        <Field label="Trạng thái (mặc định giữ nguyên)">
+          <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as SignalStatus)}>
+            {[...OPEN_STATUSES, "won", "lost"].map((o) => <option key={o} value={o}>{STATUS_LABEL[o as SignalStatus]}{o === s.status ? " (hiện tại)" : ""}</option>)}
+          </select>
+        </Field>
+        {status === "won" && <Field label="Doanh số chốt (VNĐ) *"><Input inputMode="numeric" value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, "."))} placeholder="VD: 15.000.000" /></Field>}
+        {status === "lost" && <>
+          <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={SIGNAL_LOST_REASONS} /></Field>
+          {reason === "Khác" && <Field label="Lý do cụ thể *"><Input maxLength={300} value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} /></Field>}
+          <p className="text-xs text-muted-foreground">Khách không nghe máy một lần chưa phải Trượt — có thể giữ "Đang liên hệ" và hẹn gọi lại.</p>
+        </>}
+        {!closing && (
+          <Field label="Lịch liên hệ tiếp (không bắt buộc)">
+            <div className="grid grid-cols-[1fr_120px] gap-2">
+              <Input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} />
+              <Input type="time" value={nextTime} onChange={(e) => setNextTime(e.target.value)} />
+            </div>
+          </Field>
+        )}
+        {closing && <p className="text-xs text-muted-foreground">Sau khi Chốt/Trượt, tín hiệu khóa lại. Chỉ Quản lý mới mở lại được. Doanh số là số Sale khai báo, chưa phải doanh thu kế toán.</p>}
       </div>
-      {status === "won" && <Field label="Doanh số chốt (VNĐ) *"><Input inputMode="numeric" value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, "."))} placeholder="VD: 15.000.000" /></Field>}
-      {status === "lost" && <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={SIGNAL_LOST_REASONS} /></Field>}
-      <Field label="Ghi chú mới"><Textarea rows={3} maxLength={3000} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Nội dung trao đổi với khách…" /></Field>
-      {status !== "won" && status !== "lost" && <Field label="Ngày liên hệ tiếp"><Input type="date" value={next} onChange={(e) => setNext(e.target.value)} /></Field>}
-      <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-background border-t">
-        <Button size="lg" className="w-full h-12 text-base" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu cập nhật"}</Button>
+      <div className="sticky bottom-0 bg-background border-t p-3">
+        <Button size="lg" className="w-full h-12 text-base" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu"}</Button>
       </div>
-      {(status === "won" || status === "lost") && <p className="text-xs text-muted-foreground">Sau khi Chốt/Trượt, tín hiệu khóa lại. Chỉ Quản lý mới mở lại được. Doanh số là số Sale khai báo, chưa phải doanh thu kế toán.</p>}
-    </Section>
+    </div>
   );
 }
