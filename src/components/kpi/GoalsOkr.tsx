@@ -295,66 +295,81 @@ function KrFields({ d, set, brandId, onRemove, start, end }: { d: Draft; set: (d
 }
 
 /* ---------- Form tạo Mục tiêu (3 bước) ---------- */
-function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
+export const SCOPE_LABEL: Record<GoalScope, string> = { department: "Phòng ban", team: "Nhóm", project: "Dự án", personal: "Cá nhân" };
+type GoalMeta = { scope?: GoalScope; scopeRef?: string; coordinatorId?: string; ownerId?: string; deadline?: string; periodType?: KpiPeriodType; archived?: boolean };
+function useBrandOf() {
+  const { websites, socials } = useStore();
+  return (k: "website" | "social", id: string) => (k === "website" ? websites.find((w) => w.id === id)?.brandId : socials.find((s) => s.id === id)?.brandId);
+}
+function ScopeFields({ v, set }: { v: { scope: GoalScope; scopeRef: string; coordinatorId: string }; set: (p: Partial<{ scope: GoalScope; scopeRef: string; coordinatorId: string }>) => void }) {
   const users = useAuth((s) => s.users);
+  const { brands } = useStore();
+  return (<>
+    <label className={lbl}>Phạm vi mục tiêu
+      <select className={inp} value={v.scope} onChange={(e) => { const sc = e.target.value as GoalScope; set({ scope: sc, scopeRef: sc === "department" ? "Phòng Marketing" : "" }); }}>
+        {Object.entries(SCOPE_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+    <label className={lbl}>{v.scope === "department" ? "Phòng ban" : v.scope === "team" ? "Tên nhóm" : v.scope === "project" ? "Dự án" : "Nhân viên"}
+      {v.scope === "project" ? <select className={inp} value={v.scopeRef} onChange={(e) => set({ scopeRef: e.target.value })}><option value="">— Chọn —</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+        : v.scope === "personal" ? <select className={inp} value={v.scopeRef} onChange={(e) => set({ scopeRef: e.target.value })}><option value="">— Chọn —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}</select>
+        : <input className={inp} value={v.scopeRef} placeholder={v.scope === "team" ? "VD: Nhóm SEO" : ""} onChange={(e) => set({ scopeRef: e.target.value })} />}</label>
+    <label className={lbl}>Người điều phối (tùy chọn)
+      <select className={inp} value={v.coordinatorId} onChange={(e) => set({ coordinatorId: e.target.value })}><option value="">— Không —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}</select></label>
+  </>);
+}
+
+function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
   const { brands, websites, socials } = useStore();
+  const brandOf = useBrandOf();
   const [step, setStep] = useState(1);
   const [ptype, setPtype] = useState<KpiPeriodType>("month");
-  const [g, setG] = useState(() => { const [s, e] = rangeOf("month"); return { title: "", brandId: "", channel: "", ownerId: actor.id, start: s, end: e, deadline: e }; });
+  const [g, setG] = useState(() => { const [s, e] = rangeOf("month"); return { title: "", brandId: "", channel: "", scope: "department" as GoalScope, scopeRef: "Phòng Marketing", coordinatorId: "", start: s, end: e, deadline: e }; });
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [saving, setSaving] = useState(false);
   const kind = g.channel.startsWith("w:") ? "web" : g.channel.startsWith("s:") ? (socials.find((s) => s.id === g.channel.slice(2))?.platform === "TikTok" ? "tiktok" : "facebook") : "";
   const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t); setG({ ...g, start: s, end: e, deadline: e }); setDrafts(drafts.map((d) => ({ ...d, deadline: e }))); } };
-  const info = g.title.trim() && g.ownerId && g.start && g.end && g.end >= g.start;
+  const info = g.title.trim() && g.start && g.end && g.end >= g.start && (g.scope === "department" || g.scope === "team" ? true : !!g.scopeRef);
 
   const [savedGoalId, setSavedGoalId] = useState<string | null>(null);
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<{ ok: string[]; failed: string[] } | null>(null);
-  const draftName = (d: Draft) => `${d.label || getKpiMetric(d.metricKey)?.label} — ${users.find((u) => u.id === d.ownerId)?.fullName ?? "?"}`;
-  /** Kiểm tra toàn bộ trước khi lưu (không ghi gì nếu còn lỗi). */
+  const draftName = (d: Draft) => d.label || getKpiMetric(d.metricKey)?.label || d.metricKey;
   const validateAll = (): string[] => {
     const errs: string[] = [];
     if (g.deadline < g.start || g.deadline > g.end) errs.push("Deadline mục tiêu phải nằm trong kỳ.");
-    const probe = createKpiService({ load: () => ({ goals: [], periods: [], items: [], adjustments: [] }), save: () => {} });
-    for (const d of drafts) {
-      if (!d.ownerId) { errs.push(`${draftName(d)}: chưa chọn người phụ trách.`); continue; }
-      try { probe.assign({ id: actor.id, isAdmin: true }, { userId: d.ownerId, periodType: ptype, periodStart: g.start, periodEnd: g.end, items: [draftToItem(d, g.brandId)] }); }
-      catch (e) { errs.push(`${draftName(d)}: ${(e as Error).message}`); }
-    }
+    for (const d of drafts) validateDraft(actor, d, g.brandId, ptype, g.start, g.end, brandOf).forEach((e) => errs.push(`${draftName(d)}: ${e}`));
     return errs;
   };
   const save = async () => {
     const errs = validateAll();
     if (errs.length) { toast.error(`Chưa lưu gì — cần sửa ${errs.length} lỗi`, { description: errs.join("\n") }); return; }
     setSaving(true);
+    const unbalanced = drafts.filter((d) => !allocationSummary({ targetValue: d.target, metricKey: d.metricKey }, d.allocs).balanced);
     let goalId = savedGoalId;
     const [t, id] = g.channel.split(":");
     if (!goalId) {
       try {
-        goalId = svc.saveGoal(actor, { title: g.title, periodStart: g.start, periodEnd: g.end, status: "active", brandId: g.brandId || null,
-          websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null, metadata: { ownerId: g.ownerId, deadline: g.deadline, periodType: ptype } }).id;
+        goalId = svc.saveGoal(actor, { title: g.title, periodStart: g.start, periodEnd: g.end, status: unbalanced.length ? "draft" : "active", brandId: g.brandId || null,
+          websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null,
+          metadata: { scope: g.scope, scopeRef: g.scopeRef, coordinatorId: g.coordinatorId || null, deadline: g.deadline, periodType: ptype } }).id;
         await flushKpi();
         setSavedGoalId(goalId);
       } catch (e) { toast.error(`Chưa tạo được mục tiêu: ${(e as Error).message}`); setSaving(false); return; }
     }
-    // Lưu từng KR riêng để biết chính xác KR nào lỗi; KR đã lưu không lưu lại khi bấm thử lại.
     const okNames: string[] = []; const failed: string[] = []; const done = new Set(savedKeys);
     for (const d of drafts.filter((x) => !done.has(x.key))) {
-      try {
-        svc.assign(actor, { userId: d.ownerId, periodType: ptype, periodStart: g.start, periodEnd: g.end, goalId, items: [draftToItem(d, g.brandId)] });
-        await flushKpi();
-        done.add(d.key); okNames.push(draftName(d));
-      } catch (e) { failed.push(`${draftName(d)}: ${e instanceof KpiError ? e.message : (e as Error).message}`); }
+      try { await saveDraftKr(actor, goalId, d, g.brandId, ptype, g.start, g.end); done.add(d.key); okNames.push(draftName(d)); }
+      catch (e) { failed.push(`${draftName(d)}: ${e instanceof KpiError ? e.message : (e as Error).message}`); }
     }
     setSavedKeys(done); setSaving(false);
-    if (failed.length) { setResult({ ok: okNames, failed }); toast.error(`Mục tiêu đã lưu, còn ${failed.length} KR chưa lưu được`, { description: "Bấm \"Lưu lại KR lỗi\" sau khi sửa — KR đã lưu sẽ không bị tạo trùng." }); return; }
-    toast.success(`Đã lưu mục tiêu${drafts.length ? ` và ${drafts.length} KR` : ""}`);
+    if (failed.length) { setResult({ ok: okNames, failed }); toast.error(`Mục tiêu đã lưu, còn ${failed.length} KR chưa lưu được`, { description: "Bấm \"Lưu lại KR lỗi\" sau khi sửa — phần đã lưu sẽ không bị tạo trùng." }); return; }
+    if (unbalanced.length) toast.warning(`Đã lưu dạng Nháp: ${unbalanced.length} KR chưa phân bổ khớp chỉ tiêu. Hoàn tất phân bổ rồi chuyển sang "Đang thực hiện".`);
+    else toast.success(`Đã lưu mục tiêu${drafts.length ? ` và ${drafts.length} KR` : ""}`);
     onDone();
   };
 
   const Steps = (
     <div className="flex items-center gap-2 text-xs">
-      {["Mục tiêu", "Chọn KR", "Đặt chỉ tiêu"].map((s, i) => (
+      {["Mục tiêu", "Chọn KR", "Chỉ tiêu & phân bổ"].map((s, i) => (
         <button key={s} disabled={i + 1 > step && !info} onClick={() => setStep(i + 1)} className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1", step === i + 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
           <span className="font-semibold">{i + 1}</span>{s}{i === 2 && drafts.length ? ` (${drafts.length})` : ""}
         </button>
@@ -368,17 +383,16 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
       {step === 1 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className={`${lbl} sm:col-span-2`}>Tên mục tiêu
-            <input className={inp} autoFocus placeholder="VD: Tăng hiện diện SEO Website Xưởng Gốm" value={g.title} onChange={(e) => setG({ ...g, title: e.target.value })} /></label>
-          <label className={lbl}>Dự án / Thương hiệu
-            <select className={inp} value={g.brandId} onChange={(e) => setG({ ...g, brandId: e.target.value, channel: "" })}><option value="">Toàn phòng</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+            <input className={inp} autoFocus placeholder="VD: Hoàn thành kế hoạch Marketing tháng 10" value={g.title} onChange={(e) => setG({ ...g, title: e.target.value })} /></label>
+          <ScopeFields v={g} set={(p) => setG({ ...g, ...p })} />
+          <label className={lbl}>Dự án đo lường KR (mặc định)
+            <select className={inp} value={g.brandId} onChange={(e) => setG({ ...g, brandId: e.target.value, channel: "" })}><option value="">Nhiều dự án</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
           <label className={lbl}>Kênh chính (tùy chọn)
             <select className={inp} value={g.channel} disabled={!g.brandId} onChange={(e) => setG({ ...g, channel: e.target.value })}>
               <option value="">Toàn dự án</option>
               {websites.filter((w) => w.brandId === g.brandId).map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
               {socials.filter((s) => s.brandId === g.brandId).map((s) => <option key={s.id} value={`s:${s.id}`}>{s.platform}: {s.name}</option>)}
             </select></label>
-          <label className={lbl}>Người phụ trách
-            <select className={inp} value={g.ownerId} onChange={(e) => setG({ ...g, ownerId: e.target.value })}>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}</select></label>
           <div className={lbl}>Thời gian
             <div className="flex rounded-md bg-muted p-0.5">{PERIOD_T.map(([k, v]) => <button key={k} onClick={() => setType(k)} className={cn("flex-1 rounded px-2 py-1.5 text-xs", ptype === k ? "bg-background font-medium text-foreground shadow-sm" : "")}>{v}</button>)}</div></div>
           <label className={lbl}>Từ ngày – đến ngày
@@ -387,7 +401,7 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
             <input type="date" className={inp} value={g.deadline} onChange={(e) => setG({ ...g, deadline: e.target.value })} /></label>
         </div>
       )}
-      {step === 2 && <KrPicker kind={kind} onPick={(k) => { setDrafts([...drafts, newDraft(k, g.ownerId, g.channel, g.deadline)]); setStep(3); }} />}
+      {step === 2 && <KrPicker kind={kind} onPick={(k) => { setDrafts([...drafts, newDraft(k, g.scope === "personal" ? g.scopeRef : "", g.channel, g.deadline)]); setStep(3); }} />}
       {step === 3 && (
         <div className="space-y-3">
           {drafts.map((d, i) => <KrFields key={d.key} d={d} brandId={g.brandId} start={g.start} end={g.end} set={(nd) => setDrafts(drafts.map((x, j) => (j === i ? nd : x)))} onRemove={() => setDrafts(drafts.filter((_, j) => j !== i))} />)}
@@ -404,7 +418,7 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-3">
         <button className={btn2} onClick={onDone}>{savedGoalId ? "Đóng" : "Hủy"}</button>
         {step === 1 && <button className={btn} disabled={!info} onClick={() => setStep(2)}>Tiếp: chọn KR</button>}
-        {step === 3 && <button className={btn} disabled={saving || !info || drafts.some((d) => !d.ownerId || !(d.target > 0))} onClick={save}>{saving ? "Đang lưu…" : savedGoalId ? "Lưu lại KR lỗi" : `Lưu mục tiêu${drafts.length ? ` + ${drafts.length} KR` : ""}`}</button>}
+        {step === 3 && <button className={btn} disabled={saving || !info || drafts.some((d) => d.allocs.some((a) => !a.userId) || !(d.target > 0))} onClick={save}>{saving ? "Đang lưu…" : savedGoalId ? "Lưu lại KR lỗi" : `Lưu mục tiêu${drafts.length ? ` + ${drafts.length} KR` : ""}`}</button>}
       </div>
     </div>
   );
