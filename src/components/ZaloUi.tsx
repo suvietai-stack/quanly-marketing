@@ -30,6 +30,7 @@ export function NotificationBell() {
   const qc = useQueryClient();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
+  const [showLink, setShowLink] = useState(false);
   const { data = [] } = useQuery({
     queryKey: ["notifications", uid],
     enabled: !!uid,
@@ -76,6 +77,9 @@ export function NotificationBell() {
               <div className="text-xs text-muted-foreground mt-0.5">{ago(n.created_at)}</div>
             </button>
           ))}
+        </div>
+        <div className="border-t p-2">
+          {showLink ? <ZaloLinkCard /> : <button className="w-full text-xs text-primary py-1" onClick={() => setShowLink(true)}>Nhận thông báo qua Zalo</button>}
         </div>
       </PopoverContent>
     </Popover>
