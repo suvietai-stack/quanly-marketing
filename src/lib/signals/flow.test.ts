@@ -33,21 +33,23 @@ describe("bộ lọc danh sách", () => {
     mk({ id: "c", status: "waiting", detected_on: "2026-08-01" }),
     mk({ id: "d", status: "lost", lost_reason: "Khác: khách đi nước ngoài", next_contact_on: null }),
   ];
-  const f = (o: any) => applyListFilter(list, { quick: "all", time: "", ...o }, T, { a: { signal_id: "a", created_at: "", event_type: null, note: "x" } }).map((s) => s.id);
-  it("lọc nhanh", () => {
-    expect(f({ quick: "due" })).toEqual(["a"]);
-    expect(f({ quick: "overdue" })).toEqual(["b"]);
+  const f = (o: any) => applyListFilter(list, { quick: "all", time: "", ...o }, T, {}).map((s) => s.id).sort();
+  it("lọc nhanh theo trạng thái", () => {
+    expect(f({ quick: "quoted" })).toEqual(["a"]);
     expect(f({ quick: "deposit" })).toEqual(["b"]);
+    expect(f({ quick: "lost" })).toEqual(["d"]);
+    expect(f({ quick: "won" })).toEqual([]);
   });
   it("thời gian + trạng thái kết hợp", () => {
     expect(f({ time: "month" })).toEqual(["a", "b", "d"]);
-    expect(f({ time: "7d", status: "quoted" })).toEqual(["a"]);
+    expect(f({ time: "7d", quick: "quoted" })).toEqual(["a"]);
     expect(f({ time: "custom", from: "2026-08-01", to: "2026-08-31" })).toEqual(["c"]);
   });
-  it("lịch hẹn, lý do Khác, chưa có diễn biến", () => {
-    expect(f({ nextFrom: T, nextTo: T })).toEqual(["a"]);
+  it("lý do Khác; sắp xếp theo cập nhật mới nhất", () => {
     expect(f({ lostReason: "Khác" })).toEqual(["d"]);
-    expect(f({ noNote: true })).toEqual(["b", "c", "d"]);
+    const sorted = applyListFilter([mk({ id: "old" }), mk({ id: "new", updated_at: "2026-09-24T00:00:00Z" })], { quick: "all", time: "" }, T,
+      { old: { signal_id: "old", created_at: "2026-09-25T00:00:00Z", event_type: null, note: "x" } }).map((s) => s.id);
+    expect(sorted).toEqual(["old", "new"]);
   });
   it("phân tích lý do trượt gom lý do tùy chỉnh về Khác", () => {
     expect(lostReasons(list)).toEqual([{ key: "Khác", n: 1 }]);

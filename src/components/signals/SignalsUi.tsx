@@ -18,7 +18,7 @@ import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
   signalHistory, updateSignalInfo, type SignalInput,
 } from "@/lib/signals/api";
-import { applyListFilter, type ListFilter, type Quick } from "@/lib/signals/report";
+import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
 
 export function useSignalPerms() {
   const { user, can } = useCurrentUser();
