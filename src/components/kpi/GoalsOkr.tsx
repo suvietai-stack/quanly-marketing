@@ -1,7 +1,9 @@
 /** Trang Mục tiêu (OKR gọn): Mục tiêu → chọn KR từ thư viện 19 KR → đặt chỉ tiêu → theo dõi. Dùng chung engine KPI hiện có. */
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronRight, Plus, Search, X } from "lucide-react";
+import { ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, X } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { isDivisible, allocationSummary, checkAllocationScope, aggregateKr, canHardDelete } from "@/lib/kpi/allocation";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -15,7 +17,7 @@ import { cloudRepository, flushKpi } from "@/lib/kpi/cloudRepository";
 import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
 import { monthsIn } from "@/lib/kpi/calculateKr";
 import { MONTHLY_SOURCE } from "@/lib/kpi/service";
-import type { EmployeeKpiItem, GoalStatus, KpiMetricDefinition, KpiPeriodType } from "@/lib/kpi/types";
+import type { EmployeeKpiItem, Goal, GoalKr, GoalScope, GoalStatus, KpiMetricDefinition, KpiPeriodType } from "@/lib/kpi/types";
 
 const svc = createKpiService(cloudRepository);
 const inp = "h-9 w-full rounded-md border border-input bg-background px-2 text-sm";
@@ -85,12 +87,23 @@ function priorityKeys(kind: "web" | "facebook" | "tiktok" | "") {
 }
 
 /* ---------- Bản nháp KR ---------- */
-type Draft = { key: string; deadline: string; metricKey: string; ownerId: string; channel: string; target: number; label: string; keywordIds: string[]; threshold: number; taskIds: string[]; viewThreshold: number; mode: "value" | "growth" };
+type Alloc = { key: string; userId: string; target: number; channel: string };
+type Draft = { allocs: Alloc[]; key: string; deadline: string; metricKey: string; ownerId: string; channel: string; target: number; label: string; keywordIds: string[]; threshold: number; taskIds: string[]; viewThreshold: number; mode: "value" | "growth" };
+const rid = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
 const newDraft = (metricKey: string, ownerId: string, channel = "", deadline = ""): Draft => {
   const m = getKpiMetric(metricKey);
-  return { key: globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2), deadline, metricKey, ownerId, channel: m && (m.scopes.includes("website") || m.scopes.includes("social")) ? channel : "",
+  const tgt = metricKey === "task_on_time_rate" ? 95 : metricKey === "task_first_pass_rate" ? 90 : m?.direction === "at_most" ? 1 : m?.needs === "keyword" ? 1 : 10;
+  return { allocs: [{ key: rid(), userId: ownerId, target: tgt, channel: "" }], key: rid(), deadline, metricKey, ownerId, channel: m && (m.scopes.includes("website") || m.scopes.includes("social")) ? channel : "",
     target: metricKey === "task_on_time_rate" ? 95 : metricKey === "task_first_pass_rate" ? 90 : m?.direction === "at_most" ? 1 : m?.needs === "keyword" ? 1 : 10, label: "", keywordIds: [], threshold: 3, taskIds: [], viewThreshold: 10000, mode: "value" };
 };
+/** Dòng phân bổ → chỉ tiêu nhân sự (dùng chung engine hiện có). */
+function allocItem(d: Draft, a: Alloc, brandId: string, krId: string | null): NewItem {
+  const base = draftToItem(d, brandId);
+  const ch = a.channel || d.channel;
+  const [t, id] = ch.split(":");
+  return { ...base, krId, targetValue: isDivisible(d.metricKey) ? a.target : d.target, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null,
+    metadata: { ...base.metadata, clientKey: `${d.key}:${a.key}` } };
+}
 function draftToItem(d: Draft, brandId: string): NewItem {
   const m = getKpiMetric(d.metricKey)!;
   const [t, id] = d.channel.split(":");
@@ -159,10 +172,6 @@ function KrFields({ d, set, brandId, onRemove, start, end }: { d: Draft; set: (d
         <button onClick={onRemove} className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Bỏ KR"><X className="h-4 w-4" /></button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className={lbl}>Người phụ trách
-          <select className={inp} value={d.ownerId} onChange={(e) => set({ ...d, ownerId: e.target.value })}>
-            <option value="">— Chọn —</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}
-          </select></label>
         {(webOpts.length > 0 || socOpts.length > 0) && (
           <label className={lbl}>{m.needs === "views" ? "Tài khoản video" : socOpts.length && !webOpts.length ? "Tài khoản Social" : webOpts.length && !socOpts.length ? "Website" : "Website / Tài khoản"}
             <select className={inp} value={d.channel} onChange={(e) => set({ ...d, channel: e.target.value, keywordIds: [] })}>
@@ -186,13 +195,14 @@ function KrFields({ d, set, brandId, onRemove, start, end }: { d: Draft; set: (d
             <select className={inp} value={d.threshold} onChange={(e) => set({ ...d, threshold: Number(e.target.value) })}>{[1, 3, 5, 10, 20].map((n) => <option key={n} value={n}>Top {n}</option>)}</select></label>
         )}
         <label className={lbl}>{m.needs === "keyword" ? "Số từ khóa đạt Top" : m.needs === "views" ? "Số video đạt ngưỡng" : m.direction === "at_most" ? "Không vượt quá" : "Chỉ tiêu"}{pctTarget ? " (%)" : m.unit === "currency" ? " (đ)" : ""}
-          <input type="number" min={1} max={m.needs === "keyword" && d.keywordIds.length ? d.keywordIds.length : undefined} className={inp} value={d.target} onChange={(e) => set({ ...d, target: Number(e.target.value) })} /></label>
+          <input type="number" min={1} max={m.needs === "keyword" && d.keywordIds.length ? d.keywordIds.length : undefined} className={inp} value={d.target} onChange={(e) => { const v = Number(e.target.value); set({ ...d, target: v, allocs: isDivisible(d.metricKey) ? d.allocs : d.allocs.map((x) => ({ ...x, target: v })) }); }} /></label>
         <label className={lbl}>Deadline KR
           <input type="date" className={inp} min={start} max={end} value={d.deadline || end} onChange={(e) => set({ ...d, deadline: e.target.value })} /></label>
       </div>
       {m.needs === "keyword" && d.keywordIds.length > 0 && d.target > d.keywordIds.length && <p className="text-[11px] text-destructive">Chỉ tiêu không được vượt quá {d.keywordIds.length} từ khóa đã chọn.</p>}
       {MONTHLY_SOURCE.has(d.metricKey) && !monthsIn(start, end) && <p className="text-[11px] text-destructive">Chỉ số này lấy số liệu theo tháng. Kỳ hiện tại không trọn tháng — hãy chọn kỳ Tháng hoặc Quý.</p>}
       {(d.deadline || end) > end || (d.deadline && d.deadline < start) ? <p className="text-[11px] text-destructive">Deadline phải nằm trong kỳ thực hiện.</p> : null}
+      <AllocEditor d={d} set={set} webOpts={d.channel ? [] : webOpts} socOpts={d.channel ? [] : socOpts} />
       {(m.needs === "tasks" || m.needs === "label") && (
         <label className={lbl}>Tên kết quả cần đạt
           <input className={inp} placeholder="VD: Nghiên cứu 3 bộ từ khóa" value={d.label} onChange={(e) => set({ ...d, label: e.target.value })} /></label>
