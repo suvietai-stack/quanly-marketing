@@ -95,7 +95,7 @@ export function PersonalKpi({ userId, periodKey, compact }: { userId: string; pe
   const [ps, pe] = key.split("|");
   const today = todayVN();
   const periods = db.periods.filter((p) => p.periodStart === ps && p.periodEnd === pe);
-  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites };
+  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites, growth: store.growth };
   const r = buildEmployeeReport({ user, allUsers: users, periods, items: db.items, adjustments: db.adjustments, data, filters: {}, today });
   if (!r.items.length) return <EmptyBox text="Chưa có KPI nào được giao trong kỳ này." />;
 
@@ -203,7 +203,7 @@ export function StaffTable() {
   const [ps, pe] = key.split("|");
   const today = todayVN();
   const periods = db.periods.filter((p) => p.periodStart === ps && p.periodEnd === pe);
-  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites };
+  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites, growth: store.growth };
   const rows = users.filter((u) => periods.some((p) => p.userId === u.id)).map((u) => ({ u, r: buildEmployeeReport({ user: u, allUsers: users, periods, items: db.items, adjustments: db.adjustments, data, filters: {}, today }) }));
   const selUser = users.find((u) => u.id === sel);
 
@@ -272,7 +272,7 @@ export function useChannelProgress(key: string, brandId: string) {
     const pIds = new Set(periods.map((p) => p.id));
     const scopes = new Map<string, { brandId: string | null; websiteId: string | null; socialId: string | null }>();
     for (const it of db.items) if (pIds.has(it.kpiPeriodId) && (!brandId || it.brandId === brandId)) scopes.set(`${it.brandId}|${it.websiteId}|${it.socialId}`, { brandId: it.brandId ?? null, websiteId: it.websiteId ?? null, socialId: it.socialId ?? null });
-    const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites };
+    const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites, growth: store.growth };
     const rows = [...scopes.values()].flatMap((sc) => {
       const ov = buildOverview({ users, goals: [], periods, items: db.items, adjustments: db.adjustments, data, today,
         filters: { brandId: sc.brandId ?? undefined, websiteId: sc.websiteId ?? undefined, socialId: sc.socialId ?? undefined } });

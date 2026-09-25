@@ -8,12 +8,12 @@ import type { KpiAdjustment } from "./service";
 import { getKpiMetric } from "./metrics";
 import { calculateKpiItem } from "./calculateKpi";
 import { calculateKrItem, KR_ENGINE_KEYS } from "./calculateKr";
-import type { KeywordTrack, MapPost, Website } from "@/lib/store";
+import type { KeywordTrack, MapPost, Website, GrowthMetric } from "@/lib/store";
 import { calculateVideoDesignItem } from "./calculateVideoDesign";
 import { matchesEmployee, type KpiEmployee } from "./identity";
 import { toDateKey } from "./date";
 
-export interface ReportData { tasks: Task[]; webContents: WebContent[]; socialPosts: SocialPost[]; videos: Video[]; orders: DesignOrder[]; /** snapshot điểm order (sidecar đã duyệt); thiếu → N/A */ designPoints?: Record<string, number>; keywords?: KeywordTrack[]; mapPosts?: MapPost[]; websites?: Website[] }
+export interface ReportData { tasks: Task[]; webContents: WebContent[]; socialPosts: SocialPost[]; videos: Video[]; orders: DesignOrder[]; /** snapshot điểm order (sidecar đã duyệt); thiếu → N/A */ designPoints?: Record<string, number>; keywords?: KeywordTrack[]; mapPosts?: MapPost[]; websites?: Website[]; growth?: GrowthMetric[] }
 export interface ReportFilters { brandId?: string; websiteId?: string; socialId?: string; group?: KpiMetricCategory | "" }
 export type SourceType = "task" | "web_content" | "social_post" | "video" | "design_order" | "keyword" | "map_post";
 
@@ -75,7 +75,7 @@ export function buildItemReport(emp: KpiEmployee, item: EmployeeKpiItem, period:
   const look = sourceLookup(data);
   let actual: number | null; let warnings = 0; let supported = true; let raw: EvidenceRow[] = [];
   if (KR_ENGINE_KEYS.has(item.metricKey)) {
-    const r = calculateKrItem(emp, { ...input, metadata: item.metadata }, p, { tasks: data.tasks, keywords: data.keywords, mapPosts: data.mapPosts, websites: data.websites });
+    const r = calculateKrItem(emp, { ...input, metadata: item.metadata }, p, { tasks: data.tasks, keywords: data.keywords, mapPosts: data.mapPosts, websites: data.websites, webContents: data.webContents, socialPosts: data.socialPosts, growth: data.growth });
     warnings = r.warnings.length; supported = r.supported; actual = r.actualValue;
     raw = r.evidence.map((e) => ({ sourceType: e.sourceType, sourceId: e.sourceId, title: e.title, creditedAt: e.creditedAt, brandId: e.brandId,
       websiteId: e.websiteId, socialId: null, deadline: e.deadline, onTime: e.onTime, firstPass: e.firstPass }));

@@ -48,7 +48,7 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
   const periods = db.periods.filter((p) => p.periodStart === ps && p.periodEnd === pe);
   const visibleUsers = users.filter((u) => periods.some((p) => p.userId === u.id) && (!userId || u.id === userId));
   const filters = { brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, group: group as never };
-  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites };
+  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites, growth: store.growth };
   const reports = visibleUsers.map((u) => ({ u, r: buildEmployeeReport({ user: u, allUsers: users, periods, items: metric ? db.items.filter((i) => i.metricKey === metric) : db.items, adjustments: db.adjustments, data, filters, today }) }));
   const bname = (id: string | null) => store.brands.find((b) => b.id === id)?.name ?? "—";
   const cname = (w: string | null, s: string | null) => (w ? `Web: ${store.websites.find((x) => x.id === w)?.name ?? w}` : s ? `Page: ${store.socials.find((x) => x.id === s)?.name ?? s}` : "—");
