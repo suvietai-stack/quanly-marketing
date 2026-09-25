@@ -50,6 +50,13 @@
       "when": 1790318485081,
       "tag": "0006_signals_seven_status_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790319851512,
+      "tag": "0007_signals_edit_delete_cancel",
+      "breakpoints": true
     }
   ]
 }

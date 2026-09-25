@@ -616,6 +616,9 @@ export type Database = {
           address: string | null
           assigned_at: string | null
           assigned_to: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           closed_at: string | null
           created_at: string
           created_by: string
@@ -639,6 +642,9 @@ export type Database = {
           address?: string | null
           assigned_at?: string | null
           assigned_to?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           closed_at?: string | null
           created_at?: string
           created_by?: string
@@ -662,6 +668,9 @@ export type Database = {
           address?: string | null
           assigned_at?: string | null
           assigned_to?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           closed_at?: string | null
           created_at?: string
           created_by?: string
@@ -1127,6 +1136,10 @@ export type Database = {
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       signal_assign: {
         Args: { _id: string; _user: string }
+        Returns: undefined
+      }
+      signal_cancel: {
+        Args: { _id: string; _reason: string; _undo?: boolean }
         Returns: undefined
       }
       signal_reopen: {
