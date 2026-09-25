@@ -3,7 +3,7 @@
  * Chưa có staging tách biệt → mọi create/update chỉ ghi vào trình duyệt hiện tại.
  * Đổi sang Supabase staging sau này bằng cách implement lại KpiRepository.
  */
-import type { Goal, EmployeeKpiPeriod, EmployeeKpiItem, KpiPeriodStatus, KpiScope } from "./types";
+import type { Goal, GoalKr, GoalKrStatus, EmployeeKpiPeriod, EmployeeKpiItem, KpiPeriodStatus, KpiScope } from "./types";
 import { getKpiMetric, isAssignable } from "./metrics";
 import { monthsIn } from "./calculateKr";
 
@@ -13,7 +13,7 @@ export const MONTHLY_SOURCE = new Set(["seo_organic_clicks", "social_views", "mk
 export const KPI_V2_MODE = "cloud" as const;
 
 export interface KpiAdjustment { id: string; itemId: string; field: "targetValue"; from: number; to: number; by: string; at: string; reason: string }
-export interface KpiDb { goals: Goal[]; periods: EmployeeKpiPeriod[]; items: EmployeeKpiItem[]; adjustments: KpiAdjustment[] }
+export interface KpiDb { goals: Goal[]; periods: EmployeeKpiPeriod[]; items: EmployeeKpiItem[]; adjustments: KpiAdjustment[]; krs?: GoalKr[] }
 
 export interface KpiRepository { load(): KpiDb; save(db: KpiDb): void }
 
@@ -47,10 +47,10 @@ export function scopeOf(i: { brandId?: string | null; websiteId?: string | null;
   if (i.brandId) return "brand";
   return "global";
 }
-const scopeKey = (i: { brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> }) =>
-  `${i.brandId ?? ""}|${i.websiteId ?? ""}|${i.socialId ?? ""}|${i.label ?? ""}|${JSON.stringify((i.metadata as { keywordIds?: unknown })?.keywordIds ?? "")}`;
+const scopeKey = (i: { krId?: string | null; brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> }) =>
+  `${i.krId ?? ""}|${i.brandId ?? ""}|${i.websiteId ?? ""}|${i.socialId ?? ""}|${i.label ?? ""}|${JSON.stringify((i.metadata as { keywordIds?: unknown })?.keywordIds ?? "")}`;
 
-export type NewItem = { metricKey: string; targetValue: number; brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> };
+export type NewItem = { krId?: string | null; metricKey: string; targetValue: number; brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> };
 
 export function createKpiService(repo: KpiRepository) {
   const requireAdmin = (a: KpiActor) => { if (!a.isAdmin) throw new KpiError("Chỉ Admin được quản lý KPI."); };
@@ -142,7 +142,7 @@ export function createKpiService(repo: KpiRepository) {
         }
         const pid = period.id;
         const created = input.items.map((it): EmployeeKpiItem => ({
-          id: uid(), kpiPeriodId: pid, metricKey: it.metricKey, label: it.label ?? null, targetValue: it.targetValue,
+          id: uid(), kpiPeriodId: pid, krId: it.krId ?? null, metricKey: it.metricKey, label: it.label ?? null, targetValue: it.targetValue,
           unit: getKpiMetric(it.metricKey)!.unit, targetOperator: ">=", brandId: it.brandId ?? null, websiteId: it.websiteId ?? null,
           socialId: it.socialId ?? null, metadata: { ...(it.metadata ?? {}), goalId: input.goalId ?? null }, createdAt: now(), updatedAt: now(),
         }));
@@ -206,6 +206,54 @@ export function createKpiService(repo: KpiRepository) {
         }
         p.status = status; p.updatedAt = now();
         return p;
+      });
+    },
+
+    /* ---------- KR chung + phân bổ ---------- */
+    saveKr(a: KpiActor, k: Partial<GoalKr> & { goalId: string; metricKey: string; targetValue: number }, reason = "") {
+      requireAdmin(a);
+      const m = getKpiMetric(k.metricKey);
+      if (!m) throw new KpiError(`Metric không tồn tại: ${k.metricKey}`);
+      if (!Number.isFinite(k.targetValue) || k.targetValue <= 0) throw new KpiError(`Chỉ tiêu của "${m.label}" phải > 0.`);
+      if (k.websiteId && k.socialId) throw new KpiError("Không gắn đồng thời Website và Social.");
+      return mutate((db) => {
+        db.krs = db.krs ?? [];
+        const goal = db.goals.find((g) => g.id === k.goalId);
+        if (!goal) throw new KpiError("Không tìm thấy mục tiêu.");
+        if (k.deadline && (k.deadline < goal.periodStart || k.deadline > goal.periodEnd)) throw new KpiError("Deadline KR phải nằm trong kỳ của mục tiêu.");
+        const ex = k.id ? db.krs.find((x) => x.id === k.id) : undefined;
+        if (ex && (ex.websiteId !== (k.websiteId ?? ex.websiteId) || ex.socialId !== (k.socialId ?? ex.socialId)) && db.items.some((i) => i.krId === ex.id))
+          throw new KpiError("KR đã có phân bổ — không đổi Website/Social. Hãy tạo KR mới.");
+        const history = [...(((ex?.metadata as { history?: unknown[] })?.history) ?? [])];
+        if (ex && ex.targetValue !== k.targetValue) history.push({ from: ex.targetValue, to: k.targetValue, by: a.id, at: now(), reason });
+        const rec: GoalKr = { id: ex?.id ?? k.id ?? uid(), goalId: k.goalId, metricKey: k.metricKey, label: k.label ?? ex?.label ?? null, targetValue: k.targetValue,
+          brandId: k.brandId !== undefined ? k.brandId : ex?.brandId ?? goal.brandId, websiteId: k.websiteId !== undefined ? k.websiteId : ex?.websiteId ?? null,
+          socialId: k.socialId !== undefined ? k.socialId : ex?.socialId ?? null, deadline: k.deadline !== undefined ? k.deadline : ex?.deadline ?? null,
+          status: k.status ?? ex?.status ?? "active", metadata: { ...(ex?.metadata ?? {}), ...(k.metadata ?? {}), history },
+          createdBy: ex?.createdBy ?? a.id, createdAt: ex?.createdAt ?? now(), updatedAt: now() };
+        db.krs = ex ? db.krs.map((x) => (x.id === rec.id ? rec : x)) : [...db.krs, rec];
+        return rec;
+      });
+    },
+    setKrStatus(a: KpiActor, krId: string, status: GoalKrStatus) {
+      requireAdmin(a);
+      return mutate((db) => { const k = (db.krs ?? []).find((x) => x.id === krId); if (!k) throw new KpiError("Không tìm thấy KR."); k.status = status; k.updatedAt = now(); return k; });
+    },
+    /** Xóa KR: chỉ khi chưa có dòng phân bổ nào. */
+    deleteKr(a: KpiActor, krId: string) {
+      requireAdmin(a);
+      mutate((db) => {
+        if (db.items.some((i) => i.krId === krId)) throw new KpiError("KR đã có phân bổ — hãy xóa các dòng chưa có kết quả hoặc chọn Hủy/Lưu trữ.");
+        db.krs = (db.krs ?? []).filter((x) => x.id !== krId);
+      });
+    },
+    /** Xóa mục tiêu: chỉ khi không còn KR hay chỉ tiêu nào liên kết. */
+    deleteGoal(a: KpiActor, goalId: string) {
+      requireAdmin(a);
+      mutate((db) => {
+        if ((db.krs ?? []).some((k) => k.goalId === goalId) || db.items.some((i) => (i.metadata as { goalId?: string })?.goalId === goalId) || db.periods.some((p) => p.goalId === goalId))
+          throw new KpiError("Mục tiêu còn KR/chỉ tiêu liên kết — hãy chọn Hủy hoặc Lưu trữ để giữ lịch sử.");
+        db.goals = db.goals.filter((g) => g.id !== goalId);
       });
     },
   };
