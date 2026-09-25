@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Ban, Trash2, Undo2, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import {
@@ -16,7 +18,7 @@ import {
 } from "@/lib/signals/catalog";
 import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
-  signalHistory, updateSignalInfo, type SignalInput,
+  signalHistory, updateSignalInfo, deleteSignal, cancelSignal, getCustomLostReasons, setCustomLostReasons, type SignalInput,
 } from "@/lib/signals/api";
 import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
 
@@ -28,6 +30,8 @@ export function useSignalPerms() {
     viewAll: can("signal.view_all") || can("signal.manage"),
     assign: can("signal.assign") || can("signal.manage"),
     manage: can("signal.manage"),
+    edit: can("signal.edit") || can("signal.manage"),
+    del: can("signal.delete") || can("signal.manage"),
     sale: can("signal.sale"),
     report: can("signal.report") || can("signal.manage"),
   };
@@ -43,6 +47,14 @@ export function useSignals(enabled = true) {
 export function useLastNotes(enabled = true) {
   const { userId } = useSignalPerms();
   return useQuery({ queryKey: [`${SIG}last`, userId], queryFn: listLastNotes, enabled: enabled && !!userId });
+}
+/** 9 lý do mặc định + lý do quản lý bổ sung ("Khác" luôn ở cuối). */
+export function useLostReasons() {
+  const { userId } = useSignalPerms();
+  const q = useQuery({ queryKey: [`${SIG}lostReasons`, userId], queryFn: getCustomLostReasons, enabled: !!userId });
+  const custom = q.data ?? [];
+  const base = SIGNAL_LOST_REASONS.filter((x) => x !== "Khác");
+  return { custom, all: [...base, ...custom.filter((c) => !(base as readonly string[]).includes(c)), "Khác"] };
 }
 const invalidateSig = (qc: ReturnType<typeof useQueryClient>) =>
   qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith(SIG) });
@@ -97,6 +109,7 @@ export function SignalsPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [reasonsOpen, setReasonsOpen] = useState(false);
   const today = todayKey();
   const saleOnly = p.sale && !p.viewAll && !p.create;
 
@@ -114,7 +127,10 @@ export function SignalsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{saleOnly ? "Tín hiệu của tôi" : "Tín hiệu cơ hội"}</h1>
           <p className="text-sm text-muted-foreground">Tín hiệu có khả năng phát sinh đơn hàng, giao Kinh doanh tư vấn.</p>
         </div>
-        {p.create && <Button size="lg" onClick={() => setCreating(true)} className="hidden md:inline-flex"><Plus className="h-4 w-4 mr-1" />Thêm tín hiệu</Button>}
+        <div className="flex gap-2">
+          {p.manage && <Button variant="outline" onClick={() => setReasonsOpen(true)}><ListPlus className="h-4 w-4 mr-1" />Lý do trượt</Button>}
+          {p.create && <Button size="lg" onClick={() => setCreating(true)} className="hidden md:inline-flex"><Plus className="h-4 w-4 mr-1" />Thêm tín hiệu</Button>}
+        </div>
       </div>
 
       {p.sale && (
@@ -193,6 +209,7 @@ export function SignalsPage() {
       )}
 
       <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} />
+      {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader><SheetTitle>Thêm tín hiệu</SheetTitle></SheetHeader>
@@ -212,6 +229,7 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
   open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean;
 }) {
   const name = useUserName();
+  const lr = useLostReasons();
   const [f, setF] = useState<ListFilter>(value);
   useEffect(() => { if (open) setF(value); }, [open, value]);
   const set = (k: keyof ListFilter, v: any) => setF((x) => ({ ...x, [k]: v || undefined }));
@@ -229,13 +247,17 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
           <Field label="Nguồn"><Pick value={f.source} onChange={(v) => set("source", v)} opts={SIGNAL_SOURCES.map((x) => [x, x])} /></Field>
           <Field label="Sản phẩm"><Pick value={f.product} onChange={(v) => set("product", v)} opts={SIGNAL_PRODUCTS.map((x) => [x, x])} /></Field>
           <Field label="Nhóm nhu cầu"><Pick value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={SIGNAL_NEED_GROUPS.map((x) => [x, x])} /></Field>
-          <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={SIGNAL_LOST_REASONS.map((x) => [x, x])} /></Field>
+          <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={lr.all.map((x) => [x, x])} /></Field>
           {showPeople && <>
             <Field label="Sale phụ trách"><Pick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} /></Field>
             <Field label="Người tạo"><Pick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} /></Field>
             <label className="col-span-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="h-4 w-4" checked={!!f.unassigned} onChange={(e) => set("unassigned", e.target.checked)} />
               Chỉ tín hiệu chưa phân công
+            </label>
+            <label className="col-span-2 flex items-center gap-2 text-sm">
+              <input type="checkbox" className="h-4 w-4" checked={!!f.cancelled} onChange={(e) => set("cancelled", e.target.checked)} />
+              Xem tín hiệu đã hủy
             </label>
           </>}
         </div>
@@ -408,8 +430,10 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const hist = useQuery({ queryKey: [`${SIG}hist`, p.userId, s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
   const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
-  const canEditInfo = !closed && (p.manage || (p.create && s.created_by === p.userId));
-  const canConsult = !closed && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
+  const cancelled = !!s.cancelled_at;
+  const canEditInfo = !closed && !cancelled && (p.edit || (p.create && s.created_by === p.userId && (!s.status || s.status === "waiting" || s.status === "consulting")));
+  const canDelete = p.del && !closed && (hist.data ? hist.data.notes.length === 0 : false);
+  const canConsult = !closed && !cancelled && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
   const refresh = () => invalidateSig(qc);
 
   const doAssign = async (uid: string) => {
@@ -420,6 +444,19 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
     const r = window.prompt("Lý do mở lại tín hiệu?");
     if (!r?.trim()) return;
     try { await reopenSignal(s.id, r.trim()); await refresh(); toast.success("Đã mở lại — lịch sử chốt/trượt cũ vẫn giữ trong nhật ký"); } catch (e) { toast.error(errMsg(e)); }
+  };
+  const doDelete = async () => {
+    if (!window.confirm(`Xóa tín hiệu "${s.customer_name}"? Không thể hoàn tác.`)) return;
+    try {
+      const ok = await deleteSignal(s.id);
+      if (!ok) return toast.error("Không xóa được: tín hiệu đã có nhật ký tư vấn hoặc kết quả. Hãy dùng Hủy.");
+      toast.success("Đã xóa tín hiệu"); refresh();
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const doCancel = async (undo: boolean) => {
+    const r = undo ? (window.confirm("Bỏ hủy tín hiệu này?") ? "" : null) : window.prompt("Lý do hủy (nhập nhầm, trùng lặp…)?");
+    if (r === null || (!undo && !r.trim())) return;
+    try { await cancelSignal(s.id, r.trim(), undo); refresh(); toast.success(undo ? "Đã bỏ hủy" : "Đã hủy — lịch sử vẫn được giữ"); } catch (e) { toast.error(errMsg(e)); }
   };
   const accept = async () => {
     try {
@@ -449,6 +486,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
         <div className="text-xs text-muted-foreground italic">
           {e.kind === "assign" ? `Phân công: ${e.detail?.from ? name(e.detail.from) : "Chưa phân công"} → ${e.detail?.to ? name(e.detail.to) : "Chưa phân công"}`
             : e.kind === "reopen" ? `Mở lại tín hiệu (trước: ${statusLabel(e.detail?.prev_status)}${e.detail?.prev_revenue ? ` · ${fmtVnd(e.detail.prev_revenue)}` : ""}${e.detail?.prev_lost_reason ? ` · ${e.detail.prev_lost_reason}` : ""}). Lý do: ${e.detail?.reason}`
+            : e.kind === "cancel" ? `Hủy tín hiệu. Lý do: ${e.detail?.reason ?? ""}`
+            : e.kind === "uncancel" ? `Bỏ hủy tín hiệu${e.detail?.prev_reason ? ` (lý do hủy trước: ${e.detail.prev_reason})` : ""}`
             : "Cập nhật thông tin khách hàng"}
         </div>
       </>
@@ -459,7 +498,25 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   return (
     <div className="flex flex-col min-h-full">
       <div className="p-4 border-b space-y-2">
-        <div className="flex items-start justify-between gap-2 pr-8"><h2 className="text-lg font-semibold leading-tight">{s.customer_name}</h2><StatusPill s={s} /></div>
+        <div className="flex items-start justify-between gap-2 pr-8">
+          <h2 className="text-lg font-semibold leading-tight">{s.customer_name}</h2>
+          <div className="flex items-center gap-1">
+            <StatusPill s={s} />
+            {(canEditInfo || canDelete || p.manage) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Thao tác"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canEditInfo && <DropdownMenuItem onClick={() => setEditing(true)}><PencilLine className="h-4 w-4 mr-2" />Sửa tín hiệu</DropdownMenuItem>}
+                  {canDelete && <DropdownMenuItem onClick={doDelete} className="text-destructive"><Trash2 className="h-4 w-4 mr-2" />Xóa tín hiệu</DropdownMenuItem>}
+                  {p.manage && (cancelled
+                    ? <DropdownMenuItem onClick={() => doCancel(true)}><Undo2 className="h-4 w-4 mr-2" />Bỏ hủy</DropdownMenuItem>
+                    : <DropdownMenuItem onClick={() => doCancel(false)}><Ban className="h-4 w-4 mr-2" />Hủy tín hiệu</DropdownMenuItem>)}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+        {cancelled && <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2">Đã hủy {fmtTime(s.cancelled_at!)}: {s.cancel_reason}. Không tính vào báo cáo.</div>}
         <a href={`tel:${s.phone}`} className="block font-mono text-base text-primary">{s.phone}</a>
         <div className="text-sm">{[s.products.join(", "), s.need_group].filter(Boolean).join(" · ") || "—"}</div>
         <div className="text-sm text-muted-foreground">Gần nhất: {lastText(last) ?? "Chưa có diễn biến"}</div>
@@ -538,6 +595,7 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
   const [status, setStatus] = useState<SignalStatus>(s.status as SignalStatus);
   const [revenue, setRevenue] = useState("");
   const [reason, setReason] = useState("");
+  const lr = useLostReasons();
   const [reasonOther, setReasonOther] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => { const c = localStorage.getItem(CH_KEY); if (c) setChannel(c); }, []);
@@ -584,7 +642,7 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
         </Field>
         {status === "won" && <Field label="Doanh số chốt (VNĐ) *"><Input inputMode="numeric" value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, "."))} placeholder="VD: 15.000.000" /></Field>}
         {status === "lost" && <>
-          <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={SIGNAL_LOST_REASONS} /></Field>
+          <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={lr.all} /></Field>
           {reason === "Khác" && <Field label="Lý do cụ thể *"><Input maxLength={300} value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} /></Field>}
           <p className="text-xs text-muted-foreground">Khách chưa phản hồi chưa phải Trượt — có thể giữ "Đang liên hệ".</p>
         </>}
@@ -594,5 +652,40 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
         <Button size="lg" className="w-full h-12 text-base" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu"}</Button>
       </div>
     </div>
+  );
+}
+
+function LostReasonsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const lr = useLostReasons();
+  const qc = useQueryClient();
+  const [v, setV] = useState("");
+  const save = async (items: string[]) => {
+    try { await setCustomLostReasons(items); await invalidateSig(qc); toast.success("Đã lưu danh sách lý do"); } catch (e) { toast.error(errMsg(e)); }
+  };
+  const add = () => {
+    const x = v.trim();
+    if (!x || lr.all.includes(x)) return toast.error("Lý do trống hoặc đã có");
+    setV(""); save([...lr.custom, x]);
+  };
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+        <SheetHeader><SheetTitle>Lý do trượt</SheetTitle></SheetHeader>
+        <p className="text-xs text-muted-foreground mt-1">9 lý do mặc định luôn có. Bỏ lý do tùy chỉnh không làm thay đổi lịch sử đã ghi.</p>
+        <ul className="mt-3 space-y-1 text-sm">
+          {SIGNAL_LOST_REASONS.filter((x) => x !== "Khác").map((x) => <li key={x} className="text-muted-foreground">{x}</li>)}
+          {lr.custom.map((x) => (
+            <li key={x} className="flex items-center justify-between rounded border px-2 py-1">
+              <span>{x}</span>
+              <Button size="sm" variant="ghost" onClick={() => save(lr.custom.filter((y) => y !== x))}>Bỏ</Button>
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-2 mt-3">
+          <Input value={v} maxLength={200} onChange={(e) => setV(e.target.value)} placeholder="Thêm lý do mới" />
+          <Button onClick={add}>Thêm</Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
