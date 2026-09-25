@@ -41,9 +41,32 @@ export interface EmployeeKpiPeriod {
   updatedAt: string;
 }
 
+export type GoalScope = "department" | "team" | "project" | "personal";
+export type GoalKrStatus = "active" | "cancelled" | "archived";
+
+/** KR chung của một Mục tiêu. Các dòng phân bổ là EmployeeKpiItem có krId trỏ về đây. */
+export interface GoalKr {
+  id: string;
+  goalId: string;
+  metricKey: string;
+  label: string | null;
+  targetValue: number;
+  brandId: string | null;
+  websiteId: string | null;
+  socialId: string | null;
+  deadline: string | null;
+  status: GoalKrStatus;
+  metadata: Record<string, unknown>;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface EmployeeKpiItem {
   id: string;
   kpiPeriodId: string;
+  /** Dòng phân bổ thuộc KR chung nào (null = KR cũ giao cho 1 người). */
+  krId?: string | null;
   metricKey: KpiMetricKey | string;
   label: string | null;
   targetValue: number;
