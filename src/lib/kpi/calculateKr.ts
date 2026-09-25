@@ -5,6 +5,7 @@
 import type { Task, KeywordTrack, MapPost, Website, WebContent, SocialPost, GrowthMetric } from "@/lib/store";
 import { getKpiMetric } from "./metrics";
 import { isWithinPeriod, toDateKey } from "./date";
+import { confirmedUniqueEntries, entryStatus, isAchieved } from "./evaluate";
 import { matchesEmployee, type KpiEmployee } from "./identity";
 
 export const KR_ENGINE_KEYS = new Set(["seo_keyword_top", "custom_task_result", "task_on_time_rate", "task_first_pass_rate", "task_overdue", "map_post_published",
@@ -13,7 +14,9 @@ export const KR_ENGINE_KEYS = new Set(["seo_keyword_top", "custom_task_result", 
 
 /** Một lần ghi nhận kết quả thủ công. Chỉ lần có confirmedBy mới được tính. */
 export interface KrEntry { id: string; value?: number; numerator?: number; denominator?: number; link?: string; note?: string;
-  recordedAt: string; recordedBy: string; confirmedBy?: string | null; confirmedAt?: string | null }
+  recordedAt: string; recordedBy: string; confirmedBy?: string | null; confirmedAt?: string | null;
+  /** pending: chờ xác nhận · confirmed · needs_info: yêu cầu bổ sung · rejected: từ chối */
+  status?: "pending" | "confirmed" | "needs_info" | "rejected"; reviewNote?: string }
 
 export interface KrMeta { keywordIds?: string[]; threshold?: number; taskIds?: string[]; viewThreshold?: number; mode?: "value" | "growth"; entries?: KrEntry[] }
 export interface KrItem { metricKey: string; brandId?: string | null; websiteId?: string | null; socialId?: string | null; metadata?: Record<string, unknown> | null }
@@ -164,8 +167,8 @@ export function calculateKrItem(emp: KpiEmployee, item: KrItem, period: { period
     }
     case "video_view_threshold": case "mkt_quality_leads": case "mkt_conversion_rate": case "mkt_orders": case "mkt_revenue": case "mkt_cpl": case "custom_confirmed": {
       const all = meta.entries ?? [];
-      const ok = all.filter((e) => e.confirmedBy && isWithinPeriod(toDateKey(e.recordedAt), period.periodStart, period.periodEnd));
-      const waiting = all.filter((e) => !e.confirmedBy).length;
+      const ok = confirmedUniqueEntries(all).filter((e) => isWithinPeriod(toDateKey(e.recordedAt), period.periodStart, period.periodEnd));
+      const waiting = all.filter((e) => entryStatus(e) === "pending").length;
       const wait = waiting ? ` · ${waiting} ghi nhận chờ xác nhận` : "";
       const ev = (e: KrEntry, title: string): KrEvidence => ({ sourceType: "entry", sourceId: e.id, title, creditedAt: toDateKey(e.recordedAt) ?? "", brandId: item.brandId ?? null,
         websiteId: item.websiteId ?? null, deadline: null, onTime: null, firstPass: null, note: e.link });
@@ -194,8 +197,7 @@ export function calculateKrItem(emp: KpiEmployee, item: KrItem, period: { period
 
 /** Đạt/chưa theo hướng mục tiêu. */
 export function krAchieved(actual: number | null, target: number, direction: string = "at_least"): boolean | null {
-  if (actual === null) return null;
-  return direction === "at_most" ? actual <= target : actual >= target;
+  return isAchieved(actual, target, direction === "at_most" ? "at_most" : "at_least");
 }
 
 /** Danh sách YYYY-MM nếu thời gian là trọn các tháng liên tiếp; ngược lại null. */
