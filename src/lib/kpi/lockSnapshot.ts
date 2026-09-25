@@ -22,7 +22,7 @@ export interface KpiPeriodSnapshot {
   incomplete: boolean;
 }
 
-export const KPI_ENGINE_VERSION = "v2-mock-1";
+export const KPI_ENGINE_VERSION = "v2-2";
 
 export function buildPeriodSnapshot(period: EmployeeKpiPeriod, reports: ItemReport[], lockedBy: string, lockedAt: string): KpiPeriodSnapshot {
   const items = reports.filter((r) => r.item.kpiPeriodId === period.id && !r.contributionOnly).map((r): KpiItemSnapshot => ({

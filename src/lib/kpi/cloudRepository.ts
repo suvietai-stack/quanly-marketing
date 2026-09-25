@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { KpiDb, KpiRepository, KpiAdjustment } from "./service";
 import type { Goal, EmployeeKpiPeriod, EmployeeKpiItem } from "./types";
 import { KPI_ENGINE_VERSION } from "./lockSnapshot";
+import { getKpiMetric } from "./metrics";
 
 const empty = (): KpiDb => ({ goals: [], periods: [], items: [], adjustments: [] });
 let cache: KpiDb = empty();
@@ -65,7 +66,10 @@ async function push(prev: KpiDb, next: KpiDb) {
     ok(await db.from("employee_kpi_periods").update(periodRow(p)).eq("id", p.id));
     if (p.status === "locked" && prevP.get(p.id)!.status !== "locked") {
       const items = next.items.filter((i) => i.kpiPeriodId === p.id).map((i) => ({ itemId: i.id, metricKey: i.metricKey, unit: i.unit, target: i.targetValue,
-        brandId: i.brandId, websiteId: i.websiteId, socialId: i.socialId }));
+        brandId: i.brandId, websiteId: i.websiteId, socialId: i.socialId,
+        direction: getKpiMetric(i.metricKey)?.direction ?? "at_least", deadline: (i.metadata as { deadline?: string }).deadline ?? p.periodEnd,
+        actual: (i.metadata as { lockedActual?: number | null }).lockedActual ?? null, achieved: (i.metadata as { lockedAchieved?: boolean | null }).lockedAchieved ?? null,
+        evidence: (i.metadata as { lockedEvidence?: unknown[] }).lockedEvidence ?? [] }));
       ok(await db.from("employee_kpi_snapshots").insert({ kpi_period_id: p.id, engine_version: KPI_ENGINE_VERSION, data: { items }, locked_by: me }));
     }
   }
