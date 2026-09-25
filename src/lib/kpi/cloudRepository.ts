@@ -6,11 +6,11 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { KpiDb, KpiRepository, KpiAdjustment } from "./service";
-import type { Goal, EmployeeKpiPeriod, EmployeeKpiItem } from "./types";
+import type { Goal, GoalKr, EmployeeKpiPeriod, EmployeeKpiItem } from "./types";
 import { KPI_ENGINE_VERSION } from "./lockSnapshot";
 import { getKpiMetric } from "./metrics";
 
-const empty = (): KpiDb => ({ goals: [], periods: [], items: [], adjustments: [] });
+const empty = (): KpiDb => ({ goals: [], periods: [], items: [], adjustments: [], krs: [] });
 let cache: KpiDb = empty();
 let queue: Promise<void> = Promise.resolve();
 const listeners = new Set<(err?: string) => void>();
@@ -22,24 +22,29 @@ const goalRow = (g: Goal) => ({ id: g.id, title: g.title, description: g.descrip
   brand_id: g.brandId, website_id: g.websiteId, social_id: g.socialId, metadata: g.metadata, created_by: g.createdBy });
 const periodRow = (p: EmployeeKpiPeriod) => ({ id: p.id, user_id: p.userId, period_type: p.periodType, period_start: p.periodStart, period_end: p.periodEnd,
   goal_id: p.goalId, status: p.status, created_by: p.createdBy });
-const itemRow = (i: EmployeeKpiItem) => ({ id: i.id, kpi_period_id: i.kpiPeriodId, metric_key: i.metricKey, label: i.label, target_value: i.targetValue,
+const krRow = (k: GoalKr) => ({ id: k.id, goal_id: k.goalId, metric_key: k.metricKey, label: k.label, target_value: k.targetValue, brand_id: k.brandId,
+  website_id: k.websiteId, social_id: k.socialId, deadline: k.deadline, status: k.status, metadata: k.metadata, created_by: k.createdBy });
+const itemRow = (i: EmployeeKpiItem) => ({ id: i.id, kpi_period_id: i.kpiPeriodId, kr_id: i.krId ?? null, metric_key: i.metricKey, label: i.label, target_value: i.targetValue,
   unit: i.unit, target_operator: i.targetOperator, brand_id: i.brandId, website_id: i.websiteId, social_id: i.socialId, metadata: i.metadata });
 
 export async function hydrateKpi(): Promise<KpiDb> {
-  const [g, p, i, a] = await Promise.all([
+  const [g, p, i, a, k] = await Promise.all([
     db.from("goals").select("*"), db.from("employee_kpi_periods").select("*"),
     db.from("employee_kpi_items").select("*"), db.from("employee_kpi_adjustments").select("*"),
+    db.from("goal_krs").select("*"),
   ]);
-  const err = g.error || p.error || i.error;
+  const err = g.error || p.error || i.error || k.error;
   if (err) throw new Error(err.message);
   cache = {
     goals: (g.data ?? []).map((r: any): Goal => ({ id: r.id, title: r.title, description: r.description, periodStart: r.period_start, periodEnd: r.period_end,
       status: r.status, brandId: r.brand_id, websiteId: r.website_id, socialId: r.social_id, metadata: r.metadata ?? {}, createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at })),
     periods: (p.data ?? []).map((r: any): EmployeeKpiPeriod => ({ id: r.id, userId: r.user_id, periodType: r.period_type, periodStart: r.period_start, periodEnd: r.period_end,
       goalId: r.goal_id, status: r.status, createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at })),
-    items: (i.data ?? []).map((r: any): EmployeeKpiItem => ({ id: r.id, kpiPeriodId: r.kpi_period_id, metricKey: r.metric_key, label: r.label, targetValue: Number(r.target_value),
+    items: (i.data ?? []).map((r: any): EmployeeKpiItem => ({ id: r.id, kpiPeriodId: r.kpi_period_id, krId: r.kr_id ?? null, metricKey: r.metric_key, label: r.label, targetValue: Number(r.target_value),
       unit: r.unit, targetOperator: r.target_operator, brandId: r.brand_id, websiteId: r.website_id, socialId: r.social_id, metadata: r.metadata ?? {}, createdAt: r.created_at, updatedAt: r.updated_at })),
     adjustments: (a.data ?? []).map((r: any): KpiAdjustment => ({ id: r.id, itemId: r.item_id, field: "targetValue", from: Number(r.from_value), to: Number(r.to_value), by: r.created_by, at: r.created_at, reason: r.reason })),
+    krs: (k.data ?? []).map((r: any): GoalKr => ({ id: r.id, goalId: r.goal_id, metricKey: r.metric_key, label: r.label, targetValue: Number(r.target_value), brandId: r.brand_id,
+      websiteId: r.website_id, socialId: r.social_id, deadline: r.deadline, status: r.status, metadata: r.metadata ?? {}, createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at })),
   };
   return structuredClone(cache);
 }
@@ -55,6 +60,7 @@ async function push(prev: KpiDb, next: KpiDb) {
   const { data: u } = await supabase.auth.getUser();
   const me = u.user?.id ?? null;
   const g = changed(prev.goals, next.goals); if (g.length) ok(await db.from("goals").upsert(g.map(goalRow)));
+  const k = changed(prev.krs ?? [], next.krs ?? []); if (k.length) ok(await db.from("goal_krs").upsert(k.map(krRow)));
   const prevP = new Map(prev.periods.map((p) => [p.id, p]));
   const newP = next.periods.filter((p) => !prevP.has(p.id));
   if (newP.length) ok(await db.from("employee_kpi_periods").insert(newP.map(periodRow)));
@@ -74,6 +80,7 @@ async function push(prev: KpiDb, next: KpiDb) {
     }
   }
   const delP = removed(prev.periods, next.periods); if (delP.length) ok(await db.from("employee_kpi_periods").delete().in("id", delP));
+  const delK = removed(prev.krs ?? [], next.krs ?? []); if (delK.length) ok(await db.from("goal_krs").delete().in("id", delK));
   const delG = removed(prev.goals, next.goals); if (delG.length) ok(await db.from("goals").delete().in("id", delG));
 }
 
