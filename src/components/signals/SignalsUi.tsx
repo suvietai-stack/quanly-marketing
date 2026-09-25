@@ -18,7 +18,7 @@ import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
   signalHistory, updateSignalInfo, type SignalInput,
 } from "@/lib/signals/api";
-import { applyListFilter, type ListFilter, type Quick } from "@/lib/signals/report";
+import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
 
 export function useSignalPerms() {
   const { user, can } = useCurrentUser();
@@ -83,8 +83,8 @@ const fmtNext = (s: Pick<Signal, "next_contact_on" | "next_contact_at">) =>
 const lastText = (n?: LastNote) => (n ? [n.event_type, n.note].filter(Boolean).join(" — ") || "Đã cập nhật" : null);
 
 const QUICK: { k: Quick; label: string }[] = [
-  { k: "all", label: "Tất cả" }, { k: "waiting", label: "Chờ nhận" }, { k: "due", label: "Cần liên hệ hôm nay" },
-  { k: "overdue", label: "Quá lịch hẹn" }, { k: "quoted", label: "Đã báo giá" }, { k: "deposit", label: "Chờ xác nhận / cọc" },
+  { k: "all", label: "Tất cả" },
+  ...(Object.entries(STATUS_LABEL) as [SignalStatus, string][]).map(([k, label]) => ({ k, label })),
 ];
 const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 
@@ -102,6 +102,8 @@ export function SignalsPage() {
 
   const mine = useMemo(() => data.filter((s) => s.assigned_to === p.userId), [data, p.userId]);
   const list = useMemo(() => applyListFilter(data, f, today, last), [data, f, today, last]);
+  const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
+  const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
   const open = data.find((s) => s.id === openId) || null;
   const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
 
@@ -119,7 +121,7 @@ export function SignalsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           <Stat label="Chờ nhận" v={mine.filter((s) => s.status === "waiting").length} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
           <Stat label="Đang xử lý" v={mine.filter((s) => isOpen(s.status) && s.status !== "waiting").length} />
-          <Stat label="Cần liên hệ hôm nay" v={mine.filter((s) => s.next_contact_on && s.next_contact_on <= today && isOpen(s.status)).length} onClick={() => setF({ ...emptyFilter(), quick: "due" })} tone="warn" />
+          <Stat label="Đã báo giá" v={mine.filter((s) => s.status === "quoted").length} onClick={() => setF({ ...emptyFilter(), quick: "quoted" })} />
           <Stat label="Đã chốt tháng này" v={mine.filter((s) => s.status === "won" && s.closed_at && todayKey(new Date(s.closed_at)).slice(0, 7) === today.slice(0, 7)).length} />
         </div>
       )}
@@ -135,9 +137,10 @@ export function SignalsPage() {
       </div>
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
         {QUICK.map((x) => (
-          <button key={x.k} onClick={() => setF((y) => ({ ...y, quick: x.k }))} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label}</button>
+          <button key={x.k} onClick={() => setF((y) => ({ ...y, quick: x.k }))} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label} <span className="opacity-70">{count(x.k)}</span></button>
         ))}
       </div>
+      <p className="text-xs text-muted-foreground -mt-2">Sắp xếp theo cập nhật mới nhất.</p>
 
       {isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
         : error ? <p className="text-sm text-destructive py-8 text-center">{errMsg(error)}</p>
@@ -155,7 +158,7 @@ export function SignalsPage() {
                   <div className="text-sm line-clamp-1">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
-                    {s.next_contact_on && <span className={cn(isOverdue(s, today) && "text-destructive font-medium")}>Hẹn {fmtNext(s)}</span>}
+                    <span>Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
                   </div>
                 </button>
               ))}
@@ -163,7 +166,7 @@ export function SignalsPage() {
             <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Liên hệ tiếp", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
+                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Cập nhật", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {list.map((s) => (
@@ -175,7 +178,7 @@ export function SignalsPage() {
                       <td className="px-3 py-2">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
                       <td className="px-3 py-2"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
                       <td className="px-3 py-2 max-w-[220px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
-                      <td className={cn("px-3 py-2 whitespace-nowrap", isOverdue(s, today) && "text-destructive font-medium")}>{s.next_contact_on ? fmtNext(s) : "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{fmtTime(lastActivity(s, last[s.id]))}</td>
                       <td className="px-3 py-2 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
                     </tr>
                   ))}
@@ -218,7 +221,6 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
         <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
         <div className="px-4 grid grid-cols-2 gap-3 pb-4">
-          <Field label="Trạng thái"><Pick value={f.status} onChange={(v) => set("status", v)} opts={[["unassigned", "Chưa phân công"], ...Object.entries(STATUS_LABEL)]} /></Field>
           <Field label="Thời gian (ngày tạo)"><Pick value={f.time} onChange={(v) => setF((x) => ({ ...x, time: (v || "") as any }))} opts={[["today", "Hôm nay"], ["7d", "7 ngày"], ["month", "Tháng này"], ["custom", "Tùy chỉnh"]]} /></Field>
           {f.time === "custom" && <>
             <Field label="Từ ngày"><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></Field>
@@ -230,14 +232,12 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
           <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={SIGNAL_LOST_REASONS.map((x) => [x, x])} /></Field>
           {showPeople && <>
             <Field label="Sale phụ trách"><Pick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} /></Field>
-            <Field label="Marketing tạo"><Pick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} /></Field>
+            <Field label="Người tạo"><Pick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} /></Field>
+            <label className="col-span-2 flex items-center gap-2 text-sm">
+              <input type="checkbox" className="h-4 w-4" checked={!!f.unassigned} onChange={(e) => set("unassigned", e.target.checked)} />
+              Chỉ tín hiệu chưa phân công
+            </label>
           </>}
-          <Field label="Hẹn từ ngày"><Input type="date" value={f.nextFrom ?? ""} onChange={(e) => set("nextFrom", e.target.value)} /></Field>
-          <Field label="Hẹn đến ngày"><Input type="date" value={f.nextTo ?? ""} onChange={(e) => set("nextTo", e.target.value)} /></Field>
-          <label className="col-span-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" className="h-4 w-4" checked={!!f.noNote} onChange={(e) => set("noNote", e.target.checked)} />
-            Chưa có diễn biến (đã giao nhưng Sale chưa cập nhật)
-          </label>
         </div>
         <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
           <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOpenChange(false); }}>Xóa bộ lọc</Button>
@@ -441,7 +441,6 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
         {n.event_type && <div className="font-semibold uppercase text-[13px]">{n.event_type}</div>}
         {n.status_from !== n.status_to && n.status_to && <div className="text-xs text-muted-foreground">{statusLabel(n.status_from)} → <b>{statusLabel(n.status_to)}</b>{n.revenue ? ` · ${fmtVnd(n.revenue)}` : ""}{n.lost_reason ? ` · ${n.lost_reason}` : ""}</div>}
         {n.note && <div className="whitespace-pre-wrap">{n.note}</div>}
-        {(n.next_contact_at || n.next_contact_on) && <div className="text-xs text-muted-foreground">Hẹn liên hệ: {n.next_contact_at ? fmtTime(n.next_contact_at) : fmtDate(n.next_contact_on)}</div>}
       </>
     ) })),
     ...(hist.data?.events ?? []).map((e) => ({ t: e.created_at, who: e.actor_id, body: (
@@ -465,7 +464,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
         <div className="text-sm">{[s.products.join(", "), s.need_group].filter(Boolean).join(" · ") || "—"}</div>
         <div className="text-sm text-muted-foreground">Gần nhất: {lastText(last) ?? "Chưa có diễn biến"}</div>
         <div className="text-sm text-muted-foreground">
-          Hẹn tiếp: {s.next_contact_on ? fmtNext(s) : "—"} · Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}
+          Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}
           {s.status === "won" && s.revenue ? ` · Doanh số ${fmtVnd(s.revenue)}` : ""}{s.lost_reason ? ` · ${s.lost_reason}` : ""}
         </div>
         <div className="grid grid-cols-3 gap-2 pt-1">
@@ -537,8 +536,6 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
   const [note, setNote] = useState("");
   const [channel, setChannel] = useState("Zalo");
   const [status, setStatus] = useState<SignalStatus>(s.status as SignalStatus);
-  const [nextDate, setNextDate] = useState("");
-  const [nextTime, setNextTime] = useState("");
   const [revenue, setRevenue] = useState("");
   const [reason, setReason] = useState("");
   const [reasonOther, setReasonOther] = useState("");
@@ -551,14 +548,13 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
     if (status === "won" && (!rev || rev <= 0)) return toast.error("Chốt bắt buộc nhập doanh số");
     const lost = status === "lost" ? (reason === "Khác" ? (reasonOther.trim() ? `Khác: ${reasonOther.trim()}` : "") : reason) : null;
     if (status === "lost" && !lost) return toast.error(reason === "Khác" ? "Nhập lý do trượt cụ thể" : "Trượt bắt buộc chọn lý do");
-    if (!closing && nextTime && !nextDate) return toast.error("Chọn ngày hẹn");
-    if (status === s.status && !event && !note.trim() && !nextDate) return toast.error("Chọn diễn biến hoặc nhập nội dung");
+    if (status === s.status && !event && !note.trim()) return toast.error("Chọn diễn biến hoặc nhập nội dung");
     setBusy(true);
     try {
+      // Không còn lịch hẹn trên giao diện; giữ nguyên giá trị cũ trong dữ liệu.
       await saleUpdate(s.id, {
         status, note, event: event || null, channel,
-        next: closing ? null : nextDate || s.next_contact_on,
-        nextAt: closing || !nextDate ? (nextDate ? null : s.next_contact_at ?? null) : nextTime ? vnLocalToIso(`${nextDate}T${nextTime}`) : null,
+        next: closing ? null : s.next_contact_on, nextAt: closing ? null : s.next_contact_at ?? null,
         revenue: rev, lostReason: lost,
       });
       localStorage.setItem(CH_KEY, channel);
@@ -590,16 +586,8 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
         {status === "lost" && <>
           <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={SIGNAL_LOST_REASONS} /></Field>
           {reason === "Khác" && <Field label="Lý do cụ thể *"><Input maxLength={300} value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} /></Field>}
-          <p className="text-xs text-muted-foreground">Khách không nghe máy một lần chưa phải Trượt — có thể giữ "Đang liên hệ" và hẹn gọi lại.</p>
+          <p className="text-xs text-muted-foreground">Khách chưa phản hồi chưa phải Trượt — có thể giữ "Đang liên hệ".</p>
         </>}
-        {!closing && (
-          <Field label="Lịch liên hệ tiếp (không bắt buộc)">
-            <div className="grid grid-cols-[1fr_120px] gap-2">
-              <Input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} />
-              <Input type="time" value={nextTime} onChange={(e) => setNextTime(e.target.value)} />
-            </div>
-          </Field>
-        )}
         {closing && <p className="text-xs text-muted-foreground">Sau khi Chốt/Trượt, tín hiệu khóa lại. Chỉ Quản lý mới mở lại được. Doanh số là số Sale khai báo, chưa phải doanh thu kế toán.</p>}
       </div>
       <div className="sticky bottom-0 bg-background border-t p-3">
