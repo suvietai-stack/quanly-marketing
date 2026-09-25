@@ -117,6 +117,10 @@ export function SignalsPage() {
   const [f, setF] = useState<ListFilter>(emptyFilter());
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("open");
+    if (id && /^[0-9a-f-]{36}$/i.test(id)) setOpenId(id);
+  }, []);
   const [creating, setCreating] = useState(false);
   const [reasonsOpen, setReasonsOpen] = useState(false);
   const today = todayKey();

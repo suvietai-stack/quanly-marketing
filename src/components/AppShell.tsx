@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/ZaloUi";
 import { useAuth, useCurrentUser, type PermissionKey } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -170,7 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         ))}
       </nav>
-      <div className="px-2 py-2 border-t border-sidebar-border">{UserMenu}</div>
+      <div className="px-2 py-2 border-t border-sidebar-border flex items-center gap-1"><div className="flex-1 min-w-0">{UserMenu}</div><div className="hidden md:block"><NotificationBell /></div></div>
     </aside>
   );
 
@@ -195,6 +196,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="font-semibold flex-1">Base Marketing</div>
+          <NotificationBell />
           {user && (
             <button onClick={onLogout} className="p-2 rounded hover:bg-accent" title="Đăng xuất">
               <LogOut className="h-5 w-5" />

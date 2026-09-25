@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +26,7 @@ const ago = (iso: string) => {
 };
 
 export function NotificationBell() {
-  const { user } = useCurrentUser() as any;
-  const uid: string | undefined = user?.id;
+  const uid = useAuth((st) => st.currentUserId) || undefined;
   const qc = useQueryClient();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);

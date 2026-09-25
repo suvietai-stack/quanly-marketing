@@ -1,4 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import { zaloDispatch } from "@/lib/zalo.functions";
+
+/** Đẩy thông báo Zalo chạy nền — lỗi không ảnh hưởng thao tác chính. */
+function dispatchZalo() { zaloDispatch().catch(() => {}); }
 import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
 
 const db = supabase as any;
@@ -37,6 +41,7 @@ export interface SignalInput {
 export async function createSignal(input: SignalInput, userId: string): Promise<Signal> {
   const { data, error } = await db.from("opportunity_signals").insert({ ...input, created_by: userId }).select("*").single();
   if (error) throw error;
+  dispatchZalo();
   return data as Signal;
 }
 
@@ -48,6 +53,7 @@ export async function updateSignalInfo(id: string, input: SignalInput) {
 export async function assignSignal(id: string, userId: string | null) {
   const { error } = await db.rpc("signal_assign", { _id: id, _user: userId });
   if (error) throw error;
+  dispatchZalo();
 }
 
 export interface SaleUpdate {
