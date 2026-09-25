@@ -520,6 +520,157 @@ export type Database = {
         }
         Relationships: []
       }
+      opportunity_signal_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          id: string
+          kind: string
+          signal_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          kind: string
+          signal_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          kind?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_signal_events_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_signal_notes: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          lost_reason: string | null
+          next_contact_on: string | null
+          note: string | null
+          revenue: number | null
+          signal_id: string
+          status_from: string | null
+          status_to: string | null
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          lost_reason?: string | null
+          next_contact_on?: string | null
+          note?: string | null
+          revenue?: number | null
+          signal_id: string
+          status_from?: string | null
+          status_to?: string | null
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          lost_reason?: string | null
+          next_contact_on?: string | null
+          note?: string | null
+          revenue?: number | null
+          signal_id?: string
+          status_from?: string | null
+          status_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_signal_notes_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_signals: {
+        Row: {
+          address: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          customer_name: string
+          detected_on: string
+          id: string
+          lost_reason: string | null
+          marketing_note: string | null
+          need_detail: string | null
+          need_group: string | null
+          next_contact_on: string | null
+          phone: string
+          products: string[]
+          revenue: number | null
+          source: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          customer_name: string
+          detected_on?: string
+          id?: string
+          lost_reason?: string | null
+          marketing_note?: string | null
+          need_detail?: string | null
+          need_group?: string | null
+          next_contact_on?: string | null
+          phone: string
+          products?: string[]
+          revenue?: number | null
+          source: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string
+          customer_name?: string
+          detected_on?: string
+          id?: string
+          lost_reason?: string | null
+          marketing_note?: string | null
+          need_detail?: string | null
+          need_group?: string | null
+          next_contact_on?: string | null
+          phone?: string
+          products?: string[]
+          revenue?: number | null
+          source?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -962,6 +1113,32 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      signal_assign: {
+        Args: { _id: string; _user: string }
+        Returns: undefined
+      }
+      signal_reopen: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
+      }
+      signal_sale_update: {
+        Args: {
+          _id: string
+          _lost_reason: string
+          _next: string
+          _note: string
+          _revenue: number
+          _status: string
+        }
+        Returns: undefined
+      }
+      signal_sales_list: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       account_status:

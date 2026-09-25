@@ -24,10 +24,12 @@ import { Route as GoalsV2RouteImport } from './routes/goals-v2'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
+import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
+import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
@@ -107,6 +109,11 @@ const SocialIndexRoute = SocialIndexRouteImport.update({
   path: '/social/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignalsIndexRoute = SignalsIndexRouteImport.update({
+  id: '/signals/',
+  path: '/signals/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LocalIndexRoute = LocalIndexRouteImport.update({
   id: '/local/',
   path: '/local/',
@@ -125,6 +132,11 @@ const WebsitesIdRoute = WebsitesIdRouteImport.update({
 const SocialIdRoute = SocialIdRouteImport.update({
   id: '/social/$id',
   path: '/social/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignalsReportRoute = SignalsReportRouteImport.update({
+  id: '/signals/report',
+  path: '/signals/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
@@ -160,10 +172,12 @@ export interface FileRoutesByFullPath {
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
+  '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
 }
@@ -184,10 +198,12 @@ export interface FileRoutesByTo {
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
   '/brands': typeof BrandsIndexRoute
   '/local': typeof LocalIndexRoute
+  '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
 }
@@ -209,10 +225,12 @@ export interface FileRoutesById {
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
+  '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
+  '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
 }
@@ -235,10 +253,12 @@ export interface FileRouteTypes {
     | '/brands/$id'
     | '/local/$id'
     | '/settings/kpi-v2'
+    | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
     | '/brands/'
     | '/local/'
+    | '/signals/'
     | '/social/'
     | '/websites/'
   fileRoutesByTo: FileRoutesByTo
@@ -259,10 +279,12 @@ export interface FileRouteTypes {
     | '/brands/$id'
     | '/local/$id'
     | '/settings/kpi-v2'
+    | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
     | '/brands'
     | '/local'
+    | '/signals'
     | '/social'
     | '/websites'
   id:
@@ -283,10 +305,12 @@ export interface FileRouteTypes {
     | '/brands/$id'
     | '/local/$id'
     | '/settings_/kpi-v2'
+    | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
     | '/brands/'
     | '/local/'
+    | '/signals/'
     | '/social/'
     | '/websites/'
   fileRoutesById: FileRoutesById
@@ -308,10 +332,12 @@ export interface RootRouteChildren {
   BrandsIdRoute: typeof BrandsIdRoute
   LocalIdRoute: typeof LocalIdRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
+  SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
   BrandsIndexRoute: typeof BrandsIndexRoute
   LocalIndexRoute: typeof LocalIndexRoute
+  SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
 }
@@ -423,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SocialIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signals/': {
+      id: '/signals/'
+      path: '/signals'
+      fullPath: '/signals/'
+      preLoaderRoute: typeof SignalsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/local/': {
       id: '/local/'
       path: '/local'
@@ -449,6 +482,13 @@ declare module '@tanstack/react-router' {
       path: '/social/$id'
       fullPath: '/social/$id'
       preLoaderRoute: typeof SocialIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signals/report': {
+      id: '/signals/report'
+      path: '/signals/report'
+      fullPath: '/signals/report'
+      preLoaderRoute: typeof SignalsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings_/kpi-v2': {
@@ -492,10 +532,12 @@ const rootRouteChildren: RootRouteChildren = {
   BrandsIdRoute: BrandsIdRoute,
   LocalIdRoute: LocalIdRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
+  SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
   BrandsIndexRoute: BrandsIndexRoute,
   LocalIndexRoute: LocalIndexRoute,
+  SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
 }

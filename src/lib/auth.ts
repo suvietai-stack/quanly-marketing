@@ -22,6 +22,7 @@ export type PermissionGroup =
   | "Thiết Kế"
   | "Báo Cáo"
   | "Cài Đặt"
+  | "Tín Hiệu Cơ Hội"
   | "Tài khoản";
 
 export interface PermissionDef {
@@ -367,6 +368,14 @@ export const PERMISSIONS: PermissionDef[] = [
   P("settings.system_edit", "Chỉnh thông tin hệ thống", "Cài Đặt", "Hệ thống"),
   P("settings.view_presence", "Xem trạng thái online nhân sự", "Cài Đặt", "Nhân sự"),
 
+  // ===== Tín hiệu cơ hội =====
+  P("signal.create", "Tạo tín hiệu (Marketing)", "Tín Hiệu Cơ Hội", "Marketing"),
+  P("signal.view_all", "Xem toàn bộ tín hiệu", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.assign", "Phân công / đổi Sale", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.manage", "Quản lý tín hiệu (sửa, mở lại)", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.sale", "Kinh doanh — nhận tín hiệu được giao", "Tín Hiệu Cơ Hội", "Kinh doanh"),
+  P("signal.report", "Xem báo cáo tín hiệu", "Tín Hiệu Cơ Hội", "Báo cáo"),
+
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
   P("settings.user_create", "Tạo tài khoản", "Tài khoản", "Tài khoản"),
@@ -585,7 +594,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
