@@ -558,9 +558,12 @@ export type Database = {
       opportunity_signal_notes: {
         Row: {
           author_id: string
+          channel: string | null
           created_at: string
+          event_type: string | null
           id: string
           lost_reason: string | null
+          next_contact_at: string | null
           next_contact_on: string | null
           note: string | null
           revenue: number | null
@@ -570,9 +573,12 @@ export type Database = {
         }
         Insert: {
           author_id: string
+          channel?: string | null
           created_at?: string
+          event_type?: string | null
           id?: string
           lost_reason?: string | null
+          next_contact_at?: string | null
           next_contact_on?: string | null
           note?: string | null
           revenue?: number | null
@@ -582,9 +588,12 @@ export type Database = {
         }
         Update: {
           author_id?: string
+          channel?: string | null
           created_at?: string
+          event_type?: string | null
           id?: string
           lost_reason?: string | null
+          next_contact_at?: string | null
           next_contact_on?: string | null
           note?: string | null
           revenue?: number | null
@@ -617,6 +626,7 @@ export type Database = {
           marketing_note: string | null
           need_detail: string | null
           need_group: string | null
+          next_contact_at: string | null
           next_contact_on: string | null
           phone: string
           products: string[]
@@ -639,6 +649,7 @@ export type Database = {
           marketing_note?: string | null
           need_detail?: string | null
           need_group?: string | null
+          next_contact_at?: string | null
           next_contact_on?: string | null
           phone: string
           products?: string[]
@@ -661,6 +672,7 @@ export type Database = {
           marketing_note?: string | null
           need_detail?: string | null
           need_group?: string | null
+          next_contact_at?: string | null
           next_contact_on?: string | null
           phone?: string
           products?: string[]
@@ -1123,9 +1135,12 @@ export type Database = {
       }
       signal_sale_update: {
         Args: {
+          _channel?: string
+          _event?: string
           _id: string
           _lost_reason: string
           _next: string
+          _next_at?: string
           _note: string
           _revenue: number
           _status: string
