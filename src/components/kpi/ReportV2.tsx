@@ -1,4 +1,5 @@
 /** KPI V2 — Báo cáo hiệu suất theo nhân sự (ẩn, flag OFF, chỉ đọc). */
+import { getKpiMetric } from "@/lib/kpi/metrics";
 import { Fragment, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
@@ -105,11 +106,11 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
                       <tr key={it.item.id} className="border-t border-border bg-muted/40 text-xs">
                         <td className="px-6 py-1.5"><span className={chip} onClick={() => setDrill({ kind: "breakdown", title: `Phân bổ — ${it.label}`, item: it, period: p })}>{it.label}</span> <span className="text-muted-foreground">({it.unit})</span></td>
                         <td>
-                          <span className={chip} onClick={() => setDrill({ kind: "evidence", title: it.label, rows: it.evidence })}>{it.actual === null ? "Chưa đủ dữ liệu" : it.actual}</span> / {it.contributionOnly ? <span title="KPI toàn cục — đây chỉ là đóng góp trong phạm vi lọc">N/A (Đóng góp hiện tại · target toàn cục {it.target})</span> : it.target}
+                          <span className={chip} onClick={() => setDrill({ kind: "evidence", title: it.label, rows: it.evidence })}>{it.actual === null ? "Chưa đủ dữ liệu" : `${it.actual}${it.unit === "percent" ? "%" : ""}`}</span> / {it.evaluation.state !== "contribution" && getKpiMetric(it.item.metricKey)?.direction === "at_most" ? "≤ " : ""}{it.contributionOnly ? <span title="KPI toàn cục — đây chỉ là đóng góp trong phạm vi lọc">N/A (Đóng góp hiện tại · target toàn cục {it.target})</span> : it.target}
                           {it.lockedTarget !== null && <span className="ml-1 text-muted-foreground">(snapshot khi khóa)</span>}
                           {it.adjustments.length > 0 && <span className="ml-1 text-muted-foreground" title={it.adjustments.map((a) => `${a.at.slice(0, 10)}: ${a.from}→${a.to}`).join("\n")}>· {it.adjustments.length} điều chỉnh</span>}
                         </td>
-                        <td colSpan={3} className="text-muted-foreground">{it.contributionOnly ? "Chỉ đóng góp" : it.achieved === null ? (it.warnings ? "Chưa kết luận (còn mục chưa xác minh)" : "—") : it.achieved ? "Đạt" : "Chưa đạt"}{it.warnings ? ` · ${it.warnings} mục chưa xác minh` : ""} · kỳ {p.status}</td>
+                        <td colSpan={3} className="text-muted-foreground">{it.evaluation.label}{it.evaluation.state === "overdue" && it.achieved === null && it.warnings ? " (chưa kết luận — còn mục chưa xác minh)" : ""} · hạn {it.deadline.split("-").reverse().join("/")}{it.lockedSource === "snapshot" ? " · kết quả đã chốt" : it.lockedSource === "live" ? " · kỳ khóa chưa có bản chốt, đang tính lại" : ""}{it.warnings ? ` · ${it.warnings} mục chưa xác minh` : ""} · kỳ {p.status}</td>
                       </tr>
                     );
                   })}
