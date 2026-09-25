@@ -144,7 +144,7 @@ export function createKpiService(repo: KpiRepository) {
         const created = input.items.map((it): EmployeeKpiItem => ({
           id: uid(), kpiPeriodId: pid, metricKey: it.metricKey, label: it.label ?? null, targetValue: it.targetValue,
           unit: getKpiMetric(it.metricKey)!.unit, targetOperator: ">=", brandId: it.brandId ?? null, websiteId: it.websiteId ?? null,
-          socialId: it.socialId ?? null, metadata: { ...(it.metadata ?? {}), ...(input.goalId ? { goalId: input.goalId } : {}) }, createdAt: now(), updatedAt: now(),
+          socialId: it.socialId ?? null, metadata: { ...(it.metadata ?? {}), goalId: input.goalId ?? null }, createdAt: now(), updatedAt: now(),
         }));
         db.items.push(...created);
         return { period, items: created };

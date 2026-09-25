@@ -12,8 +12,9 @@ import { getKpiMetric } from "./metrics";
 /* ---------- Goal ↔ KR ---------- */
 /** Goal của KR: ưu tiên goalId gắn trực tiếp trên KR; chỉ dữ liệu cũ (KR không có goalId) mới dùng goalId của kỳ. */
 export function krGoalId(item: Pick<EmployeeKpiItem, "metadata" | "kpiPeriodId">, periods: Pick<EmployeeKpiPeriod, "id" | "goalId">[]): string | null {
-  const direct = (item.metadata as { goalId?: unknown } | null)?.goalId;
-  if (typeof direct === "string" && direct) return direct;
+  const md = (item.metadata ?? {}) as { goalId?: unknown };
+  // KR mới luôn có khóa goalId (kể cả null = không thuộc mục tiêu nào) → không bao giờ rơi về goalId của kỳ.
+  if ("goalId" in md) return typeof md.goalId === "string" && md.goalId ? md.goalId : null;
   return periods.find((p) => p.id === item.kpiPeriodId)?.goalId ?? null;
 }
 export const krsOfGoal = <T extends Pick<EmployeeKpiItem, "metadata" | "kpiPeriodId">>(goalId: string, items: T[], periods: Pick<EmployeeKpiPeriod, "id" | "goalId">[]) =>
