@@ -372,7 +372,9 @@ export const PERMISSIONS: PermissionDef[] = [
   P("signal.create", "Tạo tín hiệu (Marketing)", "Tín Hiệu Cơ Hội", "Marketing"),
   P("signal.view_all", "Xem toàn bộ tín hiệu", "Tín Hiệu Cơ Hội", "Quản lý"),
   P("signal.assign", "Phân công / đổi Sale", "Tín Hiệu Cơ Hội", "Quản lý"),
-  P("signal.manage", "Quản lý tín hiệu (sửa, mở lại)", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.manage", "Quản lý tín hiệu (sửa, xóa, hủy, mở lại)", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.edit", "Sửa thông tin tín hiệu", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.delete", "Xóa tín hiệu (chưa có nhật ký)", "Tín Hiệu Cơ Hội", "Quản lý"),
   P("signal.sale", "Kinh doanh — nhận tín hiệu được giao", "Tín Hiệu Cơ Hội", "Kinh doanh"),
   P("signal.report", "Xem báo cáo tín hiệu", "Tín Hiệu Cơ Hội", "Báo cáo"),
 

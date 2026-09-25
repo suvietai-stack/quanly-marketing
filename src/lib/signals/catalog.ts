@@ -55,6 +55,10 @@ export interface Signal {
   closed_at: string | null;
   created_at: string;
   updated_at: string;
+  /** Hủy (khác Trượt): loại khỏi báo cáo thường nhưng giữ lịch sử. */
+  cancelled_at?: string | null;
+  cancelled_by?: string | null;
+  cancel_reason?: string | null;
 }
 
 /** Tóm tắt diễn biến gần nhất của 1 tín hiệu (từ nhật ký). */
