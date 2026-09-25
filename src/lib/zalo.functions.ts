@@ -36,7 +36,7 @@ export const zaloAdminStatus = createServerFn({ method: "POST" })
       appSecretHint: env.appSecret ? `••••${env.appSecret.slice(-3)}` : "",
       webhookReady: !!env.oaSecret,
       baseUrl: await s.baseUrl(),
-      testOk: !!cfg?.test_ok_at,
+      testOk: !!cfg?.test_send_at,
       state,
       callbackUrl: s.CALLBACK_URL,
       webhookUrl: s.WEBHOOK_URL,
@@ -73,7 +73,7 @@ export const zaloSendTest = createServerFn({ method: "POST" })
     const { data: link } = await context.supabase.from("zalo_links").select("zalo_user_id,status").eq("user_id", context.userId).maybeSingle();
     if (!link) return { ok: false, message: "Tài khoản của bạn chưa liên kết Zalo — liên kết trước để nhận tin thử" };
     const r = await s.sendCs(link.zalo_user_id, "Đây là tin thử từ Base Marketing.", `${await s.baseUrl()}/signals`);
-    if (r.ok) await s.saveConfig({ test_ok_at: new Date().toISOString(), last_error: null }).catch(() => {});
+    if (r.ok) await s.saveConfig({ test_send_at: new Date().toISOString(), last_error: null }).catch(() => {});
     return r.ok ? { ok: true, message: "Zalo đã nhận yêu cầu gửi — kiểm tra điện thoại của bạn" } : { ok: false, message: `Không gửi được (${r.code}: ${r.message})` };
   });
 
@@ -93,7 +93,7 @@ export const zaloSetAuto = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const s = await import("./zalo.server");
     const cfg: any = await s.getConfig();
-    if (data.on && (cfg?.status !== "connected" || !cfg?.test_ok_at)) throw new Error("Cần gửi thử thành công trước khi bật gửi tự động");
+    if (data.on && (cfg?.status !== "connected" || !cfg?.test_send_at)) throw new Error("Cần gửi thử thành công trước khi bật gửi tự động");
     await s.saveConfig({ auto_send: data.on });
     return { ok: true };
   });
@@ -168,7 +168,7 @@ export const zaloSaveAppConfig = createServerFn({ method: "POST" })
     if (data.appSecret) patch.app_secret = data.appSecret;
     const changed = (cfg?.app_id && cfg.app_id !== data.appId) || !!data.appSecret;
     // Đổi ứng dụng → token cũ không còn đáng tin: yêu cầu kết nối lại, tắt gửi tự động
-    if (changed && cfg?.status === "connected") Object.assign(patch, { status: "expired", auto_send: false, test_ok_at: null, last_error: "Đã đổi ứng dụng Zalo — cần kết nối lại OA" });
+    if (changed && cfg?.status === "connected") Object.assign(patch, { status: "expired", auto_send: false, test_send_at: null, last_error: "Đã đổi ứng dụng Zalo — cần kết nối lại OA" });
     await s.saveConfig(patch);
     return { ok: true, message: changed && cfg?.status === "connected" ? "Đã lưu — cần kết nối lại OA" : "Đã lưu cấu hình" };
   });
