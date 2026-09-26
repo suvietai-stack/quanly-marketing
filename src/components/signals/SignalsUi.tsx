@@ -297,6 +297,7 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
   const name = useUserName();
   const prodOpts = useOptions("signal_products");
   const needOpts = useOptions("signal_need_groups");
+  const srcOpts = useOptions("signal_sources");
   const lr = useLostReasons();
   const [f, setF] = useState<ListFilter>(value);
   useEffect(() => { if (open) setF(value); }, [open, value]);
@@ -312,7 +313,7 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
             <Field label="Từ ngày"><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></Field>
             <Field label="Đến ngày"><Input type="date" value={f.to ?? ""} onChange={(e) => set("to", e.target.value)} /></Field>
           </>}
-          <Field label="Nguồn"><Pick value={f.source} onChange={(v) => set("source", v)} opts={SIGNAL_SOURCES.map((x) => [x, x])} /></Field>
+          <Field label="Nguồn"><Pick value={f.source} onChange={(v) => set("source", v)} opts={srcOpts.names.map((x) => [x, x])} /></Field>
           <Field label="Sản phẩm"><Pick value={f.product} onChange={(v) => set("product", v)} opts={prodOpts.names.map((x) => [x, x])} /></Field>
           <Field label="Nhóm nhu cầu"><Pick value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={needOpts.names.map((x) => [x, x])} /></Field>
           <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={lr.all.map((x) => [x, x])} /></Field>
@@ -442,7 +443,7 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
         <Field label="Chi tiết nhu cầu"><Textarea rows={3} maxLength={3000} value={f.need_detail ?? ""} onChange={(e) => set("need_detail", e.target.value)} /></Field>
       </Section>
       <Section title="Nguồn & ghi chú">
-        <Field label="Nguồn tín hiệu *"><Select value={f.source} onChange={(v) => set("source", v)} opts={SIGNAL_SOURCES} /></Field>
+        <Field label="Nguồn tín hiệu *"><SourcePick value={f.source} onChange={(v) => set("source", v)} /></Field>
         <Field label="Ghi chú Marketing"><Textarea rows={2} maxLength={3000} value={f.marketing_note ?? ""} onChange={(e) => set("marketing_note", e.target.value)} /></Field>
         {!id && p.assign && (
           <Field label="Sale phụ trách">
@@ -463,6 +464,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1.5"><Label className="text-sm">{label}</Label>{children}</div>;
+}
+/** Nguồn: chọn một; chỉ lựa chọn đang dùng, nhưng giữ giá trị cũ đã ngừng dùng. */
+function SourcePick({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const o = useOptions("signal_sources");
+  const opts = value && !o.active.includes(value) ? [...o.active, value] : o.active;
+  return <Select value={value} onChange={onChange} opts={opts} />;
 }
 function Select({ value, onChange, opts }: { value: string; onChange: (v: string) => void; opts: readonly string[] }) {
   return (

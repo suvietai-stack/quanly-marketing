@@ -25,6 +25,7 @@ export function SignalsReport() {
   const bySource = groupBy(list, (s) => s.source);
   const prodOpts = useOptions("signal_products");
   const needOpts = useOptions("signal_need_groups");
+  const srcOpts = useOptions("signal_sources");
   const multi = (get: (s: (typeof list)[number]) => string[]) => {
     const keys = [...new Set(list.flatMap((s) => get(s).map((k) => (k.startsWith("Khác") ? "Khác" : k))))];
     return keys.map((k) => ({ key: k, s: summarize(list.filter((s) => get(s).some((x) => (x.startsWith("Khác") ? "Khác" : x) === k))) })).sort((a, b) => b.s.total - a.s.total);
@@ -50,7 +51,7 @@ export function SignalsReport() {
         <Sel label="Tính theo" value={f.basis} onChange={(v) => setF((x) => ({ ...x, basis: (v || "created") as any }))} opts={[["created", "Ngày tạo tín hiệu"], ["closed", "Ngày chốt / trượt"]]} noEmpty />
         <label className="space-y-1"><span className="text-xs text-muted-foreground">Từ ngày</span><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></label>
         <label className="space-y-1"><span className="text-xs text-muted-foreground">Đến ngày</span><Input type="date" value={f.to ?? ""} onChange={(e) => set("to", e.target.value)} /></label>
-        <Sel label="Nguồn" value={f.source} onChange={(v) => set("source", v)} opts={SIGNAL_SOURCES.map((x) => [x, x])} />
+        <Sel label="Nguồn" value={f.source} onChange={(v) => set("source", v)} opts={[...new Set([...srcOpts.names, ...data.map((x) => x.source)])].map((x) => [x, x])} />
         <Sel label="Sản phẩm" value={f.product} onChange={(v) => set("product", v)} opts={prodOpts.names.map((x) => [x, x])} />
         <Sel label="Nhóm nhu cầu" value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={needOpts.names.map((x) => [x, x])} />
         <Sel label="Sale phụ trách" value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to)).map((x) => [x.id, x.n])} />
