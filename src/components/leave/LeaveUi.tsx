@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LeaveReport } from "./LeaveReport";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, CalendarDays, Clock, LogOut as LogOutIcon, AlertTriangle, History, ChevronRight } from "lucide-react";
@@ -116,7 +117,7 @@ export function LeavePage() {
         {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showReport && <TabsContent value="report" className="mt-4">
-          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Báo cáo đơn từ sẽ có trong giai đoạn tiếp theo.</CardContent></Card>
+          <LeaveReport rows={all} name={name} />
         </TabsContent>}
       </Tabs>
 
