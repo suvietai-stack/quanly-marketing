@@ -23,6 +23,10 @@ const LABEL: Record<string, string> = {
   signal_new: "Có tín hiệu mới đang cần xử lý.",
   signal_assigned: "Bạn vừa được giao một tín hiệu cơ hội mới.",
   signal_care: "Nhắc chăm sóc: có tín hiệu cần kiểm tra.",
+  leave_pending: "Có đơn từ cần bạn duyệt.",
+  leave_result: "Đơn từ của bạn có kết quả mới.",
+  leave_cancel_request: "Có yêu cầu hủy đơn cần bạn duyệt.",
+  leave_remind: "Nhắc duyệt: có đơn đang chờ bạn.",
 };
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -40,9 +44,9 @@ export function NotificationBell() {
     enabled: !!uid,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,read_at,created_at")
+      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,read_at,created_at")
         .eq("recipient_id", uid).order("created_at", { ascending: false }).limit(30);
-      return (data ?? []) as { id: string; kind: string; signal_id: string; read_at: string | null; created_at: string }[];
+      return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; read_at: string | null; created_at: string }[];
     },
   });
   if (!uid) return null;
@@ -53,7 +57,7 @@ export function NotificationBell() {
       await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
-    window.location.href = n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
+    window.location.href = n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
   const readAll = async () => {
     await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", uid).is("read_at", null);

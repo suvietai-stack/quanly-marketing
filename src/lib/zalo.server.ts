@@ -215,8 +215,10 @@ export async function processPending(limit = 20) {
   await db.from("notifications").update({ zalo_status: "failed", zalo_attempts: MAX_ATTEMPTS, zalo_error: "Tiến trình gửi bị gián đoạn — không rõ đã gửi, cần kiểm tra trước khi gửi lại" })
     .eq("zalo_status", "pending").gt("zalo_attempts", 0).neq("kind", "signal_care").is("zalo_sent_at", null)
     .lt("created_at", new Date(Date.now() - STUCK_MS).toISOString()).like("zalo_error", "claimed:%");
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,zalo_attempts,zalo_status,payload")
-    .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).neq("kind", "signal_care")
+  const leaveZalo = (await leaveNotifyCfg()).zalo;
+  const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request"] : [])];
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,zalo_attempts,zalo_status,payload")
+    .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
   for (const n of rows ?? []) {
@@ -236,6 +238,17 @@ export async function processPending(limit = 20) {
       const { data: s } = await db.from("opportunity_signals").select("assigned_to,cancelled_at").eq("id", n.signal_id).maybeSingle();
       if (!s || s.assigned_to || s.cancelled_at) { await mark({ zalo_status: "ineligible", zalo_error: "Tín hiệu đã được phân công/hủy" }); continue; }
     }
+    let leaveMsg: { header: string; text: string; button: string; link: string } | null = null;
+    if (n.kind.startsWith("leave_")) {
+      const { data: r } = await db.from("leave_requests").select("*").eq("id", n.leave_request_id).maybeSingle();
+      const stale = !r
+        || (n.kind === "leave_pending" && (r.status !== "pending" || r.approver_id !== n.recipient_id))
+        || (n.kind === "leave_cancel_request" && (r.cancel_state !== "requested" || r.approver_id !== n.recipient_id));
+      if (stale) { await mark({ zalo_status: "ineligible", zalo_error: "Đơn đã được xử lý/chuyển người duyệt" }); continue; }
+      const { data: p } = await db.from("profiles").select("full_name").eq("id", r.owner_id).maybeSingle();
+      const { leaveMessage } = await import("./leave/zaloMessage");
+      leaveMsg = { ...leaveMessage(n.kind, { ...r, owner_name: p?.full_name, action: n.payload?.action }), link: `${await baseUrl()}/leave?open=${r.id}` };
+    }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }
     if (n.kind === "signal_assigned") {
@@ -243,7 +256,7 @@ export async function processPending(limit = 20) {
         .eq("recipient_id", n.recipient_id).eq("zalo_status", "sent").gt("zalo_sent_at", new Date(Date.now() - REASSIGN_DEDUP_MS).toISOString()).limit(1);
       if (dup?.length) { await mark({ zalo_status: "ineligible", zalo_error: "Đã gửi tin giao tín hiệu này gần đây" }); continue; }
     }
-    const m = await buildSignalMessage(n.kind as "signal_new" | "signal_assigned", n.signal_id);
+    const m = leaveMsg ?? await buildSignalMessage(n.kind as "signal_new" | "signal_assigned", n.signal_id);
     const r = await sendCs(link.zalo_user_id, m.text, m.link, { header: m.header, button: m.button });
     processed++;
     if (r.ok) {
@@ -329,6 +342,54 @@ export async function runCareDigest() {
     const r = await sendCs(link.zalo_user_id, careMessage(p?.full_name || "bạn", c), `${await baseUrl()}/signals?care=1`);
     if (r.ok) sent++;
     // Chỉ thử 1 lần — không gửi lại liên tục
+    await db.from("notifications").update(r.ok
+      ? { zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_attempts: 1 }
+      : { zalo_status: [-213, -230, -201].includes(r.code) ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: MAX_ATTEMPTS }).eq("id", row.id);
+  }
+  return { created, sent };
+}
+
+/* ---------- Đơn từ: cấu hình thông báo + nhắc duyệt ---------- */
+export async function leaveNotifyCfg(): Promise<{ zalo: boolean; remind_hours: number }> {
+  const db = await admin();
+  const { data } = await db.from("leave_settings").select("data").eq("id", 1).maybeSingle();
+  const n = data?.data?.notify ?? {};
+  return { zalo: n.zalo === true, remind_hours: Number(n.remind_hours) > 0 ? Number(n.remind_hours) : 4 };
+}
+
+/** Chạy mỗi giờ; chỉ trong 08:00–17:59 giờ VN; mỗi người duyệt tối đa 1 tin nhắc/ngày (gộp nhiều đơn). */
+export async function runLeaveRemind() {
+  const h = vnHour();
+  if (h < 8 || h > 17) return { skipped: "off_hours" };
+  const lc = await leaveNotifyCfg();
+  const db = await admin();
+  const { needsRemind, remindMessage } = await import("./leave/zaloMessage");
+  const { data: reqs } = await db.from("leave_requests").select("id,status,submitted_at,mark_at,approver_id").eq("status", "pending").limit(2000);
+  const by: Record<string, { ids: string[]; soon: number }> = {};
+  for (const r of reqs ?? []) {
+    const x = needsRemind(r, lc.remind_hours);
+    if (!x.remind) continue;
+    const g = (by[r.approver_id] ??= { ids: [], soon: 0 });
+    g.ids.push(r.id); if (x.soon) g.soon++;
+  }
+  const today = vnDate();
+  const cfg: any = await getConfig();
+  const canSend = lc.zalo && cfg?.status === "connected";
+  let created = 0, sent = 0;
+  for (const [uid, g] of Object.entries(by)) {
+    const { data: ins } = await db.from("notifications").upsert(
+      { recipient_id: uid, kind: "leave_remind", payload: { count: g.ids.length, soon: g.soon, ids: g.ids }, dedup_key: `leave_remind:${today}:${uid}` },
+      { onConflict: "dedup_key", ignoreDuplicates: true }).select("id");
+    const row = ins?.[0]; if (!row) continue;
+    created++;
+    const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", uid).maybeSingle();
+    if (!canSend || !link || link.status !== "active") {
+      await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: !canSend ? "Chưa bật Zalo cho đơn từ" : "Chưa liên kết Zalo" }).eq("id", row.id);
+      continue;
+    }
+    const m = remindMessage(g.ids.length, g.soon);
+    const r = await sendCs(link.zalo_user_id, m.text, `${await baseUrl()}/leave?tab=approve`, { header: m.header, button: m.button });
+    if (r.ok) sent++;
     await db.from("notifications").update(r.ok
       ? { zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_attempts: 1 }
       : { zalo_status: [-213, -230, -201].includes(r.code) ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: MAX_ATTEMPTS }).eq("id", row.id);

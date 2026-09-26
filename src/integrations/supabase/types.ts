@@ -719,6 +719,7 @@ export type Database = {
           dedup_key: string
           id: string
           kind: string
+          leave_request_id: string | null
           payload: Json | null
           read_at: string | null
           recipient_id: string
@@ -733,6 +734,7 @@ export type Database = {
           dedup_key: string
           id?: string
           kind: string
+          leave_request_id?: string | null
           payload?: Json | null
           read_at?: string | null
           recipient_id: string
@@ -747,6 +749,7 @@ export type Database = {
           dedup_key?: string
           id?: string
           kind?: string
+          leave_request_id?: string | null
           payload?: Json | null
           read_at?: string | null
           recipient_id?: string
@@ -757,6 +760,13 @@ export type Database = {
           zalo_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_leave_request_id_fkey"
+            columns: ["leave_request_id"]
+            isOneToOne: false
+            referencedRelation: "leave_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_signal_id_fkey"
             columns: ["signal_id"]
