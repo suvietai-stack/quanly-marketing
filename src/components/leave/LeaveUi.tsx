@@ -85,6 +85,7 @@ export function LeavePage() {
   const canAttCreate = can("att.create");
   const showAttMine = can("att.view_own") || canAttCreate;
   const showAtt = can("att.view_all") || can("att.reconcile") || can("att.manage");
+  const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const attQ = useQuery({ queryKey: ["leave", "att-list"], queryFn: attApi.listAtt, enabled: !!user });
   const atts = attQ.data || [];
   const [attOpen, setAttOpen] = useState<string | null>(() => initial?.get("att") || null);
@@ -97,7 +98,6 @@ export function LeavePage() {
   };
   const myAtts = atts.filter((a) => a.owner_id === uid);
   const witnessTodo = atts.filter((a) => a.witness_id === uid && a.owner_id !== uid && !a.recalled && a.witness_status === "pending");
-  const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const [tab, setTab] = useState(() => initial?.get("tab") || (showMine || showAttMine ? "mine" : showApprove ? "approve" : showManage ? "manage" : "report"));
   const [openId, setOpenId] = useState<string | null>(() => initial?.get("open") || null);
   const [form, setForm] = useState<FormState | null>(null);
