@@ -204,7 +204,16 @@ export async function processPending(limit = 20) {
       await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }).eq("id", n.id);
       continue;
     }
-    const r = await sendCs(link.zalo_user_id, TEXT[n.kind] ?? "Có thông báo mới.", `${await baseUrl()}/signals?open=${n.signal_id}`);
+    if (n.kind === "signal_assigned") {
+      const { data: dup } = await db.from("notifications").select("id").eq("kind", "signal_assigned").eq("signal_id", n.signal_id)
+        .eq("recipient_id", n.recipient_id).eq("zalo_status", "sent").gt("zalo_sent_at", new Date(Date.now() - REASSIGN_DEDUP_MS).toISOString()).limit(1);
+      if (dup?.length) {
+        await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Đã gửi tin giao tín hiệu này gần đây" }).eq("id", n.id);
+        continue;
+      }
+    }
+    const m = await buildSignalMessage(n.kind as "signal_new" | "signal_assigned", n.signal_id);
+    const r = await sendCs(link.zalo_user_id, m.text, m.link, { header: m.header, button: m.button });
     processed++;
     if (r.ok) {
       await db.from("notifications").update({ zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_error: null, zalo_attempts: n.zalo_attempts + 1 }).eq("id", n.id);
