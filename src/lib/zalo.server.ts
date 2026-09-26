@@ -134,42 +134,61 @@ export async function checkConnection() {
 }
 
 /** Gửi tin Tư vấn (CS). Trả mã lỗi Zalo để phân loại. */
-export async function sendCs(zaloUserId: string, text: string, link: string, opts: { header?: string; button?: string } = {}) {
+type SendResult = { ok: boolean; code: number; message: string; messageId?: string | null; ambiguous?: boolean };
+
+async function postCs(token: string, body: unknown): Promise<{ j: any; netErr: boolean }> {
+  try {
+    const res = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", access_token: token },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
+    });
+    return { j: await res.json().catch(() => ({})), netErr: false };
+  } catch {
+    return { j: {}, netErr: true };
+  }
+}
+
+export async function sendCs(zaloUserId: string, text: string, link: string, opts: { header?: string; button?: string } = {}): Promise<SendResult> {
   const header = opts.header ?? "BASE MARKETING";
   const button = opts.button ?? "XEM TÍN HIỆU";
   const token = await getAccessToken();
   if (!token) return { ok: false, code: -1, message: "Chưa kết nối OA" };
-  const res = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", access_token: token },
-    body: JSON.stringify({
-      recipient: { user_id: zaloUserId },
-      message: {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "promotion",
-            elements: [{ type: "header", content: header }, { type: "text", align: "left", content: text }],
-            buttons: [{ title: button, type: "oa.open.url", payload: { url: link } }],
-          },
+  const a = await postCs(token, {
+    recipient: { user_id: zaloUserId },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "promotion",
+          elements: [{ type: "header", content: header }, { type: "text", align: "left", content: text }],
+          buttons: [{ title: button, type: "oa.open.url", payload: { url: link } }],
         },
       },
-    }),
+    },
   });
-  const j: any = await res.json().catch(() => ({}));
-  if (j.error === 0) return { ok: true, code: 0, message: "" };
-  // Dự phòng: tin văn bản thuần nếu mẫu có nút không được phép
-  const r2 = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", access_token: token },
-    body: JSON.stringify({ recipient: { user_id: zaloUserId }, message: { text: `${header}\n${text}\n\n👉 ${button}\n${link}` } }),
-  });
-  const j2: any = await r2.json().catch(() => ({}));
-  if (j2.error === 0) return { ok: true, code: 0, message: "" };
-  return { ok: false, code: Number(j2.error ?? j.error ?? -2), message: String(j2.message ?? j.message ?? "Lỗi gửi").slice(0, 200) };
+  if (a.j.error === 0) return { ok: true, code: 0, message: "", messageId: a.j.data?.message_id ?? null };
+  // Mất kết nối/timeout: không biết Zalo đã nhận hay chưa → KHÔNG gửi tiếp để tránh trùng
+  if (a.netErr) return { ok: false, code: -9, message: "Mất kết nối khi gửi — không rõ Zalo đã nhận", ambiguous: true };
+  // Dự phòng: tin văn bản thuần nếu mẫu có nút bị Zalo từ chối (đã có phản hồi lỗi rõ ràng)
+  const b = await postCs(token, { recipient: { user_id: zaloUserId }, message: { text: `${header}\n${text}\n\n👉 ${button}:\n${link}` } });
+  if (b.j.error === 0) return { ok: true, code: 0, message: "", messageId: b.j.data?.message_id ?? null };
+  if (b.netErr) return { ok: false, code: -9, message: "Mất kết nối khi gửi — không rõ Zalo đã nhận", ambiguous: true };
+  return { ok: false, code: Number(b.j.error ?? a.j.error ?? -2), message: String(b.j.message ?? a.j.message ?? "Lỗi gửi").slice(0, 200) };
 }
 
-/** Dựng nội dung tin tín hiệu từ dữ liệu thật — dùng cho cả gửi tự động và gửi thử. */
+/** Tin kiểm thử — không dùng dữ liệu khách hàng, không tạo sự kiện tín hiệu. */
+export function testMessage(now = new Date()) {
+  const t = now.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false });
+  return {
+    header: "🧪 BASE MARKETING — TIN KIỂM THỬ",
+    text: `Đây là tin nhắn kiểm tra kết nối Zalo OA với Base.\nNếu bạn nhận được tin này, kết nối gửi tin đang hoạt động.\n\nThời gian: ${t}`,
+    button: "MỞ BASE",
+  };
+}
+
+/** Dựng nội dung tin tín hiệu từ dữ liệu thật — dùng cho gửi tự động. */
 export async function buildSignalMessage(kind: "signal_new" | "signal_assigned", signalId: string) {
   const { signalMessage } = await import("./signals/zaloMessage");
   const db = await admin();
@@ -180,50 +199,63 @@ export async function buildSignalMessage(kind: "signal_new" | "signal_assigned",
 
 /** Khoảng chống gửi trùng khi gỡ rồi giao lại cùng một người trong thời gian ngắn. */
 const REASSIGN_DEDUP_MS = 30 * 60 * 1000;
+/** Bản ghi đã được nhận xử lý nhưng tiến trình chết giữa chừng quá lâu → không tự gửi lại (tránh trùng). */
+const STUCK_MS = 10 * 60 * 1000;
 
-/** Xử lý hàng đợi: chỉ khi Admin đã bật gửi tự động. Không lặp vô hạn. */
+/**
+ * Xử lý hàng đợi: chỉ khi Admin đã bật gửi tự động. Không lặp vô hạn.
+ * Khóa nguyên tử: mỗi bản ghi chỉ được "nhận" bởi đúng một tiến trình qua cập nhật có điều kiện
+ * (zalo_attempts = giá trị cũ, trạng thái pending/failed). Tiến trình thua sẽ nhận 0 dòng và bỏ qua.
+ */
 export async function processPending(limit = 20) {
   const cfg = await getConfig();
   if (!cfg?.auto_send || cfg.status !== "connected") return { processed: 0 };
   const db = await admin();
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,zalo_attempts,zalo_status")
+  // Phục hồi: bản ghi bị "nhận" (attempts tăng, vẫn pending) mà treo quá lâu → đánh dấu lỗi, chờ Admin gửi lại thủ công
+  await db.from("notifications").update({ zalo_status: "failed", zalo_attempts: MAX_ATTEMPTS, zalo_error: "Tiến trình gửi bị gián đoạn — không rõ đã gửi, cần kiểm tra trước khi gửi lại" })
+    .eq("zalo_status", "pending").gt("zalo_attempts", 0).neq("kind", "signal_care").is("zalo_sent_at", null)
+    .lt("created_at", new Date(Date.now() - STUCK_MS).toISOString()).like("zalo_error", "claimed:%");
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,zalo_attempts,zalo_status,payload")
     .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).neq("kind", "signal_care")
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
   for (const n of rows ?? []) {
+    // CLAIM nguyên tử
+    const { data: got } = await db.from("notifications")
+      .update({ zalo_status: "pending", zalo_attempts: n.zalo_attempts + 1, zalo_error: `claimed:${new Date().toISOString()}` })
+      .eq("id", n.id).eq("zalo_attempts", n.zalo_attempts).in("zalo_status", ["pending", "failed"]).is("zalo_sent_at", null).select("id");
+    if (!got?.length) continue;
+    const attempts = n.zalo_attempts + 1;
+    const mark = (patch: Record<string, unknown>) => db.from("notifications").update(patch).eq("id", n.id);
     // Kiểm lại người nhận còn đúng (Sale có thể đã bị chuyển)
     if (n.kind === "signal_assigned") {
       const { data: s } = await db.from("opportunity_signals").select("assigned_to").eq("id", n.signal_id).maybeSingle();
-      if (!s || s.assigned_to !== n.recipient_id) {
-        await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Tín hiệu đã chuyển người khác" }).eq("id", n.id);
-        continue;
-      }
+      if (!s || s.assigned_to !== n.recipient_id) { await mark({ zalo_status: "ineligible", zalo_error: "Tín hiệu đã chuyển người khác" }); continue; }
+    }
+    if (n.kind === "signal_new") {
+      const { data: s } = await db.from("opportunity_signals").select("assigned_to,cancelled_at").eq("id", n.signal_id).maybeSingle();
+      if (!s || s.assigned_to || s.cancelled_at) { await mark({ zalo_status: "ineligible", zalo_error: "Tín hiệu đã được phân công/hủy" }); continue; }
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
-    if (!link || link.status !== "active") {
-      await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }).eq("id", n.id);
-      continue;
-    }
+    if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }
     if (n.kind === "signal_assigned") {
       const { data: dup } = await db.from("notifications").select("id").eq("kind", "signal_assigned").eq("signal_id", n.signal_id)
         .eq("recipient_id", n.recipient_id).eq("zalo_status", "sent").gt("zalo_sent_at", new Date(Date.now() - REASSIGN_DEDUP_MS).toISOString()).limit(1);
-      if (dup?.length) {
-        await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Đã gửi tin giao tín hiệu này gần đây" }).eq("id", n.id);
-        continue;
-      }
+      if (dup?.length) { await mark({ zalo_status: "ineligible", zalo_error: "Đã gửi tin giao tín hiệu này gần đây" }); continue; }
     }
     const m = await buildSignalMessage(n.kind as "signal_new" | "signal_assigned", n.signal_id);
     const r = await sendCs(link.zalo_user_id, m.text, m.link, { header: m.header, button: m.button });
     processed++;
     if (r.ok) {
-      await db.from("notifications").update({ zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_error: null, zalo_attempts: n.zalo_attempts + 1 }).eq("id", n.id);
+      await mark({ zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_error: null, payload: { ...(n.payload ?? {}), zalo_message_id: r.messageId ?? null } });
+    } else if (r.ambiguous) {
+      // Không rõ đã gửi hay chưa → dừng tự động, không retry mù
+      await mark({ zalo_status: "failed", zalo_attempts: MAX_ATTEMPTS, zalo_error: `${r.code}: ${r.message}` });
     } else {
       // -213/-230: người dùng chưa quan tâm OA / quá khung tương tác → không đủ điều kiện, không thử lại
       const ineligible = [-213, -230, -201].includes(r.code);
       if (!ineligible) await saveConfig({ last_error: `Gửi tin thất bại (${r.code})` }).catch(() => {});
-      await db.from("notifications").update({
-        zalo_status: ineligible ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: n.zalo_attempts + 1,
-      }).eq("id", n.id);
+      await mark({ zalo_status: ineligible ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: attempts });
     }
   }
   return { processed };
