@@ -209,7 +209,7 @@ export function SignalsPage() {
               <div key={s.id} className="rounded-xl border bg-card p-3.5 space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="font-semibold leading-tight">{s.customer_name}</div>
-                  <StatusBadge s={s.status} />
+                  <StatusPill s={s} />
                 </div>
                 <div className="text-sm"><span className="text-muted-foreground">Diễn biến gần nhất: </span>{lastText(last[s.id]) ?? "Chưa có"}</div>
                 <div className="flex items-center justify-between text-xs">
