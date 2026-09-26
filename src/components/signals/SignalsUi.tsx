@@ -20,8 +20,12 @@ import {
 import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
   signalHistory, updateSignalInfo, deleteSignal, cancelSignal, getCustomLostReasons, setCustomLostReasons, getOptions, saveOptions, renameOptionEverywhere, type SignalInput,
+  listCareNotes,
 } from "@/lib/signals/api";
 import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
+import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
+import { useServerFn } from "@tanstack/react-start";
+import { zaloCareCounts } from "@/lib/zalo.functions";
 
 export function useSignalPerms() {
   const { user, can } = useCurrentUser();
@@ -220,7 +224,7 @@ export function SignalsPage() {
       )}
       <p className="text-xs text-muted-foreground -mt-2">Sắp xếp theo cập nhật mới nhất.</p>
 
-      {isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
+      {care.on ? null : isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
         : error ? <p className="text-sm text-destructive py-8 text-center">{errMsg(error)}</p>
         : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
