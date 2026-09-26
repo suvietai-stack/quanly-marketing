@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { zaloDispatch } from "@/lib/zalo.functions";
 import type { LeaveSettings, LeaveType } from "./calc";
 
 const db = supabase as any;
@@ -32,8 +33,11 @@ export const ACTION_LABEL: Record<string, string> = {
 async function rpc<T = any>(fn: string, args?: any): Promise<T> {
   const { data, error } = await db.rpc(fn, args);
   if (error) throw error;
+  // Giống module Tín hiệu: sau thao tác thành công, nhờ máy chủ xử lý hàng đợi Zalo ngay (lỗi không ảnh hưởng thao tác chính)
+  if (WRITE_RPC.has(fn)) zaloDispatch().catch(() => {});
   return data as T;
 }
+const WRITE_RPC = new Set(["leave_submit", "leave_resubmit", "leave_decide", "leave_cancel_request", "leave_cancel_decide", "leave_reassign", "leave_exception_cancel"]);
 
 export const getSettings = () => rpc<LeaveSettings>("leave_settings_get");
 export const saveSettings = (data: LeaveSettings) => rpc("leave_settings_save", { _data: data });
