@@ -473,7 +473,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
               </div>
             )}
 
-            <HistoryBlock subs={h.data?.subs || []} events={h.data?.events || []} name={name} />
+            <HistoryBlock type={r.type} subs={h.data?.subs || []} events={h.data?.events || []} name={name} />
           </div>
         )}
       </SheetContent>
@@ -502,7 +502,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
   );
 }
 
-function HistoryBlock({ subs, events, name }: { subs: api.LeaveSubmission[]; events: api.LeaveEvent[]; name: (id?: string | null) => string }) {
+function HistoryBlock({ type, subs, events, name }: { type: LeaveType; subs: api.LeaveSubmission[]; events: api.LeaveEvent[]; name: (id?: string | null) => string }) {
   const RES: Record<string, string> = { approved: "Đã duyệt", rejected: "Từ chối", recalled: "Đã thu hồi", cancelled: "Đã hủy" };
   return (
     <div className="space-y-3">
@@ -513,7 +513,7 @@ function HistoryBlock({ subs, events, name }: { subs: api.LeaveSubmission[]; eve
             {subs.map((s) => (
               <div key={s.id} className="rounded-md border p-2.5">
                 <div className="font-medium">Lần {s.no} · {fmtVn(s.submitted_at)}</div>
-                <div className="text-muted-foreground">{summary({ type: s.payload?.start_date ? "leave" : (s.calc?.expected_at && s.calc?.mark_at === s.calc?.expected_at ? "early" : "late"), payload: s.payload, calc: s.calc } as any)}</div>
+                <div className="text-muted-foreground">{summary({ type, payload: s.payload, calc: s.calc })}</div>
                 <div>Lý do: {s.reason_name}{s.detail ? ` — ${s.detail}` : ""}</div>
                 <div>Người duyệt: {name(s.approver_id)} · Kết quả: {s.result ? RES[s.result] || s.result : "Chờ duyệt"}{s.note ? ` — ${s.note}` : ""}</div>
               </div>
