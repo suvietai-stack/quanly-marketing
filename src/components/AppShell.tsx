@@ -2,7 +2,7 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,12 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true },
       { to: "/reports-v2", label: "Báo cáo", icon: FileText, kpi: true },
+    ],
+  },
+  {
+    label: "Quản trị nội bộ",
+    items: [
+      { to: "/leave", label: "Đơn từ & Phê duyệt", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
     ],
   },
   {

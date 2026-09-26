@@ -20,6 +20,7 @@ import { Route as OverviewV2RouteImport } from './routes/overview-v2'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as GoalsV2RouteImport } from './routes/goals-v2'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
@@ -91,6 +92,11 @@ const OkrsRoute = OkrsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaveRoute = LeaveRouteImport.update({
+  id: '/leave',
+  path: '/leave',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsV2Route = GoalsV2RouteImport.update({
@@ -184,6 +190,7 @@ const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/goals-v2': typeof GoalsV2Route
+  '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/goals-v2': typeof GoalsV2Route
+  '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/goals-v2': typeof GoalsV2Route
+  '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/goals-v2'
+    | '/leave'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/goals-v2'
+    | '/leave'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/goals-v2'
+    | '/leave'
     | '/login'
     | '/okrs'
     | '/orders'
@@ -368,6 +380,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GoalsV2Route: typeof GoalsV2Route
+  LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leave': {
+      id: '/leave'
+      path: '/leave'
+      fullPath: '/leave'
+      preLoaderRoute: typeof LeaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals-v2': {
@@ -600,6 +620,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GoalsV2Route: GoalsV2Route,
+  LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,

@@ -493,6 +493,199 @@ export type Database = {
         }
         Relationships: []
       }
+      leave_request_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          id: string
+          request_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          request_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "leave_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_request_submissions: {
+        Row: {
+          approver_id: string
+          calc: Json
+          decided_at: string | null
+          decided_by: string | null
+          detail: string | null
+          id: string
+          no: number
+          note: string | null
+          payload: Json
+          reason_id: string
+          reason_name: string
+          request_id: string
+          result: string | null
+          submitted_at: string
+          submitted_by: string
+        }
+        Insert: {
+          approver_id: string
+          calc: Json
+          decided_at?: string | null
+          decided_by?: string | null
+          detail?: string | null
+          id?: string
+          no: number
+          note?: string | null
+          payload: Json
+          reason_id: string
+          reason_name: string
+          request_id: string
+          result?: string | null
+          submitted_at?: string
+          submitted_by: string
+        }
+        Update: {
+          approver_id?: string
+          calc?: Json
+          decided_at?: string | null
+          decided_by?: string | null
+          detail?: string | null
+          id?: string
+          no?: number
+          note?: string | null
+          payload?: Json
+          reason_id?: string
+          reason_name?: string
+          request_id?: string
+          result?: string | null
+          submitted_at?: string
+          submitted_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_request_submissions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "leave_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          applied: Json
+          approver_id: string
+          calc: Json
+          cancel_reason: string | null
+          cancel_state: string | null
+          created_at: string
+          created_by: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          detail: string | null
+          id: string
+          mark_at: string
+          owner_id: string
+          payload: Json
+          reason_id: string
+          reason_name: string
+          status: string
+          submission_no: number
+          submitted_at: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          applied: Json
+          approver_id: string
+          calc: Json
+          cancel_reason?: string | null
+          cancel_state?: string | null
+          created_at?: string
+          created_by: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          detail?: string | null
+          id?: string
+          mark_at: string
+          owner_id: string
+          payload: Json
+          reason_id: string
+          reason_name: string
+          status?: string
+          submission_no?: number
+          submitted_at?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          applied?: Json
+          approver_id?: string
+          calc?: Json
+          cancel_reason?: string | null
+          cancel_state?: string | null
+          created_at?: string
+          created_by?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          detail?: string | null
+          id?: string
+          mark_at?: string
+          owner_id?: string
+          payload?: Json
+          reason_id?: string
+          reason_name?: string
+          status?: string
+          submission_no?: number
+          submitted_at?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      leave_settings: {
+        Row: {
+          data: Json
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data: Json
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       map_posts: {
         Row: {
           created_at: string
@@ -1314,6 +1507,69 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      leave_approvers: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
+      leave_cancel_decide: {
+        Args: { _approve: boolean; _id: string; _note: string }
+        Returns: undefined
+      }
+      leave_cancel_request: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
+      }
+      leave_decide: {
+        Args: { _approve: boolean; _id: string; _note: string }
+        Returns: undefined
+      }
+      leave_exception_cancel: {
+        Args: { _id: string; _reason: string }
+        Returns: undefined
+      }
+      leave_reason_usage: { Args: { _id: string }; Returns: number }
+      leave_reassign: {
+        Args: { _approver: string; _id: string; _note: string }
+        Returns: undefined
+      }
+      leave_recall: { Args: { _id: string }; Returns: undefined }
+      leave_resubmit: {
+        Args: {
+          _approver: string
+          _detail: string
+          _id: string
+          _payload: Json
+          _reason_id: string
+        }
+        Returns: undefined
+      }
+      leave_settings_get: { Args: never; Returns: Json }
+      leave_settings_save: { Args: { _data: Json }; Returns: undefined }
+      leave_submit: {
+        Args: {
+          _approver: string
+          _detail: string
+          _exception?: string
+          _owner: string
+          _payload: Json
+          _reason_id: string
+          _type: string
+        }
+        Returns: string
+      }
+      leave_update: {
+        Args: {
+          _approver: string
+          _detail: string
+          _id: string
+          _payload: Json
+          _reason_id: string
+        }
+        Returns: undefined
+      }
       signal_assign: {
         Args: { _id: string; _user: string }
         Returns: undefined

@@ -23,6 +23,7 @@ export type PermissionGroup =
   | "Báo Cáo"
   | "Cài Đặt"
   | "Tín Hiệu Cơ Hội"
+  | "Đơn Từ & Phê Duyệt"
   | "Tài khoản";
 
 export interface PermissionDef {
@@ -379,6 +380,23 @@ export const PERMISSIONS: PermissionDef[] = [
   P("signal.report", "Xem báo cáo tín hiệu", "Tín Hiệu Cơ Hội", "Báo cáo"),
   P("signal.catalog", "Quản lý danh mục tín hiệu (Nguồn, Loại sản phẩm, Nhóm nhu cầu)", "Tín Hiệu Cơ Hội", "Quản lý"),
 
+  // ===== Đơn từ & Phê duyệt =====
+  P("leave.view_own", "Xem đơn cá nhân", "Đơn Từ & Phê Duyệt", "Xem"),
+  P("leave.view_assigned", "Xem đơn được giao duyệt", "Đơn Từ & Phê Duyệt", "Xem"),
+  P("leave.view_all", "Xem toàn bộ đơn", "Đơn Từ & Phê Duyệt", "Xem"),
+  P("leave.create", "Tạo đơn cá nhân", "Đơn Từ & Phê Duyệt", "Tạo"),
+  P("leave.create_for", "Tạo đơn hộ", "Đơn Từ & Phê Duyệt", "Tạo"),
+  P("leave.edit_own", "Sửa đơn cá nhân", "Đơn Từ & Phê Duyệt", "Sửa"),
+  P("leave.edit_others", "Sửa đơn nhân viên", "Đơn Từ & Phê Duyệt", "Sửa"),
+  P("leave.recall", "Thu hồi đơn cá nhân", "Đơn Từ & Phê Duyệt", "Xử lý"),
+  P("leave.approve", "Phê duyệt đơn (chỉ đơn được chỉ định)", "Đơn Từ & Phê Duyệt", "Xử lý"),
+  P("leave.reassign", "Chuyển người duyệt", "Đơn Từ & Phê Duyệt", "Xử lý"),
+  P("leave.cancel_handle", "Xử lý hủy đơn", "Đơn Từ & Phê Duyệt", "Xử lý"),
+  P("leave.exception", "Xử lý ngoại lệ đơn từ", "Đơn Từ & Phê Duyệt", "Xử lý"),
+  P("leave.report", "Xem báo cáo đơn từ", "Đơn Từ & Phê Duyệt", "Báo cáo"),
+  P("leave.export", "Xuất báo cáo", "Đơn Từ & Phê Duyệt", "Báo cáo"),
+  P("leave.settings", "Quản lý cài đặt đơn từ", "Đơn Từ & Phê Duyệt", "Cài đặt"),
+
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
   P("settings.user_create", "Tạo tài khoản", "Tài khoản", "Tài khoản"),
@@ -597,7 +615,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "Đơn Từ & Phê Duyệt", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
