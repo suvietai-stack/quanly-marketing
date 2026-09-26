@@ -110,6 +110,15 @@ export function LeaveSettings() {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle className="text-base">Thông báo</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={!!s.notify?.zalo} onChange={(e) => up((x) => { x.notify = { ...(x.notify ?? {}), zalo: e.target.checked }; })} />Gửi tin Zalo cho đơn từ (người duyệt và người đứng tên)</label>
+          <Num label="Nhắc người duyệt khi đơn chờ quá (giờ)" v={s.notify?.remind_hours ?? 4} on={(n) => up((x) => { x.notify = { ...(x.notify ?? {}), remind_hours: Math.max(1, n) }; })} />
+          <p className="sm:col-span-2 text-xs text-muted-foreground">Thông báo trong Base luôn bật. Nhắc duyệt gửi tối đa 1 lần/ngày, trong giờ 08:00–18:00; đơn sắp tới giờ bắt đầu (còn ≤ 2 giờ) được nhắc sớm. Cần bật "Gửi tự động" và đã lưu cài đặt nhắc trong Thông báo Zalo.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-base">Quy định thời hạn</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3 text-sm">
           <Num label="Nghỉ phép: gửi trước giờ bắt đầu nghỉ (giờ)" v={s.deadlines.leave_hours} on={(n) => up((x) => { x.deadlines.leave_hours = n; })} />
