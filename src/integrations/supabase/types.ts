@@ -1326,6 +1326,10 @@ export type Database = {
         Args: { _new: string; _old: string; _scope: string }
         Returns: undefined
       }
+      signal_catalog_usage: {
+        Args: { _name: string; _scope: string }
+        Returns: number
+      }
       signal_reopen: {
         Args: { _id: string; _reason: string }
         Returns: undefined
