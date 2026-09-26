@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildReport, toCsv } from "./report";
+import { buildReport, buildDetails, isoWeekOf, rangeOf, toCsv } from "./report";
 
 describe("leave report", () => {
   const rows = [
