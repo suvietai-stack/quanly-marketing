@@ -72,7 +72,10 @@ export const zaloSendTest = createServerFn({ method: "POST" })
     const s = await import("./zalo.server");
     const { data: link } = await context.supabase.from("zalo_links").select("zalo_user_id,status").eq("user_id", context.userId).maybeSingle();
     if (!link) return { ok: false, message: "Tài khoản của bạn chưa liên kết Zalo — liên kết trước để nhận tin thử" };
-    const r = await s.sendCs(link.zalo_user_id, "Đây là tin thử từ Base Marketing.", `${await s.baseUrl()}/signals`);
+    const { data: last } = await context.supabase.from("opportunity_signals").select("id").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const r = last
+      ? await (async () => { const m = await s.buildSignalMessage("signal_assigned", last.id); return s.sendCs(link.zalo_user_id, m.text, m.link, { header: m.header, button: m.button }); })()
+      : await s.sendCs(link.zalo_user_id, "Đây là tin thử từ Base Marketing.", `${await s.baseUrl()}/signals`);
     if (r.ok) await s.saveConfig({ test_send_at: new Date().toISOString(), last_error: null }).catch(() => {});
     return r.ok ? { ok: true, message: "Zalo đã nhận yêu cầu gửi — kiểm tra điện thoại của bạn" } : { ok: false, message: `Không gửi được (${r.code}: ${r.message})` };
   });

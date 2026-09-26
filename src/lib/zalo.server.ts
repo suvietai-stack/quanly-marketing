@@ -134,7 +134,9 @@ export async function checkConnection() {
 }
 
 /** Gửi tin Tư vấn (CS). Trả mã lỗi Zalo để phân loại. */
-export async function sendCs(zaloUserId: string, text: string, link: string) {
+export async function sendCs(zaloUserId: string, text: string, link: string, opts: { header?: string; button?: string } = {}) {
+  const header = opts.header ?? "BASE MARKETING";
+  const button = opts.button ?? "XEM TÍN HIỆU";
   const token = await getAccessToken();
   if (!token) return { ok: false, code: -1, message: "Chưa kết nối OA" };
   const res = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
@@ -147,8 +149,8 @@ export async function sendCs(zaloUserId: string, text: string, link: string) {
           type: "template",
           payload: {
             template_type: "promotion",
-            elements: [{ type: "header", content: "BASE MARKETING" }, { type: "text", align: "left", content: text }],
-            buttons: [{ title: "XEM TÍN HIỆU", type: "oa.open.url", payload: { url: link } }],
+            elements: [{ type: "header", content: header }, { type: "text", align: "left", content: text }],
+            buttons: [{ title: button, type: "oa.open.url", payload: { url: link } }],
           },
         },
       },
@@ -160,17 +162,24 @@ export async function sendCs(zaloUserId: string, text: string, link: string) {
   const r2 = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
     method: "POST",
     headers: { "Content-Type": "application/json", access_token: token },
-    body: JSON.stringify({ recipient: { user_id: zaloUserId }, message: { text: `BASE MARKETING\n\n${text}\n\nXem tín hiệu: ${link}` } }),
+    body: JSON.stringify({ recipient: { user_id: zaloUserId }, message: { text: `${header}\n${text}\n\n👉 ${button}\n${link}` } }),
   });
   const j2: any = await r2.json().catch(() => ({}));
   if (j2.error === 0) return { ok: true, code: 0, message: "" };
   return { ok: false, code: Number(j2.error ?? j.error ?? -2), message: String(j2.message ?? j.message ?? "Lỗi gửi").slice(0, 200) };
 }
 
-const TEXT: Record<string, string> = {
-  signal_new: "Có tín hiệu mới đang cần xử lý.",
-  signal_assigned: "Bạn vừa được giao một tín hiệu cơ hội mới.",
-};
+/** Dựng nội dung tin tín hiệu từ dữ liệu thật — dùng cho cả gửi tự động và gửi thử. */
+export async function buildSignalMessage(kind: "signal_new" | "signal_assigned", signalId: string) {
+  const { signalMessage } = await import("./signals/zaloMessage");
+  const db = await admin();
+  const { data: s } = await db.from("opportunity_signals")
+    .select("customer_name,products,need_groups,need_group,source,detected_on,created_at,status").eq("id", signalId).maybeSingle();
+  return { ...signalMessage(kind, s ?? {}), link: `${await baseUrl()}/signals?open=${signalId}` };
+}
+
+/** Khoảng chống gửi trùng khi gỡ rồi giao lại cùng một người trong thời gian ngắn. */
+const REASSIGN_DEDUP_MS = 30 * 60 * 1000;
 
 /** Xử lý hàng đợi: chỉ khi Admin đã bật gửi tự động. Không lặp vô hạn. */
 export async function processPending(limit = 20) {
@@ -195,7 +204,16 @@ export async function processPending(limit = 20) {
       await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }).eq("id", n.id);
       continue;
     }
-    const r = await sendCs(link.zalo_user_id, TEXT[n.kind] ?? "Có thông báo mới.", `${await baseUrl()}/signals?open=${n.signal_id}`);
+    if (n.kind === "signal_assigned") {
+      const { data: dup } = await db.from("notifications").select("id").eq("kind", "signal_assigned").eq("signal_id", n.signal_id)
+        .eq("recipient_id", n.recipient_id).eq("zalo_status", "sent").gt("zalo_sent_at", new Date(Date.now() - REASSIGN_DEDUP_MS).toISOString()).limit(1);
+      if (dup?.length) {
+        await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: "Đã gửi tin giao tín hiệu này gần đây" }).eq("id", n.id);
+        continue;
+      }
+    }
+    const m = await buildSignalMessage(n.kind as "signal_new" | "signal_assigned", n.signal_id);
+    const r = await sendCs(link.zalo_user_id, m.text, m.link, { header: m.header, button: m.button });
     processed++;
     if (r.ok) {
       await db.from("notifications").update({ zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_error: null, zalo_attempts: n.zalo_attempts + 1 }).eq("id", n.id);
