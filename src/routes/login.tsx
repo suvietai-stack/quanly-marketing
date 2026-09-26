@@ -47,7 +47,7 @@ function LoginPage() {
       return;
     }
     toast.success("Đăng nhập thành công");
-    goBack(navigate);
+    // Điều hướng do effect theo currentUserId đảm nhận (tránh điều hướng hai lần)
   };
 
   return (
