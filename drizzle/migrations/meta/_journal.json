@@ -85,6 +85,13 @@
       "when": 1790393463738,
       "tag": "0011_zalo_signal_care",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790398592912,
+      "tag": "0012_signal_catalog_sources_usage",
+      "breakpoints": true
     }
   ]
 }
