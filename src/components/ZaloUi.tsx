@@ -53,7 +53,7 @@ export function NotificationBell() {
       await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
-    window.location.href = `/signals?open=${n.signal_id}`;
+    window.location.href = n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
   const readAll = async () => {
     await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", uid).is("read_at", null);
