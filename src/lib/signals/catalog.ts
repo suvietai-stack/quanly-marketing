@@ -97,9 +97,9 @@ export function isDueToday(s: Pick<Signal, "status" | "next_contact_on">, today 
 }
 
 /* ---------- Danh mục tùy chỉnh: Nhóm sản phẩm / Nhóm nhu cầu ---------- */
-export type OptionScope = "signal_products" | "signal_need_groups";
+export type OptionScope = "signal_sources" | "signal_products" | "signal_need_groups";
 export interface CatOption { name: string; active: boolean }
-export const DEFAULT_OPTIONS: Record<OptionScope, readonly string[]> = { signal_products: SIGNAL_PRODUCTS, signal_need_groups: SIGNAL_NEED_GROUPS };
+export const DEFAULT_OPTIONS: Record<OptionScope, readonly string[]> = { signal_sources: SIGNAL_SOURCES, signal_products: SIGNAL_PRODUCTS, signal_need_groups: SIGNAL_NEED_GROUPS };
 /** So khớp tên không phân biệt hoa/thường và khoảng trắng thừa. */
 export const normName = (s: string) => s.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
 export const cleanName = (s: string) => s.trim().replace(/\s+/g, " ");
@@ -108,7 +108,7 @@ export function resolveOptions(stored: unknown, scope: OptionScope): CatOption[]
   const list: CatOption[] = Array.isArray(stored) && stored.length
     ? stored.filter((x: any) => x && typeof x.name === "string").map((x: any) => ({ name: x.name, active: x.active !== false }))
     : DEFAULT_OPTIONS[scope].map((name) => ({ name, active: true }));
-  return [...list.filter((o) => o.name !== "Khác"), ...list.filter((o) => o.name === "Khác")];
+  return list;
 }
 export function addOption(list: CatOption[], name: string): CatOption[] {
   const n = cleanName(name);
@@ -122,6 +122,13 @@ export function renameOption(list: CatOption[], from: string, to: string): CatOp
   if (list.some((o) => o.name !== from && normName(o.name) === normName(n))) throw new Error("Tên này đã tồn tại");
   return list.map((o) => (o.name === from ? { ...o, name: n } : o));
 }
+/** Đổi vị trí hiển thị (dir -1 lên, +1 xuống). */
+export function moveOption(list: CatOption[], name: string, dir: -1 | 1): CatOption[] {
+  const i = list.findIndex((o) => o.name === name); const j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return list;
+  const next = [...list]; [next[i], next[j]] = [next[j], next[i]]; return next;
+}
+export const removeOption = (list: CatOption[], name: string): CatOption[] => list.filter((o) => o.name !== name);
 export const toggleOption = (list: CatOption[], name: string): CatOption[] => list.map((o) => (o.name === name ? { ...o, active: !o.active } : o));
 /** Nhóm nhu cầu của tín hiệu (hỗ trợ dữ liệu cũ chỉ có 1 nhóm). */
 export const needGroupsOf = (s: { need_groups?: string[] | null; need_group: string | null }) =>

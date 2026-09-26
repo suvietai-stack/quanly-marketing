@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { addOption, renameOption, resolveOptions, toggleOption, needGroupsOf } from "./catalog";
+import { moveOption, addOption, renameOption, resolveOptions, toggleOption, needGroupsOf } from "./catalog";
 describe("danh mục tín hiệu", () => {
   const base = resolveOptions(null, "signal_need_groups");
   it("mặc định giữ danh mục hiện có, Khác ở cuối", () => { expect(base.at(-1)!.name).toBe("Khác"); expect(base.length).toBe(6); });
@@ -7,4 +7,6 @@ describe("danh mục tín hiệu", () => {
   it("đổi tên không trùng", () => { expect(() => renameOption(base, "Xuất khẩu", "nhập sỉ")).toThrow(); });
   it("ngừng dùng giữ nguyên lựa chọn", () => { const t = toggleOption(base, "Xuất khẩu"); expect(t.find((o) => o.name === "Xuất khẩu")!.active).toBe(false); expect(t.length).toBe(6); });
   it("dữ liệu cũ 1 nhóm vẫn đọc được", () => { expect(needGroupsOf({ need_group: "Nhập sỉ" })).toEqual(["Nhập sỉ"]); expect(needGroupsOf({ need_groups: ["A", "B"], need_group: "A" })).toEqual(["A", "B"]); });
+  it("sắp xếp thứ tự", () => { expect(moveOption(base, "Xuất khẩu", -1)[2].name).toBe("Xuất khẩu"); });
+  it("nguồn mặc định đủ 9", () => { expect(resolveOptions(null, "signal_sources").length).toBe(9); });
 });

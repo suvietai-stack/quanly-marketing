@@ -147,6 +147,13 @@ export async function renameOptionEverywhere(scope: OptionScope, from: string, t
   await saveOptions(scope, items);
 }
 
+/** Số tín hiệu đang dùng lựa chọn (đếm phía máy chủ, kiểm tra quyền). Lỗi → không cho xóa. */
+export async function optionUsage(scope: OptionScope, name: string): Promise<number> {
+  const { data, error } = await db.rpc("signal_catalog_usage", { _scope: scope, _name: name });
+  if (error) throw new Error("Chưa kiểm tra được dữ liệu lịch sử nên chưa thể xóa. Hãy dùng \"Ngừng dùng\".");
+  return Number(data) || 0;
+}
+
 /** Nhật ký rút gọn (người viết + thời điểm) để tính nhắc chăm sóc — trong phạm vi RLS. */
 export async function listCareNotes(): Promise<Record<string, { author_id: string; created_at: string }[]>> {
   const rows = await fetchAll<{ signal_id: string; author_id: string; created_at: string }>((a, b) => db.from("opportunity_signal_notes")

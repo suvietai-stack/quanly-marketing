@@ -377,7 +377,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("signal.delete", "Xóa tín hiệu (chưa có nhật ký)", "Tín Hiệu Cơ Hội", "Quản lý"),
   P("signal.sale", "Kinh doanh — nhận tín hiệu được giao", "Tín Hiệu Cơ Hội", "Kinh doanh"),
   P("signal.report", "Xem báo cáo tín hiệu", "Tín Hiệu Cơ Hội", "Báo cáo"),
-  P("signal.catalog", "Quản lý danh mục Nhóm sản phẩm / Nhóm nhu cầu", "Tín Hiệu Cơ Hội", "Quản lý"),
+  P("signal.catalog", "Quản lý danh mục tín hiệu (Nguồn, Loại sản phẩm, Nhóm nhu cầu)", "Tín Hiệu Cơ Hội", "Quản lý"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),

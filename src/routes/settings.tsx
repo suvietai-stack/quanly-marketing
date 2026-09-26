@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AccountsSettings } from "@/components/AccountsSettings";
 import { ZaloSettingsTab } from "@/components/ZaloUi";
+import { SignalCatalogSettings } from "@/components/signals/SignalCatalogSettings";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
@@ -150,6 +151,7 @@ function SettingsPage() {
   const showPeople = can("settings.people");
   const showCatalog = can("settings.catalog") || can("settings.plan_topic");
   const showInfo = can("settings.system_view");
+  const showSigCat = can("signal.catalog") || can("signal.manage");
   const canPresence = can("settings.view_presence");
   const initialTab = showAccounts ? "accounts" : showPeople ? "people" : showCatalog ? "plans" : "info";
   const me = auth.users.find((u) => u.id === auth.currentUserId);
@@ -182,8 +184,10 @@ function SettingsPage() {
         {showCatalog && <TabsTrigger value="plans">Plan</TabsTrigger>}
         {showCatalog && <TabsTrigger value="topics">Topic</TabsTrigger>}
         {showInfo && <TabsTrigger value="info">Thông tin hệ thống</TabsTrigger>}
+        {showSigCat && <TabsTrigger value="sigcat">Danh mục tín hiệu</TabsTrigger>}
         <TabsTrigger value="zalo">Thông báo Zalo</TabsTrigger>
       </TabsList>
+      {showSigCat && <TabsContent value="sigcat" className="mt-4"><SignalCatalogSettings /></TabsContent>}
       <TabsContent value="zalo" className="mt-4"><ZaloSettingsTab isAdmin={zaloAdmin} /></TabsContent>
 
       {showAccounts && <TabsContent value="accounts" className="mt-4">
