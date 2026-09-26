@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { LeaveReport } from "./LeaveReport";
+import { AttCard, AttDetail, AttForm, AttManage } from "./AttendanceUi";
+import * as attApi from "@/lib/leave/attApi";
+import type { AttExplanation } from "@/lib/leave/attendance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, CalendarDays, Clock, LogOut as LogOutIcon, AlertTriangle, History, ChevronRight } from "lucide-react";
@@ -78,9 +81,24 @@ export function LeavePage() {
   const showMine = can("leave.view_own") || can("leave.create");
   const showApprove = can("leave.view_assigned") || can("leave.approve");
   const showManage = can("leave.view_all");
-  const showReport = can("leave.report");
+  const showReport = can("leave.report") || can("att.report");
+  const canAttCreate = can("att.create");
+  const showAttMine = can("att.view_own") || canAttCreate;
+  const showAtt = can("att.view_all") || can("att.reconcile") || can("att.manage");
+  const attQ = useQuery({ queryKey: ["leave", "att-list"], queryFn: attApi.listAtt, enabled: !!user });
+  const atts = attQ.data || [];
+  const [attOpen, setAttOpen] = useState<string | null>(() => initial?.get("att") || null);
+  const [attForm, setAttForm] = useState<null | { edit?: AttExplanation }>(null);
+  const setAttO = (id: string | null) => {
+    setAttOpen(id);
+    const u = new URL(window.location.href);
+    if (id) u.searchParams.set("att", id); else u.searchParams.delete("att");
+    window.history.replaceState(null, "", u.toString());
+  };
+  const myAtts = atts.filter((a) => a.owner_id === uid);
+  const witnessTodo = atts.filter((a) => a.witness_id === uid && a.owner_id !== uid && !a.recalled && a.witness_status === "pending");
   const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const [tab, setTab] = useState(() => initial?.get("tab") || (showMine ? "mine" : showApprove ? "approve" : showManage ? "manage" : "report"));
+  const [tab, setTab] = useState(() => initial?.get("tab") || (showMine || showAttMine ? "mine" : showApprove ? "approve" : showManage ? "manage" : "report"));
   const [openId, setOpenId] = useState<string | null>(() => initial?.get("open") || null);
   const [form, setForm] = useState<FormState | null>(null);
 
@@ -102,22 +120,30 @@ export function LeavePage() {
       <PageHeader
         title="Đơn từ & Phê duyệt"
         description="Nghỉ phép, đi muộn, về sớm — gửi đơn và theo dõi phê duyệt."
-        actions={can("leave.create") || can("leave.create_for") ? (
-          <Button onClick={() => setForm({ mode: "create" })} disabled={!settings}><Plus className="h-4 w-4 mr-1" />Tạo đơn</Button>
+        actions={can("leave.create") || can("leave.create_for") || canAttCreate ? (
+          <Button onClick={() => (can("leave.create") || can("leave.create_for") ? setForm({ mode: "create" }) : setAttForm({}))} disabled={!settings}><Plus className="h-4 w-4 mr-1" />Tạo đơn</Button>
         ) : undefined}
       />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
-          {showMine && <TabsTrigger value="mine">Đơn của tôi</TabsTrigger>}
+          {(showMine || showAttMine) && <TabsTrigger value="mine">Đơn của tôi</TabsTrigger>}
           {showApprove && <TabsTrigger value="approve">Chờ tôi duyệt{pendingApprove > 0 && <span className="ml-1.5 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5">{pendingApprove}</span>}</TabsTrigger>}
           {showManage && <TabsTrigger value="manage">Quản lý đơn từ</TabsTrigger>}
+          {(showAtt || witnessTodo.length > 0) && <TabsTrigger value="att">Giải trình chấm công{witnessTodo.length > 0 && <span className="ml-1.5 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5">{witnessTodo.length}</span>}</TabsTrigger>}
           {showReport && <TabsTrigger value="report">Báo cáo</TabsTrigger>}
         </TabsList>
-        {showMine && <TabsContent value="mine" className="mt-4"><RequestList rows={mine} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty="Bạn chưa có đơn nào." /></TabsContent>}
+        {(showMine || showAttMine) && <TabsContent value="mine" className="mt-4 space-y-4">
+          {showMine && <RequestList rows={mine} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty={myAtts.length ? "Bạn chưa có đơn nghỉ phép, đi muộn, về sớm." : "Bạn chưa có đơn nào."} />}
+          {showAttMine && myAtts.length > 0 && <div className="space-y-2">{myAtts.map((a) => <AttCard key={a.id} a={a} name={name} showOwner={false} onOpen={setAttO} />)}</div>}
+        </TabsContent>}
+        {(showAtt || witnessTodo.length > 0) && <TabsContent value="att" className="mt-4 space-y-4">
+          {witnessTodo.length > 0 && <div className="space-y-2"><h3 className="text-sm font-semibold">Chờ bạn xác nhận làm chứng</h3>{witnessTodo.map((a) => <AttCard key={a.id} a={a} name={name} showOwner onOpen={setAttO} />)}</div>}
+          {showAtt && <AttManage rows={atts} loading={attQ.isLoading} name={name} onOpen={setAttO} />}
+        </TabsContent>}
         {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showReport && <TabsContent value="report" className="mt-4">
-          <LeaveReport rows={all} name={name} />
+          <LeaveReport rows={can("leave.report") ? all : []} atts={can("att.report") ? atts : null} name={name} onOpenAtt={setAttO} />
         </TabsContent>}
       </Tabs>
 
@@ -125,8 +151,10 @@ export function LeavePage() {
         <DetailSheet id={openId} settings={settings} name={name} onClose={() => setOpen(null)} onChanged={refresh}
           onEdit={(r, mode) => setForm({ mode, request: r })} />
       )}
+      {attOpen && <AttDetail id={attOpen} name={name} onClose={() => setAttO(null)} onChanged={refresh} onEdit={(a) => setAttForm({ edit: a })} />}
+      {attForm && settings && <AttForm settings={settings} edit={attForm.edit} onClose={() => setAttForm(null)} onDone={(id) => { setAttForm(null); refresh(); if (id) setAttO(id); }} />}
       {form && settings && (
-        <FormDialog state={form} settings={settings} onClose={() => setForm(null)}
+        <FormDialog state={form} settings={settings} onPickAtt={canAttCreate ? () => { setForm(null); setAttForm({}); } : undefined} onClose={() => setForm(null)}
           onDone={(id) => { setForm(null); refresh(); if (id) setOpen(id); }} />
       )}
     </>
@@ -210,7 +238,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
 /* ================= Form ================= */
 type FormState = { mode: "create" | "edit" | "resubmit"; request?: LeaveRequest };
 
-function FormDialog({ state, settings, onClose, onDone }: { state: FormState; settings: LeaveSettings; onClose: () => void; onDone: (id?: string) => void }) {
+function FormDialog({ state, settings, onClose, onDone, onPickAtt }: { state: FormState; settings: LeaveSettings; onClose: () => void; onDone: (id?: string) => void; onPickAtt?: () => void }) {
   const { user, can } = useCurrentUser();
   const users = useAuth((s) => s.users);
   const r = state.request;
@@ -267,10 +295,11 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           {state.mode === "create" && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className={cn("grid gap-2", onPickAtt ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}>
               {(Object.keys(TYPE_LABEL) as LeaveType[]).map((t) => (
                 <button key={t} onClick={() => setType(t)} className={cn("rounded-md border py-2.5 text-sm font-medium", type === t ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{TYPE_LABEL[t]}</button>
               ))}
+              {onPickAtt && <button onClick={onPickAtt} className="rounded-md border py-2.5 text-sm font-medium hover:bg-accent">Giải trình Chấm Công</button>}
             </div>
           )}
           {canFor && (

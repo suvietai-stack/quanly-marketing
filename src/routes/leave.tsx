@@ -12,7 +12,7 @@ export const Route = createFileRoute("/leave")({
     { name: "twitter:card", content: "summary" },
   ] }),
   component: () => (
-    <RequirePermission perm={["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"]}>
+    <RequirePermission perm={["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report", "att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"]}>
       <LeavePage />
     </RequirePermission>
   ),

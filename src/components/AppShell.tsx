@@ -61,7 +61,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Quản trị nội bộ",
     items: [
-      { to: "/leave", label: "Đơn từ & Phê duyệt", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
+      { to: "/leave", label: "Đơn từ & Phê duyệt", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report", "att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"] },
     ],
   },
   {

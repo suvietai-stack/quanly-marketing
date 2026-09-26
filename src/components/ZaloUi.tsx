@@ -28,6 +28,11 @@ const LABEL: Record<string, string> = {
   leave_cancel_request: "Có yêu cầu hủy đơn cần bạn duyệt.",
   leave_remind: "Nhắc duyệt: có đơn đang chờ bạn.",
   leave_cc: "Có đơn từ vừa được phê duyệt/hủy (thông báo CC).",
+  att_witness: "Bạn được chọn làm người làm chứng cho một giải trình chấm công.",
+  att_new: "Có giải trình chấm công mới cần đối chiếu.",
+  att_changed: "Một giải trình chấm công vừa được sửa ngày/giờ.",
+  att_result: "Người làm chứng đã phản hồi giải trình chấm công của bạn.",
+  att_submitted: "Giải trình chấm công của bạn đã được ghi nhận.",
 };
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -45,9 +50,9 @@ export function NotificationBell() {
     enabled: !!uid,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,read_at,created_at")
+      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,attendance_id,read_at,created_at")
         .eq("recipient_id", uid).order("created_at", { ascending: false }).limit(30);
-      return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; read_at: string | null; created_at: string }[];
+      return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; attendance_id: string | null; read_at: string | null; created_at: string }[];
     },
   });
   if (!uid) return null;
@@ -58,7 +63,7 @@ export function NotificationBell() {
       await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
-    window.location.href = n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
+    window.location.href = n.kind.startsWith("att_") ? `/leave?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
   const readAll = async () => {
     await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", uid).is("read_at", null);

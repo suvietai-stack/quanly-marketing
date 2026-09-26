@@ -120,6 +120,7 @@ export function LeaveSettings() {
       </Card>
 
       <CcCard s={s} up={up} />
+      <AttNotifyCard s={s} up={up} />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Quy định thời hạn</CardTitle></CardHeader>
@@ -208,6 +209,49 @@ function CcCard({ s, up }: { s: S; up: (f: (x: S) => void) => void }) {
           {missing.length > 0 && (
             <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
               {missing.length} người nhận chưa có quyền "Xem toàn bộ" đơn từ nên sẽ không mở được chi tiết đơn: {missing.map((u) => u.fullName || u.username).join(", ")}. Nhận thông báo không tự cấp quyền xem.
+            </p>
+          )}
+        </>)}
+      </CardContent>
+    </Card>
+  );
+}
+
+type AttN = { enabled?: boolean; role_ids?: string[]; user_ids?: string[] };
+function AttNotifyCard({ s, up }: { s: S; up: (f: (x: S) => void) => void }) {
+  const users = useAuth((a) => a.users);
+  const roles = useAuth((a) => a.roles);
+  const cfg: AttN = (s as any).attendance?.notify ?? {};
+  const set = (patch: Partial<AttN>) => up((x: any) => { x.attendance = { ...(x.attendance ?? {}), notify: { ...(x.attendance?.notify ?? {}), ...patch } }; });
+  const toggle = (key: "role_ids" | "user_ids", id: string) => { const cur = cfg[key] ?? []; set({ [key]: cur.includes(id) ? cur.filter((v) => v !== id) : [...cur, id] }); };
+  const active = users.filter((u) => u.status === "Đang hoạt động");
+  const rec = new Map<string, (typeof users)[number]>();
+  active.forEach((u) => { if ((u.roleId && cfg.role_ids?.includes(u.roleId)) || cfg.user_ids?.includes(u.id)) rec.set(u.id, u); });
+  const missing = [...rec.values()].filter((u) => { const p = getUserPermissions(u, roles); return !["att.view_all", "att.reconcile", "att.manage"].some((k) => p.has(k as any)); });
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Người nhận giải trình chấm công</CardTitle></CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <label className="flex items-center gap-2"><Switch checked={!!cfg.enabled} onCheckedChange={(v) => set({ enabled: v })} />Bật thông báo giải trình chấm công</label>
+        {cfg.enabled && (<>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Theo vai trò (người đang hoạt động tại thời điểm gửi)</Label>
+              <div className="max-h-56 overflow-auto rounded-md border p-2 space-y-1">
+                {roles.map((r) => <label key={r.id} className="flex items-center gap-2"><input type="checkbox" checked={!!cfg.role_ids?.includes(r.id)} onChange={() => toggle("role_ids", r.id)} />{r.name}</label>)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Theo cá nhân</Label>
+              <div className="max-h-56 overflow-auto rounded-md border p-2 space-y-1">
+                {active.map((u) => <label key={u.id} className="flex items-center gap-2"><input type="checkbox" checked={!!cfg.user_ids?.includes(u.id)} onChange={() => toggle("user_ids", u.id)} />{u.fullName || u.username}</label>)}
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Hiện có {rec.size} người nhận (đã bỏ trùng). Người nhận được báo khi có giải trình mới và khi nhân viên sửa ngày/giờ. Thông báo trong Base luôn được tạo; Zalo gửi kèm nếu đã bật Zalo đơn từ và người nhận đã liên kết. Không gửi bù giải trình cũ.</p>
+          {missing.length > 0 && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+              {missing.length} người nhận chưa có quyền xem giải trình (Xem toàn bộ / Đối chiếu / Quản lý giải trình) nên sẽ không mở được chi tiết: {missing.map((u) => u.fullName || u.username).join(", ")}.
             </p>
           )}
         </>)}
