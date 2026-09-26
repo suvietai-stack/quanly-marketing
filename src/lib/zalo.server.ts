@@ -348,3 +348,51 @@ export async function runCareDigest() {
   }
   return { created, sent };
 }
+
+/* ---------- Đơn từ: cấu hình thông báo + nhắc duyệt ---------- */
+export async function leaveNotifyCfg(): Promise<{ zalo: boolean; remind_hours: number }> {
+  const db = await admin();
+  const { data } = await db.from("leave_settings").select("data").eq("id", 1).maybeSingle();
+  const n = data?.data?.notify ?? {};
+  return { zalo: n.zalo === true, remind_hours: Number(n.remind_hours) > 0 ? Number(n.remind_hours) : 4 };
+}
+
+/** Chạy mỗi giờ; chỉ trong 08:00–17:59 giờ VN; mỗi người duyệt tối đa 1 tin nhắc/ngày (gộp nhiều đơn). */
+export async function runLeaveRemind() {
+  const h = vnHour();
+  if (h < 8 || h > 17) return { skipped: "off_hours" };
+  const lc = await leaveNotifyCfg();
+  const db = await admin();
+  const { needsRemind, remindMessage } = await import("./leave/zaloMessage");
+  const { data: reqs } = await db.from("leave_requests").select("id,status,submitted_at,mark_at,approver_id").eq("status", "pending").limit(2000);
+  const by: Record<string, { ids: string[]; soon: number }> = {};
+  for (const r of reqs ?? []) {
+    const x = needsRemind(r, lc.remind_hours);
+    if (!x.remind) continue;
+    const g = (by[r.approver_id] ??= { ids: [], soon: 0 });
+    g.ids.push(r.id); if (x.soon) g.soon++;
+  }
+  const today = vnDate();
+  const cfg: any = await getConfig();
+  const canSend = lc.zalo && cfg?.status === "connected";
+  let created = 0, sent = 0;
+  for (const [uid, g] of Object.entries(by)) {
+    const { data: ins } = await db.from("notifications").upsert(
+      { recipient_id: uid, kind: "leave_remind", payload: { count: g.ids.length, soon: g.soon, ids: g.ids }, dedup_key: `leave_remind:${today}:${uid}` },
+      { onConflict: "dedup_key", ignoreDuplicates: true }).select("id");
+    const row = ins?.[0]; if (!row) continue;
+    created++;
+    const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", uid).maybeSingle();
+    if (!canSend || !link || link.status !== "active") {
+      await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: !canSend ? "Chưa bật Zalo cho đơn từ" : "Chưa liên kết Zalo" }).eq("id", row.id);
+      continue;
+    }
+    const m = remindMessage(g.ids.length, g.soon);
+    const r = await sendCs(link.zalo_user_id, m.text, `${await baseUrl()}/leave?tab=approve`, { header: m.header, button: m.button });
+    if (r.ok) sent++;
+    await db.from("notifications").update(r.ok
+      ? { zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_attempts: 1 }
+      : { zalo_status: [-213, -230, -201].includes(r.code) ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: MAX_ATTEMPTS }).eq("id", row.id);
+  }
+  return { created, sent };
+}
