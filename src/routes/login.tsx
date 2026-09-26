@@ -24,6 +24,7 @@ function goBack(navigate: ReturnType<typeof useNavigate>) {
 }
 
 function LoginPage() {
+  const brand = useBranding();
   const navigate = useNavigate();
   const login = useAuth((s) => s.login);
   const currentUserId = useAuth((s) => s.currentUserId);

@@ -12,6 +12,7 @@ export const Route = createFileRoute("/pending")({
 });
 
 function PendingPage() {
+  const brand = useBranding();
   const navigate = useNavigate();
   const logout = useAuth((s) => s.logout);
   const { user } = useCurrentUser();

@@ -17,8 +17,8 @@ const readImg = (f: File) => new Promise<string>((ok, bad) => {
 });
 
 export function SystemInfoSettings() {
-  const { can, isSuperAdmin } = useCurrentUser() as any;
-  const canEdit = !!isSuperAdmin || can("system.branding");
+  const { can } = useCurrentUser();
+  const canEdit = can("system.branding");
   const cur = useBranding();
   const qc = useQueryClient();
   const [d, setD] = useState<Branding>(cur);
