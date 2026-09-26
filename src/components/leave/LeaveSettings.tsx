@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DOW_LABEL, fmtDate, type LeaveSettings as S } from "@/lib/leave/calc";
 import * as api from "@/lib/leave/api";
+import { useAuth, getUserPermissions } from "@/lib/auth";
 
 const norm = (v: string) => v.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
 
@@ -118,6 +119,8 @@ export function LeaveSettings() {
         </CardContent>
       </Card>
 
+      <CcCard s={s} up={up} />
+
       <Card>
         <CardHeader><CardTitle className="text-base">Quy định thời hạn</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3 text-sm">
@@ -161,4 +164,54 @@ export function LeaveSettings() {
 
 function Num({ label, v, on }: { label: string; v: number; on: (n: number) => void }) {
   return <div className="space-y-1"><Label className="text-xs">{label}</Label><Input type="number" min={0} value={v} onChange={(e) => on(Math.max(0, Number(e.target.value) || 0))} /></div>;
+}
+
+type Cc = { enabled?: boolean; on_approve?: boolean; on_cancel?: boolean; role_ids?: string[]; user_ids?: string[] };
+function CcCard({ s, up }: { s: S; up: (f: (x: S) => void) => void }) {
+  const users = useAuth((a) => a.users);
+  const roles = useAuth((a) => a.roles);
+  const cc: Cc = s.notify?.cc ?? {};
+  const set = (patch: Partial<Cc>) => up((x) => { x.notify = { ...(x.notify ?? {}), cc: { ...(x.notify?.cc ?? {}), ...patch } }; });
+  const toggle = (key: "role_ids" | "user_ids", id: string) => {
+    const cur = cc[key] ?? [];
+    set({ [key]: cur.includes(id) ? cur.filter((v) => v !== id) : [...cur, id] });
+  };
+  const active = users.filter((u) => u.status === "Đang hoạt động");
+  const rec = new Map<string, (typeof users)[number]>();
+  active.forEach((u) => { if ((u.roleId && cc.role_ids?.includes(u.roleId)) || cc.user_ids?.includes(u.id)) rec.set(u.id, u); });
+  const missing = [...rec.values()].filter((u) => !getUserPermissions(u, roles).has("leave.view_all" as any));
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Thông báo sau khi phê duyệt</CardTitle></CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <label className="flex items-center gap-2"><Switch checked={!!cc.enabled} onCheckedChange={(v) => set({ enabled: v })} />Bật thông báo CC</label>
+        {cc.enabled && (<>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2"><input type="checkbox" checked={!!cc.on_approve} onChange={(e) => set({ on_approve: e.target.checked })} />Đơn được phê duyệt</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={!!cc.on_cancel} onChange={(e) => set({ on_cancel: e.target.checked })} />Đơn đã duyệt được chấp thuận hủy</label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Theo vai trò (người đang hoạt động tại thời điểm gửi)</Label>
+              <div className="max-h-56 overflow-auto rounded-md border p-2 space-y-1">
+                {roles.map((r) => <label key={r.id} className="flex items-center gap-2"><input type="checkbox" checked={!!cc.role_ids?.includes(r.id)} onChange={() => toggle("role_ids", r.id)} />{r.name}</label>)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Theo cá nhân</Label>
+              <div className="max-h-56 overflow-auto rounded-md border p-2 space-y-1">
+                {active.map((u) => <label key={u.id} className="flex items-center gap-2"><input type="checkbox" checked={!!cc.user_ids?.includes(u.id)} onChange={() => toggle("user_ids", u.id)} />{u.fullName || u.username}</label>)}
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Hiện có {rec.size} người nhận (đã bỏ trùng). Chủ đơn và người vừa duyệt không nhận CC. Chỉ áp dụng cho đơn duyệt/hủy từ nay, không gửi bù đơn cũ. Zalo gửi kèm nếu đã bật Zalo đơn từ và người nhận đã liên kết.</p>
+          {missing.length > 0 && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">
+              {missing.length} người nhận chưa có quyền "Xem toàn bộ" đơn từ nên sẽ không mở được chi tiết đơn: {missing.map((u) => u.fullName || u.username).join(", ")}. Nhận thông báo không tự cấp quyền xem.
+            </p>
+          )}
+        </>)}
+      </CardContent>
+    </Card>
+  );
 }

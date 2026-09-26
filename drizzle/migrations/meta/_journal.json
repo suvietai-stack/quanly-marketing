@@ -120,6 +120,13 @@
       "when": 1790408746673,
       "tag": "0016_leave_zalo_wake_dispatch",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790409549642,
+      "tag": "0017_leave_cc_notifications",
+      "breakpoints": true
     }
   ]
 }

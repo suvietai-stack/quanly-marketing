@@ -27,3 +27,15 @@ describe("leave zalo message", () => {
     expect(remindMessage(2, 0).text).toBe("Bạn có 2 đơn đang chờ duyệt.");
   });
 });
+
+import { leaveMessage as lm2 } from "./zaloMessage";
+describe("leave_cc", () => {
+  it("dựng tin CC", () => {
+    const m = lm2("leave_cc", { type: "late", payload: { date: "2026-09-26", half: "am", minutes: 15 }, calc: {}, owner_name: "An", approver_name: "Bình", action: "approve" });
+    expect(m.header).toContain("ĐÃ ĐƯỢC PHÊ DUYỆT");
+    expect(m.text).toContain("Nhân viên: An");
+    expect(m.text).toContain("Người phê duyệt: Bình");
+    expect(m.text).toContain("15 phút");
+    expect(m.text).not.toContain("undefined");
+  });
+});

@@ -1,10 +1,10 @@
 /** Dựng tin Zalo cho Đơn từ — hàm thuần. Không đưa phần "chi tiết" tự nhập vào tin. */
 import { TYPE_LABEL, HALF_LABEL, fmtDate, fmtDays, fmtVn, type LeaveType, type Half } from "./calc";
 
-export type LeaveKind = "leave_pending" | "leave_result" | "leave_cancel_request";
+export type LeaveKind = "leave_pending" | "leave_result" | "leave_cancel_request" | "leave_cc";
 export interface LeaveMsgData {
   type: LeaveType; payload: any; calc: any; reason_name?: string | null;
-  owner_name?: string | null; action?: string | null; decision_note?: string | null;
+  owner_name?: string | null; action?: string | null; approver_name?: string | null; decision_note?: string | null;
 }
 
 export function leaveSummary(d: Pick<LeaveMsgData, "type" | "payload" | "calc">): string {
@@ -30,6 +30,17 @@ const RESULT: Record<string, string> = {
 };
 
 export function leaveMessage(kind: LeaveKind, d: LeaveMsgData, brand = "BASE MARKETING") {
+  if (kind === "leave_cc") {
+    const cancel = d.action === "cancel_approve";
+    const lines = [
+      d.owner_name ? `👤 Nhân viên: ${d.owner_name}` : "",
+      `📄 Loại đơn: ${TYPE_LABEL[d.type] ?? ""}`,
+      leaveSummary(d) ? `🕒 Thời gian: ${leaveSummary(d)}` : "",
+      d.approver_name ? `✍️ Người phê duyệt: ${d.approver_name}` : "",
+      `📌 Kết quả: ${cancel ? "Đã chấp thuận hủy đơn" : "Đã phê duyệt"}`,
+    ].filter(Boolean);
+    return { header: `${brand} — ${cancel ? "🗑️ ĐƠN ĐÃ DUYỆT ĐƯỢC HỦY" : "✅ ĐƠN ĐÃ ĐƯỢC PHÊ DUYỆT"}`, text: lines.join("\n"), button: "XEM ĐƠN" };
+  }
   const title = kind === "leave_pending"
     ? (d.action === "resubmit" ? "📝 ĐƠN GỬI LẠI CẦN DUYỆT" : "📝 ĐƠN MỚI CẦN DUYỆT")
     : kind === "leave_cancel_request" ? "🗑️ YÊU CẦU HỦY ĐƠN CẦN DUYỆT"
