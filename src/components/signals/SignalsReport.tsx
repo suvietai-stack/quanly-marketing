@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { careFlag, DEFAULT_CARE } from "@/lib/signals/care";
+import { zaloCareCounts } from "@/lib/zalo.functions";
 import { Input } from "@/components/ui/input";
 import { SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import { filterSignals, groupBy, lostReasons, summarize, type ReportFilter, type Summary } from "@/lib/signals/report";
-import { errMsg } from "@/lib/signals/api";
+import { errMsg, listCareNotes } from "@/lib/signals/api";
 import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
 import { needGroupsOf } from "@/lib/signals/catalog";
 
