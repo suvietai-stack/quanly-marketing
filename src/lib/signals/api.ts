@@ -150,7 +150,7 @@ export async function renameOptionEverywhere(scope: OptionScope, from: string, t
 /** Số tín hiệu đang dùng lựa chọn (đếm phía máy chủ, kiểm tra quyền). Lỗi → không cho xóa. */
 export async function optionUsage(scope: OptionScope, name: string): Promise<number> {
   const { data, error } = await db.rpc("signal_catalog_usage", { _scope: scope, _name: name });
-  if (error) throw new Error("Chưa kiểm tra được dữ liệu lịch sử nên chưa thể xóa. Hãy dùng \"Ngừng dùng\".");
+  if (error) throw new Error(`Không kiểm tra được dữ liệu lịch sử nên chưa xóa: ${error.message || "lỗi không xác định"}`);
   return Number(data) || 0;
 }
 
