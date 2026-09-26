@@ -27,6 +27,7 @@ const LABEL: Record<string, string> = {
   leave_result: "Đơn từ của bạn có kết quả mới.",
   leave_cancel_request: "Có yêu cầu hủy đơn cần bạn duyệt.",
   leave_remind: "Nhắc duyệt: có đơn đang chờ bạn.",
+  leave_cc: "Có đơn từ vừa được phê duyệt/hủy (thông báo CC).",
 };
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);

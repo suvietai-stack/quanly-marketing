@@ -15,7 +15,7 @@ export interface LeaveSettings {
   deadlines: { leave_hours: number; late_minutes: number; early_minutes: number };
   recall_minutes: Record<LeaveType, number>;
   reasons: LeaveReason[];
-  notify?: { zalo?: boolean; remind_hours?: number };
+  notify?: { zalo?: boolean; remind_hours?: number; cc?: { enabled?: boolean; on_approve?: boolean; on_cancel?: boolean; role_ids?: string[]; user_ids?: string[] } };
 }
 
 export interface LeavePayload { start_date: string; start_half: Half; end_date: string; end_half: Half }
