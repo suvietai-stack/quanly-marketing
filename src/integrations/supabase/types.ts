@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_branding: {
+        Row: {
+          app_name: string
+          description: string
+          favicon_url: string | null
+          id: number
+          logo_url: string | null
+          org_name: string
+          short_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          app_name?: string
+          description?: string
+          favicon_url?: string | null
+          id?: number
+          logo_url?: string | null
+          org_name?: string
+          short_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          app_name?: string
+          description?: string
+          favicon_url?: string | null
+          id?: number
+          logo_url?: string | null
+          org_name?: string
+          short_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      app_branding_history: {
+        Row: {
+          actor_id: string | null
+          after: Json
+          before: Json
+          created_at: string
+          id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          after: Json
+          before: Json
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          actor_id?: string | null
+          after?: Json
+          before?: Json
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       app_roles: {
         Row: {
           created_at: string
@@ -1498,6 +1558,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      branding_save: {
+        Args: {
+          _app_name: string
+          _description: string
+          _favicon_url: string
+          _logo_url: string
+          _org_name: string
+          _short_name: string
+        }
+        Returns: undefined
+      }
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
       get_profiles_directory: {
         Args: never
