@@ -127,6 +127,13 @@
       "when": 1790409549642,
       "tag": "0017_leave_cc_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790419155972,
+      "tag": "0018_attendance_explanations",
+      "breakpoints": true
     }
   ]
 }

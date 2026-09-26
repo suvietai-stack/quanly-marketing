@@ -104,6 +104,116 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_explanation_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          explanation_id: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          explanation_id: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          explanation_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_explanation_events_explanation_id_fkey"
+            columns: ["explanation_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_explanations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_explanations: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          kind: string
+          owner_id: string
+          reason_id: string
+          reason_name: string
+          recalled: boolean
+          recalled_at: string | null
+          reconcile_note: string | null
+          reconciled: boolean
+          reconciled_at: string | null
+          reconciled_by: string | null
+          submitted_at: string
+          time_in: string | null
+          time_out: string | null
+          updated_at: string
+          witness_at: string | null
+          witness_id: string
+          witness_note: string | null
+          witness_status: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: string
+          owner_id: string
+          reason_id: string
+          reason_name: string
+          recalled?: boolean
+          recalled_at?: string | null
+          reconcile_note?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          submitted_at?: string
+          time_in?: string | null
+          time_out?: string | null
+          updated_at?: string
+          witness_at?: string | null
+          witness_id: string
+          witness_note?: string | null
+          witness_status?: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: string
+          owner_id?: string
+          reason_id?: string
+          reason_name?: string
+          recalled?: boolean
+          recalled_at?: string | null
+          reconcile_note?: string | null
+          reconciled?: boolean
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          submitted_at?: string
+          time_in?: string | null
+          time_out?: string | null
+          updated_at?: string
+          witness_at?: string | null
+          witness_id?: string
+          witness_note?: string | null
+          witness_status?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       backlinks: {
         Row: {
           created_at: string
@@ -775,6 +885,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          attendance_id: string | null
           created_at: string
           dedup_key: string
           id: string
@@ -790,6 +901,7 @@ export type Database = {
           zalo_status: string
         }
         Insert: {
+          attendance_id?: string | null
           created_at?: string
           dedup_key: string
           id?: string
@@ -805,6 +917,7 @@ export type Database = {
           zalo_status?: string
         }
         Update: {
+          attendance_id?: string | null
           created_at?: string
           dedup_key?: string
           id?: string
@@ -820,6 +933,13 @@ export type Database = {
           zalo_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_explanations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_leave_request_id_fkey"
             columns: ["leave_request_id"]
@@ -1558,6 +1678,48 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      att_note: { Args: { _id: string; _note: string }; Returns: undefined }
+      att_recall: { Args: { _id: string }; Returns: undefined }
+      att_reconcile: {
+        Args: { _id: string; _note: string }
+        Returns: undefined
+      }
+      att_submit: {
+        Args: {
+          _date: string
+          _detail: string
+          _in: string
+          _kind: string
+          _out: string
+          _reason_id: string
+          _witness: string
+        }
+        Returns: string
+      }
+      att_update: {
+        Args: {
+          _date: string
+          _detail: string
+          _id: string
+          _in: string
+          _kind: string
+          _out: string
+          _reason_id: string
+          _witness: string
+        }
+        Returns: undefined
+      }
+      att_witness: {
+        Args: { _confirm: boolean; _id: string; _note: string }
+        Returns: undefined
+      }
+      att_witnesses: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       branding_save: {
         Args: {
           _app_name: string
