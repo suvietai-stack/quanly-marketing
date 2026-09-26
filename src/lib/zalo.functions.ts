@@ -198,3 +198,33 @@ export const zaloSaveBaseUrl = createServerFn({ method: "POST" })
     await s.saveConfig({ base_url: url }); // không đụng token / kết nối OA
     return { ok: true, message: `Đã lưu: ${url}` };
   });
+
+export const zaloCareGet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const s = await import("./zalo.server");
+    const c: any = await s.getConfig();
+    return { enabled: !!c?.care_enabled, waitHours: c?.care_wait_hours ?? 24, staleDays: c?.care_stale_days ?? 3, hour: c?.care_hour ?? 9, lastRun: c?.care_last_run ?? null };
+  });
+
+export const zaloCareSave = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ enabled: z.boolean(), waitHours: z.number().int().min(1).max(240), staleDays: z.number().int().min(1).max(60), hour: z.number().int().min(0).max(23) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const s = await import("./zalo.server");
+    const c: any = await s.getConfig();
+    const { randomBytes } = await import("crypto");
+    await s.saveConfig({ care_enabled: data.enabled, care_wait_hours: data.waitHours, care_stale_days: data.staleDays, care_hour: data.hour,
+      care_cron_token: c?.care_cron_token || randomBytes(24).toString("hex") });
+    return { ok: true, message: "Đã lưu cài đặt nhắc chăm sóc" };
+  });
+
+export const zaloCareCounts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const s = await import("./zalo.server");
+    const c: any = await s.getConfig();
+    return { waitHours: c?.care_wait_hours ?? 24, staleDays: c?.care_stale_days ?? 3 };
+  });

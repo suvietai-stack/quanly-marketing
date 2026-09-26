@@ -146,3 +146,12 @@ export async function renameOptionEverywhere(scope: OptionScope, from: string, t
   if (error) throw error;
   await saveOptions(scope, items);
 }
+
+/** Nhật ký rút gọn (người viết + thời điểm) để tính nhắc chăm sóc — trong phạm vi RLS. */
+export async function listCareNotes(): Promise<Record<string, { author_id: string; created_at: string }[]>> {
+  const rows = await fetchAll<{ signal_id: string; author_id: string; created_at: string }>((a, b) => db.from("opportunity_signal_notes")
+    .select("signal_id,author_id,created_at").order("id").range(a, b));
+  const m: Record<string, { author_id: string; created_at: string }[]> = {};
+  for (const r of rows) (m[r.signal_id] ??= []).push(r);
+  return m;
+}

@@ -35,6 +35,7 @@ import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo/webhook'
 import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
+import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
 
 const WebContentsRoute = WebContentsRouteImport.update({
   id: '/web-contents',
@@ -167,6 +168,11 @@ const ApiPublicZaloOauthCallbackRoute =
     path: '/api/public/zalo/oauth-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
+  id: '/api/public/zalo/care-cron',
+  path: '/api/public/zalo/care-cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
   '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
+  '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
   '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
   '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/zalo/care-cron'
     | '/api/public/zalo/oauth-callback'
     | '/api/public/zalo/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/signals'
     | '/social'
     | '/websites'
+    | '/api/public/zalo/care-cron'
     | '/api/public/zalo/oauth-callback'
     | '/api/public/zalo/webhook'
   id:
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/zalo/care-cron'
     | '/api/public/zalo/oauth-callback'
     | '/api/public/zalo/webhook'
   fileRoutesById: FileRoutesById
@@ -365,6 +377,7 @@ export interface RootRouteChildren {
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
+  ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
   ApiPublicZaloOauthCallbackRoute: typeof ApiPublicZaloOauthCallbackRoute
   ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
 }
@@ -553,6 +566,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicZaloOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zalo/care-cron': {
+      id: '/api/public/zalo/care-cron'
+      path: '/api/public/zalo/care-cron'
+      fullPath: '/api/public/zalo/care-cron'
+      preLoaderRoute: typeof ApiPublicZaloCareCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -581,6 +601,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
+  ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
   ApiPublicZaloOauthCallbackRoute: ApiPublicZaloOauthCallbackRoute,
   ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
 }
