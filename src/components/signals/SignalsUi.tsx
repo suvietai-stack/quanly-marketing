@@ -153,6 +153,7 @@ export function SignalsPage() {
   const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
   const open = data.find((s) => s.id === openId) || null;
+  const denied = !!openId && !isLoading && !open;
   const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
 
 
@@ -282,9 +283,20 @@ export function SignalsPage() {
           <SignalForm onDone={() => setCreating(false)} />
         </SheetContent>
       </Sheet>
-      <Sheet open={!!open} onOpenChange={(o) => !o && setOpenId(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0">
+      <Sheet open={!!open || denied} onOpenChange={(o) => {
+        if (o) return;
+        setOpenId(null);
+        const u = new URL(window.location.href);
+        if (u.searchParams.has("open")) { u.searchParams.delete("open"); window.history.replaceState(null, "", u.pathname + u.search); }
+      }}>
+        <SheetContent side="right" className="w-full h-full max-w-none sm:max-w-xl overflow-y-auto p-0">
           {open && <SignalDetail s={open} last={last[open.id]} />}
+          {denied && (
+            <div className="p-6 pt-12 space-y-2">
+              <SheetHeader><SheetTitle>Không thể mở tín hiệu</SheetTitle></SheetHeader>
+              <p className="text-sm text-muted-foreground">Bạn không còn quyền xem tín hiệu này — có thể tín hiệu đã được chuyển cho người khác hoặc không còn tồn tại.</p>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
     </div>

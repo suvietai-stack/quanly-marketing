@@ -46,6 +46,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!initialized) return;
     if (!currentUserId && !isPublic && !isPending) {
+      try {
+        const back = window.location.pathname + window.location.search;
+        if (back !== "/" ) sessionStorage.setItem("after_login", back);
+      } catch { /* ignore */ }
       navigate({ to: "/login" });
       return;
     }
