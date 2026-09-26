@@ -236,3 +236,52 @@ export async function handleLinkMessage(zaloUserId: string, text: string) {
   await db.from("zalo_links").upsert({ user_id: row.user_id, zalo_user_id: zaloUserId, status: "active", linked_at: now, last_interaction_at: now });
   return "linked";
 }
+
+/* ---------- Nhắc chăm sóc tín hiệu (tổng hợp mỗi ngày) ---------- */
+const vnDate = (d = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(d);
+const vnHour = (d = new Date()) => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", hour12: false }).format(d)) % 24;
+
+/** Chạy theo lịch mỗi giờ; chỉ làm việc đúng giờ đã cài và 1 lần/ngày. */
+export async function runCareDigest() {
+  const cfg: any = await getConfig();
+  if (!cfg?.care_enabled) return { skipped: "disabled" };
+  const today = vnDate();
+  if (vnHour() !== (cfg?.care_hour ?? 9) || cfg?.care_last_run === today) return { skipped: "not_time" };
+  const db = await admin();
+  await saveConfig({ care_last_run: today });
+  const { careFlag, countCare, careMessage } = await import("./signals/care");
+  const ccfg = { waitHours: cfg?.care_wait_hours ?? 24, staleDays: cfg?.care_stale_days ?? 3 };
+  const { data: sigs } = await db.from("opportunity_signals").select("id,status,assigned_to,assigned_at,cancelled_at")
+    .not("assigned_to", "is", null).is("cancelled_at", null).in("status", ["waiting", "contacting", "consulting", "quoted", "deposit"]).limit(5000);
+  const ids = (sigs ?? []).map((s: any) => s.id);
+  const notesBy: Record<string, any[]> = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data: ns } = await db.from("opportunity_signal_notes").select("signal_id,author_id,created_at").in("signal_id", ids.slice(i, i + 200));
+    for (const n of ns ?? []) (notesBy[n.signal_id] ??= []).push(n);
+  }
+  const flagsBy: Record<string, any[]> = {};
+  for (const s of sigs ?? []) { const f = careFlag(s, notesBy[s.id] ?? [], Date.now(), ccfg); if (f) (flagsBy[s.assigned_to] ??= []).push(f); }
+  let created = 0, sent = 0;
+  const canSend = cfg?.status === "connected";
+  for (const [uid, flags] of Object.entries(flagsBy)) {
+    const c = countCare(flags);
+    const { data: ins } = await db.from("notifications").upsert(
+      { recipient_id: uid, kind: "signal_care", signal_id: null, payload: c, dedup_key: `care:${today}:${uid}` },
+      { onConflict: "dedup_key", ignoreDuplicates: true }).select("id");
+    const row = ins?.[0]; if (!row) continue; // đã có hôm nay → không trùng
+    created++;
+    const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", uid).maybeSingle();
+    if (!canSend || !link || link.status !== "active") {
+      await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: !canSend ? "OA chưa kết nối" : "Chưa liên kết Zalo" }).eq("id", row.id);
+      continue;
+    }
+    const { data: p } = await db.from("profiles").select("full_name").eq("id", uid).maybeSingle();
+    const r = await sendCs(link.zalo_user_id, careMessage(p?.full_name || "bạn", c), `${await baseUrl()}/signals?care=1`);
+    if (r.ok) sent++;
+    // Chỉ thử 1 lần — không gửi lại liên tục
+    await db.from("notifications").update(r.ok
+      ? { zalo_status: "sent", zalo_sent_at: new Date().toISOString(), zalo_attempts: 1 }
+      : { zalo_status: [-213, -230, -201].includes(r.code) ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: MAX_ATTEMPTS }).eq("id", row.id);
+  }
+  return { created, sent };
+}
