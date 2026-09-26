@@ -113,6 +113,13 @@
       "when": 1790407183611,
       "tag": "0015_app_branding",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790408746673,
+      "tag": "0016_leave_zalo_wake_dispatch",
+      "breakpoints": true
     }
   ]
 }
