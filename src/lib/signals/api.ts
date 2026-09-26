@@ -1,8 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { zaloDispatch } from "@/lib/zalo.functions";
+import { pushDispatch } from "@/lib/push.functions";
 
 /** Đẩy thông báo Zalo chạy nền — lỗi không ảnh hưởng thao tác chính. */
-function dispatchZalo() { zaloDispatch().catch(() => {}); }
+function dispatchZalo() { zaloDispatch().catch(() => {});  pushDispatch().catch(() => {}); }
 import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
 
 const db = supabase as any;

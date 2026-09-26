@@ -1,3 +1,4 @@
+import { PushSettings } from "@/components/PushSettings";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -45,6 +46,7 @@ export function NotificationBell() {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [showLink, setShowLink] = useState(false);
+  const [showPush, setShowPush] = useState(false);
   const { data = [] } = useQuery({
     queryKey: ["notifications", uid],
     enabled: !!uid,
@@ -93,6 +95,7 @@ export function NotificationBell() {
           ))}
         </div>
         <div className="border-t p-2">
+          {showPush ? <div className="p-1"><PushSettings /></div> : <button className="w-full text-xs text-primary py-1" onClick={() => setShowPush(true)}>Thông báo trên thiết bị</button>}
           {showLink ? <ZaloLinkCard /> : <button className="w-full text-xs text-primary py-1" onClick={() => setShowLink(true)}>Nhận thông báo qua Zalo</button>}
         </div>
       </PopoverContent>
