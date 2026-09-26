@@ -207,6 +207,7 @@ const STUCK_MS = 10 * 60 * 1000;
  * Khóa nguyên tử: mỗi bản ghi chỉ được "nhận" bởi đúng một tiến trình qua cập nhật có điều kiện
  * (zalo_attempts = giá trị cũ, trạng thái pending/failed). Tiến trình thua sẽ nhận 0 dòng và bỏ qua.
  */
+const LEAVE_FRESH_MS = 30 * 60 * 1000;
 export async function processPending(limit = 20) {
   const cfg = await getConfig();
   if (!cfg?.auto_send || cfg.status !== "connected") return { processed: 0 };
@@ -217,7 +218,7 @@ export async function processPending(limit = 20) {
     .lt("created_at", new Date(Date.now() - STUCK_MS).toISOString()).like("zalo_error", "claimed:%");
   const leaveZalo = (await leaveNotifyCfg()).zalo;
   const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request"] : [])];
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,zalo_attempts,zalo_status,payload")
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,created_at,zalo_attempts,zalo_status,payload")
     .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
@@ -244,6 +245,8 @@ export async function processPending(limit = 20) {
       const stale = !r
         || (n.kind === "leave_pending" && (r.status !== "pending" || r.approver_id !== n.recipient_id))
         || (n.kind === "leave_cancel_request" && (r.cancel_state !== "requested" || r.approver_id !== n.recipient_id));
+      // Tin đơn từ chỉ gửi khi còn "nóng" (≤ 30 phút sau khi phát sinh) — không đẩy dồn tin cũ
+      if (!stale && Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
       if (stale) { await mark({ zalo_status: "ineligible", zalo_error: "Đơn đã được xử lý/chuyển người duyệt" }); continue; }
       const { data: p } = await db.from("profiles").select("full_name").eq("id", r.owner_id).maybeSingle();
       const { leaveMessage } = await import("./leave/zaloMessage");
