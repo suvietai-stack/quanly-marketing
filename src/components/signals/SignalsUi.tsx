@@ -114,12 +114,21 @@ export function SignalsPage() {
   const name = useUserName();
   const { data = [], isLoading, error } = useSignals();
   const { data: last = {} } = useLastNotes();
+  const { data: careNotes = {} } = useQuery({ queryKey: [`${SIG}care`, p.userId], queryFn: listCareNotes, enabled: !!p.userId });
+  const careFn = useServerFn(zaloCareCounts);
+  const { data: careCfg } = useQuery({ queryKey: [`${SIG}carecfg`], queryFn: () => careFn(), staleTime: 600000 });
+  const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
   const [f, setF] = useState<ListFilter>(emptyFilter());
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("open");
+    const sp = new URLSearchParams(window.location.search);
+    const id = sp.get("open");
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setOpenId(id);
+    if (sp.get("care") === "1") {
+      const sale = sp.get("sale"); const kind = sp.get("kind");
+      setCare({ on: true, sale: sale && /^[0-9a-f-]{36}$/i.test(sale) ? sale : undefined, kind: kind === "unaccepted" || kind === "stale" ? kind : undefined });
+    }
   }, []);
   const [creating, setCreating] = useState(false);
   const [reasonsOpen, setReasonsOpen] = useState(false);
@@ -127,11 +136,21 @@ export function SignalsPage() {
   const saleOnly = p.sale && !p.viewAll && !p.create;
 
   const mine = useMemo(() => data.filter((s) => s.assigned_to === p.userId), [data, p.userId]);
+  const careAll = useMemo(() => {
+    const cfg = careCfg ?? DEFAULT_CARE; const now = Date.now();
+    return data.map((s) => ({ s, flag: careFlag(s, careNotes[s.id] ?? [], now, cfg), since: daysSince(lastCareActivity(s, careNotes[s.id] ?? []), now) }))
+      .filter((x) => x.flag);
+  }, [data, careNotes, careCfg]);
+  // Sale chỉ thấy tín hiệu đang giao cho chính mình; quản lý thấy trong phạm vi được xem
+  const careScope = useMemo(() => (p.viewAll || p.assign || p.manage ? careAll : careAll.filter((x) => x.s.assigned_to === p.userId)), [careAll, p]);
+  const careList = useMemo(() => careScope.filter((x) => (!care.sale || x.s.assigned_to === care.sale)
+    && (!care.kind || (care.kind === "unaccepted" ? x.flag === "unaccepted" : x.flag !== "unaccepted"))), [careScope, care]);
   const list = useMemo(() => applyListFilter(data, f, today, last), [data, f, today, last]);
   const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
   const open = data.find((s) => s.id === openId) || null;
   const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
+
 
   return (
     <div className="space-y-4 pb-20 md:pb-0">
@@ -164,11 +183,41 @@ export function SignalsPage() {
           <SlidersHorizontal className="h-4 w-4 mr-1" />Bộ lọc{extra ? ` (${extra})` : ""}
         </Button>
       </div>
+      {careScope.length > 0 && !care.on && (
+        <button onClick={() => setCare({ on: true })} className="w-full text-left rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-medium">
+          ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
+        </button>
+      )}
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
         {QUICK.map((x) => (
-          <button key={x.k} onClick={() => setF((y) => ({ ...y, quick: x.k }))} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label} <span className="opacity-70">{count(x.k)}</span></button>
+          <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label} <span className="opacity-70">{count(x.k)}</span></button>
         ))}
+        <button onClick={() => setCare({ on: true, kind: "stale" })} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", care.on && care.kind === "stale" ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>Lâu chưa cập nhật <span className="opacity-70">{careScope.filter((x) => x.flag !== "unaccepted").length}</span></button>
       </div>
+      {care.on && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">⚠️ Cần kiểm tra{care.kind === "unaccepted" ? " — Chưa tiếp nhận" : care.kind === "stale" ? " — Lâu chưa cập nhật" : ""}{care.sale ? ` — ${name(care.sale)}` : ""}: {careList.length}</span>
+            <Button variant="ghost" size="sm" onClick={() => setCare({ on: false })}>Xem tất cả</Button>
+          </div>
+          {careList.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg bg-card">Không có tín hiệu cần kiểm tra.</p>
+            : careList.map(({ s, flag, since }) => (
+              <div key={s.id} className="rounded-xl border bg-card p-3.5 space-y-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-semibold leading-tight">{s.customer_name}</div>
+                  <StatusBadge s={s.status} />
+                </div>
+                <div className="text-sm"><span className="text-muted-foreground">Diễn biến gần nhất: </span>{lastText(last[s.id]) ?? "Chưa có"}</div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className={flag === "unaccepted" ? "text-destructive" : "text-amber-700 dark:text-amber-300"}>
+                    {flag === "unaccepted" ? `Chưa tiếp nhận: ${since} ngày` : `Chưa cập nhật: ${since} ngày`}{!saleOnly && s.assigned_to ? ` · ${name(s.assigned_to)}` : ""}
+                  </span>
+                  <Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Xem tín hiệu</Button>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
       <p className="text-xs text-muted-foreground -mt-2">Sắp xếp theo cập nhật mới nhất.</p>
 
       {isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
