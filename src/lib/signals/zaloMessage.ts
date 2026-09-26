@@ -14,7 +14,7 @@ const vnDate = (d?: string | null) => {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
 };
 
-export function signalMessage(kind: "signal_new" | "signal_assigned", s: SignalMsgData) {
+export function signalMessage(kind: "signal_new" | "signal_assigned", s: SignalMsgData, brand = "BASE MARKETING") {
   const needs = list(s.need_groups?.length ? s.need_groups : s.need_group ? [s.need_group] : []);
   const common = [
     line("🏢", "Khách hàng", s.customer_name), line("📦", "Sản phẩm", list(s.products)),
@@ -22,7 +22,7 @@ export function signalMessage(kind: "signal_new" | "signal_assigned", s: SignalM
   ];
   if (kind === "signal_new") {
     return {
-      header: "🔔 BASE MARKETING",
+      header: `🔔 ${brand}`,
       button: "XEM VÀ PHÂN CÔNG",
       text: ["TÍN HIỆU MỚI CẦN PHÂN CÔNG", "", ...common, line("📅", "Ngày tạo", vnDate(s.detected_on ?? s.created_at)), "👤 Phụ trách: Chưa phân công"]
         .filter((x) => x !== null).join("\n"),
@@ -30,7 +30,7 @@ export function signalMessage(kind: "signal_new" | "signal_assigned", s: SignalM
   }
   const st = s.status ? STATUS_LABEL[s.status as SignalStatus] ?? null : null;
   return {
-    header: "🎯 BASE MARKETING",
+    header: `🎯 ${brand}`,
     button: "XEM VÀ TIẾP NHẬN",
     text: ["BẠN ĐƯỢC GIAO TÍN HIỆU MỚI", "", ...common, line("📌", "Trạng thái", st)].filter((x) => x !== null).join("\n"),
   };

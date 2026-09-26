@@ -151,7 +151,7 @@ async function postCs(token: string, body: unknown): Promise<{ j: any; netErr: b
 }
 
 export async function sendCs(zaloUserId: string, text: string, link: string, opts: { header?: string; button?: string } = {}): Promise<SendResult> {
-  const header = opts.header ?? "BASE MARKETING";
+  const header = opts.header ?? await brandHeader();
   const button = opts.button ?? "XEM TÍN HIỆU";
   const token = await getAccessToken();
   if (!token) return { ok: false, code: -1, message: "Chưa kết nối OA" };
@@ -179,11 +179,11 @@ export async function sendCs(zaloUserId: string, text: string, link: string, opt
 }
 
 /** Tin kiểm thử — không dùng dữ liệu khách hàng, không tạo sự kiện tín hiệu. */
-export function testMessage(now = new Date()) {
+export function testMessage(now = new Date(), brand = "BASE MARKETING") {
   const t = now.toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false });
   return {
-    header: "🧪 BASE MARKETING — TIN KIỂM THỬ",
-    text: `Đây là tin nhắn kiểm tra kết nối Zalo OA với Base.\nNếu bạn nhận được tin này, kết nối gửi tin đang hoạt động.\n\nThời gian: ${t}`,
+    header: `🧪 ${brand} — TIN KIỂM THỬ`,
+    text: `Đây là tin nhắn kiểm tra kết nối Zalo OA với ${brand}.\nNếu bạn nhận được tin này, kết nối gửi tin đang hoạt động.\n\nThời gian: ${t}`,
     button: "MỞ BASE",
   };
 }
@@ -194,7 +194,7 @@ export async function buildSignalMessage(kind: "signal_new" | "signal_assigned",
   const db = await admin();
   const { data: s } = await db.from("opportunity_signals")
     .select("customer_name,products,need_groups,need_group,source,detected_on,created_at,status").eq("id", signalId).maybeSingle();
-  return { ...signalMessage(kind, s ?? {}), link: `${await baseUrl()}/signals?open=${signalId}` };
+  return { ...signalMessage(kind, s ?? {}, await brandHeader()), link: `${await baseUrl()}/signals?open=${signalId}` };
 }
 
 /** Khoảng chống gửi trùng khi gỡ rồi giao lại cùng một người trong thời gian ngắn. */
@@ -247,7 +247,7 @@ export async function processPending(limit = 20) {
       if (stale) { await mark({ zalo_status: "ineligible", zalo_error: "Đơn đã được xử lý/chuyển người duyệt" }); continue; }
       const { data: p } = await db.from("profiles").select("full_name").eq("id", r.owner_id).maybeSingle();
       const { leaveMessage } = await import("./leave/zaloMessage");
-      leaveMsg = { ...leaveMessage(n.kind, { ...r, owner_name: p?.full_name, action: n.payload?.action }), link: `${await baseUrl()}/leave?open=${r.id}` };
+      leaveMsg = { ...leaveMessage(n.kind, { ...r, owner_name: p?.full_name, action: n.payload?.action }, await brandHeader()), link: `${await baseUrl()}/leave?open=${r.id}` };
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }
@@ -339,7 +339,7 @@ export async function runCareDigest() {
       continue;
     }
     const { data: p } = await db.from("profiles").select("full_name").eq("id", uid).maybeSingle();
-    const r = await sendCs(link.zalo_user_id, careMessage(p?.full_name || "bạn", c), `${await baseUrl()}/signals?care=1`);
+    const r = await sendCs(link.zalo_user_id, careMessage(p?.full_name || "bạn", c), `${await baseUrl()}/signals?care=1`, { header: await brandHeader() });
     if (r.ok) sent++;
     // Chỉ thử 1 lần — không gửi lại liên tục
     await db.from("notifications").update(r.ok
@@ -387,7 +387,7 @@ export async function runLeaveRemind() {
       await db.from("notifications").update({ zalo_status: "ineligible", zalo_error: !canSend ? "Chưa bật Zalo cho đơn từ" : "Chưa liên kết Zalo" }).eq("id", row.id);
       continue;
     }
-    const m = remindMessage(g.ids.length, g.soon);
+    const m = remindMessage(g.ids.length, g.soon, await brandHeader());
     const r = await sendCs(link.zalo_user_id, m.text, `${await baseUrl()}/leave?tab=approve`, { header: m.header, button: m.button });
     if (r.ok) sent++;
     await db.from("notifications").update(r.ok
@@ -395,4 +395,13 @@ export async function runLeaveRemind() {
       : { zalo_status: [-213, -230, -201].includes(r.code) ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: MAX_ATTEMPTS }).eq("id", row.id);
   }
   return { created, sent };
+}
+
+/** Tên thương hiệu viết hoa cho đầu tin Zalo — đọc từ Cài đặt → Thông tin hệ thống; lỗi thì dùng mặc định. */
+export async function brandHeader(): Promise<string> {
+  try {
+    const { data } = await (await admin()).from("app_branding").select("app_name").eq("id", 1).maybeSingle();
+    const n = String(data?.app_name ?? "").trim();
+    return n ? n.toUpperCase() : "BASE MARKETING";
+  } catch { return "BASE MARKETING"; }
 }

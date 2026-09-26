@@ -1,3 +1,4 @@
+import { useBranding, BrandMark } from "@/lib/branding";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/pending")({
 });
 
 function PendingPage() {
+  const brand = useBranding();
   const navigate = useNavigate();
   const logout = useAuth((s) => s.logout);
   const { user } = useCurrentUser();
@@ -24,8 +26,8 @@ function PendingPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted px-4 py-8">
       <div className="w-full max-w-lg">
         <div className="text-center mb-6">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xl mb-3">B</div>
-          <h1 className="text-xl font-semibold tracking-tight">Base Marketing</h1>
+          <BrandMark b={brand} className="h-12 w-12 rounded-xl text-xl mb-3" />
+          <h1 className="text-xl font-semibold tracking-tight">{brand.app_name}</h1>
         </div>
         <Card className="border-amber-200/60 shadow-lg">
           <CardContent className="p-8">

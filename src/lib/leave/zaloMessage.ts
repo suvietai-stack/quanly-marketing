@@ -29,7 +29,7 @@ const RESULT: Record<string, string> = {
   created_for: "📝 CÓ ĐƠN ĐƯỢC TẠO HỘ BẠN",
 };
 
-export function leaveMessage(kind: LeaveKind, d: LeaveMsgData) {
+export function leaveMessage(kind: LeaveKind, d: LeaveMsgData, brand = "BASE MARKETING") {
   const title = kind === "leave_pending"
     ? (d.action === "resubmit" ? "📝 ĐƠN GỬI LẠI CẦN DUYỆT" : "📝 ĐƠN MỚI CẦN DUYỆT")
     : kind === "leave_cancel_request" ? "🗑️ YÊU CẦU HỦY ĐƠN CẦN DUYỆT"
@@ -41,12 +41,12 @@ export function leaveMessage(kind: LeaveKind, d: LeaveMsgData) {
     d.reason_name ? `📌 Lý do: ${d.reason_name}` : "",
     kind === "leave_result" && d.decision_note && ["reject", "cancel_reject", "exception"].includes(d.action ?? "") ? `💬 Ghi chú: ${d.decision_note}` : "",
   ].filter(Boolean);
-  return { header: `BASE MARKETING — ${title}`, text: lines.join("\n"), button: kind === "leave_result" ? "XEM ĐƠN" : "XEM VÀ DUYỆT" };
+  return { header: `${brand} — ${title}`, text: lines.join("\n"), button: kind === "leave_result" ? "XEM ĐƠN" : "XEM VÀ DUYỆT" };
 }
 
-export function remindMessage(count: number, overdue: number) {
+export function remindMessage(count: number, overdue: number, brand = "BASE MARKETING") {
   const lines = [`Bạn có ${count} đơn đang chờ duyệt.`, overdue ? `⏰ Sắp tới / đã tới giờ bắt đầu: ${overdue}` : ""].filter(Boolean);
-  return { header: "⏳ BASE MARKETING — NHẮC DUYỆT ĐƠN", text: lines.join("\n"), button: "XEM ĐƠN CHỜ DUYỆT" };
+  return { header: `⏳ ${brand} — NHẮC DUYỆT ĐƠN`, text: lines.join("\n"), button: "XEM ĐƠN CHỜ DUYỆT" };
 }
 
 /** Đơn cần nhắc: chờ duyệt quá N giờ, hoặc giờ bắt đầu còn ≤ 2 giờ. */

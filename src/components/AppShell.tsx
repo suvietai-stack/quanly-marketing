@@ -1,3 +1,4 @@
+import { useBranding, BrandMark } from "@/lib/branding";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
@@ -78,6 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
   const logout = useAuth((s) => s.logout);
+  const brand = useBranding();
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
   const isKpiAdmin = isSuperAdmin || user?.roleId === "role-admin";
   const canApprove = isSuperAdmin || can("settings.account_approve");
@@ -133,12 +135,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const Sidebar = (
     <aside className="flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-2 px-5 py-5 border-b border-sidebar-border">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-          B
-        </div>
-        <div>
-          <div className="text-sm font-semibold tracking-tight">Base Marketing</div>
-          <div className="text-xs text-sidebar-foreground/60">Quản lý công việc</div>
+        <BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />
+        <div className="min-w-0">
+          <div className="text-sm font-semibold tracking-tight truncate">{brand.app_name}</div>
+          <div className="text-xs text-sidebar-foreground/60 truncate">{brand.description}</div>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
@@ -201,7 +201,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="font-semibold flex-1">Base Marketing</div>
+          <div className="font-semibold flex-1 truncate">{brand.app_name}</div>
           <NotificationBell />
           {user && (
             <button onClick={onLogout} className="p-2 rounded hover:bg-accent" title="Đăng xuất">

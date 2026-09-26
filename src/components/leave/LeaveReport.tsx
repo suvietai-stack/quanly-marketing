@@ -4,20 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/lib/auth";
+import { useBranding } from "@/lib/branding";
 import { buildReport, toCsv } from "@/lib/leave/report";
 import { fmtDays, todayVn } from "@/lib/leave/calc";
 import type { LeaveRequest } from "@/lib/leave/api";
 
 export function LeaveReport({ rows, name }: { rows: LeaveRequest[]; name: (id?: string | null) => string }) {
   const { can } = useCurrentUser();
+  const brand = useBranding();
   const [month, setMonth] = useState(todayVn().slice(0, 7));
   const data = useMemo(() => buildReport(rows, month).sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")), [rows, month, name]);
   const total = data.reduce((t, r) => ({ days: t.days + r.leaveDays, late: t.late + r.lateCount, early: t.early + r.earlyCount, pending: t.pending + r.pending }), { days: 0, late: 0, early: 0, pending: 0 });
 
   const exportCsv = () => {
-    const blob = new Blob([toCsv(data, (id) => name(id), month)], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([toCsv(data, (id) => name(id), month, `${brand.app_name} — ${brand.org_name}`)], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = `bao-cao-don-tu-${month}.csv`; a.click();
+    a.href = URL.createObjectURL(blob); a.download = `${brand.short_name.replace(/[^\p{L}\p{N}]+/gu, "-")}-bao-cao-don-tu-${month}.csv`; a.click();
     URL.revokeObjectURL(a.href);
   };
 
