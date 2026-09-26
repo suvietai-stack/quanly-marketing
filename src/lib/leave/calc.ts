@@ -74,9 +74,9 @@ export function evalLeave(s: LeaveSettings, p: Partial<LeavePayload>): EvalResul
   const sv = s.session_value ?? 0.5;
   let cnt = 0; let mark: Date | null = null;
   const details: { date: string; am: boolean; pm: boolean; days: number }[] = [];
-  for (let d = d1, i = 0; d <= d2 && i < 400; d = addDays(d, 1), i++) {
-    const am = works(s, d, "am") && (d > d1 || h1 === "am");
-    const pm = works(s, d, "pm") && (d < d2 || h2 === "pm");
+  for (let d: string = d1, i = 0; d <= d2 && i < 400; d = addDays(d, 1), i++) {
+    const am: boolean = works(s, d, "am") && (d > d1 || h1 === "am");
+    const pm: boolean = works(s, d, "pm") && (d < d2 || h2 === "pm");
     if (!am && !pm) continue;
     cnt += Number(am) + Number(pm);
     details.push({ date: d, am, pm, days: (Number(am) + Number(pm)) * sv });
