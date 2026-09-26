@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LeaveReport } from "./LeaveReport";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, CalendarDays, Clock, LogOut as LogOutIcon, AlertTriangle, History, ChevronRight } from "lucide-react";
