@@ -526,6 +526,7 @@ export type Database = {
           dedup_key: string
           id: string
           kind: string
+          payload: Json | null
           read_at: string | null
           recipient_id: string
           signal_id: string | null
@@ -539,6 +540,7 @@ export type Database = {
           dedup_key: string
           id?: string
           kind: string
+          payload?: Json | null
           read_at?: string | null
           recipient_id: string
           signal_id?: string | null
@@ -552,6 +554,7 @@ export type Database = {
           dedup_key?: string
           id?: string
           kind?: string
+          payload?: Json | null
           read_at?: string | null
           recipient_id?: string
           signal_id?: string | null
@@ -1216,6 +1219,12 @@ export type Database = {
           app_secret: string | null
           auto_send: boolean
           base_url: string | null
+          care_cron_token: string | null
+          care_enabled: boolean
+          care_hour: number
+          care_last_run: string | null
+          care_stale_days: number
+          care_wait_hours: number
           id: number
           last_error: string | null
           oa_id: string | null
@@ -1235,6 +1244,12 @@ export type Database = {
           app_secret?: string | null
           auto_send?: boolean
           base_url?: string | null
+          care_cron_token?: string | null
+          care_enabled?: boolean
+          care_hour?: number
+          care_last_run?: string | null
+          care_stale_days?: number
+          care_wait_hours?: number
           id?: number
           last_error?: string | null
           oa_id?: string | null
@@ -1254,6 +1269,12 @@ export type Database = {
           app_secret?: string | null
           auto_send?: boolean
           base_url?: string | null
+          care_cron_token?: string | null
+          care_enabled?: boolean
+          care_hour?: number
+          care_last_run?: string | null
+          care_stale_days?: number
+          care_wait_hours?: number
           id?: number
           last_error?: string | null
           oa_id?: string | null
