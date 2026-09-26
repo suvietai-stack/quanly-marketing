@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { useCurrentUser } from "@/lib/auth";
 import { useBranding } from "@/lib/branding";
 import { buildDetails, buildReport, isoWeekOf, rangeOf, weeksInYear, type PeriodKind, type ReportRow, type DetailRow } from "@/lib/leave/report";
-import { fmtDate, fmtDays, todayVn, TYPE_LABEL, type LeaveType } from "@/lib/leave/calc";
+import { fmtDate, fmtDays, fmtVn, todayVn, TYPE_LABEL, type LeaveType } from "@/lib/leave/calc";
+import { attInRange, attSummary, declaredTime, KIND_LABEL, WITNESS_LABEL, type AttExplanation } from "@/lib/leave/attendance";
 import { STATUS_LABEL, type LeaveRequest, type LeaveStatus } from "@/lib/leave/api";
 
 const KINDS: [PeriodKind, string][] = [["week", "Tuần"], ["month", "Tháng"], ["quarter", "Quý"], ["year", "Năm"], ["custom", "Tùy chỉnh"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
-export function LeaveReport({ rows, name }: { rows: LeaveRequest[]; name: (id?: string | null) => string }) {
+export function LeaveReport({ rows, atts, name, onOpenAtt }: { rows: LeaveRequest[]; atts?: AttExplanation[] | null; name: (id?: string | null) => string; onOpenAtt?: (id: string) => void }) {
   const { can } = useCurrentUser();
   const brand = useBranding();
   const today = todayVn();
@@ -31,6 +32,8 @@ export function LeaveReport({ rows, name }: { rows: LeaveRequest[]; name: (id?: 
   const data = useMemo(() => buildReport(rows, range).sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")), [rows, range, name]);
   const details = useMemo(() => buildDetails(rows, range), [rows, range]);
   const total = data.reduce((t, r) => ({ days: t.days + r.leaveDays, late: t.late + r.lateCount, early: t.early + r.earlyCount, pending: t.pending + r.pending, rejected: t.rejected + r.rejected }), { days: 0, late: 0, early: 0, pending: 0, rejected: 0 });
+  const attRows = useMemo(() => atts ? attInRange(atts, range.start, range.end).sort((a, b) => a.work_date.localeCompare(b.work_date)) : [], [atts, range]);
+  const attSum = useMemo(() => attSummary(attRows).sort((a, b) => name(a.owner_id).localeCompare(name(b.owner_id), "vi")), [attRows, name]);
   const years = Array.from({ length: 7 }, (_, i) => cy - 5 + i);
 
   const exportXlsx = async () => {
@@ -44,6 +47,14 @@ export function LeaveReport({ rows, name }: { rows: LeaveRequest[]; name: (id?: 
     const dHead = ["Nhân viên", "Loại đơn", "Thời gian đăng ký", "Ngày nghỉ trong kỳ", "Số phút", "Trạng thái", "Tính vào tổng"];
     const dRows = [...details].sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")).map((d) => [name(d.userId), TYPE_LABEL[d.type as LeaveType] ?? d.type, whenText(d), d.type === "leave" ? d.days : "", d.type === "leave" ? "" : d.minutes, STATUS_LABEL[d.status as LeaveStatus] ?? d.status, d.counted ? "Có" : "Không"]);
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Chỉ đơn Đã duyệt được tính vào bảng Tổng hợp."], dHead, ...dRows]), "Chi tiết");
+    if (atts) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Tính theo ngày quên chấm công. Giải trình đã thu hồi không tính."],
+        ["Nhân viên", "Tổng số lần", "Quên chấm công vào", "Quên chấm công ra", "Quên cả hai", "Chưa đối chiếu", "Đã đối chiếu"],
+        ...attSum.map((r) => [name(r.owner_id), r.total, r.in, r.out, r.both, r.unreconciled, r.reconciled])]), "Giải trình - Tổng hợp");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], [],
+        ["Nhân viên", "Ngày quên chấm công", "Gửi lúc", "Nội dung", "Giờ tự khai báo", "Lý do", "Chi tiết", "Người làm chứng", "Kết quả làm chứng", "Trạng thái đối chiếu", "Người đối chiếu", "Thời điểm đối chiếu", "Ghi chú đối chiếu"],
+        ...attRows.map((a) => [name(a.owner_id), fmtDate(a.work_date), fmtVn(a.submitted_at), KIND_LABEL[a.kind], declaredTime(a), a.reason_name, a.detail ?? "", name(a.witness_id), WITNESS_LABEL[a.witness_status], a.reconciled ? "Đã đối chiếu" : "Chưa đối chiếu", a.reconciled ? name(a.reconciled_by) : "", a.reconciled_at ? fmtVn(a.reconciled_at) : "", a.reconcile_note ?? ""])]), "Giải trình - Chi tiết");
+    }
     XLSX.writeFile(wb, `${brand.short_name.replace(/[^\p{L}\p{N}]+/gu, "-")}-bao-cao-don-tu-${range.start}_${range.end}.xlsx`);
   };
 
@@ -65,7 +76,7 @@ export function LeaveReport({ rows, name }: { rows: LeaveRequest[]; name: (id?: 
           <Input type="date" value={ce} onChange={(e) => e.target.value && setCe(e.target.value)} className="w-40" />
         </>}
         <div className="flex-1" />
-        {can("leave.export") && <Button variant="outline" onClick={exportXlsx} disabled={!details.length}><Download className="h-4 w-4 mr-1" />Xuất Excel</Button>}
+        {can("leave.export") && <Button variant="outline" onClick={exportXlsx} disabled={!details.length && !attRows.length}><Download className="h-4 w-4 mr-1" />Xuất Excel</Button>}
       </div>
       <div className="text-sm text-muted-foreground">Đang thống kê: <span className="font-medium text-foreground">{periodLabel}</span></div>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -97,6 +108,7 @@ export function LeaveReport({ rows, name }: { rows: LeaveRequest[]; name: (id?: 
           </tbody>
         </table>
       </CardContent></Card>
+      {atts && <AttSection sum={attSum} rows={attRows} name={name} onOpen={onOpenAtt} />}
       <p className="text-xs text-muted-foreground">Tính theo ngày đăng ký nghỉ/đi muộn/về sớm, không theo ngày gửi đơn. Chỉ đơn đã duyệt được cộng vào tổng; đơn nghỉ qua nhiều kỳ được chia theo từng ngày làm việc. Bấm vào tên nhân viên để xem chi tiết từng đơn. Báo cáo gồm những đơn bạn được quyền xem.</p>
     </div>
   );
@@ -124,5 +136,39 @@ function DetailTable({ rows }: { rows: DetailRow[] }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+function AttSection({ sum, rows, name, onOpen }: { sum: ReturnType<typeof attSummary>; rows: AttExplanation[]; name: (id?: string | null) => string; onOpen?: (id: string) => void }) {
+  const th = "text-left font-medium px-3 py-2 whitespace-nowrap";
+  return (
+    <div className="space-y-3 pt-2">
+      <h3 className="font-semibold">Giải trình Chấm Công</h3>
+      <Card><CardContent className="p-0 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>{["Nhân viên", "Tổng", "Quên vào", "Quên ra", "Quên cả hai", "Chưa đối chiếu", "Đã đối chiếu"].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+          <tbody>
+            {sum.map((r) => <tr key={r.owner_id} className="border-t"><td className="px-3 py-2 font-medium">{name(r.owner_id)}</td><td className="px-3 py-2">{r.total}</td><td className="px-3 py-2">{r.in}</td><td className="px-3 py-2">{r.out}</td><td className="px-3 py-2">{r.both}</td><td className="px-3 py-2">{r.unreconciled}</td><td className="px-3 py-2">{r.reconciled}</td></tr>)}
+            {!sum.length && <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Không có giải trình nào trong khoảng thời gian này.</td></tr>}
+          </tbody>
+        </table>
+      </CardContent></Card>
+      {rows.length > 0 && <Card><CardContent className="p-0 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-muted/50 text-muted-foreground"><tr>{["Nhân viên", "Ngày quên", "Gửi lúc", "Nội dung", "Giờ tự khai", "Lý do", "Người làm chứng", "Làm chứng", "Đối chiếu"].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+          <tbody>
+            {rows.map((a) => (
+              <tr key={a.id} className="border-t cursor-pointer hover:bg-muted/40" onClick={() => onOpen?.(a.id)}>
+                <td className="px-3 py-1.5">{name(a.owner_id)}</td><td className="px-3 py-1.5">{fmtDate(a.work_date)}</td><td className="px-3 py-1.5 whitespace-nowrap">{fmtVn(a.submitted_at)}</td>
+                <td className="px-3 py-1.5">{KIND_LABEL[a.kind]}</td><td className="px-3 py-1.5 whitespace-nowrap">{declaredTime(a)}</td><td className="px-3 py-1.5">{a.reason_name}</td>
+                <td className="px-3 py-1.5">{name(a.witness_id)}</td><td className="px-3 py-1.5">{WITNESS_LABEL[a.witness_status]}</td>
+                <td className="px-3 py-1.5 whitespace-nowrap">{a.reconciled ? `Đã · ${name(a.reconciled_by)} · ${fmtVn(a.reconciled_at!)}` : "Chưa"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent></Card>}
+      <p className="text-xs text-muted-foreground">Giải trình tính theo ngày quên chấm công, không cộng vào thống kê nghỉ phép, đi muộn, về sớm. Giải trình đã thu hồi không tính. Bấm một dòng để xem đầy đủ và lịch sử.</p>
+    </div>
   );
 }

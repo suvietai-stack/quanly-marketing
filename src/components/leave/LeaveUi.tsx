@@ -143,7 +143,7 @@ export function LeavePage() {
         {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showReport && <TabsContent value="report" className="mt-4">
-          <LeaveReport rows={can("leave.report") ? all : []} atts={can("att.report") ? atts : null} name={name} />
+          <LeaveReport rows={can("leave.report") ? all : []} atts={can("att.report") ? atts : null} name={name} onOpenAtt={setAttO} />
         </TabsContent>}
       </Tabs>
 
