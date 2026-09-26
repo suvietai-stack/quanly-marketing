@@ -1,5 +1,5 @@
 // Chỉ chạy phía máy chủ. Không log token / SĐT / nội dung khách hàng.
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
 
 // Địa chỉ backend cố định trên tên miền của Sứ Việt (Zalo yêu cầu domain đã xác thực) — dùng cho OAuth Callback / Webhook.
 // Không đổi theo "Đường dẫn ứng dụng Base" để redirect_uri luôn khớp với khai báo trên Zalo Developers.
@@ -211,12 +211,15 @@ export async function processPending(limit = 20) {
   return { processed };
 }
 
-export async function verifyWebhook(raw: string, signature: string | null, timestamp: string) {
+/** Theo tài liệu Zalo: X-ZEvent-Signature = "mac=" + sha256(appId + rawBody + timestamp + OA Secret Key). */
+export async function verifyWebhook(raw: string, signature: string | null, timestamp: string, bodyAppId = "") {
   const { appId, oaSecret } = await zaloEnv();
-  if (!signature || !oaSecret) return false;
-  const expected = "mac=" + createHash("sha256").update(appId + raw + timestamp + oaSecret).digest("hex");
-  const a = signature.startsWith("mac=") ? signature : "mac=" + signature;
-  return a.length === expected.length && a === expected;
+  if (!signature || !oaSecret || !timestamp) return false;
+  if (bodyAppId && appId && bodyAppId !== appId) return false;
+  const expected = "mac=" + createHash("sha256").update((appId || bodyAppId) + raw + timestamp + oaSecret).digest("hex");
+  const a = (signature.startsWith("mac=") ? signature : "mac=" + signature).toLowerCase();
+  if (a.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(expected));
 }
 
 export async function handleLinkMessage(zaloUserId: string, text: string) {
