@@ -217,8 +217,8 @@ export async function processPending(limit = 20) {
     .eq("zalo_status", "pending").gt("zalo_attempts", 0).neq("kind", "signal_care").is("zalo_sent_at", null)
     .lt("created_at", new Date(Date.now() - STUCK_MS).toISOString()).like("zalo_error", "claimed:%");
   const leaveZalo = (await leaveNotifyCfg()).zalo;
-  const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc"] : [])];
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,created_at,zalo_attempts,zalo_status,payload")
+  const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new"] : [])];
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,created_at,zalo_attempts,zalo_status,payload")
     .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
@@ -252,6 +252,16 @@ export async function processPending(limit = 20) {
       const { data: p } = await db.from("profiles").select("full_name").eq("id", r.owner_id).maybeSingle();
       const { leaveMessage } = await import("./leave/zaloMessage");
       leaveMsg = { ...leaveMessage(n.kind, { ...r, owner_name: p?.full_name, action: n.payload?.action, approver_name: n.payload?.approver_name }, await brandHeader()), link: `${await baseUrl()}/leave?open=${r.id}` };
+    }
+    if (n.kind.startsWith("att_")) {
+      const { data: a } = await db.from("attendance_explanations").select("*").eq("id", n.attendance_id).maybeSingle();
+      const stale = !a || a.recalled || (n.kind === "att_witness" && (a.witness_id !== n.recipient_id || a.witness_status !== "pending"));
+      if (stale) { await mark({ zalo_status: "ineligible", zalo_error: "Giải trình đã thu hồi/đã xử lý" }); continue; }
+      if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
+      const { attMessage } = await import("./leave/attendance");
+      const names = await db.from("profiles").select("id,full_name").in("id", [a.owner_id, a.witness_id]);
+      const nm = (id: string) => (names.data ?? []).find((x: any) => x.id === id)?.full_name;
+      leaveMsg = { ...attMessage(n.kind as "att_witness" | "att_new", { ...a, owner_name: nm(a.owner_id), witness_name: nm(a.witness_id), action: n.payload?.action }, await brandHeader()), link: `${await baseUrl()}/leave?att=${a.id}` };
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }

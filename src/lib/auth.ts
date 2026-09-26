@@ -397,6 +397,14 @@ export const PERMISSIONS: PermissionDef[] = [
   P("leave.report", "Xem báo cáo đơn từ", "Đơn Từ & Phê Duyệt", "Báo cáo"),
   P("leave.export", "Xuất báo cáo", "Đơn Từ & Phê Duyệt", "Báo cáo"),
   P("leave.settings", "Quản lý cài đặt đơn từ", "Đơn Từ & Phê Duyệt", "Cài đặt"),
+  P("att.create", "Tạo giải trình chấm công cá nhân", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.view_own", "Xem giải trình cá nhân", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.edit_own", "Sửa / thu hồi giải trình cá nhân", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.witness", "Xác nhận làm chứng (chỉ giải trình được chọn)", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.view_all", "Xem toàn bộ giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.reconcile", "Đối chiếu giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.report", "Xem báo cáo giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.manage", "Quản lý giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
