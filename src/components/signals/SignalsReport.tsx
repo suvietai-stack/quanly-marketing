@@ -138,3 +138,35 @@ function Tbl({ title, first, rows, cols }: { title: string; first: string; rows:
     </div>
   );
 }
+
+/** Theo dõi chăm sóc — tình trạng hiện tại (không theo bộ lọc thời gian), trong phạm vi dữ liệu được xem. */
+function CareTable({ data, name, userId, all }: { data: any[]; name: (id: string | null) => string; userId: string | null; all: boolean }) {
+  const { data: notes = {} } = useQuery({ queryKey: ["sig:care", userId], queryFn: listCareNotes, enabled: !!userId });
+  const careFn = useServerFn(zaloCareCounts);
+  const { data: cfg } = useQuery({ queryKey: ["sig:carecfg"], queryFn: () => careFn(), staleTime: 600000 });
+  const rows = useMemo(() => {
+    const m: Record<string, { u: number; s: number }> = {}; const now = Date.now();
+    for (const s of data) {
+      if (!all && s.assigned_to !== userId) continue;
+      const f = careFlag(s, notes[s.id] ?? [], now, cfg ?? DEFAULT_CARE);
+      if (!f) continue;
+      const r = (m[s.assigned_to] ??= { u: 0, s: 0 });
+      if (f === "unaccepted") r.u++; else r.s++;
+    }
+    return Object.entries(m).sort((a, b) => b[1].u + b[1].s - a[1].u - a[1].s);
+  }, [data, notes, cfg, all, userId]);
+  const link = (id: string, kind: string, n: number) => n ? <a className="text-primary underline" href={`/signals?care=1&sale=${id}&kind=${kind}`}>{n}</a> : <span className="text-muted-foreground">0</span>;
+  return (
+    <div className="rounded-lg border bg-card overflow-x-auto">
+      <div className="px-3 py-2 text-sm font-medium border-b">Theo dõi chăm sóc <span className="text-xs font-normal text-muted-foreground">— tình trạng hiện tại, chỉ để nhắc việc</span></div>
+      {rows.length === 0 ? <p className="p-3 text-sm text-muted-foreground">Không có tín hiệu cần kiểm tra.</p> : (
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50 text-left text-xs text-muted-foreground"><tr><th className="px-3 py-2">Nhân viên</th><th className="px-3 py-2">Chưa tiếp nhận</th><th className="px-3 py-2">Lâu chưa cập nhật</th></tr></thead>
+          <tbody>{rows.map(([id, r]) => (
+            <tr key={id} className="border-t"><td className="px-3 py-2">{name(id)}</td><td className="px-3 py-2">{link(id, "unaccepted", r.u)}</td><td className="px-3 py-2">{link(id, "stale", r.s)}</td></tr>
+          ))}</tbody>
+        </table>
+      )}
+    </div>
+  );
+}
