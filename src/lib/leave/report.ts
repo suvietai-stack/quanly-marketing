@@ -37,9 +37,9 @@ export function buildReport(rows: R[], month: string): ReportRow[] {
   return Object.values(by);
 }
 
-export function toCsv(rows: ReportRow[], name: (id: string) => string, month: string): string {
+export function toCsv(rows: ReportRow[], name: (id: string) => string, month: string, title?: string): string {
   const head = ["Tháng", "Nhân viên", "Số đơn nghỉ phép", "Số ngày nghỉ", "Số lần đi muộn", "Phút đi muộn", "Số lần về sớm", "Phút về sớm", "Đơn chờ duyệt", "Đơn bị từ chối"];
   const esc = (v: unknown) => { const s = String(v); return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const lines = rows.map((r) => [month, name(r.userId), r.leaveCount, String(r.leaveDays).replace(".", ","), r.lateCount, r.lateMinutes, r.earlyCount, r.earlyMinutes, r.pending, r.rejected].map(esc).join(","));
-  return "\uFEFF" + [head.join(","), ...lines].join("\n");
+  return "\uFEFF" + [...(title ? [esc(`${title} — Báo cáo đơn từ tháng ${month}`), ""] : []), head.join(","), ...lines].join("\n");
 }

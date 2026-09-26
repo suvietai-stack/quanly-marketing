@@ -19,6 +19,7 @@ import { AccountsSettings } from "@/components/AccountsSettings";
 import { ZaloSettingsTab } from "@/components/ZaloUi";
 import { SignalCatalogSettings } from "@/components/signals/SignalCatalogSettings";
 import { LeaveSettings } from "@/components/leave/LeaveSettings";
+import { SystemInfoSettings } from "@/components/SystemInfoSettings";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
@@ -151,7 +152,7 @@ function SettingsPage() {
   const showAccounts = can("settings.user_view") || can("settings.role") || can("settings.permission");
   const showPeople = can("settings.people");
   const showCatalog = can("settings.catalog") || can("settings.plan_topic");
-  const showInfo = can("settings.system_view");
+  const showInfo = can("settings.system_view") || can("system.branding");
   const showSigCat = can("signal.catalog") || can("signal.manage");
   const showLeave = can("leave.settings");
   const canPresence = can("settings.view_presence");
@@ -276,6 +277,7 @@ function SettingsPage() {
       </CardContent></Card></TabsContent>
 
       <TabsContent value="info" className="mt-4 space-y-4">
+        <SystemInfoSettings />
         <Card><CardContent className="p-5 text-sm text-muted-foreground space-y-2">
           <p>Dữ liệu được lưu trên Lovable Cloud — chia sẻ giữa tất cả người dùng và thiết bị.</p>
           <p>Tài khoản đang hoạt động sẽ tự động xuất hiện trong các dropdown chọn người phụ trách trong toàn app.</p>
