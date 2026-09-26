@@ -35,6 +35,7 @@ import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo/webhook'
 import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
+import { Route as ApiPublicZaloDispatchCronRouteImport } from './routes/api/public/zalo/dispatch-cron'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
 
 const WebContentsRoute = WebContentsRouteImport.update({
@@ -168,6 +169,12 @@ const ApiPublicZaloOauthCallbackRoute =
     path: '/api/public/zalo/oauth-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicZaloDispatchCronRoute =
+  ApiPublicZaloDispatchCronRouteImport.update({
+    id: '/api/public/zalo/dispatch-cron',
+    path: '/api/public/zalo/dispatch-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
   id: '/api/public/zalo/care-cron',
   path: '/api/public/zalo/care-cron',
@@ -200,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
+  '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
   '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
+  '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
   '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
@@ -259,6 +268,7 @@ export interface FileRoutesById {
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
+  '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
   '/api/public/zalo/webhook': typeof ApiPublicZaloWebhookRoute
 }
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/social/'
     | '/websites/'
     | '/api/public/zalo/care-cron'
+    | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
     | '/api/public/zalo/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/websites'
     | '/api/public/zalo/care-cron'
+    | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
     | '/api/public/zalo/webhook'
   id:
@@ -348,6 +360,7 @@ export interface FileRouteTypes {
     | '/social/'
     | '/websites/'
     | '/api/public/zalo/care-cron'
+    | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
     | '/api/public/zalo/webhook'
   fileRoutesById: FileRoutesById
@@ -378,6 +391,7 @@ export interface RootRouteChildren {
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
+  ApiPublicZaloDispatchCronRoute: typeof ApiPublicZaloDispatchCronRoute
   ApiPublicZaloOauthCallbackRoute: typeof ApiPublicZaloOauthCallbackRoute
   ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
 }
@@ -566,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicZaloOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zalo/dispatch-cron': {
+      id: '/api/public/zalo/dispatch-cron'
+      path: '/api/public/zalo/dispatch-cron'
+      fullPath: '/api/public/zalo/dispatch-cron'
+      preLoaderRoute: typeof ApiPublicZaloDispatchCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/zalo/care-cron': {
       id: '/api/public/zalo/care-cron'
       path: '/api/public/zalo/care-cron'
@@ -602,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
+  ApiPublicZaloDispatchCronRoute: ApiPublicZaloDispatchCronRoute,
   ApiPublicZaloOauthCallbackRoute: ApiPublicZaloOauthCallbackRoute,
   ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
 }
