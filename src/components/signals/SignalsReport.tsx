@@ -74,6 +74,7 @@ export function SignalsReport() {
 
           <H>Hiệu quả Sale</H>
           <Tbl title="Theo Sale được phân công" first="Sale" rows={bySale.map((r) => [name(r.key), r.s])} cols="sale" />
+          <CareTable data={data} name={name} userId={p.userId} all={p.viewAll || p.assign} />
 
           <H>Phân tích tín hiệu</H>
           <Tbl title="Theo nguồn tín hiệu" first="Nguồn" rows={bySource.map((r) => [r.key, r.s])} cols="mkt" />
