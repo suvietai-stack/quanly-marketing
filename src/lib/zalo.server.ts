@@ -178,7 +178,7 @@ export async function processPending(limit = 20) {
   if (!cfg?.auto_send || cfg.status !== "connected") return { processed: 0 };
   const db = await admin();
   const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,zalo_attempts,zalo_status")
-    .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS)
+    .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).neq("kind", "signal_care")
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
   for (const n of rows ?? []) {
