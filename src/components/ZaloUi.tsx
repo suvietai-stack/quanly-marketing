@@ -16,11 +16,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   zaloAdminStatus, zaloConnectUrl, zaloCheck, zaloSendTest, zaloDisconnect, zaloSetAuto, zaloRetryFailed,
   zaloMyLink, zaloCreateLinkCode, zaloUnlink, zaloSaveAppConfig, zaloSaveBaseUrl, zaloSaveWebhookSecret,
+  zaloCareGet, zaloCareSave,
 } from "@/lib/zalo.functions";
 
 const LABEL: Record<string, string> = {
   signal_new: "Có tín hiệu mới đang cần xử lý.",
   signal_assigned: "Bạn vừa được giao một tín hiệu cơ hội mới.",
+  signal_care: "Nhắc chăm sóc: có tín hiệu cần kiểm tra.",
 };
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -252,7 +254,36 @@ export function ZaloAdminCard() {
           </div>
         </div>
       </CardContent></Card>
+      <CareCard />
     </div>
+  );
+}
+
+function CareCard() {
+  const get = useServerFn(zaloCareGet);
+  const save = useServerFn(zaloCareSave);
+  const [c, setC] = useState<{ enabled: boolean; waitHours: number; staleDays: number; hour: number; lastRun: string | null } | null>(null);
+  useEffect(() => { get().then(setC).catch(() => {}); }, []);
+  if (!c) return null;
+  const num = (k: "waitHours" | "staleDays" | "hour") => (e: any) => setC({ ...c, [k]: Number(e.target.value) || 0 });
+  return (
+    <Card><CardContent className="p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold">Nhắc chăm sóc tín hiệu</h3>
+          <p className="text-xs text-muted-foreground">Mỗi Sale nhận tối đa 1 tin tổng hợp/ngày nếu có tín hiệu cần chú ý. Công tắc riêng, không ảnh hưởng 2 thông báo hiện có.</p>
+        </div>
+        <Switch checked={c.enabled} onCheckedChange={(enabled) => setC({ ...c, enabled })} />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1"><Label>Chưa tiếp nhận (giờ)</Label><Input type="number" min={1} value={c.waitHours} onChange={num("waitHours")} /></div>
+        <div className="space-y-1"><Label>Lâu chưa cập nhật (ngày)</Label><Input type="number" min={1} value={c.staleDays} onChange={num("staleDays")} /></div>
+        <div className="space-y-1"><Label>Giờ gửi (0–23)</Label><Input type="number" min={0} max={23} value={c.hour} onChange={num("hour")} /></div>
+      </div>
+      {c.lastRun && <p className="text-xs text-muted-foreground">Lần chạy gần nhất: {c.lastRun}</p>}
+      <Button onClick={() => save({ data: { enabled: c.enabled, waitHours: c.waitHours, staleDays: c.staleDays, hour: c.hour } })
+        .then((r) => toast.success(r.message)).catch((e) => toast.error(String(e?.message ?? e)))}>Lưu cài đặt nhắc</Button>
+    </CardContent></Card>
   );
 }
 
