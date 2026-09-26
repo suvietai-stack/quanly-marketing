@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { zaloDispatch } from "@/lib/zalo.functions";
+import { pushDispatch } from "@/lib/push.functions";
 import type { AttExplanation, AttInput } from "./attendance";
 
 const db = supabase as any;
@@ -12,7 +13,7 @@ export const ATT_ACTION_LABEL: Record<string, string> = {
 async function rpc<T = any>(fn: string, args?: any, wake = false): Promise<T> {
   const { data, error } = await db.rpc(fn, args);
   if (error) throw error;
-  if (wake) zaloDispatch().catch(() => {});
+  if (wake) { zaloDispatch().catch(() => {}); pushDispatch().catch(() => {}); }
   return data as T;
 }
 export async function listAtt(): Promise<AttExplanation[]> {

@@ -892,6 +892,7 @@ export type Database = {
           kind: string
           leave_request_id: string | null
           payload: Json | null
+          push_status: string
           read_at: string | null
           recipient_id: string
           signal_id: string | null
@@ -908,6 +909,7 @@ export type Database = {
           kind: string
           leave_request_id?: string | null
           payload?: Json | null
+          push_status?: string
           read_at?: string | null
           recipient_id: string
           signal_id?: string | null
@@ -924,6 +926,7 @@ export type Database = {
           kind?: string
           leave_request_id?: string | null
           payload?: Json | null
+          push_status?: string
           read_at?: string | null
           recipient_id?: string
           signal_id?: string | null
@@ -1257,6 +1260,105 @@ export type Database = {
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      push_config: {
+        Row: {
+          id: number
+          token: string
+        }
+        Insert: {
+          id?: number
+          token?: string
+        }
+        Update: {
+          id?: number
+          token?: string
+        }
+        Relationships: []
+      }
+      push_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          id: string
+          notification_id: string
+          sent_at: string | null
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          notification_id: string
+          sent_at?: string | null
+          status?: string
+          subscription_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          notification_id?: string
+          sent_at?: string | null
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_deliveries_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "push_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          device: string | null
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          device?: string | null
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          device?: string | null
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1811,6 +1913,19 @@ export type Database = {
           _payload: Json
           _reason_id: string
         }
+        Returns: undefined
+      }
+      push_subscribe: {
+        Args: {
+          _auth: string
+          _device: string
+          _endpoint: string
+          _p256dh: string
+        }
+        Returns: undefined
+      }
+      push_unsubscribe: {
+        Args: { _endpoint: string; _id: string }
         Returns: undefined
       }
       signal_assign: {

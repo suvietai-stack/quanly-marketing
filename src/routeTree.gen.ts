@@ -38,6 +38,7 @@ import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/za
 import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
 import { Route as ApiPublicZaloDispatchCronRouteImport } from './routes/api/public/zalo/dispatch-cron'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
+import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
 
 const WebContentsRoute = WebContentsRouteImport.update({
   id: '/web-contents',
@@ -186,6 +187,11 @@ const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
   path: '/api/public/zalo/care-cron',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
+  id: '/api/public/push/dispatch',
+  path: '/api/public/push/dispatch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
+  '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
@@ -309,6 +318,7 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/signals'
     | '/social'
     | '/websites'
+    | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
@@ -403,6 +415,7 @@ export interface RootRouteChildren {
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
+  ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
   ApiPublicZaloDispatchCronRoute: typeof ApiPublicZaloDispatchCronRoute
   ApiPublicZaloOauthCallbackRoute: typeof ApiPublicZaloOauthCallbackRoute
@@ -614,6 +627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicZaloCareCronRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/push/dispatch': {
+      id: '/api/public/push/dispatch'
+      path: '/api/public/push/dispatch'
+      fullPath: '/api/public/push/dispatch'
+      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -643,6 +663,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
+  ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
   ApiPublicZaloDispatchCronRoute: ApiPublicZaloDispatchCronRoute,
   ApiPublicZaloOauthCallbackRoute: ApiPublicZaloOauthCallbackRoute,

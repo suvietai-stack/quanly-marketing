@@ -1056,6 +1056,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    // Ngừng gửi thông báo của tài khoản này tới thiết bị trước khi thoát
+    await import("@/lib/push/client").then((m) => m.disablePush()).catch(() => {});
     await supabase.auth.signOut();
   },
 
