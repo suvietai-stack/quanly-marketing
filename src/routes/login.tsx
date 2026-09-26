@@ -13,6 +13,15 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+function goBack(navigate: ReturnType<typeof useNavigate>) {
+  let back: string | null = null;
+  try { back = sessionStorage.getItem("after_login"); sessionStorage.removeItem("after_login"); } catch { /* ignore */ }
+  if (back && back.startsWith("/") && !back.startsWith("//") && !back.startsWith("/login")) {
+    const [path, qs = ""] = back.split("?");
+    navigate({ to: path as "/", search: Object.fromEntries(new URLSearchParams(qs)) as never });
+  } else navigate({ to: "/" });
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const login = useAuth((s) => s.login);
@@ -24,7 +33,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (currentUserId) navigate({ to: "/" });
+    if (currentUserId) goBack(navigate);
   }, [currentUserId, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -38,7 +47,7 @@ function LoginPage() {
       return;
     }
     toast.success("Đăng nhập thành công");
-    navigate({ to: "/" });
+    // Điều hướng do effect theo currentUserId đảm nhận (tránh điều hướng hai lần)
   };
 
   return (
