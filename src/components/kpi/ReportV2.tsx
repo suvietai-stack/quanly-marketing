@@ -73,6 +73,8 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
         <Link to="/overview-v2" search={{ from: ps, to: pe, brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, metric: metric || undefined, userId: userId || undefined, group: group || undefined }} className="self-center text-xs text-primary hover:underline">→ Xem Tổng quan (giữ bộ lọc)</Link>
       </div>
       {metric && <p className="text-xs">Đang lọc chỉ tiêu: <b>{metric}</b> <button className="text-primary underline" onClick={() => setMetric("")}>bỏ lọc</button></p>}
+      <ReportDiagnosis ps={ps} pe={pe} periods={periods} items={db.items} goals={db.goals} isAdmin={actor.isAdmin}
+        shown={reports.reduce((n, x) => n + x.r.items.length, 0)} hasFilter={!!(brandId || channel || group || metric || userId)} />
       <p className="text-xs text-muted-foreground">Ngày tính theo giờ Việt Nam. Việc được credit theo ngày <b>nộp bản được duyệt</b> — bài nộp cuối kỳ nhưng duyệt sang kỳ sau vẫn thuộc kỳ nộp; bài đang chờ duyệt chưa tính vào hoàn thành và nằm ở cột “Chờ duyệt”.</p>
 
       <div className="overflow-x-auto rounded-lg border border-border">
