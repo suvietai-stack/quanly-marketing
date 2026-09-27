@@ -1,5 +1,5 @@
 /** Trang Mục tiêu (OKR gọn): Mục tiêu → chọn KR từ thư viện 19 KR → đặt chỉ tiêu → theo dõi. Dùng chung engine KPI hiện có. */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -820,7 +820,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" disabled={!caps.delete} title={caps.deleteBlockers.join("\n")} onClick={() => confirm(`Xóa vĩnh viễn mục tiêu "${g.title}"? Thao tác này không thể hoàn tác.`) && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa vĩnh viễn</DropdownMenuItem>
                         {actor.isAdmin && <DropdownMenuItem onClick={() => setLinks(g)}>Xem dữ liệu liên kết</DropdownMenuItem>}
-                        {caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Dùng Hủy/Lưu trữ.</div>}
+                        {caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Bấm "Xem dữ liệu liên kết" để kiểm tra.</div>}
                       </DropdownMenuContent></DropdownMenu>
                   )}
                 </div>
@@ -880,7 +880,7 @@ function GoalLinksSheet({ goal, onClose, onDeleted }: { goal: Goal; onClose: () 
   const [d, setD] = useState<GoalLinkData | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  useState(() => { (supabase as any).rpc("goal_links", { _goal: goal.id }).then(({ data, error }: any) => error ? setErr(error.message) : setD(data)); return 0; });
+  useEffect(() => { (supabase as any).rpc("goal_links", { _goal: goal.id }).then(({ data, error }: any) => error ? setErr(error.message) : setD(data)); }, [goal.id]);
   const blocked = d ? [...d.krs.map((k) => `KR "${k.label}" (${KR_ST[k.status] ?? k.status})`), ...(d.items ? [`${d.items} dòng chỉ tiêu gắn trực tiếp`] : []),
     ...d.periods.filter(periodBlock).map((p) => `Kỳ của ${p.user}: ${periodBlock(p)}`)] : [];
   const empties = d ? d.periods.filter((p) => !periodBlock(p)) : [];
