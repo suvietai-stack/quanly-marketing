@@ -162,6 +162,13 @@
       "when": 1790497132244,
       "tag": "0022_goal_purge_test",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790497242195,
+      "tag": "0023_goal_purge_test_status_guard",
+      "breakpoints": true
     }
   ]
 }
