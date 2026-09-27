@@ -148,6 +148,13 @@
       "when": 1790495621203,
       "tag": "0020_goals_delete_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790496237368,
+      "tag": "0021_goal_links_rpc",
+      "breakpoints": true
     }
   ]
 }
