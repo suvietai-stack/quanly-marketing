@@ -155,6 +155,13 @@
       "when": 1790496237368,
       "tag": "0021_goal_links_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790497132244,
+      "tag": "0022_goal_purge_test",
+      "breakpoints": true
     }
   ]
 }
