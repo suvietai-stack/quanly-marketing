@@ -790,7 +790,6 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
           const states = legacy.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, locked(p)); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
           const caps = goalCaps(g, db, actor.isAdmin);
           const gLocked = goalLocked(g.id, db);
-          const hasLinks = krs.length > 0 || legacy.length > 0 || db.items.some((i) => (i.metadata as { goalId?: string }).goalId === g.id) || db.periods.some((p) => p.goalId === g.id);
           return (
             <div key={g.id} className={cn("rounded-xl border border-border bg-card", meta.archived && "opacity-60")}>
               <div className="flex items-start justify-between gap-3 border-b border-border p-4">
@@ -816,7 +815,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         {caps.cancel && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
                         {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
                         <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" disabled={!caps.delete} onClick={() => confirm("Xóa vĩnh viễn mục tiêu này?") && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa{hasLinks ? " (còn KR — dùng Hủy/Lưu trữ)" : gLocked ? " (kỳ đã khóa)" : ""}</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" disabled={!caps.delete} title={caps.deleteBlockers.join("\n")} onClick={() => confirm(`Xóa vĩnh viễn mục tiêu "${g.title}"? Thao tác này không thể hoàn tác.`) && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa vĩnh viễn</DropdownMenuItem>
+                        {caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Dùng Hủy/Lưu trữ.</div>}
                       </DropdownMenuContent></DropdownMenu>
                   )}
                 </div>
