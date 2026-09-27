@@ -6,7 +6,7 @@
 import type { Goal, GoalKr, GoalKrStatus, EmployeeKpiPeriod, EmployeeKpiItem, KpiPeriodStatus, KpiScope } from "./types";
 import { getKpiMetric, isAssignable } from "./metrics";
 import { monthsIn } from "./calculateKr";
-import { goalLocked, checkGoalTransition } from "./goalPolicy";
+import { goalLocked, checkGoalTransition, goalDeleteBlockers } from "./goalPolicy";
 
 /** Chỉ số lấy từ báo cáo tăng trưởng nhập theo Tháng. */
 export const MONTHLY_SOURCE = new Set(["seo_organic_clicks", "social_views", "mkt_leads"]);

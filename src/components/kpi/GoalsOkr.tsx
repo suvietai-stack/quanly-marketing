@@ -816,7 +816,8 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         {caps.cancel && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
                         {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
                         <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" disabled={!caps.delete} onClick={() => confirm("Xóa vĩnh viễn mục tiêu này?") && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa{hasLinks ? " (còn KR — dùng Hủy/Lưu trữ)" : gLocked ? " (kỳ đã khóa)" : ""}</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" disabled={!caps.delete} title={caps.deleteBlockers.join("\n")} onClick={() => confirm(`Xóa vĩnh viễn mục tiêu "${g.title}"? Thao tác này không thể hoàn tác.`) && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa vĩnh viễn</DropdownMenuItem>
+                        {caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Dùng Hủy/Lưu trữ.</div>}
                       </DropdownMenuContent></DropdownMenu>
                   )}
                 </div>
