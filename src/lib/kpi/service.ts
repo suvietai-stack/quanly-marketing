@@ -270,8 +270,8 @@ export function createKpiService(repo: KpiRepository) {
     deleteGoal(a: KpiActor, goalId: string) {
       requireAdmin(a);
       mutate((db) => {
-        if ((db.krs ?? []).some((k) => k.goalId === goalId) || db.items.some((i) => (i.metadata as { goalId?: string })?.goalId === goalId) || db.periods.some((p) => p.goalId === goalId))
-          throw new KpiError("Mục tiêu còn KR/chỉ tiêu liên kết — hãy chọn Hủy hoặc Lưu trữ để giữ lịch sử.");
+        const why = goalDeleteBlockers(goalId, db);
+        if (why.length) throw new KpiError(`Không thể xóa vĩnh viễn: ${why.join("; ")}. Hãy dùng Hủy hoặc Lưu trữ để giữ lịch sử.`);
         db.goals = db.goals.filter((g) => g.id !== goalId);
       });
     },
