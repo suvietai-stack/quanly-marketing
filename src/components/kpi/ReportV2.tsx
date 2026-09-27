@@ -1,3 +1,4 @@
+import { ReportDiagnosis } from "./ReportDiagnosis";
 /** KPI V2 — Báo cáo hiệu suất theo nhân sự (ẩn, flag OFF, chỉ đọc). */
 import { getKpiMetric } from "@/lib/kpi/metrics";
 import { Fragment, useMemo, useState } from "react";
