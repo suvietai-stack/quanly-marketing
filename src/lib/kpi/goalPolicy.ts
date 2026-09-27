@@ -27,7 +27,7 @@ export function goalDeleteBlockers(goalId: string, db: Lite): string[] {
   const out: string[] = [];
   if (goalLocked(goalId, db)) out.push("Kỳ KPI liên kết đã khóa/đóng");
   const krs = (db.krs ?? []).filter((k) => k.goalId === goalId);
-  const act = krs.filter((k) => k.status === "active").length;
+  const act = krs.filter((k) => k.status !== "archived" && k.status !== "cancelled").length;
   const arc = krs.filter((k) => k.status === "archived").length;
   const can = krs.filter((k) => k.status === "cancelled").length;
   if (act) out.push(`Còn ${act} KR đang hoạt động`);
