@@ -1847,6 +1847,10 @@ export type Database = {
       }
       goal_delete_empty: { Args: { _goal: string }; Returns: number }
       goal_links: { Args: { _goal: string }; Returns: Json }
+      goal_purge_test: {
+        Args: { _execute?: boolean; _goal: string }
+        Returns: Json
+      }
       has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
