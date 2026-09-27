@@ -1,7 +1,8 @@
 /** Trang Mục tiêu (OKR gọn): Mục tiêu → chọn KR từ thư viện 19 KR → đặt chỉ tiêu → theo dõi. Dùng chung engine KPI hiện có. */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, MoreHorizontal, Plus, Search, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { isDivisible, allocationSummary, checkAllocationScope, aggregateKr, canHardDelete } from "@/lib/kpi/allocation";
 import { useAuth } from "@/lib/auth";
@@ -120,16 +121,19 @@ function draftToItem(d: Draft, brandId: string): NewItem {
 }
 
 /* ---------- Bước 2: thư viện ---------- */
-function KrPicker({ onPick, kind }: { onPick: (key: string) => void; kind: "web" | "facebook" | "tiktok" | "" }) {
+function KrPicker({ onPick, kind, selected }: { onPick: (key: string) => void; kind: "web" | "facebook" | "tiktok" | ""; selected?: string[] }) {
   const [q, setQ] = useState("");
   const pri = priorityKeys(kind);
   const list = BASIC_KR_LIST.filter((m) => !q || m.label.toLowerCase().includes(q.toLowerCase()));
+  const multi = !!selected;
   const Card = (m: KpiMetricDefinition) => {
     const ok = isAssignable(m);
+    const on = !!selected?.includes(m.key);
     return (
-      <button key={m.key} disabled={!ok} onClick={() => onPick(m.key)} title={m.rule ?? m.source}
-        className="flex items-start justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left text-sm transition hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50">
-        <span className="min-w-0"><span className="block font-medium">{m.basic ? `${m.basic}. ` : ""}{m.label}</span><span className="block truncate text-[11px] text-muted-foreground">{m.source}</span></span>
+      <button key={m.key} type="button" disabled={!ok} onClick={() => onPick(m.key)} title={m.rule ?? m.source} role={multi ? "checkbox" : undefined} aria-checked={multi ? on : undefined}
+        className={cn("flex items-start justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-left text-sm transition hover:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50", on ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border")}>
+        {multi && <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border", on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40")}>{on && <Check className="h-3 w-3" />}</span>}
+        <span className="min-w-0 flex-1"><span className="block font-medium">{m.basic ? `${m.basic}. ` : ""}{m.label}</span><span className="block truncate text-[11px] text-muted-foreground">{m.source}</span></span>
         <span className={cn("shrink-0 rounded px-1.5 py-0.5 text-[10px]", AV_TONE[m.availability!])}>{AVAILABILITY_LABEL[m.availability!]}</span>
       </button>
     );
