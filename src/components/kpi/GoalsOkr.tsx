@@ -911,12 +911,43 @@ function GoalLinksSheet({ goal, onClose, onDeleted }: { goal: Goal; onClose: () 
                   <div className={b ? "text-destructive" : "text-muted-foreground"}>{b ? `Ngăn xóa: ${b}` : "Kỳ trống — chưa có dữ liệu nghiệp vụ"}</div>
                 </div>); }) : <div className="text-xs text-muted-foreground">Không có kỳ nào.</div>}
             </section>
-            {blocked.length ? <div className="rounded bg-destructive/10 p-2 text-xs text-destructive">Không thể xóa vĩnh viễn: {blocked.join("; ")}. Hãy dùng Hủy hoặc Lưu trữ.</div>
+            {blocked.length ? <><div className="rounded bg-destructive/10 p-2 text-xs text-destructive">Không thể xóa vĩnh viễn: {blocked.join("; ")}. Hãy dùng Hủy hoặc Lưu trữ.</div>
+                <PurgeTest goal={goal} onDeleted={onDeleted} /></>
               : <button disabled={busy} onClick={del} className="w-full rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50">
                   {empties.length ? `Xóa ${empties.length} kỳ trống và xóa mục tiêu` : "Xóa vĩnh viễn mục tiêu"}</button>}
           </>}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+type PurgePreview = { blockers: string[]; periods: LinkPeriod[]; items: { id: string; metric: string; target: number }[]; snapshots: { id: string; at: string }[] };
+/** Dọn triệt để mục tiêu thử nghiệm: xem trước danh sách, Admin xác nhận, máy chủ kiểm tra lại. */
+function PurgeTest({ goal, onDeleted }: { goal: Goal; onDeleted: () => void }) {
+  const [pv, setPv] = useState<PurgePreview | null>(null);
+  const [busy, setBusy] = useState(false);
+  const call = async (execute: boolean) => {
+    setBusy(true);
+    const { data, error } = await (supabase as any).rpc("goal_purge_test", { _goal: goal.id, _execute: execute });
+    setBusy(false);
+    if (error) { toast.error(error.message); return null; }
+    return data as PurgePreview;
+  };
+  const run2 = async () => {
+    if (!confirm(`Xóa triệt để "${goal.title}" cùng ${pv!.periods.length} kỳ, ${pv!.items.length} chỉ tiêu, ${pv!.snapshots.length} bản chốt? Không thể hoàn tác.`)) return;
+    if (await call(true)) { toast.success("Đã dọn mục tiêu thử nghiệm"); onDeleted(); }
+  };
+  if (!pv) return <button disabled={busy} onClick={async () => setPv(await call(false))} className="w-full rounded-md border border-border px-3 py-2 text-xs">Kiểm tra dọn dẹp dữ liệu thử nghiệm</button>;
+  return (
+    <div className="space-y-2 rounded border border-border p-2 text-xs">
+      <div className="font-medium">Bản ghi sẽ bị xóa</div>
+      {pv.periods.map((p) => <div key={p.id}>• Kỳ KPI: {p.user} · {fmtD(p.start)} → {fmtD(p.end)} · {PERIOD_ST[p.status] ?? p.status}</div>)}
+      {pv.items.map((i) => <div key={i.id}>• Chỉ tiêu: {getKpiMetric(i.metric)?.label ?? i.metric} · mục tiêu {i.target}</div>)}
+      {pv.snapshots.map((x) => <div key={x.id}>• Bản chốt kỳ lập {new Date(x.at).toLocaleString("vi-VN")}</div>)}
+      <div>• Mục tiêu: {goal.title}</div>
+      {pv.blockers.length ? <div className="text-destructive">Không thể dọn: {pv.blockers.join("; ")}.</div>
+        : <button disabled={busy} onClick={run2} className="w-full rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50">Xác nhận xóa triệt để</button>}
+    </div>
   );
 }
