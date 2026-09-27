@@ -1,4 +1,5 @@
 /** KPI V2 — Tổng quan theo Brand / Asset (ẩn, flag OFF, chỉ đọc). */
+import { ReportDiagnosis } from "./ReportDiagnosis";
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
@@ -65,6 +66,8 @@ export function OverviewV2({ actor, search = {} }: { actor: { id: string; isAdmi
         <Link to="/reports-v2" search={repSearch(userCtx, metric || undefined)} className="self-center text-xs text-primary hover:underline">→ Báo cáo nhân sự V2 (giữ bộ lọc)</Link>
       </div>
       {!actor.isAdmin && <p className="text-xs text-muted-foreground">Bạn chỉ thấy phần KPI được giao cho chính mình.</p>}
+      <ReportDiagnosis ps={ps} pe={pe} periods={periods} items={db.items} goals={db.goals} isAdmin={actor.isAdmin}
+        shown={ov.metrics.length} hasFilter={!!(brandId || channel || group || metric || userCtx)} />
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">Tiến độ theo chỉ tiêu</h2>
