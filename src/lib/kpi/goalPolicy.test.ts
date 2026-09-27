@@ -41,3 +41,20 @@ describe("goal policy", () => {
     expect(c.addKr || c.archive || c.duplicate).toBe(false);
   });
 });
+
+import { goalDeleteBlockers } from "./goalPolicy";
+describe("nguyên nhân chặn xóa", () => {
+  it("0 KR nhưng còn kỳ KPI → báo kỳ, không báo KR", () => {
+    const b = goalDeleteBlockers("g", db([p("p1", "draft", "g")]));
+    expect(b).toEqual(["Còn 1 kỳ KPI nhân sự liên kết"]);
+  });
+  it("KR lưu trữ ẩn được nêu rõ", () => {
+    expect(goalDeleteBlockers("g", db([], [{ id: "k", goalId: "g", status: "archived" }]))[0]).toMatch(/lưu trữ/);
+  });
+  it("kỳ khóa được nêu", () => {
+    expect(goalDeleteBlockers("g", db([p("p1", "locked", "g")]))).toContain("Kỳ KPI liên kết đã khóa/đóng");
+  });
+  it("mục tiêu đã hủy chưa có liên kết → xóa được", () => {
+    expect(goalCaps({ id: "g", status: "cancelled" }, db(), true).delete).toBe(true);
+  });
+});

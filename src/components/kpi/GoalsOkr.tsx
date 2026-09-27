@@ -790,7 +790,6 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
           const states = legacy.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, locked(p)); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
           const caps = goalCaps(g, db, actor.isAdmin);
           const gLocked = goalLocked(g.id, db);
-          const hasLinks = krs.length > 0 || legacy.length > 0 || db.items.some((i) => (i.metadata as { goalId?: string }).goalId === g.id) || db.periods.some((p) => p.goalId === g.id);
           return (
             <div key={g.id} className={cn("rounded-xl border border-border bg-card", meta.archived && "opacity-60")}>
               <div className="flex items-start justify-between gap-3 border-b border-border p-4">
