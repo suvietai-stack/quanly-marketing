@@ -13,7 +13,8 @@ import { calculateKrItem, KR_ENGINE_KEYS, krAchieved, type KrEntry, type KrEvide
 import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
 import { createKpiService, KpiError, type KpiDb, type NewItem } from "@/lib/kpi/service";
-import { cloudRepository, flushKpi } from "@/lib/kpi/cloudRepository";
+import { cloudRepository, flushKpi, hydrateKpi } from "@/lib/kpi/cloudRepository";
+import { supabase } from "@/integrations/supabase/client";
 import { goalCaps, goalLocked } from "@/lib/kpi/goalPolicy";
 import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
 import { monthsIn } from "@/lib/kpi/calculateKr";
@@ -733,6 +734,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   const [editGoal, setEditGoal] = useState<string | null>(null);
   const [editKr, setEditKr] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [links, setLinks] = useState<Goal | null>(null);
   const [detail, setDetail] = useState<{ it: EmployeeKpiItem; userId: string; start: string; end: string } | null>(null);
   const [ps, pe] = (periodKey ?? "|").split("|");
   const goals = useMemo(() => db.goals.filter((g) => (!periodKey || (g.periodStart <= pe && g.periodEnd >= ps)) && (!brandFilter || g.brandId === brandFilter) && (showArchived || !(g.metadata as GoalMeta).archived))
@@ -782,6 +784,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
       </div>
       {actor.isAdmin && creating && <GoalWizard actor={actor} onDone={() => { setCreating(false); refresh(); }} />}
       {!goals.length && <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Chưa có mục tiêu trong kỳ này.</div>}
+      {links && <GoalLinksSheet goal={links} onClose={() => setLinks(null)} onDeleted={async () => { setLinks(null); await hydrateKpi(); refresh(); }} />}
       <div className="grid gap-4 lg:grid-cols-2">
         {goals.map((g) => {
           const meta = g.metadata as GoalMeta;
@@ -816,6 +819,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
                         <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" disabled={!caps.delete} title={caps.deleteBlockers.join("\n")} onClick={() => confirm(`Xóa vĩnh viễn mục tiêu "${g.title}"? Thao tác này không thể hoàn tác.`) && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa vĩnh viễn</DropdownMenuItem>
+                        {actor.isAdmin && <DropdownMenuItem onClick={() => setLinks(g)}>Xem dữ liệu liên kết</DropdownMenuItem>}
                         {caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Dùng Hủy/Lưu trữ.</div>}
                       </DropdownMenuContent></DropdownMenu>
                   )}
@@ -855,5 +859,64 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
       {krEdit && <KrEditSheet actor={actor} kr={krEdit} goal={db.goals.find((g) => g.id === krEdit.goalId)!} onClose={() => { setEditKr(null); refresh(); }} />}
       {detail && <KrDetail actor={actor} {...detail} it={db.items.find((i) => i.id === detail.it.id) ?? detail.it} onSaved={refresh} onClose={() => { setDetail(null); refresh(); }} />}
     </div>
+  );
+}
+
+/* ---------- Dữ liệu liên kết của mục tiêu (đọc từ máy chủ) ---------- */
+type LinkPeriod = { id: string; user: string; status: string; start: string; end: string; items: number; adjustments: number; snapshots: number };
+type GoalLinkData = { krs: { id: string; label: string; status: string; allocs: number }[]; items: number; periods: LinkPeriod[] };
+const PERIOD_ST: Record<string, string> = { draft: "Nháp", active: "Đang chạy", locked: "Đã khóa", closed: "Đã đóng" };
+const KR_ST: Record<string, string> = { active: "Đang hoạt động", archived: "Đã lưu trữ", cancelled: "Đã hủy" };
+
+/** Kỳ trống = chưa khóa, chưa có chỉ tiêu, chưa có kết quả chốt. */
+export function periodBlock(p: LinkPeriod): string | null {
+  if (p.status === "locked" || p.status === "closed") return "Kỳ đã khóa/đóng";
+  if (p.snapshots) return "Đã chốt kết quả";
+  if (p.items) return `Có ${p.items} chỉ tiêu phân bổ`;
+  return null;
+}
+
+function GoalLinksSheet({ goal, onClose, onDeleted }: { goal: Goal; onClose: () => void; onDeleted: () => void }) {
+  const [d, setD] = useState<GoalLinkData | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  useState(() => { (supabase as any).rpc("goal_links", { _goal: goal.id }).then(({ data, error }: any) => error ? setErr(error.message) : setD(data)); return 0; });
+  const blocked = d ? [...d.krs.map((k) => `KR "${k.label}" (${KR_ST[k.status] ?? k.status})`), ...(d.items ? [`${d.items} dòng chỉ tiêu gắn trực tiếp`] : []),
+    ...d.periods.filter(periodBlock).map((p) => `Kỳ của ${p.user}: ${periodBlock(p)}`)] : [];
+  const empties = d ? d.periods.filter((p) => !periodBlock(p)) : [];
+  const del = async () => {
+    if (!confirm(`Xóa ${empties.length} kỳ KPI trống và xóa vĩnh viễn mục tiêu "${goal.title}"? Không thể hoàn tác.`)) return;
+    setBusy(true);
+    const { error } = await (supabase as any).rpc("goal_delete_empty", { _goal: goal.id });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Đã xóa mục tiêu"); onDeleted();
+  };
+  return (
+    <Sheet open onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+        <SheetHeader><SheetTitle>Dữ liệu liên kết</SheetTitle><SheetDescription>{goal.title}</SheetDescription></SheetHeader>
+        <div className="mt-4 space-y-4 text-sm">
+          {err && <div className="text-destructive">{err}</div>}
+          {!d && !err && <div className="text-muted-foreground">Đang kiểm tra…</div>}
+          {d && <>
+            <section><div className="mb-1 font-medium">KR ({d.krs.length})</div>
+              {d.krs.length ? d.krs.map((k) => <div key={k.id} className="text-xs">• {k.label} — {KR_ST[k.status] ?? k.status} · {k.allocs} phân bổ</div>) : <div className="text-xs text-muted-foreground">Không có KR nào, kể cả đã lưu trữ/hủy.</div>}
+            </section>
+            <section><div className="mb-1 font-medium">Kỳ KPI nhân sự ({d.periods.length})</div>
+              {d.periods.length ? d.periods.map((p) => { const b = periodBlock(p); return (
+                <div key={p.id} className="mb-1 rounded border border-border p-2 text-xs">
+                  <div className="font-medium">{p.user} · {fmtD(p.start)} → {fmtD(p.end)} · {PERIOD_ST[p.status] ?? p.status}</div>
+                  <div className="text-muted-foreground">{p.items} chỉ tiêu · {p.adjustments} điều chỉnh · {p.snapshots} bản chốt</div>
+                  <div className={b ? "text-destructive" : "text-muted-foreground"}>{b ? `Ngăn xóa: ${b}` : "Kỳ trống — chưa có dữ liệu nghiệp vụ"}</div>
+                </div>); }) : <div className="text-xs text-muted-foreground">Không có kỳ nào.</div>}
+            </section>
+            {blocked.length ? <div className="rounded bg-destructive/10 p-2 text-xs text-destructive">Không thể xóa vĩnh viễn: {blocked.join("; ")}. Hãy dùng Hủy hoặc Lưu trữ.</div>
+              : <button disabled={busy} onClick={del} className="w-full rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-50">
+                  {empties.length ? `Xóa ${empties.length} kỳ trống và xóa mục tiêu` : "Xóa vĩnh viễn mục tiêu"}</button>}
+          </>}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
