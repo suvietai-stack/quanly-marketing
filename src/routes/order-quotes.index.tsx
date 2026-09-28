@@ -15,7 +15,7 @@ import { useCurrentUser } from "@/lib/auth";
 import { oqApi } from "@/lib/orderQuotes/api";
 import { vnDateTime } from "@/lib/orderQuotes/logic";
 import { FlowBadge, useUserName } from "@/components/orderQuotes/OqCommon";
-import { ListTimeCell, timeLines, useJobTimes } from "@/components/orderQuotes/JobTimes";
+import { ListTimeCell, shortTimeLines, useJobTimes } from "@/components/orderQuotes/JobTimes";
 import { BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/order-quotes/")({
@@ -171,10 +171,11 @@ function OqList() {
                   {r.flows.map((f: any) => [<span key={f.id + "k"} className="text-muted-foreground">Cung ứng {f.kind === "price" ? "Giá" : "Tiến độ"}</span>, <span key={f.id} className="truncate">{name(f.assignee_id)}</span>])}
                   <span className="text-muted-foreground">Sản phẩm/PA</span><span>{r.count}</span>
                 </div>
-                {r.status !== "draft" && r.flows.map((f: any) => { const l = timeLines(times.current(f.id), f.kind); return l && (
+                {r.status !== "draft" && r.flows.map((f: any) => { const l = shortTimeLines(times.current(f.id), f.kind); return l && (
                   <div key={f.id + "t"} className="rounded bg-muted/40 px-2 py-1 text-xs">
                     <div className="font-medium uppercase text-[10px] tracking-wide">{f.kind === "price" ? "Giá" : "Tiến độ"} · {l.head}{l.running ? " (tạm tính)" : ""}</div>
                     <div>{l.resp}</div><div>{l.proc}</div>
+                    <div className="text-[10px] text-muted-foreground">h = giờ · m = phút · s = giây</div>
                   </div>); })}
                 <div className="text-[11px] text-muted-foreground">Cập nhật {vnDateTime(lastUpdate(r))}</div>
               </button>

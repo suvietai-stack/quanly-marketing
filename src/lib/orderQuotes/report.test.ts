@@ -45,6 +45,19 @@ describe("oq report", () => {
     expect(toBounds(["2026-09-01", "2026-09-30"])).toEqual({ from: "2026-09-01T00:00:00+07:00", to: "2026-10-01T00:00:00+07:00" });
   });
   it("chỉ làm tròn khi hiển thị", () => {
-    expect(fmtDur(4800)).toBe("1 giờ 20 phút"); expect(fmtDur(null, "Chưa đủ dữ liệu")).toBe("Chưa đủ dữ liệu");
+    expect(fmtDur(4800)).toBe("1 giờ 20 phút 00 giây"); expect(fmtDur(null, "Chưa đủ dữ liệu")).toBe("Chưa đủ dữ liệu");
+  });
+});
+
+describe("fmtDur chính xác đến giây", () => {
+  it("các mốc", () => {
+    expect(fmtDur(59)).toBe("59 giây");
+    expect(fmtDur(61)).toBe("1 phút 01 giây");
+    expect(fmtDur(899)).toBe("14 phút 59 giây");
+    expect(fmtDur(900)).toBe("15 phút 00 giây");
+    expect(fmtDur(901)).toBe("15 phút 01 giây");
+    expect(fmtDur(3930)).toBe("1 giờ 05 phút 30 giây");
+    expect(fmtDur(3930, "—", true)).toBe("1h 05m 30s");
+    expect(fmtDur(90061)).toBe("1 ngày 01 giờ 01 phút 01 giây");
   });
 });
