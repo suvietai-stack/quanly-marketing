@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { oqApi } from "@/lib/orderQuotes/api";
 import { PRICE_CATS, vnDate, type PriceConfig, type ProgressConfig } from "@/lib/orderQuotes/logic";
-import { ItemImages, useUserName } from "@/components/orderQuotes/OqCommon";
+import { ItemImages, MobileActionBar, UserPicker, useUserName } from "@/components/orderQuotes/OqCommon";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/order-quotes/new")({
@@ -49,6 +48,8 @@ function OqForm() {
   const [busy, setBusy] = useState(false);
   const [images, setImages] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(!initialId);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleItem = (k: string) => setCollapsed((c) => { const n = new Set(c); n.has(k) ? n.delete(k) : n.add(k); return n; });
   const priceUsers = useQuery({ queryKey: ["oq-assignees", "price"], queryFn: () => oqApi.assignees("price") }).data ?? [];
   const progUsers = useQuery({ queryKey: ["oq-assignees", "progress"], queryFn: () => oqApi.assignees("progress") }).data ?? [];
 
@@ -121,6 +122,7 @@ function OqForm() {
     const e = stepErr(step); if (e) { setTried((t) => new Set(t).add(step)); throw new Error(e); }
     if (step === 1) await save(true); // cần mã sản phẩm để gắn hạng mục hỏi giá
     setStep((s) => s + 1);
+    window.scrollTo({ top: 0 });
   });
   const submit = () => run(async () => {
     for (let s = 0; s < 3; s++) { const e = stepErr(s); if (e) { setTried((t) => new Set(t).add(s)); setStep(s); throw new Error(e); } }
@@ -142,16 +144,17 @@ function OqForm() {
   if (!loaded) return <p className="text-sm text-muted-foreground">Đang tải bản nháp…</p>;
   const itemImgs = (itemId?: string) => images.filter((g) => g.item_id === itemId);
 
+  const curErr = tried.has(step) ? stepErr(step) : null;
   return (
-    <div className="max-w-4xl mx-auto pb-24">
+    <div className="max-w-4xl mx-auto pb-32 md:pb-6">
       <PageHeader title={id ? "Bản nháp yêu cầu" : "Tạo yêu cầu"} description="Phân loại: Đơn Sứ Quà Tặng" />
+      <div className="sm:hidden mb-2 text-sm font-semibold">Bước {step + 1}/4 — {STEPS[step]}</div>
       <ol className="grid grid-cols-4 gap-1 mb-5">
         {STEPS.map((s, i) => (
-          <li key={s}><button type="button" onClick={() => i < step && setStep(i)} className={cn("w-full text-left rounded-md px-2 py-2 text-xs sm:text-sm border", i === step ? "bg-primary text-primary-foreground border-primary" : i < step ? "bg-accent" : "text-muted-foreground")}>
-            <span className="font-semibold">{i + 1}.</span> <span className="hidden sm:inline">{s}</span></button></li>
+          <li key={s}><button type="button" aria-label={`Bước ${i + 1}: ${s}`} onClick={() => i < step && setStep(i)} className={cn("w-full text-left rounded-md px-2 text-xs sm:text-sm border h-2 sm:h-auto sm:py-2", i === step ? "bg-primary text-primary-foreground border-primary" : i < step ? "bg-primary/40 sm:bg-accent border-primary/40 sm:border-border" : "bg-muted text-muted-foreground")}>
+            <span className="hidden sm:inline"><span className="font-semibold">{i + 1}.</span> {s}</span></button></li>
         ))}
       </ol>
-      <div className="sm:hidden -mt-3 mb-4 text-sm font-medium">Bước {step + 1}: {STEPS[step]}</div>
 
       {step === 0 && (
         <Card><CardContent className="p-4 sm:p-6 space-y-4">
@@ -159,7 +162,7 @@ function OqForm() {
           <div><Label>Tên yêu cầu *</Label><Input value={f.title} aria-invalid={!!err("title")} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} /><FieldErr m={err("title")} /></div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div><Label>Địa điểm giao hàng *</Label><Input value={f.delivery_place} aria-invalid={!!err("delivery_place")} onChange={(e) => setF({ ...f, delivery_place: e.target.value })} /><FieldErr m={err("delivery_place")} /></div>
-            <div><Label>Ngày khách yêu cầu giao *</Label><Input type="date" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /><FieldErr m={err("delivery_date")} /></div>
+            <div><Label>Ngày khách yêu cầu giao *</Label><Input type="date" className="h-11" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /><FieldErr m={err("delivery_date")} /></div>
           </div>
           <div><Label>Ghi chú chung</Label><Textarea rows={4} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
         </CardContent></Card>
@@ -174,49 +177,72 @@ function OqForm() {
               <label className="flex items-start gap-2 rounded-md border p-3 cursor-pointer"><RadioGroupItem value="bundle" className="mt-0.5" /><span><b>Sản phẩm khách đặt đồng thời</b><br /><span className="text-xs text-muted-foreground">Khách cần tất cả các sản phẩm.</span></span></label>
             </RadioGroup>
           </CardContent></Card>
-          {f.items.map((it, idx) => (
+          {f.items.map((it, idx) => {
+            const hasErr = ["name", "qty", "unit", "detail"].some((k) => err(`${it.key}.${k}`));
+            const isOpen = !collapsed.has(it.key) || hasErr;
+            const imgs = itemImgs(it.id);
+            return (
             <Card key={it.key}><CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between"><span className="font-semibold">PA{String(idx + 1).padStart(2, "0")}</span>
-                {f.items.length > 1 && <Button variant="ghost" size="sm" onClick={() => setF({ ...f, items: f.items.filter((x) => x.key !== it.key) })}><Trash2 className="h-4 w-4 mr-1" />Xóa</Button>}</div>
+              <div className="flex items-center gap-2">
+                <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => toggleItem(it.key)} aria-expanded={isOpen}>
+                  <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">PA{String(idx + 1).padStart(2, "0")}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className={cn("block truncate font-medium", !it.name && "text-muted-foreground")}>{it.name || "(chưa đặt tên)"}</span>
+                    {!isOpen && <span className="block text-xs text-muted-foreground">{it.qty ? `${it.qty} ${it.unit}` : "Chưa có số lượng"} · {imgs.length} ảnh</span>}
+                  </span>
+                  <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isOpen && "rotate-180")} />
+                </button>
+                {f.items.length > 1 && <Button variant="ghost" size="icon" aria-label="Xóa sản phẩm" onClick={() => confirm(`Xóa PA${String(idx + 1).padStart(2, "0")}?`) && setF({ ...f, items: f.items.filter((x) => x.key !== it.key) })}><Trash2 className="h-4 w-4" /></Button>}
+              </div>
+              <div className={cn("space-y-3", !isOpen && "hidden")}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="col-span-2"><Label>Tên sản phẩm *</Label><Input value={it.name} aria-invalid={!!err(`${it.key}.name`)} onChange={(e) => setItem(it.key, { name: e.target.value })} /><FieldErr m={err(`${it.key}.name`)} /></div>
                 <div><Label>Số lượng *</Label><Input type="number" min="0" inputMode="decimal" value={it.qty} aria-invalid={!!err(`${it.key}.qty`)} onChange={(e) => setItem(it.key, { qty: e.target.value })} /><FieldErr m={err(`${it.key}.qty`)} /></div>
                 <div><Label>Đơn vị tính *</Label><Input value={it.unit} aria-invalid={!!err(`${it.key}.unit`)} onChange={(e) => setItem(it.key, { unit: e.target.value })} /><FieldErr m={err(`${it.key}.unit`)} /></div>
               </div>
-              <div><Label>Thông tin chi tiết sản phẩm *</Label><Textarea rows={3} value={it.detail} aria-invalid={!!err(`${it.key}.detail`)} onChange={(e) => setItem(it.key, { detail: e.target.value })} /><FieldErr m={err(`${it.key}.detail`)} /></div>
-              <div><Label>Yêu cầu in ấn / gia công</Label><Textarea rows={2} value={it.processing} onChange={(e) => setItem(it.key, { processing: e.target.value })} /></div>
-              <div><Label>Ghi chú riêng</Label><Textarea rows={2} value={it.note} onChange={(e) => setItem(it.key, { note: e.target.value })} /></div>
+              <div><Label>Thông tin chi tiết sản phẩm *</Label><Textarea rows={3} className="field-sizing-content min-h-20" value={it.detail} aria-invalid={!!err(`${it.key}.detail`)} onChange={(e) => setItem(it.key, { detail: e.target.value })} /><FieldErr m={err(`${it.key}.detail`)} /></div>
+              <div><Label>Yêu cầu in ấn / gia công</Label><Textarea rows={2} className="field-sizing-content min-h-16" value={it.processing} onChange={(e) => setItem(it.key, { processing: e.target.value })} /></div>
+              <div><Label>Ghi chú riêng</Label><Textarea rows={2} className="field-sizing-content min-h-16" value={it.note} onChange={(e) => setItem(it.key, { note: e.target.value })} /></div>
               <div><Label className="mb-1 block">Hình ảnh tham khảo</Label>
-                <ItemImages images={itemImgs(it.id)} editable onChanged={() => id && reload(id, true).then(() => oqApi.detail(id).then((d) => d && setImages(d.images)))}
-                  onAdd={async (files, cat) => {
+                <ItemImages images={imgs} editable onChanged={() => id && oqApi.detail(id).then((d) => d && setImages(d.images))}
+                  onAdd={async (file, cat) => {
                     if (!it.name.trim()) throw new Error("Nhập tên sản phẩm trước khi thêm ảnh.");
-                    const rid = await save(true);
-                    const d = await oqApi.detail(rid);
-                    const itemId = d?.items[idx]?.id; if (!itemId) throw new Error("Chưa lưu được sản phẩm.");
-                    for (const file of files) await oqApi.uploadImage(rid, itemId, file, cat, "");
-                    const d2 = await oqApi.detail(rid); if (d2) setImages(d2.images);
+                    let rid = id; let itemId = it.id;
+                    if (!rid || !itemId) {
+                      rid = await save(true);
+                      const d = await oqApi.detail(rid);
+                      itemId = d?.items[idx]?.id; if (!itemId) throw new Error("Chưa lưu được sản phẩm.");
+                    }
+                    await oqApi.uploadImage(rid, itemId, file, cat, "");
+                    if (!id) { const d2 = await oqApi.detail(rid); if (d2) setImages(d2.images); }
                   }} />
               </div>
+              </div>
             </CardContent></Card>
-          ))}
-          <Button variant="outline" onClick={() => setF({ ...f, items: [...f.items, newItem()] })}><Plus className="h-4 w-4 mr-1" />Thêm sản phẩm</Button>
+          ); })}
+          <Button variant="outline" className="w-full h-11 border-dashed" onClick={() => { const n = newItem(); setCollapsed(new Set(f.items.map((i) => i.key))); setF({ ...f, items: [...f.items, n] }); }}><Plus className="h-4 w-4 mr-1" />Thêm sản phẩm</Button>
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-4">
-          <Card><CardContent className="p-4 flex flex-wrap items-center gap-6">
-            <label className="flex items-center gap-2 font-semibold"><Checkbox checked={f.want_price} onCheckedChange={(v) => setF({ ...f, want_price: !!v, price_assignee: f.price_assignee || f.progress_assignee })} />HỎI GIÁ</label>
-            <label className="flex items-center gap-2 font-semibold"><Checkbox checked={f.want_progress} onCheckedChange={(v) => setF({ ...f, want_progress: !!v, progress_assignee: f.progress_assignee || f.price_assignee })} />HỎI TIẾN ĐỘ</label>
+          <div>
+            <div className="grid grid-cols-2 gap-3">
+              {([["want_price", "HỎI GIÁ", "Báo giá từng sản phẩm"], ["want_progress", "HỎI TIẾN ĐỘ", "Khả năng / tiến độ giao"]] as const).map(([k, t, sub]) => (
+                <label key={k} className={cn("flex cursor-pointer flex-col gap-1 rounded-lg border-2 p-3 sm:p-4 transition-colors", f[k] ? "border-primary bg-primary/5" : "border-border")}>
+                  <span className="flex items-center gap-2 font-semibold"><Checkbox checked={f[k]} onCheckedChange={(v) => setF(k === "want_price" ? { ...f, want_price: !!v, price_assignee: f.price_assignee || f.progress_assignee } : { ...f, want_progress: !!v, progress_assignee: f.progress_assignee || f.price_assignee })} />{t}</span>
+                  <span className="text-xs text-muted-foreground">{sub}</span>
+                </label>
+              ))}
+            </div>
             <FieldErr m={err("flows")} />
-          </CardContent></Card>
+          </div>
 
           {f.want_price && (
-            <Card><CardContent className="p-4 space-y-4">
+            <Card className="border-l-4 border-l-primary"><CardContent className="p-4 space-y-4">
               <h3 className="font-semibold">Hỏi Giá</h3>
               <div><Label>Người phụ trách Hỏi Giá *</Label>
-                <Select value={f.price_assignee} onValueChange={(v) => setF({ ...f, price_assignee: v })}><SelectTrigger><SelectValue placeholder="Chọn nhân viên Cung ứng" /></SelectTrigger>
-                  <SelectContent>{priceUsers.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+                <UserPicker users={priceUsers} value={f.price_assignee} invalid={!!err("price_assignee")} onChange={(v) => setF({ ...f, price_assignee: v })} />
                 <FieldErr m={err("price_assignee")} />
                 {priceUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Giá".</p>}</div>
               <div><Label className="mb-1 block">Giá vận chuyển</Label>
@@ -246,12 +272,13 @@ function OqForm() {
           )}
 
           {f.want_progress && (
-            <Card><CardContent className="p-4 space-y-4">
+            <Card className="border-l-4 border-l-accent-foreground/40"><CardContent className="p-4 space-y-4">
               <h3 className="font-semibold">Hỏi Tiến Độ</h3>
               <div><Label>Người phụ trách Hỏi Tiến Độ *</Label>
-                <Select value={f.progress_assignee} onValueChange={(v) => setF({ ...f, progress_assignee: v })}><SelectTrigger><SelectValue placeholder="Chọn nhân viên Cung ứng" /></SelectTrigger>
-                  <SelectContent>{progUsers.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+                <UserPicker users={progUsers} value={f.progress_assignee} invalid={!!err("progress_assignee")} onChange={(v) => setF({ ...f, progress_assignee: v })} />
                 <FieldErr m={err("progress_assignee")} />
+                {f.want_price && f.price_assignee && f.price_assignee !== f.progress_assignee && progUsers.some((u) => u.id === f.price_assignee) && (
+                  <Button type="button" variant="link" size="sm" className="h-auto px-0" onClick={() => setF({ ...f, progress_assignee: f.price_assignee })}>Dùng cùng người Hỏi Giá ({name(f.price_assignee)})</Button>)}
                 {progUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Tiến Độ".</p>}</div>
               <RadioGroup value={f.progress.check_type ?? ""} onValueChange={(v) => setF({ ...f, progress: { ...f.progress, check_type: v as any } })} className="grid sm:grid-cols-2 gap-2">
                 <label className="flex items-start gap-2 rounded-md border p-3 text-sm"><RadioGroupItem value="capability" className="mt-0.5" /><span><b>Kiểm tra khả năng đáp ứng</b><br />Đơn chưa chốt</span></label>
@@ -281,12 +308,16 @@ function OqForm() {
         </CardContent></Card>
       )}
 
-      <div className="fixed bottom-0 inset-x-0 md:static md:mt-6 z-20 border-t md:border-0 bg-background/95 backdrop-blur px-4 py-3 md:p-0 flex flex-wrap gap-2 justify-end">
-        {id && <Button variant="ghost" className="mr-auto text-destructive" disabled={busy} onClick={() => confirm("Xóa bản nháp này?") && run(async () => { await oqApi.deleteDraft(id); nav({ to: "/order-quotes" }); })}>Xóa nháp</Button>}
-        {step > 0 && <Button variant="outline" disabled={busy} onClick={() => setStep(step - 1)}>Quay lại</Button>}
-        <Button variant="outline" disabled={busy} onClick={() => run(() => save())}>Lưu nháp</Button>
-        {step < 3 ? <Button disabled={busy} onClick={next}>Tiếp tục</Button> : <Button disabled={busy} onClick={submit}>Gửi yêu cầu</Button>}
-      </div>
+      {id && <div className="mt-4 md:hidden"><Button variant="ghost" size="sm" className="text-destructive" disabled={busy} onClick={() => confirm("Xóa bản nháp này?") && run(async () => { await oqApi.deleteDraft(id); nav({ to: "/order-quotes" }); })}>Xóa bản nháp</Button></div>}
+      <MobileActionBar>
+        {curErr && <p className="mb-2 text-xs text-destructive md:text-right">{curErr}</p>}
+        <div className="grid grid-cols-3 gap-2 md:flex md:justify-end">
+          {id && <Button variant="ghost" className="hidden md:inline-flex mr-auto text-destructive" disabled={busy} onClick={() => confirm("Xóa bản nháp này?") && run(async () => { await oqApi.deleteDraft(id); nav({ to: "/order-quotes" }); })}>Xóa nháp</Button>}
+          <Button variant="outline" className="h-11 md:h-10" disabled={busy || step === 0} onClick={() => { setStep(step - 1); window.scrollTo({ top: 0 }); }}>Quay lại</Button>
+          <Button variant="outline" className="h-11 md:h-10" disabled={busy} onClick={() => run(() => save())}>Lưu nháp</Button>
+          {step < 3 ? <Button className="h-11 md:h-10" disabled={busy} onClick={next}>Tiếp tục</Button> : <Button className="h-11 md:h-10" disabled={busy} onClick={submit}>Gửi yêu cầu</Button>}
+        </div>
+      </MobileActionBar>
     </div>
   );
 }
