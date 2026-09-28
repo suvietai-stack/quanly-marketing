@@ -1360,32 +1360,55 @@ export type Database = {
           category: string
           created_at: string
           created_by: string
+          flow_id: string | null
           id: string
+          info_request_id: string | null
           item_id: string
           path: string
           request_id: string
+          round_no: number | null
         }
         Insert: {
           caption?: string | null
           category?: string
           created_at?: string
           created_by: string
+          flow_id?: string | null
           id?: string
+          info_request_id?: string | null
           item_id: string
           path: string
           request_id: string
+          round_no?: number | null
         }
         Update: {
           caption?: string | null
           category?: string
           created_at?: string
           created_by?: string
+          flow_id?: string | null
           id?: string
+          info_request_id?: string | null
           item_id?: string
           path?: string
           request_id?: string
+          round_no?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "oq_item_images_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "oq_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oq_item_images_info_request_id_fkey"
+            columns: ["info_request_id"]
+            isOneToOne: false
+            referencedRelation: "oq_info_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "oq_item_images_item_id_fkey"
             columns: ["item_id"]
@@ -1590,6 +1613,7 @@ export type Database = {
       oq_rounds: {
         Row: {
           accepted_at: string | null
+          assigned_at: string | null
           assignee_id: string
           completed_at: string | null
           config: Json
@@ -1604,6 +1628,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          assigned_at?: string | null
           assignee_id: string
           completed_at?: string | null
           config?: Json
@@ -1618,6 +1643,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          assigned_at?: string | null
           assignee_id?: string
           completed_at?: string | null
           config?: Json
@@ -1639,6 +1665,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      oq_storage_cleanup: {
+        Row: {
+          attempts: number
+          created_at: string
+          done_at: string | null
+          id: string
+          last_error: string | null
+          owner_id: string | null
+          path: string
+          reason: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          last_error?: string | null
+          owner_id?: string | null
+          path: string
+          reason?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          last_error?: string | null
+          owner_id?: string | null
+          path?: string
+          reason?: string | null
+        }
+        Relationships: []
       }
       orders: {
         Row: {
@@ -2447,6 +2506,11 @@ export type Database = {
         Args: { _flow: string; _id: string; _reason: string }
         Returns: undefined
       }
+      oq_cleanup_done: {
+        Args: { _error: string; _paths: string[] }
+        Returns: undefined
+      }
+      oq_cleanup_pending: { Args: never; Returns: string[] }
       oq_comment: { Args: { _flow: string; _text: string }; Returns: undefined }
       oq_complete: { Args: { _flow: string }; Returns: undefined }
       oq_delete_draft: { Args: { _id: string }; Returns: undefined }
@@ -2468,6 +2532,17 @@ export type Database = {
         }
         Returns: string
       }
+      oq_info_image_add: {
+        Args: {
+          _caption: string
+          _category: string
+          _info: string
+          _item: string
+          _path: string
+        }
+        Returns: string
+      }
+      oq_info_image_delete: { Args: { _id: string }; Returns: undefined }
       oq_missing: { Args: { _flow: string }; Returns: string[] }
       oq_publish_response: {
         Args: { _content: Json; _flow: string; _target: string }
