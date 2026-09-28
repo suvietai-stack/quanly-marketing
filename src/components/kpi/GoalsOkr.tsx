@@ -813,12 +813,15 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   const goalEdit = editGoal ? db.goals.find((g) => g.id === editGoal) : null;
   const krEdit = editKr ? (db.krs ?? []).find((k) => k.id === editKr) : null;
 
-  const duplicate = (g: Goal) => run(() => {
-    const ng = svc.saveGoal(actor, { title: `${g.title} (bản sao)`, description: g.description, periodStart: g.periodStart, periodEnd: g.periodEnd, status: "draft", brandId: g.brandId, websiteId: g.websiteId, socialId: g.socialId,
-      metadata: { ...g.metadata, archived: false } });
-    for (const k of krsOfG(g.id).filter((x) => x.status === "active")) svc.saveKr(actor, { goalId: ng.id, metricKey: k.metricKey, label: k.label, targetValue: k.targetValue, brandId: k.brandId, websiteId: k.websiteId, socialId: k.socialId, deadline: k.deadline,
-      metadata: Object.fromEntries(Object.entries(k.metadata).filter(([x]) => !["history", "clientKey"].includes(x))) });
+  const duplicate = (g: Goal, d: DupInput) => run(() => {
+    const ng = svc.saveGoal(actor, { title: d.title, description: g.description, periodStart: d.start, periodEnd: d.end, status: "draft", brandId: g.brandId, websiteId: g.websiteId, socialId: g.socialId,
+      metadata: { ...g.metadata, archived: false, periodType: d.ptype, deadline: d.deadline } });
+    // Deadline KR chỉ giữ nếu còn nằm trong thời gian mới, nếu không dùng hạn của mục tiêu.
+    for (const k of krsOfG(g.id).filter((x) => x.status === "active")) svc.saveKr(actor, { goalId: ng.id, metricKey: k.metricKey, label: k.label, targetValue: k.targetValue, brandId: k.brandId, websiteId: k.websiteId, socialId: k.socialId,
+      deadline: k.deadline && k.deadline >= d.start && k.deadline <= d.end ? k.deadline : null,
+      metadata: Object.fromEntries(Object.entries(k.metadata).filter(([x]) => !["history", "clientKey", "deadline"].includes(x))) });
   }, "Đã nhân bản mục tiêu (dạng Nháp, chưa phân bổ nhân sự)", refresh);
+  const [dupGoal, setDupGoal] = useState<Goal | null>(null);
   const setGoalStatus = (g: Goal, status: GoalStatus) => {
     if (status === "active") {
       const bad = krsOfG(g.id).filter((k) => k.status === "active" && !allocationSummary(k, db.items.filter((i) => i.krId === k.id)).balanced);
