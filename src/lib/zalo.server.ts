@@ -217,8 +217,9 @@ export async function processPending(limit = 20) {
     .eq("zalo_status", "pending").gt("zalo_attempts", 0).neq("kind", "signal_care").is("zalo_sent_at", null)
     .lt("created_at", new Date(Date.now() - STUCK_MS).toISOString()).like("zalo_error", "claimed:%");
   const leaveZalo = (await leaveNotifyCfg()).zalo;
-  const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new"] : [])];
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,created_at,zalo_attempts,zalo_status,payload")
+  const cz = await contentZaloCfg();
+  const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new"] : []), ...Object.keys(cz).filter((k) => cz[k])];
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,created_at,zalo_attempts,zalo_status,payload")
     .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
@@ -262,6 +263,13 @@ export async function processPending(limit = 20) {
       const names = await db.from("profiles").select("id,full_name").in("id", [a.owner_id, a.witness_id]);
       const nm = (id: string) => (names.data ?? []).find((x: any) => x.id === id)?.full_name;
       leaveMsg = { ...attMessage(n.kind as "att_witness" | "att_new", { ...a, owner_name: nm(a.owner_id), witness_name: nm(a.witness_id), action: n.payload?.action }, await brandHeader()), link: `${await baseUrl()}/leave?att=${a.id}` };
+    }
+    if (n.kind.startsWith("content_")) {
+      const { data: c } = await db.from("web_contents").select("data").eq("id", n.content_id).maybeSingle();
+      const { contentStillValid, contentZaloMessage, contentLink } = await import("./content/notifyMessage");
+      if (!c || !contentStillValid(n.kind, n.payload?.status, c.data?.status)) { await mark({ zalo_status: "ineligible", zalo_error: "Bài viết đã được xử lý/đổi trạng thái" }); continue; }
+      if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
+      leaveMsg = { ...contentZaloMessage(n.kind, { ...n.payload, title: c.data?.title ?? n.payload?.title }, await brandHeader()), link: `${await baseUrl()}${contentLink(n.content_id)}` };
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }
@@ -364,6 +372,16 @@ export async function runCareDigest() {
 }
 
 /* ---------- Đơn từ: cấu hình thông báo + nhắc duyệt ---------- */
+/** Công tắc Zalo theo từng sự kiện Content Web (không ảnh hưởng thông báo nội bộ). */
+export async function contentZaloCfg(): Promise<Record<string, boolean>> {
+  const db = await admin();
+  const { data } = await db.from("content_notify_settings").select("data").eq("id", 1).maybeSingle();
+  const z = data?.data?.zalo ?? {};
+  const out: Record<string, boolean> = {};
+  for (const k of ["content_assigned", "content_review", "content_revise", "content_approved", "content_published", "content_remind"]) out[k] = z[k] === true;
+  return out;
+}
+
 export async function leaveNotifyCfg(): Promise<{ zalo: boolean; remind_hours: number }> {
   const db = await admin();
   const { data } = await db.from("leave_settings").select("data").eq("id", 1).maybeSingle();
@@ -418,4 +436,12 @@ export async function brandHeader(): Promise<string> {
     const n = String(data?.app_name ?? "").trim();
     return n ? n.toUpperCase() : "BASE MARKETING";
   } catch { return "BASE MARKETING"; }
+}
+
+/** Nhắc bài chờ duyệt (tắt mặc định): tạo thông báo nội bộ; Zalo/Push đi qua hàng đợi hiện có. */
+export async function runContentRemind() {
+  const h = vnHour();
+  if (h < 8 || h > 17) return { skipped: "off_hours" };
+  const { data, error } = await (await admin()).rpc("content_remind_run");
+  return error ? { error: "failed" } : { created: data ?? 0 };
 }

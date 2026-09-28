@@ -23,9 +23,10 @@ import {
 import {
   Plus, LayoutGrid, Table as TableIcon, Calendar as CalIcon, ExternalLink,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/web-contents")({
+  validateSearch: (s: Record<string, unknown>): { open?: string } => (typeof s.open === "string" && s.open ? { open: s.open } : {}),
   head: () => ({ meta: [{ title: "Tất cả Content Web — Base Marketing" }] }),
   component: () => (
     <RequirePermission perm={["web.content_view", "web.content_view_all", "web.content_view_mine"]}>
@@ -44,6 +45,9 @@ function AllContents() {
   const [adding, setAdding] = useState(false);
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
 
+  const { open: openId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [denied, setDenied] = useState(false);
   const [search, setSearch] = useState("");
   const [fWebsite, setFWebsite] = useState("all");
   const [fBrand, setFBrand] = useState("all");
@@ -66,6 +70,17 @@ function AllContents() {
     ),
     [webContents, scopeList, userName],
   );
+
+  // Mở trực tiếp từ thông báo: chỉ mở khi bài nằm trong phạm vi người dùng được xem
+  useEffect(() => {
+    if (!openId) return;
+    const c = scoped.find((x) => x.id === openId);
+    if (c) { setOpenContent(c); setDenied(false); }
+    else if (webContents.length) setDenied(true);
+  }, [openId, scoped, webContents.length]);
+  useEffect(() => {
+    if (openContent) setOpenContent(webContents.find((x) => x.id === openContent.id) ?? null);
+  }, [webContents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => scoped.filter((c) =>
     (!search || c.title.toLowerCase().includes(search.toLowerCase()) || (c.mainKeyword || "").toLowerCase().includes(search.toLowerCase())) &&
@@ -96,6 +111,12 @@ function AllContents() {
       />
 
 
+      {denied && openId && (
+        <div className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
+          Bài viết không tồn tại hoặc bạn không có quyền xem.
+          <button className="ml-2 underline" onClick={() => { setDenied(false); navigate({ search: {} }); }}>Đóng</button>
+        </div>
+      )}
       <FilterBar>
         <Input placeholder="Tìm tiêu đề, từ khóa..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
         <Select value={fWebsite} onValueChange={setFWebsite}>
@@ -219,7 +240,7 @@ function AllContents() {
 
       {view === "calendar" && <ContentCalendar contents={filtered} onOpen={setOpenContent} />}
 
-      <ContentDetail content={openContent} open={!!openContent} onClose={() => setOpenContent(null)} />
+      <ContentDetail content={openContent} open={!!openContent} onClose={() => { setOpenContent(null); if (openId) navigate({ search: {} }); }} />
     </>
   );
 }

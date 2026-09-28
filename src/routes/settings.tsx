@@ -20,6 +20,7 @@ import { ZaloSettingsTab } from "@/components/ZaloUi";
 import { SignalCatalogSettings } from "@/components/signals/SignalCatalogSettings";
 import { LeaveSettings } from "@/components/leave/LeaveSettings";
 import { SystemInfoSettings } from "@/components/SystemInfoSettings";
+import { ContentNotifySettings } from "@/components/ContentNotifySettings";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
@@ -193,7 +194,7 @@ function SettingsPage() {
       </TabsList>
       {showSigCat && <TabsContent value="sigcat" className="mt-4"><SignalCatalogSettings /></TabsContent>}
       {showLeave && <TabsContent value="leave" className="mt-4"><LeaveSettings /></TabsContent>}
-      <TabsContent value="zalo" className="mt-4"><ZaloSettingsTab isAdmin={zaloAdmin} /></TabsContent>
+      <TabsContent value="zalo" className="mt-4 space-y-4"><ZaloSettingsTab isAdmin={zaloAdmin} /><ContentNotifySettings canEdit={zaloAdmin || can("settings.system_edit")} /></TabsContent>
 
       {showAccounts && <TabsContent value="accounts" className="mt-4">
         <AccountsSettings />

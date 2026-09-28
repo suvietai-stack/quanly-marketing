@@ -169,6 +169,20 @@
       "when": 1790497242195,
       "tag": "0023_goal_purge_test_status_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790560893978,
+      "tag": "0024_content_web_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790560923575,
+      "tag": "0025_content_notify_save_perm",
+      "breakpoints": true
     }
   ]
 }
