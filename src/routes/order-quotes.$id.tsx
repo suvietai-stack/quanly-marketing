@@ -14,6 +14,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCurrentUser } from "@/lib/auth";
 import { oqApi } from "@/lib/orderQuotes/api";
+import { FlowTimeSummary, useJobTimes } from "@/components/orderQuotes/JobTimes";
+import { fmtDur } from "@/lib/orderQuotes/report";
 import {
   CHOICE_LABEL, EVENT_LABEL, flowStatusLabel, IMG_CAT, catLabel, copyText, latestPublished, missing, progressCount, qtySummary, requestedCats, vnDate, vnDateTime,
   type PriceConfig, type Resp, type SnapItem,
@@ -145,6 +147,7 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
   const { user, can } = useCurrentUser();
   const name = useUserName();
   const rounds = d.rounds.filter((r: any) => r.flow_id === flow.id);
+  const times = useJobTimes([flow.id]);
   const [roundNo, setRoundNo] = useState<number>(flow.current_round);
   useEffect(() => setRoundNo(flow.current_round), [flow.id, flow.current_round]);
   const round = rounds.find((r: any) => r.no === roundNo) ?? rounds[rounds.length - 1];
@@ -186,6 +189,14 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
             {pc.shipping !== null && <span>Vận chuyển chung: <b>{pc.shipping ? "Đã phản hồi" : "Chưa phản hồi"}</b></span>}
             {rounds.length > 1 && <span className="text-muted-foreground">Lượt {round?.no}/{rounds.length}</span>}
           </div>
+        )}
+        <FlowTimeSummary t={times.current(flow.id, round?.no)} kind={flow.kind} assignee={name(round?.assignee_id ?? flow.assignee_id)} />
+        {rounds.length > 1 && (
+          <details className="text-xs"><summary className="cursor-pointer text-muted-foreground">Thời gian các lượt</summary>
+            <div className="mt-1 space-y-0.5">{times.all.filter((t) => t.flow_id === flow.id).sort((a, b) => a.round_no - b.round_no).map((t) => (
+              <div key={t.round_id}>Lượt {t.round_no}: phản hồi {t.completed_at ? fmtDur(t.response_sec) : "chưa hoàn thành"} · Cung ứng xử lý {t.completed_at ? (t.data_ok ? fmtDur(t.process_sec) : "Chưa đủ dữ liệu") : "—"}{t.handover ? " · Có chuyển giao" : ""}</div>
+            ))}</div>
+          </details>
         )}
         {flow.status === "pending" && round?.accepted_at && <p className="text-xs text-muted-foreground">Luồng vừa được chuyển người phụ trách — người mới cần Xác nhận tiếp nhận để tiếp tục. Nháp và kết quả đã công bố được giữ nguyên.</p>}
         {rounds.length > 1 && (

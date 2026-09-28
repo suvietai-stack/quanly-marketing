@@ -15,6 +15,8 @@ import { useCurrentUser } from "@/lib/auth";
 import { oqApi } from "@/lib/orderQuotes/api";
 import { vnDateTime } from "@/lib/orderQuotes/logic";
 import { FlowBadge, useUserName } from "@/components/orderQuotes/OqCommon";
+import { ListTimeCell, timeLines, useJobTimes } from "@/components/orderQuotes/JobTimes";
+import { BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/order-quotes/")({
   head: () => ({ meta: [
@@ -59,6 +61,7 @@ function OqList() {
       return { ...r, flows, count: r.oq_items?.[0]?.count ?? 0, flowCode: tab === "all" ? undefined : flows[0]?.code };
     });
   }, [data, tab]);
+  const times = useJobTimes(rows.flatMap((r) => r.status === "draft" ? [] : r.flows.map((f: any) => f.id)));
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / SIZE));
   const people = peopleQ.data ?? { a: [], c: [] };
@@ -71,6 +74,7 @@ function OqList() {
         actions={can("oq.create") ? <Button asChild><Link to="/order-quotes/new" search={{ id: undefined }}><Plus className="h-4 w-4 mr-1" />Tạo yêu cầu</Link></Button> : undefined} />
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
         <TabsList className="grid w-full grid-cols-3 h-11 sm:inline-flex sm:w-auto sm:h-10"><TabsTrigger value="all">Tất cả</TabsTrigger><TabsTrigger value="price">Hỏi Giá</TabsTrigger><TabsTrigger value="progress">Hỏi Tiến Độ</TabsTrigger></TabsList>
+        {(can("oq.report_own") || can("oq.report_all")) && <Button asChild variant="outline" className="mt-2 w-full h-11 sm:mt-0 sm:ml-2 sm:w-auto sm:h-10"><Link to="/order-quotes/report"><BarChart3 className="h-4 w-4 mr-1" />Báo cáo thống kê</Link></Button>}
       </Tabs>
       <div className="mb-4 flex gap-2 lg:hidden">
         <div className="relative flex-1">
@@ -137,7 +141,7 @@ function OqList() {
             <Table>
               <TableHeader><TableRow>
                 <TableHead>Mã</TableHead><TableHead>Tên yêu cầu</TableHead><TableHead>Phân loại</TableHead><TableHead className="text-center">SP/PA</TableHead>
-                <TableHead>Người tạo</TableHead><TableHead>Cung ứng phụ trách</TableHead><TableHead>Trạng thái</TableHead><TableHead>Cập nhật</TableHead>
+                <TableHead>Người tạo</TableHead><TableHead>Cung ứng phụ trách</TableHead><TableHead>Trạng thái</TableHead><TableHead>Thời gian phản hồi</TableHead><TableHead>Thời gian Cung ứng xử lý</TableHead><TableHead>Cập nhật</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {rows.map((r) => (
@@ -149,6 +153,8 @@ function OqList() {
                     <TableCell className="text-sm">{name(r.creator_id)}</TableCell>
                     <TableCell className="text-sm">{r.flows.map((f: any) => <div key={f.id}>{f.kind === "price" ? "Giá" : "Tiến độ"}: {name(f.assignee_id)}</div>)}</TableCell>
                     <TableCell><StatusCell r={r} /></TableCell>
+                    <TableCell className="text-xs">{r.status === "draft" ? "—" : r.flows.map((f: any) => <div key={f.id}><ListTimeCell t={times.current(f.id)} kind={f.kind} part="resp" /></div>)}</TableCell>
+                    <TableCell className="text-xs">{r.status === "draft" ? "—" : r.flows.map((f: any) => <div key={f.id}><ListTimeCell t={times.current(f.id)} kind={f.kind} part="proc" /></div>)}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{vnDateTime(lastUpdate(r))}</TableCell>
                   </TableRow>
                 ))}
@@ -165,6 +171,11 @@ function OqList() {
                   {r.flows.map((f: any) => [<span key={f.id + "k"} className="text-muted-foreground">Cung ứng {f.kind === "price" ? "Giá" : "Tiến độ"}</span>, <span key={f.id} className="truncate">{name(f.assignee_id)}</span>])}
                   <span className="text-muted-foreground">Sản phẩm/PA</span><span>{r.count}</span>
                 </div>
+                {r.status !== "draft" && r.flows.map((f: any) => { const l = timeLines(times.current(f.id), f.kind); return l && (
+                  <div key={f.id + "t"} className="rounded bg-muted/40 px-2 py-1 text-xs">
+                    <div className="font-medium uppercase text-[10px] tracking-wide">{f.kind === "price" ? "Giá" : "Tiến độ"} · {l.head}{l.running ? " (tạm tính)" : ""}</div>
+                    <div>{l.resp}</div><div>{l.proc}</div>
+                  </div>); })}
                 <div className="text-[11px] text-muted-foreground">Cập nhật {vnDateTime(lastUpdate(r))}</div>
               </button>
             ))}
