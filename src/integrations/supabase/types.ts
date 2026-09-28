@@ -2543,6 +2543,28 @@ export type Database = {
         Returns: string
       }
       oq_info_image_delete: { Args: { _id: string }; Returns: undefined }
+      oq_job_times: {
+        Args: { _flows: string[] }
+        Returns: {
+          accept_wait_sec: number
+          accepted_at: string
+          completed_at: string
+          data_ok: boolean
+          final_accepted_at: string
+          first_pub_sec: number
+          first_published_at: string
+          flow_id: string
+          handover: boolean
+          process_sec: number
+          response_sec: number
+          round_id: string
+          round_no: number
+          sent_at: string
+          server_now: string
+          status: string
+          wait_sale_sec: number
+        }[]
+      }
       oq_missing: { Args: { _flow: string }; Returns: string[] }
       oq_publish_response: {
         Args: { _content: Json; _flow: string; _target: string }
@@ -2555,6 +2577,38 @@ export type Database = {
       oq_reassign: {
         Args: { _flow: string; _user: string }
         Returns: undefined
+      }
+      oq_report_rows: {
+        Args: { _basis: string; _export?: boolean; _from: string; _to: string }
+        Returns: {
+          accept_wait_sec: number
+          accepted_at: string
+          assignee_id: string
+          assignee_name: string
+          completed_at: string
+          creator_id: string
+          creator_name: string
+          data_ok: boolean
+          final_accepted_at: string
+          first_pub_sec: number
+          first_published_at: string
+          flow_code: string
+          flow_id: string
+          handover: boolean
+          info_count: number
+          items: number
+          kind: string
+          process_sec: number
+          request_id: string
+          response_sec: number
+          round_id: string
+          round_no: number
+          scope: string
+          sent_at: string
+          status: string
+          title: string
+          wait_sale_sec: number
+        }[]
       }
       oq_request_info: {
         Args: { _flow: string; _question: string }
