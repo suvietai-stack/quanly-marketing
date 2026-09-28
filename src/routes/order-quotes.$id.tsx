@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCurrentUser } from "@/lib/auth";
 import { oqApi } from "@/lib/orderQuotes/api";
 import {
-  CHOICE_LABEL, EVENT_LABEL, IMG_CAT, catLabel, copyText, latestPublished, missing, progressCount, qtySummary, requestedCats, vnDate, vnDateTime,
+  CHOICE_LABEL, EVENT_LABEL, flowStatusLabel, IMG_CAT, catLabel, copyText, latestPublished, missing, progressCount, qtySummary, requestedCats, vnDate, vnDateTime,
   type PriceConfig, type Resp, type SnapItem,
 } from "@/lib/orderQuotes/logic";
 import { FlowBadge, ItemImages, useUserName } from "@/components/orderQuotes/OqCommon";
@@ -64,29 +64,31 @@ function OqDetail() {
 
   return (
     <div className="pb-10">
-      <div className="flex flex-wrap items-start gap-3 mb-4">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 mb-4 sm:flex sm:gap-3">
         <Button variant="ghost" size="icon" asChild><Link to="/order-quotes" aria-label="Về danh sách"><ArrowLeft className="h-5 w-5" /></Link></Button>
         <div className="flex-1 min-w-0">
           <div className="text-xs font-mono text-muted-foreground">{d.req.code} · Đơn Sứ Quà Tặng</div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{d.req.title}</h1>
+          <h1 className="text-lg sm:text-2xl font-semibold tracking-tight break-words">{d.req.title}</h1>
           {d.req.status === "cancelled" && <Badge variant="outline" className="mt-1">Đã hủy — {d.req.cancel_reason}</Badge>}
         </div>
         <CancelButton d={d} flow={flow} onDone={refresh} />
       </div>
       {error && <div className="mb-3 rounded-md border border-destructive/40 p-2 text-sm flex items-center gap-2">Không cập nhật được dữ liệu mới nhất: {(error as Error).message}<Button size="sm" variant="outline" className="ml-auto" onClick={() => refetch()}>Thử lại</Button></div>}
       {d.flows.length > 1 && (
-        <div className="flex gap-2 mb-4 overflow-x-auto">
+        <div className="grid grid-cols-2 gap-2 mb-4 sm:flex">
           {d.flows.map((f: any) => (
             <Link key={f.id} to="/order-quotes/$id" params={{ id }} search={{ flow: f.id }} replace
-              className={cn("rounded-md border px-3 py-2 text-sm whitespace-nowrap", f.id === flowId ? "border-primary bg-primary/10 font-medium" : "hover:bg-accent")}>
-              {f.code} · {f.kind === "price" ? "Hỏi Giá" : "Hỏi Tiến Độ"}
+              className={cn("min-w-0 rounded-md border px-3 py-2 text-sm", f.id === flowId ? "border-primary bg-primary/10 font-medium" : "hover:bg-accent")}>
+              <div className="truncate">{f.kind === "price" ? "Hỏi Giá" : "Hỏi Tiến Độ"} <span className="font-mono text-xs text-muted-foreground">{f.code}</span></div>
+              <div className="mt-0.5 truncate text-xs text-muted-foreground">{flowStatusLabel(f.kind, f.status)}{f.waiting_info && f.status === "processing" ? " · chờ Sale" : ""}</div>
             </Link>
           ))}
         </div>
       )}
       <div className="grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-4">
         <OrderInfo d={d} onChanged={refresh} />
-        {flow ? <FlowPanel d={d} flow={flow} onChanged={refresh} /> : <Card><CardContent className="p-4 text-sm text-muted-foreground">Chưa có luồng xử lý.</CardContent></Card>}
+        {flow ? <div className="min-w-0">{d.flows.map((f: any) => <div key={f.id} className={f.id === flowId ? "" : "hidden"}><FlowPanel d={d} flow={f} onChanged={refresh} /></div>)}</div>
+          : <Card><CardContent className="p-4 text-sm text-muted-foreground">Chưa có luồng xử lý.</CardContent></Card>}
       </div>
     </div>
   );
@@ -164,6 +166,11 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
   const conclusion = latestPublished(resps, "conclusion")?.content?.text;
   const targetsList = flow.kind === "price" ? items.filter((i) => requestedCats(cfg, i.id).length > 0) : items;
   const active = d.req.status === "submitted" && flow.status !== "cancelled";
+  const navTargets: { id: string; code: string; name: string }[] = [...targetsList, ...(flow.kind === "price" && cfg.shipping_mode === "common" ? [{ id: "shipping", code: "VC", name: "Vận chuyển chung" }] : [])];
+  const [sel, setSel] = useState<string>("");
+  const selId = navTargets.some((t) => t.id === sel) ? sel : navTargets[0]?.id;
+  const tStatus = (tid: string) => resps.some((r) => r.target === tid && r.is_published) ? "pub" : resps.some((r) => r.target === tid && !r.is_published) ? "draft" : "none";
+  const isLastFor = (it: SnapItem) => miss.length > 0 && miss.every((m) => m.startsWith(`${it.code} ${it.name}:`));
 
   return (
     <div className="space-y-3">
@@ -218,14 +225,25 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
         )}
       </CardContent></Card>
 
+      {navTargets.length > 1 && (
+        <div className="lg:hidden sticky top-14 z-10 -mx-1 bg-background/95 px-1 py-2 backdrop-blur">
+          <div className="text-xs font-semibold mb-1.5">{flow.kind === "price" ? "BÁO GIÁ" : "PHẢN HỒI"} — {Math.max(1, navTargets.findIndex((t) => t.id === selId) + 1)}/{navTargets.length}</div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {navTargets.map((t) => { const st = tStatus(t.id); return (
+              <button key={t.id} type="button" onClick={() => setSel(t.id)} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-xs", t.id === selId ? "border-primary bg-primary text-primary-foreground" : st === "pub" ? "border-primary/40 bg-primary/10" : st === "draft" ? "border-dashed border-foreground/40" : "")}>
+                {t.code || t.name.slice(0, 12)} · {st === "pub" ? "Đã công bố" : st === "draft" ? "Nháp" : "Chưa"}
+              </button>); })}
+          </div>
+        </div>
+      )}
       {targetsList.map((it) => (
-        <ResponseCard key={`${round?.id}-${it.id}`} kind={flow.kind} item={it} cfg={cfg} round={round} resps={resps.filter((r) => r.target === it.id)} editable={editable} busy={busy} locked={flow.waiting_info}
+        <div key={`${round?.id}-${it.id}`} className={cn(navTargets.length > 1 && it.id !== selId && "hidden lg:block")}><ResponseCard isLast={isLastFor(it)} images={d.images.filter((g: any) => g.item_id === it.id)} kind={flow.kind} item={it} cfg={cfg} round={round} resps={resps.filter((r) => r.target === it.id)} editable={editable} busy={busy} locked={flow.waiting_info}
           onSave={(c) => run(() => oqApi.saveResponse(flow.id, it.id, c), "Đã lưu nháp phản hồi.")}
-          onPublish={(c) => run(() => oqApi.publish(flow.id, it.id, c), "Đã công bố kết quả.")} name={name} />
+          onPublish={(c) => run(() => oqApi.publish(flow.id, it.id, c), "Đã công bố kết quả.")} name={name} /></div>
       ))}
       {flow.kind === "price" && cfg.shipping_mode === "common" && (
-        <ResponseCard kind="price" item={{ id: "shipping", code: "VC", name: "Vận chuyển chung" }} cfg={cfg} round={round} shippingOnly resps={resps.filter((r) => r.target === "shipping")} editable={editable} busy={busy} locked={flow.waiting_info}
-          onSave={(c) => run(() => oqApi.saveResponse(flow.id, "shipping", c), "Đã lưu nháp.")} onPublish={(c) => run(() => oqApi.publish(flow.id, "shipping", c), "Đã công bố.")} name={name} />
+        <div className={cn(navTargets.length > 1 && selId !== "shipping" && "hidden lg:block")}><ResponseCard isLast={miss.every((m) => m === "Giá vận chuyển chung")} kind="price" item={{ id: "shipping", code: "VC", name: "Vận chuyển chung" }} cfg={cfg} round={round} shippingOnly resps={resps.filter((r) => r.target === "shipping")} editable={editable} busy={busy} locked={flow.waiting_info}
+          onSave={(c) => run(() => oqApi.saveResponse(flow.id, "shipping", c), "Đã lưu nháp.")} onPublish={(c) => run(() => oqApi.publish(flow.id, "shipping", c), "Đã công bố.")} name={name} /></div>
       )}
       {flow.kind === "progress" && (editable || conclusion) && (
         <ResponseCard kind="conclusion" item={{ id: "conclusion", code: "", name: "Kết luận chung cho toàn bộ đơn hàng" }} cfg={cfg} round={round} resps={resps.filter((r) => r.target === "conclusion")} editable={editable} busy={busy} locked={flow.waiting_info}
@@ -237,9 +255,9 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
   );
 }
 
-function ResponseCard({ kind, item, cfg, round, resps, editable, busy, locked, onSave, onPublish, name, shippingOnly }: {
+function ResponseCard({ kind, item, cfg, round, resps, editable, busy, locked, onSave, onPublish, name, shippingOnly, isLast, images }: {
   kind: "price" | "progress" | "conclusion"; item: SnapItem; cfg: PriceConfig; round: any; resps: Resp[]; editable: boolean; busy: boolean; locked?: boolean;
-  onSave: (c: any) => Promise<boolean>; onPublish: (c: any) => Promise<boolean>; name: (id?: string) => string; shippingOnly?: boolean;
+  onSave: (c: any) => Promise<boolean>; onPublish: (c: any) => Promise<boolean>; name: (id?: string) => string; shippingOnly?: boolean; isLast?: boolean; images?: any[];
 }) {
   const draft = resps.find((r) => !r.is_published);
   const published = resps.filter((r) => r.is_published).sort((a, b) => (b.version ?? 0) - (a.version ?? 0));
@@ -269,9 +287,10 @@ function ResponseCard({ kind, item, cfg, round, resps, editable, busy, locked, o
       <div className="flex flex-wrap items-center gap-2">
         {item.code && <span className="font-mono text-xs text-muted-foreground">{item.code}</span>}
         <span className="font-medium flex-1">{item.name}{item.qty ? ` · ${item.qty} ${item.unit ?? ""}` : ""}</span>
-        {latest ? <Badge>Đã công bố v{latest.version}</Badge> : <Badge variant="outline">Chưa công bố</Badge>}
-        {editable && draft && <Badge variant="secondary">Có bản nháp</Badge>}
+        {latest ? <Badge>Đã công bố v{latest.version}</Badge> : editable && draft ? null : <Badge variant="outline">Chưa phản hồi</Badge>}
+        {editable && draft && <Badge variant="secondary" className="border-dashed">Đã lưu nháp</Badge>}
       </div>
+      {editable && images && images.length > 0 && <div className="lg:hidden"><div className="text-xs text-muted-foreground mb-1">Ảnh Sale gửi</div><ItemImages images={images} /></div>}
       {editable ? (
         <>
           {fields.map((fd) => (
@@ -279,14 +298,14 @@ function ResponseCard({ kind, item, cfg, round, resps, editable, busy, locked, o
               <Label>{fd.label}</Label>
               {fd.hint && <p className="text-xs text-muted-foreground mb-1">Sale yêu cầu: {fd.hint}</p>}
               {fd.type === "date" ? <Input type="date" value={c[fd.key] ?? ""} onChange={(e) => edit(fd.key, e.target.value)} className="w-48" />
-                : <Textarea rows={fd.key === "note" || fd.key === "capability" ? 2 : 3} value={c[fd.key] ?? ""} onChange={(e) => edit(fd.key, e.target.value)} />}
+                : <Textarea rows={fd.key === "note" || fd.key === "capability" ? 2 : 3} className="field-sizing-content min-h-16 max-h-[50dvh]" value={c[fd.key] ?? ""} onChange={(e) => edit(fd.key, e.target.value)} />}
             </div>
           ))}
-          <div className="flex flex-wrap gap-2 justify-end">
-            {dirty && <span className="mr-auto self-center text-xs text-muted-foreground">Có thay đổi chưa lưu</span>}
-            <Button variant="outline" size="sm" disabled={busy} onClick={async () => { if (await onSave(c)) setDirty(false); }}>Lưu nháp</Button>
-            <Button size="sm" disabled={busy || locked} title={locked ? "Đang chờ Sale bổ sung thông tin" : undefined}
-              onClick={async () => { if (confirm(latest ? `Công bố phiên bản mới v${(latest.version ?? 0) + 1}? Bản cũ vẫn được giữ.` : "Công bố kết quả này cho Sale?") && (await onPublish(c))) setDirty(false); }}>
+          <div className="sticky bottom-0 -mx-4 -mb-4 flex flex-wrap gap-2 justify-end border-t bg-card/95 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur md:static md:m-0 md:border-0 md:bg-transparent md:p-0">
+            {dirty && <span className="w-full text-xs text-muted-foreground md:w-auto md:mr-auto md:self-center">Có thay đổi chưa lưu</span>}
+            <Button variant="outline" className="flex-1 h-11 md:flex-none md:h-9" disabled={busy} onClick={async () => { if (await onSave(c)) setDirty(false); }}>Lưu nháp</Button>
+            <Button className="flex-1 h-11 md:flex-none md:h-9" disabled={busy || locked} title={locked ? "Đang chờ Sale bổ sung thông tin" : undefined}
+              onClick={async () => { if (confirm((latest ? `Công bố phiên bản mới v${(latest.version ?? 0) + 1}? Bản cũ vẫn được giữ.` : kind === "price" ? "Công bố báo giá sản phẩm này?" : "Công bố kết quả này cho Sale?") + (isLast ? "\n\nĐây là phần cuối cùng còn thiếu — luồng sẽ tự hoàn tất sau khi công bố." : "")) && (await onPublish(c))) setDirty(false); }}>
               {kind === "price" ? (latest ? "Công bố báo giá mới" : "Công bố báo giá") : kind === "progress" ? (latest ? "Công bố phản hồi mới" : "Công bố phản hồi tiến độ") : "Công bố kết luận"}</Button>
           </div>
         </>
@@ -413,7 +432,7 @@ function CancelButton({ d, flow, onDone }: { d: any; flow: any; onDone: () => vo
     const reason = prompt(flowId ? "Lý do dừng luồng này:" : "Lý do hủy toàn bộ yêu cầu:");
     if (reason?.trim()) oqApi.cancel(d.req.id, flowId, reason).then(() => { toast.success("Đã hủy."); onDone(); }).catch((e) => toast.error(e.message));
   };
-  return <div className="flex gap-2">
+  return <div className="col-span-2 flex flex-wrap justify-end gap-2 sm:col-span-1">
     {flow && d.flows.length > 1 && flow.status !== "cancelled" && <Button variant="ghost" size="sm" onClick={() => go(flow.id)}>Dừng luồng này</Button>}
     <Button variant="ghost" size="sm" className="text-destructive" onClick={() => go(null)}>Hủy yêu cầu</Button></div>;
 }
