@@ -142,16 +142,17 @@ function OqForm() {
   if (!loaded) return <p className="text-sm text-muted-foreground">Đang tải bản nháp…</p>;
   const itemImgs = (itemId?: string) => images.filter((g) => g.item_id === itemId);
 
+  const curErr = tried.has(step) ? stepErr(step) : null;
   return (
-    <div className="max-w-4xl mx-auto pb-24">
+    <div className="max-w-4xl mx-auto pb-32 md:pb-6">
       <PageHeader title={id ? "Bản nháp yêu cầu" : "Tạo yêu cầu"} description="Phân loại: Đơn Sứ Quà Tặng" />
+      <div className="sm:hidden mb-2 text-sm font-semibold">Bước {step + 1}/4 — {STEPS[step]}</div>
       <ol className="grid grid-cols-4 gap-1 mb-5">
         {STEPS.map((s, i) => (
-          <li key={s}><button type="button" onClick={() => i < step && setStep(i)} className={cn("w-full text-left rounded-md px-2 py-2 text-xs sm:text-sm border", i === step ? "bg-primary text-primary-foreground border-primary" : i < step ? "bg-accent" : "text-muted-foreground")}>
-            <span className="font-semibold">{i + 1}.</span> <span className="hidden sm:inline">{s}</span></button></li>
+          <li key={s}><button type="button" aria-label={`Bước ${i + 1}: ${s}`} onClick={() => i < step && setStep(i)} className={cn("w-full text-left rounded-md px-2 text-xs sm:text-sm border h-2 sm:h-auto sm:py-2", i === step ? "bg-primary text-primary-foreground border-primary" : i < step ? "bg-primary/40 sm:bg-accent border-primary/40 sm:border-border" : "bg-muted text-muted-foreground")}>
+            <span className="hidden sm:inline"><span className="font-semibold">{i + 1}.</span> {s}</span></button></li>
         ))}
       </ol>
-      <div className="sm:hidden -mt-3 mb-4 text-sm font-medium">Bước {step + 1}: {STEPS[step]}</div>
 
       {step === 0 && (
         <Card><CardContent className="p-4 sm:p-6 space-y-4">
@@ -174,32 +175,50 @@ function OqForm() {
               <label className="flex items-start gap-2 rounded-md border p-3 cursor-pointer"><RadioGroupItem value="bundle" className="mt-0.5" /><span><b>Sản phẩm khách đặt đồng thời</b><br /><span className="text-xs text-muted-foreground">Khách cần tất cả các sản phẩm.</span></span></label>
             </RadioGroup>
           </CardContent></Card>
-          {f.items.map((it, idx) => (
+          {f.items.map((it, idx) => {
+            const hasErr = ["name", "qty", "unit", "detail"].some((k) => err(`${it.key}.${k}`));
+            const isOpen = !collapsed.has(it.key) || hasErr;
+            const imgs = itemImgs(it.id);
+            return (
             <Card key={it.key}><CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between"><span className="font-semibold">PA{String(idx + 1).padStart(2, "0")}</span>
-                {f.items.length > 1 && <Button variant="ghost" size="sm" onClick={() => setF({ ...f, items: f.items.filter((x) => x.key !== it.key) })}><Trash2 className="h-4 w-4 mr-1" />Xóa</Button>}</div>
+              <div className="flex items-center gap-2">
+                <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => toggleItem(it.key)} aria-expanded={isOpen}>
+                  <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">PA{String(idx + 1).padStart(2, "0")}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className={cn("block truncate font-medium", !it.name && "text-muted-foreground")}>{it.name || "(chưa đặt tên)"}</span>
+                    {!isOpen && <span className="block text-xs text-muted-foreground">{it.qty ? `${it.qty} ${it.unit}` : "Chưa có số lượng"} · {imgs.length} ảnh</span>}
+                  </span>
+                  <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isOpen && "rotate-180")} />
+                </button>
+                {f.items.length > 1 && <Button variant="ghost" size="icon" aria-label="Xóa sản phẩm" onClick={() => confirm(`Xóa PA${String(idx + 1).padStart(2, "0")}?`) && setF({ ...f, items: f.items.filter((x) => x.key !== it.key) })}><Trash2 className="h-4 w-4" /></Button>}
+              </div>
+              <div className={cn("space-y-3", !isOpen && "hidden")}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="col-span-2"><Label>Tên sản phẩm *</Label><Input value={it.name} aria-invalid={!!err(`${it.key}.name`)} onChange={(e) => setItem(it.key, { name: e.target.value })} /><FieldErr m={err(`${it.key}.name`)} /></div>
                 <div><Label>Số lượng *</Label><Input type="number" min="0" inputMode="decimal" value={it.qty} aria-invalid={!!err(`${it.key}.qty`)} onChange={(e) => setItem(it.key, { qty: e.target.value })} /><FieldErr m={err(`${it.key}.qty`)} /></div>
                 <div><Label>Đơn vị tính *</Label><Input value={it.unit} aria-invalid={!!err(`${it.key}.unit`)} onChange={(e) => setItem(it.key, { unit: e.target.value })} /><FieldErr m={err(`${it.key}.unit`)} /></div>
               </div>
-              <div><Label>Thông tin chi tiết sản phẩm *</Label><Textarea rows={3} value={it.detail} aria-invalid={!!err(`${it.key}.detail`)} onChange={(e) => setItem(it.key, { detail: e.target.value })} /><FieldErr m={err(`${it.key}.detail`)} /></div>
-              <div><Label>Yêu cầu in ấn / gia công</Label><Textarea rows={2} value={it.processing} onChange={(e) => setItem(it.key, { processing: e.target.value })} /></div>
-              <div><Label>Ghi chú riêng</Label><Textarea rows={2} value={it.note} onChange={(e) => setItem(it.key, { note: e.target.value })} /></div>
+              <div><Label>Thông tin chi tiết sản phẩm *</Label><Textarea rows={3} className="field-sizing-content min-h-20" value={it.detail} aria-invalid={!!err(`${it.key}.detail`)} onChange={(e) => setItem(it.key, { detail: e.target.value })} /><FieldErr m={err(`${it.key}.detail`)} /></div>
+              <div><Label>Yêu cầu in ấn / gia công</Label><Textarea rows={2} className="field-sizing-content min-h-16" value={it.processing} onChange={(e) => setItem(it.key, { processing: e.target.value })} /></div>
+              <div><Label>Ghi chú riêng</Label><Textarea rows={2} className="field-sizing-content min-h-16" value={it.note} onChange={(e) => setItem(it.key, { note: e.target.value })} /></div>
               <div><Label className="mb-1 block">Hình ảnh tham khảo</Label>
-                <ItemImages images={itemImgs(it.id)} editable onChanged={() => id && reload(id, true).then(() => oqApi.detail(id).then((d) => d && setImages(d.images)))}
-                  onAdd={async (files, cat) => {
+                <ItemImages images={imgs} editable onChanged={() => id && oqApi.detail(id).then((d) => d && setImages(d.images))}
+                  onAdd={async (file, cat) => {
                     if (!it.name.trim()) throw new Error("Nhập tên sản phẩm trước khi thêm ảnh.");
-                    const rid = await save(true);
-                    const d = await oqApi.detail(rid);
-                    const itemId = d?.items[idx]?.id; if (!itemId) throw new Error("Chưa lưu được sản phẩm.");
-                    for (const file of files) await oqApi.uploadImage(rid, itemId, file, cat, "");
-                    const d2 = await oqApi.detail(rid); if (d2) setImages(d2.images);
+                    let rid = id; let itemId = it.id;
+                    if (!rid || !itemId) {
+                      rid = await save(true);
+                      const d = await oqApi.detail(rid);
+                      itemId = d?.items[idx]?.id; if (!itemId) throw new Error("Chưa lưu được sản phẩm.");
+                    }
+                    await oqApi.uploadImage(rid, itemId, file, cat, "");
+                    if (!id) { const d2 = await oqApi.detail(rid); if (d2) setImages(d2.images); }
                   }} />
               </div>
+              </div>
             </CardContent></Card>
-          ))}
-          <Button variant="outline" onClick={() => setF({ ...f, items: [...f.items, newItem()] })}><Plus className="h-4 w-4 mr-1" />Thêm sản phẩm</Button>
+          ); })}
+          <Button variant="outline" className="w-full h-11 border-dashed" onClick={() => { const n = newItem(); setCollapsed(new Set(f.items.map((i) => i.key))); setF({ ...f, items: [...f.items, n] }); }}><Plus className="h-4 w-4 mr-1" />Thêm sản phẩm</Button>
         </div>
       )}
 
