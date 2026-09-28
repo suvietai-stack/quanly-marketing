@@ -20,6 +20,7 @@ import { goalCaps, goalLocked } from "@/lib/kpi/goalPolicy";
 import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
 import { monthsIn } from "@/lib/kpi/calculateKr";
 import { MONTHLY_SOURCE } from "@/lib/kpi/service";
+import { TIMEFRAMES, rangeLabel, rangeOf, rangeOptions, validateGoalDates } from "@/lib/kpi/timeframe";
 import type { EmployeeKpiItem, Goal, GoalKr, GoalScope, GoalStatus, KpiMetricDefinition, KpiPeriodType } from "@/lib/kpi/types";
 
 const svc = createKpiService(cloudRepository);
