@@ -220,7 +220,8 @@ export async function processPending(limit = 20) {
   const cz = await contentZaloCfg();
   const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new"] : []), ...Object.keys(cz).filter((k) => cz[k])];
   const oz = await orderZaloCfg(); kinds.push(...Object.keys(oz).filter((k) => oz[k]));
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,created_at,zalo_attempts,zalo_status,payload")
+  kinds.push("oq_new", "oq_info", "oq_answered", "oq_published", "oq_done", "oq_reask", "oq_assigned");
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,created_at,zalo_attempts,zalo_status,payload")
     .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
@@ -284,6 +285,14 @@ export async function processPending(limit = 20) {
           if (!nameMatches(names, rp)) { await mark({ zalo_status: "ineligible", zalo_error: "Người nhận không còn phụ trách order" }); continue; } } }
       if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
       leaveMsg = { ...orderZaloMessage(n.kind, { ...n.payload, title: o.data?.title ?? n.payload?.title }, await brandHeader()), link: `${await baseUrl()}${orderLink(n.order_id)}` };
+    }
+    if (n.kind.startsWith("oq_")) {
+      const { data: f } = await db.from("oq_flows").select("request_id,assignee_id,status,waiting_info").eq("id", n.oq_flow_id).maybeSingle();
+      const { data: rq } = f ? await db.from("oq_requests").select("creator_id,status").eq("id", f.request_id).maybeSingle() : { data: null };
+      const { oqStillValid, oqZaloMessage, oqLink } = await import("./orderQuotes/notify");
+      if (!oqStillValid(n.kind, n.recipient_id, f, rq)) { await mark({ zalo_status: "ineligible", zalo_error: "Yêu cầu đã được xử lý/đổi người phụ trách" }); continue; }
+      if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
+      leaveMsg = { ...oqZaloMessage(n.kind, n.payload ?? {}, await brandHeader()), link: `${await baseUrl()}${oqLink(f.request_id, n.oq_flow_id)}` };
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }

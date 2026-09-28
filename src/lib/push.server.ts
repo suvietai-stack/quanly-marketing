@@ -3,6 +3,7 @@ import { buildPushPayload } from "@block65/webcrypto-web-push";
 import { VAPID_PUBLIC_KEY } from "./push/config";
 import { contentCurrentRecipients, contentLink, contentPushMessage, contentStillValid, nameMatches, type ContentKind } from "./content/notifyMessage";
 import { orderCurrentRecipients, orderLink, orderPushMessage, orderStillValid, type OrderKind } from "./orders/notifyMessage";
+import { oqLink, oqPushMessage, oqStillValid } from "./orderQuotes/notify";
 import { PUSH_KINDS, pushMessage, type PushKind } from "./push/message";
 
 const FRESH_MS = 30 * 60 * 1000;
@@ -34,6 +35,12 @@ async function build(db: any, n: any, b: string) {
     if (kind === "signal_assigned" && s.assigned_to !== n.recipient_id) return null;
     if (kind === "signal_new" && (s.assigned_to || s.cancelled_at)) return null;
     return { ...pushMessage(kind, s, b), url: `/signals?open=${n.signal_id}` };
+  }
+  if ((kind as string).startsWith("oq_")) {
+    const { data: f } = await db.from("oq_flows").select("request_id,assignee_id,status,waiting_info").eq("id", n.oq_flow_id).maybeSingle();
+    const { data: rq } = f ? await db.from("oq_requests").select("creator_id,status").eq("id", f.request_id).maybeSingle() : { data: null };
+    if (!oqStillValid(kind as any, n.recipient_id, f, rq)) return null;
+    return { ...oqPushMessage(kind as any, n.payload ?? {}, b), url: oqLink(f.request_id, n.oq_flow_id) };
   }
   if ((kind as string).startsWith("order_")) {
     const { data: o } = await db.from("orders").select("data").eq("id", n.order_id).maybeSingle();
@@ -70,7 +77,7 @@ export async function processPush(limit = 30) {
   if (!priv) return { processed: 0, error: "missing key" };
   const vapid = { subject: "mailto:admin@suviet.vn", publicKey: VAPID_PUBLIC_KEY, privateKey: priv };
   const db = await admin();
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,payload,created_at")
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,payload,created_at")
     .eq("push_status", "pending").in("kind", PUSH_KINDS as unknown as string[])
     .gt("created_at", new Date(Date.now() - FRESH_MS).toISOString()).order("created_at").limit(limit);
   const b = await brand();
