@@ -286,6 +286,27 @@ export type Database = {
         }
         Relationships: []
       }
+      content_notify_settings: {
+        Row: {
+          data: Json
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data?: Json
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       employee_kpi_adjustments: {
         Row: {
           created_at: string
@@ -886,6 +907,7 @@ export type Database = {
       notifications: {
         Row: {
           attendance_id: string | null
+          content_id: string | null
           created_at: string
           dedup_key: string
           id: string
@@ -903,6 +925,7 @@ export type Database = {
         }
         Insert: {
           attendance_id?: string | null
+          content_id?: string | null
           created_at?: string
           dedup_key: string
           id?: string
@@ -920,6 +943,7 @@ export type Database = {
         }
         Update: {
           attendance_id?: string | null
+          content_id?: string | null
           created_at?: string
           dedup_key?: string
           id?: string
@@ -941,6 +965,13 @@ export type Database = {
             columns: ["attendance_id"]
             isOneToOne: false
             referencedRelation: "attendance_explanations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "web_contents"
             referencedColumns: ["id"]
           },
           {
@@ -1834,6 +1865,9 @@ export type Database = {
         Returns: undefined
       }
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
+      content_notify_save: { Args: { _data: Json }; Returns: undefined }
+      content_remind_run: { Args: never; Returns: number }
+      cw_uid: { Args: { _name: string }; Returns: string }
       get_profiles_directory: {
         Args: never
         Returns: {
