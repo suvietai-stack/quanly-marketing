@@ -259,6 +259,7 @@ function OqForm() {
                   <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="per_item" />Hỏi riêng từng sản phẩm/phương án</label>
                   <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="common" />Hỏi chung cho cả đơn / tổ hợp sản phẩm</label>
                 </RadioGroup>
+                {needPlace && !f.delivery_place.trim() && <p className="mt-2 text-xs text-muted-foreground">Cần nhập Địa điểm giao hàng ở bước 1 để Cung ứng báo giá vận chuyển.</p>}
                 {f.price.shipping_mode === "common" && <Textarea className="mt-2" rows={2} placeholder="Ghi rõ áp dụng cho sản phẩm nào, giao đi đâu…" value={f.price.shipping_note ?? ""} onChange={(e) => setF({ ...f, price: { ...f.price, shipping_note: e.target.value } })} />}
               </div>
               {f.items.map((it, idx) => it.id && (
@@ -291,7 +292,7 @@ function OqForm() {
                 {progUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Tiến Độ".</p>}</div>
                <p className="text-sm text-muted-foreground">Kiểm tra khả năng đáp ứng và thời gian giao hàng dự kiến trước khi chốt đơn.</p>
               <div><Label>Nội dung cần kiểm tra *</Label><Textarea rows={3} value={f.progress.content ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, content: e.target.value } })} /><FieldErr m={err("progress_content")} /></div>
-              <p className="text-xs text-muted-foreground">Ngày khách yêu cầu giao: {vnDate(f.delivery_date)}</p>
+              <p className="text-xs text-muted-foreground">Ngày khách yêu cầu giao: {f.delivery_date ? vnDate(f.delivery_date) : "chưa chọn — bắt buộc khi Hỏi Tiến Độ (bước 1)"}</p>
               {f.items.map((it, idx) => it.id && (
                 <div key={it.key}><Label className="text-xs">Yêu cầu tiến độ riêng PA{String(idx + 1).padStart(2, "0")} — {it.name} (tùy chọn)</Label>
                   <Input value={f.progress.per_item?.[it.id] ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, per_item: { ...(f.progress.per_item ?? {}), [it.id!]: e.target.value } } })} /></div>
