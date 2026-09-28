@@ -130,6 +130,7 @@ function OqForm() {
             <span className="font-semibold">{i + 1}.</span> <span className="hidden sm:inline">{s}</span></button></li>
         ))}
       </ol>
+      <div className="sm:hidden -mt-3 mb-4 text-sm font-medium">Bước {step + 1}: {STEPS[step]}</div>
 
       {step === 0 && (
         <Card><CardContent className="p-4 sm:p-6 space-y-4">
