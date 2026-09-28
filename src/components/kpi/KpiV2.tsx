@@ -61,29 +61,7 @@ export function KpiV2Gate({ title, children }: { title: string; children: (actor
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
-function monthRange(d = new Date()) {
-  const s = new Date(d.getFullYear(), d.getMonth(), 1), e = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  const f = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-  return [f(s), f(e)] as const;
-}
-function quarterRange(d = new Date()) {
-  const q = Math.floor(d.getMonth() / 3);
-  const s = new Date(d.getFullYear(), q * 3, 1), e = new Date(d.getFullYear(), q * 3 + 3, 0);
-  const f = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-  return [f(s), f(e)] as const;
-}
-
-/* ---------------- Tiện ích kỳ ---------------- */
-function monthOptions() {
-  const out: { key: string; label: string }[] = [];
-  const d = new Date();
-  for (let k = -3; k <= 3; k++) {
-    const x = new Date(d.getFullYear(), d.getMonth() + k, 1);
-    const [a, b] = monthRange(x);
-    out.push({ key: `${a}|${b}`, label: `Tháng ${x.getMonth() + 1}/${x.getFullYear()}` });
-  }
-  return out.reverse();
-}
+/* Kỳ: xem @/lib/kpi/timeframe (giờ Việt Nam, tuần T2–CN). */
 const GOAL_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang thực hiện", closed: "Đã đóng", cancelled: "Đã hủy" };
 const PERIOD_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang áp dụng", locked: "Đã khóa", closed: "Đã đóng" };
 const NEXT_LABEL: Record<string, string> = { active: "Áp dụng", locked: "Khóa kỳ", closed: "Đóng kỳ" };
