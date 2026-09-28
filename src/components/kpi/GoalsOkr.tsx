@@ -859,7 +859,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
               <div className="flex items-start justify-between gap-3 border-b border-border p-4">
                 <div className="min-w-0">
                   <div className="font-semibold">{g.title}{meta.archived && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal">Lưu trữ</span>}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{scopeText(g)}{meta.coordinatorId ? ` · Điều phối: ${nameOf(meta.coordinatorId) ?? "—"}` : ""} · {fmtD(g.periodStart)} → {fmtD(g.periodEnd)} · Deadline {fmtD(meta.deadline ?? g.periodEnd)}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{scopeText(g)}{meta.coordinatorId ? ` · Điều phối: ${nameOf(meta.coordinatorId) ?? "—"}` : ""} · Thực hiện{meta.periodType && meta.periodType !== "custom" ? ` (${rangeLabel(meta.periodType, g.periodStart, g.periodEnd)})` : ""}: {fmtD(g.periodStart)} → {fmtD(g.periodEnd)} · Deadline {fmtD(meta.deadline ?? g.periodEnd)}</div>
                 </div>
                 <div className="flex shrink-0 items-start gap-1 text-right">
                   <div>
