@@ -10,3 +10,4 @@
 - Order quotes: separate oq_flows and snapshot oq_rounds; published responses immutable; writes via SECURITY DEFINER oq_* RPC; private order-quotes images. Change private.oq_missing with src/lib/orderQuotes/logic.ts; oq_publish_response auto-completes under FOR UPDATE; delete images via oq_storage_cleanup — preserves history and access control.
 - Order tracking remains a data-free placeholder independent of oq_* — no unrequested order workflow.
 - New progress forms only submit capability; detail reads old in_progress/existing_code — keeps historical rounds readable.
+- Order-quote durations are computed only in private.oq_round_metrics (exposed via oq_job_times/oq_report_rows, report perms oq.report_own/all/export checked server-side); src/lib/orderQuotes/report.ts only filters/aggregates — one formula for list, detail, report, Excel.
