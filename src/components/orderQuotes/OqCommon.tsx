@@ -33,7 +33,7 @@ export function FlowBadge({ kind, status, waiting }: { kind: "price" | "progress
 /** Cùng bố cục thông tin sản phẩm ở yêu cầu, lượt phản hồi và bản xem lại. */
 export function ProductQuantity({ qty, unit }: { qty?: string | number | null; unit?: string | null }) {
   return <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2 text-sm">
-    <span className="text-muted-foreground">Số lượng</span>
+    <span className="text-muted-foreground">Số lượng:</span>
     <span className="min-w-0 break-words font-medium">{qty === null || qty === undefined || qty === "" ? "—" : `${qty}${unit ? ` ${unit}` : ""}`}</span>
   </div>;
 }
