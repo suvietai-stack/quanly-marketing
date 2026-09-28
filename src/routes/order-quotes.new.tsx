@@ -24,6 +24,8 @@ export const Route = createFileRoute("/order-quotes/new")({
     { name: "description", content: "Tạo yêu cầu hỏi giá, kiểm tra khả năng đáp ứng và ngày giao dự kiến trước khi chốt đơn." },
     { property: "og:title", content: "Tạo yêu cầu Hỏi Giá & Tiến Độ" },
     { property: "og:description", content: "Form 4 bước: thông tin đơn, sản phẩm, nội dung hỏi, kiểm tra và gửi." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
   ] }),
   component: () => <RequirePermission perm="oq.create"><OqForm /></RequirePermission>,
 });

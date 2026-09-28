@@ -30,6 +30,8 @@ export const Route = createFileRoute("/order-quotes/$id")({
     { name: "description", content: "Theo dõi và xử lý yêu cầu hỏi giá, hỏi tiến độ theo từng sản phẩm." },
     { property: "og:title", content: "Chi tiết yêu cầu — Hỏi Giá & Tiến Độ" },
     { property: "og:description", content: "Phản hồi Cung ứng, trao đổi và lịch sử xử lý của yêu cầu." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
     { name: "robots", content: "noindex" },
   ] }),
   component: () => (
