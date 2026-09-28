@@ -33,7 +33,15 @@ export function SourceLink({ t, id, websiteId, socialId, children }: { t: string
 export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin: boolean }; search?: V2Search }) {
   const users = useAuth((s) => s.users);
   const store = useStore();
-  const db = useMemo(() => svc.listForActor(actor), [actor]); // quyền: Admin tất cả, còn lại chỉ bản thân
+  const dbAll = useMemo(() => svc.listForActor(actor), [actor]); // quyền: Admin tất cả, còn lại chỉ bản thân
+  const [history, setHistory] = useState(false);
+  // Mặc định ẩn mục tiêu đã hủy/lưu trữ (và kỳ gắn với chúng); bật "lịch sử" để xem lại — không xóa dữ liệu đã chốt.
+  const db = useMemo(() => {
+    if (history) return dbAll;
+    const inactive = new Set(dbAll.goals.filter((g) => g.status === "cancelled" || (g.metadata as { archived?: boolean })?.archived).map((g) => g.id));
+    if (!inactive.size) return dbAll;
+    return { ...dbAll, goals: dbAll.goals.filter((g) => !inactive.has(g.id)), periods: dbAll.periods.filter((p) => !(p.goalId && inactive.has(p.goalId))) };
+  }, [dbAll, history]);
   const periodKeys = [...new Set(db.periods.map((p) => `${p.periodStart}|${p.periodEnd}`))].sort().reverse();
   const sk = search.from && search.to ? `${search.from}|${search.to}` : "";
   const [pk, setPk] = useState(periodKeys.includes(sk) ? sk : periodKeys[0] ?? "");
