@@ -83,26 +83,47 @@ function OqForm() {
   const run = async (fn: () => Promise<unknown>) => { setBusy(true); try { await fn(); } catch (e: any) { toast.error(e.message); } finally { setBusy(false); } };
 
   const setItem = (k: string, patch: Partial<Item>) => setF((p) => ({ ...p, items: p.items.map((i) => (i.key === k ? { ...i, ...patch } : i)) }));
-  const stepErr = (s: number): string | null => {
-    if (s === 0 && !f.title.trim()) return "Nhập tên báo giá / đơn hàng.";
-    if (s === 1 && (f.items.length === 0 || f.items.some((i) => !i.name.trim()))) return "Mỗi sản phẩm cần có tên.";
-    if (s === 2) {
-      if (!f.want_price && !f.want_progress) return "Chọn ít nhất Hỏi Giá hoặc Hỏi Tiến Độ.";
-      if (f.want_price && !f.price_assignee) return "Chọn người phụ trách Hỏi Giá.";
-      if (f.want_price && f.price.shipping_mode !== "common" && !f.items.some((i) => i.id && Object.values(f.price.items?.[i.id] ?? {}).some((c: any) => c?.on))) return "Hỏi Giá: chọn ít nhất một hạng mục cần báo giá.";
-      if (f.want_progress && !f.progress_assignee) return "Chọn người phụ trách Hỏi Tiến Độ.";
-      if (f.want_progress && !f.progress.check_type) return "Hỏi Tiến Độ: chọn loại kiểm tra.";
-      if (f.want_progress && !f.progress.content?.trim()) return "Hỏi Tiến Độ: nhập nội dung cần kiểm tra.";
+  /** Lỗi theo từng trường (chỉ kiểm tra khi Tiếp tục/Gửi; Lưu nháp không kiểm tra). */
+  const fieldErrs = (s: number): Record<string, string> => {
+    const e: Record<string, string> = {};
+    if (s === 0) {
+      if (!f.title.trim()) e.title = "Nhập tên yêu cầu.";
+      if (!f.delivery_place.trim()) e.delivery_place = "Nhập địa điểm giao hàng.";
+      if (!f.delivery_date) e.delivery_date = "Chọn ngày khách yêu cầu giao.";
     }
-    return null;
+    if (s === 1) {
+      if (f.items.length === 0) e.items = "Cần ít nhất một sản phẩm.";
+      for (const i of f.items) {
+        if (!i.name.trim()) e[`${i.key}.name`] = "Nhập tên sản phẩm.";
+        const q = Number(i.qty);
+        if (i.qty.trim() === "" || !Number.isFinite(q) || q <= 0) e[`${i.key}.qty`] = "Số lượng phải lớn hơn 0.";
+        if (!i.unit.trim()) e[`${i.key}.unit`] = "Nhập đơn vị tính.";
+        if (!i.detail.trim()) e[`${i.key}.detail`] = "Nhập thông tin chi tiết sản phẩm.";
+      }
+    }
+    if (s === 2) {
+      if (!f.want_price && !f.want_progress) e.flows = "Chọn ít nhất Hỏi Giá hoặc Hỏi Tiến Độ.";
+      if (f.want_price && !priceUsers.some((u) => u.id === f.price_assignee)) e.price_assignee = "Chọn người phụ trách Hỏi Giá.";
+      if (f.want_price && f.price.shipping_mode !== "common" && !f.items.some((i) => i.id && Object.values(f.price.items?.[i.id] ?? {}).some((c: any) => c?.on))) e.price_cats = "Chọn ít nhất một hạng mục cần báo giá.";
+      if (f.want_progress && !progUsers.some((u) => u.id === f.progress_assignee)) e.progress_assignee = "Chọn người phụ trách Hỏi Tiến Độ.";
+      if (f.want_progress && !f.progress.check_type) e.check_type = "Chọn loại kiểm tra.";
+      if (f.want_progress && !f.progress.content?.trim()) e.progress_content = "Nhập nội dung cần kiểm tra.";
+    }
+    return e;
+  };
+  const [tried, setTried] = useState<Set<number>>(new Set());
+  const err = (k: string) => (tried.has(step) ? fieldErrs(step)[k] : undefined);
+  const stepErr = (s: number): string | null => {
+    const e = fieldErrs(s); const n = Object.keys(e).length;
+    return n ? `Còn ${n} mục cần bổ sung ở bước ${s + 1} (xem các ô báo đỏ).` : null;
   };
   const next = () => run(async () => {
-    const e = stepErr(step); if (e) throw new Error(e);
+    const e = stepErr(step); if (e) { setTried((t) => new Set(t).add(step)); throw new Error(e); }
     if (step === 1) await save(true); // cần mã sản phẩm để gắn hạng mục hỏi giá
     setStep((s) => s + 1);
   });
   const submit = () => run(async () => {
-    for (let s = 0; s < 3; s++) { const e = stepErr(s); if (e) { setStep(s); throw new Error(e); } }
+    for (let s = 0; s < 3; s++) { const e = stepErr(s); if (e) { setTried((t) => new Set(t).add(s)); setStep(s); throw new Error(e); } }
     const rid = await save(true);
     const code = await oqApi.submit(rid);
     toast.success(`Đã gửi yêu cầu ${code}.`);
@@ -135,10 +156,10 @@ function OqForm() {
       {step === 0 && (
         <Card><CardContent className="p-4 sm:p-6 space-y-4">
           <div><Label>Phân loại đơn hàng</Label><Input value="Đơn Sứ Quà Tặng" disabled /></div>
-          <div><Label>Tên báo giá / đơn hàng *</Label><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} /></div>
+          <div><Label>Tên yêu cầu *</Label><Input value={f.title} aria-invalid={!!err("title")} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} /><FieldErr m={err("title")} /></div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div><Label>Địa điểm giao hàng</Label><Input value={f.delivery_place} onChange={(e) => setF({ ...f, delivery_place: e.target.value })} /></div>
-            <div><Label>Ngày khách yêu cầu giao</Label><Input type="date" value={f.delivery_date} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /></div>
+            <div><Label>Địa điểm giao hàng *</Label><Input value={f.delivery_place} aria-invalid={!!err("delivery_place")} onChange={(e) => setF({ ...f, delivery_place: e.target.value })} /><FieldErr m={err("delivery_place")} /></div>
+            <div><Label>Ngày khách yêu cầu giao *</Label><Input type="date" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /><FieldErr m={err("delivery_date")} /></div>
           </div>
           <div><Label>Ghi chú chung</Label><Textarea rows={4} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
         </CardContent></Card>
@@ -158,11 +179,11 @@ function OqForm() {
               <div className="flex items-center justify-between"><span className="font-semibold">PA{String(idx + 1).padStart(2, "0")}</span>
                 {f.items.length > 1 && <Button variant="ghost" size="sm" onClick={() => setF({ ...f, items: f.items.filter((x) => x.key !== it.key) })}><Trash2 className="h-4 w-4 mr-1" />Xóa</Button>}</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="col-span-2"><Label>Tên sản phẩm *</Label><Input value={it.name} onChange={(e) => setItem(it.key, { name: e.target.value })} /></div>
-                <div><Label>Số lượng</Label><Input type="number" inputMode="decimal" value={it.qty} onChange={(e) => setItem(it.key, { qty: e.target.value })} /></div>
-                <div><Label>Đơn vị tính</Label><Input value={it.unit} onChange={(e) => setItem(it.key, { unit: e.target.value })} /></div>
+                <div className="col-span-2"><Label>Tên sản phẩm *</Label><Input value={it.name} aria-invalid={!!err(`${it.key}.name`)} onChange={(e) => setItem(it.key, { name: e.target.value })} /><FieldErr m={err(`${it.key}.name`)} /></div>
+                <div><Label>Số lượng *</Label><Input type="number" min="0" inputMode="decimal" value={it.qty} aria-invalid={!!err(`${it.key}.qty`)} onChange={(e) => setItem(it.key, { qty: e.target.value })} /><FieldErr m={err(`${it.key}.qty`)} /></div>
+                <div><Label>Đơn vị tính *</Label><Input value={it.unit} aria-invalid={!!err(`${it.key}.unit`)} onChange={(e) => setItem(it.key, { unit: e.target.value })} /><FieldErr m={err(`${it.key}.unit`)} /></div>
               </div>
-              <div><Label>Thông tin chi tiết sản phẩm</Label><Textarea rows={3} value={it.detail} onChange={(e) => setItem(it.key, { detail: e.target.value })} /></div>
+              <div><Label>Thông tin chi tiết sản phẩm *</Label><Textarea rows={3} value={it.detail} aria-invalid={!!err(`${it.key}.detail`)} onChange={(e) => setItem(it.key, { detail: e.target.value })} /><FieldErr m={err(`${it.key}.detail`)} /></div>
               <div><Label>Yêu cầu in ấn / gia công</Label><Textarea rows={2} value={it.processing} onChange={(e) => setItem(it.key, { processing: e.target.value })} /></div>
               <div><Label>Ghi chú riêng</Label><Textarea rows={2} value={it.note} onChange={(e) => setItem(it.key, { note: e.target.value })} /></div>
               <div><Label className="mb-1 block">Hình ảnh tham khảo</Label>
@@ -184,9 +205,10 @@ function OqForm() {
 
       {step === 2 && (
         <div className="space-y-4">
-          <Card><CardContent className="p-4 flex flex-wrap gap-6">
+          <Card><CardContent className="p-4 flex flex-wrap items-center gap-6">
             <label className="flex items-center gap-2 font-semibold"><Checkbox checked={f.want_price} onCheckedChange={(v) => setF({ ...f, want_price: !!v, price_assignee: f.price_assignee || f.progress_assignee })} />HỎI GIÁ</label>
             <label className="flex items-center gap-2 font-semibold"><Checkbox checked={f.want_progress} onCheckedChange={(v) => setF({ ...f, want_progress: !!v, progress_assignee: f.progress_assignee || f.price_assignee })} />HỎI TIẾN ĐỘ</label>
+            <FieldErr m={err("flows")} />
           </CardContent></Card>
 
           {f.want_price && (
@@ -195,6 +217,7 @@ function OqForm() {
               <div><Label>Người phụ trách Hỏi Giá *</Label>
                 <Select value={f.price_assignee} onValueChange={(v) => setF({ ...f, price_assignee: v })}><SelectTrigger><SelectValue placeholder="Chọn nhân viên Cung ứng" /></SelectTrigger>
                   <SelectContent>{priceUsers.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+                <FieldErr m={err("price_assignee")} />
                 {priceUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Giá".</p>}</div>
               <div><Label className="mb-1 block">Giá vận chuyển</Label>
                 <RadioGroup value={f.price.shipping_mode ?? "per_item"} onValueChange={(v) => setF({ ...f, price: { ...f.price, shipping_mode: v as any } })} className="flex flex-wrap gap-4">
@@ -217,6 +240,7 @@ function OqForm() {
                   })}
                 </div>
               ))}
+              <FieldErr m={err("price_cats")} />
               <div><Label>Ghi chú chung cho Hỏi Giá</Label><Textarea rows={2} value={f.price.note ?? ""} onChange={(e) => setF({ ...f, price: { ...f.price, note: e.target.value } })} /></div>
             </CardContent></Card>
           )}
@@ -227,13 +251,15 @@ function OqForm() {
               <div><Label>Người phụ trách Hỏi Tiến Độ *</Label>
                 <Select value={f.progress_assignee} onValueChange={(v) => setF({ ...f, progress_assignee: v })}><SelectTrigger><SelectValue placeholder="Chọn nhân viên Cung ứng" /></SelectTrigger>
                   <SelectContent>{progUsers.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+                <FieldErr m={err("progress_assignee")} />
                 {progUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Tiến Độ".</p>}</div>
               <RadioGroup value={f.progress.check_type ?? ""} onValueChange={(v) => setF({ ...f, progress: { ...f.progress, check_type: v as any } })} className="grid sm:grid-cols-2 gap-2">
                 <label className="flex items-start gap-2 rounded-md border p-3 text-sm"><RadioGroupItem value="capability" className="mt-0.5" /><span><b>Kiểm tra khả năng đáp ứng</b><br />Đơn chưa chốt</span></label>
                 <label className="flex items-start gap-2 rounded-md border p-3 text-sm"><RadioGroupItem value="in_progress" className="mt-0.5" /><span><b>Kiểm tra tiến độ đơn đang thực hiện</b><br />Đơn đã triển khai</span></label>
               </RadioGroup>
+              <FieldErr m={err("check_type")} />
               <div><Label>Mã đơn hàng hiện có (nếu có)</Label><Input value={f.progress.existing_code ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, existing_code: e.target.value } })} /></div>
-              <div><Label>Nội dung cần kiểm tra *</Label><Textarea rows={3} value={f.progress.content ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, content: e.target.value } })} /></div>
+              <div><Label>Nội dung cần kiểm tra *</Label><Textarea rows={3} value={f.progress.content ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, content: e.target.value } })} /><FieldErr m={err("progress_content")} /></div>
               <p className="text-xs text-muted-foreground">Ngày khách yêu cầu giao: {vnDate(f.delivery_date)}</p>
               {f.items.map((it, idx) => it.id && (
                 <div key={it.key}><Label className="text-xs">Yêu cầu tiến độ riêng PA{String(idx + 1).padStart(2, "0")} — {it.name} (tùy chọn)</Label>
@@ -266,3 +292,4 @@ function OqForm() {
 }
 
 const Row = ({ k, v }: { k: string; v: string }) => <div className="grid grid-cols-[110px_1fr] gap-2"><span className="text-muted-foreground">{k}</span><span className="whitespace-pre-wrap">{v}</span></div>;
+const FieldErr = ({ m }: { m?: string }) => (m ? <p className="text-xs text-destructive mt-1">{m}</p> : null);
