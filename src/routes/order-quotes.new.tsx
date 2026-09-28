@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { oqApi } from "@/lib/orderQuotes/api";
 import { PRICE_CATS, vnDate, type PriceConfig, type ProgressConfig } from "@/lib/orderQuotes/logic";
-import { ItemImages, useUserName } from "@/components/orderQuotes/OqCommon";
+import { ItemImages, MobileActionBar, UserPicker, useUserName } from "@/components/orderQuotes/OqCommon";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/order-quotes/new")({
@@ -49,6 +48,8 @@ function OqForm() {
   const [busy, setBusy] = useState(false);
   const [images, setImages] = useState<any[]>([]);
   const [loaded, setLoaded] = useState(!initialId);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleItem = (k: string) => setCollapsed((c) => { const n = new Set(c); n.has(k) ? n.delete(k) : n.add(k); return n; });
   const priceUsers = useQuery({ queryKey: ["oq-assignees", "price"], queryFn: () => oqApi.assignees("price") }).data ?? [];
   const progUsers = useQuery({ queryKey: ["oq-assignees", "progress"], queryFn: () => oqApi.assignees("progress") }).data ?? [];
 
@@ -121,6 +122,7 @@ function OqForm() {
     const e = stepErr(step); if (e) { setTried((t) => new Set(t).add(step)); throw new Error(e); }
     if (step === 1) await save(true); // cần mã sản phẩm để gắn hạng mục hỏi giá
     setStep((s) => s + 1);
+    window.scrollTo({ top: 0 });
   });
   const submit = () => run(async () => {
     for (let s = 0; s < 3; s++) { const e = stepErr(s); if (e) { setTried((t) => new Set(t).add(s)); setStep(s); throw new Error(e); } }
@@ -160,7 +162,7 @@ function OqForm() {
           <div><Label>Tên yêu cầu *</Label><Input value={f.title} aria-invalid={!!err("title")} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} /><FieldErr m={err("title")} /></div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div><Label>Địa điểm giao hàng *</Label><Input value={f.delivery_place} aria-invalid={!!err("delivery_place")} onChange={(e) => setF({ ...f, delivery_place: e.target.value })} /><FieldErr m={err("delivery_place")} /></div>
-            <div><Label>Ngày khách yêu cầu giao *</Label><Input type="date" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /><FieldErr m={err("delivery_date")} /></div>
+            <div><Label>Ngày khách yêu cầu giao *</Label><Input type="date" className="h-11" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /><FieldErr m={err("delivery_date")} /></div>
           </div>
           <div><Label>Ghi chú chung</Label><Textarea rows={4} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
         </CardContent></Card>
