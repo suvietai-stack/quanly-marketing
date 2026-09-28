@@ -67,7 +67,7 @@ function OqList() {
 
   return (
     <div>
-      <PageHeader title="Hỏi Giá & Tiến Độ" description="Đơn Sứ Quà Tặng — Sale hỏi giá/tiến độ, Cung ứng phản hồi theo từng sản phẩm."
+       <PageHeader title="Hỏi Giá & Tiến Độ" description="Đơn Sứ Quà Tặng — hỏi giá, khả năng đáp ứng và ngày giao dự kiến trước khi chốt đơn."
         actions={can("oq.create") ? <Button asChild><Link to="/order-quotes/new" search={{ id: undefined }}><Plus className="h-4 w-4 mr-1" />Tạo yêu cầu</Link></Button> : undefined} />
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
         <TabsList className="grid w-full grid-cols-3 h-11 sm:inline-flex sm:w-auto sm:h-10"><TabsTrigger value="all">Tất cả</TabsTrigger><TabsTrigger value="price">Hỏi Giá</TabsTrigger><TabsTrigger value="progress">Hỏi Tiến Độ</TabsTrigger></TabsList>

@@ -3,7 +3,7 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Đơn hàng",
     items: [
       { to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"] },
+      { to: "/order-tracking", label: "Theo Dõi Đơn Hàng", icon: Truck, badge: "Sắp ra mắt" },
     ],
   },
   {

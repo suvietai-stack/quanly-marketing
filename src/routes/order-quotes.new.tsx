@@ -21,7 +21,7 @@ export const Route = createFileRoute("/order-quotes/new")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
   head: () => ({ meta: [
     { title: "Tạo yêu cầu Hỏi Giá & Tiến Độ" },
-    { name: "description", content: "Tạo yêu cầu hỏi giá, hỏi tiến độ Đơn Sứ Quà Tặng gửi Cung ứng." },
+    { name: "description", content: "Tạo yêu cầu hỏi giá, kiểm tra khả năng đáp ứng và ngày giao dự kiến trước khi chốt đơn." },
     { property: "og:title", content: "Tạo yêu cầu Hỏi Giá & Tiến Độ" },
     { property: "og:description", content: "Form 4 bước: thông tin đơn, sản phẩm, nội dung hỏi, kiểm tra và gửi." },
   ] }),
@@ -35,7 +35,7 @@ type Form = {
   price: PriceConfig; progress: ProgressConfig; price_assignee: string; progress_assignee: string;
 };
 const newItem = (): Item => ({ key: crypto.randomUUID(), name: "", qty: "", unit: "bộ", detail: "", processing: "", note: "" });
-const empty: Form = { title: "", delivery_place: "", delivery_date: "", note: "", items_mode: "option", want_price: false, want_progress: false, items: [newItem()], price: { items: {}, shipping_mode: "per_item" }, progress: {}, price_assignee: "", progress_assignee: "" };
+const empty: Form = { title: "", delivery_place: "", delivery_date: "", note: "", items_mode: "option", want_price: false, want_progress: false, items: [newItem()], price: { items: {}, shipping_mode: "per_item" }, progress: { check_type: "capability" }, price_assignee: "", progress_assignee: "" };
 const STEPS = ["Thông tin đơn hàng", "Sản phẩm", "Nội dung hỏi & Cung ứng", "Kiểm tra & gửi"];
 
 function OqForm() {
@@ -63,7 +63,7 @@ function OqForm() {
     const c = d.req.draft_config ?? {};
     setF({ title: d.req.title ?? "", delivery_place: d.req.delivery_place ?? "", delivery_date: d.req.delivery_date ?? "", note: d.req.note ?? "", items_mode: d.req.items_mode,
       want_price: d.req.want_price, want_progress: d.req.want_progress, items: items.length ? items : [newItem()],
-      price: c.price ?? { items: {}, shipping_mode: "per_item" }, progress: c.progress ?? {}, price_assignee: c.price_assignee ?? "", progress_assignee: c.progress_assignee ?? "" });
+       price: c.price ?? { items: {}, shipping_mode: "per_item" }, progress: { content: c.progress?.content, per_item: c.progress?.per_item, check_type: "capability" }, price_assignee: c.price_assignee ?? "", progress_assignee: c.progress_assignee ?? "" });
     setLoaded(true);
   };
   useEffect(() => { if (initialId) reload(initialId); }, [initialId]);
@@ -72,7 +72,7 @@ function OqForm() {
     title: f.title, delivery_place: f.delivery_place, delivery_date: f.delivery_date, note: f.note, items_mode: f.items_mode,
     want_price: f.want_price, want_progress: f.want_progress,
     items: f.items.map(({ id, name, qty, unit, detail, processing, note }) => ({ id, name, qty, unit, detail, processing, note })),
-    config: { price: f.price, progress: f.progress, price_assignee: f.want_price ? f.price_assignee : "", progress_assignee: f.want_progress ? f.progress_assignee : "" },
+     config: { price: f.price, progress: { content: f.progress.content, per_item: f.progress.per_item, check_type: "capability" }, price_assignee: f.want_price ? f.price_assignee : "", progress_assignee: f.want_progress ? f.progress_assignee : "" },
   });
   const save = async (quiet = false) => {
     const rid = await oqApi.save(id, payload());
@@ -107,7 +107,6 @@ function OqForm() {
       if (f.want_price && !priceUsers.some((u) => u.id === f.price_assignee)) e.price_assignee = "Chọn người phụ trách Hỏi Giá.";
       if (f.want_price && f.price.shipping_mode !== "common" && !f.items.some((i) => i.id && Object.values(f.price.items?.[i.id] ?? {}).some((c: any) => c?.on))) e.price_cats = "Chọn ít nhất một hạng mục cần báo giá.";
       if (f.want_progress && !progUsers.some((u) => u.id === f.progress_assignee)) e.progress_assignee = "Chọn người phụ trách Hỏi Tiến Độ.";
-      if (f.want_progress && !f.progress.check_type) e.check_type = "Chọn loại kiểm tra.";
       if (f.want_progress && !f.progress.content?.trim()) e.progress_content = "Nhập nội dung cần kiểm tra.";
     }
     return e;
@@ -228,7 +227,7 @@ function OqForm() {
         <div className="space-y-4">
           <div>
             <div className="grid grid-cols-2 gap-3">
-              {([["want_price", "HỎI GIÁ", "Báo giá từng sản phẩm"], ["want_progress", "HỎI TIẾN ĐỘ", "Khả năng / tiến độ giao"]] as const).map(([k, t, sub]) => (
+               {([["want_price", "HỎI GIÁ", "Báo giá từng sản phẩm"], ["want_progress", "HỎI TIẾN ĐỘ", "Khả năng đáp ứng trước khi chốt đơn"]] as const).map(([k, t, sub]) => (
                 <label key={k} className={cn("flex cursor-pointer flex-col gap-1 rounded-lg border-2 p-3 sm:p-4 transition-colors", f[k] ? "border-primary bg-primary/5" : "border-border")}>
                   <span className="flex items-center gap-2 font-semibold"><Checkbox checked={f[k]} onCheckedChange={(v) => setF(k === "want_price" ? { ...f, want_price: !!v, price_assignee: f.price_assignee || f.progress_assignee } : { ...f, want_progress: !!v, progress_assignee: f.progress_assignee || f.price_assignee })} />{t}</span>
                   <span className="text-xs text-muted-foreground">{sub}</span>
@@ -280,12 +279,7 @@ function OqForm() {
                 {f.want_price && f.price_assignee && f.price_assignee !== f.progress_assignee && progUsers.some((u) => u.id === f.price_assignee) && (
                   <Button type="button" variant="link" size="sm" className="h-auto px-0" onClick={() => setF({ ...f, progress_assignee: f.price_assignee })}>Dùng cùng người Hỏi Giá ({name(f.price_assignee)})</Button>)}
                 {progUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Tiến Độ".</p>}</div>
-              <RadioGroup value={f.progress.check_type ?? ""} onValueChange={(v) => setF({ ...f, progress: { ...f.progress, check_type: v as any } })} className="grid sm:grid-cols-2 gap-2">
-                <label className="flex items-start gap-2 rounded-md border p-3 text-sm"><RadioGroupItem value="capability" className="mt-0.5" /><span><b>Kiểm tra khả năng đáp ứng</b><br />Đơn chưa chốt</span></label>
-                <label className="flex items-start gap-2 rounded-md border p-3 text-sm"><RadioGroupItem value="in_progress" className="mt-0.5" /><span><b>Kiểm tra tiến độ đơn đang thực hiện</b><br />Đơn đã triển khai</span></label>
-              </RadioGroup>
-              <FieldErr m={err("check_type")} />
-              <div><Label>Mã đơn hàng hiện có (nếu có)</Label><Input value={f.progress.existing_code ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, existing_code: e.target.value } })} /></div>
+               <p className="text-sm text-muted-foreground">Kiểm tra khả năng đáp ứng và thời gian giao hàng dự kiến trước khi chốt đơn.</p>
               <div><Label>Nội dung cần kiểm tra *</Label><Textarea rows={3} value={f.progress.content ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, content: e.target.value } })} /><FieldErr m={err("progress_content")} /></div>
               <p className="text-xs text-muted-foreground">Ngày khách yêu cầu giao: {vnDate(f.delivery_date)}</p>
               {f.items.map((it, idx) => it.id && (
