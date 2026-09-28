@@ -51,7 +51,7 @@ export function ItemImages({ images, editable, onAdd, onChanged }: { images: Img
           {images.map((im) => (
             <div key={im.id} className="space-y-1">
               <button type="button" onClick={() => setZoom(im)} className="block aspect-square w-full overflow-hidden rounded-md border bg-muted">
-                {urls[im.path] ? <img src={urls[im.path]} alt={im.caption ?? ""} className="h-full w-full object-cover" /> : null}
+                {urls[im.path] ? <img src={urls[im.path] ?? undefined} alt={im.caption ?? undefined} className="h-full w-full object-cover" /> : null}
               </button>
               <div className="text-[11px] text-muted-foreground truncate">{IMG_CAT[im.category]}</div>
               {editable ? <CaptionEdit im={im} onChanged={onChanged} /> : im.caption && <div className="text-xs line-clamp-2">{im.caption}</div>}
@@ -77,7 +77,7 @@ export function ItemImages({ images, editable, onAdd, onChanged }: { images: Img
       <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
         <DialogContent className="max-w-3xl p-2">
           <DialogTitle className="sr-only">Xem ảnh</DialogTitle>
-          {zoom && urls[zoom.path] && <img src={urls[zoom.path]} alt={zoom.caption ?? ""} className="max-h-[80vh] w-full object-contain" />}
+          {zoom && urls[zoom.path] && <img src={urls[zoom.path] ?? undefined} alt={zoom.caption ?? undefined} className="max-h-[80vh] w-full object-contain" />}
           {zoom?.caption && <p className="px-2 pb-2 text-sm">{zoom.caption}</p>}
         </DialogContent>
       </Dialog>

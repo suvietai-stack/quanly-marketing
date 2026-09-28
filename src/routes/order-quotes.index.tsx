@@ -82,7 +82,7 @@ function OqList() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
         <TabsList><TabsTrigger value="all">Tất cả</TabsTrigger><TabsTrigger value="price">Hỏi Giá</TabsTrigger><TabsTrigger value="progress">Hỏi Tiến Độ</TabsTrigger></TabsList>
       </Tabs>
-      <div className="grid gap-2 grid-cols-2 lg:grid-cols-6 mb-4">
+      <div className="grid gap-2 grid-cols-2 lg:grid-cols-7 mb-4">
         <div className="relative col-span-2">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tên hoặc mã yêu cầu" className="pl-8" />
@@ -96,7 +96,7 @@ function OqList() {
           <SelectContent><SelectItem value={ALL}>Mọi người tạo</SelectItem>{people.c.map((id) => <SelectItem key={id} value={id}>{name(id)}</SelectItem>)}</SelectContent></Select>
         <Select value={assignee} onValueChange={setAssignee}><SelectTrigger><SelectValue placeholder="Người phụ trách" /></SelectTrigger>
           <SelectContent><SelectItem value={ALL}>Mọi người phụ trách</SelectItem>{people.a.map((id) => <SelectItem key={id} value={id}>{name(id)}</SelectItem>)}</SelectContent></Select>
-        <div className="flex gap-1 col-span-2 lg:col-span-1">
+        <div className="flex gap-1 col-span-2">
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Từ ngày" className="px-2" />
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Đến ngày" className="px-2" />
         </div>
