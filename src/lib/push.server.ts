@@ -1,6 +1,7 @@
 // Chỉ chạy phía máy chủ. Web Push độc lập với Zalo (cột push_status + bảng push_deliveries riêng).
 import { buildPushPayload } from "@block65/webcrypto-web-push";
 import { VAPID_PUBLIC_KEY } from "./push/config";
+import { contentLink, contentPushMessage, contentStillValid, type ContentKind } from "./content/notifyMessage";
 import { PUSH_KINDS, pushMessage, type PushKind } from "./push/message";
 
 const FRESH_MS = 30 * 60 * 1000;
@@ -33,6 +34,11 @@ async function build(db: any, n: any, b: string) {
     if (kind === "signal_new" && (s.assigned_to || s.cancelled_at)) return null;
     return { ...pushMessage(kind, s, b), url: `/signals?open=${n.signal_id}` };
   }
+  if ((kind as string).startsWith("content_")) {
+    const { data: c } = await db.from("web_contents").select("data").eq("id", n.content_id).maybeSingle();
+    if (!c || !contentStillValid(kind as ContentKind, n.payload?.status, c.data?.status)) return null;
+    return { ...contentPushMessage(kind as ContentKind, { ...n.payload, title: c.data?.title ?? n.payload?.title }, b), url: contentLink(n.content_id) };
+  }
   if (kind.startsWith("leave_")) {
     const { data: r } = await db.from("leave_requests").select("*").eq("id", n.leave_request_id).maybeSingle();
     if (!r) return null;
@@ -55,7 +61,7 @@ export async function processPush(limit = 30) {
   if (!priv) return { processed: 0, error: "missing key" };
   const vapid = { subject: "mailto:admin@suviet.vn", publicKey: VAPID_PUBLIC_KEY, privateKey: priv };
   const db = await admin();
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,payload,created_at")
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,payload,created_at")
     .eq("push_status", "pending").in("kind", PUSH_KINDS as unknown as string[])
     .gt("created_at", new Date(Date.now() - FRESH_MS).toISOString()).order("created_at").limit(limit);
   const b = await brand();
