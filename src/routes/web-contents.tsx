@@ -48,17 +48,6 @@ function AllContents() {
   const { open: openId } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [denied, setDenied] = useState(false);
-  // Mở trực tiếp từ thông báo: chỉ mở khi bài nằm trong phạm vi người dùng được xem
-  useEffect(() => {
-    if (!openId) return;
-    const c = scoped.find((x) => x.id === openId);
-    if (c) { setOpenContent(c); setDenied(false); }
-    else if (webContents.length) setDenied(true);
-  }, [openId, scoped, webContents.length]);
-  useEffect(() => {
-    if (openContent) setOpenContent(webContents.find((x) => x.id === openContent.id) ?? null);
-  }, [webContents]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const [search, setSearch] = useState("");
   const [fWebsite, setFWebsite] = useState("all");
   const [fBrand, setFBrand] = useState("all");
@@ -81,6 +70,17 @@ function AllContents() {
     ),
     [webContents, scopeList, userName],
   );
+
+  // Mở trực tiếp từ thông báo: chỉ mở khi bài nằm trong phạm vi người dùng được xem
+  useEffect(() => {
+    if (!openId) return;
+    const c = scoped.find((x) => x.id === openId);
+    if (c) { setOpenContent(c); setDenied(false); }
+    else if (webContents.length) setDenied(true);
+  }, [openId, scoped, webContents.length]);
+  useEffect(() => {
+    if (openContent) setOpenContent(webContents.find((x) => x.id === openContent.id) ?? null);
+  }, [webContents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => scoped.filter((c) =>
     (!search || c.title.toLowerCase().includes(search.toLowerCase()) || (c.mainKeyword || "").toLowerCase().includes(search.toLowerCase())) &&
