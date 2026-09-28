@@ -183,6 +183,13 @@
       "when": 1790560923575,
       "tag": "0025_content_notify_save_perm",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790561231035,
+      "tag": "0026_design_order_notifications",
+      "breakpoints": true
     }
   ]
 }

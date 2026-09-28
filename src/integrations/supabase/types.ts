@@ -913,6 +913,7 @@ export type Database = {
           id: string
           kind: string
           leave_request_id: string | null
+          order_id: string | null
           payload: Json | null
           push_status: string
           read_at: string | null
@@ -931,6 +932,7 @@ export type Database = {
           id?: string
           kind: string
           leave_request_id?: string | null
+          order_id?: string | null
           payload?: Json | null
           push_status?: string
           read_at?: string | null
@@ -949,6 +951,7 @@ export type Database = {
           id?: string
           kind?: string
           leave_request_id?: string | null
+          order_id?: string | null
           payload?: Json | null
           push_status?: string
           read_at?: string | null
@@ -979,6 +982,13 @@ export type Database = {
             columns: ["leave_request_id"]
             isOneToOne: false
             referencedRelation: "leave_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
           {
@@ -1955,6 +1965,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      order_remind_run: { Args: never; Returns: number }
       push_subscribe: {
         Args: {
           _auth: string
