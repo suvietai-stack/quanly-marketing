@@ -34,6 +34,7 @@ import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
+import { Route as OrderQuotesIdRouteImport } from './routes/order-quotes.$id'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo/webhook'
@@ -167,6 +168,11 @@ const OrderQuotesNewRoute = OrderQuotesNewRouteImport.update({
   path: '/order-quotes/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderQuotesIdRoute = OrderQuotesIdRouteImport.update({
+  id: '/order-quotes/$id',
+  path: '/order-quotes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LocalIdRoute = LocalIdRouteImport.update({
   id: '/local/$id',
   path: '/local/$id',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
+  '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
@@ -256,6 +263,7 @@ export interface FileRoutesByTo {
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
+  '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
+  '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
@@ -327,6 +336,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/brands/$id'
     | '/local/$id'
+    | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/settings/kpi-v2'
     | '/signals/report'
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/brands/$id'
     | '/local/$id'
+    | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/settings/kpi-v2'
     | '/signals/report'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/brands/$id'
     | '/local/$id'
+    | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/settings_/kpi-v2'
     | '/signals/report'
@@ -430,6 +442,7 @@ export interface RootRouteChildren {
   WebContentsRoute: typeof WebContentsRoute
   BrandsIdRoute: typeof BrandsIdRoute
   LocalIdRoute: typeof LocalIdRoute
+  OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
   SignalsReportRoute: typeof SignalsReportRoute
@@ -625,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderQuotesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order-quotes/$id': {
+      id: '/order-quotes/$id'
+      path: '/order-quotes/$id'
+      fullPath: '/order-quotes/$id'
+      preLoaderRoute: typeof OrderQuotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/local/$id': {
       id: '/local/$id'
       path: '/local/$id'
@@ -694,6 +714,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebContentsRoute: WebContentsRoute,
   BrandsIdRoute: BrandsIdRoute,
   LocalIdRoute: LocalIdRoute,
+  OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
   SignalsReportRoute: SignalsReportRoute,
