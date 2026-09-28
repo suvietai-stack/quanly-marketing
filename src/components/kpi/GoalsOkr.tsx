@@ -604,31 +604,36 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
   );
 }
 
-/* ---------- Sửa mục tiêu ---------- */
-function GoalEditSheet({ actor, goal, onClose }: { actor: Actor; goal: Goal; onClose: () => void }) {
+/* ---------- Sửa / nhân bản mục tiêu ---------- */
+type DupInput = { title: string; start: string; end: string; deadline: string; ptype: KpiPeriodType };
+function GoalEditSheet({ actor, goal, onClose, onDuplicate }: { actor: Actor; goal: Goal; onClose: () => void; onDuplicate?: (d: DupInput) => Promise<boolean> }) {
   const meta = goal.metadata as GoalMeta;
-  const [v, setV] = useState({ title: goal.title, description: goal.description ?? "", scope: meta.scope ?? (meta.ownerId ? "personal" : "department") as GoalScope,
+  const dup = !!onDuplicate;
+  const [ptype, setPtype] = useState<KpiPeriodType>(meta.periodType ?? "custom");
+  const [v, setV] = useState({ title: dup ? `${goal.title} (bản sao)` : goal.title, description: goal.description ?? "", scope: meta.scope ?? (meta.ownerId ? "personal" : "department") as GoalScope,
     scopeRef: meta.scopeRef ?? meta.ownerId ?? "Phòng Marketing", coordinatorId: meta.coordinatorId ?? "", start: goal.periodStart, end: goal.periodEnd, deadline: meta.deadline ?? goal.periodEnd });
   const [saving, setSaving] = useState(false);
+  const errs = validateGoalDates(v.start, v.end, v.deadline);
+  const setRange = (s: string, e: string) => setV({ ...v, start: s, end: e, deadline: e });
+  const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t, v.start); setRange(s, e); } };
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader><SheetTitle>Sửa mục tiêu</SheetTitle><SheetDescription>Thay đổi kỳ không làm thay đổi kỳ của các chỉ tiêu đã giao.</SheetDescription></SheetHeader>
+        <SheetHeader><SheetTitle>{dup ? "Nhân bản mục tiêu" : "Sửa mục tiêu"}</SheetTitle>
+          <SheetDescription>{dup ? "Bản sao ở dạng Nháp, sao chép KR đang dùng, chưa phân bổ nhân sự. Kỳ KPI cũ giữ nguyên." : "Thay đổi thời gian không làm thay đổi kỳ của các chỉ tiêu đã giao hay kỳ đã khóa."}</SheetDescription></SheetHeader>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className={`${lbl} sm:col-span-2`}>Tên mục tiêu<input className={inp} value={v.title} onChange={(e) => setV({ ...v, title: e.target.value })} /></label>
-          <ScopeFields v={v} set={(p) => setV({ ...v, ...p })} />
-          <label className={lbl}>Từ ngày<input type="date" className={inp} value={v.start} onChange={(e) => setV({ ...v, start: e.target.value })} /></label>
-          <label className={lbl}>Đến ngày<input type="date" className={inp} value={v.end} onChange={(e) => setV({ ...v, end: e.target.value })} /></label>
-          <label className={lbl}>Deadline<input type="date" className={inp} value={v.deadline} onChange={(e) => setV({ ...v, deadline: e.target.value })} /></label>
-          <label className={`${lbl} sm:col-span-2`}>Nội dung liên quan<textarea className={`${inp} h-20 py-1.5`} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} /></label>
+          {!dup && <ScopeFields v={v} set={(p) => setV({ ...v, ...p })} />}
+          <TimeframeFields ptype={ptype} setType={setType} start={v.start} end={v.end} deadline={v.deadline} setRange={setRange} setDates={(p) => setV({ ...v, ...p })} errs={errs} />
+          {!dup && <label className={`${lbl} sm:col-span-2`}>Nội dung liên quan<textarea className={`${inp} h-20 py-1.5`} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} /></label>}
         </div>
-        <div className="mt-4 flex justify-end"><button className={btn} disabled={saving || !v.title.trim()} onClick={async () => {
-          if (v.deadline < v.start || v.deadline > v.end) { toast.error("Deadline phải nằm trong kỳ."); return; }
+        <div className="mt-4 flex justify-end"><button className={btn} disabled={saving || !v.title.trim() || errs.length > 0} onClick={async () => {
           setSaving(true);
-          const ok = await run(() => svc.saveGoal(actor, { ...goal, title: v.title, description: v.description || null, periodStart: v.start, periodEnd: v.end,
-            metadata: { scope: v.scope, scopeRef: v.scopeRef, coordinatorId: v.coordinatorId || null, deadline: v.deadline } }), "Đã lưu mục tiêu", () => {});
+          const ok = dup ? await onDuplicate!({ title: v.title.trim(), start: v.start, end: v.end, deadline: v.deadline, ptype })
+            : await run(() => svc.saveGoal(actor, { ...goal, title: v.title, description: v.description || null, periodStart: v.start, periodEnd: v.end,
+              metadata: { ...meta, scope: v.scope, scopeRef: v.scopeRef, coordinatorId: v.coordinatorId || null, deadline: v.deadline, periodType: ptype } }), "Đã lưu mục tiêu", () => {});
           setSaving(false); if (ok) onClose();
-        }}>{saving ? "Đang lưu…" : "Lưu"}</button></div>
+        }}>{saving ? "Đang lưu…" : dup ? "Nhân bản" : "Lưu"}</button></div>
       </SheetContent>
     </Sheet>
   );
