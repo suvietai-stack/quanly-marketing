@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronDown, Copy } from "lucide-react";
+import { ArrowLeft, ChevronDown, Copy, ImagePlus, Trash2 } from "lucide-react";
 import { RequirePermission } from "@/components/PermissionGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCurrentUser } from "@/lib/auth";
 import { oqApi } from "@/lib/orderQuotes/api";
 import {
-  CHOICE_LABEL, EVENT_LABEL, catLabel, copyText, latestPublished, missing, progressCount, requestedCats, totalQty, vnDate, vnDateTime,
+  CHOICE_LABEL, EVENT_LABEL, IMG_CAT, catLabel, copyText, latestPublished, missing, progressCount, qtySummary, requestedCats, vnDate, vnDateTime,
   type PriceConfig, type Resp, type SnapItem,
 } from "@/lib/orderQuotes/logic";
 import { FlowBadge, ItemImages, useUserName } from "@/components/orderQuotes/OqCommon";
@@ -42,13 +42,19 @@ function OqDetail() {
   const { flow: flowParam } = Route.useSearch();
   const nav = useNavigate();
   const qc = useQueryClient();
-  const { data: d, isLoading } = useQuery({ queryKey: ["oq", id], queryFn: () => oqApi.detail(id), refetchInterval: 60_000 });
+  const { user } = useCurrentUser();
+  const { data: d, isLoading, error, refetch } = useQuery({ queryKey: ["oq", id], queryFn: () => oqApi.detail(id), refetchInterval: 60_000 });
   const refresh = () => { qc.invalidateQueries({ queryKey: ["oq", id] }); qc.invalidateQueries({ queryKey: ["oq-list"] }); };
-  const flowId = flowParam && d?.flows.some((f: any) => f.id === flowParam) ? flowParam : d?.flows[0]?.id;
+  const mine = d?.flows.find((f: any) => f.assignee_id === user?.id && f.status === "pending") ?? d?.flows.find((f: any) => f.assignee_id === user?.id && f.status === "processing");
+  const flowId = flowParam && d?.flows.some((f: any) => f.id === flowParam) ? flowParam : (mine ?? d?.flows[0])?.id;
 
   useEffect(() => { if (d?.req.status === "draft") nav({ to: "/order-quotes/new", search: { id }, replace: true }); }, [d?.req.status]);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Đang tải…</p>;
+  if (error && !d) return (
+    <div className="py-16 text-center space-y-3"><p className="text-sm">Không tải được yêu cầu: {(error as Error).message}</p>
+      <Button variant="outline" onClick={() => refetch()}>Thử lại</Button></div>
+  );
   if (!d) return (
     <div className="py-20 text-center"><h2 className="text-lg font-semibold">Không tìm thấy yêu cầu</h2>
       <p className="text-sm text-muted-foreground mt-1">Yêu cầu không tồn tại hoặc bạn không có quyền xem.</p>
@@ -67,6 +73,7 @@ function OqDetail() {
         </div>
         <CancelButton d={d} flow={flow} onDone={refresh} />
       </div>
+      {error && <div className="mb-3 rounded-md border border-destructive/40 p-2 text-sm flex items-center gap-2">Không cập nhật được dữ liệu mới nhất: {(error as Error).message}<Button size="sm" variant="outline" className="ml-auto" onClick={() => refetch()}>Thử lại</Button></div>}
       {d.flows.length > 1 && (
         <div className="flex gap-2 mb-4 overflow-x-auto">
           {d.flows.map((f: any) => (
@@ -89,7 +96,6 @@ function OrderInfo({ d, onChanged }: { d: any; onChanged: () => void }) {
   const { user, can } = useCurrentUser();
   const name = useUserName();
   const isOwner = d.req.creator_id === user?.id || can("oq.manage");
-  const total = totalQty(d.req.items_mode, d.items);
   return (
     <div className="space-y-3">
       <Card><CardContent className="p-4 space-y-1.5 text-sm">
@@ -97,7 +103,7 @@ function OrderInfo({ d, onChanged }: { d: any; onChanged: () => void }) {
         <Info k="Gửi lúc" v={vnDateTime(d.req.submitted_at)} />
         <Info k="Giao tại" v={d.req.delivery_place || "—"} />
         <Info k="Ngày khách cần" v={vnDate(d.req.delivery_date)} />
-        <Info k="Loại sản phẩm" v={d.req.items_mode === "option" ? "Phương án để khách lựa chọn" : `Đặt đồng thời · tổng ${total}`} />
+        <Info k="Sản phẩm" v={qtySummary(d.req.items_mode, d.items)} />
         {d.req.note && <Info k="Ghi chú" v={d.req.note} />}
       </CardContent></Card>
       {d.items.map((it: any) => (
@@ -114,7 +120,11 @@ function OrderInfo({ d, onChanged }: { d: any; onChanged: () => void }) {
               {it.detail && <Info k="Chi tiết" v={it.detail} />}
               {it.processing && <Info k="In ấn / gia công" v={it.processing} />}
               {it.note && <Info k="Ghi chú" v={it.note} />}
-              <ItemImages images={d.images.filter((g: any) => g.item_id === it.id)} />
+              <ItemImages images={d.images.filter((g: any) => g.item_id === it.id && !g.info_request_id)} />
+              {d.images.some((g: any) => g.item_id === it.id && g.info_request_id) && (
+                <div><div className="text-xs text-muted-foreground mb-1">Ảnh Sale bổ sung sau khi gửi</div>
+                  <ItemImages images={d.images.filter((g: any) => g.item_id === it.id && g.info_request_id)} /></div>
+              )}
               {isOwner && d.req.status === "submitted" && d.items.length > 1 && (
                 <Select value={it.customer_choice ?? "none"} onValueChange={(v) => oqApi.setChoice(it.id, v === "none" ? null : v).then(onChanged).catch((e) => toast.error(e.message))}>
                   <SelectTrigger className="h-8 w-48"><SelectValue /></SelectTrigger>
@@ -142,6 +152,7 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
   const isCurrent = round?.no === flow.current_round;
   const canReply = can(flow.kind === "price" ? "oq.reply_price" : "oq.reply_progress");
   const isHandler = (flow.assignee_id === user?.id && canReply) || can("oq.manage");
+  const canAccept = (flow.assignee_id === user?.id && canReply && can("oq.accept")) || can("oq.manage");
   const isOwner = d.req.creator_id === user?.id || can("oq.manage");
   const editable = isHandler && isCurrent && flow.status === "processing";
   const miss = missing(flow.kind, items, cfg, resps);
@@ -149,7 +160,7 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
   const infos = d.infos.filter((i: any) => i.flow_id === flow.id);
   const events = d.events.filter((e: any) => e.flow_id === flow.id || !e.flow_id);
   const [busy, setBusy] = useState(false);
-  const run = async (fn: () => Promise<unknown>, ok?: string) => { setBusy(true); try { await fn(); if (ok) toast.success(ok); onChanged(); } catch (e: any) { toast.error(e.message); } finally { setBusy(false); } };
+  const run = async (fn: () => Promise<unknown>, ok?: string): Promise<boolean> => { setBusy(true); try { await fn(); if (ok) toast.success(ok); onChanged(); return true; } catch (e: any) { toast.error(e.message); return false; } finally { setBusy(false); } };
   const conclusion = latestPublished(resps, "conclusion")?.content?.text;
   const targetsList = flow.kind === "price" ? items.filter((i) => requestedCats(cfg, i.id).length > 0) : items;
   const active = d.req.status === "submitted" && flow.status !== "cancelled";
@@ -162,24 +173,33 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
           <FlowBadge kind={flow.kind} status={flow.status} waiting={flow.waiting_info} />
           <span className="text-sm text-muted-foreground ml-auto">Phụ trách: <b className="text-foreground">{name(flow.assignee_id)}</b></span>
         </div>
-        {flow.status !== "pending" && <div className="text-sm">{flow.kind === "price" ? "Đã báo giá" : "Đã phản hồi"} <b>{pc.done}/{pc.total}</b> {flow.kind === "price" ? "phương án" : "sản phẩm"}{rounds.length > 1 && ` · lượt ${round?.no}/${rounds.length}`}</div>}
+        {(flow.status !== "pending" || resps.some((r) => r.is_published)) && (
+          <div className="text-sm flex flex-wrap gap-x-3">
+            <span>{flow.kind === "price" ? "Đã báo giá" : "Đã phản hồi"} <b>{pc.done}/{pc.total}</b> sản phẩm</span>
+            {pc.shipping !== null && <span>Vận chuyển chung: <b>{pc.shipping ? "Đã phản hồi" : "Chưa phản hồi"}</b></span>}
+            {rounds.length > 1 && <span className="text-muted-foreground">Lượt {round?.no}/{rounds.length}</span>}
+          </div>
+        )}
+        {flow.status === "pending" && round?.accepted_at && <p className="text-xs text-muted-foreground">Luồng vừa được chuyển người phụ trách — người mới cần Xác nhận tiếp nhận để tiếp tục. Nháp và kết quả đã công bố được giữ nguyên.</p>}
         {rounds.length > 1 && (
           <div className="flex flex-wrap gap-1">{rounds.map((r: any) => <Button key={r.id} size="sm" variant={r.no === round?.no ? "default" : "outline"} onClick={() => setRoundNo(r.no)}>Lượt {r.no}</Button>)}</div>
         )}
         <div className="flex flex-wrap gap-2">
-          {active && isHandler && flow.status === "pending" && <Button disabled={busy} onClick={() => run(() => oqApi.accept(flow.id), "Đã xác nhận tiếp nhận.")}>Xác nhận tiếp nhận</Button>}
+          {active && canAccept && flow.status === "pending" && isCurrent && <Button disabled={busy} onClick={() => run(() => oqApi.accept(flow.id), "Đã xác nhận tiếp nhận.")}>Xác nhận tiếp nhận</Button>}
           {active && editable && <AskInfo disabled={busy || flow.waiting_info} onSend={(q) => run(() => oqApi.requestInfo(flow.id, q), "Đã gửi yêu cầu bổ sung.")} />}
-          {active && editable && <Button disabled={busy} variant={miss.length ? "outline" : "default"} onClick={() => run(() => oqApi.complete(flow.id), "Đã hoàn tất luồng.")}>Hoàn tất toàn bộ luồng</Button>}
-          {active && isOwner && flow.status !== "answered" && <Reassign flow={flow} disabled={busy} onPick={(u) => run(() => oqApi.reassign(flow.id, u), "Đã đổi người phụ trách.")} />}
+          {active && isOwner && flow.status !== "answered" && <Reassign flow={flow} disabled={busy} onPick={(u) => run(() => oqApi.reassign(flow.id, u), "Đã đổi người phụ trách — người mới sẽ nhận thông báo và cần xác nhận tiếp nhận.")} />}
           {active && isOwner && flow.status === "answered" && <Reask round={round} disabled={busy} onSend={(note, snap) => run(() => oqApi.reask(flow.id, note, null, snap), "Đã gửi yêu cầu hỏi lại.")} />}
           {resps.some((r) => r.is_published) && (
             <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(copyText(flow.kind, items, cfg, resps, conclusion)).then(() => toast.success("Đã sao chép kết quả đã công bố."))}><Copy className="h-4 w-4 mr-1" />Sao chép kết quả</Button>
           )}
         </div>
-        {editable && miss.length > 0 && <div className="rounded-md bg-muted p-2 text-xs"><b>Còn thiếu để hoàn tất:</b><ul className="list-disc ml-4">{miss.map((m) => <li key={m}>{m}</li>)}</ul></div>}
+        {editable && flow.waiting_info && <div className="rounded-md border border-dashed p-2 text-xs">Đang chờ Sale bổ sung thông tin — bạn vẫn lưu nháp được, nút Công bố tạm khóa đến khi Sale trả lời.</div>}
+        {editable && miss.length > 0 && <div className="rounded-md bg-muted p-2 text-xs"><b>Còn thiếu (luồng tự hoàn tất khi công bố đủ):</b><ul className="list-disc ml-4">{miss.map((m) => <li key={m}>{m}</li>)}</ul></div>}
       </CardContent></Card>
 
-      {flow.waiting_info && isOwner && active && <AnswerInfo q={infos.filter((i: any) => !i.answered_at).pop()?.question} disabled={busy} onSend={(a) => run(() => oqApi.answerInfo(flow.id, a), "Đã gửi bổ sung.")} />}
+      {flow.waiting_info && isOwner && active && (() => { const open = infos.filter((i: any) => !i.answered_at).pop(); return open ? (
+        <AnswerInfo info={open} requestId={d.req.id} items={d.items} images={d.images.filter((g: any) => g.info_request_id === open.id)} disabled={busy} onChanged={onChanged}
+          onSend={(a) => run(() => oqApi.answerInfo(flow.id, a), "Đã gửi bổ sung.")} />) : null; })()}
 
       <Card><CardContent className="p-4 text-sm space-y-1.5">
         <div className="font-semibold mb-1">Sale yêu cầu (lượt {round?.no})</div>
@@ -199,16 +219,16 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
       </CardContent></Card>
 
       {targetsList.map((it) => (
-        <ResponseCard key={`${round?.id}-${it.id}`} kind={flow.kind} item={it} cfg={cfg} round={round} resps={resps.filter((r) => r.target === it.id)} editable={editable} busy={busy}
+        <ResponseCard key={`${round?.id}-${it.id}`} kind={flow.kind} item={it} cfg={cfg} round={round} resps={resps.filter((r) => r.target === it.id)} editable={editable} busy={busy} locked={flow.waiting_info}
           onSave={(c) => run(() => oqApi.saveResponse(flow.id, it.id, c), "Đã lưu nháp phản hồi.")}
           onPublish={(c) => run(() => oqApi.publish(flow.id, it.id, c), "Đã công bố kết quả.")} name={name} />
       ))}
       {flow.kind === "price" && cfg.shipping_mode === "common" && (
-        <ResponseCard kind="price" item={{ id: "shipping", code: "VC", name: "Vận chuyển chung" }} cfg={cfg} round={round} shippingOnly resps={resps.filter((r) => r.target === "shipping")} editable={editable} busy={busy}
+        <ResponseCard kind="price" item={{ id: "shipping", code: "VC", name: "Vận chuyển chung" }} cfg={cfg} round={round} shippingOnly resps={resps.filter((r) => r.target === "shipping")} editable={editable} busy={busy} locked={flow.waiting_info}
           onSave={(c) => run(() => oqApi.saveResponse(flow.id, "shipping", c), "Đã lưu nháp.")} onPublish={(c) => run(() => oqApi.publish(flow.id, "shipping", c), "Đã công bố.")} name={name} />
       )}
       {flow.kind === "progress" && (editable || conclusion) && (
-        <ResponseCard kind="conclusion" item={{ id: "conclusion", code: "", name: "Kết luận chung cho toàn bộ đơn hàng" }} cfg={cfg} round={round} resps={resps.filter((r) => r.target === "conclusion")} editable={editable} busy={busy}
+        <ResponseCard kind="conclusion" item={{ id: "conclusion", code: "", name: "Kết luận chung cho toàn bộ đơn hàng" }} cfg={cfg} round={round} resps={resps.filter((r) => r.target === "conclusion")} editable={editable} busy={busy} locked={flow.waiting_info}
           onSave={(c) => run(() => oqApi.saveResponse(flow.id, "conclusion", c), "Đã lưu nháp.")} onPublish={(c) => run(() => oqApi.publish(flow.id, "conclusion", c), "Đã công bố.")} name={name} />
       )}
 
@@ -217,15 +237,26 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
   );
 }
 
-function ResponseCard({ kind, item, cfg, round, resps, editable, busy, onSave, onPublish, name, shippingOnly }: {
-  kind: "price" | "progress" | "conclusion"; item: SnapItem; cfg: PriceConfig; round: any; resps: Resp[]; editable: boolean; busy: boolean;
-  onSave: (c: any) => void; onPublish: (c: any) => void; name: (id?: string) => string; shippingOnly?: boolean;
+function ResponseCard({ kind, item, cfg, round, resps, editable, busy, locked, onSave, onPublish, name, shippingOnly }: {
+  kind: "price" | "progress" | "conclusion"; item: SnapItem; cfg: PriceConfig; round: any; resps: Resp[]; editable: boolean; busy: boolean; locked?: boolean;
+  onSave: (c: any) => Promise<boolean>; onPublish: (c: any) => Promise<boolean>; name: (id?: string) => string; shippingOnly?: boolean;
 }) {
   const draft = resps.find((r) => !r.is_published);
   const published = resps.filter((r) => r.is_published).sort((a, b) => (b.version ?? 0) - (a.version ?? 0));
   const latest = published[0];
-  const [c, setC] = useState<Record<string, any>>(draft?.content ?? latest?.content ?? {});
-  useEffect(() => { setC(draft?.content ?? latest?.content ?? {}); }, [draft?.content, latest?.version]);
+  const server = draft?.content ?? latest?.content ?? {};
+  const serverKey = JSON.stringify(server);
+  const [c, setC] = useState<Record<string, any>>(server);
+  const [dirty, setDirty] = useState(false);
+  // Chỉ đồng bộ từ máy chủ khi không có nội dung chưa lưu (tải lại định kỳ không đè lên nội dung đang gõ).
+  useEffect(() => { if (!dirty) setC(server); }, [serverKey]);
+  useEffect(() => {
+    if (!dirty) return;
+    const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [dirty]);
+  const edit = (k: string, v: string) => { setC((p) => ({ ...p, [k]: v })); setDirty(true); };
   const [hist, setHist] = useState(false);
   const cats = shippingOnly ? (["shipping"] as const) : kind === "price" ? requestedCats(cfg, item.id) : [];
   const fields: { key: string; label: string; hint?: string; type?: string }[] =
@@ -247,13 +278,16 @@ function ResponseCard({ kind, item, cfg, round, resps, editable, busy, onSave, o
             <div key={fd.key}>
               <Label>{fd.label}</Label>
               {fd.hint && <p className="text-xs text-muted-foreground mb-1">Sale yêu cầu: {fd.hint}</p>}
-              {fd.type === "date" ? <Input type="date" value={c[fd.key] ?? ""} onChange={(e) => setC({ ...c, [fd.key]: e.target.value })} className="w-48" />
-                : <Textarea rows={fd.key === "note" || fd.key === "capability" ? 2 : 3} value={c[fd.key] ?? ""} onChange={(e) => setC({ ...c, [fd.key]: e.target.value })} />}
+              {fd.type === "date" ? <Input type="date" value={c[fd.key] ?? ""} onChange={(e) => edit(fd.key, e.target.value)} className="w-48" />
+                : <Textarea rows={fd.key === "note" || fd.key === "capability" ? 2 : 3} value={c[fd.key] ?? ""} onChange={(e) => edit(fd.key, e.target.value)} />}
             </div>
           ))}
           <div className="flex flex-wrap gap-2 justify-end">
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => onSave(c)}>Lưu nháp</Button>
-            <Button size="sm" disabled={busy} onClick={() => confirm(latest ? `Công bố phiên bản mới v${(latest.version ?? 0) + 1}? Bản cũ vẫn được giữ.` : "Công bố kết quả này cho Sale?") && onPublish(c)}>{latest ? "Công bố phiên bản mới" : "Công bố"}</Button>
+            {dirty && <span className="mr-auto self-center text-xs text-muted-foreground">Có thay đổi chưa lưu</span>}
+            <Button variant="outline" size="sm" disabled={busy} onClick={async () => { if (await onSave(c)) setDirty(false); }}>Lưu nháp</Button>
+            <Button size="sm" disabled={busy || locked} title={locked ? "Đang chờ Sale bổ sung thông tin" : undefined}
+              onClick={async () => { if (confirm(latest ? `Công bố phiên bản mới v${(latest.version ?? 0) + 1}? Bản cũ vẫn được giữ.` : "Công bố kết quả này cho Sale?") && (await onPublish(c))) setDirty(false); }}>
+              {kind === "price" ? (latest ? "Công bố báo giá mới" : "Công bố báo giá") : kind === "progress" ? (latest ? "Công bố phản hồi mới" : "Công bố phản hồi tiến độ") : "Công bố kết luận"}</Button>
           </div>
         </>
       ) : latest ? (
@@ -316,12 +350,42 @@ function AskInfo({ disabled, onSend }: { disabled: boolean; onSend: (q: string) 
   return <div className="w-full space-y-2"><Textarea rows={2} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nội dung cần Sale làm rõ" />
     <div className="flex gap-2"><Button size="sm" disabled={!q.trim()} onClick={() => { onSend(q); setOpen(false); setQ(""); }}>Gửi yêu cầu</Button><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Hủy</Button></div></div>;
 }
-function AnswerInfo({ q, disabled, onSend }: { q?: string; disabled: boolean; onSend: (a: string) => void }) {
+function AnswerInfo({ info, requestId, items, images, disabled, onSend, onChanged }: { info: any; requestId: string; items: any[]; images: any[]; disabled: boolean; onSend: (a: string) => Promise<boolean>; onChanged: () => void }) {
   const [a, setA] = useState("");
-  return <Card className="border-primary"><CardContent className="p-4 space-y-2">
-    <div className="font-semibold text-sm">Cung ứng cần bạn bổ sung</div><p className="text-sm whitespace-pre-wrap">{q}</p>
+  const [item, setItem] = useState<string>(items[0]?.id ?? "");
+  const [cat, setCat] = useState("logo");
+  const [cap, setCap] = useState("");
+  const [up, setUp] = useState(false);
+  const add = async (fl: FileList | null) => {
+    if (!fl?.length || !item) return;
+    setUp(true);
+    try { for (const file of Array.from(fl)) await oqApi.uploadInfoImage(requestId, info.id, item, file, cat, cap); setCap(""); toast.success("Đã tải ảnh bổ sung."); onChanged(); }
+    catch (e: any) { toast.error(e.message); } finally { setUp(false); }
+  };
+  return <Card className="border-primary"><CardContent className="p-4 space-y-3">
+    <div className="font-semibold text-sm">Cung ứng cần bạn bổ sung</div><p className="text-sm whitespace-pre-wrap">{info.question}</p>
     <Textarea rows={3} value={a} onChange={(e) => setA(e.target.value)} placeholder="Nội dung bổ sung" />
-    <Button size="sm" disabled={disabled || !a.trim()} onClick={() => { onSend(a); setA(""); }}>Gửi bổ sung</Button></CardContent></Card>;
+    <div className="rounded-md border p-3 space-y-2">
+      <div className="text-sm font-medium">Ảnh bổ sung (tùy chọn)</div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Select value={item} onValueChange={setItem}><SelectTrigger className="h-9"><SelectValue placeholder="Chọn sản phẩm" /></SelectTrigger>
+          <SelectContent>{items.map((it) => <SelectItem key={it.id} value={it.id}>{it.code} {it.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={cat} onValueChange={setCat}><SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>{Object.entries(IMG_CAT).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
+        <Input className="h-9" value={cap} onChange={(e) => setCap(e.target.value)} placeholder="Chú thích ảnh" maxLength={1000} />
+      </div>
+      <Button type="button" variant="outline" size="sm" disabled={up || !item} asChild>
+        <label className="cursor-pointer"><ImagePlus className="h-4 w-4 mr-1" />{up ? "Đang tải…" : "Chọn / chụp ảnh"}<input type="file" accept="image/*" multiple hidden onChange={(e) => { add(e.target.files); e.target.value = ""; }} /></label>
+      </Button>
+      {images.length > 0 && <div className="space-y-2">{items.filter((it) => images.some((g) => g.item_id === it.id)).map((it) => (
+        <div key={it.id}><div className="text-xs text-muted-foreground mb-1">{it.code} {it.name}</div>
+          <ItemImages images={images.filter((g) => g.item_id === it.id)} />
+          <div className="flex flex-wrap gap-1 mt-1">{images.filter((g) => g.item_id === it.id).map((g) => (
+            <Button key={g.id} size="sm" variant="ghost" className="h-7 text-xs" onClick={() => oqApi.deleteInfoImage(g.id).then(onChanged).catch((e) => toast.error(e.message))}><Trash2 className="h-3 w-3 mr-1" />Bỏ ảnh {g.caption ?? IMG_CAT[g.category]}</Button>
+          ))}</div></div>
+      ))}</div>}
+    </div>
+    <Button size="sm" disabled={disabled || up || !a.trim()} onClick={async () => { if (await onSend(a)) setA(""); }}>Gửi bổ sung</Button></CardContent></Card>;
 }
 function Reassign({ flow, disabled, onPick }: { flow: any; disabled: boolean; onPick: (u: string) => void }) {
   const users = useQuery({ queryKey: ["oq-assignees", flow.kind], queryFn: () => oqApi.assignees(flow.kind) }).data ?? [];
@@ -333,13 +397,14 @@ function Reask({ round, disabled, onSend }: { round: any; disabled: boolean; onS
   const [open, setOpen] = useState(false); const [note, setNote] = useState("");
   const [snap, setSnap] = useState<any[]>(round?.items_snapshot ?? []);
   useEffect(() => setSnap(round?.items_snapshot ?? []), [round?.id]);
+  const badQty = snap.some((it) => !(Number(it.qty) > 0));
   if (!open) return <Button variant="outline" disabled={disabled} onClick={() => setOpen(true)}>Hỏi lại</Button>;
   return <div className="w-full space-y-2 rounded-md border p-3">
     <Label>Nội dung hỏi lại *</Label><Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ví dụ: khách đổi thành 1.000 bộ" />
     <div className="text-xs text-muted-foreground">Điều chỉnh số lượng áp dụng cho lượt mới (kết quả lượt cũ được giữ nguyên):</div>
     {snap.map((it, i) => <div key={it.id} className="flex items-center gap-2 text-sm"><span className="flex-1 truncate">{it.code} {it.name}</span>
       <Input type="number" className="w-28 h-8" value={it.qty ?? ""} onChange={(e) => setSnap(snap.map((x, j) => (j === i ? { ...x, qty: e.target.value === "" ? null : Number(e.target.value) } : x)))} /><span className="w-10 text-xs">{it.unit}</span></div>)}
-    <div className="flex gap-2"><Button size="sm" disabled={!note.trim()} onClick={() => { onSend(note, snap); setOpen(false); setNote(""); }}>Gửi hỏi lại</Button><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Hủy</Button></div></div>;
+    <div className="flex gap-2">{badQty && <span className="text-xs text-destructive self-center">Số lượng phải lớn hơn 0.</span>}<Button size="sm" disabled={!note.trim() || badQty} onClick={() => { onSend(note, snap); setOpen(false); setNote(""); }}>Gửi hỏi lại</Button><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Hủy</Button></div></div>;
 }
 function CancelButton({ d, flow, onDone }: { d: any; flow: any; onDone: () => void }) {
   const { user, can } = useCurrentUser();

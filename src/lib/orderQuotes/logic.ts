@@ -48,22 +48,35 @@ export function missing(kind: "price" | "progress", items: SnapItem[], cfg: Pric
   return out;
 }
 
-/** "Đã báo giá 2/3 phương án": số đích đã đủ nội dung đã công bố. */
+/** "Đã báo giá 2/3 sản phẩm": chỉ đếm sản phẩm; vận chuyển chung báo riêng (shipping = null nếu không hỏi). */
 export function progressCount(kind: "price" | "progress", items: SnapItem[], cfg: PriceConfig, resps: Resp[]) {
-  const t = targets(kind, items, cfg);
+  const t = targets(kind, items, cfg).filter((id) => id !== "shipping");
   const miss = missing(kind, items, cfg, resps);
   const done = t.filter((id) => {
-    const it = items.find((i) => i.id === id);
-    const prefix = it ? `${it.code} ${it.name}:` : "Giá vận chuyển chung";
-    return !miss.some((m) => m.startsWith(prefix));
+    const it = items.find((i) => i.id === id)!;
+    return !miss.some((m) => m.startsWith(`${it.code} ${it.name}:`));
   }).length;
-  return { done, total: t.length };
+  const shipping = kind === "price" && cfg.shipping_mode === "common" ? !miss.includes("Giá vận chuyển chung") : null;
+  return { done, total: t.length, shipping };
 }
 
 /** Phương án thay thế không cộng số lượng; chỉ sản phẩm đặt đồng thời mới cộng. */
 export function totalQty(mode: "option" | "bundle", items: { qty?: number | null }[]) {
   if (mode === "option") return null;
   return items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+}
+
+/** Tóm tắt số lượng: chỉ cộng cùng đơn vị, phương án thay thế không cộng. */
+export function qtySummary(mode: "option" | "bundle", items: { qty?: number | null; unit?: string | null }[]) {
+  const n = items.length;
+  if (mode === "option") return `${n} phương án để khách chọn (không cộng số lượng)`;
+  const byUnit = new Map<string, number>();
+  for (const i of items) {
+    const u = (i.unit ?? "").trim().toLowerCase() || "(chưa có ĐVT)";
+    byUnit.set(u, (byUnit.get(u) ?? 0) + (Number(i.qty) || 0));
+  }
+  const parts = [...byUnit].map(([u, q]) => `${q.toLocaleString("vi-VN")} ${u}`);
+  return `${n} dòng sản phẩm · ${parts.join(" + ")}`;
 }
 
 export const FLOW_STATUS: Record<string, string> = { pending: "Chờ xác nhận", processing: "Đang xử lý", answered: "Đã trả lời", cancelled: "Đã hủy" };

@@ -204,6 +204,13 @@
       "when": 1790571873681,
       "tag": "0028_order_quotes_module",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790575472226,
+      "tag": "0029_order_quotes_fixes",
+      "breakpoints": true
     }
   ]
 }

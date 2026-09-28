@@ -39,8 +39,9 @@ async function build(db: any, n: any, b: string) {
   if ((kind as string).startsWith("oq_")) {
     const { data: f } = await db.from("oq_flows").select("request_id,assignee_id,status,waiting_info").eq("id", n.oq_flow_id).maybeSingle();
     const { data: rq } = f ? await db.from("oq_requests").select("creator_id,status").eq("id", f.request_id).maybeSingle() : { data: null };
-    if (!oqStillValid(kind as any, n.recipient_id, f, rq)) return null;
-    return { ...oqPushMessage(kind as any, n.payload ?? {}, b), url: oqLink(f.request_id, n.oq_flow_id) };
+    const { data: sib } = f && n.payload?.both ? await db.from("oq_flows").select("assignee_id,status,waiting_info").eq("request_id", f.request_id) : { data: null };
+    if (!oqStillValid(kind as any, n.recipient_id, f, rq, n.payload, sib ?? undefined)) return null;
+    return { ...oqPushMessage(kind as any, n.payload ?? {}, b), url: oqLink(f.request_id, n.payload?.both ? null : n.oq_flow_id) };
   }
   if ((kind as string).startsWith("order_")) {
     const { data: o } = await db.from("orders").select("data").eq("id", n.order_id).maybeSingle();

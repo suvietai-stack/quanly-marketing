@@ -290,9 +290,10 @@ export async function processPending(limit = 20) {
       const { data: f } = await db.from("oq_flows").select("request_id,assignee_id,status,waiting_info").eq("id", n.oq_flow_id).maybeSingle();
       const { data: rq } = f ? await db.from("oq_requests").select("creator_id,status").eq("id", f.request_id).maybeSingle() : { data: null };
       const { oqStillValid, oqZaloMessage, oqLink } = await import("./orderQuotes/notify");
-      if (!oqStillValid(n.kind, n.recipient_id, f, rq)) { await mark({ zalo_status: "ineligible", zalo_error: "Yêu cầu đã được xử lý/đổi người phụ trách" }); continue; }
+      const { data: sib } = f && n.payload?.both ? await db.from("oq_flows").select("assignee_id,status,waiting_info").eq("request_id", f.request_id) : { data: null };
+      if (!oqStillValid(n.kind, n.recipient_id, f, rq, n.payload, sib ?? undefined)) { await mark({ zalo_status: "ineligible", zalo_error: "Yêu cầu đã được xử lý/đổi người phụ trách" }); continue; }
       if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
-      leaveMsg = { ...oqZaloMessage(n.kind, n.payload ?? {}, await brandHeader()), link: `${await baseUrl()}${oqLink(f.request_id, n.oq_flow_id)}` };
+      leaveMsg = { ...oqZaloMessage(n.kind, n.payload ?? {}, await brandHeader()), link: `${await baseUrl()}${oqLink(f.request_id, n.payload?.both ? null : n.oq_flow_id)}` };
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }
