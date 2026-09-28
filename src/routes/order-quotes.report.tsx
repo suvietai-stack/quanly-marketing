@@ -288,7 +288,7 @@ function Overview({ rows, f, range, onDrill }: { rows: Row[]; f: Applied; range:
     </div>
   );
 }
-const KIND_CHART = { price: { label: "Hỏi Giá", color: "hsl(var(--primary))" }, progress: { label: "Hỏi Tiến Độ", color: "hsl(var(--muted-foreground))" } } satisfies ChartConfig;
+const KIND_CHART = { price: { label: "Hỏi Giá", color: "var(--primary)" }, progress: { label: "Hỏi Tiến Độ", color: "var(--muted-foreground)" } } satisfies ChartConfig;
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
   <div><h3 className="text-sm font-semibold mb-2">{title}</h3><div className="grid grid-cols-2 lg:grid-cols-4 gap-2">{children}</div></div>
 );
@@ -296,7 +296,7 @@ const Section = ({ title, children }: { title: string; children: ReactNode }) =>
 function DistributionCard({ rows, measure, onDrill }: { rows: Row[]; measure: Measure; onDrill: (d: Drill) => void }) {
   const dist = distribution(rows, measure);
   const total = dist.reduce((s, b) => s + b.n, 0);
-  const cfg = { n: { label: "Số lượt", color: "hsl(var(--primary))" } } satisfies ChartConfig;
+  const cfg = { n: { label: "Số lượt", color: "var(--primary)" } } satisfies ChartConfig;
   const open = (key: string) => { const b = BUCKETS.find((x) => x.key === key)!; onDrill({ title: `Hoàn thành ${b.label} (${measure === "response" ? "cách đo A" : "cách đo B"})`, rows: rows.filter((r) => { const v = measureOf(r, measure); return r.status === "answered" && v != null && v > b.lo && v <= b.hi; }) }); };
   return (
     <Card>
