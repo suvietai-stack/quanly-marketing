@@ -14,11 +14,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, LayoutGrid, Table as TableIcon, ExternalLink, BarChart3 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OrderDetailDialog } from "@/components/OrderDetail";
 import { OrderReport } from "@/components/OrderReport";
 
 export const Route = createFileRoute("/orders")({
+  validateSearch: (s: Record<string, unknown>): { open?: string } => (typeof s.open === "string" && s.open ? { open: s.open } : {}),
   head: () => ({ meta: [{ title: "Order Thiết Kế — Base Marketing" }] }),
   component: () => (
     <RequirePermission perm="order.view">
@@ -125,6 +126,16 @@ function OrdersPage() {
   const [fAssignee, setFAssignee] = useState("all");
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  // Mở trực tiếp từ thông báo — chỉ khi order nằm trong phạm vi được xem
+  const { open: linkId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [denied, setDenied] = useState(false);
+  useEffect(() => {
+    if (!linkId || !s.orders.length) return;
+    const o = s.orders.find((x) => x.id === linkId);
+    const ok = !!o && (canViewAll || can("order.assign") || o.requester === userName || o.assignee === userName || o.reviewer === userName);
+    if (ok) { setOpenId(linkId); setDenied(false); } else setDenied(true);
+  }, [linkId, s.orders.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = useMemo(() => {
     let list = s.orders;
@@ -287,7 +298,13 @@ function OrdersPage() {
     )}
     </>)}
 
-    <OrderDetailDialog orderId={openId} open={!!openId} onOpenChange={(v) => !v && setOpenId(null)} />
+    {denied && linkId && (
+      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-md border border-destructive/40 bg-background px-3 py-2 text-sm shadow">
+        Order không tồn tại hoặc bạn không có quyền xem.
+        <button className="ml-2 underline" onClick={() => { setDenied(false); navigate({ search: {} }); }}>Đóng</button>
+      </div>
+    )}
+    <OrderDetailDialog orderId={openId} open={!!openId} onOpenChange={(v) => { if (!v) { setOpenId(null); if (linkId) navigate({ search: {} }); } }} />
   </>;
 
 }
