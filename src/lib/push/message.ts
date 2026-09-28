@@ -4,7 +4,7 @@ import { TYPE_LABEL } from "../leave/calc";
 import { KIND_LABEL, declaredTime } from "../leave/attendance";
 import { fmtDate } from "../leave/calc";
 
-export const PUSH_KINDS = ["signal_new", "signal_assigned", "leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new", "content_assigned", "content_review", "content_revise", "content_approved", "content_published", "content_remind"] as const;
+export const PUSH_KINDS = ["signal_new", "signal_assigned", "leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new", "content_assigned", "content_review", "content_revise", "content_approved", "content_published", "content_remind", "order_new", "order_assigned", "order_taken", "order_review", "order_revise", "order_approved", "order_delivered", "order_remind"] as const;
 export type PushKind = (typeof PUSH_KINDS)[number];
 export interface PushMsg { title: string; body: string; url: string; tag: string }
 

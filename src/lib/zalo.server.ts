@@ -219,7 +219,8 @@ export async function processPending(limit = 20) {
   const leaveZalo = (await leaveNotifyCfg()).zalo;
   const cz = await contentZaloCfg();
   const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new"] : []), ...Object.keys(cz).filter((k) => cz[k])];
-  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,created_at,zalo_attempts,zalo_status,payload")
+  const oz = await orderZaloCfg(); kinds.push(...Object.keys(oz).filter((k) => oz[k]));
+  const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,created_at,zalo_attempts,zalo_status,payload")
     .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
@@ -270,6 +271,13 @@ export async function processPending(limit = 20) {
       if (!c || !contentStillValid(n.kind, n.payload?.status, c.data?.status)) { await mark({ zalo_status: "ineligible", zalo_error: "Bài viết đã được xử lý/đổi trạng thái" }); continue; }
       if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
       leaveMsg = { ...contentZaloMessage(n.kind, { ...n.payload, title: c.data?.title ?? n.payload?.title }, await brandHeader()), link: `${await baseUrl()}${contentLink(n.content_id)}` };
+    }
+    if (n.kind.startsWith("order_")) {
+      const { data: o } = await db.from("orders").select("data").eq("id", n.order_id).maybeSingle();
+      const { orderStillValid, orderZaloMessage, orderLink } = await import("./orders/notifyMessage");
+      if (!o || !orderStillValid(n.kind, n.payload?.status, o.data, n.payload?.assignee)) { await mark({ zalo_status: "ineligible", zalo_error: "Order đã được xử lý/đổi người" }); continue; }
+      if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
+      leaveMsg = { ...orderZaloMessage(n.kind, { ...n.payload, title: o.data?.title ?? n.payload?.title }, await brandHeader()), link: `${await baseUrl()}${orderLink(n.order_id)}` };
     }
     const { data: link } = await db.from("zalo_links").select("zalo_user_id,status").eq("user_id", n.recipient_id).maybeSingle();
     if (!link || link.status !== "active") { await mark({ zalo_status: "ineligible", zalo_error: "Chưa liên kết Zalo" }); continue; }
@@ -382,6 +390,15 @@ export async function contentZaloCfg(): Promise<Record<string, boolean>> {
   return out;
 }
 
+export async function orderZaloCfg(): Promise<Record<string, boolean>> {
+  const db = await admin();
+  const { data } = await db.from("content_notify_settings").select("data").eq("id", 1).maybeSingle();
+  const z = data?.data?.order?.zalo ?? {};
+  const out: Record<string, boolean> = {};
+  for (const k of ["order_new", "order_assigned", "order_taken", "order_review", "order_revise", "order_approved", "order_delivered", "order_remind"]) out[k] = z[k] === true;
+  return out;
+}
+
 export async function leaveNotifyCfg(): Promise<{ zalo: boolean; remind_hours: number }> {
   const db = await admin();
   const { data } = await db.from("leave_settings").select("data").eq("id", 1).maybeSingle();
@@ -442,6 +459,8 @@ export async function brandHeader(): Promise<string> {
 export async function runContentRemind() {
   const h = vnHour();
   if (h < 8 || h > 17) return { skipped: "off_hours" };
-  const { data, error } = await (await admin()).rpc("content_remind_run");
-  return error ? { error: "failed" } : { created: data ?? 0 };
+  const db = await admin();
+  const a = await db.rpc("content_remind_run");
+  const b = await db.rpc("order_remind_run");
+  return { content: a.error ? "failed" : a.data ?? 0, order: b.error ? "failed" : b.data ?? 0 };
 }
