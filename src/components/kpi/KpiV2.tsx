@@ -11,6 +11,7 @@ import { calculateKpiItem } from "@/lib/kpi/calculateKpi";
 import { calculateVideoDesignItem } from "@/lib/kpi/calculateVideoDesign";
 import { findNestedItems } from "@/lib/kpi/overview";
 import { GoalsBoard, useKrActual } from "./GoalsOkr";
+import { TIMEFRAMES, overlaps, rangeOf, rangeOptions } from "@/lib/kpi/timeframe";
 import { isAchieved, directionOf } from "@/lib/kpi/evaluate";
 import type { EmployeeKpiItem, GoalStatus, KpiPeriodType } from "@/lib/kpi/types";
 
@@ -60,29 +61,7 @@ export function KpiV2Gate({ title, children }: { title: string; children: (actor
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
-function monthRange(d = new Date()) {
-  const s = new Date(d.getFullYear(), d.getMonth(), 1), e = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  const f = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-  return [f(s), f(e)] as const;
-}
-function quarterRange(d = new Date()) {
-  const q = Math.floor(d.getMonth() / 3);
-  const s = new Date(d.getFullYear(), q * 3, 1), e = new Date(d.getFullYear(), q * 3 + 3, 0);
-  const f = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-  return [f(s), f(e)] as const;
-}
-
-/* ---------------- Tiện ích kỳ ---------------- */
-function monthOptions() {
-  const out: { key: string; label: string }[] = [];
-  const d = new Date();
-  for (let k = -3; k <= 3; k++) {
-    const x = new Date(d.getFullYear(), d.getMonth() + k, 1);
-    const [a, b] = monthRange(x);
-    out.push({ key: `${a}|${b}`, label: `Tháng ${x.getMonth() + 1}/${x.getFullYear()}` });
-  }
-  return out.reverse();
-}
+/* Kỳ: xem @/lib/kpi/timeframe (giờ Việt Nam, tuần T2–CN). */
 const GOAL_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang thực hiện", closed: "Đã đóng", cancelled: "Đã hủy" };
 const PERIOD_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang áp dụng", locked: "Đã khóa", closed: "Đã đóng" };
 const NEXT_LABEL: Record<string, string> = { active: "Áp dụng", locked: "Khóa kỳ", closed: "Đóng kỳ" };
@@ -102,9 +81,11 @@ function useActual() {
 
 export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean } }) {
   const [tab, setTab] = useState<"kpi" | "goals" | "library">("goals");
-  const months = useMemo(monthOptions, []);
-  const [m0, m1] = monthRange();
-  const [pk, setPk] = useState(`${m0}|${m1}`);
+  const [tf, setTf] = useState<KpiPeriodType>("month");
+  const [pk, setPk] = useState(() => rangeOf("month").join("|"));
+  const opts = useMemo(() => (tf === "custom" ? [] : rangeOptions(tf)), [tf]);
+  const [cs, ce] = pk.split("|");
+  const pickTf = (t: KpiPeriodType) => { setTf(t); setPk(rangeOf(t === "custom" ? "month" : t, cs).join("|")); };
   const [brandF, setBrandF] = useState("");
   const brands = useStore((s) => s.brands);
   return (
@@ -117,17 +98,22 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
             ))}
           </div>
         )}
-        <select className={inp} value={pk} onChange={(e) => setPk(e.target.value)}>{months.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}</select>
+        <select className={inp} aria-label="Khung thời gian" value={tf} onChange={(e) => pickTf(e.target.value as KpiPeriodType)}>{TIMEFRAMES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        {tf === "custom" ? (
+          <span className="flex items-center gap-1"><input type="date" className={inp} value={cs} onChange={(e) => e.target.value && setPk(`${e.target.value}|${e.target.value > ce ? e.target.value : ce}`)} />
+            <span className="text-xs text-muted-foreground">→</span><input type="date" className={inp} min={cs} value={ce} onChange={(e) => e.target.value && setPk(`${cs}|${e.target.value < cs ? cs : e.target.value}`)} /></span>
+        ) : <select className={inp} aria-label="Kỳ" value={pk} onChange={(e) => setPk(e.target.value)}>{opts.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}</select>}
         <select className={inp} value={brandF} onChange={(e) => setBrandF(e.target.value)}>
           <option value="">Tất cả thương hiệu</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
-      {tab === "library" ? <KrLibrary /> : tab === "kpi" ? <KpiList actor={actor} periodKey={pk} brandFilter={brandF} /> : <GoalsV2 actor={actor} periodKey={pk} brandFilter={brandF} />}
+      {tab !== "library" && <p className="text-[11px] text-muted-foreground">Hiển thị mục tiêu và KR có thời gian thực hiện giao với kỳ {cs.split("-").reverse().join("/")} → {ce.split("-").reverse().join("/")}. Mục tiêu kéo dài nhiều kỳ chỉ là một mục tiêu; kết quả luôn tính theo đúng kỳ KPI của từng KR, không cộng trùng.</p>}
+      {tab === "library" ? <KrLibrary /> : tab === "kpi" ? <KpiList actor={actor} periodKey={pk} periodType={tf} brandFilter={brandF} /> : <GoalsV2 actor={actor} periodKey={pk} brandFilter={brandF} />}
     </div>
   );
 }
 
-function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdmin: boolean }; periodKey: string; brandFilter: string }) {
+function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: { id: string; isAdmin: boolean }; periodKey: string; periodType: KpiPeriodType; brandFilter: string }) {
   const { db, refresh } = useKpiDb();
   const users = useAuth((s) => s.users);
   const roles = useAuth((s) => s.roles);
@@ -144,7 +130,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
   const view = useMemo(() => (db ? svc.listForActor(actor) : null), [db, actor]);
   if (!db || !view) return null;
   const [ps, pe] = periodKey.split("|");
-  const periods = view.periods.filter((p) => p.periodStart === ps && p.periodEnd === pe);
+  const periods = view.periods.filter((p) => overlaps(p.periodStart, p.periodEnd, ps, pe));
   const pmap = new Map(periods.map((p) => [p.id, p]));
   const rows = view.items.filter((i) => pmap.has(i.kpiPeriodId) && (!brandFilter || i.brandId === brandFilter))
     .map((it) => ({ it, p: pmap.get(it.kpiPeriodId)! }))
@@ -164,7 +150,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
   const submit = async () => {
     const [t, id] = f.channel.split(":");
     setSaving(true);
-    const ok = await run(() => svc.assign(actor, { userId: f.userId, periodType: "month", periodStart: ps, periodEnd: pe, goalId: f.goalId || null,
+    const ok = await run(() => svc.assign(actor, { userId: f.userId, periodType, periodStart: ps, periodEnd: pe, goalId: f.goalId || null,
       items: [{ metricKey: f.metricKey, targetValue: f.target, brandId: f.brandId || null, websiteId: t === "w" ? id : null, socialId: t === "s" ? id : null,
         label: f.label.trim() || null,
         metadata: m?.needs === "keyword" ? { keywordIds: f.keywordIds, threshold: f.threshold } : m?.needs === "tasks" ? { taskIds: f.taskIds } : {} }] }), "Đã giao KPI", refresh);
@@ -238,12 +224,12 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
                 </select>
                 {template && <button className={btn2} disabled={saving} onClick={async () => {
                   setSaving(true);
-                  await run(() => svc.assign(actor, { userId: f.userId, periodType: "month", periodStart: ps, periodEnd: pe, goalId: f.goalId || null, items: template }), `Đã giao ${template.length} KPI gợi ý`, refresh);
+                  await run(() => svc.assign(actor, { userId: f.userId, periodType, periodStart: ps, periodEnd: pe, goalId: f.goalId || null, items: template }), `Đã giao ${template.length} KPI gợi ý`, refresh);
                   setSaving(false);
                 }}>Giao nhanh theo vai trò</button>}
                 <button className={`${btn} ml-auto`} disabled={saving || !f.userId || !(f.target > 0)} onClick={submit}>{saving ? "Đang lưu…" : "Giao KPI"}</button>
               </div>
-              <p className="text-xs text-muted-foreground">Kỳ KPI lấy theo bộ lọc tháng phía trên. Một người có thể nhận nhiều KPI; hệ thống chặn KPI trùng cùng loại và cùng phạm vi.</p>
+              <p className="text-xs text-muted-foreground">Kỳ KPI lấy theo bộ lọc thời gian phía trên. Một người có thể nhận nhiều KPI; hệ thống chặn KPI trùng cùng loại và cùng phạm vi.</p>
             </div>
           )}
         </div>
@@ -273,6 +259,7 @@ function KpiList({ actor, periodKey, brandFilter }: { actor: { id: string; isAdm
                   <td className="tabular-nums">{a.value === null ? <span className="text-muted-foreground">Chưa đủ dữ liệu</span> : <b>{a.value}{it.unit === "percent" ? "%" : ""} / {getKpiMetric(it.metricKey)?.direction === "at_most" ? "≤ " : ""}{it.targetValue}{it.unit === "percent" ? "%" : ""}</b>}</td>
                   <td className="text-xs">
                     <span className={`rounded px-1.5 py-0.5 ${locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{PERIOD_STATUS[p.status] ?? p.status}</span>
+                    <div className="mt-0.5 whitespace-nowrap text-[11px] text-muted-foreground">{p.periodStart.split("-").reverse().join("/")} → {p.periodEnd.split("-").reverse().join("/")}</div>
                     {actor.isAdmin && first && next && <button className="ml-2 text-primary hover:underline" onClick={() => {
                       if (next === "locked" && !confirm(`Khóa kỳ KPI của ${u?.fullName}? Sau khi khóa không thể sửa chỉ tiêu.`)) return;
                       // Khóa kỳ: chốt kết quả thực tế của từng KR vào snapshot để báo cáo lịch sử không đổi theo dữ liệu nguồn sau này.

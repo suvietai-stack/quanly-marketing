@@ -20,6 +20,7 @@ import { goalCaps, goalLocked } from "@/lib/kpi/goalPolicy";
 import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
 import { monthsIn } from "@/lib/kpi/calculateKr";
 import { MONTHLY_SOURCE } from "@/lib/kpi/service";
+import { TIMEFRAMES, rangeLabel, rangeOf, rangeOptions, validateGoalDates } from "@/lib/kpi/timeframe";
 import type { EmployeeKpiItem, Goal, GoalKr, GoalScope, GoalStatus, KpiMetricDefinition, KpiPeriodType } from "@/lib/kpi/types";
 
 const svc = createKpiService(cloudRepository);
@@ -34,13 +35,35 @@ async function run(fn: () => void, ok: string, after: () => void) {
   catch (e) { toast.error(e instanceof KpiError ? e.message : `Không lưu được: ${(e as Error).message ?? e}`); after(); return false; }
 }
 const fmtD = (d?: string | null) => (d ? d.split("-").reverse().join("/") : "—");
-const f2 = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
-function rangeOf(t: KpiPeriodType, d = new Date()): [string, string] {
-  if (t === "week") { const day = (d.getDay() + 6) % 7; const s = new Date(d); s.setDate(d.getDate() - day); const e = new Date(s); e.setDate(s.getDate() + 6); return [f2(s), f2(e)]; }
-  if (t === "quarter") { const q = Math.floor(d.getMonth() / 3); return [f2(new Date(d.getFullYear(), q * 3, 1)), f2(new Date(d.getFullYear(), q * 3 + 3, 0))]; }
-  return [f2(new Date(d.getFullYear(), d.getMonth(), 1)), f2(new Date(d.getFullYear(), d.getMonth() + 1, 0))];
+
+/** Chọn khung thời gian (Tuần/Tháng/Quý/Năm/Tùy chỉnh) + kỳ cụ thể + deadline riêng. Giờ Việt Nam, tuần T2–CN. */
+function TimeframeFields({ ptype, setType, start, end, deadline, setRange, setDates, errs }: {
+  ptype: KpiPeriodType; setType: (t: KpiPeriodType) => void; start: string; end: string; deadline: string;
+  setRange: (s: string, e: string) => void; setDates: (p: { start?: string; end?: string; deadline?: string }) => void; errs: string[];
+}) {
+  const opts = ptype === "custom" ? [] : rangeOptions(ptype, start || undefined);
+  const key = `${start}|${end}`;
+  return (
+    <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`${lbl} sm:col-span-2`}>Khung thời gian
+        <div className="grid grid-cols-5 rounded-md bg-muted p-0.5">{TIMEFRAMES.map(([k, v]) => <button type="button" key={k} onClick={() => setType(k)} className={cn("whitespace-nowrap rounded px-1 py-1.5 text-xs", ptype === k ? "bg-background font-medium text-foreground shadow-sm" : "")}>{v}</button>)}</div></div>
+      {ptype === "custom" ? (
+        <label className={lbl}>Từ ngày – đến ngày
+          <div className="flex gap-1"><input type="date" className={inp} value={start} onChange={(e) => setDates({ start: e.target.value })} /><input type="date" className={inp} min={start} value={end} onChange={(e) => setDates({ end: e.target.value })} /></div></label>
+      ) : (
+        <label className={lbl}>Kỳ thực hiện
+          <select className={inp} value={key} onChange={(e) => { const [s, x] = e.target.value.split("|"); setRange(s, x); }}>
+            {!opts.some((o) => o.key === key) && <option value={key}>{rangeLabel(ptype, start, end)}</option>}
+            {opts.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+          </select>
+          <span className="block text-[11px] font-normal">{fmtD(start)} → {fmtD(end)}</span></label>
+      )}
+      <label className={lbl}>Deadline mục tiêu
+        <input type="date" className={inp} min={start} max={end} value={deadline} onChange={(e) => setDates({ deadline: e.target.value })} /></label>
+      {errs.length > 0 && <p className="col-span-full text-[11px] text-destructive">{errs.join(" ")}</p>}
+    </div>
+  );
 }
-const PERIOD_T: [KpiPeriodType, string][] = [["week", "Tuần"], ["month", "Tháng"], ["quarter", "Quý"], ["custom", "Tùy chỉnh"]];
 const GOAL_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang thực hiện", closed: "Hoàn thành", cancelled: "Đã hủy" };
 const AV_TONE: Record<string, string> = { linked: "bg-primary/10 text-primary", periodic: "bg-accent text-accent-foreground", manual: "bg-warning/15 text-warning-foreground", pending: "bg-muted text-muted-foreground", configure: "bg-muted text-muted-foreground", none: "bg-muted text-muted-foreground" };
 
@@ -347,16 +370,17 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
   };
   const [saving, setSaving] = useState(false);
   const kind = g.channel.startsWith("w:") ? "web" : g.channel.startsWith("s:") ? (socials.find((s) => s.id === g.channel.slice(2))?.platform === "TikTok" ? "tiktok" : "facebook") : "";
-  const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t); setG({ ...g, start: s, end: e, deadline: e }); setDrafts(drafts.map((d) => ({ ...d, deadline: e }))); } };
-  const info = g.title.trim() && g.start && g.end && g.end >= g.start && (g.scope === "department" || g.scope === "team" ? true : !!g.scopeRef);
+  const setRange = (s: string, e: string) => { setG({ ...g, start: s, end: e, deadline: e }); setDrafts(drafts.map((d) => ({ ...d, deadline: e }))); };
+  const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t, g.start || undefined); setRange(s, e); } };
+  const dateErrs = validateGoalDates(g.start, g.end, g.deadline);
+  const info = g.title.trim() && !dateErrs.length && (g.scope === "department" || g.scope === "team" ? true : !!g.scopeRef);
 
   const [savedGoalId, setSavedGoalId] = useState<string | null>(null);
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<{ ok: string[]; failed: string[] } | null>(null);
   const draftName = (d: Draft) => d.label || getKpiMetric(d.metricKey)?.label || d.metricKey;
   const validateAll = (): string[] => {
-    const errs: string[] = [];
-    if (g.deadline < g.start || g.deadline > g.end) errs.push("Deadline mục tiêu phải nằm trong kỳ.");
+    const errs: string[] = [...dateErrs];
     for (const d of drafts) validateDraft(actor, d, g.brandId, ptype, g.start, g.end, brandOf).forEach((e) => errs.push(`${draftName(d)}: ${e}`));
     return errs;
   };
@@ -414,12 +438,8 @@ function GoalWizard({ actor, onDone }: { actor: Actor; onDone: () => void }) {
               {websites.filter((w) => w.brandId === g.brandId).map((w) => <option key={w.id} value={`w:${w.id}`}>Web: {w.name}</option>)}
               {socials.filter((s) => s.brandId === g.brandId).map((s) => <option key={s.id} value={`s:${s.id}`}>{s.platform}: {s.name}</option>)}
             </select></label>
-          <div className={lbl}>Thời gian
-            <div className="flex rounded-md bg-muted p-0.5">{PERIOD_T.map(([k, v]) => <button key={k} onClick={() => setType(k)} className={cn("flex-1 rounded px-2 py-1.5 text-xs", ptype === k ? "bg-background font-medium text-foreground shadow-sm" : "")}>{v}</button>)}</div></div>
-          <label className={lbl}>Từ ngày – đến ngày
-            <div className="flex gap-1"><input type="date" className={inp} value={g.start} disabled={ptype !== "custom"} onChange={(e) => setG({ ...g, start: e.target.value })} /><input type="date" className={inp} value={g.end} disabled={ptype !== "custom"} onChange={(e) => setG({ ...g, end: e.target.value })} /></div></label>
-          <label className={lbl}>Deadline
-            <input type="date" className={inp} value={g.deadline} onChange={(e) => setG({ ...g, deadline: e.target.value })} /></label>
+          <TimeframeFields ptype={ptype} setType={setType} start={g.start} end={g.end} deadline={g.deadline}
+            setRange={setRange} setDates={(p) => setG({ ...g, ...p })} errs={dateErrs} />
         </div>
       )}
       {step === 2 && <KrPicker kind={kind} selected={drafts.map((d) => d.metricKey)} onPick={toggleKr} />}
@@ -584,31 +604,36 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
   );
 }
 
-/* ---------- Sửa mục tiêu ---------- */
-function GoalEditSheet({ actor, goal, onClose }: { actor: Actor; goal: Goal; onClose: () => void }) {
+/* ---------- Sửa / nhân bản mục tiêu ---------- */
+type DupInput = { title: string; start: string; end: string; deadline: string; ptype: KpiPeriodType };
+function GoalEditSheet({ actor, goal, onClose, onDuplicate }: { actor: Actor; goal: Goal; onClose: () => void; onDuplicate?: (d: DupInput) => Promise<boolean> }) {
   const meta = goal.metadata as GoalMeta;
-  const [v, setV] = useState({ title: goal.title, description: goal.description ?? "", scope: meta.scope ?? (meta.ownerId ? "personal" : "department") as GoalScope,
+  const dup = !!onDuplicate;
+  const [ptype, setPtype] = useState<KpiPeriodType>(meta.periodType ?? "custom");
+  const [v, setV] = useState({ title: dup ? `${goal.title} (bản sao)` : goal.title, description: goal.description ?? "", scope: meta.scope ?? (meta.ownerId ? "personal" : "department") as GoalScope,
     scopeRef: meta.scopeRef ?? meta.ownerId ?? "Phòng Marketing", coordinatorId: meta.coordinatorId ?? "", start: goal.periodStart, end: goal.periodEnd, deadline: meta.deadline ?? goal.periodEnd });
   const [saving, setSaving] = useState(false);
+  const errs = validateGoalDates(v.start, v.end, v.deadline);
+  const setRange = (s: string, e: string) => setV({ ...v, start: s, end: e, deadline: e });
+  const setType = (t: KpiPeriodType) => { setPtype(t); if (t !== "custom") { const [s, e] = rangeOf(t, v.start); setRange(s, e); } };
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader><SheetTitle>Sửa mục tiêu</SheetTitle><SheetDescription>Thay đổi kỳ không làm thay đổi kỳ của các chỉ tiêu đã giao.</SheetDescription></SheetHeader>
+        <SheetHeader><SheetTitle>{dup ? "Nhân bản mục tiêu" : "Sửa mục tiêu"}</SheetTitle>
+          <SheetDescription>{dup ? "Bản sao ở dạng Nháp, sao chép KR đang dùng, chưa phân bổ nhân sự. Kỳ KPI cũ giữ nguyên." : "Thay đổi thời gian không làm thay đổi kỳ của các chỉ tiêu đã giao hay kỳ đã khóa."}</SheetDescription></SheetHeader>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className={`${lbl} sm:col-span-2`}>Tên mục tiêu<input className={inp} value={v.title} onChange={(e) => setV({ ...v, title: e.target.value })} /></label>
-          <ScopeFields v={v} set={(p) => setV({ ...v, ...p })} />
-          <label className={lbl}>Từ ngày<input type="date" className={inp} value={v.start} onChange={(e) => setV({ ...v, start: e.target.value })} /></label>
-          <label className={lbl}>Đến ngày<input type="date" className={inp} value={v.end} onChange={(e) => setV({ ...v, end: e.target.value })} /></label>
-          <label className={lbl}>Deadline<input type="date" className={inp} value={v.deadline} onChange={(e) => setV({ ...v, deadline: e.target.value })} /></label>
-          <label className={`${lbl} sm:col-span-2`}>Nội dung liên quan<textarea className={`${inp} h-20 py-1.5`} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} /></label>
+          {!dup && <ScopeFields v={v} set={(p) => setV({ ...v, ...p })} />}
+          <TimeframeFields ptype={ptype} setType={setType} start={v.start} end={v.end} deadline={v.deadline} setRange={setRange} setDates={(p) => setV({ ...v, ...p })} errs={errs} />
+          {!dup && <label className={`${lbl} sm:col-span-2`}>Nội dung liên quan<textarea className={`${inp} h-20 py-1.5`} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} /></label>}
         </div>
-        <div className="mt-4 flex justify-end"><button className={btn} disabled={saving || !v.title.trim()} onClick={async () => {
-          if (v.deadline < v.start || v.deadline > v.end) { toast.error("Deadline phải nằm trong kỳ."); return; }
+        <div className="mt-4 flex justify-end"><button className={btn} disabled={saving || !v.title.trim() || errs.length > 0} onClick={async () => {
           setSaving(true);
-          const ok = await run(() => svc.saveGoal(actor, { ...goal, title: v.title, description: v.description || null, periodStart: v.start, periodEnd: v.end,
-            metadata: { scope: v.scope, scopeRef: v.scopeRef, coordinatorId: v.coordinatorId || null, deadline: v.deadline } }), "Đã lưu mục tiêu", () => {});
+          const ok = dup ? await onDuplicate!({ title: v.title.trim(), start: v.start, end: v.end, deadline: v.deadline, ptype })
+            : await run(() => svc.saveGoal(actor, { ...goal, title: v.title, description: v.description || null, periodStart: v.start, periodEnd: v.end,
+              metadata: { ...meta, scope: v.scope, scopeRef: v.scopeRef, coordinatorId: v.coordinatorId || null, deadline: v.deadline, periodType: ptype } }), "Đã lưu mục tiêu", () => {});
           setSaving(false); if (ok) onClose();
-        }}>{saving ? "Đang lưu…" : "Lưu"}</button></div>
+        }}>{saving ? "Đang lưu…" : dup ? "Nhân bản" : "Lưu"}</button></div>
       </SheetContent>
     </Sheet>
   );
@@ -788,12 +813,15 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   const goalEdit = editGoal ? db.goals.find((g) => g.id === editGoal) : null;
   const krEdit = editKr ? (db.krs ?? []).find((k) => k.id === editKr) : null;
 
-  const duplicate = (g: Goal) => run(() => {
-    const ng = svc.saveGoal(actor, { title: `${g.title} (bản sao)`, description: g.description, periodStart: g.periodStart, periodEnd: g.periodEnd, status: "draft", brandId: g.brandId, websiteId: g.websiteId, socialId: g.socialId,
-      metadata: { ...g.metadata, archived: false } });
-    for (const k of krsOfG(g.id).filter((x) => x.status === "active")) svc.saveKr(actor, { goalId: ng.id, metricKey: k.metricKey, label: k.label, targetValue: k.targetValue, brandId: k.brandId, websiteId: k.websiteId, socialId: k.socialId, deadline: k.deadline,
-      metadata: Object.fromEntries(Object.entries(k.metadata).filter(([x]) => !["history", "clientKey"].includes(x))) });
+  const duplicate = (g: Goal, d: DupInput) => run(() => {
+    const ng = svc.saveGoal(actor, { title: d.title, description: g.description, periodStart: d.start, periodEnd: d.end, status: "draft", brandId: g.brandId, websiteId: g.websiteId, socialId: g.socialId,
+      metadata: { ...g.metadata, archived: false, periodType: d.ptype, deadline: d.deadline } });
+    // Deadline KR chỉ giữ nếu còn nằm trong thời gian mới, nếu không dùng hạn của mục tiêu.
+    for (const k of krsOfG(g.id).filter((x) => x.status === "active")) svc.saveKr(actor, { goalId: ng.id, metricKey: k.metricKey, label: k.label, targetValue: k.targetValue, brandId: k.brandId, websiteId: k.websiteId, socialId: k.socialId,
+      deadline: k.deadline && k.deadline >= d.start && k.deadline <= d.end ? k.deadline : null,
+      metadata: Object.fromEntries(Object.entries(k.metadata).filter(([x]) => !["history", "clientKey", "deadline"].includes(x))) });
   }, "Đã nhân bản mục tiêu (dạng Nháp, chưa phân bổ nhân sự)", refresh);
+  const [dupGoal, setDupGoal] = useState<Goal | null>(null);
   const setGoalStatus = (g: Goal, status: GoalStatus) => {
     if (status === "active") {
       const bad = krsOfG(g.id).filter((k) => k.status === "active" && !allocationSummary(k, db.items.filter((i) => i.krId === k.id)).balanced);
@@ -831,7 +859,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
               <div className="flex items-start justify-between gap-3 border-b border-border p-4">
                 <div className="min-w-0">
                   <div className="font-semibold">{g.title}{meta.archived && <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal">Lưu trữ</span>}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">{scopeText(g)}{meta.coordinatorId ? ` · Điều phối: ${nameOf(meta.coordinatorId) ?? "—"}` : ""} · {fmtD(g.periodStart)} → {fmtD(g.periodEnd)} · Deadline {fmtD(meta.deadline ?? g.periodEnd)}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">{scopeText(g)}{meta.coordinatorId ? ` · Điều phối: ${nameOf(meta.coordinatorId) ?? "—"}` : ""} · Thực hiện{meta.periodType && meta.periodType !== "custom" ? ` (${rangeLabel(meta.periodType, g.periodStart, g.periodEnd)})` : ""}: {fmtD(g.periodStart)} → {fmtD(g.periodEnd)} · Deadline {fmtD(meta.deadline ?? g.periodEnd)}</div>
                 </div>
                 <div className="flex shrink-0 items-start gap-1 text-right">
                   <div>
@@ -846,7 +874,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         {caps.readOnly && <DropdownMenuItem disabled>{caps.reason ?? "Chỉ xem"}</DropdownMenuItem>}
                         {caps.edit && <DropdownMenuItem onClick={() => setEditGoal(g.id)}>Sửa mục tiêu</DropdownMenuItem>}
                         {caps.addKr && <DropdownMenuItem onClick={() => setAdding(g.id)}>Thêm KR</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => duplicate(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDupGoal(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {caps.cancel && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
                         {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
