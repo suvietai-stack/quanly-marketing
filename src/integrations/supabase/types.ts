@@ -913,6 +913,7 @@ export type Database = {
           id: string
           kind: string
           leave_request_id: string | null
+          oq_flow_id: string | null
           order_id: string | null
           payload: Json | null
           push_status: string
@@ -932,6 +933,7 @@ export type Database = {
           id?: string
           kind: string
           leave_request_id?: string | null
+          oq_flow_id?: string | null
           order_id?: string | null
           payload?: Json | null
           push_status?: string
@@ -951,6 +953,7 @@ export type Database = {
           id?: string
           kind?: string
           leave_request_id?: string | null
+          oq_flow_id?: string | null
           order_id?: string | null
           payload?: Json | null
           push_status?: string
@@ -982,6 +985,13 @@ export type Database = {
             columns: ["leave_request_id"]
             isOneToOne: false
             referencedRelation: "leave_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_oq_flow_id_fkey"
+            columns: ["oq_flow_id"]
+            isOneToOne: false
+            referencedRelation: "oq_flows"
             referencedColumns: ["id"]
           },
           {
@@ -1174,6 +1184,461 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      oq_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          flow_id: string | null
+          id: string
+          item_id: string | null
+          kind: string
+          request_id: string
+          round_no: number | null
+          status_from: string | null
+          status_to: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          flow_id?: string | null
+          id?: string
+          item_id?: string | null
+          kind: string
+          request_id: string
+          round_no?: number | null
+          status_from?: string | null
+          status_to?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          flow_id?: string | null
+          id?: string
+          item_id?: string | null
+          kind?: string
+          request_id?: string
+          round_no?: number | null
+          status_from?: string | null
+          status_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_events_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "oq_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oq_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "oq_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oq_flows: {
+        Row: {
+          accepted_at: string | null
+          assigned_at: string
+          assignee_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          code: string
+          completed_at: string | null
+          created_at: string
+          current_round: number
+          first_published_at: string | null
+          id: string
+          kind: string
+          processing_started_at: string | null
+          request_id: string
+          status: string
+          updated_at: string
+          waiting_info: boolean
+        }
+        Insert: {
+          accepted_at?: string | null
+          assigned_at?: string
+          assignee_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          code: string
+          completed_at?: string | null
+          created_at?: string
+          current_round?: number
+          first_published_at?: string | null
+          id?: string
+          kind: string
+          processing_started_at?: string | null
+          request_id: string
+          status?: string
+          updated_at?: string
+          waiting_info?: boolean
+        }
+        Update: {
+          accepted_at?: string | null
+          assigned_at?: string
+          assignee_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          code?: string
+          completed_at?: string | null
+          created_at?: string
+          current_round?: number
+          first_published_at?: string | null
+          id?: string
+          kind?: string
+          processing_started_at?: string | null
+          request_id?: string
+          status?: string
+          updated_at?: string
+          waiting_info?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_flows_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "oq_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oq_info_requests: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          answered_by: string | null
+          asked_at: string
+          asked_by: string
+          flow_id: string
+          id: string
+          question: string
+          round_no: number
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          asked_at?: string
+          asked_by: string
+          flow_id: string
+          id?: string
+          question: string
+          round_no: number
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          asked_at?: string
+          asked_by?: string
+          flow_id?: string
+          id?: string
+          question?: string
+          round_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_info_requests_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "oq_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oq_item_images: {
+        Row: {
+          caption: string | null
+          category: string
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string
+          path: string
+          request_id: string
+        }
+        Insert: {
+          caption?: string | null
+          category?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          item_id: string
+          path: string
+          request_id: string
+        }
+        Update: {
+          caption?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string
+          path?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "oq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oq_item_images_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "oq_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oq_items: {
+        Row: {
+          code: string
+          created_at: string
+          customer_choice: string | null
+          detail: string | null
+          id: string
+          name: string
+          note: string | null
+          position: number
+          processing: string | null
+          qty: number | null
+          request_id: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          customer_choice?: string | null
+          detail?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          position?: number
+          processing?: string | null
+          qty?: number | null
+          request_id: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          customer_choice?: string | null
+          detail?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          position?: number
+          processing?: string | null
+          qty?: number | null
+          request_id?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "oq_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oq_requests: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          code: string | null
+          created_at: string
+          creator_id: string
+          delivery_date: string | null
+          delivery_place: string | null
+          draft_config: Json
+          form_data: Json
+          id: string
+          items_mode: string
+          note: string | null
+          order_type: string
+          status: string
+          submitted_at: string | null
+          title: string
+          updated_at: string
+          want_price: boolean
+          want_progress: boolean
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          code?: string | null
+          created_at?: string
+          creator_id: string
+          delivery_date?: string | null
+          delivery_place?: string | null
+          draft_config?: Json
+          form_data?: Json
+          id?: string
+          items_mode?: string
+          note?: string | null
+          order_type?: string
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+          want_price?: boolean
+          want_progress?: boolean
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          code?: string | null
+          created_at?: string
+          creator_id?: string
+          delivery_date?: string | null
+          delivery_place?: string | null
+          draft_config?: Json
+          form_data?: Json
+          id?: string
+          items_mode?: string
+          note?: string | null
+          order_type?: string
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          updated_at?: string
+          want_price?: boolean
+          want_progress?: boolean
+        }
+        Relationships: []
+      }
+      oq_responses: {
+        Row: {
+          author_id: string
+          content: Json
+          created_at: string
+          flow_id: string
+          id: string
+          is_published: boolean
+          published_at: string | null
+          published_by: string | null
+          round_id: string
+          target: string
+          updated_at: string
+          version: number | null
+        }
+        Insert: {
+          author_id: string
+          content?: Json
+          created_at?: string
+          flow_id: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          published_by?: string | null
+          round_id: string
+          target: string
+          updated_at?: string
+          version?: number | null
+        }
+        Update: {
+          author_id?: string
+          content?: Json
+          created_at?: string
+          flow_id?: string
+          id?: string
+          is_published?: boolean
+          published_at?: string | null
+          published_by?: string | null
+          round_id?: string
+          target?: string
+          updated_at?: string
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_responses_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "oq_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oq_responses_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "oq_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oq_rounds: {
+        Row: {
+          accepted_at: string | null
+          assignee_id: string
+          completed_at: string | null
+          config: Json
+          created_at: string
+          created_by: string
+          first_published_at: string | null
+          flow_id: string
+          id: string
+          items_snapshot: Json
+          no: number
+          request_note: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          assignee_id: string
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by: string
+          first_published_at?: string | null
+          flow_id: string
+          id?: string
+          items_snapshot?: Json
+          no: number
+          request_note?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          assignee_id?: string
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string
+          first_published_at?: string | null
+          flow_id?: string
+          id?: string
+          items_snapshot?: Json
+          no?: number
+          request_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oq_rounds_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "oq_flows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
@@ -1966,6 +2431,70 @@ export type Database = {
         }
         Returns: undefined
       }
+      oq_accept: { Args: { _flow: string }; Returns: undefined }
+      oq_answer_info: {
+        Args: { _answer: string; _flow: string }
+        Returns: undefined
+      }
+      oq_assignees: {
+        Args: { _kind: string }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
+      oq_cancel: {
+        Args: { _flow: string; _id: string; _reason: string }
+        Returns: undefined
+      }
+      oq_comment: { Args: { _flow: string; _text: string }; Returns: undefined }
+      oq_complete: { Args: { _flow: string }; Returns: undefined }
+      oq_delete_draft: { Args: { _id: string }; Returns: undefined }
+      oq_image_add: {
+        Args: {
+          _caption: string
+          _category: string
+          _item: string
+          _path: string
+        }
+        Returns: string
+      }
+      oq_image_update: {
+        Args: {
+          _caption: string
+          _category: string
+          _delete: boolean
+          _id: string
+        }
+        Returns: string
+      }
+      oq_missing: { Args: { _flow: string }; Returns: string[] }
+      oq_publish_response: {
+        Args: { _content: Json; _flow: string; _target: string }
+        Returns: number
+      }
+      oq_reask: {
+        Args: { _config: Json; _flow: string; _note: string; _snapshot: Json }
+        Returns: number
+      }
+      oq_reassign: {
+        Args: { _flow: string; _user: string }
+        Returns: undefined
+      }
+      oq_request_info: {
+        Args: { _flow: string; _question: string }
+        Returns: undefined
+      }
+      oq_save: { Args: { _data: Json; _id: string }; Returns: string }
+      oq_save_response: {
+        Args: { _content: Json; _flow: string; _target: string }
+        Returns: undefined
+      }
+      oq_set_choice: {
+        Args: { _choice: string; _item: string }
+        Returns: undefined
+      }
+      oq_submit: { Args: { _id: string }; Returns: string }
       order_remind_run: { Args: never; Returns: number }
       push_subscribe: {
         Args: {
