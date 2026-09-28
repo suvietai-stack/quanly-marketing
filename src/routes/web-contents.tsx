@@ -50,11 +50,11 @@ function AllContents() {
   const [denied, setDenied] = useState(false);
   // Mở trực tiếp từ thông báo: chỉ mở khi bài nằm trong phạm vi người dùng được xem
   useEffect(() => {
-    if (!openId || s.loading) return;
+    if (!openId) return;
     const c = scoped.find((x) => x.id === openId);
     if (c) { setOpenContent(c); setDenied(false); }
     else if (webContents.length) setDenied(true);
-  }, [openId, scoped, webContents.length, s.loading]);
+  }, [openId, scoped, webContents.length]);
   useEffect(() => {
     if (openContent) setOpenContent(webContents.find((x) => x.id === openContent.id) ?? null);
   }, [webContents]); // eslint-disable-line react-hooks/exhaustive-deps
