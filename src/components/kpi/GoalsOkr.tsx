@@ -874,7 +874,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                         {caps.readOnly && <DropdownMenuItem disabled>{caps.reason ?? "Chỉ xem"}</DropdownMenuItem>}
                         {caps.edit && <DropdownMenuItem onClick={() => setEditGoal(g.id)}>Sửa mục tiêu</DropdownMenuItem>}
                         {caps.addKr && <DropdownMenuItem onClick={() => setAdding(g.id)}>Thêm KR</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => duplicate(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDupGoal(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {caps.cancel && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
                         {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
