@@ -14,7 +14,7 @@ async function rpc<T = any>(fn: string, args: Record<string, unknown>): Promise<
 }
 
 export const oqApi = {
-  save: (id: string | null, data: any) => rpc<string>("oq_save", { _id: id, _data: data }),
+  async save(id: string | null, data: any) { const rid = await rpc<string>("oq_save", { _id: id, _data: data }); void oqApi.flushCleanup(); return rid; },
   async deleteDraft(id: string) { await rpc("oq_delete_draft", { _id: id }); await oqApi.flushCleanup(); },
   submit: (id: string) => rpc<string>("oq_submit", { _id: id }),
   assignees: (kind: "price" | "progress") => rpc<{ id: string; full_name: string }[]>("oq_assignees", { _kind: kind }),
