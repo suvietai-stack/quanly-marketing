@@ -67,7 +67,6 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Mở rộng & Hệ thống",
     items: [
-      { to: "/okrs", label: "OKRs", icon: Target, badge: "Sắp ra mắt" },
       { to: "/settings", label: "Cài Đặt", icon: Settings, perm: "settings.view" },
     ],
   },

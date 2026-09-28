@@ -111,9 +111,9 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         {actor.isAdmin && (
-          <div className="inline-flex rounded-lg bg-muted p-1 text-sm">
+          <div className="inline-flex rounded-lg bg-muted p-1 text-xs sm:text-sm max-w-full overflow-x-auto">
             {(["goals", "kpi", "library"] as const).map((t) => (
-              <button key={t} onClick={() => setTab(t)} className={`rounded-md px-3 py-1.5 ${tab === t ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{t === "kpi" ? "KR đã giao" : t === "goals" ? "Mục tiêu" : "Thư viện KR"}</button>
+              <button key={t} onClick={() => setTab(t)} className={`whitespace-nowrap rounded-md px-2.5 py-1.5 sm:px-3 ${tab === t ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{t === "kpi" ? "KR đã giao" : t === "goals" ? "Quản trị Mục tiêu" : "Thư viện KR"}</button>
             ))}
           </div>
         )}
