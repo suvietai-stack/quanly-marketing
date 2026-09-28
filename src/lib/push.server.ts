@@ -1,8 +1,8 @@
 // Chỉ chạy phía máy chủ. Web Push độc lập với Zalo (cột push_status + bảng push_deliveries riêng).
 import { buildPushPayload } from "@block65/webcrypto-web-push";
 import { VAPID_PUBLIC_KEY } from "./push/config";
-import { contentLink, contentPushMessage, contentStillValid, type ContentKind } from "./content/notifyMessage";
-import { orderLink, orderPushMessage, orderStillValid, type OrderKind } from "./orders/notifyMessage";
+import { contentCurrentRecipients, contentLink, contentPushMessage, contentStillValid, nameMatches, type ContentKind } from "./content/notifyMessage";
+import { orderCurrentRecipients, orderLink, orderPushMessage, orderStillValid, type OrderKind } from "./orders/notifyMessage";
 import { PUSH_KINDS, pushMessage, type PushKind } from "./push/message";
 
 const FRESH_MS = 30 * 60 * 1000;
@@ -38,11 +38,14 @@ async function build(db: any, n: any, b: string) {
   if ((kind as string).startsWith("order_")) {
     const { data: o } = await db.from("orders").select("data").eq("id", n.order_id).maybeSingle();
     if (!o || !orderStillValid(kind as OrderKind, n.payload?.status, o.data, n.payload?.assignee)) return null;
+    const on = orderCurrentRecipients(kind as OrderKind, o.data ?? {});
+    if (on && !nameMatches(on, (await db.from("profiles").select("full_name,username").eq("id", n.recipient_id).maybeSingle()).data)) return null;
     return { ...orderPushMessage(kind as OrderKind, { ...n.payload, title: o.data?.title ?? n.payload?.title }, b), url: orderLink(n.order_id) };
   }
   if ((kind as string).startsWith("content_")) {
     const { data: c } = await db.from("web_contents").select("data").eq("id", n.content_id).maybeSingle();
     if (!c || !contentStillValid(kind as ContentKind, n.payload?.status, c.data?.status)) return null;
+    if (!nameMatches(contentCurrentRecipients(kind as ContentKind, c.data ?? {}), (await db.from("profiles").select("full_name,username").eq("id", n.recipient_id).maybeSingle()).data)) return null;
     return { ...contentPushMessage(kind as ContentKind, { ...n.payload, title: c.data?.title ?? n.payload?.title }, b), url: contentLink(n.content_id) };
   }
   if (kind.startsWith("leave_")) {
