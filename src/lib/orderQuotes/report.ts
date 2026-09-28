@@ -163,15 +163,19 @@ export function timeSeries(rows: Row[], range: [string, string], basis: "sent" |
 }
 
 // ---------- Hiển thị ----------
-/** Làm tròn chỉ khi hiển thị. */
-export function fmtDur(sec: number | null | undefined, empty = "—"): string {
+/** Định dạng chính xác đến giây — làm tròn (giây) chỉ khi hiển thị. compact: "1h 05m 30s" cho mobile. */
+export function fmtDur(sec: number | null | undefined, empty = "—", compact = false): string {
   if (sec == null || !Number.isFinite(sec)) return empty;
   const s = Math.max(0, Math.round(sec));
-  if (s < 60) return `${s} giây`;
-  const m = Math.floor(s / 60), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
-  if (d) return `${d} ngày${h ? ` ${h} giờ` : ""}`;
-  if (h) return `${h} giờ${mm ? ` ${mm} phút` : ""}`;
-  return `${mm} phút`;
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  const p = (n: number) => String(n).padStart(2, "0");
+  const U = compact ? { d: "ng", h: "h", m: "m", s: "s" } : { d: " ngày", h: " giờ", m: " phút", s: " giây" };
+  const parts: string[] = [];
+  if (d) parts.push(`${d}${U.d}`);
+  if (d || h) parts.push(`${d ? p(h) : h}${U.h}`);
+  if (d || h || m) parts.push(`${d || h ? p(m) : m}${U.m}`);
+  parts.push(`${d || h || m ? p(ss) : ss}${U.s}`);
+  return parts.join(" ");
 }
 export const toMin = (sec: number | null) => (sec == null ? null : Math.round((sec / 60) * 100) / 100);
 export const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 1000) / 10}%` : "—");
