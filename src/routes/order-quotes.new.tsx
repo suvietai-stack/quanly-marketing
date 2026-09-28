@@ -224,18 +224,23 @@ function OqForm() {
 
       {step === 2 && (
         <div className="space-y-4">
-          <Card><CardContent className="p-4 flex flex-wrap items-center gap-6">
-            <label className="flex items-center gap-2 font-semibold"><Checkbox checked={f.want_price} onCheckedChange={(v) => setF({ ...f, want_price: !!v, price_assignee: f.price_assignee || f.progress_assignee })} />HỎI GIÁ</label>
-            <label className="flex items-center gap-2 font-semibold"><Checkbox checked={f.want_progress} onCheckedChange={(v) => setF({ ...f, want_progress: !!v, progress_assignee: f.progress_assignee || f.price_assignee })} />HỎI TIẾN ĐỘ</label>
+          <div>
+            <div className="grid grid-cols-2 gap-3">
+              {([["want_price", "HỎI GIÁ", "Báo giá từng sản phẩm"], ["want_progress", "HỎI TIẾN ĐỘ", "Khả năng / tiến độ giao"]] as const).map(([k, t, sub]) => (
+                <label key={k} className={cn("flex cursor-pointer flex-col gap-1 rounded-lg border-2 p-3 sm:p-4 transition-colors", f[k] ? "border-primary bg-primary/5" : "border-border")}>
+                  <span className="flex items-center gap-2 font-semibold"><Checkbox checked={f[k]} onCheckedChange={(v) => setF(k === "want_price" ? { ...f, want_price: !!v, price_assignee: f.price_assignee || f.progress_assignee } : { ...f, want_progress: !!v, progress_assignee: f.progress_assignee || f.price_assignee })} />{t}</span>
+                  <span className="text-xs text-muted-foreground">{sub}</span>
+                </label>
+              ))}
+            </div>
             <FieldErr m={err("flows")} />
-          </CardContent></Card>
+          </div>
 
           {f.want_price && (
-            <Card><CardContent className="p-4 space-y-4">
+            <Card className="border-l-4 border-l-primary"><CardContent className="p-4 space-y-4">
               <h3 className="font-semibold">Hỏi Giá</h3>
               <div><Label>Người phụ trách Hỏi Giá *</Label>
-                <Select value={f.price_assignee} onValueChange={(v) => setF({ ...f, price_assignee: v })}><SelectTrigger><SelectValue placeholder="Chọn nhân viên Cung ứng" /></SelectTrigger>
-                  <SelectContent>{priceUsers.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+                <UserPicker users={priceUsers} value={f.price_assignee} invalid={!!err("price_assignee")} onChange={(v) => setF({ ...f, price_assignee: v })} />
                 <FieldErr m={err("price_assignee")} />
                 {priceUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Giá".</p>}</div>
               <div><Label className="mb-1 block">Giá vận chuyển</Label>
@@ -265,12 +270,13 @@ function OqForm() {
           )}
 
           {f.want_progress && (
-            <Card><CardContent className="p-4 space-y-4">
+            <Card className="border-l-4 border-l-accent-foreground/40"><CardContent className="p-4 space-y-4">
               <h3 className="font-semibold">Hỏi Tiến Độ</h3>
               <div><Label>Người phụ trách Hỏi Tiến Độ *</Label>
-                <Select value={f.progress_assignee} onValueChange={(v) => setF({ ...f, progress_assignee: v })}><SelectTrigger><SelectValue placeholder="Chọn nhân viên Cung ứng" /></SelectTrigger>
-                  <SelectContent>{progUsers.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+                <UserPicker users={progUsers} value={f.progress_assignee} invalid={!!err("progress_assignee")} onChange={(v) => setF({ ...f, progress_assignee: v })} />
                 <FieldErr m={err("progress_assignee")} />
+                {f.want_price && f.price_assignee && f.price_assignee !== f.progress_assignee && progUsers.some((u) => u.id === f.price_assignee) && (
+                  <Button type="button" variant="link" size="sm" className="h-auto px-0" onClick={() => setF({ ...f, progress_assignee: f.price_assignee })}>Dùng cùng người Hỏi Giá ({name(f.price_assignee)})</Button>)}
                 {progUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Tiến Độ".</p>}</div>
               <RadioGroup value={f.progress.check_type ?? ""} onValueChange={(v) => setF({ ...f, progress: { ...f.progress, check_type: v as any } })} className="grid sm:grid-cols-2 gap-2">
                 <label className="flex items-start gap-2 rounded-md border p-3 text-sm"><RadioGroupItem value="capability" className="mt-0.5" /><span><b>Kiểm tra khả năng đáp ứng</b><br />Đơn chưa chốt</span></label>
@@ -300,12 +306,16 @@ function OqForm() {
         </CardContent></Card>
       )}
 
-      <div className="fixed bottom-0 inset-x-0 md:static md:mt-6 z-20 border-t md:border-0 bg-background/95 backdrop-blur px-4 py-3 md:p-0 flex flex-wrap gap-2 justify-end">
-        {id && <Button variant="ghost" className="mr-auto text-destructive" disabled={busy} onClick={() => confirm("Xóa bản nháp này?") && run(async () => { await oqApi.deleteDraft(id); nav({ to: "/order-quotes" }); })}>Xóa nháp</Button>}
-        {step > 0 && <Button variant="outline" disabled={busy} onClick={() => setStep(step - 1)}>Quay lại</Button>}
-        <Button variant="outline" disabled={busy} onClick={() => run(() => save())}>Lưu nháp</Button>
-        {step < 3 ? <Button disabled={busy} onClick={next}>Tiếp tục</Button> : <Button disabled={busy} onClick={submit}>Gửi yêu cầu</Button>}
-      </div>
+      {id && <div className="mt-4 md:hidden"><Button variant="ghost" size="sm" className="text-destructive" disabled={busy} onClick={() => confirm("Xóa bản nháp này?") && run(async () => { await oqApi.deleteDraft(id); nav({ to: "/order-quotes" }); })}>Xóa bản nháp</Button></div>}
+      <MobileActionBar>
+        {curErr && <p className="mb-2 text-xs text-destructive md:text-right">{curErr}</p>}
+        <div className="grid grid-cols-3 gap-2 md:flex md:justify-end">
+          {id && <Button variant="ghost" className="hidden md:inline-flex mr-auto text-destructive" disabled={busy} onClick={() => confirm("Xóa bản nháp này?") && run(async () => { await oqApi.deleteDraft(id); nav({ to: "/order-quotes" }); })}>Xóa nháp</Button>}
+          <Button variant="outline" className="h-11 md:h-10" disabled={busy || step === 0} onClick={() => { setStep(step - 1); window.scrollTo({ top: 0 }); }}>Quay lại</Button>
+          <Button variant="outline" className="h-11 md:h-10" disabled={busy} onClick={() => run(() => save())}>Lưu nháp</Button>
+          {step < 3 ? <Button className="h-11 md:h-10" disabled={busy} onClick={next}>Tiếp tục</Button> : <Button className="h-11 md:h-10" disabled={busy} onClick={submit}>Gửi yêu cầu</Button>}
+        </div>
+      </MobileActionBar>
     </div>
   );
 }
