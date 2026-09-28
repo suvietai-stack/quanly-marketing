@@ -24,6 +24,7 @@ export type PermissionGroup =
   | "Cài Đặt"
   | "Tín Hiệu Cơ Hội"
   | "Đơn Từ & Phê Duyệt"
+  | "Đơn Hàng — Hỏi Giá & Tiến Độ"
   | "Tài khoản";
 
 export interface PermissionDef {
@@ -405,6 +406,15 @@ export const PERMISSIONS: PermissionDef[] = [
   P("att.reconcile", "Đối chiếu giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
   P("att.report", "Xem báo cáo giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
   P("att.manage", "Quản lý giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+
+  // ===== Đơn hàng — Hỏi Giá & Tiến Độ =====
+  P("oq.create", "Tạo yêu cầu", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Kinh doanh"),
+  P("oq.view_own", "Xem yêu cầu cá nhân", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Xem"),
+  P("oq.view_all", "Xem toàn bộ yêu cầu", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Xem"),
+  P("oq.accept", "Tiếp nhận yêu cầu được giao", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Cung ứng"),
+  P("oq.reply_price", "Phản hồi Hỏi Giá", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Cung ứng"),
+  P("oq.reply_progress", "Phản hồi Hỏi Tiến Độ", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Cung ứng"),
+  P("oq.manage", "Quản lý yêu cầu (can thiệp trường hợp đặc biệt)", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Quản lý"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
