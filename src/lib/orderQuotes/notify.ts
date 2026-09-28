@@ -34,8 +34,12 @@ export const oqLink = (requestId: string, flowId?: string | null) =>
   `/order-quotes/${encodeURIComponent(requestId)}${flowId ? `?flow=${encodeURIComponent(flowId)}` : ""}`;
 
 /** Người nhận còn hợp lệ? recipient = Cung ứng (tin cần xử lý) hoặc người tạo (tin kết quả). */
-export function oqStillValid(kind: OqKind, recipient: string, flow: { assignee_id: string; status: string; waiting_info: boolean } | null, req: { creator_id: string; status: string } | null) {
-  if (!flow || !req || req.status === "cancelled" || flow.status === "cancelled") return false;
+type FlowLite = { assignee_id: string; status: string; waiting_info: boolean };
+/** Tin gộp (payload.both) xét mọi luồng của yêu cầu: còn luồng nào người nhận phải tiếp nhận thì tin vẫn hợp lệ. */
+export function oqStillValid(kind: OqKind, recipient: string, flow: FlowLite | null, req: { creator_id: string; status: string } | null, payload?: OqPayload | null, siblings?: FlowLite[]) {
+  if (!req || req.status === "cancelled") return false;
+  if (kind === "oq_new" && payload?.both && siblings?.length) return siblings.some((f) => f.assignee_id === recipient && f.status === "pending");
+  if (!flow || flow.status === "cancelled") return false;
   if (kind === "oq_new" || kind === "oq_reask" || kind === "oq_assigned") return flow.assignee_id === recipient && flow.status === "pending";
   if (kind === "oq_answered") return flow.assignee_id === recipient;
   if (kind === "oq_info") return req.creator_id === recipient && flow.waiting_info;
