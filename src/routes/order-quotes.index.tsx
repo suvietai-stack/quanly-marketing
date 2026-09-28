@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,8 @@ function OqList() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(0);
+  const [sheet, setSheet] = useState(false);
+  const nFilters = [st !== ALL, creator !== ALL, assignee !== ALL, !!from, !!to].filter(Boolean).length;
   const SIZE = 30;
   const params = { page, size: SIZE, tab, q: q.trim() || undefined, status: st === ALL ? undefined : st, creator: creator === ALL ? undefined : creator, assignee: assignee === ALL ? undefined : assignee, from: from || undefined, to: to || undefined };
   const { data, isLoading, error, refetch, isFetching } = useQuery({ queryKey: ["oq-list", params], queryFn: () => oqApi.list(params), refetchInterval: 60_000, placeholderData: (p) => p });
@@ -67,9 +70,40 @@ function OqList() {
       <PageHeader title="Hỏi Giá & Tiến Độ" description="Đơn Sứ Quà Tặng — Sale hỏi giá/tiến độ, Cung ứng phản hồi theo từng sản phẩm."
         actions={can("oq.create") ? <Button asChild><Link to="/order-quotes/new" search={{ id: undefined }}><Plus className="h-4 w-4 mr-1" />Tạo yêu cầu</Link></Button> : undefined} />
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
-        <TabsList><TabsTrigger value="all">Tất cả</TabsTrigger><TabsTrigger value="price">Hỏi Giá</TabsTrigger><TabsTrigger value="progress">Hỏi Tiến Độ</TabsTrigger></TabsList>
+        <TabsList className="grid w-full grid-cols-3 h-11 sm:inline-flex sm:w-auto sm:h-10"><TabsTrigger value="all">Tất cả</TabsTrigger><TabsTrigger value="price">Hỏi Giá</TabsTrigger><TabsTrigger value="progress">Hỏi Tiến Độ</TabsTrigger></TabsList>
       </Tabs>
-      <div className="grid gap-2 grid-cols-2 lg:grid-cols-7 mb-4">
+      <div className="mb-4 flex gap-2 lg:hidden">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tên hoặc mã yêu cầu" className="pl-8 h-10" />
+        </div>
+        <Sheet open={sheet} onOpenChange={setSheet}>
+          <SheetTrigger asChild><Button variant="outline" className="h-10 shrink-0"><SlidersHorizontal className="h-4 w-4 mr-1" />Lọc{nFilters ? ` (${nFilters})` : ""}</Button></SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-xl pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+            <SheetHeader><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
+            <div className="grid gap-3 py-4 [&_button]:h-11">
+        <Select value={st} onValueChange={setSt}><SelectTrigger><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Mọi trạng thái</SelectItem><SelectItem value="draft">Bản nháp</SelectItem><SelectItem value="pending">Chờ xác nhận</SelectItem>
+            <SelectItem value="processing">Đang xử lý</SelectItem><SelectItem value="waiting">Đang chờ Sale bổ sung</SelectItem><SelectItem value="answered">Đã trả lời</SelectItem><SelectItem value="cancelled">Đã hủy</SelectItem>
+          </SelectContent></Select>
+        <Select value={creator} onValueChange={setCreator}><SelectTrigger><SelectValue placeholder="Người tạo" /></SelectTrigger>
+          <SelectContent><SelectItem value={ALL}>Mọi người tạo</SelectItem>{people.c.map((id) => <SelectItem key={id} value={id}>{name(id)}</SelectItem>)}</SelectContent></Select>
+        <Select value={assignee} onValueChange={setAssignee}><SelectTrigger><SelectValue placeholder="Người phụ trách" /></SelectTrigger>
+          <SelectContent><SelectItem value={ALL}>Mọi người phụ trách</SelectItem>{people.a.map((id) => <SelectItem key={id} value={id}>{name(id)}</SelectItem>)}</SelectContent></Select>
+        <div className="grid grid-cols-2 gap-1 lg:flex lg:col-span-2">
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Từ ngày" className="px-2" />
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Đến ngày" className="px-2" />
+        </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="h-11" onClick={() => { setSt(ALL); setCreator(ALL); setAssignee(ALL); setFrom(""); setTo(""); }}>Xóa lọc</Button>
+              <Button className="h-11" onClick={() => setSheet(false)}>Xem {total} kết quả</Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+      <div className="hidden lg:grid gap-2 grid-cols-7 mb-4">
         <div className="relative col-span-2">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tên hoặc mã yêu cầu" className="pl-8" />
@@ -83,7 +117,7 @@ function OqList() {
           <SelectContent><SelectItem value={ALL}>Mọi người tạo</SelectItem>{people.c.map((id) => <SelectItem key={id} value={id}>{name(id)}</SelectItem>)}</SelectContent></Select>
         <Select value={assignee} onValueChange={setAssignee}><SelectTrigger><SelectValue placeholder="Người phụ trách" /></SelectTrigger>
           <SelectContent><SelectItem value={ALL}>Mọi người phụ trách</SelectItem>{people.a.map((id) => <SelectItem key={id} value={id}>{name(id)}</SelectItem>)}</SelectContent></Select>
-        <div className="flex gap-1 col-span-2">
+        <div className="grid grid-cols-2 gap-1 lg:flex lg:col-span-2">
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Từ ngày" className="px-2" />
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Đến ngày" className="px-2" />
         </div>
@@ -123,10 +157,14 @@ function OqList() {
           </div>
           <div className="md:hidden space-y-2">
             {rows.map((r) => (
-              <button key={r.id + (r.flowCode ?? "")} onClick={() => open(r)} className="w-full text-left rounded-lg border bg-card p-3 space-y-1.5">
-                <div className="flex justify-between gap-2"><span className="font-medium line-clamp-2">{r.title || "(chưa đặt tên)"}</span><span className="font-mono text-xs text-muted-foreground shrink-0">{r.flowCode ?? r.code ?? "Nháp"}</span></div>
+              <button key={r.id + (r.flowCode ?? "")} onClick={() => open(r)} className="w-full text-left rounded-lg border bg-card p-3 space-y-2 active:bg-accent">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><span className="font-semibold line-clamp-2">{r.title || "(chưa đặt tên)"}</span><span className="font-mono text-xs text-muted-foreground">{r.flowCode ?? r.code ?? "Nháp"}</span></div>
                 <StatusCell r={r} />
-                <div className="text-xs text-muted-foreground">{r.flows.map((f: any) => `${f.kind === "price" ? "Giá" : "Tiến độ"}: ${name(f.assignee_id)}`).join(" · ") || name(r.creator_id)}</div>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <span className="text-muted-foreground">Người tạo</span><span className="truncate">{name(r.creator_id)}</span>
+                  {r.flows.map((f: any) => [<span key={f.id + "k"} className="text-muted-foreground">Cung ứng {f.kind === "price" ? "Giá" : "Tiến độ"}</span>, <span key={f.id} className="truncate">{name(f.assignee_id)}</span>])}
+                  <span className="text-muted-foreground">Sản phẩm/PA</span><span>{r.count}</span>
+                </div>
                 <div className="text-[11px] text-muted-foreground">Cập nhật {vnDateTime(lastUpdate(r))}</div>
               </button>
             ))}
