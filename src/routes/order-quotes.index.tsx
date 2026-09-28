@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -42,36 +42,23 @@ function OqList() {
   const [assignee, setAssignee] = useState(ALL);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const { data, isLoading } = useQuery({ queryKey: ["oq-list"], queryFn: oqApi.list, refetchInterval: 60_000 });
+  const [page, setPage] = useState(0);
+  const SIZE = 30;
+  const params = { page, size: SIZE, tab, q: q.trim() || undefined, status: st === ALL ? undefined : st, creator: creator === ALL ? undefined : creator, assignee: assignee === ALL ? undefined : assignee, from: from || undefined, to: to || undefined };
+  const { data, isLoading, error, refetch, isFetching } = useQuery({ queryKey: ["oq-list", params], queryFn: () => oqApi.list(params), refetchInterval: 60_000, placeholderData: (p) => p });
+  const peopleQ = useQuery({ queryKey: ["oq-list", "people"], queryFn: oqApi.people });
+  useEffect(() => setPage(0), [tab, q, st, creator, assignee, from, to]);
 
   const rows = useMemo(() => {
     if (!data) return [];
-    const flowsOf = (id: string) => data.flows.filter((f) => f.request_id === id);
-    const base = data.requests.map((r) => ({ ...r, flows: flowsOf(r.id), count: r.oq_items?.[0]?.count ?? 0 }));
-    const out: any[] = tab === "all" ? base : base.flatMap((r) => r.flows.filter((f: any) => f.kind === tab).map((f: any) => ({ ...r, flows: [f], flowCode: f.code })));
-    const s = q.trim().toLowerCase();
-    return out.filter((r) => {
-      if (s && !(`${r.title} ${r.code ?? ""} ${r.flowCode ?? ""}`.toLowerCase().includes(s))) return false;
-      if (creator !== ALL && r.creator_id !== creator) return false;
-      if (assignee !== ALL && !r.flows.some((f: any) => f.assignee_id === assignee)) return false;
-      if (st !== ALL) {
-        if (st === "draft" || st === "cancelled") { if (r.status !== st) return false; }
-        else if (st === "waiting") { if (!r.flows.some((f: any) => f.waiting_info && f.status === "processing")) return false; }
-        else if (!r.flows.some((f: any) => f.status === st)) return false;
-      }
-      const d = (r.submitted_at ?? r.created_at).slice(0, 10);
-      if (from && d < from) return false;
-      if (to && d > to) return false;
-      return true;
+    return data.requests.map((r) => {
+      const flows = (r.flows ?? []).filter((f: any) => tab === "all" || f.kind === tab);
+      return { ...r, flows, count: r.oq_items?.[0]?.count ?? 0, flowCode: tab === "all" ? undefined : flows[0]?.code };
     });
-  }, [data, tab, q, st, creator, assignee, from, to]);
-
-  const people = useMemo(() => {
-    const c = new Set<string>(), a = new Set<string>();
-    data?.requests.forEach((r) => c.add(r.creator_id));
-    data?.flows.forEach((f) => a.add(f.assignee_id));
-    return { c: [...c], a: [...a] };
-  }, [data]);
+  }, [data, tab]);
+  const total = data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / SIZE));
+  const people = peopleQ.data ?? { a: [], c: [] };
 
   const open = (r: any) => r.status === "draft" ? nav({ to: "/order-quotes/new", search: { id: r.id } }) : nav({ to: "/order-quotes/$id", params: { id: r.id }, search: { flow: r.flowCode ? r.flows[0]?.id : undefined } });
 
@@ -101,9 +88,14 @@ function OqList() {
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Đến ngày" className="px-2" />
         </div>
       </div>
-      <div className="text-xs text-muted-foreground mb-2">Loại đơn: Đơn Sứ Quà Tặng · {rows.length} kết quả</div>
+      <div className="text-xs text-muted-foreground mb-2">Loại đơn: Đơn Sứ Quà Tặng · {total} kết quả{isFetching ? " · đang cập nhật…" : ""}</div>
 
-      {isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : rows.length === 0 ? (
+      {error ? (
+        <div className="rounded-lg border border-destructive/40 p-6 text-center text-sm space-y-2">
+          <p>Không tải được danh sách: {(error as Error).message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>Thử lại</Button>
+        </div>
+      ) : isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : rows.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">Chưa có yêu cầu nào phù hợp.</div>
       ) : (
         <>
@@ -139,6 +131,13 @@ function OqList() {
               </button>
             ))}
           </div>
+          {pages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4 text-sm">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button>
+              <span>Trang {page + 1}/{pages}</span>
+              <Button variant="outline" size="sm" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Sau</Button>
+            </div>
+          )}
         </>
       )}
     </div>
