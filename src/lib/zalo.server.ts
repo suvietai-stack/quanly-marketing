@@ -267,15 +267,21 @@ export async function processPending(limit = 20) {
     }
     if (n.kind.startsWith("content_")) {
       const { data: c } = await db.from("web_contents").select("data").eq("id", n.content_id).maybeSingle();
-      const { contentStillValid, contentZaloMessage, contentLink } = await import("./content/notifyMessage");
+      const { contentStillValid, contentZaloMessage, contentLink, contentCurrentRecipients, nameMatches } = await import("./content/notifyMessage");
       if (!c || !contentStillValid(n.kind, n.payload?.status, c.data?.status)) { await mark({ zalo_status: "ineligible", zalo_error: "Bài viết đã được xử lý/đổi trạng thái" }); continue; }
+      { const { data: rp } = await db.from("profiles").select("full_name,username").eq("id", n.recipient_id).maybeSingle();
+        if (!nameMatches(contentCurrentRecipients(n.kind, c.data ?? {}), rp)) { await mark({ zalo_status: "ineligible", zalo_error: "Người nhận không còn phụ trách bài" }); continue; } }
       if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
       leaveMsg = { ...contentZaloMessage(n.kind, { ...n.payload, title: c.data?.title ?? n.payload?.title }, await brandHeader()), link: `${await baseUrl()}${contentLink(n.content_id)}` };
     }
     if (n.kind.startsWith("order_")) {
       const { data: o } = await db.from("orders").select("data").eq("id", n.order_id).maybeSingle();
-      const { orderStillValid, orderZaloMessage, orderLink } = await import("./orders/notifyMessage");
+      const { orderStillValid, orderZaloMessage, orderLink, orderCurrentRecipients } = await import("./orders/notifyMessage");
+      const { nameMatches } = await import("./content/notifyMessage");
       if (!o || !orderStillValid(n.kind, n.payload?.status, o.data, n.payload?.assignee)) { await mark({ zalo_status: "ineligible", zalo_error: "Order đã được xử lý/đổi người" }); continue; }
+      { const names = orderCurrentRecipients(n.kind, o.data ?? {});
+        if (names) { const { data: rp } = await db.from("profiles").select("full_name,username").eq("id", n.recipient_id).maybeSingle();
+          if (!nameMatches(names, rp)) { await mark({ zalo_status: "ineligible", zalo_error: "Người nhận không còn phụ trách order" }); continue; } } }
       if (Date.now() - new Date(n.created_at).getTime() > LEAVE_FRESH_MS) { await mark({ zalo_status: "ineligible", zalo_error: "Quá 30 phút — không gửi tự động tin cũ" }); continue; }
       leaveMsg = { ...orderZaloMessage(n.kind, { ...n.payload, title: o.data?.title ?? n.payload?.title }, await brandHeader()), link: `${await baseUrl()}${orderLink(n.order_id)}` };
     }

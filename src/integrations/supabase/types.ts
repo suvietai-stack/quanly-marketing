@@ -1877,6 +1877,7 @@ export type Database = {
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
       content_notify_save: { Args: { _data: Json }; Returns: undefined }
       content_remind_run: { Args: never; Returns: number }
+      cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
       get_profiles_directory: {
         Args: never

@@ -16,3 +16,23 @@ describe("content notify", () => {
   });
   it("link", () => expect(contentLink("a b")).toBe("/web-contents?open=a%20b"));
 });
+
+import { contentCurrentRecipients as ccr, contentReviewerOf, nameMatches as nm } from "./notifyMessage";
+import { orderCurrentRecipients as ocr } from "../orders/notifyMessage";
+describe("người nhận hiện tại", () => {
+  it("bản nháp web dùng webDraftReviewer, dự phòng draftReviewer", () => {
+    expect(contentReviewerOf({ webDraftReviewer: "An", draftReviewer: "Bình" }, "Chờ duyệt bản nháp web")).toBe("An");
+    expect(contentReviewerOf({ draftReviewer: "Bình" }, "Chờ duyệt bản nháp web")).toBe("Bình");
+    expect(contentReviewerOf({ webDraftReviewer: "An", draftReviewer: "Bình" }, "Chờ duyệt bài")).toBe("Bình");
+  });
+  it("người viết bị thay thì không gửi", () => {
+    expect(nm(ccr("content_assigned", { writer: "Cường" }), { full_name: "Dũng" })).toBe(false);
+    expect(nm(ccr("content_assigned", { writer: "cường " }), { full_name: "Cường" })).toBe(true);
+    expect(nm(ccr("content_review", { status: "Chờ duyệt bản nháp web", webDraftReviewer: "An" }), { full_name: "Bình" })).toBe(false);
+  });
+  it("order: đổi người duyệt/người thiết kế", () => {
+    expect(ocr("order_review", { reviewer: "", requester: "Hà" })).toEqual(["Hà"]);
+    expect(ocr("order_assigned", { assignee: "Lan" })).toEqual(["Lan"]);
+    expect(ocr("order_new", {})).toBeNull();
+  });
+});
