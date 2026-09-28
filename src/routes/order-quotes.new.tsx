@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { oqApi } from "@/lib/orderQuotes/api";
 import { PRICE_CATS, vnDate, type PriceConfig, type ProgressConfig } from "@/lib/orderQuotes/logic";
-import { ItemImages, MobileActionBar, UserPicker, useUserName } from "@/components/orderQuotes/OqCommon";
+import { ItemImages, MobileActionBar, ProductQuantity, UserPicker, useUserName } from "@/components/orderQuotes/OqCommon";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/order-quotes/new")({
@@ -24,6 +24,8 @@ export const Route = createFileRoute("/order-quotes/new")({
     { name: "description", content: "Tạo yêu cầu hỏi giá, kiểm tra khả năng đáp ứng và ngày giao dự kiến trước khi chốt đơn." },
     { property: "og:title", content: "Tạo yêu cầu Hỏi Giá & Tiến Độ" },
     { property: "og:description", content: "Form 4 bước: thông tin đơn, sản phẩm, nội dung hỏi, kiểm tra và gửi." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
   ] }),
   component: () => <RequirePermission perm="oq.create"><OqForm /></RequirePermission>,
 });
@@ -197,16 +199,17 @@ function OqForm() {
                   <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">PA{String(idx + 1).padStart(2, "0")}</span>
                   <span className="min-w-0 flex-1">
                     <span className={cn("block truncate font-medium", !it.name && "text-muted-foreground")}>{it.name || "(chưa đặt tên)"}</span>
-                    {!isOpen && <span className="block text-xs text-muted-foreground">{it.qty ? `${it.qty} ${it.unit}` : "Chưa có số lượng"} · {imgs.length} ảnh</span>}
+                     {!isOpen && <span className="block text-xs text-muted-foreground">{imgs.length} ảnh</span>}
                   </span>
                   <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isOpen && "rotate-180")} />
                 </button>
                 {f.items.length > 1 && <Button variant="ghost" size="icon" aria-label="Xóa sản phẩm" onClick={() => confirm(`Xóa PA${String(idx + 1).padStart(2, "0")}?`) && setF({ ...f, items: f.items.filter((x) => x.key !== it.key) })}><Trash2 className="h-4 w-4" /></Button>}
               </div>
+               {!isOpen && <ProductQuantity qty={it.qty} unit={it.unit} />}
               <div className={cn("space-y-3", !isOpen && "hidden")}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="col-span-2"><Label>Tên sản phẩm *</Label><Input value={it.name} aria-invalid={!!err(`${it.key}.name`)} onChange={(e) => setItem(it.key, { name: e.target.value })} /><FieldErr m={err(`${it.key}.name`)} /></div>
-                <div><Label>Số lượng *</Label><Input type="number" min="0" inputMode="decimal" value={it.qty} aria-invalid={!!err(`${it.key}.qty`)} onChange={(e) => setItem(it.key, { qty: e.target.value })} /><FieldErr m={err(`${it.key}.qty`)} /></div>
+                 <div><Label>Số lượng *</Label><Input type="number" min="0" inputMode="decimal" className="font-medium" value={it.qty} aria-invalid={!!err(`${it.key}.qty`)} onChange={(e) => setItem(it.key, { qty: e.target.value })} /><FieldErr m={err(`${it.key}.qty`)} /></div>
                 <div><Label>Đơn vị tính *</Label><Input value={it.unit} aria-invalid={!!err(`${it.key}.unit`)} onChange={(e) => setItem(it.key, { unit: e.target.value })} /><FieldErr m={err(`${it.key}.unit`)} /></div>
               </div>
               <div><Label>Thông tin chi tiết sản phẩm *</Label><Textarea rows={3} className="field-sizing-content min-h-20" value={it.detail} aria-invalid={!!err(`${it.key}.detail`)} onChange={(e) => setItem(it.key, { detail: e.target.value })} /><FieldErr m={err(`${it.key}.detail`)} /></div>
@@ -264,7 +267,8 @@ function OqForm() {
               </div>
               {f.items.map((it, idx) => it.id && (
                 <div key={it.key} className="rounded-md border p-3 space-y-2">
-                  <div className="font-medium text-sm">PA{String(idx + 1).padStart(2, "0")} — {it.name}</div>
+                   <div className="font-medium text-sm">PA{String(idx + 1).padStart(2, "0")} — {it.name}</div>
+                   <ProductQuantity qty={it.qty} unit={it.unit} />
                   {PRICE_CATS.filter((c) => !(c.key === "shipping" && f.price.shipping_mode === "common")).map((c) => {
                     const cur = (f.price.items?.[it.id!] as any)?.[c.key];
                     return (
@@ -307,7 +311,7 @@ function OqForm() {
           <Row k="Phân loại" v="Đơn Sứ Quà Tặng" /><Row k="Tên" v={f.title} /><Row k="Giao tại" v={f.delivery_place || "—"} /><Row k="Ngày giao" v={vnDate(f.delivery_date)} />
           {f.note && <Row k="Ghi chú" v={f.note} />}
           <Row k="Loại sản phẩm" v={f.items_mode === "option" ? "Phương án để khách lựa chọn (không cộng số lượng)" : "Sản phẩm đặt đồng thời"} />
-          <div className="space-y-1">{f.items.map((it, i) => <div key={it.key} className="rounded border px-3 py-2">PA{String(i + 1).padStart(2, "0")} — {it.name} {it.qty && `· ${it.qty} ${it.unit}`} · {itemImgs(it.id).length} ảnh</div>)}</div>
+           <div className="space-y-2">{f.items.map((it, i) => <div key={it.key} className="rounded border px-3 py-2 space-y-1"><div className="font-medium break-words">PA{String(i + 1).padStart(2, "0")} — {it.name}</div><ProductQuantity qty={it.qty} unit={it.unit} /><div className="text-xs text-muted-foreground">{itemImgs(it.id).length} ảnh</div></div>)}</div>
           <Row k="Nội dung hỏi" v={[f.want_price && `Hỏi Giá → ${name(f.price_assignee)}`, f.want_progress && `Hỏi Tiến Độ → ${name(f.progress_assignee)}`].filter(Boolean).join(" · ") || "—"} />
           <p className="text-xs text-muted-foreground">Sau khi gửi không đổi được phân loại đơn hàng. Mỗi nội dung hỏi thành một luồng xử lý riêng.</p>
         </CardContent></Card>

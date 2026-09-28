@@ -20,7 +20,7 @@ import {
   CHOICE_LABEL, EVENT_LABEL, flowStatusLabel, IMG_CAT, catLabel, copyText, latestPublished, missing, progressCount, qtySummary, requestedCats, vnDate, vnDateTime,
   type PriceConfig, type Resp, type SnapItem,
 } from "@/lib/orderQuotes/logic";
-import { FlowBadge, ItemImages, useUserName } from "@/components/orderQuotes/OqCommon";
+import { FlowBadge, ItemImages, ProductQuantity, useUserName } from "@/components/orderQuotes/OqCommon";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/order-quotes/$id")({
@@ -30,6 +30,8 @@ export const Route = createFileRoute("/order-quotes/$id")({
     { name: "description", content: "Theo dõi và xử lý yêu cầu hỏi giá, hỏi tiến độ theo từng sản phẩm." },
     { property: "og:title", content: "Chi tiết yêu cầu — Hỏi Giá & Tiến Độ" },
     { property: "og:description", content: "Phản hồi Cung ứng, trao đổi và lịch sử xử lý của yêu cầu." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
     { name: "robots", content: "noindex" },
   ] }),
   component: () => (
@@ -117,10 +119,10 @@ function OrderInfo({ d, onChanged }: { d: any; onChanged: () => void }) {
               <span className="font-mono text-xs text-muted-foreground">{it.code}</span>
               <span className="flex-1 font-medium truncate">{it.name}</span>
               {it.customer_choice && <Badge variant="secondary">{CHOICE_LABEL[it.customer_choice]}</Badge>}
-              <span className="text-xs text-muted-foreground">{it.qty ?? ""} {it.unit ?? ""}</span>
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4 shrink-0" />
             </CollapsibleTrigger>
             <CollapsibleContent><CardContent className="px-3 pb-3 pt-0 space-y-2 text-sm">
+              <ProductQuantity qty={it.qty} unit={it.unit} />
               {it.detail && <Info k="Chi tiết" v={it.detail} />}
               {it.processing && <Info k="In ấn / gia công" v={it.processing} />}
               {it.note && <Info k="Ghi chú" v={it.note} />}
@@ -297,10 +299,11 @@ function ResponseCard({ kind, item, cfg, round, resps, editable, busy, locked, o
     <Card><CardContent className="p-4 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         {item.code && <span className="font-mono text-xs text-muted-foreground">{item.code}</span>}
-        <span className="font-medium flex-1">{item.name}{item.qty ? ` · ${item.qty} ${item.unit ?? ""}` : ""}</span>
+        <span className="min-w-0 break-words font-medium flex-1">{item.name}</span>
         {latest ? <Badge>Đã công bố v{latest.version}</Badge> : editable && draft ? null : <Badge variant="outline">Chưa phản hồi</Badge>}
         {editable && draft && <Badge variant="secondary" className="border-dashed">Đã lưu nháp</Badge>}
       </div>
+      {!shippingOnly && kind !== "conclusion" && <ProductQuantity qty={item.qty} unit={item.unit} />}
       {editable && images && images.length > 0 && <div className="lg:hidden"><div className="text-xs text-muted-foreground mb-1">Ảnh Sale gửi</div><ItemImages images={images} /></div>}
       {editable ? (
         <>
@@ -448,4 +451,4 @@ function CancelButton({ d, flow, onDone }: { d: any; flow: any; onDone: () => vo
     <Button variant="ghost" size="sm" className="text-destructive" onClick={() => go(null)}>Hủy yêu cầu</Button></div>;
 }
 
-const Info = ({ k, v }: { k: string; v: string }) => <div className="grid grid-cols-[110px_1fr] gap-2"><span className="text-muted-foreground">{k}</span><span className="whitespace-pre-wrap break-words">{v}</span></div>;
+const Info = ({ k, v }: { k: string; v: string }) => <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2"><span className="text-muted-foreground">{k}</span><span className="whitespace-pre-wrap break-words">{v}</span></div>;

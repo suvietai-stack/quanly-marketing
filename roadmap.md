@@ -1,3 +1,4 @@
 - [x] Thêm mục Theo Dõi Đơn Hàng “Sắp ra mắt” và trang giới thiệu trên desktop/mobile.
 - [x] Bỏ lựa chọn đơn đang thực hiện và mã đơn cũ khỏi biểu mẫu Hỏi Tiến Độ mới.
 - [x] Giữ nguyên khả năng xem các lượt cũ và dữ liệu lịch sử.
+- [x] Hiển thị số lượng có nhãn riêng trên thẻ sản phẩm ở biểu mẫu, chi tiết hai luồng và phản hồi Cung ứng.
