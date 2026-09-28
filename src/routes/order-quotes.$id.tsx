@@ -46,7 +46,7 @@ function OqDetail() {
   const qc = useQueryClient();
   const { user } = useCurrentUser();
   const { data: d, isLoading, error, refetch } = useQuery({ queryKey: ["oq", id], queryFn: () => oqApi.detail(id), refetchInterval: 60_000 });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["oq", id] }); qc.invalidateQueries({ queryKey: ["oq-list"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["oq", id] }); qc.invalidateQueries({ queryKey: ["oq-list"] }); qc.invalidateQueries({ queryKey: ["oq-times"] }); };
   const mine = d?.flows.find((f: any) => f.assignee_id === user?.id && f.status === "pending") ?? d?.flows.find((f: any) => f.assignee_id === user?.id && f.status === "processing");
   const flowId = flowParam && d?.flows.some((f: any) => f.id === flowParam) ? flowParam : (mine ?? d?.flows[0])?.id;
 
