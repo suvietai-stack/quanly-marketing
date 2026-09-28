@@ -63,19 +63,19 @@ function OqForm() {
     const c = d.req.draft_config ?? {};
     setF({ title: d.req.title ?? "", delivery_place: d.req.delivery_place ?? "", delivery_date: d.req.delivery_date ?? "", note: d.req.note ?? "", items_mode: d.req.items_mode,
       want_price: d.req.want_price, want_progress: d.req.want_progress, items: items.length ? items : [newItem()],
-       price: c.price ?? { items: {}, shipping_mode: "per_item" }, progress: { content: c.progress?.content, per_item: c.progress?.per_item, check_type: "capability" }, price_assignee: c.price_assignee ?? "", progress_assignee: c.progress_assignee ?? "" });
+       price: c.price ?? { items: {}, shipping_mode: "per_item" }, progress: c.progress ?? { check_type: "capability" }, price_assignee: c.price_assignee ?? "", progress_assignee: c.progress_assignee ?? "" });
     setLoaded(true);
   };
   useEffect(() => { if (initialId) reload(initialId); }, [initialId]);
 
-  const payload = () => ({
+   const payload = (forSubmit = false) => ({
     title: f.title, delivery_place: f.delivery_place, delivery_date: f.delivery_date, note: f.note, items_mode: f.items_mode,
     want_price: f.want_price, want_progress: f.want_progress,
     items: f.items.map(({ id, name, qty, unit, detail, processing, note }) => ({ id, name, qty, unit, detail, processing, note })),
-     config: { price: f.price, progress: { content: f.progress.content, per_item: f.progress.per_item, check_type: "capability" }, price_assignee: f.want_price ? f.price_assignee : "", progress_assignee: f.want_progress ? f.progress_assignee : "" },
+     config: { price: f.price, progress: forSubmit ? { content: f.progress.content, per_item: f.progress.per_item, check_type: "capability" } : f.progress, price_assignee: f.want_price ? f.price_assignee : "", progress_assignee: f.want_progress ? f.progress_assignee : "" },
   });
-  const save = async (quiet = false) => {
-    const rid = await oqApi.save(id, payload());
+   const save = async (quiet = false, forSubmit = false) => {
+     const rid = await oqApi.save(id, payload(forSubmit));
     if (!id) { setId(rid); nav({ to: "/order-quotes/new", search: { id: rid }, replace: true }); }
     await reload(rid, true);
     if (!quiet) toast.success("Đã lưu nháp.");
@@ -125,7 +125,7 @@ function OqForm() {
   });
   const submit = () => run(async () => {
     for (let s = 0; s < 3; s++) { const e = stepErr(s); if (e) { setTried((t) => new Set(t).add(s)); setStep(s); throw new Error(e); } }
-    const rid = await save(true);
+     const rid = await save(true, true);
     const code = await oqApi.submit(rid);
     toast.success(`Đã gửi yêu cầu ${code}.`);
     nav({ to: "/order-quotes/$id", params: { id: rid }, search: { flow: undefined } });
