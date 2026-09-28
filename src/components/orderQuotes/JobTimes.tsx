@@ -49,7 +49,7 @@ export function shortTimeLines(t: JobTime | undefined, kind: "price" | "progress
   const c = (v: number | null) => fmtDur(v, "—", true);
   if (t.status === "answered") return { ...l, resp: `Phản hồi: ${c(t.response_sec)}`, proc: `Cung ứng xử lý: ${t.data_ok ? c(t.process_sec) : "Chưa đủ dữ liệu"}` };
   if (!l.running) return l;
-  return { ...l, resp: `${l.head} — ${c(since(t, t.sent_at))} (tạm tính)`, proc: t.status === "pending" || !t.final_accepted_at ? "Chưa tiếp nhận" : `Cung ứng đang xử lý: ${c(since(t, t.final_accepted_at))}` };
+  return { ...l, resp: `${l.head} — ${c(since(t, t.sent_at))}`, proc: t.status === "pending" || !t.final_accepted_at ? "Chưa tiếp nhận" : `Cung ứng đang xử lý: ${c(since(t, t.final_accepted_at))}` };
 }
 
 export function Explain({ text }: { text: string }) {

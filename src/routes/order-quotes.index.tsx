@@ -175,6 +175,7 @@ function OqList() {
                   <div key={f.id + "t"} className="rounded bg-muted/40 px-2 py-1 text-xs">
                     <div className="font-medium uppercase text-[10px] tracking-wide">{f.kind === "price" ? "Giá" : "Tiến độ"} · {l.head}{l.running ? " (tạm tính)" : ""}</div>
                     <div>{l.resp}</div><div>{l.proc}</div>
+                    <div className="text-[10px] text-muted-foreground">h = giờ · m = phút · s = giây</div>
                   </div>); })}
                 <div className="text-[11px] text-muted-foreground">Cập nhật {vnDateTime(lastUpdate(r))}</div>
               </button>
