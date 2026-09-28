@@ -18,6 +18,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as OverviewV2RouteImport } from './routes/overview-v2'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OrderTrackingRouteImport } from './routes/order-tracking'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaveRouteImport } from './routes/leave'
@@ -86,6 +87,11 @@ const OverviewV2Route = OverviewV2RouteImport.update({
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderTrackingRoute = OrderTrackingRouteImport.update({
+  id: '/order-tracking',
+  path: '/order-tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OkrsRoute = OkrsRouteImport.update({
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
+  '/order-tracking': typeof OrderTrackingRoute
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
@@ -252,6 +259,7 @@ export interface FileRoutesByTo {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
+  '/order-tracking': typeof OrderTrackingRoute
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
+  '/order-tracking': typeof OrderTrackingRoute
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/okrs'
+    | '/order-tracking'
     | '/orders'
     | '/overview-v2'
     | '/pending'
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/okrs'
+    | '/order-tracking'
     | '/orders'
     | '/overview-v2'
     | '/pending'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/okrs'
+    | '/order-tracking'
     | '/orders'
     | '/overview-v2'
     | '/pending'
@@ -431,6 +443,7 @@ export interface RootRouteChildren {
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
+  OrderTrackingRoute: typeof OrderTrackingRoute
   OrdersRoute: typeof OrdersRoute
   OverviewV2Route: typeof OverviewV2Route
   PendingRoute: typeof PendingRoute
@@ -524,6 +537,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/orders'
       preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-tracking': {
+      id: '/order-tracking'
+      path: '/order-tracking'
+      fullPath: '/order-tracking'
+      preLoaderRoute: typeof OrderTrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/okrs': {
@@ -703,6 +723,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
+  OrderTrackingRoute: OrderTrackingRoute,
   OrdersRoute: OrdersRoute,
   OverviewV2Route: OverviewV2Route,
   PendingRoute: PendingRoute,

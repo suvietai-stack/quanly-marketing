@@ -1,10 +1,12 @@
 # Architecture rules
 
-- Đơn từ (leave_*) writes go only through SECURITY DEFINER RPCs (leave_submit/decide/recall/...) that check `private.sig_can` and server time; tables are SELECT-only for clients — so permission and deadline rules cannot be bypassed from the browser.
-- Leave time math lives in `src/lib/leave/calc.ts` (preview) and mirrors `private.leave_eval` (authoritative); change both together — keeps the preview and the backend check consistent.
-- Thương hiệu (tên, logo, favicon) chỉ đọc từ bảng app_branding qua useBranding()/brandHeader(), luôn có giá trị mặc định dự phòng — để nhân bản cho đơn vị khác không cần sửa mã.
-- Giải trình chấm công dùng bảng riêng attendance_explanations (không nhét vào leave_requests), ghi chỉ qua RPC att_* SECURITY DEFINER — để không lẫn trạng thái duyệt và báo cáo của đơn nghỉ/đi muộn/về sớm.
-- Web Push là kênh riêng: trạng thái ở notifications.push_status + push_deliveries (UNIQUE notification+thiết bị), gửi từ push.server.ts khi trigger push_wake gọi /api/public/push/dispatch — để lỗi Push và Zalo không ảnh hưởng nhau; service worker public/push-sw.js không cache trang.
-- Thông báo Content Web / Order Thiết kế tạo bởi trigger content_notify / order_notify (so trạng thái cũ/mới, người nhận khớp tên → tài khoản duy nhất), chống trùng bằng dedup_key theo sự kiện+bài+vòng lịch sử+người nhận; công tắc Zalo ở content_notify_settings (Order dưới khóa "order", RPC lưu gộp) — để luôn tạo thông báo tại backend dù client nào ghi.
-- Khung thời gian KPI (Tuần T2–CN/Tháng/Quý/Năm/Tùy chỉnh, giờ VN) chỉ tính trong src/lib/kpi/timeframe.ts; mục tiêu lưu periodType/deadline trong goals.metadata, lọc theo giao nhau — không cần đổi database, không tách mục tiêu theo tháng.
-- Hỏi Giá & Tiến Độ (oq_*): mỗi nội dung hỏi là một luồng oq_flows riêng, mỗi lần hỏi lại là oq_rounds mới có ảnh chụp sản phẩm; phản hồi đã công bố bất biến (chỉ thêm phiên bản); ghi chỉ qua RPC oq_* SECURITY DEFINER, ảnh trong bucket riêng tư order-quotes/<request_id>/ — để giữ lịch sử/timestamp phục vụ báo cáo sau này và không lộ ảnh; kiểm thiếu hạng mục ở private.oq_missing và src/lib/orderQuotes/logic.ts, sửa cả hai cùng lúc; luồng tự hoàn tất trong oq_publish_response (private.oq_try_complete, khóa FOR UPDATE), không có nút hoàn tất riêng; file ảnh chỉ xóa qua hàng đợi oq_storage_cleanup.
+- Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.
+- Change `src/lib/leave/calc.ts` and `private.leave_eval` together — keeps preview and authoritative calculation aligned.
+- Read branding only from app_branding via useBranding()/brandHeader() with fallback — supports reuse without code changes.
+- Attendance explanations live in attendance_explanations, written via att_* RPCs — avoids mixing leave approvals/reports.
+- Web Push uses notifications.push_status + unique push_deliveries; push.server.ts sends on push_wake to /api/public/push/dispatch; public/push-sw.js never caches pages — isolates Push from Zalo.
+- Content/Design notifications originate in content_notify/order_notify triggers with unique-name recipients and event+item+history+recipient dedup_key; switches live in content_notify_settings — every writer triggers the same notification.
+- KPI periods use src/lib/kpi/timeframe.ts (Vietnam time); goals.metadata holds periodType/deadline; overlap filtering doesn't clone monthly goals — preserves historic KPI data.
+- Order quotes: separate oq_flows and snapshot oq_rounds; published responses immutable; writes via SECURITY DEFINER oq_* RPC; private order-quotes images. Change private.oq_missing with src/lib/orderQuotes/logic.ts; oq_publish_response auto-completes under FOR UPDATE; delete images via oq_storage_cleanup — preserves history and access control.
+- Order tracking remains a data-free placeholder independent of oq_* — no unrequested order workflow.
+- New progress forms only submit capability; detail reads old in_progress/existing_code — keeps historical rounds readable.
