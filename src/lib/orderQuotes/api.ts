@@ -6,6 +6,11 @@ export const MAX_IMG = 10 * 1024 * 1024;
 const OK_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 
 export type ListParams = { page: number; size: number; tab: "all" | "price" | "progress"; q?: string; status?: string; creator?: string; assignee?: string; from?: string; to?: string };
+export type JobTime = {
+  round_id: string; flow_id: string; round_no: number; status: string; sent_at: string; accepted_at: string | null; final_accepted_at: string | null;
+  first_published_at: string | null; completed_at: string | null; wait_sale_sec: number; handover: boolean; response_sec: number | null;
+  process_sec: number | null; accept_wait_sec: number | null; first_pub_sec: number | null; data_ok: boolean; server_now: string;
+};
 
 async function rpc<T = any>(fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await db.rpc(fn, args);
@@ -30,6 +35,11 @@ export const oqApi = {
   setChoice: (item: string, choice: string | null) => rpc("oq_set_choice", { _item: item, _choice: choice }),
   cancel: (id: string, flow: string | null, reason: string) => rpc("oq_cancel", { _id: id, _flow: flow, _reason: reason }),
   comment: (flow: string, text: string) => rpc("oq_comment", { _flow: flow, _text: text }),
+  /** Báo cáo: máy chủ kiểm quyền (report_own/report_all/report_export) và tính thời lượng. */
+  report: (from: string, to: string, basis: "sent" | "completed", exp = false) =>
+    rpc<import("./report").Row[]>("oq_report_rows", { _from: from, _to: to, _basis: basis, _export: exp }),
+  /** Thời gian từng lượt của các luồng người dùng được xem (cùng công thức với báo cáo). */
+  jobTimes: (flows: string[]) => flows.length ? rpc<JobTime[]>("oq_job_times", { _flows: flows }) : Promise.resolve([] as JobTime[]),
 
   /** Danh sách có phân trang + lọc tại máy chủ; không tải phản hồi/ảnh. */
   async list(p: ListParams) {

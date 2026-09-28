@@ -34,6 +34,7 @@ import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
+import { Route as OrderQuotesReportRouteImport } from './routes/order-quotes.report'
 import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
 import { Route as OrderQuotesIdRouteImport } from './routes/order-quotes.$id'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
@@ -169,6 +170,11 @@ const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   path: '/settings/kpi-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderQuotesReportRoute = OrderQuotesReportRouteImport.update({
+  id: '/order-quotes/report',
+  path: '/order-quotes/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderQuotesNewRoute = OrderQuotesNewRouteImport.update({
   id: '/order-quotes/new',
   path: '/order-quotes/new',
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
+  '/order-quotes/report': typeof OrderQuotesReportRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
+  '/order-quotes/report': typeof OrderQuotesReportRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
+  '/order-quotes/report': typeof OrderQuotesReportRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
+    | '/order-quotes/report'
     | '/settings/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -384,6 +394,7 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
+    | '/order-quotes/report'
     | '/settings/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
+    | '/order-quotes/report'
     | '/settings_/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -457,6 +469,7 @@ export interface RootRouteChildren {
   LocalIdRoute: typeof LocalIdRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
+  OrderQuotesReportRoute: typeof OrderQuotesReportRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
@@ -651,6 +664,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsKpiV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order-quotes/report': {
+      id: '/order-quotes/report'
+      path: '/order-quotes/report'
+      fullPath: '/order-quotes/report'
+      preLoaderRoute: typeof OrderQuotesReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order-quotes/new': {
       id: '/order-quotes/new'
       path: '/order-quotes/new'
@@ -737,6 +757,7 @@ const rootRouteChildren: RootRouteChildren = {
   LocalIdRoute: LocalIdRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
+  OrderQuotesReportRoute: OrderQuotesReportRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
