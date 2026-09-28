@@ -54,21 +54,17 @@ export function ReportV2({ actor, search = {} }: { actor: { id: string; isAdmin:
   const [drill, setDrill] = useState<Drill | null>(null);
   const today = todayVN();
 
-  const [ps, pe] = pk.split("|");
-  const periods = db.periods.filter((p) => p.periodStart === ps && p.periodEnd === pe);
-  const visibleUsers = users.filter((u) => periods.some((p) => p.userId === u.id) && (!userId || u.id === userId));
-  const filters = { brandId: brandId || undefined, websiteId: channel.startsWith("w:") ? channel.slice(2) : undefined, socialId: channel.startsWith("s:") ? channel.slice(2) : undefined, group: group as never };
-  const data = { tasks: store.tasks, webContents: store.webContents, socialPosts: store.socialPosts, videos: store.videos, orders: store.orders, keywords: store.keywords, mapPosts: store.mapPosts, websites: store.websites, growth: store.growth };
-  const reports = visibleUsers.map((u) => ({ u, r: buildEmployeeReport({ user: u, allUsers: users, periods, items: metric ? db.items.filter((i) => i.metricKey === metric) : db.items, adjustments: db.adjustments, data, filters, today }) }));
-  const bname = (id: string | null) => store.brands.find((b) => b.id === id)?.name ?? "—";
-  const cname = (w: string | null, s: string | null) => (w ? `Web: ${store.websites.find((x) => x.id === w)?.name ?? w}` : s ? `Page: ${store.socials.find((x) => x.id === s)?.name ?? s}` : "—");
-
-  if (!periodKeys.length) return <p className="text-sm text-muted-foreground">Chưa có kỳ KPI nào {actor.isAdmin ? "(giao KPI tại /settings/kpi-v2)" : "được giao cho bạn"}.</p>;
+  const pkEff = periodKeys.includes(pk) ? pk : periodKeys[0] ?? "";
+  const [ps, pe] = pkEff.split("|");
+...
+  const histToggle = <label className="flex items-center gap-1 self-center text-xs text-muted-foreground"><input type="checkbox" checked={history} onChange={(e) => setHistory(e.target.checked)} /> Xem lịch sử (mục tiêu đã hủy/lưu trữ)</label>;
+  if (!periodKeys.length) return <div className="space-y-2"><p className="text-sm text-muted-foreground">Chưa có kỳ KPI nào đang hiệu lực {actor.isAdmin ? "(giao KPI tại /settings/kpi-v2)" : "được giao cho bạn"}.</p>{histToggle}</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <select className={inp} value={pk} onChange={(e) => setPk(e.target.value)}>{periodKeys.map((k) => <option key={k} value={k}>{k.replace("|", " → ")}</option>)}</select>
+        <select className={inp} value={pkEff} onChange={(e) => setPk(e.target.value)}>{periodKeys.map((k) => <option key={k} value={k}>{k.replace("|", " → ")}</option>)}</select>
+        {histToggle}
         {actor.isAdmin && <select className={inp} value={userId} onChange={(e) => setUserId(e.target.value)}><option value="">Tất cả nhân sự</option>{users.map((u) => <option key={u.id} value={u.id}>{u.fullName || u.username}</option>)}</select>}
         <select className={inp} value={brandId} onChange={(e) => { setBrandId(e.target.value); setChannel(""); }}><option value="">Tất cả thương hiệu</option>{store.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
         <select className={inp} value={channel} disabled={!brandId} onChange={(e) => setChannel(e.target.value)}>
