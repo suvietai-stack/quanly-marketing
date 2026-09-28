@@ -85,12 +85,14 @@ function OqForm() {
 
   const setItem = (k: string, patch: Partial<Item>) => setF((p) => ({ ...p, items: p.items.map((i) => (i.key === k ? { ...i, ...patch } : i)) }));
   /** Lỗi theo từng trường (chỉ kiểm tra khi Tiếp tục/Gửi; Lưu nháp không kiểm tra). */
+  const needPlace = f.want_price && (f.price.shipping_mode === "common" || f.items.some((i) => i.id && (f.price.items?.[i.id] as any)?.shipping?.on));
+  const needDate = f.want_progress;
   const fieldErrs = (s: number): Record<string, string> => {
     const e: Record<string, string> = {};
     if (s === 0) {
       if (!f.title.trim()) e.title = "Nhập tên yêu cầu.";
-      if (!f.delivery_place.trim()) e.delivery_place = "Nhập địa điểm giao hàng.";
-      if (!f.delivery_date) e.delivery_date = "Chọn ngày khách yêu cầu giao.";
+      if (needPlace && !f.delivery_place.trim()) e.delivery_place = "Vui lòng bổ sung địa điểm giao hàng để Cung ứng báo giá vận chuyển.";
+      if (needDate && !f.delivery_date) e.delivery_date = "Vui lòng bổ sung ngày khách cần nhận hàng để Cung ứng kiểm tra khả năng đáp ứng.";
     }
     if (s === 1) {
       if (f.items.length === 0) e.items = "Cần ít nhất một sản phẩm.";
@@ -124,7 +126,15 @@ function OqForm() {
     window.scrollTo({ top: 0 });
   });
   const submit = () => run(async () => {
-    for (let s = 0; s < 3; s++) { const e = stepErr(s); if (e) { setTried((t) => new Set(t).add(s)); setStep(s); throw new Error(e); } }
+    for (let s = 0; s < 3; s++) {
+      const fe = fieldErrs(s); const e = stepErr(s);
+      if (e) {
+        setTried((t) => new Set(t).add(s)); setStep(s);
+        const k = Object.keys(fe)[0];
+        setTimeout(() => { const el = document.getElementById(`oq-f-${k}`); if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus(); } else window.scrollTo({ top: 0 }); }, 80);
+        throw new Error(fe.delivery_place || fe.delivery_date || e);
+      }
+    }
      const rid = await save(true, true);
     const code = await oqApi.submit(rid);
     toast.success(`Đã gửi yêu cầu ${code}.`);
@@ -160,8 +170,8 @@ function OqForm() {
           <div><Label>Phân loại đơn hàng</Label><Input value="Đơn Sứ Quà Tặng" disabled /></div>
           <div><Label>Tên yêu cầu *</Label><Input value={f.title} aria-invalid={!!err("title")} onChange={(e) => setF({ ...f, title: e.target.value })} maxLength={300} /><FieldErr m={err("title")} /></div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div><Label>Địa điểm giao hàng *</Label><Input value={f.delivery_place} aria-invalid={!!err("delivery_place")} onChange={(e) => setF({ ...f, delivery_place: e.target.value })} /><FieldErr m={err("delivery_place")} /></div>
-            <div><Label>Ngày khách yêu cầu giao *</Label><Input type="date" className="h-11" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} /><FieldErr m={err("delivery_date")} /></div>
+            <div><Label htmlFor="oq-f-delivery_place">Địa điểm giao hàng{needPlace && <span className="text-destructive"> *</span>}</Label><Input id="oq-f-delivery_place" value={f.delivery_place} aria-invalid={!!err("delivery_place")} onChange={(e) => setF({ ...f, delivery_place: e.target.value })} />{needPlace && !err("delivery_place") && <p className="mt-1 text-xs text-muted-foreground">Bắt buộc vì bạn yêu cầu báo giá vận chuyển.</p>}<FieldErr m={err("delivery_place")} /></div>
+            <div><Label htmlFor="oq-f-delivery_date">Ngày khách yêu cầu giao{needDate && <span className="text-destructive"> *</span>}</Label><Input id="oq-f-delivery_date" type="date" className="h-11" value={f.delivery_date} aria-invalid={!!err("delivery_date")} onChange={(e) => setF({ ...f, delivery_date: e.target.value })} />{needDate && !err("delivery_date") && <p className="mt-1 text-xs text-muted-foreground">Bắt buộc vì bạn chọn Hỏi Tiến Độ.</p>}<FieldErr m={err("delivery_date")} /></div>
           </div>
           <div><Label>Ghi chú chung</Label><Textarea rows={4} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
         </CardContent></Card>
@@ -249,6 +259,7 @@ function OqForm() {
                   <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="per_item" />Hỏi riêng từng sản phẩm/phương án</label>
                   <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="common" />Hỏi chung cho cả đơn / tổ hợp sản phẩm</label>
                 </RadioGroup>
+                {needPlace && !f.delivery_place.trim() && <p className="mt-2 text-xs text-muted-foreground">Cần nhập Địa điểm giao hàng ở bước 1 để Cung ứng báo giá vận chuyển.</p>}
                 {f.price.shipping_mode === "common" && <Textarea className="mt-2" rows={2} placeholder="Ghi rõ áp dụng cho sản phẩm nào, giao đi đâu…" value={f.price.shipping_note ?? ""} onChange={(e) => setF({ ...f, price: { ...f.price, shipping_note: e.target.value } })} />}
               </div>
               {f.items.map((it, idx) => it.id && (
@@ -281,7 +292,7 @@ function OqForm() {
                 {progUsers.length === 0 && <p className="text-xs text-muted-foreground mt-1">Chưa có tài khoản nào được cấp quyền "Phản hồi Hỏi Tiến Độ".</p>}</div>
                <p className="text-sm text-muted-foreground">Kiểm tra khả năng đáp ứng và thời gian giao hàng dự kiến trước khi chốt đơn.</p>
               <div><Label>Nội dung cần kiểm tra *</Label><Textarea rows={3} value={f.progress.content ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, content: e.target.value } })} /><FieldErr m={err("progress_content")} /></div>
-              <p className="text-xs text-muted-foreground">Ngày khách yêu cầu giao: {vnDate(f.delivery_date)}</p>
+              <p className="text-xs text-muted-foreground">Ngày khách yêu cầu giao: {f.delivery_date ? vnDate(f.delivery_date) : "chưa chọn — bắt buộc khi Hỏi Tiến Độ (bước 1)"}</p>
               {f.items.map((it, idx) => it.id && (
                 <div key={it.key}><Label className="text-xs">Yêu cầu tiến độ riêng PA{String(idx + 1).padStart(2, "0")} — {it.name} (tùy chọn)</Label>
                   <Input value={f.progress.per_item?.[it.id] ?? ""} onChange={(e) => setF({ ...f, progress: { ...f.progress, per_item: { ...(f.progress.per_item ?? {}), [it.id!]: e.target.value } } })} /></div>
