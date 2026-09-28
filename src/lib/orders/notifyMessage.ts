@@ -58,3 +58,13 @@ export function orderStillValid(kind: OrderKind, payloadStatus: string | null | 
 }
 
 export const orderLink = (id: string) => `/orders?open=${encodeURIComponent(id)}`;
+
+/** Người phụ trách hiện tại theo loại tin; null = không cần kiểm (order_new gửi theo quyền). */
+export function orderCurrentRecipients(kind: OrderKind, d: Record<string, any>): string[] | null {
+  const rev = (typeof d.reviewer === "string" && d.reviewer.trim()) ? d.reviewer : d.requester;
+  if (kind === "order_new") return null;
+  if (kind === "order_taken") return [d.requester].filter(Boolean);
+  if (kind === "order_review" || kind === "order_delivered") return [rev].filter(Boolean);
+  if (kind === "order_remind") return [d.status === "Chờ nhận việc" ? d.assignee : rev].filter(Boolean);
+  return [d.assignee].filter(Boolean);
+}

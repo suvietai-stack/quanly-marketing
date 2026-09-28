@@ -57,3 +57,21 @@ export function contentStillValid(kind: ContentKind, payloadStatus: string | nul
 }
 
 export const contentLink = (id: string) => `/web-contents?open=${encodeURIComponent(id)}`;
+
+/** Người đang chịu trách nhiệm hiện tại theo loại tin (tên ghi trên bài). Khớp với cw_reviewer ở backend. */
+export function contentReviewerOf(d: Record<string, any>, status: string): string | undefined {
+  const nz = (v: any) => (typeof v === "string" && v.trim() ? v : undefined);
+  if (status.endsWith("outline")) return nz(d.outlineReviewer);
+  if (status.endsWith("tối ưu")) return nz(d.optimizeReviewer) ?? nz(d.draftReviewer);
+  if (status.endsWith("bản nháp web")) return nz(d.webDraftReviewer) ?? nz(d.draftReviewer);
+  return nz(d.draftReviewer);
+}
+export function contentCurrentRecipients(kind: ContentKind, d: Record<string, any>): string[] {
+  const st = String(d?.status ?? "");
+  if (kind === "content_review" || kind === "content_remind") return [contentReviewerOf(d, st)].filter(Boolean) as string[];
+  if (kind === "content_approved") return [d.writer, d.publisher].filter(Boolean);
+  return [d.writer].filter(Boolean);
+}
+/** Người nhận (tên/username tài khoản) vẫn là người phụ trách hiện tại. */
+export const nameMatches = (names: string[], p: { full_name?: string | null; username?: string | null } | null) =>
+  !!p && names.some((n) => { const x = n.trim().toLowerCase(); return x && (x === (p.full_name ?? "").trim().toLowerCase() || x === (p.username ?? "").trim().toLowerCase()); });
