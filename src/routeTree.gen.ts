@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
+import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
@@ -125,6 +126,11 @@ const SignalsIndexRoute = SignalsIndexRouteImport.update({
   path: '/signals/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderQuotesIndexRoute = OrderQuotesIndexRouteImport.update({
+  id: '/order-quotes/',
+  path: '/order-quotes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LocalIndexRoute = LocalIndexRouteImport.update({
   id: '/local/',
   path: '/local/',
@@ -216,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/websites/$id': typeof WebsitesIdRoute
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
+  '/order-quotes/': typeof OrderQuotesIndexRoute
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/websites/$id': typeof WebsitesIdRoute
   '/brands': typeof BrandsIndexRoute
   '/local': typeof LocalIndexRoute
+  '/order-quotes': typeof OrderQuotesIndexRoute
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/websites/$id': typeof WebsitesIdRoute
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
+  '/order-quotes/': typeof OrderQuotesIndexRoute
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/websites/$id'
     | '/brands/'
     | '/local/'
+    | '/order-quotes/'
     | '/signals/'
     | '/social/'
     | '/websites/'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/websites/$id'
     | '/brands'
     | '/local'
+    | '/order-quotes'
     | '/signals'
     | '/social'
     | '/websites'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/websites/$id'
     | '/brands/'
     | '/local/'
+    | '/order-quotes/'
     | '/signals/'
     | '/social/'
     | '/websites/'
@@ -412,6 +424,7 @@ export interface RootRouteChildren {
   WebsitesIdRoute: typeof WebsitesIdRoute
   BrandsIndexRoute: typeof BrandsIndexRoute
   LocalIndexRoute: typeof LocalIndexRoute
+  OrderQuotesIndexRoute: typeof OrderQuotesIndexRoute
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
@@ -543,6 +556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignalsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order-quotes/': {
+      id: '/order-quotes/'
+      path: '/order-quotes'
+      fullPath: '/order-quotes/'
+      preLoaderRoute: typeof OrderQuotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/local/': {
       id: '/local/'
       path: '/local'
@@ -660,6 +680,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebsitesIdRoute: WebsitesIdRoute,
   BrandsIndexRoute: BrandsIndexRoute,
   LocalIndexRoute: LocalIndexRoute,
+  OrderQuotesIndexRoute: OrderQuotesIndexRoute,
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
