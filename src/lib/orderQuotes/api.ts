@@ -43,25 +43,17 @@ export const oqApi = {
 
   /** Danh sách có phân trang + lọc tại máy chủ; không tải phản hồi/ảnh. */
   async list(p: ListParams) {
-    const flowSel = "id,request_id,kind,code,assignee_id,status,waiting_info,current_round,updated_at";
-    const needFlowFilter = p.tab !== "all" || (p.status && !["draft", "cancelled"].includes(p.status)) || !!p.assignee;
-    let q = db.from("oq_requests")
-      .select(`id,code,title,order_type,status,creator_id,want_price,want_progress,created_at,submitted_at,updated_at,oq_items(count),flows:oq_flows(${flowSel})${needFlowFilter ? ",ff:oq_flows!inner(id)" : ""}`, { count: "exact" })
-      .order("updated_at", { ascending: false })
-      .range(p.page * p.size, p.page * p.size + p.size - 1);
-    const s = p.q?.trim().replace(/[%,()]/g, " ");
-    if (s) q = q.or(`title.ilike.%${s}%,code.ilike.%${s}%`);
-    if (p.creator) q = q.eq("creator_id", p.creator);
-    if (p.from) q = q.gte("created_at", `${p.from}T00:00:00+07:00`);
-    if (p.to) q = q.lte("created_at", `${p.to}T23:59:59.999+07:00`);
-    if (p.status === "draft" || p.status === "cancelled") q = q.eq("status", p.status);
-    if (p.tab !== "all") q = q.eq("ff.kind", p.tab);
-    if (p.assignee) q = q.eq("ff.assignee_id", p.assignee);
-    if (p.status === "waiting") q = q.eq("ff.waiting_info", true).eq("ff.status", "processing");
-    else if (p.status && !["draft", "cancelled"].includes(p.status)) q = q.eq("ff.status", p.status);
-    const { data, error, count } = await q;
+    const { data, error, count } = await listQuery(p, false);
     if (error) throw new Error(error.message);
     return { requests: (data ?? []) as any[], total: count ?? 0 };
+  },
+  /** Số yêu cầu theo từng trạng thái, cùng bộ lọc và phạm vi quyền (RLS) với danh sách. */
+  async counts(p: Omit<ListParams, "status" | "page" | "size">) {
+    const keys = ["", ...LIST_STATUSES.map((s) => s.value)];
+    const res = await Promise.all(keys.map((k) => listQuery({ ...p, page: 0, size: 1, status: k || undefined }, true)));
+    const out: Record<string, number> = {};
+    res.forEach((r, i) => { if (r.error) throw new Error(r.error.message); out[keys[i] || "all"] = r.count ?? 0; });
+    return out;
   },
 
   async people() {
@@ -137,3 +129,30 @@ export const oqApi = {
     return Object.fromEntries((data ?? []).filter((x) => x.signedUrl).map((x) => [x.path!, x.signedUrl]));
   },
 };
+
+export const LIST_STATUSES = [
+  { value: "draft", label: "Bản nháp" }, { value: "pending", label: "Chưa nhận" }, { value: "processing", label: "Đang xử lý" },
+  { value: "waiting", label: "Đang chờ Sale bổ sung" }, { value: "answered", label: "Đã trả lời" }, { value: "cancelled", label: "Đã hủy" },
+];
+
+function listQuery(p: ListParams, head: boolean) {
+  const flowSel = "id,request_id,kind,code,assignee_id,status,waiting_info,current_round,updated_at";
+  const needFlowFilter = p.tab !== "all" || (p.status && !["draft", "cancelled"].includes(p.status)) || !!p.assignee;
+  let q = db.from("oq_requests")
+    .select(head ? `id${needFlowFilter ? ",ff:oq_flows!inner(id)" : ""}` : `id,code,title,order_type,status,creator_id,want_price,want_progress,delivery_date,created_at,submitted_at,updated_at,oq_items(count),flows:oq_flows(${flowSel})${needFlowFilter ? ",ff:oq_flows!inner(id)" : ""}`, { count: "exact", head });
+  if (!head) {
+    q = p.status === "pending" ? q.order("submitted_at", { ascending: true, nullsFirst: false }) : q.order("updated_at", { ascending: false });
+    q = q.range(p.page * p.size, p.page * p.size + p.size - 1);
+  }
+  const s = p.q?.trim().replace(/[%,()]/g, " ");
+  if (s) q = q.or(`title.ilike.%${s}%,code.ilike.%${s}%`);
+  if (p.creator) q = q.eq("creator_id", p.creator);
+  if (p.from) q = q.gte("created_at", `${p.from}T00:00:00+07:00`);
+  if (p.to) q = q.lte("created_at", `${p.to}T23:59:59.999+07:00`);
+  if (p.status === "draft" || p.status === "cancelled") q = q.eq("status", p.status);
+  if (p.tab !== "all") q = q.eq("ff.kind", p.tab);
+  if (p.assignee) q = q.eq("ff.assignee_id", p.assignee);
+  if (p.status === "waiting") q = q.eq("ff.waiting_info", true).eq("ff.status", "processing");
+  else if (p.status && !["draft", "cancelled"].includes(p.status)) q = q.eq("ff.status", p.status);
+  return q;
+}
