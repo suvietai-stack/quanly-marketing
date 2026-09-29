@@ -419,6 +419,23 @@ export const PERMISSIONS: PermissionDef[] = [
   P("oq.report_all", "Xem báo cáo toàn bộ Hỏi Giá & Tiến Độ", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Báo cáo"),
   P("oq.report_export", "Xuất báo cáo Excel", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Báo cáo"),
 
+  // ===== Theo Dõi Đơn Hàng =====
+  P("ot.view_own", "Xem đơn phụ trách", "Theo Dõi Đơn Hàng", "Xem"),
+  P("ot.view_all", "Xem toàn bộ đơn", "Theo Dõi Đơn Hàng", "Xem"),
+  P("ot.create", "Tạo đơn thủ công", "Theo Dõi Đơn Hàng", "Đơn hàng"),
+  P("ot.accept", "Tiếp nhận đơn", "Theo Dõi Đơn Hàng", "Đơn hàng"),
+  P("ot.assign", "Phân công người phụ trách", "Theo Dõi Đơn Hàng", "Đơn hàng"),
+  P("ot.task_view", "Xem công việc được giao", "Theo Dõi Đơn Hàng", "Công việc"),
+  P("ot.task_update", "Cập nhật công việc được giao", "Theo Dõi Đơn Hàng", "Công việc"),
+  P("ot.stage_update", "Cập nhật tiến độ công đoạn", "Theo Dõi Đơn Hàng", "Công việc"),
+  P("ot.reschedule_propose", "Đề xuất điều chỉnh lịch", "Theo Dõi Đơn Hàng", "Điều chỉnh lịch"),
+  P("ot.reschedule_reply", "Phản hồi điều chỉnh lịch", "Theo Dõi Đơn Hàng", "Điều chỉnh lịch"),
+  P("ot.supplier", "Quản lý nhà cung cấp", "Theo Dõi Đơn Hàng", "Quản lý"),
+  P("ot.manage", "Quản lý đơn hàng", "Theo Dõi Đơn Hàng", "Quản lý"),
+  P("ot.report", "Xem báo cáo", "Theo Dõi Đơn Hàng", "Báo cáo"),
+  P("ot.report_export", "Xuất báo cáo", "Theo Dõi Đơn Hàng", "Báo cáo"),
+  P("ot.settings", "Quản lý cài đặt đơn hàng", "Theo Dõi Đơn Hàng", "Quản lý"),
+
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
   P("settings.user_create", "Tạo tài khoản", "Tài khoản", "Tài khoản"),
