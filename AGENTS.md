@@ -2,7 +2,7 @@
 
 - Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.
 - Change `src/lib/leave/calc.ts` and `private.leave_eval` together — keeps preview and authoritative calculation aligned.
-- Read branding only from app_branding via useBranding()/brandHeader() with fallback — supports reuse without code changes.
+- Read app_branding for UI and server share metadata with fallback — link crawlers cannot run client updates.
 - Attendance explanations live in attendance_explanations, written via att_* RPCs — avoids mixing leave approvals/reports.
 - Web Push uses notifications.push_status + unique push_deliveries; push.server.ts sends on push_wake to /api/public/push/dispatch; public/push-sw.js never caches pages — isolates Push from Zalo.
 - Content/Design notifications originate in content_notify/order_notify triggers with unique-name recipients and event+item+history+recipient dedup_key; switches live in content_notify_settings — every writer triggers the same notification.
