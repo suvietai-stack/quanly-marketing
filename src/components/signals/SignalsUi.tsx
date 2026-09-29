@@ -152,9 +152,16 @@ export function SignalsPage() {
   const list = useMemo(() => applyListFilter(data, f, today, last), [data, f, today, last]);
   const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
+  const needOpts = useOptions("signal_need_groups");
+  // Đếm nhóm nhu cầu: áp dụng mọi điều kiện khác (kể cả trạng thái) trừ chính nhóm nhu cầu
+  const needBase = useMemo(() => {
+    const b = applyDetailFilter(data, { ...f, needGroup: undefined }, today);
+    return f.quick === "all" ? b : b.filter((s) => s.status === f.quick);
+  }, [data, f, today]);
+  const needCount = (g?: string) => (g ? needBase.filter((s) => needGroupsOf(s).includes(g)).length : needBase.length);
   const open = data.find((s) => s.id === openId) || null;
   const denied = !!openId && !isLoading && !open;
-  const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
+  const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time", "needGroup"].includes(k) && v).length + (f.time ? 1 : 0);
 
 
   return (
@@ -193,6 +200,11 @@ export function SignalsPage() {
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </button>
       )}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" aria-label="Phân loại tín hiệu">
+        {[{ k: "", label: "Tất cả" }, ...needOpts.names.map((n) => ({ k: n, label: n }))].map((x) => (
+          <button key={x.k || "all"} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: x.k || undefined })); }} className={cn("shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium", (f.needGroup ?? "") === x.k ? "bg-foreground text-background border-foreground" : "bg-card")}>{x.label} <span className="opacity-70">{needCount(x.k || undefined)}</span></button>
+        ))}
+      </div>
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
         {QUICK.map((x) => (
           <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label} <span className="opacity-70">{count(x.k)}</span></button>
