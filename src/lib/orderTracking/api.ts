@@ -21,6 +21,7 @@ export type OtOrder = {
 };
 export type OtSupplier = { id: string; name: string; groups: string[]; contact: string | null; phone: string | null; address: string | null; note: string | null; active: boolean };
 export type OtLog = { id: string; task_id: string | null; actor_id: string | null; action: string; old: any; new: any; reason: string | null; created_at: string };
+export type OtReschedule = { id: string; order_id: string; parent_id: string | null; from_date: string; proposed_date: string; reason: string; side: "sale" | "supply"; proposer_id: string; status: "pending" | "accepted" | "rejected" | "countered" | "withdrawn"; responder_id: string | null; response_note: string | null; responded_at: string | null; created_at: string };
 export type OtPerson = { id: string; full_name: string; sale: boolean; supply: boolean };
 
 export const otApi = {
@@ -45,6 +46,12 @@ export const otApi = {
   action: (task: string, action: string, qty?: number) => rpc("ot_task_action", { _task: task, _action: action, _qty: qty ?? null }),
   fixTime: (task: string, field: string, value: string, reason: string) => rpc("ot_fix_time", { _task: task, _field: field, _value: value, _reason: reason }),
   cancel: (id: string, reason: string) => rpc("ot_cancel", { _id: id, _reason: reason }),
+  reschedules: (id: string) => sel<OtReschedule[]>(db.from("ot_reschedules").select("*").eq("order_id", id).order("created_at", { ascending: false })),
+  pendingReschedules: () => sel<OtReschedule[]>(db.from("ot_reschedules").select("*").eq("status", "pending")),
+  propose: (order: string, date: string, reason: string) => rpc<string>("ot_reschedule_propose", { _order: order, _date: date, _reason: reason }),
+  reply: (id: string, decision: "accept" | "reject" | "counter", counter: string | null, note: string) => rpc("ot_reschedule_reply", { _id: id, _decision: decision, _counter: counter, _note: note }),
+  withdraw: (id: string) => rpc("ot_reschedule_withdraw", { _id: id }),
+  setContact: (task: string, date: string | null) => rpc("ot_set_contact", { _task: task, _date: date }),
 };
 
 export const fmtDate = (d?: string | null) => { const m = d ? /^(\d{4})-(\d{2})-(\d{2})/.exec(d) : null; return m ? `${m[3]}/${m[2]}/${m[1]}` : "—"; };

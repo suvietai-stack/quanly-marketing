@@ -40,6 +40,8 @@ const LABEL: Record<string, string> = {
   ...CONTENT_LABEL,
   ...ORDER_LABEL,
   ...OQ_LABEL,
+  ot_reschedule: "Có đề xuất điều chỉnh ngày khách nhận cần bạn phản hồi.",
+  ot_reschedule_result: "Đề xuất điều chỉnh ngày khách nhận của bạn đã có phản hồi.",
 };
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -58,9 +60,9 @@ export function NotificationBell() {
     enabled: !!uid,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,payload,read_at,created_at")
+      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,ot_order_id,payload,read_at,created_at")
         .eq("recipient_id", uid).order("created_at", { ascending: false }).limit(30);
-      return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; attendance_id: string | null; content_id: string | null; order_id: string | null; oq_flow_id: string | null; payload: any; read_at: string | null; created_at: string }[];
+      return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; attendance_id: string | null; content_id: string | null; order_id: string | null; oq_flow_id: string | null; ot_order_id: string | null; payload: any; read_at: string | null; created_at: string }[];
     },
   });
   if (!uid) return null;
@@ -71,7 +73,7 @@ export function NotificationBell() {
       await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
-    window.location.href = n.kind.startsWith("oq_") ? oqLink(n.payload?.request_id ?? "", n.payload?.both ? null : n.oq_flow_id) : n.kind.startsWith("order_") ? orderLink(n.order_id ?? "") : n.kind.startsWith("content_") ? contentLink(n.content_id ?? "") : n.kind.startsWith("att_") ? `/leave?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
+    window.location.href = n.kind.startsWith("ot_") ? `/order-tracking/${n.ot_order_id ?? ""}` : n.kind.startsWith("oq_") ? oqLink(n.payload?.request_id ?? "", n.payload?.both ? null : n.oq_flow_id) : n.kind.startsWith("order_") ? orderLink(n.order_id ?? "") : n.kind.startsWith("content_") ? contentLink(n.content_id ?? "") : n.kind.startsWith("att_") ? `/leave?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
   const readAll = async () => {
     await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", uid).is("read_at", null);

@@ -31,3 +31,21 @@ describe("order tracking rules", () => {
     expect(j.current).toBe("packing");
   });
 });
+
+import { reminders as _rem, monthGrid as _mg } from "./logic";
+describe("GĐ2", () => {
+  const base = { order_id: "o", position: 0, supplier_id: null, assignee_id: null, qty: 10, proc_type: null, planned_arrival: null, ordered_at: null, mail_due: null, mail_sent_at: null, send_planned: null, sent_at: null, sent_qty: 0, shipped_at: null, done_at: null, note: null } as any;
+  it("nhắc việc: quá hạn > hôm nay > liên hệ lại, bỏ việc xong", () => {
+    const r = _rem([
+      { ...base, id: "a", kind: "packing", status: "todo", planned_date: "2026-09-29" },
+      { ...base, id: "b", kind: "packing", status: "doing", planned_date: "2026-09-20" },
+      { ...base, id: "c", kind: "packing", status: "waiting", planned_date: "2026-10-05", contact_date: "2026-09-28" },
+      { ...base, id: "d", kind: "packing", status: "done", planned_date: "2026-09-01" },
+    ], "2026-09-29");
+    expect(r.map((x) => `${x.task.id}:${x.type}`)).toEqual(["b:overdue", "a:today", "c:contact"]);
+  });
+  it("lưới tháng bắt đầu Thứ Hai", () => {
+    const g = _mg(2026, 8); // Tháng 9/2026, 1/9 là Thứ Ba
+    expect(g[0]).toBe("2026-08-31"); expect(g.length).toBe(42);
+  });
+});

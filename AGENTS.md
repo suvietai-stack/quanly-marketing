@@ -11,3 +11,5 @@
 - Order tracking (ot_*) is independent of oq_* and Task: client SELECT-only, writes via ot_* SECURITY DEFINER RPCs with dependency/qty checks under FOR UPDATE; src/lib/orderTracking/logic.ts mirrors those rules for UI hints — backend stays authoritative.
 - New progress forms only submit capability; detail reads old in_progress/existing_code — keeps historical rounds readable.
 - Order-quote durations are computed only in private.oq_round_metrics (exposed via oq_job_times/oq_report_rows, report perms oq.report_own/all/export checked server-side); src/lib/orderQuotes/report.ts only filters/aggregates — one formula for list, detail, report, Excel.
+- Order tracking reschedules: ot_reschedules (one pending per order), only the opposite side (sale↔supply) replies via ot_reschedule_* RPC; accepting changes due_date while original_due stays — two-party agreement enforced server-side.
+- ot_* notifications are in-app only (zalo_status ineligible, push_status none, notifications.ot_order_id) — no Zalo/Push until explicitly requested.
