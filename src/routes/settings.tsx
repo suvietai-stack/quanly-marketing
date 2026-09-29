@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { OtSettings } from "@/components/orderTracking/OtSettings";
 import { useStore } from "@/lib/store";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";

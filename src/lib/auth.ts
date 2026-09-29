@@ -25,6 +25,7 @@ export type PermissionGroup =
   | "Tín Hiệu Cơ Hội"
   | "Đơn Từ & Phê Duyệt"
   | "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  | "Theo Dõi Đơn Hàng"
   | "Tài khoản";
 
 export interface PermissionDef {
