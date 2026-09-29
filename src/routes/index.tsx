@@ -17,16 +17,20 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
+import { getPublicBranding } from "@/lib/branding.functions";
 import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [
-    { title: "Tổng Quan — Base Marketing" },
-    { name: "description", content: "Công việc, KPI và tiến độ triển khai Marketing Sứ Việt." },
-    { property: "og:title", content: "Tổng Quan — Base Marketing" },
-    { property: "og:description", content: "Công việc, KPI và tiến độ triển khai Marketing Sứ Việt." },
+  loader: () => getPublicBranding(),
+  head: ({ loaderData }) => ({ meta: [
+    { title: `Tổng Quan — ${loaderData?.app_name ?? "Base Marketing"}` },
+    { name: "description", content: loaderData?.description ?? "Quản lý công việc" },
+    { property: "og:title", content: `Tổng Quan — ${loaderData?.app_name ?? "Base Marketing"}` },
+    { property: "og:description", content: loaderData?.description ?? "Quản lý công việc" },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
+    { name: "twitter:title", content: `Tổng Quan — ${loaderData?.app_name ?? "Base Marketing"}` },
+    { name: "twitter:description", content: loaderData?.description ?? "Quản lý công việc" },
   ] }),
   component: () => (
     <RequirePermission perm="overview.view">
