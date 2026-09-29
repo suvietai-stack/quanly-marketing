@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { otApi, fmtDate, type OtSupplier, type OtPerson } from "@/lib/orderTracking/api";
 import { ORDER_STATUS, ORDER_TYPE, SUPPLIER_GROUPS, journey, daysLeft, isOverdue, taskDue, todayVN } from "@/lib/orderTracking/logic";
 import { cn } from "@/lib/utils";
+import { usePeople } from "@/lib/orderTracking/hooks";
 
 const VIEW_PERMS = ["ot.view_own", "ot.view_all", "ot.create", "ot.task_view", "ot.supplier", "ot.manage"];
 
@@ -33,12 +34,6 @@ export const Route = createFileRoute("/order-tracking/")({
   ] }),
   component: () => <RequirePermission perm={VIEW_PERMS}><OrderTracking /></RequirePermission>,
 });
-
-export function usePeople() {
-  const q = useQuery({ queryKey: ["ot", "people"], queryFn: otApi.people, staleTime: 60_000 });
-  const map = useMemo(() => new Map((q.data ?? []).map((p) => [p.id, p.full_name])), [q.data]);
-  return { list: q.data ?? [], name: (id?: string | null) => (id ? map.get(id) ?? "—" : "—") };
-}
 
 function OrderTracking() {
   const { can } = useCurrentUser();
