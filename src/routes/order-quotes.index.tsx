@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useCurrentUser } from "@/lib/auth";
 import { oqApi, LIST_STATUSES } from "@/lib/orderQuotes/api";
-import { vnDateTime } from "@/lib/orderQuotes/logic";
+import { vnDate, vnDateTime } from "@/lib/orderQuotes/logic";
 import { FlowBadge, useUserName } from "@/components/orderQuotes/OqCommon";
 import { ListTimeCell, shortTimeLines, useJobTimes } from "@/components/orderQuotes/JobTimes";
 import { BarChart3 } from "lucide-react";
