@@ -48,7 +48,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Đơn hàng",
     items: [
       { to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"] },
-      { to: "/order-tracking", label: "Theo Dõi Đơn Hàng", icon: Truck, badge: "Sắp ra mắt" },
+      { to: "/order-tracking", label: "Theo Dõi Đơn Hàng", icon: Truck, anyPerm: ["ot.view_own", "ot.view_all", "ot.create", "ot.task_view", "ot.supplier", "ot.manage"] },
     ],
   },
   {

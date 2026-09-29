@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { OtSettings } from "@/components/orderTracking/OtSettings";
 import { useStore } from "@/lib/store";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -190,10 +191,12 @@ function SettingsPage() {
         {showInfo && <TabsTrigger value="info">Thông tin hệ thống</TabsTrigger>}
         {showSigCat && <TabsTrigger value="sigcat">Danh mục tín hiệu</TabsTrigger>}
         {showLeave && <TabsTrigger value="leave">Đơn từ & Phê duyệt</TabsTrigger>}
+        {can("ot.settings") && <TabsTrigger value="ot">Theo dõi đơn hàng</TabsTrigger>}
         <TabsTrigger value="zalo">Thông báo Zalo</TabsTrigger>
       </TabsList>
       {showSigCat && <TabsContent value="sigcat" className="mt-4"><SignalCatalogSettings /></TabsContent>}
       {showLeave && <TabsContent value="leave" className="mt-4"><LeaveSettings /></TabsContent>}
+      {can("ot.settings") && <TabsContent value="ot" className="mt-4"><OtSettings /></TabsContent>}
       <TabsContent value="zalo" className="mt-4 space-y-4"><ZaloSettingsTab isAdmin={zaloAdmin} /><ContentNotifySettings canEdit={zaloAdmin || can("settings.system_edit")} /><OrderNotifySettings canEdit={zaloAdmin || can("settings.system_edit")} /></TabsContent>
 
       {showAccounts && <TabsContent value="accounts" className="mt-4">

@@ -8,6 +8,6 @@
 - Content/Design notifications originate in content_notify/order_notify triggers with unique-name recipients and event+item+history+recipient dedup_key; switches live in content_notify_settings — every writer triggers the same notification.
 - KPI periods use src/lib/kpi/timeframe.ts (Vietnam time); goals.metadata holds periodType/deadline; overlap filtering doesn't clone monthly goals — preserves historic KPI data.
 - Order quotes: separate oq_flows and snapshot oq_rounds; published responses immutable; writes via SECURITY DEFINER oq_* RPC; private order-quotes images. Change private.oq_missing with src/lib/orderQuotes/logic.ts; oq_publish_response auto-completes under FOR UPDATE; delete images via oq_storage_cleanup — preserves history and access control.
-- Order tracking remains a data-free placeholder independent of oq_* — no unrequested order workflow.
+- Order tracking (ot_*) is independent of oq_* and Task: client SELECT-only, writes via ot_* SECURITY DEFINER RPCs with dependency/qty checks under FOR UPDATE; src/lib/orderTracking/logic.ts mirrors those rules for UI hints — backend stays authoritative.
 - New progress forms only submit capability; detail reads old in_progress/existing_code — keeps historical rounds readable.
 - Order-quote durations are computed only in private.oq_round_metrics (exposed via oq_job_times/oq_report_rows, report perms oq.report_own/all/export checked server-side); src/lib/orderQuotes/report.ts only filters/aggregates — one formula for list, detail, report, Excel.

@@ -1726,6 +1726,323 @@ export type Database = {
         }
         Relationships: []
       }
+      ot_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          new: Json | null
+          old: Json | null
+          order_id: string
+          reason: string | null
+          task_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          new?: Json | null
+          old?: Json | null
+          order_id: string
+          reason?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          new?: Json | null
+          old?: Json | null
+          order_id?: string
+          reason?: string | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "ot_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ot_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ot_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ot_orders: {
+        Row: {
+          accepted_at: string | null
+          address: string | null
+          code: string
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          crm_url: string | null
+          due_date: string
+          due_time: string | null
+          has_box: boolean
+          has_processing: boolean
+          id: string
+          note: string | null
+          order_type: string
+          original_due: string
+          planned: boolean
+          qty: number | null
+          sale_id: string | null
+          source: string
+          status: string
+          supply_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          address?: string | null
+          code: string
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          crm_url?: string | null
+          due_date: string
+          due_time?: string | null
+          has_box?: boolean
+          has_processing?: boolean
+          id?: string
+          note?: string | null
+          order_type: string
+          original_due: string
+          planned?: boolean
+          qty?: number | null
+          sale_id?: string | null
+          source?: string
+          status?: string
+          supply_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          address?: string | null
+          code?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          crm_url?: string | null
+          due_date?: string
+          due_time?: string | null
+          has_box?: boolean
+          has_processing?: boolean
+          id?: string
+          note?: string | null
+          order_type?: string
+          original_due?: string
+          planned?: boolean
+          qty?: number | null
+          sale_id?: string | null
+          source?: string
+          status?: string
+          supply_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ot_receipts: {
+        Row: {
+          actor_id: string
+          id: string
+          qty: number
+          received_at: string
+          task_id: string
+        }
+        Insert: {
+          actor_id: string
+          id?: string
+          qty: number
+          received_at?: string
+          task_id: string
+        }
+        Update: {
+          actor_id?: string
+          id?: string
+          qty?: number
+          received_at?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_receipts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ot_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ot_settings: {
+        Row: {
+          allow_manual: boolean
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_manual?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_manual?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      ot_suppliers: {
+        Row: {
+          active: boolean
+          address: string | null
+          contact: string | null
+          created_at: string
+          created_by: string | null
+          groups: string[]
+          id: string
+          name: string
+          note: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          contact?: string | null
+          created_at?: string
+          created_by?: string | null
+          groups?: string[]
+          id?: string
+          name: string
+          note?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          contact?: string | null
+          created_at?: string
+          created_by?: string | null
+          groups?: string[]
+          id?: string
+          name?: string
+          note?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ot_tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          done_at: string | null
+          id: string
+          kind: string
+          mail_by: string | null
+          mail_due: string | null
+          mail_sent_at: string | null
+          note: string | null
+          order_id: string
+          ordered_at: string | null
+          planned_arrival: string | null
+          planned_date: string | null
+          position: number
+          proc_type: string | null
+          qty: number | null
+          send_planned: string | null
+          sent_at: string | null
+          sent_qty: number
+          shipped_at: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          kind: string
+          mail_by?: string | null
+          mail_due?: string | null
+          mail_sent_at?: string | null
+          note?: string | null
+          order_id: string
+          ordered_at?: string | null
+          planned_arrival?: string | null
+          planned_date?: string | null
+          position?: number
+          proc_type?: string | null
+          qty?: number | null
+          send_planned?: string | null
+          sent_at?: string | null
+          sent_qty?: number
+          shipped_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          kind?: string
+          mail_by?: string | null
+          mail_due?: string | null
+          mail_sent_at?: string | null
+          note?: string | null
+          order_id?: string
+          ordered_at?: string | null
+          planned_arrival?: string | null
+          planned_date?: string | null
+          position?: number
+          proc_type?: string | null
+          qty?: number | null
+          send_planned?: string | null
+          sent_at?: string | null
+          sent_qty?: number
+          shipped_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_tasks_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "ot_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ot_tasks_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "ot_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people: {
         Row: {
           created_at: string
@@ -2625,6 +2942,50 @@ export type Database = {
       }
       oq_submit: { Args: { _id: string }; Returns: string }
       order_remind_run: { Args: never; Returns: number }
+      ot_accept: { Args: { _id: string }; Returns: undefined }
+      ot_cancel: { Args: { _id: string; _reason: string }; Returns: undefined }
+      ot_create: { Args: { _data: Json }; Returns: string }
+      ot_fix_time: {
+        Args: { _field: string; _reason: string; _task: string; _value: string }
+        Returns: undefined
+      }
+      ot_people: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          sale: boolean
+          supply: boolean
+        }[]
+      }
+      ot_plan: {
+        Args: {
+          _has_box: boolean
+          _has_proc: boolean
+          _id: string
+          _qty: number
+        }
+        Returns: undefined
+      }
+      ot_proc_add: { Args: { _data: Json; _order: string }; Returns: string }
+      ot_settings_save: { Args: { _allow_manual: boolean }; Returns: undefined }
+      ot_supplier_active: {
+        Args: { _active: boolean; _id: string }
+        Returns: undefined
+      }
+      ot_supplier_save: { Args: { _data: Json; _id: string }; Returns: string }
+      ot_task_action: {
+        Args: { _action: string; _qty?: number; _task: string }
+        Returns: undefined
+      }
+      ot_task_update: {
+        Args: { _data: Json; _task: string }
+        Returns: undefined
+      }
+      ot_update_order: {
+        Args: { _data: Json; _id: string }
+        Returns: undefined
+      }
       push_subscribe: {
         Args: {
           _auth: string
