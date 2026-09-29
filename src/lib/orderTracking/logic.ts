@@ -4,7 +4,7 @@ export type OtTask = {
   supplier_id: string | null; assignee_id: string | null; qty: number | null; proc_type: string | null;
   planned_date: string | null; planned_arrival: string | null; ordered_at: string | null;
   mail_due: string | null; mail_sent_at: string | null; send_planned: string | null; sent_at: string | null; sent_qty: number;
-  shipped_at: string | null; status: "todo" | "doing" | "waiting" | "done" | "skipped"; done_at: string | null; note: string | null;
+  shipped_at: string | null; status: "todo" | "doing" | "waiting" | "done" | "skipped"; done_at: string | null; note: string | null; contact_date?: string | null;
 };
 export type OtReceipt = { id: string; task_id: string; qty: number; received_at: string; actor_id: string };
 
@@ -61,4 +61,32 @@ export function journey(o: { status: string; has_box: boolean; has_processing: b
   steps.push({ key: "packing", label: "Đóng gói", done: done("packing") }, { key: "delivery", label: "Giao hàng", done: done("delivery") });
   const current = steps.find((s) => !s.done)?.key ?? null;
   return { steps, current };
+}
+
+/** Cột Kanban của một công việc (chỉ hiển thị, không phải trạng thái mới). */
+export type BoardCol = "todo" | "doing" | "waiting" | "done";
+export const BOARD_COLS: { key: BoardCol; label: string }[] = [
+  { key: "todo", label: "Chưa thực hiện" }, { key: "doing", label: "Đang xử lý" }, { key: "waiting", label: "Chờ nhà cung cấp" }, { key: "done", label: "Hoàn thành" },
+];
+
+export type Reminder = { task: OtTask; type: "overdue" | "today" | "contact"; date: string };
+/** Nhắc việc trong ngày: quá hạn, đến hạn hôm nay, đến ngày liên hệ lại NCC. Mỗi công việc chỉ một nhắc (ưu tiên quá hạn). */
+export function reminders(tasks: OtTask[], today = todayVN()): Reminder[] {
+  const out: Reminder[] = [];
+  for (const t of tasks) {
+    if (t.status === "done" || t.status === "skipped" || t.kind === "intake") continue;
+    const due = taskDue(t);
+    if (due && due < today) out.push({ task: t, type: "overdue", date: due });
+    else if (due === today) out.push({ task: t, type: "today", date: due });
+    else if (t.contact_date && t.contact_date <= today) out.push({ task: t, type: "contact", date: t.contact_date });
+  }
+  const rank = { overdue: 0, today: 1, contact: 2 };
+  return out.sort((a, b) => rank[a.type] - rank[b.type] || a.date.localeCompare(b.date));
+}
+
+/** Các ngày trong lưới tháng (bắt đầu Thứ Hai), chuỗi YYYY-MM-DD. */
+export function monthGrid(year: number, month: number): string[] {
+  const first = new Date(Date.UTC(year, month, 1));
+  const start = new Date(first.getTime() - ((first.getUTCDay() + 6) % 7) * 86400_000);
+  return Array.from({ length: 42 }, (_, i) => new Date(start.getTime() + i * 86400_000).toISOString().slice(0, 10));
 }

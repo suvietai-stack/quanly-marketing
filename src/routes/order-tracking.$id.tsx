@@ -20,6 +20,7 @@ import {
   type OtTask, type OtReceipt,
 } from "@/lib/orderTracking/logic";
 import { cn } from "@/lib/utils";
+import { ReschedulePanel } from "@/components/orderTracking/Reschedule";
 
 export const Route = createFileRoute("/order-tracking/$id")({
   head: () => ({ meta: [
@@ -37,12 +38,14 @@ const ACTION_LABEL: Record<string, string> = {
   create: "Tạo đơn", accept: "Tiếp nhận đơn", update_order: "Sửa thông tin đơn", plan: "Lập kế hoạch", proc_add: "Thêm lượt gia công",
   task_update: "Cập nhật công việc", ordered: "Xác nhận đã đặt", receive: "Ghi nhận hàng về", mail_sent: "Xác nhận đã gửi mail sản xuất",
   sent: "Gửi phôi đi gia công", pack_done: "Hoàn thành đóng gói", shipped: "Xuất hàng", delivered: "Khách đã nhận hàng", fix_time: "Điều chỉnh thời gian thực tế", cancel: "Hủy đơn",
+  reschedule_propose: "Đề xuất điều chỉnh ngày khách nhận", reschedule_accept: "Đồng ý điều chỉnh ngày khách nhận", reschedule_reject: "Từ chối điều chỉnh lịch",
+  reschedule_counter: "Đề xuất ngày khác", reschedule_withdraw: "Rút đề xuất điều chỉnh",
 };
 const FIELD_LABEL: Record<string, string> = {
   supplier_id: "Nhà cung cấp", assignee_id: "Người phụ trách", qty: "Số lượng", planned_date: "Hạn dự kiến", planned_arrival: "Dự kiến hàng về",
   mail_due: "Hạn gửi mail", send_planned: "Dự kiến gửi phôi", note: "Ghi chú", status: "Trạng thái", proc_type: "Loại gia công",
   ordered_at: "Thời điểm đặt", mail_sent_at: "Thời điểm gửi mail", sent_at: "Thời điểm gửi phôi", shipped_at: "Thời điểm xuất hàng", done_at: "Thời điểm hoàn thành",
-  sale_id: "Kinh doanh", supply_id: "Cung ứng", has_box: "Có đặt hộp", has_processing: "Có in ấn/gia công", title: "Tên đơn", address: "Địa chỉ", crm_url: "Link CRM", due_time: "Giờ nhận",
+  sale_id: "Kinh doanh", supply_id: "Cung ứng", has_box: "Có đặt hộp", has_processing: "Có in ấn/gia công", title: "Tên đơn", address: "Địa chỉ", crm_url: "Link CRM", due_time: "Giờ nhận", due_date: "Ngày khách nhận", proposed: "Ngày đề xuất", contact_date: "Ngày liên hệ lại NCC",
 };
 
 function useErr() {
@@ -124,6 +127,8 @@ function Detail() {
         </ol>
         {o.has_box && <p className="mt-2 text-xs text-muted-foreground">Đặt hộp được triển khai song song với đặt phôi.</p>}
       </div>
+
+      <ReschedulePanel o={o} name={people.name} />
 
       {active && canStage && <PlanCard o={o} run={run} />}
       {o.status === "new" && <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">Cung ứng cần tiếp nhận đơn trước khi lập kế hoạch các công đoạn.</p>}
