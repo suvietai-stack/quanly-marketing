@@ -34,6 +34,7 @@ import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
+import { Route as OrderTrackingIdRouteImport } from './routes/order-tracking.$id'
 import { Route as OrderQuotesReportRouteImport } from './routes/order-quotes.report'
 import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
 import { Route as OrderQuotesIdRouteImport } from './routes/order-quotes.$id'
@@ -170,6 +171,11 @@ const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   path: '/settings/kpi-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderTrackingIdRoute = OrderTrackingIdRouteImport.update({
+  id: '/order-tracking/$id',
+  path: '/order-tracking/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderQuotesReportRoute = OrderQuotesReportRouteImport.update({
   id: '/order-quotes/report',
   path: '/order-quotes/report',
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
+  '/order-tracking/$id': typeof OrderTrackingIdRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
+  '/order-tracking/$id': typeof OrderTrackingIdRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
+  '/order-tracking/$id': typeof OrderTrackingIdRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/order-quotes/report'
+    | '/order-tracking/$id'
     | '/settings/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/order-quotes/report'
+    | '/order-tracking/$id'
     | '/settings/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
     | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/order-quotes/report'
+    | '/order-tracking/$id'
     | '/settings_/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -469,6 +481,7 @@ export interface RootRouteChildren {
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
   OrderQuotesReportRoute: typeof OrderQuotesReportRoute
+  OrderTrackingIdRoute: typeof OrderTrackingIdRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
@@ -664,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsKpiV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/order-tracking/$id': {
+      id: '/order-tracking/$id'
+      path: '/order-tracking/$id'
+      fullPath: '/order-tracking/$id'
+      preLoaderRoute: typeof OrderTrackingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order-quotes/report': {
       id: '/order-quotes/report'
       path: '/order-quotes/report'
@@ -757,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
   OrderQuotesReportRoute: OrderQuotesReportRoute,
+  OrderTrackingIdRoute: OrderTrackingIdRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,

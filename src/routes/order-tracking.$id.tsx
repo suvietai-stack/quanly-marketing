@@ -129,9 +129,9 @@ function Detail() {
       {o.status === "new" && <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">Cung ứng cần tiếp nhận đơn trước khi lập kế hoạch các công đoạn.</p>}
 
       <div className="space-y-3">
-        {ts.filter((t) => t.kind !== "intake" && t.kind !== "proc" && t.status !== "skipped").filter((t) => t.kind !== "packing" || true).map((t) =>
-          <TaskCard key={t.id} t={t} ctx={ctx} />,
-        ).reduce<ReactNode[]>((acc, el, i, arr) => { acc.push(el); const t = ts.filter((x) => x.kind !== "intake" && x.kind !== "proc" && x.status !== "skipped")[i]; if (o.has_processing && (t.kind === "box" || (t.kind === "blank" && !o.has_box))) acc.push(<ProcSection key="proc" ctx={ctx} />); return acc; }, [])}
+        {ts.filter((t) => (t.kind === "blank" || t.kind === "box") && t.status !== "skipped").map((t) => <TaskCard key={t.id} t={t} ctx={ctx} />)}
+        {o.has_processing && <ProcSection ctx={ctx} />}
+        {ts.filter((t) => t.kind === "packing" || t.kind === "delivery").map((t) => <TaskCard key={t.id} t={t} ctx={ctx} />)}
       </div>
 
       <div className="rounded-lg border bg-card p-4">
