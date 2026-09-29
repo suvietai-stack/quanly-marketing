@@ -20,6 +20,7 @@ import { otApi, fmtDate, type OtSupplier, type OtPerson } from "@/lib/orderTrack
 import { ORDER_STATUS, ORDER_TYPE, SUPPLIER_GROUPS, journey, daysLeft, isOverdue, taskDue, todayVN } from "@/lib/orderTracking/logic";
 import { cn } from "@/lib/utils";
 import { usePeople } from "@/lib/orderTracking/hooks";
+import { Board, Reminders, SupplyCalendar } from "@/components/orderTracking/Workboard";
 
 const VIEW_PERMS = ["ot.view_own", "ot.view_all", "ot.create", "ot.task_view", "ot.supplier", "ot.manage"];
 
@@ -41,11 +42,17 @@ function OrderTracking() {
   return (
     <>
       <PageHeader title="Theo Dõi Đơn Hàng" description="Hành trình thực hiện đơn hàng: tiếp nhận, đặt phôi, gia công, đóng gói, giao hàng." />
-      <Tabs defaultValue={canOrders ? "orders" : "suppliers"}>
-        <TabsList>
+      <Tabs defaultValue={canOrders ? "today" : "suppliers"}>
+        <div className="overflow-x-auto"><TabsList>
+          {canOrders && <TabsTrigger value="today">Tổng quan</TabsTrigger>}
+          {canOrders && <TabsTrigger value="board">Kanban công việc</TabsTrigger>}
+          {canOrders && <TabsTrigger value="calendar">Lịch cung ứng</TabsTrigger>}
           {canOrders && <TabsTrigger value="orders">Danh sách đơn</TabsTrigger>}
           <TabsTrigger value="suppliers">Nhà cung cấp</TabsTrigger>
-        </TabsList>
+        </TabsList></div>
+        {canOrders && <TabsContent value="today" className="mt-4"><Reminders /></TabsContent>}
+        {canOrders && <TabsContent value="board" className="mt-4"><Board /></TabsContent>}
+        {canOrders && <TabsContent value="calendar" className="mt-4"><SupplyCalendar /></TabsContent>}
         {canOrders && <TabsContent value="orders" className="mt-4"><OrderList /></TabsContent>}
         <TabsContent value="suppliers" className="mt-4"><Suppliers /></TabsContent>
       </Tabs>
