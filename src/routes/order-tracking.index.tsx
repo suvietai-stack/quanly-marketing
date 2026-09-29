@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/order-tracking")({
+export const Route = createFileRoute("/order-tracking/")({
   head: () => ({ meta: [
     { title: "Theo Dõi Đơn Hàng — Base" },
     { name: "description", content: "Theo Dõi Đơn Hàng đang được phát triển trên Base." },

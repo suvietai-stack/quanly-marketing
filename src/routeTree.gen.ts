@@ -18,7 +18,6 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as OverviewV2RouteImport } from './routes/overview-v2'
 import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as OrderTrackingRouteImport } from './routes/order-tracking'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaveRouteImport } from './routes/leave'
@@ -27,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
+import { Route as OrderTrackingIndexRouteImport } from './routes/order-tracking.index'
 import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
@@ -90,11 +90,6 @@ const OrdersRoute = OrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderTrackingRoute = OrderTrackingRouteImport.update({
-  id: '/order-tracking',
-  path: '/order-tracking',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OkrsRoute = OkrsRouteImport.update({
   id: '/okrs',
   path: '/okrs',
@@ -133,6 +128,11 @@ const SocialIndexRoute = SocialIndexRouteImport.update({
 const SignalsIndexRoute = SignalsIndexRouteImport.update({
   id: '/signals/',
   path: '/signals/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderTrackingIndexRoute = OrderTrackingIndexRouteImport.update({
+  id: '/order-tracking/',
+  path: '/order-tracking/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrderQuotesIndexRoute = OrderQuotesIndexRouteImport.update({
@@ -229,7 +229,6 @@ export interface FileRoutesByFullPath {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
-  '/order-tracking': typeof OrderTrackingRoute
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
@@ -251,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
   '/order-quotes/': typeof OrderQuotesIndexRoute
+  '/order-tracking/': typeof OrderTrackingIndexRoute
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -266,7 +266,6 @@ export interface FileRoutesByTo {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
-  '/order-tracking': typeof OrderTrackingRoute
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
@@ -288,6 +287,7 @@ export interface FileRoutesByTo {
   '/brands': typeof BrandsIndexRoute
   '/local': typeof LocalIndexRoute
   '/order-quotes': typeof OrderQuotesIndexRoute
+  '/order-tracking': typeof OrderTrackingIndexRoute
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
@@ -304,7 +304,6 @@ export interface FileRoutesById {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
-  '/order-tracking': typeof OrderTrackingRoute
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
@@ -326,6 +325,7 @@ export interface FileRoutesById {
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
   '/order-quotes/': typeof OrderQuotesIndexRoute
+  '/order-tracking/': typeof OrderTrackingIndexRoute
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -343,7 +343,6 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/okrs'
-    | '/order-tracking'
     | '/orders'
     | '/overview-v2'
     | '/pending'
@@ -365,6 +364,7 @@ export interface FileRouteTypes {
     | '/brands/'
     | '/local/'
     | '/order-quotes/'
+    | '/order-tracking/'
     | '/signals/'
     | '/social/'
     | '/websites/'
@@ -380,7 +380,6 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/okrs'
-    | '/order-tracking'
     | '/orders'
     | '/overview-v2'
     | '/pending'
@@ -402,6 +401,7 @@ export interface FileRouteTypes {
     | '/brands'
     | '/local'
     | '/order-quotes'
+    | '/order-tracking'
     | '/signals'
     | '/social'
     | '/websites'
@@ -417,7 +417,6 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/okrs'
-    | '/order-tracking'
     | '/orders'
     | '/overview-v2'
     | '/pending'
@@ -439,6 +438,7 @@ export interface FileRouteTypes {
     | '/brands/'
     | '/local/'
     | '/order-quotes/'
+    | '/order-tracking/'
     | '/signals/'
     | '/social/'
     | '/websites/'
@@ -455,7 +455,6 @@ export interface RootRouteChildren {
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
-  OrderTrackingRoute: typeof OrderTrackingRoute
   OrdersRoute: typeof OrdersRoute
   OverviewV2Route: typeof OverviewV2Route
   PendingRoute: typeof PendingRoute
@@ -477,6 +476,7 @@ export interface RootRouteChildren {
   BrandsIndexRoute: typeof BrandsIndexRoute
   LocalIndexRoute: typeof LocalIndexRoute
   OrderQuotesIndexRoute: typeof OrderQuotesIndexRoute
+  OrderTrackingIndexRoute: typeof OrderTrackingIndexRoute
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
@@ -552,13 +552,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-tracking': {
-      id: '/order-tracking'
-      path: '/order-tracking'
-      fullPath: '/order-tracking'
-      preLoaderRoute: typeof OrderTrackingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/okrs': {
       id: '/okrs'
       path: '/okrs'
@@ -613,6 +606,13 @@ declare module '@tanstack/react-router' {
       path: '/signals'
       fullPath: '/signals/'
       preLoaderRoute: typeof SignalsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-tracking/': {
+      id: '/order-tracking/'
+      path: '/order-tracking'
+      fullPath: '/order-tracking/'
+      preLoaderRoute: typeof OrderTrackingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order-quotes/': {
@@ -743,7 +743,6 @@ const rootRouteChildren: RootRouteChildren = {
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
-  OrderTrackingRoute: OrderTrackingRoute,
   OrdersRoute: OrdersRoute,
   OverviewV2Route: OverviewV2Route,
   PendingRoute: PendingRoute,
@@ -765,6 +764,7 @@ const rootRouteChildren: RootRouteChildren = {
   BrandsIndexRoute: BrandsIndexRoute,
   LocalIndexRoute: LocalIndexRoute,
   OrderQuotesIndexRoute: OrderQuotesIndexRoute,
+  OrderTrackingIndexRoute: OrderTrackingIndexRoute,
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
