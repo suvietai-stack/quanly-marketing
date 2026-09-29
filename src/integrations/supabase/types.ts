@@ -915,6 +915,7 @@ export type Database = {
           leave_request_id: string | null
           oq_flow_id: string | null
           order_id: string | null
+          ot_order_id: string | null
           payload: Json | null
           push_status: string
           read_at: string | null
@@ -935,6 +936,7 @@ export type Database = {
           leave_request_id?: string | null
           oq_flow_id?: string | null
           order_id?: string | null
+          ot_order_id?: string | null
           payload?: Json | null
           push_status?: string
           read_at?: string | null
@@ -955,6 +957,7 @@ export type Database = {
           leave_request_id?: string | null
           oq_flow_id?: string | null
           order_id?: string | null
+          ot_order_id?: string | null
           payload?: Json | null
           push_status?: string
           read_at?: string | null
@@ -999,6 +1002,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_ot_order_id_fkey"
+            columns: ["ot_order_id"]
+            isOneToOne: false
+            referencedRelation: "ot_orders"
             referencedColumns: ["id"]
           },
           {
@@ -1887,6 +1897,69 @@ export type Database = {
           },
         ]
       }
+      ot_reschedules: {
+        Row: {
+          created_at: string
+          from_date: string
+          id: string
+          order_id: string
+          parent_id: string | null
+          proposed_date: string
+          proposer_id: string
+          reason: string
+          responded_at: string | null
+          responder_id: string | null
+          response_note: string | null
+          side: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          from_date: string
+          id?: string
+          order_id: string
+          parent_id?: string | null
+          proposed_date: string
+          proposer_id: string
+          reason: string
+          responded_at?: string | null
+          responder_id?: string | null
+          response_note?: string | null
+          side: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          from_date?: string
+          id?: string
+          order_id?: string
+          parent_id?: string | null
+          proposed_date?: string
+          proposer_id?: string
+          reason?: string
+          responded_at?: string | null
+          responder_id?: string | null
+          response_note?: string | null
+          side?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ot_reschedules_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "ot_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ot_reschedules_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ot_reschedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ot_settings: {
         Row: {
           allow_manual: boolean
@@ -1953,6 +2026,7 @@ export type Database = {
       ot_tasks: {
         Row: {
           assignee_id: string | null
+          contact_date: string | null
           created_at: string
           done_at: string | null
           id: string
@@ -1978,6 +2052,7 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          contact_date?: string | null
           created_at?: string
           done_at?: string | null
           id?: string
@@ -2003,6 +2078,7 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          contact_date?: string | null
           created_at?: string
           done_at?: string | null
           id?: string
@@ -2968,6 +3044,24 @@ export type Database = {
         Returns: undefined
       }
       ot_proc_add: { Args: { _data: Json; _order: string }; Returns: string }
+      ot_reschedule_propose: {
+        Args: { _date: string; _order: string; _reason: string }
+        Returns: string
+      }
+      ot_reschedule_reply: {
+        Args: {
+          _counter: string
+          _decision: string
+          _id: string
+          _note: string
+        }
+        Returns: undefined
+      }
+      ot_reschedule_withdraw: { Args: { _id: string }; Returns: undefined }
+      ot_set_contact: {
+        Args: { _date: string; _task: string }
+        Returns: undefined
+      }
       ot_settings_save: { Args: { _allow_manual: boolean }; Returns: undefined }
       ot_supplier_active: {
         Args: { _active: boolean; _id: string }
