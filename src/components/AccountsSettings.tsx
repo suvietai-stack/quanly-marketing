@@ -594,11 +594,10 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
           <div><Label>Tên role *</Label><Input value={name} onChange={(e) => setName(e.target.value)} disabled={isSystem} /></div>
           <div><Label>Mô tả</Label><Input value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         </div>
-        {!isSuper && <div className="mt-4"><SignalScopeEditor ref={scopeRef} roleId={role?.id} /></div>}
         <div className="mt-4">
           <Label className="mb-2 block">Phân quyền</Label>
           {isSuper ? <div className="text-sm p-3 rounded border bg-muted/30">Super Admin có toàn bộ quyền và không thể giảm quyền.</div>
-            : <PermissionMatrix value={perms} onChange={setPerms} />}
+            : <PermissionMatrix value={perms} onChange={setPerms} signalScope={<SignalScopeEditor ref={scopeRef} roleId={role?.id} />} />}
         </div>
         <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Huỷ</Button><Button onClick={save}>Lưu</Button></DialogFooter>
       </DialogContent>
@@ -667,7 +666,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
 }
 
 // --------- Permission Matrix editor (grouped + subgroup + search) ---------
-function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChange: (v: PermissionKey[]) => void }) {
+function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionKey[]; onChange: (v: PermissionKey[]) => void; signalScope?: React.ReactNode }) {
   const [q, setQ] = useState("");
   const set = new Set(value);
   const toggle = (k: PermissionKey) => {
@@ -702,8 +701,10 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
       const sg = p.subGroup || "—";
       ((m[g] ||= {})[sg] ||= []).push(p);
     }
+    // Keep the scope editor mounted while searching so unsaved selections survive.
+    if (signalScope) m["Tín Hiệu Cơ Hội"] ||= {};
     return m;
-  }, [filtered]);
+  }, [filtered, signalScope]);
 
   const setMany = (keys: PermissionKey[], on: boolean) => {
     const next = new Set(set);
@@ -746,7 +747,7 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
           const allOn = onCount === allKeys.length && allKeys.length > 0;
           const someOn = onCount > 0 && !allOn;
           return (
-            <AccordionItem key={g} value={g} className="border rounded-lg overflow-hidden bg-card">
+            <AccordionItem key={g} value={g} className={`border rounded-lg overflow-hidden bg-card ${allKeys.length === 0 ? "hidden" : ""}`}>
               <div className="flex items-center gap-2 px-3 py-1 bg-muted/40 border-b">
                 <Checkbox
                   checked={allOn ? true : (someOn ? "indeterminate" : false)}
@@ -760,8 +761,27 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
                   </div>
                 </AccordionTrigger>
               </div>
-              <AccordionContent className="pb-0">
-                <div className="divide-y">
+              <AccordionContent className={`pb-0 ${g === "Tín Hiệu Cơ Hội" ? "data-[state=closed]:hidden" : ""}`} {...(g === "Tín Hiệu Cơ Hội" ? { forceMount: true as const } : {})}>
+                {g === "Tín Hiệu Cơ Hội" && signalScope && <div className="px-3 pt-3 pb-2">{signalScope}</div>}
+                {g === "Tín Hiệu Cơ Hội" ? (
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 px-4 py-3">
+                    {[
+                      "signal.create", "signal.view_all", "signal.assign", "signal.edit",
+                      "signal.delete", "signal.manage", "signal.catalog", "signal.sale", "signal.report",
+                    ].map((key) => Object.values(subs).flat().find((p) => p.key === key)).filter((p) => p !== undefined).map((p) => {
+                      const miss = broken.get(p.key);
+                      return (
+                        <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
+                          <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
+                          <span title={p.key} className={miss ? "text-amber-700 dark:text-amber-400" : ""}>
+                            {p.label}
+                            {miss && <span className="ml-1 text-[10px]" title={`Thiếu quyền cha: ${miss.join(", ")}`}>⚠</span>}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : <div className="divide-y">
                   {Object.entries(subs).map(([sg, items]) => {
                     const ks = items.map((x) => x.key);
                     const subOn = ks.filter((k) => set.has(k)).length;
@@ -794,7 +814,7 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
                       </div>
                     );
                   })}
-                </div>
+                </div>}
               </AccordionContent>
             </AccordionItem>
           );
