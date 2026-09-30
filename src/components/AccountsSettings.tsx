@@ -594,11 +594,10 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
           <div><Label>Tên role *</Label><Input value={name} onChange={(e) => setName(e.target.value)} disabled={isSystem} /></div>
           <div><Label>Mô tả</Label><Input value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         </div>
-        {!isSuper && <div className="mt-4"><SignalScopeEditor ref={scopeRef} roleId={role?.id} /></div>}
         <div className="mt-4">
           <Label className="mb-2 block">Phân quyền</Label>
           {isSuper ? <div className="text-sm p-3 rounded border bg-muted/30">Super Admin có toàn bộ quyền và không thể giảm quyền.</div>
-            : <PermissionMatrix value={perms} onChange={setPerms} />}
+            : <PermissionMatrix value={perms} onChange={setPerms} signalScope={<SignalScopeEditor ref={scopeRef} roleId={role?.id} />} />}
         </div>
         <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Huỷ</Button><Button onClick={save}>Lưu</Button></DialogFooter>
       </DialogContent>
@@ -667,7 +666,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
 }
 
 // --------- Permission Matrix editor (grouped + subgroup + search) ---------
-function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChange: (v: PermissionKey[]) => void }) {
+function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionKey[]; onChange: (v: PermissionKey[]) => void; signalScope?: React.ReactNode }) {
   const [q, setQ] = useState("");
   const set = new Set(value);
   const toggle = (k: PermissionKey) => {
@@ -761,6 +760,7 @@ function PermissionMatrix({ value, onChange }: { value: PermissionKey[]; onChang
                 </AccordionTrigger>
               </div>
               <AccordionContent className="pb-0">
+                {g === "Tín Hiệu Cơ Hội" && signalScope && <div className="px-3 pt-3 pb-2">{signalScope}</div>}
                 <div className="divide-y">
                   {Object.entries(subs).map(([sg, items]) => {
                     const ks = items.map((x) => x.key);
