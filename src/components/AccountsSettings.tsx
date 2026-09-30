@@ -701,8 +701,10 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
       const sg = p.subGroup || "—";
       ((m[g] ||= {})[sg] ||= []).push(p);
     }
+    // Keep the scope editor mounted while searching so unsaved selections survive.
+    if (signalScope) m["Tín Hiệu Cơ Hội"] ||= {};
     return m;
-  }, [filtered]);
+  }, [filtered, signalScope]);
 
   const setMany = (keys: PermissionKey[], on: boolean) => {
     const next = new Set(set);
@@ -745,7 +747,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
           const allOn = onCount === allKeys.length && allKeys.length > 0;
           const someOn = onCount > 0 && !allOn;
           return (
-            <AccordionItem key={g} value={g} className="border rounded-lg overflow-hidden bg-card">
+            <AccordionItem key={g} value={g} className={`border rounded-lg overflow-hidden bg-card ${allKeys.length === 0 ? "hidden" : ""}`}>
               <div className="flex items-center gap-2 px-3 py-1 bg-muted/40 border-b">
                 <Checkbox
                   checked={allOn ? true : (someOn ? "indeterminate" : false)}
@@ -759,7 +761,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
                   </div>
                 </AccordionTrigger>
               </div>
-              <AccordionContent className="pb-0">
+              <AccordionContent className="pb-0" forceMount={g === "Tín Hiệu Cơ Hội"}>
                 {g === "Tín Hiệu Cơ Hội" && signalScope && <div className="px-3 pt-3 pb-2">{signalScope}</div>}
                 <div className="divide-y">
                   {Object.entries(subs).map(([sg, items]) => {
