@@ -763,7 +763,25 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
               </div>
               <AccordionContent className="pb-0" forceMount={g === "Tín Hiệu Cơ Hội"}>
                 {g === "Tín Hiệu Cơ Hội" && signalScope && <div className="px-3 pt-3 pb-2">{signalScope}</div>}
-                <div className="divide-y">
+                {g === "Tín Hiệu Cơ Hội" ? (
+                  <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 px-4 py-3">
+                    {[
+                      "signal.create", "signal.view_all", "signal.assign", "signal.edit",
+                      "signal.delete", "signal.manage", "signal.catalog", "signal.sale", "signal.report",
+                    ].map((key) => Object.values(subs).flat().find((p) => p.key === key)).filter((p) => p !== undefined).map((p) => {
+                      const miss = broken.get(p.key);
+                      return (
+                        <label key={p.key} className="flex items-start gap-2 text-sm cursor-pointer hover:text-foreground/90">
+                          <Checkbox checked={set.has(p.key)} onCheckedChange={() => toggle(p.key)} className="mt-0.5" />
+                          <span title={p.key} className={miss ? "text-amber-700 dark:text-amber-400" : ""}>
+                            {p.label}
+                            {miss && <span className="ml-1 text-[10px]" title={`Thiếu quyền cha: ${miss.join(", ")}`}>⚠</span>}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : <div className="divide-y">
                   {Object.entries(subs).map(([sg, items]) => {
                     const ks = items.map((x) => x.key);
                     const subOn = ks.filter((k) => set.has(k)).length;
@@ -796,7 +814,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
                       </div>
                     );
                   })}
-                </div>
+                </div>}
               </AccordionContent>
             </AccordionItem>
           );
