@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/SignalScopeEditor";
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
@@ -570,10 +571,14 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
   const isSystem = !!role?.system;
   const isSuper = role?.id === SUPER_ADMIN_ID;
 
-  const save = () => {
+  const scopeRef = useRef<SignalScopeHandle>(null);
+  const save = async () => {
     if (!name.trim()) return toast.error("Nhập tên role");
     if (role) {
       s.updateRole(role.id, { name: isSystem ? role.name : name.trim(), description: desc.trim() || undefined, permissions: isSuper ? ALL_PERMS : perms });
+      if (!isSuper) {
+        try { await scopeRef.current?.save(); } catch (e: any) { return toast.error(e?.message || "Không lưu được phạm vi tín hiệu"); }
+      }
     } else {
       s.addRole({ name: name.trim(), description: desc.trim() || undefined, permissions: perms });
     }
@@ -589,6 +594,7 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
           <div><Label>Tên role *</Label><Input value={name} onChange={(e) => setName(e.target.value)} disabled={isSystem} /></div>
           <div><Label>Mô tả</Label><Input value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         </div>
+        {!isSuper && <div className="mt-4"><SignalScopeEditor ref={scopeRef} roleId={role?.id} /></div>}
         <div className="mt-4">
           <Label className="mb-2 block">Phân quyền</Label>
           {isSuper ? <div className="text-sm p-3 rounded border bg-muted/30">Super Admin có toàn bộ quyền và không thể giảm quyền.</div>

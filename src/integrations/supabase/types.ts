@@ -82,6 +82,8 @@ export type Database = {
           is_system: boolean
           name: string
           permissions: string[]
+          signal_scope: string[]
+          signal_scope_all: boolean
           updated_at: string
         }
         Insert: {
@@ -91,6 +93,8 @@ export type Database = {
           is_system?: boolean
           name: string
           permissions?: string[]
+          signal_scope?: string[]
+          signal_scope_all?: boolean
           updated_at?: string
         }
         Update: {
@@ -100,6 +104,8 @@ export type Database = {
           is_system?: boolean
           name?: string
           permissions?: string[]
+          signal_scope?: string[]
+          signal_scope_all?: boolean
           updated_at?: string
         }
         Relationships: []

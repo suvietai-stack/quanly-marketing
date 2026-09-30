@@ -201,7 +201,7 @@ export function SignalsPage() {
         </button>
       )}
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" aria-label="Phân loại tín hiệu">
-        {[{ k: "", label: "Tất cả" }, ...needOpts.names.map((n) => ({ k: n, label: n }))].map((x) => (
+        {[{ k: "", label: "Tất cả" }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n }))].map((x) => (
           <button key={x.k || "all"} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: x.k || undefined })); }} className={cn("shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium", (f.needGroup ?? "") === x.k ? "bg-foreground text-background border-foreground" : "bg-card")}>{x.label} <span className="opacity-70">{needCount(x.k || undefined)}</span></button>
         ))}
       </div>

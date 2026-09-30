@@ -13,3 +13,4 @@
 - Order-quote durations are computed only in private.oq_round_metrics (exposed via oq_job_times/oq_report_rows, report perms oq.report_own/all/export checked server-side); src/lib/orderQuotes/report.ts only filters/aggregates — one formula for list, detail, report, Excel.
 - Order tracking reschedules: ot_reschedules (one pending per order), only the opposite side (sale↔supply) replies via ot_reschedule_* RPC; accepting changes due_date while original_due stays — two-party agreement enforced server-side.
 - ot_* notifications are in-app only (zalo_status ineligible, push_status none, notifications.ot_order_id) — no Zalo/Push until explicitly requested.
+- Signal role scope: app_roles.signal_scope_all/signal_scope, enforced by private.sig_scope_ok in opportunity_signals RLS + sig_scope_guard trigger (covers every RPC); sale/creator branches unscoped — list, counters, report, export all read through the same RLS.
