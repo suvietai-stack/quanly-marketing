@@ -761,7 +761,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
                   </div>
                 </AccordionTrigger>
               </div>
-              <AccordionContent className="pb-0" forceMount={g === "Tín Hiệu Cơ Hội"}>
+              <AccordionContent className={`pb-0 ${g === "Tín Hiệu Cơ Hội" ? "data-[state=closed]:hidden" : ""}`} {...(g === "Tín Hiệu Cơ Hội" ? { forceMount: true as const } : {})}>
                 {g === "Tín Hiệu Cơ Hội" && signalScope && <div className="px-3 pt-3 pb-2">{signalScope}</div>}
                 {g === "Tín Hiệu Cơ Hội" ? (
                   <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 px-4 py-3">
