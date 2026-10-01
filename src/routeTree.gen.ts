@@ -9,101 +9,46 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as GoalsV2RouteImport } from './routes/goals-v2'
-import { Route as LeaveRouteImport } from './routes/leave'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as OkrsRouteImport } from './routes/okrs'
-import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as OverviewV2RouteImport } from './routes/overview-v2'
-import { Route as PendingRouteImport } from './routes/pending'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ReportsV2RouteImport } from './routes/reports-v2'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as TasksRouteImport } from './routes/tasks'
-import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
-import { Route as BrandsIndexRouteImport } from './routes/brands.index'
-import { Route as BrandsIdRouteImport } from './routes/brands.$id'
-import { Route as LocalIndexRouteImport } from './routes/local.index'
-import { Route as LocalIdRouteImport } from './routes/local.$id'
-import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
-import { Route as OrderQuotesIdRouteImport } from './routes/order-quotes.$id'
-import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
-import { Route as OrderQuotesReportRouteImport } from './routes/order-quotes.report'
-import { Route as OrderTrackingIndexRouteImport } from './routes/order-tracking.index'
-import { Route as OrderTrackingIdRouteImport } from './routes/order-tracking.$id'
-import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
-import { Route as SignalsIndexRouteImport } from './routes/signals.index'
-import { Route as SignalsReportRouteImport } from './routes/signals.report'
-import { Route as SocialIndexRouteImport } from './routes/social.index'
-import { Route as SocialIdRouteImport } from './routes/social.$id'
+import { Route as VideosRouteImport } from './routes/videos'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportsV2RouteImport } from './routes/reports-v2'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PendingRouteImport } from './routes/pending'
+import { Route as OverviewV2RouteImport } from './routes/overview-v2'
+import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OkrsRouteImport } from './routes/okrs'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaveRouteImport } from './routes/leave'
+import { Route as GoalsV2RouteImport } from './routes/goals-v2'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
+import { Route as SocialIndexRouteImport } from './routes/social.index'
+import { Route as SignalsIndexRouteImport } from './routes/signals.index'
+import { Route as OrderTrackingIndexRouteImport } from './routes/order-tracking.index'
+import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
+import { Route as LocalIndexRouteImport } from './routes/local.index'
+import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
-import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
-import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
-import { Route as ApiPublicZaloDispatchCronRouteImport } from './routes/api/public/zalo/dispatch-cron'
-import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
+import { Route as SocialIdRouteImport } from './routes/social.$id'
+import { Route as SignalsReportRouteImport } from './routes/signals.report'
+import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
+import { Route as OrderTrackingIdRouteImport } from './routes/order-tracking.$id'
+import { Route as OrderQuotesReportRouteImport } from './routes/order-quotes.report'
+import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
+import { Route as OrderQuotesIdRouteImport } from './routes/order-quotes.$id'
+import { Route as LocalIdRouteImport } from './routes/local.$id'
+import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo/webhook'
+import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
+import { Route as ApiPublicZaloDispatchCronRouteImport } from './routes/api/public/zalo/dispatch-cron'
+import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
+import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GoalsV2Route = GoalsV2RouteImport.update({
-  id: '/goals-v2',
-  path: '/goals-v2',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LeaveRoute = LeaveRouteImport.update({
-  id: '/leave',
-  path: '/leave',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OkrsRoute = OkrsRouteImport.update({
-  id: '/okrs',
-  path: '/okrs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrdersRoute = OrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OverviewV2Route = OverviewV2RouteImport.update({
-  id: '/overview-v2',
-  path: '/overview-v2',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PendingRoute = PendingRouteImport.update({
-  id: '/pending',
-  path: '/pending',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsV2Route = ReportsV2RouteImport.update({
-  id: '/reports-v2',
-  path: '/reports-v2',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksRoute = TasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
+const WebContentsRoute = WebContentsRouteImport.update({
+  id: '/web-contents',
+  path: '/web-contents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VideosRoute = VideosRouteImport.update({
@@ -111,84 +56,64 @@ const VideosRoute = VideosRouteImport.update({
   path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WebContentsRoute = WebContentsRouteImport.update({
-  id: '/web-contents',
-  path: '/web-contents',
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BrandsIndexRoute = BrandsIndexRouteImport.update({
-  id: '/brands/',
-  path: '/brands/',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BrandsIdRoute = BrandsIdRouteImport.update({
-  id: '/brands/$id',
-  path: '/brands/$id',
+const ReportsV2Route = ReportsV2RouteImport.update({
+  id: '/reports-v2',
+  path: '/reports-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LocalIndexRoute = LocalIndexRouteImport.update({
-  id: '/local/',
-  path: '/local/',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LocalIdRoute = LocalIdRouteImport.update({
-  id: '/local/$id',
-  path: '/local/$id',
+const PendingRoute = PendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderQuotesIndexRoute = OrderQuotesIndexRouteImport.update({
-  id: '/order-quotes/',
-  path: '/order-quotes/',
+const OverviewV2Route = OverviewV2RouteImport.update({
+  id: '/overview-v2',
+  path: '/overview-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderQuotesIdRoute = OrderQuotesIdRouteImport.update({
-  id: '/order-quotes/$id',
-  path: '/order-quotes/$id',
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderQuotesNewRoute = OrderQuotesNewRouteImport.update({
-  id: '/order-quotes/new',
-  path: '/order-quotes/new',
+const OkrsRoute = OkrsRouteImport.update({
+  id: '/okrs',
+  path: '/okrs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderQuotesReportRoute = OrderQuotesReportRouteImport.update({
-  id: '/order-quotes/report',
-  path: '/order-quotes/report',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderTrackingIndexRoute = OrderTrackingIndexRouteImport.update({
-  id: '/order-tracking/',
-  path: '/order-tracking/',
+const LeaveRoute = LeaveRouteImport.update({
+  id: '/leave',
+  path: '/leave',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderTrackingIdRoute = OrderTrackingIdRouteImport.update({
-  id: '/order-tracking/$id',
-  path: '/order-tracking/$id',
+const GoalsV2Route = GoalsV2RouteImport.update({
+  id: '/goals-v2',
+  path: '/goals-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
-  id: '/settings_/kpi-v2',
-  path: '/settings/kpi-v2',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignalsIndexRoute = SignalsIndexRouteImport.update({
-  id: '/signals/',
-  path: '/signals/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignalsReportRoute = SignalsReportRouteImport.update({
-  id: '/signals/report',
-  path: '/signals/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SocialIndexRoute = SocialIndexRouteImport.update({
-  id: '/social/',
-  path: '/social/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SocialIdRoute = SocialIdRouteImport.update({
-  id: '/social/$id',
-  path: '/social/$id',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WebsitesIndexRoute = WebsitesIndexRouteImport.update({
@@ -196,36 +121,111 @@ const WebsitesIndexRoute = WebsitesIndexRouteImport.update({
   path: '/websites/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SocialIndexRoute = SocialIndexRouteImport.update({
+  id: '/social/',
+  path: '/social/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignalsIndexRoute = SignalsIndexRouteImport.update({
+  id: '/signals/',
+  path: '/signals/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderTrackingIndexRoute = OrderTrackingIndexRouteImport.update({
+  id: '/order-tracking/',
+  path: '/order-tracking/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderQuotesIndexRoute = OrderQuotesIndexRouteImport.update({
+  id: '/order-quotes/',
+  path: '/order-quotes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocalIndexRoute = LocalIndexRouteImport.update({
+  id: '/local/',
+  path: '/local/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrandsIndexRoute = BrandsIndexRouteImport.update({
+  id: '/brands/',
+  path: '/brands/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebsitesIdRoute = WebsitesIdRouteImport.update({
   id: '/websites/$id',
   path: '/websites/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
-  id: '/api/public/push/dispatch',
-  path: '/api/public/push/dispatch',
+const SocialIdRoute = SocialIdRouteImport.update({
+  id: '/social/$id',
+  path: '/social/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
-  id: '/api/public/zalo/care-cron',
-  path: '/api/public/zalo/care-cron',
+const SignalsReportRoute = SignalsReportRouteImport.update({
+  id: '/signals/report',
+  path: '/signals/report',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicZaloDispatchCronRoute =
-  ApiPublicZaloDispatchCronRouteImport.update({
-    id: '/api/public/zalo/dispatch-cron',
-    path: '/api/public/zalo/dispatch-cron',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
+  id: '/settings_/kpi-v2',
+  path: '/settings/kpi-v2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderTrackingIdRoute = OrderTrackingIdRouteImport.update({
+  id: '/order-tracking/$id',
+  path: '/order-tracking/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderQuotesReportRoute = OrderQuotesReportRouteImport.update({
+  id: '/order-quotes/report',
+  path: '/order-quotes/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderQuotesNewRoute = OrderQuotesNewRouteImport.update({
+  id: '/order-quotes/new',
+  path: '/order-quotes/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderQuotesIdRoute = OrderQuotesIdRouteImport.update({
+  id: '/order-quotes/$id',
+  path: '/order-quotes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocalIdRoute = LocalIdRouteImport.update({
+  id: '/local/$id',
+  path: '/local/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrandsIdRoute = BrandsIdRouteImport.update({
+  id: '/brands/$id',
+  path: '/brands/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
+  id: '/api/public/zalo/webhook',
+  path: '/api/public/zalo/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicZaloOauthCallbackRoute =
   ApiPublicZaloOauthCallbackRouteImport.update({
     id: '/api/public/zalo/oauth-callback',
     path: '/api/public/zalo/oauth-callback',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
-  id: '/api/public/zalo/webhook',
-  path: '/api/public/zalo/webhook',
+const ApiPublicZaloDispatchCronRoute =
+  ApiPublicZaloDispatchCronRouteImport.update({
+    id: '/api/public/zalo/dispatch-cron',
+    path: '/api/public/zalo/dispatch-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
+  id: '/api/public/zalo/care-cron',
+  path: '/api/public/zalo/care-cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
+  id: '/api/public/push/dispatch',
+  path: '/api/public/push/dispatch',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -502,88 +502,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/goals-v2': {
-      id: '/goals-v2'
-      path: '/goals-v2'
-      fullPath: '/goals-v2'
-      preLoaderRoute: typeof GoalsV2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/leave': {
-      id: '/leave'
-      path: '/leave'
-      fullPath: '/leave'
-      preLoaderRoute: typeof LeaveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/okrs': {
-      id: '/okrs'
-      path: '/okrs'
-      fullPath: '/okrs'
-      preLoaderRoute: typeof OkrsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/orders': {
-      id: '/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/overview-v2': {
-      id: '/overview-v2'
-      path: '/overview-v2'
-      fullPath: '/overview-v2'
-      preLoaderRoute: typeof OverviewV2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pending': {
-      id: '/pending'
-      path: '/pending'
-      fullPath: '/pending'
-      preLoaderRoute: typeof PendingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports-v2': {
-      id: '/reports-v2'
-      path: '/reports-v2'
-      fullPath: '/reports-v2'
-      preLoaderRoute: typeof ReportsV2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks': {
-      id: '/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof TasksRouteImport
+    '/web-contents': {
+      id: '/web-contents'
+      path: '/web-contents'
+      fullPath: '/web-contents'
+      preLoaderRoute: typeof WebContentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/videos': {
@@ -593,116 +516,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/web-contents': {
-      id: '/web-contents'
-      path: '/web-contents'
-      fullPath: '/web-contents'
-      preLoaderRoute: typeof WebContentsRouteImport
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/brands/': {
-      id: '/brands/'
-      path: '/brands'
-      fullPath: '/brands/'
-      preLoaderRoute: typeof BrandsIndexRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/brands/$id': {
-      id: '/brands/$id'
-      path: '/brands/$id'
-      fullPath: '/brands/$id'
-      preLoaderRoute: typeof BrandsIdRouteImport
+    '/reports-v2': {
+      id: '/reports-v2'
+      path: '/reports-v2'
+      fullPath: '/reports-v2'
+      preLoaderRoute: typeof ReportsV2RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/local/': {
-      id: '/local/'
-      path: '/local'
-      fullPath: '/local/'
-      preLoaderRoute: typeof LocalIndexRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/local/$id': {
-      id: '/local/$id'
-      path: '/local/$id'
-      fullPath: '/local/$id'
-      preLoaderRoute: typeof LocalIdRouteImport
+    '/pending': {
+      id: '/pending'
+      path: '/pending'
+      fullPath: '/pending'
+      preLoaderRoute: typeof PendingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-quotes/': {
-      id: '/order-quotes/'
-      path: '/order-quotes'
-      fullPath: '/order-quotes/'
-      preLoaderRoute: typeof OrderQuotesIndexRouteImport
+    '/overview-v2': {
+      id: '/overview-v2'
+      path: '/overview-v2'
+      fullPath: '/overview-v2'
+      preLoaderRoute: typeof OverviewV2RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-quotes/$id': {
-      id: '/order-quotes/$id'
-      path: '/order-quotes/$id'
-      fullPath: '/order-quotes/$id'
-      preLoaderRoute: typeof OrderQuotesIdRouteImport
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-quotes/new': {
-      id: '/order-quotes/new'
-      path: '/order-quotes/new'
-      fullPath: '/order-quotes/new'
-      preLoaderRoute: typeof OrderQuotesNewRouteImport
+    '/okrs': {
+      id: '/okrs'
+      path: '/okrs'
+      fullPath: '/okrs'
+      preLoaderRoute: typeof OkrsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-quotes/report': {
-      id: '/order-quotes/report'
-      path: '/order-quotes/report'
-      fullPath: '/order-quotes/report'
-      preLoaderRoute: typeof OrderQuotesReportRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-tracking/': {
-      id: '/order-tracking/'
-      path: '/order-tracking'
-      fullPath: '/order-tracking/'
-      preLoaderRoute: typeof OrderTrackingIndexRouteImport
+    '/leave': {
+      id: '/leave'
+      path: '/leave'
+      fullPath: '/leave'
+      preLoaderRoute: typeof LeaveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order-tracking/$id': {
-      id: '/order-tracking/$id'
-      path: '/order-tracking/$id'
-      fullPath: '/order-tracking/$id'
-      preLoaderRoute: typeof OrderTrackingIdRouteImport
+    '/goals-v2': {
+      id: '/goals-v2'
+      path: '/goals-v2'
+      fullPath: '/goals-v2'
+      preLoaderRoute: typeof GoalsV2RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings_/kpi-v2': {
-      id: '/settings_/kpi-v2'
-      path: '/settings/kpi-v2'
-      fullPath: '/settings/kpi-v2'
-      preLoaderRoute: typeof SettingsKpiV2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signals/': {
-      id: '/signals/'
-      path: '/signals'
-      fullPath: '/signals/'
-      preLoaderRoute: typeof SignalsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signals/report': {
-      id: '/signals/report'
-      path: '/signals/report'
-      fullPath: '/signals/report'
-      preLoaderRoute: typeof SignalsReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/social/': {
-      id: '/social/'
-      path: '/social'
-      fullPath: '/social/'
-      preLoaderRoute: typeof SocialIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/social/$id': {
-      id: '/social/$id'
-      path: '/social/$id'
-      fullPath: '/social/$id'
-      preLoaderRoute: typeof SocialIdRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/websites/': {
@@ -712,6 +607,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebsitesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/social/': {
+      id: '/social/'
+      path: '/social'
+      fullPath: '/social/'
+      preLoaderRoute: typeof SocialIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signals/': {
+      id: '/signals/'
+      path: '/signals'
+      fullPath: '/signals/'
+      preLoaderRoute: typeof SignalsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-tracking/': {
+      id: '/order-tracking/'
+      path: '/order-tracking'
+      fullPath: '/order-tracking/'
+      preLoaderRoute: typeof OrderTrackingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-quotes/': {
+      id: '/order-quotes/'
+      path: '/order-quotes'
+      fullPath: '/order-quotes/'
+      preLoaderRoute: typeof OrderQuotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/local/': {
+      id: '/local/'
+      path: '/local'
+      fullPath: '/local/'
+      preLoaderRoute: typeof LocalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brands/': {
+      id: '/brands/'
+      path: '/brands'
+      fullPath: '/brands/'
+      preLoaderRoute: typeof BrandsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/websites/$id': {
       id: '/websites/$id'
       path: '/websites/$id'
@@ -719,25 +656,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebsitesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/push/dispatch': {
-      id: '/api/public/push/dispatch'
-      path: '/api/public/push/dispatch'
-      fullPath: '/api/public/push/dispatch'
-      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
+    '/social/$id': {
+      id: '/social/$id'
+      path: '/social/$id'
+      fullPath: '/social/$id'
+      preLoaderRoute: typeof SocialIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/zalo/care-cron': {
-      id: '/api/public/zalo/care-cron'
-      path: '/api/public/zalo/care-cron'
-      fullPath: '/api/public/zalo/care-cron'
-      preLoaderRoute: typeof ApiPublicZaloCareCronRouteImport
+    '/signals/report': {
+      id: '/signals/report'
+      path: '/signals/report'
+      fullPath: '/signals/report'
+      preLoaderRoute: typeof SignalsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/zalo/dispatch-cron': {
-      id: '/api/public/zalo/dispatch-cron'
-      path: '/api/public/zalo/dispatch-cron'
-      fullPath: '/api/public/zalo/dispatch-cron'
-      preLoaderRoute: typeof ApiPublicZaloDispatchCronRouteImport
+    '/settings_/kpi-v2': {
+      id: '/settings_/kpi-v2'
+      path: '/settings/kpi-v2'
+      fullPath: '/settings/kpi-v2'
+      preLoaderRoute: typeof SettingsKpiV2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-tracking/$id': {
+      id: '/order-tracking/$id'
+      path: '/order-tracking/$id'
+      fullPath: '/order-tracking/$id'
+      preLoaderRoute: typeof OrderTrackingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-quotes/report': {
+      id: '/order-quotes/report'
+      path: '/order-quotes/report'
+      fullPath: '/order-quotes/report'
+      preLoaderRoute: typeof OrderQuotesReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-quotes/new': {
+      id: '/order-quotes/new'
+      path: '/order-quotes/new'
+      fullPath: '/order-quotes/new'
+      preLoaderRoute: typeof OrderQuotesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-quotes/$id': {
+      id: '/order-quotes/$id'
+      path: '/order-quotes/$id'
+      fullPath: '/order-quotes/$id'
+      preLoaderRoute: typeof OrderQuotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/local/$id': {
+      id: '/local/$id'
+      path: '/local/$id'
+      fullPath: '/local/$id'
+      preLoaderRoute: typeof LocalIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brands/$id': {
+      id: '/brands/$id'
+      path: '/brands/$id'
+      fullPath: '/brands/$id'
+      preLoaderRoute: typeof BrandsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zalo/webhook': {
+      id: '/api/public/zalo/webhook'
+      path: '/api/public/zalo/webhook'
+      fullPath: '/api/public/zalo/webhook'
+      preLoaderRoute: typeof ApiPublicZaloWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/zalo/oauth-callback': {
@@ -747,11 +733,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicZaloOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/zalo/webhook': {
-      id: '/api/public/zalo/webhook'
-      path: '/api/public/zalo/webhook'
-      fullPath: '/api/public/zalo/webhook'
-      preLoaderRoute: typeof ApiPublicZaloWebhookRouteImport
+    '/api/public/zalo/dispatch-cron': {
+      id: '/api/public/zalo/dispatch-cron'
+      path: '/api/public/zalo/dispatch-cron'
+      fullPath: '/api/public/zalo/dispatch-cron'
+      preLoaderRoute: typeof ApiPublicZaloDispatchCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zalo/care-cron': {
+      id: '/api/public/zalo/care-cron'
+      path: '/api/public/zalo/care-cron'
+      fullPath: '/api/public/zalo/care-cron'
+      preLoaderRoute: typeof ApiPublicZaloCareCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/push/dispatch': {
+      id: '/api/public/push/dispatch'
+      path: '/api/public/push/dispatch'
+      fullPath: '/api/public/push/dispatch'
+      preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
