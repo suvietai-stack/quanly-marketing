@@ -1,6 +1,7 @@
 /** Quy tắc thao tác Mục tiêu theo trạng thái + khóa kỳ (pure, dùng cho cả giao diện và service). */
 import type { Goal, GoalStatus } from "./types";
 import type { KpiDb } from "./service";
+import type { KpiPerms } from "./perms";
 
 export type GoalCaps = {
   edit: boolean; addKr: boolean; allocate: boolean; duplicate: boolean;
@@ -45,19 +46,21 @@ export function goalHasLinks(goalId: string, db: Lite): boolean {
   return goalDeleteBlockers(goalId, db).length > 0;
 }
 
-export function goalCaps(g: Pick<Goal, "id" | "status">, db: Lite, isAdmin: boolean): GoalCaps & { deleteBlockers: string[] } {
+export function goalCaps(g: Pick<Goal, "id" | "status">, db: Lite, perms: boolean | KpiPerms): GoalCaps & { deleteBlockers: string[] } {
+  const P = (k: keyof KpiPerms) => (typeof perms === "boolean" ? perms : perms[k]);
   const locked = goalLocked(g.id, db);
   const open = g.status === "draft" || g.status === "active";
-  const can = isAdmin && open && !locked;
+  const ok = open && !locked;
   const reason = locked ? "Kỳ đã khóa — chỉ xem. Nhân bản sang kỳ mới để tiếp tục."
     : g.status === "cancelled" ? "Mục tiêu đã hủy — chỉ xem."
     : g.status === "closed" ? "Mục tiêu đã hoàn thành — chỉ xem kết quả." : null;
   const deleteBlockers = goalDeleteBlockers(g.id, db);
+  const edit = ok && P("kpi.goal_edit");
   return {
-    edit: can, addKr: can, allocate: can, duplicate: isAdmin,
-    cancel: can, restore: isAdmin && g.status === "cancelled" && !locked,
-    archive: isAdmin, delete: isAdmin && deleteBlockers.length === 0,
-    readOnly: !can, reason, deleteBlockers,
+    edit, addKr: ok && P("kpi.kr_assign"), allocate: ok && P("kpi.kr_assign"), duplicate: P("kpi.goal_create"),
+    cancel: ok && P("kpi.goal_archive"), restore: P("kpi.goal_archive") && g.status === "cancelled" && !locked,
+    archive: P("kpi.goal_archive"), delete: P("kpi.goal_delete") && deleteBlockers.length === 0,
+    readOnly: !edit, reason, deleteBlockers,
   };
 }
 
