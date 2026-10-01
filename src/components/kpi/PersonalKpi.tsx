@@ -1,5 +1,6 @@
 /** KPI V2 — thẻ KPI cá nhân, bảng nhân sự, tiến độ theo Brand/kênh. Chỉ giao diện: dùng lại buildEmployeeReport/buildOverview. */
 import { directionOf, KR_STATE_TONE, krGoalId } from "@/lib/kpi/evaluate";
+import { useKpiActor } from "@/lib/kpi/useKpiActor";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Target, Users } from "lucide-react";
@@ -28,8 +29,9 @@ export function useKpiView() {
     hydrateKpi().then(() => setReady(true)).catch((e) => setReady(String(e?.message ?? e)));
     return onCloudSync(() => setTick((t) => t + 1));
   }, []);
-  const isAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
-  const db: KpiDb | null = useMemo(() => (ready === true && me ? svc.listForActor({ id: me.id, isAdmin }) : null), [ready, me, isAdmin, tick]);
+  const kActor = useKpiActor();
+  const isAdmin = !!kActor?.isAdmin;
+  const db: KpiDb | null = useMemo(() => (ready === true && me ? svc.listForActor(kActor ?? { id: me.id, isAdmin: false }) : null), [ready, me, isAdmin, tick]);
   return { db, error: typeof ready === "string" ? ready : null, isAdmin, me };
 }
 

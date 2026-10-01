@@ -1,5 +1,6 @@
 /** Dashboard — Tiến độ kế hoạch theo Brand/Website/Page. Tái sử dụng buildOverview (không viết lại công thức). */
 import { useEffect, useMemo, useState } from "react";
+import { useKpiActor } from "@/lib/kpi/useKpiActor";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
@@ -21,8 +22,9 @@ export function PlanProgress() {
     hydrateKpi().then(() => setReady(true)).catch((e) => setReady(String(e?.message ?? e)));
     return onCloudSync(() => setTick((t) => t + 1));
   }, []);
-  const isAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
-  const db = useMemo(() => (ready === true && me ? svc.listForActor({ id: me.id, isAdmin }) : null), [ready, me, isAdmin, tick]);
+  const kActor = useKpiActor();
+  const isAdmin = !!kActor?.isAdmin;
+  const db = useMemo(() => (ready === true && me ? svc.listForActor(kActor ?? { id: me.id, isAdmin: false }) : null), [ready, me, isAdmin, tick]);
   const today = todayVN();
   const periodKeys = db ? [...new Set(db.periods.map((p) => `${p.periodStart}|${p.periodEnd}`))].sort().reverse() : [];
   const current = periodKeys.find((k) => { const [a, b] = k.split("|"); return a <= today && today <= b; }) ?? periodKeys[0] ?? "";

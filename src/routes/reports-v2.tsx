@@ -22,7 +22,7 @@ function ReportsV2Page() {
   const search = Route.useSearch();
   const [tab, setTab] = useState<"project" | "staff">(search.userId ? "staff" : "project");
   return (
-    <KpiV2Gate title="Báo cáo">
+    <KpiV2Gate title="Báo cáo" perm="kpi.report">
       {(a) => (
         <div className="space-y-4">
           <div className="inline-flex rounded-lg bg-muted p-1 text-sm">
