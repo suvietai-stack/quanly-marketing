@@ -40,7 +40,8 @@ const now = () => new Date().toISOString();
 export class KpiError extends Error {}
 
 /** Quyền: chỉ Admin quản lý; nhân viên chỉ xem KPI của mình. (Ở DB: RLS tương ứng.) */
-export interface KpiActor { id: string; isAdmin: boolean }
+import { kpiCan, type KpiActor, type KpiPermKey } from "./perms";
+export type { KpiActor } from "./perms";
 
 export function scopeOf(i: { brandId?: string | null; websiteId?: string | null; socialId?: string | null }): KpiScope {
   if (i.websiteId) return "website";
@@ -54,7 +55,13 @@ const scopeKey = (i: { krId?: string | null; brandId?: string | null; websiteId?
 export type NewItem = { krId?: string | null; metricKey: string; targetValue: number; brandId?: string | null; websiteId?: string | null; socialId?: string | null; label?: string | null; metadata?: Record<string, unknown> };
 
 export function createKpiService(repo: KpiRepository) {
-  const requireAdmin = (a: KpiActor) => { if (!a.isAdmin) throw new KpiError("Chỉ Admin được quản lý KPI."); };
+  const MSG: Partial<Record<KpiPermKey, string>> = {
+    "kpi.goal_create": "Bạn không có quyền Tạo mục tiêu.", "kpi.goal_edit": "Bạn không có quyền Sửa mục tiêu.",
+    "kpi.goal_archive": "Bạn không có quyền Hủy / Lưu trữ mục tiêu.", "kpi.goal_delete": "Bạn không có quyền Xóa mục tiêu.",
+    "kpi.kr_assign": "Bạn không có quyền Thêm / Giao KR.", "kpi.kr_adjust": "Bạn không có quyền Điều chỉnh KR đã giao.",
+    "kpi.period_manage": "Bạn không có quyền Quản lý kỳ KPI.",
+  };
+  const need = (a: KpiActor, k: KpiPermKey) => { if (!kpiCan(a, k)) throw new KpiError(MSG[k] ?? "Bạn không có quyền thao tác KPI."); };
   const mutate = <T>(fn: (db: KpiDb) => T): T => { const db = repo.load(); const r = fn(db); repo.save(db); return r; };
 
   function validateItem(it: NewItem) {
@@ -91,7 +98,7 @@ export function createKpiService(repo: KpiRepository) {
     },
 
     saveGoal(a: KpiActor, g: Partial<Goal> & { title: string; periodStart: string; periodEnd: string }) {
-      requireAdmin(a);
+      if (!g.id) need(a, "kpi.goal_create");
       if (!g.title.trim()) throw new KpiError("Thiếu tiêu đề mục tiêu.");
       if (g.periodEnd < g.periodStart) throw new KpiError("Kỳ không hợp lệ.");
       return mutate((db) => {
@@ -103,6 +110,11 @@ export function createKpiService(repo: KpiRepository) {
           const onlyArchive = g.title.trim() === existing.title && g.periodStart === existing.periodStart && g.periodEnd === existing.periodEnd && (g.status ?? existing.status) === existing.status;
           const editable = (existing.status === "draft" || existing.status === "active") && !locked;
           if (!editable && !onlyArchive && (g.status ?? existing.status) === existing.status) throw new KpiError("Mục tiêu đang ở chế độ chỉ xem — không sửa được.");
+          const statusChange = (g.status ?? existing.status) !== existing.status;
+          const archToggle = !!(g.metadata && "archived" in g.metadata) && (g.metadata as { archived?: unknown }).archived !== (existing.metadata as { archived?: unknown })?.archived;
+          const toCancelOrRestore = statusChange && (g.status === "cancelled" || existing.status === "cancelled");
+          if ((onlyArchive && archToggle) || toCancelOrRestore) need(a, "kpi.goal_archive");
+          else need(a, "kpi.goal_edit");
         }
         const rec: Goal = {
           id: existing?.id ?? uid(), title: g.title.trim(), description: g.description ?? null,
@@ -118,7 +130,7 @@ export function createKpiService(repo: KpiRepository) {
 
     /** Giao KPI: 1 kỳ cho user + nhiều metric. Chống trùng user+kỳ+metric+scope. */
     assign(a: KpiActor, input: { userId: string; periodType: EmployeeKpiPeriod["periodType"]; periodStart: string; periodEnd: string; goalId?: string | null; items: NewItem[] }) {
-      requireAdmin(a);
+      need(a, "kpi.kr_assign");
       if (!input.userId) throw new KpiError("Chưa chọn nhân sự.");
       if (input.periodEnd < input.periodStart) throw new KpiError("Kỳ không hợp lệ.");
       if (!input.items.length) throw new KpiError("Chưa có chỉ tiêu nào.");
@@ -166,7 +178,7 @@ export function createKpiService(repo: KpiRepository) {
 
     /** Đổi target: chỉ Admin; kỳ locked/closed → chặn. Mọi thay đổi ghi audit. Actual không đổi (tính từ engine). */
     updateTarget(a: KpiActor, itemId: string, to: number, reason = "") {
-      requireAdmin(a);
+      need(a, "kpi.kr_adjust");
       if (!Number.isFinite(to) || to <= 0) throw new KpiError("Target phải > 0.");
       return mutate((db) => {
         const it = db.items.find((i) => i.id === itemId);
@@ -181,7 +193,7 @@ export function createKpiService(repo: KpiRepository) {
 
     /** Cập nhật metadata KR (ghi nhận/xác nhận kết quả thủ công). Chỉ Admin; kỳ khóa → chặn. */
     updateItemMetadata(a: KpiActor, itemId: string, patch: Record<string, unknown>) {
-      requireAdmin(a);
+      need(a, "kpi.kr_adjust");
       return mutate((db) => {
         const it = db.items.find((i) => i.id === itemId);
         if (!it) throw new KpiError("Không tìm thấy KR.");
@@ -193,7 +205,7 @@ export function createKpiService(repo: KpiRepository) {
     },
 
     removeItem(a: KpiActor, itemId: string) {
-      requireAdmin(a);
+      need(a, "kpi.kr_adjust");
       mutate((db) => {
         const it = db.items.find((i) => i.id === itemId);
         const p = it && db.periods.find((x) => x.id === it.kpiPeriodId);
@@ -204,7 +216,7 @@ export function createKpiService(repo: KpiRepository) {
 
     /** draft → active → locked → closed (một chiều). Khi khóa: snapshot target vào metadata. */
     setStatus(a: KpiActor, periodId: string, status: KpiPeriodStatus, results?: Record<string, { actual: number | null; achieved: boolean | null; evidence: { type: string; id: string; at: string }[] }>) {
-      requireAdmin(a);
+      need(a, "kpi.period_manage");
       const order: KpiPeriodStatus[] = ["draft", "active", "locked", "closed"];
       return mutate((db) => {
         const p = db.periods.find((x) => x.id === periodId);
@@ -224,7 +236,7 @@ export function createKpiService(repo: KpiRepository) {
 
     /* ---------- KR chung + phân bổ ---------- */
     saveKr(a: KpiActor, k: Partial<GoalKr> & { goalId: string; metricKey: string; targetValue: number }, reason = "") {
-      requireAdmin(a);
+      need(a, k.id ? "kpi.kr_adjust" : "kpi.kr_assign");
       const m = getKpiMetric(k.metricKey);
       if (!m) throw new KpiError(`Metric không tồn tại: ${k.metricKey}`);
       if (!Number.isFinite(k.targetValue) || k.targetValue <= 0) throw new KpiError(`Chỉ tiêu của "${m.label}" phải > 0.`);
@@ -250,7 +262,7 @@ export function createKpiService(repo: KpiRepository) {
       });
     },
     setKrStatus(a: KpiActor, krId: string, status: GoalKrStatus) {
-      requireAdmin(a);
+      need(a, "kpi.kr_adjust");
       return mutate((db) => { const k = (db.krs ?? []).find((x) => x.id === krId); if (!k) throw new KpiError("Không tìm thấy KR.");
         const g = db.goals.find((x) => x.id === k.goalId);
         if (g && goalLocked(g.id, db) && status !== "archived") throw new KpiError("Kỳ đã khóa — chỉ được lưu trữ KR.");
@@ -258,7 +270,7 @@ export function createKpiService(repo: KpiRepository) {
     },
     /** Xóa KR: chỉ khi chưa có dòng phân bổ nào. */
     deleteKr(a: KpiActor, krId: string) {
-      requireAdmin(a);
+      need(a, "kpi.kr_adjust");
       mutate((db) => {
         const kr = (db.krs ?? []).find((x) => x.id === krId);
         if (kr && goalLocked(kr.goalId, db)) throw new KpiError("Kỳ đã khóa — không xóa KR.");
@@ -268,7 +280,7 @@ export function createKpiService(repo: KpiRepository) {
     },
     /** Xóa mục tiêu: chỉ khi không còn KR hay chỉ tiêu nào liên kết. */
     deleteGoal(a: KpiActor, goalId: string) {
-      requireAdmin(a);
+      need(a, "kpi.goal_delete");
       mutate((db) => {
         const why = goalDeleteBlockers(goalId, db);
         if (why.length) throw new KpiError(`Không thể xóa vĩnh viễn: ${why.join("; ")}. Hãy dùng Hủy hoặc Lưu trữ để giữ lịch sử.`);
