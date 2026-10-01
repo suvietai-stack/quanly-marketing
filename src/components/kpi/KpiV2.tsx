@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { kpiCan, type KpiActor, type KpiPermKey } from "@/lib/kpi/perms";
+import { useKpiActor } from "@/lib/kpi/useKpiActor";
 import { useStore } from "@/lib/store";
 import { KPI_METRIC_LIST, KR_GROUPS, AVAILABILITY_LABEL, DIRECTION_LABEL, getKpiMetric, isAssignable } from "@/lib/kpi/metrics";
 import { calculateKrItem, KR_ENGINE_KEYS } from "@/lib/kpi/calculateKr";
@@ -33,8 +35,8 @@ async function run(fn: () => void, ok: string, after: () => void): Promise<boole
   catch (e) { toast.error(e instanceof KpiError ? e.message : `Không lưu được: ${(e as Error).message ?? e}`); after(); return false; }
 }
 
-export function KpiV2Gate({ title, children }: { title: string; children: (actor: { id: string; isAdmin: boolean }) => ReactNode }) {
-  const me = useAuth((s) => s.users.find((x) => x.id === s.currentUserId));
+export function KpiV2Gate({ title, children, perm }: { title: string; children: (actor: KpiActor) => ReactNode; perm?: KpiPermKey | KpiPermKey[] }) {
+  const actor = useKpiActor();
   const [state, setState] = useState<{ on: boolean; ready: boolean; error?: string } | null>(null);
   useEffect(() => {
     const on = isKpiV2Enabled();
@@ -48,14 +50,14 @@ export function KpiV2Gate({ title, children }: { title: string; children: (actor
   }, []);
   // Quyền hiển thị lấy từ role đã tải trong useAuth (role-super-admin / role-admin / tài khoản hệ thống).
   // Quyền GHI dữ liệu vẫn do RLS phía database kiểm soát — giao diện chỉ quyết định hiện/ẩn biểu mẫu.
-  const isAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
   if (!state) return <div className="p-8 text-sm text-muted-foreground">Đang tải…</div>;
-  if (!state.on || !me) return <div className="p-8 text-sm text-muted-foreground">Trang không khả dụng.</div>;
+  if (!state.on || !actor) return <div className="p-8 text-sm text-muted-foreground">Trang không khả dụng.</div>;
+  if (perm && !(Array.isArray(perm) ? perm : [perm]).some((k) => kpiCan(actor, k))) return <div className="p-8 text-sm text-muted-foreground">Bạn không có quyền truy cập trang này.</div>;
   if (state.error) return <div className="p-8 text-sm text-destructive">Không tải được KPI: {state.error}</div>;
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-xl font-semibold">{title}</h1>
-      {children({ id: me.id, isAdmin })}
+      {children(actor)}
     </div>
   );
 }
@@ -67,7 +69,7 @@ const PERIOD_STATUS: Record<string, string> = { draft: "Nháp", active: "Đang �
 const NEXT_LABEL: Record<string, string> = { active: "Áp dụng", locked: "Khóa kỳ", closed: "Đóng kỳ" };
 
 /* ---------------- Mục tiêu ---------------- */
-export function GoalsV2({ actor, periodKey, brandFilter }: { actor: { id: string; isAdmin: boolean }; periodKey?: string; brandFilter?: string }) {
+export function GoalsV2({ actor, periodKey, brandFilter }: { actor: KpiActor; periodKey?: string; brandFilter?: string }) {
   const { db, refresh } = useKpiDb();
   if (!db) return null;
   return <GoalsBoard actor={actor} db={db} refresh={refresh} periodKey={periodKey} brandFilter={brandFilter} />;
@@ -79,7 +81,7 @@ function useActual() {
   return (userId: string, it: EmployeeKpiItem, ps: string, pe: string, locked = false) => f(userId, it, ps, pe, locked);
 }
 
-export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean } }) {
+export function AssignKpiV2({ actor }: { actor: KpiActor }) {
   const [tab, setTab] = useState<"kpi" | "goals" | "library">("goals");
   const [tf, setTf] = useState<KpiPeriodType>("month");
   const [pk, setPk] = useState(() => rangeOf("month").join("|"));
@@ -91,7 +93,7 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        {actor.isAdmin && (
+        {(actor.isAdmin || kpiCan(actor, "kpi.kr_assign") || kpiCan(actor, "kpi.kr_adjust") || kpiCan(actor, "kpi.goal_create")) && (
           <div className="inline-flex rounded-lg bg-muted p-1 text-xs sm:text-sm max-w-full overflow-x-auto">
             {(["goals", "kpi", "library"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)} className={`whitespace-nowrap rounded-md px-2.5 py-1.5 sm:px-3 ${tab === t ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{t === "kpi" ? "KR đã giao" : t === "goals" ? "Quản trị Mục tiêu" : "Thư viện KR"}</button>
@@ -113,7 +115,7 @@ export function AssignKpiV2({ actor }: { actor: { id: string; isAdmin: boolean }
   );
 }
 
-function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: { id: string; isAdmin: boolean }; periodKey: string; periodType: KpiPeriodType; brandFilter: string }) {
+function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: KpiActor; periodKey: string; periodType: KpiPeriodType; brandFilter: string }) {
   const { db, refresh } = useKpiDb();
   const users = useAuth((s) => s.users);
   const roles = useAuth((s) => s.roles);
@@ -160,7 +162,7 @@ function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: { id: s
 
   return (
     <div className="space-y-4">
-      {actor.isAdmin && (
+      {kpiCan(actor, "kpi.kr_assign") && (
         <div className="rounded-xl border border-border bg-card">
           <button onClick={() => setFormOpen(!formOpen)} className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium">
             <span className="text-primary">+ Giao KPI</span><span className="text-xs text-muted-foreground">{formOpen ? "Thu gọn" : "Mở biểu mẫu"}</span>
@@ -252,7 +254,7 @@ function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: { id: s
                   <td className="px-4 py-2.5 font-medium">{u?.fullName || u?.username || "—"}</td>
                   <td>{chName(it)}</td>
                   <td>{it.label || getKpiMetric(it.metricKey)?.label || it.metricKey}{a.status && <div className="text-[11px] text-muted-foreground">{a.status}</div>}{nested.has(it.id) && <div className="text-[11px] text-warning-foreground">Nằm trong KPI rộng hơn — không cộng trùng</div>}</td>
-                  <td>{actor.isAdmin && !locked
+                  <td>{kpiCan(actor, "kpi.kr_adjust") && !locked
                     ? <input type="number" min={1} className={`${inp} h-8 w-20`} defaultValue={it.targetValue} key={`${it.id}${it.targetValue}`}
                         onBlur={(e) => { const v = Number(e.target.value); if (v !== it.targetValue) run(() => svc.updateTarget(actor, it.id, v), "Đã cập nhật chỉ tiêu", refresh); }} />
                     : it.targetValue}</td>
@@ -260,7 +262,7 @@ function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: { id: s
                   <td className="text-xs">
                     <span className={`rounded px-1.5 py-0.5 ${locked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"}`}>{PERIOD_STATUS[p.status] ?? p.status}</span>
                     <div className="mt-0.5 whitespace-nowrap text-[11px] text-muted-foreground">{p.periodStart.split("-").reverse().join("/")} → {p.periodEnd.split("-").reverse().join("/")}</div>
-                    {actor.isAdmin && first && next && <button className="ml-2 text-primary hover:underline" onClick={() => {
+                    {kpiCan(actor, "kpi.period_manage") && first && next && <button className="ml-2 text-primary hover:underline" onClick={() => {
                       if (next === "locked" && !confirm(`Khóa kỳ KPI của ${u?.fullName}? Sau khi khóa không thể sửa chỉ tiêu.`)) return;
                       // Khóa kỳ: chốt kết quả thực tế của từng KR vào snapshot để báo cáo lịch sử không đổi theo dữ liệu nguồn sau này.
                       const results = next === "locked" ? Object.fromEntries(db.items.filter((x) => x.kpiPeriodId === p.id).map((x) => {
@@ -270,11 +272,11 @@ function KpiList({ actor, periodKey, periodType, brandFilter }: { actor: { id: s
                       run(() => svc.setStatus(actor, p.id, next, results), `Đã chuyển: ${PERIOD_STATUS[next]}`, refresh);
                     }}>{NEXT_LABEL[next]}</button>}
                   </td>
-                  <td className="pr-3 text-right">{actor.isAdmin && !locked && <button className={btn2} onClick={() => confirm("Xóa KPI này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa KPI", refresh)}>Xóa</button>}</td>
+                  <td className="pr-3 text-right">{kpiCan(actor, "kpi.kr_adjust") && !locked && <button className={btn2} onClick={() => confirm("Xóa KPI này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa KPI", refresh)}>Xóa</button>}</td>
                 </tr>
               );
             })}
-            {!rows.length && <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">{actor.isAdmin ? "Chưa có KPI trong kỳ này. Nhấn “+ Giao KPI” để bắt đầu." : "Bạn chưa được giao KPI trong kỳ này."}</td></tr>}
+            {!rows.length && <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">{kpiCan(actor, "kpi.kr_assign") ? "Chưa có KPI trong kỳ này. Nhấn “+ Giao KPI” để bắt đầu." : "Bạn chưa được giao KPI trong kỳ này."}</td></tr>}
           </tbody>
         </table>
       </div>
