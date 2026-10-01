@@ -6,5 +6,5 @@
 - [x] Theo Dõi Đơn Hàng GĐ2: Tổng quan nhắc việc, Kanban, Lịch cung ứng, điều chỉnh lịch hai bên
 - [ ] Theo Dõi Đơn Hàng — GĐ3: báo cáo, Excel, kiểm thử toàn bộ.
 
-- [ ] Kiểm tra tài khoản Trung Hiếu (vai trò, quyền, trạng thái)
-- [ ] Phân quyền KPI / Giao KPI (11 quyền, RLS, giao diện)
+- [x] Kiểm tra tài khoản Trung Hiếu (vai trò, quyền, trạng thái)
+- [x] Phân quyền KPI / Giao KPI (11 quyền, RLS, giao diện)
