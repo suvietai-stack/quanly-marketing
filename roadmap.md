@@ -5,3 +5,6 @@
 - [x] Đồng bộ tên và mô tả thẻ liên kết trang Tổng Quan với thông tin hệ thống đã lưu.- [x] Theo Dõi Đơn Hàng — GĐ1: danh sách, tạo thủ công, NCC, hành trình, dự kiến/thực tế, nhật ký, quyền backend.
 - [x] Theo Dõi Đơn Hàng GĐ2: Tổng quan nhắc việc, Kanban, Lịch cung ứng, điều chỉnh lịch hai bên
 - [ ] Theo Dõi Đơn Hàng — GĐ3: báo cáo, Excel, kiểm thử toàn bộ.
+
+- [x] Kiểm tra tài khoản Trung Hiếu (vai trò, quyền, trạng thái)
+- [x] Phân quyền KPI / Giao KPI (11 quyền, RLS, giao diện)

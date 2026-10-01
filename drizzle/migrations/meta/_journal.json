@@ -253,6 +253,13 @@
       "when": 1790738225558,
       "tag": "0035_signal_notify_role_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790848504136,
+      "tag": "0036_kpi_permissions",
+      "breakpoints": true
     }
   ]
 }
