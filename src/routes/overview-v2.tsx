@@ -11,5 +11,5 @@ export const Route = createFileRoute("/overview-v2")({
 
 function OverviewV2Page() {
   const search = Route.useSearch();
-  return <KpiV2Gate title="Tổng quan theo Brand / Kênh">{(a) => <OverviewV2 key={JSON.stringify(search)} actor={a} search={search} />}</KpiV2Gate>;
+  return <KpiV2Gate title="Tổng quan theo Brand / Kênh" perm="kpi.report">{(a) => <OverviewV2 key={JSON.stringify(search)} actor={a} search={search} />}</KpiV2Gate>;
 }

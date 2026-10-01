@@ -61,8 +61,8 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "KPI",
     items: [
-      { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true },
-      { to: "/reports-v2", label: "Báo cáo", icon: FileText, kpi: true },
+      { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, anyPerm: ["kpi.view_own", "kpi.view_all", "kpi.goal_create", "kpi.goal_edit", "kpi.goal_archive", "kpi.goal_delete", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"] },
+      { to: "/reports-v2", label: "Báo cáo", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
     ],
   },
   {
@@ -88,6 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const brand = useBranding();
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
   const isKpiAdmin = isSuperAdmin || user?.roleId === "role-admin";
+  const isKpiManager = isKpiAdmin || ["kpi.view_all", "kpi.goal_create", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"].some((k) => can(k));
   const canApprove = isSuperAdmin || can("settings.account_approve");
 
   const isActive = (to: string, exact?: boolean) =>
@@ -97,8 +98,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((g) => ({
       ...g,
       items: g.items
-        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
-        .map((it) => (it.to === "/settings/kpi-v2" && !isKpiAdmin ? { ...it, label: "KPI của tôi" } : it))
+        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || isKpiAdmin && it.kpi || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
+        .map((it) => (it.to === "/settings/kpi-v2" && !isKpiManager ? { ...it, label: "KPI của tôi" } : it))
         .map((it) =>
           it.to === "/settings" && canApprove && pendingCount > 0
             ? { ...it, badge: `${pendingCount} chờ duyệt` }

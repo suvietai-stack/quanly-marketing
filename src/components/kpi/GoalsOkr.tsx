@@ -17,6 +17,7 @@ import { createKpiService, KpiError, type KpiDb, type NewItem } from "@/lib/kpi/
 import { cloudRepository, flushKpi, hydrateKpi } from "@/lib/kpi/cloudRepository";
 import { supabase } from "@/integrations/supabase/client";
 import { goalCaps, goalLocked } from "@/lib/kpi/goalPolicy";
+import { kpiCan, type KpiActor, type KpiPermKey } from "@/lib/kpi/perms";
 import { evaluateKr, directionOf, krDeadline, krsOfGoal, lockedResultOf, entryStatus, KR_STATE_TONE } from "@/lib/kpi/evaluate";
 import { monthsIn } from "@/lib/kpi/calculateKr";
 import { MONTHLY_SOURCE } from "@/lib/kpi/service";
@@ -28,7 +29,8 @@ const inp = "h-9 w-full rounded-md border border-input bg-background px-2 text-s
 const btn = "inline-flex h-9 items-center gap-1 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50";
 const btn2 = "inline-flex h-8 items-center gap-1 rounded-md border border-input px-2.5 text-xs hover:bg-muted";
 const lbl = "space-y-1 text-xs font-medium text-muted-foreground";
-type Actor = { id: string; isAdmin: boolean };
+type Actor = KpiActor;
+const can = (a: Actor, k: KpiPermKey) => kpiCan(a, k);
 
 async function run(fn: () => void, ok: string, after: () => void) {
   try { fn(); await flushKpi(); toast.success(ok); after(); return true; }
@@ -558,7 +560,7 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
                       const stt = entryStatus(x);
                       if (stt === "confirmed") return <span className="text-success">Đã xác nhận · {nameOf(x.confirmedBy)}</span>;
                       if (stt === "rejected") return <span className="text-destructive">Đã từ chối</span>;
-                      const canReview = actor.isAdmin && x.recordedBy !== userId;
+                      const canReview = can(actor, "kpi.kr_adjust") && x.recordedBy !== userId;
                       const review = (status: "confirmed" | "needs_info" | "rejected", msg: string) => {
                         const note = status === "confirmed" ? undefined : prompt(status === "rejected" ? "Lý do từ chối" : "Cần bổ sung gì?") ?? undefined;
                         if (status !== "confirmed" && note === undefined) return;
@@ -576,10 +578,10 @@ function KrDetail({ actor, it, userId, start, end, onClose, onSaved }: { actor: 
                   {x.reviewNote && <div className="text-warning-foreground">Phản hồi: {x.reviewNote}</div>}
                   <div className="text-muted-foreground">{fmtD(x.recordedAt.slice(0, 10))} · {nameOf(x.recordedBy)}{x.note ? ` · ${x.note}` : ""}</div>
                   {x.link && <a href={x.link} target="_blank" rel="noreferrer" className="break-all text-primary hover:underline">{x.link}</a>}
-                  {actor.isAdmin && entryStatus(x) !== "confirmed" && <button className="mt-1 text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa ghi nhận này?") && save(entries.filter((y) => y.id !== x.id), "Đã xóa ghi nhận")}>Xóa</button>}
+                  {can(actor, "kpi.kr_adjust") && entryStatus(x) !== "confirmed" && <button className="mt-1 text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa ghi nhận này?") && save(entries.filter((y) => y.id !== x.id), "Đã xóa ghi nhận")}>Xóa</button>}
                 </div>
               ))}
-              {actor.isAdmin ? (
+              {can(actor, "kpi.kr_adjust") ? (
                 <div className="grid gap-2 rounded-md border border-dashed border-border p-3 sm:grid-cols-2">
                   {ratio ? <>
                     <input className={inp} type="number" placeholder={ratio.numerator} value={e.numerator} onChange={(v) => setE({ ...e, numerator: v.target.value })} />
@@ -725,18 +727,18 @@ function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit, readOnly }: { re
           <div className={cn("text-[11px] font-medium", st.tone)}>{st.label}</div>
           <div className="text-[10px] text-muted-foreground">hạn {fmtD(kr.deadline ?? goal.periodEnd)}</div>
         </div>
-        {actor.isAdmin && (
+        {(can(actor, "kpi.kr_adjust") || can(actor, "kpi.kr_assign")) && (
           <DropdownMenu><DropdownMenuTrigger className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Thao tác KR"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {!krLocked && <DropdownMenuItem onClick={onEdit}>Sửa KR / chỉ tiêu / deadline</DropdownMenuItem>}
-              {!inactive && <DropdownMenuItem onClick={() => { setOpen(true); setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" }); }}>Phân bổ nhân sự</DropdownMenuItem>}
-              {!krLocked && <DropdownMenuSeparator />}
-              {krLocked ? (kr.status !== "archived" ? <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "archived"), "Đã lưu trữ KR", refresh)}>Lưu trữ</DropdownMenuItem> : <DropdownMenuItem disabled>Chỉ xem (mục tiêu không còn hoạt động)</DropdownMenuItem>)
+              {!krLocked && can(actor, "kpi.kr_adjust") && <DropdownMenuItem onClick={onEdit}>Sửa KR / chỉ tiêu / deadline</DropdownMenuItem>}
+              {!inactive && can(actor, "kpi.kr_assign") && <DropdownMenuItem onClick={() => { setOpen(true); setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" }); }}>Phân bổ nhân sự</DropdownMenuItem>}
+              {!krLocked && can(actor, "kpi.kr_adjust") && <DropdownMenuSeparator />}
+              {!can(actor, "kpi.kr_adjust") ? null : krLocked ? (kr.status !== "archived" ? <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "archived"), "Đã lưu trữ KR", refresh)}>Lưu trữ</DropdownMenuItem> : <DropdownMenuItem disabled>Chỉ xem (mục tiêu không còn hoạt động)</DropdownMenuItem>)
               : kr.status === "active" ? <>
                 <DropdownMenuItem onClick={() => confirm("Hủy KR này? Kết quả đã có vẫn được giữ.") && run(() => svc.setKrStatus(actor, kr.id, "cancelled"), "Đã hủy KR", refresh)}>Hủy KR</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "archived"), "Đã lưu trữ KR", refresh)}>Lưu trữ</DropdownMenuItem>
               </> : <DropdownMenuItem onClick={() => run(() => svc.setKrStatus(actor, kr.id, "active"), "Đã mở lại KR", refresh)}>Khôi phục</DropdownMenuItem>}
-              {!krLocked && <DropdownMenuItem className="text-destructive" disabled={!canHardDelete(hasResult, anyLocked)} onClick={() => confirm("Xóa KR và các dòng phân bổ chưa có kết quả?") && run(() => { rows.forEach((r) => svc.removeItem(actor, r.it.id)); svc.deleteKr(actor, kr.id); }, "Đã xóa KR", refresh)}>
+              {!krLocked && can(actor, "kpi.kr_adjust") && <DropdownMenuItem className="text-destructive" disabled={!canHardDelete(hasResult, anyLocked)} onClick={() => confirm("Xóa KR và các dòng phân bổ chưa có kết quả?") && run(() => { rows.forEach((r) => svc.removeItem(actor, r.it.id)); svc.deleteKr(actor, kr.id); }, "Đã xóa KR", refresh)}>
                 Xóa{!canHardDelete(hasResult, anyLocked) ? " (đã có kết quả/khóa kỳ)" : ""}</DropdownMenuItem>}
             </DropdownMenuContent></DropdownMenu>
         )}
@@ -755,8 +757,8 @@ function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit, readOnly }: { re
                     <td className="px-2 text-right tabular-nums"><span className="font-semibold">{a.value ?? "—"}</span>/{div ? it.targetValue : kr.targetValue} <span className={rs.tone}>· {rs.label}</span></td>
                     <td className="px-2">{fmtD(krDeadline(it, p?.periodEnd ?? goal.periodEnd))}</td>
                     <td className="whitespace-nowrap px-2 text-right">
-                      {actor.isAdmin && !krLocked && div && !locked(p) && <button className="mr-2 text-primary hover:underline" onClick={() => { const v = prompt("Chỉ tiêu mới cho dòng này", String(it.targetValue)); if (!v) return; const reason = prompt("Lý do thay đổi") ?? ""; run(() => svc.updateTarget(actor, it.id, Number(v), reason), "Đã sửa phân bổ", refresh); }}>Sửa</button>}
-                      {actor.isAdmin && !krLocked && canHardDelete(res, locked(p)) && <button className="text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa dòng phân bổ này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa dòng phân bổ", refresh)}>Xóa</button>}
+                      {can(actor, "kpi.kr_adjust") && !krLocked && div && !locked(p) && <button className="mr-2 text-primary hover:underline" onClick={() => { const v = prompt("Chỉ tiêu mới cho dòng này", String(it.targetValue)); if (!v) return; const reason = prompt("Lý do thay đổi") ?? ""; run(() => svc.updateTarget(actor, it.id, Number(v), reason), "Đã sửa phân bổ", refresh); }}>Sửa</button>}
+                      {can(actor, "kpi.kr_adjust") && !krLocked && canHardDelete(res, locked(p)) && <button className="text-muted-foreground hover:text-destructive" onClick={() => confirm("Xóa dòng phân bổ này?") && run(() => svc.removeItem(actor, it.id), "Đã xóa dòng phân bổ", refresh)}>Xóa</button>}
                     </td>
                   </tr>
                 );
@@ -773,7 +775,7 @@ function KrCard({ actor, kr, goal, db, refresh, onOpen, onEdit, readOnly }: { re
               <input type="date" className={inp} title="Deadline riêng (tùy chọn)" min={goal.periodStart} max={goal.periodEnd} value={add.deadline} onChange={(e) => setAdd({ ...add, deadline: e.target.value })} />
               <div className="flex gap-1"><button className={btn} disabled={!add.userId || (div && !(add.target > 0))} onClick={saveAlloc}>Lưu</button><button className={btn2} onClick={() => setAdd(null)}>Hủy</button></div>
             </div>
-          ) : actor.isAdmin && !inactive && (div || !rows.length) && (
+          ) : can(actor, "kpi.kr_assign") && !inactive && (div || !rows.length) && (
             <button className="w-full border-t border-border px-2 py-1.5 text-left text-xs font-medium text-primary hover:bg-muted/40" onClick={() => setAdd({ userId: "", channel: "", target: Math.max(1, -sum.diff || 1), deadline: "" })}>+ Phân bổ chỉ tiêu</button>
           )}
         </div>
@@ -840,10 +842,10 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        {actor.isAdmin && !creating && <button className={btn} onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Tạo mục tiêu</button>}
+        {can(actor, "kpi.goal_create") && !creating && <button className={btn} onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Tạo mục tiêu</button>}
         <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />Hiện mục đã lưu trữ</label>
       </div>
-      {actor.isAdmin && creating && <GoalWizard actor={actor} onDone={() => { setCreating(false); refresh(); }} />}
+      {can(actor, "kpi.goal_create") && creating && <GoalWizard actor={actor} onDone={() => { setCreating(false); refresh(); }} />}
       {!goals.length && <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Chưa có mục tiêu trong kỳ này.</div>}
       {links && <GoalLinksSheet goal={links} onClose={() => setLinks(null)} onDeleted={async () => { setLinks(null); await hydrateKpi(); refresh(); }} />}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -852,7 +854,7 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
           const krs = krsOfG(g.id);
           const legacy = legacyOf(g.id);
           const states = legacy.map((it) => { const p = db.periods.find((x) => x.id === it.kpiPeriodId); if (!p) return null; const a = actualOf(p.userId, it, p.periodStart, p.periodEnd, locked(p)); return { it, p, a, st: krState(getKpiMetric(it.metricKey), a, it, p.periodEnd) }; }).filter(Boolean) as { it: EmployeeKpiItem; p: KpiDb["periods"][number]; a: KrActual; st: ReturnType<typeof krState> }[];
-          const caps = goalCaps(g, db, actor.isAdmin);
+          const caps = goalCaps(g, db, actor.p ?? actor.isAdmin);
           const gLocked = goalLocked(g.id, db);
           return (
             <div key={g.id} className={cn("rounded-xl border border-border bg-card", meta.archived && "opacity-60")}>
@@ -863,25 +865,25 @@ export function GoalsBoard({ actor, db, refresh, periodKey, brandFilter }: { act
                 </div>
                 <div className="flex shrink-0 items-start gap-1 text-right">
                   <div>
-                    {actor.isAdmin && !caps.readOnly ? <select className="h-7 rounded-md border border-input bg-background px-1.5 text-xs" value={g.status} onChange={(e) => setGoalStatus(g, e.target.value as GoalStatus)}>
+                    {caps.edit && can(actor, "kpi.goal_archive") ? <select className="h-7 rounded-md border border-input bg-background px-1.5 text-xs" value={g.status} onChange={(e) => setGoalStatus(g, e.target.value as GoalStatus)}>
                       {Object.entries(GOAL_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
                       : <span className={cn("rounded px-1.5 py-0.5 text-xs", g.status === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-muted")}>{GOAL_STATUS[g.status]}{gLocked ? " · Kỳ đã khóa" : ""}</span>}
                     <div className="mt-1 text-xs text-muted-foreground">{krs.length + states.length} KR</div>
                   </div>
-                  {actor.isAdmin && (
+                  {(caps.edit || caps.addKr || caps.duplicate || caps.archive || can(actor, "kpi.goal_delete") || actor.isAdmin) && (
                     <DropdownMenu><DropdownMenuTrigger className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Thao tác mục tiêu"><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {caps.readOnly && <DropdownMenuItem disabled>{caps.reason ?? "Chỉ xem"}</DropdownMenuItem>}
                         {caps.edit && <DropdownMenuItem onClick={() => setEditGoal(g.id)}>Sửa mục tiêu</DropdownMenuItem>}
                         {caps.addKr && <DropdownMenuItem onClick={() => setAdding(g.id)}>Thêm KR</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => setDupGoal(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>
+                        {caps.duplicate && <DropdownMenuItem onClick={() => setDupGoal(g)}>{gLocked ? "Nhân bản sang kỳ mới" : "Nhân bản"}</DropdownMenuItem>}
                         <DropdownMenuSeparator />
                         {caps.cancel && <DropdownMenuItem onClick={() => setGoalStatus(g, "cancelled")}>Hủy mục tiêu</DropdownMenuItem>}
                         {caps.restore && <DropdownMenuItem onClick={() => restore(g)}>Khôi phục</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" disabled={!caps.delete} title={caps.deleteBlockers.join("\n")} onClick={() => confirm(`Xóa vĩnh viễn mục tiêu "${g.title}"? Thao tác này không thể hoàn tác.`) && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa vĩnh viễn</DropdownMenuItem>
+                        {caps.archive && <DropdownMenuItem onClick={() => toggleArchive(g, !!meta.archived)}>{meta.archived ? "Bỏ lưu trữ" : "Lưu trữ"}</DropdownMenuItem>}
+                        {can(actor, "kpi.goal_delete") && <DropdownMenuItem className="text-destructive" disabled={!caps.delete} title={caps.deleteBlockers.join("\n")} onClick={() => confirm(`Xóa vĩnh viễn mục tiêu "${g.title}"? Thao tác này không thể hoàn tác.`) && run(() => svc.deleteGoal(actor, g.id), "Đã xóa mục tiêu", refresh)}>Xóa vĩnh viễn</DropdownMenuItem>}
                         {actor.isAdmin && <DropdownMenuItem onClick={() => setLinks(g)}>Xem dữ liệu liên kết</DropdownMenuItem>}
-                        {caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Bấm "Xem dữ liệu liên kết" để kiểm tra.</div>}
+                        {can(actor, "kpi.goal_delete") && caps.deleteBlockers.length > 0 && <div className="max-w-64 px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">Không xóa được: {caps.deleteBlockers.join("; ")}. Bấm "Xem dữ liệu liên kết" để kiểm tra.</div>}
                       </DropdownMenuContent></DropdownMenu>
                   )}
                 </div>

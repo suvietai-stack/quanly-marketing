@@ -26,6 +26,7 @@ export type PermissionGroup =
   | "Đơn Từ & Phê Duyệt"
   | "Đơn Hàng — Hỏi Giá & Tiến Độ"
   | "Theo Dõi Đơn Hàng"
+  | "KPI / Giao KPI"
   | "Tài khoản";
 
 export interface PermissionDef {
@@ -383,6 +384,19 @@ export const PERMISSIONS: PermissionDef[] = [
   P("signal.report", "Xem báo cáo tín hiệu", "Tín Hiệu Cơ Hội", "Báo cáo"),
   P("signal.catalog", "Quản lý danh mục tín hiệu (Nguồn, Loại sản phẩm, Nhóm nhu cầu)", "Tín Hiệu Cơ Hội", "Quản lý"),
 
+  // ===== KPI / Giao KPI =====
+  P("kpi.view_own", "Xem KPI cá nhân", "KPI / Giao KPI", "Xem"),
+  P("kpi.view_all", "Xem toàn bộ KPI", "KPI / Giao KPI", "Xem"),
+  P("kpi.goal_create", "Tạo mục tiêu", "KPI / Giao KPI", "Mục tiêu"),
+  P("kpi.goal_edit", "Sửa mục tiêu", "KPI / Giao KPI", "Mục tiêu"),
+  P("kpi.goal_archive", "Hủy / Lưu trữ mục tiêu", "KPI / Giao KPI", "Mục tiêu"),
+  P("kpi.goal_delete", "Xóa mục tiêu chưa phát sinh dữ liệu", "KPI / Giao KPI", "Mục tiêu"),
+  P("kpi.kr_assign", "Thêm / Giao KR", "KPI / Giao KPI", "KR & Chỉ tiêu"),
+  P("kpi.kr_adjust", "Điều chỉnh KR đã giao", "KPI / Giao KPI", "KR & Chỉ tiêu"),
+  P("kpi.period_manage", "Quản lý kỳ KPI", "KPI / Giao KPI", "Kỳ KPI"),
+  P("kpi.report", "Xem báo cáo KPI", "KPI / Giao KPI", "Báo cáo"),
+  P("kpi.report_export", "Xuất báo cáo KPI", "KPI / Giao KPI", "Báo cáo"),
+
   // ===== Đơn từ & Phê duyệt =====
   P("leave.view_own", "Xem đơn cá nhân", "Đơn Từ & Phê Duyệt", "Xem"),
   P("leave.view_assigned", "Xem đơn được giao duyệt", "Đơn Từ & Phê Duyệt", "Xem"),
@@ -655,7 +669,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "Đơn Từ & Phê Duyệt", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
