@@ -1,0 +1,1 @@
+ALTER FUNCTION public.sig_guard() SECURITY DEFINER SET search_path = public;

@@ -260,6 +260,13 @@
       "when": 1790848504136,
       "tag": "0036_kpi_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790927455639,
+      "tag": "0037_sig_guard_security_definer",
+      "breakpoints": true
     }
   ]
 }
