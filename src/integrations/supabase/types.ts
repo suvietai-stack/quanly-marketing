@@ -3024,6 +3024,7 @@ export type Database = {
       }
       oq_submit: { Args: { _id: string }; Returns: string }
       order_remind_run: { Args: never; Returns: number }
+      order_take_job: { Args: { _id: string }; Returns: undefined }
       ot_accept: { Args: { _id: string }; Returns: undefined }
       ot_cancel: { Args: { _id: string; _reason: string }; Returns: undefined }
       ot_create: { Args: { _data: Json }; Returns: string }

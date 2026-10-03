@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const s = useStore();
@@ -87,6 +88,17 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const actions: { label: string; onClick: () => void; variant?: "default" | "outline" | "destructive" | "secondary"; show: boolean }[] = [];
 
   if (status === "Chờ phân công") {
+    actions.push({
+      label: "NHẬN JOB",
+      onClick: async () => {
+        const { error } = await (supabase as any).rpc("order_take_job", { _id: order.id });
+        if (error) { toast.error(error.message); await s.reload(); return; }
+        setDraft({});
+        await s.reload();
+        toast.success("Bạn đã nhận Job");
+      },
+      show: !order.assignee && can("order.take"),
+    });
     actions.push({
       label: "Gửi yêu cầu",
       onClick: () => transition("Chờ nhận việc", "Gửi yêu cầu"),
