@@ -16,16 +16,21 @@ describe("signals report", () => {
     mk({ detected_on: "2026-09-12", assigned_to: "hoa", status: "consulting", next_contact_on: "2026-09-13" }),
     mk({ detected_on: "2026-09-15" }),
   ];
-  it("tỷ lệ chốt = chốt/(chốt+trượt), doanh số chỉ tính Chốt", () => {
+  it("tỷ lệ chốt = chốt/tổng tín hiệu hợp lệ, doanh số chỉ tính Chốt", () => {
     const s = summarize(list, "2026-09-20");
     expect(s.total).toBe(4);
     expect(s.unassigned).toBe(1);
-    expect(s.closeRate).toBe(50);
+    expect(s.closeRate).toBe(25);
     expect(s.revenue).toBe(10_000_000);
     expect(s.overdue).toBe(1);
   });
-  it("chưa có tín hiệu kết thúc → không có tỷ lệ", () => {
-    expect(summarize([mk({})]).closeRate).toBeNull();
+  it("chưa chốt → 0%, không có tín hiệu → không có tỷ lệ", () => {
+    expect(summarize([mk({})]).closeRate).toBe(0);
+    expect(summarize([]).closeRate).toBeNull();
+  });
+  it("tín hiệu hủy không vào mẫu số", () => {
+    const l = [...list, mk({ cancelled_at: "2026-09-11T00:00:00Z" } as any)];
+    expect(summarize(filterSignals(l, { basis: "created" })).closeRate).toBe(25);
   });
   it("lọc theo ngày tạo và ngày chốt khác nhau", () => {
     const sep = { from: "2026-09-01", to: "2026-09-30" };

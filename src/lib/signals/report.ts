@@ -52,7 +52,8 @@ export function summarize(list: Signal[], today = todayKey(), last?: Record<stri
     if (isDueToday(s, today)) r.dueToday++;
     if (last && s.assigned_to && !last[s.id]) r.noNote++;
   }
-  r.closeRate = r.won + r.lost > 0 ? (r.won / (r.won + r.lost)) * 100 : null;
+  // Tỷ lệ chốt = Chốt / Tổng tín hiệu hợp lệ (cùng tập đã lọc, đã loại tín hiệu hủy)
+  r.closeRate = r.total > 0 ? (r.won / r.total) * 100 : null;
   return r;
 }
 
