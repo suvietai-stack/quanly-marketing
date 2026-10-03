@@ -10,7 +10,7 @@ import { errMsg, listCareNotes } from "@/lib/signals/api";
 import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
 import { needGroupsOf } from "@/lib/signals/catalog";
 
-const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toFixed(1)}%`);
+const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
 
 export function SignalsReport() {
   const p = useSignalPerms();
@@ -22,6 +22,8 @@ export function SignalsReport() {
   const set = (k: keyof ReportFilter, v: string) => setF((x) => ({ ...x, [k]: v || undefined }));
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
+  // KPI tỷ lệ chốt: giữ tập gốc theo bộ lọc nghiệp vụ, không bị bộ lọc trạng thái làm sai lệch
+  const kpi = useMemo(() => summarize(filterSignals(data, { ...f, status: undefined }), t), [data, f, t]);
   const bySource = groupBy(list, (s) => s.source);
   const prodOpts = useOptions("signal_products");
   const needOpts = useOptions("signal_need_groups");
@@ -73,8 +75,10 @@ export function SignalsReport() {
             <Card k="Chờ xác nhận / cọc" v={sum.deposit} />
             <Card k="Chốt" v={sum.won} />
             <Card k="Trượt" v={sum.lost} />
-            <Card k="Doanh số chốt" v={fmtVnd(sum.revenue)} hint={`Tỷ lệ chốt: ${pct(sum)}`} />
+            <Card k="Doanh số chốt" v={fmtVnd(sum.revenue)} />
+            <Card k="Tỷ lệ chốt" v={pct(kpi)} hint={`${kpi.won} / ${kpi.total} tín hiệu`} />
           </div>
+          <p className="text-xs text-muted-foreground -mt-3">Tỷ lệ chốt = Tín hiệu Chốt / Tổng tín hiệu hợp lệ trong phạm vi đang xem (không tính tín hiệu đã hủy; không phụ thuộc bộ lọc Trạng thái).</p>
 
 
           <H>Hiệu quả Sale</H>
