@@ -21,6 +21,7 @@ async function rpc<T = any>(fn: string, args: Record<string, unknown>): Promise<
 export const oqApi = {
   async save(id: string | null, data: any) { const rid = await rpc<string>("oq_save", { _id: id, _data: data }); void oqApi.flushCleanup(); return rid; },
   async deleteDraft(id: string) { await rpc("oq_delete_draft", { _id: id }); await oqApi.flushCleanup(); },
+  async deleteCancelled(id: string) { await rpc("oq_delete_cancelled", { _id: id }); await oqApi.flushCleanup(); },
   submit: (id: string) => rpc<string>("oq_submit", { _id: id }),
   assignees: (kind: "price" | "progress") => rpc<{ id: string; full_name: string }[]>("oq_assignees", { _kind: kind }),
   accept: (flow: string) => rpc("oq_accept", { _flow: flow }),
@@ -132,7 +133,7 @@ export const oqApi = {
 
 export const LIST_STATUSES = [
   { value: "draft", label: "Bản nháp" }, { value: "pending", label: "Chưa nhận" }, { value: "processing", label: "Đang xử lý" },
-  { value: "waiting", label: "Đang chờ Sale bổ sung" }, { value: "answered", label: "Đã trả lời" }, { value: "cancelled", label: "Đã hủy" },
+  { value: "waiting", label: "Đang chờ Sale bổ sung" }, { value: "answered", label: "Đã trả lời" }, { value: "cancelled", label: "Yêu cầu đã hủy" },
 ];
 
 function listQuery(p: ListParams, head: boolean) {
@@ -150,6 +151,7 @@ function listQuery(p: ListParams, head: boolean) {
   if (p.from) q = q.gte("created_at", `${p.from}T00:00:00+07:00`);
   if (p.to) q = q.lte("created_at", `${p.to}T23:59:59.999+07:00`);
   if (p.status === "draft" || p.status === "cancelled") q = q.eq("status", p.status);
+  else q = q.neq("status", "cancelled"); // yêu cầu hủy toàn bộ chỉ hiện ở khu vực "Yêu cầu đã hủy"
   if (p.tab !== "all") q = q.eq("ff.kind", p.tab);
   if (p.assignee) q = q.eq("ff.assignee_id", p.assignee);
   if (p.status === "waiting") q = q.eq("ff.waiting_info", true).eq("ff.status", "processing");
