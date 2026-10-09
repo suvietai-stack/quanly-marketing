@@ -430,6 +430,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("oq.reply_price", "Phản hồi Hỏi Giá", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Cung ứng"),
   P("oq.reply_progress", "Phản hồi Hỏi Tiến Độ", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Cung ứng"),
   P("oq.manage", "Quản lý yêu cầu (can thiệp trường hợp đặc biệt)", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Quản lý"),
+  P("oq.delete_cancelled", "Xóa yêu cầu đã hủy", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Quản lý"),
   P("oq.report_own", "Xem báo cáo cá nhân", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Báo cáo"),
   P("oq.report_all", "Xem báo cáo toàn bộ Hỏi Giá & Tiến Độ", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Báo cáo"),
   P("oq.report_export", "Xuất báo cáo Excel", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Báo cáo"),

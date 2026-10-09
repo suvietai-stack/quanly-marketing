@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fmtDur } from "@/lib/orderQuotes/report";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -54,6 +55,14 @@ function OqList() {
   const [sheet, setSheet] = useState(false);
   const isMobile = useIsMobile();
   const [busy, setBusy] = useState<string | null>(null);
+  const [del, setDel] = useState<any>(null);
+  const canDel = can("oq.delete_cancelled");
+  const doDelete = async () => {
+    const r = del; if (!r) return; setBusy(r.id);
+    try { await oqApi.deleteCancelled(r.id); toast.success(`Đã xóa ${r.code ?? "yêu cầu"}.`); setDel(null); qc.invalidateQueries({ queryKey: ["oq-list"] }); }
+    catch (err) { toast.error((err as Error).message); } finally { setBusy(null); }
+  };
+  const delBtn = (r: any) => canDel && r.status === "cancelled" ? <Button size="sm" variant="outline" className="text-destructive" disabled={busy === r.id} onClick={(e) => { e.stopPropagation(); setDel(r); }}><Trash2 className="h-4 w-4 mr-1" />Xóa</Button> : null;
   const nFilters = [creator !== ALL, assignee !== ALL, !!from, !!to].filter(Boolean).length;
   const SIZE = 30;
   const base = { tab, q: q.trim() || undefined, creator: creator === ALL ? undefined : creator, assignee: assignee === ALL ? undefined : assignee, from: from || undefined, to: to || undefined };
@@ -107,7 +116,7 @@ function OqList() {
 
   const waitCell = (r: any) => r.flows.map((f: any) => { const t = times.current(f.id); return <div key={f.id} className="whitespace-nowrap">{f.kind === "price" ? "Giá" : "Tiến độ"}: {t?.sent_at ? fmtDur((Date.parse(t.server_now) - Date.parse(t.sent_at)) / 1000) : "—"}</div>; });
   const acceptedCell = (r: any) => r.flows.map((f: any) => <div key={f.id} className="whitespace-nowrap">{vnDateTime(times.current(f.id)?.accepted_at) || "—"}</div>);
-  const acceptBtns = (r: any) => r.flows.filter(canAccept).map((f: any) => <Button key={f.id} size="sm" disabled={busy === f.id} onClick={(e) => accept(e, f)}>Tiếp nhận{r.flows.length > 1 ? ` ${f.kind === "price" ? "Giá" : "Tiến độ"}` : ""}</Button>);
+  const acceptBtns = (r: any) => r.status === "cancelled" ? delBtn(r) : r.flows.filter(canAccept).map((f: any) => <Button key={f.id} size="sm" disabled={busy === f.id} onClick={(e) => accept(e, f)}>Tiếp nhận{r.flows.length > 1 ? ` ${f.kind === "price" ? "Giá" : "Tiến độ"}` : ""}</Button>);
 
   return (
     <div>
@@ -138,7 +147,7 @@ function OqList() {
         <div className="flex w-max gap-1 border-b">
           {statusTabs.map((s) => {
             const on = st === s.value;
-            return <button key={s.key} role="tab" aria-selected={on} onClick={() => setSt(s.value)}
+            return <button key={s.key} role="tab" style={s.value === "cancelled" ? { marginLeft: "0.75rem" } : undefined} aria-selected={on} onClick={() => setSt(s.value)}
               className={cn("-mb-px flex h-10 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-sm transition-colors", on ? "border-primary font-semibold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>
               {s.label}<span className={cn("rounded-full px-1.5 py-0.5 text-[11px] tabular-nums", on ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>{counts?.[s.key] ?? "…"}</span>
             </button>;
@@ -162,7 +171,7 @@ function OqList() {
                 <TableHead>Mã</TableHead><TableHead>Tên yêu cầu</TableHead>
                 {mode === "pending" ? <><TableHead>Người gửi</TableHead><TableHead>Thời điểm gửi</TableHead><TableHead>Đã chờ</TableHead><TableHead>Cung ứng phụ trách</TableHead><TableHead /></>
                 : mode === "processing" ? <><TableHead>Người phụ trách</TableHead><TableHead>Tiếp nhận lúc</TableHead><TableHead>Cập nhật gần nhất</TableHead><TableHead>Ngày khách cần</TableHead><TableHead>Tiến độ</TableHead><TableHead>Cung ứng xử lý</TableHead></>
-                : <><TableHead className="text-center">SP/PA</TableHead><TableHead>Người tạo</TableHead><TableHead>Cung ứng phụ trách</TableHead><TableHead>Trạng thái</TableHead><TableHead>Thời gian phản hồi</TableHead><TableHead>Thời gian Cung ứng xử lý</TableHead><TableHead>Cập nhật</TableHead></>}
+                : <><TableHead className="text-center">SP/PA</TableHead><TableHead>Người tạo</TableHead><TableHead>Cung ứng phụ trách</TableHead><TableHead>Trạng thái</TableHead><TableHead>Thời gian phản hồi</TableHead><TableHead>Thời gian Cung ứng xử lý</TableHead><TableHead>Cập nhật</TableHead>{st === "cancelled" && canDel && <TableHead />}</>}
               </TableRow></TableHeader>
               <TableBody>
                 {rows.map((r) => {
@@ -192,6 +201,7 @@ function OqList() {
                       <TableCell className="text-xs">{r.status === "draft" ? "—" : r.flows.map((f: any) => <div key={f.id}><ListTimeCell t={times.current(f.id)} kind={f.kind} part="resp" /></div>)}</TableCell>
                       <TableCell className="text-xs">{r.status === "draft" ? "—" : r.flows.map((f: any) => <div key={f.id}><ListTimeCell t={times.current(f.id)} kind={f.kind} part="proc" /></div>)}</TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{vnDateTime(lastUpdate(r))}</TableCell>
+                      {st === "cancelled" && canDel && <TableCell className="text-right">{delBtn(r)}</TableCell>}
                     </>}
                   </TableRow>); })}
               </TableBody>
@@ -238,6 +248,18 @@ function OqList() {
           )}
         </>
       )}
+      <AlertDialog open={!!del} onOpenChange={(o) => !o && setDel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa yêu cầu {del?.code} đã hủy?</AlertDialogTitle>
+            <AlertDialogDescription>Toàn bộ dữ liệu của yêu cầu sẽ bị xóa: sản phẩm/phương án, luồng Hỏi Giá và Hỏi Tiến Độ, các lượt xử lý, phản hồi, trao đổi, lịch sử, hình ảnh và thông báo liên quan. Không thể khôi phục bằng giao diện.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Không xóa</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={!!busy} onClick={(e) => { e.preventDefault(); void doDelete(); }}>Xóa vĩnh viễn</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
