@@ -2912,6 +2912,7 @@ export type Database = {
       oq_cleanup_pending: { Args: never; Returns: string[] }
       oq_comment: { Args: { _flow: string; _text: string }; Returns: undefined }
       oq_complete: { Args: { _flow: string }; Returns: undefined }
+      oq_delete_cancelled: { Args: { _id: string }; Returns: undefined }
       oq_delete_draft: { Args: { _id: string }; Returns: undefined }
       oq_image_add: {
         Args: {
