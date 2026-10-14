@@ -281,6 +281,13 @@
       "when": 1791531522626,
       "tag": "0039_oq_cancelled_exclusion_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791961094935,
+      "tag": "0040_signal_reassign_permission",
+      "breakpoints": true
     }
   ]
 }
