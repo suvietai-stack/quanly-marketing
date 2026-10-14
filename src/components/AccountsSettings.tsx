@@ -766,7 +766,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
                 {g === "Tín Hiệu Cơ Hội" ? (
                   <div className="grid sm:grid-cols-2 gap-x-4 gap-y-2 px-4 py-3">
                     {[
-                      "signal.create", "signal.view_all", "signal.assign", "signal.edit",
+                      "signal.create", "signal.view_all", "signal.assign", "signal.reassign", "signal.edit",
                       "signal.delete", "signal.manage", "signal.catalog", "signal.sale", "signal.report",
                     ].map((key) => Object.values(subs).flat().find((p) => p.key === key)).filter((p) => p !== undefined).map((p) => {
                       const miss = broken.get(p.key);

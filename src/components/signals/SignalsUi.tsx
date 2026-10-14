@@ -33,7 +33,9 @@ export function useSignalPerms() {
     userId: user?.id ?? null,
     create: can("signal.create") || can("signal.manage"),
     viewAll: can("signal.view_all") || can("signal.manage"),
-    assign: can("signal.assign") || can("signal.manage"),
+    assign: can("signal.assign") || can("signal.reassign") || can("signal.manage"),
+    assignNew: can("signal.assign"),
+    reassign: can("signal.reassign"),
     manage: can("signal.manage"),
     edit: can("signal.edit") || can("signal.manage"),
     del: can("signal.delete") || can("signal.manage"),
@@ -469,7 +471,7 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
       <Section title="Nguồn & ghi chú">
         <Field label="Nguồn tín hiệu *"><SourcePick value={f.source} onChange={(v) => set("source", v)} /></Field>
         <Field label="Ghi chú Marketing"><Textarea rows={2} maxLength={3000} value={f.marketing_note ?? ""} onChange={(e) => set("marketing_note", e.target.value)} /></Field>
-        {!id && p.assign && (
+        {!id && p.assignNew && (
           <Field label="Sale phụ trách">
             <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={sale} onChange={(e) => setSale(e.target.value)}>
               <option value="">Chưa phân công</option>
@@ -650,7 +652,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
             {canEditInfo && <Button variant="outline" onClick={() => setEditing(true)}>Sửa thông tin</Button>}
             {closed && p.manage && <Button variant="outline" onClick={doReopen}><RotateCcw className="h-4 w-4 mr-1" />Mở lại</Button>}
           </div>
-          {p.assign && !closed && (
+          {(s.assigned_to ? p.reassign : p.assignNew) && !closed && (
             <Field label="Sale phụ trách">
               <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={s.assigned_to ?? ""} onChange={(e) => doAssign(e.target.value)}>
                 <option value="">Chưa phân công</option>
