@@ -344,6 +344,13 @@
       "when": 1792132568242,
       "tag": "0048_fin_manual_claim_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792134455424,
+      "tag": "0049_notifications_kind_fin",
+      "breakpoints": true
     }
   ]
 }
