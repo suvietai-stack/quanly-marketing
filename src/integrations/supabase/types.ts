@@ -247,9 +247,46 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_number: string
+          account_type: string
+          active: boolean
+          bank_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          account_type?: string
+          active?: boolean
+          bank_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          account_type?: string
+          active?: boolean
+          bank_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bank_transactions: {
         Row: {
           amount: number
+          bank_account_id: string | null
           bank_account_identifier: string | null
           bank_name: string | null
           created_at: string
@@ -264,6 +301,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
           bank_account_identifier?: string | null
           bank_name?: string | null
           created_at?: string
@@ -278,6 +316,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           bank_account_identifier?: string | null
           bank_name?: string | null
           created_at?: string
@@ -290,7 +329,15 @@ export type Database = {
           transaction_at?: string | null
           transaction_date?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brands: {
         Row: {
