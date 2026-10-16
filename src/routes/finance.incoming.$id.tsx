@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
+import { checkNoteError, EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
 import { ManualEntry } from "@/components/finance/ManualEntry";
 
 export const Route = createFileRoute("/finance/incoming/$id")({
@@ -83,7 +83,10 @@ function Detail() {
   const mine = t.claimed_by === user?.id;
   const saleEditable = !cancelled && canClaim && ((t.status === "unclaimed" && !t.claimed_by) || (mine && t.status === "pending_reconciliation"));
   const manualEditable = !isBank && !cancelled && canManual && (t.status !== "reconciled" || canManage);
-  const showForm = saleEditable;
+  const directEligible = !cancelled && canRec && t.status === "unclaimed" && !t.claimed_by;
+  const isOther = f.type === "other";
+  const directOther = directEligible && isOther;
+  const showForm = saleEditable || directEligible;
 
   const done = async (p: PromiseLike<{ error: any }>, ok: string) => {
     if (busy) return;
@@ -98,9 +101,8 @@ function Detail() {
     refetch();
   };
   const check = () => {
-    if (!f.customer.trim()) return toast.error("Vui lòng nhập Khách hàng"), false;
-    if (!f.type) return toast.error("Vui lòng chọn Loại tiền"), false;
-    if (!f.note.trim()) return toast.error("Vui lòng nhập Ghi chú chi tiết"), false;
+    const error = checkNoteError(f);
+    if (error) return toast.error(error), false;
     return true;
   };
   const args = { _tx: id, _customer: f.customer, _type: f.type, _ref: f.ref, _note: f.note };
@@ -149,7 +151,7 @@ function Detail() {
         <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"><b>Kế toán yêu cầu chỉnh sửa:</b> {t.info_reason}</div>
       )}
 
-      {t.claimed_by || (isBank && t.customer) ? (
+      {t.claimed_by || t.reconciled_by || (isBank && t.customer) ? (
         <div className="mt-3 rounded-lg border bg-card p-4 text-sm grid grid-cols-[130px_1fr] gap-y-1.5">
           <span className="text-muted-foreground">Sale xác nhận</span><span>{nameOf(t.claimed_by)}{t.claimed_at ? ` · ${fmtTime(t.claimed_at)}` : ""}</span>
           <span className="text-muted-foreground">Khách hàng</span><span>{t.customer || "—"}</span>
@@ -163,17 +165,17 @@ function Detail() {
       {showForm && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-4">
           <div className="font-medium">Xác nhận tiền về</div>
-          <div className="space-y-1.5"><Label>Khách hàng *</Label><Input className={`h-11 ${field}`} value={f.customer} maxLength={200} placeholder="Tên khách hàng hoặc công ty" onChange={(e) => setF({ ...f, customer: e.target.value })} /></div>
+          {!isOther && <div className="space-y-1.5"><Label>Khách hàng *</Label><Input className={`h-11 ${field}`} value={f.customer} maxLength={200} placeholder="Tên khách hàng hoặc công ty" onChange={(e) => setF({ ...f, customer: e.target.value })} /></div>}
           <div className="space-y-1.5"><Label>Loại tiền *</Label>
             <select className={`h-11 w-full rounded-md border border-input bg-background px-3 ${field}`} value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>
               <option value="">— Chọn loại tiền —</option>
               {Object.entries(MONEY_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
-          <div className="space-y-1.5"><Label>Mã đơn / Mã tham chiếu</Label><Input className={`h-11 ${field}`} value={f.ref} maxLength={100} placeholder="Có thể bỏ trống" onChange={(e) => setF({ ...f, ref: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Ghi chú chi tiết *</Label><Textarea className={`min-h-28 ${field}`} value={f.note} maxLength={2000} placeholder="VD: Khách Công ty ABC cọc 50 bộ ly sứ in logo, Sale Nguyễn A phụ trách." onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
+          {!isOther && <div className="space-y-1.5"><Label>Mã đơn / Mã tham chiếu</Label><Input className={`h-11 ${field}`} value={f.ref} maxLength={100} placeholder="Có thể bỏ trống" onChange={(e) => setF({ ...f, ref: e.target.value })} /></div>}
+          <div className="space-y-1.5"><Label>{isOther ? "Ghi chú khoản tiền *" : "Ghi chú chi tiết *"}</Label><Textarea className={`min-h-28 ${field}`} value={f.note} maxLength={2000} placeholder={isOther ? "VD: Tiền hoàn ứng nội bộ." : "VD: Khách Công ty ABC cọc 50 bộ ly sứ in logo, Sale Nguyễn A phụ trách."} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
           <div className="fixed md:static bottom-0 inset-x-0 p-3 md:p-0 bg-background border-t md:border-0 flex flex-col md:flex-row gap-2 z-20">
-            {saleEditable && <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_claim", args), "Đã gửi Kế toán đối soát")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Xác nhận & gửi Kế toán</Button>}
+            {directOther ? <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_reconcile", { _tx: id, _type: "other", _note: f.note }), "Đã ghi chú và hoàn tất đối soát")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Ghi chú & hoàn tất đối soát</Button> : saleEditable && <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_claim", args), "Đã gửi Kế toán đối soát")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Xác nhận & gửi Kế toán</Button>}
           </div>
         </div>
       )}
