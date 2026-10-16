@@ -356,6 +356,7 @@ export type Database = {
           info_reason: string | null
           money_type: string | null
           note: string | null
+          operation_test: boolean
           provider: string
           provider_transaction_id: string
           received_date: string | null
@@ -393,6 +394,7 @@ export type Database = {
           info_reason?: string | null
           money_type?: string | null
           note?: string | null
+          operation_test?: boolean
           provider?: string
           provider_transaction_id: string
           received_date?: string | null
@@ -430,6 +432,7 @@ export type Database = {
           info_reason?: string | null
           money_type?: string | null
           note?: string | null
+          operation_test?: boolean
           provider?: string
           provider_transaction_id?: string
           received_date?: string | null
@@ -731,6 +734,24 @@ export type Database = {
           id?: string
           is_demo?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_operation_start: {
+        Row: {
+          id: boolean
+          started_at: string
+          started_by: string
+        }
+        Insert: {
+          id?: boolean
+          started_at: string
+          started_by: string
+        }
+        Update: {
+          id?: boolean
+          started_at?: string
+          started_by?: string
         }
         Relationships: []
       }
@@ -3048,6 +3069,22 @@ export type Database = {
         Returns: undefined
       }
       fin_gmf_can_manage: { Args: never; Returns: boolean }
+      fin_incoming_history_stats: {
+        Args: {
+          _acc?: string
+          _from?: string
+          _q?: string
+          _sale?: string
+          _src?: string
+          _to?: string
+        }
+        Returns: {
+          n: number
+          source: string
+          status: string
+          total: number
+        }[]
+      }
       fin_incoming_stats: {
         Args: {
           _acc?: string
@@ -3089,6 +3126,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      fin_operation_begin: { Args: { _confirm: boolean }; Returns: string }
+      fin_operation_status: { Args: never; Returns: Json }
       fin_reconcile: {
         Args: {
           _customer?: string

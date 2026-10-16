@@ -372,6 +372,13 @@
       "when": 1792138028001,
       "tag": "0052_finance_other_concurrent_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1792138679315,
+      "tag": "0053_finance_operation_start",
+      "breakpoints": true
     }
   ]
 }
