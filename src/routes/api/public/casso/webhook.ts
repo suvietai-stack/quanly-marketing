@@ -88,13 +88,19 @@ export const Route = createFileRoute("/api/public/casso/webhook")({
           });
         if (!rows.length) return json({ success: true, ignored: "filtered" });
 
-        const { error } = await supabaseAdmin
+        const { data: inserted, error } = await supabaseAdmin
           .from("bank_transactions")
-          .upsert(rows, { onConflict: "provider,provider_transaction_id", ignoreDuplicates: true });
+          .upsert(rows, { onConflict: "provider,provider_transaction_id", ignoreDuplicates: true })
+          .select("id");
         if (error) {
           console.error("[casso] db error", error.code);
           return json({ success: false, error: "db_error" }, 500);
         }
+        // Chỉ giao dịch MỚI chèn mới gửi GMF (webhook retry không tạo bản ghi mới). Lỗi Zalo không ảnh hưởng giao dịch.
+        try {
+          const { queueAndSend } = await import("@/lib/finance/gmf.server");
+          await queueAndSend((inserted ?? []).map((r) => r.id));
+        } catch { console.warn("[casso] gmf notify failed"); }
         return json({ success: true });
       },
     },
