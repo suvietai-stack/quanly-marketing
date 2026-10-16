@@ -5,6 +5,7 @@ import { Plus, RefreshCw, Search, Settings2, X } from "lucide-react";
 import { BankSettings } from "@/components/finance/BankSettings";
 import { ManualEntry } from "@/components/finance/ManualEntry";
 import { OperationStart } from "@/components/finance/OperationStart";
+import { ResetData } from "@/components/finance/ResetData";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -116,7 +117,7 @@ function Incoming() {
         description="Giao dịch tiền vào đồng bộ tự động từ ngân hàng và khoản Kế toán nhập thủ công."
         actions={<>
           {isSuperAdmin && <OperationStart userId={user?.id} />}
-          {isSuperAdmin && <Button variant="outline" onClick={() => { setQText(""); set({ history: history ? "" : "test", acc: "", st: "", q: "", from: "", to: "", sale: "" }); }}>{history ? "Vận hành chính" : "Lịch sử kiểm thử"}</Button>}
+          {isSuperAdmin && <ResetData userId={user?.id} onDone={() => { setQText(""); set({ history: "", acc: "", st: "", q: "", from: "", to: "", sale: "" }); }} />}
           {canAdd && !history && <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" />Thêm khoản tiền</Button>}
           {(canBank || canGmf) && <Button variant="outline" onClick={() => setShowSettings(true)}><Settings2 className="h-4 w-4 mr-2" />Cài đặt</Button>}
           <Button variant="outline" size="icon" aria-label="Làm mới" onClick={() => { refetch(); stats.refetch(); }} disabled={isFetching}><RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /></Button>

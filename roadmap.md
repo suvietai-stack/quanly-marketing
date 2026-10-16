@@ -14,5 +14,6 @@
 - [ ] Tiền Về: bảo mật giao dịch theo Sale, tổng theo quyền, tìm chính xác số tiền, giao diện người xác nhận và kiểm thử.
 - [x] Tiền Về — loại Khác: rút gọn form, đối soát trực tiếp có quyền, khóa chống xử lý trùng, bảo toàn luồng cũ; 14 kiểm tra đạt.
 - [x] Tiền Về — mốc vận hành chỉ Super Admin xác nhận, lịch sử kiểm thử riêng, chặn truy cập và gửi lại thông báo giao dịch cũ; không tự reset.
-- [ ] Tiền Về — reset có xem trước, bản sao riêng Super Admin, xóa phụ thuộc nguyên tử, chặn webhook trước/bằng mốc; không tự thực thi.
+- [x] Tiền Về — reset có xem trước, bản sao riêng Super Admin, xóa phụ thuộc nguyên tử, chặn webhook trước/bằng mốc; 0055/0056, 14 kiểm tra đạt; chưa xóa 8 giao dịch hiện có.
+- [ ] Tiền Về — thử reset thực tế và giao dịch ngân hàng → GMF → Sale (chờ Super Admin đăng nhập và chủ động xác nhận xóa; không tự gửi khoản thật).
 - [ ] Tiền Về — loại Khác: kiểm thử 4 tình huống bằng Sale/Kế toán thật (chờ tài khoản đăng nhập trong preview; --self không có tài khoản khớp).

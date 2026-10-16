@@ -16,7 +16,7 @@ export function OperationStart({ userId }: { userId: string | undefined }) {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("fin_operation_status");
       if (error) throw new Error(error.message);
-      return data as { started_at: string | null; started_by: string | null };
+      return data as { started_at: string | null; started_by: string | null; reset_at: string | null };
     },
   });
   const begin = async () => {
@@ -38,7 +38,7 @@ export function OperationStart({ userId }: { userId: string | undefined }) {
   return <>
     {status.error ? <span className="text-sm text-destructive">{status.error.message}<Button variant="ghost" size="sm" onClick={() => status.refetch()}>Thử lại</Button></span>
       : status.data?.started_at ? <span className="text-sm text-muted-foreground">Vận hành từ {fmtTime(status.data.started_at)}</span>
-      : <Button variant="outline" disabled={!status.data} onClick={() => setOpen(true)}><Play className="h-4 w-4 mr-2" />Bắt đầu vận hành Tiền Về</Button>}
+       : null}
     <AlertDialog open={open} onOpenChange={(value) => { if (!busy) setOpen(value); }}>
       <AlertDialogContent className="max-w-lg w-[calc(100%-2rem)]">
         <AlertDialogHeader>
