@@ -455,10 +455,15 @@ export const PERMISSIONS: PermissionDef[] = [
   P("ot.settings", "Quản lý cài đặt đơn hàng", "Theo Dõi Đơn Hàng", "Quản lý"),
 
   // ===== Tài Chính Kế Toán =====
-  P("finance.incoming.view", "Xem Tiền Về", "Tài Chính Kế Toán", "Tiền Về"),
-  P("finance.incoming.claim", "Sale xác nhận giao dịch", "Tài Chính Kế Toán", "Tiền Về"),
-  P("finance.incoming.reconcile", "Kế toán đối soát", "Tài Chính Kế Toán", "Tiền Về"),
-  P("finance.incoming.manage", "Quản lý / điều chỉnh giao dịch & cấu hình thông báo", "Tài Chính Kế Toán", "Tiền Về"),
+  P("finance.incoming.view", "Xem Tiền Về", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
+  P("finance.incoming.claim", "Sale xác nhận giao dịch", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
+  P("finance.incoming.reconcile", "Đối soát giao dịch", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
+  P("finance.incoming.manual_view", "Xem khoản thủ công (Tiền mặt / TK khác)", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
+  P("finance.incoming.manual_create", "Thêm khoản thủ công", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
+  P("finance.incoming.manual_manage", "Quản lý (sửa / hủy) khoản thủ công", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
+  P("finance.incoming.manage", "Quản lý / điều chỉnh giao dịch", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
+  P("finance.incoming.bank_config", "Cài đặt ngân hàng", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
+  P("finance.incoming.gmf_config", "Cài đặt thông báo Zalo GMF", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
