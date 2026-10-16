@@ -3036,6 +3036,7 @@ export type Database = {
           last4: string
         }[]
       }
+      fin_can_view_totals: { Args: never; Returns: boolean }
       fin_claim: {
         Args: {
           _customer: string

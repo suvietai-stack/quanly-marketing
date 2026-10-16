@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, vnEndExcl, vnStart, vnd } from "@/lib/finance/incoming";
+import { TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, searchAmount, vnEndExcl, vnStart, vnd } from "@/lib/finance/incoming";
 
 type S = { acc: string; st: string; q: string; from: string; to: string; sale: string };
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -51,7 +51,9 @@ function Incoming() {
   const [showAdd, setShowAdd] = useState(false);
   const { user, can } = useCurrentUser();
   const canBank = can("finance.incoming.bank_config"), canGmf = can("finance.incoming.gmf_config") || can("finance.incoming.manage");
-  const canManual = can("finance.incoming.manual_view") || can("finance.incoming.manage");
+  const canTotals = can("finance.incoming.view_totals");
+  const canAll = can("finance.incoming.manage") || can("finance.incoming.reconcile");
+  const canManual = can("finance.incoming.manual_view") || canAll || can("finance.incoming.manual_manage") || can("finance.incoming.manual_create");
   const canAdd = can("finance.incoming.manual_create");
   const nav = useNavigate();
   const qc = useQueryClient();
@@ -61,13 +63,14 @@ function Incoming() {
   const { data: labels } = useQuery({ queryKey: ["fin_bank_labels"], queryFn: async () => ((await supabase.rpc("fin_bank_labels")).data ?? []) as BankLabel[] });
   const src = s.acc === "cash" || s.acc === "other_account" ? s.acc : "";
   const acc = isUuid(s.acc) ? s.acc : "";
-  const q = safeQ(s.q);
+  const amount = searchAmount(s.q);
+  const q = amount === null ? safeQ(s.q) : s.q.trim();
   const sale = isUuid(s.sale) ? s.sale : "";
   const fromTs = vnStart(s.from), toTs = vnEndExcl(s.to);
   const filt = { src, acc, q, sale, fromTs, toTs };
 
   const stats = useQuery({
-    queryKey: ["bank_transactions", "stats", filt],
+    queryKey: ["bank_transactions", "stats", user?.id, filt, canTotals],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("fin_incoming_stats", { _src: src || undefined, _acc: acc || undefined, _from: fromTs ?? undefined, _to: toTs ?? undefined, _q: q || undefined, _sale: sale || undefined });
       if (error) throw error;
@@ -78,11 +81,10 @@ function Incoming() {
   const sum = (st: string, kind?: string) => (stats.data ?? []).filter((r) => (!st || r.status === st) && (!kind || r.source === kind)).reduce((a, r) => a + Number(r.total ?? 0), 0);
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ["bank_transactions", "list", filt, s.st, limit],
-    placeholderData: (p) => p,
+    queryKey: ["bank_transactions", "list", user?.id, filt, s.st, limit],
     queryFn: async () => {
       let x = supabase.from("bank_transactions")
-        .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, status, created_at, created_by, claimed_by, info_reason")
+        .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, status, created_at, claimed_by, info_reason")
         .gt("amount", 0).is("cancelled_at", null);
       if (src) x = x.eq("source", src);
       if (acc) x = x.eq("bank_account_id", acc);
@@ -90,7 +92,8 @@ function Incoming() {
       if (sale) x = x.eq("claimed_by", sale);
       if (fromTs) x = x.gte("transaction_at", fromTs);
       if (toTs) x = x.lt("transaction_at", toTs);
-      if (q) x = x.or(["description", "reference_number", "note", "customer"].map((c) => `${c}.ilike.*${q}*`).join(","));
+      if (amount !== null) x = x.eq("amount", amount);
+      else if (q) x = x.or(["description", "reference_number", "note", "customer"].map((c) => `${c}.ilike.*${q}*`).join(","));
       const { data, error } = await x.order("transaction_at", { ascending: false }).order("created_at", { ascending: false }).range(0, limit - 1);
       if (error) throw error;
       return data;
@@ -102,7 +105,7 @@ function Incoming() {
   const saleUsers = useMemo(() => [...users].filter((u) => u.fullName).sort((a, b) => a.fullName.localeCompare(b.fullName)), [users]);
   const hasFilter = !!(s.q || s.from || s.to || s.sale);
   const open = (id: string) => nav({ to: "/finance/incoming/$id", params: { id } });
-  const who = (r: any) => r.source !== "bank" ? [`Nhập: ${nameOf(r.created_by)}`, r.claimed_by ? `Sale: ${nameOf(r.claimed_by)}` : ""].filter(Boolean).join(" · ") : nameOf(r.claimed_by);
+  const who = (r: { claimed_by: string | null }) => nameOf(r.claimed_by);
 
   return (
     <div>
@@ -145,19 +148,21 @@ function Incoming() {
       <div className="flex flex-wrap gap-2 mb-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-8" placeholder="Nội dung CK, mã GD, ghi chú" value={qText} onChange={(e) => setQText(e.target.value)} />
+          <Input className="pl-8" placeholder="Tìm số tiền, nội dung CK, mã GD, ghi chú..." value={qText} onChange={(e) => setQText(e.target.value)} />
         </div>
         <Input type="date" className="w-auto" value={s.from} onChange={(e) => set({ from: e.target.value })} aria-label="Từ ngày" />
         <Input type="date" className="w-auto" value={s.to} onChange={(e) => set({ to: e.target.value })} aria-label="Đến ngày" />
-        <select className="h-9 rounded-md border border-input bg-background px-2 text-sm max-w-[180px]" value={s.sale} onChange={(e) => set({ sale: e.target.value })} aria-label="Sale xác nhận">
+        {canAll && <select className="h-9 rounded-md border border-input bg-background px-2 text-sm max-w-[180px]" value={s.sale} onChange={(e) => set({ sale: e.target.value })} aria-label="Sale xác nhận">
           <option value="">Sale xác nhận: tất cả</option>
           {saleUsers.map((u) => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-        </select>
+        </select>}
         {hasFilter && <Button variant="ghost" size="sm" onClick={() => { setQText(""); set({ q: "", from: "", to: "", sale: "" }); }}><X className="h-4 w-4 mr-1" />Xóa lọc</Button>}
       </div>
       <div className="text-sm text-muted-foreground mb-3">
-        {total} giao dịch · Tổng <b className="text-foreground">{vnd(sum(s.st))}</b>
-        {sum(s.st, "manual") > 0 && <> (ngân hàng {vnd(sum(s.st, "bank"))} · thủ công {vnd(sum(s.st, "manual"))})</>}
+        {stats.error ? <span className="text-destructive">Không tải được số đếm và tổng tiền.</span> : <>
+          {stats.data ? total : "…"} giao dịch · {canTotals ? "Tổng" : "Tổng của tôi"} <b className="text-foreground">{stats.data ? vnd(sum(s.st)) : "…"}</b>
+          {canTotals && sum(s.st, "manual") > 0 && <> (ngân hàng {vnd(sum(s.st, "bank"))} · thủ công {vnd(sum(s.st, "manual"))})</>}
+        </>}
       </div>
 
       <div className="md:hidden space-y-2">
@@ -170,7 +175,7 @@ function Incoming() {
                 <span className="text-xl font-bold text-primary">{vnd(Number(r.amount))}</span>
                 <Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>
               </div>
-              <div className="mt-1 text-sm font-semibold uppercase">{rc.main}{r.source !== "bank" && <Badge variant="outline" className="ml-2 normal-case">Thủ công</Badge>}</div>
+              <div className="mt-1 text-sm font-semibold uppercase">{rc.main}</div>
               <div className="text-sm mt-0.5 line-clamp-2 text-muted-foreground">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div>
               <div className="text-xs text-muted-foreground mt-1">{fmtTime(r.transaction_at, r.transaction_date)}{who(r) !== "—" ? ` · ${who(r)}` : ""}</div>
             </button>
@@ -179,7 +184,7 @@ function Incoming() {
       <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
-            <tr>{["Thời gian", "TK nhận / nguồn", "Số tiền", "Nội dung CK / ghi chú", "Sale / người tạo", "Trạng thái"].map((h) => <th key={h} className="px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
+            <tr>{["Thời gian", "TK nhận / nguồn", "Số tiền", "Nội dung CK / ghi chú", "Sale xác nhận", "Trạng thái"].map((h) => <th key={h} className="px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
           </thead>
           <tbody>
             {isLoading ? (
@@ -191,9 +196,9 @@ function Incoming() {
             ) : rows.map((r) => { const rc = receiver(r, labels); return (
               <tr key={r.id} className="border-t cursor-pointer hover:bg-accent/50" onClick={() => open(r.id)}>
                 <td className="px-3 py-2 whitespace-nowrap">{fmtTime(r.transaction_at, r.transaction_date)}</td>
-                <td className="px-3 py-2 whitespace-nowrap"><div className="font-semibold uppercase">{rc.main}</div><div className="text-xs text-muted-foreground">{r.source !== "bank" ? <Badge variant="outline">Thủ công</Badge> : rc.sub}</div></td>
+                <td className="px-3 py-2"><div className="font-semibold uppercase">{rc.main}</div>{rc.sub && <div className="text-xs text-muted-foreground">{rc.sub}</div>}</td>
                 <td className="px-3 py-2 font-medium text-primary whitespace-nowrap">{vnd(Number(r.amount))}</td>
-                <td className="px-3 py-2 min-w-[280px]"><div className="line-clamp-2">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div></td>
+                <td className="px-3 py-2 min-w-[220px]"><div className="line-clamp-2 break-words">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div></td>
                 <td className="px-3 py-2 whitespace-nowrap">{who(r)}</td>
                 <td className="px-3 py-2"><Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>{r.info_reason && r.status === "pending_reconciliation" && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}</td>
               </tr>
