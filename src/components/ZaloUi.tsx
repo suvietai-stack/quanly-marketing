@@ -25,7 +25,7 @@ import { ORDER_LABEL, orderLink } from "@/lib/orders/notifyMessage";
 import { OQ_LABEL, oqLink } from "@/lib/orderQuotes/notify";
 const LABEL: Record<string, string> = {
   fin_pending: "Tiền Về: có giao dịch chờ đối soát.",
-  fin_needs_info: "Tiền Về: Kế toán yêu cầu bổ sung thông tin.",
+  fin_needs_info: "Tiền Về: Kế toán yêu cầu chỉnh sửa thông tin.",
   signal_new: "Có tín hiệu mới đang cần xử lý.",
   signal_assigned: "Bạn vừa được giao một tín hiệu cơ hội mới.",
   signal_care: "Nhắc chăm sóc: có tín hiệu cần kiểm tra.",
