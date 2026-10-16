@@ -17,3 +17,5 @@
 - [x] Tiền Về — reset có xem trước, bản sao riêng Super Admin, xóa phụ thuộc nguyên tử, chặn webhook trước/bằng mốc; 0055/0056, 14 kiểm tra đạt; chưa xóa 8 giao dịch hiện có.
 - [ ] Tiền Về — thử reset thực tế và giao dịch ngân hàng → GMF → Sale (chờ Super Admin đăng nhập và chủ động xác nhận xóa; không tự gửi khoản thật).
 - [ ] Tiền Về — loại Khác: kiểm thử 4 tình huống bằng Sale/Kế toán thật (chờ tài khoản đăng nhập trong preview; --self không có tài khoản khớp).
+- [x] Chuyển Reset khỏi thanh công cụ vào cuối Cài đặt Tiền Về → Quản trị nâng cao; giữ xem trước, xác nhận và kiểm tra Super Admin ở RPC; 14 kiểm tra đạt.
+- [ ] Kiểm tra vị trí Reset trong Cài đặt bằng Super Admin thật (chờ đăng nhập trong preview; không có tài khoản khớp để tạo phiên).

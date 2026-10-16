@@ -9,12 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCurrentUser } from "@/lib/auth";
+import { ResetData } from "@/components/finance/ResetData";
 
 const TYPES: Record<string, string> = { personal: "Cá nhân", household: "Hộ kinh doanh", company: "Công ty" };
 type Acc = { id: string; bank_name: string; account_number: string; label: string | null; account_type: string; active: boolean; share_sale: boolean; gmf_notify: boolean };
 const EMPTY = { id: "", bank_name: "", account_number: "", label: "", account_type: "personal" };
 
-export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true }: { open: boolean; onOpenChange: (v: boolean) => void; canBank?: boolean; canGmf?: boolean }) {
+export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true, onResetDone }: { open: boolean; onOpenChange: (v: boolean) => void; canBank?: boolean; canGmf?: boolean; onResetDone?: () => void }) {
+  const { user, isSuperAdmin } = useCurrentUser();
   const qc = useQueryClient();
   const [f, setF] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -53,7 +56,7 @@ export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{canBank ? "Cài đặt ngân hàng" : "Cài đặt Zalo GMF"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Cài đặt Tiền Về</DialogTitle></DialogHeader>
         {canBank && <>
         <p className="text-sm text-muted-foreground">Chỉ giao dịch của tài khoản đã đăng ký và đang bật mới được ghi nhận vào Tiền Về.</p>
         <div className="space-y-2">
@@ -89,6 +92,11 @@ export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true
         <p className="text-xs text-muted-foreground">“Sale xem”: cho Sale thấy giao dịch của tài khoản này để xác nhận. “Báo GMF”: Bật thông báo tiền về cho nhóm GMF. Cả hai mặc định tắt.</p>
         </>}
         {canGmf && <GmfSettings enabled={open} />}
+        {isSuperAdmin && <section className="border-t pt-4 space-y-3">
+          <h3 className="font-medium">Quản trị nâng cao</h3>
+          <p className="text-sm text-destructive">Cảnh báo: Reset sẽ xóa dữ liệu tài chính Tiền Về trong Base. Chỉ thực hiện khi đã kiểm tra số lượng giao dịch và xác nhận rõ ràng.</p>
+          <ResetData userId={user?.id} onDone={() => { onOpenChange(false); onResetDone?.(); }} />
+        </section>}
       </DialogContent>
     </Dialog>
   );
