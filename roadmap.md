@@ -12,4 +12,5 @@
 - [x] Tài Chính Kế Toán → Tiền Về (Casso webhook, bảng tài khoản ngân hàng do Admin quản lý)
 - [ ] Nhập CASSO_WEBHOOK_SECRET + cấu hình Webhook trên Casso (chờ người dùng)
 - [ ] Tiền Về: bảo mật giao dịch theo Sale, tổng theo quyền, tìm chính xác số tiền, giao diện người xác nhận và kiểm thử.
-- [ ] Tiền Về — loại Khác: rút gọn form, đối soát trực tiếp có quyền, kiểm tra nguyên tử và bảo toàn luồng cũ.
+- [x] Tiền Về — loại Khác: rút gọn form, đối soát trực tiếp có quyền, khóa chống xử lý trùng, bảo toàn luồng cũ; 14 kiểm tra đạt.
+- [ ] Tiền Về — loại Khác: kiểm thử 4 tình huống bằng Sale/Kế toán thật (chờ tài khoản đăng nhập trong preview; --self không có tài khoản khớp).
