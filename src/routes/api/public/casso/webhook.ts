@@ -64,25 +64,30 @@ export const Route = createFileRoute("/api/public/casso/webhook")({
         }
         if (body?.error !== 0 || !body?.data) return json({ success: true, ignored: "no_data" });
 
-        const allowed = String(process.env["CASSO_ALLOWED_ACCOUNTS"] ?? "").split(",").map(digits).filter(Boolean);
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: accs, error: accErr } = await supabaseAdmin.from("bank_accounts").select("id, bank_name, account_number").eq("active", true);
+        if (accErr) { console.error("[casso] db error", accErr.code); return json({ success: false, error: "db_error" }, 500); }
+        const byNo = new Map((accs ?? []).map((a) => [a.account_number, a]));
         const list: any[] = Array.isArray(body.data) ? body.data : [body.data];
         const rows = list
-          .filter((d) => d && d.id != null && Number(d.amount) > 0)
-          .filter((d) => allowed.includes(digits(d.accountNumber)))
-          .map((d) => ({
-            provider: "casso",
-            provider_transaction_id: String(d.id),
-            bank_name: String(d.bankAbbreviation || d.bankName || "").slice(0, 100) || null,
-            bank_account_identifier: digits(d.accountNumber) || null,
-            transaction_date: d.transactionDateTime != null ? String(d.transactionDateTime) : null,
-            transaction_at: toIso(d.transactionDateTime),
-            amount: Math.round(Number(d.amount)),
-            description: d.description != null ? String(d.description).slice(0, 1000) : null,
-            reference_number: d.reference != null ? String(d.reference).slice(0, 200) : null,
-          }));
+          .filter((d) => d && d.id != null && Number(d.amount) > 0 && byNo.has(digits(d.accountNumber)))
+          .map((d) => {
+            const acc = byNo.get(digits(d.accountNumber))!;
+            return {
+              provider: "casso",
+              provider_transaction_id: String(d.id),
+              bank_account_id: acc.id,
+              bank_name: acc.bank_name,
+              bank_account_identifier: acc.account_number,
+              transaction_date: d.transactionDateTime != null ? String(d.transactionDateTime) : null,
+              transaction_at: toIso(d.transactionDateTime),
+              amount: Math.round(Number(d.amount)),
+              description: d.description != null ? String(d.description).slice(0, 1000) : null,
+              reference_number: d.reference != null ? String(d.reference).slice(0, 200) : null,
+            };
+          });
         if (!rows.length) return json({ success: true, ignored: "filtered" });
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error } = await supabaseAdmin
           .from("bank_transactions")
           .upsert(rows, { onConflict: "provider,provider_transaction_id", ignoreDuplicates: true });
