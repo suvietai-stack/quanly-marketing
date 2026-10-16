@@ -337,6 +337,13 @@
       "when": 1792131052620,
       "tag": "0047_finance_incoming_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792132568242,
+      "tag": "0048_fin_manual_claim_flow",
+      "breakpoints": true
     }
   ]
 }
