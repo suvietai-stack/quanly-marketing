@@ -3,11 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function assertManage(ctx: { supabase: any; userId: string }) {
-  const [{ data: a }, { data: b }] = await Promise.all([
+  const [perm, admin, superAdmin] = await Promise.all([
     ctx.supabase.rpc("has_permission", { _user_id: ctx.userId, _permission: "finance.incoming.manage" }),
     ctx.supabase.rpc("is_admin", { _user_id: ctx.userId }),
+    ctx.supabase.rpc("is_super_admin", { _user_id: ctx.userId }),
   ]);
-  if (!a && !b) throw new Error("Bạn không có quyền cấu hình thông báo Tiền Về");
+  const rpcError = perm.error ?? admin.error ?? superAdmin.error;
+  if (rpcError) throw new Error(`Không kiểm tra được quyền: ${rpcError.message}`);
+  if (!perm.data && !admin.data && !superAdmin.data) throw new Error("Bạn không có quyền cấu hình thông báo Tiền Về");
 }
 
 export const gmfStatus = createServerFn({ method: "POST" })
