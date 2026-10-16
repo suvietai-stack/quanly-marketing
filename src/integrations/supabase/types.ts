@@ -740,16 +740,19 @@ export type Database = {
       fin_operation_start: {
         Row: {
           id: boolean
+          reset_at: string | null
           started_at: string
           started_by: string
         }
         Insert: {
           id?: boolean
+          reset_at?: string | null
           started_at: string
           started_by: string
         }
         Update: {
           id?: boolean
+          reset_at?: string | null
           started_at?: string
           started_by?: string
         }
@@ -3143,6 +3146,8 @@ export type Database = {
         Returns: undefined
       }
       fin_reset: { Args: { _reason: string; _tx: string }; Returns: undefined }
+      fin_reset_execute: { Args: { _confirm: string }; Returns: Json }
+      fin_reset_preview: { Args: never; Returns: Json }
       get_profiles_directory: {
         Args: never
         Returns: {

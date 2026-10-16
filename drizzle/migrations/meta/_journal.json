@@ -386,6 +386,13 @@
       "when": 1792138779909,
       "tag": "0054_finance_test_history_readonly",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1792140230368,
+      "tag": "0055_finance_incoming_reset",
+      "breakpoints": true
     }
   ]
 }
