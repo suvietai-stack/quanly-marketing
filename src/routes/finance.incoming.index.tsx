@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/finance/incoming")({
+export const Route = createFileRoute("/finance/incoming/")({
   head: () => ({ meta: [
     { title: "Tiền Về — Tài Chính Kế Toán" },
     { name: "description", content: "Giao dịch tiền vào đồng bộ tự động từ ngân hàng." },
