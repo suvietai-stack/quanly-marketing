@@ -45,7 +45,7 @@ export function BankSettings({ open, onOpenChange }: { open: boolean; onOpenChan
   };
 
   const toggle = async (a: Acc, k: "active" | "share_sale" | "gmf_notify" = "active") => {
-    const { error } = await supabase.from("bank_accounts").update({ [k]: !a[k] }).eq("id", a.id);
+    const { error } = await supabase.from("bank_accounts").update({ [k]: !a[k] } as any).eq("id", a.id);
     if (error) toast.error("Không cập nhật được.");
     refresh();
   };
