@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { RefreshCw, Search } from "lucide-react";
+import { RefreshCw, Search, Settings2 } from "lucide-react";
+import { BankSettings } from "@/components/finance/BankSettings";
+import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +35,9 @@ function Incoming() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [bank, setBank] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const { isSuperAdmin, user } = useCurrentUser();
+  const isAdmin = isSuperAdmin || user?.roleId === "role-admin";
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["bank_transactions"],
     queryFn: async () => {
@@ -64,8 +69,9 @@ function Incoming() {
       <PageHeader
         title="Tiền Về"
         description="Quản lý các giao dịch tiền vào được đồng bộ tự động từ ngân hàng."
-        actions={<Button variant="outline" onClick={() => refetch()} disabled={isFetching}><RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />Làm mới</Button>}
+        actions={<>{isAdmin && <Button variant="outline" onClick={() => setShowSettings(true)}><Settings2 className="h-4 w-4 mr-2" />Cài đặt ngân hàng</Button>}<Button variant="outline" onClick={() => refetch()} disabled={isFetching}><RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />Làm mới</Button></>}
       />
+      {isAdmin && <BankSettings open={showSettings} onOpenChange={setShowSettings} />}
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
