@@ -25,6 +25,7 @@ import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
+import { Route as FinanceIncomingRouteImport } from './routes/finance.incoming'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
@@ -40,6 +41,7 @@ import { Route as SocialIndexRouteImport } from './routes/social.index'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
+import { Route as ApiPublicCassoWebhookRouteImport } from './routes/api/public/casso/webhook'
 import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
 import { Route as ApiPublicZaloDispatchCronRouteImport } from './routes/api/public/zalo/dispatch-cron'
@@ -126,6 +128,11 @@ const BrandsIdRoute = BrandsIdRouteImport.update({
   path: '/brands/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceIncomingRoute = FinanceIncomingRouteImport.update({
+  id: '/finance/incoming',
+  path: '/finance/incoming',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LocalIndexRoute = LocalIndexRouteImport.update({
   id: '/local/',
   path: '/local/',
@@ -201,6 +208,11 @@ const WebsitesIdRoute = WebsitesIdRouteImport.update({
   path: '/websites/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCassoWebhookRoute = ApiPublicCassoWebhookRouteImport.update({
+  id: '/api/public/casso/webhook',
+  path: '/api/public/casso/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
   id: '/api/public/push/dispatch',
   path: '/api/public/push/dispatch',
@@ -245,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
+  '/finance/incoming': typeof FinanceIncomingRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -261,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
@@ -283,6 +297,7 @@ export interface FileRoutesByTo {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
+  '/finance/incoming': typeof FinanceIncomingRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -299,6 +314,7 @@ export interface FileRoutesByTo {
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
+  '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
@@ -322,6 +338,7 @@ export interface FileRoutesById {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
+  '/finance/incoming': typeof FinanceIncomingRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -338,6 +355,7 @@ export interface FileRoutesById {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
@@ -362,6 +380,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/brands/$id'
+    | '/finance/incoming'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -378,6 +397,7 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/casso/webhook'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
@@ -400,6 +420,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/brands/$id'
+    | '/finance/incoming'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -416,6 +437,7 @@ export interface FileRouteTypes {
     | '/signals'
     | '/social'
     | '/websites'
+    | '/api/public/casso/webhook'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
@@ -438,6 +460,7 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/brands/$id'
+    | '/finance/incoming'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -454,6 +477,7 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/api/public/casso/webhook'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
@@ -477,6 +501,7 @@ export interface RootRouteChildren {
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
   BrandsIdRoute: typeof BrandsIdRoute
+  FinanceIncomingRoute: typeof FinanceIncomingRoute
   LocalIdRoute: typeof LocalIdRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
@@ -493,6 +518,7 @@ export interface RootRouteChildren {
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
+  ApiPublicCassoWebhookRoute: typeof ApiPublicCassoWebhookRoute
   ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
   ApiPublicZaloDispatchCronRoute: typeof ApiPublicZaloDispatchCronRoute
@@ -614,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BrandsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/finance/incoming': {
+      id: '/finance/incoming'
+      path: '/finance/incoming'
+      fullPath: '/finance/incoming'
+      preLoaderRoute: typeof FinanceIncomingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/local/': {
       id: '/local/'
       path: '/local'
@@ -719,6 +752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebsitesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/casso/webhook': {
+      id: '/api/public/casso/webhook'
+      path: '/api/public/casso/webhook'
+      fullPath: '/api/public/casso/webhook'
+      preLoaderRoute: typeof ApiPublicCassoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/push/dispatch': {
       id: '/api/public/push/dispatch'
       path: '/api/public/push/dispatch'
@@ -773,6 +813,7 @@ const rootRouteChildren: RootRouteChildren = {
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
   BrandsIdRoute: BrandsIdRoute,
+  FinanceIncomingRoute: FinanceIncomingRoute,
   LocalIdRoute: LocalIdRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
@@ -789,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
+  ApiPublicCassoWebhookRoute: ApiPublicCassoWebhookRoute,
   ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
   ApiPublicZaloDispatchCronRoute: ApiPublicZaloDispatchCronRoute,

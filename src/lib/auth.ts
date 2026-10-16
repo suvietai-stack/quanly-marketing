@@ -27,6 +27,7 @@ export type PermissionGroup =
   | "Đơn Hàng — Hỏi Giá & Tiến Độ"
   | "Theo Dõi Đơn Hàng"
   | "KPI / Giao KPI"
+  | "Tài Chính Kế Toán"
   | "Tài khoản";
 
 export interface PermissionDef {
@@ -453,6 +454,9 @@ export const PERMISSIONS: PermissionDef[] = [
   P("ot.report_export", "Xuất báo cáo", "Theo Dõi Đơn Hàng", "Báo cáo"),
   P("ot.settings", "Quản lý cài đặt đơn hàng", "Theo Dõi Đơn Hàng", "Quản lý"),
 
+  // ===== Tài Chính Kế Toán =====
+  P("finance.incoming.view", "Xem Tiền Về", "Tài Chính Kế Toán", "Tiền Về"),
+
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),
   P("settings.user_create", "Tạo tài khoản", "Tài khoản", "Tài khoản"),
@@ -671,7 +675,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
