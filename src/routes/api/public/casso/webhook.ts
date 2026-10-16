@@ -30,6 +30,7 @@ function safeEq(a: string, b: string) {
 }
 
 const digits = (s: unknown) => String(s ?? "").replace(/\D/g, "");
+const str = (v: unknown, max: number) => { const s = v == null ? "" : String(v).trim(); return s ? s.slice(0, max) : null; };
 
 function toIso(v: unknown): string | null {
   const s = String(v ?? "").trim();
@@ -84,6 +85,10 @@ export const Route = createFileRoute("/api/public/casso/webhook")({
               amount: Math.round(Number(d.amount)),
               description: d.description != null ? String(d.description).slice(0, 1000) : null,
               reference_number: d.reference != null ? String(d.reference).slice(0, 200) : null,
+              // Casso V2: chỉ lưu khi Casso thực sự gửi; không suy diễn từ nội dung CK.
+              counter_account_name: str(d.counterAccountName, 200),
+              counter_account_number: str(d.counterAccountNumber, 40),
+              counter_bank_name: str(d.counterAccountBankName ?? d.counterAccountBankId, 120),
             };
           });
         if (!rows.length) return json({ success: true, ignored: "filtered" });

@@ -14,13 +14,13 @@ const TYPES: Record<string, string> = { personal: "Cá nhân", household: "Hộ 
 type Acc = { id: string; bank_name: string; account_number: string; label: string | null; account_type: string; active: boolean; share_sale: boolean; gmf_notify: boolean };
 const EMPTY = { id: "", bank_name: "", account_number: "", label: "", account_type: "personal" };
 
-export function BankSettings({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true }: { open: boolean; onOpenChange: (v: boolean) => void; canBank?: boolean; canGmf?: boolean }) {
   const qc = useQueryClient();
   const [f, setF] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["bank_accounts"],
-    enabled: open,
+    enabled: open && canBank,
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_accounts").select("id, bank_name, account_number, label, account_type, active, share_sale, gmf_notify").order("created_at");
       if (error) throw error;
@@ -52,8 +52,9 @@ export function BankSettings({ open, onOpenChange }: { open: boolean; onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>Cài đặt ngân hàng</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{canBank ? "Cài đặt ngân hàng" : "Cài đặt Zalo GMF"}</DialogTitle></DialogHeader>
+        {canBank && <>
         <p className="text-sm text-muted-foreground">Chỉ giao dịch của tài khoản đã đăng ký và đang bật mới được ghi nhận vào Tiền Về.</p>
         <div className="space-y-2">
           {isLoading ? <div className="text-sm text-muted-foreground">Đang tải…</div>
@@ -86,7 +87,8 @@ export function BankSettings({ open, onOpenChange }: { open: boolean; onOpenChan
           </div>
         </div>
         <p className="text-xs text-muted-foreground">“Sale xem”: cho Sale thấy giao dịch của tài khoản này để xác nhận. “Báo GMF”: Bật thông báo tiền về cho nhóm GMF. Cả hai mặc định tắt.</p>
-        <GmfSettings enabled={open} />
+        </>}
+        {canGmf && <GmfSettings enabled={open} />}
       </DialogContent>
     </Dialog>
   );
