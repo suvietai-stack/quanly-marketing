@@ -1,0 +1,1 @@
+UPDATE public.app_roles SET permissions = (SELECT array_agg(DISTINCT x) FROM unnest(permissions || ARRAY['finance.incoming.view','finance.incoming.claim','finance.incoming.reconcile','finance.incoming.manage']) x), updated_at = now() WHERE id IN ('role-admin','role-super-admin');
