@@ -18,6 +18,12 @@ export const EVENT_LABEL: Record<string, string> = {
 };
 export type BankLabel = { id: string; label: string; bank_name: string; last4: string; active: boolean };
 export const vnd = (n: number) => "+" + Number(n).toLocaleString("vi-VN") + "đ";
+export function checkNoteError(f: { customer: string; type: string; note: string }): string | null {
+  if (!f.type) return "Vui lòng chọn Loại tiền";
+  if (f.type !== "other" && !f.customer.trim()) return "Vui lòng nhập Khách hàng";
+  if (!f.note.trim()) return f.type === "other" ? "Vui lòng nhập Ghi chú khoản tiền" : "Vui lòng nhập Ghi chú chi tiết";
+  return null;
+}
 export const fmtTime = (iso: string | null, raw?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : raw || "—";
 export const fmtDate = (d: string | null) => (d ? d.split("-").reverse().join("/") : "—");
