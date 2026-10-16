@@ -336,9 +336,16 @@ export type Database = {
           bank_account_id: string | null
           bank_account_identifier: string | null
           bank_name: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           claimed_at: string | null
           claimed_by: string | null
+          counter_account_name: string | null
+          counter_account_number: string | null
+          counter_bank_name: string | null
           created_at: string
+          created_by: string | null
           customer: string | null
           description: string | null
           gmf_attempts: number
@@ -351,10 +358,12 @@ export type Database = {
           note: string | null
           provider: string
           provider_transaction_id: string
+          received_date: string | null
           reconciled_at: string | null
           reconciled_by: string | null
           ref_code: string | null
           reference_number: string | null
+          source: string
           status: string
           transaction_at: string | null
           transaction_date: string | null
@@ -364,9 +373,16 @@ export type Database = {
           bank_account_id?: string | null
           bank_account_identifier?: string | null
           bank_name?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
+          counter_account_name?: string | null
+          counter_account_number?: string | null
+          counter_bank_name?: string | null
           created_at?: string
+          created_by?: string | null
           customer?: string | null
           description?: string | null
           gmf_attempts?: number
@@ -379,10 +395,12 @@ export type Database = {
           note?: string | null
           provider?: string
           provider_transaction_id: string
+          received_date?: string | null
           reconciled_at?: string | null
           reconciled_by?: string | null
           ref_code?: string | null
           reference_number?: string | null
+          source?: string
           status?: string
           transaction_at?: string | null
           transaction_date?: string | null
@@ -392,9 +410,16 @@ export type Database = {
           bank_account_id?: string | null
           bank_account_identifier?: string | null
           bank_name?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
+          counter_account_name?: string | null
+          counter_account_number?: string | null
+          counter_bank_name?: string | null
           created_at?: string
+          created_by?: string | null
           customer?: string | null
           description?: string | null
           gmf_attempts?: number
@@ -407,10 +432,12 @@ export type Database = {
           note?: string | null
           provider?: string
           provider_transaction_id?: string
+          received_date?: string | null
           reconciled_at?: string | null
           reconciled_by?: string | null
           ref_code?: string | null
           reference_number?: string | null
+          source?: string
           status?: string
           transaction_at?: string | null
           transaction_date?: string | null
@@ -3002,8 +3029,11 @@ export type Database = {
       fin_bank_labels: {
         Args: never
         Returns: {
+          active: boolean
+          bank_name: string
           id: string
           label: string
+          last4: string
         }[]
       }
       fin_claim: {
@@ -3017,6 +3047,47 @@ export type Database = {
         Returns: undefined
       }
       fin_gmf_can_manage: { Args: never; Returns: boolean }
+      fin_incoming_stats: {
+        Args: {
+          _acc?: string
+          _from?: string
+          _q?: string
+          _sale?: string
+          _src?: string
+          _to?: string
+        }
+        Returns: {
+          n: number
+          source: string
+          status: string
+          total: number
+        }[]
+      }
+      fin_manual_cancel: {
+        Args: { _reason: string; _tx: string }
+        Returns: undefined
+      }
+      fin_manual_create: {
+        Args: {
+          _amount: number
+          _date: string
+          _note: string
+          _reconcile?: boolean
+          _source: string
+        }
+        Returns: string
+      }
+      fin_manual_update: {
+        Args: {
+          _amount: number
+          _date: string
+          _note: string
+          _reason?: string
+          _source: string
+          _tx: string
+        }
+        Returns: undefined
+      }
       fin_reconcile: {
         Args: {
           _customer?: string
