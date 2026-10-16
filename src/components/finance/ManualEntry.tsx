@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SOURCES } from "@/lib/finance/incoming";
+import { finManualNotify } from "@/lib/finance/gmf.functions";
 
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
 const fmtNum = (s: string) => { const d = s.replace(/\D/g, "").replace(/^0+/, ""); return d ? Number(d).toLocaleString("vi-VN") : ""; };
@@ -26,7 +27,7 @@ export function ManualEntry({ open, onOpenChange, canReconcile, edit, onDone }: 
       : { source: "", amount: "", date: today(), note: "", reason: "" });
   }, [open, edit?.id]);
 
-  const submit = async (reconcile: boolean) => {
+  const submit = async () => {
     const amount = Number(f.amount.replace(/\D/g, ""));
     if (!f.source) return toast.error("Vui lòng chọn Nguồn tiền");
     if (!amount) return toast.error("Số tiền phải lớn hơn 0");
@@ -36,10 +37,11 @@ export function ManualEntry({ open, onOpenChange, canReconcile, edit, onDone }: 
     setBusy(true);
     const res = edit
       ? await supabase.rpc("fin_manual_update", { _tx: edit.id, _source: f.source, _amount: amount, _date: f.date, _note: f.note, _reason: f.reason || undefined })
-      : await supabase.rpc("fin_manual_create", { _source: f.source, _amount: amount, _date: f.date, _note: f.note, _reconcile: reconcile });
+      : await supabase.rpc("fin_manual_create", { _source: f.source, _amount: amount, _date: f.date, _note: f.note });
     setBusy(false);
     if (res.error) return toast.error(res.error.message || "Không lưu được");
-    toast.success(edit ? "Đã lưu thay đổi" : reconcile ? "Đã lưu & đối soát" : "Đã lưu, chờ đối soát");
+    if (!edit && res.data) finManualNotify({ data: { id: res.data as string } }).catch(() => {});
+    toast.success(edit ? "Đã lưu thay đổi" : "Đã lưu — đã báo nhóm Zalo để Sale xác nhận");
     onOpenChange(false);
     onDone(edit ? edit.id : (res.data as string));
   };
@@ -64,10 +66,8 @@ export function ManualEntry({ open, onOpenChange, canReconcile, edit, onDone }: 
           <div className="space-y-1.5"><Label>Ghi chú *</Label><Textarea className="min-h-28 text-base md:text-sm" maxLength={2000} value={f.note} placeholder="VD: Khách Nguyễn Văn A đưa 5 triệu tiền mặt đặt cọc lô ly sứ." onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
           {edit?.reconciled && <div className="space-y-1.5"><Label>Lý do sửa *</Label><Input value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} /></div>}
           <div className="flex flex-col sm:flex-row justify-end gap-2">
-            {edit ? <Button disabled={busy} onClick={() => submit(false)}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Lưu thay đổi</Button> : <>
-              <Button variant={canReconcile ? "outline" : "default"} disabled={busy} onClick={() => submit(false)}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Lưu & chờ đối soát</Button>
-              {canReconcile && <Button disabled={busy} onClick={() => submit(true)}>Lưu & đối soát luôn</Button>}
-            </>}
+            {edit ? <Button disabled={busy} onClick={() => submit()}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Lưu thay đổi</Button>
+              : <Button disabled={busy} onClick={() => submit()}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Lưu khoản tiền</Button>}
           </div>
         </div>
       </DialogContent>

@@ -58,3 +58,15 @@ export const gmfRetry = createServerFn({ method: "POST" })
     const s = await import("./gmf.server");
     return s.sendPending();
   });
+
+/** Gửi GMF ban đầu cho khoản thủ công vừa tạo. Chỉ người tạo gọi được; chống gửi trùng bằng gmf_status/gmf_attempts. */
+export const finManualNotify = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: t, error } = await (context.supabase as any).from("bank_transactions").select("id, source, created_by, status, cancelled_at").eq("id", data.id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!t || t.source === "bank" || t.created_by !== context.userId || t.status !== "unclaimed" || t.cancelled_at) return { ok: false };
+    try { const s = await import("./gmf.server"); await s.queueAndSend([t.id]); } catch { /* lỗi Zalo không chặn khoản tiền */ }
+    return { ok: true };
+  });
