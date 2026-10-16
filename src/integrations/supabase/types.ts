@@ -3016,6 +3016,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      fin_gmf_can_manage: { Args: never; Returns: boolean }
       fin_reconcile: {
         Args: {
           _customer?: string
