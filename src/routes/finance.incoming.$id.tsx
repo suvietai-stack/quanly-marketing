@@ -81,9 +81,9 @@ function Detail() {
   const rc = receiver(t, labels);
   const lb = labels?.find((l) => l.id === t.bank_account_id);
   const mine = t.claimed_by === user?.id;
-  const saleEditable = !cancelled && canClaim && ((t.status === "unclaimed" && !t.claimed_by) || (mine && t.status === "pending_reconciliation"));
-  const manualEditable = !isBank && !cancelled && canManual && (t.status !== "reconciled" || canManage);
-  const directEligible = !cancelled && canRec && t.status === "unclaimed" && !t.claimed_by;
+  const saleEditable = !t.operation_test && !cancelled && canClaim && ((t.status === "unclaimed" && !t.claimed_by) || (mine && t.status === "pending_reconciliation"));
+  const manualEditable = !t.operation_test && !isBank && !cancelled && canManual && (t.status !== "reconciled" || canManage);
+  const directEligible = !t.operation_test && !cancelled && canRec && t.status === "unclaimed" && !t.claimed_by;
   const isOther = f.type === "other";
   const directOther = directEligible && isOther;
   const showForm = saleEditable || directEligible;
@@ -110,6 +110,7 @@ function Detail() {
   return (
     <div className="max-w-2xl mx-auto pb-28 md:pb-6">
       <Link to="/finance/incoming" onClick={(e) => { if (canBack) { e.preventDefault(); router.history.back(); } }} className="inline-flex items-center text-sm text-muted-foreground mb-3"><ArrowLeft className="h-4 w-4 mr-1" />Tiền Về</Link>
+      {t.operation_test && <div className="mb-3 text-sm text-muted-foreground">Lịch sử kiểm thử — trước mốc vận hành</div>}
       <div className="rounded-lg border bg-card p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div className="text-3xl font-bold text-primary">{vnd(Number(t.amount))}</div>
@@ -180,7 +181,7 @@ function Detail() {
         </div>
       )}
 
-      {canRec && !cancelled && t.claimed_by && t.status === "pending_reconciliation" && (
+      {!t.operation_test && canRec && !cancelled && t.claimed_by && t.status === "pending_reconciliation" && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-3">
           <div className="font-medium">Kế toán đối soát</div>
           <Button className="h-11 w-full md:w-auto" disabled={busy} onClick={() => done(supabase.rpc("fin_reconcile", { _tx: id }), "Đã đối soát")}>Xác nhận đối soát</Button>
@@ -200,7 +201,7 @@ function Detail() {
         </div>
       )}
 
-      {!cancelled && (canRec || canManage) && t.claimed_by && (t.status !== "reconciled" || canManage) && (
+      {!t.operation_test && !cancelled && (canRec || canManage) && t.claimed_by && (t.status !== "reconciled" || canManage) && (
         <details className="mt-4 rounded-lg border bg-card p-4">
           <summary className="cursor-pointer text-sm font-medium">Điều chỉnh nhận nhầm</summary>
           <div className="mt-3 space-y-2">

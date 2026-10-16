@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Tiền Về operational cutoff is explicitly initialized once via Super-Admin-only fin_operation_begin; the database trigger archives late/replayed pre-cutoff timestamps, fin_can_see gates test rows and history, operational stats exclude them, and GMF queues/claims reject them — preserves raw data and idempotency without resetting on deployment.
+
 - Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.
 - Change `src/lib/leave/calc.ts` and `private.leave_eval` together — keeps preview and authoritative calculation aligned.
 - Read app_branding for UI and server share metadata with fallback — link crawlers cannot run client updates.

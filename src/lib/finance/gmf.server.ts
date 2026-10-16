@@ -93,12 +93,12 @@ export async function queueAndSend(txIds: string[]) {
   const d = await db();
   const cfg: any = await getConfig();
   if (!cfg?.gmf_enabled || !cfg?.gmf_group_id) return;
-  const { data: rows } = await d.from("bank_transactions").select("id, bank_account_id, source").in("id", txIds).eq("gmf_status", "skipped");
+  const { data: rows } = await d.from("bank_transactions").select("id, bank_account_id, source").in("id", txIds).eq("gmf_status", "skipped").eq("operation_test", false);
   const { data: accs } = await d.from("bank_accounts").select("id").eq("gmf_notify", true);
   const ok = new Set((accs ?? []).map((a: any) => a.id));
   const ids = (rows ?? []).filter((r: any) => r.source !== "bank" || ok.has(r.bank_account_id)).map((r: any) => r.id);
   if (!ids.length) return;
-  await d.from("bank_transactions").update({ gmf_status: "pending" }).in("id", ids).eq("gmf_status", "skipped").eq("gmf_attempts", 0);
+  await d.from("bank_transactions").update({ gmf_status: "pending" }).in("id", ids).eq("gmf_status", "skipped").eq("gmf_attempts", 0).eq("operation_test", false);
   await sendPending(ids);
 }
 
@@ -107,7 +107,7 @@ export async function sendPending(ids?: string[]) {
   const d = await db();
   const cfg: any = await getConfig();
   if (!cfg?.gmf_group_id) return { sent: 0, failed: 0, message: "Chưa chọn nhóm GMF" };
-  let q = d.from("bank_transactions").select("id, amount, transaction_at, transaction_date, description, bank_account_id, gmf_status, gmf_attempts, source, received_date, created_by").in("gmf_status", ["pending", "failed"]).limit(30);
+  let q = d.from("bank_transactions").select("id, amount, transaction_at, transaction_date, description, bank_account_id, gmf_status, gmf_attempts, source, received_date, created_by").in("gmf_status", ["pending", "failed"]).eq("operation_test", false).limit(30);
   if (ids) q = q.in("id", ids);
   const { data: rows } = await q;
   const { data: accs } = await d.from("bank_accounts").select("id, bank_name, label, account_number");
@@ -115,7 +115,7 @@ export async function sendPending(ids?: string[]) {
   let sent = 0, failed = 0, last = "";
   for (const t of rows ?? []) {
     const { data: got } = await d.from("bank_transactions").update({ gmf_status: "sending", gmf_attempts: (t.gmf_attempts ?? 0) + 1 })
-      .eq("id", t.id).eq("gmf_status", t.gmf_status).eq("gmf_attempts", t.gmf_attempts).select("id");
+      .eq("id", t.id).eq("gmf_status", t.gmf_status).eq("gmf_attempts", t.gmf_attempts).eq("operation_test", false).select("id");
     if (!got?.length) continue;
     const r = await postGroup(cfg.gmf_group_id, t.source !== "bank" ? await manualMessage(t) : await txMessage(t, labels.get(t.bank_account_id) ?? { label: "", bank: "", last4: "" }));
     if (r.ok) sent++; else { failed++; last = `${r.code}: ${r.message}`; }
