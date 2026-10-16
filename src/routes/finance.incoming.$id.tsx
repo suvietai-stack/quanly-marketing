@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, mask, receiver, vnd } from "@/lib/finance/incoming";
+import { EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
 import { ManualEntry } from "@/components/finance/ManualEntry";
 
 export const Route = createFileRoute("/finance/incoming/$id")({
