@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, vnEndExcl, vnStart, vnd, mask } from "@/lib/finance/incoming";
+import { TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, vnEndExcl, vnStart, vnd } from "@/lib/finance/incoming";
 
 type S = { acc: string; st: string; q: string; from: string; to: string; sale: string };
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -82,7 +82,7 @@ function Incoming() {
     placeholderData: (p) => p,
     queryFn: async () => {
       let x = supabase.from("bank_transactions")
-        .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, status, created_at, created_by, claimed_by, counter_account_name, counter_account_number, info_reason")
+        .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, status, created_at, created_by, claimed_by, info_reason")
         .gt("amount", 0).is("cancelled_at", null);
       if (src) x = x.eq("source", src);
       if (acc) x = x.eq("bank_account_id", acc);
@@ -90,7 +90,7 @@ function Incoming() {
       if (sale) x = x.eq("claimed_by", sale);
       if (fromTs) x = x.gte("transaction_at", fromTs);
       if (toTs) x = x.lt("transaction_at", toTs);
-      if (q) x = x.or(["description", "reference_number", "counter_account_name", "note", "customer"].map((c) => `${c}.ilike.*${q}*`).join(","));
+      if (q) x = x.or(["description", "reference_number", "note", "customer"].map((c) => `${c}.ilike.*${q}*`).join(","));
       const { data, error } = await x.order("transaction_at", { ascending: false }).order("created_at", { ascending: false }).range(0, limit - 1);
       if (error) throw error;
       return data;
@@ -145,7 +145,7 @@ function Incoming() {
       <div className="flex flex-wrap gap-2 mb-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-8" placeholder="Nội dung CK, người chuyển, mã GD, ghi chú" value={qText} onChange={(e) => setQText(e.target.value)} />
+          <Input className="pl-8" placeholder="Nội dung CK, mã GD, ghi chú" value={qText} onChange={(e) => setQText(e.target.value)} />
         </div>
         <Input type="date" className="w-auto" value={s.from} onChange={(e) => set({ from: e.target.value })} aria-label="Từ ngày" />
         <Input type="date" className="w-auto" value={s.to} onChange={(e) => set({ to: e.target.value })} aria-label="Đến ngày" />
@@ -171,7 +171,6 @@ function Incoming() {
                 <Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>
               </div>
               <div className="mt-1 text-sm font-semibold uppercase">{rc.main}{r.source !== "bank" && <Badge variant="outline" className="ml-2 normal-case">Thủ công</Badge>}</div>
-              {r.counter_account_name && <div className="text-sm">Từ: {r.counter_account_name}</div>}
               <div className="text-sm mt-0.5 line-clamp-2 text-muted-foreground">{(r.source === "bank" ? r.description : r.note) || "—"}</div>
               <div className="text-xs text-muted-foreground mt-1">{fmtTime(r.transaction_at, r.transaction_date)}{who(r) !== "—" ? ` · ${who(r)}` : ""}</div>
             </button>
@@ -180,22 +179,21 @@ function Incoming() {
       <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
-            <tr>{["Thời gian", "TK nhận / nguồn", "Số tiền", "Người chuyển", "Nội dung CK / ghi chú", "Sale / người tạo", "Trạng thái"].map((h) => <th key={h} className="px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
+            <tr>{["Thời gian", "TK nhận / nguồn", "Số tiền", "Nội dung CK / ghi chú", "Sale / người tạo", "Trạng thái"].map((h) => <th key={h} className="px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Đang tải dữ liệu…</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Đang tải dữ liệu…</td></tr>
             ) : error ? (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-destructive">Không tải được danh sách. Vui lòng thử lại.</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-destructive">Không tải được danh sách. Vui lòng thử lại.</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Không có giao dịch phù hợp.</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Không có giao dịch phù hợp.</td></tr>
             ) : rows.map((r) => { const rc = receiver(r, labels); return (
               <tr key={r.id} className="border-t cursor-pointer hover:bg-accent/50" onClick={() => open(r.id)}>
                 <td className="px-3 py-2 whitespace-nowrap">{fmtTime(r.transaction_at, r.transaction_date)}</td>
                 <td className="px-3 py-2 whitespace-nowrap"><div className="font-semibold uppercase">{rc.main}</div><div className="text-xs text-muted-foreground">{r.source !== "bank" ? <Badge variant="outline">Thủ công</Badge> : rc.sub}</div></td>
                 <td className="px-3 py-2 font-medium text-primary whitespace-nowrap">{vnd(Number(r.amount))}</td>
-                <td className="px-3 py-2 max-w-[180px]"><div className="truncate">{r.counter_account_name || "—"}</div>{r.counter_account_number && <div className="text-xs text-muted-foreground">{mask(r.counter_account_number)}</div>}</td>
-                <td className="px-3 py-2 min-w-[220px]"><div className="line-clamp-2">{(r.source === "bank" ? r.description : r.note) || "—"}</div></td>
+                <td className="px-3 py-2 min-w-[280px]"><div className="line-clamp-2">{(r.source === "bank" ? r.description : r.note) || "—"}</div></td>
                 <td className="px-3 py-2 whitespace-nowrap">{who(r)}</td>
                 <td className="px-3 py-2"><Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>{r.info_reason && r.status === "pending_reconciliation" && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}</td>
               </tr>

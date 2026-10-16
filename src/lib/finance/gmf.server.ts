@@ -67,11 +67,6 @@ export async function txMessage(t: any, acc: AccInfo) {
     `🏦 TK NHẬN: ${(acc.label || acc.bank || "").toLocaleUpperCase("vi-VN")}`,
     [acc.bank, acc.last4 ? `****${acc.last4}` : ""].filter(Boolean).join(" · "),
   ];
-  if (t.counter_account_name || src4) {
-    lines.push("");
-    if (t.counter_account_name) lines.push(`👤 NGƯỜI CHUYỂN: ${String(t.counter_account_name).toLocaleUpperCase("vi-VN").slice(0, 100)}`);
-    if (src4) lines.push(`🔢 STK NGUỒN: ****${src4}`);
-  }
   lines.push("", `🕒 Thời gian: ${when}`, "", "📝 Nội dung CK:", String(t.description ?? "").slice(0, 300), "", "📌 Chưa xác nhận", "",
     "👉 NHẤN ĐỂ CHECK NOTE:", `${await baseUrl()}/finance/incoming/${t.id}`);
   return lines.join("\n");
