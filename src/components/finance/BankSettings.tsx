@@ -101,8 +101,8 @@ function GmfSettings({ enabled }: { enabled: boolean }) {
   const load = () => status().then((r) => { setS(r); setG({ groupId: r.groupId, groupName: r.groupName, enabled: r.enabled }); }).catch((e) => setS({ error: e.message }));
   useEffect(() => { if (enabled) load(); }, [enabled]);
   const run = async (fn: () => Promise<any>) => { setBusy(true); try { const r = await fn(); if (r?.message) (r.ok === false ? toast.error : toast.success)(r.message); } catch (e: any) { toast.error(e.message); } setBusy(false); load(); };
-  if (!s) return null;
-  if (s.error) return <p className="text-sm text-muted-foreground border-t pt-4">{s.error}</p>;
+  if (!s) return <div className="border-t pt-4"><div className="font-medium">Cài đặt Zalo GMF</div><p className="text-sm text-muted-foreground">Đang tải…</p></div>;
+  if (s.error) return <div className="border-t pt-4 space-y-2"><div className="font-medium">Cài đặt Zalo GMF</div><p className="text-sm text-destructive">{s.error}</p><Button size="sm" variant="outline" onClick={() => { setS(null); load(); }}>Thử lại</Button></div>;
   return (
     <div className="border-t pt-4 space-y-3">
       <div className="font-medium">Cài đặt Zalo GMF</div>
