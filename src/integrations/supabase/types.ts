@@ -3146,6 +3146,15 @@ export type Database = {
         Returns: undefined
       }
       fin_reset: { Args: { _reason: string; _tx: string }; Returns: undefined }
+      fin_reset_backup_get: { Args: { _id: string }; Returns: Json }
+      fin_reset_backups: {
+        Args: never
+        Returns: {
+          counts: Json
+          id: string
+          reset_at: string
+        }[]
+      }
       fin_reset_execute: { Args: { _confirm: string }; Returns: Json }
       fin_reset_preview: { Args: never; Returns: Json }
       get_profiles_directory: {
