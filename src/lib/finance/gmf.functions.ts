@@ -15,7 +15,7 @@ export const gmfStatus = createServerFn({ method: "POST" })
     const { getConfig } = await import("@/lib/zalo.server");
     const c: any = await getConfig();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count } = await (supabaseAdmin as any).from("bank_transactions").select("id", { count: "exact", head: true }).in("gmf_status", ["failed", "unknown"]);
+    const { count } = await (supabaseAdmin as any).from("bank_transactions").select("id", { count: "exact", head: true }).in("gmf_status", ["failed", "unknown"]).eq("operation_test", false);
     return { oaConnected: c?.status === "connected", oaName: c?.oa_name ?? null, groupId: c?.gmf_group_id ?? "", groupName: c?.gmf_group_name ?? "", enabled: !!c?.gmf_enabled, failed: count ?? 0 };
   });
 

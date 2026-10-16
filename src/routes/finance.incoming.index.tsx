@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCw, Search, Settings2, X } from "lucide-react";
 import { BankSettings } from "@/components/finance/BankSettings";
 import { ManualEntry } from "@/components/finance/ManualEntry";
+import { OperationStart } from "@/components/finance/OperationStart";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -13,13 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, searchAmount, vnEndExcl, vnStart, vnd } from "@/lib/finance/incoming";
 
-type S = { acc: string; st: string; q: string; from: string; to: string; sale: string };
+type S = { acc: string; st: string; q: string; from: string; to: string; sale: string; history: string };
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
 export const Route = createFileRoute("/finance/incoming/")({
   validateSearch: (s: Record<string, unknown>): Partial<S> => {
     const o: Partial<S> = {};
-    for (const k of ["acc", "st", "q", "from", "to", "sale"] as const) if (str(s[k])) o[k] = str(s[k]);
+    for (const k of ["acc", "st", "q", "from", "to", "sale", "history"] as const) if (str(s[k])) o[k] = str(s[k]);
     return o;
   },
   head: () => ({ meta: [
@@ -39,17 +40,18 @@ const chip = (on: boolean) => `shrink-0 h-9 px-3 rounded-full border text-sm whi
 
 function Incoming() {
   const sp = Route.useSearch();
-  const s: S = { acc: sp.acc ?? "", st: sp.st ?? "", q: sp.q ?? "", from: sp.from ?? "", to: sp.to ?? "", sale: sp.sale ?? "" };
+  const s: S = { acc: sp.acc ?? "", st: sp.st ?? "", q: sp.q ?? "", from: sp.from ?? "", to: sp.to ?? "", sale: sp.sale ?? "", history: sp.history ?? "" };
   const navigate = useNavigate({ from: "/finance/incoming/" });
   const set = (p: Partial<S>) => navigate({ search: (prev: any) => { const n = { ...prev, ...p }; for (const k in n) if (!n[k]) delete n[k]; return n; }, replace: true });
   const [qText, setQText] = useState(s.q);
   useEffect(() => { const h = setTimeout(() => { if (qText !== s.q) set({ q: qText }); }, 350); return () => clearTimeout(h); }, [qText]);
   const [limit, setLimit] = useState(PAGE);
-  useEffect(() => setLimit(PAGE), [s.acc, s.st, s.q, s.from, s.to, s.sale]);
+  useEffect(() => setLimit(PAGE), [s.acc, s.st, s.q, s.from, s.to, s.sale, s.history]);
 
   const [showSettings, setShowSettings] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-  const { user, can } = useCurrentUser();
+  const { user, can, isSuperAdmin } = useCurrentUser();
+  const history = isSuperAdmin && s.history === "test";
   const canBank = can("finance.incoming.bank_config"), canGmf = can("finance.incoming.gmf_config") || can("finance.incoming.manage");
   const canTotals = can("finance.incoming.view_totals");
   const canAll = can("finance.incoming.manage") || can("finance.incoming.reconcile");
@@ -67,12 +69,12 @@ function Incoming() {
   const q = amount === null ? safeQ(s.q) : s.q.trim();
   const sale = isUuid(s.sale) ? s.sale : "";
   const fromTs = vnStart(s.from), toTs = vnEndExcl(s.to);
-  const filt = { src, acc, q, sale, fromTs, toTs };
+  const filt = { src, acc, q, sale, fromTs, toTs, history };
 
   const stats = useQuery({
     queryKey: ["bank_transactions", "stats", user?.id, filt, canTotals],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("fin_incoming_stats", { _src: src || undefined, _acc: acc || undefined, _from: fromTs ?? undefined, _to: toTs ?? undefined, _q: q || undefined, _sale: sale || undefined });
+      const { data, error } = await supabase.rpc(history ? "fin_incoming_history_stats" : "fin_incoming_stats", { _src: src || undefined, _acc: acc || undefined, _from: fromTs ?? undefined, _to: toTs ?? undefined, _q: q || undefined, _sale: sale || undefined });
       if (error) throw error;
       return data ?? [];
     },
@@ -85,7 +87,7 @@ function Incoming() {
     queryFn: async () => {
       let x = supabase.from("bank_transactions")
         .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, status, created_at, claimed_by, info_reason")
-        .gt("amount", 0).is("cancelled_at", null);
+        .gt("amount", 0).is("cancelled_at", null).eq("operation_test", history);
       if (src) x = x.eq("source", src);
       if (acc) x = x.eq("bank_account_id", acc);
       if (s.st) x = x.eq("status", s.st);
@@ -110,10 +112,12 @@ function Incoming() {
   return (
     <div>
       <PageHeader
-        title="Tiền Về"
+        title={history ? "Tiền Về — Lịch sử kiểm thử" : "Tiền Về"}
         description="Giao dịch tiền vào đồng bộ tự động từ ngân hàng và khoản Kế toán nhập thủ công."
         actions={<>
-          {canAdd && <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" />Thêm khoản tiền</Button>}
+          {isSuperAdmin && <OperationStart userId={user?.id} />}
+          {isSuperAdmin && <Button variant="outline" onClick={() => { setQText(""); set({ history: history ? "" : "test", acc: "", st: "", q: "", from: "", to: "", sale: "" }); }}>{history ? "Vận hành chính" : "Lịch sử kiểm thử"}</Button>}
+          {canAdd && !history && <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-1" />Thêm khoản tiền</Button>}
           {(canBank || canGmf) && <Button variant="outline" onClick={() => setShowSettings(true)}><Settings2 className="h-4 w-4 mr-2" />Cài đặt</Button>}
           <Button variant="outline" size="icon" aria-label="Làm mới" onClick={() => { refetch(); stats.refetch(); }} disabled={isFetching}><RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /></Button>
         </>}
