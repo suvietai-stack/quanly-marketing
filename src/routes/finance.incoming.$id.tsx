@@ -43,7 +43,7 @@ function Detail() {
   const [editOpen, setEditOpen] = useState(false);
 
   const { data: t, isLoading, refetch } = useQuery({
-    queryKey: ["bank_tx", id],
+    queryKey: ["bank_tx", user?.id, id],
     queryFn: async () => {
       const { data, error } = await supabase.from("bank_transactions").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
@@ -53,17 +53,18 @@ function Detail() {
   const { data: labels } = useQuery({ queryKey: ["fin_bank_labels"], queryFn: async () => ((await supabase.rpc("fin_bank_labels")).data ?? []) as BankLabel[] });
   // Cảnh báo khả năng trùng: khoản thủ công cùng số tiền với giao dịch ngân hàng trong ±3 ngày.
   const { data: dups } = useQuery({
-    queryKey: ["bank_tx_dups", id, t?.amount, t?.received_date],
+    queryKey: ["bank_tx_dups", user?.id, id, t?.amount, t?.received_date],
     enabled: !!t && t.source !== "bank" && !t.cancelled_at,
     queryFn: async () => {
-      const base = new Date(`${t!.received_date ?? t!.transaction_at?.slice(0, 10)}T00:00:00+07:00`).getTime();
-      const { data } = await supabase.from("bank_transactions").select("id, transaction_at, description").eq("source", "bank").eq("amount", t!.amount)
+      if (!t) return [];
+      const base = new Date(`${t.received_date ?? t.transaction_at?.slice(0, 10)}T00:00:00+07:00`).getTime();
+      const { data } = await supabase.from("bank_transactions").select("id, transaction_at, description").eq("source", "bank").eq("amount", t.amount)
         .gte("transaction_at", new Date(base - 3 * 86400000).toISOString()).lt("transaction_at", new Date(base + 4 * 86400000).toISOString()).limit(5);
       return data ?? [];
     },
   });
   const { data: events } = useQuery({
-    queryKey: ["bank_tx_events", id],
+    queryKey: ["bank_tx_events", id, user?.id],
     queryFn: async () => (await supabase.from("bank_transaction_events").select("id, actor_id, action, reason, created_at").eq("tx_id", id).order("created_at")).data ?? [],
   });
 
@@ -81,9 +82,8 @@ function Detail() {
   const lb = labels?.find((l) => l.id === t.bank_account_id);
   const mine = t.claimed_by === user?.id;
   const saleEditable = !cancelled && canClaim && ((t.status === "unclaimed" && !t.claimed_by) || (mine && t.status === "pending_reconciliation"));
-  const accSelf = isBank && !cancelled && canRec && t.status === "unclaimed" && !t.claimed_by;
   const manualEditable = !isBank && !cancelled && canManual && (t.status !== "reconciled" || canManage);
-  const showForm = saleEditable || accSelf;
+  const showForm = saleEditable;
 
   const done = async (p: PromiseLike<{ error: any }>, ok: string) => {
     if (busy) return;
@@ -113,7 +113,7 @@ function Detail() {
           <div className="text-3xl font-bold text-primary">{vnd(Number(t.amount))}</div>
           {cancelled ? <Badge variant="destructive">Đã hủy</Badge> : <Badge variant={TX_VARIANT[t.status] ?? "secondary"}>{TX_STATUS[t.status] ?? t.status}</Badge>}
         </div>
-        <div className="text-lg font-semibold uppercase">TK nhận: {rc.main}{!isBank && <Badge variant="outline" className="ml-2 normal-case">Thủ công</Badge>}</div>
+        <div className="text-lg font-semibold uppercase">{isBank ? "TK nhận" : "Nguồn tiền"}: {rc.main}</div>
         {isBank ? (
           <div className="text-sm grid grid-cols-[130px_1fr] gap-y-1">
             <span className="text-muted-foreground">Ngân hàng nhận</span><span>{lb ? `${lb.bank_name} · ****${lb.last4}` : t.bank_name || "—"}</span>
@@ -124,9 +124,13 @@ function Detail() {
         ) : (
           <div className="text-sm grid grid-cols-[130px_1fr] gap-y-1">
             <span className="text-muted-foreground">Ngày nhận tiền</span><span>{fmtDate(t.received_date)}</span>
-            <span className="text-muted-foreground">Người nhập</span><span>{nameOf(t.created_by)} · {fmtTime(t.created_at)}</span>
+            <span className="text-muted-foreground">Người tạo khoản tiền</span><span>{nameOf(t.created_by)}</span>
+            <span className="text-muted-foreground">Thời gian tạo</span><span>{fmtTime(t.created_at)}</span>
+            <span className="text-muted-foreground">Sale xác nhận</span><span>{nameOf(t.claimed_by)}</span>
+            <span className="text-muted-foreground">Thời gian xác nhận</span><span>{fmtTime(t.claimed_at)}</span>
+            <span className="text-muted-foreground">Kế toán đối soát</span><span>{nameOf(t.reconciled_by)}</span>
+            <span className="text-muted-foreground">Thời gian đối soát</span><span>{fmtTime(t.reconciled_at)}</span>
             <span className="text-muted-foreground">Ghi chú Kế toán</span><span className="whitespace-pre-wrap break-words">{t.description || "—"}</span>
-            {!t.claimed_by && t.reconciled_by && <><span className="text-muted-foreground">Đối soát</span><span>{nameOf(t.reconciled_by)} · {fmtTime(t.reconciled_at)}</span></>}
             {cancelled && <><span className="text-muted-foreground">Hủy</span><span>{nameOf(t.cancelled_by)} · {fmtTime(t.cancelled_at)}: {t.cancel_reason}</span></>}
           </div>
         )}
@@ -158,7 +162,7 @@ function Detail() {
 
       {showForm && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-4">
-          <div className="font-medium">{accSelf && !canClaim ? "Kế toán tự ghi chú & đối soát" : "Xác nhận tiền về"}</div>
+          <div className="font-medium">Xác nhận tiền về</div>
           <div className="space-y-1.5"><Label>Khách hàng *</Label><Input className={`h-11 ${field}`} value={f.customer} maxLength={200} placeholder="Tên khách hàng hoặc công ty" onChange={(e) => setF({ ...f, customer: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Loại tiền *</Label>
             <select className={`h-11 w-full rounded-md border border-input bg-background px-3 ${field}`} value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>
@@ -170,12 +174,11 @@ function Detail() {
           <div className="space-y-1.5"><Label>Ghi chú chi tiết *</Label><Textarea className={`min-h-28 ${field}`} value={f.note} maxLength={2000} placeholder="VD: Khách Công ty ABC cọc 50 bộ ly sứ in logo, Sale Nguyễn A phụ trách." onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
           <div className="fixed md:static bottom-0 inset-x-0 p-3 md:p-0 bg-background border-t md:border-0 flex flex-col md:flex-row gap-2 z-20">
             {saleEditable && <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_claim", args), "Đã gửi Kế toán đối soát")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Xác nhận & gửi Kế toán</Button>}
-            {accSelf && <Button variant={saleEditable ? "outline" : "default"} className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_reconcile", args), "Đã đối soát")}>Ghi chú & đối soát luôn</Button>}
           </div>
         </div>
       )}
 
-      {canRec && !cancelled && t.status === "pending_reconciliation" && (
+      {canRec && !cancelled && t.claimed_by && t.status === "pending_reconciliation" && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-3">
           <div className="font-medium">Kế toán đối soát</div>
           <Button className="h-11 w-full md:w-auto" disabled={busy} onClick={() => done(supabase.rpc("fin_reconcile", { _tx: id }), "Đã đối soát")}>Xác nhận đối soát</Button>

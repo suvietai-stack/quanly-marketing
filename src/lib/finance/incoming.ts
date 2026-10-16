@@ -24,12 +24,21 @@ export const fmtDate = (d: string | null) => (d ? d.split("-").reverse().join("/
 export const mask = (s: string | null) => { const d = String(s ?? "").replace(/\D/g, ""); return d.length >= 4 ? `****${d.slice(-4)}` : ""; };
 /** Tên TK nhận / nguồn tiền: tên gợi nhớ là nội dung chính. */
 export function receiver(t: { source?: string | null; bank_account_id?: string | null; bank_name?: string | null }, labels?: BankLabel[]) {
-  if (t.source && t.source !== "bank") return { main: SOURCES[t.source] ?? t.source, sub: "Thủ công" };
+  if (t.source && t.source !== "bank") return { main: SOURCES[t.source] ?? t.source, sub: "" };
   const l = labels?.find((x) => x.id === t.bank_account_id);
   return { main: l?.label || t.bank_name || "—", sub: l ? `${l.bank_name} · ****${l.last4}` : t.bank_name || "" };
 }
 /** Bỏ ký tự đặc biệt của bộ lọc PostgREST. */
 export const safeQ = (q: string) => q.replace(/[,()*%\\:"']/g, " ").trim().slice(0, 100);
+/** Chỉ nhận số nguyên hoặc nhóm hàng nghìn; tìm đúng số tiền, không tìm chuỗi con. */
+export function searchAmount(q: string): number | null {
+  const text = q.trim();
+  if (!/^[0-9]+([.,][0-9]{3})*$/.test(text)) return null;
+  const digits = text.replace(/[.,]/g, "");
+  if (digits.length > 16) return null;
+  const amount = Number(digits);
+  return Number.isSafeInteger(amount) ? amount : null;
+}
 /** Ngày VN (YYYY-MM-DD) → mốc thời gian. */
 export const vnStart = (d: string) => (d ? new Date(`${d}T00:00:00+07:00`).toISOString() : null);
 export const vnEndExcl = (d: string) => (d ? new Date(new Date(`${d}T00:00:00+07:00`).getTime() + 86400000).toISOString() : null);

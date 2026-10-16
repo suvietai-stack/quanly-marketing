@@ -41,7 +41,7 @@ export function ManualEntry({ open, onOpenChange, canReconcile, edit, onDone }: 
     setBusy(false);
     if (res.error) return toast.error(res.error.message || "Không lưu được");
     if (!edit && res.data) finManualNotify({ data: { id: res.data as string } }).catch(() => {});
-    toast.success(edit ? "Đã lưu thay đổi" : "Đã lưu — đã báo nhóm Zalo để Sale xác nhận");
+    toast.success(edit ? "Đã lưu thay đổi" : "Đã lưu khoản tiền — Chưa xác nhận");
     onOpenChange(false);
     onDone(edit ? edit.id : (res.data as string));
   };
