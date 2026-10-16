@@ -25,7 +25,6 @@ import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
-import { Route as FinanceIncomingRouteImport } from './routes/finance.incoming'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
@@ -41,6 +40,8 @@ import { Route as SocialIndexRouteImport } from './routes/social.index'
 import { Route as SocialIdRouteImport } from './routes/social.$id'
 import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
+import { Route as FinanceIncomingIndexRouteImport } from './routes/finance.incoming.index'
+import { Route as FinanceIncomingIdRouteImport } from './routes/finance.incoming.$id'
 import { Route as ApiPublicCassoWebhookRouteImport } from './routes/api/public/casso/webhook'
 import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
@@ -128,11 +129,6 @@ const BrandsIdRoute = BrandsIdRouteImport.update({
   path: '/brands/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FinanceIncomingRoute = FinanceIncomingRouteImport.update({
-  id: '/finance/incoming',
-  path: '/finance/incoming',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LocalIndexRoute = LocalIndexRouteImport.update({
   id: '/local/',
   path: '/local/',
@@ -208,6 +204,16 @@ const WebsitesIdRoute = WebsitesIdRouteImport.update({
   path: '/websites/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceIncomingIndexRoute = FinanceIncomingIndexRouteImport.update({
+  id: '/finance/incoming/',
+  path: '/finance/incoming/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceIncomingIdRoute = FinanceIncomingIdRouteImport.update({
+  id: '/finance/incoming/$id',
+  path: '/finance/incoming/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCassoWebhookRoute = ApiPublicCassoWebhookRouteImport.update({
   id: '/api/public/casso/webhook',
   path: '/api/public/casso/webhook',
@@ -257,7 +263,6 @@ export interface FileRoutesByFullPath {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
-  '/finance/incoming': typeof FinanceIncomingRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -274,6 +279,8 @@ export interface FileRoutesByFullPath {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/finance/incoming/$id': typeof FinanceIncomingIdRoute
+  '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -297,7 +304,6 @@ export interface FileRoutesByTo {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
-  '/finance/incoming': typeof FinanceIncomingRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -314,6 +320,8 @@ export interface FileRoutesByTo {
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
+  '/finance/incoming/$id': typeof FinanceIncomingIdRoute
+  '/finance/incoming': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -338,7 +346,6 @@ export interface FileRoutesById {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/brands/$id': typeof BrandsIdRoute
-  '/finance/incoming': typeof FinanceIncomingRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -355,6 +362,8 @@ export interface FileRoutesById {
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
+  '/finance/incoming/$id': typeof FinanceIncomingIdRoute
+  '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -380,7 +389,6 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/brands/$id'
-    | '/finance/incoming'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -397,6 +405,8 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/finance/incoming/$id'
+    | '/finance/incoming/'
     | '/api/public/casso/webhook'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
@@ -420,7 +430,6 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/brands/$id'
-    | '/finance/incoming'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -437,6 +446,8 @@ export interface FileRouteTypes {
     | '/signals'
     | '/social'
     | '/websites'
+    | '/finance/incoming/$id'
+    | '/finance/incoming'
     | '/api/public/casso/webhook'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
@@ -460,7 +471,6 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/brands/$id'
-    | '/finance/incoming'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -477,6 +487,8 @@ export interface FileRouteTypes {
     | '/signals/'
     | '/social/'
     | '/websites/'
+    | '/finance/incoming/$id'
+    | '/finance/incoming/'
     | '/api/public/casso/webhook'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
@@ -501,7 +513,6 @@ export interface RootRouteChildren {
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
   BrandsIdRoute: typeof BrandsIdRoute
-  FinanceIncomingRoute: typeof FinanceIncomingRoute
   LocalIdRoute: typeof LocalIdRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
@@ -518,6 +529,8 @@ export interface RootRouteChildren {
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
+  FinanceIncomingIdRoute: typeof FinanceIncomingIdRoute
+  FinanceIncomingIndexRoute: typeof FinanceIncomingIndexRoute
   ApiPublicCassoWebhookRoute: typeof ApiPublicCassoWebhookRoute
   ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
@@ -640,13 +653,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BrandsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/finance/incoming': {
-      id: '/finance/incoming'
-      path: '/finance/incoming'
-      fullPath: '/finance/incoming'
-      preLoaderRoute: typeof FinanceIncomingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/local/': {
       id: '/local/'
       path: '/local'
@@ -752,6 +758,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebsitesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/finance/incoming/': {
+      id: '/finance/incoming/'
+      path: '/finance/incoming'
+      fullPath: '/finance/incoming/'
+      preLoaderRoute: typeof FinanceIncomingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/incoming/$id': {
+      id: '/finance/incoming/$id'
+      path: '/finance/incoming/$id'
+      fullPath: '/finance/incoming/$id'
+      preLoaderRoute: typeof FinanceIncomingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/casso/webhook': {
       id: '/api/public/casso/webhook'
       path: '/api/public/casso/webhook'
@@ -813,7 +833,6 @@ const rootRouteChildren: RootRouteChildren = {
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
   BrandsIdRoute: BrandsIdRoute,
-  FinanceIncomingRoute: FinanceIncomingRoute,
   LocalIdRoute: LocalIdRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
@@ -830,6 +849,8 @@ const rootRouteChildren: RootRouteChildren = {
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
+  FinanceIncomingIdRoute: FinanceIncomingIdRoute,
+  FinanceIncomingIndexRoute: FinanceIncomingIndexRoute,
   ApiPublicCassoWebhookRoute: ApiPublicCassoWebhookRoute,
   ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
