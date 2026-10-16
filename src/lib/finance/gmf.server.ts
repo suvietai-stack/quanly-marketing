@@ -53,20 +53,28 @@ export async function listGroups(): Promise<{ ok: boolean; message: string; grou
 
 const vnd = (n: number) => "+" + Number(n).toLocaleString("vi-VN") + "đ";
 
-export async function txMessage(t: any, bankLabel: string) {
+export type AccInfo = { label: string; bank: string; last4: string };
+const last4 = (s: unknown) => { const d = String(s ?? "").replace(/\D/g, ""); return d.length >= 4 ? d.slice(-4) : ""; };
+
+export async function txMessage(t: any, acc: AccInfo) {
   const when = t.transaction_at ? new Date(t.transaction_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (t.transaction_date ?? "");
-  return [
+  const src4 = last4(t.counter_account_number);
+  const lines = [
     `🔔 ${await brandHeader()} — THÔNG BÁO TIỀN VỀ`,
     "",
-    `💰 Số tiền: ${vnd(t.amount)}`,
-    `🏦 Ngân hàng: ${bankLabel}`,
-    `🕒 Thời gian: ${when}`,
-    `📝 Nội dung CK: ${String(t.description ?? "").slice(0, 300)}`,
-    `📌 Trạng thái: Chưa xác nhận`,
+    `💰 ${vnd(t.amount)}`,
     "",
-    "👉 Nhấn vào link để xác nhận giao dịch:",
-    `${await baseUrl()}/finance/incoming/${t.id}`,
-  ].join("\n");
+    `🏦 TK NHẬN: ${(acc.label || acc.bank || "").toLocaleUpperCase("vi-VN")}`,
+    [acc.bank, acc.last4 ? `****${acc.last4}` : ""].filter(Boolean).join(" · "),
+  ];
+  if (t.counter_account_name || src4) {
+    lines.push("");
+    if (t.counter_account_name) lines.push(`👤 NGƯỜI CHUYỂN: ${String(t.counter_account_name).toLocaleUpperCase("vi-VN").slice(0, 100)}`);
+    if (src4) lines.push(`🔢 STK NGUỒN: ****${src4}`);
+  }
+  lines.push("", `🕒 Thời gian: ${when}`, "", "📝 Nội dung CK:", String(t.description ?? "").slice(0, 300), "", "📌 Chưa xác nhận", "",
+    "👉 NHẤN ĐỂ CHECK NOTE:", `${await baseUrl()}/finance/incoming/${t.id}`);
+  return lines.join("\n");
 }
 
 /** Đánh dấu các giao dịch mới cần gửi GMF (theo cài đặt tài khoản) rồi gửi. Lỗi không ảnh hưởng giao dịch. */
@@ -89,17 +97,17 @@ export async function sendPending(ids?: string[]) {
   const d = await db();
   const cfg: any = await getConfig();
   if (!cfg?.gmf_group_id) return { sent: 0, failed: 0, message: "Chưa chọn nhóm GMF" };
-  let q = d.from("bank_transactions").select("id, amount, transaction_at, transaction_date, description, bank_account_id, gmf_status, gmf_attempts").in("gmf_status", ["pending", "failed"]).limit(30);
+  let q = d.from("bank_transactions").select("id, amount, transaction_at, transaction_date, description, bank_account_id, gmf_status, gmf_attempts, counter_account_name, counter_account_number").in("gmf_status", ["pending", "failed"]).limit(30);
   if (ids) q = q.in("id", ids);
   const { data: rows } = await q;
-  const { data: accs } = await d.from("bank_accounts").select("id, bank_name, label");
-  const labels = new Map((accs ?? []).map((a: any) => [a.id, a.label ? `${a.bank_name} · ${a.label}` : a.bank_name]));
+  const { data: accs } = await d.from("bank_accounts").select("id, bank_name, label, account_number");
+  const labels = new Map<string, AccInfo>((accs ?? []).map((a: any) => [a.id, { label: a.label?.trim() || "", bank: a.bank_name, last4: last4(a.account_number) }]));
   let sent = 0, failed = 0, last = "";
   for (const t of rows ?? []) {
     const { data: got } = await d.from("bank_transactions").update({ gmf_status: "sending", gmf_attempts: (t.gmf_attempts ?? 0) + 1 })
       .eq("id", t.id).eq("gmf_status", t.gmf_status).eq("gmf_attempts", t.gmf_attempts).select("id");
     if (!got?.length) continue;
-    const r = await postGroup(cfg.gmf_group_id, await txMessage(t, String(labels.get(t.bank_account_id) ?? "")));
+    const r = await postGroup(cfg.gmf_group_id, await txMessage(t, labels.get(t.bank_account_id) ?? { label: "", bank: "", last4: "" }));
     if (r.ok) sent++; else { failed++; last = `${r.code}: ${r.message}`; }
     await d.from("bank_transactions").update(r.ok
       ? { gmf_status: "sent", gmf_sent_at: new Date().toISOString(), gmf_error: null }
