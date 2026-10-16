@@ -288,6 +288,13 @@
       "when": 1791961094935,
       "tag": "0040_signal_reassign_permission",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1792121000931,
+      "tag": "0041_bank_transactions",
+      "breakpoints": true
     }
   ]
 }

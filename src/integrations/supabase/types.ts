@@ -247,6 +247,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_transactions: {
+        Row: {
+          amount: number
+          bank_account_identifier: string | null
+          bank_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          provider: string
+          provider_transaction_id: string
+          reference_number: string | null
+          status: string
+          transaction_at: string | null
+          transaction_date: string | null
+        }
+        Insert: {
+          amount: number
+          bank_account_identifier?: string | null
+          bank_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          provider?: string
+          provider_transaction_id: string
+          reference_number?: string | null
+          status?: string
+          transaction_at?: string | null
+          transaction_date?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_identifier?: string | null
+          bank_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          provider?: string
+          provider_transaction_id?: string
+          reference_number?: string | null
+          status?: string
+          transaction_at?: string | null
+          transaction_date?: string | null
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
