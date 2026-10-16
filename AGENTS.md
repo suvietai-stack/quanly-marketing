@@ -1,6 +1,6 @@
 # Architecture rules
 
-- Tiền Về operational cutoff is explicitly initialized once via Super-Admin-only fin_operation_begin; the database trigger archives late/replayed pre-cutoff timestamps, fin_can_see gates test rows and history, operational stats exclude them, and GMF queues/claims reject them — preserves raw data and idempotency without resetting on deployment.
+- Tiền Về resets use Super-Admin-only fin_reset_* RPCs with explicit confirmation, table lock before shared advisory lock, private scoped JSON recovery snapshots and atomic dependent deletion; fin_operation_guard ignores bank INSERTs at/before reset_at — prevents replay and concurrent reset inconsistencies without changing provider authentication or auto-resetting on deployment.
 
 - Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.
 - Change `src/lib/leave/calc.ts` and `private.leave_eval` together — keeps preview and authoritative calculation aligned.
