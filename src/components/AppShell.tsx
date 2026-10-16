@@ -3,7 +3,7 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,12 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Quản trị nội bộ",
     items: [
       { to: "/leave", label: "Đơn từ & Phê duyệt", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report", "att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"] },
+    ],
+  },
+  {
+    label: "Tài Chính Kế Toán",
+    items: [
+      { to: "/finance/incoming", label: "Tiền Về", icon: BanknoteArrowDown, perm: "finance.incoming.view" },
     ],
   },
   {
