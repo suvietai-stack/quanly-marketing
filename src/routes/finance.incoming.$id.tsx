@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, mask, receiver, vnd } from "@/lib/finance/incoming";
+import { EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
 import { ManualEntry } from "@/components/finance/ManualEntry";
 
 export const Route = createFileRoute("/finance/incoming/$id")({
@@ -117,9 +117,6 @@ function Detail() {
         {isBank ? (
           <div className="text-sm grid grid-cols-[130px_1fr] gap-y-1">
             <span className="text-muted-foreground">Ngân hàng nhận</span><span>{lb ? `${lb.bank_name} · ****${lb.last4}` : t.bank_name || "—"}</span>
-            <span className="text-muted-foreground">Người chuyển</span><span>{t.counter_account_name || <i className="text-muted-foreground">Chưa có thông tin</i>}</span>
-            <span className="text-muted-foreground">STK nguồn</span><span>{t.counter_account_number ? (canManage || canRec ? t.counter_account_number : mask(t.counter_account_number)) : <i className="text-muted-foreground">Chưa có thông tin</i>}</span>
-            <span className="text-muted-foreground">Ngân hàng nguồn</span><span>{t.counter_bank_name || <i className="text-muted-foreground">Chưa có thông tin</i>}</span>
             <span className="text-muted-foreground">Thời gian</span><span>{fmtTime(t.transaction_at, t.transaction_date)}</span>
             <span className="text-muted-foreground">Nội dung CK</span><span className="whitespace-pre-wrap break-words">{t.description || "—"}</span>
             <span className="text-muted-foreground">Mã giao dịch</span><span className="break-all">{t.reference_number || "—"}</span>

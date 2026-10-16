@@ -58,7 +58,6 @@ const last4 = (s: unknown) => { const d = String(s ?? "").replace(/\D/g, ""); re
 
 export async function txMessage(t: any, acc: AccInfo) {
   const when = t.transaction_at ? new Date(t.transaction_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (t.transaction_date ?? "");
-  const src4 = last4(t.counter_account_number);
   const lines = [
     `🔔 ${await brandHeader()} — THÔNG BÁO TIỀN VỀ`,
     "",
@@ -67,11 +66,6 @@ export async function txMessage(t: any, acc: AccInfo) {
     `🏦 TK NHẬN: ${(acc.label || acc.bank || "").toLocaleUpperCase("vi-VN")}`,
     [acc.bank, acc.last4 ? `****${acc.last4}` : ""].filter(Boolean).join(" · "),
   ];
-  if (t.counter_account_name || src4) {
-    lines.push("");
-    if (t.counter_account_name) lines.push(`👤 NGƯỜI CHUYỂN: ${String(t.counter_account_name).toLocaleUpperCase("vi-VN").slice(0, 100)}`);
-    if (src4) lines.push(`🔢 STK NGUỒN: ****${src4}`);
-  }
   lines.push("", `🕒 Thời gian: ${when}`, "", "📝 Nội dung CK:", String(t.description ?? "").slice(0, 300), "", "📌 Chưa xác nhận", "",
     "👉 NHẤN ĐỂ CHECK NOTE:", `${await baseUrl()}/finance/incoming/${t.id}`);
   return lines.join("\n");
@@ -97,7 +91,7 @@ export async function sendPending(ids?: string[]) {
   const d = await db();
   const cfg: any = await getConfig();
   if (!cfg?.gmf_group_id) return { sent: 0, failed: 0, message: "Chưa chọn nhóm GMF" };
-  let q = d.from("bank_transactions").select("id, amount, transaction_at, transaction_date, description, bank_account_id, gmf_status, gmf_attempts, counter_account_name, counter_account_number").in("gmf_status", ["pending", "failed"]).limit(30);
+  let q = d.from("bank_transactions").select("id, amount, transaction_at, transaction_date, description, bank_account_id, gmf_status, gmf_attempts").in("gmf_status", ["pending", "failed"]).limit(30);
   if (ids) q = q.in("id", ids);
   const { data: rows } = await q;
   const { data: accs } = await d.from("bank_accounts").select("id, bank_name, label, account_number");
