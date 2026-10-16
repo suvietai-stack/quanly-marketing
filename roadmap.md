@@ -8,3 +8,6 @@
 
 - [x] Kiểm tra tài khoản Trung Hiếu (vai trò, quyền, trạng thái)
 - [x] Phân quyền KPI / Giao KPI (11 quyền, RLS, giao diện)
+
+- [x] Tài Chính Kế Toán → Tiền Về (Casso webhook, bảng tài khoản ngân hàng do Admin quản lý)
+- [ ] Nhập CASSO_WEBHOOK_SECRET + cấu hình Webhook trên Casso (chờ người dùng)

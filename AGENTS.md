@@ -14,3 +14,4 @@
 - Order tracking reschedules: ot_reschedules (one pending per order), only the opposite side (sale↔supply) replies via ot_reschedule_* RPC; accepting changes due_date while original_due stays — two-party agreement enforced server-side.
 - ot_* notifications are in-app only (zalo_status ineligible, push_status none, notifications.ot_order_id) — no Zalo/Push until explicitly requested.
 - Signal role scope: app_roles.signal_scope_all/signal_scope, enforced by private.sig_scope_ok in opportunity_signals RLS + sig_scope_guard trigger (covers every RPC); sale/creator branches unscoped — list, counters, report, export all read through the same RLS.
+- Bank (Casso) incoming: Casso V2 webhook at /api/public/casso/webhook verifies HMAC + timestamp, records only active admin-registered public.bank_accounts, dedupes on (provider, provider_transaction_id); clients SELECT-only on bank_transactions — bank data never writable from UI.
