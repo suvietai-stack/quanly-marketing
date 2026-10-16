@@ -102,7 +102,7 @@ function Incoming() {
   const saleUsers = useMemo(() => [...users].filter((u) => u.fullName).sort((a, b) => a.fullName.localeCompare(b.fullName)), [users]);
   const hasFilter = !!(s.q || s.from || s.to || s.sale);
   const open = (id: string) => nav({ to: "/finance/incoming/$id", params: { id } });
-  const who = (r: any) => r.source !== "bank" ? nameOf(r.created_by) : nameOf(r.claimed_by);
+  const who = (r: any) => r.source !== "bank" ? [`Nhập: ${nameOf(r.created_by)}`, r.claimed_by ? `Sale: ${nameOf(r.claimed_by)}` : ""].filter(Boolean).join(" · ") : nameOf(r.claimed_by);
 
   return (
     <div>
@@ -171,7 +171,7 @@ function Incoming() {
                 <Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>
               </div>
               <div className="mt-1 text-sm font-semibold uppercase">{rc.main}{r.source !== "bank" && <Badge variant="outline" className="ml-2 normal-case">Thủ công</Badge>}</div>
-              <div className="text-sm mt-0.5 line-clamp-2 text-muted-foreground">{(r.source === "bank" ? r.description : r.note) || "—"}</div>
+              <div className="text-sm mt-0.5 line-clamp-2 text-muted-foreground">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div>
               <div className="text-xs text-muted-foreground mt-1">{fmtTime(r.transaction_at, r.transaction_date)}{who(r) !== "—" ? ` · ${who(r)}` : ""}</div>
             </button>
           ); })}
@@ -193,7 +193,7 @@ function Incoming() {
                 <td className="px-3 py-2 whitespace-nowrap">{fmtTime(r.transaction_at, r.transaction_date)}</td>
                 <td className="px-3 py-2 whitespace-nowrap"><div className="font-semibold uppercase">{rc.main}</div><div className="text-xs text-muted-foreground">{r.source !== "bank" ? <Badge variant="outline">Thủ công</Badge> : rc.sub}</div></td>
                 <td className="px-3 py-2 font-medium text-primary whitespace-nowrap">{vnd(Number(r.amount))}</td>
-                <td className="px-3 py-2 min-w-[280px]"><div className="line-clamp-2">{(r.source === "bank" ? r.description : r.note) || "—"}</div></td>
+                <td className="px-3 py-2 min-w-[280px]"><div className="line-clamp-2">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div></td>
                 <td className="px-3 py-2 whitespace-nowrap">{who(r)}</td>
                 <td className="px-3 py-2"><Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>{r.info_reason && r.status === "pending_reconciliation" && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}</td>
               </tr>
