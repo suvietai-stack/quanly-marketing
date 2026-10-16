@@ -379,6 +379,13 @@
       "when": 1792138679315,
       "tag": "0053_finance_operation_start",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1792138779909,
+      "tag": "0054_finance_test_history_readonly",
+      "breakpoints": true
     }
   ]
 }
