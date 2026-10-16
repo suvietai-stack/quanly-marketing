@@ -255,8 +255,10 @@ export type Database = {
           bank_name: string
           created_at: string
           created_by: string | null
+          gmf_notify: boolean
           id: string
           label: string | null
+          share_sale: boolean
           updated_at: string
         }
         Insert: {
@@ -266,8 +268,10 @@ export type Database = {
           bank_name: string
           created_at?: string
           created_by?: string | null
+          gmf_notify?: boolean
           id?: string
           label?: string | null
+          share_sale?: boolean
           updated_at?: string
         }
         Update: {
@@ -277,11 +281,54 @@ export type Database = {
           bank_name?: string
           created_at?: string
           created_by?: string | null
+          gmf_notify?: boolean
           id?: string
           label?: string | null
+          share_sale?: boolean
           updated_at?: string
         }
         Relationships: []
+      }
+      bank_transaction_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          reason: string | null
+          tx_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          tx_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          tx_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transaction_events_tx_id_fkey"
+            columns: ["tx_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bank_transactions: {
         Row: {
@@ -289,11 +336,24 @@ export type Database = {
           bank_account_id: string | null
           bank_account_identifier: string | null
           bank_name: string | null
+          claimed_at: string | null
+          claimed_by: string | null
           created_at: string
+          customer: string | null
           description: string | null
+          gmf_attempts: number
+          gmf_error: string | null
+          gmf_sent_at: string | null
+          gmf_status: string
           id: string
+          info_reason: string | null
+          money_type: string | null
+          note: string | null
           provider: string
           provider_transaction_id: string
+          reconciled_at: string | null
+          reconciled_by: string | null
+          ref_code: string | null
           reference_number: string | null
           status: string
           transaction_at: string | null
@@ -304,11 +364,24 @@ export type Database = {
           bank_account_id?: string | null
           bank_account_identifier?: string | null
           bank_name?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           created_at?: string
+          customer?: string | null
           description?: string | null
+          gmf_attempts?: number
+          gmf_error?: string | null
+          gmf_sent_at?: string | null
+          gmf_status?: string
           id?: string
+          info_reason?: string | null
+          money_type?: string | null
+          note?: string | null
           provider?: string
           provider_transaction_id: string
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          ref_code?: string | null
           reference_number?: string | null
           status?: string
           transaction_at?: string | null
@@ -319,11 +392,24 @@ export type Database = {
           bank_account_id?: string | null
           bank_account_identifier?: string | null
           bank_name?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
           created_at?: string
+          customer?: string | null
           description?: string | null
+          gmf_attempts?: number
+          gmf_error?: string | null
+          gmf_sent_at?: string | null
+          gmf_status?: string
           id?: string
+          info_reason?: string | null
+          money_type?: string | null
+          note?: string | null
           provider?: string
           provider_transaction_id?: string
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          ref_code?: string | null
           reference_number?: string | null
           status?: string
           transaction_at?: string | null
@@ -1005,6 +1091,7 @@ export type Database = {
       notifications: {
         Row: {
           attendance_id: string | null
+          bank_tx_id: string | null
           content_id: string | null
           created_at: string
           dedup_key: string
@@ -1026,6 +1113,7 @@ export type Database = {
         }
         Insert: {
           attendance_id?: string | null
+          bank_tx_id?: string | null
           content_id?: string | null
           created_at?: string
           dedup_key: string
@@ -1047,6 +1135,7 @@ export type Database = {
         }
         Update: {
           attendance_id?: string | null
+          bank_tx_id?: string | null
           content_id?: string | null
           created_at?: string
           dedup_key?: string
@@ -1072,6 +1161,13 @@ export type Database = {
             columns: ["attendance_id"]
             isOneToOne: false
             referencedRelation: "attendance_explanations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_bank_tx_id_fkey"
+            columns: ["bank_tx_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
             referencedColumns: ["id"]
           },
           {
@@ -2766,6 +2862,9 @@ export type Database = {
           care_last_run: string | null
           care_stale_days: number
           care_wait_hours: number
+          gmf_enabled: boolean
+          gmf_group_id: string | null
+          gmf_group_name: string | null
           id: number
           last_error: string | null
           oa_id: string | null
@@ -2791,6 +2890,9 @@ export type Database = {
           care_last_run?: string | null
           care_stale_days?: number
           care_wait_hours?: number
+          gmf_enabled?: boolean
+          gmf_group_id?: string | null
+          gmf_group_name?: string | null
           id?: number
           last_error?: string | null
           oa_id?: string | null
@@ -2816,6 +2918,9 @@ export type Database = {
           care_last_run?: string | null
           care_stale_days?: number
           care_wait_hours?: number
+          gmf_enabled?: boolean
+          gmf_group_id?: string | null
+          gmf_group_name?: string | null
           id?: number
           last_error?: string | null
           oa_id?: string | null
@@ -2894,6 +2999,38 @@ export type Database = {
       content_remind_run: { Args: never; Returns: number }
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
+      fin_bank_labels: {
+        Args: never
+        Returns: {
+          id: string
+          label: string
+        }[]
+      }
+      fin_claim: {
+        Args: {
+          _customer: string
+          _note: string
+          _ref: string
+          _tx: string
+          _type: string
+        }
+        Returns: undefined
+      }
+      fin_reconcile: {
+        Args: {
+          _customer?: string
+          _note?: string
+          _ref?: string
+          _tx: string
+          _type?: string
+        }
+        Returns: undefined
+      }
+      fin_request_info: {
+        Args: { _reason: string; _tx: string }
+        Returns: undefined
+      }
+      fin_reset: { Args: { _reason: string; _tx: string }; Returns: undefined }
       get_profiles_directory: {
         Args: never
         Returns: {
