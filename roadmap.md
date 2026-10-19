@@ -1,3 +1,4 @@
+- [ ] Tiền Về — kiểm tra tác động dữ liệu/quyền, chuyển hai trạng thái thật, xác nhận nguyên tử và sửa ghi chú có lịch sử, cập nhật thống kê/giao diện, kiểm thử ngân hàng/thủ công.
 - [x] Thêm mục Theo Dõi Đơn Hàng “Sắp ra mắt” và trang giới thiệu trên desktop/mobile.
 - [x] Bỏ lựa chọn đơn đang thực hiện và mã đơn cũ khỏi biểu mẫu Hỏi Tiến Độ mới.
 - [x] Giữ nguyên khả năng xem các lượt cũ và dữ liệu lịch sử.
