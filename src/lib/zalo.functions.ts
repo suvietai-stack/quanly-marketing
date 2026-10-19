@@ -110,8 +110,21 @@ export const zaloRetryFailed = createServerFn({ method: "POST" })
 export const zaloMyLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.from("zalo_links").select("status,linked_at,last_interaction_at").eq("user_id", context.userId).maybeSingle();
+    const { data, error } = await context.supabase.from("zalo_links").select("status,linked_at,last_interaction_at").eq("user_id", context.userId).maybeSingle();
+    if (error) throw new Error("Chưa kiểm tra được liên kết Zalo. Vui lòng thử lại.");
     return data ?? null;
+  });
+
+// Only safe OA health fields are returned, never credentials or other users' links.
+export const zaloReminderHealth = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.from("zalo_oa_config")
+      .select("status,oa_id,oa_secret_key").eq("id", 1).maybeSingle();
+    if (error) throw new Error("Chưa kiểm tra được trạng thái Zalo OA.");
+    // OA id comes from the existing authenticated Zalo connection, not user input.
+    return { connected: data?.status === "connected", webhookConfigured: !!(data?.oa_secret_key || process.env["ZALO_OA_SECRET_KEY"]), oaId: data?.oa_id ?? null };
   });
 
 export const zaloCreateLinkCode = createServerFn({ method: "POST" })
