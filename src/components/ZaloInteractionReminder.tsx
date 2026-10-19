@@ -43,7 +43,7 @@ export function ZaloInteractionReminder({ userId }: { userId: string }) {
   const message = state === "unlinked" ? "Chưa liên kết Zalo cá nhân." : state === "soon" ? "Sắp đủ 7 ngày từ lần tương tác Zalo OA được Base ghi nhận. Hãy nhắn BASE để duy trì khả năng nhận tin cá nhân." : state === "overdue" ? "Đã lâu bạn chưa tương tác với Zalo OA Sứ Việt. Thông báo Zalo cá nhân có thể không gửi được." : state === "unavailable" ? "Zalo OA hoặc liên kết cá nhân chưa sẵn sàng. Chưa thể xác minh khả năng nhận tin; vui lòng liên hệ quản trị viên." : "Chưa xác minh được lần tương tác Zalo OA. Nếu đã gửi BASE, hãy chờ Base nhận được tin; nếu chưa cập nhật, liên hệ quản trị viên kiểm tra kết nối nhận tin.";
 
   return <>
-    {popup ? <section role="dialog" aria-modal="false" aria-labelledby="zalo-interaction-title" aria-describedby="zalo-interaction-description" className="fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] max-w-sm rounded-lg border bg-card p-5 text-card-foreground shadow-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
+    {popup ? <section role="dialog" aria-modal="false" aria-labelledby="zalo-interaction-title" aria-describedby="zalo-interaction-description" className="fixed bottom-4 right-4 z-50 w-[calc(100%_-_2rem)] max-w-sm rounded-lg border bg-card p-5 text-card-foreground shadow-lg max-h-[calc(100dvh_-_2rem)] overflow-y-auto">
       <div className="flex items-start justify-between gap-3">
         <h2 id="zalo-interaction-title" className="text-base font-semibold leading-6">🔔 NHẮC TƯƠNG TÁC ZALO OA</h2>
         <Button variant="ghost" size="icon" className="shrink-0" aria-label="Để sau 24 giờ" onClick={later}><X className="h-4 w-4" /></Button>
@@ -66,6 +66,6 @@ export function ZaloInteractionReminder({ userId }: { userId: string }) {
       {state === "unlinked" ? <Button size="sm" variant="outline" onClick={() => setLinkOpen(true)}>Liên kết Zalo</Button> : oaUrl && state === "soon" ? <Button size="sm" variant="outline" asChild><a href={oaUrl} target="_blank" rel="noopener noreferrer">Mở Zalo OA</a></Button> : null}
       <Button variant="ghost" size="icon" aria-label="Để sau 24 giờ" onClick={later}><X className="h-4 w-4" /></Button>
     </div>}
-    <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent className="max-w-md w-[calc(100%-2rem)] rounded-lg"><DialogTitle>Liên kết Zalo cá nhân</DialogTitle><DialogDescription>Liên kết với OA Sứ Việt để nhận thông báo cá nhân.</DialogDescription><ZaloLinkCard /></DialogContent></Dialog>
+    <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent className="max-w-md w-[calc(100%_-_2rem)] rounded-lg"><DialogTitle>Liên kết Zalo cá nhân</DialogTitle><DialogDescription>Liên kết với OA Sứ Việt để nhận thông báo cá nhân.</DialogDescription><ZaloLinkCard /></DialogContent></Dialog>
   </>;
 }
