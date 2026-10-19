@@ -33,7 +33,7 @@ export function ManualEntry({ open, onOpenChange, canReconcile, edit, onDone }: 
     if (!amount) return toast.error("Số tiền phải lớn hơn 0");
     if (!f.date) return toast.error("Vui lòng chọn Ngày nhận tiền");
     if (!f.note.trim()) return toast.error("Vui lòng nhập Ghi chú");
-    if (edit?.reconciled && !f.reason.trim()) return toast.error("Vui lòng nhập lý do sửa khoản đã đối soát");
+    if (edit?.reconciled && !f.reason.trim()) return toast.error("Vui lòng nhập lý do sửa khoản đã xác nhận");
     setBusy(true);
     const res = edit
       ? await supabase.rpc("fin_manual_update", { _tx: edit.id, _source: f.source, _amount: amount, _date: f.date, _note: f.note, _reason: f.reason || undefined })

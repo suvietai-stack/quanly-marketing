@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, searchAmount, vnEndExcl, vnStart, vnd } from "@/lib/finance/incoming";
+import { confirmationFilter, TX_STATUS, TX_VARIANT, type BankLabel, fmtTime, receiver, safeQ, searchAmount, vnEndExcl, vnStart, vnd } from "@/lib/finance/incoming";
 
 type S = { acc: string; st: string; q: string; from: string; to: string; sale: string; history: string };
 const str = (v: unknown) => (typeof v === "string" ? v : "");
@@ -40,7 +40,7 @@ const chip = (on: boolean) => `shrink-0 h-9 px-3 rounded-full border text-sm whi
 
 function Incoming() {
   const sp = Route.useSearch();
-  const s: S = { acc: sp.acc ?? "", st: sp.st ?? "", q: sp.q ?? "", from: sp.from ?? "", to: sp.to ?? "", sale: sp.sale ?? "", history: sp.history ?? "" };
+  const s: S = { acc: sp.acc ?? "", st: confirmationFilter(sp.st ?? ""), q: sp.q ?? "", from: sp.from ?? "", to: sp.to ?? "", sale: sp.sale ?? "", history: sp.history ?? "" };
   const navigate = useNavigate({ from: "/finance/incoming/" });
   const set = (p: Partial<S>) => navigate({ search: (prev: any) => { const n = { ...prev, ...p }; for (const k in n) if (!n[k]) delete n[k]; return n; }, replace: true });
   const [qText, setQText] = useState(s.q);
@@ -79,18 +79,18 @@ function Incoming() {
       return data ?? [];
     },
   });
-  const count = (st: string) => (stats.data ?? []).filter((r) => !st || r.status === st).reduce((a, r) => a + Number(r.n), 0);
-  const sum = (st: string, kind?: string) => (stats.data ?? []).filter((r) => (!st || r.status === st) && (!kind || r.source === kind)).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const count = (st: string) => (stats.data ?? []).filter((r) => !st || r.confirmation_status === st).reduce((a, r) => a + Number(r.n), 0);
+  const sum = (st: string, kind?: string) => (stats.data ?? []).filter((r) => (!st || r.confirmation_status === st) && (!kind || r.source === kind)).reduce((a, r) => a + Number(r.total ?? 0), 0);
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["bank_transactions", "list", user?.id, filt, s.st, limit],
     queryFn: async () => {
       let x = supabase.from("bank_transactions")
-        .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, status, created_at, claimed_by, info_reason")
+        .select("id, source, bank_account_id, bank_name, transaction_at, transaction_date, amount, description, note, reference_number, confirmation_status, created_at, claimed_by, info_reason")
         .gt("amount", 0).is("cancelled_at", null).eq("operation_test", history);
       if (src) x = x.eq("source", src);
       if (acc) x = x.eq("bank_account_id", acc);
-      if (s.st) x = x.eq("status", s.st);
+      if (s.st) x = x.eq("confirmation_status", s.st);
       if (sale) x = x.eq("claimed_by", sale);
       if (fromTs) x = x.gte("transaction_at", fromTs);
       if (toTs) x = x.lt("transaction_at", toTs);
@@ -176,7 +176,7 @@ function Incoming() {
             <button key={r.id} onClick={() => open(r.id)} className="w-full text-left rounded-lg border bg-card p-3 active:bg-accent">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xl font-bold text-primary">{vnd(Number(r.amount))}</span>
-                <Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>
+                <Badge variant={TX_VARIANT[r.confirmation_status] ?? "secondary"}>{TX_STATUS[r.confirmation_status] ?? r.confirmation_status}</Badge>
               </div>
               <div className="mt-1 text-sm font-semibold uppercase">{rc.main}</div>
               <div className="text-sm mt-0.5 line-clamp-2 text-muted-foreground">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div>
@@ -203,7 +203,7 @@ function Incoming() {
                 <td className="px-3 py-2 font-medium text-primary whitespace-nowrap">{vnd(Number(r.amount))}</td>
                 <td className="px-3 py-2 min-w-[220px]"><div className="line-clamp-2 break-words">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div></td>
                 <td className="px-3 py-2 whitespace-nowrap">{who(r)}</td>
-                <td className="px-3 py-2"><Badge variant={TX_VARIANT[r.status] ?? "secondary"}>{TX_STATUS[r.status] ?? r.status}</Badge>{r.info_reason && r.status === "pending_reconciliation" && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}</td>
+                <td className="px-3 py-2"><Badge variant={TX_VARIANT[r.confirmation_status] ?? "secondary"}>{TX_STATUS[r.confirmation_status] ?? r.confirmation_status}</Badge>{r.info_reason && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}</td>
               </tr>
             ); })}
           </tbody>
