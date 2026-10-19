@@ -181,7 +181,7 @@ function Detail() {
         </div>
       )}
 
-      {actions.note && !showForm && (
+      {actions.note && (!showForm || canRec || canManage) && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-3">
           <div className="font-medium">Điều chỉnh ghi chú</div>
           <Label>Ghi chú *</Label><Textarea className={field} value={f.note} maxLength={2000} onChange={(e) => setF({ ...f, note: e.target.value })} />
