@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Personal OA reminders mount once in AppShell, use authenticated user-scoped link reads and safe OA health fields, and store per-user browser snoozes; only existing verified webhook updates establish interaction — navigation and opening OA never renew eligibility or affect GMF.
+
 - Tiền Về resets use Super-Admin-only fin_reset_* RPCs with explicit confirmation, table lock before shared advisory lock, private scoped JSON recovery snapshots and atomic dependent deletion; fin_operation_guard ignores bank INSERTs at/before reset_at — prevents replay and concurrent reset inconsistencies without changing provider authentication or auto-resetting on deployment.
 
 - Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.

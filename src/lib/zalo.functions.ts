@@ -124,7 +124,7 @@ export const zaloReminderHealth = createServerFn({ method: "POST" })
       .select("status,oa_id,oa_secret_key").eq("id", 1).maybeSingle();
     if (error) throw new Error("Chưa kiểm tra được trạng thái Zalo OA.");
     // OA id comes from the existing authenticated Zalo connection, not user input.
-    return { connected: data?.status === "connected", webhookConfigured: !!(data?.oa_secret_key || process.env["ZALO_OA_SECRET_KEY"]), oaId: data?.oa_id ?? null };
+    return { connected: data?.status === "connected", webhookConfigured: !!(data?.oa_secret_key || process.env["ZALO_OA_SECRET_KEY"]), oaUrl: data?.oa_id === "2511181204652469735" ? "https://zalo.me/2511181204652469735" : null };
   });
 
 export const zaloCreateLinkCode = createServerFn({ method: "POST" })
