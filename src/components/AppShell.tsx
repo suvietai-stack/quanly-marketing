@@ -8,6 +8,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/ZaloUi";
+import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
 import { useAuth, useCurrentUser, type PermissionKey } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -223,6 +224,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
         </header>
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
+          {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
           {children}
         </main>
       </div>
