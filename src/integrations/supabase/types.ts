@@ -341,6 +341,9 @@ export type Database = {
           cancelled_by: string | null
           claimed_at: string | null
           claimed_by: string | null
+          confirmation_status: string
+          confirmed_at: string | null
+          confirmed_by: string | null
           counter_account_name: string | null
           counter_account_number: string | null
           counter_bank_name: string | null
@@ -379,6 +382,9 @@ export type Database = {
           cancelled_by?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
+          confirmation_status?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           counter_account_name?: string | null
           counter_account_number?: string | null
           counter_bank_name?: string | null
@@ -417,6 +423,9 @@ export type Database = {
           cancelled_by?: string | null
           claimed_at?: string | null
           claimed_by?: string | null
+          confirmation_status?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
           counter_account_name?: string | null
           counter_account_number?: string | null
           counter_bank_name?: string | null
@@ -3127,6 +3136,10 @@ export type Database = {
           _source: string
           _tx: string
         }
+        Returns: undefined
+      }
+      fin_note_update: {
+        Args: { _note: string; _reason: string; _tx: string }
         Returns: undefined
       }
       fin_operation_begin: { Args: { _confirm: boolean }; Returns: string }
