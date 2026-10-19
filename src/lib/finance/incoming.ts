@@ -1,11 +1,10 @@
-// 3 trạng thái nghiệp vụ. "needs_info" cũ đã được chuyển về Chờ đối soát (yêu cầu chỉnh sửa lưu ở info_reason).
+// Hai trạng thái nghiệp vụ; trạng thái đối soát cũ chỉ còn dùng để đọc lịch sử.
 export const TX_STATUS: Record<string, string> = {
   unclaimed: "Chưa xác nhận",
-  pending_reconciliation: "Chờ đối soát",
-  reconciled: "Đã đối soát",
+  confirmed: "Đã xác nhận",
 };
 export const TX_VARIANT: Record<string, "secondary" | "default" | "destructive" | "outline"> = {
-  unclaimed: "secondary", pending_reconciliation: "default", reconciled: "outline",
+  unclaimed: "secondary", confirmed: "outline",
 };
 export const MONEY_TYPES: Record<string, string> = {
   deposit: "Tiền cọc", payment: "Thanh toán", extra_payment: "Thanh toán bổ sung", refund: "Hoàn tiền", other: "Khác",
@@ -13,7 +12,8 @@ export const MONEY_TYPES: Record<string, string> = {
 export const SOURCES: Record<string, string> = { cash: "Tiền mặt", other_account: "TK khác" };
 export const EVENT_LABEL: Record<string, string> = {
   claim: "Sale xác nhận", edit: "Sale sửa thông tin", resubmit: "Sale cập nhật theo yêu cầu", request_info: "Kế toán yêu cầu chỉnh sửa",
-  reconcile: "Kế toán đối soát", reset: "Điều chỉnh: đưa về chưa xác nhận",
+  confirm_other: "Kế toán xác nhận loại Khác", note_edit: "Điều chỉnh ghi chú",
+  reconcile: "Kế toán đối soát (lịch sử)", reset: "Điều chỉnh: đưa về chưa xác nhận",
   manual_create: "Tạo khoản thủ công", manual_edit: "Sửa khoản thủ công", manual_cancel: "Hủy khoản thủ công",
 };
 export type BankLabel = { id: string; label: string; bank_name: string; last4: string; active: boolean };
@@ -48,3 +48,14 @@ export function searchAmount(q: string): number | null {
 /** Ngày VN (YYYY-MM-DD) → mốc thời gian. */
 export const vnStart = (d: string) => (d ? new Date(`${d}T00:00:00+07:00`).toISOString() : null);
 export const vnEndExcl = (d: string) => (d ? new Date(new Date(`${d}T00:00:00+07:00`).getTime() + 86400000).toISOString() : null);
+
+/** Chuẩn hóa liên kết bộ lọc cũ; các truy vấn dùng trạng thái xác nhận thật. */
+export function confirmationFilter(status: string): string {
+  if (["confirmed", "pending_reconciliation", "reconciled"].includes(status)) return "confirmed";
+  return status === "unclaimed" ? "unclaimed" : "";
+}
+export function confirmationActions(t: { confirmation_status: string; claimed_by: string | null; operation_test: boolean; cancelled_at: string | null }, userId: string | undefined, claim: boolean, accounting: boolean, manage: boolean) {
+  const active = !t.operation_test && !t.cancelled_at;
+  const unowned = t.confirmation_status === "unclaimed" && !t.claimed_by;
+  return { sale: active && claim && unowned, other: active && accounting && unowned, note: active && (accounting || manage || (claim && !!userId && t.claimed_by === userId)) };
+}

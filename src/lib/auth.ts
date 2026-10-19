@@ -457,7 +457,7 @@ export const PERMISSIONS: PermissionDef[] = [
   // ===== Tài Chính Kế Toán =====
   P("finance.incoming.view", "Xem Tiền Về", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
   P("finance.incoming.claim", "Sale xác nhận giao dịch", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
-  P("finance.incoming.reconcile", "Đối soát giao dịch", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
+  P("finance.incoming.reconcile", "Xem toàn bộ / sửa ghi chú / xác nhận loại Khác", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
   P("finance.incoming.manual_view", "Xem khoản thủ công (Tiền mặt / TK khác)", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
   P("finance.incoming.view_totals", "Xem tổng tiền và thống kê tài chính", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
   P("finance.incoming.manual_create", "Thêm khoản thủ công", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),

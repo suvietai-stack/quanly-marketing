@@ -11,15 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { checkNoteError, EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
+import { checkNoteError, confirmationActions, EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
 import { ManualEntry } from "@/components/finance/ManualEntry";
 
 export const Route = createFileRoute("/finance/incoming/$id")({
   head: () => ({ meta: [
     { title: "Chi tiết giao dịch — Tiền Về" },
-    { name: "description", content: "Xác nhận và đối soát giao dịch tiền vào." },
+    { name: "description", content: "Xác nhận giao dịch tiền vào và tra cứu lịch sử." },
     { property: "og:title", content: "Chi tiết giao dịch — Tiền Về" },
-    { property: "og:description", content: "Xác nhận và đối soát giao dịch tiền vào." },
+    { property: "og:description", content: "Xác nhận giao dịch tiền vào và tra cứu lịch sử." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
@@ -71,7 +71,7 @@ function Detail() {
   const [f, setF] = useState({ customer: "", type: "", ref: "", note: "" });
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { if (t) setF({ customer: t.customer ?? "", type: t.money_type ?? "", ref: t.ref_code ?? "", note: t.note ?? "" }); }, [t?.id, t?.status]);
+  useEffect(() => { if (t) setF({ customer: t.customer ?? "", type: t.money_type ?? "", ref: t.ref_code ?? "", note: t.note ?? "" }); }, [t?.id, t?.confirmation_status, t?.note]);
 
   if (isLoading) return <div className="py-16 text-center text-muted-foreground">Đang tải…</div>;
   if (!t) return <div className="py-16 text-center text-muted-foreground">Không tìm thấy giao dịch hoặc bạn không có quyền xem.</div>;
@@ -80,10 +80,10 @@ function Detail() {
   const cancelled = !!t.cancelled_at;
   const rc = receiver(t, labels);
   const lb = labels?.find((l) => l.id === t.bank_account_id);
-  const mine = t.claimed_by === user?.id;
-  const saleEditable = !t.operation_test && !cancelled && canClaim && ((t.status === "unclaimed" && !t.claimed_by) || (mine && t.status === "pending_reconciliation"));
-  const manualEditable = !t.operation_test && !isBank && !cancelled && canManual && (t.status !== "reconciled" || canManage);
-  const directEligible = !t.operation_test && !cancelled && canRec && t.status === "unclaimed" && !t.claimed_by;
+  const actions = confirmationActions(t, user?.id, canClaim, canRec, canManage);
+  const saleEditable = actions.sale;
+  const manualEditable = !t.operation_test && !isBank && !cancelled && canManual && (t.confirmation_status !== "confirmed" || canManage);
+  const directEligible = actions.other;
   const isOther = f.type === "other";
   const directOther = directEligible && isOther;
   const showForm = saleEditable || directEligible;
@@ -98,6 +98,7 @@ function Detail() {
     setReason("");
     qc.invalidateQueries({ queryKey: ["bank_transactions"] });
     qc.invalidateQueries({ queryKey: ["bank_tx_events", id] });
+    qc.invalidateQueries({ queryKey: ["bank_tx", user?.id, id] });
     refetch();
   };
   const check = () => {
@@ -114,7 +115,7 @@ function Detail() {
       <div className="rounded-lg border bg-card p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div className="text-3xl font-bold text-primary">{vnd(Number(t.amount))}</div>
-          {cancelled ? <Badge variant="destructive">Đã hủy</Badge> : <Badge variant={TX_VARIANT[t.status] ?? "secondary"}>{TX_STATUS[t.status] ?? t.status}</Badge>}
+          {cancelled ? <Badge variant="destructive">Đã hủy</Badge> : <Badge variant={TX_VARIANT[t.confirmation_status] ?? "secondary"}>{TX_STATUS[t.confirmation_status] ?? t.confirmation_status}</Badge>}
         </div>
         <div className="text-lg font-semibold uppercase">{isBank ? "TK nhận" : "Nguồn tiền"}: {rc.main}</div>
         {isBank ? (
@@ -131,8 +132,7 @@ function Detail() {
             <span className="text-muted-foreground">Thời gian tạo</span><span>{fmtTime(t.created_at)}</span>
             <span className="text-muted-foreground">Sale xác nhận</span><span>{nameOf(t.claimed_by)}</span>
             <span className="text-muted-foreground">Thời gian xác nhận</span><span>{fmtTime(t.claimed_at)}</span>
-            <span className="text-muted-foreground">Kế toán đối soát</span><span>{nameOf(t.reconciled_by)}</span>
-            <span className="text-muted-foreground">Thời gian đối soát</span><span>{fmtTime(t.reconciled_at)}</span>
+            {!t.claimed_by && t.confirmed_by && <><span className="text-muted-foreground">Người xác nhận</span><span>{nameOf(t.confirmed_by)} · {fmtTime(t.confirmed_at)}</span></>}
             <span className="text-muted-foreground">Ghi chú Kế toán</span><span className="whitespace-pre-wrap break-words">{t.description || "—"}</span>
             {cancelled && <><span className="text-muted-foreground">Hủy</span><span>{nameOf(t.cancelled_by)} · {fmtTime(t.cancelled_at)}: {t.cancel_reason}</span></>}
           </div>
@@ -148,18 +148,18 @@ function Detail() {
         </div>
       )}
 
-      {t.status === "pending_reconciliation" && t.info_reason && (
-        <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"><b>Kế toán yêu cầu chỉnh sửa:</b> {t.info_reason}</div>
+      {t.info_reason && (
+        <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"><b>Yêu cầu chỉnh sửa trước đây:</b> {t.info_reason}</div>
       )}
 
-      {t.claimed_by || t.reconciled_by || (isBank && t.customer) ? (
+      {t.confirmed_by || t.claimed_by || t.reconciled_by || (isBank && t.customer) ? (
         <div className="mt-3 rounded-lg border bg-card p-4 text-sm grid grid-cols-[130px_1fr] gap-y-1.5">
           <span className="text-muted-foreground">Sale xác nhận</span><span>{nameOf(t.claimed_by)}{t.claimed_at ? ` · ${fmtTime(t.claimed_at)}` : ""}</span>
           <span className="text-muted-foreground">Khách hàng</span><span>{t.customer || "—"}</span>
           <span className="text-muted-foreground">Loại tiền</span><span>{MONEY_TYPES[t.money_type ?? ""] ?? "—"}</span>
           <span className="text-muted-foreground">Mã đơn / tham chiếu</span><span>{t.ref_code || "—"}</span>
           <span className="text-muted-foreground">Ghi chú</span><span className="whitespace-pre-wrap">{t.note || "—"}</span>
-          {t.reconciled_by && <><span className="text-muted-foreground">Đối soát</span><span>{nameOf(t.reconciled_by)} · {fmtTime(t.reconciled_at)}</span></>}
+          {t.reconciled_by && <><span className="text-muted-foreground">Đối soát trước đây</span><span>{nameOf(t.reconciled_by)} · {fmtTime(t.reconciled_at)}</span></>}
         </div>
       ) : null}
 
@@ -176,17 +176,17 @@ function Detail() {
           {!isOther && <div className="space-y-1.5"><Label>Mã đơn / Mã tham chiếu</Label><Input className={`h-11 ${field}`} value={f.ref} maxLength={100} placeholder="Có thể bỏ trống" onChange={(e) => setF({ ...f, ref: e.target.value })} /></div>}
           <div className="space-y-1.5"><Label>{isOther ? "Ghi chú khoản tiền *" : "Ghi chú chi tiết *"}</Label><Textarea className={`min-h-28 ${field}`} value={f.note} maxLength={2000} placeholder={isOther ? "VD: Tiền hoàn ứng nội bộ." : "VD: Khách Công ty ABC cọc 50 bộ ly sứ in logo, Sale Nguyễn A phụ trách."} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
           <div className="fixed md:static bottom-0 inset-x-0 p-3 md:p-0 bg-background border-t md:border-0 flex flex-col md:flex-row gap-2 z-20">
-            {directOther ? <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_reconcile", { _tx: id, _type: "other", _note: f.note }), "Đã ghi chú và hoàn tất đối soát")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Ghi chú & hoàn tất đối soát</Button> : saleEditable && <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_claim", args), "Đã gửi Kế toán đối soát")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Xác nhận & gửi Kế toán</Button>}
+            {directOther ? <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_reconcile", { _tx: id, _type: "other", _note: f.note }), "Đã xác nhận giao dịch")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Ghi chú & xác nhận giao dịch</Button> : saleEditable && <Button className="h-12 md:h-10 w-full md:w-auto" disabled={busy} onClick={() => check() && done(supabase.rpc("fin_claim", args), "Đã xác nhận giao dịch")}>{busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Xác nhận giao dịch</Button>}
           </div>
         </div>
       )}
 
-      {!t.operation_test && canRec && !cancelled && t.claimed_by && t.status === "pending_reconciliation" && (
+      {actions.note && !showForm && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-3">
-          <div className="font-medium">Kế toán đối soát</div>
-          <Button className="h-11 w-full md:w-auto" disabled={busy} onClick={() => done(supabase.rpc("fin_reconcile", { _tx: id }), "Đã đối soát")}>Xác nhận đối soát</Button>
-          {t.claimed_by && <><div className="space-y-1.5 pt-2 border-t"><Label>Yêu cầu Sale chỉnh sửa (giữ trạng thái Chờ đối soát)</Label><Textarea className={field} value={reason} onChange={(e) => setReason(e.target.value)} /></div>
-          <Button variant="outline" disabled={busy || !reason.trim()} onClick={() => done(supabase.rpc("fin_request_info", { _tx: id, _reason: reason }), "Đã gửi yêu cầu chỉnh sửa")}>Gửi yêu cầu chỉnh sửa</Button></>}
+          <div className="font-medium">Điều chỉnh ghi chú</div>
+          <Label>Ghi chú *</Label><Textarea className={field} value={f.note} maxLength={2000} onChange={(e) => setF({ ...f, note: e.target.value })} />
+          <Label>Lý do điều chỉnh *</Label><Textarea className={field} value={reason} maxLength={2000} onChange={(e) => setReason(e.target.value)} />
+          <Button disabled={busy || !f.note.trim() || !reason.trim()} onClick={() => done(supabase.rpc("fin_note_update", { _tx: id, _note: f.note, _reason: reason }), "Đã lưu ghi chú và lịch sử")}>Lưu ghi chú</Button>
         </div>
       )}
 
@@ -194,14 +194,14 @@ function Detail() {
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-3">
           <div className="font-medium">Quản lý khoản thủ công</div>
           <Button variant="outline" onClick={() => setEditOpen(true)}>Sửa khoản tiền</Button>
-          <ManualEntry open={editOpen} onOpenChange={setEditOpen} canReconcile={false} edit={{ id: t.id, source: t.source, amount: Number(t.amount), received_date: t.received_date, note: t.description ?? t.note, reconciled: t.status === "reconciled" }}
+          <ManualEntry open={editOpen} onOpenChange={setEditOpen} canReconcile={false} edit={{ id: t.id, source: t.source, amount: Number(t.amount), received_date: t.received_date, note: t.description ?? t.note, reconciled: t.confirmation_status === "confirmed" }}
             onDone={() => { qc.invalidateQueries({ queryKey: ["bank_transactions"] }); qc.invalidateQueries({ queryKey: ["bank_tx_events", id] }); refetch(); }} />
           <div className="space-y-1.5 pt-2 border-t"><Label>Lý do hủy</Label><Textarea className={field} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="VD: Nhập nhầm / trùng với giao dịch ngân hàng" /></div>
           <Button variant="destructive" disabled={busy || !reason.trim()} onClick={() => confirm("Hủy khoản tiền này? Khoản hủy không được tính vào tổng.") && done(supabase.rpc("fin_manual_cancel", { _tx: id, _reason: reason }), "Đã hủy khoản tiền")}>Hủy khoản tiền</Button>
         </div>
       )}
 
-      {!t.operation_test && !cancelled && (canRec || canManage) && t.claimed_by && (t.status !== "reconciled" || canManage) && (
+      {!t.operation_test && !cancelled && (canRec || canManage) && t.claimed_by && (t.confirmation_status !== "confirmed" || canManage) && (
         <details className="mt-4 rounded-lg border bg-card p-4">
           <summary className="cursor-pointer text-sm font-medium">Điều chỉnh nhận nhầm</summary>
           <div className="mt-3 space-y-2">
