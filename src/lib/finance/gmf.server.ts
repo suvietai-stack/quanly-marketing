@@ -1,6 +1,6 @@
 // Chỉ chạy phía máy chủ. Gửi thông báo Tiền Về vào nhóm Zalo GMF qua OA Access Token đang quản lý.
 // Không gửi số dư / số tài khoản đầy đủ. Không log nội dung giao dịch.
-import { getAccessToken, getConfig, baseUrl, brandHeader } from "@/lib/zalo.server";
+import { getAccessToken, getConfig, baseUrl } from "@/lib/zalo.server";
 
 async function db() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -57,33 +57,32 @@ export type AccInfo = { label: string; bank: string; last4: string };
 const last4 = (s: unknown) => { const d = String(s ?? "").replace(/\D/g, ""); return d.length >= 4 ? d.slice(-4) : ""; };
 
 export async function txMessage(t: any, acc: AccInfo) {
-  const when = t.transaction_at ? new Date(t.transaction_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : (t.transaction_date ?? "");
-  const lines = [
-    `🔔 ${await brandHeader()} — THÔNG BÁO TIỀN VỀ`,
-    "",
-    `💰 ${vnd(t.amount)}`,
-    "",
-    `🏦 TK NHẬN: ${(acc.label || acc.bank || "").toLocaleUpperCase("vi-VN")}`,
-    [acc.bank, acc.last4 ? `****${acc.last4}` : ""].filter(Boolean).join(" · "),
-  ];
-  lines.push("", `🕒 Thời gian: ${when}`, "", "📝 Nội dung CK:", String(t.description ?? "").slice(0, 300), "", "📌 Chưa xác nhận", "",
-    "👉 NHẤN ĐỂ CHECK NOTE:", `${await baseUrl()}/finance/incoming/${t.id}`);
-  return lines.join("\n");
+  const date = t.transaction_at ? new Date(t.transaction_at) : null;
+  const parts = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh", hourCycle: "h23", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+  }).formatToParts(date) : [];
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
+  const when = parts.length ? `${part("hour")}:${part("minute")} ${part("day")}/${part("month")}/${part("year")}` : (t.transaction_date ?? "—");
+  // Chưa có mã tham chiếu được tách/xác minh an toàn trên đường gửi: giữ nguyên CK, không suy đoán tiền tố.
+  return [
+    "🔔 TIỀN VỀ MỚI", "",
+    `💰 ${vnd(t.amount)} · Chưa xác nhận`,
+    `🏦 TK: ${(acc.label || acc.bank || "—").toLocaleUpperCase("vi-VN")}${acc.last4 ? ` (****${acc.last4})` : ""}`,
+    `🕒 ${when}`, "",
+    `📝 CK: ${String(t.description ?? "")}`, "",
+    "👉 Check note:", `${await baseUrl()}/finance/incoming/${t.id}`,
+  ].join("\n");
 }
 
 export async function manualMessage(t: any) {
-  const d = await db();
-  const { data: p } = t.created_by ? await d.from("profiles").select("full_name").eq("id", t.created_by).maybeSingle() : { data: null };
   const day = t.received_date ? String(t.received_date).split("-").reverse().join("/") : "";
   return [
-    `🔔 ${await brandHeader()} — THÔNG BÁO TIỀN VỀ`, "",
-    `💰 ${vnd(t.amount)}`, "",
-    `💵 NGUỒN: ${t.source === "cash" ? "TIỀN MẶT" : "TK KHÁC"}`, "",
-    `📅 Ngày nhận: ${day}`,
-    `👤 Người nhập: ${p?.full_name ?? "—"}`, "",
-    "📝 Ghi chú Kế toán:", String(t.description ?? "").slice(0, 300), "",
-    "📌 Chưa xác nhận", "",
-    "👉 NHẤN ĐỂ CHECK NOTE:", `${await baseUrl()}/finance/incoming/${t.id}`,
+    "🔔 TIỀN VỀ MỚI", "",
+    `💰 ${vnd(t.amount)} · Chưa xác nhận`,
+    t.source === "cash" ? "💵 TIỀN MẶT" : "🏦 TK KHÁC",
+    `🕒 ${day || "—"}`, "",
+    `📝 Ghi chú Kế toán: ${String(t.description ?? "")}`, "",
+    "👉 Check note:", `${await baseUrl()}/finance/incoming/${t.id}`,
   ].join("\n");
 }
 
