@@ -79,8 +79,8 @@ function Incoming() {
       return data ?? [];
     },
   });
-  const count = (st: string) => (stats.data ?? []).filter((r) => !st || r.confirmation_status === st).reduce((a, r) => a + Number(r.n), 0);
-  const sum = (st: string, kind?: string) => (stats.data ?? []).filter((r) => (!st || r.confirmation_status === st) && (!kind || r.source === kind)).reduce((a, r) => a + Number(r.total ?? 0), 0);
+  const count = (st: string) => (stats.data ?? []).filter((r) => !st || r.status === st).reduce((a, r) => a + Number(r.n), 0);
+  const sum = (st: string, kind?: string) => (stats.data ?? []).filter((r) => (!st || r.status === st) && (!kind || r.source === kind)).reduce((a, r) => a + Number(r.total ?? 0), 0);
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["bank_transactions", "list", user?.id, filt, s.st, limit],
