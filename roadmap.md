@@ -1,4 +1,5 @@
-- [ ] Tiền Về — kiểm tra tác động dữ liệu/quyền, chuyển hai trạng thái thật, xác nhận nguyên tử và sửa ghi chú có lịch sử, cập nhật thống kê/giao diện, kiểm thử ngân hàng/thủ công.
+- [x] Tiền Về — kiểm tra 4 giao dịch cũ hợp lệ, chuyển hai trạng thái thật, xác nhận nguyên tử, sửa ghi chú có lịch sử, đồng bộ quyền/thống kê/giao diện; 20 kiểm tra đạt, bảo toàn 4 người nhận/thời gian và 4 lịch sử.
+- [ ] Tiền Về hai trạng thái — kiểm thử Casso/thủ công và hai Sale xác nhận đồng thời qua tài khoản thật (chờ người dùng chọn tài khoản Sale/Kế toán; phiên đăng xuất và không có tài khoản khớp --self).
 - [x] Thêm mục Theo Dõi Đơn Hàng “Sắp ra mắt” và trang giới thiệu trên desktop/mobile.
 - [x] Bỏ lựa chọn đơn đang thực hiện và mã đơn cũ khỏi biểu mẫu Hỏi Tiến Độ mới.
 - [x] Giữ nguyên khả năng xem các lượt cũ và dữ liệu lịch sử.
