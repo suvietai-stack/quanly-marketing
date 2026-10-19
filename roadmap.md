@@ -19,3 +19,4 @@
 - [ ] Tiền Về — loại Khác: kiểm thử 4 tình huống bằng Sale/Kế toán thật (chờ tài khoản đăng nhập trong preview; --self không có tài khoản khớp).
 - [x] Chuyển Reset khỏi thanh công cụ vào cuối Cài đặt Tiền Về → Quản trị nâng cao; giữ xem trước, xác nhận và kiểm tra Super Admin ở RPC; 14 kiểm tra đạt.
 - [ ] Kiểm tra vị trí Reset trong Cài đặt bằng Super Admin thật (chờ đăng nhập trong preview; không có tài khoản khớp để tạo phiên).
+- [ ] Nhắc tương tác Zalo cá nhân: cảnh báo nhẹ, popup, hoãn riêng từng user, tự kiểm tra webhook và kiểm thử; không thay đổi gửi tin.
