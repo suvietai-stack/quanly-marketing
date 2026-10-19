@@ -19,4 +19,5 @@
 - [ ] Tiền Về — loại Khác: kiểm thử 4 tình huống bằng Sale/Kế toán thật (chờ tài khoản đăng nhập trong preview; --self không có tài khoản khớp).
 - [x] Chuyển Reset khỏi thanh công cụ vào cuối Cài đặt Tiền Về → Quản trị nâng cao; giữ xem trước, xác nhận và kiểm tra Super Admin ở RPC; 14 kiểm tra đạt.
 - [ ] Kiểm tra vị trí Reset trong Cài đặt bằng Super Admin thật (chờ đăng nhập trong preview; không có tài khoản khớp để tạo phiên).
-- [ ] Nhắc tương tác Zalo cá nhân: cảnh báo nhẹ, popup, hoãn riêng từng user, tự kiểm tra webhook và kiểm thử; không thay đổi gửi tin.
+- [x] Nhắc tương tác Zalo cá nhân: cảnh báo nhẹ, popup không chặn làm việc, hoãn 24 giờ riêng từng user, đọc lại tương tác mỗi 30 giây/khi quay lại Base; dùng OA đã xác minh, không thay đổi gửi tin; 20 kiểm tra đạt.
+- [ ] Kiểm thử popup Zalo cá nhân và tự ẩn sau tin BASE thực tế (chờ đăng nhập tài khoản đã liên kết và gửi tin OA; không có tài khoản khớp để tạo phiên).
