@@ -414,6 +414,13 @@
       "when": 1792384784218,
       "tag": "0058_finance_confirmed_adjustment_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1792481129322,
+      "tag": "0059_finance_confirmation_guard_service_role",
+      "breakpoints": true
     }
   ]
 }

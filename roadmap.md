@@ -1,3 +1,5 @@
+- [x] Casso HTTP 500 — 0059 sửa quyền thực thi fin_confirmation_guard; production nhận probe có chữ ký HTTP 200 hai lần, không lưu khoản thử; khoản mới 16186931 đồng bộ và GMF sent; 29 kiểm tra đạt, không reset/xóa dữ liệu.
+- [ ] Khôi phục Casso 16186727/16178097 và kiểm tra Sale/GMF — chờ Casso gửi lại payload gốc hoặc API được cấp quyền; hiện hai ID chưa có, Base có 5 giao dịch, không suy diễn thời gian/nội dung gốc.
 - [x] Tiền Về — kiểm tra 4 giao dịch cũ hợp lệ, chuyển hai trạng thái thật, xác nhận nguyên tử, sửa ghi chú có lịch sử, đồng bộ quyền/thống kê/giao diện; 25 kiểm tra đạt, bảo toàn 4 người nhận/thời gian và 4 lịch sử; 16 cặp Sale/giao dịch không lộ khoản người khác, trang yêu cầu đăng nhập, build sạch.
 - [ ] Tiền Về hai trạng thái — kiểm thử Casso/thủ công và hai Sale xác nhận đồng thời qua tài khoản thật (chờ người dùng chọn tài khoản Sale/Kế toán; phiên đăng xuất và không có tài khoản khớp --self).
 - [x] Thêm mục Theo Dõi Đơn Hàng “Sắp ra mắt” và trang giới thiệu trên desktop/mobile.

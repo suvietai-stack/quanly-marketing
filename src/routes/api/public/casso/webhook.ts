@@ -7,6 +7,16 @@ const json = (body: unknown, status = 200) =>
 
 const MAX_SKEW_MS = 10 * 60 * 1000;
 
+// Raw PostgreSQL messages/details can contain financial data; log identifiers only.
+function logDbError(stage: "accounts" | "upsert", error: { code?: string; message?: string }) {
+  const identifier = error.message?.match(/(?:schema|table|function|constraint|trigger) "?([a-z_][a-z0-9_]*)/i)?.[1];
+  console.error("[casso] db error", {
+    stage,
+    sqlstate: /^[A-Z0-9]{5}$/.test(error.code ?? "") ? error.code : "unknown",
+    ...(identifier ? { database_object: identifier } : {}),
+  });
+}
+
 // Giống hệt sortObjDataByKey trong mã mẫu chính thức của Casso.
 function sortObj(data: any): any {
   const out: any = {};
@@ -67,14 +77,15 @@ export const Route = createFileRoute("/api/public/casso/webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: accs, error: accErr } = await supabaseAdmin.from("bank_accounts").select("id, bank_name, account_number").eq("active", true);
-        if (accErr) { console.error("[casso] db error", accErr.code); return json({ success: false, error: "db_error" }, 500); }
+        if (accErr) { logDbError("accounts", accErr); return json({ success: false, error: "db_error" }, 500); }
         const byNo = new Map((accs ?? []).map((a) => [a.account_number, a]));
         const list: any[] = Array.isArray(body.data) ? body.data : [body.data];
         const rows = list
           .filter((d) => d && d.id != null && Number(d.amount) > 0 && byNo.has(digits(d.accountNumber)))
-          .map((d) => {
-            const acc = byNo.get(digits(d.accountNumber))!;
-            return {
+          .flatMap((d) => {
+            const acc = byNo.get(digits(d.accountNumber));
+            if (!acc) return [];
+            return [{
               provider: "casso",
               provider_transaction_id: String(d.id),
               bank_account_id: acc.id,
@@ -89,7 +100,7 @@ export const Route = createFileRoute("/api/public/casso/webhook")({
               counter_account_name: str(d.counterAccountName, 200),
               counter_account_number: str(d.counterAccountNumber, 40),
               counter_bank_name: str(d.counterAccountBankName ?? d.counterAccountBankId, 120),
-            };
+            }];
           });
         if (!rows.length) return json({ success: true, ignored: "filtered" });
 
@@ -98,7 +109,7 @@ export const Route = createFileRoute("/api/public/casso/webhook")({
           .upsert(rows, { onConflict: "provider,provider_transaction_id", ignoreDuplicates: true })
           .select("id");
         if (error) {
-          console.error("[casso] db error", error.code);
+          logDbError("upsert", error);
           return json({ success: false, error: "db_error" }, 500);
         }
         // Chỉ giao dịch MỚI chèn mới gửi GMF (webhook retry không tạo bản ghi mới). Lỗi Zalo không ảnh hưởng giao dịch.
