@@ -5,6 +5,7 @@ import { pushDispatch } from "@/lib/push.functions";
 /** Đẩy thông báo Zalo chạy nền — lỗi không ảnh hưởng thao tác chính. */
 function dispatchZalo() { zaloDispatch().catch(() => {});  pushDispatch().catch(() => {}); }
 import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
+import type { AcceptNoteRow, AssignEventRow } from "./acceptTime";
 
 const db = supabase as any;
 const PAGE = 1000;
@@ -153,6 +154,18 @@ export async function optionUsage(scope: OptionScope, name: string): Promise<num
   const { data, error } = await db.rpc("signal_catalog_usage", { _scope: scope, _name: name });
   if (error) throw new Error(`Không kiểm tra được dữ liệu lịch sử nên chưa xóa: ${error.message || "lỗi không xác định"}`);
   return Number(data) || 0;
+}
+
+/** Sự kiện phân công (kind=assign) — nguồn timestamp giao tín hiệu cho báo cáo TG tiếp nhận. */
+export async function listAssignEvents(): Promise<AssignEventRow[]> {
+  return fetchAll<AssignEventRow>((a, b) => db.from("opportunity_signal_events")
+    .select("signal_id,kind,detail,created_at").eq("kind", "assign").order("id").range(a, b));
+}
+
+/** Nhật ký kèm status_from — nguồn timestamp Sale bấm Tiếp nhận (status_from = waiting). */
+export async function listAcceptNotes(): Promise<AcceptNoteRow[]> {
+  return fetchAll<AcceptNoteRow>((a, b) => db.from("opportunity_signal_notes")
+    .select("signal_id,author_id,status_from,created_at").order("id").range(a, b));
 }
 
 /** Nhật ký rút gọn (người viết + thời điểm) để tính nhắc chăm sóc — trong phạm vi RLS. */
