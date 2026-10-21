@@ -33,9 +33,9 @@ describe("businessMinutes — khung 08:00–17:00 giờ VN", () => {
     expect(businessMinutes(null, vn("2026-10-19", "09:00"))).toBeNull();
     expect(businessMinutes(vn("2026-10-19", "09:00"), null)).toBeNull();
   });
-  it("kéo dài nhiều ngày: 16:00 thứ 6 → 09:00 thứ 2 = 60 + 540 + 60 phút", () => {
-    // 16:00–17:00 (60) + cả ngày thứ 7 (540) + 08:00–09:00 (60) — tính mọi ngày theo lịch
-    expect(businessMinutes(vn("2026-10-16", "16:00"), vn("2026-10-19", "09:00"))).toBe(660);
+  it("kéo dài nhiều ngày: 16:00 thứ 6 → 09:00 thứ 2 = 60 + 540 + 540 + 60 phút", () => {
+    // 16:00–17:00 (60) + thứ 7 (540) + Chủ nhật (540) + 08:00–09:00 (60) — tính mọi ngày theo lịch
+    expect(businessMinutes(vn("2026-10-16", "16:00"), vn("2026-10-19", "09:00"))).toBe(1200);
   });
 });
 
