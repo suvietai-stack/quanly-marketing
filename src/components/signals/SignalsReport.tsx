@@ -6,7 +6,9 @@ import { zaloCareCounts } from "@/lib/zalo.functions";
 import { Input } from "@/components/ui/input";
 import { SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import { filterSignals, groupBy, lostReasons, summarize, type ReportFilter, type Summary } from "@/lib/signals/report";
-import { errMsg, listCareNotes } from "@/lib/signals/api";
+import { errMsg, listAcceptNotes, listAssignEvents, listCareNotes } from "@/lib/signals/api";
+import { acceptStat, fmtMinutes, type AcceptNoteRow, type AssignEventRow } from "@/lib/signals/acceptTime";
+import type { Signal } from "@/lib/signals/catalog";
 import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
 import { needGroupsOf } from "@/lib/signals/catalog";
 
@@ -23,7 +25,17 @@ export function SignalsReport() {
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
   // KPI tỷ lệ chốt: giữ tập gốc theo bộ lọc nghiệp vụ, không bị bộ lọc trạng thái làm sai lệch
-  const kpi = useMemo(() => summarize(filterSignals(data, { ...f, status: undefined }), t), [data, f, t]);
+  const kpiList = useMemo(() => filterSignals(data, { ...f, status: undefined }), [data, f]);
+  const kpi = useMemo(() => summarize(kpiList, t), [kpiList, t]);
+  // Tỷ lệ chốt theo Sale: cùng tập không lọc trạng thái, mẫu số = tổng tín hiệu được giao
+  const rateBySale = useMemo(() => new Map(groupBy(kpiList, (s) => s.assigned_to).map((r) => [r.key, r.s])), [kpiList]);
+  const signalsBySale = useMemo(() => {
+    const m = new Map<string, Signal[]>();
+    for (const s of list) if (s.assigned_to) (m.get(s.assigned_to) ?? m.set(s.assigned_to, []).get(s.assigned_to)!).push(s);
+    return m;
+  }, [list]);
+  const { data: assignEvents = [] } = useQuery({ queryKey: ["sig:assignEvents"], queryFn: listAssignEvents, staleTime: 60000 });
+  const { data: acceptNotes = [] } = useQuery({ queryKey: ["sig:acceptNotes"], queryFn: listAcceptNotes, staleTime: 60000 });
   const bySource = groupBy(list, (s) => s.source);
   const prodOpts = useOptions("signal_products");
   const needOpts = useOptions("signal_need_groups");
@@ -82,7 +94,7 @@ export function SignalsReport() {
 
 
           <H>Hiệu quả Sale</H>
-          <Tbl title="Theo Sale được phân công" first="Sale" rows={bySale.map((r) => [name(r.key), r.s])} cols="sale" />
+          <SaleTable rows={bySale} name={name} rates={rateBySale} signalsBySale={signalsBySale} events={assignEvents} notes={acceptNotes} />
           <CareTable data={data} name={name} userId={p.userId} all={p.viewAll || p.assign} />
 
           <H>Phân tích tín hiệu</H>
