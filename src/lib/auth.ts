@@ -28,6 +28,7 @@ export type PermissionGroup =
   | "Theo Dõi Đơn Hàng"
   | "KPI / Giao KPI"
   | "Tài Chính Kế Toán"
+  | "Tích hợp Marketing"
   | "Tài khoản";
 
 export interface PermissionDef {
