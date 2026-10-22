@@ -98,3 +98,25 @@ export function applyMapping(m: Mapping, data: FieldData[], cat: Catalogs, sourc
     source, detected_on: vnDate(createdAt),
   } };
 }
+
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
+const HINTS: { key: FieldKey; keys: string[]; words: string[] }[] = [
+  { key: "customer_name", keys: ["company_name", "full_name", "first_name"], words: ["cong ty", "don vi", "ho ten", "ten khach", "ho va ten", "ten"] },
+  { key: "phone", keys: ["phone_number", "phone"], words: ["dien thoai", "sdt", "so dt", "zalo"] },
+  { key: "address", keys: ["street_address", "city", "province"], words: ["dia chi", "tinh", "thanh pho"] },
+  { key: "products", keys: [], words: ["san pham"] },
+  { key: "need_groups", keys: [], words: ["nhu cau", "muc dich", "nhom"] },
+  { key: "need_detail", keys: [], words: ["chi tiet", "mo ta", "so luong", "yeu cau"] },
+];
+/** Gợi ý mapping cho trường còn trống; không ghi đè trường đã cấu hình, không dùng một câu hỏi cho hai trường văn bản. */
+export function suggestMapping(current: Mapping, questions: Question[]): Mapping {
+  const out: Mapping = { ...current };
+  const used = new Set(Object.values(out).flatMap((r) => (r?.mode === "facebook" ? [r.key] : [])));
+  for (const h of HINTS) {
+    if (out[h.key] && out[h.key]!.mode !== "empty") continue;
+    const q = h.keys.map((k) => questions.find((x) => x.key === k)).find((x) => x && !used.has(x.key))
+      ?? questions.find((x) => !used.has(x.key) && h.words.some((w) => fold(`${x.label} ${x.key}`).includes(w)));
+    if (q) { out[h.key] = { mode: "facebook", key: q.key }; used.add(q.key); }
+  }
+  return out;
+}
