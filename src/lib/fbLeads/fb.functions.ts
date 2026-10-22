@@ -183,7 +183,7 @@ export const fblBackfill = createServerFn({ method: "POST" })
     if (new Date(data.from) > new Date(data.to)) throw new Error("Khoảng thời gian không hợp lệ");
     if (new Date(data.to).getTime() - new Date(data.from).getTime() > 90 * 86400_000) throw new Error("Tối đa 90 ngày mỗi lần đồng bộ bù");
     const s = await import("./fb.server");
-    try { return await s.backfill(data.formId, data.from, data.to, data.apply); } catch (e: any) { throw new Error(s.explainMeta(e)); }
+    try { return await s.backfill(data.formId, data.from, data.to, data.apply); } catch (e: any) { throw new Error(e?.message ?? "Lỗi đồng bộ bù"); }
   });
 
 export const fblMaintainNow = createServerFn({ method: "POST" })
