@@ -136,7 +136,7 @@ function PageCard({ page, ov, onChange, onEdit }: { page: any; ov: Overview; onC
         <SelectTrigger className="w-64 h-9"><SelectValue /></SelectTrigger>
         <SelectContent><SelectItem value="__none">— Chưa chọn —</SelectItem>{srcOpts.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
       </Select>
-      <Link to="/settings" search={{ tab: "sigcat" } as any} className="text-xs underline text-muted-foreground" onClick={() => setTimeout(() => window.location.assign("/settings?tab=sigcat"), 0)}>Quản lý Kho nguồn</Link>
+      <a href="/settings?tab=sigcat" className="text-xs underline text-muted-foreground">Quản lý Kho nguồn</a>
     </div>
     <div className="divide-y border rounded-md">
       {forms.length === 0 && <p className="p-3 text-sm text-muted-foreground">Chưa có Form — bấm “Làm mới danh sách Form”.</p>}
@@ -233,7 +233,7 @@ function History({ ov }: { ov: Overview }) {
         <td className="py-2 pr-3 whitespace-nowrap">{fmt(r.received_at)}</td><td className="pr-3">{pageName(r.page_id)}</td><td className="pr-3">{formName(r.form_id)}</td>
         <td className="pr-3"><Badge variant={r.status === "success" ? "secondary" : r.status === "failed" || r.status === "needs_action" ? "destructive" : "outline"}>{STATUS[r.status] ?? r.status}</Badge></td>
         <td className="pr-3">{r.source ?? "—"}</td>
-        <td className="pr-3">{r.signal_id ? <Link to="/signals" search={{ id: r.signal_id } as any} className="underline">Mở tín hiệu</Link> : "—"}</td>
+        <td className="pr-3">{r.signal_id ? <Link to="/signals" className="underline">Mở tín hiệu</Link> : "—"}</td>
         <td className="pr-3 text-xs text-muted-foreground max-w-xs">{r.error ?? ""}</td>
         <td>{["failed", "needs_action", "pending"].includes(r.status) && <Button size="sm" variant="outline" onClick={async () => { try { const x = await retry({ data: { id: r.id } }); toast.message(`Kết quả: ${STATUS[x.status] ?? x.status}`); load(); } catch (e: any) { toast.error(e.message); } }}>Thử đồng bộ lại</Button>}</td>
       </tr>)}
