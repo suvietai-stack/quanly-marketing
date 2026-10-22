@@ -746,6 +746,217 @@ export type Database = {
         }
         Relationships: []
       }
+      fbl_events: {
+        Row: {
+          ad_id: string | null
+          attempts: number
+          campaign_id: string | null
+          error: string | null
+          form_id: string | null
+          id: string
+          lead_created_at: string | null
+          leadgen_id: string
+          page_id: string
+          processed_at: string | null
+          received_at: string
+          signal_id: string | null
+          source: string | null
+          status: string
+        }
+        Insert: {
+          ad_id?: string | null
+          attempts?: number
+          campaign_id?: string | null
+          error?: string | null
+          form_id?: string | null
+          id?: string
+          lead_created_at?: string | null
+          leadgen_id: string
+          page_id: string
+          processed_at?: string | null
+          received_at?: string
+          signal_id?: string | null
+          source?: string | null
+          status?: string
+        }
+        Update: {
+          ad_id?: string | null
+          attempts?: number
+          campaign_id?: string | null
+          error?: string | null
+          form_id?: string | null
+          id?: string
+          lead_created_at?: string | null
+          leadgen_id?: string
+          page_id?: string
+          processed_at?: string | null
+          received_at?: string
+          signal_id?: string | null
+          source?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      fbl_forms: {
+        Row: {
+          checked_at: string | null
+          created_at: string
+          enabled: boolean
+          enabled_at: string | null
+          form_id: string
+          mapping: Json | null
+          meta_status: string | null
+          name: string
+          needs_review: boolean
+          page_id: string
+          questions: Json
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string | null
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          form_id: string
+          mapping?: Json | null
+          meta_status?: string | null
+          name: string
+          needs_review?: boolean
+          page_id: string
+          questions?: Json
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string | null
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          form_id?: string
+          mapping?: Json | null
+          meta_status?: string | null
+          name?: string
+          needs_review?: boolean
+          page_id?: string
+          questions?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fbl_forms_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "fbl_pages"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      fbl_oauth_sessions: {
+        Row: {
+          created_at: string
+          pages_enc: string | null
+          state: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          pages_enc?: string | null
+          state: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          pages_enc?: string | null
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fbl_page_tokens: {
+        Row: {
+          page_id: string
+          token_enc: string
+          updated_at: string
+        }
+        Insert: {
+          page_id: string
+          token_enc: string
+          updated_at?: string
+        }
+        Update: {
+          page_id?: string
+          token_enc?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fbl_page_tokens_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "fbl_pages"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      fbl_pages: {
+        Row: {
+          checked_at: string | null
+          connected_by: string | null
+          created_at: string
+          name: string
+          page_id: string
+          source: string | null
+          status: string
+          status_detail: string | null
+          subscribed: boolean
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          name: string
+          page_id: string
+          source?: string | null
+          status?: string
+          status_detail?: string | null
+          subscribed?: boolean
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          name?: string
+          page_id?: string
+          source?: string | null
+          status?: string
+          status_detail?: string | null
+          subscribed?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fbl_state: {
+        Row: {
+          app_subscribed_at: string | null
+          id: number
+          last_event_at: string | null
+          webhook_verified_at: string | null
+        }
+        Insert: {
+          app_subscribed_at?: string | null
+          id?: number
+          last_event_at?: string | null
+          webhook_verified_at?: string | null
+        }
+        Update: {
+          app_subscribed_at?: string | null
+          id?: number
+          last_event_at?: string | null
+          webhook_verified_at?: string | null
+        }
+        Relationships: []
+      }
       fin_operation_start: {
         Row: {
           id: boolean
@@ -3059,6 +3270,7 @@ export type Database = {
       content_remind_run: { Args: never; Returns: number }
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
+      fbl_can_manage: { Args: never; Returns: boolean }
       fin_bank_labels: {
         Args: never
         Returns: {
