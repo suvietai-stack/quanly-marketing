@@ -27,3 +27,18 @@ describe("fb lead mapping", () => {
   });
   it("vn date", () => expect(vnDate("2026-10-22T16:59:00Z")).toBe("2026-10-22"));
 });
+
+import { suggestMapping as sm } from "./mapping";
+describe("suggestMapping", () => {
+  const qs = [{ key: "full_name", label: "Họ tên" }, { key: "phone_number", label: "SĐT" }, { key: "q1", label: "Nhu cầu của bạn" }, { key: "q2", label: "Mô tả chi tiết" }];
+  it("gợi ý theo key/nhãn", () => {
+    const m = sm({}, qs);
+    expect(m.customer_name).toEqual({ mode: "facebook", key: "full_name" });
+    expect(m.phone).toEqual({ mode: "facebook", key: "phone_number" });
+    expect(m.need_groups).toEqual({ mode: "facebook", key: "q1" });
+    expect(m.need_detail).toEqual({ mode: "facebook", key: "q2" });
+  });
+  it("không ghi đè cấu hình sẵn", () => {
+    expect(sm({ phone: { mode: "default", value: "0900" } }, qs).phone).toEqual({ mode: "default", value: "0900" });
+  });
+});

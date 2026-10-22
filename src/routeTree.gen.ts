@@ -44,6 +44,7 @@ import { Route as FinanceIncomingIndexRouteImport } from './routes/finance.incom
 import { Route as FinanceIncomingIdRouteImport } from './routes/finance.incoming.$id'
 import { Route as ApiPublicCassoWebhookRouteImport } from './routes/api/public/casso/webhook'
 import { Route as ApiPublicMetaLeadsWebhookRouteImport } from './routes/api/public/meta/leads-webhook'
+import { Route as ApiPublicMetaMaintainCronRouteImport } from './routes/api/public/meta/maintain-cron'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth-callback'
 import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
@@ -227,6 +228,12 @@ const ApiPublicMetaLeadsWebhookRoute =
     path: '/api/public/meta/leads-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicMetaMaintainCronRoute =
+  ApiPublicMetaMaintainCronRouteImport.update({
+    id: '/api/public/meta/maintain-cron',
+    path: '/api/public/meta/maintain-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMetaOauthCallbackRoute =
   ApiPublicMetaOauthCallbackRouteImport.update({
     id: '/api/public/meta/oauth-callback',
@@ -297,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
+  '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -340,6 +348,7 @@ export interface FileRoutesByTo {
   '/finance/incoming': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
+  '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -384,6 +393,7 @@ export interface FileRoutesById {
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
+  '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -429,6 +439,7 @@ export interface FileRouteTypes {
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
     | '/api/public/meta/leads-webhook'
+    | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/finance/incoming'
     | '/api/public/casso/webhook'
     | '/api/public/meta/leads-webhook'
+    | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
@@ -515,6 +527,7 @@ export interface FileRouteTypes {
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
     | '/api/public/meta/leads-webhook'
+    | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
     | '/api/public/zalo/care-cron'
@@ -559,6 +572,7 @@ export interface RootRouteChildren {
   FinanceIncomingIndexRoute: typeof FinanceIncomingIndexRoute
   ApiPublicCassoWebhookRoute: typeof ApiPublicCassoWebhookRoute
   ApiPublicMetaLeadsWebhookRoute: typeof ApiPublicMetaLeadsWebhookRoute
+  ApiPublicMetaMaintainCronRoute: typeof ApiPublicMetaMaintainCronRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
@@ -814,6 +828,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMetaLeadsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/meta/maintain-cron': {
+      id: '/api/public/meta/maintain-cron'
+      path: '/api/public/meta/maintain-cron'
+      fullPath: '/api/public/meta/maintain-cron'
+      preLoaderRoute: typeof ApiPublicMetaMaintainCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/meta/oauth-callback': {
       id: '/api/public/meta/oauth-callback'
       path: '/api/public/meta/oauth-callback'
@@ -895,6 +916,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceIncomingIndexRoute: FinanceIncomingIndexRoute,
   ApiPublicCassoWebhookRoute: ApiPublicCassoWebhookRoute,
   ApiPublicMetaLeadsWebhookRoute: ApiPublicMetaLeadsWebhookRoute,
+  ApiPublicMetaMaintainCronRoute: ApiPublicMetaMaintainCronRoute,
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,

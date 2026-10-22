@@ -174,3 +174,21 @@ export const fblRetry = createServerFn({ method: "POST" })
     const st = await s.processEvent(data.id);
     return { status: st };
   });
+
+export const fblBackfill = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ formId: id, from: z.string().datetime(), to: z.string().datetime(), apply: z.boolean() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertManage(context);
+    if (new Date(data.from) > new Date(data.to)) throw new Error("Khoảng thời gian không hợp lệ");
+    if (new Date(data.to).getTime() - new Date(data.from).getTime() > 90 * 86400_000) throw new Error("Tối đa 90 ngày mỗi lần đồng bộ bù");
+    const s = await import("./fb.server");
+    try { return await s.backfill(data.formId, data.from, data.to, data.apply); } catch (e: any) { throw new Error(e?.message ?? "Lỗi đồng bộ bù"); }
+  });
+
+export const fblMaintainNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertManage(context);
+    return (await import("./fb.server")).maintain();
+  });

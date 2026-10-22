@@ -190,6 +190,10 @@ export async function recordEvents(changes: LeadChange[]) {
 }
 
 async function finish(id: string, patch: Record<string, unknown>) {
+  if (patch.status === "failed") {
+    const { data } = await (await admin()).from("fbl_events").select("attempts").eq("id", id).single();
+    patch.next_retry_at = new Date(Date.now() + retryDelayMs(data?.attempts ?? 1)).toISOString();
+  } else patch.next_retry_at = null;
   await (await admin()).from("fbl_events").update({ ...patch, processed_at: new Date().toISOString() }).eq("id", id);
 }
 
@@ -208,7 +212,7 @@ export async function processEvent(id: string): Promise<string> {
   const { data: form } = ev.form_id ? await db.from("fbl_forms").select("*").eq("form_id", ev.form_id).maybeSingle() : { data: null };
   if (!form) { await finish(id, { status: "skipped", error: "Form chưa có trong Base (bấm Làm mới danh sách Form)" }); return "skipped"; }
   const when = ev.lead_created_at ?? ev.received_at;
-  if (!form.enabled || !form.enabled_at || new Date(when) < new Date(form.enabled_at)) {
+  if (!ev.backfill && (!form.enabled || !form.enabled_at || new Date(when) < new Date(form.enabled_at))) {
     await finish(id, { status: "skipped", error: form.enabled ? "Lead trước thời điểm bật đồng bộ" : "Form đang tắt đồng bộ" }); return "skipped";
   }
   if (!page.source) { await finish(id, { status: "needs_action", error: "Page chưa chọn Nguồn tín hiệu" }); return "needs_action"; }
@@ -232,4 +236,65 @@ export async function processEvent(id: string): Promise<string> {
   try { const z = await import("@/lib/zalo.server"); await z.processPending(20); } catch { /* cron sẽ gửi lại */ }
   try { const p = await import("@/lib/push.server"); await p.processPush(30); } catch { /* bỏ qua */ }
   return "success";
+}
+
+/** Backoff: 2, 4, 8 … phút, tối đa 6 giờ. */
+export function retryDelayMs(attempts: number) { return Math.min(2 ** Math.max(1, attempts), 360) * 60_000; }
+
+async function formLeads(formId: string, token: string, fromIso: string, toIso: string) {
+  const out: { id: string; created_time: string; ad_id?: string }[] = [];
+  let after = "";
+  const filtering = JSON.stringify([{ field: "time_created", operator: "GREATER_THAN", value: Math.floor(new Date(fromIso).getTime() / 1000) - 1 }]);
+  do {
+    const j: any = await graph(`/${formId}/leads`, token, { params: { fields: "id,created_time,ad_id", limit: "100", filtering, ...(after ? { after } : {}) } });
+    for (const l of j.data ?? []) if (new Date(l.created_time) <= new Date(toIso)) out.push(l);
+    after = j.paging?.next ? j.paging?.cursors?.after ?? "" : "";
+  } while (after && out.length < 2000);
+  return out;
+}
+
+/** Đồng bộ bù: preview (apply=false) hoặc ghi + xử lý lead còn thiếu trong khoảng. Không tạo trùng (leadgen_id duy nhất). */
+export async function backfill(formId: string, fromIso: string, toIso: string, apply: boolean) {
+  const db = await admin();
+  const { data: form } = await db.from("fbl_forms").select("*").eq("form_id", formId).single();
+  const leads = await formLeads(formId, await pageToken(form.page_id), fromIso, toIso);
+  const ids = leads.map((l) => String(l.id));
+  const have = new Set<string>();
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data } = await db.from("fbl_events").select("leadgen_id").in("leadgen_id", ids.slice(i, i + 200));
+    for (const r of data ?? []) have.add(r.leadgen_id);
+  }
+  const missing = leads.filter((l) => !have.has(String(l.id)));
+  if (!apply) return { total: leads.length, existing: have.size, missing: missing.length, created: 0, failed: 0 };
+  const rows = missing.slice(0, 300).map((l) => ({ leadgen_id: String(l.id), page_id: form.page_id, form_id: formId, ad_id: l.ad_id ?? null, lead_created_at: new Date(l.created_time).toISOString(), backfill: true }));
+  const { data: ins, error } = rows.length ? await db.from("fbl_events").upsert(rows, { onConflict: "leadgen_id", ignoreDuplicates: true }).select("id") : { data: [], error: null };
+  if (error) throw new Error(`db ${error.code}`);
+  let created = 0, failed = 0;
+  for (const r of ins ?? []) (await processEvent(r.id)) === "success" ? created++ : failed++;
+  return { total: leads.length, existing: have.size, missing: missing.length, created, failed };
+}
+
+/** Chạy định kỳ: quét Form mới, retry lỗi đến hạn, đối chiếu 48 giờ gần nhất cho Form đang bật. */
+export async function maintain() {
+  const db = await admin();
+  const out = { pages: 0, newForms: 0, retried: 0, recovered: 0, errors: [] as string[] };
+  const { data: pages } = await db.from("fbl_pages").select("page_id").neq("status", "disconnected");
+  for (const p of pages ?? []) {
+    out.pages++;
+    try { out.newForms += (await refreshForms(p.page_id)).added; } catch (e: any) { out.errors.push(`${p.page_id}: ${e.message}`); }
+  }
+  const { data: due } = await db.from("fbl_events").select("id").eq("status", "failed").lt("attempts", 10).lte("next_retry_at", new Date().toISOString()).limit(30);
+  for (const r of due ?? []) { out.retried++; await processEvent(r.id); }
+  const { data: forms } = await db.from("fbl_forms").select("form_id,page_id,enabled_at").eq("enabled", true);
+  const since = new Date(Date.now() - 48 * 3600_000);
+  for (const f of forms ?? []) {
+    try {
+      const from = new Date(Math.max(since.getTime(), new Date(f.enabled_at).getTime())).toISOString();
+      const leads = await formLeads(f.form_id, await pageToken(f.page_id), from, new Date().toISOString());
+      const ids = await recordEvents(leads.map((l) => ({ leadgen_id: String(l.id), page_id: f.page_id, form_id: f.form_id, ad_id: l.ad_id, created_time: Math.floor(new Date(l.created_time).getTime() / 1000) })));
+      for (const id of ids) { out.recovered++; await processEvent(id); }
+    } catch (e: any) { out.errors.push(`${f.form_id}: ${e.message}`); }
+  }
+  await db.from("fbl_state").update({ last_maintain_at: new Date().toISOString() }).eq("id", 1);
+  return out;
 }

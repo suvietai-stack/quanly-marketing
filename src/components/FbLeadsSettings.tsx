@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Facebook, RefreshCw, Link2, Unlink, Settings2, RotateCw, Copy } from "lucide-react";
-import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry } from "@/lib/fbLeads/fb.functions";
-import { FIELDS, validateMapping, type FieldKey, type FieldRule, type Mapping, type Question } from "@/lib/fbLeads/mapping";
+import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry, fblBackfill, fblMaintainNow } from "@/lib/fbLeads/fb.functions";
+import { FIELDS, validateMapping, suggestMapping, type FieldKey, type FieldRule, type Mapping, type Question } from "@/lib/fbLeads/mapping";
 
 type Overview = Awaited<ReturnType<typeof fblOverview>>;
 const STATUS: Record<string, string> = { pending: "Chờ xử lý", success: "Thành công", failed: "Thất bại", skipped: "Bỏ qua", duplicate: "Trùng", needs_action: "Cần xử lý" };
@@ -126,6 +126,7 @@ function PageCard({ page, ov, onChange, onEdit }: { page: any; ov: Overview; onC
         {page.status_detail && <p className="text-xs text-destructive mt-1">{page.status_detail}</p>}</div>
       <div className="flex gap-1 flex-wrap">
         <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("check")}><RefreshCw className="h-3.5 w-3.5 mr-1" />Kiểm tra</Button>
+        <MaintainButton onDone={onChange} />
         <Button size="sm" variant="outline" disabled={!!busy} onClick={() => run("refresh")}><RotateCw className="h-3.5 w-3.5 mr-1" />Làm mới danh sách Form</Button>
         <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run("disconnect")}><Unlink className="h-3.5 w-3.5 mr-1" />Ngắt</Button>
       </div>
@@ -147,6 +148,7 @@ function PageCard({ page, ov, onChange, onEdit }: { page: any; ov: Overview; onC
             <div className="text-xs text-muted-foreground">{f.mapping ? (errs.length ? "Cấu hình chưa hợp lệ" : "Đã cấu hình") : "Chưa cấu hình"} · {f.enabled ? `Đang đồng bộ từ ${fmt(f.enabled_at)}` : "Tắt"}{f.meta_status && f.meta_status !== "ACTIVE" ? ` · Meta: ${f.meta_status === "ARCHIVED_OR_GONE" ? "không còn truy cập" : f.meta_status}` : ""}</div>
             {f.needs_review && <div className="text-xs text-destructive">Form đã thay đổi câu hỏi — cần kiểm tra lại cấu hình</div>}</div>
           <div className="flex items-center gap-2">
+            <BackfillButton form={f} />
             <Button size="sm" variant="outline" onClick={() => onEdit(f.form_id)}><Settings2 className="h-3.5 w-3.5 mr-1" />Cấu hình Form</Button>
             <Switch checked={f.enabled} disabled={!f.enabled && errs.length > 0} title={errs.join("; ")} onCheckedChange={async (v) => {
               try { const r = await save({ data: { formId: f.form_id, enabled: v } }); (r.ok ? toast.success : toast.error)(r.message); onChange(); } catch (e: any) { toast.error(e.message); }
@@ -202,6 +204,7 @@ function MappingDialog({ form, ov, onClose, onSaved }: { form: any; ov: Overview
     })}</div>
     {errs.length > 0 ? <ul className="text-xs text-destructive list-disc pl-5">{errs.map((e) => <li key={e}>{e}</li>)}</ul> : <p className="text-xs text-emerald-600">Cấu hình hợp lệ — có thể bật đồng bộ.</p>}
     <DialogFooter><Button variant="ghost" onClick={onClose}>Đóng</Button>
+      <Button variant="outline" onClick={() => { const n = suggestMapping(m, questions); const c = Object.keys(n).filter((k) => n[k as FieldKey] !== m[k as FieldKey]).length; setM(n); toast(c ? `Đã gợi ý ${c} trường — kiểm tra trước khi lưu` : "Không có gợi ý mới"); }}>Gợi ý tự động</Button>
       <Button onClick={async () => { try { const r = await save({ data: { formId: form.form_id, mapping: m as any } }); (r.ok ? toast.success : toast.error)(r.message); onSaved(); onClose(); } catch (e: any) { toast.error(e.message); } }}>Lưu cấu hình</Button></DialogFooter>
   </DialogContent></Dialog>;
 }
@@ -240,4 +243,47 @@ function History({ ov }: { ov: Overview }) {
       {rows && rows.length === 0 && <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Chưa có sự kiện.</td></tr>}</tbody>
     </table></div>
   </CardContent></Card>;
+}
+
+function MaintainButton({ onDone }: { onDone: () => void }) {
+  const run = useServerFn(fblMaintainNow);
+  const [busy, setBusy] = useState(false);
+  return <Button size="sm" variant="outline" disabled={busy} title="Quét Form mới, thử lại lead lỗi đến hạn, đối chiếu 48 giờ gần nhất" onClick={async () => {
+    setBusy(true);
+    try { const r = await run(); toast.success(`Kiểm tra xong: ${r.newForms} Form mới · thử lại ${r.retried} · bổ sung ${r.recovered} lead`); if (r.errors.length) toast.error(r.errors.slice(0, 3).join("; ")); onDone(); }
+    catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  }}>{busy ? "Đang kiểm tra…" : "Kiểm tra ngay"}</Button>;
+}
+
+function BackfillButton({ form }: { form: any }) {
+  const run = useServerFn(fblBackfill);
+  const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+  const [open, setOpen] = useState(false);
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
+  const [preview, setPreview] = useState<{ total: number; existing: number; missing: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const range = () => ({ formId: form.form_id, from: new Date(from + "T00:00:00+07:00").toISOString(), to: new Date(to + "T23:59:59+07:00").toISOString() });
+  const go = async (apply: boolean) => {
+    setBusy(true);
+    try {
+      const r = await run({ data: { ...range(), apply } });
+      if (apply) { toast.success(`Đồng bộ bù xong: tạo ${r.created} tín hiệu${r.failed ? ` · ${r.failed} lead cần xử lý (xem Lịch sử)` : ""}`); setOpen(false); setPreview(null); }
+      else setPreview(r);
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+  return <>
+    <Button size="sm" variant="outline" disabled={!form.mapping} title={form.mapping ? "" : "Cần cấu hình Form trước"} onClick={() => setOpen(true)}>Đồng bộ bù</Button>
+    {open && <Dialog open onOpenChange={(o) => { if (!o) { setOpen(false); setPreview(null); } }}><DialogContent>
+      <DialogHeader><DialogTitle>Đồng bộ bù — {form.name}</DialogTitle></DialogHeader>
+      <p className="text-xs text-muted-foreground">Lấy lại các lead trong khoảng ngày (giờ Việt Nam, tối đa 90 ngày) chưa có trong Base. Lead đã có sẽ không bị tạo trùng.</p>
+      <div className="flex gap-2 items-center"><Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPreview(null); }} /><span>→</span><Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPreview(null); }} /></div>
+      {preview && <div className="text-sm border rounded-md p-3">Tìm thấy <b>{preview.total}</b> lead · đã có <b>{preview.existing}</b> · sẽ tạo mới tối đa <b>{Math.min(preview.missing, 300)}</b> tín hiệu{preview.missing > 300 ? " (lần này 300, chạy lại để tiếp tục)" : ""}.</div>}
+      <DialogFooter>
+        <Button variant="ghost" onClick={() => { setOpen(false); setPreview(null); }}>Hủy</Button>
+        {!preview ? <Button disabled={busy} onClick={() => go(false)}>{busy ? "Đang kiểm tra…" : "Xem trước"}</Button>
+          : <Button disabled={busy || preview.missing === 0} onClick={() => go(true)}>{busy ? "Đang đồng bộ…" : `Xác nhận tạo ${Math.min(preview.missing, 300)} tín hiệu`}</Button>}
+      </DialogFooter>
+    </DialogContent></Dialog>}
+  </>;
 }

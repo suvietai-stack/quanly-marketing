@@ -750,12 +750,14 @@ export type Database = {
         Row: {
           ad_id: string | null
           attempts: number
+          backfill: boolean
           campaign_id: string | null
           error: string | null
           form_id: string | null
           id: string
           lead_created_at: string | null
           leadgen_id: string
+          next_retry_at: string | null
           page_id: string
           processed_at: string | null
           received_at: string
@@ -766,12 +768,14 @@ export type Database = {
         Insert: {
           ad_id?: string | null
           attempts?: number
+          backfill?: boolean
           campaign_id?: string | null
           error?: string | null
           form_id?: string | null
           id?: string
           lead_created_at?: string | null
           leadgen_id: string
+          next_retry_at?: string | null
           page_id: string
           processed_at?: string | null
           received_at?: string
@@ -782,12 +786,14 @@ export type Database = {
         Update: {
           ad_id?: string | null
           attempts?: number
+          backfill?: boolean
           campaign_id?: string | null
           error?: string | null
           form_id?: string | null
           id?: string
           lead_created_at?: string | null
           leadgen_id?: string
+          next_retry_at?: string | null
           page_id?: string
           processed_at?: string | null
           received_at?: string
@@ -941,18 +947,21 @@ export type Database = {
           app_subscribed_at: string | null
           id: number
           last_event_at: string | null
+          last_maintain_at: string | null
           webhook_verified_at: string | null
         }
         Insert: {
           app_subscribed_at?: string | null
           id?: number
           last_event_at?: string | null
+          last_maintain_at?: string | null
           webhook_verified_at?: string | null
         }
         Update: {
           app_subscribed_at?: string | null
           id?: number
           last_event_at?: string | null
+          last_maintain_at?: string | null
           webhook_verified_at?: string | null
         }
         Relationships: []
