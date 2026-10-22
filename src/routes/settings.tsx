@@ -21,6 +21,7 @@ import { ZaloSettingsTab } from "@/components/ZaloUi";
 import { SignalCatalogSettings } from "@/components/signals/SignalCatalogSettings";
 import { LeaveSettings } from "@/components/leave/LeaveSettings";
 import { SystemInfoSettings } from "@/components/SystemInfoSettings";
+import { FbLeadsSettings } from "@/components/FbLeadsSettings";
 import { ContentNotifySettings, OrderNotifySettings } from "@/components/ContentNotifySettings";
 
 export const Route = createFileRoute("/settings")({
@@ -161,7 +162,12 @@ function SettingsPage() {
   const initialTab = showAccounts ? "accounts" : showPeople ? "people" : showCatalog ? "plans" : "info";
   const me = auth.users.find((u) => u.id === auth.currentUserId);
   const zaloAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
-  const [tab, setTab] = useState(() => (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("zalo") ? "zalo" : initialTab));
+  const showFbl = can("integration.facebook_leads");
+  const [tab, setTab] = useState(() => {
+    if (typeof window === "undefined") return initialTab;
+    const q = new URLSearchParams(window.location.search);
+    return q.get("zalo") ? "zalo" : q.get("tab") || initialTab;
+  });
   const [presenceFilter, setPresenceFilter] = useState<"all" | "online" | "offline">("all");
   const setPlans = (next: string[]) => s.setCatalog("plans", next);
   const setTopics = (next: string[]) => s.setCatalog("topics", next);
@@ -193,7 +199,9 @@ function SettingsPage() {
         {showLeave && <TabsTrigger value="leave">Đơn từ & Phê duyệt</TabsTrigger>}
         {can("ot.settings") && <TabsTrigger value="ot">Theo dõi đơn hàng</TabsTrigger>}
         <TabsTrigger value="zalo">Thông báo Zalo</TabsTrigger>
+        {showFbl && <TabsTrigger value="fbleads">Tích hợp Marketing · Facebook Lead Ads</TabsTrigger>}
       </TabsList>
+      {showFbl && <TabsContent value="fbleads" className="mt-4"><FbLeadsSettings /></TabsContent>}
       {showSigCat && <TabsContent value="sigcat" className="mt-4"><SignalCatalogSettings /></TabsContent>}
       {showLeave && <TabsContent value="leave" className="mt-4"><LeaveSettings /></TabsContent>}
       {can("ot.settings") && <TabsContent value="ot" className="mt-4"><OtSettings /></TabsContent>}

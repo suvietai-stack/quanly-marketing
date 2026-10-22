@@ -1,3 +1,4 @@
+- [ ] Facebook Lead Ads G1 — xong code; chờ META_APP_SECRET/verify token, Publish, cấu hình Meta và lead thử thật. G2: gợi ý mapping, quét Form định kỳ, retry tự động, đồng bộ bù.
 - [x] Báo cáo Tín hiệu — bảng Hiệu quả Sale thêm cột Tỷ lệ chốt (mẫu số = được giao, không theo lọc trạng thái) và TG tiếp nhận TB (khung 08:00–17:00 giờ VN, loại mẫu ngoài giờ, đúng chu kỳ chuyển Sale); 53 kiểm tra đạt.
 - [x] Casso HTTP 500 — 0059 sửa quyền thực thi fin_confirmation_guard; production nhận probe có chữ ký HTTP 200 hai lần, không lưu khoản thử; khoản mới 16186931 đồng bộ và GMF sent; 29 kiểm tra đạt, không reset/xóa dữ liệu.
 - [ ] Khôi phục Casso 16186727/16178097 và kiểm tra Sale/GMF — chờ Casso gửi lại payload gốc hoặc API được cấp quyền; hiện hai ID chưa có, Base có 5 giao dịch, không suy diễn thời gian/nội dung gốc.
