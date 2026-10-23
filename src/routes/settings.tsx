@@ -25,7 +25,14 @@ import { FbLeadsSettings } from "@/components/FbLeadsSettings";
 import { ContentNotifySettings, OrderNotifySettings } from "@/components/ContentNotifySettings";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Cài Đặt — Base Marketing" }] }),
+  head: () => ({ meta: [
+    { title: "Cài Đặt — Base Marketing Sứ Việt" },
+    { name: "description", content: "Quản lý vai trò, danh mục và các kết nối của Base Marketing Sứ Việt." },
+    { property: "og:title", content: "Cài Đặt — Base Marketing Sứ Việt" },
+    { property: "og:description", content: "Quản lý vai trò, danh mục và các kết nối của Base Marketing Sứ Việt." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: () => (
     <RequirePermission perm="settings.view">
       <SettingsPage />

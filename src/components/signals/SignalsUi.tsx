@@ -50,7 +50,7 @@ const SIG = "sig:";
 export const signalsKey = (uid: string | null) => [`${SIG}list`, uid] as const;
 export function useSignals(enabled = true) {
   const { userId } = useSignalPerms();
-  return useQuery({ queryKey: signalsKey(userId), queryFn: listSignals, enabled: enabled && !!userId });
+  return useQuery({ queryKey: signalsKey(userId), queryFn: listSignals, enabled: enabled && !!userId, refetchInterval: 10000, refetchIntervalInBackground: false, refetchOnWindowFocus: "always" });
 }
 export function useLastNotes(enabled = true) {
   const { userId } = useSignalPerms();

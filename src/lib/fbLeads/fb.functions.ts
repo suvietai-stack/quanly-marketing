@@ -80,7 +80,7 @@ export const fblConnectPages = createServerFn({ method: "POST" })
       await db.from("fbl_pages").upsert({ page_id: p.id, name: p.name, status: "connected", status_detail: null, connected_by: context.userId, updated_at: new Date().toISOString() }, { onConflict: "page_id" });
       await db.from("fbl_page_tokens").upsert({ page_id: p.id, token_enc: await s.seal(p.token), updated_at: new Date().toISOString() }, { onConflict: "page_id" });
       const chk = await s.checkPage(p.id);
-      let msg = chk.ok ? (chk.subscribed ? "Đã đăng ký nhận lead" : "Kết nối được nhưng Page chưa đăng ký nhận lead") : chk.message!;
+      let msg = chk.ok ? (chk.subscribed ? "Đã đăng ký nhận lead" : "Kết nối được nhưng Page chưa đăng ký nhận lead") : (chk.message ?? "Kiểm tra thất bại");
       if (chk.ok) {
         try { const f = await s.refreshForms(p.id); msg += ` · ${f.total} Form`; }
         catch (e: any) { msg += ` · Không đọc được Form: ${e.message}`; }
@@ -98,7 +98,7 @@ export const fblPageAction = createServerFn({ method: "POST" })
     await assertManage(context);
     const s = await import("./fb.server");
     const db = await admin();
-    if (data.action === "check") { const r = await s.checkPage(data.pageId); return { ok: r.ok, message: r.ok ? (r.subscribed ? "Kết nối và đăng ký nhận lead hợp lệ" : "Page chưa đăng ký nhận lead") : r.message! }; }
+    if (data.action === "check") { const r = await s.checkPage(data.pageId); return { ok: r.ok, message: r.ok ? (r.subscribed ? "Page đã đăng ký leadgen; chưa phải bằng chứng đã nhận Webhook" : "Page chưa đăng ký nhận lead") : (r.message ?? "Kiểm tra thất bại") }; }
     if (data.action === "refresh") {
       try { const r = await s.refreshForms(data.pageId); return { ok: true, message: `Đã cập nhật ${r.total} Form (${r.added} Form mới, mặc định Tắt)` }; }
       catch (e: any) { return { ok: false, message: e.message }; }
@@ -152,7 +152,7 @@ export const fblEvents = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertManage(context);
     const db = await admin();
-    let q = db.from("fbl_events").select("id,leadgen_id,page_id,form_id,received_at,lead_created_at,status,error,attempts,signal_id,source").order("received_at", { ascending: false }).limit(200);
+    let q = db.from("fbl_events").select("id,leadgen_id,page_id,form_id,received_at,lead_created_at,processed_at,signal_created_at,webhook_received_at,receipt_method,status,error,attempts,signal_id,source").order("received_at", { ascending: false }).limit(200);
     if (data.pageId) q = q.eq("page_id", data.pageId);
     if (data.formId) q = q.eq("form_id", data.formId);
     if (data.status) q = q.eq("status", data.status);
@@ -169,7 +169,9 @@ export const fblRetry = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertManage(context);
     const db = await admin();
-    await db.from("fbl_events").update({ attempts: 0, status: "pending" }).eq("id", data.id).is("signal_id", null);
+    const now = new Date().toISOString();
+    const { error } = await db.from("fbl_events").update({ attempts: 0, status: "pending", next_retry_at: null }).eq("id", data.id).is("signal_id", null).or(`lease_until.is.null,lease_until.lte.${now}`);
+    if (error) throw new Error("Không đưa được lead vào hàng đợi thử lại");
     const s = await import("./fb.server");
     const st = await s.processEvent(data.id);
     return { status: st };
