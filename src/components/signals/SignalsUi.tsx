@@ -263,7 +263,7 @@ export function SignalsPage() {
             <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Cập nhật", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
+                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Chi tiết nhu cầu", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {list.map((s) => (
@@ -274,8 +274,10 @@ export function SignalsPage() {
                       <td className="px-3 py-2">{s.source}</td>
                       <td className="px-3 py-2">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
                       <td className="px-3 py-2"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
-                      <td className="px-3 py-2 max-w-[220px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{fmtTime(lastActivity(s, last[s.id]))}</td>
+                      <td className="px-3 py-2 max-w-[200px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
+                      <td className="px-3 py-2 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
+                        ? <div className="line-clamp-2 whitespace-pre-line" title={s.need_detail}>{s.need_detail}</div>
+                        : <span className="text-muted-foreground">—</span>}</td>
                       <td className="px-3 py-2 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
                     </tr>
                   ))}
