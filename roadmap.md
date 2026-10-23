@@ -1,4 +1,5 @@
-- [ ] Facebook Lead Ads tốc độ — kiểm tra production, xử lý ngay qua hàng đợi bền vững, khóa chống trùng, retry pending/failed, tự cập nhật danh sách/lịch sử, chẩn đoán ba thời điểm; kiểm thử lead Meta thật.
+- [x] Facebook Lead Ads tốc độ — 0062 hàng đợi bền vững, lease + atomic completion, wake khi enqueue, retry tự dừng sau drain, phục hồi pending/failed, polling tab đang xem, ba thời điểm/nguồn nhận; 19 test, signed-empty webhook 200, worker có quyền 200/không quyền 401; nối lại một pending với tín hiệu đã đối chiếu, không tạo trùng.
+- [ ] Facebook Lead Ads tốc độ — chưa Publish; chờ đăng ký App Webhook Meta (subscriptions rỗng), lead thử thật để đo end-to-end và phiên đăng nhập để xác minh UI; --self không có tài khoản khớp.
 - [ ] Facebook Lead Ads G1/G2 — code và secrets có; chờ xác minh cấu hình Meta và lead thử thật.
 - [x] Báo cáo Tín hiệu — bảng Hiệu quả Sale thêm cột Tỷ lệ chốt (mẫu số = được giao, không theo lọc trạng thái) và TG tiếp nhận TB (khung 08:00–17:00 giờ VN, loại mẫu ngoài giờ, đúng chu kỳ chuyển Sale); 53 kiểm tra đạt.
 - [x] Casso HTTP 500 — 0059 sửa quyền thực thi fin_confirmation_guard; production nhận probe có chữ ký HTTP 200 hai lần, không lưu khoản thử; khoản mới 16186931 đồng bộ và GMF sent; 29 kiểm tra đạt, không reset/xóa dữ liệu.
