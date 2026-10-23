@@ -17,4 +17,7 @@ describe("meta lead webhook", () => {
     expect(parseWebhook(JSON.parse(raw))).toEqual([{ leadgen_id: "111", page_id: "222", form_id: "333", ad_id: undefined, created_time: 1761000000 }]);
     expect(parseWebhook({ object: "user" })).toEqual([]);
   });
+  it("rejects malformed lead identifiers before storing events", () => {
+    expect(() => parseWebhook({ object: "page", entry: [{ changes: [{ field: "leadgen", value: { leadgen_id: "invalid", page_id: "222" } }] }] })).toThrow();
+  });
 });
