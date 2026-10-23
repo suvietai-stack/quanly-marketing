@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
 import { Route as GoalsV2RouteImport } from './routes/goals-v2'
 import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as LoginRouteImport } from './routes/login'
@@ -56,6 +57,11 @@ import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/za
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChinhSachBaoMatRoute = ChinhSachBaoMatRouteImport.update({
+  id: '/chinh-sach-bao-mat',
+  path: '/chinh-sach-bao-mat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsV2Route = GoalsV2RouteImport.update({
@@ -276,6 +282,7 @@ const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/goals-v2': typeof GoalsV2Route
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
@@ -321,6 +328,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/goals-v2': typeof GoalsV2Route
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
@@ -367,6 +375,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/goals-v2': typeof GoalsV2Route
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/chinh-sach-bao-mat'
     | '/goals-v2'
     | '/leave'
     | '/login'
@@ -459,6 +469,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/chinh-sach-bao-mat'
     | '/goals-v2'
     | '/leave'
     | '/login'
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/chinh-sach-bao-mat'
     | '/goals-v2'
     | '/leave'
     | '/login'
@@ -550,6 +562,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
   GoalsV2Route: typeof GoalsV2Route
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
@@ -601,6 +614,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chinh-sach-bao-mat': {
+      id: '/chinh-sach-bao-mat'
+      path: '/chinh-sach-bao-mat'
+      fullPath: '/chinh-sach-bao-mat'
+      preLoaderRoute: typeof ChinhSachBaoMatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals-v2': {
@@ -902,6 +922,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
   GoalsV2Route: GoalsV2Route,
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
