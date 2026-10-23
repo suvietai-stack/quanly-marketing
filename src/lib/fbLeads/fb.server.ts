@@ -6,7 +6,7 @@ export const META_APP_ID = "1673473860857150";
 export const GRAPH = "https://graph.facebook.com/v23.0";
 /** Người tạo cho tín hiệu từ tích hợp — không phải tài khoản nhân viên. */
 export const FB_SYSTEM_CREATOR = "00000000-0000-0000-0000-00000000fb01";
-export const OAUTH_SCOPES = ["pages_show_list", "pages_read_engagement", "pages_manage_metadata", "pages_manage_ads", "leads_retrieval"];
+export const OAUTH_SCOPES = ["pages_show_list", "business_management", "pages_read_engagement", "pages_manage_metadata", "pages_manage_ads", "leads_retrieval"];
 
 async function admin(): Promise<any> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -97,23 +97,25 @@ export async function exchangeCode(code: string, state: string) {
   if (!sess || Date.now() - new Date(sess.created_at).getTime() > 15 * 60_000) throw new Error("Phiên kết nối hết hạn");
   const tok = await graph("/oauth/access_token", "", { params: { client_id: META_APP_ID, client_secret: appSecret(), redirect_uri: await redirectUri(), code } }).catch(async (e) => { throw e; });
   const long = await graph("/oauth/access_token", "", { params: { grant_type: "fb_exchange_token", client_id: META_APP_ID, client_secret: appSecret(), fb_exchange_token: tok.access_token } });
-  const pages: any[] = [];
-  let next: string | null = "/me/accounts";
-  let params: Record<string, string> = { fields: "id,name,access_token,tasks", limit: "100" };
-  while (next && pages.length < 500) {
-    const j: any = await graph(next, long.access_token, { params });
-    pages.push(...(j.data ?? []));
-    const after = j.paging?.next ? j.paging?.cursors?.after : null;
-    next = after ? "/me/accounts" : null;
-    params = { ...params, after: after ?? "" };
-  }
-  await db.from("fbl_oauth_sessions").update({ pages_enc: await seal(JSON.stringify(pages.map((p) => ({ id: p.id, name: p.name, token: p.access_token, tasks: p.tasks ?? [] })))) }).eq("state", state);
+  const { discoverPages } = await import("./pageDiscovery.server");
+  const discovery = await discoverPages(graph, long.access_token, META_APP_ID, `${META_APP_ID}|${appSecret()}`);
+  const { error } = await db.from("fbl_oauth_sessions").update({ pages_enc: await seal(JSON.stringify(discovery)) }).eq("state", state).is("pages_enc", null);
+  if (error) throw new Error("Không lưu được kết quả kiểm tra Page");
 }
 
-export async function sessionPages(state: string, userId: string): Promise<{ id: string; name: string; token: string; tasks: string[] }[]> {
+export async function sessionDiscovery(state: string, userId: string): Promise<import("./pageDiscovery.server").Discovery> {
   const { data } = await (await admin()).from("fbl_oauth_sessions").select("*").eq("state", state).eq("user_id", userId).maybeSingle();
-  if (!data?.pages_enc) return [];
-  return JSON.parse(await unseal(data.pages_enc));
+  if (!data?.pages_enc || Date.now() - new Date(data.created_at).getTime() > 15 * 60_000) throw new Error("Phiên chọn Page hết hạn — Kết nối lại Facebook");
+  const payload = JSON.parse(await unseal(data.pages_enc));
+  if (!Array.isArray(payload)) return payload;
+  const { verifyCandidate } = await import("./pageDiscovery.server");
+  const pages = [];
+  for (const p of payload) {
+    const page = { ...p, origins: ["/me/accounts"], eligible: false, message: "" };
+    Object.assign(page, await verifyCandidate(graph, META_APP_ID, `${META_APP_ID}|${appSecret()}`, page));
+    pages.push(page);
+  }
+  return { pages, diagnostics: ["Phiên OAuth cũ không lưu User Token: chưa kiểm tra được /me/permissions và granular permissions của người dùng. Kết nối lại để kiểm tra các Business Portfolio."], permissions: [], granular: [] };
 }
 
 // ---------- Pages & forms ----------
