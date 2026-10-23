@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Facebook, RefreshCw, Link2, Unlink, Settings2, RotateCw, Copy } from "lucide-react";
-import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry, fblBackfill, fblMaintainNow } from "@/lib/fbLeads/fb.functions";
+import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry, fblBackfill, fblMaintainNow, fblWebhookDiagnostic } from "@/lib/fbLeads/fb.functions";
 import { useVisibleRefresh } from "@/hooks/use-visible-refresh";
 import { eventLatency } from "@/lib/fbLeads/latency";
 import { FIELDS, validateMapping, suggestMapping, type FieldKey, type FieldRule, type Mapping, type Question } from "@/lib/fbLeads/mapping";
@@ -59,6 +59,9 @@ export function FbLeadsSettings() {
 }
 
 function StatusCard({ ov }: { ov: Overview }) {
+  const check = useServerFn(fblWebhookDiagnostic);
+  const [diagnostic, setDiagnostic] = useState<Awaited<ReturnType<typeof fblWebhookDiagnostic>> | null>(null);
+  const [checking, setChecking] = useState(false);
   const copy = (v: string) => { navigator.clipboard.writeText(v); toast.success("Đã sao chép"); };
   const s = ov.stats;
   return <Card><CardContent className="p-5 space-y-3 text-sm">
@@ -70,6 +73,8 @@ function StatusCard({ ov }: { ov: Overview }) {
       <Badge variant="outline">Webhook POST gần nhất: {fmt(ov.state?.last_webhook_at)}</Badge>
       <Badge variant="outline">Quét dự phòng gần nhất: {fmt(ov.state?.last_maintain_at)}</Badge>
     </div>
+    <Button size="sm" variant="outline" disabled={checking} onClick={async () => { setChecking(true); try { setDiagnostic(await check()); } catch (e: any) { toast.error(e.message); } finally { setChecking(false); } }}><RefreshCw className="h-3.5 w-3.5 mr-1" />{checking ? "Đang kiểm tra Meta…" : "Kiểm tra Webhook trên Meta"}</Button>
+    {diagnostic && <p className="text-sm break-words" role="status">{diagnostic.message}<span className="block text-xs text-muted-foreground">Kiểm tra: {fmt(diagnostic.checkedAt)}</span></p>}
     {[["Callback URL (Webhook)", ov.webhookUrl], ["OAuth Redirect URI", ov.redirectUri]].map(([l, v]) => (
       <div key={l} className="flex items-center gap-2 flex-wrap"><span className="text-muted-foreground w-44">{l}</span><code className="text-xs bg-muted px-2 py-1 rounded break-all">{v}</code>
         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copy(v)}><Copy className="h-3.5 w-3.5" /></Button></div>))}
@@ -93,16 +98,21 @@ function ConnectButton({ disabled }: { disabled: boolean }) {
 function PickPages({ state, onDone }: { state: string; onDone: () => void }) {
   const list = useServerFn(fblPendingPages);
   const connect = useServerFn(fblConnectPages);
-  const [pages, setPages] = useState<{ id: string; name: string; tasks: string[] }[] | null>(null);
+  const [discovery, setDiscovery] = useState<Awaited<ReturnType<typeof fblPendingPages>> | null>(null);
+  const pages = discovery?.pages;
   const [sel, setSel] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { list({ data: { state } }).then(setPages).catch((e) => { toast.error(e.message); setPages([]); }); }, [state]);
+  useEffect(() => { list({ data: { state } }).then(setDiscovery).catch((e) => { toast.error(e.message); setDiscovery({ pages: [], diagnostics: [e.message], permissions: [], granular: [] }); }); }, [state]);
   return <Dialog open onOpenChange={(o) => !o && onDone()}><DialogContent>
     <DialogHeader><DialogTitle>Chọn Page muốn kết nối</DialogTitle></DialogHeader>
+    {discovery && <div className="space-y-2 text-xs break-words">
+      {discovery.diagnostics.map((d, i) => <p key={i} className="text-destructive">{d}</p>)}
+      {discovery.permissions.length > 0 && <details><summary className="cursor-pointer">Quyền Meta và phạm vi Page</summary><div className="max-h-36 overflow-auto space-y-1 mt-2">{discovery.permissions.map((p) => <div key={p.permission}>{p.permission}: {p.status}</div>)}{discovery.granular.map((g, i) => <div key={i}>{g.scope}: {g.target_ids?.join(", ") ?? "Meta không trả target_ids; không suy ra toàn bộ Page"}</div>)}</div></details>}
+    </div>}
     {!pages ? <p className="text-sm">Đang tải…</p> : pages.length === 0 ? <p className="text-sm text-muted-foreground">Meta không trả về Page nào cho tài khoản này (hoặc phiên đã hết hạn).</p> :
-      <div className="space-y-2 max-h-80 overflow-auto">{pages.map((p) => <label key={p.id} className="flex items-center gap-2 text-sm">
-        <Checkbox checked={sel.includes(p.id)} onCheckedChange={(c) => setSel(c ? [...sel, p.id] : sel.filter((x) => x !== p.id))} />
-        <span>{p.name}</span><span className="text-xs text-muted-foreground">{p.id}</span></label>)}</div>}
+      <div className="space-y-3 max-h-80 overflow-auto">{pages.map((p) => <label key={p.id} className="flex items-start gap-2 text-sm">
+        <Checkbox aria-label={`Chọn ${p.name}`} disabled={!p.eligible} checked={sel.includes(p.id)} onCheckedChange={(c) => setSel(c ? [...sel, p.id] : sel.filter((x) => x !== p.id))} />
+        <span className="min-w-0 break-words"><span className="block font-medium">{p.name}</span><span className="block text-xs text-muted-foreground">{p.id} · {p.origins.join("; ")}</span><span className={`block text-xs ${p.eligible ? "text-muted-foreground" : "text-destructive"}`}>{p.message}</span></span></label>)}</div>}
     <DialogFooter><Button variant="ghost" onClick={onDone}>Hủy</Button>
       <Button disabled={!sel.length || busy} onClick={async () => {
         setBusy(true);

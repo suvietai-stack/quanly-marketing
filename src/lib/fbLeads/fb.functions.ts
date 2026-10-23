@@ -63,8 +63,8 @@ export const fblPendingPages = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertManage(context);
     const s = await import("./fb.server");
-    const pages = await s.sessionPages(data.state, context.userId);
-    return pages.map((p) => ({ id: p.id, name: p.name, tasks: p.tasks }));
+    const result = await s.sessionDiscovery(data.state, context.userId);
+    return { ...result, pages: result.pages.map(({ token: _token, ...p }) => p) };
   });
 
 export const fblConnectPages = createServerFn({ method: "POST" })
@@ -74,9 +74,16 @@ export const fblConnectPages = createServerFn({ method: "POST" })
     await assertManage(context);
     const s = await import("./fb.server");
     const db = await admin();
-    const pages = (await s.sessionPages(data.state, context.userId)).filter((p) => data.pageIds.includes(p.id));
+    const discovered = (await s.sessionDiscovery(data.state, context.userId)).pages;
+    if (data.pageIds.some((id) => !discovered.some((p) => p.id === id))) throw new Error("Page được chọn không thuộc phiên OAuth này");
+    const pages = discovered.filter((p) => data.pageIds.includes(p.id));
+    const { verifyCandidate } = await import("./pageDiscovery.server");
     const results: { id: string; name: string; ok: boolean; message: string }[] = [];
     for (const p of pages) {
+      const access = await verifyCandidate(s.graph, s.META_APP_ID, `${s.META_APP_ID}|${s.appSecret()}`, p);
+      if (!access.eligible) { results.push({ id: p.id, name: p.name, ok: false, message: access.message }); continue; }
+      const subscribed = await s.subscribePage(p.id, p.token);
+      if (!subscribed) { results.push({ id: p.id, name: p.name, ok: false, message: "Meta chưa xác nhận đăng ký leadgen; giữ nguyên kết nối cũ" }); continue; }
       await db.from("fbl_pages").upsert({ page_id: p.id, name: p.name, status: "connected", status_detail: null, connected_by: context.userId, updated_at: new Date().toISOString() }, { onConflict: "page_id" });
       await db.from("fbl_page_tokens").upsert({ page_id: p.id, token_enc: await s.seal(p.token), updated_at: new Date().toISOString() }, { onConflict: "page_id" });
       const chk = await s.checkPage(p.id);
@@ -193,4 +200,25 @@ export const fblMaintainNow = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertManage(context);
     return (await import("./fb.server")).maintain();
+  });
+
+/** Explicit read-only Meta check, not repeated by overview polling. */
+export const fblWebhookDiagnostic = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertManage(context);
+    const s = await import("./fb.server");
+    const expected = `${await s.baseUrl()}/api/public/meta/leads-webhook`;
+    const result = await s.graph(`/${s.META_APP_ID}/subscriptions`, `${s.META_APP_ID}|${s.appSecret()}`);
+    const subscription = (result.data ?? []).find((p: any) => p.object === "page");
+    const fields = (subscription?.fields ?? []).map((f: any) => typeof f === "string" ? f : f.name);
+    return {
+      checkedAt: new Date().toISOString(),
+      registered: !!subscription,
+      active: subscription?.active === true,
+      leadgen: fields.includes("leadgen"),
+      callbackMatches: subscription?.callback_url === expected,
+      callbackUrl: expected,
+      message: !subscription ? "Meta trả subscriptions rỗng cho đối tượng Page: ứng dụng chưa đăng ký Webhook Page. Trong Meta Developers → Webhooks, chọn Page, nhập Callback URL và Verify Token đã cấu hình, xác minh rồi đăng ký leadgen." : `Meta: Page Webhook ${subscription.active ? "đang bật" : "chưa bật"}; leadgen ${fields.includes("leadgen") ? "đã đăng ký" : "chưa đăng ký"}; Callback ${subscription.callback_url === expected ? "khớp Base" : "không khớp Base"}. Xác minh GET và nhận POST là hai kiểm tra riêng; cần gửi lead thử thật.`,
+    };
   });
