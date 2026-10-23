@@ -6,7 +6,7 @@ import { z } from "zod";
 export const Route = createFileRoute("/api/public/meta/dispatch")({
   server: { handlers: { POST: async ({ request }) => {
     const zserver = await import("@/lib/zalo.server");
-    const cfg = await zserver.getConfig();
+    const cfg = await zserver.getConfig() as { care_cron_token?: string } | null;
     const expected = cfg?.care_cron_token ?? "";
     const got = request.headers.get("x-care-token") ?? "";
     if (!expected || got.length !== expected.length || !timingSafeEqual(Buffer.from(got), Buffer.from(expected))) return new Response("Unauthorized", { status: 401 });
