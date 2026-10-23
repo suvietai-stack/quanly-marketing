@@ -3,7 +3,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 
-const PUBLIC_PATHS = ["/login", "/register"];
+const PUBLIC_PATHS = ["/login", "/register", "/chinh-sach-bao-mat"];
 const PENDING_PATH = "/pending";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
