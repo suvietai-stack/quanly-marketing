@@ -17,7 +17,7 @@ import { AppShell } from "@/components/AppShell";
 import { AuthGate } from "@/components/AuthGate";
 import { BrandingSync } from "@/lib/branding";
 
-const PUBLIC_PATHS = ["/login", "/register", "/pending"];
+const PUBLIC_PATHS = ["/login", "/register", "/pending", "/chinh-sach-bao-mat"];
 
 function NotFoundComponent() {
   return (
