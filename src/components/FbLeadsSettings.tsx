@@ -14,11 +14,15 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Facebook, RefreshCw, Link2, Unlink, Settings2, RotateCw, Copy } from "lucide-react";
 import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry, fblBackfill, fblMaintainNow } from "@/lib/fbLeads/fb.functions";
+import { useVisibleRefresh } from "@/hooks/use-visible-refresh";
+import { eventLatency } from "@/lib/fbLeads/latency";
 import { FIELDS, validateMapping, suggestMapping, type FieldKey, type FieldRule, type Mapping, type Question } from "@/lib/fbLeads/mapping";
 
 type Overview = Awaited<ReturnType<typeof fblOverview>>;
 const STATUS: Record<string, string> = { pending: "Chờ xử lý", success: "Thành công", failed: "Thất bại", skipped: "Bỏ qua", duplicate: "Trùng", needs_action: "Cần xử lý" };
-const fmt = (s?: string | null) => (s ? new Date(s).toLocaleString("vi-VN") : "—");
+const fmt = (s?: string | null) => (s ? new Date(s).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—");
+const METHOD: Record<string, string> = { webhook: "Webhook", reconciliation: "Quét bù tự động", backfill: "Đồng bộ bù", legacy_unknown: "Chưa xác định (lịch sử cũ)" };
+const duration = (seconds: number | null) => seconds === null ? "—" : `${seconds.toLocaleString("vi-VN", { maximumFractionDigits: 2 })} giây`;
 
 export function FbLeadsSettings() {
   const overview = useServerFn(fblOverview);
@@ -27,6 +31,7 @@ export function FbLeadsSettings() {
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<string | null>(null);
   const load = () => overview().then((r) => { setOv(r); setErr(null); }).catch((e) => setErr(e.message));
+  useVisibleRefresh(load, 30000);
   useEffect(() => {
     load();
     const q = new URLSearchParams(window.location.search);
@@ -62,7 +67,8 @@ function StatusCard({ ov }: { ov: Overview }) {
       <Badge variant={ov.secrets.appSecret ? "secondary" : "destructive"}>App Secret: {ov.secrets.appSecret ? "đã nhập" : "chưa nhập"}</Badge>
       <Badge variant={ov.secrets.verifyToken ? "secondary" : "destructive"}>Verify Token: {ov.secrets.verifyToken ? "đã nhập" : "chưa nhập"}</Badge>
       <Badge variant={ov.state?.webhook_verified_at ? "secondary" : "outline"}>Webhook: {ov.state?.webhook_verified_at ? `đã xác minh ${fmt(ov.state.webhook_verified_at)}` : "chưa xác minh"}</Badge>
-      <Badge variant="outline">Sự kiện gần nhất: {fmt(ov.state?.last_event_at)}</Badge>
+      <Badge variant="outline">Webhook POST gần nhất: {fmt(ov.state?.last_webhook_at)}</Badge>
+      <Badge variant="outline">Quét dự phòng gần nhất: {fmt(ov.state?.last_maintain_at)}</Badge>
     </div>
     {[["Callback URL (Webhook)", ov.webhookUrl], ["OAuth Redirect URI", ov.redirectUri]].map(([l, v]) => (
       <div key={l} className="flex items-center gap-2 flex-wrap"><span className="text-muted-foreground w-44">{l}</span><code className="text-xs bg-muted px-2 py-1 rounded break-all">{v}</code>
@@ -216,6 +222,7 @@ function History({ ov }: { ov: Overview }) {
   const [rows, setRows] = useState<any[] | null>(null);
   const load = () => list({ data: { pageId: f.pageId || undefined, formId: f.formId || undefined, status: f.status || undefined, from: f.from ? new Date(f.from + "T00:00:00+07:00").toISOString() : undefined, to: f.to ? new Date(f.to + "T23:59:59+07:00").toISOString() : undefined } }).then(setRows).catch((e) => toast.error(e.message));
   useEffect(() => { load(); }, [f]);
+  useVisibleRefresh(load);
   const pageName = (id: string) => ov.pages.find((p: any) => p.page_id === id)?.name ?? id;
   const formName = (id: string) => ov.forms.find((x: any) => x.form_id === id)?.name ?? id ?? "—";
   const sel = (k: keyof typeof f, v: string) => setF({ ...f, [k]: v === "__all" ? "" : v });
@@ -231,16 +238,18 @@ function History({ ov }: { ov: Overview }) {
       <Input type="date" className="w-40 h-9" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
     </div>
     <div className="overflow-x-auto"><table className="w-full text-sm">
-      <thead className="text-xs text-muted-foreground"><tr className="text-left"><th className="py-2 pr-3">Thời gian</th><th className="pr-3">Page</th><th className="pr-3">Form</th><th className="pr-3">Trạng thái</th><th className="pr-3">Nguồn</th><th className="pr-3">Tín hiệu</th><th className="pr-3">Nguyên nhân</th><th /></tr></thead>
+      <thead className="text-xs text-muted-foreground"><tr className="text-left"><th className="py-2 pr-3">Ba thời điểm</th><th className="pr-3">Phương thức nhận</th><th className="pr-3">Độ trễ</th><th className="pr-3">Page</th><th className="pr-3">Form</th><th className="pr-3">Trạng thái</th><th className="pr-3">Nguồn</th><th className="pr-3">Tín hiệu</th><th className="pr-3">Nguyên nhân</th><th /></tr></thead>
       <tbody className="divide-y">{(rows ?? []).map((r) => <tr key={r.id}>
-        <td className="py-2 pr-3 whitespace-nowrap">{fmt(r.received_at)}</td><td className="pr-3">{pageName(r.page_id)}</td><td className="pr-3">{formName(r.form_id)}</td>
+        <td className="py-2 pr-3 whitespace-nowrap text-xs"><div>Meta tạo: {fmt(r.lead_created_at)}</div><div>Base nhận: {fmt(r.received_at)}</div><div>Tạo tín hiệu: {fmt(r.signal_created_at)}</div></td>
+        <td className="pr-3 whitespace-nowrap text-xs">{METHOD[r.receipt_method] ?? METHOD.legacy_unknown}</td>
+        <td className="pr-3 whitespace-nowrap text-xs"><div>Nhận Webhook: {duration(eventLatency(r).webhookSeconds)}</div><div>Xử lý: {duration(eventLatency(r).processingSeconds)}</div></td><td className="pr-3">{pageName(r.page_id)}</td><td className="pr-3">{formName(r.form_id)}</td>
         <td className="pr-3"><Badge variant={r.status === "success" ? "secondary" : r.status === "failed" || r.status === "needs_action" ? "destructive" : "outline"}>{STATUS[r.status] ?? r.status}</Badge></td>
         <td className="pr-3">{r.source ?? "—"}</td>
         <td className="pr-3">{r.signal_id ? <Link to="/signals" className="underline">Mở tín hiệu</Link> : "—"}</td>
         <td className="pr-3 text-xs text-muted-foreground max-w-xs">{r.error ?? ""}</td>
         <td>{["failed", "needs_action", "pending"].includes(r.status) && <Button size="sm" variant="outline" onClick={async () => { try { const x = await retry({ data: { id: r.id } }); toast.message(`Kết quả: ${STATUS[x.status] ?? x.status}`); load(); } catch (e: any) { toast.error(e.message); } }}>Thử đồng bộ lại</Button>}</td>
       </tr>)}
-      {rows && rows.length === 0 && <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Chưa có sự kiện.</td></tr>}</tbody>
+      {rows && rows.length === 0 && <tr><td colSpan={10} className="py-8 text-center text-muted-foreground">Chưa có sự kiện.</td></tr>}</tbody>
     </table></div>
   </CardContent></Card>;
 }
