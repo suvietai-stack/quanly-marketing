@@ -43,6 +43,7 @@ import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as FinanceIncomingIndexRouteImport } from './routes/finance.incoming.index'
 import { Route as FinanceIncomingIdRouteImport } from './routes/finance.incoming.$id'
 import { Route as ApiPublicCassoWebhookRouteImport } from './routes/api/public/casso/webhook'
+import { Route as ApiPublicMetaDispatchRouteImport } from './routes/api/public/meta/dispatch'
 import { Route as ApiPublicMetaLeadsWebhookRouteImport } from './routes/api/public/meta/leads-webhook'
 import { Route as ApiPublicMetaMaintainCronRouteImport } from './routes/api/public/meta/maintain-cron'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth-callback'
@@ -222,6 +223,11 @@ const ApiPublicCassoWebhookRoute = ApiPublicCassoWebhookRouteImport.update({
   path: '/api/public/casso/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMetaDispatchRoute = ApiPublicMetaDispatchRouteImport.update({
+  id: '/api/public/meta/dispatch',
+  path: '/api/public/meta/dispatch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMetaLeadsWebhookRoute =
   ApiPublicMetaLeadsWebhookRouteImport.update({
     id: '/api/public/meta/leads-webhook',
@@ -303,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
+  '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
   '/finance/incoming': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
+  '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
@@ -392,6 +400,7 @@ export interface FileRoutesById {
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
+  '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
@@ -438,6 +447,7 @@ export interface FileRouteTypes {
     | '/finance/incoming/$id'
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
+    | '/api/public/meta/dispatch'
     | '/api/public/meta/leads-webhook'
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/finance/incoming/$id'
     | '/finance/incoming'
     | '/api/public/casso/webhook'
+    | '/api/public/meta/dispatch'
     | '/api/public/meta/leads-webhook'
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
@@ -526,6 +537,7 @@ export interface FileRouteTypes {
     | '/finance/incoming/$id'
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
+    | '/api/public/meta/dispatch'
     | '/api/public/meta/leads-webhook'
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
@@ -571,6 +583,7 @@ export interface RootRouteChildren {
   FinanceIncomingIdRoute: typeof FinanceIncomingIdRoute
   FinanceIncomingIndexRoute: typeof FinanceIncomingIndexRoute
   ApiPublicCassoWebhookRoute: typeof ApiPublicCassoWebhookRoute
+  ApiPublicMetaDispatchRoute: typeof ApiPublicMetaDispatchRoute
   ApiPublicMetaLeadsWebhookRoute: typeof ApiPublicMetaLeadsWebhookRoute
   ApiPublicMetaMaintainCronRoute: typeof ApiPublicMetaMaintainCronRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
@@ -821,6 +834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCassoWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/meta/dispatch': {
+      id: '/api/public/meta/dispatch'
+      path: '/api/public/meta/dispatch'
+      fullPath: '/api/public/meta/dispatch'
+      preLoaderRoute: typeof ApiPublicMetaDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/meta/leads-webhook': {
       id: '/api/public/meta/leads-webhook'
       path: '/api/public/meta/leads-webhook'
@@ -915,6 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceIncomingIdRoute: FinanceIncomingIdRoute,
   FinanceIncomingIndexRoute: FinanceIncomingIndexRoute,
   ApiPublicCassoWebhookRoute: ApiPublicCassoWebhookRoute,
+  ApiPublicMetaDispatchRoute: ApiPublicMetaDispatchRoute,
   ApiPublicMetaLeadsWebhookRoute: ApiPublicMetaLeadsWebhookRoute,
   ApiPublicMetaMaintainCronRoute: ApiPublicMetaMaintainCronRoute,
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,

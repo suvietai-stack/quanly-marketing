@@ -757,13 +757,18 @@ export type Database = {
           id: string
           lead_created_at: string | null
           leadgen_id: string
+          lease_token: string | null
+          lease_until: string | null
           next_retry_at: string | null
           page_id: string
           processed_at: string | null
+          receipt_method: string
           received_at: string
+          signal_created_at: string | null
           signal_id: string | null
           source: string | null
           status: string
+          webhook_received_at: string | null
         }
         Insert: {
           ad_id?: string | null
@@ -775,13 +780,18 @@ export type Database = {
           id?: string
           lead_created_at?: string | null
           leadgen_id: string
+          lease_token?: string | null
+          lease_until?: string | null
           next_retry_at?: string | null
           page_id: string
           processed_at?: string | null
+          receipt_method?: string
           received_at?: string
+          signal_created_at?: string | null
           signal_id?: string | null
           source?: string | null
           status?: string
+          webhook_received_at?: string | null
         }
         Update: {
           ad_id?: string | null
@@ -793,13 +803,18 @@ export type Database = {
           id?: string
           lead_created_at?: string | null
           leadgen_id?: string
+          lease_token?: string | null
+          lease_until?: string | null
           next_retry_at?: string | null
           page_id?: string
           processed_at?: string | null
+          receipt_method?: string
           received_at?: string
+          signal_created_at?: string | null
           signal_id?: string | null
           source?: string | null
           status?: string
+          webhook_received_at?: string | null
         }
         Relationships: []
       }
@@ -948,6 +963,7 @@ export type Database = {
           id: number
           last_event_at: string | null
           last_maintain_at: string | null
+          last_webhook_at: string | null
           webhook_verified_at: string | null
         }
         Insert: {
@@ -955,6 +971,7 @@ export type Database = {
           id?: number
           last_event_at?: string | null
           last_maintain_at?: string | null
+          last_webhook_at?: string | null
           webhook_verified_at?: string | null
         }
         Update: {
@@ -962,6 +979,7 @@ export type Database = {
           id?: number
           last_event_at?: string | null
           last_maintain_at?: string | null
+          last_webhook_at?: string | null
           webhook_verified_at?: string | null
         }
         Relationships: []
@@ -3280,6 +3298,17 @@ export type Database = {
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
       fbl_can_manage: { Args: never; Returns: boolean }
+      fbl_claim_event: { Args: { p_id: string }; Returns: Json }
+      fbl_complete_event: {
+        Args: { p_draft: Json; p_id: string; p_lead: Json; p_lease: string }
+        Returns: string
+      }
+      fbl_dispatch_wake: { Args: never; Returns: undefined }
+      fbl_finish_event: {
+        Args: { p_id: string; p_lease: string; p_patch: Json }
+        Returns: boolean
+      }
+      fbl_retry_tick: { Args: never; Returns: undefined }
       fin_bank_labels: {
         Args: never
         Returns: {
