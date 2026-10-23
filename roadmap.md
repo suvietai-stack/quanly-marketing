@@ -1,3 +1,4 @@
+- [ ] Facebook Page đa BM — chẩn đoán quyền/token/owned_pages/client_pages, phân trang, kiểm Lead Ads trước kết nối; kiểm Webhook riêng, không đổi cron hay Page/Form cũ.
 - [x] Facebook Lead Ads tốc độ — 0062 hàng đợi bền vững, lease + atomic completion, wake khi enqueue, retry tự dừng sau drain, phục hồi pending/failed, polling tab đang xem, ba thời điểm/nguồn nhận; 19 test, signed-empty webhook 200, worker có quyền 200/không quyền 401; nối lại một pending với tín hiệu đã đối chiếu, không tạo trùng.
 - [ ] Facebook Lead Ads tốc độ — chưa Publish; chờ đăng ký App Webhook Meta (subscriptions rỗng), lead thử thật để đo end-to-end và phiên đăng nhập để xác minh UI; --self không có tài khoản khớp.
 - [ ] Facebook Lead Ads G1/G2 — code và secrets có; chờ xác minh cấu hình Meta và lead thử thật.
