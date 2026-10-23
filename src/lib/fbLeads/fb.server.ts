@@ -1,4 +1,6 @@
 import { applyMapping, validateMapping, type Catalogs, type Mapping, type Question } from "./mapping";
+import { z } from "zod";
+import type { ReceiptMethod } from "./latency";
 
 export const META_APP_ID = "1673473860857150";
 export const GRAPH = "https://graph.facebook.com/v23.0";
@@ -69,7 +71,7 @@ export async function graph(path: string, token: string, init: { method?: string
   const u = new URL(GRAPH + path);
   for (const [k, v] of Object.entries(init.params ?? {})) u.searchParams.set(k, v);
   u.searchParams.set("access_token", token);
-  const r = await fetch(u, { method: init.method ?? "GET" });
+  const r = await fetch(u, { method: init.method ?? "GET", signal: AbortSignal.timeout(20000) });
   const j: any = await r.json().catch(() => ({}));
   if (!r.ok || j?.error) throw new MetaError(explainMeta(j?.error ?? { message: `HTTP ${r.status}` }), j?.error?.code);
   return j;
@@ -169,73 +171,81 @@ export async function refreshForms(pageId: string) {
 
 // ---------- Events ----------
 export interface LeadChange { leadgen_id: string; page_id: string; form_id?: string; ad_id?: string; created_time?: number }
-export function parseWebhook(body: any): LeadChange[] {
-  if (body?.object !== "page") return [];
+const changeSchema = z.object({ field: z.string().max(100), value: z.object({ leadgen_id: z.union([z.string().regex(/^\d{1,40}$/), z.number().int().nonnegative()]).optional(), page_id: z.union([z.string().regex(/^\d{1,40}$/), z.number().int().nonnegative()]).optional(), form_id: z.union([z.string().regex(/^\d{1,40}$/), z.number().int().nonnegative()]).optional(), ad_id: z.union([z.string().regex(/^\d{1,40}$/), z.number().int().nonnegative()]).optional(), created_time: z.number().int().nonnegative().max(4102444800).optional() }).passthrough() });
+const webhookSchema = z.object({ object: z.string().max(100), entry: z.array(z.object({ changes: z.array(changeSchema).max(100).optional() }).passthrough()).max(100).optional() }).passthrough();
+export function parseWebhook(body: unknown): LeadChange[] {
+  const parsed = webhookSchema.parse(body);
+  if (parsed.object !== "page") return [];
   const out: LeadChange[] = [];
-  for (const e of body.entry ?? []) for (const c of e.changes ?? []) {
-    const v = c?.value;
-    if (c?.field === "leadgen" && v?.leadgen_id && v?.page_id) out.push({ leadgen_id: String(v.leadgen_id), page_id: String(v.page_id), form_id: v.form_id ? String(v.form_id) : undefined, ad_id: v.ad_id ? String(v.ad_id) : undefined, created_time: Number(v.created_time) || undefined });
+  for (const e of parsed.entry ?? []) for (const c of e.changes ?? []) {
+    const v = c.value;
+    if (c.field === "leadgen" && v.leadgen_id && v.page_id) out.push({ leadgen_id: String(v.leadgen_id), page_id: String(v.page_id), form_id: v.form_id ? String(v.form_id) : undefined, ad_id: v.ad_id ? String(v.ad_id) : undefined, created_time: v.created_time || undefined });
   }
   return out;
 }
 
-export async function recordEvents(changes: LeadChange[]) {
+export async function recordEvents(changes: LeadChange[], method: ReceiptMethod = "webhook") {
   const db = await admin();
-  const rows = changes.map((c) => ({ leadgen_id: c.leadgen_id, page_id: c.page_id, form_id: c.form_id ?? null, ad_id: c.ad_id ?? null, lead_created_at: c.created_time ? new Date(c.created_time * 1000).toISOString() : null }));
+  const now = new Date().toISOString();
+  const rows = changes.map((c) => ({ leadgen_id: c.leadgen_id, page_id: c.page_id, form_id: c.form_id ?? null, ad_id: c.ad_id ?? null, lead_created_at: c.created_time ? new Date(c.created_time * 1000).toISOString() : null, receipt_method: method, ...(method === "webhook" ? { webhook_received_at: now } : {}) }));
   if (!rows.length) return [];
   const { data, error } = await db.from("fbl_events").upsert(rows, { onConflict: "leadgen_id", ignoreDuplicates: true }).select("id");
   if (error) throw new Error(`db ${error.code}`);
-  await db.from("fbl_state").update({ last_event_at: new Date().toISOString() }).eq("id", 1);
+  if (method === "webhook") {
+    const { error: stampError } = await db.from("fbl_events").update({ webhook_received_at: now }).in("leadgen_id", changes.map((c) => c.leadgen_id)).is("webhook_received_at", null);
+    if (stampError) throw new Error(`db ${stampError.code}`);
+  }
+  const { error: stateError } = await db.from("fbl_state").update({ last_event_at: now, ...(method === "webhook" ? { last_webhook_at: now } : {}) }).eq("id", 1);
+  if (stateError) throw new Error(`db ${stateError.code}`);
   return (data ?? []).map((r: any) => r.id as string);
 }
 
-async function finish(id: string, patch: Record<string, unknown>) {
-  if (patch.status === "failed") {
-    const { data } = await (await admin()).from("fbl_events").select("attempts").eq("id", id).single();
-    patch.next_retry_at = new Date(Date.now() + retryDelayMs(data?.attempts ?? 1)).toISOString();
-  } else patch.next_retry_at = null;
-  await (await admin()).from("fbl_events").update({ ...patch, processed_at: new Date().toISOString() }).eq("id", id);
+async function finish(id: string, lease: string, patch: Record<string, unknown>) {
+  const { error } = await (await admin()).rpc("fbl_finish_event", { p_id: id, p_lease: lease, p_patch: patch });
+  if (error) throw new Error(`Không lưu được kết quả xử lý (${error.code})`);
 }
 
-/** Xử lý một sự kiện; idempotent: đã có signal_id thì không tạo lại. */
+/** Leased fetch; final signal + completion are committed in one locked transaction. */
 export async function processEvent(id: string): Promise<string> {
   const db = await admin();
-  const { data: ev } = await db.from("fbl_events").select("*").eq("id", id).maybeSingle();
-  if (!ev) return "missing";
-  if (ev.signal_id || ev.status === "success") return "success";
-  if (ev.attempts >= 10) return ev.status;
-  const { data: claimed } = await db.from("fbl_events").update({ attempts: ev.attempts + 1 }).eq("id", id).eq("attempts", ev.attempts).is("signal_id", null).select("id");
-  if (!claimed?.length) return "busy";
-
-  const { data: page } = await db.from("fbl_pages").select("*").eq("page_id", ev.page_id).maybeSingle();
-  if (!page || page.status === "disconnected") { await finish(id, { status: "skipped", error: "Page chưa kết nối với Base" }); return "skipped"; }
-  const { data: form } = ev.form_id ? await db.from("fbl_forms").select("*").eq("form_id", ev.form_id).maybeSingle() : { data: null };
-  if (!form) { await finish(id, { status: "skipped", error: "Form chưa có trong Base (bấm Làm mới danh sách Form)" }); return "skipped"; }
-  const when = ev.lead_created_at ?? ev.received_at;
-  if (!ev.backfill && (!form.enabled || !form.enabled_at || new Date(when) < new Date(form.enabled_at))) {
-    await finish(id, { status: "skipped", error: form.enabled ? "Lead trước thời điểm bật đồng bộ" : "Form đang tắt đồng bộ" }); return "skipped";
-  }
-  if (!page.source) { await finish(id, { status: "needs_action", error: "Page chưa chọn Nguồn tín hiệu" }); return "needs_action"; }
-  if (form.needs_review) { await finish(id, { status: "needs_action", error: "Form thay đổi câu hỏi — cần kiểm tra lại cấu hình" }); return "needs_action"; }
-
-  let lead: any;
+  const { data: ev, error: claimError } = await db.rpc("fbl_claim_event", { p_id: id });
+  if (claimError) throw new Error(`Không nhận được công việc (${claimError.code})`);
+  if (!ev) return "busy";
+  const lease = ev.lease_token as string;
   try {
-    lead = await graph(`/${ev.leadgen_id}`, await pageToken(ev.page_id), { params: { fields: "created_time,field_data,ad_id,campaign_id,form_id" } });
-  } catch (e: any) { await finish(id, { status: "failed", error: e.message }); return "failed"; }
+    const { data: page, error: pageError } = await db.from("fbl_pages").select("*").eq("page_id", ev.page_id).maybeSingle();
+    if (pageError) throw new Error(`db ${pageError.code}`);
+    if (!page || page.status === "disconnected") { await finish(id, lease, { status: "skipped", error: "Page chưa kết nối với Base" }); return "skipped"; }
+    const { data: form, error: formError } = await db.from("fbl_forms").select("*").eq("form_id", ev.form_id ?? "").eq("page_id", ev.page_id).maybeSingle();
+    if (formError) throw new Error(`db ${formError.code}`);
+    if (!form) { await finish(id, lease, { status: "skipped", error: "Form chưa có trong Base (bấm Làm mới danh sách Form)" }); return "skipped"; }
+    const when = ev.lead_created_at ?? ev.received_at;
+    if (!form.enabled || (!ev.backfill && (!form.enabled_at || new Date(when) < new Date(form.enabled_at)))) {
+      await finish(id, lease, { status: "skipped", error: form.enabled ? "Lead trước thời điểm bật đồng bộ" : "Form đang tắt đồng bộ" }); return "skipped";
+    }
+    if (!page.source || form.needs_review) { await finish(id, lease, { status: "needs_action", error: !page.source ? "Page chưa chọn Nguồn tín hiệu" : "Form thay đổi câu hỏi — cần kiểm tra lại cấu hình" }); return "needs_action"; }
+    const lead = await graph(`/${ev.leadgen_id}`, await pageToken(ev.page_id), { params: { fields: "created_time,field_data,ad_id,campaign_id,form_id" } });
+    if (String(lead.form_id) !== ev.form_id) throw new Error("Lead không thuộc Form của sự kiện");
+    const r = applyMapping(form.mapping as Mapping ?? {}, lead.field_data ?? [], await catalogs(), page.source, lead.created_time ?? when);
+    if (!r.ok) { await finish(id, lease, { status: "needs_action", error: r.error }); return "needs_action"; }
+    const { data: result, error } = await db.rpc("fbl_complete_event", { p_id: id, p_lease: lease, p_draft: r.draft, p_lead: { created_time: lead.created_time, ad_id: lead.ad_id ?? ev.ad_id, campaign_id: lead.campaign_id ?? null } });
+    if (error) throw new Error(`Không tạo được tín hiệu (${error.code})`);
+    return result;
+  } catch (e: any) {
+    await finish(id, lease, { status: "failed", error: e instanceof MetaError ? e.message : "Xử lý bị gián đoạn — hệ thống sẽ thử lại" });
+    return "failed";
+  }
+}
 
-  const cat = await catalogs();
-  const r = applyMapping(form.mapping as Mapping ?? {}, lead.field_data ?? [], cat, page.source, lead.created_time ?? when);
-  if (!r.ok) { await finish(id, { status: "needs_action", error: r.error }); return "needs_action"; }
-
-  const { data: again } = await db.from("fbl_events").select("signal_id").eq("id", id).single();
-  if (again?.signal_id) return "success";
-  const { data: sig, error } = await db.from("opportunity_signals").insert({ ...r.draft, created_by: FB_SYSTEM_CREATOR }).select("id").single();
-  if (error) { await finish(id, { status: "failed", error: `Không tạo được tín hiệu: ${error.message}` }); return "failed"; }
-  await finish(id, { status: "success", error: null, signal_id: sig.id, source: page.source,
-    ad_id: lead.ad_id ?? ev.ad_id, campaign_id: lead.campaign_id ?? null, lead_created_at: lead.created_time ? new Date(lead.created_time).toISOString() : ev.lead_created_at });
-  try { const z = await import("@/lib/zalo.server"); await z.processPending(20); } catch { /* cron sẽ gửi lại */ }
-  try { const p = await import("@/lib/push.server"); await p.processPush(30); } catch { /* bỏ qua */ }
-  return "success";
+export async function dispatchPending() {
+  const db = await admin();
+  const now = new Date().toISOString();
+  const { data, error } = await db.from("fbl_events").select("id,status,next_retry_at,lease_until").in("status", ["pending", "failed"]).is("signal_id", null).lt("attempts", 10).or(`lease_until.is.null,lease_until.lte.${now}`).order("received_at").limit(20);
+  if (error) throw new Error(`db ${error.code}`);
+  const rows = (data ?? []).filter((e: any) => e.status === "pending" || !e.next_retry_at || e.next_retry_at <= now);
+  const results: string[] = [];
+  for (let i = 0; i < rows.length; i += 4) results.push(...await Promise.all(rows.slice(i, i + 4).map((r: any) => processEvent(r.id))));
+  return { processed: results.length, success: results.filter((s) => s === "success").length, failed: results.filter((s) => s === "failed").length };
 }
 
 /** Backoff: 2, 4, 8 … phút, tối đa 6 giờ. */
@@ -266,7 +276,7 @@ export async function backfill(formId: string, fromIso: string, toIso: string, a
   }
   const missing = leads.filter((l) => !have.has(String(l.id)));
   if (!apply) return { total: leads.length, existing: have.size, missing: missing.length, created: 0, failed: 0 };
-  const rows = missing.slice(0, 300).map((l) => ({ leadgen_id: String(l.id), page_id: form.page_id, form_id: formId, ad_id: l.ad_id ?? null, lead_created_at: new Date(l.created_time).toISOString(), backfill: true }));
+  const rows = missing.slice(0, 300).map((l) => ({ leadgen_id: String(l.id), page_id: form.page_id, form_id: formId, ad_id: l.ad_id ?? null, lead_created_at: new Date(l.created_time).toISOString(), backfill: true, receipt_method: "backfill" }));
   const { data: ins, error } = rows.length ? await db.from("fbl_events").upsert(rows, { onConflict: "leadgen_id", ignoreDuplicates: true }).select("id") : { data: [], error: null };
   if (error) throw new Error(`db ${error.code}`);
   let created = 0, failed = 0;
@@ -283,15 +293,14 @@ export async function maintain() {
     out.pages++;
     try { out.newForms += (await refreshForms(p.page_id)).added; } catch (e: any) { out.errors.push(`${p.page_id}: ${e.message}`); }
   }
-  const { data: due } = await db.from("fbl_events").select("id").eq("status", "failed").lt("attempts", 10).lte("next_retry_at", new Date().toISOString()).limit(30);
-  for (const r of due ?? []) { out.retried++; await processEvent(r.id); }
+  out.retried = (await dispatchPending()).processed;
   const { data: forms } = await db.from("fbl_forms").select("form_id,page_id,enabled_at").eq("enabled", true);
   const since = new Date(Date.now() - 48 * 3600_000);
   for (const f of forms ?? []) {
     try {
       const from = new Date(Math.max(since.getTime(), new Date(f.enabled_at).getTime())).toISOString();
       const leads = await formLeads(f.form_id, await pageToken(f.page_id), from, new Date().toISOString());
-      const ids = await recordEvents(leads.map((l) => ({ leadgen_id: String(l.id), page_id: f.page_id, form_id: f.form_id, ad_id: l.ad_id, created_time: Math.floor(new Date(l.created_time).getTime() / 1000) })));
+      const ids = await recordEvents(leads.map((l) => ({ leadgen_id: String(l.id), page_id: f.page_id, form_id: f.form_id, ad_id: l.ad_id, created_time: Math.floor(new Date(l.created_time).getTime() / 1000) })), "reconciliation");
       for (const id of ids) { out.recovered++; await processEvent(id); }
     } catch (e: any) { out.errors.push(`${f.form_id}: ${e.message}`); }
   }
