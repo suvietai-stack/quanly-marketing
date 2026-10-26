@@ -183,6 +183,7 @@ export async function processEvent(id: string): Promise<string> {
       await finish(id, lease, { status: "needs_action", error: !website.source ? "Website chưa chọn Nguồn tín hiệu" : "Form thay đổi cấu trúc — cần kiểm tra lại cấu hình" });
       return "needs_action";
     }
+    if (ev.payload == null) { await finish(id, lease, { status: "skipped", error: "Form đang tắt khi nhận — Base không lưu dữ liệu submission nên không thể xử lý lại" }); return "skipped"; }
     const r = applyMapping(form.mapping as Mapping ?? {}, (ev.payload ?? {}) as SubmissionData, (form.schema ?? []) as FormField[], await catalogs(), website.source, ev.sent_at ?? ev.received_at);
     if (!r.ok) { await finish(id, lease, { status: "needs_action", error: r.error }); return "needs_action"; }
     const { data: result, error } = await db.rpc("wf_complete_event", { p_id: id, p_lease: lease, p_draft: r.draft });
