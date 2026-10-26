@@ -81,13 +81,13 @@ describe("suggestMapping / copyMapping", () => {
     const m = suggestMapping({}, fields);
     expect(m.customer_name).toEqual({ mode: "website", key: "name" });
     expect(m.phone).toEqual({ mode: "website", key: "phone" });
-    expect(m.marketing_note).toEqual({ mode: "website", key: "message" });
+    expect(m.need_detail).toEqual({ mode: "website", key: "message" });
   });
   it("sao chép sang Form khác, loại trường không tồn tại", () => {
     const src: Mapping = { ...base, marketing_note: { mode: "website", key: "message" } };
     const { mapping, dropped } = copyMapping(src, [{ key: "name", label: "Tên" }]);
     expect(mapping.customer_name).toEqual({ mode: "website", key: "name" });
-    expect(dropped).toEqual(["message"]);
+    expect(dropped).toEqual(["Số điện thoại", "Ghi chú Marketing"]);
     expect(mapping.phone).toBeUndefined();
   });
 });
