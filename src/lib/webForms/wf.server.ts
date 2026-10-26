@@ -160,8 +160,9 @@ async function finish(id: string, lease: string, patch: Record<string, unknown>)
 
 /** Tìm Form áp dụng: đúng variant, không có thì kế thừa Form chính (variant rỗng). */
 async function findForm(db: any, websiteId: string, formId: string, variant: string) {
-  const { data } = await db.from("wf_forms").select("*").eq("website_id", websiteId).eq("form_id", formId).in("variant", [variant, ""]);
-  const rows = (data ?? []) as any[];
+  // Lọc variant bằng JS: PostgREST không khớp chuỗi rỗng trong danh sách .in().
+  const { data } = await db.from("wf_forms").select("*").eq("website_id", websiteId).eq("form_id", formId);
+  const rows = ((data ?? []) as any[]).filter((r) => r.variant === variant || r.variant === "");
   return rows.find((r) => r.variant === variant) ?? rows.find((r) => r.variant === "") ?? null;
 }
 
@@ -182,6 +183,7 @@ export async function processEvent(id: string): Promise<string> {
       await finish(id, lease, { status: "needs_action", error: !website.source ? "Website chưa chọn Nguồn tín hiệu" : "Form thay đổi cấu trúc — cần kiểm tra lại cấu hình" });
       return "needs_action";
     }
+    if (ev.payload == null) { await finish(id, lease, { status: "skipped", error: "Form đang tắt khi nhận — Base không lưu dữ liệu submission nên không thể xử lý lại" }); return "skipped"; }
     const r = applyMapping(form.mapping as Mapping ?? {}, (ev.payload ?? {}) as SubmissionData, (form.schema ?? []) as FormField[], await catalogs(), website.source, ev.sent_at ?? ev.received_at);
     if (!r.ok) { await finish(id, lease, { status: "needs_action", error: r.error }); return "needs_action"; }
     const { data: result, error } = await db.rpc("wf_complete_event", { p_id: id, p_lease: lease, p_draft: r.draft });

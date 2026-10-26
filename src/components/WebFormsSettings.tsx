@@ -323,7 +323,7 @@ function History({ ov }: { ov: Overview }) {
           <td className="px-3 py-2"><Badge variant={r.status === "success" ? "secondary" : r.status === "pending" ? "outline" : "destructive"}>{STATUS[r.status] ?? r.status}</Badge></td>
           <td className="px-3 py-2">{r.signal_id ? <Link to="/signals" className="text-primary underline text-xs">Mở tín hiệu</Link> : "—"}{r.page_url && <a href={r.page_url} target="_blank" rel="noreferrer" className="block text-xs text-muted-foreground underline truncate max-w-40">Trang nguồn</a>}</td>
           <td className="px-3 py-2 text-xs text-muted-foreground max-w-64"><span className="line-clamp-2" title={r.error ?? ""}>{r.error ?? "—"}</span></td>
-          <td className="px-3 py-2 text-right">{!r.signal_id && ["failed", "needs_action", "skipped"].includes(r.status) &&
+          <td className="px-3 py-2 text-right">{!r.signal_id && r.has_payload && ["failed", "needs_action", "skipped"].includes(r.status) &&
             <Button size="sm" variant="outline" onClick={async () => { try { const x: any = await retry({ data: { id: r.id } }); toast.success(`Đã thử lại: ${STATUS[x.status] ?? x.status}`); load(); } catch (e: any) { toast.error(e.message); } }}><RotateCw className="h-3.5 w-3.5 mr-1" />Thử lại</Button>}</td>
         </tr>)}
         {rows.length === 0 && <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground text-sm">Chưa có submission nào.</td></tr>}
