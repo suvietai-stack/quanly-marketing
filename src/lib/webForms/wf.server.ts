@@ -160,8 +160,9 @@ async function finish(id: string, lease: string, patch: Record<string, unknown>)
 
 /** Tìm Form áp dụng: đúng variant, không có thì kế thừa Form chính (variant rỗng). */
 async function findForm(db: any, websiteId: string, formId: string, variant: string) {
-  const { data } = await db.from("wf_forms").select("*").eq("website_id", websiteId).eq("form_id", formId).in("variant", [variant, ""]);
-  const rows = (data ?? []) as any[];
+  // Lọc variant bằng JS: PostgREST không khớp chuỗi rỗng trong danh sách .in().
+  const { data } = await db.from("wf_forms").select("*").eq("website_id", websiteId).eq("form_id", formId);
+  const rows = ((data ?? []) as any[]).filter((r) => r.variant === variant || r.variant === "");
   return rows.find((r) => r.variant === variant) ?? rows.find((r) => r.variant === "") ?? null;
 }
 
