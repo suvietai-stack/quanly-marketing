@@ -20,6 +20,7 @@ import { FIELDS, validateMapping, suggestMapping, copyMapping, type FieldKey, ty
 
 type Overview = Awaited<ReturnType<typeof wfOverview>>;
 const STATUS: Record<string, string> = { pending: "Chờ xử lý", success: "Thành công", failed: "Thất bại", skipped: "Bỏ qua", duplicate: "Trùng", needs_action: "Cần xử lý" };
+const STATE: Record<string, string> = { processing: "Đang xử lý", stuck: "Quá hạn xử lý", retry_wait: "Chờ thử lại", needs_action: "Lỗi cần can thiệp", success: "Thành công", skipped: "Bỏ qua", duplicate: "Trùng" };
 const fmt = (s?: string | null) => (s ? new Date(s).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—");
 const copyText = (v: string) => { navigator.clipboard.writeText(v); toast.success("Đã sao chép"); };
 
@@ -320,11 +321,12 @@ function History({ ov }: { ov: Overview }) {
           <td className="px-3 py-2 whitespace-nowrap">{fmt(r.received_at)}</td>
           <td className="px-3 py-2">{nameOf(r.website_id)}</td>
           <td className="px-3 py-2">{r.form_id}{r.variant ? ` · ${r.variant}` : ""}</td>
-          <td className="px-3 py-2"><Badge variant={r.status === "success" ? "secondary" : r.status === "pending" ? "outline" : "destructive"}>{STATUS[r.status] ?? r.status}</Badge></td>
+          <td className="px-3 py-2"><Badge variant={r.state === "success" ? "secondary" : ["processing", "retry_wait"].includes(r.state) ? "outline" : "destructive"}>{STATE[r.state] ?? STATUS[r.status] ?? r.status}</Badge>
+            {r.state === "retry_wait" && r.next_retry_at && <div className="text-[11px] text-muted-foreground mt-0.5">lần {r.attempts} · thử lại lúc {fmt(r.next_retry_at)}</div>}</td>
           <td className="px-3 py-2">{r.signal_id ? <Link to="/signals" className="text-primary underline text-xs">Mở tín hiệu</Link> : "—"}{r.page_url && <a href={r.page_url} target="_blank" rel="noreferrer" className="block text-xs text-muted-foreground underline truncate max-w-40">Trang nguồn</a>}</td>
-          <td className="px-3 py-2 text-xs text-muted-foreground max-w-64"><span className="line-clamp-2" title={r.error ?? ""}>{r.error ?? "—"}</span></td>
-          <td className="px-3 py-2 text-right">{!r.signal_id && r.has_payload && ["failed", "needs_action", "skipped"].includes(r.status) &&
-            <Button size="sm" variant="outline" onClick={async () => { try { const x: any = await retry({ data: { id: r.id } }); toast.success(`Đã thử lại: ${STATUS[x.status] ?? x.status}`); load(); } catch (e: any) { toast.error(e.message); } }}><RotateCw className="h-3.5 w-3.5 mr-1" />Thử lại</Button>}</td>
+          <td className="px-3 py-2 text-xs text-muted-foreground max-w-64"><span className="line-clamp-2" title={r.error ?? ""}>{r.error ?? (r.state === "stuck" ? "Quá hạn xử lý — hệ thống tự phục hồi trong vài phút" : "—")}</span></td>
+          <td className="px-3 py-2 text-right">{!r.signal_id && r.has_payload && ["failed", "needs_action", "skipped", "stuck", "retry_wait"].includes(r.state) &&
+            <Button size="sm" variant="outline" onClick={async () => { try { const x: any = await retry({ data: { id: r.id } }); toast.success(x.status === "busy" ? "Submission đang được xử lý, vui lòng đợi" : `Đã thử lại: ${STATUS[x.status] ?? x.status}`); load(); } catch (e: any) { toast.error(e.message); } }}><RotateCw className="h-3.5 w-3.5 mr-1" />Thử lại</Button>}</td>
         </tr>)}
         {rows.length === 0 && <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground text-sm">Chưa có submission nào.</td></tr>}
       </tbody></table></div>
