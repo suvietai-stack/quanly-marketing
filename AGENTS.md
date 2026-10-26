@@ -1,6 +1,6 @@
 # Architecture rules
 
-- Signal acceptance averages use src/lib/signals/acceptTime.ts — one formula; consumers filter input, not timestamps.
+- Signal KPI: acceptTime.ts for all history; refresh user-keyed sources with signals — no stored averages.
 
 - Personal OA reminders mount once in AppShell, use authenticated user-scoped link reads and safe OA health fields, and store per-user browser snoozes; only existing verified webhook updates establish interaction — navigation and opening OA never renew eligibility or affect GMF.
 
