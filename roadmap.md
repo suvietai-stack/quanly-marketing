@@ -1,3 +1,4 @@
+- [ ] KPI Đào Thanh Hoan: sửa hiển thị giây/tooltip, đối soát từng chu kỳ giao–nhận và trung bình thật, kiểm thử; không sửa dữ liệu gốc.
 - [x] KPI tiếp nhận lịch sử: đối chiếu 332 tín hiệu bằng công thức chung và SQL độc lập; 278 mẫu hợp lệ, loại 37 mẫu 0 phút, 57,5706 phút TB; 16 mẫu đổi khi bỏ Chủ nhật. Cache nguồn gắn user, tải lại khi mở/focus và mỗi 10 giây; 43 test đạt, build sạch; không sửa dữ liệu, không Publish. Dashboard/KPI khác chưa có chỉ số này.
 - [ ] KPI tiếp nhận — xác minh bảng và bộ lọc qua UI đăng nhập thật: chờ phiên người dùng, --self không có tài khoản khớp.
 - [x] Cập nhật thời gian tiếp nhận tín hiệu — dùng công thức chung, bỏ Chủ nhật, loại mẫu nghỉ khỏi trung bình, giữ timestamp/bộ lọc; đủ 5 tình huống, 127 kiểm thử Tín hiệu/KPI đạt, build sạch; chưa Publish.
