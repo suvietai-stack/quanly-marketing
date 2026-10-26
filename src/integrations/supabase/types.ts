@@ -3232,6 +3232,7 @@ export type Database = {
       wf_keys: {
         Row: {
           created_at: string
+          key_enc: string | null
           key_hash: string
           key_prefix: string
           revoked_at: string | null
@@ -3239,6 +3240,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          key_enc?: string | null
           key_hash: string
           key_prefix: string
           revoked_at?: string | null
@@ -3246,6 +3248,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          key_enc?: string | null
           key_hash?: string
           key_prefix?: string
           revoked_at?: string | null
@@ -3256,6 +3259,29 @@ export type Database = {
             foreignKeyName: "wf_keys_website_id_fkey"
             columns: ["website_id"]
             isOneToOne: true
+            referencedRelation: "wf_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wf_rate_hits: {
+        Row: {
+          at: string
+          website_id: string
+        }
+        Insert: {
+          at?: string
+          website_id: string
+        }
+        Update: {
+          at?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wf_rate_hits_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
             referencedRelation: "wf_websites"
             referencedColumns: ["id"]
           },
@@ -3965,6 +3991,7 @@ export type Database = {
         Args: { p_id: string; p_lease: string; p_patch: Json }
         Returns: boolean
       }
+      wf_rate_hit: { Args: { p_website: string }; Returns: number }
     }
     Enums: {
       account_status:
