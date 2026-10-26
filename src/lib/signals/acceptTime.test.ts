@@ -95,6 +95,27 @@ describe("acceptMinutes — đúng chu kỳ giao/tiếp nhận", () => {
 });
 
 describe("acceptStat — trung bình chỉ trên mẫu hợp lệ > 0", () => {
+  it("tính lại cả lịch sử trước cập nhật, loại Chủ nhật và ngoài giờ khỏi tử số/mẫu số", () => {
+    // 2025-10-18 = Thứ Bảy; 2025-10-19 = Chủ nhật, trước khi quy tắc được cập nhật.
+    const signals = ["sat", "sun", "night", "mon"].map((id) => ({ id, assigned_to: "s" }));
+    const events = [
+      ev("sat", "s", vn("2025-10-18", "16:50")),
+      ev("sun", "s", vn("2025-10-19", "10:00")),
+      ev("night", "s", vn("2025-10-20", "18:00")),
+      ev("mon", "s", vn("2025-10-20", "09:00")),
+    ];
+    const notes = [
+      note("sat", "s", vn("2025-10-20", "08:10")),
+      note("sun", "s", vn("2025-10-19", "11:00")),
+      note("night", "s", vn("2025-10-20", "19:00")),
+      note("mon", "s", vn("2025-10-20", "09:15")),
+    ];
+    const original = JSON.stringify({ signals, events, notes });
+    expect(acceptStat(signals, events, notes)).toEqual({ avg: 17.5, valid: 2, accepted: 4 });
+    expect(acceptStat(signals.filter((s) => s.id === "sat"), events, notes)).toEqual({ avg: 20, valid: 1, accepted: 1 });
+    expect(acceptStat(signals.filter((s) => s.id === "sun" || s.id === "night"), events, notes)).toEqual({ avg: null, valid: 0, accepted: 2 });
+    expect(JSON.stringify({ signals, events, notes })).toBe(original);
+  });
   it("Chủ nhật 20:00 → 21:00 bị loại khỏi trung bình, không làm giảm mẫu 15 phút", () => {
     const signals = [{ id: "sun", assigned_to: "s" }, { id: "mon", assigned_to: "s" }];
     const events = [ev("sun", "s", vn("2026-10-18", "20:00")), ev("mon", "s", vn("2026-10-19", "09:00"))];
