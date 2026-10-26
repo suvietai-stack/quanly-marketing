@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateKey, sha256, hmacHex, timingSafeEq, seal, unseal, RATE_LIMIT_PER_MIN, TIMESTAMP_WINDOW_MS } from "./wf.server";
+import { generateKey, sha256, hmacHex, timingSafeEq, RATE_LIMIT_PER_MIN, TIMESTAMP_WINDOW_MS } from "./wf.server";
 
 describe("wf key & HMAC", () => {
   it("sinh khóa đúng định dạng wf_<prefix>_<secret>, prefix 8 ký tự", () => {
