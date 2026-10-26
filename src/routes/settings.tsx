@@ -22,6 +22,7 @@ import { SignalCatalogSettings } from "@/components/signals/SignalCatalogSetting
 import { LeaveSettings } from "@/components/leave/LeaveSettings";
 import { SystemInfoSettings } from "@/components/SystemInfoSettings";
 import { FbLeadsSettings } from "@/components/FbLeadsSettings";
+import { WebFormsSettings } from "@/components/WebFormsSettings";
 import { ContentNotifySettings, OrderNotifySettings } from "@/components/ContentNotifySettings";
 
 export const Route = createFileRoute("/settings")({
@@ -170,6 +171,7 @@ function SettingsPage() {
   const me = auth.users.find((u) => u.id === auth.currentUserId);
   const zaloAdmin = !!me && (me.system || me.roleId === "role-super-admin" || me.roleId === "role-admin");
   const showFbl = can("integration.facebook_leads");
+  const showWf = can("integration.website_forms");
   const [tab, setTab] = useState(() => {
     if (typeof window === "undefined") return initialTab;
     const q = new URLSearchParams(window.location.search);
@@ -207,8 +209,10 @@ function SettingsPage() {
         {can("ot.settings") && <TabsTrigger value="ot">Theo dõi đơn hàng</TabsTrigger>}
         <TabsTrigger value="zalo">Thông báo Zalo</TabsTrigger>
         {showFbl && <TabsTrigger value="fbleads">Tích hợp Marketing · Facebook Lead Ads</TabsTrigger>}
+        {showWf && <TabsTrigger value="webforms">Tích hợp Marketing · Website Forms</TabsTrigger>}
       </TabsList>
       {showFbl && <TabsContent value="fbleads" className="mt-4"><FbLeadsSettings /></TabsContent>}
+      {showWf && <TabsContent value="webforms" className="mt-4"><WebFormsSettings /></TabsContent>}
       {showSigCat && <TabsContent value="sigcat" className="mt-4"><SignalCatalogSettings /></TabsContent>}
       {showLeave && <TabsContent value="leave" className="mt-4"><LeaveSettings /></TabsContent>}
       {can("ot.settings") && <TabsContent value="ot" className="mt-4"><OtSettings /></TabsContent>}

@@ -469,6 +469,7 @@ export const PERMISSIONS: PermissionDef[] = [
 
   // ===== Tích hợp Marketing =====
   P("integration.facebook_leads", "Quản lý Facebook Lead Ads (kết nối Page, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Facebook Lead Ads"),
+  P("integration.website_forms", "Quản lý Website Forms (thêm Website, cấp/thu hồi khóa, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Website Forms"),
 
   // ===== K. Tài khoản / Role / Phân quyền =====
   P("settings.user_view", "Xem tài khoản", "Tài khoản", "Tài khoản"),

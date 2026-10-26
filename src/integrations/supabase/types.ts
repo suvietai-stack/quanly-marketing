@@ -3102,6 +3102,227 @@ export type Database = {
         }
         Relationships: []
       }
+      wf_events: {
+        Row: {
+          attempts: number
+          error: string | null
+          form_id: string
+          id: string
+          lease_token: string | null
+          lease_until: string | null
+          next_retry_at: string | null
+          page_url: string | null
+          payload: Json | null
+          processed_at: string | null
+          received_at: string
+          sent_at: string | null
+          signal_id: string | null
+          source: string | null
+          status: string
+          submission_id: string
+          variant: string
+          website_id: string
+        }
+        Insert: {
+          attempts?: number
+          error?: string | null
+          form_id: string
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          next_retry_at?: string | null
+          page_url?: string | null
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          sent_at?: string | null
+          signal_id?: string | null
+          source?: string | null
+          status?: string
+          submission_id: string
+          variant?: string
+          website_id: string
+        }
+        Update: {
+          attempts?: number
+          error?: string | null
+          form_id?: string
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          next_retry_at?: string | null
+          page_url?: string | null
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          sent_at?: string | null
+          signal_id?: string | null
+          source?: string | null
+          status?: string
+          submission_id?: string
+          variant?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wf_events_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "wf_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wf_forms: {
+        Row: {
+          checked_at: string | null
+          created_at: string
+          enabled: boolean
+          enabled_at: string | null
+          form_id: string
+          mapping: Json | null
+          name: string
+          needs_review: boolean
+          schema: Json
+          schema_hash: string | null
+          updated_at: string
+          variant: string
+          website_id: string
+        }
+        Insert: {
+          checked_at?: string | null
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          form_id: string
+          mapping?: Json | null
+          name: string
+          needs_review?: boolean
+          schema?: Json
+          schema_hash?: string | null
+          updated_at?: string
+          variant?: string
+          website_id: string
+        }
+        Update: {
+          checked_at?: string | null
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          form_id?: string
+          mapping?: Json | null
+          name?: string
+          needs_review?: boolean
+          schema?: Json
+          schema_hash?: string | null
+          updated_at?: string
+          variant?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wf_forms_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "wf_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wf_keys: {
+        Row: {
+          created_at: string
+          key_enc: string | null
+          key_hash: string
+          key_prefix: string
+          revoked_at: string | null
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          key_enc?: string | null
+          key_hash: string
+          key_prefix: string
+          revoked_at?: string | null
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          key_enc?: string | null
+          key_hash?: string
+          key_prefix?: string
+          revoked_at?: string | null
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wf_keys_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: true
+            referencedRelation: "wf_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wf_rate_hits: {
+        Row: {
+          at: string
+          website_id: string
+        }
+        Insert: {
+          at?: string
+          website_id: string
+        }
+        Update: {
+          at?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wf_rate_hits_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "wf_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wf_websites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain: string
+          id: string
+          last_seen_at: string | null
+          name: string
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain: string
+          id?: string
+          last_seen_at?: string | null
+          name: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain?: string
+          id?: string
+          last_seen_at?: string | null
+          name?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       zalo_link_codes: {
         Row: {
           code: string
@@ -3760,6 +3981,17 @@ export type Database = {
           id: string
         }[]
       }
+      wf_can_manage: { Args: never; Returns: boolean }
+      wf_claim_event: { Args: { p_id: string }; Returns: Json }
+      wf_complete_event: {
+        Args: { p_draft: Json; p_id: string; p_lease: string }
+        Returns: string
+      }
+      wf_finish_event: {
+        Args: { p_id: string; p_lease: string; p_patch: Json }
+        Returns: boolean
+      }
+      wf_rate_hit: { Args: { p_website: string }; Returns: number }
     }
     Enums: {
       account_status:
