@@ -22,6 +22,7 @@ import { SignalCatalogSettings } from "@/components/signals/SignalCatalogSetting
 import { LeaveSettings } from "@/components/leave/LeaveSettings";
 import { SystemInfoSettings } from "@/components/SystemInfoSettings";
 import { FbLeadsSettings } from "@/components/FbLeadsSettings";
+import { WebFormsSettings } from "@/components/WebFormsSettings";
 import { ContentNotifySettings, OrderNotifySettings } from "@/components/ContentNotifySettings";
 
 export const Route = createFileRoute("/settings")({
