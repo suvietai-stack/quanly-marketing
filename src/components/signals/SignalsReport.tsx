@@ -34,8 +34,19 @@ export function SignalsReport() {
     for (const s of list) if (s.assigned_to) (m.get(s.assigned_to) ?? m.set(s.assigned_to, []).get(s.assigned_to)!).push(s);
     return m;
   }, [list]);
-  const { data: assignEvents = [] } = useQuery({ queryKey: ["sig:assignEvents"], queryFn: listAssignEvents, staleTime: 60000 });
-  const { data: acceptNotes = [] } = useQuery({ queryKey: ["sig:acceptNotes"], queryFn: listAcceptNotes, staleTime: 60000 });
+  // Cache only source timestamps, never calculated KPI; refresh at the same cadence as signals.
+  const historyRefresh = {
+    enabled: !!p.userId && p.report,
+    staleTime: 0,
+    refetchOnMount: "always" as const,
+    refetchOnWindowFocus: "always" as const,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
+  };
+  const assignments = useQuery({ ...historyRefresh, queryKey: ["sig:assignEvents", p.userId], queryFn: listAssignEvents });
+  const acceptances = useQuery({ ...historyRefresh, queryKey: ["sig:acceptNotes", p.userId], queryFn: listAcceptNotes });
+  const assignEvents = assignments.data ?? [];
+  const acceptNotes = acceptances.data ?? [];
   const bySource = groupBy(list, (s) => s.source);
   const prodOpts = useOptions("signal_products");
   const needOpts = useOptions("signal_need_groups");
@@ -94,7 +105,13 @@ export function SignalsReport() {
 
 
           <H>Hiệu quả Sale</H>
-          <SaleTable rows={bySale} name={name} rates={rateBySale} signalsBySale={signalsBySale} events={assignEvents} notes={acceptNotes} />
+          {assignments.error || acceptances.error ? (
+            <p className="text-sm text-destructive">Không tải được lịch sử tiếp nhận: {errMsg(assignments.error || acceptances.error)}</p>
+          ) : assignments.isPending || acceptances.isPending ? (
+            <p className="text-sm text-muted-foreground">Đang tải lịch sử tiếp nhận…</p>
+          ) : (
+            <SaleTable rows={bySale} name={name} rates={rateBySale} signalsBySale={signalsBySale} events={assignEvents} notes={acceptNotes} />
+          )}
           <CareTable data={data} name={name} userId={p.userId} all={p.viewAll || p.assign} />
 
           <H>Phân tích tín hiệu</H>

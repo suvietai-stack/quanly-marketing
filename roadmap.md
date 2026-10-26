@@ -1,3 +1,4 @@
+- [ ] Đối chiếu KPI tiếp nhận toàn bộ lịch sử bằng công thức chung; làm mới cache nguồn và kiểm tra hồi quy, không đổi timestamp. Kiểm tra UI đăng nhập đang chờ phiên người dùng.
 - [x] Cập nhật thời gian tiếp nhận tín hiệu — dùng công thức chung, bỏ Chủ nhật, loại mẫu nghỉ khỏi trung bình, giữ timestamp/bộ lọc; đủ 5 tình huống, 127 kiểm thử Tín hiệu/KPI đạt, build sạch; chưa Publish.
 - [x] Facebook Page đa BM — thêm business_management, gộp /me/accounts + owned_pages/client_pages phân trang, kiểm token đúng Page/Form/lead trước kết nối, hiển thị quyền và lỗi Meta; chẩn đoán Webhook chỉ đọc. 25 test đạt; token thật Page đang nối đọc lead được, không dùng cho Page khác; không đổi cron/Page/Form/dữ liệu.
 - [ ] Facebook Page Xưởng Gốm Sứ Việt — chờ OAuth mới của Phương Thảo để kiểm User Token/granular permissions và BM thực; User Token cũ không được lưu. Chờ đăng nhập Base để kiểm giao diện; đăng ký App Webhook Page/leadgen và lead thử thật trên Meta; chưa Publish.
