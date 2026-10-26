@@ -61,7 +61,14 @@ describe("fmtMinutes", () => {
   it("dưới 60 phút", () => expect(fmtMinutes(12)).toBe("12 phút"));
   it("từ 60 phút", () => expect(fmtMinutes(75)).toBe("1 giờ 15 phút"));
   it("tròn giờ", () => expect(fmtMinutes(120)).toBe("2 giờ"));
-  it("làm tròn", () => expect(fmtMinutes(10.4)).toBe("10 phút"));
+  it("giữ giây từ 1 phút", () => expect(fmtMinutes(10.4)).toBe("10 phút 24 giây"));
+  it("dưới 30 giây không hiển thị 0 phút", () => expect(fmtMinutes(0.49)).toBe("29 giây"));
+  it("dưới 1 phút hiển thị giây", () => expect(fmtMinutes(0.75)).toBe("45 giây"));
+  it("từ 1 phút có giây khi cần", () => expect(fmtMinutes(1.25)).toBe("1 phút 15 giây"));
+  it("giữ giây cùng giờ", () => expect(fmtMinutes(75.25)).toBe("1 giờ 15 phút 15 giây"));
+  it("mẫu dương dưới 1 giây không thành 0", () => expect(fmtMinutes(0.001)).toBe("<1 giây"));
+  it("không có mẫu hợp lệ", () => expect(fmtMinutes(null)).toBe("—"));
+  it("mốc giây làm tròn sang phút", () => expect(fmtMinutes(59.6 / 60)).toBe("1 phút"));
 });
 
 const ev = (signal_id: string, to: string | null, created_at: string) => ({ signal_id, kind: "assign", detail: { to }, created_at });
@@ -95,6 +102,18 @@ describe("acceptMinutes — đúng chu kỳ giao/tiếp nhận", () => {
 });
 
 describe("acceptStat — trung bình chỉ trên mẫu hợp lệ > 0", () => {
+  it("8 mẫu dưới phút giữ trung bình chính xác, không làm tròn từng mẫu", () => {
+    const seconds = [29.903, 19.739, 18.165, 32.49, 29.036, 41.078, 29.37, 15.694];
+    const signals = seconds.map((_, i) => ({ id: `s${i}`, assigned_to: "s" }));
+    const start = Date.parse("2026-10-01T09:00:00+07:00");
+    const events = signals.map((s) => ev(s.id, "s", new Date(start).toISOString()));
+    const notes = signals.map((s, i) => note(s.id, "s", new Date(start + seconds[i] * 1000).toISOString()));
+    const result = acceptStat(signals, events, notes);
+    expect(result.valid).toBe(8);
+    expect(result.accepted).toBe(8);
+    expect(result.avg).toBeCloseTo(26.934375 / 60, 12);
+    expect(fmtMinutes(result.avg)).toBe("27 giây");
+  });
   it("tính lại cả lịch sử trước cập nhật, loại Chủ nhật và ngoài giờ khỏi tử số/mẫu số", () => {
     // 2025-10-18 = Thứ Bảy; 2025-10-19 = Chủ nhật, trước khi quy tắc được cập nhật.
     const signals = ["sat", "sun", "night", "mon"].map((id) => ({ id, assigned_to: "s" }));

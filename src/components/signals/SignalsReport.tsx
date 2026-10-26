@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { careFlag, DEFAULT_CARE } from "@/lib/signals/care";
 import { zaloCareCounts } from "@/lib/zalo.functions";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SIGNAL_LOST_REASONS, SIGNAL_NEED_GROUPS, SIGNAL_PRODUCTS, SIGNAL_SOURCES, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import { filterSignals, groupBy, lostReasons, summarize, type ReportFilter, type Summary } from "@/lib/signals/report";
 import { errMsg, listAcceptNotes, listAssignEvents, listCareNotes } from "@/lib/signals/api";
@@ -229,9 +230,20 @@ function SaleTable({ rows, name, rates, signalsBySale, events, notes }: {
                 <td className="px-3 py-2 text-right whitespace-nowrap">
                   {r.rate == null ? "—" : `${r.rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`}
                 </td>
-                <td className="px-3 py-2 text-right whitespace-nowrap"
-                  title={r.acc.avg == null ? ACCEPT_HINT : `${ACCEPT_HINT}\nTrung bình ${fmtMinutes(r.acc.avg)} · ${r.acc.valid}/${r.acc.accepted} tín hiệu có thời gian hợp lệ.`}>
-                  {r.acc.avg == null ? "—" : fmtMinutes(r.acc.avg)}
+                <td className="px-3 py-2 text-right whitespace-nowrap">
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0} className="cursor-help">{fmtMinutes(r.acc.avg)}</span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm whitespace-normal space-y-1">
+                        <p>{r.acc.avg == null ? "Không có tín hiệu đủ điều kiện tính trung bình." : `Trung bình trước làm tròn: ${(r.acc.avg * 60).toLocaleString("vi-VN", { maximumFractionDigits: 12 })} giây (${r.acc.avg.toLocaleString("vi-VN", { maximumFractionDigits: 12 })} phút).`}</p>
+                        <p>{r.acc.valid}/{r.s.accepted} tín hiệu hợp lệ / đã tiếp nhận.</p>
+                        <p>{r.acc.accepted - r.acc.valid} tín hiệu có 0 phút làm việc; {Math.max(0, r.s.accepted - r.acc.accepted)} tín hiệu đã tiếp nhận thiếu hoặc sai mốc giao/nhận.</p>
+                        <p>{ACCEPT_HINT}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </td>
               </tr>
             ))}
