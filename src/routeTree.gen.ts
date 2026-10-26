@@ -49,6 +49,9 @@ import { Route as ApiPublicMetaLeadsWebhookRouteImport } from './routes/api/publ
 import { Route as ApiPublicMetaMaintainCronRouteImport } from './routes/api/public/meta/maintain-cron'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth-callback'
 import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
+import { Route as ApiPublicWfPingRouteImport } from './routes/api/public/wf/ping'
+import { Route as ApiPublicWfRegisterFormsRouteImport } from './routes/api/public/wf/register-forms'
+import { Route as ApiPublicWfSubmitRouteImport } from './routes/api/public/wf/submit'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
 import { Route as ApiPublicZaloDispatchCronRouteImport } from './routes/api/public/zalo/dispatch-cron'
 import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
@@ -257,6 +260,22 @@ const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
   path: '/api/public/push/dispatch',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWfPingRoute = ApiPublicWfPingRouteImport.update({
+  id: '/api/public/wf/ping',
+  path: '/api/public/wf/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWfRegisterFormsRoute =
+  ApiPublicWfRegisterFormsRouteImport.update({
+    id: '/api/public/wf/register-forms',
+    path: '/api/public/wf/register-forms',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWfSubmitRoute = ApiPublicWfSubmitRouteImport.update({
+  id: '/api/public/wf/submit',
+  path: '/api/public/wf/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicZaloCareCronRoute = ApiPublicZaloCareCronRouteImport.update({
   id: '/api/public/zalo/care-cron',
   path: '/api/public/zalo/care-cron',
@@ -321,6 +340,9 @@ export interface FileRoutesByFullPath {
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
+  '/api/public/wf/ping': typeof ApiPublicWfPingRoute
+  '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
+  '/api/public/wf/submit': typeof ApiPublicWfSubmitRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
@@ -367,6 +389,9 @@ export interface FileRoutesByTo {
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
+  '/api/public/wf/ping': typeof ApiPublicWfPingRoute
+  '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
+  '/api/public/wf/submit': typeof ApiPublicWfSubmitRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
@@ -414,6 +439,9 @@ export interface FileRoutesById {
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
+  '/api/public/wf/ping': typeof ApiPublicWfPingRoute
+  '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
+  '/api/public/wf/submit': typeof ApiPublicWfSubmitRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
   '/api/public/zalo/dispatch-cron': typeof ApiPublicZaloDispatchCronRoute
   '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
@@ -462,6 +490,9 @@ export interface FileRouteTypes {
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
+    | '/api/public/wf/ping'
+    | '/api/public/wf/register-forms'
+    | '/api/public/wf/submit'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
@@ -508,6 +539,9 @@ export interface FileRouteTypes {
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
+    | '/api/public/wf/ping'
+    | '/api/public/wf/register-forms'
+    | '/api/public/wf/submit'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
@@ -554,6 +588,9 @@ export interface FileRouteTypes {
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
+    | '/api/public/wf/ping'
+    | '/api/public/wf/register-forms'
+    | '/api/public/wf/submit'
     | '/api/public/zalo/care-cron'
     | '/api/public/zalo/dispatch-cron'
     | '/api/public/zalo/oauth-callback'
@@ -601,6 +638,9 @@ export interface RootRouteChildren {
   ApiPublicMetaMaintainCronRoute: typeof ApiPublicMetaMaintainCronRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
+  ApiPublicWfPingRoute: typeof ApiPublicWfPingRoute
+  ApiPublicWfRegisterFormsRoute: typeof ApiPublicWfRegisterFormsRoute
+  ApiPublicWfSubmitRoute: typeof ApiPublicWfSubmitRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
   ApiPublicZaloDispatchCronRoute: typeof ApiPublicZaloDispatchCronRoute
   ApiPublicZaloOauthCallbackRoute: typeof ApiPublicZaloOauthCallbackRoute
@@ -889,6 +929,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/wf/ping': {
+      id: '/api/public/wf/ping'
+      path: '/api/public/wf/ping'
+      fullPath: '/api/public/wf/ping'
+      preLoaderRoute: typeof ApiPublicWfPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/wf/register-forms': {
+      id: '/api/public/wf/register-forms'
+      path: '/api/public/wf/register-forms'
+      fullPath: '/api/public/wf/register-forms'
+      preLoaderRoute: typeof ApiPublicWfRegisterFormsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/wf/submit': {
+      id: '/api/public/wf/submit'
+      path: '/api/public/wf/submit'
+      fullPath: '/api/public/wf/submit'
+      preLoaderRoute: typeof ApiPublicWfSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/zalo/care-cron': {
       id: '/api/public/zalo/care-cron'
       path: '/api/public/zalo/care-cron'
@@ -961,6 +1022,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaMaintainCronRoute: ApiPublicMetaMaintainCronRoute,
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
+  ApiPublicWfPingRoute: ApiPublicWfPingRoute,
+  ApiPublicWfRegisterFormsRoute: ApiPublicWfRegisterFormsRoute,
+  ApiPublicWfSubmitRoute: ApiPublicWfSubmitRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
   ApiPublicZaloDispatchCronRoute: ApiPublicZaloDispatchCronRoute,
   ApiPublicZaloOauthCallbackRoute: ApiPublicZaloOauthCallbackRoute,
