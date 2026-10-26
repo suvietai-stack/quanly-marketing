@@ -1,6 +1,6 @@
 /**
  * TG tiếp nhận TB của Sale — chỉ tính thời gian trong khung 08:00–17:00 (giờ Việt Nam).
- * Giả định: áp dụng mọi ngày theo lịch, không trừ giờ nghỉ trưa (chưa có cấu hình lịch làm việc dùng chung).
+ * Thứ Hai đến Thứ Bảy; Chủ nhật nghỉ hoàn toàn. Không trừ giờ nghỉ trưa.
  * Mốc bắt đầu: sự kiện phân công (opportunity_signal_events kind=assign, detail.to = Sale).
  * Mốc kết thúc: nhật ký đầu tiên của chính Sale đó với status_from = "waiting" (bấm Tiếp nhận).
  */
@@ -31,6 +31,8 @@ export function businessMinutes(startIso: string | null | undefined, endIso: str
   let total = 0;
   const endKey = vnDateKey(e);
   for (let d = vnDateKey(s); d <= endKey; d = addDay(d)) {
+    // d is already the Vietnam calendar date; UTC here only determines its weekday.
+    if (new Date(`${d}T00:00:00Z`).getUTCDay() === 0) continue;
     const ws = Date.parse(`${d}T${WORK_START}${VN_OFFSET}`);
     const we = Date.parse(`${d}T${WORK_END}${VN_OFFSET}`);
     const a = Math.max(s, ws);

@@ -160,7 +160,7 @@ function Tbl({ title, first, rows, cols }: { title: string; first: string; rows:
   );
 }
 
-const ACCEPT_HINT = "Chỉ tính thời gian 08:00–17:00. Các tín hiệu tiếp nhận hoàn toàn ngoài giờ không tham gia tính trung bình.";
+const ACCEPT_HINT = "Chỉ tính thời gian 08:00–17:00 từ Thứ Hai đến Thứ Bảy, theo giờ Việt Nam; Chủ nhật nghỉ hoàn toàn. Tín hiệu không có phút làm việc giữa lúc giao và tiếp nhận không tham gia tính trung bình.";
 
 /** Bảng Hiệu quả Sale: giữ nguyên các cột hiện có, thêm Tỷ lệ chốt và TG tiếp nhận TB (có sắp xếp). */
 function SaleTable({ rows, name, rates, signalsBySale, events, notes }: {

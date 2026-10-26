@@ -33,9 +33,27 @@ describe("businessMinutes — khung 08:00–17:00 giờ VN", () => {
     expect(businessMinutes(null, vn("2026-10-19", "09:00"))).toBeNull();
     expect(businessMinutes(vn("2026-10-19", "09:00"), null)).toBeNull();
   });
-  it("kéo dài nhiều ngày: 16:00 thứ 6 → 09:00 thứ 2 = 60 + 540 + 540 + 60 phút", () => {
-    // 16:00–17:00 (60) + thứ 7 (540) + Chủ nhật (540) + 08:00–09:00 (60) — tính mọi ngày theo lịch
-    expect(businessMinutes(vn("2026-10-16", "16:00"), vn("2026-10-19", "09:00"))).toBe(1200);
+  it("kéo dài nhiều ngày: 16:00 thứ 6 → 09:00 thứ 2 = 60 + 540 + 60 phút", () => {
+    // Thứ 6 (60) + thứ 7 (540) + Chủ nhật nghỉ (0) + thứ 2 (60).
+    expect(businessMinutes(vn("2026-10-16", "16:00"), vn("2026-10-19", "09:00"))).toBe(660);
+  });
+  it("Thứ 7 16:50 → Thứ 2 08:10 = 20 phút", () => {
+    expect(businessMinutes(vn("2026-10-17", "16:50"), vn("2026-10-19", "08:10"))).toBe(20);
+  });
+  it("Chủ nhật 10:00 → Thứ 2 08:15 = 15 phút", () => {
+    expect(businessMinutes(vn("2026-10-18", "10:00"), vn("2026-10-19", "08:15"))).toBe(15);
+  });
+  it("Chủ nhật không tính phút nào, kể cả trong khung 08:00–17:00", () => {
+    expect(businessMinutes(vn("2026-10-18", "08:00"), vn("2026-10-18", "17:00"))).toBe(0);
+  });
+  it("Thứ 2 18:00 → Thứ 3 08:20 = 20 phút", () => {
+    expect(businessMinutes(vn("2026-10-19", "18:00"), vn("2026-10-20", "08:20"))).toBe(20);
+  });
+  it("Thứ 2 09:00 → Thứ 2 09:15 = 15 phút", () => {
+    expect(businessMinutes(vn("2026-10-19", "09:00"), vn("2026-10-19", "09:15"))).toBe(15);
+  });
+  it("xác định Chủ nhật theo giờ VN khi ngày UTC vẫn là Thứ 7", () => {
+    expect(businessMinutes("2026-10-17T18:00:00Z", "2026-10-19T01:15:00Z")).toBe(15);
   });
 });
 
@@ -77,6 +95,22 @@ describe("acceptMinutes — đúng chu kỳ giao/tiếp nhận", () => {
 });
 
 describe("acceptStat — trung bình chỉ trên mẫu hợp lệ > 0", () => {
+  it("Chủ nhật 20:00 → 21:00 bị loại khỏi trung bình, không làm giảm mẫu 15 phút", () => {
+    const signals = [{ id: "sun", assigned_to: "s" }, { id: "mon", assigned_to: "s" }];
+    const events = [ev("sun", "s", vn("2026-10-18", "20:00")), ev("mon", "s", vn("2026-10-19", "09:00"))];
+    const notes = [note("sun", "s", vn("2026-10-18", "21:00")), note("mon", "s", vn("2026-10-19", "09:15"))];
+    expect(acceptStat(signals, events, notes)).toEqual({ avg: 15, valid: 1, accepted: 2 });
+    expect(acceptStat(signals.slice(0, 1), events, notes)).toEqual({ avg: null, valid: 0, accepted: 1 });
+  });
+  it("chỉ tổng hợp tập tín hiệu đang lọc và không sửa mốc giao/tiếp nhận", () => {
+    const signals = [{ id: "sat", assigned_to: "s" }, { id: "sun", assigned_to: "s" }];
+    const events = [ev("sat", "s", vn("2026-10-17", "16:50")), ev("sun", "s", vn("2026-10-18", "10:00"))];
+    const notes = [note("sat", "s", vn("2026-10-19", "08:10")), note("sun", "s", vn("2026-10-19", "08:15"))];
+    const original = JSON.stringify({ signals, events, notes });
+    expect(acceptStat(signals, events, notes)).toEqual({ avg: 17.5, valid: 2, accepted: 2 });
+    expect(acceptStat(signals.filter((s) => s.id === "sun"), events, notes)).toEqual({ avg: 15, valid: 1, accepted: 1 });
+    expect(JSON.stringify({ signals, events, notes })).toBe(original);
+  });
   it("(10 + 20) / 2 = 15, tín hiệu ngoài giờ không chia vào trung bình", () => {
     const signals = [{ id: "a", assigned_to: "s" }, { id: "b", assigned_to: "s" }, { id: "c", assigned_to: "s" }];
     const events = [
