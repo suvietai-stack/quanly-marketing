@@ -42,13 +42,16 @@ export function businessMinutes(startIso: string | null | undefined, endIso: str
   return total;
 }
 
-/** Định dạng phút: dưới 60 → "12 phút"; từ 60 → "1 giờ 15 phút" / "2 giờ". */
-export function fmtMinutes(min: number): string {
-  const m = Math.round(min);
-  if (m < 60) return `${m} phút`;
-  const h = Math.floor(m / 60);
-  const r = m % 60;
-  return r ? `${h} giờ ${r} phút` : `${h} giờ`;
+/** Chỉ làm tròn lúc hiển thị, đến giây; không làm mất mẫu dương dưới một phút. */
+export function fmtMinutes(min: number | null): string {
+  if (min == null || !Number.isFinite(min) || min < 0) return "—";
+  if (min > 0 && min * 60 < 1) return "<1 giây";
+  const seconds = Math.round(min * 60);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const parts = [h ? `${h} giờ` : "", m ? `${m} phút` : "", s ? `${s} giây` : ""].filter(Boolean);
+  return parts.join(" ") || "0 giây";
 }
 
 export interface AssignEventRow { signal_id: string; kind: string; detail: any; created_at: string }
