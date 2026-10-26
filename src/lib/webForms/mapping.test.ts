@@ -23,22 +23,22 @@ describe("validateMapping", () => {
   it("báo lỗi khi thiếu trường bắt buộc", () => {
     const errs = validateMapping({ customer_name: { mode: "empty" } }, fields, cat, SRC);
     expect(errs.join()).toContain("Khách hàng");
-    expect(errs.join()).toContain("SĐT");
+    expect(errs.join()).toContain("Số điện thoại");
   });
   it("báo lỗi khi trường nguồn không còn trong Form", () => {
     const m: Mapping = { ...base, customer_name: { mode: "website", key: "gone" } };
-    expect(validateMapping(m, fields, cat, SRC).join()).toContain("không có trong Form");
+    expect(validateMapping(m, fields, cat, SRC).join()).toContain("không còn trong Form");
   });
   it("báo lỗi khi giá trị mặc định ngoài danh mục", () => {
     const m: Mapping = { ...base, products: { mode: "default", value: ["Lạ"] } };
-    expect(validateMapping(m, fields, cat, SRC).join()).toContain("ngoài danh mục");
+    expect(validateMapping(m, fields, cat, SRC).join()).toContain("không còn trong danh mục");
   });
   it("báo lỗi khi Website chưa chọn nguồn", () => {
     expect(validateMapping(base, fields, cat, null).join()).toContain("Nguồn tín hiệu");
   });
   it("compose phải có ít nhất một trường", () => {
     const m: Mapping = { ...base, need_detail: { mode: "compose", keys: [] } };
-    expect(validateMapping(m, fields, cat, SRC).join()).toContain("ít nhất một trường");
+    expect(validateMapping(m, fields, cat, SRC).join()).toContain("chưa chọn trường để ghép");
   });
 });
 
@@ -72,7 +72,7 @@ describe("applyMapping", () => {
   it("chế độ empty cho giá trị mặc định rỗng", () => {
     const m: Mapping = { ...base, address: { mode: "empty" } };
     const r = applyMapping(m, { name: "A", phone: "0912345678" }, fields, cat, SRC, "2026-10-26T00:00:00Z");
-    expect(r.ok && r.draft.address).toBe("");
+    expect(r.ok && r.draft.address).toBeNull();
   });
 });
 
