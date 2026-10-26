@@ -121,7 +121,7 @@ export function applyMapping(m: Mapping, data: SubmissionData, fields: FormField
   } };
 }
 
-const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+const fold = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
 const HINTS: { key: FieldKey; keys: string[]; words: string[] }[] = [
   { key: "customer_name", keys: ["company", "company_name", "full_name", "name", "your_name"], words: ["cong ty", "don vi", "ho ten", "ten khach", "ho va ten", "ten"] },
   { key: "phone", keys: ["phone", "phone_number", "mobile", "tel"], words: ["dien thoai", "sdt", "so dt", "zalo"] },
