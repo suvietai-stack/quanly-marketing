@@ -135,7 +135,7 @@ export const wfEvents = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertManage(context);
     const db = await admin();
-    let q = db.from("wf_events").select("id,website_id,form_id,variant,submission_id,page_url,sent_at,received_at,processed_at,status,error,attempts,signal_id,source,payload").order("received_at", { ascending: false }).limit(200);
+    let q = db.from("wf_events").select("id,website_id,form_id,variant,submission_id,page_url,sent_at,received_at,processed_at,status,error,attempts,signal_id,source,payload,lease_until,next_retry_at").order("received_at", { ascending: false }).limit(200);
     if (data.websiteId) q = q.eq("website_id", data.websiteId);
     if (data.formId) q = q.eq("form_id", data.formId);
     if (data.status) q = q.eq("status", data.status);
@@ -143,8 +143,9 @@ export const wfEvents = createServerFn({ method: "POST" })
     if (data.to) q = q.lte("received_at", data.to);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
+    const { liveState } = await import("./wf.server");
     // Không trả dữ liệu cá nhân ra trình duyệt — chỉ báo có/không để hiện nút Thử lại.
-    return (rows ?? []).map(({ payload, ...r }: any) => ({ ...r, has_payload: payload != null }));
+    return (rows ?? []).map(({ payload, ...r }: any) => ({ ...r, has_payload: payload != null, state: liveState(r) }));
   });
 
 export const wfRetry = createServerFn({ method: "POST" })

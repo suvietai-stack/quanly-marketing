@@ -214,7 +214,17 @@ export async function intakeSubmission(websiteId: string, input: z.infer<typeof 
   if (error) throw new Error(`db ${error.code}`);
   const eventId = ins?.[0]?.id as string | undefined;
   if (!eventId) {
-    const { data: existing } = await db.from("wf_events").select("id,status,signal_id").eq("website_id", websiteId).eq("submission_id", input.submission_id).maybeSingle();
+    const { data: existing } = await db.from("wf_events").select("id,status,signal_id,payload,lease_until").eq("website_id", websiteId).eq("submission_id", input.submission_id).maybeSingle();
+    // Plugin gửi lại vì lần trước bị ngắt giữa chừng: xử lý tiếp chính event cũ (claim có khóa dòng nên không tạo trùng).
+    if (existing && !existing.signal_id && existing.payload != null && ["pending", "failed"].includes(existing.status)) {
+      const st = await processEvent(existing.id);
+      if (st === "success") {
+        const { data: ev } = await db.from("wf_events").select("signal_id").eq("id", existing.id).single();
+        return { code: "accepted", eventId: existing.id, signalId: ev?.signal_id ?? undefined };
+      }
+      if (st === "needs_action") return { code: "mapping_invalid", eventId: existing.id };
+      if (st === "failed") return { code: "retry_later", eventId: existing.id };
+    }
     return { code: "duplicate", eventId: existing?.id, signalId: existing?.signal_id ?? undefined };
   }
   if (!keepPayload) return { code: "form_disabled", eventId };
@@ -228,10 +238,48 @@ export async function intakeSubmission(websiteId: string, input: z.infer<typeof 
   return { code: "retry_later", eventId };
 }
 
-/** Thử lại thủ công từ Lịch sử. */
+export const MAX_ATTEMPTS = 10;
+/** Pending không ai giữ lease quá thời gian này coi như bị kẹt (request bị ngắt sau khi nhận việc). */
+export const STALE_PENDING_MS = 60_000;
+
+/** Trạng thái hiển thị: tách đang xử lý / kẹt / chờ retry / cần can thiệp. */
+export function liveState(r: { status: string; signal_id?: string | null; lease_until?: string | null; next_retry_at?: string | null; received_at: string; attempts?: number }, now = Date.now()) {
+  if (r.signal_id || r.status === "success") return "success";
+  const leased = r.lease_until && new Date(r.lease_until).getTime() > now;
+  if (leased) return "processing";
+  if (r.status === "pending") return now - new Date(r.received_at).getTime() > STALE_PENDING_MS || r.lease_until ? "stuck" : "processing";
+  if (r.status === "failed") return (r.attempts ?? 0) >= MAX_ATTEMPTS ? "needs_action" : "retry_wait";
+  return r.status;
+}
+
+/** Lịch chạy nền: phục hồi pending bị kẹt và retry failed đến hạn. Idempotent. */
+export async function recoverEvents(limit = 20) {
+  const db = await admin();
+  const now = new Date().toISOString();
+  const staleBefore = new Date(Date.now() - STALE_PENDING_MS).toISOString();
+  // Hết lượt thử: chuyển sang "Cần xử lý" thay vì treo vô thời hạn.
+  await db.from("wf_events").update({ status: "needs_action", error: `Đã thử ${MAX_ATTEMPTS} lần không thành công — cần kiểm tra`, processed_at: now, next_retry_at: null })
+    .is("signal_id", null).in("status", ["pending", "failed"]).gte("attempts", MAX_ATTEMPTS).or(`lease_until.is.null,lease_until.lte.${now}`);
+  const { data: stuck } = await db.from("wf_events").select("id").is("signal_id", null).eq("status", "pending").not("payload", "is", null)
+    .lt("received_at", staleBefore).or(`lease_until.is.null,lease_until.lte.${now}`).order("received_at").limit(limit);
+  const { data: due } = await db.from("wf_events").select("id").is("signal_id", null).eq("status", "failed").not("payload", "is", null)
+    .lte("next_retry_at", now).or(`lease_until.is.null,lease_until.lte.${now}`).order("next_retry_at").limit(limit);
+  const results: Record<string, string> = {};
+  for (const r of [...(stuck ?? []), ...(due ?? [])]) {
+    try { results[r.id] = await processEvent(r.id); } catch { results[r.id] = "error"; }
+  }
+  return { checked: Object.keys(results).length, results };
+}
+
+/** Thử lại thủ công từ Lịch sử — không đụng event đang được xử lý hợp lệ. */
 export async function retryEvent(id: string): Promise<string> {
   const db = await admin();
   const now = new Date().toISOString();
+  const { data: ev } = await db.from("wf_events").select("signal_id,lease_until,payload").eq("id", id).maybeSingle();
+  if (!ev) throw new Error("Không tìm thấy submission");
+  if (ev.signal_id) return "success";
+  if (ev.lease_until && ev.lease_until > now) return "busy";
+  if (ev.payload == null) throw new Error("Submission này không lưu dữ liệu (Form tắt khi nhận) nên không thể thử lại");
   const { error } = await db.from("wf_events").update({ attempts: 0, status: "pending", next_retry_at: null, error: null })
     .eq("id", id).is("signal_id", null).or(`lease_until.is.null,lease_until.lte.${now}`);
   if (error) throw new Error("Không đưa được submission vào hàng đợi thử lại");

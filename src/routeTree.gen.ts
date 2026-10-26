@@ -50,6 +50,7 @@ import { Route as ApiPublicMetaMaintainCronRouteImport } from './routes/api/publ
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth-callback'
 import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
 import { Route as ApiPublicWfPingRouteImport } from './routes/api/public/wf/ping'
+import { Route as ApiPublicWfRecoverCronRouteImport } from './routes/api/public/wf/recover-cron'
 import { Route as ApiPublicWfRegisterFormsRouteImport } from './routes/api/public/wf/register-forms'
 import { Route as ApiPublicWfSubmitRouteImport } from './routes/api/public/wf/submit'
 import { Route as ApiPublicZaloCareCronRouteImport } from './routes/api/public/zalo/care-cron'
@@ -265,6 +266,11 @@ const ApiPublicWfPingRoute = ApiPublicWfPingRouteImport.update({
   path: '/api/public/wf/ping',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWfRecoverCronRoute = ApiPublicWfRecoverCronRouteImport.update({
+  id: '/api/public/wf/recover-cron',
+  path: '/api/public/wf/recover-cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWfRegisterFormsRoute =
   ApiPublicWfRegisterFormsRouteImport.update({
     id: '/api/public/wf/register-forms',
@@ -341,6 +347,7 @@ export interface FileRoutesByFullPath {
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/wf/ping': typeof ApiPublicWfPingRoute
+  '/api/public/wf/recover-cron': typeof ApiPublicWfRecoverCronRoute
   '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
   '/api/public/wf/submit': typeof ApiPublicWfSubmitRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -390,6 +397,7 @@ export interface FileRoutesByTo {
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/wf/ping': typeof ApiPublicWfPingRoute
+  '/api/public/wf/recover-cron': typeof ApiPublicWfRecoverCronRoute
   '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
   '/api/public/wf/submit': typeof ApiPublicWfSubmitRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -440,6 +448,7 @@ export interface FileRoutesById {
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
   '/api/public/wf/ping': typeof ApiPublicWfPingRoute
+  '/api/public/wf/recover-cron': typeof ApiPublicWfRecoverCronRoute
   '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
   '/api/public/wf/submit': typeof ApiPublicWfSubmitRoute
   '/api/public/zalo/care-cron': typeof ApiPublicZaloCareCronRoute
@@ -491,6 +500,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
     | '/api/public/wf/ping'
+    | '/api/public/wf/recover-cron'
     | '/api/public/wf/register-forms'
     | '/api/public/wf/submit'
     | '/api/public/zalo/care-cron'
@@ -540,6 +550,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
     | '/api/public/wf/ping'
+    | '/api/public/wf/recover-cron'
     | '/api/public/wf/register-forms'
     | '/api/public/wf/submit'
     | '/api/public/zalo/care-cron'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
     | '/api/public/wf/ping'
+    | '/api/public/wf/recover-cron'
     | '/api/public/wf/register-forms'
     | '/api/public/wf/submit'
     | '/api/public/zalo/care-cron'
@@ -639,6 +651,7 @@ export interface RootRouteChildren {
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
   ApiPublicWfPingRoute: typeof ApiPublicWfPingRoute
+  ApiPublicWfRecoverCronRoute: typeof ApiPublicWfRecoverCronRoute
   ApiPublicWfRegisterFormsRoute: typeof ApiPublicWfRegisterFormsRoute
   ApiPublicWfSubmitRoute: typeof ApiPublicWfSubmitRoute
   ApiPublicZaloCareCronRoute: typeof ApiPublicZaloCareCronRoute
@@ -936,6 +949,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWfPingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/wf/recover-cron': {
+      id: '/api/public/wf/recover-cron'
+      path: '/api/public/wf/recover-cron'
+      fullPath: '/api/public/wf/recover-cron'
+      preLoaderRoute: typeof ApiPublicWfRecoverCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/wf/register-forms': {
       id: '/api/public/wf/register-forms'
       path: '/api/public/wf/register-forms'
@@ -1023,6 +1043,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
   ApiPublicWfPingRoute: ApiPublicWfPingRoute,
+  ApiPublicWfRecoverCronRoute: ApiPublicWfRecoverCronRoute,
   ApiPublicWfRegisterFormsRoute: ApiPublicWfRegisterFormsRoute,
   ApiPublicWfSubmitRoute: ApiPublicWfSubmitRoute,
   ApiPublicZaloCareCronRoute: ApiPublicZaloCareCronRoute,
