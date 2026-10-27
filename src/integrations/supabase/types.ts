@@ -4025,6 +4025,8 @@ export type Database = {
         Returns: boolean
       }
       wf_rate_hit: { Args: { p_website: string }; Returns: number }
+      zalo_queue_has_work: { Args: never; Returns: boolean }
+      zalo_queue_tick: { Args: never; Returns: undefined }
       zalo_refresh_claim: {
         Args: { p_lease: string; p_version: number }
         Returns: boolean

@@ -470,6 +470,13 @@
       "when": 1793085345977,
       "tag": "0066_zalo_token_rotation_health",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1793085519973,
+      "tag": "0067_zalo_queue_wake_retries",
+      "breakpoints": true
     }
   ]
 }
