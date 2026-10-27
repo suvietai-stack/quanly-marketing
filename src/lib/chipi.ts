@@ -13,3 +13,8 @@ export function chipiState(n?: ChipiNotice): ChipiState {
 export function newChipiNotice(notices: ChipiNotice[], seen: Set<string>): ChipiNotice | undefined {
   return notices.find((n) => !n.read_at && !seen.has(n.id));
 }
+
+/** Acknowledging a bubble does not mark its notification read. */
+export function currentChipiNotice(notices: ChipiNotice[], previousId?: string): ChipiNotice | undefined {
+  return notices.find((n) => n.id === previousId && !n.read_at) ?? notices.find((n) => !n.read_at);
+}

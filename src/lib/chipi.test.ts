@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chipiState, newChipiNotice, type ChipiNotice } from "./chipi";
+import { chipiState, newChipiNotice, currentChipiNotice, type ChipiNotice } from "./chipi";
 const n = (kind: string, read_at: string | null = null): ChipiNotice => ({ id: kind, kind, read_at, created_at: "2026-10-27T09:00:00Z" });
 describe("Chipi existing notifications", () => {
   it("uses only unread notifications for reminders", () => expect(newChipiNotice([n("signal_new", "2026-10-27")], new Set())).toBeUndefined());
@@ -9,4 +9,7 @@ describe("Chipi existing notifications", () => {
   it("maps recorded success, not inferred task completion", () => expect(chipiState(n("oq_done"))).toBe("success"));
   it("does not infer overdue from notification age", () => expect(chipiState(n("order_remind"))).toBe("notification"));
   it("returns idle when there is no unread event", () => expect(chipiState(n("signal_assigned", "2026-10-27"))).toBe("idle"));
+  it("keeps unread state after reload even if its bubble was seen", () => expect(currentChipiNotice([n("signal_assigned")])?.id).toBe("signal_assigned"));
+  it("moves to the next unread notification when the current one is read", () => expect(currentChipiNotice([n("signal_assigned", "2026-10-27"), n("order_assigned")], "signal_assigned")?.id).toBe("order_assigned"));
+  it("clears state once every notification is read", () => expect(currentChipiNotice([n("order_assigned", "2026-10-27")], "order_assigned")).toBeUndefined());
 });

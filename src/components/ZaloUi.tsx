@@ -58,17 +58,20 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
   const [open, setOpen] = useState(false);
   const [showLink, setShowLink] = useState(false);
   const [showPush, setShowPush] = useState(false);
-  const { data = [] } = useQuery({
+  const { data: notifications } = useQuery({
     queryKey: ["notifications", uid],
     enabled: !!uid,
-    refetchInterval: 60_000,
+    // Chipi observes the same cache; existing header/sidebar bells own polling.
+    refetchInterval: onNotifications ? false : 60_000,
+    staleTime: onNotifications ? 60_000 : 0,
     queryFn: async () => {
       const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,ot_order_id,bank_tx_id,payload,read_at,created_at")
         .eq("recipient_id", uid).order("created_at", { ascending: false }).limit(30);
       return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; attendance_id: string | null; content_id: string | null; order_id: string | null; oq_flow_id: string | null; ot_order_id: string | null; bank_tx_id: string | null; payload: any; read_at: string | null; created_at: string }[];
     },
   });
-  useEffect(() => { if (uid && onNotifications) onNotifications(data); }, [data, uid, onNotifications]);
+  const data = notifications ?? [];
+  useEffect(() => { if (uid && onNotifications && notifications) onNotifications(notifications); }, [notifications, uid, onNotifications]);
   if (!uid) return null;
   const unread = data.filter((n) => !n.read_at).length;
   const openOne = async (n: (typeof data)[number]) => {
