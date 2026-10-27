@@ -373,6 +373,90 @@ function Stat({ label, v, onClick, tone }: { label: string; v: number; onClick?:
   );
 }
 
+/** Hàng chip lọc nhanh có nhãn; quá nhiều lựa chọn thì gọn lại sau "Xem thêm". */
+function ChipRow({ label, items, active, onPick, extra, max = 6 }: {
+  label: string; items: { k: string; label: string; n: number }[]; active: string; onPick: (k: string) => void; extra?: React.ReactNode; max?: number;
+}) {
+  const [more, setMore] = useState(false);
+  const shown = more ? items : items.slice(0, max);
+  return (
+    <div className="flex items-start gap-2">
+      <span className="shrink-0 pt-1.5 text-xs font-medium text-muted-foreground w-24">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {shown.map((x) => (
+          <button key={x.k || "all"} onClick={() => onPick(x.k)}
+            className={cn("shrink-0 rounded-full border px-3 py-1 text-[13px]", active === x.k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-background hover:bg-muted/60")}>
+            {x.label} <span className="opacity-70">{x.n}</span>
+          </button>
+        ))}
+        {items.length > max && (
+          <button onClick={() => setMore((v) => !v)} className="shrink-0 rounded-full border border-dashed px-3 py-1 text-[13px] text-muted-foreground">
+            {more ? "Thu gọn" : `Xem thêm (${items.length - max})`}
+          </button>
+        )}
+        {extra}
+      </div>
+    </div>
+  );
+}
+
+/** Vùng hiển thị các điều kiện đang áp dụng (có thể gỡ từng cái) + nút Xóa lọc. */
+function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string | null) => string; onChange: (f: ListFilter) => void }) {
+  const timeLabel: Record<string, string> = { today: "Hôm nay", "7d": "7 ngày", month: "Tháng này", custom: "Tùy chỉnh" };
+  const chips: { key: keyof ListFilter; label: string }[] = [];
+  if (f.time) chips.push({ key: "time", label: `Thời gian: ${timeLabel[f.time] ?? f.time}${f.time === "custom" && (f.from || f.to) ? ` ${f.from ?? "…"}→${f.to ?? "…"}` : ""}` });
+  if (f.source) chips.push({ key: "source", label: `Nguồn: ${f.source}` });
+  if (f.product) chips.push({ key: "product", label: `Sản phẩm: ${f.product}` });
+  if (f.lostReason) chips.push({ key: "lostReason", label: `Lý do trượt: ${f.lostReason}` });
+  if (f.saleId) chips.push({ key: "saleId", label: `Sale: ${name(f.saleId)}` });
+  if (f.creatorId) chips.push({ key: "creatorId", label: `Người tạo: ${name(f.creatorId)}` });
+  if (f.unassigned) chips.push({ key: "unassigned", label: "Chưa phân công" });
+  if (f.cancelled) chips.push({ key: "cancelled", label: "Đã hủy" });
+  if (chips.length === 0) return null;
+  const clear = (k: keyof ListFilter) => onChange({ ...f, [k]: undefined, ...(k === "time" ? { from: undefined, to: undefined } : {}) });
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-t pt-2.5">
+      <span className="text-xs text-muted-foreground">Đang lọc:</span>
+      {chips.map((c) => (
+        <button key={c.key} onClick={() => clear(c.key)} title="Bấm để gỡ điều kiện"
+          className="rounded-full bg-primary/10 text-primary px-2.5 py-1 text-xs font-medium hover:bg-primary/20">
+          {c.label} ×
+        </button>
+      ))}
+      <button onClick={() => onChange({ ...emptyFilter(), q: f.q })} className="text-xs text-muted-foreground underline ml-1">Xóa lọc</button>
+    </div>
+  );
+}
+
+/** Combobox có tìm kiếm — dùng cho Sale phụ trách / Người tạo thay vì danh sách dài. */
+function SearchPick({ value, onChange, opts, placeholder }: { value?: string; onChange: (v: string) => void; opts: [string, string][]; placeholder: string }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const current = opts.find(([v]) => v === value)?.[1];
+  const shown = opts.filter(([, l]) => l.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="h-11 w-full rounded-md border bg-background px-3 text-sm text-left flex items-center justify-between gap-2">
+        <span className={cn("truncate", !current && "text-muted-foreground")}>{current ?? placeholder}</span>
+        <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover p-2 shadow-md space-y-1.5">
+          <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm theo tên…" className="h-9" />
+          <div className="max-h-44 overflow-y-auto space-y-0.5">
+            <button type="button" onClick={() => { onChange(""); setOpen(false); }} className={cn("w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted", !value && "font-medium text-primary")}>Tất cả</button>
+            {shown.map(([v, l]) => (
+              <button type="button" key={v} onClick={() => { onChange(v); setOpen(false); setQ(""); }}
+                className={cn("w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted", v === value && "font-medium text-primary")}>{l}</button>
+            ))}
+            {shown.length === 0 && <p className="px-2 py-1.5 text-xs text-muted-foreground">Không có kết quả.</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const emptyInput = (): SignalInput => ({ detected_on: todayKey(), customer_name: "", phone: "", address: null, need_detail: null, products: [], need_group: null, need_groups: [], source: "", marketing_note: null });
 
 function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: string; onDone: () => void }) {
