@@ -257,25 +257,25 @@ export function SignalsPage() {
                 </button>
               ))}
             </div>
-            <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
+            <div className="hidden md:block rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Chi tiết nhu cầu", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
+                <thead className="bg-primary/5 text-left text-xs text-muted-foreground">
+                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Chi tiết nhu cầu", ""].map((h) => <th key={h} className="px-4 py-2.5 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {list.map((s) => (
-                    <tr key={s.id} className="border-t hover:bg-muted/30">
-                      <td className="px-3 py-2 whitespace-nowrap">{fmtDate(s.detected_on)}</td>
-                      <td className="px-3 py-2"><div className="font-medium">{s.customer_name}</div><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
-                      <td className="px-3 py-2 max-w-[180px] truncate">{needGroupsOf(s).join(", ") || s.products.join(", ") || "—"}</td>
-                      <td className="px-3 py-2">{s.source}</td>
-                      <td className="px-3 py-2">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
-                      <td className="px-3 py-2"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
-                      <td className="px-3 py-2 max-w-[200px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
-                      <td className="px-3 py-2 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
+                    <tr key={s.id} className="border-t hover:bg-primary/[0.03] transition-colors">
+                      <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{fmtDate(s.detected_on)}</td>
+                      <td className="px-4 py-2.5 min-w-[160px]"><div className="font-medium">{s.customer_name}</div><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
+                      <td className="px-4 py-2.5 max-w-[180px] truncate">{needGroupsOf(s).join(", ") || s.products.join(", ") || "—"}</td>
+                      <td className="px-4 py-2.5 whitespace-nowrap">{s.source}</td>
+                      <td className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
+                      <td className="px-4 py-2.5"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
+                      <td className="px-4 py-2.5 max-w-[200px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
+                      <td className="px-4 py-2.5 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
                         ? <div className="line-clamp-2 whitespace-pre-line" title={s.need_detail}>{s.need_detail}</div>
                         : <span className="text-muted-foreground">—</span>}</td>
-                      <td className="px-3 py-2 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
+                      <td className="px-4 py-2.5 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -343,8 +343,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
           <Field label="Nhóm nhu cầu"><Pick value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={needOpts.names.map((x) => [x, x])} /></Field>
           <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={lr.all.map((x) => [x, x])} /></Field>
           {showPeople && <>
-            <Field label="Sale phụ trách"><Pick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} /></Field>
-            <Field label="Người tạo"><Pick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} /></Field>
+            <Field label="Sale phụ trách"><SearchPick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} placeholder="Tất cả Sale" /></Field>
+            <Field label="Người tạo"><SearchPick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} placeholder="Tất cả người tạo" /></Field>
             <label className="col-span-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="h-4 w-4" checked={!!f.unassigned} onChange={(e) => set("unassigned", e.target.checked)} />
               Chỉ tín hiệu chưa phân công
