@@ -114,7 +114,8 @@ export async function maintainOa() {
 export async function checkConnection() {
   const token = await getAccessToken();
   if (!token) return { ok: false, message: "Chưa kết nối hoặc kết nối đã hết hiệu lực" };
-  const j = await refreshOaInfo(token);
+  let j = await refreshOaInfo(token);
+  if (Number(j.error) === -216) { const renewed = await getAccessToken(true); if (renewed) j = await refreshOaInfo(renewed); }
   return j.error === 0 ? { ok: true, message: `Kết nối tốt: ${j.data?.name ?? "OA"}` } : { ok: false, message: `Zalo trả lỗi ${j.error}: ${j.message ?? ""}` };
 }
 
@@ -161,7 +162,7 @@ export async function sendCs(zaloUserId: string, text: string, link: string, opt
   if (a.j.error === 0) return { ok: true, code: 0, message: "", messageId: a.j.data?.message_id ?? null };
   // Mất kết nối/timeout: không biết Zalo đã nhận hay chưa → KHÔNG gửi tiếp để tránh trùng
   if (a.netErr) return { ok: false, code: -9, message: "Mất kết nối khi gửi — không rõ Zalo đã nhận", ambiguous: true };
-  if (![ -204 ].includes(Number(a.j.error))) return { ok: false, code: Number(a.j.error ?? -2), message: `Zalo từ chối gửi (${Number(a.j.error ?? -2)})` };
+  if (![-204, -320].includes(Number(a.j.error))) return { ok: false, code: Number(a.j.error ?? -2), message: `Zalo từ chối gửi (${Number(a.j.error ?? -2)})` };
   if (!token) return { ok: false, code: -1, message: "Chưa phục hồi Token OA" };
   // Dự phòng: tin văn bản thuần nếu mẫu có nút bị Zalo từ chối (đã có phản hồi lỗi rõ ràng)
   const b = await postCs(token, { recipient: { user_id: zaloUserId }, message: { text: `${header}\n${text}\n\n👉 ${button}:\n${link}` } });
