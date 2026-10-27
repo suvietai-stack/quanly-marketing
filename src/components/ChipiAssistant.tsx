@@ -3,7 +3,7 @@ import { Bell, ChevronDown, ChevronUp, EyeOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell, NOTIFICATION_LABEL } from "@/components/ZaloUi";
 import { chipiAssets } from "@/assets/chipi/states";
-import { chipiState, newChipiNotice, type ChipiNotice } from "@/lib/chipi";
+import { chipiState, currentChipiNotice, newChipiNotice, type ChipiNotice } from "@/lib/chipi";
 
 export function ChipiAssistant({ userId }: { userId: string }) {
   const [mode, setMode] = useState<"full" | "small" | "hidden">("full");
@@ -21,6 +21,7 @@ export function ChipiAssistant({ userId }: { userId: string }) {
       const saved = JSON.parse(sessionStorage.getItem(key) ?? "{}");
       if (["full", "small", "hidden"].includes(saved.mode)) setMode(saved.mode);
       seen.current = new Set(Array.isArray(saved.seen) ? saved.seen : []);
+      lastBubble.current = typeof saved.lastBubble === "number" ? saved.lastBubble : 0;
       setHello(!saved.visited);
     } catch { /* Storage can be unavailable. */ }
     setReady(true);
@@ -30,13 +31,13 @@ export function ChipiAssistant({ userId }: { userId: string }) {
 
   useEffect(() => {
     if (!ready) return;
-    try { sessionStorage.setItem(key, JSON.stringify({ mode, visited: true, seen: [...seen.current].slice(-100) })); } catch { /* Session-only preference. */ }
+    try { sessionStorage.setItem(key, JSON.stringify({ mode, visited: true, lastBubble: lastBubble.current, seen: [...seen.current].slice(-100) })); } catch { /* Session-only preference. */ }
   }, [key, mode, ready, notice]);
 
   const onNotifications = useCallback((data: ChipiNotice[]) => {
     const fresh = newChipiNotice(data, seen.current);
-    data.forEach((n) => seen.current.add(n.id));
-    if (!fresh) { setNotice((old) => data.find((n) => n.id === old?.id && !n.read_at)); return; }
+    seen.current = new Set([...seen.current, ...data.map((n) => n.id)].slice(-100));
+    if (!fresh) { setNotice((old) => currentChipiNotice(data, old?.id)); return; }
     setNotice(fresh);
     if (Date.now() - lastBubble.current < 60_000) return;
     lastBubble.current = Date.now();
