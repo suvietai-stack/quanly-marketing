@@ -36,3 +36,4 @@
 - [x] Nhắc tương tác Zalo cá nhân: cảnh báo nhẹ, popup không chặn làm việc, hoãn 24 giờ riêng từng user, đọc lại tương tác mỗi 30 giây/khi quay lại Base; dùng OA đã xác minh, không thay đổi gửi tin; 20 kiểm tra đạt.
 - [ ] Kiểm thử popup Zalo cá nhân và tự ẩn sau tin BASE thực tế (chờ đăng nhập tài khoản đã liên kết và gửi tin OA; không có tài khoản khớp để tạo phiên).
 - [x] Website Forms Integration G1: wf_* tables/RPC, HMAC+replay+rate-limit, 3 API /api/public/wf/*, mapping 4 chế độ, tab Cài đặt, docs/website-forms-api.md
+- [ ] Zalo OA ổn định: đối soát production; sửa gia hạn/khóa xoay token, phân loại lỗi và hàng đợi; bổ sung sức khỏe lịch chạy; kiểm thử và xác minh vận hành.
