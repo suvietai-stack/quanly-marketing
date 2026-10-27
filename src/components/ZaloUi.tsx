@@ -1,5 +1,6 @@
 import { PushSettings } from "@/components/PushSettings";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import type { ChipiNotice } from "@/lib/chipi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -23,7 +24,7 @@ import {
 import { CONTENT_LABEL, contentLink } from "@/lib/content/notifyMessage";
 import { ORDER_LABEL, orderLink } from "@/lib/orders/notifyMessage";
 import { OQ_LABEL, oqLink } from "@/lib/orderQuotes/notify";
-const LABEL: Record<string, string> = {
+export const NOTIFICATION_LABEL: Record<string, string> = {
   fin_pending: "Tiền Về: có giao dịch chờ đối soát.",
   fin_needs_info: "Tiền Về: Kế toán yêu cầu chỉnh sửa thông tin.",
   signal_new: "Có tín hiệu mới đang cần xử lý.",
@@ -50,7 +51,7 @@ const ago = (iso: string) => {
   return m < 1 ? "vừa xong" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`;
 };
 
-export function NotificationBell() {
+export function NotificationBell({ trigger, onNotifications }: { trigger?: ReactNode; onNotifications?: (data: ChipiNotice[]) => void } = {}) {
   const uid = useAuth((st) => st.currentUserId) || undefined;
   const qc = useQueryClient();
   const nav = useNavigate();
@@ -67,6 +68,7 @@ export function NotificationBell() {
       return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; attendance_id: string | null; content_id: string | null; order_id: string | null; oq_flow_id: string | null; ot_order_id: string | null; bank_tx_id: string | null; payload: any; read_at: string | null; created_at: string }[];
     },
   });
+  useEffect(() => { if (uid && onNotifications) onNotifications(data); }, [data, uid, onNotifications]);
   if (!uid) return null;
   const unread = data.filter((n) => !n.read_at).length;
   const openOne = async (n: (typeof data)[number]) => {
@@ -85,12 +87,12 @@ export function NotificationBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="relative p-2 rounded hover:bg-accent" aria-label="Thông báo">
-          <Bell className="h-5 w-5" />
+        <Button variant="ghost" className={trigger ? "chipi-trigger relative h-auto p-0 hover:bg-transparent" : "relative h-auto p-2"} aria-label={trigger ? "Chipi — mở thông báo" : "Thông báo"}>
+          {trigger ?? <Bell className="h-5 w-5" />}
           {unread > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center">{unread > 9 ? "9+" : unread}</span>}
-        </button>
+        </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0">
+      <PopoverContent align="end" collisionPadding={12} className="w-80 max-w-[calc(100vw-24px)] max-h-[70dvh] overflow-auto p-0">
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <span className="text-sm font-medium">Thông báo</span>
           {unread > 0 && <button className="text-xs text-primary" onClick={readAll}>Đánh dấu đã đọc</button>}
@@ -99,7 +101,7 @@ export function NotificationBell() {
           {data.length === 0 && <p className="p-4 text-sm text-muted-foreground">Chưa có thông báo.</p>}
           {data.map((n) => (
             <button key={n.id} onClick={() => openOne(n)} className={`w-full text-left px-3 py-2.5 border-b last:border-0 hover:bg-accent ${n.read_at ? "" : "bg-primary/5"}`}>
-              <div className="text-sm">{LABEL[n.kind] ?? "Thông báo mới"}</div>
+              <div className="text-sm">{NOTIFICATION_LABEL[n.kind] ?? "Thông báo mới"}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{ago(n.created_at)}</div>
             </button>
           ))}
