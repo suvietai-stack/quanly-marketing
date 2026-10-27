@@ -15,5 +15,7 @@ describe("Chipi existing notifications", () => {
   it("decorative greeting cannot replace a business notification", () => expect(chipiDisplayState("assigned", "hello")).toBe("assigned"));
   it("decorative thinking cannot replace verified urgency", () => expect(chipiDisplayState("urgent", "thinking")).toBe("urgent"));
   it("allows decoration only while idle", () => expect(chipiDisplayState("idle", "thinking")).toBe("thinking"));
+  it("evening quiet cannot hide a real notification", () => expect(chipiDisplayState("notification", "quiet")).toBe("notification"));
+  it("afternoon cheer cannot hide assigned work", () => expect(chipiDisplayState("assigned", "celebrate")).toBe("assigned"));
   it("schedules play inside the requested 30–60 second range", () => { expect(CHIPI_PLAY_INTERVAL_MS).toBeGreaterThanOrEqual(30000); expect(CHIPI_PLAY_INTERVAL_MS).toBeLessThanOrEqual(60000); });
 });

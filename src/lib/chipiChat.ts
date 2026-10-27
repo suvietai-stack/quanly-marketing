@@ -10,6 +10,14 @@ export function chipiGreeting(date: Date): string {
   if (hour >= 14 && hour < 18) return "Buổi chiều rồi! Cứ từng việc một, Chipi cổ vũ bạn.";
   return "Buổi tối rồi, nhớ dành thời gian nghỉ ngơi nhé!";
 }
+/** Existing artwork only; these are greetings, never task-completion claims. */
+export function chipiGreetingPose(date: Date): "hello" | "thankyou" | "celebrate" | "quiet" {
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "numeric", hourCycle: "h23" }).format(date));
+  if (hour >= 5 && hour < 11) return "hello";
+  if (hour >= 11 && hour < 14) return "thankyou";
+  if (hour >= 14 && hour < 18) return "celebrate";
+  return "quiet";
+}
 export const CHIPI_CHAT_LINES = [
   "Uống một ngụm nước nhé, Chipi cũng đang tiếp năng lượng đây!",
   "Từng bước nhỏ cũng đưa mình đến đích. Cố lên nhé!",

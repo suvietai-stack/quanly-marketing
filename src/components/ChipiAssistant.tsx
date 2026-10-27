@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, EyeOff, Settings2, X, Smile } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { CHIPI_SIZES, CHIPI_CHAT_LINES, validChipiSize, chipiGreeting, chipiChatDelay, nextChipiLine, type ChipiSize } from "@/lib/chipiChat";
+import { CHIPI_SIZES, CHIPI_CHAT_LINES, validChipiSize, chipiGreeting, chipiGreetingPose, chipiChatDelay, nextChipiLine, type ChipiSize } from "@/lib/chipiChat";
 import { ChipiNoticeIcon } from "@/components/ChipiNoticeIcon";
 import { Button } from "@/components/ui/button";
 import { NotificationBell, NOTIFICATION_LABEL } from "@/components/ZaloUi";
 import { chipiAssets } from "@/assets/chipi/states";
-import { chipiState, chipiDisplayState, CHIPI_PLAY_INTERVAL_MS, CHIPI_PLAY_DURATION_MS, currentChipiNotice, newChipiNotice, type ChipiNotice } from "@/lib/chipi";
+import { chipiState, chipiDisplayState, CHIPI_PLAY_INTERVAL_MS, CHIPI_PLAY_DURATION_MS, currentChipiNotice, newChipiNotice, type ChipiNotice, type ChipiDecoration } from "@/lib/chipi";
 
 export function ChipiAssistant({ userId }: { userId: string }) {
   const [mode, setMode] = useState<"full" | "small" | "hidden">("full");
@@ -20,6 +20,7 @@ export function ChipiAssistant({ userId }: { userId: string }) {
   const [size, setSize] = useState<ChipiSize>(150);
   const [chatEnabled, setChatEnabled] = useState(true);
   const [chat, setChat] = useState<string>();
+  const [chatPose, setChatPose] = useState<ChipiDecoration>("thankyou");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const lastLine = useRef(-1);
   const lastActive = useRef(0);
@@ -32,7 +33,8 @@ export function ChipiAssistant({ userId }: { userId: string }) {
   const business = chipiState(notice);
 
   const canChat = useCallback(() => document.visibilityState === "visible" && !document.querySelector('[role="dialog"], [role="alertdialog"], [data-radix-popper-content-wrapper]') && !(document.activeElement?.closest('form, input, textarea, select, [contenteditable="true"]')), []);
-  const say = useCallback((text: string) => {
+  const say = useCallback((text: string, pose: ChipiDecoration = "thankyou") => {
+    setChatPose(pose);
     setChat(text);
     clearTimeout(chatTimer.current);
     chatTimer.current = setTimeout(() => setChat(undefined), 7000);
@@ -71,7 +73,7 @@ export function ChipiAssistant({ userId }: { userId: string }) {
 
   useEffect(() => {
     if (!ready || !hello || !chatEnabled || mode !== "full" || business !== "idle") return;
-    const greet = setTimeout(() => { if (canChat()) say(chipiGreeting(new Date())); }, 700);
+    const greet = setTimeout(() => { if (canChat()) { const now = new Date(); say(chipiGreeting(now), chipiGreetingPose(now)); } }, 700);
     return () => clearTimeout(greet);
   }, [ready, hello, chatEnabled, mode, business, canChat, say]);
 
@@ -133,7 +135,7 @@ export function ChipiAssistant({ userId }: { userId: string }) {
 
   if (!ready) return null;
   if (mode === "hidden") return <div className="chipi-assistant chipi-hidden"><Button variant="outline" size="icon" title="Hiện Chipi" aria-label="Hiện Chipi" onClick={() => setMode("small")}><ChevronUp /></Button></div>;
-  const state = chipiDisplayState(business, hello ? "hello" : decoration);
+  const state = chipiDisplayState(business, chat ? chatPose : !chatEnabled ? "quiet" : decoration);
   return (
     <div className={`chipi-assistant chipi-size-${size} ${mode === "small" ? "chipi-small" : ""}`} data-state={state}>
       {chat && business === "idle" && mode === "full" && <div className="chipi-bubble p-4" role="status"><div className="flex items-start gap-2"><Smile className="h-4 w-4 text-chipi-orange shrink-0 mt-0.5" /><p className="text-sm flex-1">{chat}</p><Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" aria-label="Đóng lời chào Chipi" onClick={() => setChat(undefined)}><X /></Button></div></div>}
