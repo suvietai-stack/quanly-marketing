@@ -107,8 +107,12 @@
   }
 }
 
-.chipi-assistant { position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 25; width: 128px; }
-.chipi-art { display: block; width: 128px; height: 128px; animation: chipi-breathe 4s ease-in-out infinite; }
+.chipi-assistant { --chipi-size: 150px; position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 25; width: var(--chipi-size); }
+.chipi-size-90 { --chipi-size: 90px; }
+.chipi-size-120 { --chipi-size: 120px; }
+.chipi-size-150 { --chipi-size: 150px; }
+.chipi-size-180 { --chipi-size: 180px; }
+.chipi-art { display: block; width: var(--chipi-size); height: var(--chipi-size); animation: chipi-breathe 4s ease-in-out infinite; }
 .chipi-pose { display: block; width: 100%; height: 100%; transform-origin: 50% 86%; animation: chipi-sway 16s ease-in-out infinite; }
 .chipi-play { animation: chipi-play 2400ms ease-in-out; }
 .chipi-art img { display: block; width: 100%; height: 100%; object-fit: contain; animation: chipi-appear 220ms ease-out; }
@@ -134,8 +138,7 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
 @keyframes chipi-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-8px) rotate(3deg); } }
 @keyframes chipi-appear { from { opacity: .65; } to { opacity: 1; } }
 @media (max-width: 767px) {
-  .chipi-assistant { width: 88px; right: max(8px, env(safe-area-inset-right)); bottom: calc(80px + env(safe-area-inset-bottom)); }
-  .chipi-art { width: 88px; height: 88px; }
+  .chipi-assistant { --chipi-size: 75px; right: max(8px, env(safe-area-inset-right)); bottom: calc(80px + env(safe-area-inset-bottom)); }
   .chipi-small { width: 64px; }
   .chipi-hidden { width: 36px; }
   body:has(input:focus, textarea:focus, [contenteditable="true"]:focus) .chipi-assistant { visibility: hidden; pointer-events: none; }
