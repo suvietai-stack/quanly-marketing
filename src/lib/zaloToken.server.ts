@@ -24,9 +24,14 @@ export async function accessToken(deps: { db: () => Promise<any>; config: () => 
     return null;
   }
   const lease = crypto.randomUUID();
+  if (force) await db.from("zalo_oa_config").update({ refresh_next_at: null }).eq("id", 1).eq("token_version", c.token_version).is("refresh_lease", null);
   const { data: claimed, error } = await db.rpc("zalo_refresh_claim", { p_version: c.token_version, p_lease: lease });
   if (error) throw new Error("Không khóa được phiên gia hạn Zalo");
-  if (!claimed) return accessToken(deps, false);
+  if (!claimed) {
+    const latest = await deps.config();
+    if (latest?.refresh_lease) return accessToken(deps, false);
+    return !force && tokenUsable(latest) ? latest.access_token : null;
+  }
   const fenced = (patch: Record<string, unknown>) => db.from("zalo_oa_config").update(patch).eq("id", 1).eq("token_version", c.token_version).eq("refresh_lease", lease);
   let res: Response;
   try {
