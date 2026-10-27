@@ -172,10 +172,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                     to={it.to}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                      "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-150",
                       active
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm"
-                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-md shadow-black/15"
+                        : "text-sidebar-foreground/75 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -240,7 +240,7 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {description && (
           <p className="text-sm text-muted-foreground mt-1">{description}</p>
         )}
