@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterSignals, summarize } from "./report";
+import { filterSignals, summarize, trendSeries, weekStart, reportInsights, groupBy } from "./report";
 import { normalizePhone, type Signal } from "./catalog";
 
 const mk = (o: Partial<Signal>): Signal => ({
