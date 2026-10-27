@@ -1,4 +1,5 @@
 # Architecture rules
+- Zalo rotating tokens use separate non-reclaimable leases and version-fenced atomic pair commits; hourly care schedule runs maintenance, UI derives watchdog health, notification claims exclude active owners and fence completion — avoids single-use refresh and duplicate-send races.
 
 - Signal KPI: acceptTime.ts for all history; refresh user-keyed sources with signals — no stored averages.
 
