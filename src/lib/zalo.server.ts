@@ -1,5 +1,6 @@
 // Chỉ chạy phía máy chủ. Không log token / SĐT / nội dung khách hàng.
 import { createHash, randomBytes, timingSafeEqual } from "crypto";
+import { rotationResponse, retryDelay } from "./zaloToken";
 
 // Địa chỉ backend cố định trên tên miền của Sứ Việt (Zalo yêu cầu domain đã xác thực) — dùng cho OAuth Callback / Webhook.
 // Không đổi theo "Đường dẫn ứng dụng Base" để redirect_uri luôn khớp với khai báo trên Zalo Developers.
@@ -74,14 +75,12 @@ async function tokenRequest(body: Record<string, string>) {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded", secret_key: appSecret },
     body: new URLSearchParams({ app_id: appId, ...body }),
+    signal: AbortSignal.timeout(15000),
   });
   const j: any = await res.json().catch(() => ({}));
-  if (!j.access_token) throw new Error(`Zalo từ chối cấp token (${j.error ?? res.status})`);
-  return {
-    access_token: j.access_token as string,
-    refresh_token: j.refresh_token as string,
-    token_expires_at: new Date(Date.now() + (Number(j.expires_in) || 90000) * 1000).toISOString(),
-  };
+  const result = rotationResponse(j);
+  if (!result) throw new Error(`Zalo từ chối cấp token (${Number(j.error ?? res.status) || res.status})`);
+  return result;
 }
 
 export async function exchangeCode(code: string, state: string) {
@@ -100,30 +99,16 @@ async function refreshOaInfo(token: string) {
 }
 
 /** Trả token còn hiệu lực, tự làm mới nếu sắp hết hạn. */
-export async function getAccessToken(): Promise<string | null> {
-  const cfg = await getConfig();
-  if (!cfg?.access_token || cfg.status !== "connected") return null;
-  const exp = cfg.token_expires_at ? new Date(cfg.token_expires_at).getTime() : 0;
-  if (exp - Date.now() > 10 * 60 * 1000) return cfg.access_token;
-  if (!cfg.refresh_token) return null;
-  const oldRefresh = cfg.refresh_token;
-  try {
-    // Giữ chỗ: chỉ một tiến trình được dùng refresh token này
-    const db = await admin();
-    const claim = `claim:${Date.now()}:${Math.random()}`;
-    const { data: got } = await db.from("zalo_oa_config").update({ refresh_token: claim }).eq("id", 1).eq("refresh_token", oldRefresh).select("id");
-    if (!got?.length) {
-      await new Promise((r) => setTimeout(r, 1500));
-      const again = await getConfig();
-      return again?.status === "connected" && again.access_token && !String(again.refresh_token).startsWith("claim:") ? again.access_token : null;
-    }
-    const t = await tokenRequest({ refresh_token: oldRefresh, grant_type: "refresh_token" });
-    await saveConfig({ ...t, last_error: null });
-    return t.access_token;
-  } catch {
-    await saveConfig({ status: "expired", last_error: "Không làm mới được token — cần kết nối lại" });
-    return null;
-  }
+export async function getAccessToken(force = false): Promise<string | null> {
+  const { accessToken } = await import("./zaloToken.server");
+  return accessToken({ db: admin, config: getConfig, env: zaloEnv }, force);
+}
+
+/** The existing hourly schedule invokes this independently of open browsers. */
+export async function maintainOa() {
+  await saveConfig({ scheduler_last_at: new Date().toISOString() });
+  await getAccessToken();
+  return { checked: true };
 }
 
 export async function checkConnection() {
@@ -153,9 +138,9 @@ async function postCs(token: string, body: unknown): Promise<{ j: any; netErr: b
 export async function sendCs(zaloUserId: string, text: string, link: string, opts: { header?: string; button?: string } = {}): Promise<SendResult> {
   const header = opts.header ?? await brandHeader();
   const button = opts.button ?? "XEM TÍN HIỆU";
-  const token = await getAccessToken();
+  let token = await getAccessToken();
   if (!token) return { ok: false, code: -1, message: "Chưa kết nối OA" };
-  const a = await postCs(token, {
+  const body = {
     recipient: { user_id: zaloUserId },
     message: {
       attachment: {
@@ -167,10 +152,17 @@ export async function sendCs(zaloUserId: string, text: string, link: string, opt
         },
       },
     },
-  });
+  };
+  let a = await postCs(token, body);
+  if (Number(a.j.error) === -216) {
+    token = await getAccessToken(true);
+    if (token) a = await postCs(token, body);
+  }
   if (a.j.error === 0) return { ok: true, code: 0, message: "", messageId: a.j.data?.message_id ?? null };
   // Mất kết nối/timeout: không biết Zalo đã nhận hay chưa → KHÔNG gửi tiếp để tránh trùng
   if (a.netErr) return { ok: false, code: -9, message: "Mất kết nối khi gửi — không rõ Zalo đã nhận", ambiguous: true };
+  if (![ -204 ].includes(Number(a.j.error))) return { ok: false, code: Number(a.j.error ?? -2), message: `Zalo từ chối gửi (${Number(a.j.error ?? -2)})` };
+  if (!token) return { ok: false, code: -1, message: "Chưa phục hồi Token OA" };
   // Dự phòng: tin văn bản thuần nếu mẫu có nút bị Zalo từ chối (đã có phản hồi lỗi rõ ràng)
   const b = await postCs(token, { recipient: { user_id: zaloUserId }, message: { text: `${header}\n${text}\n\n👉 ${button}:\n${link}` } });
   if (b.j.error === 0) return { ok: true, code: 0, message: "", messageId: b.j.data?.message_id ?? null };
@@ -210,29 +202,31 @@ const STUCK_MS = 10 * 60 * 1000;
 const LEAVE_FRESH_MS = 30 * 60 * 1000;
 export async function processPending(limit = 20) {
   const cfg = await getConfig();
-  if (!cfg?.auto_send || cfg.status !== "connected") return { processed: 0 };
+  if (!cfg?.auto_send || cfg.status !== "connected" || !await getAccessToken()) return { processed: 0 };
   const db = await admin();
+  await saveConfig({ queue_last_at: new Date().toISOString() });
   // Phục hồi: bản ghi bị "nhận" (attempts tăng, vẫn pending) mà treo quá lâu → đánh dấu lỗi, chờ Admin gửi lại thủ công
   await db.from("notifications").update({ zalo_status: "failed", zalo_attempts: MAX_ATTEMPTS, zalo_error: "Tiến trình gửi bị gián đoạn — không rõ đã gửi, cần kiểm tra trước khi gửi lại" })
     .eq("zalo_status", "pending").gt("zalo_attempts", 0).neq("kind", "signal_care").is("zalo_sent_at", null)
-    .lt("created_at", new Date(Date.now() - STUCK_MS).toISOString()).like("zalo_error", "claimed:%");
+    .lt("zalo_next_attempt_at", new Date().toISOString()).like("zalo_error", "claimed:%");
   const leaveZalo = (await leaveNotifyCfg()).zalo;
   const cz = await contentZaloCfg();
   const kinds = ["signal_new", "signal_assigned", ...(leaveZalo ? ["leave_pending", "leave_result", "leave_cancel_request", "leave_cc", "att_witness", "att_new"] : []), ...Object.keys(cz).filter((k) => cz[k])];
   const oz = await orderZaloCfg(); kinds.push(...Object.keys(oz).filter((k) => oz[k]));
   kinds.push("oq_new", "oq_info", "oq_answered", "oq_published", "oq_done", "oq_reask", "oq_assigned");
   const { data: rows } = await db.from("notifications").select("id,recipient_id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,created_at,zalo_attempts,zalo_status,payload")
-    .in("zalo_status", ["pending", "failed"]).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
+    .in("zalo_status", ["pending", "failed"]).or(`zalo_error.is.null,zalo_error.not.like.claimed:*`).or(`zalo_next_attempt_at.is.null,zalo_next_attempt_at.lte.${new Date().toISOString()}`).lt("zalo_attempts", MAX_ATTEMPTS).in("kind", kinds)
     .gt("created_at", new Date(Date.now() - 2 * 86400000).toISOString()).order("created_at").limit(limit);
   let processed = 0;
   for (const n of rows ?? []) {
+    const claim = `claimed:${crypto.randomUUID()}`;
     // CLAIM nguyên tử
     const { data: got } = await db.from("notifications")
-      .update({ zalo_status: "pending", zalo_attempts: n.zalo_attempts + 1, zalo_error: `claimed:${new Date().toISOString()}` })
-      .eq("id", n.id).eq("zalo_attempts", n.zalo_attempts).in("zalo_status", ["pending", "failed"]).is("zalo_sent_at", null).select("id");
+      .update({ zalo_status: "pending", zalo_attempts: n.zalo_attempts + 1, zalo_error: claim, zalo_next_attempt_at: new Date(Date.now() + STUCK_MS).toISOString() })
+      .eq("id", n.id).eq("zalo_attempts", n.zalo_attempts).eq("zalo_status", n.zalo_status).or("zalo_error.is.null,zalo_error.not.like.claimed:*").is("zalo_sent_at", null).select("id");
     if (!got?.length) continue;
     const attempts = n.zalo_attempts + 1;
-    const mark = (patch: Record<string, unknown>) => db.from("notifications").update(patch).eq("id", n.id);
+    const mark = (patch: Record<string, unknown>) => db.from("notifications").update({ zalo_next_attempt_at: null, ...patch }).eq("id", n.id).eq("zalo_error", claim).eq("zalo_attempts", attempts).is("zalo_sent_at", null);
     // Kiểm lại người nhận còn đúng (Sale có thể đã bị chuyển)
     if (n.kind === "signal_assigned") {
       const { data: s } = await db.from("opportunity_signals").select("assigned_to").eq("id", n.signal_id).maybeSingle();
@@ -314,7 +308,7 @@ export async function processPending(limit = 20) {
       // -213/-230: người dùng chưa quan tâm OA / quá khung tương tác → không đủ điều kiện, không thử lại
       const ineligible = [-213, -230, -201].includes(r.code);
       if (!ineligible) await saveConfig({ last_error: `Gửi tin thất bại (${r.code})` }).catch(() => {});
-      await mark({ zalo_status: ineligible ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: attempts });
+      await mark({ zalo_status: ineligible ? "ineligible" : "failed", zalo_error: `${r.code}: ${r.message}`, zalo_attempts: [-320, -224].includes(r.code) ? MAX_ATTEMPTS : attempts, zalo_next_attempt_at: ineligible ? null : new Date(Date.now() + retryDelay(attempts)).toISOString() });
     }
   }
   return { processed };
