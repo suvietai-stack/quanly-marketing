@@ -170,6 +170,7 @@ const STATE: Record<string, { label: string; tone: "default" | "secondary" | "de
   unconfigured: { label: "Chưa cấu hình", tone: "secondary" },
   disconnected: { label: "Chưa kết nối", tone: "secondary" },
   connected: { label: "Đã kết nối", tone: "default" },
+  refresh_review: { label: "Gia hạn cần kiểm tra", tone: "destructive" },
   reconnect: { label: "Cần kết nối lại", tone: "destructive" },
   send_failed: { label: "Gửi tin thất bại", tone: "destructive" },
 };
@@ -197,6 +198,8 @@ export function ZaloAdminCard() {
     const r = new URLSearchParams(window.location.search).get("zalo");
     if (r === "connected") toast.success("Đã kết nối Zalo OA");
     if (r === "error") toast.error("Kết nối Zalo OA thất bại — thử lại");
+    const timer = setInterval(load, 30000);
+    return () => clearInterval(timer);
   }, []);
   if (err || !s) return null;
   const run = (p: Promise<any>) => p.then((r) => { if (r?.message) (r.ok ? toast.success : toast.error)(r.message); load(); }).catch((e) => {
@@ -242,10 +245,16 @@ export function ZaloAdminCard() {
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="text-muted-foreground">Tên OA</div><div>{s.oaName ?? "—"}</div>
           <div className="text-muted-foreground">Nhân viên đã liên kết</div><div>{s.linkedCount}</div>
+          <div className="text-muted-foreground">Gia hạn thành công</div><div>{s.refreshLast ? new Date(s.refreshLast).toLocaleString("vi-VN") : "Chưa ghi nhận"}</div>
+          <div className="text-muted-foreground">Dự kiến gia hạn</div><div>{s.refreshNext ? new Date(s.refreshNext).toLocaleString("vi-VN") : "—"}</div>
+          <div className="text-muted-foreground">Lịch chạy nền</div><div>{s.schedulerHealthy ? "Đang hoạt động · mỗi giờ" : "Chưa ghi nhận hoặc gián đoạn"}</div>
+          <div className="text-muted-foreground">Xử lý hàng đợi gần nhất</div><div>{s.queueLast ? new Date(s.queueLast).toLocaleString("vi-VN") : "—"}</div>
+          <div className="text-muted-foreground">Gửi tự động</div><div>{s.autoSend ? "Đã bật" : "Chưa bật"}</div>
           <div className="text-muted-foreground">Gửi thử</div><div>{s.testOk ? "Đã thành công" : "Chưa thành công"}</div>
           <div className="text-muted-foreground">7 ngày qua</div>
           <div>Đã gửi {s.stats7d.sent ?? 0} · Thất bại {s.stats7d.failed ?? 0} · Không đủ ĐK {s.stats7d.ineligible ?? 0} · Chưa gửi {s.stats7d.pending ?? 0}</div>
         </div>
+        {s.refreshError && <p className="text-xs text-destructive">{s.refreshError}</p>}
         {s.lastError && <p className="text-xs text-destructive">{s.lastError}</p>}
         <div className="flex gap-2 flex-wrap">
           <Button disabled={!s.configured} onClick={() => connect().then((r) => { window.location.href = r.url; }).catch((e) => toast.error(e.message))}>
