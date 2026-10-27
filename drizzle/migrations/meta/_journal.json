@@ -463,6 +463,13 @@
       "when": 1793008900089,
       "tag": "0065_website_forms_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1793085345977,
+      "tag": "0066_zalo_token_rotation_health",
+      "breakpoints": true
     }
   ]
 }

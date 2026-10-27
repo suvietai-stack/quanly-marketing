@@ -1406,6 +1406,7 @@ export type Database = {
           signal_id: string | null
           zalo_attempts: number
           zalo_error: string | null
+          zalo_next_attempt_at: string | null
           zalo_sent_at: string | null
           zalo_status: string
         }
@@ -1428,6 +1429,7 @@ export type Database = {
           signal_id?: string | null
           zalo_attempts?: number
           zalo_error?: string | null
+          zalo_next_attempt_at?: string | null
           zalo_sent_at?: string | null
           zalo_status?: string
         }
@@ -1450,6 +1452,7 @@ export type Database = {
           signal_id?: string | null
           zalo_attempts?: number
           zalo_error?: string | null
+          zalo_next_attempt_at?: string | null
           zalo_sent_at?: string | null
           zalo_status?: string
         }
@@ -3391,10 +3394,20 @@ export type Database = {
           oa_secret_key: string | null
           oauth_state: string | null
           oauth_verifier: string | null
+          queue_last_at: string | null
+          refresh_blocked: boolean
+          refresh_error: string | null
+          refresh_failures: number
+          refresh_last_success_at: string | null
+          refresh_lease: string | null
+          refresh_next_at: string | null
+          refresh_started_at: string | null
           refresh_token: string | null
+          scheduler_last_at: string | null
           status: string
           test_send_at: string | null
           token_expires_at: string | null
+          token_version: number
           updated_at: string
         }
         Insert: {
@@ -3419,10 +3432,20 @@ export type Database = {
           oa_secret_key?: string | null
           oauth_state?: string | null
           oauth_verifier?: string | null
+          queue_last_at?: string | null
+          refresh_blocked?: boolean
+          refresh_error?: string | null
+          refresh_failures?: number
+          refresh_last_success_at?: string | null
+          refresh_lease?: string | null
+          refresh_next_at?: string | null
+          refresh_started_at?: string | null
           refresh_token?: string | null
+          scheduler_last_at?: string | null
           status?: string
           test_send_at?: string | null
           token_expires_at?: string | null
+          token_version?: number
           updated_at?: string
         }
         Update: {
@@ -3447,10 +3470,20 @@ export type Database = {
           oa_secret_key?: string | null
           oauth_state?: string | null
           oauth_verifier?: string | null
+          queue_last_at?: string | null
+          refresh_blocked?: boolean
+          refresh_error?: string | null
+          refresh_failures?: number
+          refresh_last_success_at?: string | null
+          refresh_lease?: string | null
+          refresh_next_at?: string | null
+          refresh_started_at?: string | null
           refresh_token?: string | null
+          scheduler_last_at?: string | null
           status?: string
           test_send_at?: string | null
           token_expires_at?: string | null
+          token_version?: number
           updated_at?: string
         }
         Relationships: []
@@ -3992,6 +4025,20 @@ export type Database = {
         Returns: boolean
       }
       wf_rate_hit: { Args: { p_website: string }; Returns: number }
+      zalo_refresh_claim: {
+        Args: { p_lease: string; p_version: number }
+        Returns: boolean
+      }
+      zalo_refresh_finish: {
+        Args: {
+          p_access: string
+          p_expires: string
+          p_lease: string
+          p_refresh: string
+          p_version: number
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       account_status:
