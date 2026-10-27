@@ -1,5 +1,16 @@
 export type ChipiNotice = { id: string; kind: string; read_at: string | null; created_at: string };
 export type ChipiState = "idle" | "hello" | "notification" | "assigned" | "new_job" | "urgent" | "due" | "success" | "celebrate" | "thinking" | "quiet" | "working" | "thankyou" | "attention";
+export const CHIPI_PLAY_INTERVAL_MS = 45_000;
+export const CHIPI_PLAY_DURATION_MS = 2400;
+export function chipiDisplayState(business: ChipiState, decoration?: "hello" | "thinking"): ChipiState {
+  return business === "idle" ? decoration ?? "idle" : business;
+}
+export function chipiNoticeCategory(kind: string): "signal" | "job" | "success" | "general" {
+  if (chipiState({ id: "", kind, read_at: null, created_at: "" }) === "success") return "success";
+  if (kind.startsWith("signal_")) return "signal";
+  if (/^(order_|content_|oq_|ot_)/.test(kind)) return "job";
+  return "general";
+}
 
 /** Only existing notification events drive the mascot; age alone never means overdue. */
 export function chipiState(n?: ChipiNotice): ChipiState {

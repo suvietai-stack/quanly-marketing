@@ -4,7 +4,8 @@ import type { ChipiNotice } from "@/lib/chipi";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell } from "lucide-react";
+import { Bell, CheckCheck, X } from "lucide-react";
+import { ChipiNoticeIcon } from "@/components/ChipiNoticeIcon";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -95,7 +96,22 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
           {unread > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center">{unread > 9 ? "9+" : unread}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" collisionPadding={12} className="w-80 max-w-[calc(100vw-24px)] max-h-[70dvh] overflow-auto p-0">
+      <PopoverContent align="end" collisionPadding={12} className={trigger ? "chipi-notifications w-80 max-w-[calc(100vw-24px)] max-h-[70dvh] overflow-auto p-0" : "w-80 max-w-[calc(100vw-24px)] max-h-[70dvh] overflow-auto p-0"}>
+        {trigger ? <>
+          <div className="chipi-panel-header flex items-center gap-2 px-4 py-3">
+            <Bell className="h-4 w-4 text-chipi-orange" /><span className="font-semibold text-sm flex-1">Chipi nhắc bạn</span>
+            {unread > 0 && <Button variant="ghost" size="icon" title="Đánh dấu tất cả đã đọc" aria-label="Đánh dấu tất cả đã đọc" onClick={readAll}><CheckCheck /></Button>}
+            <Button variant="ghost" size="icon" aria-label="Đóng bảng thông báo Chipi" onClick={() => setOpen(false)}><X /></Button>
+          </div>
+          <div className="max-h-96 overflow-auto p-3 space-y-2">
+            {data.length === 0 && <div className="py-8 text-center"><Bell className="h-6 w-6 mx-auto mb-3 text-chipi-orange" /><p className="text-sm font-medium">Bạn đã xem hết rồi!</p><p className="text-xs text-muted-foreground mt-1">Chipi sẽ nhắc khi có thông báo mới.</p></div>}
+            {data.map((n) => <Button key={n.id} variant="ghost" onClick={() => openOne(n)} className={`chipi-notice-card ${n.read_at ? "" : "chipi-unread"} h-auto w-full items-start justify-start whitespace-normal text-left p-3 gap-3`}>
+              <span className="chipi-notice-icon"><ChipiNoticeIcon kind={n.kind} className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1"><span className={`block text-sm break-words ${n.read_at ? "font-normal" : "font-semibold"}`}>{NOTIFICATION_LABEL[n.kind] ?? "Thông báo mới"}</span><span className="block text-xs text-muted-foreground mt-1.5">{ago(n.created_at)}</span></span>
+              {!n.read_at && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-chipi-orange mt-1.5" />}
+            </Button>)}
+          </div>
+        </> : <>
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <span className="text-sm font-medium">Thông báo</span>
           {unread > 0 && <button className="text-xs text-primary" onClick={readAll}>Đánh dấu đã đọc</button>}
@@ -113,6 +129,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
           {showPush ? <div className="p-1"><PushSettings /></div> : <button className="w-full text-xs text-primary py-1" onClick={() => setShowPush(true)}>Thông báo trên thiết bị</button>}
           {showLink ? <ZaloLinkCard /> : <button className="w-full text-xs text-primary py-1" onClick={() => setShowLink(true)}>Nhận thông báo qua Zalo</button>}
         </div>
+        </>}
       </PopoverContent>
     </Popover>
   );
