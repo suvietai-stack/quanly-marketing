@@ -1,5 +1,5 @@
 # Architecture rules
-- ChipiAssistant mounts once per authenticated user in AppShell and reuses NotificationBell's recipient-scoped query, labels and navigation; browser session preferences and deduplication are user-keyed — preserves existing notification permissions and business workflows without another delivery channel.
+- ChipiAssistant mounts once per authenticated user in AppShell, observes NotificationBell's recipient-scoped cache and uses a trigger-specific presentation with shared navigation/read actions; user-keyed session dedupe and cleanup-bound decorative timers never override business states — preserves existing notifications and the original bell without another delivery channel.
 - Zalo rotating tokens use separate non-reclaimable leases and version-fenced atomic pair commits; hourly care schedule runs maintenance, UI derives watchdog health, notification claims exclude active owners and fence completion — avoids single-use refresh and duplicate-send races.
 
 - Signal KPI: acceptTime.ts for all history; refresh user-keyed sources with signals — no stored averages.

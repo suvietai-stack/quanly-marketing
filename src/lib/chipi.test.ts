@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chipiState, newChipiNotice, currentChipiNotice, type ChipiNotice } from "./chipi";
+import { chipiState, newChipiNotice, currentChipiNotice, chipiDisplayState, CHIPI_PLAY_INTERVAL_MS, type ChipiNotice } from "./chipi";
 const n = (kind: string, read_at: string | null = null): ChipiNotice => ({ id: kind, kind, read_at, created_at: "2026-10-27T09:00:00Z" });
 describe("Chipi existing notifications", () => {
   it("uses only unread notifications for reminders", () => expect(newChipiNotice([n("signal_new", "2026-10-27")], new Set())).toBeUndefined());
@@ -12,4 +12,8 @@ describe("Chipi existing notifications", () => {
   it("keeps unread state after reload even if its bubble was seen", () => expect(currentChipiNotice([n("signal_assigned")])?.id).toBe("signal_assigned"));
   it("moves to the next unread notification when the current one is read", () => expect(currentChipiNotice([n("signal_assigned", "2026-10-27"), n("order_assigned")], "signal_assigned")?.id).toBe("order_assigned"));
   it("clears state once every notification is read", () => expect(currentChipiNotice([n("order_assigned", "2026-10-27")], "order_assigned")).toBeUndefined());
+  it("decorative greeting cannot replace a business notification", () => expect(chipiDisplayState("assigned", "hello")).toBe("assigned"));
+  it("decorative thinking cannot replace verified urgency", () => expect(chipiDisplayState("urgent", "thinking")).toBe("urgent"));
+  it("allows decoration only while idle", () => expect(chipiDisplayState("idle", "thinking")).toBe("thinking"));
+  it("schedules play inside the requested 30–60 second range", () => { expect(CHIPI_PLAY_INTERVAL_MS).toBeGreaterThanOrEqual(30000); expect(CHIPI_PLAY_INTERVAL_MS).toBeLessThanOrEqual(60000); });
 });
