@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterSignals, summarize } from "./report";
+import { filterSignals, summarize, trendSeries, weekStart, reportInsights, groupBy } from "./report";
 import { normalizePhone, type Signal } from "./catalog";
 
 const mk = (o: Partial<Signal>): Signal => ({
@@ -46,5 +46,56 @@ describe("signals report", () => {
   it("SĐT giữ số 0 đầu", () => {
     expect(normalizePhone(" 0965 000 256 ")).toBe("0965000256");
     expect(normalizePhone("abc")).toBeNull();
+  });
+});
+
+describe("xu hướng tín hiệu", () => {
+  it("gom theo ngày: created = tạo trong ngày, won = tạo trong ngày hiện đã chốt", () => {
+    const l = [
+      mk({ detected_on: "2026-10-01", status: "won" }),
+      mk({ detected_on: "2026-10-01", status: "lost" }),
+      mk({ detected_on: "2026-10-03", status: "consulting" }),
+    ];
+    const t = trendSeries(l, "day");
+    expect(t.map((x) => [x.label, x.created, x.won])).toEqual([["01/10", 2, 1], ["03/10", 1, 0]]);
+  });
+  it("tuần bắt đầu Thứ Hai; tháng theo YYYY-MM", () => {
+    expect(weekStart("2026-10-27")).toBe("2026-10-26"); // Thứ Ba → Thứ Hai
+    expect(weekStart("2026-10-26")).toBe("2026-10-26");
+    expect(weekStart("2026-11-01")).toBe("2026-10-26"); // Chủ nhật vẫn thuộc tuần trước
+    const t = trendSeries([mk({ detected_on: "2026-10-27" }), mk({ detected_on: "2026-10-30", status: "won" })], "week");
+    expect(t).toHaveLength(1);
+    expect(t[0].label).toBe("Tuần 26/10");
+    expect([t[0].created, t[0].won]).toEqual([2, 1]);
+    expect(trendSeries([mk({ detected_on: "2026-09-15" }), mk({ detected_on: "2026-10-01" })], "month").map((x) => x.label)).toEqual(["09/2026", "10/2026"]);
+  });
+});
+
+describe("điểm đáng chú ý", () => {
+  const sum = summarize([
+    mk({ source: "Facebook", status: "won" }), mk({ source: "Facebook" }), mk({ source: "Facebook" }),
+    mk({ source: "Facebook" }), mk({ source: "Facebook" }), mk({ source: "Facebook" }),
+    mk({ source: "Website", status: "won" }), mk({ source: "Website", status: "won" }),
+    mk({ status: "waiting", assigned_to: "s1" }),
+  ]);
+  it("không kết luận nguồn tốt nhất khi mẫu nhỏ", () => {
+    const ins = reportInsights({ sum, bySource: groupBy(sum ? [mk({ source: "Facebook" }), mk({ source: "Website", status: "won" })] : [], (s) => s.source), byNeed: [] });
+    const rate = ins.find((i) => i.kind === "rate")!;
+    expect(rate.text).toContain("Website");
+    expect(rate.note).toContain("Mẫu nhỏ");
+  });
+  it("mẫu đủ lớn thì không ghi chú; tồn đọng = chưa phân công + chờ nhận", () => {
+    const src = groupBy([
+      ...Array.from({ length: 6 }, () => mk({ source: "Facebook", status: "won" })),
+      ...Array.from({ length: 6 }, () => mk({ source: "Website" })),
+    ], (s) => s.source);
+    const ins = reportInsights({ sum: summarize([mk({ status: "waiting", assigned_to: "s1" }), mk({})]), bySource: src, byNeed: [] });
+    expect(ins.find((i) => i.kind === "rate")!.note).toBeUndefined();
+    expect(ins.find((i) => i.kind === "rate")!.text).toContain("Facebook");
+    const backlog = ins.find((i) => i.kind === "backlog")!;
+    expect(backlog.text).toContain("2 tín hiệu (1 chưa phân công, 1 chờ nhận)");
+  });
+  it("không có dữ liệu thì không có nhận định", () => {
+    expect(reportInsights({ sum: summarize([]), bySource: [], byNeed: [] })).toEqual([]);
   });
 });

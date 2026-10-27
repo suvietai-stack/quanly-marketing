@@ -202,16 +202,13 @@ export function SignalsPage() {
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </button>
       )}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" aria-label="Phân loại tín hiệu">
-        {[{ k: "", label: "Tất cả" }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n }))].map((x) => (
-          <button key={x.k || "all"} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: x.k || undefined })); }} className={cn("shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium", (f.needGroup ?? "") === x.k ? "bg-foreground text-background border-foreground" : "bg-card")}>{x.label} <span className="opacity-70">{needCount(x.k || undefined)}</span></button>
-        ))}
-      </div>
-      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-        {QUICK.map((x) => (
-          <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label} <span className="opacity-70">{count(x.k)}</span></button>
-        ))}
-        <button onClick={() => setCare({ on: true, kind: "stale" })} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", care.on && care.kind === "stale" ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>Lâu chưa cập nhật <span className="opacity-70">{careScope.filter((x) => x.flag !== "unaccepted").length}</span></button>
+      <div className="rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
+        <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
+          active={f.needGroup ?? ""} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: k || undefined })); }} />
+        <ChipRow label="Trạng thái" items={QUICK.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
+          active={care.on ? "__care__" : f.quick} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, quick: k as Quick })); }}
+          extra={<button onClick={() => setCare({ on: true, kind: "stale" })} className={cn("shrink-0 rounded-full border px-3 py-1 text-[13px]", care.on && care.kind === "stale" ? "bg-primary text-primary-foreground border-primary" : "bg-background")}>Lâu chưa cập nhật <span className="opacity-70">{careScope.filter((x) => x.flag !== "unaccepted").length}</span></button>} />
+        <ActiveFilters f={f} name={name} onChange={setF} />
       </div>
       {care.on && (
         <div className="space-y-2">
@@ -260,25 +257,25 @@ export function SignalsPage() {
                 </button>
               ))}
             </div>
-            <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
+            <div className="hidden md:block rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Chi tiết nhu cầu", ""].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}</tr>
+                <thead className="bg-primary/5 text-left text-xs text-muted-foreground">
+                  <tr>{["Ngày", "Khách hàng", "Nhu cầu", "Nguồn", "Sale phụ trách", "Trạng thái", "Diễn biến gần nhất", "Chi tiết nhu cầu", ""].map((h) => <th key={h} className="px-4 py-2.5 font-medium">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {list.map((s) => (
-                    <tr key={s.id} className="border-t hover:bg-muted/30">
-                      <td className="px-3 py-2 whitespace-nowrap">{fmtDate(s.detected_on)}</td>
-                      <td className="px-3 py-2"><div className="font-medium">{s.customer_name}</div><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
-                      <td className="px-3 py-2 max-w-[180px] truncate">{needGroupsOf(s).join(", ") || s.products.join(", ") || "—"}</td>
-                      <td className="px-3 py-2">{s.source}</td>
-                      <td className="px-3 py-2">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
-                      <td className="px-3 py-2"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
-                      <td className="px-3 py-2 max-w-[200px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
-                      <td className="px-3 py-2 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
+                    <tr key={s.id} className="border-t hover:bg-primary/[0.03] transition-colors">
+                      <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{fmtDate(s.detected_on)}</td>
+                      <td className="px-4 py-2.5 min-w-[160px]"><div className="font-medium">{s.customer_name}</div><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
+                      <td className="px-4 py-2.5 max-w-[180px] truncate">{needGroupsOf(s).join(", ") || s.products.join(", ") || "—"}</td>
+                      <td className="px-4 py-2.5 whitespace-nowrap">{s.source}</td>
+                      <td className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
+                      <td className="px-4 py-2.5"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
+                      <td className="px-4 py-2.5 max-w-[200px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
+                      <td className="px-4 py-2.5 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
                         ? <div className="line-clamp-2 whitespace-pre-line" title={s.need_detail}>{s.need_detail}</div>
                         : <span className="text-muted-foreground">—</span>}</td>
-                      <td className="px-3 py-2 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
+                      <td className="px-4 py-2.5 text-right"><Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Chi tiết</Button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -346,8 +343,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
           <Field label="Nhóm nhu cầu"><Pick value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={needOpts.names.map((x) => [x, x])} /></Field>
           <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={lr.all.map((x) => [x, x])} /></Field>
           {showPeople && <>
-            <Field label="Sale phụ trách"><Pick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} /></Field>
-            <Field label="Người tạo"><Pick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} /></Field>
+            <Field label="Sale phụ trách"><SearchPick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} placeholder="Tất cả Sale" /></Field>
+            <Field label="Người tạo"><SearchPick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} placeholder="Tất cả người tạo" /></Field>
             <label className="col-span-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="h-4 w-4" checked={!!f.unassigned} onChange={(e) => set("unassigned", e.target.checked)} />
               Chỉ tín hiệu chưa phân công
@@ -373,6 +370,90 @@ function Stat({ label, v, onClick, tone }: { label: string; v: number; onClick?:
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-2xl font-semibold mt-0.5">{v}</div>
     </button>
+  );
+}
+
+/** Hàng chip lọc nhanh có nhãn; quá nhiều lựa chọn thì gọn lại sau "Xem thêm". */
+function ChipRow({ label, items, active, onPick, extra, max = 6 }: {
+  label: string; items: { k: string; label: string; n: number }[]; active: string; onPick: (k: string) => void; extra?: React.ReactNode; max?: number;
+}) {
+  const [more, setMore] = useState(false);
+  const shown = more ? items : items.slice(0, max);
+  return (
+    <div className="flex items-start gap-2">
+      <span className="shrink-0 pt-1.5 text-xs font-medium text-muted-foreground w-24">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {shown.map((x) => (
+          <button key={x.k || "all"} onClick={() => onPick(x.k)}
+            className={cn("shrink-0 rounded-full border px-3 py-1 text-[13px]", active === x.k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-background hover:bg-muted/60")}>
+            {x.label} <span className="opacity-70">{x.n}</span>
+          </button>
+        ))}
+        {items.length > max && (
+          <button onClick={() => setMore((v) => !v)} className="shrink-0 rounded-full border border-dashed px-3 py-1 text-[13px] text-muted-foreground">
+            {more ? "Thu gọn" : `Xem thêm (${items.length - max})`}
+          </button>
+        )}
+        {extra}
+      </div>
+    </div>
+  );
+}
+
+/** Vùng hiển thị các điều kiện đang áp dụng (có thể gỡ từng cái) + nút Xóa lọc. */
+function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string | null) => string; onChange: (f: ListFilter) => void }) {
+  const timeLabel: Record<string, string> = { today: "Hôm nay", "7d": "7 ngày", month: "Tháng này", custom: "Tùy chỉnh" };
+  const chips: { key: keyof ListFilter; label: string }[] = [];
+  if (f.time) chips.push({ key: "time", label: `Thời gian: ${timeLabel[f.time] ?? f.time}${f.time === "custom" && (f.from || f.to) ? ` ${f.from ?? "…"}→${f.to ?? "…"}` : ""}` });
+  if (f.source) chips.push({ key: "source", label: `Nguồn: ${f.source}` });
+  if (f.product) chips.push({ key: "product", label: `Sản phẩm: ${f.product}` });
+  if (f.lostReason) chips.push({ key: "lostReason", label: `Lý do trượt: ${f.lostReason}` });
+  if (f.saleId) chips.push({ key: "saleId", label: `Sale: ${name(f.saleId)}` });
+  if (f.creatorId) chips.push({ key: "creatorId", label: `Người tạo: ${name(f.creatorId)}` });
+  if (f.unassigned) chips.push({ key: "unassigned", label: "Chưa phân công" });
+  if (f.cancelled) chips.push({ key: "cancelled", label: "Đã hủy" });
+  if (chips.length === 0) return null;
+  const clear = (k: keyof ListFilter) => onChange({ ...f, [k]: undefined, ...(k === "time" ? { from: undefined, to: undefined } : {}) });
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-t pt-2.5">
+      <span className="text-xs text-muted-foreground">Đang lọc:</span>
+      {chips.map((c) => (
+        <button key={c.key} onClick={() => clear(c.key)} title="Bấm để gỡ điều kiện"
+          className="rounded-full bg-primary/10 text-primary px-2.5 py-1 text-xs font-medium hover:bg-primary/20">
+          {c.label} ×
+        </button>
+      ))}
+      <button onClick={() => onChange({ ...emptyFilter(), q: f.q })} className="text-xs text-muted-foreground underline ml-1">Xóa lọc</button>
+    </div>
+  );
+}
+
+/** Combobox có tìm kiếm — dùng cho Sale phụ trách / Người tạo thay vì danh sách dài. */
+function SearchPick({ value, onChange, opts, placeholder }: { value?: string; onChange: (v: string) => void; opts: [string, string][]; placeholder: string }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const current = opts.find(([v]) => v === value)?.[1];
+  const shown = opts.filter(([, l]) => l.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="h-11 w-full rounded-md border bg-background px-3 text-sm text-left flex items-center justify-between gap-2">
+        <span className={cn("truncate", !current && "text-muted-foreground")}>{current ?? placeholder}</span>
+        <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover p-2 shadow-md space-y-1.5">
+          <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm theo tên…" className="h-9" />
+          <div className="max-h-44 overflow-y-auto space-y-0.5">
+            <button type="button" onClick={() => { onChange(""); setOpen(false); }} className={cn("w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted", !value && "font-medium text-primary")}>Tất cả</button>
+            {shown.map(([v, l]) => (
+              <button type="button" key={v} onClick={() => { onChange(v); setOpen(false); setQ(""); }}
+                className={cn("w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted", v === value && "font-medium text-primary")}>{l}</button>
+            ))}
+            {shown.length === 0 && <p className="px-2 py-1.5 text-xs text-muted-foreground">Không có kết quả.</p>}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

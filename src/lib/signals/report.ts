@@ -73,6 +73,72 @@ export function lostReasons(list: Signal[]): { key: string; n: number }[] {
   return [...m.entries()].map(([key, n]) => ({ key, n })).sort((a, b) => b.n - a.n);
 }
 
+/* ---------- Xu hướng theo thời gian ---------- */
+export type TrendGranularity = "day" | "week" | "month";
+export interface TrendPoint { key: string; label: string; created: number; won: number }
+
+/** Thứ Hai của tuần chứa ngày (key "YYYY-MM-DD", giờ VN). */
+export function weekStart(key: string): string {
+  const d = new Date(key + "T00:00:00Z");
+  const dow = (d.getUTCDay() + 6) % 7; // Thứ Hai = 0
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d.toISOString().slice(0, 10);
+}
+const ddmm = (key: string) => key.slice(8, 10) + "/" + key.slice(5, 7);
+
+/**
+ * Chuỗi xu hướng theo ngày tạo (detected_on) của tập đã lọc:
+ * created = số tín hiệu tạo trong nhóm; won = số tín hiệu thuộc nhóm hiện đã Chốt.
+ * Đây là "tạo trong kỳ, hiện đã chốt" — KHÔNG phải "chốt trong kỳ".
+ */
+export function trendSeries(list: Signal[], g: TrendGranularity): TrendPoint[] {
+  const m = new Map<string, TrendPoint>();
+  for (const s of list) {
+    const d = s.detected_on;
+    if (!d) continue;
+    const key = g === "day" ? d : g === "week" ? weekStart(d) : d.slice(0, 7);
+    const label = g === "day" ? ddmm(d) : g === "week" ? "Tuần " + ddmm(key) : key.slice(5, 7) + "/" + key.slice(0, 4);
+    const p = m.get(key) ?? m.set(key, { key, label, created: 0, won: 0 }).get(key)!;
+    p.created++;
+    if (s.status === "won") p.won++;
+  }
+  return [...m.values()].sort((a, b) => a.key.localeCompare(b.key));
+}
+
+/* ---------- Điểm đáng chú ý (tính từ dữ liệu thật, không suy diễn) ---------- */
+export interface Insight { kind: "source" | "rate" | "backlog" | "need"; text: string; note?: string }
+
+export const INSIGHT_MIN_SAMPLE = 5;
+
+export function reportInsights(args: {
+  sum: Summary;
+  bySource: { key: string; s: Summary }[];
+  byNeed: { key: string; s: Summary }[];
+  minSample?: number;
+}): Insight[] {
+  const { sum, bySource, byNeed } = args;
+  const min = args.minSample ?? INSIGHT_MIN_SAMPLE;
+  const out: Insight[] = [];
+  const topSrc = bySource[0];
+  if (topSrc) out.push({ kind: "source", text: `Nguồn nhiều tín hiệu nhất: ${topSrc.key} (${topSrc.s.total} tín hiệu).` });
+  // Tỷ lệ chốt cao nhất chỉ xét nguồn đủ mẫu; nguồn dẫn đầu nhưng mẫu nhỏ được ghi chú rõ.
+  const rated = bySource.filter((r) => r.s.total > 0 && r.s.closeRate != null);
+  const best = [...rated].sort((a, b) => (b.s.closeRate ?? 0) - (a.s.closeRate ?? 0))[0];
+  if (best) {
+    const enough = best.s.total >= min;
+    out.push({
+      kind: "rate",
+      text: `Tỷ lệ chốt cao nhất: ${best.key} (${best.s.closeRate!.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}% — ${best.s.won}/${best.s.total}).`,
+      note: enough ? undefined : `Mẫu nhỏ (${best.s.total} < ${min} tín hiệu) — chưa đủ căn cứ kết luận nguồn hiệu quả nhất.`,
+    });
+  }
+  const backlog = sum.unassigned + sum.waiting;
+  if (backlog > 0) out.push({ kind: "backlog", text: `Tồn đọng cần xử lý: ${backlog} tín hiệu (${sum.unassigned} chưa phân công, ${sum.waiting} chờ nhận).` });
+  const topNeed = byNeed[0];
+  if (topNeed) out.push({ kind: "need", text: `Nhóm nhu cầu nổi bật: ${topNeed.key} (${topNeed.s.total} tín hiệu).` });
+  return out;
+}
+
 /* ---------- Bộ lọc trang danh sách ---------- */
 /** Lọc nhanh chỉ theo trạng thái (không còn lọc lịch hẹn). */
 export type Quick = "all" | SignalStatus;
