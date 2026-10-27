@@ -8,7 +8,7 @@ const config = () => ({ status: "connected", access_token: "old-access-token", r
 function harness() {
   const c: any = config();
   const patches: any[] = [];
-  const builder: any = { update: (p: any) => { patches.push(p); return builder; }, eq: () => builder, then: (resolve: any) => resolve({ error: null }) };
+  const builder: any = { update: (p: any) => { patches.push(p); return builder; }, eq: () => builder, is: () => builder, then: (resolve: any) => resolve({ error: null }) };
   const rpc = vi.fn(async (name: string, p: any) => {
     if (name === "zalo_refresh_claim") { if (c.refresh_lease) return { data: false }; c.refresh_lease = p.p_lease; c.refresh_started_at = new Date(now).toISOString(); return { data: true }; }
     if (p.p_version !== c.token_version || p.p_lease !== c.refresh_lease) return { data: false };

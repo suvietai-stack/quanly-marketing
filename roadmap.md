@@ -36,4 +36,5 @@
 - [x] Nhắc tương tác Zalo cá nhân: cảnh báo nhẹ, popup không chặn làm việc, hoãn 24 giờ riêng từng user, đọc lại tương tác mỗi 30 giây/khi quay lại Base; dùng OA đã xác minh, không thay đổi gửi tin; 20 kiểm tra đạt.
 - [ ] Kiểm thử popup Zalo cá nhân và tự ẩn sau tin BASE thực tế (chờ đăng nhập tài khoản đã liên kết và gửi tin OA; không có tài khoản khớp để tạo phiên).
 - [x] Website Forms Integration G1: wf_* tables/RPC, HMAC+replay+rate-limit, 3 API /api/public/wf/*, mapping 4 chế độ, tab Cài đặt, docs/website-forms-api.md
-- [ ] Zalo OA ổn định: đối soát production; sửa gia hạn/khóa xoay token, phân loại lỗi và hàng đợi; bổ sung sức khỏe lịch chạy; kiểm thử và xác minh vận hành.
+- [x] Zalo OA: production hiện connected/auto_send=true/15 liên kết; xác minh lỗi destructive refresh claim và thiếu lịch gia hạn; khóa riêng + version-fenced commit, backoff/ambiguity, claim hàng đợi và wake/retry có dừng; lịch care mỗi giờ tăng timeout 60s; UI kiểm tra kết nối OA thật thành công, không đổi Token hiện tại hoặc quyền/liên kết.
+- [ ] Zalo OA: cần Publish để lịch production chạy maintainOa mới; sau đó đọc scheduler_last_at/refresh_last_success_at và đối chiếu chu kỳ refresh thật. Chưa có bằng chứng lịch sử lỗi OAuth cụ thể hoặc xác minh 24/7; không yêu cầu nối lại vì OA hiện hoạt động.
