@@ -9,6 +9,7 @@ import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/ZaloUi";
 import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
+import { ChipiAssistant } from "@/components/ChipiAssistant";
 import { useAuth, useCurrentUser, type PermissionKey } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -227,6 +228,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
           {children}
         </main>
+        {user && <ChipiAssistant key={user.id} userId={user.id} />}
       </div>
     </div>
   );

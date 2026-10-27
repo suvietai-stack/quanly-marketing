@@ -100,3 +100,26 @@
     letter-spacing: -0.02em;
   }
 }
+
+.chipi-assistant { position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 25; width: 128px; }
+.chipi-art { display: block; width: 128px; height: 128px; animation: chipi-breathe 6s ease-in-out infinite; }
+.chipi-art img { display: block; width: 100%; height: 100%; object-fit: contain; animation: chipi-appear 220ms ease-out; }
+.chipi-trigger:active .chipi-art { transform: translateY(2px); }
+.chipi-bubble { position: absolute; right: 0; bottom: calc(100% + 8px); width: min(280px, calc(100vw - 32px)); }
+.chipi-bounce { animation: chipi-hop 600ms ease-out 2; }
+.chipi-small { width: 64px; }
+.chipi-small .chipi-art { width: 56px; height: 56px; animation: none; }
+.chipi-hidden { width: 36px; }
+body:has([role="dialog"][aria-modal="true"]) .chipi-assistant,
+body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-events: none; }
+@keyframes chipi-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes chipi-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-8px) rotate(3deg); } }
+@keyframes chipi-appear { from { opacity: .65; } to { opacity: 1; } }
+@media (max-width: 767px) {
+  .chipi-assistant { width: 88px; right: max(8px, env(safe-area-inset-right)); bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .chipi-art { width: 88px; height: 88px; }
+  .chipi-small { width: 64px; }
+  .chipi-hidden { width: 36px; }
+  body:has(input:focus, textarea:focus, [contenteditable="true"]:focus) .chipi-assistant { visibility: hidden; pointer-events: none; }
+}
+@media (prefers-reduced-motion: reduce) { .chipi-art, .chipi-art img { animation: none; } }
