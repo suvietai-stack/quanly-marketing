@@ -202,16 +202,13 @@ export function SignalsPage() {
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </button>
       )}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" aria-label="Phân loại tín hiệu">
-        {[{ k: "", label: "Tất cả" }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n }))].map((x) => (
-          <button key={x.k || "all"} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: x.k || undefined })); }} className={cn("shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium", (f.needGroup ?? "") === x.k ? "bg-foreground text-background border-foreground" : "bg-card")}>{x.label} <span className="opacity-70">{needCount(x.k || undefined)}</span></button>
-        ))}
-      </div>
-      <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-        {QUICK.map((x) => (
-          <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x.label} <span className="opacity-70">{count(x.k)}</span></button>
-        ))}
-        <button onClick={() => setCare({ on: true, kind: "stale" })} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-sm", care.on && care.kind === "stale" ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>Lâu chưa cập nhật <span className="opacity-70">{careScope.filter((x) => x.flag !== "unaccepted").length}</span></button>
+      <div className="rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
+        <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
+          active={f.needGroup ?? ""} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: k || undefined })); }} />
+        <ChipRow label="Trạng thái" items={QUICK.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
+          active={care.on ? "__care__" : f.quick} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, quick: k as Quick })); }}
+          extra={<button onClick={() => setCare({ on: true, kind: "stale" })} className={cn("shrink-0 rounded-full border px-3 py-1 text-[13px]", care.on && care.kind === "stale" ? "bg-primary text-primary-foreground border-primary" : "bg-background")}>Lâu chưa cập nhật <span className="opacity-70">{careScope.filter((x) => x.flag !== "unaccepted").length}</span></button>} />
+        <ActiveFilters f={f} name={name} onChange={setF} />
       </div>
       {care.on && (
         <div className="space-y-2">
