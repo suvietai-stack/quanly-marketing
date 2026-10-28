@@ -5,15 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-export type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, "type">;
+export type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, "type"> & { allowReveal?: boolean };
 
 /** Visibility is local to this field; the original input and its value never remount. */
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-  ({ className, disabled, ...props }, forwardedRef) => {
+  ({ className, disabled, allowReveal = true, ...props }, forwardedRef) => {
     const [visible, setVisible] = React.useState(false);
     const inputRef = React.useRef<HTMLInputElement | null>(null);
     const selection = React.useRef<{ start: number | null; end: number | null; direction: "forward" | "backward" | "none" | null } | null>(null);
-    const label = visible ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+    const revealed = visible && allowReveal;
+    const label = revealed ? "Ẩn mật khẩu" : "Hiện mật khẩu";
 
     React.useLayoutEffect(() => {
       const input = inputRef.current;
@@ -33,11 +34,11 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             if (typeof forwardedRef === "function") forwardedRef(input);
             else if (forwardedRef) forwardedRef.current = input;
           }}
-          type={visible ? "text" : "password"}
+          type={revealed ? "text" : "password"}
           disabled={disabled}
           className={cn("h-11 pr-12", className)}
         />
-        <TooltipProvider delayDuration={250}>
+        {allowReveal && <TooltipProvider delayDuration={250}>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -47,7 +48,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
                 disabled={disabled}
                 className="absolute right-0 top-0 h-full min-h-11 w-11 rounded-md text-muted-foreground hover:bg-accent/60 hover:text-primary"
                 aria-label={label}
-                aria-pressed={visible}
+                aria-pressed={revealed}
                 aria-controls={props.id}
                 onPointerDown={(event) => {
                   // Keep the field's focus and caret when using a mouse or touch.
@@ -60,12 +61,12 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
                   setVisible((value) => !value);
                 }}
               >
-                {visible ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                {revealed ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>{label}</TooltipContent>
           </Tooltip>
-        </TooltipProvider>
+        </TooltipProvider>}
       </div>
     );
   },

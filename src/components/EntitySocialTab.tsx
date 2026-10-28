@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useStore, uid, ENTITY_PLATFORMS, ENTITY_STATUSES, type EntitySocial } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -181,7 +182,6 @@ function EntityForm({
     status: initial?.status || "Đang dùng",
     notes: initial?.notes || "",
   });
-  const [showPw, setShowPw] = useState(false);
   const set = (k: keyof EntitySocial, val: any) => setV({ ...v, [k]: val });
 
   return (
@@ -197,14 +197,7 @@ function EntityForm({
         <Field label="Link" className="sm:col-span-2"><Input value={v.url} onChange={(e) => set("url", e.target.value)} placeholder="https://..." /></Field>
         <Field label="Tài khoản"><Input value={v.account} onChange={(e) => set("account", e.target.value)} /></Field>
         <Field label="Mật khẩu">
-          <div className="flex gap-1">
-            <Input type={showPw && canRevealPassword ? "text" : "password"} value={v.password} onChange={(e) => set("password", e.target.value)} />
-            {canRevealPassword && (
-              <Button type="button" size="icon" variant="ghost" onClick={() => setShowPw((x) => !x)}>
-                {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            )}
-          </div>
+          <PasswordInput allowReveal={canRevealPassword} value={v.password} onChange={(e) => set("password", e.target.value)} />
         </Field>
         <Field label="Email"><Input value={v.email} onChange={(e) => set("email", e.target.value)} /></Field>
         <Field label="SĐT"><Input value={v.phone} onChange={(e) => set("phone", e.target.value)} /></Field>
