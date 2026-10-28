@@ -160,7 +160,8 @@ export function SignalsPage() {
   // Sale chỉ thấy tín hiệu đang giao cho chính mình; quản lý thấy trong phạm vi được xem
   const careScope = useMemo(() => (p.viewAll || p.assign || p.manage ? careAll : careAll.filter((x) => x.s.assigned_to === p.userId)), [careAll, p]);
   const careList = useMemo(() => careScope.filter((x) => (!care.sale || x.s.assigned_to === care.sale)
-    && (!care.kind || (care.kind === "unaccepted" ? x.flag === "unaccepted" : x.flag !== "unaccepted"))), [careScope, care]);
+    && (!care.kind || (care.kind === "unaccepted" ? x.flag === "unaccepted" : x.flag !== "unaccepted")) && applyDetailFilter([x.s], f, today).length > 0
+    && (f.quick === 'all' || x.s.status === f.quick)), [careScope, care, f, today]);
   const list = useMemo(() => applyListFilter(data, f, today, last), [data, f, today, last]);
   const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);

@@ -23,14 +23,14 @@ export function ProgressionReport({ data, f, userId, name, onSale }: { data: Sig
   const analysis=useMemo(()=>{
     const rows=query.data ?? {};
     const cohort=filterSignals(data,f);
-    const period=filterSignals(data,{...f,from:undefined,to:undefined});
+    const period=filterSignals(data,{...f,from:undefined,to:undefined,saleId:undefined});
     const ids=new Set(cohort.map(s=>s.assigned_to).filter((id):id is string=>!!id));
     for(const s of period) for(const id of Object.keys(rows[s.id]?.authors ?? {})) if(!f.saleId || id===f.saleId) ids.add(id);
     const now=Date.now();
-    return { total:progressionMetrics(cohort,period,rows,now), sales:[...ids].map(id=>({id,metrics:progressionMetrics(cohort.filter(s=>s.assigned_to===id),period,rows,now,id)})) };
+    return { total:progressionMetrics(cohort,period,rows,now,f.saleId), sales:[...ids].map(id=>({id,metrics:progressionMetrics(cohort.filter(s=>s.assigned_to===id),period,rows,now,id)})) };
   },[data,f,query.data]);
   const sorted=[...analysis.sales].sort((a,b)=>((a.metrics[sort.key]??-1)-(b.metrics[sort.key]??-1))*(sort.desc ? -1 : 1));
-  return <section className="space-y-3 pb-32 md:pb-0" aria-label="Hiệu suất cập nhật diễn biến">
+  return <section className="space-y-3 pb-32 pr-24 md:pr-0 md:pb-0" aria-label="Hiệu suất cập nhật diễn biến">
     <h2 className="text-xs font-semibold uppercase text-muted-foreground">Hiệu suất cập nhật diễn biến</h2>
     <p className="text-xs text-muted-foreground">Trạng thái hiện tại trong tập tín hiệu đã lọc · Cửa sổ 7 ngày đến hiện tại · Lượt trong kỳ theo ngày ghi diễn biến.</p>
     {query.error ? <p className="text-sm text-destructive">Không tải được diễn biến: {errMsg(query.error)}</p> : query.isPending ? <p className="text-sm text-muted-foreground">Đang tải diễn biến…</p> : <>
