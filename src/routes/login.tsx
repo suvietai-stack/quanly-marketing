@@ -113,6 +113,7 @@ function LoginPage() {
   const [password, setP] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   useEffect(() => {
     if (currentUserId) goBack(navigate);
@@ -167,9 +168,12 @@ function LoginPage() {
                 <Button asChild variant="link" className="h-auto min-h-10 p-0 text-xs font-medium sm:text-sm">
                   <Link to="/register">Đăng ký tài khoản mới</Link>
                 </Button>
-                <span className="inline-flex min-h-10 cursor-not-allowed items-center text-muted-foreground transition-colors hover:text-foreground" title="Sắp ra mắt" aria-disabled="true">Quên mật khẩu</span>
+                <Button type="button" variant="link" className="h-auto min-h-10 p-0 text-xs font-medium sm:text-sm" onClick={() => setForgotOpen(true)}>
+                  <MailQuestion aria-hidden="true" className="mr-1 h-3.5 w-3.5" />Quên mật khẩu
+                </Button>
               </div>
             </form>
+            <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} />
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">{brand.org_name}</p>
