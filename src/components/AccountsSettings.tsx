@@ -20,6 +20,7 @@ import {
   Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check, Search,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { toast } from "sonner";
 
 const STATUSES: AccountStatus[] = ["Chờ duyệt","Đang hoạt động","Tạm khóa","Từ chối","Lưu trữ"];
@@ -829,26 +830,5 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
 
 // --------- Change own password ---------
 function ChangePasswordTab() {
-  const s = useAuth();
-  const [oldP, setOld] = useState("");
-  const [n1, setN1] = useState("");
-  const [n2, setN2] = useState("");
-
-  const submit = async () => {
-    if (n1.length < 6) return toast.error("Mật khẩu mới tối thiểu 6 ký tự");
-    if (n1 !== n2) return toast.error("Mật khẩu xác nhận không khớp");
-    const res = await s.changeOwnPassword(oldP, n1);
-    if (!res.ok) return toast.error(res.error);
-    toast.success("Đã đổi mật khẩu");
-    setOld(""); setN1(""); setN2("");
-  };
-
-  return (
-    <Card><CardContent className="p-5 max-w-md space-y-3">
-      <div><Label>Mật khẩu hiện tại</Label><Input type="password" value={oldP} onChange={(e) => setOld(e.target.value)} /></div>
-      <div><Label>Mật khẩu mới</Label><Input type="password" value={n1} onChange={(e) => setN1(e.target.value)} /></div>
-      <div><Label>Xác nhận mật khẩu mới</Label><Input type="password" value={n2} onChange={(e) => setN2(e.target.value)} /></div>
-      <Button onClick={submit}><KeyRound className="h-4 w-4 mr-1.5" />Đổi mật khẩu</Button>
-    </CardContent></Card>
-  );
+  return <ChangePasswordForm />;
 }
