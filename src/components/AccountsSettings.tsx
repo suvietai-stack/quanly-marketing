@@ -360,7 +360,12 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
 
   const reset = async () => {
     if (newPwd.length < 6) return toast.error("Mật khẩu mới tối thiểu 6 ký tự");
-    await s.resetPassword(user.id, newPwd);
+    try {
+      await s.resetPassword(user.id, newPwd);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Không reset được mật khẩu.");
+      return;
+    }
     setNewPwd("");
     toast.success("Đã reset mật khẩu");
   };
