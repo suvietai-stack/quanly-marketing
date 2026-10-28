@@ -6,7 +6,7 @@ export function sendErrorGroup(code: number): SendErrorGroup {
   if ([-213, -230, -232, -201].includes(code)) return "recipient";
   if ([-233, -204].includes(code)) return "format";
   if ([-320, -224].includes(code) || code === 403) return "permission";
-  if (code === 429 || [-210, -211].includes(code)) return "quota";
+  if (code === 429) return "quota";
   if (code === -9) return "network";
   return "unknown";
 }
