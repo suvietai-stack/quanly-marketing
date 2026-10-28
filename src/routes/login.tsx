@@ -6,8 +6,81 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { LogIn, LockKeyhole, UserRound, LoaderCircle } from "lucide-react";
+import { LogIn, LockKeyhole, UserRound, LoaderCircle, MailQuestion } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { isFakeEmail } from "@/lib/password";
 import { toast } from "sonner";
+
+const FORGOT_COOLDOWN_MS = 60_000;
+const FORGOT_COOLDOWN_KEY = "forgot_password_last_at";
+
+function ForgotPasswordDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    const value = email.trim().toLowerCase();
+    if (isFakeEmail(value)) {
+      toast.error("Địa chỉ email nội bộ không nhận được thư khôi phục. Vui lòng liên hệ Admin để được hỗ trợ.");
+      return;
+    }
+    // Chống lạm dụng: tối thiểu 60 giây giữa hai lần gửi trên cùng trình duyệt.
+    try {
+      const last = Number(localStorage.getItem(FORGOT_COOLDOWN_KEY) || 0);
+      if (Date.now() - last < FORGOT_COOLDOWN_MS) {
+        toast.error("Bạn vừa yêu cầu khôi phục. Vui lòng đợi khoảng 1 phút rồi thử lại.");
+        return;
+      }
+    } catch { /* ignore */ }
+    setLoading(true);
+    try {
+      await supabase.auth.resetPasswordForEmail(value, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      try { localStorage.setItem(FORGOT_COOLDOWN_KEY, String(Date.now())); } catch { /* ignore */ }
+      // Phản hồi trung tính: không tiết lộ email có tồn tại hay không.
+      setSent(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) { setSent(false); setEmail(""); onClose(); } }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Khôi phục mật khẩu</DialogTitle></DialogHeader>
+        {sent ? (
+          <div className="space-y-4">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Nếu email này thuộc một tài khoản đang hoạt động, hệ thống đã gửi liên kết khôi phục.
+              Vui lòng kiểm tra hộp thư (kể cả mục Spam) và làm theo hướng dẫn.
+            </p>
+            <DialogFooter><Button onClick={onClose}>Đã hiểu</Button></DialogFooter>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="forgot-email">Email khôi phục</Label>
+              <Input id="forgot-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ban@congty.vn" required autoFocus />
+              <p className="text-xs text-muted-foreground">Nhập email đã đăng ký với tài khoản của bạn.</p>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={onClose}>Huỷ</Button>
+              <Button type="submit" disabled={loading}>
+                {loading && <LoaderCircle aria-hidden="true" className="mr-1.5 h-4 w-4 motion-safe:animate-spin" />}
+                {loading ? "Đang gửi..." : "Gửi liên kết khôi phục"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [
