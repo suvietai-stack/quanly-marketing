@@ -72,7 +72,13 @@ export const adminResetPassword = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        newPassword: z.string().min(6).max(200),
+        newPassword: z
+          .string()
+          .min(8, "Mật khẩu mới tối thiểu 8 ký tự.")
+          .max(200)
+          .refine((v) => /[a-zA-Z]/.test(v) && /[0-9]/.test(v), {
+            message: "Mật khẩu mới cần có cả chữ cái và chữ số.",
+          }),
       })
       .parse(input),
   )
