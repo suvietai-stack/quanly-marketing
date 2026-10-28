@@ -252,7 +252,7 @@ export function SignalsPage() {
         : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
           <>
-            <div className="md:hidden space-y-2">
+            <div className="md:hidden space-y-2 pr-24">
               {list.map((s) => (
                 <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
