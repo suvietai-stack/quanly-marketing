@@ -52,12 +52,15 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
                 aria-controls={props.id}
                 onPointerDown={(event) => {
                   // Keep the field's focus and caret when using a mouse or touch.
+                  const input = inputRef.current;
+                  if (input) selection.current = { start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection };
                   event.preventDefault();
                 }}
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={(event) => {
                   event.stopPropagation();
                   const input = inputRef.current;
-                  if (input) selection.current = { start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection };
+                  if (input && !selection.current) selection.current = { start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection };
                   setVisible((value) => !value);
                 }}
               >
