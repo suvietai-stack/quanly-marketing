@@ -156,7 +156,7 @@ function LoginPage() {
               <div className="space-y-2">
                 <Label htmlFor="login-password" className="text-sm font-medium">Mật khẩu</Label>
                 <div className="relative">
-                  <LockKeyhole aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground" />
+                  <LockKeyhole aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 z-10 size-[18px] -translate-y-1/2 text-muted-foreground" />
                   <PasswordInput id="login-password" className="login-input h-12 rounded-xl pl-11" value={password} onChange={(e) => setP(e.target.value)} required />
                 </div>
               </div>
