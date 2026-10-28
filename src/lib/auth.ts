@@ -1238,13 +1238,21 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   changeOwnPassword: async (oldPwd, newPwd) => {
     const { data: sess } = await supabase.auth.getSession();
-    const email = sess.session?.user?.email;
     const userId = sess.session?.user?.id;
-    if (!email || !userId) return { ok: false, error: "Chưa đăng nhập." };
-    const { error: e1 } = await supabase.auth.signInWithPassword({ email, password: oldPwd });
-    if (e1) return { ok: false, error: "Mật khẩu hiện tại không đúng." };
-    const { error: e2 } = await supabase.auth.updateUser({ password: newPwd });
-    if (e2) return { ok: false, error: e2.message };
+    if (!userId) return { ok: false, error: "Chưa đăng nhập." };
+    // Xác minh mật khẩu hiện tại trực tiếp qua Supabase Auth (require_current_password),
+    // không đăng nhập lại — phiên hiện tại được giữ nguyên.
+    const { error } = await supabase.auth.updateUser({ password: newPwd, current_password: oldPwd });
+    if (error) {
+      const msg = error.message?.toLowerCase() ?? "";
+      if (msg.includes("current password") || msg.includes("invalid") || msg.includes("incorrect")) {
+        return { ok: false, error: "Mật khẩu hiện tại không đúng." };
+      }
+      if (msg.includes("weak") || msg.includes("at least")) {
+        return { ok: false, error: "Mật khẩu mới chưa đủ mạnh theo yêu cầu hệ thống." };
+      }
+      return { ok: false, error: "Không đổi được mật khẩu. Vui lòng thử lại." };
+    }
     await supabase.from("profiles").update({ must_change_password: false }).eq("id", userId);
     await get().reload();
     return { ok: true };
