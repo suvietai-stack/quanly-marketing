@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { passwordIssues } from "@/lib/password";
 import { useBranding, BrandMark } from "@/lib/branding";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeyRound, LoaderCircle } from "lucide-react";
@@ -123,12 +123,12 @@ function ResetPasswordPage() {
               <form onSubmit={submit} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="rp-new" className="text-sm font-medium">Mật khẩu mới</Label>
-                  <Input id="rp-new" className="login-input h-12 rounded-xl" type="password" autoComplete="new-password" value={n1} onChange={(e) => setN1(e.target.value)} required autoFocus />
+                  <PasswordInput id="rp-new" className="login-input h-12 rounded-xl" autoComplete="new-password" value={n1} onChange={(e) => setN1(e.target.value)} required autoFocus />
                   <p className="text-xs text-muted-foreground">Tối thiểu 8 ký tự, gồm cả chữ cái và chữ số.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="rp-confirm" className="text-sm font-medium">Xác nhận mật khẩu mới</Label>
-                  <Input id="rp-confirm" className="login-input h-12 rounded-xl" type="password" autoComplete="new-password" value={n2} onChange={(e) => setN2(e.target.value)} required />
+                  <PasswordInput id="rp-confirm" className="login-input h-12 rounded-xl" autoComplete="new-password" value={n2} onChange={(e) => setN2(e.target.value)} required />
                 </div>
                 {err && <div role="alert" className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm leading-relaxed text-destructive">{err}</div>}
                 <Button type="submit" className="login-submit h-12 w-full rounded-xl text-sm font-semibold" disabled={loading}>

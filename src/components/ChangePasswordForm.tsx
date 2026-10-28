@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { changePasswordError } from "@/lib/password";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeyRound, LoaderCircle } from "lucide-react";
@@ -49,16 +49,16 @@ export function ChangePasswordForm() {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="cp-old">Mật khẩu hiện tại</Label>
-            <Input id="cp-old" type="password" autoComplete="current-password" value={oldP} onChange={(e) => setOld(e.target.value)} required />
+            <PasswordInput id="cp-old" autoComplete="current-password" value={oldP} onChange={(e) => setOld(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="cp-new">Mật khẩu mới</Label>
-            <Input id="cp-new" type="password" autoComplete="new-password" value={n1} onChange={(e) => setN1(e.target.value)} required />
+            <PasswordInput id="cp-new" autoComplete="new-password" value={n1} onChange={(e) => setN1(e.target.value)} required />
             <p className="text-xs text-muted-foreground">Tối thiểu 8 ký tự, gồm cả chữ cái và chữ số.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="cp-confirm">Xác nhận mật khẩu mới</Label>
-            <Input id="cp-confirm" type="password" autoComplete="new-password" value={n2} onChange={(e) => setN2(e.target.value)} required />
+            <PasswordInput id="cp-confirm" autoComplete="new-password" value={n2} onChange={(e) => setN2(e.target.value)} required />
           </div>
           {err && <div role="alert" className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm leading-relaxed text-destructive">{err}</div>}
           <Button type="submit" disabled={loading}>

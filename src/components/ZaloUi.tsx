@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -240,7 +241,7 @@ export function ZaloAdminCard() {
         <div className="space-y-1"><Label>Zalo App ID</Label><Input value={appId} onChange={(e) => setAppId(e.target.value)} inputMode="numeric" /></div>
         <div className="space-y-1">
           <Label>App Secret</Label>
-          <Input type="password" autoComplete="new-password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder={s.appSecretSet ? `Đã lưu (${s.appSecretHint}) — để trống nếu không đổi` : "Nhập App Secret"} />
+          <PasswordInput autoComplete="new-password" value={secret} onChange={(e) => setSecret(e.target.value)} placeholder={s.appSecretSet ? `Đã lưu (${s.appSecretHint}) — để trống nếu không đổi` : "Nhập App Secret"} />
           <div className="text-xs text-muted-foreground">App Secret không bao giờ hiển thị lại. Đổi App ID/Secret sẽ yêu cầu kết nối lại OA.</div>
         </div>
         <Button disabled={!s.dbReady} onClick={() => {
@@ -306,7 +307,7 @@ export function ZaloAdminCard() {
         <div className="space-y-1">
           <Label>Khóa Webhook (OA Secret Key)</Label>
           <div className="flex gap-2">
-            <Input type="password" autoComplete="new-password" value={hook} onChange={(e) => setHook(e.target.value)} placeholder={s.webhookReady ? "Đã lưu — để trống nếu không đổi" : "Chỉ cần để nhân viên liên kết Zalo"} />
+            <PasswordInput autoComplete="new-password" value={hook} onChange={(e) => setHook(e.target.value)} placeholder={s.webhookReady ? "Đã lưu — để trống nếu không đổi" : "Chỉ cần để nhân viên liên kết Zalo"} />
             <Button variant="outline" disabled={!s.dbReady || !hook} onClick={() => run(saveHook({ data: { secret: hook } }).then((r) => { setHook(""); return r; }))}>Lưu</Button>
           </div>
         </div>
