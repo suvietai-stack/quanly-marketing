@@ -36,8 +36,8 @@ Máy chủ tổng hợp dưới quyền đọc hiện có (SECURITY INVOKER). B�
 - Không đưa chỉ số chụp trạng thái vào xu hướng lịch sử, không đổi tỷ lệ chốt/giờ tiếp nhận/nhắc Zalo.
 
 ## Kiểm thử và giới hạn
-- Kiểm thử quy tắc thuần, công thức và hồi quy toàn module Tín hiệu; kiểm tĩnh ràng buộc hàm lưu/quyền/60 giây và bảo toàn lịch sử.
-- UI thật bằng Super Admin: 405 tín hiệu; mở chi tiết, hai chip ghép đúng, maket xuất hiện ở nhóm quà tặng, thống kê đọc thành công, lọc Đào Thanh Hoan: 5 đang mở / 0 gần đây / 0% / 5 lâu / 5 dưới mốc / 22 lượt tháng 10.
+- 103/103 kiểm thử đạt: quy tắc thuần, công thức, hồi quy Tín hiệu; kiểm tĩnh hàm lưu/quyền/60 giây và bảo toàn lịch sử. Build OK.
+- UI thật bằng Super Admin: 405 tín hiệu; mở chi tiết, hai chip ghép đúng, maket xuất hiện ở nhóm quà tặng, bấm Lưu khi chọn Trượt chưa có lý do báo đúng và không ghi dữ liệu; thống kê đọc thành công, lọc Đào Thanh Hoan: 5 đang mở / 0 gần đây / 0% / 5 lâu / 5 dưới mốc / 22 lượt tháng 10.
 - Toàn báo cáo tháng 10 lúc kiểm: 322 / 50 / 15,5% / 134 / 321 / 265 theo thứ tự trên UI.
 - Desktop 1280, mobile 360/390: không tràn ngang, không lỗi runtime; ảnh nội bộ ở `/tmp/browser/progression/`.
 - Chưa thử lưu diễn biến thành công hoặc hai request thật đồng thời, vì dữ liệu dùng chung và không có nội dung chăm sóc thật được chỉ định. Không tạo diễn biến giả, không thử Chốt/Trượt trên khách thật. Quyền Sale ngoài phạm vi chưa được kiểm bằng phiên Sale thật.
