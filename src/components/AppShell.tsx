@@ -135,6 +135,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div>{user.username}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+          <UserIcon className="h-4 w-4 mr-2" />Hồ sơ cá nhân
+        </DropdownMenuItem>
         {can("settings.view") && (
           <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
             <UserIcon className="h-4 w-4 mr-2" />Tài khoản & Cài đặt
