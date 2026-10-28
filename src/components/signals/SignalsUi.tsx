@@ -20,12 +20,14 @@ import {
 import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
   signalHistory, updateSignalInfo, deleteSignal, cancelSignal, getCustomLostReasons, setCustomLostReasons, getOptions, saveOptions, renameOptionEverywhere, type SignalInput,
-  listCareNotes,
+  listCareNotes, listProgression, saveProgression,
 } from "@/lib/signals/api";
 import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
 import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
 import { useServerFn } from "@tanstack/react-start";
 import { zaloCareCounts } from "@/lib/zalo.functions";
+import { ProgressionSummary } from "./ProgressionSummary";
+import { composeProgression, progressionSuggestions, progressionState, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
@@ -128,6 +130,7 @@ export function SignalsPage() {
   const { data = [], isLoading, error } = useSignals();
   const { data: last = {} } = useLastNotes();
   const { data: careNotes = {} } = useQuery({ queryKey: [`${SIG}care`, p.userId], queryFn: listCareNotes, enabled: !!p.userId });
+  const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchInterval: 10000, refetchOnWindowFocus: "always" });
   const careFn = useServerFn(zaloCareCounts);
   const { data: careCfg } = useQuery({ queryKey: [`${SIG}carecfg`], queryFn: () => careFn(), staleTime: 600000 });
   const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
@@ -151,9 +154,9 @@ export function SignalsPage() {
   const mine = useMemo(() => data.filter((s) => s.assigned_to === p.userId), [data, p.userId]);
   const careAll = useMemo(() => {
     const cfg = careCfg ?? DEFAULT_CARE; const now = Date.now();
-    return data.map((s) => ({ s, flag: careFlag(s, careNotes[s.id] ?? [], now, cfg), since: daysSince(lastCareActivity(s, careNotes[s.id] ?? []), now) }))
+    return data.map((s) => ({ s, flag: careFlag(s, careNotes[s.id] ?? [], now, cfg) === "unaccepted" ? "unaccepted" : progressionState(s, progression.data?.[s.id], now).stale ? "stale_contact" : null, since: daysSince(progressionState(s, progression.data?.[s.id], now).last ?? (s.assigned_at ? Date.parse(s.assigned_at) : null), now) }))
       .filter((x) => x.flag);
-  }, [data, careNotes, careCfg]);
+  }, [data, careNotes, careCfg, progression.data]);
   // Sale chỉ thấy tín hiệu đang giao cho chính mình; quản lý thấy trong phạm vi được xem
   const careScope = useMemo(() => (p.viewAll || p.assign || p.manage ? careAll : careAll.filter((x) => x.s.assigned_to === p.userId)), [careAll, p]);
   const careList = useMemo(() => careScope.filter((x) => (!care.sale || x.s.assigned_to === care.sale)
@@ -257,6 +260,7 @@ export function SignalsPage() {
                   </div>
                   <div className="text-sm text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
                   <div className="text-sm line-clamp-1">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
+                  {progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} compact />}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
                     <span>Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
@@ -278,7 +282,7 @@ export function SignalsPage() {
                       <td className="px-4 py-2.5 whitespace-nowrap">{s.source}</td>
                       <td className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
                       <td className="px-4 py-2.5"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
-                      <td className="px-4 py-2.5 max-w-[200px] truncate">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</td>
+                      <td className="px-4 py-2.5 max-w-[240px]"><div className="line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</div>{progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} compact />}</td>
                       <td className="px-4 py-2.5 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
                         ? <div className="line-clamp-2 whitespace-pre-line" title={s.need_detail}>{s.need_detail}</div>
                         : <span className="text-muted-foreground">—</span>}</td>
@@ -612,6 +616,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const [updating, setUpdating] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const hist = useQuery({ queryKey: [`${SIG}hist`, p.userId, s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
+  const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchOnWindowFocus: "always" });
+  const [showProgression, setShowProgression] = useState(false);
   const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
   const cancelled = !!s.cancelled_at;
@@ -700,7 +706,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
             )}
           </div>
         </div>
-        {cancelled && <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2">Đã hủy {fmtTime(s.cancelled_at!)}: {s.cancel_reason}. Không tính vào báo cáo.</div>}
+        {cancelled && <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2">Đã hủy {fmtTime(s.cancelled_at ?? s.updated_at)}: {s.cancel_reason}. Không tính vào báo cáo.</div>}
         <a href={`tel:${s.phone}`} className="block font-mono text-base text-primary">{s.phone}</a>
         <div className="text-sm">{[s.products.join(", "), needGroupsOf(s).join(", ")].filter(Boolean).join(" · ") || "—"}</div>
         <div className="text-sm text-muted-foreground">Gần nhất: {lastText(last) ?? "Chưa có diễn biến"}</div>
@@ -718,6 +724,16 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       </div>
 
       <div className="p-4 space-y-5 flex-1">
+        {progression.error ? <p className="text-sm text-destructive">Không tải được diễn biến: {errMsg(progression.error)}</p> : progression.isPending ? <p className="text-sm text-muted-foreground">Đang tải diễn biến…</p> : <ProgressionSummary s={s} row={progression.data?.[s.id]} />}
+        <Section title="Lịch sử diễn biến">
+          {hist.error ? <p className="text-sm text-destructive">{errMsg(hist.error)}</p> : <>
+            <ol className="space-y-3 border-l pl-4">
+              {(hist.data?.notes ?? []).filter(validProgression).slice(0, showProgression ? undefined : 3).map(n => <li key={n.id} className="text-sm space-y-1"><div className="text-xs text-muted-foreground">{fmtTime(n.created_at)} · {name(n.author_id)}</div><p className="whitespace-pre-wrap">{[n.event_type,n.note].filter(Boolean).join(' — ')}</p></li>)}
+            </ol>
+            {(hist.data?.notes ?? []).filter(validProgression).length > 3 && <Button variant="ghost" size="sm" onClick={() => setShowProgression(v => !v)}>{showProgression ? 'Thu gọn' : 'Xem thêm diễn biến'}</Button>}
+            <p className="text-xs text-muted-foreground">Lịch sử cũ tính nội dung và gợi ý tư vấn xác định được; không tính tiếp nhận hoặc đổi trạng thái đơn thuần. Chưa thể xác minh các lần retry cũ.</p>
+          </>}
+        </Section>
         <Section title="Nhật ký tư vấn">
           {hist.isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : timeline.length === 0 ? <p className="text-sm text-muted-foreground">Chưa có diễn biến.</p> : (
             <>
@@ -768,57 +784,61 @@ function Row({ k, children }: { k: string; children: React.ReactNode }) {
   return <div className="grid grid-cols-[120px_1fr] gap-2"><span className="text-muted-foreground">{k}</span><span>{children}</span></div>;
 }
 
-const CH_KEY = "sig_last_channel";
+
 /** "YYYY-MM-DDTHH:mm" (giờ Việt Nam) → ISO */
 const vnLocalToIso = (v: string) => new Date(`${v}:00+07:00`).toISOString();
 
 function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
-  const [event, setEvent] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [extra, setExtra] = useState("");
+  const [preview, setPreview] = useState(false);
+  const saving = useRef(false);
+  const request = useRef<{ id: string; payload: string } | null>(null);
   const [note, setNote] = useState("");
-  const [channel, setChannel] = useState("Zalo");
+
   const [status, setStatus] = useState<SignalStatus>(s.status as SignalStatus);
   const [revenue, setRevenue] = useState("");
   const [reason, setReason] = useState("");
   const lr = useLostReasons();
   const [reasonOther, setReasonOther] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { const c = localStorage.getItem(CH_KEY); if (c) setChannel(c); }, []);
+  const compose = (items: string[], text: string) => { setNote(composeProgression(items,text)); setPreview(false); };
   const closing = status === "won" || status === "lost";
 
   const save = async () => {
+    if (saving.current) return;
     const rev = status === "won" ? Number(revenue.replace(/[^\d]/g, "")) : null;
     if (status === "won" && (!rev || rev <= 0)) return toast.error("Chốt bắt buộc nhập doanh số");
     const lost = status === "lost" ? (reason === "Khác" ? (reasonOther.trim() ? `Khác: ${reasonOther.trim()}` : "") : reason) : null;
     if (status === "lost" && !lost) return toast.error(reason === "Khác" ? "Nhập lý do trượt cụ thể" : "Trượt bắt buộc chọn lý do");
-    if (status === s.status && !event && !note.trim()) return toast.error("Chọn diễn biến hoặc nhập nội dung");
+    if (status === s.status && !note.trim()) return toast.error("Chọn diễn biến hoặc nhập nội dung");
+    saving.current = true;
     setBusy(true);
     try {
+      const payload = JSON.stringify([s.id,status,note,rev,lost]);
+      if (request.current?.payload !== payload) request.current = { id: crypto.randomUUID(), payload };
       // Không còn lịch hẹn trên giao diện; giữ nguyên giá trị cũ trong dữ liệu.
-      await saleUpdate(s.id, {
-        status, note, event: event || null, channel,
+      await saveProgression(s.id, request.current.id, {
+        status, note, event: null, channel: "Zalo",
         next: closing ? null : s.next_contact_on, nextAt: closing ? null : s.next_contact_at ?? null,
         revenue: rev, lostReason: lost,
       });
-      localStorage.setItem(CH_KEY, channel);
+
       toast.success("Đã lưu diễn biến");
       onSaved();
-    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+    } catch (e) { toast.error(errMsg(e)); } finally { saving.current = false; setBusy(false); }
   };
 
   return (
     <div>
       <div className="px-4 space-y-4 pb-4">
-        <Field label="Diễn biến">
-          <div className="flex flex-wrap gap-1.5">
-            {SIGNAL_EVENTS.map((x) => <button key={x} type="button" onClick={() => setEvent(event === x ? "" : x)} className={cn("rounded-full border px-3 py-1.5 text-sm", event === x ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x}</button>)}
-          </div>
-        </Field>
-        <Field label="Nội dung trao đổi"><Textarea rows={3} maxLength={3000} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Thông tin quan trọng cần lưu lại…" /></Field>
-        <Field label="Phương thức">
-          <div className="flex flex-wrap gap-1.5">
-            {SIGNAL_CHANNELS.map((x) => <button key={x} type="button" onClick={() => setChannel(x)} className={cn("rounded-full border px-3 py-1.5 text-sm", channel === x ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{x}</button>)}
-          </div>
-        </Field>
+        <details open className="space-y-3">
+          <summary className="cursor-pointer text-sm font-medium">Gợi ý diễn biến</summary>
+          {progressionSuggestions(needGroupsOf(s)).map(group => <div key={group.label} className="space-y-1.5"><div className="text-xs font-semibold text-muted-foreground">{group.label}</div><div className="flex flex-wrap gap-2">{group.items.map(item => <Button key={item} type="button" variant={selected.includes(item) ? "default" : "outline"} size="sm" className="h-auto min-h-10 whitespace-normal rounded-full px-3 py-2 text-left" aria-pressed={selected.includes(item)} onClick={() => { const next=selected.includes(item) ? selected.filter(x=>x!==item) : [...selected,item]; setSelected(next); compose(next,extra); }}>{item}</Button>)}</div></div>)}
+        </details>
+        <Field label="Ghi chú bổ sung"><Textarea rows={3} maxLength={3000} value={extra} onChange={e => {setExtra(e.target.value); compose(selected,e.target.value);}} placeholder="Diễn biến thực tế của khách…" /></Field>
+        <div className="flex items-center justify-between"><Label>Nội dung sẽ lưu</Label><Button variant="ghost" size="sm" onClick={() => setPreview(v=>!v)}>{preview ? 'Chỉnh sửa' : 'Xem trước'}</Button></div>
+        {preview ? <p className="min-h-24 whitespace-pre-wrap rounded-md border p-3 text-sm">{note || 'Chưa có nội dung'}</p> : <Textarea aria-label="Nội dung sẽ lưu" rows={4} maxLength={3000} value={note} onChange={e=>setNote(e.target.value)} />}
         <Field label="Trạng thái (mặc định giữ nguyên)">
           <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as SignalStatus)}>
             {[...OPEN_STATUSES, "won", "lost"].map((o) => <option key={o} value={o}>{STATUS_LABEL[o as SignalStatus]}{o === s.status ? " (hiện tại)" : ""}</option>)}
