@@ -26,6 +26,13 @@ import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type
 import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
 import { useServerFn } from "@tanstack/react-start";
 import { zaloCareCounts } from "@/lib/zalo.functions";
+import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
+
+function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
+  return <Button asChild variant="link" className="h-auto min-h-11 md:min-h-0 justify-start whitespace-normal p-0 text-left font-semibold leading-tight select-text">
+    <span role="button" tabIndex={0} aria-label={`Mở chi tiết tín hiệu: ${name}`} onClick={signalNameClick(onOpen)} onKeyDown={signalNameKeyDown(onOpen)}>{name}</span>
+  </Button>;
+}
 
 export function useSignalPerms() {
   const { user, can } = useCurrentUser();
@@ -167,7 +174,7 @@ export function SignalsPage() {
 
 
   return (
-    <div className="space-y-4 pb-20 md:pb-0">
+    <div className="signals-page space-y-4 pb-32 md:pb-0">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{saleOnly ? "Tín hiệu của tôi" : "Tín hiệu cơ hội"}</h1>
@@ -218,9 +225,9 @@ export function SignalsPage() {
           </div>
           {careList.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg bg-card">Không có tín hiệu cần kiểm tra.</p>
             : careList.map(({ s, flag, since }) => (
-              <div key={s.id} className="rounded-xl border bg-card p-3.5 space-y-1.5">
+              <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-semibold leading-tight">{s.customer_name}</div>
+                  <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
                   <StatusPill s={s} />
                 </div>
                 <div className="text-sm"><span className="text-muted-foreground">Diễn biến gần nhất: </span>{lastText(last[s.id]) ?? "Chưa có"}</div>
@@ -228,7 +235,7 @@ export function SignalsPage() {
                   <span className={flag === "unaccepted" ? "text-destructive" : "text-amber-700 dark:text-amber-300"}>
                     {flag === "unaccepted" ? `Chưa tiếp nhận: ${since} ngày` : `Chưa cập nhật: ${since} ngày`}{!saleOnly && s.assigned_to ? ` · ${name(s.assigned_to)}` : ""}
                   </span>
-                  <Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>Xem tín hiệu</Button>
+                  <Button size="sm" variant="outline" className="min-h-11 md:min-h-0" onClick={() => setOpenId(s.id)}>Xem tín hiệu</Button>
                 </div>
               </div>
             ))}
@@ -243,9 +250,9 @@ export function SignalsPage() {
           <>
             <div className="md:hidden space-y-2">
               {list.map((s) => (
-                <button key={s.id} onClick={() => setOpenId(s.id)} className="w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5">
+                <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="font-semibold leading-tight">{s.customer_name}</div>
+                    <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
                     <StatusPill s={s} />
                   </div>
                   <div className="text-sm text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
@@ -254,7 +261,7 @@ export function SignalsPage() {
                     <span>{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
                     <span>Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
             <div className="hidden md:block rounded-2xl border bg-card overflow-x-auto shadow-sm">
@@ -264,9 +271,9 @@ export function SignalsPage() {
                 </thead>
                 <tbody>
                   {list.map((s) => (
-                    <tr key={s.id} className="border-t hover:bg-primary/[0.03] transition-colors">
+                    <tr key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="border-t cursor-pointer hover:bg-accent/50 transition-colors">
                       <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{fmtDate(s.detected_on)}</td>
-                      <td className="px-4 py-2.5 min-w-[160px]"><div className="font-medium">{s.customer_name}</div><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
+                      <td className="px-4 py-2.5 min-w-[160px]"><SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} /><div className="text-xs text-muted-foreground font-mono">{s.phone}</div></td>
                       <td className="px-4 py-2.5 max-w-[180px] truncate">{needGroupsOf(s).join(", ") || s.products.join(", ") || "—"}</td>
                       <td className="px-4 py-2.5 whitespace-nowrap">{s.source}</td>
                       <td className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>

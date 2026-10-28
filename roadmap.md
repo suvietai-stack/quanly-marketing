@@ -1,3 +1,4 @@
+- [ ] Mở chi tiết tín hiệu: bấm tên/dòng/card dùng Sheet hiện tại, bỏ qua thao tác độc lập và chọn văn bản; keyboard, desktop/laptop/mobile, không đổi dữ liệu hay Publish.
 - [x] Tách ba kênh — đối soát chỉ đọc: 40 pending Push hỗ trợ quá 30 phút, 1 processing/sending từ 28/09, không có lịch Push; chưa xác minh Zalo gây rollback. Báo cáo docs/notification-channel-audit.md; production không đổi.
 - [ ] Tách ba kênh — sửa/kiểm thử trong bản nháp “Tách ba kênh thông báo” (đã giao đầy đủ yêu cầu, chờ bản nháp báo kết quả); main dùng chung backend production nên không áp dụng migration tại đây. Tin thật/điện thoại cần phiên và thiết bị được phép, không gửi từ hàng đợi cũ.
 - [x] Zalo OA -233: production connected/15 liên kết, 7 ngày có 56 lỗi -233, 34 lỗi -320 và 1 timeout; chuyển CS promotion sang văn bản đầy đủ/URL, tách OAuth/gửi tin, giữ lỗi cũ không replay và chỉ retry quota rõ; 37 tests/build OK, không đổi dữ liệu/token/scheduler, chưa Publish.
