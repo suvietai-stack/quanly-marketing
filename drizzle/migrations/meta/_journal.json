@@ -484,6 +484,13 @@
       "when": 1793174053295,
       "tag": "0068_account_security_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1793181224346,
+      "tag": "0069_signal_progression_tracking",
+      "breakpoints": true
     }
   ]
 }
