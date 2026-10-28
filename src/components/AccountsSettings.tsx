@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -429,7 +430,7 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
             <div className="text-sm text-muted-foreground">Mật khẩu được lưu dạng hash an toàn. Không hiển thị mật khẩu gốc.</div>
             {canReset ? (
               <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
-                <div><Label>Mật khẩu mới</Label><Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
+                <div><Label htmlFor="admin-reset-password">Mật khẩu mới</Label><PasswordInput id="admin-reset-password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
                 <Button onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />Reset mật khẩu</Button>
               </div>
             ) : (

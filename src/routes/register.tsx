@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +11,14 @@ import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
-  head: () => ({ meta: [{ title: "Đăng ký — Base Marketing" }] }),
+  head: () => ({ meta: [
+    { title: "Đăng ký — Base Sứ Việt" },
+    { name: "description", content: "Đăng ký tài khoản làm việc trên Base Sứ Việt." },
+    { property: "og:title", content: "Đăng ký — Base Sứ Việt" },
+    { property: "og:description", content: "Đăng ký tài khoản làm việc trên Base Sứ Việt." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: RegisterPage,
 });
 
@@ -61,8 +69,8 @@ function RegisterPage() {
               <div className="sm:col-span-2"><Label>Ghi chú</Label><Textarea rows={2} value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
               <div><Label>Tên đăng nhập *</Label><Input value={f.username} onChange={(e) => set({ username: e.target.value })} required /></div>
               <div></div>
-              <div><Label>Mật khẩu *</Label><Input type="password" value={f.password} onChange={(e) => set({ password: e.target.value })} required /></div>
-              <div><Label>Xác nhận mật khẩu *</Label><Input type="password" value={f.confirm} onChange={(e) => set({ confirm: e.target.value })} required /></div>
+              <div><Label htmlFor="register-password">Mật khẩu *</Label><PasswordInput id="register-password" value={f.password} onChange={(e) => set({ password: e.target.value })} required /></div>
+              <div><Label htmlFor="register-confirm">Xác nhận mật khẩu *</Label><PasswordInput id="register-confirm" value={f.confirm} onChange={(e) => set({ confirm: e.target.value })} required /></div>
               {err && <div className="sm:col-span-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">{err}</div>}
               <div className="sm:col-span-2 flex items-center justify-between gap-3 pt-2">
                 <Link to="/login" className="text-sm text-primary hover:underline">Đã có tài khoản? Đăng nhập</Link>

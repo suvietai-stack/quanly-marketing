@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { LogIn, LockKeyhole, UserRound, LoaderCircle, MailQuestion } from "lucide-react";
@@ -156,7 +157,7 @@ function LoginPage() {
                 <Label htmlFor="login-password" className="text-sm font-medium">Mật khẩu</Label>
                 <div className="relative">
                   <LockKeyhole aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground" />
-                  <Input id="login-password" className="login-input h-12 rounded-xl pl-11" type="password" value={password} onChange={(e) => setP(e.target.value)} required />
+                  <PasswordInput id="login-password" className="login-input h-12 rounded-xl pl-11" value={password} onChange={(e) => setP(e.target.value)} required />
                 </div>
               </div>
               {err && <div role="alert" className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm leading-relaxed text-destructive">{err}</div>}
