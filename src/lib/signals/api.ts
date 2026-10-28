@@ -6,6 +6,7 @@ import { pushDispatch } from "@/lib/push.functions";
 function dispatchZalo() { zaloDispatch().catch(() => {});  pushDispatch().catch(() => {}); }
 import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
 import type { AcceptNoteRow, AssignEventRow } from "./acceptTime";
+import type { ProgressionRow } from './progression';
 
 const db = supabase as any;
 const PAGE = 1000;
@@ -78,6 +79,7 @@ export async function reopenSignal(id: string, reason: string) {
 }
 
 export interface SignalNote {
+  is_progression?: boolean | null;
   id: string; author_id: string; note: string | null; status_from: string | null; status_to: string | null;
   next_contact_on: string | null; next_contact_at: string | null; revenue: number | null; lost_reason: string | null;
   event_type: string | null; channel: string | null; created_at: string;
@@ -175,4 +177,15 @@ export async function listCareNotes(): Promise<Record<string, { author_id: strin
   const m: Record<string, { author_id: string; created_at: string }[]> = {};
   for (const r of rows) (m[r.signal_id] ??= []).push(r);
   return m;
+}
+
+/** Aggregation is authoritative and SECURITY INVOKER: parent and history RLS apply. */
+export async function listProgression(from?: string, to?: string): Promise<Record<string, ProgressionRow>> {
+  const rows = await fetchAll<ProgressionRow>((a,b) => db.rpc('signal_progression_rows',{_from:from || null,_to:to || null}).order('signal_id').range(a,b));
+  return Object.fromEntries(rows.map(r => [r.signal_id,r]));
+}
+export async function saveProgression(id: string, requestId: string, p: SaleUpdate) {
+  const { data,error } = await db.rpc('signal_progression_save',{_id:id,_request_id:requestId,_status:p.status,_note:p.note,_next:p.next,_next_at:p.nextAt,_revenue:p.revenue,_lost_reason:p.lostReason});
+  if(error) throw error;
+  return data as string;
 }
