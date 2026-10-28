@@ -8,7 +8,7 @@ class FakeElement {
 }
 afterEach(() => vi.unstubAllGlobals());
 
-function click({ interactive = false, selected = false, ...overrides } = {}) {
+function click({ interactive = false, selected = false, ...overrides }: { interactive?: boolean; selected?: boolean } & Partial<MouseEvent<HTMLElement>> = {}) {
   vi.stubGlobal("Element", FakeElement);
   return {
     target: new FakeElement(interactive),
