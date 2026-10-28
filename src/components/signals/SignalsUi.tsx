@@ -174,7 +174,7 @@ export function SignalsPage() {
 
 
   return (
-    <div className="signals-page space-y-4 pb-32 md:pb-0">
+    <div className="signals-page space-y-4 pb-[calc(13rem+env(safe-area-inset-bottom))] md:pb-0">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{saleOnly ? "Tín hiệu của tôi" : "Tín hiệu cơ hội"}</h1>
