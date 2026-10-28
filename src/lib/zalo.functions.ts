@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendErrorGroup } from "./zaloSend";
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const [{ data: p }, { data: roles }] = await Promise.all([
@@ -27,7 +28,13 @@ export const zaloAdminStatus = createServerFn({ method: "POST" })
     for (const r of stats ?? []) agg[r.zalo_status] = (agg[r.zalo_status] ?? 0) + 1;
     const configured = !!(env.appId && env.appSecret);
     const raw = cfg?.status ?? "disconnected";
-    const state = !configured ? "unconfigured" : raw === "connected" ? (cfg?.last_error?.startsWith("Gửi tin thất bại") ? "send_failed" : "connected") : raw === "expired" ? "reconnect" : "disconnected";
+    const state = !configured ? "unconfigured" : raw === "connected" ? "connected" : raw === "expired" ? "reconnect" : "disconnected";
+    const { data: latestSent } = await (supabaseAdmin as any).from("notifications").select("zalo_sent_at").eq("zalo_status", "sent").not("zalo_sent_at", "is", null).order("zalo_sent_at", { ascending: false }).limit(1);
+    const { data: latestFailed } = await (supabaseAdmin as any).from("notifications").select("zalo_error,created_at").in("zalo_status", ["failed", "ineligible"]).order("created_at", { ascending: false }).limit(20);
+    const historicError = (latestFailed ?? []).find((n: any) => /^-?\d+:/.test(n.zalo_error ?? ""))?.zalo_error ?? null;
+    const recentCode = cfg?.last_error?.match(/^Gửi tin thất bại \((-?\d+)\)/)?.[1];
+    const errorCode = recentCode ?? historicError?.match(/^(-?\d+):/)?.[1] ?? null;
+    const successDates = [cfg?.test_send_at, latestSent?.[0]?.zalo_sent_at].filter(Boolean).sort();
     return {
       dbReady,
       configured,
@@ -37,6 +44,11 @@ export const zaloAdminStatus = createServerFn({ method: "POST" })
       webhookReady: !!env.oaSecret,
       baseUrl: await s.baseUrl(),
       testOk: !!cfg?.test_send_at,
+      oauthActive: configured && raw === "connected" && !cfg?.refresh_blocked && Date.parse(cfg?.token_expires_at ?? "") > Date.now(),
+      sendState: recentCode ? "error" : successDates.length ? "active" : "unknown",
+      sendErrorCode: errorCode ? Number(errorCode) : null,
+      sendErrorGroup: errorCode ? sendErrorGroup(Number(errorCode)) : null,
+      lastSendSuccess: successDates.at(-1) ?? null,
       state: cfg?.refresh_blocked && raw !== "expired" ? "refresh_review" : state,
       refreshLast: cfg?.refresh_last_success_at ?? null,
       refreshNext: cfg?.refresh_next_at ?? (cfg?.token_expires_at ? new Date(Date.parse(cfg.token_expires_at) - 2 * 3600000).toISOString() : null),
@@ -77,7 +89,7 @@ export const zaloSendTest = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const s = await import("./zalo.server");
     const { data: link } = await context.supabase.from("zalo_links").select("zalo_user_id,status").eq("user_id", context.userId).maybeSingle();
-    if (!link) return { ok: false, message: "Tài khoản của bạn chưa liên kết Zalo — liên kết trước để nhận tin thử" };
+    if (!link || link.status !== "active") return { ok: false, message: "Tài khoản của bạn chưa liên kết Zalo — liên kết trước để nhận tin thử" };
     const m = s.testMessage(new Date(), await s.brandHeader());
     const r = await s.sendCs(link.zalo_user_id, m.text, `${await s.baseUrl()}/settings`, { header: m.header, button: m.button });
     if (r.ok) await s.saveConfig({ test_send_at: new Date().toISOString(), last_error: null }).catch(() => {});
@@ -110,6 +122,8 @@ export const zaloRetryFailed = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const s = await import("./zalo.server");
+    const cfg: any = await s.getConfig();
+    if (!cfg?.test_send_at || cfg?.last_error?.startsWith("Gửi tin thất bại")) throw new Error("Cần gửi thử mới thành công trước khi rà soát hàng đợi; không gửi lại hàng loạt tin lỗi cũ");
     return s.processPending(50);
   });
 
