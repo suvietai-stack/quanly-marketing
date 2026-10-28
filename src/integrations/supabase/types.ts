@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_security_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          target_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          target_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          target_id?: string
+        }
+        Relationships: []
+      }
       app_branding: {
         Row: {
           app_name: string

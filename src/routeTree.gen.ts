@@ -18,8 +18,10 @@ import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OverviewV2RouteImport } from './routes/overview-v2'
 import { Route as PendingRouteImport } from './routes/pending'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ReportsV2RouteImport } from './routes/reports-v2'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as VideosRouteImport } from './routes/videos'
@@ -103,6 +105,11 @@ const PendingRoute = PendingRouteImport.update({
   path: '/pending',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -111,6 +118,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ReportsV2Route = ReportsV2RouteImport.update({
   id: '/reports-v2',
   path: '/reports-v2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -315,8 +327,10 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reports-v2': typeof ReportsV2Route
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
@@ -365,8 +379,10 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reports-v2': typeof ReportsV2Route
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
@@ -416,8 +432,10 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/reports-v2': typeof ReportsV2Route
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
@@ -468,8 +486,10 @@ export interface FileRouteTypes {
     | '/orders'
     | '/overview-v2'
     | '/pending'
+    | '/profile'
     | '/register'
     | '/reports-v2'
+    | '/reset-password'
     | '/settings'
     | '/tasks'
     | '/videos'
@@ -518,8 +538,10 @@ export interface FileRouteTypes {
     | '/orders'
     | '/overview-v2'
     | '/pending'
+    | '/profile'
     | '/register'
     | '/reports-v2'
+    | '/reset-password'
     | '/settings'
     | '/tasks'
     | '/videos'
@@ -568,8 +590,10 @@ export interface FileRouteTypes {
     | '/orders'
     | '/overview-v2'
     | '/pending'
+    | '/profile'
     | '/register'
     | '/reports-v2'
+    | '/reset-password'
     | '/settings'
     | '/tasks'
     | '/videos'
@@ -619,8 +643,10 @@ export interface RootRouteChildren {
   OrdersRoute: typeof OrdersRoute
   OverviewV2Route: typeof OverviewV2Route
   PendingRoute: typeof PendingRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   ReportsV2Route: typeof ReportsV2Route
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
@@ -725,6 +751,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PendingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -737,6 +770,13 @@ declare module '@tanstack/react-router' {
       path: '/reports-v2'
       fullPath: '/reports-v2'
       preLoaderRoute: typeof ReportsV2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -1011,8 +1051,10 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersRoute: OrdersRoute,
   OverviewV2Route: OverviewV2Route,
   PendingRoute: PendingRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   ReportsV2Route: ReportsV2Route,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,

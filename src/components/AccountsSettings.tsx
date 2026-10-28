@@ -20,6 +20,7 @@ import {
   Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check, Search,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { toast } from "sonner";
 
 const STATUSES: AccountStatus[] = ["Chờ duyệt","Đang hoạt động","Tạm khóa","Từ chối","Lưu trữ"];
@@ -329,6 +330,8 @@ function AllAccountsTab({ users, canLock }: { users: User[]; canLock: boolean })
 // --------- User Edit ---------
 function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) {
   const s = useAuth();
+  const { isSuperAdmin, can } = useCurrentUser();
+  const canReset = isSuperAdmin || can("settings.user_reset_password");
   const [tab, setTab] = useState("info");
   const [form, setForm] = useState({
     fullName: user.fullName, email: user.email || "", phone: user.phone || "",
@@ -357,7 +360,12 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
 
   const reset = async () => {
     if (newPwd.length < 6) return toast.error("Mật khẩu mới tối thiểu 6 ký tự");
-    await s.resetPassword(user.id, newPwd);
+    try {
+      await s.resetPassword(user.id, newPwd);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Không reset được mật khẩu.");
+      return;
+    }
     setNewPwd("");
     toast.success("Đã reset mật khẩu");
   };
@@ -418,11 +426,15 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
           </TabsContent>
 
           <TabsContent value="security" className="mt-4 space-y-4">
-            <div className="text-sm text-muted-foreground">Mật khẩu được lưu dạng hash (SHA-256 + salt). Không hiển thị mật khẩu gốc.</div>
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
-              <div><Label>Mật khẩu mới</Label><Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
-              <Button onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />Reset mật khẩu</Button>
-            </div>
+            <div className="text-sm text-muted-foreground">Mật khẩu được lưu dạng hash an toàn. Không hiển thị mật khẩu gốc.</div>
+            {canReset ? (
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
+                <div><Label>Mật khẩu mới</Label><Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
+                <Button onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />Reset mật khẩu</Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Bạn không có quyền reset mật khẩu tài khoản khác.</p>
+            )}
           </TabsContent>
         </Tabs>
         <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Đóng</Button><Button onClick={save}>Lưu</Button></DialogFooter>
@@ -829,26 +841,5 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
 
 // --------- Change own password ---------
 function ChangePasswordTab() {
-  const s = useAuth();
-  const [oldP, setOld] = useState("");
-  const [n1, setN1] = useState("");
-  const [n2, setN2] = useState("");
-
-  const submit = async () => {
-    if (n1.length < 6) return toast.error("Mật khẩu mới tối thiểu 6 ký tự");
-    if (n1 !== n2) return toast.error("Mật khẩu xác nhận không khớp");
-    const res = await s.changeOwnPassword(oldP, n1);
-    if (!res.ok) return toast.error(res.error);
-    toast.success("Đã đổi mật khẩu");
-    setOld(""); setN1(""); setN2("");
-  };
-
-  return (
-    <Card><CardContent className="p-5 max-w-md space-y-3">
-      <div><Label>Mật khẩu hiện tại</Label><Input type="password" value={oldP} onChange={(e) => setOld(e.target.value)} /></div>
-      <div><Label>Mật khẩu mới</Label><Input type="password" value={n1} onChange={(e) => setN1(e.target.value)} /></div>
-      <div><Label>Xác nhận mật khẩu mới</Label><Input type="password" value={n2} onChange={(e) => setN2(e.target.value)} /></div>
-      <Button onClick={submit}><KeyRound className="h-4 w-4 mr-1.5" />Đổi mật khẩu</Button>
-    </CardContent></Card>
-  );
+  return <ChangePasswordForm />;
 }

@@ -1241,10 +1241,26 @@ export const useAuth = create<AuthState>((set, get) => ({
     const email = sess.session?.user?.email;
     const userId = sess.session?.user?.id;
     if (!email || !userId) return { ok: false, error: "Chưa đăng nhập." };
-    const { error: e1 } = await supabase.auth.signInWithPassword({ email, password: oldPwd });
-    if (e1) return { ok: false, error: "Mật khẩu hiện tại không đúng." };
-    const { error: e2 } = await supabase.auth.updateUser({ password: newPwd });
-    if (e2) return { ok: false, error: e2.message };
+    // Bước 1: xác minh mật khẩu hiện tại bằng một client tạm KHÔNG lưu phiên,
+    // để phiên đăng nhập hiện tại không bị thay đổi.
+    const { createClient } = await import("@supabase/supabase-js");
+    const probe = createClient(
+      import.meta.env.VITE_SUPABASE_URL as string,
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+      { auth: { persistSession: false, autoRefreshToken: false, storage: undefined } },
+    );
+    const { error: verifyErr } = await probe.auth.signInWithPassword({ email, password: oldPwd });
+    if (verifyErr) return { ok: false, error: "Mật khẩu hiện tại không đúng." };
+    // Bước 2: đổi mật khẩu trên phiên hiện tại; server vẫn kiểm tra current_password
+    // (require_current_password) như lớp bảo vệ thứ hai.
+    const { error } = await supabase.auth.updateUser({ password: newPwd, current_password: oldPwd });
+    if (error) {
+      const msg = error.message?.toLowerCase() ?? "";
+      if (msg.includes("weak") || msg.includes("at least") || msg.includes("password")) {
+        return { ok: false, error: "Mật khẩu mới chưa đủ mạnh theo yêu cầu hệ thống." };
+      }
+      return { ok: false, error: "Không đổi được mật khẩu. Vui lòng thử lại." };
+    }
     await supabase.from("profiles").update({ must_change_password: false }).eq("id", userId);
     await get().reload();
     return { ok: true };
