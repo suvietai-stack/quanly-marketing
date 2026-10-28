@@ -26,6 +26,7 @@ import type { Signal, SignalStatus } from "@/lib/signals/catalog";
 import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
 import { needGroupsOf } from "@/lib/signals/catalog";
 import { cn } from "@/lib/utils";
+import { ProgressionReport } from './ProgressionReport';
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
 
@@ -302,7 +303,7 @@ export function SignalsReport() {
             ) : (
               <SaleTable rows={bySale} name={name} rates={rateBySale} signalsBySale={signalsBySale} events={assignEvents} notes={acceptNotes} />
             )}
-            <CareTable data={data} name={name} userId={p.userId} all={p.viewAll || p.assign} />
+            <ProgressionReport data={data} f={f} name={name} userId={p.userId} onSale={id => setF(x => ({...x,saleId:id}))} />
           </section>
 
           {/* 8. Phân tích chi tiết khác */}
