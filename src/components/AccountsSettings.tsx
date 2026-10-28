@@ -330,6 +330,8 @@ function AllAccountsTab({ users, canLock }: { users: User[]; canLock: boolean })
 // --------- User Edit ---------
 function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) {
   const s = useAuth();
+  const { isSuperAdmin, can } = useCurrentUser();
+  const canReset = isSuperAdmin || can("settings.user_reset_password");
   const [tab, setTab] = useState("info");
   const [form, setForm] = useState({
     fullName: user.fullName, email: user.email || "", phone: user.phone || "",
@@ -419,11 +421,15 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
           </TabsContent>
 
           <TabsContent value="security" className="mt-4 space-y-4">
-            <div className="text-sm text-muted-foreground">Mật khẩu được lưu dạng hash (SHA-256 + salt). Không hiển thị mật khẩu gốc.</div>
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
-              <div><Label>Mật khẩu mới</Label><Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
-              <Button onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />Reset mật khẩu</Button>
-            </div>
+            <div className="text-sm text-muted-foreground">Mật khẩu được lưu dạng hash an toàn. Không hiển thị mật khẩu gốc.</div>
+            {canReset ? (
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
+                <div><Label>Mật khẩu mới</Label><Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
+                <Button onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />Reset mật khẩu</Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Bạn không có quyền reset mật khẩu tài khoản khác.</p>
+            )}
           </TabsContent>
         </Tabs>
         <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Đóng</Button><Button onClick={save}>Lưu</Button></DialogFooter>
