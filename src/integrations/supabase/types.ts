@@ -1581,10 +1581,13 @@ export type Database = {
           created_at: string
           event_type: string | null
           id: string
+          is_progression: boolean | null
           lost_reason: string | null
           next_contact_at: string | null
           next_contact_on: string | null
           note: string | null
+          request_id: string | null
+          request_payload: string | null
           revenue: number | null
           signal_id: string
           status_from: string | null
@@ -1596,10 +1599,13 @@ export type Database = {
           created_at?: string
           event_type?: string | null
           id?: string
+          is_progression?: boolean | null
           lost_reason?: string | null
           next_contact_at?: string | null
           next_contact_on?: string | null
           note?: string | null
+          request_id?: string | null
+          request_payload?: string | null
           revenue?: number | null
           signal_id: string
           status_from?: string | null
@@ -1611,10 +1617,13 @@ export type Database = {
           created_at?: string
           event_type?: string | null
           id?: string
+          is_progression?: boolean | null
           lost_reason?: string | null
           next_contact_at?: string | null
           next_contact_on?: string | null
           note?: string | null
+          request_id?: string | null
+          request_payload?: string | null
           revenue?: number | null
           signal_id?: string
           status_from?: string | null
@@ -4012,6 +4021,33 @@ export type Database = {
       signal_catalog_usage: {
         Args: { _name: string; _scope: string }
         Returns: number
+      }
+      signal_note_is_progression: {
+        Args: { _event: string; _marker: boolean; _note: string }
+        Returns: boolean
+      }
+      signal_progression_rows: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          authors: Json
+          last_at: string
+          period_updates: number
+          signal_id: string
+          total: number
+        }[]
+      }
+      signal_progression_save: {
+        Args: {
+          _id: string
+          _lost_reason: string
+          _next: string
+          _next_at: string
+          _note: string
+          _request_id: string
+          _revenue: number
+          _status: string
+        }
+        Returns: string
       }
       signal_reopen: {
         Args: { _id: string; _reason: string }

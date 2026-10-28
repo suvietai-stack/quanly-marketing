@@ -6,7 +6,7 @@
 - Zalo rotating tokens use separate non-reclaimable leases and version-fenced atomic pair commits; hourly care schedule runs maintenance, UI derives watchdog health, notification claims exclude active owners and fence completion — avoids single-use refresh and duplicate-send races.
 - Zalo CS uses plain text via zaloSend.ts; only explicit token rejection allows one rotation/re-send, only explicit quota rejection is auto-retryable, ambiguous and format failures stop; OAuth and send diagnostics are independent and old failed notifications stay held — prevents unsupported templates, paid fallback and duplicate replay.
 
-- Signal KPI: acceptTime.ts for all history; refresh user-keyed sources with signals — no stored averages.
+- Signal KPI: acceptTime.ts, user-keyed refresh; progression_save dedupes and progression_rows aggregates under RLS, separating live/period-author metrics; no client counters or Zalo changes.
 
 - Personal OA reminders mount once in AppShell, use authenticated user-scoped link reads and safe OA health fields, and store per-user browser snoozes; only existing verified webhook updates establish interaction — navigation and opening OA never renew eligibility or affect GMF.
 
