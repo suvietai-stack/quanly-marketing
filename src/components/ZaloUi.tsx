@@ -194,7 +194,6 @@ const STATE: Record<string, { label: string; tone: "default" | "secondary" | "de
   connected: { label: "Đã kết nối", tone: "default" },
   refresh_review: { label: "Gia hạn cần kiểm tra", tone: "destructive" },
   reconnect: { label: "Cần kết nối lại", tone: "destructive" },
-  send_failed: { label: "Gửi tin thất bại", tone: "destructive" },
 };
 
 export function ZaloAdminCard() {
@@ -266,6 +265,10 @@ export function ZaloAdminCard() {
         </div>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="text-muted-foreground">Tên OA</div><div>{s.oaName ?? "—"}</div>
+          <div className="text-muted-foreground">Kết nối OAuth</div><div>{s.oauthActive ? "Hoạt động" : "Mất kết nối hoặc cần kiểm tra"}</div>
+          <div className="text-muted-foreground">Gửi thông báo</div><div>{s.sendState === "active" ? "Hoạt động" : s.sendState === "error" ? "Có lỗi" : "Chưa xác minh"}</div>
+          <div className="text-muted-foreground">Mã lỗi gửi gần nhất</div><div>{s.sendErrorCode ?? "—"}{s.sendErrorGroup && ` · ${{ token: "Token", recipient: "Điều kiện tương tác", format: "Loại tin không hỗ trợ", quota: "Hạn mức", permission: "Quyền OA", network: "Mạng / cần đối soát", unknown: "Cần kiểm tra" }[s.sendErrorGroup]}`}</div>
+          <div className="text-muted-foreground">Gửi thành công gần nhất</div><div>{s.lastSendSuccess ? new Date(s.lastSendSuccess).toLocaleString("vi-VN") : "Chưa ghi nhận"}</div>
           <div className="text-muted-foreground">Nhân viên đã liên kết</div><div>{s.linkedCount}</div>
           <div className="text-muted-foreground">Gia hạn thành công</div><div>{s.refreshLast ? new Date(s.refreshLast).toLocaleString("vi-VN") : "Chưa ghi nhận"}</div>
           <div className="text-muted-foreground">Dự kiến gia hạn</div><div>{s.refreshNext ? new Date(s.refreshNext).toLocaleString("vi-VN") : "—"}</div>
@@ -284,7 +287,7 @@ export function ZaloAdminCard() {
           </Button>
           <Button variant="outline" onClick={() => run(check())}>Kiểm tra kết nối</Button>
           <Button variant="outline" onClick={() => run(test())}>Gửi thử</Button>
-          <Button variant="outline" onClick={() => run(retry().then((r) => ({ ok: true, message: `Đã xử lý ${r.processed} thông báo` })))}>Thử gửi lại</Button>
+          <Button variant="outline" disabled={s.sendState !== "active"} onClick={() => run(retry().then((r) => ({ ok: true, message: `Đã xử lý ${r.processed} thông báo đủ điều kiện; không gửi lại hàng loạt tin lỗi cũ` })))}>Kiểm tra hàng đợi</Button>
           {s.status !== "disconnected" && <Button variant="ghost" onClick={() => confirm("Ngắt kết nối Zalo OA?") && run(disc())}>Ngắt kết nối</Button>}
         </div>
         <div className="flex items-center justify-between rounded-md border p-3">
