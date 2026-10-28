@@ -19,10 +19,15 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
     React.useLayoutEffect(() => {
       const input = inputRef.current;
       const saved = selection.current;
+      let frame: number | undefined;
       if (input && saved && saved.start !== null && saved.end !== null) {
-        input.setSelectionRange(saved.start, saved.end, saved.direction ?? "none");
+        const { start, end, direction } = saved;
+        input.setSelectionRange(start, end, direction ?? "none");
+        // Controlled inputs can restore selection again at the end of the click.
+        frame = requestAnimationFrame(() => input.setSelectionRange(start, end, direction ?? "none"));
       }
       selection.current = null;
+      return () => { if (frame !== undefined) cancelAnimationFrame(frame); };
     }, [visible]);
 
     return (
