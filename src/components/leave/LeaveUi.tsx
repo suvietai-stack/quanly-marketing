@@ -59,6 +59,7 @@ function StatusBadge({ r }: { r: LeaveRequest }) {
   return (
     <div className="flex flex-wrap gap-1">
       <Badge variant="outline" className={STATUS_CLS[r.status]}>{api.STATUS_LABEL[r.status]}</Badge>
+      {r.is_late && <Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning-foreground">Đơn bổ sung</Badge>}
       {r.cancel_state === "requested" && <Badge variant="outline" className="border-warning/40">Yêu cầu hủy</Badge>}
       {r.cancel_state === "rejected" && <Badge variant="outline">Từ chối hủy</Badge>}
       {overdue && <Badge variant="outline" className="border-destructive/40 text-destructive">Đã qua thời điểm đăng ký</Badge>}
@@ -191,7 +192,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
   const [st, setSt] = useState<string>("all");
   const [tp, setTp] = useState<string>("all");
   const [q, setQ] = useState("");
-  const shown = rows.filter((r) => (st === "all" || r.status === st || (st === "cancel_req" && r.cancel_state === "requested"))
+  const shown = rows.filter((r) => (st === "all" || r.status === st || (st === "cancel_req" && r.cancel_state === "requested") || (st === "late" && r.is_late))
     && (tp === "all" || r.type === tp)
     && (!q || rest.name(r.owner_id).toLowerCase().includes(q.toLowerCase())));
   return <>
