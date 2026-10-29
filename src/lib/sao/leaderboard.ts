@@ -40,9 +40,10 @@ export function currentStep(mode: LeaderboardMode, now: Date): number {
     case 'quarter': return y * 4 + Math.floor((m - 1) / 3);
     case 'month': return y * 12 + (m - 1);
     case 'week': {
-      // Week counter from the VN wall-clock Monday (treated as UTC for counting)
+      // Week counter from the VN wall-clock Monday (treated as UTC for counting).
+      // round (not floor) keeps the Monday offset stable — the epoch is a Thursday.
       const mondayWall = Date.UTC(y, m - 1, d - (dow - 1));
-      return Math.floor(mondayWall / (7 * 24 * 3600 * 1000));
+      return Math.round(mondayWall / (7 * 24 * 3600 * 1000));
     }
     default: return 0;
   }
