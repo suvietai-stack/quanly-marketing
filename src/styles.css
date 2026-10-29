@@ -196,3 +196,10 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
   body:has(input:focus, textarea:focus, [contenteditable="true"]:focus) .chipi-assistant { visibility: hidden; pointer-events: none; }
 }
 @media (prefers-reduced-motion: reduce) { .chipi-art, .chipi-art img, .chipi-pose, .chipi-bubble { animation: none; } .chipi-trigger:active .chipi-pose { transform: none; } }
+.sao-wallet-band { background: var(--secondary); border: 1px solid var(--border); }
+.sao-reward-popup { box-shadow: var(--shadow-login); }
+.sao-celebrate { animation: chipi-hop 1600ms ease-in-out 2; }
+.sao-spark { animation: sao-spark 2200ms ease-in-out 2; }
+.sao-spark-two { animation-delay: 250ms; }
+@keyframes sao-spark { 0%,100% { transform: translateY(0) rotate(0); opacity: .6; } 50% { transform: translateY(-12px) rotate(15deg); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sao-celebrate, .sao-spark, .sao-reward-popup { animation: none !important; } }

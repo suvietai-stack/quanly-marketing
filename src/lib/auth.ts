@@ -29,7 +29,8 @@ export type PermissionGroup =
   | "KPI / Giao KPI"
   | "Tài Chính Kế Toán"
   | "Tích hợp Marketing"
-  | "Tài khoản";
+  | "Tài khoản"
+  | "Sao Sứ Việt";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -47,6 +48,9 @@ const P = (
 ): PermissionDef => ({ key, label, group, subGroup });
 
 export const PERMISSIONS: PermissionDef[] = [
+  P('sao.program_manage', 'Quản lý chương trình thưởng Sao', 'Sao Sứ Việt'),
+  P('sao.shop_manage', 'Quản lý quà và xác nhận phát quà', 'Sao Sứ Việt'),
+  P('sao.manual_grant', 'Cộng Sao thủ công có lý do', 'Sao Sứ Việt'),
   // ===== A. Tổng Quan =====
   P("overview.view", "Xem Tổng Quan", "Tổng Quan", "Tổng quan"),
   P("overview.alerts", "Xem việc cần chú ý", "Tổng Quan", "Tổng quan"),
