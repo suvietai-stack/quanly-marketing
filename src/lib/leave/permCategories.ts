@@ -63,3 +63,12 @@ export function toggleCategory(current: PermissionKey[], cat: PermCategory, turn
   }
   return [...next];
 }
+
+export const FIN_PERM_CATEGORIES: PermCategory[] = [
+  { key: "view", label: "Xem Tiền về", perms: ["finance.incoming.view", "finance.incoming.manual_view"] },
+  { key: "create", label: "Tạo/ghi nhận", perms: ["finance.incoming.manual_create"] },
+  { key: "confirm", label: "Xác nhận", perms: ["finance.incoming.claim"] },
+  { key: "remind", label: "Nhắc thủ công", perms: ["finance.incoming.remind"] },
+  { key: "manage", label: "Quản lý", perms: ["finance.incoming.reconcile", "finance.incoming.manual_manage", "finance.incoming.manage", "finance.incoming.view_totals"] },
+  { key: "settings", label: "Cài đặt Tiền về", perms: ["finance.incoming.gmf_config", "finance.incoming.bank_config"] },
+];
