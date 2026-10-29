@@ -56,7 +56,7 @@ export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader><DialogTitle>Cài đặt Tiền Về</DialogTitle></DialogHeader>
         {canBank && <>
         <p className="text-sm text-muted-foreground">Chỉ giao dịch của tài khoản đã đăng ký và đang bật mới được ghi nhận vào Tiền Về.</p>
