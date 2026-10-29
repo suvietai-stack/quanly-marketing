@@ -3,7 +3,7 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: 
 const groups: { label: string; items: NavItem[] }[] = [
   { label: 'Sao Sứ Việt', items: [
     { to: '/sao', label: 'Ví Sao của tôi', icon: Wallet },
+    { to: '/sao/leaderboard', label: 'Bảng thành tích', icon: Trophy },
     { to: '/sao/shop', label: 'Gian hàng đổi quà', icon: Gift },
     { to: '/sao/admin', label: 'Quản lý thưởng Sao', icon: Star, anyPerm: ['sao.program_manage', 'sao.shop_manage', 'sao.manual_grant'] },
   ] },
