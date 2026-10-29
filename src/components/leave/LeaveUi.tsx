@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { LeaveReport } from "./LeaveReport";
+import { LeaveSettings as LeaveSettingsPanel } from "./LeaveSettings";
+import { FunctionSettingsButton, FunctionSettingsDialog } from "./FunctionSettings";
+import { LEAVE_PERM_CATEGORIES, LEAVE_PERSONAL_PERMS } from "@/lib/leave/permCategories";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, CalendarDays, Clock, LogOut as LogOutIcon, AlertTriangle, History, ChevronRight } from "lucide-react";
@@ -92,6 +95,7 @@ export function LeavePage() {
   const [tab, setTab] = useState(() => initial?.get("tab") || (showMine ? "mine" : showApprove ? "approve" : showManage ? "manage" : "report"));
   const [openId, setOpenId] = useState<string | null>(() => initial?.get("open") || null);
   const [form, setForm] = useState<FormState | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["leave"] });
   const mine = all.filter((r) => r.owner_id === uid);
@@ -111,9 +115,14 @@ export function LeavePage() {
       <PageHeader
         title="Nghỉ phép & Đi sớm muộn"
         description="Nghỉ phép, đi muộn, về sớm — gửi đơn và theo dõi phê duyệt."
-        actions={can("leave.create") || can("leave.create_for") ? (
-          <Button onClick={() => setForm({ mode: "create" })} disabled={!settings}><Plus className="h-4 w-4 mr-1" />Tạo đơn</Button>
-        ) : undefined}
+        actions={
+          <div className="flex items-center gap-2">
+            {can("leave.settings") && <FunctionSettingsButton onClick={() => setSettingsOpen(true)} />}
+            {(can("leave.create") || can("leave.create_for")) && (
+              <Button onClick={() => setForm({ mode: "create" })} disabled={!settings}><Plus className="h-4 w-4 mr-1" />Tạo đơn</Button>
+            )}
+          </div>
+        }
       />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
@@ -139,6 +148,16 @@ export function LeavePage() {
       {form && settings && (
         <FormDialog state={form} settings={settings} onClose={() => setForm(null)}
           onDone={(id) => { setForm(null); refresh(); if (id) setOpen(id); }} />
+      )}
+      {settingsOpen && (
+        <FunctionSettingsDialog
+          open
+          title="Cài đặt — Nghỉ phép & Đi sớm muộn"
+          categories={LEAVE_PERM_CATEGORIES}
+          personal={LEAVE_PERSONAL_PERMS}
+          rules={<LeaveSettingsPanel mode="leave" />}
+          onClose={() => setSettingsOpen(false)}
+        />
       )}
     </>
   );

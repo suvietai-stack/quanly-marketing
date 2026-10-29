@@ -13,7 +13,9 @@ import { useAuth, getUserPermissions } from "@/lib/auth";
 
 const norm = (v: string) => v.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
 
-export function LeaveSettings() {
+export function LeaveSettings({ mode = "all" }: { mode?: "all" | "leave" | "att" } = {}) {
+  const showLeave = mode !== "att";
+  const showAtt = mode !== "leave";
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["leave", "settings"], queryFn: api.getSettings });
   const [s, setS] = useState<S | null>(null);
@@ -54,7 +56,7 @@ export function LeaveSettings() {
 
   return (
     <div className="space-y-4">
-      <Card>
+      {showLeave && <Card>
         <CardHeader><CardTitle className="text-base">Lịch làm việc</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -108,21 +110,21 @@ export function LeaveSettings() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
-      <Card>
+      {showLeave && <Card>
         <CardHeader><CardTitle className="text-base">Thông báo</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
           <label className="flex items-center gap-2"><input type="checkbox" checked={!!s.notify?.zalo} onChange={(e) => up((x) => { x.notify = { ...(x.notify ?? {}), zalo: e.target.checked }; })} />Gửi tin Zalo cho đơn từ (người duyệt và người đứng tên)</label>
           <Num label="Nhắc người duyệt khi đơn chờ quá (giờ)" v={s.notify?.remind_hours ?? 4} on={(n) => up((x) => { x.notify = { ...(x.notify ?? {}), remind_hours: Math.max(1, n) }; })} />
           <p className="sm:col-span-2 text-xs text-muted-foreground">Thông báo trong Base luôn bật. Nhắc duyệt gửi tối đa 1 lần/ngày, trong giờ 08:00–18:00; đơn sắp tới giờ bắt đầu (còn ≤ 2 giờ) được nhắc sớm. Cần bật "Gửi tự động" và đã lưu cài đặt nhắc trong Thông báo Zalo.</p>
         </CardContent>
-      </Card>
+      </Card>}
 
-      <CcCard s={s} up={up} />
-      <AttNotifyCard s={s} up={up} />
+      {showLeave && <CcCard s={s} up={up} />}
+      {showAtt && <AttNotifyCard s={s} up={up} />}
 
-      <Card>
+      {showLeave && <Card>
         <CardHeader><CardTitle className="text-base">Quy định thời hạn</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3 text-sm">
           <Num label="Nghỉ phép: gửi trước giờ bắt đầu nghỉ (giờ)" v={s.deadlines.leave_hours} on={(n) => up((x) => { x.deadlines.leave_hours = n; })} />
@@ -133,9 +135,9 @@ export function LeaveSettings() {
           <Num label="Thu hồi về sớm: trước giờ dự kiến ra về (phút)" v={s.recall_minutes.early} on={(n) => up((x) => { x.recall_minutes.early = n; })} />
           <p className="sm:col-span-3 text-xs text-muted-foreground">Thay đổi chỉ áp dụng cho đơn gửi sau này; đơn đã gửi giữ quy định tại thời điểm gửi.</p>
         </CardContent>
-      </Card>
+      </Card>}
 
-      <Card>
+      {showLeave && <Card>
         <CardHeader><CardTitle className="text-base">Danh mục lý do</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {s.reasons.map((r, i) => (
@@ -153,7 +155,7 @@ export function LeaveSettings() {
           </div>
           {hasDup && <p className="text-sm text-destructive">Có lý do trống hoặc trùng tên.</p>}
         </CardContent>
-      </Card>
+      </Card>}
 
       <div className="flex justify-end gap-2 sticky bottom-2">
         <Button variant="outline" onClick={() => q.data && setS(structuredClone(q.data))}>Hoàn tác</Button>
