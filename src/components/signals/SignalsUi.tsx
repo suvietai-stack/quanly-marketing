@@ -456,6 +456,7 @@ function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string
   if (f.time) chips.push({ key: "time", label: `Thời gian: ${timeLabel[f.time] ?? f.time}${f.time === "custom" && (f.from || f.to) ? ` ${f.from ?? "…"}→${f.to ?? "…"}` : ""}` });
   if (f.source) chips.push({ key: "source", label: `Nguồn: ${f.source}` });
   if (f.product) chips.push({ key: "product", label: `Sản phẩm: ${f.product}` });
+  if (f.needGroup) chips.push({ key: "needGroup", label: `Nhóm nhu cầu: ${f.needGroup}` });
   if (f.lostReason) chips.push({ key: "lostReason", label: `Lý do trượt: ${f.lostReason}` });
   if (f.saleId) chips.push({ key: "saleId", label: `Sale: ${name(f.saleId)}` });
   if (f.creatorId) chips.push({ key: "creatorId", label: `Người tạo: ${name(f.creatorId)}` });
