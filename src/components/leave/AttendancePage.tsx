@@ -11,6 +11,9 @@ import * as attApi from "@/lib/leave/attApi";
 import type { AttExplanation } from "@/lib/leave/attendance";
 import { AttCard, AttDetail, AttForm, AttManage } from "./AttendanceUi";
 import { LeaveReport } from "./LeaveReport";
+import { LeaveSettings } from "./LeaveSettings";
+import { FunctionSettingsButton, FunctionSettingsDialog } from "./FunctionSettings";
+import { ATT_PERM_CATEGORIES, ATT_PERSONAL_PERMS } from "@/lib/leave/permCategories";
 
 function useNames() {
   const users = useAuth((s) => s.users);
@@ -46,6 +49,7 @@ export function AttendancePage() {
   const witnessTodo = atts.filter((a) => a.witness_id === uid && a.owner_id !== uid && !a.recalled && a.witness_status === "pending");
   const showWitness = can("att.witness") || witnessTodo.length > 0;
   const [tab, setTab] = useState(() => initial?.get("tab") || (showMine ? "mine" : showWitness ? "witness" : showManage ? "manage" : "report"));
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["leave"] });
   const settings = settingsQ.data;
@@ -55,9 +59,12 @@ export function AttendancePage() {
       <PageHeader
         title="Giải trình chấm công"
         description="Giải trình quên chấm công — gửi, làm chứng và đối chiếu."
-        actions={canCreate ? (
-          <Button onClick={() => setAttForm({})} disabled={!settings}><Plus className="h-4 w-4 mr-1" />Tạo giải trình</Button>
-        ) : undefined}
+        actions={
+          <div className="flex items-center gap-2">
+            {can("att.settings") && <FunctionSettingsButton onClick={() => setSettingsOpen(true)} />}
+            {canCreate && <Button onClick={() => setAttForm({})} disabled={!settings}><Plus className="h-4 w-4 mr-1" />Tạo giải trình</Button>}
+          </div>
+        }
       />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
@@ -84,6 +91,16 @@ export function AttendancePage() {
 
       {attOpen && <AttDetail id={attOpen} name={name} onClose={() => setAttO(null)} onChanged={refresh} onEdit={(a) => setAttForm({ edit: a })} />}
       {attForm && settings && <AttForm settings={settings} edit={attForm.edit} onClose={() => setAttForm(null)} onDone={(id) => { setAttForm(null); refresh(); if (id) setAttO(id); }} />}
+      {settingsOpen && (
+        <FunctionSettingsDialog
+          open
+          title="Cài đặt — Giải trình chấm công"
+          categories={ATT_PERM_CATEGORIES}
+          personal={ATT_PERSONAL_PERMS}
+          rules={<LeaveSettings mode="att" />}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </>
   );
 }
