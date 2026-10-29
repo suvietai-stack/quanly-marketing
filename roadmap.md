@@ -1,3 +1,5 @@
+- [ ] Sao Sứ Việt MVP: rà soát nguồn thành tích, lập kế hoạch ví/gian hàng/quy tắc Admin/popup Chipi, giao dịch an toàn và kiểm thử; chưa Publish.
+- [ ] Bảo mật cấu hình diễn biến: xác minh mục đích truy cập và thay SELECT toàn bộ bằng phạm vi phù hợp, không tự hạn chế người dùng hợp lệ.
 - [x] Kỳ diễn biến mới: lịch 5/7/7/7/30, RPC theo trách nhiệm Sale, báo cáo đúng hạn/KR tham chiếu 90%, lọc/badge/gợi ý trạng thái và nhắc Base/Chipi. 135 tests đạt; UI đọc thật + gợi ý/giữ nguyên/đa chip desktop/360/390 đạt, không tràn/lỗi. DB chưa kích hoạt: 0 lịch/0 kỳ/0 nhắc/0 job; chưa Publish.
 - [ ] Kỳ diễn biến — kiểm lưu/nhắc thật và quyền Sale end-to-end: cần môi trường dữ liệu tách biệt hoặc tín hiệu/nội dung thật được chỉ định; không tự kích hoạt toàn bộ production hoặc ghi demo. Chỉ quy tắc SQL tách biệt và UI Super Admin đọc thật đã kiểm.
 - [x] Nâng cấp diễn biến trước đây: gợi ý nhanh/maket đúng nhóm/nội dung chỉnh sửa, mốc 5/cảnh báo 7 ngày và sáu KPI (được thay bởi yêu cầu mới); 0069 bổ sung được duyệt, giữ quyền/lịch sử; 103 tests/build/UI đọc thật đạt, chưa Publish.
