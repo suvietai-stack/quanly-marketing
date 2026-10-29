@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { LeaveReport } from "./LeaveReport";
-import { AttCard, AttDetail, AttForm, AttManage } from "./AttendanceUi";
-import * as attApi from "@/lib/leave/attApi";
-import type { AttExplanation } from "@/lib/leave/attendance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, CalendarDays, Clock, LogOut as LogOutIcon, AlertTriangle, History, ChevronRight } from "lucide-react";
