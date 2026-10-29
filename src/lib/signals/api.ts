@@ -7,7 +7,7 @@ function dispatchZalo() { zaloDispatch().catch(() => {});  pushDispatch().catch(
 import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
 import type { AcceptNoteRow, AssignEventRow } from "./acceptTime";
 import type { ProgressionRow } from './progression';
-import type { DeadlineRow, DeadlineReport } from './deadlines';
+import type { DeadlineRow, DeadlineReport, DeadlineHistory } from './deadlines';
 
 const db = supabase as any;
 const PAGE = 1000;
@@ -206,4 +206,7 @@ export async function deadlineReport(from?:string,to?:string,sale?:string,group?
 export async function activateDeadlines() {
   const {data,error}=await db.rpc('signal_progression_activate',{_confirm:true});
   if(error) throw error; return data as string;
+}
+export async function deadlineHistory(id:string):Promise<DeadlineHistory[]> {
+  return fetchAll<DeadlineHistory>((a,b)=>db.rpc('signal_progression_history',{_id:id}).order('starts_at',{ascending:false}).order('sequence',{ascending:false}).range(a,b));
 }
