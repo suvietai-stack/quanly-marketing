@@ -505,6 +505,20 @@
       "when": 1793242908045,
       "tag": "0071_signal_progression_live_calendar",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793243235983,
+      "tag": "0072_signal_progression_early_close_exemption",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1793243262618,
+      "tag": "0073_signal_progression_sync_consistency",
+      "breakpoints": true
     }
   ]
 }

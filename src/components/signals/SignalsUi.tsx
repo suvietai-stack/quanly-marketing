@@ -20,7 +20,7 @@ import {
 import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
   signalHistory, updateSignalInfo, deleteSignal, cancelSignal, getCustomLostReasons, setCustomLostReasons, getOptions, saveOptions, renameOptionEverywhere, type SignalInput,
-  listCareNotes, listProgression, saveProgression, listDeadlines,
+  listCareNotes, listProgression, saveProgression, listDeadlines, deadlineHistory,
 } from "@/lib/signals/api";
 import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
 import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
@@ -634,6 +634,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const hist = useQuery({ queryKey: [`${SIG}hist`, p.userId, s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
   const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchOnWindowFocus: "always" });
   const deadlines=useQuery({queryKey:[`${SIG}deadlines`,p.userId],queryFn:listDeadlines,enabled:!!p.userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
+  const periods=useQuery({queryKey:[`${SIG}periods`,p.userId,s.id,s.updated_at],queryFn:()=>deadlineHistory(s.id),enabled:!!p.userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
   const [showProgression, setShowProgression] = useState(false);
   const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
@@ -742,6 +743,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
 
       <div className="p-4 space-y-5 flex-1">
         {progression.error || deadlines.error ? <p className="text-sm text-destructive">Không tải được diễn biến: {errMsg(progression.error||deadlines.error)}</p> : progression.isPending ? <p className="text-sm text-muted-foreground">Đang tải diễn biến…</p> : <ProgressionSummary s={s} row={progression.data?.[s.id]} deadline={deadlines.data?.[s.id]} onUpdate={canConsult?()=>setUpdating(true):undefined} />}
+        {!!periods.data?.length && <Section title="Lịch sử kỳ cập nhật"><ol className="space-y-3 border-l pl-4">{periods.data.slice(0,showProgression?undefined:3).map(r=><li key={`${r.assignment_id}:${r.sequence}`} className="text-sm"><p className="font-medium">Kỳ {r.sequence} · {name(r.sale_id)}</p><p className="text-xs text-muted-foreground">Hạn {r.due_on.split('-').reverse().join('/')} · {({pending:'Chưa đến hạn',on_time:'Đúng hạn',missed:'Trễ hạn',exempt:'Miễn — kết thúc trách nhiệm trước hạn'})[r.outcome]}</p></li>)}</ol></Section>}
+        {periods.error && <p className="text-xs text-destructive">Không tải được lịch sử kỳ: {errMsg(periods.error)}</p>}
         <Section title="Lịch sử diễn biến">
           {hist.error ? <p className="text-sm text-destructive">{errMsg(hist.error)}</p> : <>
             <ol className="space-y-3 border-l pl-4">
