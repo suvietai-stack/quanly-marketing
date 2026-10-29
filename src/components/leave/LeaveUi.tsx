@@ -218,7 +218,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
 /* ================= Form ================= */
 type FormState = { mode: "create" | "edit" | "resubmit"; request?: LeaveRequest };
 
-function FormDialog({ state, settings, onClose, onDone, onPickAtt }: { state: FormState; settings: LeaveSettings; onClose: () => void; onDone: (id?: string) => void; onPickAtt?: () => void }) {
+function FormDialog({ state, settings, onClose, onDone }: { state: FormState; settings: LeaveSettings; onClose: () => void; onDone: (id?: string) => void }) {
   const { user, can } = useCurrentUser();
   const users = useAuth((s) => s.users);
   const r = state.request;
