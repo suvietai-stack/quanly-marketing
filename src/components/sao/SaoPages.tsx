@@ -20,10 +20,11 @@ import { availableStars, giftAvailable, mayRedeem } from '@/lib/sao/logic';
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const when = (d: string) => new Date(d).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 const statusLabel = { pending: 'Đang giữ Sao', fulfilled: 'Đã phát quà', cancelled: 'Đã hủy' };
-function SaoNav() {
+export function SaoNav() {
   const { can } = useCurrentUser();
   return <nav className="flex flex-wrap gap-2 mb-6" aria-label="Sao Sứ Việt">
     <Button variant="outline" asChild><Link to="/sao"><Wallet className="h-4 w-4" />Ví Sao của tôi</Link></Button>
+    <Button variant="outline" asChild><Link to="/sao/leaderboard"><Trophy className="h-4 w-4" />Bảng thành tích</Link></Button>
     <Button variant="outline" asChild><Link to="/sao/shop"><GiftIcon className="h-4 w-4" />Gian hàng đổi quà</Link></Button>
     <Button variant="outline" asChild><Link to="/sao/earn"><Sparkles className="h-4 w-4" />Cách kiếm Sao</Link></Button>
     {['sao.program_manage', 'sao.shop_manage', 'sao.manual_grant'].some(can) && <Button variant="outline" asChild><Link to="/sao/admin"><Settings className="h-4 w-4" />Quản lý thưởng Sao</Link></Button>}
