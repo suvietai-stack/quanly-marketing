@@ -226,7 +226,29 @@ export function SignalsPage() {
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </button>
       )}
-      <div className="rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
+      {/* Mobile: bộ lọc nhanh gọn trong hàng cuộn ngang; nhóm dài nằm trong sheet "Bộ lọc". */}
+      <div className="md:hidden space-y-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1" aria-label="Lọc theo trạng thái">
+          {QUICK.map((x) => (
+            <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }}
+              className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-card hover:bg-muted/60")}>
+              {x.label} <span className="opacity-70">{count(x.k)}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1" aria-label="Hạn cập nhật diễn biến">
+          <button onClick={() => setDeadlineFilter(null)} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", !deadlineFilter ? "bg-secondary text-secondary-foreground border-secondary font-medium" : "bg-card")}>Tất cả hạn</button>
+          {(['today', 'soon', 'overdue'] as const).map((k) => (
+            <button key={k} onClick={() => { setCare({ on: false }); setDeadlineFilter(k); }}
+              className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", deadlineFilter === k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-card")}>
+              {k === 'today' ? 'Cần cập nhật hôm nay' : DEADLINE_LABEL[k]} · {base.filter((s) => deadlines.data?.[s.id]?.deadline_state === k).length}
+            </button>
+          ))}
+        </div>
+        {deadlines.error && <p className="text-xs text-destructive">Không tải được hạn cập nhật: {errMsg(deadlines.error)}</p>}
+        <ActiveFilters f={f} name={name} onChange={setF} />
+      </div>
+      <div className="hidden md:block rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
         <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
           active={f.needGroup ?? ""} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: k || undefined })); }} />
         <ChipRow label="Trạng thái" items={QUICK.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
@@ -267,19 +289,19 @@ export function SignalsPage() {
         : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
           <>
-            <div className="md:hidden space-y-2 pr-24">
+            <div className="md:hidden space-y-2">
               {list.map((s) => (
                 <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
                     <StatusPill s={s} />
                   </div>
-                  <div className="text-sm text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
-                  <div className="text-sm line-clamp-1">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
+                  <div className="text-sm line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
                   {progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} deadline={deadlines.data?.[s.id]} compact />}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
-                    <span>Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span className="min-w-0 truncate">{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
+                    <span className="shrink-0">Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
                   </div>
                 </div>
               ))}
@@ -312,7 +334,7 @@ export function SignalsPage() {
         )}
 
       {p.create && (
-        <Button size="lg" onClick={() => setCreating(true)} className="md:hidden fixed bottom-4 right-4 z-30 rounded-full shadow-lg h-14 px-5"><Plus className="h-5 w-5 mr-1" />Thêm tín hiệu</Button>
+        <Button size="icon" onClick={() => setCreating(true)} aria-label="Thêm tín hiệu" title="Thêm tín hiệu" className="md:hidden fixed bottom-4 right-4 z-30 rounded-full shadow-lg h-12 w-12"><Plus className="h-5 w-5" /></Button>
       )}
 
       <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} />
@@ -434,6 +456,7 @@ function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string
   if (f.time) chips.push({ key: "time", label: `Thời gian: ${timeLabel[f.time] ?? f.time}${f.time === "custom" && (f.from || f.to) ? ` ${f.from ?? "…"}→${f.to ?? "…"}` : ""}` });
   if (f.source) chips.push({ key: "source", label: `Nguồn: ${f.source}` });
   if (f.product) chips.push({ key: "product", label: `Sản phẩm: ${f.product}` });
+  if (f.needGroup) chips.push({ key: "needGroup", label: `Nhóm nhu cầu: ${f.needGroup}` });
   if (f.lostReason) chips.push({ key: "lostReason", label: `Lý do trượt: ${f.lostReason}` });
   if (f.saleId) chips.push({ key: "saleId", label: `Sale: ${name(f.saleId)}` });
   if (f.creatorId) chips.push({ key: "creatorId", label: `Người tạo: ${name(f.creatorId)}` });
