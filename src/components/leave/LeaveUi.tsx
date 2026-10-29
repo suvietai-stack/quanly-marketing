@@ -275,11 +275,10 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           {state.mode === "create" && (
-            <div className={cn("grid gap-2", onPickAtt ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}>
+            <div className="grid grid-cols-3 gap-2">
               {(Object.keys(TYPE_LABEL) as LeaveType[]).map((t) => (
                 <button key={t} onClick={() => setType(t)} className={cn("rounded-md border py-2.5 text-sm font-medium", type === t ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{TYPE_LABEL[t]}</button>
               ))}
-              {onPickAtt && <button onClick={onPickAtt} className="rounded-md border py-2.5 text-sm font-medium hover:bg-accent">Giải trình Chấm Công</button>}
             </div>
           )}
           {canFor && (
