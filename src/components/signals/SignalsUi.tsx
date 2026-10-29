@@ -289,19 +289,19 @@ export function SignalsPage() {
         : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
           <>
-            <div className="md:hidden space-y-2 pr-24">
+            <div className="md:hidden space-y-2">
               {list.map((s) => (
                 <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
                     <StatusPill s={s} />
                   </div>
-                  <div className="text-sm text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
-                  <div className="text-sm line-clamp-1">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
+                  <div className="text-sm line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
                   {progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} deadline={deadlines.data?.[s.id]} compact />}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
-                    <span>Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
+                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span className="min-w-0 truncate">{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
+                    <span className="shrink-0">Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
                   </div>
                 </div>
               ))}
@@ -334,7 +334,7 @@ export function SignalsPage() {
         )}
 
       {p.create && (
-        <Button size="lg" onClick={() => setCreating(true)} className="md:hidden fixed bottom-4 right-4 z-30 rounded-full shadow-lg h-14 px-5"><Plus className="h-5 w-5 mr-1" />Thêm tín hiệu</Button>
+        <Button size="icon" onClick={() => setCreating(true)} aria-label="Thêm tín hiệu" title="Thêm tín hiệu" className="md:hidden fixed bottom-4 right-4 z-30 rounded-full shadow-lg h-12 w-12"><Plus className="h-5 w-5" /></Button>
       )}
 
       <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} />
