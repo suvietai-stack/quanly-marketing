@@ -82,37 +82,39 @@ export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { r
         {can("leave.export") && <Button variant="outline" onClick={exportXlsx} disabled={!details.length && !attRows.length}><Download className="h-4 w-4 mr-1" />Xuất Excel</Button>}
       </div>
       <div className="text-sm text-muted-foreground">Đang thống kê: <span className="font-medium text-foreground">{periodLabel}</span></div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[["Ngày nghỉ đã duyệt", fmtDays(Math.round(total.days * 100) / 100)], ["Lần đi muộn", total.late], ["Lần về sớm", total.early], ["Đơn chờ duyệt", total.pending], ["Đơn bị từ chối", total.rejected]].map(([l, v]) => (
-          <Card key={l as string}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{l}</div><div className="text-2xl font-semibold mt-1">{v}</div></CardContent></Card>
-        ))}
-      </div>
-      <Card><CardContent className="p-0 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
-            {["Nhân viên", "Đơn nghỉ", "Ngày nghỉ", "Đi muộn (lần/phút)", "Về sớm (lần/phút)", "Chờ duyệt", "Từ chối"].map((h) => <th key={h} className="text-left font-medium px-3 py-2 whitespace-nowrap">{h}</th>)}
-          </tr></thead>
-          <tbody>
-            {data.map((r) => (
-              <Fragment key={r.userId}>
-                <tr className="border-t cursor-pointer hover:bg-muted/40" onClick={() => setOpenUser(openUser === r.userId ? null : r.userId)}>
-                  <td className="px-3 py-2 font-medium"><span className="inline-flex items-center gap-1">{openUser === r.userId ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}{name(r.userId)}</span></td>
-                  <td className="px-3 py-2">{r.leaveCount}</td>
-                  <td className="px-3 py-2">{fmtDays(r.leaveDays)}</td>
-                  <td className="px-3 py-2">{r.lateCount} / {r.lateMinutes}</td>
-                  <td className="px-3 py-2">{r.earlyCount} / {r.earlyMinutes}</td>
-                  <td className="px-3 py-2">{r.pending}</td>
-                  <td className="px-3 py-2">{r.rejected}</td>
-                </tr>
-                {openUser === r.userId && <tr><td colSpan={7} className="bg-muted/20 px-3 py-2"><DetailTable rows={details.filter((d) => d.userId === r.userId)} /></td></tr>}
-              </Fragment>
-            ))}
-            {!data.length && <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">Không có đơn nào trong khoảng thời gian này.</td></tr>}
-          </tbody>
-        </table>
-      </CardContent></Card>
+      {!attOnly && <>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[["Ngày nghỉ đã duyệt", fmtDays(Math.round(total.days * 100) / 100)], ["Lần đi muộn", total.late], ["Lần về sớm", total.early], ["Đơn chờ duyệt", total.pending], ["Đơn bị từ chối", total.rejected]].map(([l, v]) => (
+            <Card key={l as string}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{l}</div><div className="text-2xl font-semibold mt-1">{v}</div></CardContent></Card>
+          ))}
+        </div>
+        <Card><CardContent className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
+              {["Nhân viên", "Đơn nghỉ", "Ngày nghỉ", "Đi muộn (lần/phút)", "Về sớm (lần/phút)", "Chờ duyệt", "Từ chối"].map((h) => <th key={h} className="text-left font-medium px-3 py-2 whitespace-nowrap">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {data.map((r) => (
+                <Fragment key={r.userId}>
+                  <tr className="border-t cursor-pointer hover:bg-muted/40" onClick={() => setOpenUser(openUser === r.userId ? null : r.userId)}>
+                    <td className="px-3 py-2 font-medium"><span className="inline-flex items-center gap-1">{openUser === r.userId ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}{name(r.userId)}</span></td>
+                    <td className="px-3 py-2">{r.leaveCount}</td>
+                    <td className="px-3 py-2">{fmtDays(r.leaveDays)}</td>
+                    <td className="px-3 py-2">{r.lateCount} / {r.lateMinutes}</td>
+                    <td className="px-3 py-2">{r.earlyCount} / {r.earlyMinutes}</td>
+                    <td className="px-3 py-2">{r.pending}</td>
+                    <td className="px-3 py-2">{r.rejected}</td>
+                  </tr>
+                  {openUser === r.userId && <tr><td colSpan={7} className="bg-muted/20 px-3 py-2"><DetailTable rows={details.filter((d) => d.userId === r.userId)} /></td></tr>}
+                </Fragment>
+              ))}
+              {!data.length && <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">Không có đơn nào trong khoảng thời gian này.</td></tr>}
+            </tbody>
+          </table>
+        </CardContent></Card>
+      </>}
       {atts && <AttSection sum={attSum} rows={attRows} name={name} onOpen={onOpenAtt} />}
-      <p className="text-xs text-muted-foreground">Tính theo ngày đăng ký nghỉ/đi muộn/về sớm, không theo ngày gửi đơn. Chỉ đơn đã duyệt được cộng vào tổng; đơn nghỉ qua nhiều kỳ được chia theo từng ngày làm việc. Bấm vào tên nhân viên để xem chi tiết từng đơn. Báo cáo gồm những đơn bạn được quyền xem.</p>
+      {!attOnly && <p className="text-xs text-muted-foreground">Tính theo ngày đăng ký nghỉ/đi muộn/về sớm, không theo ngày gửi đơn. Chỉ đơn đã duyệt được cộng vào tổng; đơn nghỉ qua nhiều kỳ được chia theo từng ngày làm việc. Bấm vào tên nhân viên để xem chi tiết từng đơn. Báo cáo gồm những đơn bạn được quyền xem.</p>}
     </div>
   );
 }
