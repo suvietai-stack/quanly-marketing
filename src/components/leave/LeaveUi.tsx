@@ -541,9 +541,12 @@ function HistoryBlock({ type, subs, events, name }: { type: LeaveType; subs: api
           <div className="space-y-2">
             {subs.map((s) => (
               <div key={s.id} className="rounded-md border p-2.5">
-                <div className="font-medium">Lần {s.no} · {fmtVn(s.submitted_at)}</div>
+                <div className="font-medium flex flex-wrap items-center gap-2">Lần {s.no} · {fmtVn(s.submitted_at)}
+                  {s.is_late && <Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning-foreground">Đơn bổ sung</Badge>}
+                </div>
                 <div className="text-muted-foreground">{summary({ type, payload: s.payload, calc: s.calc })}</div>
                 <div>Lý do: {s.reason_name}{s.detail ? ` — ${s.detail}` : ""}</div>
+                {s.is_late && s.late_reason && <div>Lý do gửi bổ sung: {s.late_reason}</div>}
                 <div>Người duyệt: {name(s.approver_id)} · Kết quả: {s.result ? RES[s.result] || s.result : "Chờ duyệt"}{s.note ? ` — ${s.note}` : ""}</div>
               </div>
             ))}
