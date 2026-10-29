@@ -39,15 +39,17 @@ export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { r
 
   const exportXlsx = async () => {
     const XLSX = await import("xlsx");
-    const title = `${brand.app_name} — ${brand.org_name} — Báo cáo đơn từ — ${periodLabel}`;
-    const sumHead = ["Nhân viên", "Số đơn nghỉ phép", "Số ngày nghỉ", "Số lần đi muộn", "Phút đi muộn", "Số lần về sớm", "Phút về sớm", "Đơn chờ duyệt", "Đơn bị từ chối"];
-    const sumRows = data.map((r: ReportRow) => [name(r.userId), r.leaveCount, r.leaveDays, r.lateCount, r.lateMinutes, r.earlyCount, r.earlyMinutes, r.pending, r.rejected]);
-    const tot = ["TỔNG", data.reduce((s, r) => s + r.leaveCount, 0), Math.round(total.days * 100) / 100, total.late, data.reduce((s, r) => s + r.lateMinutes, 0), total.early, data.reduce((s, r) => s + r.earlyMinutes, 0), total.pending, total.rejected];
+    const title = `${brand.app_name} — ${brand.org_name} — ${attOnly ? "Báo cáo giải trình chấm công" : "Báo cáo đơn từ"} — ${periodLabel}`;
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], [], sumHead, ...sumRows, tot]), "Tổng hợp");
-    const dHead = ["Nhân viên", "Loại đơn", "Thời gian đăng ký", "Ngày nghỉ trong kỳ", "Số phút", "Trạng thái", "Tính vào tổng"];
-    const dRows = [...details].sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")).map((d) => [name(d.userId), TYPE_LABEL[d.type as LeaveType] ?? d.type, whenText(d), d.type === "leave" ? d.days : "", d.type === "leave" ? "" : d.minutes, STATUS_LABEL[d.status as LeaveStatus] ?? d.status, d.counted ? "Có" : "Không"]);
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Chỉ đơn Đã duyệt được tính vào bảng Tổng hợp."], dHead, ...dRows]), "Chi tiết");
+    if (!attOnly) {
+      const sumHead = ["Nhân viên", "Số đơn nghỉ phép", "Số ngày nghỉ", "Số lần đi muộn", "Phút đi muộn", "Số lần về sớm", "Phút về sớm", "Đơn chờ duyệt", "Đơn bị từ chối"];
+      const sumRows = data.map((r: ReportRow) => [name(r.userId), r.leaveCount, r.leaveDays, r.lateCount, r.lateMinutes, r.earlyCount, r.earlyMinutes, r.pending, r.rejected]);
+      const tot = ["TỔNG", data.reduce((s, r) => s + r.leaveCount, 0), Math.round(total.days * 100) / 100, total.late, data.reduce((s, r) => s + r.lateMinutes, 0), total.early, data.reduce((s, r) => s + r.earlyMinutes, 0), total.pending, total.rejected];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], [], sumHead, ...sumRows, tot]), "Tổng hợp");
+      const dHead = ["Nhân viên", "Loại đơn", "Thời gian đăng ký", "Ngày nghỉ trong kỳ", "Số phút", "Trạng thái", "Tính vào tổng"];
+      const dRows = [...details].sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")).map((d) => [name(d.userId), TYPE_LABEL[d.type as LeaveType] ?? d.type, whenText(d), d.type === "leave" ? d.days : "", d.type === "leave" ? "" : d.minutes, STATUS_LABEL[d.status as LeaveStatus] ?? d.status, d.counted ? "Có" : "Không"]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Chỉ đơn Đã duyệt được tính vào bảng Tổng hợp."], dHead, ...dRows]), "Chi tiết");
+    }
     if (atts) {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Tính theo ngày quên chấm công. Giải trình đã thu hồi không tính."],
         ["Nhân viên", "Tổng số lần", "Quên chấm công vào", "Quên chấm công ra", "Quên cả hai", "Chưa đối chiếu", "Đã đối chiếu"],
@@ -56,7 +58,7 @@ export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { r
         ["Nhân viên", "Ngày quên chấm công", "Gửi lúc", "Nội dung", "Giờ tự khai báo", "Lý do", "Chi tiết", "Người làm chứng", "Kết quả làm chứng", "Trạng thái đối chiếu", "Người đối chiếu", "Thời điểm đối chiếu", "Ghi chú đối chiếu"],
         ...attRows.map((a) => [name(a.owner_id), fmtDate(a.work_date), fmtVn(a.submitted_at), KIND_LABEL[a.kind], declaredTime(a), a.reason_name, a.detail ?? "", name(a.witness_id), WITNESS_LABEL[a.witness_status], a.reconciled ? "Đã đối chiếu" : "Chưa đối chiếu", a.reconciled ? name(a.reconciled_by) : "", a.reconciled_at ? fmtVn(a.reconciled_at) : "", a.reconcile_note ?? ""])]), "Giải trình - Chi tiết");
     }
-    XLSX.writeFile(wb, `${brand.short_name.replace(/[^\p{L}\p{N}]+/gu, "-")}-bao-cao-don-tu-${range.start}_${range.end}.xlsx`);
+    XLSX.writeFile(wb, `${brand.short_name.replace(/[^\p{L}\p{N}]+/gu, "-")}-${attOnly ? "bao-cao-giai-trinh" : "bao-cao-don-tu"}-${range.start}_${range.end}.xlsx`);
   };
 
   return (
