@@ -149,6 +149,16 @@ export function LeavePage() {
         <FormDialog state={form} settings={settings} onClose={() => setForm(null)}
           onDone={(id) => { setForm(null); refresh(); if (id) setOpen(id); }} />
       )}
+      {settingsOpen && (
+        <FunctionSettingsDialog
+          open
+          title="Cài đặt — Nghỉ phép & Đi sớm muộn"
+          categories={LEAVE_PERM_CATEGORIES}
+          personal={LEAVE_PERSONAL_PERMS}
+          rules={<LeaveSettingsPanel mode="leave" />}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </>
   );
 }
