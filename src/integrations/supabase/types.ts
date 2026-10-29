@@ -3007,6 +3007,7 @@ export type Database = {
           balance_after: number
           created_at: string
           id: string
+          program_id: string | null
           reason: string
           rule_id: string | null
           source: string
@@ -3019,6 +3020,7 @@ export type Database = {
           balance_after: number
           created_at?: string
           id?: string
+          program_id?: string | null
           reason: string
           rule_id?: string | null
           source: string
@@ -3031,6 +3033,7 @@ export type Database = {
           balance_after?: number
           created_at?: string
           id?: string
+          program_id?: string | null
           reason?: string
           rule_id?: string | null
           source?: string
@@ -3039,6 +3042,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "sao_ledger_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "sao_programs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sao_ledger_rule_id_fkey"
             columns: ["rule_id"]
             isOneToOne: false
@@ -3046,6 +3056,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sao_programs: {
+        Row: {
+          condition: string
+          created_at: string
+          enabled: boolean
+          enabled_at: string | null
+          ends_at: string | null
+          field: string
+          id: string
+          name: string
+          source: string
+          stars: number
+          starts_at: string | null
+          threshold: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          condition: string
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          ends_at?: string | null
+          field: string
+          id?: string
+          name: string
+          source: string
+          stars: number
+          starts_at?: string | null
+          threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          enabled?: boolean
+          enabled_at?: string | null
+          ends_at?: string | null
+          field?: string
+          id?: string
+          name?: string
+          source?: string
+          stars?: number
+          starts_at?: string | null
+          threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       sao_redemptions: {
         Row: {
@@ -4439,6 +4500,21 @@ export type Database = {
           _request: string
           _stars: number
           _user: string
+        }
+        Returns: string
+      }
+      sao_program_save: {
+        Args: {
+          _condition: string
+          _enabled: boolean
+          _ends?: string
+          _field: string
+          _id: string
+          _name: string
+          _source: string
+          _stars: number
+          _starts?: string
+          _threshold: number
         }
         Returns: string
       }
