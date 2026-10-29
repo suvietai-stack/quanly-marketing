@@ -40,6 +40,7 @@ import { Route as OrderTrackingIdRouteImport } from './routes/order-tracking.$id
 import { Route as SaoIndexRouteImport } from './routes/sao.index'
 import { Route as SaoAdminRouteImport } from './routes/sao.admin'
 import { Route as SaoEarnRouteImport } from './routes/sao.earn'
+import { Route as SaoLeaderboardRouteImport } from './routes/sao.leaderboard'
 import { Route as SaoShopRouteImport } from './routes/sao.shop'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
@@ -220,6 +221,11 @@ const SaoEarnRoute = SaoEarnRouteImport.update({
   path: '/sao/earn',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SaoLeaderboardRoute = SaoLeaderboardRouteImport.update({
+  id: '/sao/leaderboard',
+  path: '/sao/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SaoShopRoute = SaoShopRouteImport.update({
   id: '/sao/shop',
   path: '/sao/shop',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/order-tracking/$id': typeof OrderTrackingIdRoute
   '/sao/admin': typeof SaoAdminRoute
   '/sao/earn': typeof SaoEarnRoute
+  '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
@@ -431,6 +438,7 @@ export interface FileRoutesByTo {
   '/order-tracking/$id': typeof OrderTrackingIdRoute
   '/sao/admin': typeof SaoAdminRoute
   '/sao/earn': typeof SaoEarnRoute
+  '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/order-tracking/$id': typeof OrderTrackingIdRoute
   '/sao/admin': typeof SaoAdminRoute
   '/sao/earn': typeof SaoEarnRoute
+  '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
@@ -548,6 +557,7 @@ export interface FileRouteTypes {
     | '/order-tracking/$id'
     | '/sao/admin'
     | '/sao/earn'
+    | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
     | '/signals/report'
@@ -605,6 +615,7 @@ export interface FileRouteTypes {
     | '/order-tracking/$id'
     | '/sao/admin'
     | '/sao/earn'
+    | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
     | '/signals/report'
@@ -662,6 +673,7 @@ export interface FileRouteTypes {
     | '/order-tracking/$id'
     | '/sao/admin'
     | '/sao/earn'
+    | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings_/kpi-v2'
     | '/signals/report'
@@ -720,6 +732,7 @@ export interface RootRouteChildren {
   OrderTrackingIdRoute: typeof OrderTrackingIdRoute
   SaoAdminRoute: typeof SaoAdminRoute
   SaoEarnRoute: typeof SaoEarnRoute
+  SaoLeaderboardRoute: typeof SaoLeaderboardRoute
   SaoShopRoute: typeof SaoShopRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
   SignalsReportRoute: typeof SignalsReportRoute
@@ -970,6 +983,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SaoEarnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sao/leaderboard': {
+      id: '/sao/leaderboard'
+      path: '/sao/leaderboard'
+      fullPath: '/sao/leaderboard'
+      preLoaderRoute: typeof SaoLeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sao/shop': {
       id: '/sao/shop'
       path: '/sao/shop'
@@ -1168,6 +1188,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrderTrackingIdRoute: OrderTrackingIdRoute,
   SaoAdminRoute: SaoAdminRoute,
   SaoEarnRoute: SaoEarnRoute,
+  SaoLeaderboardRoute: SaoLeaderboardRoute,
   SaoShopRoute: SaoShopRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
   SignalsReportRoute: SignalsReportRoute,
