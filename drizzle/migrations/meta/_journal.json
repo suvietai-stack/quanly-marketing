@@ -498,6 +498,13 @@
       "when": 1793242637440,
       "tag": "0070_signal_progression_deadline_periods",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793242908045,
+      "tag": "0071_signal_progression_live_calendar",
+      "breakpoints": true
     }
   ]
 }

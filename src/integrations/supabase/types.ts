@@ -4162,6 +4162,19 @@ export type Database = {
           signal_id: string
         }[]
       }
+      signal_progression_history: {
+        Args: { _id: string }
+        Returns: {
+          assignment_id: string
+          due_on: string
+          ends_at: string
+          note_id: string
+          outcome: string
+          sale_id: string
+          sequence: number
+          starts_at: string
+        }[]
+      }
       signal_progression_report: {
         Args: {
           _from?: string
