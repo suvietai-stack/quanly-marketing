@@ -273,7 +273,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
       else if (state.mode === "edit") await api.updateRequest(r!.id, f);
       else await api.resubmitRequest(r!.id, f);
       localStorage.setItem(LAST_APPROVER, approver);
-      toast.success(state.mode === "edit" ? "Đã lưu thay đổi" : "Đã gửi đơn");
+      toast.success(state.mode === "edit" ? "Đã lưu thay đổi" : late ? "Đã gửi đơn bổ sung" : "Đã gửi đơn");
       onDone(id || r?.id);
     } catch (e) { setErr(api.leaveErr(e)); } finally { setBusy(false); }
   };
@@ -341,13 +341,22 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
           ) : <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{res.error}</div>}
 
           {late && res.ok && (
-            <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm space-y-1">
-              <div className="font-semibold text-destructive flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" />KHÔNG THỂ GỬI ĐƠN {TYPE_LABEL[type].toUpperCase()}</div>
+            <div className="rounded-md border border-warning/50 bg-warning/10 p-3 text-sm space-y-2">
+              <div className="font-semibold text-warning-foreground flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" />Đơn bổ sung — gửi sau thời hạn quy định</div>
               <div>Theo quy định của công ty, {deadlineRule(settings, type)}.</div>
               <div>Thời điểm {type === "leave" ? "bắt đầu nghỉ" : type === "late" ? "bắt đầu ca" : "dự kiến ra về"}: {fmtVn(res.markAt)}</div>
               <div>Hạn cuối gửi: {fmtVn(dl!)}</div>
-              <div>Đơn đã quá thời hạn đăng ký. Vui lòng liên hệ người quản lý nếu có trường hợp đặc biệt.</div>
-              {canException && <div className="pt-2 space-y-1"><Label>Xử lý ngoại lệ — lý do (bắt buộc)</Label><Textarea value={exception} onChange={(e) => setException(e.target.value)} rows={2} /></div>}
+              <div>Đơn này được gửi sau thời hạn quy định. Vui lòng nêu lý do gửi bổ sung để người phê duyệt xem xét.</div>
+              <div className="pt-1 space-y-1.5">
+                <Label>Lý do gửi đơn bổ sung <span className="text-destructive">*</span></Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {LATE_SUGGESTIONS.map((s) => (
+                    <button key={s} type="button" onClick={() => setException(s)}
+                      className={cn("rounded-full border px-2.5 py-1 text-xs", exception === s ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{s}</button>
+                  ))}
+                </div>
+                <Textarea value={exception} onChange={(e) => setException(e.target.value)} rows={2} placeholder="Vì sao không nộp đơn đúng hạn…" />
+              </div>
             </div>
           )}
 
