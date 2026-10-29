@@ -21,6 +21,8 @@ beforeAll(async () => {
     CREATE TABLE employee_kpi_snapshots(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),kpi_period_id uuid,locked_by uuid);`);
   await db.exec(readFileSync('drizzle/migrations/0075_sao_rewards_mvp.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0077_sao_achievement_fences.sql', 'utf8'));
+  const fences = readFileSync('drizzle/migrations/0078_sao_and_progression_read_permissions.sql', 'utf8');
+  await db.exec(fences.slice(fences.indexOf('CREATE OR REPLACE FUNCTION private.sao_task_event')));
   await actor(admin);
 }, 20000);
 afterAll(() => db.close());
@@ -72,6 +74,12 @@ it('client-completed task without approval cannot earn stars', async () => {
   await db.query('insert into tasks(id,data) values($1,$2)', ['fake', JSON.stringify({ status: 'Đang làm', assignee: 'Sale', history: [] })]);
   await db.query('update tasks set data=$1 where id=$2', [JSON.stringify({ status: 'Hoàn thành', assignee: 'Sale', history: [] }), 'fake']);
   expect(await scalar("select count(*)::int v from sao_ledger where source='task'")).toBe(0);
+});
+it('missing approval action cannot earn stars', async () => {
+  const base = { status: 'Chờ xác nhận', assignee: 'Sale', submittedAt: new Date().toISOString(), history: [] };
+  await db.query('insert into tasks(id,data) values($1,$2)', ['missing-action', JSON.stringify(base)]);
+  await db.query('update tasks set data=$1 where id=$2', [JSON.stringify({ ...base, status: 'Hoàn thành', history: [{ byId: admin }] }), 'missing-action']);
+  expect(await scalar("select count(*)::int v from sao_task_approvals where task_id='missing-action'")).toBe(0);
 });
 it('verified approval credits task owner and task-backed locked KPI, never other metrics', async () => {
   const base = { status: 'Chờ xác nhận', assignee: 'Sale', submittedAt: new Date().toISOString(), history: [] };
