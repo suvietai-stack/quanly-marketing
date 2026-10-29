@@ -36,6 +36,9 @@ import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
 import { Route as OrderQuotesReportRouteImport } from './routes/order-quotes.report'
 import { Route as OrderTrackingIndexRouteImport } from './routes/order-tracking.index'
 import { Route as OrderTrackingIdRouteImport } from './routes/order-tracking.$id'
+import { Route as SaoIndexRouteImport } from './routes/sao.index'
+import { Route as SaoAdminRouteImport } from './routes/sao.admin'
+import { Route as SaoShopRouteImport } from './routes/sao.shop'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
@@ -195,6 +198,21 @@ const OrderTrackingIdRoute = OrderTrackingIdRouteImport.update({
   path: '/order-tracking/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SaoIndexRoute = SaoIndexRouteImport.update({
+  id: '/sao/',
+  path: '/sao/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SaoAdminRoute = SaoAdminRouteImport.update({
+  id: '/sao/admin',
+  path: '/sao/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SaoShopRoute = SaoShopRouteImport.update({
+  id: '/sao/shop',
+  path: '/sao/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   id: '/settings_/kpi-v2',
   path: '/settings/kpi-v2',
@@ -341,6 +359,8 @@ export interface FileRoutesByFullPath {
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
   '/order-tracking/$id': typeof OrderTrackingIdRoute
+  '/sao/admin': typeof SaoAdminRoute
+  '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -349,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/local/': typeof LocalIndexRoute
   '/order-quotes/': typeof OrderQuotesIndexRoute
   '/order-tracking/': typeof OrderTrackingIndexRoute
+  '/sao/': typeof SaoIndexRoute
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -393,6 +414,8 @@ export interface FileRoutesByTo {
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
   '/order-tracking/$id': typeof OrderTrackingIdRoute
+  '/sao/admin': typeof SaoAdminRoute
+  '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -401,6 +424,7 @@ export interface FileRoutesByTo {
   '/local': typeof LocalIndexRoute
   '/order-quotes': typeof OrderQuotesIndexRoute
   '/order-tracking': typeof OrderTrackingIndexRoute
+  '/sao': typeof SaoIndexRoute
   '/signals': typeof SignalsIndexRoute
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
@@ -446,6 +470,8 @@ export interface FileRoutesById {
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
   '/order-tracking/$id': typeof OrderTrackingIdRoute
+  '/sao/admin': typeof SaoAdminRoute
+  '/sao/shop': typeof SaoShopRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -454,6 +480,7 @@ export interface FileRoutesById {
   '/local/': typeof LocalIndexRoute
   '/order-quotes/': typeof OrderQuotesIndexRoute
   '/order-tracking/': typeof OrderTrackingIndexRoute
+  '/sao/': typeof SaoIndexRoute
   '/signals/': typeof SignalsIndexRoute
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
@@ -500,6 +527,8 @@ export interface FileRouteTypes {
     | '/order-quotes/new'
     | '/order-quotes/report'
     | '/order-tracking/$id'
+    | '/sao/admin'
+    | '/sao/shop'
     | '/settings/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -508,6 +537,7 @@ export interface FileRouteTypes {
     | '/local/'
     | '/order-quotes/'
     | '/order-tracking/'
+    | '/sao/'
     | '/signals/'
     | '/social/'
     | '/websites/'
@@ -552,6 +582,8 @@ export interface FileRouteTypes {
     | '/order-quotes/new'
     | '/order-quotes/report'
     | '/order-tracking/$id'
+    | '/sao/admin'
+    | '/sao/shop'
     | '/settings/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -560,6 +592,7 @@ export interface FileRouteTypes {
     | '/local'
     | '/order-quotes'
     | '/order-tracking'
+    | '/sao'
     | '/signals'
     | '/social'
     | '/websites'
@@ -604,6 +637,8 @@ export interface FileRouteTypes {
     | '/order-quotes/new'
     | '/order-quotes/report'
     | '/order-tracking/$id'
+    | '/sao/admin'
+    | '/sao/shop'
     | '/settings_/kpi-v2'
     | '/signals/report'
     | '/social/$id'
@@ -612,6 +647,7 @@ export interface FileRouteTypes {
     | '/local/'
     | '/order-quotes/'
     | '/order-tracking/'
+    | '/sao/'
     | '/signals/'
     | '/social/'
     | '/websites/'
@@ -657,6 +693,8 @@ export interface RootRouteChildren {
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
   OrderQuotesReportRoute: typeof OrderQuotesReportRoute
   OrderTrackingIdRoute: typeof OrderTrackingIdRoute
+  SaoAdminRoute: typeof SaoAdminRoute
+  SaoShopRoute: typeof SaoShopRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
@@ -665,6 +703,7 @@ export interface RootRouteChildren {
   LocalIndexRoute: typeof LocalIndexRoute
   OrderQuotesIndexRoute: typeof OrderQuotesIndexRoute
   OrderTrackingIndexRoute: typeof OrderTrackingIndexRoute
+  SaoIndexRoute: typeof SaoIndexRoute
   SignalsIndexRoute: typeof SignalsIndexRoute
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
@@ -877,6 +916,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderTrackingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sao/': {
+      id: '/sao/'
+      path: '/sao'
+      fullPath: '/sao/'
+      preLoaderRoute: typeof SaoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sao/admin': {
+      id: '/sao/admin'
+      path: '/sao/admin'
+      fullPath: '/sao/admin'
+      preLoaderRoute: typeof SaoAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sao/shop': {
+      id: '/sao/shop'
+      path: '/sao/shop'
+      fullPath: '/sao/shop'
+      preLoaderRoute: typeof SaoShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings_/kpi-v2': {
       id: '/settings_/kpi-v2'
       path: '/settings/kpi-v2'
@@ -1065,6 +1125,8 @@ const rootRouteChildren: RootRouteChildren = {
   OrderQuotesNewRoute: OrderQuotesNewRoute,
   OrderQuotesReportRoute: OrderQuotesReportRoute,
   OrderTrackingIdRoute: OrderTrackingIdRoute,
+  SaoAdminRoute: SaoAdminRoute,
+  SaoShopRoute: SaoShopRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
@@ -1073,6 +1135,7 @@ const rootRouteChildren: RootRouteChildren = {
   LocalIndexRoute: LocalIndexRoute,
   OrderQuotesIndexRoute: OrderQuotesIndexRoute,
   OrderTrackingIndexRoute: OrderTrackingIndexRoute,
+  SaoIndexRoute: SaoIndexRoute,
   SignalsIndexRoute: SignalsIndexRoute,
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
