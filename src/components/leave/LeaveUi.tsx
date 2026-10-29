@@ -81,11 +81,12 @@ export function LeavePage() {
   const showManage = can("leave.view_all");
   const showReport = can("leave.report");
   const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  // Liên kết cũ (/leave?att=… hoặc ?tab=att) chuyển sang trang Giải trình chấm công.
+  // Liên kết cũ (/leave?att=… hoặc ?tab=att) chuyển sang trang Giải trình chấm công (điều hướng trong app, không tải lại trang).
+  const navigate = useNavigate();
   useEffect(() => {
     const att = initial?.get("att");
-    if (att) window.location.replace(`/attendance?att=${encodeURIComponent(att)}`);
-    else if (initial?.get("tab") === "att") window.location.replace("/attendance");
+    if (att) navigate({ to: "/attendance", search: { att }, replace: true });
+    else if (initial?.get("tab") === "att") navigate({ to: "/attendance", replace: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [tab, setTab] = useState(() => initial?.get("tab") || (showMine ? "mine" : showApprove ? "approve" : showManage ? "manage" : "report"));
   const [openId, setOpenId] = useState<string | null>(() => initial?.get("open") || null);
