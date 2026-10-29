@@ -28,7 +28,7 @@ export async function loadSao(userId: string, admin = false): Promise<SaoData> {
     supabase.from('sao_gifts').select('*').order('name'),
     allRows('sao_ledger', admin ? undefined : userId),
     allRows('sao_redemptions', admin ? undefined : userId),
-    admin ? supabase.from('sao_programs').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [], error: null }),
+    supabase.from('sao_programs').select('*').order('created_at', { ascending: false }),
     admin ? supabase.from('sao_admin_events').select('id,kind,created_at').order('created_at', { ascending: false }).limit(100) : Promise.resolve({ data: [], error: null }),
   ]);
   const error = wallet.error || gifts.error || rules.error || events.error;
