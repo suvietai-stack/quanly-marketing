@@ -70,3 +70,16 @@ export const finManualNotify = createServerFn({ method: "POST" })
     try { const s = await import("./gmf.server"); await s.queueAndSend([t.id]); } catch { /* lỗi Zalo không chặn khoản tiền */ }
     return { ok: true };
   });
+
+/** Nhắc xác nhận thủ công: quyền, phạm vi xem, trạng thái và chống spam kiểm tra trong fin_remind_manual_claim. */
+export const finRemindManual = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { data: rid, error } = await (context.supabase as any).rpc("fin_remind_manual_claim", { _tx: data.id });
+    if (error) return { ok: false, message: error.message };
+    const s = await import("./gmf.server");
+    const r = await s.sendManualReminder(rid as string, data.id);
+    return r.ok ? { ok: true, message: "Đã gửi nhắc xác nhận vào nhóm" }
+      : { ok: false, message: r.ambiguous ? "Không rõ Zalo đã nhận — kiểm tra nhóm trước khi gửi lại" : `Không gửi được: ${r.message}` };
+  });

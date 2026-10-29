@@ -471,6 +471,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("finance.incoming.manage", "Quản lý / điều chỉnh giao dịch", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
   P("finance.incoming.bank_config", "Cài đặt ngân hàng", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
   P("finance.incoming.gmf_config", "Cài đặt thông báo Zalo GMF", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
+  P("finance.incoming.remind", "Nhắc xác nhận thủ công", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
 
   // ===== Tích hợp Marketing =====
   P("integration.facebook_leads", "Quản lý Facebook Lead Ads (kết nối Page, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Facebook Lead Ads"),
