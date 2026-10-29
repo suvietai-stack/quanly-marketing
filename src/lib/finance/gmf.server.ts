@@ -150,12 +150,12 @@ async function finish(d: any, rid: string, r: Res) {
 }
 
 /** Gửi một nhắc thủ công đã được giữ chỗ bằng fin_remind_manual_claim. */
-export async function sendManualReminder(rid: string, txId: string) {
+export async function sendManualReminder(rid: string, txId: string): Promise<Res> {
   const d = await db();
   const cfg: any = await getConfig();
   const { data: t } = await d.from("bank_transactions").select(TX_COLS).eq("id", txId).maybeSingle();
-  if (!cfg?.gmf_group_id || !cfg?.gmf_enabled) { const r = { ok: false, code: -2, message: "Chưa bật nhóm thông báo Tiền Về" }; await finish(d, rid, r); return r; }
-  if (!stillPending(t)) { const r = { ok: false, code: -3, message: "Khoản tiền đã được xác nhận" }; await finish(d, rid, r); return r; }
+  if (!cfg?.gmf_group_id || !cfg?.gmf_enabled) { const r: Res = { ok: false, code: -2, message: "Chưa bật nhóm thông báo Tiền Về" }; await finish(d, rid, r); return r; }
+  if (!stillPending(t)) { const r: Res = { ok: false, code: -3, message: "Khoản tiền đã được xác nhận" }; await finish(d, rid, r); return r; }
   const r = await postGroup(cfg.gmf_group_id, await reminderMessage(t, "manual", null, 0));
   await finish(d, rid, r);
   return r;
