@@ -428,6 +428,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("att.reconcile", "Đối chiếu giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
   P("att.report", "Xem báo cáo giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
   P("att.manage", "Quản lý giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
+  P("att.settings", "Quản lý cài đặt giải trình", "Đơn Từ & Phê Duyệt", "Giải trình chấm công"),
 
   // ===== Đơn hàng — Hỏi Giá & Tiến Độ =====
   P("oq.create", "Tạo yêu cầu", "Đơn Hàng — Hỏi Giá & Tiến Độ", "Kinh doanh"),
