@@ -27,6 +27,7 @@ beforeAll(async () => {
   const configEnd = fences.indexOf('ALTER POLICY progression_config_read');
   await db.exec(fences.slice(configStart, configEnd));
   await db.exec('GRANT USAGE ON SCHEMA private,auth TO authenticated;');
+  await db.exec(readFileSync('drizzle/migrations/0079_sao_flexible_programs.sql', 'utf8'));
   await actor(admin);
 }, 20000);
 afterAll(() => db.close());
@@ -110,4 +111,38 @@ it('wallet RLS exposes exactly the employee own wallet', async () => {
 it('progression config requires a Signal permission rather than any signed-in user', async () => {
   await actor(other); expect(await scalar('select signal_progression_config_can_read() v')).toBe(false);
   await actor(admin); expect(await scalar('select signal_progression_config_can_read() v')).toBe(true);
+});
+async function program(source = 'signal', stars = 30, enabled = true, threshold = 100, starts: string | null = null, ends: string | null = null) {
+  const id = crypto.randomUUID();
+  await db.query('select sao_program_save($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [id, 'Chương trình mới', source, source === 'signal' ? 'status' : source === 'task' ? 'approved_completion' : 'verified_task_rate', source === 'signal' ? 'transition' : source === 'task' ? 'event' : 'gte', threshold, stars, enabled, starts, ends]);
+  return id;
+}
+it('two signal programs each pay 30 once to the assigned Sale for the same new achievement', async () => {
+  const a = await program(); const b = await program(); const id = crypto.randomUUID();
+  await db.query("insert into opportunity_signals(id,status,assigned_to,customer_name) values($1,'consulting',$2,'Two programs')", [id, sale]);
+  await db.query("update opportunity_signals set status='won',closed_at=now(),revenue=100 where id=$1", [id]);
+  await db.query("update opportunity_signals set status='consulting' where id=$1", [id]);
+  await db.query("update opportunity_signals set status='won' where id=$1", [id]);
+  expect(await scalar('select count(*)::int v from sao_ledger where source_id=$1 and program_id in ($2,$3) and amount=30 and user_id=$4', [id, a, b, sale])).toBe(2);
+});
+it('newly enabled programs never pay already observed achievements', async () => {
+  const id = crypto.randomUUID(); await db.query("select private.sao_award($1,'signal',$2,now(),'Old')", [sale, id]);
+  const p = await program(); await db.query("select private.sao_award($1,'signal',$2,now(),'Replay')", [sale, id]);
+  expect(await scalar('select count(*)::int v from sao_ledger where program_id=$1 and source_id=$2', [p, id])).toBe(0);
+});
+it('application window excludes events outside start/end and disabled programs', async () => {
+  const future = await program('signal', 30, true, 100, new Date(Date.now()+86400000).toISOString());
+  const expired = await program('signal', 30, true, 100, null, new Date(Date.now()-86400000).toISOString());
+  const disabled = await program('signal', 30, false);
+  const id = crypto.randomUUID(); await db.query("select private.sao_award($1,'signal',$2,now(),'Now')", [sale, id]);
+  expect(await scalar('select count(*)::int v from sao_ledger where source_id=$1 and program_id in ($2,$3,$4)', [id, future, expired, disabled])).toBe(0);
+});
+it('KPI 100 percent condition pays only verified attainment at or above 100', async () => {
+  const p = await program('kpi', 30, true, 100);
+  for (const rate of [99, 100, 120]) await db.query("select private.sao_award_evaluated($1,'kpi',$2,now(),'Rate',$3)", [sale, `rate-${rate}`, rate]);
+  expect(await scalar('select count(*)::int v from sao_ledger where program_id=$1', [p])).toBe(2);
+});
+it('only managers can create programs and unintegrated fields are rejected', async () => {
+  await actor(sale); await expect(program()).rejects.toThrow('Không có quyền'); await actor(admin);
+  await expect(db.query("select sao_program_save($1,'Fake','kpi','revenue','gte',100,30,true)", [crypto.randomUUID()])).rejects.toThrow('chưa được tích hợp');
 });
