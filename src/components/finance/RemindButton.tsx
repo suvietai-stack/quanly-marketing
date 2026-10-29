@@ -43,3 +43,50 @@ export function RemindButton({ txId, size = "sm", className }: { txId: string; s
     </span>
   );
 }
+
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth, useCurrentUser } from "@/lib/auth";
+import { fmtTime } from "@/lib/finance/incoming";
+
+export type ReminderRow = { tx_id: string; kind: string; seq: number | null; status: string; sent_by: string | null; created_at: string; error: string | null };
+export const remindersQuery = (ids: string[]) => ({
+  queryKey: ["fin_reminders", ids],
+  enabled: ids.length > 0,
+  queryFn: async () => {
+    const { data, error } = await supabase.from("fin_reminders").select("tx_id, kind, seq, status, sent_by, created_at, error").in("tx_id", ids).order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as ReminderRow[];
+  },
+});
+export const autoCount = (rows: ReminderRow[] | undefined, id: string) => (rows ?? []).filter((r) => r.tx_id === id && r.kind === "auto" && r.status !== "failed").length;
+
+const ST: Record<string, string> = { sent: "Đã gửi", failed: "Lỗi", unknown: "Không rõ kết quả", sending: "Đang gửi" };
+
+/** Lịch sử nhắc + nút nhắc thủ công trên trang chi tiết. */
+export function ReminderPanel({ txId, pending, max = 5 }: { txId: string; pending: boolean; max?: number }) {
+  const { can } = useCurrentUser();
+  const users = useAuth((s) => s.users);
+  const { data } = useQuery(remindersQuery([txId]));
+  const n = autoCount(data, txId);
+  if (!pending && !data?.length) return null;
+  return (
+    <div className="mt-4 rounded-lg border bg-card p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="font-medium">Nhắc xác nhận <span className="text-sm font-normal text-muted-foreground">· tự động {n}/{max}</span></div>
+        {pending && can("finance.incoming.remind") && <RemindButton txId={txId} className="h-11 md:h-9" />}
+      </div>
+      {data?.length ? (
+        <ul className="text-sm space-y-1">
+          {data.map((r, i) => (
+            <li key={i} className="flex flex-wrap gap-x-2 text-muted-foreground">
+              <span className="text-foreground">{r.kind === "auto" ? `Tự động lần ${r.seq}` : `Thủ công — ${users.find((u) => u.id === r.sent_by)?.fullName ?? "—"}`}</span>
+              <span>{fmtTime(r.created_at)}</span>
+              <span className={r.status === "failed" ? "text-destructive" : ""}>{ST[r.status] ?? r.status}</span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-sm text-muted-foreground">Chưa có lượt nhắc nào.</p>}
+    </div>
+  );
+}
