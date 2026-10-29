@@ -39,6 +39,10 @@ describe('authoritative calendar and outcomes',()=>{
   const r=await db.query<{sequence:number}>("select sequence from private.progression_calendar('2026-11-01 10:00+07',null,'2026-11-01 10:00+07')");
   expect(r.rows).toEqual([{sequence:1}]);
  });
+ it('KR denominator excludes retrospective periods before rule start',async()=>{
+  const r=await db.query<{due:number;retro_due:number;rate:number|null}>("with p(due_on,outcome) as(values('2026-10-20'::date,'on_time'),('2026-10-25'::date,'missed'),('2026-11-05'::date,'on_time'),('2026-11-06'::date,'missed')) select count(*) filter(where due_on>='2026-10-29')::int due,count(*) filter(where due_on<'2026-10-29')::int retro_due,count(*) filter(where outcome='on_time' and due_on>='2026-10-29')*100.0/nullif(count(*) filter(where due_on>='2026-10-29'),0) rate from p");
+  expect(r.rows[0]).toEqual({due:2,retro_due:2,rate:'50.0000000000000000'});
+ });
  it('due sample excludes future and exempt periods, and empty rate is null',async()=>{
   const r=await db.query<{due:number;rate:number|null}>("with p(ends_at,outcome) as(values('2026-11-07 00:00+07'::timestamptz,'on_time'),('2026-11-07 00:00+07','missed'),('2026-11-14 00:00+07','pending'),('2026-11-07 00:00+07','exempt')) select count(*)::int due,count(*) filter(where outcome='on_time')*100.0/nullif(count(*),0) rate from p where ends_at<='2026-11-08 12:00+07' and outcome<>'exempt'");
   expect(r.rows[0]).toEqual({due:2,rate:'50.0000000000000000'});

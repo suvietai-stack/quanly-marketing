@@ -1,7 +1,7 @@
 import type { SignalStatus } from './catalog';
 export type DeadlineState = 'ok' | 'soon' | 'today' | 'overdue' | 'updated';
 export interface DeadlineRow { signal_id: string; sale_id: string; sequence: number; due_on: string; deadline_state: DeadlineState; overdue_days: number; next_due_on: string; calculated_at: string }
-export interface DeadlineMetrics { on_time: number; due: number; rate: number | null; tracking: number; overdue: number; today: number; soon: number }
+export interface DeadlineMetrics { on_time: number; due: number; rate: number | null; retro_on_time: number; retro_due: number; tracking: number; overdue: number; today: number; soon: number }
 export interface DeadlineReport { total: DeadlineMetrics; sales: (DeadlineMetrics & { sale_id: string })[]; activated_at: string | null; calculated_at: string }
 export interface DeadlineHistory {assignment_id:string;sale_id:string;sequence:number;starts_at:string;ends_at:string;due_on:string;outcome:'pending'|'on_time'|'missed'|'exempt';note_id:string|null}
 export const DEADLINE_LABEL: Record<DeadlineState,string> = { ok:'Đang ổn',soon:'Sắp đến hạn',today:'Đến hạn hôm nay',overdue:'Quá hạn cập nhật',updated:'Đã cập nhật kỳ này' };

@@ -195,17 +195,9 @@ export async function listDeadlines(): Promise<Record<string,DeadlineRow>> {
   const rows=await fetchAll<DeadlineRow>((a,b)=>db.rpc('signal_progression_deadlines').order('signal_id').range(a,b));
   return Object.fromEntries(rows.map(r=>[r.signal_id,r]));
 }
-export async function deadlineConfig(): Promise<{activated_at:string|null}> {
-  const {data,error}=await db.from('signal_progression_config').select('activated_at').maybeSingle();
-  if(error) throw error; return data ?? {activated_at:null};
-}
 export async function deadlineReport(from?:string,to?:string,sale?:string,group?:string,source?:string): Promise<DeadlineReport> {
   const {data,error}=await db.rpc('signal_progression_report',{_from:from||null,_to:to||null,_sale:sale||null,_group:group||null,_source:source||null});
   if(error) throw error; return data;
-}
-export async function activateDeadlines() {
-  const {data,error}=await db.rpc('signal_progression_activate',{_confirm:true});
-  if(error) throw error; return data as string;
 }
 export async function deadlineHistory(id:string):Promise<DeadlineHistory[]> {
   return fetchAll<DeadlineHistory>((a,b)=>db.rpc('signal_progression_history',{_id:id}).order('starts_at',{ascending:false}).order('sequence',{ascending:false}).range(a,b));
