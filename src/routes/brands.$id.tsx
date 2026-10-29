@@ -17,7 +17,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/brands/$id")({
-  head: () => ({ meta: [{ title: "Chi tiết thương hiệu — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Chi tiết thương hiệu — Base Sứ Việt"}, {"name": "description", "content": "Chi tiết thương hiệu: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Chi tiết thương hiệu — Base Sứ Việt"}, {"property": "og:description", "content": "Chi tiết thương hiệu: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: BrandDetail,
   notFoundComponent: () => <div className="p-10 text-center">Không tìm thấy thương hiệu.</div>,
 });

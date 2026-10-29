@@ -27,7 +27,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/web-contents")({
   validateSearch: (s: Record<string, unknown>): { open?: string } => (typeof s.open === "string" && s.open ? { open: s.open } : {}),
-  head: () => ({ meta: [{ title: "Tất cả Content Web — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Tất cả Content Web — Base Sứ Việt"}, {"name": "description", "content": "Tất cả Content Web: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Tất cả Content Web — Base Sứ Việt"}, {"property": "og:description", "content": "Tất cả Content Web: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm={["web.content_view", "web.content_view_all", "web.content_view_mine"]}>
       <AllContents />

@@ -15,7 +15,7 @@ import { ArrowLeft, Plus, Pencil, Trash2, Star } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/local/$id")({
-  head: () => ({ meta: [{ title: "Chi tiết địa điểm — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Chi tiết địa điểm — Base Sứ Việt"}, {"name": "description", "content": "Chi tiết địa điểm: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Chi tiết địa điểm — Base Sứ Việt"}, {"property": "og:description", "content": "Chi tiết địa điểm: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: PlaceDetail,
 });
 

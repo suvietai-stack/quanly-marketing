@@ -20,7 +20,7 @@ import { OrderReport } from "@/components/OrderReport";
 
 export const Route = createFileRoute("/orders")({
   validateSearch: (s: Record<string, unknown>): { open?: string } => (typeof s.open === "string" && s.open ? { open: s.open } : {}),
-  head: () => ({ meta: [{ title: "Order Thiết Kế — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Order Thiết Kế — Base Sứ Việt"}, {"name": "description", "content": "Order Thiết Kế: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Order Thiết Kế — Base Sứ Việt"}, {"property": "og:description", "content": "Order Thiết Kế: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="order.view">
       <OrdersPage />

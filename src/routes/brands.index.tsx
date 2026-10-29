@@ -16,7 +16,7 @@ import { Plus, Pencil, Trash2, Globe, Share2, MapPin, ArrowRight } from "lucide-
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/brands/")({
-  head: () => ({ meta: [{ title: "Thương Hiệu — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Thương Hiệu — Base Sứ Việt"}, {"name": "description", "content": "Thương Hiệu: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Thương Hiệu — Base Sứ Việt"}, {"property": "og:description", "content": "Thương Hiệu: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="brand.view">
       <BrandsPage />

@@ -16,7 +16,7 @@ import { Plus, Pencil, Trash2, MapPin, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/local/")({
-  head: () => ({ meta: [{ title: "Local Map — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Local Map — Base Sứ Việt"}, {"name": "description", "content": "Local Map: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Local Map — Base Sứ Việt"}, {"property": "og:description", "content": "Local Map: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="local.view">
       <LocalPage />
