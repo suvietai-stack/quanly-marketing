@@ -7,6 +7,7 @@ function dispatchZalo() { zaloDispatch().catch(() => {});  pushDispatch().catch(
 import { resolveOptions, type CatOption, type LastNote, type OptionScope, type Signal, type SignalStatus } from "./catalog";
 import type { AcceptNoteRow, AssignEventRow } from "./acceptTime";
 import type { ProgressionRow } from './progression';
+import type { DeadlineRow, DeadlineReport } from './deadlines';
 
 const db = supabase as any;
 const PAGE = 1000;
@@ -188,4 +189,21 @@ export async function saveProgression(id: string, requestId: string, p: SaleUpda
   const { data,error } = await db.rpc('signal_progression_save',{_id:id,_request_id:requestId,_status:p.status,_note:p.note,_next:p.next,_next_at:p.nextAt,_revenue:p.revenue,_lost_reason:p.lostReason});
   if(error) throw error;
   return data as string;
+}
+
+export async function listDeadlines(): Promise<Record<string,DeadlineRow>> {
+  const rows=await fetchAll<DeadlineRow>((a,b)=>db.rpc('signal_progression_deadlines').order('signal_id').range(a,b));
+  return Object.fromEntries(rows.map(r=>[r.signal_id,r]));
+}
+export async function deadlineConfig(): Promise<{activated_at:string|null}> {
+  const {data,error}=await db.from('signal_progression_config').select('activated_at').maybeSingle();
+  if(error) throw error; return data ?? {activated_at:null};
+}
+export async function deadlineReport(from?:string,to?:string,sale?:string,group?:string,source?:string): Promise<DeadlineReport> {
+  const {data,error}=await db.rpc('signal_progression_report',{_from:from||null,_to:to||null,_sale:sale||null,_group:group||null,_source:source||null});
+  if(error) throw error; return data;
+}
+export async function activateDeadlines() {
+  const {data,error}=await db.rpc('signal_progression_activate',{_confirm:true});
+  if(error) throw error; return data as string;
 }
