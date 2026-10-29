@@ -242,13 +242,12 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const [reasonId, setReasonId] = useState(r?.reason_id || "");
   const [detail, setDetail] = useState(r?.detail || "");
   const [approver, setApprover] = useState<string>(r?.approver_id || (typeof window !== "undefined" ? localStorage.getItem(LAST_APPROVER) || "" : ""));
-  const [exception, setException] = useState("");
+  const [exception, setException] = useState(r?.late_reason || "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const approversQ = useQuery({ queryKey: ["leave", "approvers"], queryFn: api.listApprovers });
   const approvers = (approversQ.data || []).filter((a) => a.id !== owner);
   const canFor = can("leave.create_for") && state.mode === "create";
-  const canException = can("leave.exception") && state.mode === "create";
 
   // Keep shift half aligned with the working schedule of the chosen date.
   useEffect(() => {
@@ -263,7 +262,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const late = !!dl && new Date() > dl;
   const reasons = settings.reasons.filter((x) => x.active || x.id === r?.reason_id);
   const needDetail = reasonId === "other" && !detail.trim();
-  const blocked = !res.ok || (late && !(canException && exception.trim())) || !reasonId || needDetail || !approver;
+  const blocked = !res.ok || (late && !exception.trim()) || !reasonId || needDetail || !approver;
 
   const submit = async () => {
     setBusy(true); setErr(null);
