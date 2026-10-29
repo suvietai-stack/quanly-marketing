@@ -610,6 +610,13 @@
       "when": 1793266023138,
       "tag": "0086_sao_leaderboard_clamp_future",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1793267201395,
+      "tag": "0087_sao_leaderboard_all_rewards",
+      "breakpoints": true
     }
   ]
 }

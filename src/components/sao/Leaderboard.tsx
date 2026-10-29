@@ -94,7 +94,7 @@ export function Leaderboard() {
                         <span className="cursor-help underline decoration-dotted underline-offset-4">Sao đã đạt</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-64">
-                        Tổng Sao thưởng thành tích hợp lệ trong kỳ đang xem. Không trừ Sao đã đổi quà, không tính Sao cộng thủ công.
+                        Tổng số Sao bạn đã kiếm được trong khoảng thời gian được chọn, bao gồm cả Sao thưởng tự động và cộng thủ công. Không trừ Sao đã sử dụng đổi quà.
                       </TooltipContent>
                     </Tooltip>
                   </th>
