@@ -526,6 +526,13 @@
       "when": 1793245211894,
       "tag": "0074_signal_progression_always_on",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1793249403006,
+      "tag": "0075_sao_rewards_mvp",
+      "breakpoints": true
     }
   ]
 }
