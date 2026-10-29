@@ -124,3 +124,72 @@ export async function sendPending(ids?: string[]) {
   }
   return { sent, failed, message: last };
 }
+
+// ===== Nhắc xác nhận (tự động & thủ công) — cùng nhóm GMF, cùng postGroup =====
+import { dueAutoSeq, type ReminderCfg } from "./reminder";
+
+export async function reminderMessage(t: any, kind: "auto" | "manual", seq: number | null, max: number) {
+  const when = t.transaction_at ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hourCycle: "h23", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(t.transaction_at))
+    : t.received_date ? String(t.received_date).split("-").reverse().join("/") : "—";
+  return [
+    kind === "auto" ? "🔔 NHẮC XÁC NHẬN TIỀN VỀ" : "📣 NHẮC XÁC NHẬN TIỀN VỀ (gửi thủ công)", "",
+    "Khoản tiền này vẫn đang chờ xác nhận.", "",
+    ...(t.customer ? [`Khách hàng: ${t.customer}`] : []),
+    `Số tiền: ${vnd(t.amount)}`,
+    `Thời gian ghi nhận: ${when}`, "",
+    "Vui lòng kiểm tra và xác nhận trên Base Sứ Việt:", `${await baseUrl()}/finance/incoming/${t.id}`,
+    ...(kind === "auto" && seq ? ["", `Lần nhắc: ${seq}/${max}`] : []),
+  ].join("\n");
+}
+
+const TX_COLS = "id, amount, customer, transaction_at, received_date, confirmation_status, cancelled_at, operation_test, gmf_status, gmf_sent_at";
+const stillPending = (t: any) => t && t.confirmation_status === "unclaimed" && !t.cancelled_at && !t.operation_test;
+
+async function finish(d: any, rid: string, r: Res) {
+  await d.from("fin_reminders").update({ status: r.ok ? "sent" : r.ambiguous ? "unknown" : "failed", error: r.ok ? null : `${r.code}: ${r.message}`, finished_at: new Date().toISOString() }).eq("id", rid);
+}
+
+/** Gửi một nhắc thủ công đã được giữ chỗ bằng fin_remind_manual_claim. */
+export async function sendManualReminder(rid: string, txId: string): Promise<Res> {
+  const d = await db();
+  const cfg: any = await getConfig();
+  const { data: t } = await d.from("bank_transactions").select(TX_COLS).eq("id", txId).maybeSingle();
+  if (!cfg?.gmf_group_id || !cfg?.gmf_enabled) { const r: Res = { ok: false, code: -2, message: "Chưa bật nhóm thông báo Tiền Về" }; await finish(d, rid, r); return r; }
+  if (!stillPending(t)) { const r: Res = { ok: false, code: -3, message: "Khoản tiền đã được xác nhận" }; await finish(d, rid, r); return r; }
+  const r = await postGroup(cfg.gmf_group_id, await reminderMessage(t, "manual", null, 0));
+  await finish(d, rid, r);
+  return r;
+}
+
+/** Scheduler: mỗi lần chạy gửi tối đa một nhắc đến hạn cho mỗi khoản; chỉ số thứ tự duy nhất mới được gửi. */
+export async function runAutoReminders(nowMs = Date.now()) {
+  const d = await db();
+  const { data: rc } = await d.from("fin_reminder_config").select("*").eq("id", 1).maybeSingle();
+  const cfg: any = await getConfig();
+  if (!rc?.enabled || !cfg?.gmf_enabled || !cfg?.gmf_group_id) return { checked: 0, sent: 0, skipped: "disabled" };
+  const c: ReminderCfg = rc;
+  const { data: txs } = await d.from("bank_transactions").select(TX_COLS)
+    .eq("confirmation_status", "unclaimed").is("cancelled_at", null).eq("operation_test", false)
+    .eq("gmf_status", "sent").gte("gmf_sent_at", rc.active_from).gt("amount", 0).limit(200);
+  if (!txs?.length) return { checked: 0, sent: 0 };
+  const { data: rems } = await d.from("fin_reminders").select("tx_id, seq, status, created_at").eq("kind", "auto").in("tx_id", txs.map((t: any) => t.id));
+  let sent = 0;
+  for (const t of txs) {
+    const mine = (rems ?? []).filter((r: any) => r.tx_id === t.id);
+    const used = mine.filter((r: any) => r.status !== "failed");
+    // Lần gửi lỗi gần đây (15 phút) → chờ, tránh dội liên tục khi Zalo lỗi.
+    if (mine.some((r: any) => r.status === "failed" && nowMs - Date.parse(r.created_at) < 15 * 60_000)) continue;
+    const last = used.reduce((m: number | null, r: any) => Math.max(m ?? 0, Date.parse(r.created_at)), null);
+    const seq = dueAutoSeq({ autoCount: used.length, lastAutoAt: last, baseAt: Date.parse(t.gmf_sent_at) }, nowMs, c);
+    if (!seq) continue;
+    // Kiểm tra lại trạng thái thực tế ngay trước khi gửi.
+    const { data: fresh } = await d.from("bank_transactions").select(TX_COLS).eq("id", t.id).maybeSingle();
+    if (!stillPending(fresh)) continue;
+    const { data: claim, error } = await d.from("fin_reminders").insert({ tx_id: t.id, kind: "auto", seq }).select("id").maybeSingle();
+    if (error || !claim) continue; // đã có tiến trình khác giữ số thứ tự này
+    const r = await postGroup(cfg.gmf_group_id, await reminderMessage(fresh, "auto", seq, c.max_auto));
+    await finish(d, claim.id, r);
+    if (r.ok) sent++;
+  }
+  return { checked: txs.length, sent };
+}

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { checkNoteError, confirmationActions, EVENT_LABEL, MONEY_TYPES, TX_STATUS, TX_VARIANT, type BankLabel, fmtDate, fmtTime, receiver, vnd } from "@/lib/finance/incoming";
 import { ManualEntry } from "@/components/finance/ManualEntry";
+import { ReminderPanel } from "@/components/finance/RemindButton";
 
 export const Route = createFileRoute("/finance/incoming/$id")({
   head: () => ({ meta: [
@@ -162,6 +163,8 @@ function Detail() {
           {t.reconciled_by && <><span className="text-muted-foreground">Đối soát trước đây</span><span>{nameOf(t.reconciled_by)} · {fmtTime(t.reconciled_at)}</span></>}
         </div>
       ) : null}
+
+      {!t.operation_test && <ReminderPanel txId={t.id} pending={t.confirmation_status === "unclaimed" && !t.cancelled_at} />}
 
       {showForm && (
         <div className="mt-4 rounded-lg border bg-card p-4 space-y-4">

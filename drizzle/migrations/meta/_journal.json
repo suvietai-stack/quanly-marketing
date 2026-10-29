@@ -589,6 +589,13 @@
       "when": 1793257971390,
       "tag": "0083_att_settings_permission",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1793263066188,
+      "tag": "0084_finance_reminders",
+      "breakpoints": true
     }
   ]
 }
