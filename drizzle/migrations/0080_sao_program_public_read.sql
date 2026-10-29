@@ -1,0 +1,1 @@
+CREATE POLICY sao_program_public_read ON public.sao_programs FOR SELECT TO authenticated USING(enabled AND public.sao_active());

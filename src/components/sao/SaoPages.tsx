@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Star, Gift as GiftIcon, Wallet, Settings, Plus, Upload, Pencil, RefreshCw } from 'lucide-react';
+import { Star, Gift as GiftIcon, Wallet, Settings, Plus, Upload, Pencil, RefreshCw, Sparkles } from 'lucide-react';
 import { useCurrentUser, useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { chipiAssets } from '@/assets/chipi/states';
 import { saoOptions, redeem, decide, saveGift, grant, uploadGift, type Gift, type SaoData } from '@/lib/sao/api';
 import { Programs } from './Programs';
+import { EarnPrograms } from './EarnPrograms';
 import { availableStars, giftAvailable, mayRedeem } from '@/lib/sao/logic';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN');
@@ -24,6 +25,7 @@ function SaoNav() {
   return <nav className="flex flex-wrap gap-2 mb-6" aria-label="Sao Sứ Việt">
     <Button variant="outline" asChild><Link to="/sao"><Wallet className="h-4 w-4" />Ví Sao của tôi</Link></Button>
     <Button variant="outline" asChild><Link to="/sao/shop"><GiftIcon className="h-4 w-4" />Gian hàng đổi quà</Link></Button>
+    <Button variant="outline" asChild><Link to="/sao/earn"><Sparkles className="h-4 w-4" />Cách kiếm Sao</Link></Button>
     {['sao.program_manage', 'sao.shop_manage', 'sao.manual_grant'].some(can) && <Button variant="outline" asChild><Link to="/sao/admin"><Settings className="h-4 w-4" />Quản lý thưởng Sao</Link></Button>}
   </nav>;
 }
@@ -42,7 +44,7 @@ function Requests({ data, admin, run, busy }: { data: SaoData; admin?: boolean; 
   const users = useAuth((s) => s.users);
   return <div className="divide-y">{data.requests.length === 0 ? <Empty text="Chưa có yêu cầu đổi quà" /> : data.requests.map((r) => <div key={r.id} className="py-4 flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium">{r.gift_name} <span className="text-chipi-orange">· {fmt(r.price)} Sao</span></p><p className="text-sm text-muted-foreground">{statusLabel[r.status]} · {when(r.created_at)}</p>{admin && <p className="text-sm">{users.find((u) => u.id === r.user_id)?.fullName ?? r.user_id}</p>}{r.reason && <p className="text-sm text-muted-foreground">{r.reason}</p>}</div>{r.status === 'pending' && <div className="flex gap-2">{admin && <Button disabled={busy} onClick={() => { if (window.confirm(`Xác nhận đã phát “${r.gift_name}”? Trừ ${r.price} Sao đang giữ.`)) void run(() => decide(r.id, 'fulfilled'), 'Đã xác nhận phát quà'); }}>Đã phát quà</Button>}<Button variant="outline" disabled={busy} onClick={() => { if (window.confirm('Hủy yêu cầu và giải phóng Sao?')) void run(() => decide(r.id, 'cancelled'), 'Đã hủy và giải phóng Sao'); }}>Hủy yêu cầu</Button></div>}</div>)}</div>;
 }
-export function SaoPage({ mode }: { mode: 'wallet' | 'shop' | 'admin' }) {
+export function SaoPage({ mode }: { mode: 'wallet' | 'shop' | 'earn' | 'admin' }) {
   const { user, can } = useCurrentUser();
   const users = useAuth((s) => s.users);
   const queryClient = useQueryClient();
@@ -60,12 +62,13 @@ export function SaoPage({ mode }: { mode: 'wallet' | 'shop' | 'admin' }) {
   const [manualId, setManualId] = useState('');
   async function run(fn: () => Promise<unknown>, message: string) { if (busy) return; setBusy(true); try { await fn(); toast.success(message); await queryClient.invalidateQueries({ queryKey: ['sao', user?.id] }); } catch (e) { toast.error(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Không thực hiện được thao tác'); } finally { setBusy(false); } }
   if (!allowed) return <p>Bạn không có quyền quản lý Sao.</p>;
-  const title = mode === 'wallet' ? 'Ví Sao của tôi' : mode === 'shop' ? 'Gian hàng đổi quà' : 'Quản lý thưởng Sao';
+  const title = mode === 'wallet' ? 'Ví Sao của tôi' : mode === 'shop' ? 'Gian hàng đổi quà' : mode === 'earn' ? 'Cách kiếm Sao' : 'Quản lý thưởng Sao';
   return <div className="pb-44 max-w-6xl mx-auto"><header className="flex items-center justify-between gap-3 mb-5"><div><p className="text-sm text-chipi-orange font-medium mb-1">Sao Sứ Việt</p><h1 className="text-2xl font-bold">{title}</h1></div><Button size="icon" variant="ghost" aria-label="Tải lại Sao" onClick={() => q.refetch()}><RefreshCw className="h-4 w-4" /></Button></header><SaoNav />
     {q.isPending && <p className="text-muted-foreground">Đang tải Sao…</p>}{q.isError && <p role="alert" className="text-destructive">{q.error.message}</p>}
     {q.data && <>
       {!admin && <Balance data={q.data} />}
       {mode === 'wallet' && <><h2 className="text-lg font-semibold">Lịch sử Sao</h2><History data={q.data} /><h2 className="text-lg font-semibold mt-8">Quà của tôi</h2><Requests data={q.data} busy={busy} run={run} /></>}
+      {mode === 'earn' && <EarnPrograms programs={q.data.rules} />}
       {(mode === 'shop' || admin && can('sao.shop_manage')) && <><div className="flex justify-between items-center mb-4"><h2 className="text-lg font-semibold">Quà tặng Sứ Việt</h2>{admin && <Button onClick={() => setGift({ id: crypto.randomUUID(), name: '', image_url: '', price: 1, stock: 0, reserved: 0, enabled: true })}><Plus className="h-4 w-4" />Thêm quà</Button>}</div>
         {q.data.gifts.length === 0 ? <Empty text="Gian hàng đang chuẩn bị những món quà đầu tiên" /> : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">{q.data.gifts.map((g) => <article key={g.id} className="overflow-hidden rounded-xl border bg-card shadow-card"><img src={g.image_url} alt={g.name} className="w-full aspect-[4/3] object-contain bg-secondary p-3" /><div className="p-4"><h3 className="font-semibold text-lg break-words">{g.name}</h3><p className="flex items-center gap-2 mt-2 text-chipi-orange font-bold"><Star className="h-5 w-5 text-warning fill-warning" />{fmt(g.price)} Sao</p><p className="text-xs text-muted-foreground mt-2 mb-4">{!g.enabled ? 'Tạm ngừng' : `Còn ${giftAvailable(g.stock, g.reserved)} quà`}{admin && ` · Đang giữ ${g.reserved}`}</p>{admin ? <Button variant="outline" className="w-full min-h-11" onClick={() => setGift(g)}><Pencil className="h-4 w-4" />Sửa quà</Button> : <Button className="w-full min-h-11" disabled={!mayRedeem(q.data.balance, q.data.held, g.price, g.stock, g.reserved, g.enabled)} onClick={() => { setSelected(g); setRequestId(crypto.randomUUID()); }}><GiftIcon className="h-4 w-4" />{giftAvailable(g.stock, g.reserved) === 0 ? 'Hết quà' : availableStars(q.data.balance, q.data.held) < g.price ? 'Chưa đủ Sao' : 'Đổi quà'}</Button>}</div></article>)}</div>}
       </>}
