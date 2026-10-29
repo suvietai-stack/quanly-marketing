@@ -4419,6 +4419,8 @@ export type Database = {
         Args: { _endpoint: string; _id: string }
         Returns: undefined
       }
+      sao_active: { Args: never; Returns: boolean }
+      sao_can_manage_shop: { Args: never; Returns: boolean }
       sao_celebration_claim: { Args: never; Returns: Json }
       sao_gift_save: {
         Args: {
@@ -4473,6 +4475,7 @@ export type Database = {
         Args: { _confirm: boolean }
         Returns: string
       }
+      signal_progression_config_can_read: { Args: never; Returns: boolean }
       signal_progression_deadlines: {
         Args: never
         Returns: {

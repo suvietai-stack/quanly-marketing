@@ -547,6 +547,13 @@
       "when": 1793249601529,
       "tag": "0077_sao_achievement_fences",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1793249677529,
+      "tag": "0078_sao_and_progression_read_permissions",
+      "breakpoints": true
     }
   ]
 }
