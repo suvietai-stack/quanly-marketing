@@ -203,6 +203,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
         <SelectContent>
           <SelectItem value="all">Mọi trạng thái</SelectItem>
           {(Object.keys(api.STATUS_LABEL) as LeaveStatus[]).map((k) => <SelectItem key={k} value={k}>{api.STATUS_LABEL[k]}</SelectItem>)}
+          <SelectItem value="late">Đơn bổ sung</SelectItem>
           <SelectItem value="cancel_req">Có yêu cầu hủy</SelectItem>
         </SelectContent>
       </Select>
@@ -220,6 +221,13 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
 
 /* ================= Form ================= */
 type FormState = { mode: "create" | "edit" | "resubmit"; request?: LeaveRequest };
+
+const LATE_SUGGESTIONS = [
+  "Ốm đột xuất, không thể gửi đơn trước",
+  "Việc gia đình khẩn cấp",
+  "Sự cố giao thông",
+  "Phát sinh công việc bất khả kháng",
+];
 
 function FormDialog({ state, settings, onClose, onDone }: { state: FormState; settings: LeaveSettings; onClose: () => void; onDone: (id?: string) => void }) {
   const { user, can } = useCurrentUser();
