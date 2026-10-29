@@ -383,7 +383,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>Hủy</Button>
           <Button onClick={submit} disabled={blocked || busy || (approver !== "" && !approvers.some((a) => a.id === approver))}>
-            {busy ? "Đang gửi…" : state.mode === "edit" ? "Lưu thay đổi" : state.mode === "resubmit" ? "Gửi xin duyệt lại" : "Gửi đơn"}
+            {busy ? "Đang gửi…" : state.mode === "edit" ? "Lưu thay đổi" : state.mode === "resubmit" ? (late ? "Gửi lại đơn bổ sung" : "Gửi xin duyệt lại") : late ? "Gửi đơn bổ sung" : "Gửi đơn"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -474,6 +474,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
               <dt className="text-muted-foreground">Thời gian</dt><dd>{summary(r)}</dd>
               <dt className="text-muted-foreground">Lý do</dt><dd>{r.reason_name}</dd>
               {r.detail && <><dt className="text-muted-foreground">Chi tiết</dt><dd className="whitespace-pre-line">{r.detail}</dd></>}
+              {r.is_late && r.late_reason && <><dt className="text-muted-foreground">Lý do gửi bổ sung</dt><dd className="whitespace-pre-line">{r.late_reason}</dd></>}
               <dt className="text-muted-foreground">Người duyệt</dt><dd>{name(r.approver_id)}</dd>
               <dt className="text-muted-foreground">Gửi lúc</dt><dd>{fmtVn(r.submitted_at)}</dd>
               <dt className="text-muted-foreground">Hạn cuối gửi</dt><dd>{r.applied?.deadline_at ? fmtVn(r.applied.deadline_at) : "—"}</dd>
