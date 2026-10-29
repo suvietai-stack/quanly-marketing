@@ -11,8 +11,8 @@ beforeAll(async () => {
   await db.exec(`CREATE SCHEMA private; CREATE SCHEMA auth; CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.uid',true),'')::uuid $$;
     CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text,status text); INSERT INTO profiles VALUES('${admin}','Admin','Đang hoạt động'),('${sale}','Sale','Đang hoạt động'),('${other}','Other','Đang hoạt động');
-    CREATE FUNCTION private.is_active(u uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM profiles WHERE id=u AND status='Đang hoạt động') $$;
-    CREATE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql AS $$ SELECT u='${admin}'::uuid $$;
+    CREATE FUNCTION private.is_active(u uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT EXISTS(SELECT 1 FROM profiles WHERE id=u AND status='Đang hoạt động') $$;
+    CREATE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT u='${admin}'::uuid $$;
     CREATE TABLE opportunity_signals(id uuid PRIMARY KEY,status text,assigned_to uuid,closed_at timestamptz,revenue numeric,cancelled_at timestamptz,customer_name text,created_at timestamptz DEFAULT now());
     CREATE TABLE opportunity_signal_notes(signal_id uuid,status_to text);
     CREATE TABLE tasks(id text PRIMARY KEY,data jsonb,is_demo boolean DEFAULT false,created_at timestamptz DEFAULT now());
@@ -23,6 +23,10 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0077_sao_achievement_fences.sql', 'utf8'));
   const fences = readFileSync('drizzle/migrations/0078_sao_and_progression_read_permissions.sql', 'utf8');
   await db.exec(fences.slice(fences.indexOf('CREATE OR REPLACE FUNCTION private.sao_task_event')));
+  const configStart = fences.indexOf('CREATE FUNCTION public.signal_progression_config_can_read');
+  const configEnd = fences.indexOf('ALTER POLICY progression_config_read');
+  await db.exec(fences.slice(configStart, configEnd));
+  await db.exec('GRANT USAGE ON SCHEMA private,auth TO authenticated;');
   await actor(admin);
 }, 20000);
 afterAll(() => db.close());
@@ -93,4 +97,17 @@ it('verified approval credits task owner and task-backed locked KPI, never other
   await db.query('insert into employee_kpi_snapshots(kpi_period_id,locked_by) values($1,$2)', [p, admin]);
   await db.query('insert into employee_kpi_snapshots(kpi_period_id,locked_by) values($1,$2)', [p, admin]);
   expect(await scalar("select count(*)::int v from sao_ledger where source='kpi'")).toBe(1);
+});
+it('wallet RLS exposes exactly the employee own wallet', async () => {
+  await actor(other);
+  await db.exec('SET ROLE authenticated');
+  expect(await scalar('select count(*)::int v from sao_wallets')).toBe(0);
+  await actor(sale);
+  expect(await scalar('select count(*)::int v from sao_wallets')).toBe(1);
+  await expect(db.query('update sao_wallets set balance=999 where user_id=$1', [sale])).rejects.toThrow('permission denied');
+  await db.exec('RESET ROLE'); await actor(admin);
+});
+it('progression config requires a Signal permission rather than any signed-in user', async () => {
+  await actor(other); expect(await scalar('select signal_progression_config_can_read() v')).toBe(false);
+  await actor(admin); expect(await scalar('select signal_progression_config_can_read() v')).toBe(true);
 });
