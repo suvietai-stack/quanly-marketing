@@ -4607,6 +4607,16 @@ export type Database = {
         }
         Returns: string
       }
+      sao_leaderboard: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          available: number
+          earned: number
+          full_name: string
+          rank: number
+          user_id: string
+        }[]
+      }
       sao_manual_grant: {
         Args: {
           _reason: string
