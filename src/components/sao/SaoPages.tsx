@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Star, Gift as GiftIcon, Wallet, Settings, Plus, Upload, Pencil, RefreshCw, Sparkles } from 'lucide-react';
+import { Star, Gift as GiftIcon, Wallet, Settings, Plus, Upload, Pencil, RefreshCw, Sparkles, Trophy } from 'lucide-react';
 import { useCurrentUser, useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
