@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/pending")({
-  head: () => ({ meta: [{ title: "Tài khoản đang chờ duyệt — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Tài khoản đang chờ duyệt — Base Sứ Việt"}, {"name": "description", "content": "Tài khoản đang chờ duyệt: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Tài khoản đang chờ duyệt — Base Sứ Việt"}, {"property": "og:description", "content": "Tài khoản đang chờ duyệt: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: PendingPage,
 });
 

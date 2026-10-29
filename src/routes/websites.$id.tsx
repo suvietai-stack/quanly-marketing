@@ -42,7 +42,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/websites/$id")({
-  head: () => ({ meta: [{ title: "Chi tiết website — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Chi tiết website — Base Sứ Việt"}, {"name": "description", "content": "Chi tiết website: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Chi tiết website — Base Sứ Việt"}, {"property": "og:description", "content": "Chi tiết website: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="web.view">
       <WebsiteDetail />

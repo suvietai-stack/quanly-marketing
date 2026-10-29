@@ -27,7 +27,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/tasks")({
-  head: () => ({ meta: [{ title: "Task To-do List — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Task To-do List — Base Sứ Việt"}, {"name": "description", "content": "Task To-do List: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Task To-do List — Base Sứ Việt"}, {"property": "og:description", "content": "Task To-do List: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="task.view">
       <TasksPage />

@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { PostFormDialog } from "@/components/SocialPostDetail";
 
 export const Route = createFileRoute("/social/")({
-  head: () => ({ meta: [{ title: "Kênh Social — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Kênh Social — Base Sứ Việt"}, {"name": "description", "content": "Kênh Social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Kênh Social — Base Sứ Việt"}, {"property": "og:description", "content": "Kênh Social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="social.view">
       <SocialPage />

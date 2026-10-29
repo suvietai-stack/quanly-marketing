@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 import { VideoFormDialog, VideoDetailDialog } from "@/components/VideoDetail";
 
 export const Route = createFileRoute("/videos")({
-  head: () => ({ meta: [{ title: "Sản Xuất Video — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Sản Xuất Video — Base Sứ Việt"}, {"name": "description", "content": "Sản Xuất Video: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Sản Xuất Video — Base Sứ Việt"}, {"property": "og:description", "content": "Sản Xuất Video: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm="video.view">
       <VideosPage />

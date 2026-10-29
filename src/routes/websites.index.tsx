@@ -20,7 +20,7 @@ import { Plus, Pencil, ExternalLink, FileText, ArrowRight, Globe, FilePlus2 } fr
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/websites/")({
-  head: () => ({ meta: [{ title: "Dự Án Web — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Dự Án Web — Base Sứ Việt"}, {"name": "description", "content": "Dự Án Web: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Dự Án Web — Base Sứ Việt"}, {"property": "og:description", "content": "Dự Án Web: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm={["web.view", "web.view_all", "web.view_mine"]}>
       <WebsitesPage />

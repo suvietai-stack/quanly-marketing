@@ -20,7 +20,7 @@ import { useMemo, useState } from "react";
 import { PostFormDialog, PostDetailDialog } from "@/components/SocialPostDetail";
 
 export const Route = createFileRoute("/social/$id")({
-  head: () => ({ meta: [{ title: "Workspace kênh social — Base Marketing" }] }),
+  head: () => ({ meta: [{"title": "Workspace kênh social — Base Sứ Việt"}, {"name": "description", "content": "Workspace kênh social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Workspace kênh social — Base Sứ Việt"}, {"property": "og:description", "content": "Workspace kênh social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: ChannelWorkspace,
 });
 

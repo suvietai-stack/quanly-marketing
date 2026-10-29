@@ -5,7 +5,7 @@ import { validateV2Search } from "@/lib/kpi/overview";
 
 export const Route = createFileRoute("/overview-v2")({
   validateSearch: validateV2Search,
-  head: () => ({ meta: [{ title: "Tổng quan Brand — Base Marketing" }, { name: "description", content: "Tổng quan mục tiêu theo thương hiệu và kênh." }] }),
+  head: () => ({ meta: [{"title": "Tổng quan Brand — Base Sứ Việt"}, {"name": "description", "content": "Tổng quan mục tiêu theo thương hiệu và kênh."}, {"property": "og:title", "content": "Tổng quan Brand — Base Sứ Việt"}, {"property": "og:description", "content": "Tổng quan mục tiêu theo thương hiệu và kênh."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: OverviewV2Page,
 });
 

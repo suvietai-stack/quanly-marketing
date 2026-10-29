@@ -24,12 +24,7 @@ import { ListTimeCell, shortTimeLines, useJobTimes } from "@/components/orderQuo
 import { BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/order-quotes/")({
-  head: () => ({ meta: [
-    { title: "Hỏi Giá & Tiến Độ — Đơn hàng" },
-    { name: "description", content: "Sale gửi yêu cầu hỏi giá, hỏi tiến độ Đơn Sứ Quà Tặng cho Cung ứng và theo dõi phản hồi." },
-    { property: "og:title", content: "Hỏi Giá & Tiến Độ — Đơn hàng" },
-    { property: "og:description", content: "Phối hợp Kinh doanh và Cung ứng: hỏi giá, hỏi tiến độ theo từng sản phẩm." },
-  ] }),
+  head: () => ({ meta: [{"title": "Hỏi Giá & Tiến Độ — Đơn hàng"}, {"name": "description", "content": "Sale gửi yêu cầu hỏi giá, hỏi tiến độ Đơn Sứ Quà Tặng cho Cung ứng và theo dõi phản hồi."}, {"property": "og:title", "content": "Hỏi Giá & Tiến Độ — Đơn hàng"}, {"property": "og:description", "content": "Sale gửi yêu cầu hỏi giá, hỏi tiến độ Đơn Sứ Quà Tặng cho Cung ứng và theo dõi phản hồi."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: () => (
     <RequirePermission perm={["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"]}>
       <OqList />
