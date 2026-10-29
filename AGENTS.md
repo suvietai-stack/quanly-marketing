@@ -15,7 +15,7 @@
 - Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.
 - Change `src/lib/leave/calc.ts` and `private.leave_eval` together — keeps preview and authoritative calculation aligned.
 - Read app_branding for UI/server share metadata — crawlers cannot run client updates.
-- Attendance uses attendance_explanations and att_* RPCs — separate from leave.
+- Attendance (att_* RPCs) is separate from leave; UI split /leave vs /attendance sharing backend; /leave?att= redirects.
 - Sao uses allowlisted programs, activation windows, per-program ledger uniqueness and event fences; KPI counts verified Tasks at lock, reservations are RPC-only and one shell modal claims celebrations — prevents replay/client-forged rewards.
 - Web Push uses notifications.push_status + unique push_deliveries; push.server.ts sends on push_wake to /api/public/push/dispatch; public/push-sw.js never caches pages — isolates Push from Zalo.
 - Content/Design notifications originate in content_notify/order_notify triggers with unique-name recipients and event+item+history+recipient dedup_key; switches live in content_notify_settings — every writer triggers the same notification.

@@ -13,7 +13,8 @@ import { STATUS_LABEL, type LeaveRequest, type LeaveStatus } from "@/lib/leave/a
 const KINDS: [PeriodKind, string][] = [["week", "Tuần"], ["month", "Tháng"], ["quarter", "Quý"], ["year", "Năm"], ["custom", "Tùy chỉnh"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
-export function LeaveReport({ rows, atts, name, onOpenAtt }: { rows: LeaveRequest[]; atts?: AttExplanation[] | null; name: (id?: string | null) => string; onOpenAtt?: (id: string) => void }) {
+export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { rows: LeaveRequest[]; atts?: AttExplanation[] | null; name: (id?: string | null) => string; onOpenAtt?: (id: string) => void; mode?: "leave" | "att" }) {
+  const attOnly = mode === "att";
   const { can } = useCurrentUser();
   const brand = useBranding();
   const today = todayVn();
@@ -38,15 +39,17 @@ export function LeaveReport({ rows, atts, name, onOpenAtt }: { rows: LeaveReques
 
   const exportXlsx = async () => {
     const XLSX = await import("xlsx");
-    const title = `${brand.app_name} — ${brand.org_name} — Báo cáo đơn từ — ${periodLabel}`;
-    const sumHead = ["Nhân viên", "Số đơn nghỉ phép", "Số ngày nghỉ", "Số lần đi muộn", "Phút đi muộn", "Số lần về sớm", "Phút về sớm", "Đơn chờ duyệt", "Đơn bị từ chối"];
-    const sumRows = data.map((r: ReportRow) => [name(r.userId), r.leaveCount, r.leaveDays, r.lateCount, r.lateMinutes, r.earlyCount, r.earlyMinutes, r.pending, r.rejected]);
-    const tot = ["TỔNG", data.reduce((s, r) => s + r.leaveCount, 0), Math.round(total.days * 100) / 100, total.late, data.reduce((s, r) => s + r.lateMinutes, 0), total.early, data.reduce((s, r) => s + r.earlyMinutes, 0), total.pending, total.rejected];
+    const title = `${brand.app_name} — ${brand.org_name} — ${attOnly ? "Báo cáo giải trình chấm công" : "Báo cáo đơn từ"} — ${periodLabel}`;
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], [], sumHead, ...sumRows, tot]), "Tổng hợp");
-    const dHead = ["Nhân viên", "Loại đơn", "Thời gian đăng ký", "Ngày nghỉ trong kỳ", "Số phút", "Trạng thái", "Tính vào tổng"];
-    const dRows = [...details].sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")).map((d) => [name(d.userId), TYPE_LABEL[d.type as LeaveType] ?? d.type, whenText(d), d.type === "leave" ? d.days : "", d.type === "leave" ? "" : d.minutes, STATUS_LABEL[d.status as LeaveStatus] ?? d.status, d.counted ? "Có" : "Không"]);
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Chỉ đơn Đã duyệt được tính vào bảng Tổng hợp."], dHead, ...dRows]), "Chi tiết");
+    if (!attOnly) {
+      const sumHead = ["Nhân viên", "Số đơn nghỉ phép", "Số ngày nghỉ", "Số lần đi muộn", "Phút đi muộn", "Số lần về sớm", "Phút về sớm", "Đơn chờ duyệt", "Đơn bị từ chối"];
+      const sumRows = data.map((r: ReportRow) => [name(r.userId), r.leaveCount, r.leaveDays, r.lateCount, r.lateMinutes, r.earlyCount, r.earlyMinutes, r.pending, r.rejected]);
+      const tot = ["TỔNG", data.reduce((s, r) => s + r.leaveCount, 0), Math.round(total.days * 100) / 100, total.late, data.reduce((s, r) => s + r.lateMinutes, 0), total.early, data.reduce((s, r) => s + r.earlyMinutes, 0), total.pending, total.rejected];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], [], sumHead, ...sumRows, tot]), "Tổng hợp");
+      const dHead = ["Nhân viên", "Loại đơn", "Thời gian đăng ký", "Ngày nghỉ trong kỳ", "Số phút", "Trạng thái", "Tính vào tổng"];
+      const dRows = [...details].sort((a, b) => name(a.userId).localeCompare(name(b.userId), "vi")).map((d) => [name(d.userId), TYPE_LABEL[d.type as LeaveType] ?? d.type, whenText(d), d.type === "leave" ? d.days : "", d.type === "leave" ? "" : d.minutes, STATUS_LABEL[d.status as LeaveStatus] ?? d.status, d.counted ? "Có" : "Không"]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Chỉ đơn Đã duyệt được tính vào bảng Tổng hợp."], dHead, ...dRows]), "Chi tiết");
+    }
     if (atts) {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[title], ["Tính theo ngày quên chấm công. Giải trình đã thu hồi không tính."],
         ["Nhân viên", "Tổng số lần", "Quên chấm công vào", "Quên chấm công ra", "Quên cả hai", "Chưa đối chiếu", "Đã đối chiếu"],
@@ -55,7 +58,7 @@ export function LeaveReport({ rows, atts, name, onOpenAtt }: { rows: LeaveReques
         ["Nhân viên", "Ngày quên chấm công", "Gửi lúc", "Nội dung", "Giờ tự khai báo", "Lý do", "Chi tiết", "Người làm chứng", "Kết quả làm chứng", "Trạng thái đối chiếu", "Người đối chiếu", "Thời điểm đối chiếu", "Ghi chú đối chiếu"],
         ...attRows.map((a) => [name(a.owner_id), fmtDate(a.work_date), fmtVn(a.submitted_at), KIND_LABEL[a.kind], declaredTime(a), a.reason_name, a.detail ?? "", name(a.witness_id), WITNESS_LABEL[a.witness_status], a.reconciled ? "Đã đối chiếu" : "Chưa đối chiếu", a.reconciled ? name(a.reconciled_by) : "", a.reconciled_at ? fmtVn(a.reconciled_at) : "", a.reconcile_note ?? ""])]), "Giải trình - Chi tiết");
     }
-    XLSX.writeFile(wb, `${brand.short_name.replace(/[^\p{L}\p{N}]+/gu, "-")}-bao-cao-don-tu-${range.start}_${range.end}.xlsx`);
+    XLSX.writeFile(wb, `${brand.short_name.replace(/[^\p{L}\p{N}]+/gu, "-")}-${attOnly ? "bao-cao-giai-trinh" : "bao-cao-don-tu"}-${range.start}_${range.end}.xlsx`);
   };
 
   return (
@@ -79,37 +82,39 @@ export function LeaveReport({ rows, atts, name, onOpenAtt }: { rows: LeaveReques
         {can("leave.export") && <Button variant="outline" onClick={exportXlsx} disabled={!details.length && !attRows.length}><Download className="h-4 w-4 mr-1" />Xuất Excel</Button>}
       </div>
       <div className="text-sm text-muted-foreground">Đang thống kê: <span className="font-medium text-foreground">{periodLabel}</span></div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[["Ngày nghỉ đã duyệt", fmtDays(Math.round(total.days * 100) / 100)], ["Lần đi muộn", total.late], ["Lần về sớm", total.early], ["Đơn chờ duyệt", total.pending], ["Đơn bị từ chối", total.rejected]].map(([l, v]) => (
-          <Card key={l as string}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{l}</div><div className="text-2xl font-semibold mt-1">{v}</div></CardContent></Card>
-        ))}
-      </div>
-      <Card><CardContent className="p-0 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
-            {["Nhân viên", "Đơn nghỉ", "Ngày nghỉ", "Đi muộn (lần/phút)", "Về sớm (lần/phút)", "Chờ duyệt", "Từ chối"].map((h) => <th key={h} className="text-left font-medium px-3 py-2 whitespace-nowrap">{h}</th>)}
-          </tr></thead>
-          <tbody>
-            {data.map((r) => (
-              <Fragment key={r.userId}>
-                <tr className="border-t cursor-pointer hover:bg-muted/40" onClick={() => setOpenUser(openUser === r.userId ? null : r.userId)}>
-                  <td className="px-3 py-2 font-medium"><span className="inline-flex items-center gap-1">{openUser === r.userId ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}{name(r.userId)}</span></td>
-                  <td className="px-3 py-2">{r.leaveCount}</td>
-                  <td className="px-3 py-2">{fmtDays(r.leaveDays)}</td>
-                  <td className="px-3 py-2">{r.lateCount} / {r.lateMinutes}</td>
-                  <td className="px-3 py-2">{r.earlyCount} / {r.earlyMinutes}</td>
-                  <td className="px-3 py-2">{r.pending}</td>
-                  <td className="px-3 py-2">{r.rejected}</td>
-                </tr>
-                {openUser === r.userId && <tr><td colSpan={7} className="bg-muted/20 px-3 py-2"><DetailTable rows={details.filter((d) => d.userId === r.userId)} /></td></tr>}
-              </Fragment>
-            ))}
-            {!data.length && <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">Không có đơn nào trong khoảng thời gian này.</td></tr>}
-          </tbody>
-        </table>
-      </CardContent></Card>
+      {!attOnly && <>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[["Ngày nghỉ đã duyệt", fmtDays(Math.round(total.days * 100) / 100)], ["Lần đi muộn", total.late], ["Lần về sớm", total.early], ["Đơn chờ duyệt", total.pending], ["Đơn bị từ chối", total.rejected]].map(([l, v]) => (
+            <Card key={l as string}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{l}</div><div className="text-2xl font-semibold mt-1">{v}</div></CardContent></Card>
+          ))}
+        </div>
+        <Card><CardContent className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
+              {["Nhân viên", "Đơn nghỉ", "Ngày nghỉ", "Đi muộn (lần/phút)", "Về sớm (lần/phút)", "Chờ duyệt", "Từ chối"].map((h) => <th key={h} className="text-left font-medium px-3 py-2 whitespace-nowrap">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {data.map((r) => (
+                <Fragment key={r.userId}>
+                  <tr className="border-t cursor-pointer hover:bg-muted/40" onClick={() => setOpenUser(openUser === r.userId ? null : r.userId)}>
+                    <td className="px-3 py-2 font-medium"><span className="inline-flex items-center gap-1">{openUser === r.userId ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}{name(r.userId)}</span></td>
+                    <td className="px-3 py-2">{r.leaveCount}</td>
+                    <td className="px-3 py-2">{fmtDays(r.leaveDays)}</td>
+                    <td className="px-3 py-2">{r.lateCount} / {r.lateMinutes}</td>
+                    <td className="px-3 py-2">{r.earlyCount} / {r.earlyMinutes}</td>
+                    <td className="px-3 py-2">{r.pending}</td>
+                    <td className="px-3 py-2">{r.rejected}</td>
+                  </tr>
+                  {openUser === r.userId && <tr><td colSpan={7} className="bg-muted/20 px-3 py-2"><DetailTable rows={details.filter((d) => d.userId === r.userId)} /></td></tr>}
+                </Fragment>
+              ))}
+              {!data.length && <tr><td colSpan={7} className="px-3 py-10 text-center text-muted-foreground">Không có đơn nào trong khoảng thời gian này.</td></tr>}
+            </tbody>
+          </table>
+        </CardContent></Card>
+      </>}
       {atts && <AttSection sum={attSum} rows={attRows} name={name} onOpen={onOpenAtt} />}
-      <p className="text-xs text-muted-foreground">Tính theo ngày đăng ký nghỉ/đi muộn/về sớm, không theo ngày gửi đơn. Chỉ đơn đã duyệt được cộng vào tổng; đơn nghỉ qua nhiều kỳ được chia theo từng ngày làm việc. Bấm vào tên nhân viên để xem chi tiết từng đơn. Báo cáo gồm những đơn bạn được quyền xem.</p>
+      {!attOnly && <p className="text-xs text-muted-foreground">Tính theo ngày đăng ký nghỉ/đi muộn/về sớm, không theo ngày gửi đơn. Chỉ đơn đã duyệt được cộng vào tổng; đơn nghỉ qua nhiều kỳ được chia theo từng ngày làm việc. Bấm vào tên nhân viên để xem chi tiết từng đơn. Báo cáo gồm những đơn bạn được quyền xem.</p>}
     </div>
   );
 }
