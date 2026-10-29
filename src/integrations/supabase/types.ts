@@ -2875,6 +2875,24 @@ export type Database = {
         }
         Relationships: []
       }
+      sao_achievements: {
+        Row: {
+          occurred_at: string
+          source: string
+          source_id: string
+        }
+        Insert: {
+          occurred_at?: string
+          source: string
+          source_id: string
+        }
+        Update: {
+          occurred_at?: string
+          source?: string
+          source_id?: string
+        }
+        Relationships: []
+      }
       sao_admin_events: {
         Row: {
           actor_id: string
@@ -2961,6 +2979,24 @@ export type Database = {
           reserved?: number
           stock?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      sao_kpi_locks: {
+        Row: {
+          locked_at: string
+          locked_by: string
+          period_id: string
+        }
+        Insert: {
+          locked_at?: string
+          locked_by: string
+          period_id: string
+        }
+        Update: {
+          locked_at?: string
+          locked_by?: string
+          period_id?: string
         }
         Relationships: []
       }

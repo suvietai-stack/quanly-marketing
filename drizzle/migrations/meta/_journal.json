@@ -540,6 +540,13 @@
       "when": 1793249476130,
       "tag": "0076_sao_gift_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1793249601529,
+      "tag": "0077_sao_achievement_fences",
+      "breakpoints": true
     }
   ]
 }
