@@ -27,8 +27,8 @@ describe("nhắc xác nhận Tiền Về", () => {
   });
   it("scheduler chạy lại sau đêm chỉ gửi một lần, không dồn", () => {
     const s = { autoCount: 1, lastAutoAt: vn("2026-10-26T16:30:00"), baseAt: vn("2026-10-26T16:00:00") };
-    expect(dueAutoSeq(s, vn("2026-10-27T08:00:00"), C)).toBeNull(); // mới 0 phút làm việc
-    expect(dueAutoSeq(s, vn("2026-10-27T08:05:00"), C)).toBe(2); // 30 phút làm việc kể từ 16:30
+    expect(dueAutoSeq(s, vn("2026-10-26T16:59:00"), C)).toBeNull();
+    expect(dueAutoSeq(s, vn("2026-10-27T10:00:00"), C)).toBe(2); // trễ vẫn chỉ lần 2, không dồn 3-4-5
   });
   it("chưa đến hạn thì không nhắc", () => {
     expect(dueAutoSeq({ autoCount: 0, lastAutoAt: null, baseAt: vn("2026-10-26T09:00:00") }, vn("2026-10-26T09:29:00"), C)).toBeNull();

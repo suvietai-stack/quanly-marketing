@@ -22,7 +22,7 @@ export function addWorkMinutes(fromMs: number, minutes: number, c: ReminderCfg):
     if (!c.workdays.includes(dow(d))) continue;
     const s = Math.max(cur, at(d, c.start_hour)), e = at(d, c.end_hour);
     if (s >= e) continue;
-    if (s + left <= e && left > 0) return s + left;
+    if (s + left < e && left > 0) return s + left;
     if (left === 0) return s;
     left -= e - s;
     cur = e;
