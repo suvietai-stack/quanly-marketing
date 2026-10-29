@@ -41,9 +41,9 @@ export function currentStep(mode: LeaderboardMode, now: Date): number {
     case 'month': return y * 12 + (m - 1);
     case 'week': {
       // Week counter from the VN wall-clock Monday (treated as UTC for counting).
-      // round (not floor) keeps the Monday offset stable — the epoch is a Thursday.
+      // The epoch is a Thursday, so shift by 4 days before flooring to keep Mondays stable.
       const mondayWall = Date.UTC(y, m - 1, d - (dow - 1));
-      return Math.round(mondayWall / (7 * 24 * 3600 * 1000));
+      return Math.floor((mondayWall - 4 * 86400000) / (7 * 24 * 3600 * 1000));
     }
     default: return 0;
   }
@@ -71,8 +71,8 @@ export function resolvePeriod(mode: LeaderboardMode, offset: number, now: Date):
     const m = ((step % 12) + 12) % 12; // 0..11
     return { from: vnToUtc(y, m + 1, 1), to: vnToUtc(y, m + 2, 1), label: `Tháng ${m + 1}/${y}` };
   }
-  // week: Monday 00:00 VN to next Monday 00:00 VN (step counts VN wall-clock Mondays)
-  const mondayWall = step * 7 * 24 * 3600 * 1000;
+  // week: Monday 00:00 VN to next Monday 00:00 VN (step counts VN wall-clock Mondays, +4d undoes the Thursday-epoch shift)
+  const mondayWall = step * 7 * 24 * 3600 * 1000 + 4 * 86400000;
   const monday = new Date(mondayWall - 7 * 3600 * 1000);
   const sundayEnd = new Date(monday.getTime() + 7 * 24 * 3600 * 1000);
   const fmtDay = (wallMs: number) => {
