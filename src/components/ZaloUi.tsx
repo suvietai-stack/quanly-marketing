@@ -1,6 +1,7 @@
 import { PushSettings } from "@/components/PushSettings";
 import { useEffect, useState, type ReactNode } from "react";
 import type { ChipiNotice } from "@/lib/chipi";
+import { deadlineLink } from '@/lib/signals/deadlines';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -48,6 +49,7 @@ export const NOTIFICATION_LABEL: Record<string, string> = {
   ot_reschedule: "Có đề xuất điều chỉnh ngày khách nhận cần bạn phản hồi.",
   ot_reschedule_result: "Đề xuất điều chỉnh ngày khách nhận của bạn đã có phản hồi.",
 };
+export const notificationText=(n:ChipiNotice)=>n.kind==='signal_care' && n.payload?.progression===true && typeof n.payload.message==='string' ? n.payload.message : NOTIFICATION_LABEL[n.kind] ?? 'Thông báo mới';
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   return m < 1 ? "vừa xong" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`;
@@ -82,7 +84,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
       await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
-    window.location.href = n.kind.startsWith("fin_") ? `/finance/incoming/${n.bank_tx_id ?? ""}` : n.kind.startsWith("ot_") ? `/order-tracking/${n.ot_order_id ?? ""}` : n.kind.startsWith("oq_") ? oqLink(n.payload?.request_id ?? "", n.payload?.both ? null : n.oq_flow_id) : n.kind.startsWith("order_") ? orderLink(n.order_id ?? "") : n.kind.startsWith("content_") ? contentLink(n.content_id ?? "") : n.kind.startsWith("att_") ? `/leave?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
+    window.location.href = n.kind==='signal_care' && n.payload?.progression===true ? deadlineLink(n.payload.deadline,n.payload.sale_id) : n.kind.startsWith("fin_") ? `/finance/incoming/${n.bank_tx_id ?? ""}` : n.kind.startsWith("ot_") ? `/order-tracking/${n.ot_order_id ?? ""}` : n.kind.startsWith("oq_") ? oqLink(n.payload?.request_id ?? "", n.payload?.both ? null : n.oq_flow_id) : n.kind.startsWith("order_") ? orderLink(n.order_id ?? "") : n.kind.startsWith("content_") ? contentLink(n.content_id ?? "") : n.kind.startsWith("att_") ? `/leave?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
   const readAll = async () => {
     await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", uid).is("read_at", null);
@@ -108,7 +110,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
             {data.length === 0 && <div className="py-8 text-center"><Bell className="h-6 w-6 mx-auto mb-3 text-chipi-orange" /><p className="text-sm font-medium">Bạn đã xem hết rồi!</p><p className="text-xs text-muted-foreground mt-1">Chipi sẽ nhắc khi có thông báo mới.</p></div>}
             {data.map((n) => <Button key={n.id} variant="ghost" onClick={() => openOne(n)} className={`chipi-notice-card ${n.read_at ? "" : "chipi-unread"} h-auto w-full items-start justify-start whitespace-normal text-left p-3 gap-3`}>
               <span className="chipi-notice-icon"><ChipiNoticeIcon kind={n.kind} className="h-4 w-4" /></span>
-              <span className="min-w-0 flex-1"><span className={`block text-sm break-words ${n.read_at ? "font-normal" : "font-semibold"}`}>{NOTIFICATION_LABEL[n.kind] ?? "Thông báo mới"}</span><span className="block text-xs text-muted-foreground mt-1.5">{ago(n.created_at)}</span></span>
+              <span className="min-w-0 flex-1"><span className={`block text-sm break-words ${n.read_at ? "font-normal" : "font-semibold"}`}>{notificationText(n)}</span><span className="block text-xs text-muted-foreground mt-1.5">{ago(n.created_at)}</span></span>
               {!n.read_at && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-chipi-orange mt-1.5" />}
             </Button>)}
           </div>
@@ -121,7 +123,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
           {data.length === 0 && <p className="p-4 text-sm text-muted-foreground">Chưa có thông báo.</p>}
           {data.map((n) => (
             <button key={n.id} onClick={() => openOne(n)} className={`w-full text-left px-3 py-2.5 border-b last:border-0 hover:bg-accent ${n.read_at ? "" : "bg-primary/5"}`}>
-              <div className="text-sm">{NOTIFICATION_LABEL[n.kind] ?? "Thông báo mới"}</div>
+              <div className="text-sm">{notificationText(n)}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{ago(n.created_at)}</div>
             </button>
           ))}

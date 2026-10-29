@@ -1,23 +1,7 @@
 import { describe,it,expect } from 'vitest';
-import { composeProgression, progressionSuggestions, validProgression, progressionState, progressionMetrics, INITIAL_PROGRESS, DAY_MS } from './progression';
-import type { Signal } from './catalog';
-const now=Date.parse('2026-10-28T09:50:00Z');
-const iso=(days:number)=>new Date(now-days*DAY_MS).toISOString();
-const signal=(extra:Partial<Signal>={}):Signal=>({id:'s',detected_on:'2026-10-01',customer_name:'x',phone:'0900000000',address:null,need_detail:null,products:[],need_group:null,source:'Website',marketing_note:null,created_by:'creator',assigned_to:'sale',assigned_at:iso(1),status:'consulting',next_contact_on:null,revenue:null,lost_reason:null,closed_at:null,created_at:iso(1),updated_at:iso(0),...extra});
-const row=(total:number,days:number)=>({signal_id:'s',total,last_at:iso(days),period_updates:2,authors:{sale:1,oldSale:1}});
+import { composeProgression, progressionSuggestions, validProgression } from './progression';
 describe('progression rules',()=>{
  it('multiple suggestions and note compose one editable payload',()=>expect(composeProgression(['Đã gửi báo giá','Khách đang cân nhắc'],'  Hẹn thứ Hai  ')).toBe('Đã gửi báo giá\nKhách đang cân nhắc\nHẹn thứ Hai'));
  it('maket only for gift group',()=>{expect(progressionSuggestions(['Sứ quà tặng']).flatMap(g=>g.items).filter(i=>i.includes('maket'))).toHaveLength(5);expect(progressionSuggestions(['Xuất khẩu']).flatMap(g=>g.items).some(i=>i.includes('maket'))).toBe(false);});
- it('initial threshold is exactly 5 and is not a ceiling',()=>{expect(INITIAL_PROGRESS).toBe(5);expect(progressionState(signal(),row(4,1),now).below).toBe(true);expect(progressionState(signal(),row(5,1),now).below).toBe(false);expect(progressionState(signal(),row(8,1),now).open).toBe(true);});
- it('won after two needs neither five nor stale warning',()=>{expect(progressionState(signal({status:'won'}),row(2,12),now)).toMatchObject({open:false,below:false,stale:false});});
- it('lost after three needs no five warning',()=>expect(progressionState(signal({status:'lost'}),row(3,12),now)).toMatchObject({open:false,below:false,stale:false}));
- it('12 updates can still be stale after 12 days',()=>expect(progressionState(signal({assigned_at:iso(20)}),row(12,12),now).stale).toBe(true));
- it('exactly 7 days is recent, beyond 7 stale',()=>{expect(progressionState(signal({assigned_at:iso(20)}),row(1,7),now)).toMatchObject({recent:true,stale:false});expect(progressionState(signal({assigned_at:iso(20)}),row(1,7.001),now)).toMatchObject({recent:false,stale:true});});
- it('new assignment with no note is not stale',()=>expect(progressionState(signal(),undefined,now).stale).toBe(false));
- it('missing assignment and note is not invented overdue',()=>expect(progressionState(signal({assigned_at:null}),undefined,now).stale).toBe(false));
- it('new Sale receives a fresh window but total history remains',()=>expect(progressionState(signal(),row(12,12),now)).toMatchObject({total:12,stale:false}));
  it('acceptance/system/state-only excluded, real notes included',()=>{expect(validProgression({note:null,event_type:'Đã tiếp nhận'})).toBe(false);expect(validProgression({note:null,event_type:null})).toBe(false);expect(validProgression({note:null,event_type:'Khác'})).toBe(false);expect(validProgression({note:'Đã trao đổi',event_type:null})).toBe(true);expect(validProgression({note:null,event_type:'Đã gửi báo giá'})).toBe(true);expect(validProgression({note:'system',event_type:null,is_progression:false})).toBe(false);});
- it('six KPI values use cohort state and independent period events',()=>{const a=signal(),b=signal({id:'b',assigned_at:iso(20)}),c=signal({id:'c',status:'won'});const rows={s:row(3,1),b:{...row(12,12),signal_id:'b'},c:{...row(2,1),signal_id:'c'}};expect(progressionMetrics([a,b,c],[a,b,c],rows,now)).toEqual({open:2,recent:1,rate:50,stale:1,below:1,updates:6});});
- it('period rows from older signals still count, by actual author',()=>{expect(progressionMetrics([], [signal()], {s:row(9,1)},now,'oldSale')).toMatchObject({open:0,rate:null,updates:1});});
- it('cancelled rows excluded from all KPI',()=>expect(progressionMetrics([signal({cancelled_at:iso(0)})],[signal({cancelled_at:iso(0)})],{s:row(1,1)},now)).toEqual({open:0,recent:0,rate:null,stale:0,below:0,updates:0}));
 });

@@ -27,7 +27,7 @@ import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signa
 import { useServerFn } from "@tanstack/react-start";
 import { zaloCareCounts } from "@/lib/zalo.functions";
 import { ProgressionSummary } from "./ProgressionSummary";
-import { composeProgression, progressionSuggestions, progressionState, validProgression } from "@/lib/signals/progression";
+import { composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
 import { DEADLINE_LABEL, suggestedProgressionStatus, type DeadlineState } from '@/lib/signals/deadlines';
 
