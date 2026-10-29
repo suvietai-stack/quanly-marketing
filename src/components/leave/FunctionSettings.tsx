@@ -31,6 +31,24 @@ export function FunctionSettingsDialog({ title, categories, personal, rules, ope
   open: boolean;
   onClose: () => void;
 }) {
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <div className="space-y-6">
+          <RolePermissionMatrix categories={categories} personal={personal} />
+          <section className="space-y-3">
+            <h3 className="font-semibold text-sm">Quy định nghiệp vụ</h3>
+            {rules}
+          </section>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Role × category matrix over the shared Role/Permission store; editable only with settings.role or Super Admin. */
+export function RolePermissionMatrix({ categories, personal }: { categories: PermCategory[]; personal: string[] }) {
   const roles = useAuth((s) => s.roles);
   const updateRole = useAuth((s) => s.updateRole);
   const { isSuperAdmin, can } = useCurrentUser();
@@ -52,11 +70,7 @@ export function FunctionSettingsDialog({ title, categories, personal, rules, ope
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <div className="space-y-6">
-          <section className="space-y-3">
+    <section className="space-y-3">
             <h3 className="font-semibold text-sm">Phân quyền</h3>
             <p className="text-xs text-muted-foreground">
               Quyền lưu trên Role dùng chung của hệ thống — thay đổi tại đây đồng bộ ngay với Cài đặt → Tài khoản &amp; Phân quyền.
@@ -107,12 +121,5 @@ export function FunctionSettingsDialog({ title, categories, personal, rules, ope
               Chỉnh chi tiết hơn tại Cài đặt → Tài khoản &amp; Phân quyền.
             </p>
           </section>
-          <section className="space-y-3">
-            <h3 className="font-semibold text-sm">Quy định nghiệp vụ</h3>
-            {rules}
-          </section>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
