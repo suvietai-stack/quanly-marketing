@@ -2875,6 +2875,300 @@ export type Database = {
         }
         Relationships: []
       }
+      sao_achievements: {
+        Row: {
+          occurred_at: string
+          source: string
+          source_id: string
+        }
+        Insert: {
+          occurred_at?: string
+          source: string
+          source_id: string
+        }
+        Update: {
+          occurred_at?: string
+          source?: string
+          source_id?: string
+        }
+        Relationships: []
+      }
+      sao_admin_events: {
+        Row: {
+          actor_id: string
+          after_data: Json | null
+          before_data: Json | null
+          created_at: string
+          entity_id: string
+          id: string
+          kind: string
+        }
+        Insert: {
+          actor_id: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          entity_id: string
+          id?: string
+          kind: string
+        }
+        Update: {
+          actor_id?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          entity_id?: string
+          id?: string
+          kind?: string
+        }
+        Relationships: []
+      }
+      sao_celebrations: {
+        Row: {
+          ledger_id: string
+          shown_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ledger_id: string
+          shown_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ledger_id?: string
+          shown_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sao_celebrations_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: true
+            referencedRelation: "sao_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sao_gifts: {
+        Row: {
+          enabled: boolean
+          id: string
+          image_url: string
+          name: string
+          price: number
+          reserved: number
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: string
+          image_url: string
+          name: string
+          price: number
+          reserved?: number
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          image_url?: string
+          name?: string
+          price?: number
+          reserved?: number
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sao_kpi_locks: {
+        Row: {
+          locked_at: string
+          locked_by: string
+          period_id: string
+        }
+        Insert: {
+          locked_at?: string
+          locked_by: string
+          period_id: string
+        }
+        Update: {
+          locked_at?: string
+          locked_by?: string
+          period_id?: string
+        }
+        Relationships: []
+      }
+      sao_ledger: {
+        Row: {
+          actor_id: string | null
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          reason: string
+          rule_id: string | null
+          source: string
+          source_id: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          reason: string
+          rule_id?: string | null
+          source: string
+          source_id: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          rule_id?: string | null
+          source?: string
+          source_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sao_ledger_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "sao_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sao_redemptions: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          gift_id: string
+          gift_name: string
+          id: string
+          price: number
+          reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          gift_id: string
+          gift_name: string
+          id: string
+          price: number
+          reason?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          gift_id?: string
+          gift_name?: string
+          id?: string
+          price?: number
+          reason?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sao_redemptions_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "sao_gifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sao_rules: {
+        Row: {
+          enabled: boolean
+          enabled_at: string | null
+          id: string
+          source: string
+          stars: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          enabled_at?: string | null
+          id?: string
+          source: string
+          stars: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          enabled_at?: string | null
+          id?: string
+          source?: string
+          stars?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      sao_task_approvals: {
+        Row: {
+          approved_at: string
+          approved_by: string
+          brand_id: string | null
+          submitted_at: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string
+          approved_by: string
+          brand_id?: string | null
+          submitted_at?: string | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string
+          brand_id?: string | null
+          submitted_at?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sao_wallets: {
+        Row: {
+          balance: number
+          held: number
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          held?: number
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          held?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       seo_checks: {
         Row: {
           created_at: string
@@ -4125,6 +4419,38 @@ export type Database = {
         Args: { _endpoint: string; _id: string }
         Returns: undefined
       }
+      sao_active: { Args: never; Returns: boolean }
+      sao_can_manage_shop: { Args: never; Returns: boolean }
+      sao_celebration_claim: { Args: never; Returns: Json }
+      sao_gift_save: {
+        Args: {
+          _enabled: boolean
+          _id: string
+          _image: string
+          _name: string
+          _price: number
+          _stock: number
+        }
+        Returns: string
+      }
+      sao_manual_grant: {
+        Args: {
+          _reason: string
+          _request: string
+          _stars: number
+          _user: string
+        }
+        Returns: string
+      }
+      sao_redeem: { Args: { _gift: string; _request: string }; Returns: string }
+      sao_redemption_decide: {
+        Args: { _id: string; _reason?: string; _status: string }
+        Returns: undefined
+      }
+      sao_rule_save: {
+        Args: { _enabled: boolean; _source: string; _stars: number }
+        Returns: undefined
+      }
       signal_assign: {
         Args: { _id: string; _user: string }
         Returns: undefined
@@ -4149,6 +4475,7 @@ export type Database = {
         Args: { _confirm: boolean }
         Returns: string
       }
+      signal_progression_config_can_read: { Args: never; Returns: boolean }
       signal_progression_deadlines: {
         Args: never
         Returns: {

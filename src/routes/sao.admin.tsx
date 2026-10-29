@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { SaoPage } from '@/components/sao/SaoPages';
+export const Route = createFileRoute('/sao/admin')({ head: () => ({ meta: [{ title: 'Quản lý thưởng Sao — Base Sứ Việt' }, { name: 'description', content: 'Quản lý chương trình thưởng Sao, quà tặng và phát quà.' }, { property: 'og:title', content: 'Quản lý thưởng Sao — Base Sứ Việt' }, { property: 'og:description', content: 'Quản lý chương trình thưởng Sao, quà tặng và phát quà.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }), component: () => <SaoPage mode="admin" /> });

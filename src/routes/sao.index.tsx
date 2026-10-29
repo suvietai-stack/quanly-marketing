@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { SaoPage } from '@/components/sao/SaoPages';
+export const Route = createFileRoute('/sao/')({ head: () => ({ meta: [{ title: 'Ví Sao của tôi — Sao Sứ Việt' }, { name: 'description', content: 'Số dư và lịch sử nhận, sử dụng Sao Sứ Việt của bạn.' }, { property: 'og:title', content: 'Ví Sao của tôi — Sao Sứ Việt' }, { property: 'og:description', content: 'Số dư và lịch sử nhận, sử dụng Sao Sứ Việt của bạn.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }), component: () => <SaoPage mode="wallet" /> });

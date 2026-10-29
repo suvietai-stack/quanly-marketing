@@ -3,13 +3,14 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/ZaloUi";
 import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
 import { ChipiAssistant } from "@/components/ChipiAssistant";
+import { RewardPopup } from '@/components/sao/RewardPopup';
 import { useAuth, useCurrentUser, type PermissionKey } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -19,6 +20,11 @@ import {
 type NavItem = { to: string; label: string; icon: any; exact?: boolean; badge?: string; perm?: PermissionKey; anyPerm?: PermissionKey[]; kpi?: boolean; adminOnly?: boolean };
 
 const groups: { label: string; items: NavItem[] }[] = [
+  { label: 'Sao Sứ Việt', items: [
+    { to: '/sao', label: 'Ví Sao của tôi', icon: Wallet },
+    { to: '/sao/shop', label: 'Gian hàng đổi quà', icon: Gift },
+    { to: '/sao/admin', label: 'Quản lý thưởng Sao', icon: Star, anyPerm: ['sao.program_manage', 'sao.shop_manage', 'sao.manual_grant'] },
+  ] },
   {
     label: "Điều hành",
     items: [
@@ -232,6 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
         {user && <ChipiAssistant key={user.id} userId={user.id} />}
+        {user && <RewardPopup key={`sao-${user.id}`} userId={user.id} />}
       </div>
     </div>
   );

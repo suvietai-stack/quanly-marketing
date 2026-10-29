@@ -1,5 +1,7 @@
-- [ ] Sao Sứ Việt MVP: rà soát nguồn thành tích, lập kế hoạch ví/gian hàng/quy tắc Admin/popup Chipi, giao dịch an toàn và kiểm thử; chưa Publish.
-- [ ] Bảo mật cấu hình diễn biến: xác minh mục đích truy cập và thay SELECT toàn bộ bằng phạm vi phù hợp, không tự hạn chế người dùng hợp lệ.
+- [x] Sao Sứ Việt MVP: Ví/Gian hàng/Admin/popup Chipi + migrations 0075–0078; thưởng won/Task xác nhận và KPI task-backed khóa kỳ, chống trùng/không hồi tố/giữ-phát-hủy; 81 tests đạt, UI Super Admin thật desktop/360/390 và popup fixture đạt; chưa Publish, không bật thưởng/ghi Sao/quà giả. Bàn giao docs/sao-su-viet-mvp.md.
+- [ ] Sao — KPI nguồn khác: cần bộ đánh giá máy chủ tương ứng từng nguồn; hiện chỉ task_completed/custom_task_result đủ bằng chứng, không tự thưởng snapshot client.
+- [ ] Sao — kiểm end-to-end ghi thật và hai phiên đồng thời: cần môi trường tách biệt hoặc thành tích/quà/người nhận thật được chỉ định; dữ liệu dùng chung nên không tự bật/cộng/phát thử.
+- [x] Bảo mật cấu hình diễn biến: theo lựa chọn chỉ người hoạt động có quyền Tín hiệu; 0078 sửa SELECT và RPC cũ, tests allow/deny đạt, finding đã đánh dấu xử lý.
 - [x] Kỳ diễn biến mới: lịch 5/7/7/7/30, RPC theo trách nhiệm Sale, báo cáo đúng hạn/KR tham chiếu 90%, lọc/badge/gợi ý trạng thái và nhắc Base/Chipi. 135 tests đạt; UI đọc thật + gợi ý/giữ nguyên/đa chip desktop/360/390 đạt, không tràn/lỗi. DB chưa kích hoạt: 0 lịch/0 kỳ/0 nhắc/0 job; chưa Publish.
 - [ ] Kỳ diễn biến — kiểm lưu/nhắc thật và quyền Sale end-to-end: cần môi trường dữ liệu tách biệt hoặc tín hiệu/nội dung thật được chỉ định; không tự kích hoạt toàn bộ production hoặc ghi demo. Chỉ quy tắc SQL tách biệt và UI Super Admin đọc thật đã kiểm.
 - [x] Nâng cấp diễn biến trước đây: gợi ý nhanh/maket đúng nhóm/nội dung chỉnh sửa, mốc 5/cảnh báo 7 ngày và sáu KPI (được thay bởi yêu cầu mới); 0069 bổ sung được duyệt, giữ quyền/lịch sử; 103 tests/build/UI đọc thật đạt, chưa Publish.
