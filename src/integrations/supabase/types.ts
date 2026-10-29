@@ -1029,6 +1029,92 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_reminder_config: {
+        Row: {
+          active_from: string
+          enabled: boolean
+          end_hour: number
+          id: number
+          interval_min: number
+          manual_cooldown_min: number
+          max_auto: number
+          start_hour: number
+          updated_at: string
+          updated_by: string | null
+          workdays: number[]
+        }
+        Insert: {
+          active_from?: string
+          enabled?: boolean
+          end_hour?: number
+          id?: number
+          interval_min?: number
+          manual_cooldown_min?: number
+          max_auto?: number
+          start_hour?: number
+          updated_at?: string
+          updated_by?: string | null
+          workdays?: number[]
+        }
+        Update: {
+          active_from?: string
+          enabled?: boolean
+          end_hour?: number
+          id?: number
+          interval_min?: number
+          manual_cooldown_min?: number
+          max_auto?: number
+          start_hour?: number
+          updated_at?: string
+          updated_by?: string | null
+          workdays?: number[]
+        }
+        Relationships: []
+      }
+      fin_reminders: {
+        Row: {
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          kind: string
+          sent_by: string | null
+          seq: number | null
+          status: string
+          tx_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          sent_by?: string | null
+          seq?: number | null
+          status?: string
+          tx_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          sent_by?: string | null
+          seq?: number | null
+          status?: string
+          tx_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_reminders_tx_id_fkey"
+            columns: ["tx_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_krs: {
         Row: {
           brand_id: string | null
@@ -4174,6 +4260,19 @@ export type Database = {
           _ref?: string
           _tx: string
           _type?: string
+        }
+        Returns: undefined
+      }
+      fin_remind_can: { Args: never; Returns: boolean }
+      fin_remind_manual_claim: { Args: { _tx: string }; Returns: string }
+      fin_reminder_config_save: {
+        Args: {
+          _days: number[]
+          _enabled: boolean
+          _end: number
+          _interval: number
+          _max: number
+          _start: number
         }
         Returns: undefined
       }
