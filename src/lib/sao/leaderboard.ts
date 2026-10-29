@@ -40,9 +40,9 @@ export function currentStep(mode: LeaderboardMode, now: Date): number {
     case 'quarter': return y * 4 + Math.floor((m - 1) / 3);
     case 'month': return y * 12 + (m - 1);
     case 'week': {
-      // ISO-like week counter: days since epoch of the VN Monday of this week
-      const monday = vnToUtc(y, m, d - (dow - 1));
-      return Math.floor(monday.getTime() / (7 * 24 * 3600 * 1000));
+      // Week counter from the VN wall-clock Monday (treated as UTC for counting)
+      const mondayWall = Date.UTC(y, m - 1, d - (dow - 1));
+      return Math.floor(mondayWall / (7 * 24 * 3600 * 1000));
     }
     default: return 0;
   }
@@ -70,14 +70,15 @@ export function resolvePeriod(mode: LeaderboardMode, offset: number, now: Date):
     const m = ((step % 12) + 12) % 12; // 0..11
     return { from: vnToUtc(y, m + 1, 1), to: vnToUtc(y, m + 2, 1), label: `Tháng ${m + 1}/${y}` };
   }
-  // week: Monday 00:00 VN to next Monday 00:00 VN
-  const monday = new Date(step * 7 * 24 * 3600 * 1000);
+  // week: Monday 00:00 VN to next Monday 00:00 VN (step counts VN wall-clock Mondays)
+  const mondayWall = step * 7 * 24 * 3600 * 1000;
+  const monday = new Date(mondayWall - 7 * 3600 * 1000);
   const sundayEnd = new Date(monday.getTime() + 7 * 24 * 3600 * 1000);
-  const fmtDay = (dt: Date) => {
-    const p = vnParts(new Date(dt.getTime() + 7 * 3600 * 1000)); // shift back to VN wall clock
-    return `${String(p.d).padStart(2, '0')}/${String(p.m).padStart(2, '0')}/${p.y}`;
+  const fmtDay = (wallMs: number) => {
+    const dt = new Date(wallMs);
+    return `${String(dt.getUTCDate()).padStart(2, '0')}/${String(dt.getUTCMonth() + 1).padStart(2, '0')}/${dt.getUTCFullYear()}`;
   };
-  return { from: monday, to: sundayEnd, label: `${fmtDay(monday)} – ${fmtDay(new Date(sundayEnd.getTime() - 86400000))}` };
+  return { from: monday, to: sundayEnd, label: `${fmtDay(mondayWall)} – ${fmtDay(mondayWall + 6 * 86400000)}` };
 }
 
 export async function loadLeaderboard(mode: LeaderboardMode, offset: number): Promise<LeaderboardRow[]> {
