@@ -167,13 +167,13 @@ function Incoming() {
       </div>
 
       {canAll && !history && stats.data && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-          <button className="rounded-xl border bg-card p-3 text-left hover:bg-accent" onClick={() => set({ st: "unclaimed", rem: "" })}>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <button className="rounded-xl border bg-card p-2.5 sm:p-3 text-left hover:bg-accent" onClick={() => set({ st: "unclaimed", rem: "" })}>
             <div className="text-xs text-muted-foreground">Đang chờ xác nhận</div><div className="text-xl font-bold text-primary">{count("unclaimed")}</div>
           </button>
           <button className="rounded-xl border bg-card p-3 text-left hover:bg-accent disabled:opacity-60" disabled={!summary.data?.oldest} onClick={() => summary.data?.oldest && open(summary.data.oldest.id)}>
             <div className="text-xs text-muted-foreground">Chờ lâu nhất</div>
-            <div className="text-sm font-semibold">{summary.data?.oldest ? `${vnd(Number(summary.data.oldest.amount))} · ${fmtWait(Math.max(0, Math.floor((now - Date.parse(summary.data.oldest.transaction_at ?? summary.data.oldest.created_at)) / 60000)))}` : "—"}</div>
+            <div className="text-xs sm:text-sm font-semibold">{summary.data?.oldest ? `${vnd(Number(summary.data.oldest.amount))} · ${fmtWait(Math.max(0, Math.floor((now - Date.parse(summary.data.oldest.transaction_at ?? summary.data.oldest.created_at)) / 60000)))}` : "—"}</div>
           </button>
           <button className={`rounded-xl border p-3 text-left hover:bg-accent ${s.rem === "max" ? "border-primary bg-primary/5" : "bg-card"}`} onClick={() => set({ rem: s.rem === "max" ? "" : "max", st: "" })}>
             <div className="text-xs text-muted-foreground">Đã nhắc tối đa {maxAuto} lần</div><div className="text-xl font-bold text-warning">{maxedIds.length}</div>
@@ -238,15 +238,15 @@ function Incoming() {
       <div className="hidden md:block rounded-lg border bg-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left">
-            <tr>{["Thời gian", "TK nhận / nguồn", "Số tiền", "Nội dung CK / ghi chú", "Sale xác nhận", "Trạng thái", "Chờ / nhắc"].map((h) => <th key={h} className="px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
+            <tr>{["Thời gian", "TK nhận / nguồn", "Số tiền", "Nội dung CK / ghi chú", "Sale xác nhận", "Trạng thái"].map((h) => <th key={h} className="px-3 py-2 font-medium whitespace-nowrap">{h}</th>)}</tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Đang tải dữ liệu…</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Đang tải dữ liệu…</td></tr>
             ) : error ? (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-destructive">Không tải được danh sách. Vui lòng thử lại.</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-destructive">Không tải được danh sách. Vui lòng thử lại.</td></tr>
             ) : rows.length === 0 ? (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">Không có giao dịch phù hợp.</td></tr>
+              <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">Không có giao dịch phù hợp.</td></tr>
             ) : rows.map((r) => { const rc = receiver(r, labels); return (
               <tr key={r.id} className="border-t cursor-pointer hover:bg-accent/50" onClick={() => open(r.id)}>
                 <td className="px-3 py-2 whitespace-nowrap">{fmtTime(r.transaction_at, r.transaction_date)}</td>
@@ -254,12 +254,13 @@ function Incoming() {
                 <td className="px-3 py-2 font-medium text-primary whitespace-nowrap">{vnd(Number(r.amount))}</td>
                 <td className="px-3 py-2 min-w-[220px]"><div className="line-clamp-2 break-words">{(r.source === "bank" ? r.description : r.description || r.note) || "—"}</div></td>
                 <td className="px-3 py-2 whitespace-nowrap">{who(r)}</td>
-                <td className="px-3 py-2"><Badge variant={TX_VARIANT[r.confirmation_status] ?? "secondary"}>{TX_STATUS[r.confirmation_status] ?? r.confirmation_status}</Badge>{r.info_reason && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{(() => { const w = waitInfo(r); return w ? (
-                  <div className="flex items-center gap-2">
-                    <div className="text-xs"><div className={w.n >= maxAuto ? "text-warning font-medium" : "font-medium"}>{w.label}</div>{w.wait && <div className="text-muted-foreground">chờ {w.wait}</div>}</div>
-                    {canRemind && <RemindButton txId={r.id} />}
-                  </div>) : <span className="text-muted-foreground">—</span>; })()}</td>
+                <td className="px-3 py-2 min-w-[150px]"><Badge className="whitespace-nowrap" variant={TX_VARIANT[r.confirmation_status] ?? "secondary"}>{TX_STATUS[r.confirmation_status] ?? r.confirmation_status}</Badge>{r.info_reason && <div className="text-xs text-destructive mt-0.5">Cần chỉnh sửa</div>}
+                  {(() => { const w = waitInfo(r); return w && (
+                    <div className="mt-1 space-y-1 text-xs whitespace-nowrap">
+                      <div className={w.n >= maxAuto ? "text-warning font-medium" : "font-medium"}>{w.label}</div>
+                      {w.wait && <div className="text-muted-foreground">chờ {w.wait}</div>}
+                      {canRemind && <RemindButton txId={r.id} className="h-8 px-2" />}
+                    </div>); })()}</td>
               </tr>
             ); })}
           </tbody>
