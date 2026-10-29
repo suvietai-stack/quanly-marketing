@@ -13,7 +13,8 @@ import { STATUS_LABEL, type LeaveRequest, type LeaveStatus } from "@/lib/leave/a
 const KINDS: [PeriodKind, string][] = [["week", "Tuần"], ["month", "Tháng"], ["quarter", "Quý"], ["year", "Năm"], ["custom", "Tùy chỉnh"]];
 const sel = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
-export function LeaveReport({ rows, atts, name, onOpenAtt }: { rows: LeaveRequest[]; atts?: AttExplanation[] | null; name: (id?: string | null) => string; onOpenAtt?: (id: string) => void }) {
+export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { rows: LeaveRequest[]; atts?: AttExplanation[] | null; name: (id?: string | null) => string; onOpenAtt?: (id: string) => void; mode?: "leave" | "att" }) {
+  const attOnly = mode === "att";
   const { can } = useCurrentUser();
   const brand = useBranding();
   const today = todayVn();
