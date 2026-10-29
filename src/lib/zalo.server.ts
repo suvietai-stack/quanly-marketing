@@ -220,7 +220,7 @@ export async function processPending(limit = 20) {
       const { attMessage } = await import("./leave/attendance");
       const names = await db.from("profiles").select("id,full_name").in("id", [a.owner_id, a.witness_id]);
       const nm = (id: string) => (names.data ?? []).find((x: any) => x.id === id)?.full_name;
-      leaveMsg = { ...attMessage(n.kind as "att_witness" | "att_new", { ...a, owner_name: nm(a.owner_id), witness_name: nm(a.witness_id), action: n.payload?.action }, await brandHeader()), link: `${await baseUrl()}/leave?att=${a.id}` };
+      leaveMsg = { ...attMessage(n.kind as "att_witness" | "att_new", { ...a, owner_name: nm(a.owner_id), witness_name: nm(a.witness_id), action: n.payload?.action }, await brandHeader()), link: `${await baseUrl()}/attendance?att=${a.id}` };
     }
     if (n.kind.startsWith("content_")) {
       const { data: c } = await db.from("web_contents").select("data").eq("id", n.content_id).maybeSingle();

@@ -69,7 +69,7 @@ async function build(db: any, n: any, b: string) {
   if (!a || a.recalled) return null;
   if (kind === "att_witness" && (a.witness_id !== n.recipient_id || a.witness_status !== "pending")) return null;
   const { data: p } = await db.from("profiles").select("full_name").eq("id", a.owner_id).maybeSingle();
-  return { ...pushMessage(kind, { ...a, owner_name: p?.full_name }, b), url: `/leave?att=${a.id}` };
+  return { ...pushMessage(kind, { ...a, owner_name: p?.full_name }, b), url: `/attendance?att=${a.id}` };
 }
 
 /** Gửi Web Push cho các thông báo mới. Khóa nguyên tử theo notification (push_status pending→processing) và theo thiết bị (UNIQUE). */
