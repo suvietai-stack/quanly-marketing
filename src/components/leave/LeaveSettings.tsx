@@ -13,7 +13,9 @@ import { useAuth, getUserPermissions } from "@/lib/auth";
 
 const norm = (v: string) => v.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
 
-export function LeaveSettings() {
+export function LeaveSettings({ mode = "all" }: { mode?: "all" | "leave" | "att" } = {}) {
+  const showLeave = mode !== "att";
+  const showAtt = mode !== "leave";
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["leave", "settings"], queryFn: api.getSettings });
   const [s, setS] = useState<S | null>(null);
