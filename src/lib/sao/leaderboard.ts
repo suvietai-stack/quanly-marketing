@@ -85,8 +85,8 @@ export function resolvePeriod(mode: LeaderboardMode, offset: number, now: Date):
 export async function loadLeaderboard(mode: LeaderboardMode, offset: number): Promise<LeaderboardRow[]> {
   const period = resolvePeriod(mode, offset, new Date());
   const { data, error } = await supabase.rpc('sao_leaderboard', {
-    _from: period.from ? period.from.toISOString() : null,
-    _to: period.to ? period.to.toISOString() : null,
+    _from: period.from ? period.from.toISOString() : undefined,
+    _to: period.to ? period.to.toISOString() : undefined,
   });
   if (error) throw error;
   return (data ?? []) as LeaderboardRow[];
