@@ -117,7 +117,7 @@ export function RolePermissionMatrix({ categories, personal }: { categories: Per
               </table>
             </div>
             <p className="text-xs text-muted-foreground">
-              Quyền cá nhân luôn được giữ nguyên: {personal.map((k) => PERMISSION_BY_KEY[k]?.label || k).join(", ")}.
+              {personal.length > 0 && <>Quyền cá nhân luôn được giữ nguyên: {personal.map((k) => PERMISSION_BY_KEY[k]?.label || k).join(", ")}. </>}
               Chỉnh chi tiết hơn tại Cài đặt → Tài khoản &amp; Phân quyền.
             </p>
           </section>

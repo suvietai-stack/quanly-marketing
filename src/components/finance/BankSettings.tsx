@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ReminderSettings, FinancePermissions } from "./ReminderSettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/lib/auth";
 import { ResetData } from "@/components/finance/ResetData";
@@ -92,6 +93,8 @@ export function BankSettings({ open, onOpenChange, canBank = true, canGmf = true
         <p className="text-xs text-muted-foreground">“Sale xem”: cho Sale thấy giao dịch của tài khoản này để xác nhận. “Báo GMF”: Bật thông báo tiền về cho nhóm GMF. Cả hai mặc định tắt.</p>
         </>}
         {canGmf && <GmfSettings enabled={open} />}
+        {canGmf && <ReminderSettings />}
+        <FinancePermissions />
         {isSuperAdmin && <section className="border-t pt-4 space-y-3">
           <h3 className="font-medium">Quản trị nâng cao</h3>
           <p className="text-sm text-destructive">Cảnh báo: Reset sẽ xóa dữ liệu tài chính Tiền Về trong Base. Chỉ thực hiện khi đã kiểm tra số lượng giao dịch và xác nhận rõ ràng.</p>
