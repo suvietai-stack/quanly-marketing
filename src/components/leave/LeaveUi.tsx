@@ -59,6 +59,7 @@ function StatusBadge({ r }: { r: LeaveRequest }) {
   return (
     <div className="flex flex-wrap gap-1">
       <Badge variant="outline" className={STATUS_CLS[r.status]}>{api.STATUS_LABEL[r.status]}</Badge>
+      {r.is_late && <Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning-foreground">Đơn bổ sung</Badge>}
       {r.cancel_state === "requested" && <Badge variant="outline" className="border-warning/40">Yêu cầu hủy</Badge>}
       {r.cancel_state === "rejected" && <Badge variant="outline">Từ chối hủy</Badge>}
       {overdue && <Badge variant="outline" className="border-destructive/40 text-destructive">Đã qua thời điểm đăng ký</Badge>}
@@ -191,7 +192,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
   const [st, setSt] = useState<string>("all");
   const [tp, setTp] = useState<string>("all");
   const [q, setQ] = useState("");
-  const shown = rows.filter((r) => (st === "all" || r.status === st || (st === "cancel_req" && r.cancel_state === "requested"))
+  const shown = rows.filter((r) => (st === "all" || r.status === st || (st === "cancel_req" && r.cancel_state === "requested") || (st === "late" && r.is_late))
     && (tp === "all" || r.type === tp)
     && (!q || rest.name(r.owner_id).toLowerCase().includes(q.toLowerCase())));
   return <>
@@ -202,6 +203,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
         <SelectContent>
           <SelectItem value="all">Mọi trạng thái</SelectItem>
           {(Object.keys(api.STATUS_LABEL) as LeaveStatus[]).map((k) => <SelectItem key={k} value={k}>{api.STATUS_LABEL[k]}</SelectItem>)}
+          <SelectItem value="late">Đơn bổ sung</SelectItem>
           <SelectItem value="cancel_req">Có yêu cầu hủy</SelectItem>
         </SelectContent>
       </Select>
@@ -220,6 +222,13 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
 /* ================= Form ================= */
 type FormState = { mode: "create" | "edit" | "resubmit"; request?: LeaveRequest };
 
+const LATE_SUGGESTIONS = [
+  "Ốm đột xuất, không thể gửi đơn trước",
+  "Việc gia đình khẩn cấp",
+  "Sự cố giao thông",
+  "Phát sinh công việc bất khả kháng",
+];
+
 function FormDialog({ state, settings, onClose, onDone }: { state: FormState; settings: LeaveSettings; onClose: () => void; onDone: (id?: string) => void }) {
   const { user, can } = useCurrentUser();
   const users = useAuth((s) => s.users);
@@ -233,13 +242,12 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const [reasonId, setReasonId] = useState(r?.reason_id || "");
   const [detail, setDetail] = useState(r?.detail || "");
   const [approver, setApprover] = useState<string>(r?.approver_id || (typeof window !== "undefined" ? localStorage.getItem(LAST_APPROVER) || "" : ""));
-  const [exception, setException] = useState("");
+  const [exception, setException] = useState(r?.late_reason || "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const approversQ = useQuery({ queryKey: ["leave", "approvers"], queryFn: api.listApprovers });
   const approvers = (approversQ.data || []).filter((a) => a.id !== owner);
   const canFor = can("leave.create_for") && state.mode === "create";
-  const canException = can("leave.exception") && state.mode === "create";
 
   // Keep shift half aligned with the working schedule of the chosen date.
   useEffect(() => {
@@ -254,7 +262,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const late = !!dl && new Date() > dl;
   const reasons = settings.reasons.filter((x) => x.active || x.id === r?.reason_id);
   const needDetail = reasonId === "other" && !detail.trim();
-  const blocked = !res.ok || (late && !(canException && exception.trim())) || !reasonId || needDetail || !approver;
+  const blocked = !res.ok || (late && !exception.trim()) || !reasonId || needDetail || !approver;
 
   const submit = async () => {
     setBusy(true); setErr(null);
@@ -265,7 +273,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
       else if (state.mode === "edit") await api.updateRequest(r!.id, f);
       else await api.resubmitRequest(r!.id, f);
       localStorage.setItem(LAST_APPROVER, approver);
-      toast.success(state.mode === "edit" ? "Đã lưu thay đổi" : "Đã gửi đơn");
+      toast.success(state.mode === "edit" ? "Đã lưu thay đổi" : late ? "Đã gửi đơn bổ sung" : "Đã gửi đơn");
       onDone(id || r?.id);
     } catch (e) { setErr(api.leaveErr(e)); } finally { setBusy(false); }
   };
@@ -333,13 +341,22 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
           ) : <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{res.error}</div>}
 
           {late && res.ok && (
-            <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm space-y-1">
-              <div className="font-semibold text-destructive flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" />KHÔNG THỂ GỬI ĐƠN {TYPE_LABEL[type].toUpperCase()}</div>
+            <div className="rounded-md border border-warning/50 bg-warning/10 p-3 text-sm space-y-2">
+              <div className="font-semibold text-warning-foreground flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" />Đơn bổ sung — gửi sau thời hạn quy định</div>
               <div>Theo quy định của công ty, {deadlineRule(settings, type)}.</div>
               <div>Thời điểm {type === "leave" ? "bắt đầu nghỉ" : type === "late" ? "bắt đầu ca" : "dự kiến ra về"}: {fmtVn(res.markAt)}</div>
               <div>Hạn cuối gửi: {fmtVn(dl!)}</div>
-              <div>Đơn đã quá thời hạn đăng ký. Vui lòng liên hệ người quản lý nếu có trường hợp đặc biệt.</div>
-              {canException && <div className="pt-2 space-y-1"><Label>Xử lý ngoại lệ — lý do (bắt buộc)</Label><Textarea value={exception} onChange={(e) => setException(e.target.value)} rows={2} /></div>}
+              <div>Đơn này được gửi sau thời hạn quy định. Vui lòng nêu lý do gửi bổ sung để người phê duyệt xem xét.</div>
+              <div className="pt-1 space-y-1.5">
+                <Label>Lý do gửi đơn bổ sung <span className="text-destructive">*</span></Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {LATE_SUGGESTIONS.map((s) => (
+                    <button key={s} type="button" onClick={() => setException(s)}
+                      className={cn("rounded-full border px-2.5 py-1 text-xs", exception === s ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{s}</button>
+                  ))}
+                </div>
+                <Textarea value={exception} onChange={(e) => setException(e.target.value)} rows={2} placeholder="Vì sao không nộp đơn đúng hạn…" />
+              </div>
             </div>
           )}
 
@@ -366,7 +383,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>Hủy</Button>
           <Button onClick={submit} disabled={blocked || busy || (approver !== "" && !approvers.some((a) => a.id === approver))}>
-            {busy ? "Đang gửi…" : state.mode === "edit" ? "Lưu thay đổi" : state.mode === "resubmit" ? "Gửi xin duyệt lại" : "Gửi đơn"}
+            {busy ? "Đang gửi…" : state.mode === "edit" ? "Lưu thay đổi" : state.mode === "resubmit" ? (late ? "Gửi lại đơn bổ sung" : "Gửi xin duyệt lại") : late ? "Gửi đơn bổ sung" : "Gửi đơn"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -457,6 +474,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
               <dt className="text-muted-foreground">Thời gian</dt><dd>{summary(r)}</dd>
               <dt className="text-muted-foreground">Lý do</dt><dd>{r.reason_name}</dd>
               {r.detail && <><dt className="text-muted-foreground">Chi tiết</dt><dd className="whitespace-pre-line">{r.detail}</dd></>}
+              {r.is_late && r.late_reason && <><dt className="text-muted-foreground">Lý do gửi bổ sung</dt><dd className="whitespace-pre-line">{r.late_reason}</dd></>}
               <dt className="text-muted-foreground">Người duyệt</dt><dd>{name(r.approver_id)}</dd>
               <dt className="text-muted-foreground">Gửi lúc</dt><dd>{fmtVn(r.submitted_at)}</dd>
               <dt className="text-muted-foreground">Hạn cuối gửi</dt><dd>{r.applied?.deadline_at ? fmtVn(r.applied.deadline_at) : "—"}</dd>
@@ -523,9 +541,12 @@ function HistoryBlock({ type, subs, events, name }: { type: LeaveType; subs: api
           <div className="space-y-2">
             {subs.map((s) => (
               <div key={s.id} className="rounded-md border p-2.5">
-                <div className="font-medium">Lần {s.no} · {fmtVn(s.submitted_at)}</div>
+                <div className="font-medium flex flex-wrap items-center gap-2">Lần {s.no} · {fmtVn(s.submitted_at)}
+                  {s.is_late && <Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning-foreground">Đơn bổ sung</Badge>}
+                </div>
                 <div className="text-muted-foreground">{summary({ type, payload: s.payload, calc: s.calc })}</div>
                 <div>Lý do: {s.reason_name}{s.detail ? ` — ${s.detail}` : ""}</div>
+                {s.is_late && s.late_reason && <div>Lý do gửi bổ sung: {s.late_reason}</div>}
                 <div>Người duyệt: {name(s.approver_id)} · Kết quả: {s.result ? RES[s.result] || s.result : "Chờ duyệt"}{s.note ? ` — ${s.note}` : ""}</div>
               </div>
             ))}

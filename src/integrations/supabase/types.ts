@@ -1233,6 +1233,8 @@ export type Database = {
           decided_by: string | null
           detail: string | null
           id: string
+          is_late: boolean
+          late_reason: string | null
           no: number
           note: string | null
           payload: Json
@@ -1250,6 +1252,8 @@ export type Database = {
           decided_by?: string | null
           detail?: string | null
           id?: string
+          is_late?: boolean
+          late_reason?: string | null
           no: number
           note?: string | null
           payload: Json
@@ -1267,6 +1271,8 @@ export type Database = {
           decided_by?: string | null
           detail?: string | null
           id?: string
+          is_late?: boolean
+          late_reason?: string | null
           no?: number
           note?: string | null
           payload?: Json
@@ -1301,6 +1307,8 @@ export type Database = {
           decision_note: string | null
           detail: string | null
           id: string
+          is_late: boolean
+          late_reason: string | null
           mark_at: string
           owner_id: string
           payload: Json
@@ -1325,6 +1333,8 @@ export type Database = {
           decision_note?: string | null
           detail?: string | null
           id?: string
+          is_late?: boolean
+          late_reason?: string | null
           mark_at: string
           owner_id: string
           payload: Json
@@ -1349,6 +1359,8 @@ export type Database = {
           decision_note?: string | null
           detail?: string | null
           id?: string
+          is_late?: boolean
+          late_reason?: string | null
           mark_at?: string
           owner_id?: string
           payload?: Json
@@ -4238,6 +4250,7 @@ export type Database = {
         Args: {
           _approver: string
           _detail: string
+          _exception?: string
           _id: string
           _payload: Json
           _reason_id: string
@@ -4262,6 +4275,7 @@ export type Database = {
         Args: {
           _approver: string
           _detail: string
+          _exception?: string
           _id: string
           _payload: Json
           _reason_id: string

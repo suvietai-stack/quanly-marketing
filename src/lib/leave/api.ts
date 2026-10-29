@@ -13,12 +13,14 @@ export interface LeaveRequest {
   approver_id: string; reason_id: string; reason_name: string; detail: string | null;
   payload: any; calc: any; mark_at: string; applied: any; submission_no: number;
   submitted_at: string; decided_by: string | null; decided_at: string | null; decision_note: string | null;
+  is_late: boolean; late_reason: string | null;
   created_at: string; updated_at: string;
 }
 export interface LeaveSubmission {
   id: string; request_id: string; no: number; payload: any; calc: any; reason_name: string; detail: string | null;
   approver_id: string; submitted_by: string; submitted_at: string; result: string | null;
   decided_by: string | null; decided_at: string | null; note: string | null;
+  is_late: boolean; late_reason: string | null;
 }
 export interface LeaveEvent { id: string; request_id: string; actor_id: string | null; action: string; detail: any; created_at: string }
 
@@ -68,8 +70,8 @@ export interface FormInput { owner?: string | null; type: LeaveType; payload: an
 export const submitRequest = (f: FormInput) => rpc<string>("leave_submit", {
   _owner: f.owner || null, _type: f.type, _payload: f.payload, _reason_id: f.reasonId, _detail: f.detail, _approver: f.approver, _exception: f.exception || null,
 });
-export const updateRequest = (id: string, f: FormInput) => rpc("leave_update", { _id: id, _payload: f.payload, _reason_id: f.reasonId, _detail: f.detail, _approver: f.approver });
-export const resubmitRequest = (id: string, f: FormInput) => rpc("leave_resubmit", { _id: id, _payload: f.payload, _reason_id: f.reasonId, _detail: f.detail, _approver: f.approver });
+export const updateRequest = (id: string, f: FormInput) => rpc("leave_update", { _id: id, _payload: f.payload, _reason_id: f.reasonId, _detail: f.detail, _approver: f.approver, _exception: f.exception || null });
+export const resubmitRequest = (id: string, f: FormInput) => rpc("leave_resubmit", { _id: id, _payload: f.payload, _reason_id: f.reasonId, _detail: f.detail, _approver: f.approver, _exception: f.exception || null });
 export const decide = (id: string, approve: boolean, note: string) => rpc("leave_decide", { _id: id, _approve: approve, _note: note });
 export const recall = (id: string) => rpc("leave_recall", { _id: id });
 export const cancelRequest = (id: string, reason: string) => rpc("leave_cancel_request", { _id: id, _reason: reason });
