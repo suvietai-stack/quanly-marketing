@@ -1,45 +1,48 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowDownUp } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowDownUp, Power } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { listProgression, errMsg } from '@/lib/signals/api';
-import { filterSignals, type ReportFilter } from '@/lib/signals/report';
-import { progressionMetrics, type ProgressionMetrics } from '@/lib/signals/progression';
+import { useCurrentUser } from '@/lib/auth';
+import { deadlineReport, activateDeadlines, errMsg } from '@/lib/signals/api';
+import { deadlineLink, type DeadlineMetrics } from '@/lib/signals/deadlines';
+import type { ReportFilter } from '@/lib/signals/report';
 import type { Signal } from '@/lib/signals/catalog';
 
-const columns: { key: keyof ProgressionMetrics; label: string; hint: string }[] = [
-  { key:'open',label:'Tín hiệu đang chăm sóc',hint:'Tín hiệu đang mở, chưa hủy trong tập tín hiệu theo bộ lọc báo cáo; dùng trạng thái hiện tại.' },
-  { key:'recent',label:'Đã cập nhật trong 7 ngày',hint:'Tín hiệu đang mở có ít nhất một diễn biến hợp lệ trong 7 × 24 giờ tính đến hiện tại, không phải toàn bộ kỳ báo cáo.' },
-  { key:'rate',label:'Tỷ lệ cập nhật gần đây',hint:'Đã cập nhật trong 7 ngày / Tín hiệu đang chăm sóc × 100%. Không có tín hiệu mở: —.' },
-  { key:'stale',label:'Lâu chưa cập nhật',hint:'Tín hiệu đang mở quá 7 × 24 giờ từ diễn biến gần nhất hoặc mốc giao Sale mới hơn. Thiếu cả hai mốc thì không tự cảnh báo.' },
-  { key:'below',label:'Dưới mốc 5 lần',hint:'Tín hiệu đang mở có dưới 5 diễn biến hợp lệ trong toàn lịch sử. Đây là tiến độ ghi nhận ban đầu, không phải vi phạm.' },
-  { key:'updates',label:'Lượt cập nhật trong kỳ',hint:'Diễn biến hợp lệ tạo trong khoảng ngày chọn (giờ Việt Nam), độc lập với ngày tạo tín hiệu. Bảng Sale tính theo người thực sự cập nhật, không chuyển lượt cũ sang Sale mới.' },
+const columns: {key:keyof DeadlineMetrics;label:string;hint:string}[]=[
+  {key:'rate',label:'Tỷ lệ đúng hạn',hint:'Kỳ có note đúng hạn / kỳ đã đến hạn trong khoảng báo cáo. Loại kỳ được miễn; note muộn không sửa lịch sử trễ.'},
+  {key:'overdue',label:'Tín hiệu đang quá hạn',hint:'Khách đang mở còn tồn đọng cập nhật hiện tại; mỗi khách chỉ tính một lần.'},
+  {key:'today',label:'Cần cập nhật hôm nay',hint:'Kỳ chưa có note, hôm nay là ngày hạn cuối theo giờ Việt Nam.'},
+  {key:'tracking',label:'Tín hiệu đang theo dõi',hint:'Khách đang mở có Sale và đã bắt đầu chu kỳ theo dõi.'},
 ];
-const value = (m: ProgressionMetrics, key: keyof ProgressionMetrics) => key==='rate' ? m.rate==null ? '—' : `${m.rate.toLocaleString('vi-VN',{maximumFractionDigits:1})}%` : m[key];
-export function ProgressionReport({ data, f, userId, name, onSale }: { data: Signal[]; f: ReportFilter; userId: string | null; name:(id:string|null)=>string; onSale:(id:string)=>void }) {
-  const query=useQuery({queryKey:['sig:progression-period',userId,f.from,f.to],queryFn:()=>listProgression(f.from,f.to),enabled:!!userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
-  const [sort,setSort]=useState<{key:keyof ProgressionMetrics;desc:boolean}>({key:'stale',desc:true});
-  const analysis=useMemo(()=>{
-    const rows=query.data ?? {};
-    const cohort=filterSignals(data,f);
-    const period=filterSignals(data,{...f,from:undefined,to:undefined,saleId:undefined});
-    const ids=new Set(cohort.map(s=>s.assigned_to).filter((id):id is string=>!!id));
-    for(const s of period) for(const id of Object.keys(rows[s.id]?.authors ?? {})) if(!f.saleId || id===f.saleId) ids.add(id);
-    const now=Date.now();
-    return { total:progressionMetrics(cohort,period,rows,now,f.saleId), sales:[...ids].map(id=>({id,metrics:progressionMetrics(cohort.filter(s=>s.assigned_to===id),period,rows,now,id)})) };
-  },[data,f,query.data]);
-  const sorted=[...analysis.sales].sort((a,b)=>((a.metrics[sort.key]??-1)-(b.metrics[sort.key]??-1))*(sort.desc ? -1 : 1));
-  return <section className="space-y-3 pb-32 pr-24 md:pr-0 md:pb-0" aria-label="Hiệu suất cập nhật diễn biến">
-    <h2 className="text-xs font-semibold uppercase text-muted-foreground">Hiệu suất cập nhật diễn biến</h2>
-    <p className="text-xs text-muted-foreground">Trạng thái hiện tại trong tập tín hiệu đã lọc · Cửa sổ 7 ngày đến hiện tại · Lượt trong kỳ theo ngày ghi diễn biến.</p>
-    {query.error ? <p className="text-sm text-destructive">Không tải được diễn biến: {errMsg(query.error)}</p> : query.isPending ? <p className="text-sm text-muted-foreground">Đang tải diễn biến…</p> : <>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">{columns.map(c=><div key={c.key} className="min-w-0 rounded-lg border bg-card p-3 space-y-2"><div className="flex items-start justify-between gap-2"><span className="text-xs text-muted-foreground">{c.label}</span><TooltipProvider><Tooltip><TooltipTrigger asChild><Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" aria-label={`Định nghĩa ${c.label}`}>?</Button></TooltipTrigger><TooltipContent className="max-w-xs whitespace-normal">{c.hint}</TooltipContent></Tooltip></TooltipProvider></div><p className="text-2xl font-semibold">{value(analysis.total,c.key)}</p></div>)}</div>
-      <div className="flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp hiệu suất diễn biến" className="h-10 max-w-full rounded-md border bg-background px-2 text-sm" value={sort.key} onChange={e=>setSort({...sort,key:e.target.value as keyof ProgressionMetrics})}>{columns.map(c=><option key={c.key} value={c.key}>{c.label}</option>)}</select><Button variant="outline" size="icon" aria-label={sort.desc?'Đổi sang tăng dần':'Đổi sang giảm dần'} onClick={()=>setSort({...sort,desc:!sort.desc})}><ArrowDownUp className="h-4 w-4" /></Button></div>
-      {!sorted.length && <p className="text-sm text-muted-foreground">Chưa có dữ liệu Sale trong phạm vi lọc.</p>}
-      <div className="hidden md:block overflow-x-auto border rounded-lg"><table className="w-full text-sm"><thead className="bg-muted text-muted-foreground"><tr><th className="text-left p-3">Sale</th>{columns.map(c=><th key={c.key} title={c.hint} className="p-3 text-right min-w-28 font-medium">{c.label}</th>)}</tr></thead><tbody>{sorted.map(r=><tr key={r.id} className="border-t"><td className="p-3"><Button variant="link" className="p-0 h-auto text-left whitespace-normal" onClick={()=>onSale(r.id)}>{name(r.id)}</Button></td>{columns.map(c=><td key={c.key} className="p-3 text-right">{value(r.metrics,c.key)}</td>)}</tr>)}</tbody></table></div>
-      <div className="md:hidden space-y-3">{sorted.map(r=><article key={r.id} className="rounded-lg border bg-card p-3 space-y-2"><Button variant="link" className="p-0 h-auto whitespace-normal text-left" onClick={()=>onSale(r.id)}>{name(r.id)}</Button><dl className="grid grid-cols-2 gap-3">{columns.map(c=><div key={c.key} className="min-w-0"><dt className="text-xs text-muted-foreground">{c.label}</dt><dd className="text-base font-semibold">{value(r.metrics,c.key)}</dd></div>)}</dl></article>)}</div>
-      <p className="text-xs text-muted-foreground">5 lần là mốc ghi nhận ban đầu, không phải đích đến. Lượt ghi nhận không dùng để chấm điểm Sale. Lịch sử trước nâng cấp chưa xác minh được các lượt retry.</p>
+const value=(m:DeadlineMetrics,key:keyof DeadlineMetrics)=>key==='rate' ? m.rate==null ? 'Chưa có dữ liệu' : `${m.rate.toLocaleString('vi-VN',{maximumFractionDigits:1})}%` : m[key];
+export function ProgressionReport({ f,userId,name }: {data:Signal[];f:ReportFilter;userId:string|null;name:(id:string|null)=>string;onSale:(id:string)=>void}) {
+  const {can,isAdmin}=useCurrentUser();
+  const qc=useQueryClient();
+  const query=useQuery({queryKey:['sig:deadline-report',userId,f.from,f.to,f.saleId,f.needGroup,f.source],queryFn:()=>deadlineReport(f.from,f.to,f.saleId,f.needGroup,f.source),enabled:!!userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
+  const [sort,setSort]=useState<'rate'|'overdue'>('overdue');
+  const [desc,setDesc]=useState(true);
+  const [busy,setBusy]=useState(false);
+  const [confirm,setConfirm]=useState(false);
+  const activate=async()=>{
+    setBusy(true);
+    try {await activateDeadlines();await qc.invalidateQueries({predicate:q=>String(q.queryKey[0]).startsWith('sig:')});toast.success('Đã kích hoạt từ thời điểm hiện tại');setConfirm(false);}
+    catch(e){toast.error(errMsg(e));}finally{setBusy(false);}
+  };
+  const open=(state:string,sale?:string)=>{window.location.href=deadlineLink(state,sale,f.needGroup,f.source);};
+  const sorted=[...(query.data?.sales??[])].sort((a,b)=>((a[sort]??-1)-(b[sort]??-1))*(desc?-1:1));
+  return <section className="space-y-4 pb-40 md:pb-0" aria-label="Hiệu suất ghi nhận diễn biến Sale">
+    <h2 className="text-sm font-semibold uppercase">Hiệu suất ghi nhận diễn biến Sale</h2>
+    {query.error ? <p className="text-sm text-destructive">{errMsg(query.error)}</p> : !query.data ? <p className="text-sm text-muted-foreground">Đang tải…</p> : <>
+      {!query.data.activated_at && <div className="border-l-2 border-primary pl-3 space-y-2"><p className="text-sm">Quy định cập nhật chưa kích hoạt. Chưa tính trễ hoặc gửi nhắc.</p>{isAdmin && can('signal.manage') && (confirm ? <div className="space-y-2"><p className="text-sm">Bắt đầu theo dõi tất cả tín hiệu đang mở từ thời điểm hiện tại và bật nhắc Base hằng ngày lúc 08:00? Không chấm trễ dữ liệu cũ.</p><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={activate}>Xác nhận kích hoạt</Button><Button variant="outline" disabled={busy} onClick={()=>setConfirm(false)}>Hủy</Button></div></div> : <Button variant="outline" onClick={()=>setConfirm(true)}><Power className="h-4 w-4 mr-2"/>Kích hoạt quy định cập nhật</Button>)}</div>}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{columns.map(c=><article key={c.key} className="min-w-0 border rounded-lg bg-card p-3 space-y-2" title={c.hint}><p className="text-xs text-muted-foreground">{c.label}</p>{c.key==='overdue'||c.key==='today' ? <Button variant="link" className="p-0 h-auto text-2xl" onClick={()=>open(c.key,f.saleId)}>{value(query.data.total,c.key)}</Button> : <p className={c.key==='rate'&&query.data.total.rate==null?'text-sm font-semibold':'text-2xl font-semibold'}>{value(query.data.total,c.key)}</p>}</article>)}</div>
+      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground"><span>Kỳ đúng hạn / đến hạn: {query.data.total.on_time} / {query.data.total.due}</span><span>Kỳ trễ: {query.data.total.due-query.data.total.on_time}</span><span>Sắp đến hạn: {query.data.total.soon}</span></div>
+      <p className="text-sm">KR tham chiếu ≥90% · {query.data.total.rate==null?'Chưa có dữ liệu':`${query.data.total.rate>=90?'Đạt':'Chưa đạt'} · Mức đạt ${(query.data.total.rate/90*100).toLocaleString('vi-VN',{maximumFractionDigits:1})}%`}</p>
+      <p className="text-xs text-muted-foreground">Lịch sử lọc theo ngày đến hạn. Khách cần cập nhật là tình trạng hiện tại, không lọc theo ngày tạo. Áp dụng Sale, nhóm nhu cầu và nguồn đang chọn.</p>
+      <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-muted-foreground">Sắp xếp</span><Button variant={sort==='rate'?'secondary':'outline'} onClick={()=>setSort('rate')}>Tỷ lệ đúng hạn</Button><Button variant={sort==='overdue'?'secondary':'outline'} onClick={()=>setSort('overdue')}>Khách quá hạn</Button><Button variant="outline" size="icon" aria-label="Đảo chiều sắp xếp" onClick={()=>setDesc(x=>!x)}><ArrowDownUp/></Button></div>
+      <div className="hidden md:block overflow-x-auto border rounded-lg"><table className="w-full text-sm"><thead className="bg-muted"><tr>{['Sale','Đang theo dõi','Đúng hạn / đến hạn','Tỷ lệ đúng hạn','Quá hạn hiện tại','Hôm nay'].map(x=><th key={x} className="p-3 text-left">{x}</th>)}</tr></thead><tbody>{sorted.map(r=><tr key={r.sale_id} className="border-t"><td className="p-3">{name(r.sale_id)}</td><td className="p-3">{r.tracking}</td><td className="p-3">{r.on_time} / {r.due}</td><td className="p-3">{value(r,'rate')}</td><td className="p-3"><Button variant="link" onClick={()=>open('overdue',r.sale_id)}>{r.overdue}</Button></td><td className="p-3"><Button variant="link" onClick={()=>open('today',r.sale_id)}>{r.today}</Button></td></tr>)}</tbody></table></div>
+      <div className="md:hidden space-y-3">{sorted.map(r=><article key={r.sale_id} className="border rounded-lg bg-card p-3"><h3 className="font-semibold">{name(r.sale_id)}</h3><p className="text-sm mt-2">Đúng hạn / đến hạn: {r.on_time} / {r.due} · {value(r,'rate')}</p><div className="grid grid-cols-2 gap-2 mt-2"><p className="text-sm">Đang theo dõi: {r.tracking}</p><Button variant="link" onClick={()=>open('overdue',r.sale_id)}>Quá hạn: {r.overdue}</Button><Button variant="link" onClick={()=>open('today',r.sale_id)}>Hôm nay: {r.today}</Button></div></article>)}</div>
+      {!sorted.length && <p className="text-sm text-muted-foreground">Chưa có kỳ theo dõi trong phạm vi báo cáo.</p>}
     </>}
   </section>;
 }

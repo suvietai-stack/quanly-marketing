@@ -2902,6 +2902,125 @@ export type Database = {
         }
         Relationships: []
       }
+      signal_progression_assignments: {
+        Row: {
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          sale_id: string
+          signal_id: string
+          started_at: string
+        }
+        Insert: {
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          sale_id: string
+          signal_id: string
+          started_at: string
+        }
+        Update: {
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          sale_id?: string
+          signal_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_progression_assignments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_progression_assignments_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_progression_config: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          id: boolean
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          id?: boolean
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          id?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_progression_config_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_progression_periods: {
+        Row: {
+          assignment_id: string
+          due_on: string
+          ends_at: string
+          id: string
+          note_id: string | null
+          outcome: string
+          recorded_at: string | null
+          sequence: number
+          starts_at: string
+        }
+        Insert: {
+          assignment_id: string
+          due_on: string
+          ends_at: string
+          id?: string
+          note_id?: string | null
+          outcome?: string
+          recorded_at?: string | null
+          sequence: number
+          starts_at: string
+        }
+        Update: {
+          assignment_id?: string
+          due_on?: string
+          ends_at?: string
+          id?: string
+          note_id?: string | null
+          outcome?: string
+          recorded_at?: string | null
+          sequence?: number
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_progression_periods_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "signal_progression_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_progression_periods_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signal_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_posts: {
         Row: {
           created_at: string
@@ -4025,6 +4144,46 @@ export type Database = {
       signal_note_is_progression: {
         Args: { _event: string; _marker: boolean; _note: string }
         Returns: boolean
+      }
+      signal_progression_activate: {
+        Args: { _confirm: boolean }
+        Returns: string
+      }
+      signal_progression_deadlines: {
+        Args: never
+        Returns: {
+          calculated_at: string
+          deadline_state: string
+          due_on: string
+          next_due_on: string
+          overdue_days: number
+          sale_id: string
+          sequence: number
+          signal_id: string
+        }[]
+      }
+      signal_progression_history: {
+        Args: { _id: string }
+        Returns: {
+          assignment_id: string
+          due_on: string
+          ends_at: string
+          note_id: string
+          outcome: string
+          sale_id: string
+          sequence: number
+          starts_at: string
+        }[]
+      }
+      signal_progression_report: {
+        Args: {
+          _from?: string
+          _group?: string
+          _sale?: string
+          _source?: string
+          _to?: string
+        }
+        Returns: Json
       }
       signal_progression_rows: {
         Args: { _from?: string; _to?: string }

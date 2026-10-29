@@ -1,4 +1,4 @@
-export type ChipiNotice = { id: string; kind: string; read_at: string | null; created_at: string };
+export type ChipiNotice = { id: string; kind: string; read_at: string | null; created_at: string; payload?: {progression?:boolean; message?:string; deadline?:string; [key:string]:unknown} };
 export type ChipiState = "idle" | "hello" | "notification" | "assigned" | "new_job" | "urgent" | "due" | "success" | "celebrate" | "thinking" | "quiet" | "working" | "thankyou" | "attention";
 export const CHIPI_PLAY_INTERVAL_MS = 45_000;
 export const CHIPI_PLAY_DURATION_MS = 2400;
