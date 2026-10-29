@@ -51,7 +51,6 @@ import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as FinanceIncomingIndexRouteImport } from './routes/finance.incoming.index'
 import { Route as FinanceIncomingIdRouteImport } from './routes/finance.incoming.$id'
 import { Route as ApiPublicCassoWebhookRouteImport } from './routes/api/public/casso/webhook'
-import { Route as ApiPublicFinanceRemindCronRouteImport } from './routes/api/public/finance/remind-cron'
 import { Route as ApiPublicMetaDispatchRouteImport } from './routes/api/public/meta/dispatch'
 import { Route as ApiPublicMetaLeadsWebhookRouteImport } from './routes/api/public/meta/leads-webhook'
 import { Route as ApiPublicMetaMaintainCronRouteImport } from './routes/api/public/meta/maintain-cron'
@@ -276,12 +275,6 @@ const ApiPublicCassoWebhookRoute = ApiPublicCassoWebhookRouteImport.update({
   path: '/api/public/casso/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicFinanceRemindCronRoute =
-  ApiPublicFinanceRemindCronRouteImport.update({
-    id: '/api/public/finance/remind-cron',
-    path: '/api/public/finance/remind-cron',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicMetaDispatchRoute = ApiPublicMetaDispatchRouteImport.update({
   id: '/api/public/meta/dispatch',
   path: '/api/public/meta/dispatch',
@@ -397,7 +390,6 @@ export interface FileRoutesByFullPath {
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
-  '/api/public/finance/remind-cron': typeof ApiPublicFinanceRemindCronRoute
   '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
@@ -455,7 +447,6 @@ export interface FileRoutesByTo {
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
   '/finance/incoming': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
-  '/api/public/finance/remind-cron': typeof ApiPublicFinanceRemindCronRoute
   '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
@@ -514,7 +505,6 @@ export interface FileRoutesById {
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
-  '/api/public/finance/remind-cron': typeof ApiPublicFinanceRemindCronRoute
   '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
   '/api/public/meta/leads-webhook': typeof ApiPublicMetaLeadsWebhookRoute
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
@@ -574,7 +564,6 @@ export interface FileRouteTypes {
     | '/finance/incoming/$id'
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
-    | '/api/public/finance/remind-cron'
     | '/api/public/meta/dispatch'
     | '/api/public/meta/leads-webhook'
     | '/api/public/meta/maintain-cron'
@@ -632,7 +621,6 @@ export interface FileRouteTypes {
     | '/finance/incoming/$id'
     | '/finance/incoming'
     | '/api/public/casso/webhook'
-    | '/api/public/finance/remind-cron'
     | '/api/public/meta/dispatch'
     | '/api/public/meta/leads-webhook'
     | '/api/public/meta/maintain-cron'
@@ -690,7 +678,6 @@ export interface FileRouteTypes {
     | '/finance/incoming/$id'
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
-    | '/api/public/finance/remind-cron'
     | '/api/public/meta/dispatch'
     | '/api/public/meta/leads-webhook'
     | '/api/public/meta/maintain-cron'
@@ -749,7 +736,6 @@ export interface RootRouteChildren {
   FinanceIncomingIdRoute: typeof FinanceIncomingIdRoute
   FinanceIncomingIndexRoute: typeof FinanceIncomingIndexRoute
   ApiPublicCassoWebhookRoute: typeof ApiPublicCassoWebhookRoute
-  ApiPublicFinanceRemindCronRoute: typeof ApiPublicFinanceRemindCronRoute
   ApiPublicMetaDispatchRoute: typeof ApiPublicMetaDispatchRoute
   ApiPublicMetaLeadsWebhookRoute: typeof ApiPublicMetaLeadsWebhookRoute
   ApiPublicMetaMaintainCronRoute: typeof ApiPublicMetaMaintainCronRoute
@@ -1061,13 +1047,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCassoWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/finance/remind-cron': {
-      id: '/api/public/finance/remind-cron'
-      path: '/api/public/finance/remind-cron'
-      fullPath: '/api/public/finance/remind-cron'
-      preLoaderRoute: typeof ApiPublicFinanceRemindCronRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/meta/dispatch': {
       id: '/api/public/meta/dispatch'
       path: '/api/public/meta/dispatch'
@@ -1205,7 +1184,6 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceIncomingIdRoute: FinanceIncomingIdRoute,
   FinanceIncomingIndexRoute: FinanceIncomingIndexRoute,
   ApiPublicCassoWebhookRoute: ApiPublicCassoWebhookRoute,
-  ApiPublicFinanceRemindCronRoute: ApiPublicFinanceRemindCronRoute,
   ApiPublicMetaDispatchRoute: ApiPublicMetaDispatchRoute,
   ApiPublicMetaLeadsWebhookRoute: ApiPublicMetaLeadsWebhookRoute,
   ApiPublicMetaMaintainCronRoute: ApiPublicMetaMaintainCronRoute,
