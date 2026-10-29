@@ -226,7 +226,29 @@ export function SignalsPage() {
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </button>
       )}
-      <div className="rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
+      {/* Mobile: bộ lọc nhanh gọn trong hàng cuộn ngang; nhóm dài nằm trong sheet "Bộ lọc". */}
+      <div className="md:hidden space-y-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1" aria-label="Lọc theo trạng thái">
+          {QUICK.map((x) => (
+            <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }}
+              className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-card hover:bg-muted/60")}>
+              {x.label} <span className="opacity-70">{count(x.k)}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1" aria-label="Hạn cập nhật diễn biến">
+          <button onClick={() => setDeadlineFilter(null)} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", !deadlineFilter ? "bg-secondary text-secondary-foreground border-secondary font-medium" : "bg-card")}>Tất cả hạn</button>
+          {(['today', 'soon', 'overdue'] as const).map((k) => (
+            <button key={k} onClick={() => { setCare({ on: false }); setDeadlineFilter(k); }}
+              className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", deadlineFilter === k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-card")}>
+              {k === 'today' ? 'Cần cập nhật hôm nay' : DEADLINE_LABEL[k]} · {base.filter((s) => deadlines.data?.[s.id]?.deadline_state === k).length}
+            </button>
+          ))}
+        </div>
+        {deadlines.error && <p className="text-xs text-destructive">Không tải được hạn cập nhật: {errMsg(deadlines.error)}</p>}
+        <ActiveFilters f={f} name={name} onChange={setF} />
+      </div>
+      <div className="hidden md:block rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
         <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
           active={f.needGroup ?? ""} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: k || undefined })); }} />
         <ChipRow label="Trạng thái" items={QUICK.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
