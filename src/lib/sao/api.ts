@@ -32,7 +32,13 @@ export async function loadSao(userId: string, admin = false): Promise<SaoData> {
   ]);
   const error = wallet.error || gifts.error || rules.error || events.error;
   if (error) throw error;
-  return { balance: wallet.data?.balance ?? 0, held: wallet.data?.held ?? 0, gifts: gifts.data ?? [], ledger: ledger as Ledger[], requests: requests as Redemption[], rules: (rules.data ?? []) as Rule[], events: events.data ?? [] };
+  const resolvedGifts = await Promise.all((gifts.data ?? []).map(async (gift) => {
+    if (!gift.image_url.startsWith('storage:')) return gift;
+    const image = await supabase.storage.from('sao-gifts').createSignedUrl(gift.image_url.slice(8), 3600);
+    if (image.error) throw image.error;
+    return { ...gift, image_url: image.data.signedUrl, image_ref: gift.image_url };
+  }));
+  return { balance: wallet.data?.balance ?? 0, held: wallet.data?.held ?? 0, gifts: resolvedGifts, ledger: ledger as Ledger[], requests: requests as Redemption[], rules: (rules.data ?? []) as Rule[], events: events.data ?? [] };
 }
 export const saoOptions = (userId: string, admin = false) => queryOptions({ queryKey: ['sao', userId, admin], queryFn: () => loadSao(userId, admin), staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 15000 });
 export async function redeem(gift: string, request: string) { const r = await supabase.rpc('sao_redeem', { _gift: gift, _request: request }); if (r.error) throw r.error; return r.data; }
@@ -46,5 +52,5 @@ export async function uploadGift(file: File, userId: string) {
   const path = `${userId}/${crypto.randomUUID()}.${file.type.split('/')[1]}`;
   const r = await supabase.storage.from('sao-gifts').upload(path, file, { contentType: file.type, upsert: false });
   if (r.error) throw r.error;
-  return supabase.storage.from('sao-gifts').getPublicUrl(path).data.publicUrl;
+  return `storage:${path}`;
 }
