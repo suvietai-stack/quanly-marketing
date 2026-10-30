@@ -4723,6 +4723,15 @@ export type Database = {
         Args: { _kind: string; _period?: number; _year: number }
         Returns: string
       }
+      biz_deadline_remind: {
+        Args: {
+          _kind: string
+          _period: number
+          _period_kind: string
+          _year: number
+        }
+        Returns: number
+      }
       biz_deadline_save: { Args: { _data: Json }; Returns: undefined }
       biz_deadline_status: {
         Args: { _deadline: string; _first: string; _now?: string }
