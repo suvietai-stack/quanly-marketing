@@ -15,6 +15,8 @@ export interface BizMember {
   is_manager: boolean;
   effective_from: string;
   effective_to: string | null;
+  started_at: string;
+  ended_at: string | null;
 }
 
 export type BizValueKind = "money" | "count";
@@ -63,7 +65,7 @@ export const DEADLINE_KINDS: { key: string; label: string }[] = [
   { key: "report_year", label: "Báo cáo Năm" },
 ];
 
-export type BizDeadlineData = Record<string, { day?: number }>;
+export type BizDeadlineData = Record<string, { day?: number; phase?: "before" | "during" | "after"; hour?: number; minute?: number; exceptions?: Record<string, string> }>;
 
 /** Định dạng số tiền VNĐ gọn: 1,2 tỷ / 500 triệu / 50.000 đ. */
 export function fmtVnd(n: number): string {

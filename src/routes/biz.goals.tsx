@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Target } from "lucide-react";
+import { BizGoals } from "@/components/biz/BizGoals";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 
@@ -13,16 +13,10 @@ export const Route = createFileRoute("/biz/goals")({
     { name: "twitter:card", content: "summary" },
   ] }),
   component: () => (
-    <RequirePermission perm={["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"]}>
+    <RequirePermission perm={["biz.view_own", "biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"]}>
       <div>
         <PageHeader title="Mục tiêu KR" description="Lập mục tiêu năm, tự phân bổ xuống từng tháng, gửi lãnh đạo duyệt." />
-        <div className="rounded-xl border border-dashed bg-card p-10 text-center space-y-2">
-          <Target className="h-10 w-10 mx-auto text-muted-foreground/50" />
-          <div className="font-medium">Chưa có mục tiêu nào</div>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Chức năng lập mục tiêu năm, phân bổ 12 tháng và quy trình phê duyệt đang được xây dựng ở bước tiếp theo.
-          </p>
-        </div>
+        <BizGoals />
       </div>
     </RequirePermission>
   ),

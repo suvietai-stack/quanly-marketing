@@ -488,6 +488,58 @@ export type Database = {
           },
         ]
       }
+      biz_annual_goals: {
+        Row: {
+          created_at: string
+          department_id: string
+          department_name: string
+          id: string
+          official_version_id: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          department_name: string
+          id?: string
+          official_version_id?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          department_name?: string
+          id?: string
+          official_version_id?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_annual_goals_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_annual_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_goal_official_fk"
+            columns: ["official_version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_goal_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_deadline_config: {
         Row: {
           data: Json
@@ -523,8 +575,10 @@ export type Database = {
           department_id: string
           effective_from: string
           effective_to: string | null
+          ended_at: string | null
           id: string
           is_manager: boolean
+          started_at: string | null
           user_id: string
         }
         Insert: {
@@ -532,8 +586,10 @@ export type Database = {
           department_id: string
           effective_from?: string
           effective_to?: string | null
+          ended_at?: string | null
           id?: string
           is_manager?: boolean
+          started_at?: string | null
           user_id: string
         }
         Update: {
@@ -541,8 +597,10 @@ export type Database = {
           department_id?: string
           effective_from?: string
           effective_to?: string | null
+          ended_at?: string | null
           id?: string
           is_manager?: boolean
+          started_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -591,6 +649,163 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      biz_goal_events: {
+        Row: {
+          action: string
+          actor_id: string
+          comment: string | null
+          created_at: string
+          goal_id: string
+          id: string
+          payload: Json
+          version_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          comment?: string | null
+          created_at?: string
+          goal_id: string
+          id?: string
+          payload?: Json
+          version_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          comment?: string | null
+          created_at?: string
+          goal_id?: string
+          id?: string
+          payload?: Json
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_goal_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_goal_events_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "biz_annual_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_goal_events_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_goal_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_goal_items: {
+        Row: {
+          annual: number | null
+          definition: Json
+          id: string
+          metric_id: string
+          months: number[]
+          version_id: string
+        }
+        Insert: {
+          annual?: number | null
+          definition: Json
+          id?: string
+          metric_id: string
+          months?: number[]
+          version_id: string
+        }
+        Update: {
+          annual?: number | null
+          definition?: Json
+          id?: string
+          metric_id?: string
+          months?: number[]
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_goal_items_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "biz_kr_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_goal_items_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_goal_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_goal_versions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          goal_id: string
+          id: string
+          reason: string | null
+          review_comment: string | null
+          revision: number
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          goal_id: string
+          id?: string
+          reason?: string | null
+          review_comment?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          goal_id?: string
+          id?: string
+          reason?: string | null
+          review_comment?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_goal_versions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_goal_versions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "biz_annual_goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       biz_kr_metrics: {
         Row: {
@@ -4303,7 +4518,15 @@ export type Database = {
           id: string
         }[]
       }
+      biz_deadline_at: {
+        Args: { _kind: string; _period?: number; _year: number }
+        Returns: string
+      }
       biz_deadline_save: { Args: { _data: Json }; Returns: undefined }
+      biz_department_access: {
+        Args: { _department_id: string }
+        Returns: boolean
+      }
       biz_dept_save: {
         Args: {
           _active: boolean
@@ -4314,6 +4537,34 @@ export type Database = {
         }
         Returns: string
       }
+      biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
+      biz_goal_can_review: {
+        Args: { _department_id: string; _user_id: string }
+        Returns: boolean
+      }
+      biz_goal_decide: {
+        Args: {
+          _approve: boolean
+          _comment?: string
+          _revision: number
+          _version_id: string
+        }
+        Returns: undefined
+      }
+      biz_goal_save: {
+        Args: {
+          _items: Json
+          _revision: number
+          _submit?: boolean
+          _version_id: string
+        }
+        Returns: undefined
+      }
+      biz_goal_start: {
+        Args: { _reason?: string; _year: number }
+        Returns: string
+      }
+      biz_goals_read: { Args: { _year: number }; Returns: Json }
       biz_kr_save: {
         Args: {
           _active: boolean
@@ -4328,6 +4579,10 @@ export type Database = {
           _value_kind: string
         }
         Returns: string
+      }
+      biz_member_access: {
+        Args: { _department_id: string; _user_id: string }
+        Returns: boolean
       }
       biz_member_end: { Args: { _id: string }; Returns: undefined }
       biz_member_save: {
