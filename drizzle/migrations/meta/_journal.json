@@ -743,6 +743,13 @@
       "when": 1793345582873,
       "tag": "0105_biz_sequential_approvals",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1793345637686,
+      "tag": "0106_biz_approval_decision_fences",
+      "breakpoints": true
     }
   ]
 }
