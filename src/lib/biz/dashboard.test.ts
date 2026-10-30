@@ -8,4 +8,5 @@ it('zero actual is valid and ranked but missing actual is not',()=>{const rows=r
 it('unsupported ratios or zero target cannot invent a score',()=>{expect(evaluable(metric('0',true,null))).toBe(false);expect(evaluable({...metric('100'),definition:{...metric('100').definition,aggregation:'ratio'}})).toBe(false);});
 it('ongoing year does not label below 100 percent as failed',()=>{expect(metricState(metric('550000000'),true)).toBe('Theo dõi lũy kế');});
 it('ties share rank',()=>{expect(ranking([metric('100',true,'100'),metric('100',true,'100'),metric('50',true,'50')]).map(i=>i.rank)).toEqual([1,1,3]);});
+it('ranking distinguishes large values differing by one without rounding',()=>{expect(ranking([metric('99999999999999999998'),metric('99999999999999999999')],'actual').map(i=>i.item.actual)).toEqual(['99999999999999999999','99999999999999999998']);});
 });
