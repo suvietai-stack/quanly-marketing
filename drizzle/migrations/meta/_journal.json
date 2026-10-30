@@ -694,6 +694,34 @@
       "when": 1793340537588,
       "tag": "0098_biz_report_frozen_baselines",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1793341334144,
+      "tag": "0099_biz_dashboard_scoped_months",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1793341383361,
+      "tag": "0100_biz_dashboard_exact_aggregates",
+      "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1793341434345,
+      "tag": "0101_biz_dashboard_trends",
+      "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1793341622310,
+      "tag": "0102_biz_dashboard_completeness_summary",
+      "breakpoints": true
     }
   ]
 }
