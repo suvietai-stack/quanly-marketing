@@ -5337,6 +5337,10 @@ export type Database = {
         }[]
       }
       biz_appointment_save: { Args: { _data: Json }; Returns: string }
+      biz_appointment_scope: {
+        Args: { _at?: string; _dept: string; _id: string; _user: string }
+        Returns: boolean
+      }
       biz_approval_adopt: {
         Args: { _confirmed?: boolean; _kind: string; _version: string }
         Returns: string
@@ -5558,6 +5562,16 @@ export type Database = {
         }
         Returns: string
       }
+      biz_resolve_position: {
+        Args: {
+          _at?: string
+          _dep: string
+          _position: string
+          _sys: string
+          _team: string
+        }
+        Returns: string
+      }
       biz_run_assigned: {
         Args: { _pending?: boolean; _version: string }
         Returns: boolean
@@ -5568,6 +5582,7 @@ export type Database = {
         Returns: boolean
       }
       biz_workflow_manage: { Args: never; Returns: boolean }
+      biz_workflow_preview: { Args: { _data: Json }; Returns: Json }
       biz_workflow_save: { Args: { _data: Json }; Returns: string }
       biz_workflows_read: { Args: never; Returns: Json }
       branding_save: {
