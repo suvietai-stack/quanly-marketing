@@ -18,6 +18,7 @@ beforeAll(async () => {
  INSERT INTO profiles VALUES('${admin}','Admin','Đang hoạt động'),('${sale}','Sale','Đang hoạt động'),('${leader}','Leader','Đang hoạt động'),('${outsider}','Other','Đang hoạt động'),('${viewer}','Viewer','Đang hoạt động');`);
  await db.exec(readFileSync('drizzle/migrations/0088_biz_management_foundation.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0089_biz_annual_goals_and_scoped_foundation.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0090_biz_membership_serialized_boundaries.sql','utf8'));
  await db.exec(`GRANT USAGE ON SCHEMA auth TO authenticated; INSERT INTO biz_departments(id,name) VALUES('${dept}','Quà tặng'),('${otherDept}','Phân phối'); INSERT INTO biz_kr_metrics(id,department_id,name,unit,value_kind) VALUES('${metric}','${dept}','Doanh số','VNĐ','money');`);
  await actor(admin); await db.query('select biz_member_save($1,$2,false)',[dept,sale]); await db.query('select biz_member_save($1,$2,true)',[dept,leader]);
  await actor(sale); version = await scalar('select biz_goal_start(2027) v'); goal = await scalar('select goal_id v from biz_goal_versions where id=$1',[version]);
