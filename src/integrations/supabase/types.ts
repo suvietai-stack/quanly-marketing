@@ -488,6 +488,169 @@ export type Database = {
           },
         ]
       }
+      biz_deadline_config: {
+        Row: {
+          data: Json
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data?: Json
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_deadline_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_department_members: {
+        Row: {
+          created_at: string
+          department_id: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          is_manager: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_manager?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          is_manager?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_department_members_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_department_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_departments: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      biz_kr_metrics: {
+        Row: {
+          active: boolean
+          aggregation: string
+          created_at: string
+          department_id: string
+          description: string | null
+          direction: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          name: string
+          sort_order: number
+          unit: string
+          updated_at: string
+          value_kind: string
+        }
+        Insert: {
+          active?: boolean
+          aggregation?: string
+          created_at?: string
+          department_id: string
+          description?: string | null
+          direction?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          unit: string
+          updated_at?: string
+          value_kind?: string
+        }
+        Update: {
+          active?: boolean
+          aggregation?: string
+          created_at?: string
+          department_id?: string
+          description?: string | null
+          direction?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          unit?: string
+          updated_at?: string
+          value_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_kr_metrics_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
@@ -4139,6 +4302,37 @@ export type Database = {
           full_name: string
           id: string
         }[]
+      }
+      biz_deadline_save: { Args: { _data: Json }; Returns: undefined }
+      biz_dept_save: {
+        Args: {
+          _active: boolean
+          _description: string
+          _id: string
+          _name: string
+          _sort_order: number
+        }
+        Returns: string
+      }
+      biz_kr_save: {
+        Args: {
+          _active: boolean
+          _aggregation: string
+          _department_id: string
+          _description: string
+          _direction: string
+          _id: string
+          _name: string
+          _sort_order: number
+          _unit: string
+          _value_kind: string
+        }
+        Returns: string
+      }
+      biz_member_end: { Args: { _id: string }; Returns: undefined }
+      biz_member_save: {
+        Args: { _department_id: string; _is_manager: boolean; _user_id: string }
+        Returns: string
       }
       branding_save: {
         Args: {

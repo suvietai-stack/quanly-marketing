@@ -3,7 +3,7 @@ import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin,
-  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy,
+  Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,16 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, anyPerm: ["kpi.view_own", "kpi.view_all", "kpi.goal_create", "kpi.goal_edit", "kpi.goal_archive", "kpi.goal_delete", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"] },
       { to: "/reports-v2", label: "Báo cáo", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
+    ],
+  },
+  {
+    label: "Quản trị Kinh doanh",
+    items: [
+      { to: "/biz", label: "Tổng quan", icon: Briefcase, exact: true, anyPerm: ["biz.view_own", "biz.view_dept", "biz.view_all"] },
+      { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
+      { to: "/biz/goals", label: "Mục tiêu KR", icon: Target, anyPerm: ["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"] },
+      { to: "/biz/reports", label: "Báo cáo", icon: ClipboardCheck, anyPerm: ["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"] },
+      { to: "/biz/settings", label: "Cài đặt", icon: Settings, anyPerm: ["biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
     ],
   },
   {
