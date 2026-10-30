@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import {aggregate,children,sumDec,tone,type HFact} from './hierarchy';
-const def=(name:string,code:string|null,unit='VNĐ',value_kind='money')=>({name,code,unit,aggregation:'sum',direction:'higher',value_kind} as HFact['definition']);
+const def=(name:string,code:string|null,unit='VNĐ',value_kind='money')=>({name,code,unit,aggregation:'sum',direction:'higher',value_kind} as unknown as HFact['definition']);
 const f=(o:Partial<HFact>):HFact=>({user_id:'u1',month:1,baseline_id:'b',target_version_id:null,definition:def('Doanh số','revenue'),target:'100',actual:'50',system_id:'s1',system_name:'Đơn Hàng',department_id:'d1',department_name:'P1',team_id:null,...o} as HFact);
 describe('hierarchy dashboard',()=>{
  it('gộp hai KR Doanh số cùng mã chuẩn dù khác chữ hoa',()=>{const r=aggregate([f({}),f({user_id:'u2',department_id:'d2',definition:def('Doanh số','revenue'),target:'300',actual:'250'})],1,12);expect(r).toHaveLength(1);expect(r[0].target).toBe('400');expect(r[0].actual).toBe('300');expect(r[0].percent).toBe(75);});
