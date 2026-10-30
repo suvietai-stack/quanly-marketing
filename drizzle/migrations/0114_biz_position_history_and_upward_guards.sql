@@ -1,0 +1,9 @@
+DO $$DECLARE def text;BEGIN
+SELECT pg_get_functiondef('public.biz_appointment_save(jsonb)'::regprocedure) INTO def;
+def:=replace(def,'IF previous_.id IS NULL THEN RAISE EXCEPTION ''Không tìm thấy bổ nhiệm.'';END IF;', 'IF previous_.id IS NULL THEN RAISE EXCEPTION ''Không tìm thấy bổ nhiệm.'';END IF;IF previous_.status<>''active'' OR (previous_.ended_at IS NOT NULL AND previous_.ended_at<=clock_timestamp()) THEN RAISE EXCEPTION ''Quyết định đã kết thúc; không sửa lịch sử.'';END IF;');
+def:=replace(def,'IF previous_.id IS NULL OR previous_.user_id<>','IF previous_.status<>''active'' OR (previous_.ended_at IS NOT NULL AND previous_.ended_at<=clock_timestamp()) OR previous_.id IS NULL OR previous_.user_id<>');EXECUTE def;
+SELECT pg_get_functiondef('public.biz_approval_start(uuid,text,uuid,uuid,jsonb)'::regprocedure) INTO def;
+def:=replace(def,'org jsonb;', 'org jsonb; skipped_level int:=-1;');
+def:=replace(def,'IF approver=_owner AND coalesce((x->>''skip_if_submitter'')::boolean,false) THEN CONTINUE;END IF;', 'IF approver=_owner AND coalesce((x->>''skip_if_submitter'')::boolean,false) THEN IF sub=_owner THEN RAISE EXCEPTION ''Người nộp không thể làm người thay thế.'';END IF;SELECT greatest(skipped_level,level) INTO skipped_level FROM public.biz_positions WHERE id=(x->>''position_id'')::uuid;CONTINUE;END IF;');
+def:=replace(def,'IF jsonb_array_length(resolved)=0 THEN', 'IF skipped_level>=0 AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(resolved) z WHERE z->>''type''=''position'' AND (z->''position_snapshot''->>''level'')::int>skipped_level) THEN RAISE EXCEPTION ''Cần cấu hình người duyệt cấp trên hợp lệ.'';END IF;IF jsonb_array_length(resolved)=0 THEN');EXECUTE def;
+END $$;
