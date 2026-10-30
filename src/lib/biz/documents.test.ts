@@ -1,0 +1,11 @@
+import {expect,it} from 'vitest';
+import {deadlineStatus,googleDocsOk,metricPercent,numberText,type ReportItem} from './documents';
+it('accepts only safe Google Docs document URL',()=>{expect(googleDocsOk('https://docs.google.com/document/d/abcd_123/edit?usp=sharing')).toBe(true);for(const url of ['javascript:alert(1)','http://docs.google.com/document/d/abc','https://docs.google.com.evil.test/document/d/abc','https://evil@docs.google.com/document/d/abc'])expect(googleDocsOk(url)).toBe(false);});
+it('uses first successful submission not approval or resubmission',()=>expect(deadlineStatus('2026-11-01T10:00:00Z','2026-11-01T09:00:00Z','2026-11-10T00:00:00Z')).toBe('ontime'));
+it('classifies missing deadline separately',()=>expect(deadlineStatus(null,'2026-11-01T00:00:00Z','2026-11-10T00:00:00Z')).toBe('none'));
+it('classifies overdue without submission',()=>expect(deadlineStatus('2026-11-01T10:00:00Z',null,'2026-11-02T00:00:00Z')).toBe('overdue'));
+it('soon means within 24 hours and late submission stays late',()=>{expect(deadlineStatus('2026-11-02T10:00:00Z',null,'2026-11-01T11:00:00Z')).toBe('soon');expect(deadlineStatus('2026-11-02T10:00:00Z','2026-11-02T11:00:00Z','2026-11-03T00:00:00Z')).toBe('late');});
+const metric=(target:string,actual:string|null,direction:'higher'|'lower'='higher'):ReportItem=>({metric_id:'x',target,actual,annual_target:target,definition:{name:'Doanh số',unit:'VNĐ',description:null,aggregation:'sum',value_kind:'money',direction}});
+it('zero actual is real while missing stays undefined',()=>{expect(metricPercent(metric('500000000','0'))).toBe(0);expect(metricPercent(metric('500000000',null))).toBeNull();});
+it('zero target and lower direction do not fabricate ratio',()=>{expect(metricPercent(metric('0','100'))).toBeNull();expect(metricPercent(metric('10','5','lower'))).toBeNull();});
+it('large integer money stays exact in display',()=>expect(numberText('99999999999999999999')).toBe('99.999.999.999.999.999.999'));

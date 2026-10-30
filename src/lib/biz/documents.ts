@@ -1,0 +1,17 @@
+import type { GoalItem } from './goals';
+export type DocKind = 'plan' | 'report';
+export type PeriodKind = 'month' | 'quarter' | 'year';
+export type DocStatus = 'draft' | 'pending' | 'changes' | 'approved';
+export interface ReportItem { metric_id: string; definition: GoalItem['definition']; target: string | null; annual_target: string | null; actual: string | null; percent?: string | null; complete?: boolean; confirmed_months?: number[]; missing_months?: number[]; excluded_months?: number[]; difference?: string | null; remaining?: string | null; ytd_actual?: string | null; ytd_target?: string | null; ytd_difference?: string | null; annual_percent?: string | null; ytd_missing_months?: number[] }
+export interface DocVersion { id: string; version: number; revision: number; status: DocStatus; url: string | null; notes: string | null; reason: string | null; target_version_id: string | null; items: ReportItem[]; submitted_at: string | null; approved_at: string | null; approved_by: string | null; review_comment: string | null }
+export interface BizDocument { id: string; user_id: string; kind: DocKind; period_kind: PeriodKind; year: number; period: number; department_name: string; official_version_id: string | null; first_submitted_at: string | null; last_submitted_at: string | null; deadline: string | null; versions: DocVersion[] }
+export interface DocRow { user_id: string; employee_name: string; department_id: string; department_name: string; can_review: boolean; document: BizDocument | null; deadline: string | null; server_now: string }
+export interface MetricsResult { target_version_id: string | null; no_target: boolean; items: ReportItem[] }
+export const DOC_STATUS = { draft: 'Bản nháp', pending: 'Chờ duyệt', changes: 'Cần chỉnh sửa', approved: 'Đã duyệt' };
+export const TIME_STATUS = { none: 'Chưa cấu hình deadline', upcoming: 'Chưa đến hạn', soon: 'Sắp đến hạn', ontime: 'Đúng hạn', late: 'Nộp muộn', overdue: 'Quá hạn chưa nộp' };
+export function deadlineStatus(deadline: string | null, first: string | null, now: string): keyof typeof TIME_STATUS { if (!deadline) return 'none'; const end = Date.parse(deadline); if (first) return Date.parse(first) <= end ? 'ontime' : 'late'; const left = end - Date.parse(now); return left < 0 ? 'overdue' : left <= 86400000 ? 'soon' : 'upcoming'; }
+export function googleDocsOk(url: string) { return /^https:\/\/docs\.google\.com\/document\/d\/[A-Za-z0-9_-]+(\/(edit|view|preview))?(\?[A-Za-z0-9_=&%.-]*)?(#[A-Za-z0-9_=&%.-]*)?$/.test(url.trim()); }
+export function periodLabel(kind: PeriodKind, year: number, period: number) { return kind === 'month' ? `Tháng ${period}/${year}` : kind === 'quarter' ? `Quý ${period}/${year}` : `Năm ${year}`; }
+export function metricPercent(item: ReportItem): number | null { if (item.actual === null || item.target === null || item.definition.direction !== 'higher' || Number(item.target) <= 0) return null; return Number(item.actual) / Number(item.target) * 100; }
+export function numberText(value: string | null | undefined) { if (value === null || value === undefined) return '—'; if (/^-?\d+$/.test(value)) return BigInt(value).toLocaleString('vi-VN'); return Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 }); }
+export function progressTone(item: ReportItem) { const p = metricPercent(item); return item.actual === null ? 'text-muted-foreground' : !item.complete && item.complete !== undefined ? 'text-warning' : p === null ? 'text-muted-foreground' : p >= 100 ? 'text-success' : 'text-warning'; }

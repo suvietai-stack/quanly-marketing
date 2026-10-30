@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import { BizDocuments } from "@/components/biz/BizDocuments";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 
@@ -16,13 +16,7 @@ export const Route = createFileRoute("/biz/plans")({
     <RequirePermission perm={["biz.plan_submit", "biz.plan_approve", "biz.view_dept", "biz.view_all"]}>
       <div>
         <PageHeader title="Kế hoạch kinh doanh" description="Nộp và quản lý kế hoạch Tháng / Quý / Năm bằng đường dẫn Google Docs." />
-        <div className="rounded-xl border border-dashed bg-card p-10 text-center space-y-2">
-          <FileText className="h-10 w-10 mx-auto text-muted-foreground/50" />
-          <div className="font-medium">Chưa có kế hoạch nào</div>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Chức năng nộp kế hoạch bằng link Google Docs, kiểm soát deadline và phê duyệt đang được xây dựng ở bước tiếp theo.
-          </p>
-        </div>
+        <BizDocuments kind="plan" />
       </div>
     </RequirePermission>
   ),

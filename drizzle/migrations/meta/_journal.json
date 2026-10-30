@@ -638,6 +638,48 @@
       "when": 1793338871614,
       "tag": "0090_biz_membership_serialized_boundaries",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1793339629705,
+      "tag": "0091_biz_documents_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1793339695853,
+      "tag": "0092_biz_document_workflow",
+      "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1793339877644,
+      "tag": "0093_biz_document_aggregation_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1793339931965,
+      "tag": "0094_biz_base_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1793340028926,
+      "tag": "0095_biz_notification_recipient_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 96,
+      "version": "7",
+      "when": 1793340231798,
+      "tag": "0096_biz_deadline_and_reminder_access",
+      "breakpoints": true
     }
   ]
 }
