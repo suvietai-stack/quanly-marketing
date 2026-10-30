@@ -729,6 +729,27 @@
       "when": 1793343452756,
       "tag": "0103_biz_plan_revision_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1793345416054,
+      "tag": "0104_biz_organization_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1793345582873,
+      "tag": "0105_biz_sequential_approvals",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1793345637686,
+      "tag": "0106_biz_approval_decision_fences",
+      "breakpoints": true
     }
   ]
 }
