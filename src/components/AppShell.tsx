@@ -78,7 +78,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Quản trị Kinh doanh",
     items: [
       { to: "/biz", label: "Tổng quan", icon: Briefcase, exact: true, anyPerm: ["biz.view_own", "biz.view_dept", "biz.view_all"] },
-      { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
+      { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/goals", label: "Mục tiêu KR", icon: Target, anyPerm: ["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/reports", label: "Báo cáo", icon: ClipboardCheck, anyPerm: ["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/settings", label: "Cài đặt", icon: Settings, anyPerm: ["biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
