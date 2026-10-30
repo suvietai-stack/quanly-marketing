@@ -1113,6 +1113,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          attachments: Json
           created_at: string
           document_id: string
           id: string
@@ -1130,6 +1131,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          attachments?: Json
           created_at?: string
           document_id: string
           id?: string
@@ -1147,6 +1149,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          attachments?: Json
           created_at?: string
           document_id?: string
           id?: string
@@ -5493,6 +5496,7 @@ export type Database = {
       biz_document_save: {
         Args: {
           _actuals: Json
+          _attachments?: Json
           _id: string
           _notes: string
           _revision: number
