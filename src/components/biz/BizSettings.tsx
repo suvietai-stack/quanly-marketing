@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Building2, Pencil, Plus, Target, Timer, UserPlus, X } from "lucide-react";
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { RolePermissionMatrix } from "@/components/leave/FunctionSettings";
+import { BizDeadlineEditor } from "./BizDeadlineEditor";
 import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
   bizDeadlineQuery, bizDepartmentsQuery, bizKrMetricsQuery, bizMembersQuery,
@@ -41,7 +42,7 @@ export function BizSettings() {
       </TabsList>
       {canDept && <TabsContent value="dept" className="mt-4"><DeptTab canEdit={canDept} /></TabsContent>}
       {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
-      {canDeadline && <TabsContent value="deadline" className="mt-4"><DeadlineTab canEdit={canDeadline} /></TabsContent>}
+      {canDeadline && <TabsContent value="deadline" className="mt-4"><BizDeadlineEditor /></TabsContent>}
       {canRole && <TabsContent value="perm" className="mt-4">
         <RolePermissionMatrix categories={BIZ_PERM_CATEGORIES} personal={["biz.view_own"]} />
       </TabsContent>}
@@ -62,7 +63,7 @@ function DeptTab({ canEdit }: { canEdit: boolean }) {
   const [memberManager, setMemberManager] = useState(false);
 
   const nameOf = (id: string) => users.find((u) => u.id === id)?.fullName || "—";
-  const activeMembers = (deptId: string) => (members ?? []).filter((m) => m.department_id === deptId && !m.effective_to);
+  const activeMembers = (deptId: string) => (members ?? []).filter((m) => m.department_id === deptId && !m.ended_at);
 
   const addMember = async () => {
     if (!addMemberDept || !memberUser) return;
@@ -234,7 +235,7 @@ function KrDialog({ kr, onClose }: { kr: BizKrMetric | { new: string } | null; o
   const submit = async () => {
     try {
       await save.mutateAsync({
-        _id: m?.id ?? null, _department_id: isNew ? kr.new : m?.department_id,
+        _id: m?.id ?? null, _department_id: isNew ? kr.new : (m?.department_id ?? ""),
         _name: name, _description: desc, _unit: unit,
         _value_kind: kind, _aggregation: agg, _direction: dir, _sort_order: Number(sort) || 0, _active: active,
       });
