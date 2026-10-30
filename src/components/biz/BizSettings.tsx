@@ -222,9 +222,9 @@ function KrDialog({ kr, onClose }: { kr: BizKrMetric | { new: string } | null; o
   const [name, setName] = useState(m?.name ?? "");
   const [desc, setDesc] = useState(m?.description ?? "");
   const [unit, setUnit] = useState(m?.unit ?? "");
-  const [kind, setKind] = useState(m?.value_kind ?? "count");
-  const [agg, setAgg] = useState(m?.aggregation ?? "sum");
-  const [dir, setDir] = useState(m?.direction ?? "higher");
+  const [kind, setKind] = useState<string>(m?.value_kind ?? "count");
+  const [agg, setAgg] = useState<string>(m?.aggregation ?? "sum");
+  const [dir, setDir] = useState<string>(m?.direction ?? "higher");
   const [sort, setSort] = useState(String(m?.sort_order ?? 0));
   const [active, setActive] = useState(m?.active ?? true);
   const save = useBizKrSave();
