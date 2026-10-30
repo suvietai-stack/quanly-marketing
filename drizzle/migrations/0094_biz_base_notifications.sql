@@ -1,0 +1,13 @@
+ALTER TABLE public.notifications DROP CONSTRAINT notifications_kind_check;
+ALTER TABLE public.notifications ADD CONSTRAINT notifications_kind_check CHECK (kind = ANY (ARRAY['signal_new','signal_assigned','signal_care','leave_pending','leave_result','leave_cancel_request','leave_remind','leave_cc','att_witness','att_new','att_result','att_changed','att_submitted','content_assigned','content_review','content_revise','content_approved','content_published','content_remind','order_new','order_assigned','order_taken','order_review','order_revise','order_approved','order_delivered','order_remind','oq_new','oq_accepted','oq_info','oq_answered','oq_published','oq_done','oq_reask','oq_assigned','ot_reschedule','ot_reschedule_result','fin_pending','fin_needs_info','biz_submitted','biz_approved','biz_returned','biz_deadline']::text[]));
+CREATE FUNCTION public.biz_document_notify() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE d public.biz_documents;recipient uuid;label text;
+BEGIN
+ SELECT * INTO d FROM public.biz_documents WHERE id=NEW.document_id;
+ IF NEW.action NOT IN ('submitted','approved','returned') THEN RETURN NEW;END IF;
+ label:=CASE d.kind WHEN 'plan' THEN 'Kế hoạch' ELSE 'Báo cáo' END;
+ FOR recipient IN SELECT p.id FROM public.profiles p WHERE CASE WHEN NEW.action='submitted' THEN public.biz_doc_access(d.user_id,d.department_id,d.kind,true) AND p.id<>d.user_id AND private.sig_can(p.id,'biz.'||d.kind||'_approve') AND (private.sig_can(p.id,'biz.view_all') OR EXISTS(SELECT 1 FROM public.biz_department_members m WHERE m.user_id=p.id AND m.department_id=d.department_id AND m.is_manager AND m.ended_at IS NULL)) ELSE p.id=d.user_id AND private.sig_can(p.id,'biz.'||d.kind||'_submit') END LOOP
+  INSERT INTO public.notifications(recipient_id,kind,dedup_key,payload,zalo_status,push_status) VALUES(recipient,'biz_'||NEW.action,'biz:'||NEW.id||':'||recipient,jsonb_build_object('message',label||CASE NEW.action WHEN 'submitted' THEN ' đang chờ duyệt.' WHEN 'approved' THEN ' đã được duyệt.' ELSE ' cần chỉnh sửa.' END,'document_id',d.id,'kind',d.kind,'period_kind',d.period_kind,'year',d.year,'period',d.period,'user_id',d.user_id),'ineligible','none') ON CONFLICT(dedup_key) DO NOTHING;
+ END LOOP;RETURN NEW;
+END $$;
+CREATE TRIGGER biz_document_notify AFTER INSERT ON public.biz_document_events FOR EACH ROW EXECUTE FUNCTION public.biz_document_notify();

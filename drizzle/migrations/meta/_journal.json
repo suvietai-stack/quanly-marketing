@@ -659,6 +659,13 @@
       "when": 1793339877644,
       "tag": "0093_biz_document_aggregation_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1793339931965,
+      "tag": "0094_biz_base_notifications",
+      "breakpoints": true
     }
   ]
 }
