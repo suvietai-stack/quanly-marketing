@@ -49,7 +49,7 @@ export const NOTIFICATION_LABEL: Record<string, string> = {
   ot_reschedule: "Có đề xuất điều chỉnh ngày khách nhận cần bạn phản hồi.",
   ot_reschedule_result: "Đề xuất điều chỉnh ngày khách nhận của bạn đã có phản hồi.",
 };
-export const notificationText=(n:ChipiNotice)=>n.kind==='signal_care' && n.payload?.progression===true && typeof n.payload.message==='string' ? n.payload.message : NOTIFICATION_LABEL[n.kind] ?? 'Thông báo mới';
+export const notificationText=(n:ChipiNotice)=>(n.kind.startsWith('biz_') || (n.kind==='signal_care' && n.payload?.progression===true)) && typeof n.payload?.message==='string' ? n.payload.message : NOTIFICATION_LABEL[n.kind] ?? 'Thông báo mới';
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   return m < 1 ? "vừa xong" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`;
@@ -83,6 +83,11 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
     if (!n.read_at) {
       await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
+    }
+    if (n.kind.startsWith('biz_')) {
+      const params = new URLSearchParams({ year: String(n.payload?.year ?? ''), period: String(n.payload?.period ?? ''), period_kind: String(n.payload?.period_kind ?? ''), user: String(n.payload?.user_id ?? '') });
+      window.location.href = `/biz/${n.payload?.kind === 'plan' ? 'plans' : 'reports'}?${params}`;
+      return;
     }
     window.location.href = n.kind==='signal_care' && n.payload?.progression===true ? deadlineLink(n.payload.deadline,n.payload.sale_id) : n.kind.startsWith("fin_") ? `/finance/incoming/${n.bank_tx_id ?? ""}` : n.kind.startsWith("ot_") ? `/order-tracking/${n.ot_order_id ?? ""}` : n.kind.startsWith("oq_") ? oqLink(n.payload?.request_id ?? "", n.payload?.both ? null : n.oq_flow_id) : n.kind.startsWith("order_") ? orderLink(n.order_id ?? "") : n.kind.startsWith("content_") ? contentLink(n.content_id ?? "") : n.kind.startsWith("att_") ? `/attendance?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
