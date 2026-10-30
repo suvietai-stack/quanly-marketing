@@ -1,0 +1,15 @@
+CREATE OR REPLACE FUNCTION public.biz_dashboard_data(_year int,_period_kind text DEFAULT 'year',_period int DEFAULT 1,_department_id uuid DEFAULT NULL,_user_id uuid DEFAULT NULL,_mode text DEFAULT 'official') RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
+DECLARE r jsonb;opts jsonb;lo int;hi int;m int;current_month int;cum jsonb:='[]';quarters jsonb:='[]';missing jsonb;annual jsonb;current_data jsonb;
+BEGIN
+ r:=public.biz_dashboard_read(_year,_period_kind,_period,_department_id,_user_id,_mode);lo:=(r->>'lo')::int;hi:=(r->>'hi')::int;
+ opts:=public.biz_dashboard_read(_year,_period_kind,_period,NULL,NULL,_mode);
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',x->>'user_id','employee_name',x->>'employee_name','department_id',x->>'department_id','department_name',x->>'department_name','month',(x->>'month')::int,'metric_id',k.id,'baseline_id',NULL,'target_version_id',NULL,'definition',jsonb_build_object('name',k.name,'unit',k.unit,'aggregation',k.aggregation,'direction',k.direction,'value_kind',k.value_kind),'target',NULL,'actual',NULL)),'[]') INTO missing
+ FROM jsonb_array_elements(r->'roster') x JOIN public.biz_kr_metrics k ON k.department_id=(x->>'department_id')::uuid AND k.active
+ WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r->'facts') f WHERE f->>'user_id'=x->>'user_id' AND f->>'month'=x->>'month');
+ r:=jsonb_set(r,'{facts}',(r->'facts')||missing);
+ FOR m IN 1..12 LOOP cum:=cum||coalesce((SELECT jsonb_agg(x||jsonb_build_object('group_id',m::text,'group_name','Tháng '||m)) FROM jsonb_array_elements(public.biz_dashboard_aggregate(r->'facts',1,m)) x),'[]');END LOOP;
+ FOR m IN 1..4 LOOP quarters:=quarters||coalesce((SELECT jsonb_agg(x||jsonb_build_object('group_id',m::text,'group_name','Quý '||m)) FROM jsonb_array_elements(public.biz_dashboard_aggregate(r->'facts',(m-1)*3+1,m*3)) x),'[]');END LOOP;
+ current_month:=CASE WHEN _year<extract(year FROM now() AT TIME ZONE 'Asia/Ho_Chi_Minh') THEN 12 WHEN _year>extract(year FROM now() AT TIME ZONE 'Asia/Ho_Chi_Minh') THEN 0 ELSE extract(month FROM now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::int END;
+ annual:=public.biz_dashboard_aggregate(r->'facts',1,12);current_data:=public.biz_dashboard_aggregate(r->'facts',1,current_month);
+ RETURN r||jsonb_build_object('options_roster',opts->'roster','totals',public.biz_dashboard_aggregate(r->'facts',lo,hi),'months',public.biz_dashboard_aggregate(r->'facts',1,12,'month'),'quarters',quarters,'cumulative',cum,'annual',annual,'current',current_data,'remaining',coalesce((SELECT jsonb_agg(jsonb_build_object('metric_key',x->>'metric_key','value',((x->>'target')::numeric-(y->>'actual')::numeric)::text)) FROM jsonb_array_elements(annual) x LEFT JOIN LATERAL (SELECT v FROM jsonb_array_elements(current_data) v WHERE v->>'metric_key'=x->>'metric_key') t ON true CROSS JOIN LATERAL (SELECT t.v y) z),'[]'),'departments',public.biz_dashboard_aggregate(r->'facts',lo,hi,'department'),'employees',public.biz_dashboard_aggregate(r->'facts',lo,hi,'employee'));
+END $$;
