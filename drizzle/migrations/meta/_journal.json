@@ -687,6 +687,13 @@
       "when": 1793340481961,
       "tag": "0097_biz_report_baseline_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1793340537588,
+      "tag": "0098_biz_report_frozen_baselines",
+      "breakpoints": true
     }
   ]
 }
