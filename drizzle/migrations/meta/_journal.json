@@ -806,6 +806,13 @@
       "when": 1793347945938,
       "tag": "0114_biz_position_history_and_upward_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1793348006448,
+      "tag": "0115_biz_isolated_demo",
+      "breakpoints": true
     }
   ]
 }
