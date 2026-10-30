@@ -4719,6 +4719,21 @@ export type Database = {
           id: string
         }[]
       }
+      biz_dashboard_aggregate: {
+        Args: { _axis?: string; _facts: Json; _hi: number; _lo: number }
+        Returns: Json
+      }
+      biz_dashboard_data: {
+        Args: {
+          _department_id?: string
+          _mode?: string
+          _period?: number
+          _period_kind?: string
+          _user_id?: string
+          _year: number
+        }
+        Returns: Json
+      }
       biz_dashboard_read: {
         Args: {
           _department_id?: string

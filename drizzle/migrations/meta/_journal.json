@@ -701,6 +701,13 @@
       "when": 1793341334144,
       "tag": "0099_biz_dashboard_scoped_months",
       "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1793341383361,
+      "tag": "0100_biz_dashboard_exact_aggregates",
+      "breakpoints": true
     }
   ]
 }
