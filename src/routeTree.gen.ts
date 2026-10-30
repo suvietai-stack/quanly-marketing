@@ -29,7 +29,6 @@ import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as BizIndexRouteImport } from './routes/biz.index'
 import { Route as BizApprovalsRouteImport } from './routes/biz.approvals'
-import { Route as BizDemoRouteImport } from './routes/biz.demo'
 import { Route as BizGoalsRouteImport } from './routes/biz.goals'
 import { Route as BizPlansRouteImport } from './routes/biz.plans'
 import { Route as BizReportsRouteImport } from './routes/biz.reports'
@@ -171,11 +170,6 @@ const BizIndexRoute = BizIndexRouteImport.update({
 const BizApprovalsRoute = BizApprovalsRouteImport.update({
   id: '/biz/approvals',
   path: '/biz/approvals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BizDemoRoute = BizDemoRouteImport.update({
-  id: '/biz/demo',
-  path: '/biz/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BizGoalsRoute = BizGoalsRouteImport.update({
@@ -415,7 +409,6 @@ export interface FileRoutesByFullPath {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/approvals': typeof BizApprovalsRoute
-  '/biz/demo': typeof BizDemoRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
   '/biz/reports': typeof BizReportsRoute
@@ -480,7 +473,6 @@ export interface FileRoutesByTo {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/approvals': typeof BizApprovalsRoute
-  '/biz/demo': typeof BizDemoRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
   '/biz/reports': typeof BizReportsRoute
@@ -546,7 +538,6 @@ export interface FileRoutesById {
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/approvals': typeof BizApprovalsRoute
-  '/biz/demo': typeof BizDemoRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
   '/biz/reports': typeof BizReportsRoute
@@ -613,7 +604,6 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/biz/approvals'
-    | '/biz/demo'
     | '/biz/goals'
     | '/biz/plans'
     | '/biz/reports'
@@ -678,7 +668,6 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/biz/approvals'
-    | '/biz/demo'
     | '/biz/goals'
     | '/biz/plans'
     | '/biz/reports'
@@ -743,7 +732,6 @@ export interface FileRouteTypes {
     | '/videos'
     | '/web-contents'
     | '/biz/approvals'
-    | '/biz/demo'
     | '/biz/goals'
     | '/biz/plans'
     | '/biz/reports'
@@ -809,7 +797,6 @@ export interface RootRouteChildren {
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
   BizApprovalsRoute: typeof BizApprovalsRoute
-  BizDemoRoute: typeof BizDemoRoute
   BizGoalsRoute: typeof BizGoalsRoute
   BizPlansRoute: typeof BizPlansRoute
   BizReportsRoute: typeof BizReportsRoute
@@ -995,13 +982,6 @@ declare module '@tanstack/react-router' {
       path: '/biz/approvals'
       fullPath: '/biz/approvals'
       preLoaderRoute: typeof BizApprovalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/biz/demo': {
-      id: '/biz/demo'
-      path: '/biz/demo'
-      fullPath: '/biz/demo'
-      preLoaderRoute: typeof BizDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biz/goals': {
@@ -1321,7 +1301,6 @@ const rootRouteChildren: RootRouteChildren = {
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
   BizApprovalsRoute: BizApprovalsRoute,
-  BizDemoRoute: BizDemoRoute,
   BizGoalsRoute: BizGoalsRoute,
   BizPlansRoute: BizPlansRoute,
   BizReportsRoute: BizReportsRoute,
