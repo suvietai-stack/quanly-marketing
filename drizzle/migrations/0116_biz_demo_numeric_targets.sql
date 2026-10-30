@@ -1,0 +1,1 @@
+DO $$DECLARE def text;BEGIN SELECT pg_get_functiondef('public.biz_demo_build()'::regprocedure) INTO def;IF position('1500000000+i*350000000' IN def)=0 THEN RAISE EXCEPTION 'Không khớp mục tiêu DEMO';END IF;def:=replace(def,'1500000000+i*350000000','1500000000::numeric+i*350000000::numeric');EXECUTE def;END $$;

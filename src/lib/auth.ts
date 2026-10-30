@@ -68,6 +68,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P('biz.deadline_manage', 'Quản lý deadline nộp', 'Quản trị Kinh doanh', 'Cài đặt'),
   P('biz.org_manage', 'Quản lý cơ cấu tổ chức và phân công', 'Quản trị Kinh doanh', 'Cài đặt'),
   P('biz.workflow_manage', 'Cấu hình quy trình phê duyệt', 'Quản trị Kinh doanh', 'Cài đặt'),
+  P('biz.demo_manage', 'Xem và thao tác DEMO Kinh doanh', 'Quản trị Kinh doanh', 'Cài đặt'),
   P('biz.approval_view', 'Xem Trung tâm Phê duyệt trong phạm vi', 'Quản trị Kinh doanh', 'Duyệt'),
   // ===== A. Tổng Quan =====
   P("overview.view", "Xem Tổng Quan", "Tổng Quan", "Tổng quan"),

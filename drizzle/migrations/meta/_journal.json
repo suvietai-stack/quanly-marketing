@@ -778,6 +778,55 @@
       "when": 1793346510242,
       "tag": "0110_biz_approval_history_and_guard_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1793347400894,
+      "tag": "0111_biz_positions_appointments",
+      "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1793347457212,
+      "tag": "0112_biz_dynamic_position_workflows",
+      "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1793347504408,
+      "tag": "0113_biz_role_scope_and_review_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 114,
+      "version": "7",
+      "when": 1793347945938,
+      "tag": "0114_biz_position_history_and_upward_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1793348006448,
+      "tag": "0115_biz_isolated_demo",
+      "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1793348310834,
+      "tag": "0116_biz_demo_numeric_targets",
+      "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1793348414112,
+      "tag": "0117_biz_demo_submission_deadline",
+      "breakpoints": true
     }
   ]
 }
