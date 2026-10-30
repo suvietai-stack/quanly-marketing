@@ -650,6 +650,207 @@ export type Database = {
         }
         Relationships: []
       }
+      biz_document_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          document_id: string
+          id: string
+          payload: Json
+          version_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          document_id: string
+          id?: string
+          payload: Json
+          version_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          payload?: Json
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_document_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "biz_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_document_events_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_document_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_document_versions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          document_id: string
+          id: string
+          items: Json
+          notes: string | null
+          reason: string | null
+          review_comment: string | null
+          revision: number
+          status: string
+          submitted_at: string | null
+          target_version_id: string | null
+          url: string | null
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          document_id: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          reason?: string | null
+          review_comment?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          target_version_id?: string | null
+          url?: string | null
+          version: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          reason?: string | null
+          review_comment?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          target_version_id?: string | null
+          url?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_document_versions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "biz_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_document_versions_target_version_id_fkey"
+            columns: ["target_version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_goal_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_documents: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          deadline_frozen: boolean
+          department_id: string
+          department_name: string
+          first_submitted_at: string | null
+          id: string
+          kind: string
+          last_submitted_at: string | null
+          official_version_id: string | null
+          period: number
+          period_kind: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          deadline_frozen?: boolean
+          department_id: string
+          department_name: string
+          first_submitted_at?: string | null
+          id?: string
+          kind: string
+          last_submitted_at?: string | null
+          official_version_id?: string | null
+          period: number
+          period_kind: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          deadline_frozen?: boolean
+          department_id?: string
+          department_name?: string
+          first_submitted_at?: string | null
+          id?: string
+          kind?: string
+          last_submitted_at?: string | null
+          official_version_id?: string | null
+          period?: number
+          period_kind?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_document_official"
+            columns: ["official_version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_documents_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_goal_events: {
         Row: {
           action: string
@@ -4537,6 +4738,12 @@ export type Database = {
         }
         Returns: string
       }
+      biz_doc_access: {
+        Args: { _dept: string; _kind: string; _review?: boolean; _user: string }
+        Returns: boolean
+      }
+      biz_docs_url_ok: { Args: { _url: string }; Returns: boolean }
+      biz_document_access: { Args: { _id: string }; Returns: boolean }
       biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
       biz_goal_can_review: {
         Args: { _department_id: string; _user_id: string }
@@ -4587,6 +4794,14 @@ export type Database = {
       biz_member_end: { Args: { _id: string }; Returns: undefined }
       biz_member_save: {
         Args: { _department_id: string; _is_manager: boolean; _user_id: string }
+        Returns: string
+      }
+      biz_period_department: {
+        Args: { _kind: string; _period: number; _user: string; _year: number }
+        Returns: string
+      }
+      biz_period_start: {
+        Args: { _kind: string; _period: number; _year: number }
         Returns: string
       }
       branding_save: {
