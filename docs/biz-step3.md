@@ -25,4 +25,4 @@ Migrations 0091–0098: biz_documents, biz_document_versions, biz_document_event
 - Dashboard biểu đồ/phòng/nhân viên, xếp hạng và tỷ lệ đúng hạn dùng RPC tổng hợp hiện có.
 - Lập lịch nhắc tự động chưa bật; không tự nhắc toàn bộ dữ liệu vận hành. Hiện dùng nhắc thủ công.
 - Quy tắc tỷ lệ lower/target=0 cần định nghĩa trước khi chấm đạt; hiện không suy đoán.
-- Phân tích từng quý đạt/chưa đạt trên trang năm nâng cao dành Bước 4; có thể xem từng quý bằng bộ chọn kỳ hiện tại.
+- Trang năm có bảng từng quý đạt/chưa đạt/chưa đủ dữ liệu, không kết luận đạt khi thiếu tháng.
