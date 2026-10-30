@@ -620,6 +620,55 @@ export type Database = {
           },
         ]
       }
+      biz_department_system_history: {
+        Row: {
+          actor_id: string
+          department_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          system_id: string
+        }
+        Insert: {
+          actor_id: string
+          department_id: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          system_id: string
+        }
+        Update: {
+          actor_id?: string
+          department_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          system_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_department_system_history_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_department_system_history_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_department_system_history_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "biz_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_departments: {
         Row: {
           active: boolean
@@ -628,6 +677,7 @@ export type Database = {
           id: string
           name: string
           sort_order: number
+          system_id: string | null
           updated_at: string
         }
         Insert: {
@@ -637,6 +687,7 @@ export type Database = {
           id?: string
           name: string
           sort_order?: number
+          system_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -646,9 +697,18 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number
+          system_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "biz_departments_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "biz_systems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       biz_document_events: {
         Row: {
@@ -1060,6 +1120,212 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "biz_kr_metrics_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_management_assignments: {
+        Row: {
+          actor_id: string
+          department_id: string | null
+          ended_at: string | null
+          id: string
+          position: string
+          started_at: string
+          system_id: string | null
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          department_id?: string | null
+          ended_at?: string | null
+          id?: string
+          position: string
+          started_at?: string
+          system_id?: string | null
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          department_id?: string | null
+          ended_at?: string | null
+          id?: string
+          position?: string
+          started_at?: string
+          system_id?: string | null
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_management_assignments_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_management_assignments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_management_assignments_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "biz_systems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_management_assignments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "biz_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_management_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_org_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_org_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_systems: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      biz_team_members: {
+        Row: {
+          actor_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_team_members_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "biz_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_teams: {
+        Row: {
+          active: boolean
+          created_at: string
+          department_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          department_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          department_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_teams_department_id_fkey"
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "biz_departments"
@@ -4878,6 +5144,9 @@ export type Database = {
         Args: { _department_id: string; _is_manager: boolean; _user_id: string }
         Returns: string
       }
+      biz_org_can_manage: { Args: never; Returns: boolean }
+      biz_org_read: { Args: never; Returns: Json }
+      biz_org_save: { Args: { _action: string; _data: Json }; Returns: string }
       biz_period_department: {
         Args: { _kind: string; _period: number; _user: string; _year: number }
         Returns: string
@@ -4905,6 +5174,10 @@ export type Database = {
           _year: number
         }
         Returns: string
+      }
+      biz_scope_ok: {
+        Args: { _actor: string; _at?: string; _dept: string; _user: string }
+        Returns: boolean
       }
       branding_save: {
         Args: {
