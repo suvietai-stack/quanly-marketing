@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Building2, Pencil, Plus, Target, Timer, UserPlus, X } from "lucide-react";
@@ -7,12 +7,12 @@ import { RolePermissionMatrix } from "@/components/leave/FunctionSettings";
 import { BizDeadlineEditor } from "./BizDeadlineEditor";
 import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
-  bizDeadlineQuery, bizDepartmentsQuery, bizKrMetricsQuery, bizMembersQuery,
-  useBizDeadlineSave, useBizDeptSave, useBizKrSave, useBizMemberEnd, useBizMemberSave,
+  bizDepartmentsQuery, bizKrMetricsQuery, bizMembersQuery,
+  useBizDeptSave, useBizKrSave, useBizMemberEnd, useBizMemberSave,
 } from "@/lib/biz/queries";
 import {
-  AGGREGATION_LABELS, DEADLINE_KINDS, DIRECTION_LABELS, VALUE_KIND_LABELS,
-  type BizDeadlineData, type BizDepartment, type BizKrMetric,
+  AGGREGATION_LABELS, DIRECTION_LABELS, VALUE_KIND_LABELS,
+  type BizDepartment, type BizKrMetric,
 } from "@/lib/biz/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,58 +288,3 @@ function KrDialog({ kr, onClose }: { kr: BizKrMetric | { new: string } | null; o
   );
 }
 
-// ============ Deadline ============
-function DeadlineTab({ canEdit }: { canEdit: boolean }) {
-  const { data } = useQuery(bizDeadlineQuery);
-  const save = useBizDeadlineSave();
-  const [form, setForm] = useState<BizDeadlineData | null>(null);
-  const cur = form ?? data ?? {};
-
-  const setDay = (key: string, v: string) => {
-    const n = Number(v);
-    setForm({ ...cur, [key]: v === "" ? {} : { day: n } });
-  };
-
-  const invalid = DEADLINE_KINDS.some(({ key }) => {
-    const d = cur[key]?.day;
-    return d !== undefined && (!Number.isInteger(d) || d < 1 || d > 31);
-  });
-
-  const submit = async () => {
-    try {
-      await save.mutateAsync({ _data: cur });
-      toast.success("Đã lưu cấu hình deadline.");
-      setForm(null);
-    } catch (e: any) {
-      toast.error(e?.message || "Không lưu được cấu hình.");
-    }
-  };
-
-  return (
-    <div className="space-y-4 max-w-xl">
-      <p className="text-sm text-muted-foreground">
-        Hạn nộp là <b>ngày trong tháng đầu của kỳ</b> (giờ Việt Nam). Để trống nếu chưa áp dụng deadline cho loại đó.
-      </p>
-      <div className="rounded-xl border bg-card divide-y">
-        {DEADLINE_KINDS.map(({ key, label }) => (
-          <div key={key} className="flex items-center gap-3 px-4 py-3">
-            <div className="flex-1 text-sm font-medium">{label}</div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Ngày</span>
-              <Input
-                type="number" min={1} max={31} className="w-20 h-9" disabled={!canEdit}
-                value={cur[key]?.day ?? ""} onChange={(e) => setDay(key, e.target.value)}
-                aria-label={`Deadline ${label}`}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      {canEdit && (
-        <Button disabled={invalid || save.isPending || form === null} onClick={submit}>
-          {invalid ? "Ngày phải từ 1 đến 31" : "Lưu cấu hình deadline"}
-        </Button>
-      )}
-    </div>
-  );
-}
