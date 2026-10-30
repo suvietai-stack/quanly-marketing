@@ -52,6 +52,19 @@ export const PERMISSIONS: PermissionDef[] = [
   P('sao.program_manage', 'Quản lý chương trình thưởng Sao', 'Sao Sứ Việt'),
   P('sao.shop_manage', 'Quản lý quà và xác nhận phát quà', 'Sao Sứ Việt'),
   P('sao.manual_grant', 'Cộng Sao thủ công có lý do', 'Sao Sứ Việt'),
+  // ===== Quản trị Kinh doanh =====
+  P('biz.view_own', 'Xem dữ liệu cá nhân', 'Quản trị Kinh doanh', 'Xem'),
+  P('biz.view_dept', 'Xem dữ liệu phòng ban mình', 'Quản trị Kinh doanh', 'Xem'),
+  P('biz.view_all', 'Xem dashboard toàn bộ kinh doanh', 'Quản trị Kinh doanh', 'Xem'),
+  P('biz.plan_submit', 'Nộp kế hoạch kinh doanh', 'Quản trị Kinh doanh', 'Nộp'),
+  P('biz.goal_submit', 'Lập và gửi mục tiêu KR', 'Quản trị Kinh doanh', 'Nộp'),
+  P('biz.report_submit', 'Nộp báo cáo kinh doanh', 'Quản trị Kinh doanh', 'Nộp'),
+  P('biz.plan_approve', 'Duyệt kế hoạch', 'Quản trị Kinh doanh', 'Duyệt'),
+  P('biz.goal_approve', 'Duyệt mục tiêu KR', 'Quản trị Kinh doanh', 'Duyệt'),
+  P('biz.report_approve', 'Duyệt báo cáo', 'Quản trị Kinh doanh', 'Duyệt'),
+  P('biz.kr_manage', 'Quản lý chỉ số KR', 'Quản trị Kinh doanh', 'Cài đặt'),
+  P('biz.dept_manage', 'Quản lý phòng ban kinh doanh', 'Quản trị Kinh doanh', 'Cài đặt'),
+  P('biz.deadline_manage', 'Quản lý deadline nộp', 'Quản trị Kinh doanh', 'Cài đặt'),
   // ===== A. Tổng Quan =====
   P("overview.view", "Xem Tổng Quan", "Tổng Quan", "Tổng quan"),
   P("overview.alerts", "Xem việc cần chú ý", "Tổng Quan", "Tổng quan"),
@@ -845,6 +858,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "local.view", "local.view_all",
     "video.view", "video.view_all",
     "order.view", "order.view_all", "order.report_view",
+    "biz.view_all",
   ],
 };
 
