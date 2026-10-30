@@ -1,0 +1,14 @@
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import type { DashboardData } from './dashboard';
+import type { DashboardFilters } from './dashboardQueries';
+import type { OrgData, Workflow } from './organization';
+import type { Appointment } from './positions';
+import type { GoalItem } from './goals';
+export interface DemoDocument { id: string; kind: 'plan' | 'report'; period_kind: 'month' | 'quarter' | 'year'; period: number; year: number; user_id: string; employee_name: string; department_id: string; department_name: string; system_id: string; team_id: string | null; first_submitted_at: string | null; deadline: string; resubmitted_at?: string; approval_status: string; current_step?: number; workflow: Workflow | null; sample_content: string; events: { label: string; at: string; comment?: string; simulated: boolean }[] }
+export interface DemoGoal { id: string; user_id: string; employee_name: string; department_id: string; system_id: string; team_id: string | null; year: number; definition: GoalItem['definition']; annual: string; months: string[]; status: string; workflow: Workflow | null }
+export interface DemoData extends Pick<OrgData, 'systems' | 'departments' | 'teams' | 'managers'> { is_demo: true; roster: { user_id: string; employee_name: string; department_id: string; system_id: string; team_id: string | null }[]; appointments: Appointment[]; documents: DemoDocument[]; goals: DemoGoal[]; revision: number; server_now: string }
+export const demoQuery = (uid: string) => queryOptions({ queryKey: ['biz_demo', uid], staleTime: 0, queryFn: async () => { const { data, error } = await supabase.rpc('biz_demo_read'); if (error) throw error; return data as unknown as DemoData | null; } });
+export type DemoFilters = DashboardFilters & { system?: string; team?: string };
+export const demoDashboardQuery = (uid: string, f: DemoFilters) => queryOptions({ queryKey: ['biz_demo_dashboard', uid, f], staleTime: 0, queryFn: async () => { const { data, error } = await supabase.rpc('biz_demo_dashboard', { _filters: f as never }); if (error) throw error; return data as unknown as DashboardData | null; } });
+export function useDemoAction() { const qc = useQueryClient(); return useMutation({ mutationFn: async (a: { kind: 'reset'; delete?: boolean } | { kind: 'action'; id: string; action: string; data?: Record<string, unknown> }) => { const result = a.kind === 'reset' ? await supabase.rpc('biz_demo_reset', { _delete: a.delete ?? false, _confirmed: true }) : await supabase.rpc('biz_demo_action', { _id: a.id, _action: a.action, _data: (a.data ?? {}) as never }); if (result.error) throw result.error; }, onSuccess: async () => { await Promise.all(['biz_demo', 'biz_demo_dashboard'].map(k => qc.invalidateQueries({ queryKey: [k] }))); } }); }
