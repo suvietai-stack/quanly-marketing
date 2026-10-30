@@ -1,0 +1,22 @@
+import type { BizDepartment, BizMember } from './types';
+import type { GoalItem } from './goals';
+import type { ReportItem } from './documents';
+
+export const POSITIONS = { team_lead: 'Trưởng Nhóm', department_head: 'Trưởng Phòng', director: 'Giám Đốc', user: 'Người cụ thể' } as const;
+export const WORKFLOW_KINDS = { goal_year: 'Mục tiêu KR Năm', report_month: 'Báo cáo Tháng', report_quarter: 'Báo cáo Quý', report_year: 'Báo cáo Năm' } as const;
+export type WorkflowKind = keyof typeof WORKFLOW_KINDS;
+export interface OrgUnit { id: string; name: string; active: boolean }
+export interface OrgDepartment extends BizDepartment { system_id: string | null }
+export interface OrgTeam extends OrgUnit { department_id: string }
+export interface TeamMember { id: string; team_id: string; user_id: string; started_at: string; ended_at: string | null }
+export interface Manager { id: string; position: Exclude<keyof typeof POSITIONS, 'user'>; system_id: string | null; department_id: string | null; team_id: string | null; user_id: string; started_at: string; ended_at: string | null }
+export interface OrgData { systems: OrgUnit[]; departments: OrgDepartment[]; teams: OrgTeam[]; members: BizMember[]; team_members: TeamMember[]; managers: Manager[]; events: { id: string; actor_id: string; action: string; created_at: string; payload: unknown }[] }
+export interface ApprovalStep { label: string; type: keyof typeof POSITIONS; user_id?: string | null; substitute_id?: string | null; sla_hours?: number | null }
+export interface Workflow { id: string; family_id: string; version: number; name: string; system_id: string; department_id: string | null; kind: WorkflowKind; active: boolean; effective_from: string; steps: ApprovalStep[]; director_steps: ApprovalStep[] }
+export interface ApprovalEvent { id: string; actor_id: string; actor_name: string; action: string; step: number; comment: string | null; created_at: string }
+export interface ApprovalRun { id: string; version_id: string; kind: WorkflowKind; owner_id: string; employee_name: string; system_id?: string; department_id: string; team_id?: string; org_snapshot: { system_name?: string; department_name: string; team_name?: string; workflow_name: string; workflow_version?: number }; content_snapshot: { year: number; period?: number; period_kind?: 'month' | 'quarter' | 'year'; url?: string; items: (GoalItem & ReportItem)[] }; steps: ApprovalStep[]; current_step: number; status: 'pending' | 'approved' | 'changes'; submitted_at: string; step_started_at: string; revision: number; source_revision: number; can_act: boolean; legacy?: boolean; events: ApprovalEvent[] }
+export const defaultApprovalSteps = (): ApprovalStep[] => (['team_lead', 'department_head', 'director'] as const).map(type => ({ label: POSITIONS[type], type }));
+export function approvalOverdue(run: ApprovalRun, now: string) { const hours = run.steps[run.current_step]?.sla_hours; return run.status === 'pending' && hours != null && hours > 0 && Date.parse(now) > Date.parse(run.step_started_at) + hours * 3600000; }
+export function approvalInTab(run: ApprovalRun, tab: string, uid: string) { return tab === 'mine' ? run.status === 'pending' && run.can_act : tab === 'pending' ? run.status === 'pending' : tab === 'processed' ? run.events.some(e => e.actor_id === uid && ['step_approved', 'approved', 'returned', 'override'].includes(e.action)) : true; }
+export function orgDate(value: string) { return new Date(value).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }); }
+export function waitingText(value: string, now: string) { const minutes = Math.max(0, Math.floor((Date.parse(now) - Date.parse(value)) / 60000)); return minutes < 60 ? `${minutes} phút` : minutes < 1440 ? `${Math.floor(minutes / 60)} giờ ${minutes % 60} phút` : `${Math.floor(minutes / 1440)} ngày ${Math.floor(minutes % 1440 / 60)} giờ`; }
