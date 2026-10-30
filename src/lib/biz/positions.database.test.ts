@@ -12,7 +12,7 @@ beforeAll(async () => {
  await db.exec(`CREATE SCHEMA auth;CREATE SCHEMA private;CREATE ROLE authenticated;CREATE ROLE service_role;CREATE ROLE anon;CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$;CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text,status text);CREATE TABLE app_roles(id text PRIMARY KEY,permissions text[],updated_at timestamptz);CREATE TABLE user_roles(user_id uuid,role_id text);CREATE TABLE user_permission_overrides(user_id uuid,use_custom boolean,permissions text[]);CREATE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$SELECT u='${admin}'::uuid OR (u IN ('${sale}'::uuid,'${lead}'::uuid,'${head}'::uuid,'${director}'::uuid) AND p IN ('biz.view_own','biz.view_dept','biz.goal_submit','biz.plan_submit','biz.report_submit','biz.goal_approve','biz.report_approve','biz.plan_request_revision'))$$;CREATE FUNCTION public.is_super_admin(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT u='${admin}'::uuid$$;CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,kind text,dedup_key text UNIQUE,payload jsonb,zalo_status text,push_status text,CONSTRAINT notifications_kind_check CHECK(kind IN ('signal_new')));`);
  for (const id of [admin,sale,lead,head,director,outsider]) await db.query('insert into profiles values($1,$2,$3)', [id,id,'Đang hoạt động']);
  const files = ['0088_biz_management_foundation','0089_biz_annual_goals_and_scoped_foundation','0090_biz_membership_serialized_boundaries','0091_biz_documents_foundation','0092_biz_document_workflow','0093_biz_document_aggregation_guards','0094_biz_base_notifications','0095_biz_notification_recipient_scope','0096_biz_deadline_and_reminder_access','0097_biz_report_baseline_scope','0098_biz_report_frozen_baselines','0099_biz_dashboard_scoped_months','0100_biz_dashboard_exact_aggregates','0101_biz_dashboard_trends','0102_biz_dashboard_completeness_summary','0103_biz_plan_revision_flow','0104_biz_organization_history','0105_biz_sequential_approvals','0106_biz_approval_decision_fences','0107_biz_approval_center','0108_biz_dashboard_hierarchy_scope','0109_biz_organization_guard_record_shapes','0110_biz_approval_history_and_guard_scope','0111_biz_positions_appointments','0112_biz_dynamic_position_workflows','0113_biz_role_scope_and_review_fences'];
- for (const file of files) await db.exec(readFileSync(`drizzle/migrations/${file}.sql`, 'utf8'));
+ for (const file of [...files, '0114_biz_position_history_and_upward_guards', '0115_biz_isolated_demo']) await db.exec(readFileSync(`drizzle/migrations/${file}.sql`, 'utf8'));
  await db.exec("insert into app_roles(id,permissions,biz_scope) values('staff',ARRAY['biz.view_dept','biz.goal_approve'],'assigned');");
  for (const id of [sale,lead,head,director,outsider]) await db.query("insert into user_roles values($1,'staff')",[id]);
  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order) VALUES ('director','Giám Đốc',3,'system',0),('department_head','Trưởng Phòng',2,'department',1),('team_lead','Trưởng Nhóm',1,'team',2),('employee','Nhân viên Kinh doanh',0,'individual',3)");
@@ -72,4 +72,19 @@ it('missing dynamic reviewer is warned by preview, unauthorized writes and direc
  expect(preview.length).toBeGreaterThan(0);expect(preview.every((x:any)=>x.missing)).toBe(true);
  await actor(sale); await expect(appoint({position_id:p,user_id:sale,scope_kind:'department',system_id:sys,department_id:dep})).rejects.toThrow('quyền');
  await db.exec('SET ROLE authenticated'); await expect(db.exec("insert into biz_positions(name,unit_kind) values('Tự cấp','system')")).rejects.toThrow('permission denied'); await db.exec('RESET ROLE');
+});
+it('DEMO reuses exact aggregation, regeneration and deletion never touch operational rows', async () => {
+ await actor(admin);
+ const before = await scalar("select jsonb_build_object('goals',(select count(*) from biz_annual_goals),'docs',(select count(*) from biz_documents),'notifications',(select count(*) from notifications),'members',(select count(*) from biz_department_members)) v");
+ await db.query('select biz_demo_reset(false,true)');
+ const demo = await scalar('select biz_demo_read() v');
+ expect(demo.is_demo).toBe(true); expect(demo.goals.length).toBeGreaterThan(0);
+ for (const g of demo.goals) expect(g.months.reduce((s:number,x:string)=>s+Number(x),0)).toBe(Number(g.annual));
+ const summary = await scalar('select biz_demo_dashboard($1) v',[JSON.stringify({year:2026,kind:'month',period:2,department:'all',employee:'all',mode:'provisional'})]);
+ expect(summary.totals.length).toBeGreaterThan(0);
+ const metric = summary.totals[0]; expect(Number(metric.percent)).toBeCloseTo(Number(metric.actual)/Number(metric.target)*100,8);
+ await db.query('select biz_demo_reset(false,true)'); expect(await scalar('select count(*)::int v from biz_demo_sets')).toBe(1);
+ await db.query('select biz_demo_reset(true,true)'); expect(await scalar('select count(*)::int v from biz_demo_sets')).toBe(0);
+ expect(await scalar("select jsonb_build_object('goals',(select count(*) from biz_annual_goals),'docs',(select count(*) from biz_documents),'notifications',(select count(*) from notifications),'members',(select count(*) from biz_department_members)) v")).toEqual(before);
+ await actor(sale); await expect(db.query('select biz_demo_reset(false,true)')).rejects.toThrow('Super Admin'); await expect(db.query('select biz_demo_read()')).rejects.toThrow('quyền');
 });
