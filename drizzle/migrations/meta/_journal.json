@@ -764,6 +764,13 @@
       "when": 1793346217470,
       "tag": "0108_biz_dashboard_hierarchy_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 109,
+      "version": "7",
+      "when": 1793346308929,
+      "tag": "0109_biz_organization_guard_record_shapes",
+      "breakpoints": true
     }
   ]
 }
