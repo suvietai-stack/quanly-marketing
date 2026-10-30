@@ -1,0 +1,10 @@
+DELETE FROM public.biz_demo_sets WHERE owner_id IS NOT NULL;
+DROP FUNCTION IF EXISTS public.biz_demo_action(text,text,jsonb);
+DROP FUNCTION IF EXISTS public.biz_demo_build();
+DROP FUNCTION IF EXISTS public.biz_demo_dashboard(jsonb);
+DROP FUNCTION IF EXISTS public.biz_demo_read();
+DROP FUNCTION IF EXISTS public.biz_demo_reset(boolean,boolean);
+DROP POLICY IF EXISTS biz_demo_read ON public.biz_demo_sets;
+DROP FUNCTION IF EXISTS public.biz_demo_can();
+REVOKE ALL ON public.biz_demo_sets FROM anon, authenticated;
+COMMENT ON TABLE public.biz_demo_sets IS 'DEPRECATED: Business DEMO mode removed; table kept empty and inaccessible.';
