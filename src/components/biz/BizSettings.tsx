@@ -28,22 +28,23 @@ export function BizSettings() {
   const canDept = isSuperAdmin || can("biz.dept_manage");
   const canKr = isSuperAdmin || can("biz.kr_manage");
   const canDeadline = isSuperAdmin || can("biz.deadline_manage");
+  const canRole = isSuperAdmin || can("settings.role");
   const firstTab = canDept ? "dept" : canKr ? "kr" : canDeadline ? "deadline" : "perm";
 
   return (
     <Tabs defaultValue={firstTab}>
       <TabsList className="flex-wrap h-auto">
-        <TabsTrigger value="dept"><Building2 className="h-4 w-4 mr-1.5" />Phòng ban</TabsTrigger>
-        <TabsTrigger value="kr"><Target className="h-4 w-4 mr-1.5" />Chỉ số KR</TabsTrigger>
-        <TabsTrigger value="deadline"><Timer className="h-4 w-4 mr-1.5" />Deadline</TabsTrigger>
-        <TabsTrigger value="perm">Phân quyền</TabsTrigger>
+        {canDept && <TabsTrigger value="dept"><Building2 className="h-4 w-4 mr-1.5" />Phòng ban</TabsTrigger>}
+        {canKr && <TabsTrigger value="kr"><Target className="h-4 w-4 mr-1.5" />Chỉ số KR</TabsTrigger>}
+        {canDeadline && <TabsTrigger value="deadline"><Timer className="h-4 w-4 mr-1.5" />Deadline</TabsTrigger>}
+        {canRole && <TabsTrigger value="perm">Phân quyền</TabsTrigger>}
       </TabsList>
-      <TabsContent value="dept" className="mt-4"><DeptTab canEdit={canDept} /></TabsContent>
-      <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>
-      <TabsContent value="deadline" className="mt-4"><DeadlineTab canEdit={canDeadline} /></TabsContent>
-      <TabsContent value="perm" className="mt-4">
+      {canDept && <TabsContent value="dept" className="mt-4"><DeptTab canEdit={canDept} /></TabsContent>}
+      {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
+      {canDeadline && <TabsContent value="deadline" className="mt-4"><DeadlineTab canEdit={canDeadline} /></TabsContent>}
+      {canRole && <TabsContent value="perm" className="mt-4">
         <RolePermissionMatrix categories={BIZ_PERM_CATEGORIES} personal={["biz.view_own"]} />
-      </TabsContent>
+      </TabsContent>}
     </Tabs>
   );
 }
@@ -99,10 +100,10 @@ function DeptTab({ canEdit }: { canEdit: boolean }) {
                     <span className="flex-1 truncate">{nameOf(m.user_id)}</span>
                     {m.is_manager && <Badge variant="outline" className="text-xs">Trưởng phòng</Badge>}
                     {canEdit && (
-                      <button className="text-muted-foreground hover:text-destructive" aria-label={`Xóa ${nameOf(m.user_id)} khỏi phòng`}
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" aria-label={`Xóa ${nameOf(m.user_id)} khỏi phòng`}
                         onClick={async () => { try { await memberEnd.mutateAsync({ _id: m.id }); toast.success("Đã chuyển nhân viên ra khỏi phòng."); } catch (e: any) { toast.error(e?.message || "Không cập nhật được."); } }}>
                         <X className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 ))}
@@ -130,7 +131,7 @@ function DeptTab({ canEdit }: { canEdit: boolean }) {
           );
         })}
       </div>
-      <DeptDialog dept={editDept} onClose={() => setEditDept(null)} />
+      {editDept !== null && <DeptDialog key={editDept === "new" ? "new" : editDept.id} dept={editDept} onClose={() => setEditDept(null)} />}
     </div>
   );
 }
@@ -211,7 +212,7 @@ function KrTab({ canEdit }: { canEdit: boolean }) {
           </div>
         );
       })}
-      <KrDialog kr={editKr} onClose={() => setEditKr(null)} />
+      {editKr !== null && <KrDialog key={"new" in editKr ? `new-${editKr.new}` : editKr.id} kr={editKr} onClose={() => setEditKr(null)} />}
     </div>
   );
 }
@@ -233,7 +234,7 @@ function KrDialog({ kr, onClose }: { kr: BizKrMetric | { new: string } | null; o
   const submit = async () => {
     try {
       await save.mutateAsync({
-        _id: m?.id ?? null, _department_id: isNew ? kr.new : m!.department_id,
+        _id: m?.id ?? null, _department_id: isNew ? kr.new : m?.department_id,
         _name: name, _description: desc, _unit: unit,
         _value_kind: kind, _aggregation: agg, _direction: dir, _sort_order: Number(sort) || 0, _active: active,
       });
