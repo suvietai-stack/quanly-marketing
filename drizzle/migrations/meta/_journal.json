@@ -666,6 +666,13 @@
       "when": 1793339931965,
       "tag": "0094_biz_base_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1793340028926,
+      "tag": "0095_biz_notification_recipient_scope",
+      "breakpoints": true
     }
   ]
 }
