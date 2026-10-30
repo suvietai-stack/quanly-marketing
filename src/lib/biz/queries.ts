@@ -23,7 +23,7 @@ export const bizMembersQuery = queryOptions({
 export const bizKrMetricsQuery = queryOptions({
   queryKey: ["biz_kr_metrics"],
   queryFn: async () => {
-    const { data, error } = await supabase.from("biz_kr_metrics").select("id, department_id, name, description, unit, value_kind, aggregation, direction, sort_order, active, effective_from, effective_to").order("sort_order").order("name");
+    const { data, error } = await supabase.from("biz_kr_metrics").select("id, department_id, name, description, unit, value_kind, aggregation, direction, sort_order, active, effective_from, effective_to, standard_code, standard_label").order("sort_order").order("name");
     if (error) throw error;
     return (data ?? []) as BizKrMetric[];
   },
@@ -64,6 +64,9 @@ export const useBizKrSave = () =>
     _id: string | null; _department_id: string; _name: string; _description: string; _unit: string;
     _value_kind: string; _aggregation: string; _direction: string; _sort_order: number; _active: boolean;
   }>("biz_kr_save", [["biz_kr_metrics"]]);
+
+export const useBizKrStandardSave = () =>
+  useBizMutation<{ _metric_id: string; _code: string; _label: string }>("biz_kr_standard_save", [["biz_kr_metrics"], ["biz_dashboard"]]);
 
 export const useBizDeadlineSave = () =>
   useBizMutation<{ _data: BizDeadlineData }>("biz_deadline_save", [["biz_deadline_config"]]);

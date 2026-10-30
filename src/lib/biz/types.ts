@@ -36,6 +36,8 @@ export interface BizKrMetric {
   active: boolean;
   effective_from: string;
   effective_to: string | null;
+  standard_code?: string | null;
+  standard_label?: string | null;
 }
 
 export const VALUE_KIND_LABELS: Record<BizValueKind, string> = {
