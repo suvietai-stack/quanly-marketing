@@ -73,21 +73,3 @@ it('missing dynamic reviewer is warned by preview, unauthorized writes and direc
  await actor(sale); await expect(appoint({position_id:p,user_id:sale,scope_kind:'department',system_id:sys,department_id:dep})).rejects.toThrow('quyền');
  await db.exec('SET ROLE authenticated'); await expect(db.exec("insert into biz_positions(name,unit_kind) values('Tự cấp','system')")).rejects.toThrow('permission denied'); await db.exec('RESET ROLE');
 });
-it('DEMO reuses exact aggregation, regeneration and deletion never touch operational rows', async () => {
- await actor(admin);
- const before = await scalar("select jsonb_build_object('goals',(select count(*) from biz_annual_goals),'docs',(select count(*) from biz_documents),'notifications',(select count(*) from notifications),'members',(select count(*) from biz_department_members)) v");
- await db.query('select biz_demo_reset(false,true)');
- const demo = await scalar('select biz_demo_read() v');
- const unsubmitted=demo.documents.find((d:any)=>d.kind==='plan'&&!d.first_submitted_at);
- await db.query('select biz_demo_action($1,$2,$3)',[unsubmitted.id,'submit','{}']);
- const submitted=(await scalar('select biz_demo_read() v')).documents.find((d:any)=>d.id===unsubmitted.id);expect(submitted.time_status).toBe('late');
- expect(demo.is_demo).toBe(true); expect(demo.goals.length).toBeGreaterThan(0);
- for (const g of demo.goals) expect(g.months.reduce((s:number,x:string)=>s+Number(x),0)).toBe(Number(g.annual));
- const summary = await scalar('select biz_demo_dashboard($1) v',[JSON.stringify({year:2026,kind:'month',period:2,department:'all',employee:'all',mode:'provisional'})]);
- expect(summary.totals.length).toBeGreaterThan(0);
- const metric = summary.totals[0]; expect(Number(metric.percent)).toBeCloseTo(Number(metric.actual)/Number(metric.target)*100,8);
- await db.query('select biz_demo_reset(false,true)'); expect(await scalar('select count(*)::int v from biz_demo_sets')).toBe(1);
- await db.query('select biz_demo_reset(true,true)'); expect(await scalar('select count(*)::int v from biz_demo_sets')).toBe(0);
- expect(await scalar("select jsonb_build_object('goals',(select count(*) from biz_annual_goals),'docs',(select count(*) from biz_documents),'notifications',(select count(*) from notifications),'members',(select count(*) from biz_department_members)) v")).toEqual(before);
- await actor(sale); await expect(db.query('select biz_demo_reset(false,true)')).rejects.toThrow('Super Admin'); await expect(db.query('select biz_demo_read()')).rejects.toThrow('quyền');
-});

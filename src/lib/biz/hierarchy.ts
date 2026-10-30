@@ -1,7 +1,7 @@
 import type {DashboardFact,DashboardObligation} from './dashboard';
 import {compareDecimal} from './dashboard';
 
-/** Fact enriched by biz_dashboard_data (system/team) — DEMO facts carry the same ids. */
+/** Fact enriched by biz_dashboard_data (system/team) */
 export type HFact=DashboardFact&{employee_name?:string;department_id?:string;department_name?:string;system_id?:string|null;system_name?:string|null;team_id?:string|null;team_name?:string|null};
 export type HObligation=DashboardObligation&{system_id?:string|null;team_id?:string|null};
 export interface HPath {system?:string;department?:string;team?:string;employee?:string}

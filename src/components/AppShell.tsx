@@ -84,7 +84,6 @@ const groups: { label: string; items: NavItem[] }[] = [
       { to: "/biz/goals", label: "Mục tiêu KR", icon: Target, anyPerm: ["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/reports", label: "Báo cáo", icon: ClipboardCheck, anyPerm: ["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/approvals", label: "Phê duyệt", icon: ClipboardCheck, anyPerm: ["biz.approval_view", "biz.goal_approve", "biz.report_approve", "biz.view_all", "biz.view_dept"] },
-      { to: '/biz/demo', label: 'Xem DEMO', icon: Briefcase, anyPerm: ['biz.demo_manage'] },
       { to: "/biz/settings", label: "Cài đặt", icon: Settings, anyPerm: ["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
     ],
   },
