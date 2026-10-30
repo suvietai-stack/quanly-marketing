@@ -736,6 +736,13 @@
       "when": 1793345416054,
       "tag": "0104_biz_organization_history",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1793345582873,
+      "tag": "0105_biz_sequential_approvals",
+      "breakpoints": true
     }
   ]
 }
