@@ -15,6 +15,7 @@
 Migrations 0091–0098: biz_documents, biz_document_versions, biz_document_events; biz_period_start/department, biz_doc_access/document_access, biz_docs_url_ok, biz_document_start/save/decide/attach_target, biz_documents_read, biz_report_metrics, biz_deadline_status/remind và bảo vệ target/approved version. Giữ mục tiêu năm Bước 2.
 
 ## Kiểm thử
+- 64 kiểm thử Biz, tổng 314 kiểm thử Biz/KPI/Đơn từ/Tín hiệu/Sao đạt; build sạch, metadata các trang nội dung đầy đủ.
 - PostgreSQL tách biệt: nghĩa vụ/chuyển phòng, nháp/gửi/duyệt/trả lại/khóa/điều chỉnh, first submission, URL giả, NULL/0/negative/fraction, revision, RLS/direct write deny, provisional vs official, quý 300+400+500 triệu=1,2 tỷ, năm thiếu 9 tháng, không cộng trùng, baseline cũ/mới và nhắc chống trùng.
 - UI đăng nhập Admin thật: menu plans/reports đúng, danh sách người chưa nộp thật. Không tạo hồ sơ, mục tiêu hoặc thông báo thử vận hành.
 - Fixture phản hồi chỉ trong trình duyệt: input 0 hợp lệ, URL giả chặn gửi; desktop/mobile 360/375/390/430 không tràn, dialog/Chipi không chồng, không lỗi runtime. Không gửi fixture về backend.
