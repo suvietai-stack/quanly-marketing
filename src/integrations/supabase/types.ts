@@ -4870,6 +4870,16 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_report_target_version: {
+        Args: {
+          _mode: string
+          _period: number
+          _period_kind: string
+          _user: string
+          _year: number
+        }
+        Returns: string
+      }
       branding_save: {
         Args: {
           _app_name: string
