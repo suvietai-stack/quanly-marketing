@@ -4724,6 +4724,10 @@ export type Database = {
         Returns: string
       }
       biz_deadline_save: { Args: { _data: Json }; Returns: undefined }
+      biz_deadline_status: {
+        Args: { _deadline: string; _first: string; _now?: string }
+        Returns: string
+      }
       biz_department_access: {
         Args: { _department_id: string }
         Returns: boolean
@@ -4744,6 +4748,10 @@ export type Database = {
       }
       biz_docs_url_ok: { Args: { _url: string }; Returns: boolean }
       biz_document_access: { Args: { _id: string }; Returns: boolean }
+      biz_document_attach_target: {
+        Args: { _id: string; _revision: number }
+        Returns: undefined
+      }
       biz_document_decide: {
         Args: {
           _approve: boolean
