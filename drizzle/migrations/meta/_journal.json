@@ -624,6 +624,13 @@
       "when": 1793333564830,
       "tag": "0088_biz_management_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1793338411078,
+      "tag": "0089_biz_annual_goals_and_scoped_foundation",
+      "breakpoints": true
     }
   ]
 }
