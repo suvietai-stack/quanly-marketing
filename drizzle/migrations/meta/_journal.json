@@ -694,6 +694,13 @@
       "when": 1793340537588,
       "tag": "0098_biz_report_frozen_baselines",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1793341334144,
+      "tag": "0099_biz_dashboard_scoped_months",
+      "breakpoints": true
     }
   ]
 }
