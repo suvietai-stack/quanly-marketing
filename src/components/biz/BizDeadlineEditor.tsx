@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { bizDeadlineQuery, useBizDeadlineSave } from '@/lib/biz/queries';
 import { DEADLINE_KINDS, type BizDeadlineData } from '@/lib/biz/types';
+import { deadlinePreview } from '@/lib/biz/deadline';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -22,4 +23,9 @@ export function BizDeadlineEditor() {
 function ExceptionEditor({ values, onChange }: { values: Record<string,string>; onChange: (v: Record<string,string>) => void }) {
  const [period, setPeriod] = useState(''); const [date, setDate] = useState('');
  return <div className="space-y-2"><Label>Ngoại lệ theo kỳ</Label>{Object.entries(values).map(([p,d]) => <div key={p} className="flex flex-wrap items-center gap-2 text-sm"><span>{p} · {d.replace('T',' ')}</span><Button variant="ghost" size="sm" aria-label={`Bỏ ngoại lệ ${p}`} onClick={() => { const next = { ...values }; delete next[p]; onChange(next); }}>Bỏ</Button></div>)}<div className="flex flex-wrap gap-2"><Input aria-label="Kỳ ngoại lệ" placeholder="2027-01" className="w-32" value={period} onChange={e => setPeriod(e.target.value)} /><Input aria-label="Hạn ngoại lệ giờ Việt Nam" type="datetime-local" className="w-full sm:w-64" value={date} onChange={e => setDate(e.target.value)} /><Button variant="outline" size="sm" disabled={!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(period) || !date} onClick={() => onChange({ ...values, [period]: date })}>Thêm ngoại lệ</Button></div></div>;
+}
+function RulePreview({ kind, rule }: { kind: string; rule: BizDeadlineData[string] }) {
+ const [year,setYear] = useState(new Date().getFullYear()); const [period,setPeriod] = useState(1); const max = kind.endsWith('month') ? 12 : kind.endsWith('quarter') ? 4 : 1;
+ const deadline = deadlinePreview(kind,rule,year,period);
+ return <div className="flex flex-wrap items-center gap-2 text-sm"><span>Hạn cụ thể:</span><Input aria-label={`Năm xem hạn ${kind}`} type="number" min={2000} max={2200} className="w-24 h-9" value={year} onChange={e=>setYear(Number(e.target.value))} />{max>1 && <Input aria-label={`Kỳ xem hạn ${kind}`} type="number" min={1} max={max} className="w-20 h-9" value={period} onChange={e=>setPeriod(Math.max(1,Math.min(max,Number(e.target.value))))} />}<strong>{deadline ?? 'Chưa áp dụng'}{deadline ? ' (giờ Việt Nam)' : ''}</strong></div>;
 }
