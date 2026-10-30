@@ -12,7 +12,7 @@ import { BizRoleScopes } from './BizRoleScopes';
 import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
   bizDepartmentsQuery, bizKrMetricsQuery, bizMembersQuery,
-  useBizDeptSave, useBizKrSave, useBizMemberEnd, useBizMemberSave,
+  useBizDeptSave, useBizKrSave, useBizKrStandardSave, useBizMemberEnd, useBizMemberSave,
 } from "@/lib/biz/queries";
 import {
   AGGREGATION_LABELS, DIRECTION_LABELS, VALUE_KIND_LABELS,
@@ -198,7 +198,7 @@ function KrTab({ canEdit }: { canEdit: boolean }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Chỉ số KR theo từng phòng. Chỉ số không còn dùng chỉ được <b>ngừng áp dụng</b>, không xóa — dữ liệu lịch sử được bảo toàn.
+        Chỉ số KR theo từng phòng. Gán <b>Mã gộp</b> giống nhau (vd. revenue, orders) cho các KR cùng định nghĩa để Dashboard Toàn Khối/Hệ cộng chung; KR khác đơn vị hoặc cách tổng hợp sẽ bị từ chối. Chỉ số không còn dùng chỉ được <b>ngừng áp dụng</b>, không xóa — dữ liệu lịch sử được bảo toàn.
       </p>
       {(depts ?? []).map((d) => {
         const ms = (metrics ?? []).filter((m) => m.department_id === d.id);
@@ -213,12 +213,13 @@ function KrTab({ canEdit }: { canEdit: boolean }) {
               {ms.map((m) => (
                 <div key={m.id} className="py-2 flex items-center gap-3 text-sm">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium flex items-center gap-2">{m.name}{!m.active && <Badge variant="secondary">Ngừng áp dụng</Badge>}</div>
+                    <div className="font-medium flex items-center gap-2">{m.name}{!m.active && <Badge variant="secondary">Ngừng áp dụng</Badge>}{m.standard_code ? <Badge variant="outline" title="Dashboard Toàn Khối gộp các KR cùng mã chuẩn và cùng đơn vị/cách tổng hợp">Chỉ số chuẩn: {m.standard_label ?? m.standard_code} ({m.standard_code})</Badge> : <Badge variant="outline" className="text-muted-foreground">Chưa ánh xạ — không gộp</Badge>}</div>
                     <div className="text-xs text-muted-foreground">
                       {m.unit} · {VALUE_KIND_LABELS[m.value_kind]} · {AGGREGATION_LABELS[m.aggregation]} · {DIRECTION_LABELS[m.direction]}
                       {m.description ? ` · ${m.description}` : ""}
                     </div>
                   </div>
+                  {canEdit && <StandardCodeButton m={m} />}
                   {canEdit && <Button variant="ghost" size="icon" aria-label={`Sửa ${m.name}`} onClick={() => setEditKr(m)}><Pencil className="h-4 w-4" /></Button>}
                 </div>
               ))}
@@ -227,6 +228,22 @@ function KrTab({ canEdit }: { canEdit: boolean }) {
         );
       })}
       {editKr !== null && <KrDialog key={"new" in editKr ? `new-${editKr.new}` : editKr.id} kr={editKr} onClose={() => setEditKr(null)} />}
+    </div>
+  );
+}
+
+function StandardCodeButton({ m }: { m: BizKrMetric }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState(m.standard_code ?? "");
+  const [label, setLabel] = useState(m.standard_label ?? m.name);
+  const save = useBizKrStandardSave();
+  if (!open) return <Button variant="outline" size="sm" onClick={() => setOpen(true)}>Mã gộp</Button>;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Input aria-label="Mã chỉ số chuẩn" placeholder="vd. revenue" className="h-8 w-32" value={code} onChange={(e) => setCode(e.target.value)} />
+      <Input aria-label="Tên hiển thị chuẩn" placeholder="Tên hiển thị" className="h-8 w-36" value={label} onChange={(e) => setLabel(e.target.value)} />
+      <Button size="sm" disabled={save.isPending} onClick={() => save.mutate({ _metric_id: m.id, _code: code, _label: label }, { onSuccess: () => { toast.success(code ? "Đã lưu mã chỉ số chuẩn" : "Đã bỏ ánh xạ"); setOpen(false); } })}>Lưu</Button>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Hủy</Button>
     </div>
   );
 }

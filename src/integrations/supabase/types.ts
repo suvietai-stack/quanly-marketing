@@ -1428,6 +1428,8 @@ export type Database = {
           id: string
           name: string
           sort_order: number
+          standard_code: string | null
+          standard_label: string | null
           unit: string
           updated_at: string
           value_kind: string
@@ -1444,6 +1446,8 @@ export type Database = {
           id?: string
           name: string
           sort_order?: number
+          standard_code?: string | null
+          standard_label?: string | null
           unit: string
           updated_at?: string
           value_kind?: string
@@ -1460,6 +1464,8 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number
+          standard_code?: string | null
+          standard_label?: string | null
           unit?: string
           updated_at?: string
           value_kind?: string
@@ -5432,6 +5438,7 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_dashboard_systems: { Args: never; Returns: Json }
       biz_deadline_at: {
         Args: { _kind: string; _period?: number; _year: number }
         Returns: string
@@ -5567,6 +5574,10 @@ export type Database = {
           _value_kind: string
         }
         Returns: string
+      }
+      biz_kr_standard_save: {
+        Args: { _code: string; _label: string; _metric_id: string }
+        Returns: undefined
       }
       biz_member_access: {
         Args: { _department_id: string; _user_id: string }
