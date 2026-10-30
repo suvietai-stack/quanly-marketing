@@ -5,6 +5,8 @@ import { Building2, Pencil, Plus, Target, Timer, UserPlus, X } from "lucide-reac
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import { RolePermissionMatrix } from "@/components/leave/FunctionSettings";
 import { BizDeadlineEditor } from "./BizDeadlineEditor";
+import { BizOrganization } from './BizOrganization';
+import { BizWorkflows } from './BizWorkflows';
 import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
   bizDepartmentsQuery, bizKrMetricsQuery, bizMembersQuery,
@@ -27,19 +29,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function BizSettings() {
   const { can, isSuperAdmin } = useCurrentUser();
   const canDept = isSuperAdmin || can("biz.dept_manage");
+  const canOrg = isSuperAdmin || can('biz.org_manage');
+  const canWorkflow = isSuperAdmin || can('biz.workflow_manage');
   const canKr = isSuperAdmin || can("biz.kr_manage");
   const canDeadline = isSuperAdmin || can("biz.deadline_manage");
   const canRole = isSuperAdmin || can("settings.role");
-  const firstTab = canDept ? "dept" : canKr ? "kr" : canDeadline ? "deadline" : "perm";
+  const firstTab = canOrg ? 'org' : canWorkflow ? 'workflow' : canDept ? "dept" : canKr ? "kr" : canDeadline ? "deadline" : "perm";
 
   return (
     <Tabs defaultValue={firstTab}>
       <TabsList className="flex-wrap h-auto">
+        {canOrg && <TabsTrigger value="org">Cơ cấu tổ chức</TabsTrigger>}
+        {canWorkflow && <TabsTrigger value="workflow">Quy trình phê duyệt</TabsTrigger>}
         {canDept && <TabsTrigger value="dept"><Building2 className="h-4 w-4 mr-1.5" />Phòng ban</TabsTrigger>}
         {canKr && <TabsTrigger value="kr"><Target className="h-4 w-4 mr-1.5" />Chỉ số KR</TabsTrigger>}
         {canDeadline && <TabsTrigger value="deadline"><Timer className="h-4 w-4 mr-1.5" />Deadline</TabsTrigger>}
         {canRole && <TabsTrigger value="perm">Phân quyền</TabsTrigger>}
       </TabsList>
+      {canOrg && <TabsContent value="org" className="mt-4"><BizOrganization /></TabsContent>}
+      {canWorkflow && <TabsContent value="workflow" className="mt-4"><BizWorkflows /></TabsContent>}
       {canDept && <TabsContent value="dept" className="mt-4"><DeptTab canEdit={canDept} /></TabsContent>}
       {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
       {canDeadline && <TabsContent value="deadline" className="mt-4"><BizDeadlineEditor /></TabsContent>}
