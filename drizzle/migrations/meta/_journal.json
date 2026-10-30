@@ -792,6 +792,13 @@
       "when": 1793347457212,
       "tag": "0112_biz_dynamic_position_workflows",
       "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1793347504408,
+      "tag": "0113_biz_role_scope_and_review_fences",
+      "breakpoints": true
     }
   ]
 }

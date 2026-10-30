@@ -100,6 +100,7 @@ export type Database = {
       }
       app_roles: {
         Row: {
+          biz_scope: string
           created_at: string
           description: string | null
           id: string
@@ -111,6 +112,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          biz_scope?: string
           created_at?: string
           description?: string | null
           id: string
@@ -122,6 +124,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          biz_scope?: string
           created_at?: string
           description?: string | null
           id?: string
@@ -5336,6 +5339,7 @@ export type Database = {
           id: string
         }[]
       }
+      biz_all_scope: { Args: { _actor: string }; Returns: boolean }
       biz_appointment_save: { Args: { _data: Json }; Returns: string }
       biz_appointment_scope: {
         Args: { _at?: string; _dept: string; _id: string; _user: string }
@@ -5572,6 +5576,15 @@ export type Database = {
         }
         Returns: string
       }
+      biz_role_scope_allows: {
+        Args: { _actor: string; _kind: string }
+        Returns: boolean
+      }
+      biz_role_scope_save: {
+        Args: { _role: string; _scope: string }
+        Returns: undefined
+      }
+      biz_role_scopes_read: { Args: never; Returns: Json }
       biz_run_assigned: {
         Args: { _pending?: boolean; _version: string }
         Returns: boolean
@@ -5579,6 +5592,17 @@ export type Database = {
       biz_run_can_read: { Args: { _id: string }; Returns: boolean }
       biz_scope_ok: {
         Args: { _actor: string; _at?: string; _dept: string; _user: string }
+        Returns: boolean
+      }
+      biz_step_scope_ok: {
+        Args: {
+          _actor: string
+          _at: string
+          _dept: string
+          _index: number
+          _owner: string
+          _steps: Json
+        }
         Returns: boolean
       }
       biz_workflow_manage: { Args: never; Returns: boolean }
