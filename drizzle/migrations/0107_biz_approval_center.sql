@@ -1,0 +1,46 @@
+CREATE FUNCTION public.biz_approvals_read() RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$DECLARE r jsonb; legacy jsonb;BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Cần đăng nhập.'; END IF;
+ SELECT coalesce(jsonb_agg(to_jsonb(a)||jsonb_build_object('employee_name',p.full_name,'can_act',a.status='pending' AND public.biz_run_assigned(a.version_id,true) AND private.sig_can(auth.uid(),CASE WHEN a.kind='goal_year' THEN 'biz.goal_approve' ELSE 'biz.report_approve' END),'source_revision',CASE WHEN a.kind='goal_year' THEN (SELECT revision FROM public.biz_goal_versions WHERE id=a.version_id) ELSE (SELECT revision FROM public.biz_document_versions WHERE id=a.version_id) END,'events',(SELECT coalesce(jsonb_agg(to_jsonb(e)||jsonb_build_object('actor_name',ep.full_name) ORDER BY e.created_at),'[]') FROM public.biz_approval_events e JOIN public.profiles ep ON ep.id=e.actor_id WHERE e.run_id=a.id)) ORDER BY a.submitted_at DESC),'[]') INTO r FROM public.biz_approval_runs a JOIN public.profiles p ON p.id=a.owner_id WHERE public.biz_run_can_read(a.id);
+ SELECT coalesce(jsonb_agg(x ORDER BY x->>'submitted_at' DESC),'[]') INTO legacy FROM (
+ SELECT jsonb_build_object('id',v.id,'version_id',v.id,'kind','goal_year','owner_id',g.user_id,'employee_name',p.full_name,'department_id',g.department_id,'org_snapshot',jsonb_build_object('department_name',g.department_name,'workflow_name','Quy trình cũ'),'content_snapshot',jsonb_build_object('year',g.year,'items',(SELECT jsonb_agg(jsonb_build_object('metric_id',i.metric_id,'definition',i.definition,'annual',i.annual::text,'months',ARRAY(SELECT z::text FROM unnest(i.months) z))) FROM public.biz_goal_items i WHERE i.version_id=v.id)),'steps','[]'::jsonb,'current_step',0,'status',v.status,'submitted_at',v.submitted_at,'step_started_at',v.submitted_at,'source_revision',v.revision,'can_act',public.biz_goal_can_review(g.user_id,g.department_id),'legacy',true,'events',(SELECT coalesce(jsonb_agg(to_jsonb(e)||jsonb_build_object('actor_name',ep.full_name) ORDER BY e.created_at),'[]') FROM public.biz_goal_events e JOIN public.profiles ep ON ep.id=e.actor_id WHERE e.version_id=v.id)) x FROM public.biz_goal_versions v JOIN public.biz_annual_goals g ON g.id=v.goal_id JOIN public.profiles p ON p.id=g.user_id WHERE v.status='pending' AND public.biz_goal_can_read(g.id) AND NOT EXISTS(SELECT 1 FROM public.biz_approval_runs WHERE version_id=v.id)
+ UNION ALL
+ SELECT jsonb_build_object('id',v.id,'version_id',v.id,'kind','report_'||d.period_kind,'owner_id',d.user_id,'employee_name',p.full_name,'department_id',d.department_id,'org_snapshot',jsonb_build_object('department_name',d.department_name,'workflow_name','Quy trình cũ'),'content_snapshot',jsonb_build_object('year',d.year,'period',d.period,'period_kind',d.period_kind,'url',v.url,'items',v.items),'steps','[]'::jsonb,'current_step',0,'status',v.status,'submitted_at',v.submitted_at,'step_started_at',v.submitted_at,'source_revision',v.revision,'can_act',public.biz_doc_access(d.user_id,d.department_id,'report',true),'legacy',true,'events','[]'::jsonb) FROM public.biz_document_versions v JOIN public.biz_documents d ON d.id=v.document_id JOIN public.profiles p ON p.id=d.user_id WHERE d.kind='report' AND v.status='pending' AND public.biz_doc_access(d.user_id,d.department_id,'report') AND NOT EXISTS(SELECT 1 FROM public.biz_approval_runs WHERE version_id=v.id)) q;
+ RETURN jsonb_build_object('runs',r||legacy,'server_now',now(),'has_assigned',EXISTS(SELECT 1 FROM public.biz_approval_runs WHERE status='pending' AND public.biz_run_assigned(version_id,true)));
+END $$;
+CREATE FUNCTION public.biz_approval_override(_id uuid,_revision int,_action text,_comment text,_user uuid DEFAULT NULL) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$DECLARE r public.biz_approval_runs;BEGIN
+ IF NOT public.is_super_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Super Admin được can thiệp.'; END IF;
+ IF btrim(coalesce(_comment,''))='' THEN RAISE EXCEPTION 'Cần lý do can thiệp.'; END IF;
+ SELECT * INTO r FROM public.biz_approval_runs WHERE id=_id;
+ IF r.kind='goal_year' THEN PERFORM 1 FROM public.biz_goal_versions WHERE id=r.version_id FOR UPDATE; ELSE PERFORM 1 FROM public.biz_document_versions WHERE id=r.version_id FOR UPDATE; END IF;
+ SELECT * INTO r FROM public.biz_approval_runs WHERE id=_id FOR UPDATE;
+ IF r.id IS NULL OR r.status<>'pending' OR r.revision<>_revision THEN RAISE EXCEPTION 'Luồng đã thay đổi. Hãy tải lại.'; END IF;
+ IF _action='reassign' THEN
+ IF _user=r.owner_id OR NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=_user AND status='Đang hoạt động' AND private.sig_can(id,CASE WHEN r.kind='goal_year' THEN 'biz.goal_approve' ELSE 'biz.report_approve' END)) THEN RAISE EXCEPTION 'Người xử lý mới không hợp lệ hoặc thiếu quyền.'; END IF;
+ UPDATE public.biz_approval_runs SET steps=jsonb_set(jsonb_set(steps,ARRAY[current_step::text,'user_id'],to_jsonb(_user)),ARRAY[current_step::text,'substitute_id'],'null'),revision=revision+1 WHERE id=r.id;
+ ELSE
+ IF _action NOT IN ('approve','return') THEN RAISE EXCEPTION 'Thao tác không hợp lệ.'; END IF;
+ UPDATE public.biz_approval_runs SET status=CASE _action WHEN 'approve' THEN 'approved' ELSE 'changes' END,revision=revision+1 WHERE id=r.id;
+ IF r.kind='goal_year' THEN
+ UPDATE public.biz_goal_versions SET status=CASE _action WHEN 'approve' THEN 'approved' ELSE 'changes' END,approved_at=CASE WHEN _action='approve' THEN now() END,approved_by=CASE WHEN _action='approve' THEN auth.uid() END,review_comment=_comment,revision=revision+1 WHERE id=r.version_id;
+ IF _action='approve' THEN UPDATE public.biz_annual_goals SET official_version_id=r.version_id WHERE id=(SELECT goal_id FROM public.biz_goal_versions WHERE id=r.version_id); END IF;
+ INSERT INTO public.biz_goal_events(goal_id,version_id,actor_id,action,comment,payload) SELECT goal_id,id,auth.uid(),'override',_comment,jsonb_build_object('action',_action,'run_id',r.id) FROM public.biz_goal_versions WHERE id=r.version_id;
+ ELSE
+ UPDATE public.biz_document_versions SET status=CASE _action WHEN 'approve' THEN 'approved' ELSE 'changes' END,approved_at=CASE WHEN _action='approve' THEN now() END,approved_by=CASE WHEN _action='approve' THEN auth.uid() END,review_comment=_comment,revision=revision+1 WHERE id=r.version_id;
+ IF _action='approve' THEN UPDATE public.biz_documents SET official_version_id=r.version_id WHERE id=(SELECT document_id FROM public.biz_document_versions WHERE id=r.version_id); END IF;
+ INSERT INTO public.biz_document_events(document_id,version_id,actor_id,action,payload) SELECT document_id,id,auth.uid(),'override',jsonb_build_object('action',_action,'comment',_comment,'run_id',r.id) FROM public.biz_document_versions WHERE id=r.version_id;
+ END IF; END IF;
+ INSERT INTO public.biz_approval_events(run_id,actor_id,action,step,comment,payload) VALUES(r.id,auth.uid(),CASE WHEN _action='reassign' THEN 'reassigned' ELSE 'override' END,r.current_step,_comment,jsonb_build_object('action',_action,'user_id',_user));
+END $$;
+CREATE FUNCTION public.biz_approval_adopt(_version uuid,_kind text,_confirmed boolean DEFAULT false) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$DECLARE g public.biz_annual_goals;d public.biz_documents;v public.biz_goal_versions;dv public.biz_document_versions;c jsonb;id_ uuid;BEGIN
+ IF NOT public.is_super_admin(auth.uid()) OR NOT _confirmed THEN RAISE EXCEPTION 'Super Admin cần xác nhận chuyển luồng.'; END IF;
+ IF _kind='goal_year' THEN SELECT * INTO v FROM public.biz_goal_versions WHERE id=_version FOR UPDATE; IF v.status<>'pending' THEN RAISE EXCEPTION 'Hồ sơ không chờ duyệt.'; END IF; SELECT * INTO g FROM public.biz_annual_goals WHERE id=v.goal_id;
+ SELECT jsonb_agg(jsonb_build_object('metric_id',i.metric_id,'definition',i.definition,'annual',i.annual::text,'months',ARRAY(SELECT z::text FROM unnest(i.months) z))) INTO c FROM public.biz_goal_items i WHERE i.version_id=v.id;
+ id_:=public.biz_approval_start(v.id,_kind,g.user_id,g.department_id,jsonb_build_object('year',g.year,'items',c));
+ ELSE SELECT * INTO dv FROM public.biz_document_versions WHERE id=_version FOR UPDATE; SELECT * INTO d FROM public.biz_documents WHERE id=dv.document_id;
+ IF dv.status<>'pending' OR d.kind<>'report' OR _kind<>'report_'||d.period_kind THEN RAISE EXCEPTION 'Hồ sơ không hợp lệ.'; END IF;
+ id_:=public.biz_approval_start(dv.id,_kind,d.user_id,d.department_id,jsonb_build_object('year',d.year,'period',d.period,'period_kind',d.period_kind,'items',dv.items,'url',dv.url)); END IF;
+ IF id_ IS NULL THEN RAISE EXCEPTION 'Chưa có quy trình đang hiệu lực.'; END IF;
+ INSERT INTO public.biz_approval_events(run_id,actor_id,action,step,comment) VALUES(id_,auth.uid(),'adopted',0,'Super Admin xác nhận chuyển hồ sơ từ quy trình cũ.');RETURN id_;
+END $$;
+REVOKE ALL ON FUNCTION public.biz_approvals_read(),public.biz_approval_override(uuid,int,text,text,uuid),public.biz_approval_adopt(uuid,text,boolean) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.biz_approvals_read(),public.biz_approval_override(uuid,int,text,text,uuid),public.biz_approval_adopt(uuid,text,boolean) TO authenticated;

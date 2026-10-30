@@ -10,5 +10,6 @@ export const BIZ_PERM_CATEGORIES: PermCategory[] = [
   { key: "view_dept", label: "Xem dữ liệu phòng ban", perms: ["biz.view_dept"] },
   { key: "approve", label: "Yêu cầu sửa kế hoạch · duyệt mục tiêu / báo cáo", perms: ["biz.plan_request_revision", "biz.plan_approve", "biz.goal_approve", "biz.report_approve"] },
   { key: "view_all", label: "Xem dashboard toàn bộ", perms: ["biz.view_all"] },
-  { key: "settings", label: "Quản lý cấu hình module", perms: ["biz.kr_manage", "biz.dept_manage", "biz.deadline_manage"] },
+  { key: "approval_center", label: "Xem Trung tâm Phê duyệt trong phạm vi", perms: ["biz.approval_view"] },
+  { key: "settings", label: "Quản lý cấu hình module", perms: ["biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "biz.org_manage", "biz.workflow_manage"] },
 ];

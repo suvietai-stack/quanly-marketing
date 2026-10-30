@@ -6,6 +6,8 @@ import {
   Video, Palette, Target, Settings, Menu, FileText, LogOut, User as UserIcon, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useQuery } from '@tanstack/react-query';
+import { approvalsQuery } from '@/lib/biz/organizationQueries';
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/ZaloUi";
 import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
@@ -81,7 +83,8 @@ const groups: { label: string; items: NavItem[] }[] = [
       { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/goals", label: "Mục tiêu KR", icon: Target, anyPerm: ["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"] },
       { to: "/biz/reports", label: "Báo cáo", icon: ClipboardCheck, anyPerm: ["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"] },
-      { to: "/biz/settings", label: "Cài đặt", icon: Settings, anyPerm: ["biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
+      { to: "/biz/approvals", label: "Phê duyệt", icon: ClipboardCheck, anyPerm: ["biz.approval_view", "biz.goal_approve", "biz.report_approve", "biz.view_all", "biz.view_dept"] },
+      { to: "/biz/settings", label: "Cài đặt", icon: Settings, anyPerm: ["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
     ],
   },
   {
@@ -110,6 +113,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
+  const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id });
   const logout = useAuth((s) => s.logout);
   const brand = useBranding();
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
@@ -124,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((g) => ({
       ...g,
       items: g.items
-        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || isKpiAdmin && it.kpi || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
+        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || (isSuperAdmin && it.to.startsWith('/biz')) || (it.to === '/biz/approvals' && approvals.data?.has_assigned) || isKpiAdmin && it.kpi || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
         .map((it) => (it.to === "/settings/kpi-v2" && !isKpiManager ? { ...it, label: "KPI của tôi" } : it))
         .map((it) =>
           it.to === "/settings" && canApprove && pendingCount > 0

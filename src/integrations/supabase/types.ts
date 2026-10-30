@@ -5196,6 +5196,20 @@ export type Database = {
           id: string
         }[]
       }
+      biz_approval_adopt: {
+        Args: { _confirmed?: boolean; _kind: string; _version: string }
+        Returns: string
+      }
+      biz_approval_override: {
+        Args: {
+          _action: string
+          _comment: string
+          _id: string
+          _revision: number
+          _user?: string
+        }
+        Returns: undefined
+      }
       biz_approval_start: {
         Args: {
           _content: Json
@@ -5210,6 +5224,7 @@ export type Database = {
         Args: { _approve: boolean; _comment: string; _version: string }
         Returns: boolean
       }
+      biz_approvals_read: { Args: never; Returns: Json }
       biz_dashboard_aggregate: {
         Args: { _axis?: string; _facts: Json; _hi: number; _lo: number }
         Returns: Json
