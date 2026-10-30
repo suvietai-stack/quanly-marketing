@@ -21,7 +21,7 @@ Migrations 0099–0102 bổ sung hàm đọc, không bảng kinh doanh mới, kh
 
 ## Kiểm thử
 - PostgreSQL tách biệt: 100/100 + 450/900 triệu = **55%**, số 20 chữ số, NULL khác 0, thiếu baseline, avg không sum, ratio không suy đoán, thiếu tháng, official/provisional/baseline điều chỉnh, nghĩa vụ chưa có hồ sơ, chuyển phòng mỗi tháng một lần, own/dept/all và từ chối tham số vượt quyền.
-- Hồi quy Biz/KPI/Đơn từ/Tín hiệu/Sao: 327 kiểm thử đạt trước bổ sung kiểm xếp hạng số lớn; bộ Biz chạy lại sau đó.
+- Hồi quy Biz/KPI/Đơn từ/Tín hiệu/Sao: 327 kiểm thử đạt trước bổ sung kiểm xếp hạng số lớn; bộ Biz chạy lại sau đó đạt 78/78.
 - Playwright đăng nhập Admin thật: Dashboard đọc được dữ liệu/phạm vi/nhân sự thật, không ghi dữ liệu. Biểu đồ có số liệu và thao tác chi tiết/bộ lọc kiểm bằng phản hồi thử chỉ trong trình duyệt, không gửi ghi về backend.
 - Desktop và cả ba tab ở 360/375/390/430 không tràn ngang, dialog mở đúng, không lỗi page runtime; sáng/tối đã chụp và kiểm.
 - Build sạch, các trang kinh doanh giữ metadata riêng.
