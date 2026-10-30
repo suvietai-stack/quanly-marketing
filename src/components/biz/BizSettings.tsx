@@ -7,6 +7,8 @@ import { RolePermissionMatrix } from "@/components/leave/FunctionSettings";
 import { BizDeadlineEditor } from "./BizDeadlineEditor";
 import { BizOrganization } from './BizOrganization';
 import { BizWorkflows } from './BizWorkflows';
+import { BizPositions } from './BizPositions';
+import { BizRoleScopes } from './BizRoleScopes';
 import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
   bizDepartmentsQuery, bizKrMetricsQuery, bizMembersQuery,
@@ -40,6 +42,7 @@ export function BizSettings() {
     <Tabs defaultValue={firstTab}>
       <TabsList className="flex-wrap h-auto">
         {canOrg && <TabsTrigger value="org">Cơ cấu tổ chức</TabsTrigger>}
+        {canOrg && <TabsTrigger value="positions">Chức vụ &amp; Cấp bậc</TabsTrigger>}
         {canWorkflow && <TabsTrigger value="workflow">Quy trình phê duyệt</TabsTrigger>}
         {canDept && <TabsTrigger value="dept"><Building2 className="h-4 w-4 mr-1.5" />Phòng ban</TabsTrigger>}
         {canKr && <TabsTrigger value="kr"><Target className="h-4 w-4 mr-1.5" />Chỉ số KR</TabsTrigger>}
@@ -47,11 +50,13 @@ export function BizSettings() {
         {canRole && <TabsTrigger value="perm">Phân quyền</TabsTrigger>}
       </TabsList>
       {canOrg && <TabsContent value="org" className="mt-4"><BizOrganization /></TabsContent>}
+      {canOrg && <TabsContent value="positions" className="mt-4"><BizPositions /></TabsContent>}
       {canWorkflow && <TabsContent value="workflow" className="mt-4"><BizWorkflows /></TabsContent>}
       {canDept && <TabsContent value="dept" className="mt-4"><DeptTab canEdit={canDept} /></TabsContent>}
       {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
       {canDeadline && <TabsContent value="deadline" className="mt-4"><BizDeadlineEditor /></TabsContent>}
       {canRole && <TabsContent value="perm" className="mt-4">
+        <BizRoleScopes />
         <RolePermissionMatrix categories={BIZ_PERM_CATEGORIES} personal={["biz.view_own"]} />
       </TabsContent>}
     </Tabs>
