@@ -29,10 +29,10 @@ function KpiCard({m,eval:e,ongoing}:{m:HMetric;eval?:HMetric;ongoing:boolean}){c
 
 function ChartTip({active,payload,label,unit}:{active?:boolean;payload?:{name:string;value:number|null;color:string}[];label?:string;unit:string}){if(!active||!payload?.length)return null;return <div className="rounded-lg border bg-popover p-3 text-xs shadow-card space-y-1"><strong>{label}</strong>{payload.map(p=><p key={p.name} style={{color:p.color}}>{p.name}: {p.value===null||p.value===undefined?'Chưa có':`${p.value.toLocaleString('vi-VN',{maximumFractionDigits:2})}${unit==='%'?'%':` ${unit}`}`}</p>)}</div>;}
 
-export function BizHierarchyDashboard({data,ongoingMonth,demo,demoSystems,onOpenEmployee}:{data:DashboardData;ongoingMonth:number|null;demo?:boolean;demoSystems?:{id:string;name:string}[];onOpenEmployee:(id:string)=>void}){
+export function BizHierarchyDashboard({data,ongoingMonth,onOpenEmployee}:{data:DashboardData;ongoingMonth:number|null;onOpenEmployee:(id:string)=>void}){
  const facts=data.facts as HFact[];const obligations=data.obligations as HObligation[];
- const sys=useQuery(systemsQuery(!demo));
- const allSystems=demo?(demoSystems??[]):(sys.data??[]);
+ const sys=useQuery(systemsQuery(true));
+ const allSystems=sys.data??[];
  const [path,setPath]=useState<HPath>({});const [metricPick,setMetricPick]=useState<string>('');
  const tabs=useMemo(()=>{const m=new Map<string,string>();for(const s of allSystems)m.set(s.id,s.name);for(const f of facts)if(f.system_id&&!m.has(f.system_id))m.set(f.system_id,f.system_name??'Hệ');for(const o of obligations)if(o.system_id&&!m.has(o.system_id))m.set(o.system_id,'Hệ');return [...m.entries()];},[allSystems,facts,obligations]);
  const showAll=allSystems.length>0||tabs.length!==1;
@@ -68,7 +68,6 @@ export function BizHierarchyDashboard({data,ongoingMonth,demo,demoSystems,onOpen
   <div className="flex flex-wrap items-center gap-2 min-w-0">
    {up&&<Button variant="outline" size="sm" onClick={()=>setPath(up)} aria-label="Quay về cấp trên"><ChevronLeft className="h-4 w-4"/>Quay lại</Button>}
    <ol className="flex flex-wrap items-center gap-1 text-sm min-w-0" aria-label="Vị trí đang xem">{crumbs.map((c,i)=><li key={i} className="flex items-center gap-1 min-w-0">{i>0&&<ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0"/>}{i<crumbs.length-1?<button className="text-primary hover:underline truncate max-w-[10rem]" onClick={()=>setPath(c.path)}>{c.label}</button>:<span className="font-semibold truncate max-w-[14rem]">{c.label}</span>}</li>)}</ol>
-   {demo&&<Badge variant="secondary">DEMO</Badge>}
    <Badge variant="outline" className="ml-auto">{data.mode==='official'?'Chính thức':'Tạm tính · chưa xác nhận'}</Badge>
   </div>
   {totals.length>1&&<div className="flex gap-2 overflow-x-auto pb-1" aria-label="Chọn KR cho biểu đồ">{totals.map(t=><button key={t.key} onClick={()=>setMetricPick(t.key)} className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${t.key===metricKey?'border-primary bg-primary/10 text-primary':'text-muted-foreground'}`}>{t.name}</button>)}</div>}
