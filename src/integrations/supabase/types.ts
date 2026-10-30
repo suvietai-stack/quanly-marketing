@@ -4744,6 +4744,45 @@ export type Database = {
       }
       biz_docs_url_ok: { Args: { _url: string }; Returns: boolean }
       biz_document_access: { Args: { _id: string }; Returns: boolean }
+      biz_document_decide: {
+        Args: {
+          _approve: boolean
+          _comment?: string
+          _id: string
+          _revision: number
+        }
+        Returns: undefined
+      }
+      biz_document_save: {
+        Args: {
+          _actuals: Json
+          _id: string
+          _notes: string
+          _revision: number
+          _submit?: boolean
+          _url: string
+        }
+        Returns: undefined
+      }
+      biz_document_start: {
+        Args: {
+          _kind: string
+          _period: number
+          _period_kind: string
+          _reason?: string
+          _year: number
+        }
+        Returns: string
+      }
+      biz_documents_read: {
+        Args: {
+          _kind: string
+          _period: number
+          _period_kind: string
+          _year: number
+        }
+        Returns: Json
+      }
       biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
       biz_goal_can_review: {
         Args: { _department_id: string; _user_id: string }
@@ -4803,6 +4842,16 @@ export type Database = {
       biz_period_start: {
         Args: { _kind: string; _period: number; _year: number }
         Returns: string
+      }
+      biz_report_metrics: {
+        Args: {
+          _mode?: string
+          _period: number
+          _period_kind: string
+          _user: string
+          _year: number
+        }
+        Returns: Json
       }
       branding_save: {
         Args: {

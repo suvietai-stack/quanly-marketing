@@ -645,6 +645,13 @@
       "when": 1793339629705,
       "tag": "0091_biz_documents_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1793339695853,
+      "tag": "0092_biz_document_workflow",
+      "breakpoints": true
     }
   ]
 }
