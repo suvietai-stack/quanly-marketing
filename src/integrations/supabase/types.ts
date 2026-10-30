@@ -5438,6 +5438,7 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_dashboard_systems: { Args: never; Returns: Json }
       biz_deadline_at: {
         Args: { _kind: string; _period?: number; _year: number }
         Returns: string
