@@ -27,6 +27,11 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
+import { Route as BizIndexRouteImport } from './routes/biz.index'
+import { Route as BizGoalsRouteImport } from './routes/biz.goals'
+import { Route as BizPlansRouteImport } from './routes/biz.plans'
+import { Route as BizReportsRouteImport } from './routes/biz.reports'
+import { Route as BizSettingsRouteImport } from './routes/biz.settings'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
@@ -154,6 +159,31 @@ const VideosRoute = VideosRouteImport.update({
 const WebContentsRoute = WebContentsRouteImport.update({
   id: '/web-contents',
   path: '/web-contents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizIndexRoute = BizIndexRouteImport.update({
+  id: '/biz/',
+  path: '/biz/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizGoalsRoute = BizGoalsRouteImport.update({
+  id: '/biz/goals',
+  path: '/biz/goals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizPlansRoute = BizPlansRouteImport.update({
+  id: '/biz/plans',
+  path: '/biz/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizReportsRoute = BizReportsRouteImport.update({
+  id: '/biz/reports',
+  path: '/biz/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizSettingsRoute = BizSettingsRouteImport.update({
+  id: '/biz/settings',
+  path: '/biz/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrandsIndexRoute = BrandsIndexRouteImport.update({
@@ -372,6 +402,10 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
+  '/biz/goals': typeof BizGoalsRoute
+  '/biz/plans': typeof BizPlansRoute
+  '/biz/reports': typeof BizReportsRoute
+  '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
@@ -386,6 +420,7 @@ export interface FileRoutesByFullPath {
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/biz/': typeof BizIndexRoute
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
   '/order-quotes/': typeof OrderQuotesIndexRoute
@@ -430,6 +465,10 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
+  '/biz/goals': typeof BizGoalsRoute
+  '/biz/plans': typeof BizPlansRoute
+  '/biz/reports': typeof BizReportsRoute
+  '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
@@ -444,6 +483,7 @@ export interface FileRoutesByTo {
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/biz': typeof BizIndexRoute
   '/brands': typeof BrandsIndexRoute
   '/local': typeof LocalIndexRoute
   '/order-quotes': typeof OrderQuotesIndexRoute
@@ -489,6 +529,10 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-contents': typeof WebContentsRoute
+  '/biz/goals': typeof BizGoalsRoute
+  '/biz/plans': typeof BizPlansRoute
+  '/biz/reports': typeof BizReportsRoute
+  '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
@@ -503,6 +547,7 @@ export interface FileRoutesById {
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
+  '/biz/': typeof BizIndexRoute
   '/brands/': typeof BrandsIndexRoute
   '/local/': typeof LocalIndexRoute
   '/order-quotes/': typeof OrderQuotesIndexRoute
@@ -549,6 +594,10 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/videos'
     | '/web-contents'
+    | '/biz/goals'
+    | '/biz/plans'
+    | '/biz/reports'
+    | '/biz/settings'
     | '/brands/$id'
     | '/local/$id'
     | '/order-quotes/$id'
@@ -563,6 +612,7 @@ export interface FileRouteTypes {
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
+    | '/biz/'
     | '/brands/'
     | '/local/'
     | '/order-quotes/'
@@ -607,6 +657,10 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/videos'
     | '/web-contents'
+    | '/biz/goals'
+    | '/biz/plans'
+    | '/biz/reports'
+    | '/biz/settings'
     | '/brands/$id'
     | '/local/$id'
     | '/order-quotes/$id'
@@ -621,6 +675,7 @@ export interface FileRouteTypes {
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
+    | '/biz'
     | '/brands'
     | '/local'
     | '/order-quotes'
@@ -665,6 +720,10 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/videos'
     | '/web-contents'
+    | '/biz/goals'
+    | '/biz/plans'
+    | '/biz/reports'
+    | '/biz/settings'
     | '/brands/$id'
     | '/local/$id'
     | '/order-quotes/$id'
@@ -679,6 +738,7 @@ export interface FileRouteTypes {
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
+    | '/biz/'
     | '/brands/'
     | '/local/'
     | '/order-quotes/'
@@ -724,6 +784,10 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebContentsRoute: typeof WebContentsRoute
+  BizGoalsRoute: typeof BizGoalsRoute
+  BizPlansRoute: typeof BizPlansRoute
+  BizReportsRoute: typeof BizReportsRoute
+  BizSettingsRoute: typeof BizSettingsRoute
   BrandsIdRoute: typeof BrandsIdRoute
   LocalIdRoute: typeof LocalIdRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
@@ -738,6 +802,7 @@ export interface RootRouteChildren {
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
+  BizIndexRoute: typeof BizIndexRoute
   BrandsIndexRoute: typeof BrandsIndexRoute
   LocalIndexRoute: typeof LocalIndexRoute
   OrderQuotesIndexRoute: typeof OrderQuotesIndexRoute
@@ -890,6 +955,41 @@ declare module '@tanstack/react-router' {
       path: '/web-contents'
       fullPath: '/web-contents'
       preLoaderRoute: typeof WebContentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/': {
+      id: '/biz/'
+      path: '/biz'
+      fullPath: '/biz/'
+      preLoaderRoute: typeof BizIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/goals': {
+      id: '/biz/goals'
+      path: '/biz/goals'
+      fullPath: '/biz/goals'
+      preLoaderRoute: typeof BizGoalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/plans': {
+      id: '/biz/plans'
+      path: '/biz/plans'
+      fullPath: '/biz/plans'
+      preLoaderRoute: typeof BizPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/reports': {
+      id: '/biz/reports'
+      path: '/biz/reports'
+      fullPath: '/biz/reports'
+      preLoaderRoute: typeof BizReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/settings': {
+      id: '/biz/settings'
+      path: '/biz/settings'
+      fullPath: '/biz/settings'
+      preLoaderRoute: typeof BizSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/brands/': {
@@ -1180,6 +1280,10 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebContentsRoute: WebContentsRoute,
+  BizGoalsRoute: BizGoalsRoute,
+  BizPlansRoute: BizPlansRoute,
+  BizReportsRoute: BizReportsRoute,
+  BizSettingsRoute: BizSettingsRoute,
   BrandsIdRoute: BrandsIdRoute,
   LocalIdRoute: LocalIdRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
@@ -1194,6 +1298,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
+  BizIndexRoute: BizIndexRoute,
   BrandsIndexRoute: BrandsIndexRoute,
   LocalIndexRoute: LocalIndexRoute,
   OrderQuotesIndexRoute: OrderQuotesIndexRoute,
