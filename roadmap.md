@@ -70,3 +70,8 @@
 - [ ] Sau Publish: xác nhận cron signal-progression-daily chạy 08:00 VN và thông báo nhắc gộp tới Sale thật (chưa gửi nhắc thật trên Preview).
 
 - [x] Chipi reward popup copy + tab "Cách kiếm Sao" (/sao/earn): friendlyReward/programActive helpers, migration 0080 public read enabled programs; 35 test Sao đạt, build OK, Playwright desktop/mobile đạt; chưa Publish.
+- [x] Quản trị Kinh doanh — Bước 1 nền tảng: migration 0088 (biz_departments/members/kr_metrics/deadline_config + RPC), 2 phòng + 5 KR mặc định, 12 quyền biz.*, menu 5 mục, trang Cài đặt 4 tab (Phòng ban/KR/Deadline/Phân quyền); 459 tests/build/Playwright desktop+390px đạt; chưa Publish.
+- [ ] Quản trị Kinh doanh — Bước 2: mục tiêu KR năm + phân bổ 12 tháng + duyệt/khóa/lịch sử phiên bản.
+- [ ] Quản trị Kinh doanh — Bước 3: nộp kế hoạch & báo cáo bằng link Google Docs, kiểm soát deadline, tách trạng thái hạn nộp vs duyệt.
+- [ ] Quản trị Kinh doanh — Bước 4: dashboard Tổng quan (KPI cards, biểu đồ, so sánh 2 phòng, xếp hạng).
+- [ ] Quản trị Kinh doanh — Bước 5: kiểm thử phân quyền/số liệu/mobile end-to-end.
