@@ -813,6 +813,13 @@
       "when": 1793348006448,
       "tag": "0115_biz_isolated_demo",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1793348310834,
+      "tag": "0116_biz_demo_numeric_targets",
+      "breakpoints": true
     }
   ]
 }
