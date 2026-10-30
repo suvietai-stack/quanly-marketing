@@ -631,6 +631,13 @@
       "when": 1793338411078,
       "tag": "0089_biz_annual_goals_and_scoped_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1793338871614,
+      "tag": "0090_biz_membership_serialized_boundaries",
+      "breakpoints": true
     }
   ]
 }
