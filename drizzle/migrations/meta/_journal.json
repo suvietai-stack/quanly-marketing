@@ -771,6 +771,13 @@
       "when": 1793346308929,
       "tag": "0109_biz_organization_guard_record_shapes",
       "breakpoints": true
+    },
+    {
+      "idx": 110,
+      "version": "7",
+      "when": 1793346510242,
+      "tag": "0110_biz_approval_history_and_guard_scope",
+      "breakpoints": true
     }
   ]
 }
