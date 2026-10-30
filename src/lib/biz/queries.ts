@@ -14,7 +14,7 @@ export const bizDepartmentsQuery = queryOptions({
 export const bizMembersQuery = queryOptions({
   queryKey: ["biz_department_members"],
   queryFn: async () => {
-    const { data, error } = await supabase.from("biz_department_members").select("id, department_id, user_id, is_manager, effective_from, effective_to").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("biz_department_members").select("id, department_id, user_id, is_manager, effective_from, effective_to, started_at, ended_at").order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as BizMember[];
   },
