@@ -128,7 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .map((g) => ({
       ...g,
       items: g.items
-        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || isSuperAdmin || (it.to === '/biz/approvals' && approvals.data?.has_assigned) || isKpiAdmin && it.kpi || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
+        .filter((it: any) => (!it.perm || can(it.perm)) && (!it.anyPerm || (isSuperAdmin && it.to.startsWith('/biz')) || (it.to === '/biz/approvals' && approvals.data?.has_assigned) || isKpiAdmin && it.kpi || it.anyPerm.some((k: PermissionKey) => can(k))) && (!it.kpi || isKpiV2Enabled()) && (!it.adminOnly || isKpiAdmin))
         .map((it) => (it.to === "/settings/kpi-v2" && !isKpiManager ? { ...it, label: "KPI của tôi" } : it))
         .map((it) =>
           it.to === "/settings" && canApprove && pendingCount > 0
