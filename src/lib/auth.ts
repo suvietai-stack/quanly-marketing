@@ -30,7 +30,8 @@ export type PermissionGroup =
   | "Tài Chính Kế Toán"
   | "Tích hợp Marketing"
   | "Tài khoản"
-  | "Sao Sứ Việt";
+  | "Sao Sứ Việt"
+  | "Quản trị Kinh doanh";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -695,7 +696,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Quản trị Kinh doanh", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
