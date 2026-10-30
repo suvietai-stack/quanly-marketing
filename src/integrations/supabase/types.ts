@@ -5457,18 +5457,6 @@ export type Database = {
         Args: { _deadline: string; _first: string; _now?: string }
         Returns: string
       }
-      biz_demo_action: {
-        Args: { _action: string; _data?: Json; _id: string }
-        Returns: undefined
-      }
-      biz_demo_build: { Args: never; Returns: Json }
-      biz_demo_can: { Args: never; Returns: boolean }
-      biz_demo_dashboard: { Args: { _filters: Json }; Returns: Json }
-      biz_demo_read: { Args: never; Returns: Json }
-      biz_demo_reset: {
-        Args: { _confirmed?: boolean; _delete?: boolean }
-        Returns: undefined
-      }
       biz_department_access: {
         Args: { _department_id: string }
         Returns: boolean
