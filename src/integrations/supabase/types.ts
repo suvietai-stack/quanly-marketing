@@ -540,6 +540,107 @@ export type Database = {
           },
         ]
       }
+      biz_appointments: {
+        Row: {
+          actor_id: string
+          created_at: string
+          department_id: string | null
+          ended_at: string | null
+          id: string
+          position_id: string
+          position_snapshot: Json
+          replaces_id: string | null
+          scope_kind: string
+          started_at: string
+          status: string
+          system_id: string | null
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          department_id?: string | null
+          ended_at?: string | null
+          id?: string
+          position_id: string
+          position_snapshot: Json
+          replaces_id?: string | null
+          scope_kind: string
+          started_at?: string
+          status?: string
+          system_id?: string | null
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          department_id?: string | null
+          ended_at?: string | null
+          id?: string
+          position_id?: string
+          position_snapshot?: Json
+          replaces_id?: string | null
+          scope_kind?: string
+          started_at?: string
+          status?: string
+          system_id?: string | null
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_appointments_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_appointments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_appointments_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "biz_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_appointments_replaces_id_fkey"
+            columns: ["replaces_id"]
+            isOneToOne: false
+            referencedRelation: "biz_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_appointments_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "biz_systems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_appointments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "biz_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_appointments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_approval_events: {
         Row: {
           action: string
@@ -1441,6 +1542,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      biz_positions: {
+        Row: {
+          active: boolean
+          code: string | null
+          created_at: string
+          description: string
+          id: string
+          level: number
+          name: string
+          sort_order: number
+          unit_kind: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          level?: number
+          name: string
+          sort_order?: number
+          unit_kind: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          level?: number
+          name?: string
+          sort_order?: number
+          unit_kind?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       biz_systems: {
         Row: {
@@ -5196,6 +5336,7 @@ export type Database = {
           id: string
         }[]
       }
+      biz_appointment_save: { Args: { _data: Json }; Returns: string }
       biz_approval_adopt: {
         Args: { _confirmed?: boolean; _kind: string; _version: string }
         Returns: string
@@ -5395,6 +5536,8 @@ export type Database = {
         Args: { _kind: string; _period: number; _year: number }
         Returns: string
       }
+      biz_position_save: { Args: { _data: Json }; Returns: string }
+      biz_positions_read: { Args: never; Returns: Json }
       biz_report_metrics: {
         Args: {
           _mode?: string
