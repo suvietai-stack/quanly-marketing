@@ -1,5 +1,11 @@
 # Roadmap — Nâng cấp giao diện Mục tiêu KR & quản lý bản nháp (31/10/2026)
 
+## Chuẩn hóa cơ cấu tổ chức cấp Khối
+- [ ] Bổ sung danh mục Giám Đốc Điều hành cấp 5 / Phó Giám Đốc Điều hành cấp 4; không bổ nhiệm tự động.
+- [ ] Cây tổ chức có lãnh đạo cấp Khối và bổ nhiệm/thay thế/miễn nhiệm theo vị trí, quyền tự động và kiêm nhiệm rõ ràng.
+- [ ] Admin hiện có toàn quyền riêng Biz; Phó điều hành không vượt bước Giám Đốc; tinh gọn Phân quyền và kiểm thử bảo toàn lịch sử/phạm vi.
+- [ ] Kiểm thử chức vụ, dữ liệu thật và desktop/mobile 360/375/390/430; chưa Publish.
+
 - [x] 1. Khảo sát BizGoals: tab Của tôi/Trong phạm vi, form 12 tháng mở ngay; RPC biz_goals_read/biz_goal_start/biz_goal_save/biz_goal_decide giữ nguyên.
 - [x] 2. Hai khu vực một trang: "Mục tiêu KR của tôi" trên, "Trong phạm vi quản lý" dưới (chỉ khi có quyền view_dept/view_all/goal_approve); bỏ tab chuyển đổi.
 - [x] 3. Card tổng quan chỉ đọc KR × Năm × 4 Quý + trạng thái + cập nhật; nút theo trạng thái (Lập/Xem chi tiết/Tiếp tục chỉnh sửa/Lịch sử/Yêu cầu điều chỉnh).
