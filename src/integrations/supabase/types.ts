@@ -3046,6 +3046,95 @@ export type Database = {
         }
         Relationships: []
       }
+      leave_zalo_group_config: {
+        Row: {
+          enabled: boolean
+          group_id: string | null
+          group_name: string | null
+          id: number
+          on_approved: boolean
+          on_new: boolean
+          on_reassign: boolean
+          on_rejected: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          group_id?: string | null
+          group_name?: string | null
+          id?: number
+          on_approved?: boolean
+          on_new?: boolean
+          on_reassign?: boolean
+          on_rejected?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          group_id?: string | null
+          group_name?: string | null
+          id?: number
+          on_approved?: boolean
+          on_new?: boolean
+          on_reassign?: boolean
+          on_rejected?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      leave_zalo_group_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          dedup_key: string
+          error: string | null
+          event: string
+          group_id: string | null
+          id: string
+          request_id: string
+          sent_at: string | null
+          status: string
+          summary: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          dedup_key: string
+          error?: string | null
+          event: string
+          group_id?: string | null
+          id?: string
+          request_id: string
+          sent_at?: string | null
+          status?: string
+          summary?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          dedup_key?: string
+          error?: string | null
+          event?: string
+          group_id?: string | null
+          id?: string
+          request_id?: string
+          sent_at?: string | null
+          status?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_zalo_group_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "leave_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       map_posts: {
         Row: {
           created_at: string
@@ -6297,6 +6386,19 @@ export type Database = {
           _id: string
           _payload: Json
           _reason_id: string
+        }
+        Returns: undefined
+      }
+      leave_zalo_group_can_manage: { Args: never; Returns: boolean }
+      leave_zalo_group_save: {
+        Args: {
+          _enabled: boolean
+          _group_id: string
+          _group_name: string
+          _on_approved: boolean
+          _on_new: boolean
+          _on_reassign: boolean
+          _on_rejected: boolean
         }
         Returns: undefined
       }

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DOW_LABEL, fmtDate, type LeaveSettings as S } from "@/lib/leave/calc";
 import * as api from "@/lib/leave/api";
 import { useAuth, getUserPermissions } from "@/lib/auth";
+import { LeaveZaloGroup } from "./LeaveZaloGroup";
 
 const norm = (v: string) => v.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
 
@@ -120,6 +121,8 @@ export function LeaveSettings({ mode = "all" }: { mode?: "all" | "leave" | "att"
           <p className="sm:col-span-2 text-xs text-muted-foreground">Thông báo trong Base luôn bật. Nhắc duyệt gửi tối đa 1 lần/ngày, trong giờ 08:00–18:00; đơn sắp tới giờ bắt đầu (còn ≤ 2 giờ) được nhắc sớm. Cần bật "Gửi tự động" và đã lưu cài đặt nhắc trong Thông báo Zalo.</p>
         </CardContent>
       </Card>}
+
+      {showLeave && <LeaveZaloGroup />}
 
       {showLeave && <CcCard s={s} up={up} />}
       {showAtt && <AttNotifyCard s={s} up={up} />}
