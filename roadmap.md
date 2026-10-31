@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## Điều chỉnh phân bổ KR (Rolling Plan)
+- [ ] Bổ sung hồ sơ phân bổ riêng, tái sử dụng phê duyệt KR và kiểm tra nguồn chính thức/phiên bản khi duyệt.
+- [ ] Tính phần còn phải đạt từ tháng đã kết thúc đủ dữ liệu; khóa tháng lịch sử; đề xuất chia đều/tỷ trọng/tự nhập chính xác.
+- [ ] Giao diện điều chỉnh, lịch sử, cảnh báo nguồn thay đổi và lớp phân bổ đã duyệt; giữ cam kết năm và Dashboard chính thức.
+- [ ] Kiểm thử quyền, duyệt nguyên tử, hụt/vượt/thiếu dữ liệu, desktop/mobile; không tạo dữ liệu vận hành, chưa Publish.
+
 - [x] Đồng bộ mặc định Tuần từ 02/11, giữ ngoại lệ/lịch sử và chặn kích hoạt khi thiếu deadline; không hồi tố.
 - [x] Một nơi sửa deadline Báo cáo, xem trước kỳ và cảnh báo cấu hình thiếu/ngắn.
 - [x] Bỏ chế độ Tạm tính ở KR/Dashboard và khóa nguồn chính thức phía máy chủ; giữ điều chỉnh và tổng hợp không trùng.
