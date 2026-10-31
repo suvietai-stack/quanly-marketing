@@ -7,22 +7,23 @@ import { myWorkQuery, useDocumentOpen } from '@/lib/biz/documentQueries';
 import { bizLateRequestsQuery, bizMilestonesQuery } from '@/lib/biz/queries';
 import { phaseFromIso, type DeadlinePhase } from '@/lib/biz/deadline';
 import { deadlineStatus, docStatusLabel, myWorkRank, periodLabel, TIME_STATUS, VIEW_STATUS, viewTone, type DocKind, type DocRow, type MyWorkRow, type PeriodKind, type ViewStatus } from '@/lib/biz/documents';
+import {documentError,hasSubmittedDocument} from '@/lib/biz/planSubmission';
 import { LateRequestDialog, LateRequestPanel } from './BizLateRequest';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export const dateText = (v: string | null) => (v ? new Date(v).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : 'Chưa quy định');
 
-export function useOpenDocument() { const open = useDocumentOpen(); return async (versionId: string) => { const win = window.open('', '_blank'); try { const url = await open.mutateAsync(versionId); if (win) { win.location.href = url; } else { window.location.href = url; } } catch (e) { win?.close(); toast.error(e instanceof Error ? e.message : String(e)); } }; }
+export function useOpenDocument() { const open = useDocumentOpen(); return async (versionId: string) => { const win = window.open('', '_blank'); try { const url = await open.mutateAsync(versionId); if (win) { win.location.href = url; } else { window.location.href = url; } } catch (e) { win?.close(); toast.error(documentError(e)); } }; }
 
-export function StatusBadges({ row, kind, showView = true }: { row: DocRow; kind: DocKind; showView?: boolean }) { const time = deadlineStatus(row.deadline, row.document?.first_submitted_at ?? null, row.server_now); const version = row.document?.versions.at(-1); return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late', 'overdue'].includes(time) ? 'text-destructive border-destructive/40' : time === 'ontime' ? 'text-success border-success/40' : time === 'soon' ? 'text-warning border-warning/40' : ''}>{TIME_STATUS[time]}</Badge>{row.document?.late_submitted && <Badge variant="outline" className="text-warning border-warning/40">Nộp muộn</Badge>}<Badge variant="secondary">{version ? docStatusLabel(kind, version.status) : 'Chưa nộp'}</Badge>{showView && <Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view as ViewStatus]}</Badge>}</div>; }
+export function StatusBadges({ row, kind, showView = true, phase }: { row: DocRow; kind: DocKind; showView?: boolean; phase?: DeadlinePhase | null }) { const time = deadlineStatus(row.deadline, row.document?.first_submitted_at ?? null, row.server_now); const version = row.document?.versions.at(-1); return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late', 'overdue'].includes(time) ? 'text-destructive border-destructive/40' : time === 'ontime' ? 'text-success border-success/40' : time === 'soon' ? 'text-warning border-warning/40' : ''}>{kind==='plan'&&!row.document?.first_submitted_at?(phase?PHASE_BADGE[phase].label:time==='overdue'?'Quá hạn trực tiếp':'Đang tải lịch nộp…'):TIME_STATUS[time]}</Badge>{row.document?.late_submitted && <Badge variant="outline" className="text-warning border-warning/40">Nộp muộn</Badge>}<Badge variant="secondary">{version ? docStatusLabel(kind, version.status) : 'Chưa nộp'}</Badge>{showView && hasSubmittedDocument(row) && <Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view as ViewStatus]}</Badge>}</div>; }
 
 const PHASE_BADGE: Record<DeadlinePhase, { label: string; className: string }> = {
   none: { label: 'Chưa cấu hình lịch nộp', className: '' },
   not_open: { label: 'Chưa mở nộp', className: '' },
   open: { label: 'Đang mở nộp', className: 'text-success border-success/40' },
-  overdue: { label: 'Quá hạn', className: 'text-destructive border-destructive/40' },
-  closed: { label: 'Đóng kỳ – Không nộp', className: 'text-muted-foreground' },
+  overdue: { label: 'Quá hạn trực tiếp – Đang trong thời gian xin nộp bù', className: 'text-destructive border-destructive/40' },
+  closed: { label: 'Đã đóng kỳ', className: 'text-muted-foreground' },
 };
 
 /** Khu vực "Công việc của tôi": tự hiện các kỳ đang mở nộp/quá hạn/sắp mở/đang sửa — không phụ thuộc bộ lọc kỳ. */
@@ -54,7 +55,7 @@ export function MyWorkSection({ kind, onOpen }: { kind: DocKind; onOpen: (period
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className={phase.className}>{phase.label}</Badge>
               {r.late_submitted && <Badge variant="outline" className="text-warning border-warning/40">Nộp muộn</Badge>}
-              {r.version_status && <Badge variant="secondary">{docStatusLabel(kind, r.version_status)}</Badge>}
+              <Badge variant="secondary">{docStatusLabel(kind, r.version_status)}</Badge>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Mở nộp: {dateText(r.open_at)} · Hạn cuối: {dateText(r.due_at)} · Đóng nộp bù: {dateText(r.late_close_at)} (giờ Việt Nam)</p>
@@ -94,11 +95,11 @@ export function MyDocCard({ row, kind, periodKind, year, period, onOpen }: { row
 
   return <section className="space-y-3"><h2 className="text-lg font-semibold">{label} của tôi</h2>
     <div className={`border rounded-lg bg-card p-4 space-y-3 max-w-xl ${version?.status === 'changes' || phase === 'overdue' ? 'border-warning/60' : ''}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">{label} {periodLabel(periodKind, year, period)}</h3><StatusBadges row={row} kind={kind} /></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">{label} {periodLabel(periodKind, year, period)}</h3><StatusBadges row={row} kind={kind} phase={phase} /></div>
       <p className="text-sm text-muted-foreground">Hạn nộp: {dateText(row.deadline)} (giờ Việt Nam)</p>
       {milestones.data && <p className="text-xs text-muted-foreground">Mở nộp: {dateText(milestones.data.open)} · Đóng nộp bù: {dateText(milestones.data.late_close)}</p>}
       {row.document?.last_submitted_at && <p className="text-xs text-muted-foreground">Nộp gần nhất: {dateText(row.document.last_submitted_at)}</p>}
       <LateRequestPanel kind={kind} periodKind={periodKind} year={year} period={period} submitted={submitted} />
-      <div className="flex flex-wrap gap-2">{primary}{version?.url && <Button size="sm" variant="outline" onClick={() => openDoc(version.id)}><ExternalLink className="h-4 w-4 mr-2" />Mở tài liệu</Button>}</div>
+      <div className="flex flex-wrap gap-2">{primary}{version?.submitted_at && version.url && <Button size="sm" variant="outline" onClick={() => openDoc(version.id)}><ExternalLink className="h-4 w-4 mr-2" />Mở tài liệu</Button>}</div>
     </div></section>;
 }
