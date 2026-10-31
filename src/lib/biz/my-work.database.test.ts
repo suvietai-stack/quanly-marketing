@@ -66,3 +66,11 @@ it('người không có quyền nộp không đọc được danh sách công vi
  await actor(other);
  await expect(db.query("select biz_my_work('plan')")).rejects.toThrow('Không có quyền');
 });
+
+it('người có quyền nhưng không thuộc phòng nào trong kỳ thì không có nghĩa vụ nộp',async()=>{
+ const newbie='00000000-0000-0000-0000-000000000005';
+ await db.exec(`INSERT INTO profiles VALUES('${newbie}','Newbie','Đang hoạt động');CREATE OR REPLACE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$SELECT u IN ('${admin}'::uuid,'${newbie}'::uuid) OR (u='${sale}'::uuid AND p IN ('biz.view_own','biz.plan_submit','biz.report_submit')) OR (u='${leader}'::uuid AND p IN ('biz.view_dept','biz.plan_approve','biz.report_approve','biz.view_own'))$$;`);
+ await actor(newbie);
+ const res=await scalar("select biz_my_work('plan') v");
+ expect(res.rows).toEqual([]);
+});
