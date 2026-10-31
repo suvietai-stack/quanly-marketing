@@ -33,7 +33,6 @@ it('tự liệt kê kỳ đang mở nộp, kỳ quá hạn và kỳ sắp mở m
  expect(nxt).toBeTruthy();expect(['open','not_open']).toContain(nxt!.phase);
  // Tháng trước đã qua hạn: còn trong hạn nộp bù thì overdue, qua ngày 15 thì đã đóng và biến mất khỏi danh sách việc cần làm.
  const prv=rows.find(r=>r.period_kind==='month'&&r.year===prev.year&&r.period===prev.month);
- const day=Number(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit'}).format(new Date()));
  if(day>15)expect(prv).toBeUndefined();else expect(prv?.phase).toBe('overdue');
  // Không tự tạo bản nháp khi chỉ đọc danh sách.
  expect(Number(await scalar(`select count(*) v from biz_documents where user_id='${sale}'`))).toBe(0);
