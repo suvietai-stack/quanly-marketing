@@ -6,7 +6,15 @@ export interface ReportItem { metric_id: string; definition: GoalItem['definitio
 export interface DocAttachment { name: string; url: string; description?: string }
 export interface DocVersion { id: string; version: number; revision: number; status: DocStatus; url: string | null; attachments: DocAttachment[]; notes: string | null; reason: string | null; target_version_id: string | null; items: ReportItem[]; submitted_at: string | null; approved_at: string | null; approved_by: string | null; review_comment: string | null }
 export interface BizDocument { id: string; user_id: string; kind: DocKind; period_kind: PeriodKind; year: number; period: number; department_name: string; official_version_id: string | null; first_submitted_at: string | null; last_submitted_at: string | null; deadline: string | null; versions: DocVersion[] }
-export interface DocRow { user_id: string; employee_name: string; department_id: string; department_name: string; can_review: boolean; document: BizDocument | null; deadline: string | null; server_now: string }
+export type ViewStatus = 'none' | 'unopened' | 'opened' | 'new_version';
+export interface DocRow { user_id: string; employee_name: string; department_id: string; department_name: string; can_review: boolean; my_view: ViewStatus; document: BizDocument | null; deadline: string | null; server_now: string }
+/** Trạng thái mở tài liệu — riêng theo từng người xem, tách biệt trạng thái nộp. */
+export const VIEW_STATUS: Record<ViewStatus, string> = { none: 'Chưa có tài liệu', unopened: 'Chưa mở', opened: 'Đã mở', new_version: 'Có bản mới' };
+export function viewTone(status: ViewStatus) { return status === 'opened' ? 'text-primary border-primary/40' : status === 'none' ? 'text-muted-foreground' : 'text-warning border-warning/40'; }
+/** Ưu tiên "Kế hoạch của tôi": cần chỉnh sửa → quá hạn → sắp hạn → chưa nộp → đã nộp → chưa đến hạn. */
+export function myPlanRank(row: DocRow) { const status = row.document?.versions.at(-1)?.status; const time = deadlineStatus(row.deadline, row.document?.first_submitted_at ?? null, row.server_now); if (status === 'changes') return 0; if (time === 'overdue') return 1; if (time === 'soon') return 2; if (!row.document?.first_submitted_at) return 3; return time === 'upcoming' || time === 'none' ? 5 : 4; }
+/** Ưu tiên danh sách quản lý: đã nộp chưa xem → bản mới chưa mở → đang yêu cầu sửa → quá hạn → còn lại. */
+export function manageRank(row: DocRow) { const status = row.document?.versions.at(-1)?.status; const time = deadlineStatus(row.deadline, row.document?.first_submitted_at ?? null, row.server_now); if (row.my_view === 'unopened' && row.document?.first_submitted_at) return 0; if (row.my_view === 'new_version') return 1; if (status === 'changes') return 2; if (time === 'overdue') return 3; return 4; }
 export interface MetricsResult { target_version_id: string | null; no_target: boolean; items: ReportItem[] }
 /** Reports: first submission is official immediately; only adjustments wait for approval. */
 export const DOC_STATUS: Record<string, string> = { draft: 'Bản nháp', pending: 'Đang đề nghị điều chỉnh', changes: 'Điều chỉnh cần bổ sung', approved: 'Đã nộp' };
