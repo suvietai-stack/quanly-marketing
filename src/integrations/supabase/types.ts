@@ -1373,7 +1373,9 @@ export type Database = {
           late_submitted: boolean
           official_version_id: string | null
           period: number
+          period_end: string | null
           period_kind: string
+          period_start: string | null
           user_id: string
           year: number
         }
@@ -1390,7 +1392,9 @@ export type Database = {
           late_submitted?: boolean
           official_version_id?: string | null
           period: number
+          period_end?: string | null
           period_kind: string
+          period_start?: string | null
           user_id: string
           year: number
         }
@@ -1407,7 +1411,9 @@ export type Database = {
           late_submitted?: boolean
           official_version_id?: string | null
           period?: number
+          period_end?: string | null
           period_kind?: string
+          period_start?: string | null
           user_id?: string
           year?: number
         }
@@ -1950,6 +1956,105 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      biz_report_cycle_config_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          config_id: string | null
+          created_at: string
+          id: string
+          new_row: Json | null
+          old_row: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          new_row?: Json | null
+          old_row?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          new_row?: Json | null
+          old_row?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_report_cycle_config_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_report_cycle_configs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          cycle: string
+          department_id: string | null
+          effective_from: string
+          id: string
+          scope: string
+          system_id: string | null
+          updated_at: string
+          workdays: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          cycle: string
+          department_id?: string | null
+          effective_from: string
+          id?: string
+          scope: string
+          system_id?: string | null
+          updated_at?: string
+          workdays?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          cycle?: string
+          department_id?: string | null
+          effective_from?: string
+          id?: string
+          scope?: string
+          system_id?: string | null
+          updated_at?: string
+          workdays?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_report_cycle_configs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_report_cycle_configs_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_report_cycle_configs_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "biz_systems"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       biz_systems: {
         Row: {
@@ -5834,6 +5939,22 @@ export type Database = {
         Args: { _actor: string; _permission: string }
         Returns: boolean
       }
+      biz_cycle_milestone_at: {
+        Args: { _kind: string; _period_start: string; _rule: Json }
+        Returns: string
+      }
+      biz_cycle_milestones: {
+        Args: { _kind: string; _period_start: string }
+        Returns: Json
+      }
+      biz_cycle_period_end: {
+        Args: { _kind: string; _period_start: string }
+        Returns: string
+      }
+      biz_cycle_phase: {
+        Args: { _kind: string; _now?: string; _period_start: string }
+        Returns: string
+      }
       biz_dashboard_aggregate: {
         Args: { _axis?: string; _facts: Json; _hi: number; _lo: number }
         Returns: Json
@@ -5895,6 +6016,10 @@ export type Database = {
       biz_department_access: {
         Args: { _department_id: string }
         Returns: boolean
+      }
+      biz_department_at: {
+        Args: { _at: string; _user: string }
+        Returns: string
       }
       biz_dept_save: {
         Args: {
@@ -6082,6 +6207,22 @@ export type Database = {
       }
       biz_position_save: { Args: { _data: Json }; Returns: string }
       biz_positions_read: { Args: never; Returns: Json }
+      biz_report_cycle_delete: { Args: { _id: string }; Returns: undefined }
+      biz_report_cycle_of: {
+        Args: { _at: string; _user: string }
+        Returns: string
+      }
+      biz_report_cycle_save: {
+        Args: {
+          _cycle: string
+          _department_id: string
+          _effective_from: string
+          _scope: string
+          _system_id: string
+          _workdays?: Json
+        }
+        Returns: string
+      }
       biz_report_metrics: {
         Args: {
           _mode?: string
