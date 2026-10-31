@@ -5685,6 +5685,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      biz_goal_draft_delete: {
+        Args: { _version_id: string }
+        Returns: undefined
+      }
       biz_goal_save: {
         Args: {
           _items: Json

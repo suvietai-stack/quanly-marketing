@@ -1,8 +1,11 @@
-# Roadmap — Fix Kế hoạch/Deadline + Nâng cấp Báo cáo (31/10/2026)
+# Roadmap — Nâng cấp giao diện Mục tiêu KR & quản lý bản nháp (31/10/2026)
 
-- [x] A. Kỳ đã mở nộp tự xuất hiện trong "Công việc của tôi" (RPC biz_my_work, không phụ thuộc bộ lọc tháng); không tự tạo bản nháp; bỏ kỳ khi không thuộc phòng nào trong kỳ.
-- [x] B. Khóa nộp trực tiếp sau deadline: backend đã chặn (biz_document_save kiểm biz_deadline_phase, quá hạn cần late request đã duyệt, đóng kỳ chỉ Super Admin can thiệp có audit); UI hiện nút đúng theo phase (mở/quá hạn-xin bù/chờ duyệt/được duyệt/đóng kỳ).
-- [x] C. Đóng xin nộp bù sau ngày đóng kỳ: cấu hình plan_month sửa due=3/23:59, late_close=15/23:59 (có log); RPC biz_late_request_create đã chặn phase closed; UI ẩn nút khi đóng kỳ.
-- [x] D. Trang Báo cáo đồng bộ Kế hoạch: "Công việc của tôi" + "Báo cáo của tôi" + "Trong phạm vi quản lý" (chỉ người có quyền), quick-filter chips, search, mobile cards 360–430px.
-- [x] Kiểm thử: 146 test Biz đạt (gồm biz_my_work: kỳ mở/quá hạn/sắp mở, đã nộp biến mất, xin nộp bù pending, chặn không quyền, chặn không thuộc phòng); build OK; Playwright desktop/mobile không lỗi console, không tràn ngang.
-- [ ] Chưa kiểm: mở dialog nộp từ thẻ công việc bằng tài khoản nhân viên thật (phiên hiện tại là Super Admin, không thuộc phòng tháng 11); chưa Publish.
+- [x] 1. Khảo sát BizGoals: tab Của tôi/Trong phạm vi, form 12 tháng mở ngay; RPC biz_goals_read/biz_goal_start/biz_goal_save/biz_goal_decide giữ nguyên.
+- [x] 2. Hai khu vực một trang: "Mục tiêu KR của tôi" trên, "Trong phạm vi quản lý" dưới (chỉ khi có quyền view_dept/view_all/goal_approve); bỏ tab chuyển đổi.
+- [x] 3. Card tổng quan chỉ đọc KR × Năm × 4 Quý + trạng thái + cập nhật; nút theo trạng thái (Lập/Xem chi tiết/Tiếp tục chỉnh sửa/Lịch sử/Yêu cầu điều chỉnh).
+- [x] 4. Chi tiết 12 tháng chỉ mở khi bấm (dialog đọc, không ô nhập); chỉnh sửa mở form trong dialog; mobile theo Quý thu gọn.
+- [x] 5. Khu vực Bản nháp thu gọn mặc định, loại Lập mới/Điều chỉnh, Tiếp tục chỉnh sửa + Xóa bản nháp có xác nhận; không tự tạo nháp (biz_goal_start vốn trả về bản đang dở, không trùng).
+- [x] 6. RPC biz_goal_draft_delete (migration 0134): chỉ nháp draft chưa từng gửi, chặn pending/approved/official/có approval run, nguyên tử, xóa hồ sơ năm khi không còn phiên bản, giữ nguyên bản chính thức khi xóa nháp điều chỉnh.
+- [x] 7. Khu vực quản lý: 6 thẻ thống kê (bấm lọc nhanh), tìm tên/lọc phòng/trạng thái, bảng desktop + card mobile, Xem (chỉ đọc) / Lịch sử / Duyệt (liên kết Trung tâm Phê duyệt).
+- [x] 8. Kiểm thử: 151/151 test Biz (5 test mới cho xóa nháp); build OK; Playwright desktop/mobile 390px không lỗi console, không tràn ngang; xóa nháp thật của Admin thành công end-to-end.
+- [ ] Chưa kiểm: tài khoản Sale/Trưởng phòng thật (phiên hiện tại là Super Admin); chưa Publish.
