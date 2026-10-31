@@ -64,7 +64,7 @@ export function milestoneOrderError(kind: string, rule: BizDeadlineRule): string
   for (let y = 2024; y <= 2028; y++) {
     for (let p = 1; p <= max; p++) {
       const m = milestonesFor(kind, { open: rule.open, due: rule.due, late_close: rule.late_close }, y, p);
-      if (m.open && m.due && m.open >= m.due) return `Ngày mở nộp phải trước hạn cuối (kiểm tra kỳ ${y}-${pad(p)}).`;
+      if (m.open && m.due && m.open > m.due) return `Ngày mở nộp không được sau hạn cuối (kiểm tra kỳ ${y}-${pad(p)}).`;
       if (m.due && m.late_close && m.due >= m.late_close) return `Hạn cuối phải trước ngày đóng nộp bù (kiểm tra kỳ ${y}-${pad(p)}).`;
       if (m.open && m.late_close && m.open >= m.late_close) return `Ngày mở nộp phải trước ngày đóng nộp bù (kiểm tra kỳ ${y}-${pad(p)}).`;
     }

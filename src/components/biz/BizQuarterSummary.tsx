@@ -2,7 +2,7 @@ import {useQueries} from '@tanstack/react-query';
 import {reportMetricsQuery} from '@/lib/biz/documentQueries';
 import {metricPercent,numberText} from '@/lib/biz/documents';
 import {Badge} from '@/components/ui/badge';
-export function BizQuarterSummary({uid,user,year,mode}:{uid:string;user:string;year:number;mode:'official'|'provisional'}){
+export function BizQuarterSummary({uid,user,year,mode='official'}:{uid:string;user:string;year:number;mode?:'official'}){
  const quarters=useQueries({queries:[1,2,3,4].map(q=>reportMetricsQuery(uid,user,year,'quarter',q,mode))});
  return <div className="space-y-3"><h4 className="font-medium">Kết quả từng quý</h4><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{quarters.map((query,index)=><div key={index} className="border rounded-lg p-3 space-y-2"><strong className="text-sm">Quý {index+1}</strong>{query.isPending&&<p className="text-xs">Đang tổng hợp…</p>}{query.error&&<p className="text-xs text-destructive">Chưa tải được</p>}{query.data?.no_target&&<p className="text-xs">Chưa có mục tiêu chính thức</p>}{query.data?.items.map(item=>{const percent=metricPercent(item);const label=!item.complete?'Chưa đủ dữ liệu':percent===null?'Chưa có quy tắc đánh giá':percent>=100?'Đạt':'Chưa đạt';return <div key={item.metric_id} className="text-xs space-y-1"><div className="flex flex-wrap justify-between gap-1"><span>{item.definition.name}</span><Badge variant="outline" className={label==='Đạt'?'text-success':'text-muted-foreground'}>{label}</Badge></div><p>{numberText(item.actual)} / {numberText(item.target)} {item.definition.unit}{percent!==null?` · ${percent.toLocaleString('vi-VN',{maximumFractionDigits:2})}%`:''}</p></div>;})}</div>)}</div></div>;
 }
