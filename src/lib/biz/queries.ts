@@ -96,9 +96,9 @@ export const bizLateRequestsQuery = (kind?: string, periodKind?: string, year?: 
   queryOptions({
     queryKey: ["biz_late_requests", kind ?? null, periodKind ?? null, year ?? null, period ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("biz_late_requests_read", { _kind: kind ?? null, _period_kind: periodKind ?? null, _year: year ?? null, _period: period ?? null });
+      const { data, error } = await supabase.rpc("biz_late_requests_read", { _kind: kind ?? null, _period_kind: periodKind ?? null, _year: year ?? null, _period: period ?? null } as any);
       if (error) throw error;
-      return data as { requests: BizLateRequest[]; server_now: string };
+      return data as unknown as { requests: BizLateRequest[]; server_now: string };
     },
   });
 
