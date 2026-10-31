@@ -59,3 +59,18 @@ it('only administrators can grant exceptions and clients cannot write them',asyn
 it('an unassigned manager cannot approve just because they can view',async()=>{
  await actor(lead);expect(await scalar('select biz_goal_can_review($1,$2) v',[sale,dep])).toBe(false);
 });
+it('late permission uses sequential steps and only final approval enables submission',async()=>{
+ await actor(admin);
+ await scalar('select biz_deadline_save($1) v',[JSON.stringify({plan_month:{open:{day:1,offset:0,hour:0},due:{day:2,offset:0,hour:0},late_close:{day:28,offset:1,hour:23}}})]);
+ await scalar('select biz_workflow_save($1) v',[JSON.stringify({name:'Nộp bù hai cấp',system_id:sys,kind:'late_plan_month',active:true,steps:[{label:'Cấp 1',type:'user',user_id:lead},{label:'Cấp 2',type:'user',user_id:director}]})]);
+ await actor(sale);const request=await scalar("select biz_late_request_create('plan','month',2026,10,'Đi công tác') v");
+ expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
+ await actor(director);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
+ await actor(lead);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
+ await db.query('select biz_late_request_decide($1,true,null)',[request]);
+ expect(await scalar('select status v from biz_late_requests where id=$1',[request])).toBe('pending');
+ await actor(director);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
+ await db.query('select biz_late_request_decide($1,true,null)',[request]);
+ expect(await scalar('select status v from biz_late_requests where id=$1',[request])).toBe('approved');
+ expect(await scalar("select count(*)::int v from notifications where kind='biz_late_approved' and recipient_id=$1",[sale])).toBe(1);
+});
