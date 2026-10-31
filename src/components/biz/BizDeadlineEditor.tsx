@@ -21,7 +21,7 @@ const DOC_GROUPS = [
   { key: 'goal', label: 'Mục tiêu KR' },
 ] as const;
 // Editor này chỉ quản mốc deadline theo tháng cho kỳ Tháng/Quý/Năm; deadline Ngày/Tuần nằm trong cấu hình chu kỳ báo cáo.
-type MilestonePeriod = 'month' | 'quarter' | 'year';
+type MilestonePeriod = 'day' | 'week' | 'month' | 'quarter' | 'year';
 const PERIOD_TABS: { key: MilestonePeriod; label: string }[] = [{ key: 'month', label: 'Tháng' }, { key: 'quarter', label: 'Quý' }, { key: 'year', label: 'Năm' }];
 const MILESTONES: { key: MilestoneKey; label: string; desc: string; optional: boolean }[] = [
   { key: 'open', label: 'Mốc 1 · Mở nộp', desc: 'Từ thời điểm này nhân viên bắt đầu nộp được. Để trống nếu cho nộp bất kỳ lúc nào.', optional: true },
@@ -29,6 +29,7 @@ const MILESTONES: { key: MilestoneKey; label: string; desc: string; optional: bo
   { key: 'late_close', label: 'Mốc 3 · Đóng nộp bù', desc: 'Sau thời điểm này kỳ đóng hoàn toàn; yêu cầu nộp bù chưa xử lý sẽ hết hiệu lực. Để trống nếu không giới hạn.', optional: true },
 ];
 const OFFSET_OPTIONS: Record<MilestonePeriod, { value: number; label: string }[]> = {
+  day: [], week: [],
   month: [{ value: -1, label: 'Tháng trước kỳ' }, { value: 0, label: 'Tháng của kỳ' }, { value: 1, label: 'Tháng sau kỳ' }],
   quarter: [{ value: -1, label: 'Tháng cuối quý trước' }, { value: 0, label: 'Tháng 1 của quý' }, { value: 1, label: 'Tháng 2 của quý' }, { value: 2, label: 'Tháng 3 của quý' }, { value: 3, label: 'Tháng đầu quý sau' }],
   year: [{ value: -1, label: 'Tháng 12 năm trước' }, ...Array.from({ length: 12 }, (_, i) => ({ value: i, label: `Tháng ${i + 1} của năm` })), { value: 12, label: 'Tháng 1 năm sau' }],
@@ -47,17 +48,18 @@ function normalize(rule: BizDeadlineRule | undefined): BizDeadlineRule {
   };
 }
 
-export function BizDeadlineEditor() {
+export function BizDeadlineEditor({reportOnly=false}:{reportOnly?:boolean}={}) {
   const { data } = useQuery(bizDeadlineQuery);
   const save = useBizDeadlineSave();
   const [form, setForm] = useState<Record<string, BizDeadlineRule> | null>(null);
-  const [group, setGroup] = useState<(typeof DOC_GROUPS)[number]['key']>('plan');
+  const [group, setGroup] = useState<(typeof DOC_GROUPS)[number]['key']>(reportOnly?'report':'plan');
   const [periodKind, setPeriodKind] = useState<MilestonePeriod>('month');
   const cur = useMemo(() => {
     const source = form ?? data ?? {};
     return Object.fromEntries(Object.entries(source).map(([k, v]) => [k, normalize(v)]));
   }, [form, data]);
-  const kinds = group === 'goal' ? ['goal_year'] : PERIOD_TABS.map((t) => `${group}_${t.key}`);
+  const tabs=group==='report'?[{key:'day' as const,label:'Ngày'},{key:'week' as const,label:'Tuần'},...PERIOD_TABS.filter(t=>t.key!=='year')]:PERIOD_TABS;
+  const kinds = group === 'goal' ? ['goal_year'] : tabs.map((t) => `${group}_${t.key}`);
   const kind = group === 'goal' ? 'goal_year' : `${group}_${periodKind}`;
   const rule = cur[kind] ?? {};
   const update = (next: BizDeadlineRule) => setForm({ ...cur, [kind]: next });
@@ -75,14 +77,14 @@ export function BizDeadlineEditor() {
   };
   return <div className="space-y-5">
     <div className="flex flex-wrap gap-3 items-center">
-      <Tabs value={group} onValueChange={(v) => setGroup(v as typeof group)}><TabsList className="h-auto flex-wrap">{DOC_GROUPS.map((g) => <TabsTrigger key={g.key} value={g.key}>{g.label}</TabsTrigger>)}</TabsList></Tabs>
-      {group !== 'goal' && <Tabs value={periodKind} onValueChange={(v) => setPeriodKind(v as MilestonePeriod)}><TabsList>{PERIOD_TABS.map((t) => <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>)}</TabsList></Tabs>}
+      {!reportOnly&&<Tabs value={group} onValueChange={(v) => {setGroup(v as typeof group);setPeriodKind('month');}}><TabsList className="h-auto flex-wrap">{DOC_GROUPS.map((g) => <TabsTrigger key={g.key} value={g.key}>{g.label}</TabsTrigger>)}</TabsList></Tabs>}
+      {group !== 'goal' && <Tabs value={periodKind} onValueChange={(v) => setPeriodKind(v as MilestonePeriod)}><TabsList className="flex-wrap h-auto">{tabs.map((t) => <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>)}</TabsList></Tabs>}
     </div>
     <div className="grid gap-4 lg:grid-cols-3">
       {milestones.map((m) => <MilestoneCard key={m.key} meta={m} kind={kind} periodKind={group === 'goal' ? 'year' : periodKind} rule={rule[m.key]} onChange={(value) => update({ ...rule, [m.key]: value })} />)}
     </div>
     <SchedulePreview kind={kind} rule={rule} />
-    <ExceptionEditor values={rule.exceptions ?? {}} onChange={(exceptions) => update({ ...rule, exceptions })} />
+    <ExceptionEditor daily={periodKind==='day'||periodKind==='week'} values={rule.exceptions ?? {}} onChange={(exceptions) => update({ ...rule, exceptions })} />
     <div className="flex flex-wrap items-center gap-3">
       <Button disabled={!form || save.isPending} onClick={submit}><Save className="h-4 w-4 mr-2" />Lưu cấu hình lịch nộp</Button>
       <p className="text-xs text-muted-foreground">Giờ Việt Nam · Ngày vượt cuối tháng được tính vào ngày cuối tháng · Hồ sơ đã nộp giữ nguyên hạn đã xác nhận.</p>
@@ -98,19 +100,19 @@ function MilestoneCard({ meta, kind, periodKind, rule, onChange }: { meta: (type
   return <section className="border rounded-lg bg-card p-4 space-y-3">
     <div className="flex items-start justify-between gap-2">
       <div><h3 className="font-semibold">{meta.label}</h3><p className="text-xs text-muted-foreground mt-1">{meta.desc}</p></div>
-      {meta.optional && <Button variant={enabled ? 'secondary' : 'outline'} size="sm" onClick={() => onChange(enabled ? null : { offset: 0, day: 1, hour: 17, minute: 0 })}>{enabled ? 'Đang áp dụng' : 'Không áp dụng'}</Button>}
+      {meta.optional && <Button variant={enabled ? 'secondary' : 'outline'} size="sm" onClick={() => onChange(enabled ? null : periodKind==='day'||periodKind==='week'?{offset_days:meta.key==='open'?0:7,hour:17,minute:0}:{ offset: 0, day: 1, hour: 17, minute: 0 })}>{enabled ? 'Đang áp dụng' : 'Không áp dụng'}</Button>}
     </div>
     {enabled && <div className="space-y-3">
-      <div className="space-y-1">
+      {periodKind==='day'||periodKind==='week'?<div className="space-y-1"><Label>Số ngày sau khi kỳ kết thúc</Label><Input aria-label={`${meta.label} số ngày sau kỳ`} type="number" min={0} max={62} value={value.offset_days??''} onChange={e=>set('offset_days',e.target.value===''?undefined:Number(e.target.value))}/></div>:<div className="space-y-1">
         <Label>Thời điểm trong kỳ</Label>
         <Select value={String(value.offset ?? (value.phase === 'before' ? -1 : value.phase === 'after' ? (periodKind === 'month' ? 1 : periodKind === 'quarter' ? 3 : 12) : 0))} onValueChange={(v) => set('offset', Number(v))}>
           <SelectTrigger aria-label={`${meta.label} thời điểm`}><SelectValue /></SelectTrigger>
           <SelectContent>{OFFSET_OPTIONS[periodKind].map((o) => <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>)}</SelectContent>
         </Select>
-      </div>
+      </div>}
       <div className="grid grid-cols-3 gap-2">
-        {(['day', 'hour', 'minute'] as const).map((field, i) => <div key={field} className="space-y-1">
-          <Label>{['Ngày', 'Giờ', 'Phút'][i]}</Label>
+        {(['day', 'hour', 'minute'] as const).filter(f=>f!=='day'||(periodKind!=='day'&&periodKind!=='week')).map((field) => <div key={field} className="space-y-1">
+          <Label>{{day:'Ngày',hour:'Giờ',minute:'Phút'}[field]}</Label>
           <Input aria-label={`${meta.label} ${field}`} type="number" min={field === 'day' ? 1 : 0} max={field === 'day' ? 31 : field === 'hour' ? 23 : 59} value={value[field] ?? (field === 'day' ? '' : field === 'hour' ? 17 : 0)} onChange={(e) => set(field, e.target.value === '' ? undefined : Number(e.target.value))} />
         </div>)}
       </div>
@@ -121,7 +123,7 @@ function MilestoneCard({ meta, kind, periodKind, rule, onChange }: { meta: (type
 function SchedulePreview({ kind, rule }: { kind: string; rule: BizDeadlineRule }) {
   const periods = upcomingPeriods(kind);
   const label = kind.startsWith('plan') ? 'Kế hoạch' : kind.startsWith('report') ? 'Báo cáo' : 'Mục tiêu KR';
-  const pk: PeriodKind = kind.endsWith('month') ? 'month' : kind.endsWith('quarter') ? 'quarter' : 'year';
+  const pk: PeriodKind = kind.endsWith('day')?'day':kind.endsWith('week')?'week':kind.endsWith('month') ? 'month' : kind.endsWith('quarter') ? 'quarter' : 'year';
   return <section className="border rounded-lg bg-muted/30 p-4 space-y-3">
     <h3 className="font-semibold">Xem trước lịch nộp</h3>
     <div className="grid gap-3 md:grid-cols-3">
@@ -139,12 +141,12 @@ function SchedulePreview({ kind, rule }: { kind: string; rule: BizDeadlineRule }
   </section>;
 }
 
-function ExceptionEditor({ values, onChange }: { values: Record<string, BizDeadlineException | string>; onChange: (v: Record<string, BizDeadlineException | string>) => void }) {
+function ExceptionEditor({ values, onChange,daily=false }: { daily?:boolean;values: Record<string, BizDeadlineException | string>; onChange: (v: Record<string, BizDeadlineException | string>) => void }) {
   const [period, setPeriod] = useState('');
   const [open, setOpen] = useState('');
   const [due, setDue] = useState('');
   const [close, setClose] = useState('');
-  const valid = /^[0-9]{4}-(0[1-9]|1[0-2])$/.test(period) && (open || due || close);
+  const valid = (daily?/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/:/^[0-9]{4}-(0[1-9]|1[0-2])$/).test(period) && (open || due || close);
   const add = () => {
     const entry: BizDeadlineException = {};
     if (open) entry.open = open;
@@ -165,7 +167,7 @@ function ExceptionEditor({ values, onChange }: { values: Record<string, BizDeadl
       </div>;
     })}
     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-      <Input aria-label="Kỳ ngoại lệ" placeholder="2027-01" value={period} onChange={(e) => setPeriod(e.target.value)} />
+      <Input aria-label="Kỳ ngoại lệ" type={daily?'date':'month'} value={period} onChange={(e) => setPeriod(e.target.value)} />
       <div className="space-y-1"><Label className="text-xs">Mở nộp</Label><Input aria-label="Mở nộp ngoại lệ" type="datetime-local" value={open} onChange={(e) => setOpen(e.target.value)} /></div>
       <div className="space-y-1"><Label className="text-xs">Hạn cuối</Label><Input aria-label="Hạn cuối ngoại lệ" type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} /></div>
       <div className="space-y-1"><Label className="text-xs">Đóng nộp bù</Label><Input aria-label="Đóng nộp bù ngoại lệ" type="datetime-local" value={close} onChange={(e) => setClose(e.target.value)} /></div>

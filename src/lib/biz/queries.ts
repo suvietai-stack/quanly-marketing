@@ -63,7 +63,7 @@ export const useBizKrStandardSave = () =>
   useBizMutation<{ _metric_id: string; _code: string; _label: string }>("biz_kr_standard_save", [["biz_kr_metrics"], ["biz_dashboard"]]);
 
 export const useBizDeadlineSave = () =>
-  useBizMutation<{ _data: BizDeadlineData }>("biz_deadline_save", [["biz_deadline_config"], ["biz_deadline_config_log"]]);
+  useBizMutation<{ _data: BizDeadlineData }>("biz_deadline_save", [["biz_deadline_config"], ["biz_deadline_config_log"],["biz_my_work"],["biz_docs"],["biz_deadline_milestones"]]);
 
 export interface BizDeadlineLogRow { id: string; actor_id: string | null; old_data: BizDeadlineData; new_data: BizDeadlineData; created_at: string }
 export const bizDeadlineLogQuery = queryOptions({
@@ -80,7 +80,8 @@ export const bizMilestonesQuery = (kind: string, year: number, period: number) =
   queryOptions({
     queryKey: ["biz_deadline_milestones", kind, year, period],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("biz_deadline_milestones", { _kind: kind, _year: year, _period: period });
+      const pk=kind.replace(/^(plan|report)_/,'');
+      const { data, error } = await supabase.rpc("biz_any_milestones", { _kind: kind.startsWith('plan_')?'plan':'report',_pk:pk,_y:year,_p:period });
       if (error) throw error;
       return data as unknown as BizMilestonesIso;
     },

@@ -2006,6 +2006,7 @@ export type Database = {
           department_id: string | null
           effective_from: string
           id: string
+          inherit_parent: boolean
           scope: string
           system_id: string | null
           updated_at: string
@@ -2018,6 +2019,7 @@ export type Database = {
           department_id?: string | null
           effective_from: string
           id?: string
+          inherit_parent?: boolean
           scope: string
           system_id?: string | null
           updated_at?: string
@@ -2030,6 +2032,7 @@ export type Database = {
           department_id?: string | null
           effective_from?: string
           id?: string
+          inherit_parent?: boolean
           scope?: string
           system_id?: string | null
           updated_at?: string
