@@ -13,7 +13,12 @@ export const Route = createFileRoute("/api/public/zalo/dispatch-cron")({
         if (!exp || got.length !== exp.length || !timingSafeEqual(Buffer.from(got), Buffer.from(exp))) {
           return new Response("Unauthorized", { status: 401 });
         }
-        try { return Response.json(await s.processPending(30)); }
+        try {
+          const r = await s.processPending(30);
+          const g = await import("@/lib/leave/zaloGroup.server");
+          const lg = await g.processLeaveGroup(10).catch(() => ({ processed: 0 }));
+          return Response.json({ ...r, leaveGroup: lg });
+        }
         catch { return Response.json({ ok: false }, { status: 500 }); }
       },
     },
