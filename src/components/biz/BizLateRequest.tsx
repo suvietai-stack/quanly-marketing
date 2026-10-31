@@ -39,7 +39,7 @@ export function LateRequestPanel({ kind, periodKind, year, period, submitted }: 
   </div>;
 }
 
-function LateRequestDialog({ kind, periodKind, year, period, due, label, onClose }: { kind: DocKind; periodKind: PeriodKind; year: number; period: number; due: string | null; label: string; onClose: () => void }) {
+export function LateRequestDialog({ kind, periodKind, year, period, due, label, onClose }: { kind: DocKind; periodKind: PeriodKind; year: number; period: number; due: string | null; label: string; onClose: () => void }) {
   const [reason, setReason] = useState('');
   const create = useBizLateRequestCreate();
   const send = async () => {
