@@ -46,12 +46,12 @@ export function BizReset() {
     try{
       const {data,error}=await supabase.rpc('biz_reset_execute',{_confirm:confirm});
       if(error)throw error;
-      const r=data as {counts:Record<string,number>};
-      toast.success(`Đã reset ${r.counts.plans+r.counts.reports} hồ sơ Kế hoạch/Báo cáo, ${r.counts.goals} mục tiêu KR. Dữ liệu cũ đã được sao lưu an toàn.`);
+      const r=data as {counts:Record<string,number>;backup_id:string};
+      toast.success(`Đã reset ${r.counts.plans+r.counts.reports} hồ sơ Kế hoạch/Báo cáo, ${r.counts.goals} mục tiêu KR. Mã bản sao lưu: ${r.backup_id}`);
       setConfirm('');
       await qc.invalidateQueries();
       await preview.refetch();
-    }catch(e){toast.error(e instanceof Error?e.message:String(e));}
+    }catch(e){toast.error(`Reset thất bại: ${errText(e)}. Toàn bộ dữ liệu được giữ nguyên.`);}
     finally{setBusy(false);}
   };
 
