@@ -46,7 +46,7 @@ function useBizMutation<TArgs extends Record<string, unknown>>(fn: string, keys:
       if (error) throw error;
       return data;
     },
-    onSuccess: () => [...keys,["biz_dashboard"]].forEach((queryKey) => qc.invalidateQueries({ queryKey })),
+    onSuccess: () => [...keys,["biz_dashboard"],["biz_dashboard_published"]].forEach((queryKey) => qc.invalidateQueries({ queryKey })),
   });
 }
 

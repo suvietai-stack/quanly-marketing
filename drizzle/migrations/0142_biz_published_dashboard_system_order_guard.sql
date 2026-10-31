@@ -1,0 +1,1 @@
+DO $$DECLARE d text;BEGIN SELECT pg_get_functiondef('public.biz_dashboard_published(integer,text,integer)'::regprocedure) INTO d;d:=replace(d,'ORDER BY sort_order,created_at,name','ORDER BY created_at,name');EXECUTE d;END$$;

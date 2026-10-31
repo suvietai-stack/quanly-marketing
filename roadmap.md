@@ -1,5 +1,11 @@
 # Roadmap — Nâng cấp giao diện Mục tiêu KR & quản lý bản nháp (31/10/2026)
 
+## Khôi phục Dashboard Tổng quan
+- [x] Mở rộng dữ liệu tổng hợp chính thức an toàn: KR động, chuỗi tháng/lũy kế, kỳ trước, các Hệ và độ phủ KR; không trả hồ sơ cá nhân (0141–0142).
+- [x] Tái sử dụng biểu đồ cũ, khôi phục đầy đủ Tổng hợp toàn Khối; đồng bộ bộ lọc/làm mới, giữ Chi tiết trong phạm vi và quyền bổ nhiệm.
+- [x] 183/183 kiểm thử Biz; UI Super Admin dữ liệu thật desktop/mobile 360/375/390/430, không tràn/lỗi; báo cáo docs/biz-published-dashboard-restoration.md, chưa Publish.
+- [ ] Nghiệm thu UI bằng phiên nhân viên/cấp quản lý thật; donut/xếp hạng/xu hướng có số thực tế: chờ phiên tương ứng và dữ liệu chính thức đủ điều kiện, không tạo dữ liệu thử.
+
 ## Chuẩn hóa cơ cấu tổ chức cấp Khối
 - [x] Bổ sung danh mục Giám Đốc Điều hành cấp 5 / Phó Giám Đốc Điều hành cấp 4; không bổ nhiệm tự động.
 - [x] Cây tổ chức có lãnh đạo cấp Khối và bổ nhiệm/thay thế/miễn nhiệm theo vị trí, quyền tự động và kiêm nhiệm rõ ràng.

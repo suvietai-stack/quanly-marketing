@@ -17,7 +17,7 @@ beforeAll(async () => {
  for (const id of [sale,lead,head,director,outsider]) await db.query("insert into user_roles values($1,'staff')",[id]);
  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order) VALUES ('director','Giám Đốc',3,'system',0),('department_head','Trưởng Phòng',2,'department',1),('team_lead','Trưởng Nhóm',1,'team',2),('employee','Nhân viên Kinh doanh',0,'individual',3)");
  await actor(admin); sys = await org('system',{name:'Hệ thử tách biệt'}); dep = await org('department',{name:'Phòng thử',system_id:sys}); team = await org('team',{name:'Nhóm thử',department_id:dep}); await org('member',{user_id:sale,department_id:dep,team_id:team});
- for (let n=118;n<=140;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
+ for (let n=118;n<=142;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
 }, 60000);
 afterAll(() => db.close());
 
@@ -41,6 +41,25 @@ it('published reader cannot call private global detail reader',async()=>{
  await actor(sale);await db.exec('SET ROLE authenticated');
  await expect(db.query('select private.biz_dashboard_global_data(2026)')).rejects.toThrow();
  await db.exec('RESET ROLE');
+});
+
+it('published data keeps official actual and approved target despite a pending adjustment',async()=>{
+ await actor(admin);await db.exec('BEGIN');
+ try {
+ const metricId=await scalar("insert into biz_kr_metrics(department_id,name,unit,value_kind,aggregation,direction,standard_code,standard_label) values($1,'Doanh số','VNĐ','money','sum','higher','revenue','Doanh số') returning id v",[dep]);
+ const goalId=await scalar("insert into biz_annual_goals(user_id,year,department_id,department_name) values($1,2026,$2,'Phòng thử') returning id v",[sale,dep]);
+ const versionId=await scalar("insert into biz_goal_versions(goal_id,version,status) values($1,1,'approved') returning id v",[goalId]);
+ await db.query('insert into biz_goal_items(version_id,metric_id,definition,annual,months) values($1,$2,$3,1200,array_fill(100::numeric,ARRAY[12]))',[versionId,metricId,JSON.stringify(definition('revenue'))]);
+ await db.query('update biz_annual_goals set official_version_id=$1 where id=$2',[versionId,goalId]);
+ const documentId=await scalar("insert into biz_documents(user_id,department_id,department_name,kind,period_kind,year,period) values($1,$2,'Phòng thử','report','month',2026,10) returning id v",[sale,dep]);
+ const official=await scalar("insert into biz_document_versions(document_id,version,status,target_version_id,items) values($1,1,'approved',$2,$3) returning id v",[documentId,versionId,JSON.stringify([{metric_id:metricId,actual:'50'}])]);
+ await db.query('update biz_documents set official_version_id=$1 where id=$2',[official,documentId]);
+ await db.query("insert into biz_document_versions(document_id,version,status,target_version_id,items) values($1,2,'pending',$2,$3)",[documentId,versionId,JSON.stringify([{metric_id:metricId,actual:'999'}])]);
+ const data=await scalar("select biz_dashboard_published(2026,'month',10) v");
+ const revenue=data.groups[0].metrics.find((m:any)=>m.definition.code==='revenue');
+ expect(revenue.actual).toBe('50');expect(revenue.target).toBe('100');
+ expect(data.groups.filter((g:any)=>g.level==='system').flatMap((g:any)=>g.metrics).filter((m:any)=>m.definition.code==='revenue').reduce((n:number,m:any)=>n+Number(m.actual??0),0)).toBe(50);
+ } finally {await db.exec('ROLLBACK');}
 });
 it('future and ended appointments cannot grant a scope',async()=>{
  await actor(admin);const p=await scalar("select id v from biz_positions where code='department_head'");
@@ -146,4 +165,62 @@ it('explicit legacy replacement ends the old assignment and preserves its audit 
  expect(await scalar('select biz_scope_ok($1,$2,$3) v',[director,sale,dep2])).toBe(true);
  expect(await scalar('select count(*)::int v from biz_management_assignments where id=$1',[legacy])).toBe(1);
  expect(await scalar("select count(*)::int v from biz_org_events where action='appointment_transition' and payload->'old'->>'id'=$1",[legacy])).toBe(1);
+});
+
+const definition = (code: string|null, name='Doanh số', aggregation='sum', unit='VNĐ') => ({code,name,aggregation,unit,value_kind:'money',direction:'higher'});
+const fact = (target: string|null,actual: string|null,month=10,metric_id='revenue-a',def=definition('revenue')) => ({target,actual,month,metric_id,definition:def,due_at:'2026-11-03T16:59:00Z'});
+async function metrics(facts: unknown[],lo=1,hi=12,now='2026-10-31T05:28:00Z') {
+ return scalar('select private.biz_published_metrics($1,$2,$3,2026,$4) v',[JSON.stringify(facts),lo,hi,now]);
+}
+it('published completion is 550/1000 = 55%, not average employee percentages',async()=>{
+ const [m]=await metrics([fact('100','100'),fact('900','450',10,'revenue-b')]);
+ expect(m.target).toBe('1000');expect(m.actual).toBe('550');expect(Number(m.percent)).toBe(55);
+});
+it('equivalent semantic KR merges despite differing display labels',async()=>{
+ const result=await metrics([fact('100','100'),fact('900','450',10,'revenue-b',definition('revenue','Tên mới'))]);
+ expect(result).toHaveLength(1);expect(result[0].target).toBe('1000');
+});
+it('different unstandardized KR IDs do not merge solely by display name',async()=>{
+ expect(await metrics([fact('100','50',10,'a',definition(null)),fact('200','100',10,'b',definition(null))])).toHaveLength(2);
+});
+it('incompatible units or aggregation never merge',async()=>{
+ expect(await metrics([fact('100','50'),fact('200','100',10,'b',definition('revenue','Doanh số','sum','USD')),fact('300','150',10,'c',definition('revenue','Doanh số','avg'))])).toHaveLength(3);
+});
+it('future months are neither missing reports nor actual zero',async()=>{
+ const [m]=await metrics([fact('100',null,11)]);
+ expect(m.actual).toBe(null);expect(m.missing_due).toBe(0);expect(m.missing_months).toEqual([]);expect(m.data_state).toBe('tracking');
+});
+it('no approved target differs from a missing overdue report',async()=>{
+ expect((await metrics([fact(null,null)]))[0].data_state).toBe('no_target');
+ const [m]=await metrics([{...fact('100',null,9),due_at:'2026-10-03T16:59:00Z'}]);
+ expect(m.data_state).toBe('missing_report');expect(m.missing_months).toEqual([9]);
+});
+it('past month before report deadline remains tracking, not missing',async()=>{
+ const [m]=await metrics([fact('100',null,9)]);
+ expect(m.data_state).toBe('tracking');expect(m.missing_due).toBe(0);
+});
+it('zero official actual is valid and zero target has no percent',async()=>{
+ const [m]=await metrics([fact('0','0',9)]);
+ expect(m.actual).toBe('0');expect(m.percent).toBe(null);expect(m.complete).toBe(true);
+});
+it('average KR aggregates raw values, not sums or averages of systems',async()=>{
+ const [m]=await metrics([fact('100','10',9,'a',definition('avg','Mức TB','avg')),fact('200','20',9,'b',definition('avg','Mức TB','avg')),fact('300','60',9,'c',definition('avg','Mức TB','avg'))]);
+ expect(Number(m.target)).toBe(200);expect(Number(m.actual)).toBe(30);
+});
+it('annual and evaluation targets are distinct and quarter never doubles months',async()=>{
+ const fs=[fact('100','50',9),fact('200','100',10),fact('300',null,11),fact('400',null,12)];
+ expect((await metrics(fs))[0].target).toBe('1000');expect((await metrics(fs,1,10))[0].target).toBe('300');expect((await metrics(fs,10,12))[0].target).toBe('900');
+});
+it('large amounts retain exact backend precision and difference',async()=>{
+ const [m]=await metrics([fact('9007199254740993','9007199254740992',9),fact('1','2',9,'b')]);
+ expect(m.target).toBe('9007199254740994');expect(m.actual).toBe('9007199254740994');expect(m.difference).toBe('0');
+});
+it('published months and private helper ACLs remain safe for business staff',async()=>{
+ await actor(sale);await db.exec('SET ROLE authenticated');
+ const result=await scalar('select biz_dashboard_published(2026) v');
+ expect(result.groups[0]).toHaveProperty('months');expect(result.groups[0]).toHaveProperty('cumulative');expect(result.groups[0]).toHaveProperty('previous_metrics');
+ for (const key of ['user_id','employee_name','baseline_id','target_version_id','document_id','notes','url','facts','roster']) expect(JSON.stringify(result)).not.toContain('"'+key+'"');
+ await expect(db.query('select private.biz_published_facts(2026)')).rejects.toThrow();
+ await expect(db.query("select private.biz_published_metrics('[]',1,12,2026,now())")).rejects.toThrow();
+ await db.exec('RESET ROLE');
 });

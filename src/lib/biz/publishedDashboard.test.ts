@@ -1,0 +1,9 @@
+import {expect,it} from 'vitest';
+import {trend,distribution,chartRows,type PublishedMetric,type PublishedGroup} from './publishedDashboard';
+const m:PublishedMetric={metric_key:'revenue',definition:{name:'Doanh số',description:null,unit:'VNĐ',aggregation:'sum',value_kind:'money',direction:'higher'},group_id:'10',group_name:'Tháng 10',target:'100',actual:'50',difference:'-50',percent:'50',complete:true,expected:1,received:1,missing_months:[],target_complete:true,actual_complete:true,expected_current:1,missing_due:0,awaiting:0,data_state:'tracking'};
+it('zero baseline never produces meaningless growth percent',()=>{expect(trend(m,{...m,actual:'0'})).toEqual({difference:'50',percent:null});});
+it('partial periods cannot produce comparable growth',()=>{expect(trend({...m,actual_complete:false},m)).toBe(null);});
+it('future actual is a gap rather than zero in charts',()=>{expect(chartRows([{...m,group_id:'11',actual:null}],'revenue',10,12,10)[0].actual).toBe(null);expect(chartRows([{...m,group_id:'11'}],'revenue',10,12,10)[0].complete).toBe(false);});
+it('one missing system suppresses distribution, not an invented zero share',()=>{const g:PublishedGroup={id:'a',name:'A',level:'system',metrics:[m],evaluation_metrics:[],months:[],cumulative:[],previous_metrics:[],previous_period:{year:2025,lo:1,hi:12}};expect(distribution([g,{...g,id:'b',metrics:[]}],'revenue')).toEqual([]);});
+it('distribution uses valid actual revenue rather than targets',()=>{const g:PublishedGroup={id:'a',name:'A',level:'system',metrics:[m],evaluation_metrics:[],months:[],cumulative:[],previous_metrics:[],previous_period:{year:2025,lo:1,hi:12}};expect(distribution([g],'revenue')).toEqual([{name:'A',value:50}]);});
+it('annual charts preserve 12 monthly buckets without inventing values',()=>{const rows=chartRows([m],'revenue',1,12,10);expect(rows).toHaveLength(12);expect(rows[0].target).toBe(null);expect(rows[9].actual).toBe('50');expect(rows[11].actual).toBe(null);});
