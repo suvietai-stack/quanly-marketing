@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BizDashboard } from "@/components/biz/BizDashboard";
+import { BizDashboardViews } from "@/components/biz/BizPublishedDashboard";
 import { RequirePermission } from "@/components/PermissionGate";
 
 export const Route = createFileRoute("/biz/")({
@@ -12,8 +12,8 @@ export const Route = createFileRoute("/biz/")({
     { name: "twitter:card", content: "summary" },
   ] }),
   component: () => (
-    <RequirePermission perm={["biz.view_own", "biz.view_dept", "biz.view_all"]}>
-      <BizDashboard />
+    <RequirePermission perm={["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"]}>
+      <BizDashboardViews />
     </RequirePermission>
   ),
 });

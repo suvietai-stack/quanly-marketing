@@ -1,0 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import type { EffectiveBizAccess } from '@/lib/biz/access';
+import { orgDate } from '@/lib/biz/organization';
+export function BizEffectiveAccess({ user }: { user: string }) {
+  const query = useQuery({ queryKey: ['biz_effective_access', user], queryFn: async () => { const { data, error } = await supabase.rpc('biz_effective_access', { _user: user }); if (error) throw error; return data as unknown as EffectiveBizAccess; } });
+  const access = query.data;
+  return <section className="border-y py-4 space-y-3"><h3 className="font-semibold">Quyền Quản trị Kinh doanh hiện tại</h3>{query.error && <p role="alert" className="text-destructive">{query.error.message}</p>}{access && <><p className="text-sm">Dashboard tổng hợp: {access.permissions.includes('biz.dashboard_public') ? 'Toàn Khối' : 'Không có quyền'}</p>{[...access.appointments, ...access.legacy_assignments].map(a => <div key={a.id} className="text-sm"><strong>{a.position} · {a.unit_name}</strong><p className="text-xs text-muted-foreground">{orgDate(a.started_at)} → {a.ended_at ? orgDate(a.ended_at) : 'Không giới hạn'}</p></div>)}{access.super_admin && <p className="text-primary text-sm">Super Admin · Toàn quyền</p>}<p className="text-sm">Quyền xét duyệt: Theo bước đang được phân công</p>{access.role_exceptions.map(e => <p key={e.role_id} className="text-sm text-warning">Ngoại lệ {e.role_name}: xem chi tiết toàn Khối · {e.reason}</p>)}{access.exceptions.map(e => <p key={e.id} className="text-sm text-warning">Ngoại lệ {e.permission} · {e.scope_kind} · {e.reason}</p>)}<p className="text-xs text-muted-foreground">Quyền quản trị đặc biệt: {access.permissions.filter(p => p.endsWith('_manage')).join(', ') || 'Không có'}</p></>}</section>;
+}

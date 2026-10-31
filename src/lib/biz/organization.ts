@@ -3,7 +3,7 @@ import type { GoalItem } from './goals';
 import type { ReportItem } from './documents';
 
 export const POSITIONS = { team_lead: 'Trưởng Nhóm', department_head: 'Trưởng Phòng', director: 'Giám Đốc', user: 'Người cụ thể' } as const;
-export const WORKFLOW_KINDS = { goal_year: 'Mục tiêu KR Năm', report_month: 'Điều chỉnh Báo cáo Tháng', report_quarter: 'Điều chỉnh Báo cáo Quý', report_year: 'Điều chỉnh Báo cáo Năm' } as const;
+export const WORKFLOW_KINDS = { goal_year: 'Mục tiêu KR Năm', report_month: 'Điều chỉnh Báo cáo Tháng', report_quarter: 'Điều chỉnh Báo cáo Quý', report_year: 'Điều chỉnh Báo cáo Năm', late_plan_month: 'Nộp bù Kế hoạch Tháng', late_plan_quarter: 'Nộp bù Kế hoạch Quý', late_plan_year: 'Nộp bù Kế hoạch Năm', late_report_month: 'Nộp bù Báo cáo Tháng', late_report_quarter: 'Nộp bù Báo cáo Quý', late_report_year: 'Nộp bù Báo cáo Năm' } as const;
 export type WorkflowKind = keyof typeof WORKFLOW_KINDS;
 export interface OrgUnit { id: string; name: string; active: boolean }
 export interface OrgDepartment extends BizDepartment { system_id: string | null }

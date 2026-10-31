@@ -102,6 +102,7 @@ export type Database = {
         Row: {
           biz_detail_exception: boolean
           biz_scope: string
+          biz_settings_disabled: boolean
           created_at: string
           description: string | null
           id: string
@@ -115,6 +116,7 @@ export type Database = {
         Insert: {
           biz_detail_exception?: boolean
           biz_scope?: string
+          biz_settings_disabled?: boolean
           created_at?: string
           description?: string | null
           id: string
@@ -128,6 +130,7 @@ export type Database = {
         Update: {
           biz_detail_exception?: boolean
           biz_scope?: string
+          biz_settings_disabled?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -1660,11 +1663,13 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           decision_comment: string | null
+          department_id: string | null
           id: string
           kind: string
           period: number
           period_kind: string
           reason: string
+          revision: number
           status: string
           used_at: string | null
           user_id: string
@@ -1675,11 +1680,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_comment?: string | null
+          department_id?: string | null
           id?: string
           kind: string
           period: number
           period_kind: string
           reason: string
+          revision?: number
           status?: string
           used_at?: string | null
           user_id: string
@@ -1690,11 +1697,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_comment?: string | null
+          department_id?: string | null
           id?: string
           kind?: string
           period?: number
           period_kind?: string
           reason?: string
+          revision?: number
           status?: string
           used_at?: string | null
           user_id?: string
@@ -1706,6 +1715,13 @@ export type Database = {
             columns: ["decided_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_late_requests_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
             referencedColumns: ["id"]
           },
           {
@@ -5674,6 +5690,10 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_dashboard_published: {
+        Args: { _period?: number; _period_kind?: string; _year: number }
+        Returns: Json
+      }
       biz_dashboard_read: {
         Args: {
           _department_id?: string
@@ -5788,6 +5808,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      biz_exception_save: { Args: { _data: Json }; Returns: string }
       biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
       biz_goal_can_review: {
         Args: { _department_id: string; _user_id: string }
@@ -5839,7 +5860,12 @@ export type Database = {
         Args: { _code: string; _label: string; _metric_id: string }
         Returns: undefined
       }
+      biz_late_can_act: { Args: { _request: string }; Returns: boolean }
       biz_late_expire_closed: { Args: never; Returns: number }
+      biz_late_request_adopt: {
+        Args: { _confirmed?: boolean; _id: string }
+        Returns: string
+      }
       biz_late_request_create: {
         Args: {
           _kind: string
@@ -5878,6 +5904,7 @@ export type Database = {
         Returns: string
       }
       biz_my_work: { Args: { _kind: string }; Returns: Json }
+      biz_my_work_access_guard: { Args: { _kind: string }; Returns: boolean }
       biz_org_can_manage: { Args: never; Returns: boolean }
       biz_org_read: { Args: never; Returns: Json }
       biz_org_save: { Args: { _action: string; _data: Json }; Returns: string }
