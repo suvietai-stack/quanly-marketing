@@ -4,7 +4,8 @@ import {Eye,ExternalLink,FileText,RefreshCw,Search} from 'lucide-react';
 import {useAuth,useCurrentUser} from '@/lib/auth';
 import {hasSubmittedDocument} from '@/lib/biz/planSubmission';
 import {documentsQuery} from '@/lib/biz/documentQueries';
-import {bizLateRequestsQuery} from '@/lib/biz/queries';
+import {phaseFromIso,type DeadlinePhase} from '@/lib/biz/deadline';
+import {bizMilestonesQuery,bizLateRequestsQuery} from '@/lib/biz/queries';
 import {deadlineStatus,manageRank,periodLabel,TIME_STATUS,VIEW_STATUS,viewTone,type DocRow,type PeriodKind,type ViewStatus} from '@/lib/biz/documents';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -23,6 +24,7 @@ export function BizPlans(){
  const [periodKind,setPeriodKind]=useState<PeriodKind>('month');const [year,setYear]=useState(new Date().getFullYear());const [period,setPeriod]=useState(new Date().getMonth()+1);
  const [quick,setQuick]=useState<Quick>('all');const [dept,setDept]=useState('all');const [employee,setEmployee]=useState('all');const [status,setStatus]=useState('all');const [view,setView]=useState('all');const [search,setSearch]=useState('');const [selected,setSelected]=useState<string|null>(null);
  const query=useQuery({...documentsQuery(uid,'plan',periodKind,year,period),enabled:!!uid});const rows=useMemo(()=>query.data??[],[query.data]);
+ const milestones=useQuery(bizMilestonesQuery(`plan_${periodKind}`,year,period));const phase=milestones.data?phaseFromIso(milestones.data,rows[0]?.server_now??new Date().toISOString()):null;
  const myRow=rows.find(r=>r.user_id===uid);const teamRows=useMemo(()=>rows.filter(r=>r.user_id!==uid),[rows,uid]);
  const canManage=can('biz.view_all')||can('biz.view_dept')||can('biz.plan_approve')||can('biz.plan_request_revision');
  const showTeam=canManage&&teamRows.length>0;
@@ -50,8 +52,8 @@ export function BizPlans(){
     <Select value={view} onValueChange={setView}><SelectTrigger aria-label="Trạng thái xem" className="w-44"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Mọi trạng thái xem</SelectItem>{(Object.entries(VIEW_STATUS) as [ViewStatus,string][]).map(([id,name])=><SelectItem key={id} value={id}>{name}</SelectItem>)}</SelectContent></Select>
    </div>
    {!shown.length&&<p className="text-sm text-muted-foreground py-6">Không có kế hoạch khớp bộ lọc.</p>}
-   <div className="hidden md:block overflow-x-auto border rounded-lg"><table className="w-full text-sm"><thead><tr className="text-left text-xs text-muted-foreground border-b"><th className="py-2 px-3">Nhân sự</th><th className="py-2 px-3">Đơn vị</th><th className="py-2 px-3">Kỳ</th><th className="py-2 px-3">Hạn nộp</th><th className="py-2 px-3">Trạng thái nộp</th><th className="py-2 px-3">Trạng thái xem</th><th className="py-2 px-3">Thao tác</th></tr></thead><tbody>{shown.map(r=><PlanRow key={r.user_id} row={r} periodKind={periodKind} year={year} period={period} onOpen={()=>setSelected(r.user_id)}/>)}</tbody></table></div>
-   <div className="md:hidden grid gap-3">{shown.map(r=><PlanCard key={r.user_id} row={r} periodKind={periodKind} year={year} period={period} onOpen={()=>setSelected(r.user_id)}/>)}</div>
+   <div className="hidden md:block overflow-x-auto border rounded-lg"><table className="w-full text-sm"><thead><tr className="text-left text-xs text-muted-foreground border-b"><th className="py-2 px-3">Nhân sự</th><th className="py-2 px-3">Đơn vị</th><th className="py-2 px-3">Kỳ</th><th className="py-2 px-3">Hạn nộp</th><th className="py-2 px-3">Trạng thái nộp</th><th className="py-2 px-3">Trạng thái xem</th><th className="py-2 px-3">Thao tác</th></tr></thead><tbody>{shown.map(r=><PlanRow key={r.user_id} row={r} phase={phase} periodKind={periodKind} year={year} period={period} onOpen={()=>setSelected(r.user_id)}/>)}</tbody></table></div>
+   <div className="md:hidden grid gap-3">{shown.map(r=><PlanCard key={r.user_id} row={r} phase={phase} periodKind={periodKind} year={year} period={period} onOpen={()=>setSelected(r.user_id)}/>)}</div>
   </section>}
   {selectedRow&&<DocumentDialog key={`${selectedRow.user_id}-plan-${periodKind}-${year}-${period}`} row={selectedRow} uid={uid} kind="plan" periodKind={periodKind} year={year} period={period} onClose={()=>setSelected(null)}/>}
  </div>;
@@ -69,10 +71,10 @@ function PlanActions({row,onOpen}:{row:DocRow;onOpen:()=>void}){
  return <div className="flex flex-wrap gap-2">{version?.submitted_at&&version.url&&<Button size="sm" variant="outline" onClick={()=>openDoc(version.id)}><ExternalLink className="h-4 w-4 mr-2"/>Xem tài liệu</Button>}<Button size="sm" variant="ghost" onClick={onOpen}><Eye className="h-4 w-4 mr-2"/>Hồ sơ</Button></div>;
 }
 
-function PlanRow({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
- return <tr className="border-t align-top"><td className="py-2 px-3 font-medium">{row.employee_name}</td><td className="py-2 px-3">{row.department_name}</td><td className="py-2 px-3 whitespace-nowrap">{periodLabel(periodKind,year,period)}</td><td className="py-2 px-3 whitespace-nowrap">{dateText(row.deadline)}</td><td className="py-2 px-3"><StatusBadges row={row} kind="plan" showView={false}/></td><td className="py-2 px-3">{hasSubmittedDocument(row)?<Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge>:<span className="text-muted-foreground">—</span>}</td><td className="py-2 px-3"><PlanActions row={row} onOpen={onOpen}/></td></tr>;
+function PlanRow({row,phase,periodKind,year,period,onOpen}:{row:DocRow;phase:DeadlinePhase|null;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
+ return <tr className="border-t align-top"><td className="py-2 px-3 font-medium">{row.employee_name}</td><td className="py-2 px-3">{row.department_name}</td><td className="py-2 px-3 whitespace-nowrap">{periodLabel(periodKind,year,period)}</td><td className="py-2 px-3 whitespace-nowrap">{dateText(row.deadline)}</td><td className="py-2 px-3"><StatusBadges row={row} phase={phase} kind="plan" showView={false}/></td><td className="py-2 px-3">{hasSubmittedDocument(row)?<Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge>:<span className="text-muted-foreground">—</span>}</td><td className="py-2 px-3"><PlanActions row={row} onOpen={onOpen}/></td></tr>;
 }
 
-function PlanCard({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
- return <div className="border rounded-lg bg-card p-4 space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold break-words">{row.employee_name}</h3><p className="text-xs text-muted-foreground">{row.department_name} · {periodLabel(periodKind,year,period)}</p></div><StatusBadges row={row} kind="plan"/></div><p className="text-xs text-muted-foreground">Hạn: {dateText(row.deadline)}</p><PlanActions row={row} onOpen={onOpen}/></div>;
+function PlanCard({row,phase,periodKind,year,period,onOpen}:{row:DocRow;phase:DeadlinePhase|null;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
+ return <div className="border rounded-lg bg-card p-4 space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold break-words">{row.employee_name}</h3><p className="text-xs text-muted-foreground">{row.department_name} · {periodLabel(periodKind,year,period)}</p></div><StatusBadges row={row} phase={phase} kind="plan"/></div><p className="text-xs text-muted-foreground">Hạn: {dateText(row.deadline)}</p><PlanActions row={row} onOpen={onOpen}/></div>;
 }
