@@ -1805,6 +1805,75 @@ export type Database = {
           },
         ]
       }
+      biz_member_affiliations: {
+        Row: {
+          actor_id: string
+          appointment_id: string | null
+          department_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          appointment_id?: string | null
+          department_id: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          appointment_id?: string | null
+          department_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_member_affiliations_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_member_affiliations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "biz_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_member_affiliations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_member_affiliations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "biz_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_member_affiliations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_org_events: {
         Row: {
           action: string

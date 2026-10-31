@@ -1,0 +1,30 @@
+CREATE TABLE public.biz_member_affiliations(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid NOT NULL REFERENCES public.profiles(id),department_id uuid NOT NULL REFERENCES public.biz_departments(id),team_id uuid REFERENCES public.biz_teams(id),started_at timestamptz NOT NULL DEFAULT now(),ended_at timestamptz,appointment_id uuid REFERENCES public.biz_appointments(id),actor_id uuid NOT NULL REFERENCES public.profiles(id));
+GRANT SELECT ON public.biz_member_affiliations TO authenticated;GRANT ALL ON public.biz_member_affiliations TO service_role;
+ALTER TABLE public.biz_member_affiliations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY biz_affiliations_read ON public.biz_member_affiliations FOR SELECT TO authenticated USING(user_id=auth.uid() OR public.biz_org_can_manage());
+CREATE INDEX biz_affiliation_user ON public.biz_member_affiliations(user_id,department_id,team_id,started_at);
+CREATE FUNCTION private.biz_affiliation_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$BEGIN
+PERFORM pg_advisory_xact_lock(hashtext('biz_org_structure'));
+IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Không xóa lịch sử phân công.';END IF;
+IF NEW.ended_at IS NOT NULL AND NEW.ended_at<=NEW.started_at THEN RAISE EXCEPTION 'Khoảng phân công không hợp lệ.';END IF;
+IF TG_OP='UPDATE' AND (NEW.user_id<>OLD.user_id OR NEW.department_id<>OLD.department_id OR NEW.team_id IS DISTINCT FROM OLD.team_id OR NEW.started_at<>OLD.started_at OR NEW.appointment_id IS DISTINCT FROM OLD.appointment_id) THEN RAISE EXCEPTION 'Phân công bất biến; kết thúc rồi tạo mới.';END IF;
+IF EXISTS(SELECT 1 FROM biz_member_affiliations a WHERE a.id<>NEW.id AND a.user_id=NEW.user_id AND a.department_id=NEW.department_id AND a.team_id IS NOT DISTINCT FROM NEW.team_id AND tstzrange(a.started_at,a.ended_at,'[)') && tstzrange(NEW.started_at,NEW.ended_at,'[)')) THEN RAISE EXCEPTION 'Phân công đơn vị trùng thời gian.';END IF;RETURN NEW;END $$;
+CREATE TRIGGER biz_affiliation_guard BEFORE INSERT OR UPDATE OR DELETE ON public.biz_member_affiliations FOR EACH ROW EXECUTE FUNCTION private.biz_affiliation_guard();
+REVOKE ALL ON FUNCTION private.biz_affiliation_guard() FROM PUBLIC,anon,authenticated,service_role;
+DO $$DECLARE d text;BEGIN
+SELECT pg_get_functiondef('private.biz_sync_member(uuid,uuid,uuid,timestamptz,text)'::regprocedure) INTO d;
+d:=replace(d,'IF _mode=''concurrent'' AND EXISTS(SELECT 1 FROM biz_department_members WHERE user_id=_user AND started_at<=_at AND (ended_at IS NULL OR ended_at>_at) AND department_id<>_dep) THEN RETURN NULL;END IF;', 'IF _mode=''concurrent'' AND (EXISTS(SELECT 1 FROM biz_department_members WHERE user_id=_user AND started_at<=_at AND (ended_at IS NULL OR ended_at>_at) AND department_id<>_dep) OR EXISTS(SELECT 1 FROM biz_team_members WHERE user_id=_user AND (ended_at IS NULL OR ended_at>_at) AND team_id IS DISTINCT FROM _team)) THEN SELECT id INTO id_ FROM biz_member_affiliations WHERE user_id=_user AND department_id=_dep AND team_id IS NOT DISTINCT FROM _team AND started_at<=_at AND (ended_at IS NULL OR ended_at>_at);IF id_ IS NULL THEN INSERT INTO biz_member_affiliations(user_id,department_id,team_id,started_at,actor_id) VALUES(_user,_dep,_team,_at,auth.uid()) RETURNING id INTO id_;END IF;RETURN id_;END IF;');
+d:=replace(d,'IF _mode=''transfer'' THEN','IF _mode=''transfer'' THEN UPDATE biz_member_affiliations SET ended_at=_at WHERE user_id=_user AND started_at<_at AND (ended_at IS NULL OR ended_at>_at);');EXECUTE d;
+SELECT pg_get_functiondef('public.biz_org_save(text,jsonb)'::regprocedure) INTO d;
+d:=substring(d from 1 for position('IF mode_=''concurrent'' AND id_ IS NULL OR' in d)-1)||'PERFORM private.biz_sync_employee(u,ts); INSERT INTO biz_org_events(actor_id,action,payload) VALUES(auth.uid(),''member_sync'',jsonb_build_object(''id'',id_,''new'',_data));RETURN id_;END $function$';EXECUTE d;
+-- Include secondary affiliations in organization display, not in historical personal obligation sources.
+SELECT pg_get_functiondef('public.biz_org_read()'::regprocedure) INTO d;
+d:=replace(d,'''members'',(SELECT coalesce(jsonb_agg(to_jsonb(m)),''[]'') FROM public.biz_department_members m)', '''members'',((SELECT coalesce(jsonb_agg(to_jsonb(m)),''[]'') FROM public.biz_department_members m)||(SELECT coalesce(jsonb_agg(to_jsonb(a)||jsonb_build_object(''is_manager'',false,''concurrent'',true)),''[]'') FROM public.biz_member_affiliations a))');
+d:=replace(d,'''team_members'',(SELECT coalesce(jsonb_agg(to_jsonb(m)),''[]'') FROM public.biz_team_members m)', '''team_members'',((SELECT coalesce(jsonb_agg(to_jsonb(m)),''[]'') FROM public.biz_team_members m)||(SELECT coalesce(jsonb_agg(to_jsonb(a)||jsonb_build_object(''concurrent'',true)),''[]'') FROM public.biz_member_affiliations a WHERE a.team_id IS NOT NULL))');EXECUTE d;
+END $$;
+-- Catalog edits cannot broaden already-snapshotted appointments or silently disable their routing.
+CREATE FUNCTION private.biz_position_access_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$BEGIN
+IF TG_OP='UPDATE' AND (NEW.level<>OLD.level OR NEW.business_policy<>OLD.business_policy OR NEW.all_business<>OLD.all_business OR NEW.active<>OLD.active) AND EXISTS(SELECT 1 FROM biz_appointments WHERE position_id=OLD.id AND status<>'cancelled' AND (ended_at IS NULL OR ended_at>clock_timestamp())) THEN RAISE EXCEPTION 'Chức vụ còn quyết định hiệu lực/tương lai; kết thúc hoặc chuyển đổi có kiểm soát trước khi đổi cấp/phạm vi.';END IF;RETURN NEW;END $$;
+CREATE TRIGGER biz_position_access_guard BEFORE UPDATE ON public.biz_positions FOR EACH ROW EXECUTE FUNCTION private.biz_position_access_guard();
+REVOKE ALL ON FUNCTION private.biz_position_access_guard() FROM PUBLIC,anon,authenticated,service_role;
+COMMENT ON TABLE public.biz_member_affiliations IS 'Secondary concurrent affiliations, not personal obligations; primary historical membership remains unchanged.';

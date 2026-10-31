@@ -1002,6 +1002,48 @@
       "when": 1793424838931,
       "tag": "0142_biz_published_dashboard_system_order_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 143,
+      "version": "7",
+      "when": 1793425552227,
+      "tag": "0143_biz_atomic_personnel_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1793425587768,
+      "tag": "0144_biz_concurrent_affiliations_and_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1793425702001,
+      "tag": "0145_biz_personnel_sync_interval_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1793425806434,
+      "tag": "0146_biz_affiliation_binding_and_appointment_dates",
+      "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1793425892139,
+      "tag": "0147_biz_secondary_team_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1793425989598,
+      "tag": "0148_biz_legacy_personnel_entrypoint_sync",
+      "breakpoints": true
     }
   ]
 }
