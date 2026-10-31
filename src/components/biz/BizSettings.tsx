@@ -3,13 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Pencil, Plus, Target, Timer } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth";
-import { RolePermissionMatrix } from "@/components/leave/FunctionSettings";
+import { BizAutomaticPermissions } from './BizAutomaticPermissions';
 import { BizDeadlineEditor } from "./BizDeadlineEditor";
 import { BizOrganization } from './BizOrganization';
 import { BizWorkflows } from './BizWorkflows';
 import { BizPositions } from './BizPositions';
-import { BizAccessExceptions } from './BizAccessExceptions';
-import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
   bizDepartmentsQuery, bizKrMetricsQuery,
   useBizKrSave, useBizKrStandardSave,
@@ -35,7 +33,7 @@ export function BizSettings() {
   const canWorkflow = isSuperAdmin || can('biz.workflow_manage');
   const canKr = isSuperAdmin || can("biz.kr_manage");
   const canDeadline = isSuperAdmin || can("biz.deadline_manage");
-  const canRole = isSuperAdmin || can("settings.role");
+  const canRole = isSuperAdmin || can("biz.access_manage") || canOrg;
   const firstTab = canOrg ? 'org' : canWorkflow ? 'workflow' : canKr ? "kr" : canDeadline ? "deadline" : "perm";
 
   return (
@@ -54,8 +52,7 @@ export function BizSettings() {
       {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
       {canDeadline && <TabsContent value="deadline" className="mt-4"><BizDeadlineEditor /></TabsContent>}
       {canRole && <TabsContent value="perm" className="mt-4">
-        <BizAccessExceptions />
-        <RolePermissionMatrix categories={BIZ_PERM_CATEGORIES.filter(c=>c.key==='settings')} personal={[]} />
+        <BizAutomaticPermissions />
       </TabsContent>}
     </Tabs>
   );

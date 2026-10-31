@@ -21,7 +21,7 @@ export function BizPositions() {
  const [edit, setEdit] = useState<BizPosition | 'new' | null>(null); const [staff, setStaff] = useState<BizPosition | null>(null);
  const now = query.data?.server_now ?? new Date().toISOString();
  const holders = (p: BizPosition) => {
-  const rows = (query.data?.appointments ?? []).filter(a => a.position_id === p.id && appointmentCurrent(a, now)).map(a => ({ id: a.id, user: a.user_id, start: a.started_at, unit: a.team_id ? org.data?.teams.find(t => t.id === a.team_id)?.name : a.department_id ? org.data?.departments.find(d => d.id === a.department_id)?.name : org.data?.systems.find(s => s.id === a.system_id)?.name }));
+  const rows = (query.data?.appointments ?? []).filter(a => a.position_id === p.id && appointmentCurrent(a, now)).map(a => ({ id: a.id, user: a.user_id, start: a.started_at, unit: a.position_snapshot.all_business ? 'Toàn Khối' : a.team_id ? org.data?.teams.find(t => t.id === a.team_id)?.name : a.department_id ? org.data?.departments.find(d => d.id === a.department_id)?.name : org.data?.systems.find(s => s.id === a.system_id)?.name }));
   return [...rows, ...(org.data?.managers ?? []).filter(m => m.position === p.code && appointmentCurrent({ ...m, status: 'active' }, now)).map(m => ({ id: m.id, user: m.user_id, start: m.started_at, unit: m.team_id ? org.data?.teams.find(t => t.id === m.team_id)?.name : m.department_id ? org.data?.departments.find(d => d.id === m.department_id)?.name : org.data?.systems.find(s => s.id === m.system_id)?.name }))];
  };
  return <section className="space-y-4 pb-28 sm:pb-5">
