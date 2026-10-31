@@ -16,7 +16,7 @@ export const dateText = (v: string | null) => (v ? new Date(v).toLocaleString('v
 
 export function useOpenDocument() { const open = useDocumentOpen(); return async (versionId: string) => { const win = window.open('', '_blank'); try { const url = await open.mutateAsync(versionId); if (win) { win.location.href = url; } else { window.location.href = url; } } catch (e) { win?.close(); toast.error(documentError(e)); } }; }
 
-export function StatusBadges({ row, kind, showView = true, phase }: { row: DocRow; kind: DocKind; showView?: boolean; phase?: DeadlinePhase | null }) { const time = deadlineStatus(row.deadline, row.document?.first_submitted_at ?? null, row.server_now); const version = row.document?.versions.at(-1); return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late', 'overdue'].includes(time) ? 'text-destructive border-destructive/40' : time === 'ontime' ? 'text-success border-success/40' : time === 'soon' ? 'text-warning border-warning/40' : ''}>{kind==='plan'&&!row.document?.first_submitted_at?(phase?PHASE_BADGE[phase].label:time==='overdue'?'Quá hạn trực tiếp':'Đang tải lịch nộp…'):TIME_STATUS[time]}</Badge>{row.document?.late_submitted && <Badge variant="outline" className="text-warning border-warning/40">Nộp muộn</Badge>}<Badge variant="secondary">{version ? docStatusLabel(kind, version.status) : 'Chưa nộp'}</Badge>{showView && hasSubmittedDocument(row) && <Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view as ViewStatus]}</Badge>}</div>; }
+export function StatusBadges({ row, kind, showView = true, phase }: { row: DocRow; kind: DocKind; showView?: boolean; phase?: DeadlinePhase | null }) { const time = deadlineStatus(row.deadline, row.document?.first_submitted_at ?? null, row.server_now); const version = row.document?.versions.at(-1); return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late', 'overdue'].includes(time) ? 'text-destructive border-destructive/40' : time === 'ontime' ? 'text-success border-success/40' : time === 'soon' ? 'text-warning border-warning/40' : ''}>{!row.document?.first_submitted_at?(phase?PHASE_BADGE[phase].label:time==='overdue'?'Quá hạn trực tiếp':'Đang tải lịch nộp…'):TIME_STATUS[time]}</Badge>{row.document?.late_submitted && <Badge variant="outline" className="text-warning border-warning/40">Nộp muộn</Badge>}<Badge variant="secondary">{version ? docStatusLabel(kind, version.status) : 'Chưa nộp'}</Badge>{showView && hasSubmittedDocument(row) && <Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view as ViewStatus]}</Badge>}</div>; }
 
 const PHASE_BADGE: Record<DeadlinePhase, { label: string; className: string }> = {
   none: { label: 'Chưa cấu hình lịch nộp', className: '' },
@@ -78,7 +78,7 @@ export function MyDocCard({ row, kind, periodKind, year, period, onOpen }: { row
   const milestones = useQuery(bizMilestonesQuery(`${kind}_${periodKind}`, year, period));
   const late = useQuery(bizLateRequestsQuery(kind, periodKind, year, period));
   const submitted = !!row.document?.first_submitted_at;
-  const phase: DeadlinePhase | null = milestones.data ? phaseFromIso(milestones.data, late.data?.server_now ?? row.server_now) : null;
+  const phase: DeadlinePhase | null = milestones.data ? kind==='report'&&!(milestones.data.open&&milestones.data.due&&milestones.data.late_close)?'none':phaseFromIso(milestones.data, late.data?.server_now ?? row.server_now) : null;
   const mine = late.data?.requests.find((r) => r.user_id === uid);
   const label = kind === 'plan' ? 'Kế hoạch' : 'Báo cáo';
 
@@ -86,6 +86,7 @@ export function MyDocCard({ row, kind, periodKind, year, period, onOpen }: { row
   if (version?.status === 'changes') primary = <Button size="sm" onClick={onOpen}>Nộp lại bản chỉnh sửa</Button>;
   else if (!submitted) {
     if (phase === 'not_open') primary = <Button size="sm" disabled>Chưa mở nộp</Button>;
+    else if(kind==='report'&&(phase==='none'||phase===null)) primary=<Button size="sm" disabled>Chờ hoàn tất lịch nộp</Button>;
     else if (phase === 'open' || phase === 'none' || phase === null) primary = <Button size="sm" onClick={onOpen}>Nộp {label.toLowerCase()}</Button>;
     else if (phase === 'overdue') {
       if (mine?.status === 'approved') primary = <Button size="sm" onClick={onOpen}>Nộp bù</Button>;
