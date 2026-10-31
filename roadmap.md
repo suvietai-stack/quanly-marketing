@@ -1,10 +1,11 @@
 # Roadmap — Nâng cấp giao diện Mục tiêu KR & quản lý bản nháp (31/10/2026)
 
-- [ ] 1. Khảo sát BizGoals hiện tại: tab Của tôi/Trong phạm vi, form 12 tháng, RPC biz_goals_read/biz_goal_save/biz_goal_start, luồng duyệt nhiều cấp.
-- [ ] 2. Tách hai khu vực trên một trang: "Mục tiêu KR của tôi" trên, "Trong phạm vi quản lý" dưới (chỉ hiện khi có quyền/scope); bỏ tab chuyển đổi.
-- [ ] 3. Card tổng quan chỉ đọc: KR × Năm × 4 Quý, trạng thái, cấp duyệt, cập nhật gần nhất; nút theo trạng thái (Lập/Xem/Tiếp tục/Gửi duyệt/Lịch sử/Yêu cầu điều chỉnh).
-- [ ] 4. Chi tiết 12 tháng chỉ mở khi bấm Xem chi tiết (đọc) hoặc Chỉnh sửa (form); desktop 4 Quý × 3 tháng, mobile card theo Quý thu gọn.
-- [ ] 5. Khu vực Bản nháp: thu gọn mặc định, liệt kê loại/năm/cập nhật, Tiếp tục chỉnh sửa + Xóa bản nháp (xác nhận); không tự tạo nháp khi mở trang/đổi năm/xem chi tiết.
-- [ ] 6. RPC xóa bản nháp an toàn: chỉ nháp chưa trình duyệt của chính mình (hoặc quản trị hợp lệ), chặn chờ duyệt/đã duyệt/có lịch sử, nguyên tử, giữ mục tiêu chính thức khi xóa nháp điều chỉnh.
-- [ ] 7. Khu vực quản lý: thống kê card (tổng/đã lập/chưa lập/chờ duyệt/đã duyệt/cần sửa, không đếm trùng), danh sách nhân sự + tìm kiếm/lọc Hệ-Phòng-Nhóm-trạng thái-năm, xem tổng Năm/Quý, liên kết Trung tâm Phê duyệt.
-- [ ] 8. Kiểm thử 24 trường hợp trong spec; desktop + mobile 360/375/390/430; không đổi nghiệp vụ KR, không dữ liệu demo; chưa Publish.
+- [x] 1. Khảo sát BizGoals: tab Của tôi/Trong phạm vi, form 12 tháng mở ngay; RPC biz_goals_read/biz_goal_start/biz_goal_save/biz_goal_decide giữ nguyên.
+- [x] 2. Hai khu vực một trang: "Mục tiêu KR của tôi" trên, "Trong phạm vi quản lý" dưới (chỉ khi có quyền view_dept/view_all/goal_approve); bỏ tab chuyển đổi.
+- [x] 3. Card tổng quan chỉ đọc KR × Năm × 4 Quý + trạng thái + cập nhật; nút theo trạng thái (Lập/Xem chi tiết/Tiếp tục chỉnh sửa/Lịch sử/Yêu cầu điều chỉnh).
+- [x] 4. Chi tiết 12 tháng chỉ mở khi bấm (dialog đọc, không ô nhập); chỉnh sửa mở form trong dialog; mobile theo Quý thu gọn.
+- [x] 5. Khu vực Bản nháp thu gọn mặc định, loại Lập mới/Điều chỉnh, Tiếp tục chỉnh sửa + Xóa bản nháp có xác nhận; không tự tạo nháp (biz_goal_start vốn trả về bản đang dở, không trùng).
+- [x] 6. RPC biz_goal_draft_delete (migration 0134): chỉ nháp draft chưa từng gửi, chặn pending/approved/official/có approval run, nguyên tử, xóa hồ sơ năm khi không còn phiên bản, giữ nguyên bản chính thức khi xóa nháp điều chỉnh.
+- [x] 7. Khu vực quản lý: 6 thẻ thống kê (bấm lọc nhanh), tìm tên/lọc phòng/trạng thái, bảng desktop + card mobile, Xem (chỉ đọc) / Lịch sử / Duyệt (liên kết Trung tâm Phê duyệt).
+- [x] 8. Kiểm thử: 151/151 test Biz (5 test mới cho xóa nháp); build OK; Playwright desktop/mobile 390px không lỗi console, không tràn ngang; xóa nháp thật của Admin thành công end-to-end.
+- [ ] Chưa kiểm: tài khoản Sale/Trưởng phòng thật (phiên hiện tại là Super Admin); chưa Publish.
