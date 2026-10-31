@@ -24,9 +24,10 @@ it('tự liệt kê kỳ đang mở nộp, kỳ quá hạn và kỳ sắp mở m
  const{year,month}=vnNow();
  const next=month===12?{year:year+1,month:1}:{year,month:month+1};
  const prev=month===1?{year:year-1,month:12}:{year,month:month-1};
- // Kỳ tháng hiện tại và tháng trước đều đã qua ngày mở (25 tháng trước) → open hoặc overdue, chưa nộp → phải xuất hiện.
+ // Kỳ tháng hiện tại: còn trong hạn nộp/nộp bù (đến hết ngày 15) thì phải xuất hiện; sau đó đã đóng kỳ → không còn là việc cần làm.
+ const day=Number(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit'}).format(new Date()));
  const cur=rows.find(r=>r.period_kind==='month'&&r.year===year&&r.period===month);
- expect(cur).toBeTruthy();expect(['open','overdue']).toContain(cur!.phase);
+ if(day<=15){expect(cur).toBeTruthy();expect(['open','overdue']).toContain(cur!.phase);}else expect(cur).toBeUndefined();
  // Tháng tiếp theo: đã mở (sau ngày 25) hoặc sắp mở — đều phải xuất hiện.
  const nxt=rows.find(r=>r.period_kind==='month'&&r.year===next.year&&r.period===next.month);
  expect(nxt).toBeTruthy();expect(['open','not_open']).toContain(nxt!.phase);
