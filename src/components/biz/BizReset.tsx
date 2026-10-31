@@ -23,6 +23,16 @@ const ROWS:[keyof ResetPreview,string][]=[
  ['notifications','Thông báo gắn với hồ sơ bị reset'],
 ];
 
+/** Trích thông báo lỗi Supabase/PostgREST (message/details/hint/code) — tránh hiển thị [object Object]. */
+function errText(e:unknown):string{
+  if(e&&typeof e==='object'){
+    const o=e as {message?:unknown;details?:unknown;hint?:unknown;code?:unknown};
+    const parts=[o.message,o.details,o.hint,o.code?`Mã lỗi: ${o.code}`:null].filter((x):x is string=>typeof x==='string'&&x.length>0);
+    if(parts.length)return parts.join(' · ');
+  }
+  return e instanceof Error?e.message:'Có lỗi xảy ra. Dữ liệu được giữ nguyên, chưa có gì bị xóa.';
+}
+
 /** Reset sạch dữ liệu nghiệp vụ Quản trị Kinh doanh — chỉ Super Admin, có sao lưu riêng tư và nhật ký. */
 export function BizReset() {
   const uid=useAuth(s=>s.currentUserId)??'';

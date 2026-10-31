@@ -12,6 +12,7 @@ beforeAll(async()=>{
  CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,kind text,dedup_key text,payload jsonb);CREATE TABLE push_deliveries(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,notification_id uuid);
  CREATE TABLE biz_kr_metrics(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,name text);CREATE TABLE biz_departments(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,name text);CREATE TABLE biz_deadline_config(id uuid DEFAULT gen_random_uuid() PRIMARY KEY,kind text);`);
  await db.exec(readFileSync('drizzle/migrations/0149_biz_business_data_reset.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0151_biz_reset_execute_fix_update_where.sql','utf8'));
  await db.exec(`INSERT INTO biz_annual_goals(user_id) VALUES('${sale}');INSERT INTO biz_documents(user_id,kind) VALUES('${sale}','plan'),('${sale}','report');INSERT INTO biz_late_requests(user_id) VALUES('${sale}');INSERT INTO biz_approval_runs(version_id) VALUES(NULL);INSERT INTO notifications(kind,dedup_key) VALUES('biz_submitted','biz:x'),('biz_deadline','biz-deadline:x'),('signal_new','sig:x');INSERT INTO push_deliveries(notification_id) SELECT id FROM notifications;INSERT INTO biz_kr_metrics(name) VALUES('Doanh số');INSERT INTO biz_departments(name) VALUES('Kinh doanh 1');INSERT INTO biz_deadline_config(kind) VALUES('plan');`);
 },30000);
 afterAll(()=>db.close());
