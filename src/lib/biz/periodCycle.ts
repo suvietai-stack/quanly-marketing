@@ -63,7 +63,8 @@ export function storedRange(kind: PeriodKind, year: number, period: number): Per
   if (kind === "day") return { start: isoDate(addDays(new Date(Date.UTC(year, 0, 1)), period - 1)), end: isoDate(addDays(new Date(Date.UTC(year, 0, 1)), period - 1)) };
   if (kind === "week") {
     const jan1 = new Date(Date.UTC(year, 0, 1));
-    const mon = addDays(mondayOf(jan1), (period - 1) * 7);
+    const firstThursday = addDays(jan1, (4 - isoDow(jan1) + 7) % 7);
+    const mon = addDays(mondayOf(firstThursday), (period - 1) * 7);
     return { start: isoDate(mon), end: isoDate(addDays(mon, 6)) };
   }
   return periodRange(kind, year, period);
