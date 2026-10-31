@@ -42,6 +42,25 @@ it('published reader cannot call private global detail reader',async()=>{
  await expect(db.query('select private.biz_dashboard_global_data(2026)')).rejects.toThrow();
  await db.exec('RESET ROLE');
 });
+
+it('published data keeps official actual and approved target despite a pending adjustment',async()=>{
+ await actor(admin);await db.exec('BEGIN');
+ try {
+ const metricId=await scalar("insert into biz_kr_metrics(department_id,name,unit,value_kind,aggregation,direction,standard_code,standard_label) values($1,'Doanh số','VNĐ','money','sum','higher','revenue','Doanh số') returning id v",[dep]);
+ const goalId=await scalar("insert into biz_annual_goals(user_id,year,department_id,department_name) values($1,2026,$2,'Phòng thử') returning id v",[sale,dep]);
+ const versionId=await scalar("insert into biz_goal_versions(goal_id,version,status) values($1,1,'approved') returning id v",[goalId]);
+ await db.query('insert into biz_goal_items(version_id,metric_id,definition,annual,months) values($1,$2,$3,1200,array_fill(100::numeric,ARRAY[12]))',[versionId,metricId,JSON.stringify(definition('revenue'))]);
+ await db.query('update biz_annual_goals set official_version_id=$1 where id=$2',[versionId,goalId]);
+ const documentId=await scalar("insert into biz_documents(user_id,department_id,department_name,kind,period_kind,year,period) values($1,$2,'Phòng thử','report','month',2026,10) returning id v",[sale,dep]);
+ const official=await scalar("insert into biz_document_versions(document_id,version,status,target_version_id,items) values($1,1,'approved',$2,$3) returning id v",[documentId,versionId,JSON.stringify([{metric_id:metricId,actual:'50'}])]);
+ await db.query('update biz_documents set official_version_id=$1 where id=$2',[official,documentId]);
+ await db.query("insert into biz_document_versions(document_id,version,status,target_version_id,items) values($1,2,'pending',$2,$3)",[documentId,versionId,JSON.stringify([{metric_id:metricId,actual:'999'}])]);
+ const data=await scalar("select biz_dashboard_published(2026,'month',10) v");
+ const revenue=data.groups[0].metrics.find((m:any)=>m.definition.code==='revenue');
+ expect(revenue.actual).toBe('50');expect(revenue.target).toBe('100');
+ expect(data.groups.filter((g:any)=>g.level==='system').flatMap((g:any)=>g.metrics).filter((m:any)=>m.definition.code==='revenue').reduce((n:number,m:any)=>n+Number(m.actual??0),0)).toBe(50);
+ } finally {await db.exec('ROLLBACK');}
+});
 it('future and ended appointments cannot grant a scope',async()=>{
  await actor(admin);const p=await scalar("select id v from biz_positions where code='department_head'");
  await appoint({position_id:p,user_id:head,scope_kind:'department',system_id:sys,department_id:dep,started_at:'2099-01-01'});
