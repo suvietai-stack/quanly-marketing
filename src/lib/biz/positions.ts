@@ -20,3 +20,6 @@ export const DEFAULT_BUSINESS_POSITIONS = [
 ] as const;
 export function vietnamInput(iso: string) { return new Date(Date.parse(iso) + 7 * 3600000).toISOString().slice(0, 16); }
 export function vietnamTimestamp(input: string) { return `${input}:00+07:00`; }
+export function currentTitles(appointments: Appointment[], user: string, now: string) {
+ return appointments.filter(a=>a.user_id===user&&appointmentCurrent(a,now)).sort((a,b)=>b.position_snapshot.level-a.position_snapshot.level||Date.parse(a.started_at)-Date.parse(b.started_at)||a.id.localeCompare(b.id));
+}
