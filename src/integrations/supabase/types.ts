@@ -6389,6 +6389,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      leave_zalo_group_can_manage: { Args: never; Returns: boolean }
       leave_zalo_group_save: {
         Args: {
           _enabled: boolean
