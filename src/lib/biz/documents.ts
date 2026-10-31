@@ -8,6 +8,11 @@ export interface DocVersion { id: string; version: number; revision: number; sta
 export interface BizDocument { id: string; user_id: string; kind: DocKind; period_kind: PeriodKind; year: number; period: number; department_name: string; official_version_id: string | null; first_submitted_at: string | null; last_submitted_at: string | null; deadline: string | null; late_submitted?: boolean; versions: DocVersion[] }
 export type ViewStatus = 'none' | 'unopened' | 'opened' | 'new_version';
 export interface DocRow { user_id: string; employee_name: string; department_id: string; department_name: string; can_review: boolean; my_view: ViewStatus; document: BizDocument | null; deadline: string | null; server_now: string }
+/** Một kỳ đang cần xử lý của chính mình — trả từ biz_my_work, pha do server quyết định. */
+export interface MyWorkRow { period_kind: PeriodKind; year: number; period: number; phase: 'none' | 'not_open' | 'open' | 'overdue' | 'closed'; open_at: string | null; due_at: string | null; late_close_at: string | null; department_id: string | null; department_name: string | null; document_id: string | null; first_submitted_at: string | null; last_submitted_at: string | null; late_submitted: boolean; version_id: string | null; version_status: string | null; version_url: string | null; late_status: string | null; late_request_id: string | null }
+export interface MyWorkResult { rows: MyWorkRow[]; server_now: string }
+/** Ưu tiên "Công việc của tôi": cần chỉnh sửa → được duyệt nộp bù → chờ duyệt bù → quá hạn → đang mở chưa nộp → sắp mở → đã nộp. */
+export function myWorkRank(row: MyWorkRow) { if (row.version_status === 'changes') return 0; if (row.phase === 'overdue') return row.late_status === 'approved' ? 1 : row.late_status === 'pending' ? 2 : 3; if (row.phase === 'open' && !row.first_submitted_at) return 4; if (row.phase === 'not_open') return 5; return 6; }
 /** Trạng thái mở tài liệu — riêng theo từng người xem, tách biệt trạng thái nộp. */
 export const VIEW_STATUS: Record<ViewStatus, string> = { none: 'Chưa có tài liệu', unopened: 'Chưa mở', opened: 'Đã mở', new_version: 'Có bản mới' };
 export function viewTone(status: ViewStatus) { return status === 'opened' ? 'text-primary border-primary/40' : status === 'none' ? 'text-muted-foreground' : 'text-warning border-warning/40'; }
