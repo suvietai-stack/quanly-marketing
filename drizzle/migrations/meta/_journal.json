@@ -1163,6 +1163,27 @@
       "when": 1793439552911,
       "tag": "0165_biz_report_transition_no_duplicate_duties",
       "breakpoints": true
+    },
+    {
+      "idx": 166,
+      "version": "7",
+      "when": 1793440653417,
+      "tag": "0166_biz_rolling_plan_proposals",
+      "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "7",
+      "when": 1793440862035,
+      "tag": "0167_biz_rolling_validation_and_source_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 168,
+      "version": "7",
+      "when": 1793440992105,
+      "tag": "0168_biz_rolling_snapshot_identity_fence",
+      "breakpoints": true
     }
   ]
 }

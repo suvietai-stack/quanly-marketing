@@ -1,0 +1,6 @@
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import type { GoalItem } from './goals';
+import type { RollingData } from './rollingPlan';
+export const rollingQuery = (uid: string, goal: string) => queryOptions({queryKey:['biz_rolling',uid,goal],staleTime:0,refetchInterval:30000,refetchOnWindowFocus:true,queryFn:async()=>{const {data,error}=await supabase.rpc('biz_rolling_read',{_goal:goal});if(error)throw error;return data as unknown as RollingData;}});
+export function useRollingSave(){const qc=useQueryClient();return useMutation({mutationFn:async(a:{goal:string;items:GoalItem[];reason:string;revision?:number;submit:boolean})=>{const {data,error}=await supabase.rpc('biz_rolling_save',{_goal:a.goal,_items:a.items as never,_reason:a.reason,_revision:a.revision,_submit:a.submit});if(error)throw error;return data;},onSuccess:()=>qc.invalidateQueries({predicate:q=>String(q.queryKey[0]).startsWith('biz_')})});}

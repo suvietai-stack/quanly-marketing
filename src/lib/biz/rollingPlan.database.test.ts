@@ -1,0 +1,36 @@
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+import { beforeAll, afterAll, it, expect } from 'vitest';
+const db=new PGlite();
+const owner='00000000-0000-0000-0000-000000000001';
+const reviewer='00000000-0000-0000-0000-000000000002';
+const goal='10000000-0000-0000-0000-000000000001';
+const version='20000000-0000-0000-0000-000000000001';
+const metric='30000000-0000-0000-0000-000000000001';
+async function value(sql:string){return (await db.query<{v:any}>(sql)).rows[0]?.v;}
+beforeAll(async()=>{
+ await db.exec(`CREATE SCHEMA auth;CREATE SCHEMA private;CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT current_setting('test.uid')::uuid$$;
+ CREATE TABLE biz_documents(id uuid,user_id uuid,kind text,year integer,period_kind text,period integer,period_start date,period_end date,official_version_id uuid); CREATE FUNCTION biz_period_start_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT make_date($2,1,1)$$;CREATE FUNCTION biz_period_end_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT make_date($2,12,31)$$;CREATE TABLE profiles(id uuid PRIMARY KEY);CREATE TABLE biz_annual_goals(id uuid PRIMARY KEY,user_id uuid,department_id uuid,year integer,official_version_id uuid);
+ CREATE TABLE biz_goal_versions(id uuid PRIMARY KEY,goal_id uuid,revision integer);CREATE TABLE biz_goal_items(version_id uuid,metric_id uuid,definition jsonb,annual numeric,months numeric[]);
+ CREATE TABLE biz_approval_runs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),version_id uuid,status text,owner_id uuid,content_snapshot jsonb);
+ CREATE FUNCTION biz_goal_can_read(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+ CREATE FUNCTION biz_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+ CREATE FUNCTION biz_run_assigned(uuid,boolean DEFAULT false) RETURNS boolean LANGUAGE sql AS $$SELECT auth.uid()='${reviewer}'::uuid$$;
+ CREATE FUNCTION private.biz_report_actual_range(uuid,uuid,date,date,text) RETURNS text LANGUAGE sql AS $$SELECT current_setting('test.actual')$$;
+ CREATE FUNCTION biz_approval_start(uuid,text,uuid,uuid,jsonb) RETURNS uuid LANGUAGE plpgsql AS $$DECLARE id_ uuid;BEGIN INSERT INTO biz_approval_runs(version_id,status,owner_id,content_snapshot) VALUES($1,'pending',$3,$5) RETURNING id INTO id_;RETURN id_;END$$;
+ CREATE FUNCTION biz_approval_step(uuid,boolean,text) RETURNS boolean LANGUAGE plpgsql AS $$BEGIN IF auth.uid()<>'${reviewer}'::uuid THEN RAISE EXCEPTION 'wrong reviewer';END IF;UPDATE biz_approval_runs SET status=CASE WHEN $2 THEN 'approved' ELSE 'changes' END WHERE version_id=$1;RETURN $2;END$$;
+ INSERT INTO profiles VALUES('${owner}'),('${reviewer}');INSERT INTO biz_annual_goals VALUES('${goal}','${owner}',gen_random_uuid(),extract(year FROM now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::integer,'${version}');INSERT INTO biz_goal_versions VALUES('${version}','${goal}',0);
+ INSERT INTO biz_goal_items VALUES('${version}','${metric}','{"name":"Doanh số","aggregation":"sum","unit":"VNĐ","value_kind":"money","direction":"higher","description":null}',1200000000,ARRAY[100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000]);
+ SET test.actual='7000000';SET test.uid='${owner}';`);
+ const sql=readFileSync('drizzle/migrations/0166_biz_rolling_plan_proposals.sql','utf8');await db.exec(sql.slice(0,sql.indexOf('DO $patch$')));await db.exec(readFileSync('drizzle/migrations/0167_biz_rolling_validation_and_source_fences.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0168_biz_rolling_snapshot_identity_fence.sql','utf8')); 
+},20000);
+afterAll(()=>db.close());
+async function payload(){const b=await value(`SELECT private.biz_rolling_basis('${goal}') v`);const i=b.items[0];const months=[...i.current];months[b.first_month-1]=i.remaining;return {b,items:[{metric_id:i.metric_id,definition:i.definition,annual:i.annual,months}]};}
+async function submit(){const {items}=await payload();return value(`SELECT biz_rolling_save('${goal}','${JSON.stringify(items)}','Bù kế hoạch',NULL,true) v`);}
+it('server locks historical month and annual commitment even through direct RPC',async()=>{const {b,items}=await payload();items[0].months[0]='7000000';await expect(db.query(`SELECT biz_rolling_save('${goal}','${JSON.stringify(items)}','reason',NULL,true)`)).rejects.toThrow('Không được sửa tháng');items[0].months=b.items[0].current;items[0].annual='1';await expect(db.query(`SELECT biz_rolling_save('${goal}','${JSON.stringify(items)}','reason',NULL,true)`)).rejects.toThrow('cam kết năm');});
+it('pending allocation never changes annual official version or effective plan',async()=>{await submit();expect(await value(`SELECT official_version_id::text v FROM biz_annual_goals WHERE id='${goal}'`)).toBe(version);expect((await value(`SELECT private.biz_rolling_basis('${goal}') v`)).current_plan_id).toBeNull();});
+it('owner cannot approve own rolling allocation',async()=>{const id=await value("SELECT id::text v FROM biz_rolling_plans WHERE status='pending'");await expect(db.query(`SELECT biz_rolling_decide('${id}',0,true,'')`)).rejects.toThrow('Không đến lượt');});
+it('changed official actual blocks approval and preserves pending proposal',async()=>{const id=await value("SELECT id::text v FROM biz_rolling_plans WHERE status='pending'");await db.exec(`SET test.uid='${reviewer}';SET test.actual='8000000';`);await expect(db.query(`SELECT biz_rolling_decide('${id}',0,true,'')`)).rejects.toThrow('Cơ sở thực tế');expect(await value(`SELECT status v FROM biz_rolling_plans WHERE id='${id}'`)).toBe('pending');});
+it('return leaves current plan unchanged',async()=>{const id=await value("SELECT id::text v FROM biz_rolling_plans WHERE status='pending'");await db.exec(`SELECT biz_rolling_decide('${id}',0,false,'Cập nhật cơ sở');`);expect((await value(`SELECT private.biz_rolling_basis('${goal}') v`)).current_plan_id).toBeNull();});
+it('final approval applies future allocation without rewriting annual target or historic month',async()=>{await db.exec(`SET test.uid='${owner}';`);const {items}=await payload();const id=await value(`SELECT biz_rolling_save('${goal}','${JSON.stringify(items)}','Cập nhật cơ sở',1,true) v`);await db.exec(`SET test.uid='${reviewer}';SELECT biz_rolling_decide('${id}',2,true,'Đồng ý');`);const b=await value(`SELECT private.biz_rolling_basis('${goal}') v`);expect(b.current_plan_id).toBe(id);expect(b.items[0].current[0]).toBe('100000000');expect(b.items[0].annual).toBe('1200000000');expect(await value(`SELECT official_version_id::text v FROM biz_annual_goals WHERE id='${goal}'`)).toBe(version);});
