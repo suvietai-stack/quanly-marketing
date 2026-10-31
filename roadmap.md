@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+- [ ] Đồng bộ yêu cầu 31/10: mặc định Tuần từ 02/11 sau xác nhận đủ deadline, giữ ngoại lệ/lịch sử, không hồi tố.
+- [ ] Một nơi sửa deadline Báo cáo, xem trước ba kỳ và cảnh báo cấu hình thiếu/ngắn.
+- [ ] Bỏ Tạm tính ở KR/Dashboard và khóa nguồn chính thức phía máy chủ; giữ điều chỉnh và tổng hợp không trùng.
+- [ ] Kiểm thử quy tắc, luồng thực tế có thể kiểm tra và desktop/mobile; ghi rõ phần chờ xác nhận deadline/nộp thật; chưa Publish.
+
 - [x] Sửa nộp Kế hoạch: Google Docs chính thức, validation nháp/nộp, pha kỳ và mở tài liệu, lỗi chuẩn hóa; 94 tests đạt, form desktop/mobile bằng nháp có sẵn, không đổi dữ liệu/deadline.
 - [ ] Nghiệm thu nộp Kế hoạch thật của Lê Minh Ngọc và refresh sau nộp: cần link kế hoạch thật và xác nhận nộp; không lưu/nộp URL thử vào dữ liệu vận hành.
 
