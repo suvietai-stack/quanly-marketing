@@ -11,6 +11,7 @@ import {Badge} from '@/components/ui/badge';
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
 import {Tabs,TabsList,TabsTrigger} from '@/components/ui/tabs';
 import {DocumentDialog} from './BizDocuments';
+import {LateRequestPanel} from './BizLateRequest';
 
 const dateText=(v:string|null)=>v?new Date(v).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa quy định';
 type Quick='all'|'submitted'|'unsubmitted'|'ontime'|'late'|'overdue'|'changes'|'unviewed';
@@ -55,7 +56,7 @@ export function BizPlans(){
 
 function useOpenDocument(){const open=useDocumentOpen();return async(versionId:string)=>{const win=window.open('','_blank');try{const url=await open.mutateAsync(versionId);if(win){win.location.href=url;}else{window.location.href=url;}}catch(e){win?.close();toast.error(e instanceof Error?e.message:String(e));}};}
 
-function StatusBadges({row,showView=true}:{row:DocRow;showView?:boolean}){const time=deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now);const version=row.document?.versions.at(-1);return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late','overdue'].includes(time)?'text-destructive border-destructive/40':time==='ontime'?'text-success border-success/40':time==='soon'?'text-warning border-warning/40':''}>{TIME_STATUS[time]}</Badge><Badge variant="secondary">{version?docStatusLabel('plan',version.status):'Chưa nộp'}</Badge>{showView&&<Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge>}</div>;}
+function StatusBadges({row,showView=true}:{row:DocRow;showView?:boolean}){const time=deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now);const version=row.document?.versions.at(-1);return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late','overdue'].includes(time)?'text-destructive border-destructive/40':time==='ontime'?'text-success border-success/40':time==='soon'?'text-warning border-warning/40':''}>{TIME_STATUS[time]}</Badge>{row.document?.late_submitted&&<Badge variant="outline" className="text-warning border-warning/40">Nộp muộn</Badge>}<Badge variant="secondary">{version?docStatusLabel('plan',version.status):'Chưa nộp'}</Badge>{showView&&<Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge>}</div>;}
 
 function MyPlanCard({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
  const version=row.document?.versions.at(-1);const openDoc=useOpenDocument();const rank=myPlanRank(row);
@@ -64,6 +65,7 @@ function MyPlanCard({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:P
    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Kế hoạch {periodLabel(periodKind,year,period)}</h3><StatusBadges row={row}/></div>
    <p className="text-sm text-muted-foreground">Hạn nộp: {dateText(row.deadline)} (giờ Việt Nam)</p>
    {row.document?.last_submitted_at&&<p className="text-xs text-muted-foreground">Nộp gần nhất: {dateText(row.document.last_submitted_at)}</p>}
+   <LateRequestPanel kind="plan" periodKind={periodKind} year={year} period={period} submitted={!!row.document?.first_submitted_at}/>
    <div className="flex flex-wrap gap-2"><Button size="sm" onClick={onOpen}>{version?'Xem / cập nhật hồ sơ':'Nộp kế hoạch'}</Button>{version?.url&&<Button size="sm" variant="outline" onClick={()=>openDoc(version.id)}><ExternalLink className="h-4 w-4 mr-2"/>Mở tài liệu</Button>}</div>
   </div></section>;
 }
