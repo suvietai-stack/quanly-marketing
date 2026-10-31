@@ -100,6 +100,7 @@ export type Database = {
       }
       app_roles: {
         Row: {
+          biz_detail_exception: boolean
           biz_scope: string
           created_at: string
           description: string | null
@@ -112,6 +113,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          biz_detail_exception?: boolean
           biz_scope?: string
           created_at?: string
           description?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          biz_detail_exception?: boolean
           biz_scope?: string
           created_at?: string
           description?: string | null
@@ -487,6 +490,100 @@ export type Database = {
             columns: ["bank_account_id"]
             isOneToOne: false
             referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_access_exceptions: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          ended_at: string | null
+          granted_by: string
+          id: string
+          permission: string
+          reason: string
+          revoked_at: string | null
+          role_id: string | null
+          scope_kind: string
+          started_at: string
+          system_id: string | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          ended_at?: string | null
+          granted_by: string
+          id?: string
+          permission: string
+          reason: string
+          revoked_at?: string | null
+          role_id?: string | null
+          scope_kind: string
+          started_at?: string
+          system_id?: string | null
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          ended_at?: string | null
+          granted_by?: string
+          id?: string
+          permission?: string
+          reason?: string
+          revoked_at?: string | null
+          role_id?: string | null
+          scope_kind?: string
+          started_at?: string
+          system_id?: string | null
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_access_exceptions_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_access_exceptions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_access_exceptions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_access_exceptions_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "biz_systems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_access_exceptions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "biz_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_access_exceptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1727,6 +1824,8 @@ export type Database = {
       biz_positions: {
         Row: {
           active: boolean
+          all_business: boolean
+          business_policy: string
           code: string | null
           created_at: string
           description: string
@@ -1739,6 +1838,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          all_business?: boolean
+          business_policy?: string
           code?: string | null
           created_at?: string
           description?: string
@@ -1751,6 +1852,8 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          all_business?: boolean
+          business_policy?: string
           code?: string | null
           created_at?: string
           description?: string
@@ -5552,6 +5655,10 @@ export type Database = {
         Returns: boolean
       }
       biz_approvals_read: { Args: never; Returns: Json }
+      biz_can: {
+        Args: { _actor: string; _permission: string }
+        Returns: boolean
+      }
       biz_dashboard_aggregate: {
         Args: { _axis?: string; _facts: Json; _hi: number; _lo: number }
         Returns: Json
@@ -5671,6 +5778,16 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_effective_access: { Args: { _user?: string }; Returns: Json }
+      biz_exception_ok: {
+        Args: {
+          _actor: string
+          _kind?: string
+          _permission: string
+          _unit?: string
+        }
+        Returns: boolean
+      }
       biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
       biz_goal_can_review: {
         Args: { _department_id: string; _user_id: string }
@@ -5746,6 +5863,7 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_manager: { Args: { _actor: string }; Returns: boolean }
       biz_member_access: {
         Args: { _department_id: string; _user_id: string }
         Returns: boolean
@@ -5763,6 +5881,7 @@ export type Database = {
       biz_org_can_manage: { Args: never; Returns: boolean }
       biz_org_read: { Args: never; Returns: Json }
       biz_org_save: { Args: { _action: string; _data: Json }; Returns: string }
+      biz_participant: { Args: { _actor: string }; Returns: boolean }
       biz_period_department: {
         Args: { _kind: string; _period: number; _user: string; _year: number }
         Returns: string

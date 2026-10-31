@@ -946,6 +946,13 @@
       "when": 1793419229567,
       "tag": "0134_biz_goal_draft_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 135,
+      "version": "7",
+      "when": 1793421621086,
+      "tag": "0135_biz_effective_appointment_access",
+      "breakpoints": true
     }
   ]
 }
