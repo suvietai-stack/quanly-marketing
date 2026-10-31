@@ -6264,6 +6264,10 @@ export type Database = {
         }
         Returns: string
       }
+      biz_report_deadline_ready: {
+        Args: { _kind: string; _p: number; _pk: string; _y: number }
+        Returns: boolean
+      }
       biz_report_metrics: {
         Args: {
           _mode?: string
