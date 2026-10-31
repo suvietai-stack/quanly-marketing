@@ -32,6 +32,6 @@ export function chartRows(rows: PublishedMetric[], key: string, lo: number, hi: 
 }
 export function distribution(groups: PublishedGroup[], key: string) {
   const applicable = groups.filter(g => g.level === 'system').map(g => ({ g, m: g.metrics.find(m => m.metric_key === key) }));
-  if (!applicable.length || applicable.some(({m}) => !comparable(m))) return [];
-  return applicable.flatMap(({g,m}) => m?.actual !== null && m?.actual !== undefined ? [{ name:g.name,value:Number(m.actual) }] : []);
+  const rows = applicable.flatMap(({g,m}) => hasActual(m) && m?.actual != null ? [{ name:g.name,value:Number(m.actual) }] : []);
+  return { rows, covered: rows.length, total: applicable.length, partial: rows.length > 0 && rows.length < applicable.length };
 }
