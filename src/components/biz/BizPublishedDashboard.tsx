@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth, useCurrentUser } from '@/lib/auth';
 import { vnYear, shortNumber, ranking } from '@/lib/biz/dashboard';
 import { numberText, periodLabel } from '@/lib/biz/documents';
-import { publishedState, comparable, trend, chartRows, distribution, type PublishedDashboard, type PublishedMetric } from '@/lib/biz/publishedDashboard';
+import { publishedState, comparable, hasActual, trend, chartRows, distribution, type PublishedDashboard, type PublishedMetric } from '@/lib/biz/publishedDashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -43,7 +43,8 @@ function BizPublishedDashboard() {
   const monthly=selected&&data?chartRows(selected.months,key,data.lo,data.hi,data.evaluation_hi):[];
   const cumulative=selected&&data?chartRows(selected.cumulative,key,1,12,data.evaluation_hi):[];
   const previous=selected?.previous_metrics.find(m=>m.metric_key===key);const change=trend(active,previous);
-  const ranked=ranking(systemRows,sort);const slices=revenue&&data?distribution(data.groups.filter(g=>group==='all'||g.id===group),revenue.metric_key):[];
+  const rankable=systemRows.filter(m=>hasActual(m));const ranked=ranking(rankable.map(m=>({...m,complete:true})),sort);const unranked=systems.filter(g=>!hasActual(g.metrics.find(m=>m.metric_key===key)));
+  const dist=revenue&&data?distribution(data.groups.filter(g=>group==='all'||g.id===group),revenue.metric_key):{rows:[],covered:0,total:0,partial:false};const slices=dist.rows;
   return <div className="biz-dashboard min-w-0 space-y-6 pb-32"><header className="flex justify-between items-start gap-3"><div><p className="text-xs font-medium text-primary">QUẢN TRỊ KINH DOANH</p><h1 className="text-2xl font-semibold mt-1">Tổng quan kinh doanh</h1><p className="text-sm text-muted-foreground mt-2">{periodLabel(kind,year,period)} · Số liệu chính thức</p></div><Button variant="outline" size="icon" aria-label="Làm mới Dashboard tổng hợp" disabled={query.isFetching} onClick={()=>query.refetch()}><RefreshCw className={`h-4 w-4 ${query.isFetching?'animate-spin':''}`}/></Button></header>
     <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 border-y py-4"><Choice label="Loại kỳ tổng hợp" value={kind} onChange={v=>{setKind(v as typeof kind);setPeriod(1);}} options={[["year","Năm"],["quarter","Quý"],["month","Tháng"]]}/><Input type="number" aria-label="Năm tổng hợp" min={2000} max={2200} value={year} onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=2000&&n<=2200)setYear(n);}}/><Choice label="Kỳ tổng hợp" value={String(period)} onChange={v=>setPeriod(Number(v))} options={Array.from({length:kind==='month'?12:kind==='quarter'?4:1},(_,i)=>[String(i+1),kind==='year'?'Cả năm':`${kind==='quarter'?'Quý':'Tháng'} ${i+1}`])}/><Choice label="Hệ Kinh doanh tổng hợp" value={selected?.id??group} onChange={setGroup} options={data?.groups.map(g=>[g.id,g.name])??[['all','Toàn Khối']]}/></section>
     {query.isPending&&<div role="status" className="h-64 flex items-center justify-center text-muted-foreground">Đang tổng hợp dữ liệu…</div>}{query.error&&<div role="alert" className="border-y py-6 space-y-3"><p className="text-destructive">Không tải được số liệu tổng hợp. {query.error.message}</p><Button variant="outline" onClick={()=>query.refetch()}>Thử lại</Button></div>}
