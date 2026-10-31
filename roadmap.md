@@ -9,3 +9,10 @@
 - [x] 7. Khu vực quản lý: 6 thẻ thống kê (bấm lọc nhanh), tìm tên/lọc phòng/trạng thái, bảng desktop + card mobile, Xem (chỉ đọc) / Lịch sử / Duyệt (liên kết Trung tâm Phê duyệt).
 - [x] 8. Kiểm thử: 151/151 test Biz (5 test mới cho xóa nháp); build OK; Playwright desktop/mobile 390px không lỗi console, không tràn ngang; xóa nháp thật của Admin thành công end-to-end.
 - [ ] Chưa kiểm: tài khoản Sale/Trưởng phòng thật (phiên hiện tại là Super Admin); chưa Publish.
+
+## Chuẩn hóa quyền tự động theo chức vụ
+- [ ] Rà soát Role cũ, bổ nhiệm hiệu lực và mọi đường đọc/duyệt/tổng hợp.
+- [ ] Chốt phương án chuyển đổi an toàn quyền chi tiết và ngoại lệ, không ảnh hưởng module khác.
+- [ ] Tự động quyền nghiệp vụ/phạm vi từ cơ cấu; tách Dashboard tổng hợp; đúng lượt phê duyệt.
+- [ ] Đơn giản hóa bổ nhiệm, xem trước/xem quyền thực tế và làm mới quyền.
+- [ ] Kiểm thử từng cấp, kiêm nhiệm/hết hiệu lực, API ngoài phạm vi, Super Admin, desktop/mobile.
