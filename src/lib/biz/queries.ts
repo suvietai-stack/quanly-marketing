@@ -69,4 +69,41 @@ export const useBizKrStandardSave = () =>
   useBizMutation<{ _metric_id: string; _code: string; _label: string }>("biz_kr_standard_save", [["biz_kr_metrics"], ["biz_dashboard"]]);
 
 export const useBizDeadlineSave = () =>
-  useBizMutation<{ _data: BizDeadlineData }>("biz_deadline_save", [["biz_deadline_config"]]);
+  useBizMutation<{ _data: BizDeadlineData }>("biz_deadline_save", [["biz_deadline_config"], ["biz_deadline_config_log"]]);
+
+export interface BizDeadlineLogRow { id: string; actor_id: string | null; old_data: BizDeadlineData; new_data: BizDeadlineData; created_at: string }
+export const bizDeadlineLogQuery = queryOptions({
+  queryKey: ["biz_deadline_config_log"],
+  queryFn: async () => {
+    const { data, error } = await supabase.from("biz_deadline_config_log").select("id, actor_id, old_data, new_data, created_at").order("created_at", { ascending: false }).limit(50);
+    if (error) throw error;
+    return (data ?? []) as BizDeadlineLogRow[];
+  },
+});
+
+export interface BizMilestonesIso { open: string | null; due: string | null; late_close: string | null }
+export const bizMilestonesQuery = (kind: string, year: number, period: number) =>
+  queryOptions({
+    queryKey: ["biz_deadline_milestones", kind, year, period],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("biz_deadline_milestones", { _kind: kind, _year: year, _period: period });
+      if (error) throw error;
+      return data as BizMilestonesIso;
+    },
+  });
+
+export const bizLateRequestsQuery = (kind?: string, periodKind?: string, year?: number, period?: number) =>
+  queryOptions({
+    queryKey: ["biz_late_requests", kind ?? null, periodKind ?? null, year ?? null, period ?? null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("biz_late_requests_read", { _kind: kind ?? null, _period_kind: periodKind ?? null, _year: year ?? null, _period: period ?? null });
+      if (error) throw error;
+      return data as { requests: BizLateRequest[]; server_now: string };
+    },
+  });
+
+export const useBizLateRequestCreate = () =>
+  useBizMutation<{ _kind: string; _period_kind: string; _year: number; _period: number; _reason: string }>("biz_late_request_create", [["biz_late_requests"]]);
+
+export const useBizLateRequestDecide = () =>
+  useBizMutation<{ _id: string; _approve: boolean; _comment: string }>("biz_late_request_decide", [["biz_late_requests"]]);
