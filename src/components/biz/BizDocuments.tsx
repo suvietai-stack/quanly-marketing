@@ -16,6 +16,7 @@ import {Tabs,TabsList,TabsTrigger} from '@/components/ui/tabs';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dialog';
 import {supabase} from '@/integrations/supabase/client';
 import {BizQuarterSummary} from './BizQuarterSummary';
+import {BizPlans} from './BizPlans';
 const dateText=(v:string|null)=>v?new Date(v).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa quy định';
 export function BizDocuments({kind}:{kind:DocKind}){return kind==='plan'?<BizPlans/>:<BizDocumentsClassic kind={kind}/>;}
 function BizDocumentsClassic({kind}:{kind:DocKind}){
