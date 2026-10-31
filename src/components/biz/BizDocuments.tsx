@@ -1,10 +1,10 @@
 import {useEffect,useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {toast} from 'sonner';
-import {ExternalLink,FileText,History,LockKeyhole,Plus,RefreshCw,Save,Send,Trash2} from 'lucide-react';
+import {ExternalLink,Eye,FileText,History,LockKeyhole,Plus,RefreshCw,Save,Search,Send,Trash2} from 'lucide-react';
 import {useAuth,useCurrentUser} from '@/lib/auth';
 import {documentsQuery,documentEventsQuery,reportMetricsQuery,useDocumentAction} from '@/lib/biz/documentQueries';
-import {attachmentUrlOk,deadlineStatus,DOC_STATUS,PLAN_STATUS_OPTIONS,docStatusLabel,TIME_STATUS,googleDocsOk,metricPercent,numberText,periodLabel,progressTone,type DocAttachment,type DocKind,type DocRow,type DocVersion,type PeriodKind,type ReportItem} from '@/lib/biz/documents';
+import {attachmentUrlOk,deadlineStatus,DOC_STATUS,docStatusLabel,TIME_STATUS,googleDocsOk,manageRank,metricPercent,numberText,periodLabel,progressTone,type DocAttachment,type DocKind,type DocRow,type DocVersion,type PeriodKind,type ReportItem} from '@/lib/biz/documents';
 import {validValue} from '@/lib/biz/goals';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -16,9 +16,8 @@ import {Tabs,TabsList,TabsTrigger} from '@/components/ui/tabs';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dialog';
 import {supabase} from '@/integrations/supabase/client';
 import {BizQuarterSummary} from './BizQuarterSummary';
-import {BizPlans} from './BizPlans';
-import {LateRequestPanel} from './BizLateRequest';
-const dateText=(v:string|null)=>v?new Date(v).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa quy định';
+import {BizPlans,LateStats} from './BizPlans';
+import {MyDocCard,MyWorkSection,StatusBadges,dateText,useOpenDocument} from './BizMyWork';
 export function BizDocuments({kind}:{kind:DocKind}){return kind==='plan'?<BizPlans/>:<BizDocumentsClassic kind={kind}/>;}
 type RQuick='all'|'submitted'|'unsubmitted'|'ontime'|'late'|'overdue'|'adjusting'|'adjusted';
 const RQUICK_LABEL:Record<RQuick,string>={all:'Tổng cần nộp',submitted:'Đã nộp',unsubmitted:'Chưa nộp',ontime:'Đúng hạn',late:'Nộp muộn',overdue:'Quá hạn chưa nộp',adjusting:'Đề nghị điều chỉnh',adjusted:'Điều chỉnh đã duyệt'};
