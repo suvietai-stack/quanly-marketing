@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
+import { useQueryClient } from '@tanstack/react-query';
 
 const PUBLIC_PATHS = ["/login", "/register", "/chinh-sach-bao-mat", "/reset-password"];
 const PENDING_PATH = "/pending";
@@ -14,6 +15,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const loaded = useAuth((s) => s.loaded);
   const init = useAuth((s) => s.init);
   const touchPresence = useAuth((s) => s.touchPresence);
+  const refreshBizAccess = useAuth(s => s.refreshBizAccess);
+  const nextBizChange = useAuth(s => s.bizAccess?.next_change);
+  const qc = useQueryClient();
   const currentUser = useAuth((s) =>
     s.currentUserId ? s.users.find((u) => u.id === s.currentUserId) : null
   );
@@ -39,6 +43,25 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", onVis);
     };
   }, [currentUserId, touchPresence]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    let active = true;
+    const refresh = async () => {
+      const previous = JSON.stringify(useAuth.getState().bizAccess?.permissions);
+      await refreshBizAccess();
+      if (!active) return;
+      const changed = previous !== JSON.stringify(useAuth.getState().bizAccess?.permissions);
+      if (changed) qc.removeQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') });
+      await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') });
+    };
+    const visible = () => { if (!document.hidden) void refresh(); };
+    const interval = window.setInterval(visible, 30000);
+    const boundary = nextBizChange ? window.setTimeout(() => void refresh(), Math.max(0, Math.min(2147483647, Date.parse(nextBizChange) - Date.now() + 100))) : undefined;
+    window.addEventListener('focus', visible);
+    document.addEventListener('visibilitychange', visible);
+    return () => { active = false; clearInterval(interval); clearTimeout(boundary); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
+  }, [currentUserId, nextBizChange, refreshBizAccess, qc]);
 
   const isPublic = PUBLIC_PATHS.includes(path);
   const isPending = path === PENDING_PATH;

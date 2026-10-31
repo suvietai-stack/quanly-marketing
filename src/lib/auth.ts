@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
+import type { EffectiveBizAccess } from '@/lib/biz/access';
 import {
   adminResetPassword,
   adminDeleteUser,
@@ -55,7 +56,8 @@ export const PERMISSIONS: PermissionDef[] = [
   // ===== Quản trị Kinh doanh =====
   P('biz.view_own', 'Xem dữ liệu cá nhân', 'Quản trị Kinh doanh', 'Xem'),
   P('biz.view_dept', 'Xem dữ liệu phòng ban mình', 'Quản trị Kinh doanh', 'Xem'),
-  P('biz.view_all', 'Xem dashboard toàn bộ kinh doanh', 'Quản trị Kinh doanh', 'Xem'),
+  P('biz.view_all', 'Ngoại lệ xem hồ sơ chi tiết toàn Khối', 'Quản trị Kinh doanh', 'Xem'),
+  P('biz.dashboard_public', 'Xem Dashboard tổng hợp toàn Khối', 'Quản trị Kinh doanh', 'Xem'),
   P('biz.plan_submit', 'Nộp kế hoạch kinh doanh', 'Quản trị Kinh doanh', 'Nộp'),
   P('biz.goal_submit', 'Lập và gửi mục tiêu KR', 'Quản trị Kinh doanh', 'Nộp'),
   P('biz.report_submit', 'Nộp báo cáo kinh doanh', 'Quản trị Kinh doanh', 'Nộp'),
@@ -954,6 +956,8 @@ export interface User {
 
 // ============ Store ============
 interface AuthState {
+  bizAccess: EffectiveBizAccess | null;
+  refreshBizAccess: () => Promise<void>;
   users: User[];
   roles: Role[];
   currentUserId: ID | null;
@@ -1026,6 +1030,14 @@ function mapProfileToUser(
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
+  bizAccess: null,
+  refreshBizAccess: async () => {
+    const uid = get().currentUserId;
+    if (!uid) { set({ bizAccess: null }); return; }
+    const { data, error } = await supabase.rpc('biz_effective_access');
+    if (get().currentUserId !== uid) return;
+    set({ bizAccess: error ? null : data as unknown as EffectiveBizAccess });
+  },
   users: [],
   roles: [],
   currentUserId: null,
@@ -1036,7 +1048,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (get().initialized) return;
     set({ initialized: true });
     supabase.auth.onAuthStateChange((_event, session) => {
-      set({ currentUserId: session?.user?.id ?? null });
+      set({ currentUserId: session?.user?.id ?? null, bizAccess: null });
       if (session) {
         get().reload();
       } else {
@@ -1075,6 +1087,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       system: !!r.is_system,
     }));
     set({ users, roles, loaded: true });
+    await get().refreshBizAccess();
 
 
     // Auto-bootstrap: nếu Super Admin / tài khoản hệ thống đăng nhập mà các role
@@ -1447,6 +1460,7 @@ export function auditDependencies(perms: PermissionKey[]): { key: PermissionKey;
 export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
+  const bizAccess = useAuth((s) => s.bizAccess);
   const perms = getUserPermissions(u, roles);
   // Only Super Admin (and the system-marked Admin account) bypasses permission checks.
   // Role "Admin" is just a default permission bundle — it must still grant perms explicitly.
@@ -1458,6 +1472,7 @@ export function useCurrentUser() {
     perms.has(key) || perms.has(resolvePermKey(key));
   const can = (key: PermissionKey): boolean => {
     if (isSuperAdmin) return true;
+    if (key.startsWith('biz.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
     const resolved = resolvePermKey(key);
     if (!hasRaw(resolved)) return false;
     // Dependency check — every parent must also be granted.

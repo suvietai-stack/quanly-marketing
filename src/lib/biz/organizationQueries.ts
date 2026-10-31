@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
 import type { ApprovalRun, OrgData, Workflow } from './organization';
 export const orgQuery = (uid: string) => queryOptions({ queryKey: ['biz_org', uid], staleTime: 0, queryFn: async () => { const { data, error } = await supabase.rpc('biz_org_read'); if (error) throw error; return data as unknown as OrgData; } });
 export const workflowsQuery = (uid: string) => queryOptions({ queryKey: ['biz_workflows', uid], staleTime: 0, queryFn: async () => { const { data, error } = await supabase.rpc('biz_workflows_read'); if (error) throw error; return data as unknown as Workflow[]; } });
@@ -8,4 +9,4 @@ type Action = { kind: 'org'; action: string; data: Record<string, unknown> } | {
 export function useOrganizationAction() { const qc = useQueryClient(); return useMutation({ mutationFn: async (a: Action) => {
   const result = a.kind === 'org' ? await supabase.rpc('biz_org_save', { _action: a.action, _data: a.data as never }) : a.kind === 'workflow' ? await supabase.rpc('biz_workflow_save', { _data: a.data as never }) : a.kind === 'adopt' ? await supabase.rpc('biz_approval_adopt', { _version: a.run.version_id, _kind: a.run.kind, _confirmed: true }) : a.kind === 'override' ? await supabase.rpc('biz_approval_override', { _id: a.run.id, _revision: a.run.revision, _action: a.action, _comment: a.comment, _user: a.user || undefined }) : a.run.kind === 'goal_year' ? await supabase.rpc('biz_goal_decide', { _version_id: a.run.version_id, _revision: a.run.source_revision, _approve: a.approve, _comment: a.comment }) : await supabase.rpc('biz_document_decide', { _id: a.run.version_id, _revision: a.run.source_revision, _approve: a.approve, _comment: a.comment });
   if (result.error) throw result.error; return result.data;
-}, onSuccess: async () => { await Promise.all(['biz_org', 'biz_workflows', 'biz_approvals', 'biz_departments', 'biz_department_members', 'biz_goals', 'biz_docs', 'biz_metrics', 'biz_dashboard', 'notifications'].map(key => qc.invalidateQueries({ queryKey: [key] }))); } }); }
+}, onSuccess: async () => { await useAuth.getState().refreshBizAccess(); await Promise.all([qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') }), qc.invalidateQueries({ queryKey: ['notifications'] })]); } }); }
