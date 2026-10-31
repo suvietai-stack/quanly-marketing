@@ -20,13 +20,15 @@ const DOC_GROUPS = [
   { key: 'report', label: 'Báo cáo' },
   { key: 'goal', label: 'Mục tiêu KR' },
 ] as const;
-const PERIOD_TABS: { key: PeriodKind; label: string }[] = [{ key: 'month', label: 'Tháng' }, { key: 'quarter', label: 'Quý' }, { key: 'year', label: 'Năm' }];
+// Editor này chỉ quản mốc deadline theo tháng cho kỳ Tháng/Quý/Năm; deadline Ngày/Tuần nằm trong cấu hình chu kỳ báo cáo.
+type MilestonePeriod = 'month' | 'quarter' | 'year';
+const PERIOD_TABS: { key: MilestonePeriod; label: string }[] = [{ key: 'month', label: 'Tháng' }, { key: 'quarter', label: 'Quý' }, { key: 'year', label: 'Năm' }];
 const MILESTONES: { key: MilestoneKey; label: string; desc: string; optional: boolean }[] = [
   { key: 'open', label: 'Mốc 1 · Mở nộp', desc: 'Từ thời điểm này nhân viên bắt đầu nộp được. Để trống nếu cho nộp bất kỳ lúc nào.', optional: true },
   { key: 'due', label: 'Mốc 2 · Hạn cuối nộp', desc: 'Sau thời điểm này không nộp trực tiếp được nữa — nhân viên phải xin nộp bù và chờ duyệt.', optional: false },
   { key: 'late_close', label: 'Mốc 3 · Đóng nộp bù', desc: 'Sau thời điểm này kỳ đóng hoàn toàn; yêu cầu nộp bù chưa xử lý sẽ hết hiệu lực. Để trống nếu không giới hạn.', optional: true },
 ];
-const OFFSET_OPTIONS: Record<PeriodKind, { value: number; label: string }[]> = {
+const OFFSET_OPTIONS: Record<MilestonePeriod, { value: number; label: string }[]> = {
   month: [{ value: -1, label: 'Tháng trước kỳ' }, { value: 0, label: 'Tháng của kỳ' }, { value: 1, label: 'Tháng sau kỳ' }],
   quarter: [{ value: -1, label: 'Tháng cuối quý trước' }, { value: 0, label: 'Tháng 1 của quý' }, { value: 1, label: 'Tháng 2 của quý' }, { value: 2, label: 'Tháng 3 của quý' }, { value: 3, label: 'Tháng đầu quý sau' }],
   year: [{ value: -1, label: 'Tháng 12 năm trước' }, ...Array.from({ length: 12 }, (_, i) => ({ value: i, label: `Tháng ${i + 1} của năm` })), { value: 12, label: 'Tháng 1 năm sau' }],
@@ -50,7 +52,7 @@ export function BizDeadlineEditor() {
   const save = useBizDeadlineSave();
   const [form, setForm] = useState<Record<string, BizDeadlineRule> | null>(null);
   const [group, setGroup] = useState<(typeof DOC_GROUPS)[number]['key']>('plan');
-  const [periodKind, setPeriodKind] = useState<PeriodKind>('month');
+  const [periodKind, setPeriodKind] = useState<MilestonePeriod>('month');
   const cur = useMemo(() => {
     const source = form ?? data ?? {};
     return Object.fromEntries(Object.entries(source).map(([k, v]) => [k, normalize(v)]));
@@ -74,7 +76,7 @@ export function BizDeadlineEditor() {
   return <div className="space-y-5">
     <div className="flex flex-wrap gap-3 items-center">
       <Tabs value={group} onValueChange={(v) => setGroup(v as typeof group)}><TabsList className="h-auto flex-wrap">{DOC_GROUPS.map((g) => <TabsTrigger key={g.key} value={g.key}>{g.label}</TabsTrigger>)}</TabsList></Tabs>
-      {group !== 'goal' && <Tabs value={periodKind} onValueChange={(v) => setPeriodKind(v as PeriodKind)}><TabsList>{PERIOD_TABS.map((t) => <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>)}</TabsList></Tabs>}
+      {group !== 'goal' && <Tabs value={periodKind} onValueChange={(v) => setPeriodKind(v as MilestonePeriod)}><TabsList>{PERIOD_TABS.map((t) => <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>)}</TabsList></Tabs>}
     </div>
     <div className="grid gap-4 lg:grid-cols-3">
       {milestones.map((m) => <MilestoneCard key={m.key} meta={m} kind={kind} periodKind={group === 'goal' ? 'year' : periodKind} rule={rule[m.key]} onChange={(value) => update({ ...rule, [m.key]: value })} />)}
@@ -89,7 +91,7 @@ export function BizDeadlineEditor() {
   </div>;
 }
 
-function MilestoneCard({ meta, kind, periodKind, rule, onChange }: { meta: (typeof MILESTONES)[number]; kind: string; periodKind: PeriodKind; rule: BizMilestoneRule | null | undefined; onChange: (v: BizMilestoneRule | null) => void }) {
+function MilestoneCard({ meta, kind, periodKind, rule, onChange }: { meta: (typeof MILESTONES)[number]; kind: string; periodKind: MilestonePeriod; rule: BizMilestoneRule | null | undefined; onChange: (v: BizMilestoneRule | null) => void }) {
   const enabled = !meta.optional || rule != null;
   const value = rule ?? {};
   const set = (field: keyof BizMilestoneRule, v: unknown) => onChange({ ...value, [field]: v });
