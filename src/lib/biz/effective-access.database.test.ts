@@ -17,7 +17,7 @@ beforeAll(async () => {
  for (const id of [sale,lead,head,director,outsider]) await db.query("insert into user_roles values($1,'staff')",[id]);
  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order) VALUES ('director','Giám Đốc',3,'system',0),('department_head','Trưởng Phòng',2,'department',1),('team_lead','Trưởng Nhóm',1,'team',2),('employee','Nhân viên Kinh doanh',0,'individual',3)");
  await actor(admin); sys = await org('system',{name:'Hệ thử tách biệt'}); dep = await org('department',{name:'Phòng thử',system_id:sys}); team = await org('team',{name:'Nhóm thử',department_id:dep}); await org('member',{user_id:sale,department_id:dep,team_id:team});
- for (let n=118;n<=141;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
+ for (let n=118;n<=142;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
 }, 60000);
 afterAll(() => db.close());
 
@@ -197,7 +197,7 @@ it('large amounts retain exact backend precision and difference',async()=>{
  expect(m.target).toBe('9007199254740994');expect(m.actual).toBe('9007199254740994');expect(m.difference).toBe('0');
 });
 it('published months and private helper ACLs remain safe for business staff',async()=>{
- await actor(lead);await db.exec('SET ROLE authenticated');
+ await actor(sale);await db.exec('SET ROLE authenticated');
  const result=await scalar('select biz_dashboard_published(2026) v');
  expect(result.groups[0]).toHaveProperty('months');expect(result.groups[0]).toHaveProperty('cumulative');expect(result.groups[0]).toHaveProperty('previous_metrics');
  for (const key of ['user_id','employee_name','baseline_id','target_version_id','document_id','notes','url','facts','roster']) expect(JSON.stringify(result)).not.toContain('"'+key+'"');
