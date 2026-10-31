@@ -55,7 +55,7 @@ export function BizPlans(){
 
 function useOpenDocument(){const open=useDocumentOpen();return async(versionId:string)=>{const win=window.open('','_blank');try{const url=await open.mutateAsync(versionId);if(win){win.location.href=url;}else{window.location.href=url;}}catch(e){win?.close();toast.error(e instanceof Error?e.message:String(e));}};}
 
-function StatusBadges({row}:{row:DocRow}){const time=deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now);const version=row.document?.versions.at(-1);return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late','overdue'].includes(time)?'text-destructive border-destructive/40':time==='ontime'?'text-success border-success/40':time==='soon'?'text-warning border-warning/40':''}>{TIME_STATUS[time]}</Badge><Badge variant="secondary">{version?docStatusLabel('plan',version.status):'Chưa nộp'}</Badge><Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge></div>;}
+function StatusBadges({row,showView=true}:{row:DocRow;showView?:boolean}){const time=deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now);const version=row.document?.versions.at(-1);return <div className="flex flex-wrap gap-2"><Badge variant="outline" className={['late','overdue'].includes(time)?'text-destructive border-destructive/40':time==='ontime'?'text-success border-success/40':time==='soon'?'text-warning border-warning/40':''}>{TIME_STATUS[time]}</Badge><Badge variant="secondary">{version?docStatusLabel('plan',version.status):'Chưa nộp'}</Badge>{showView&&<Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge>}</div>;}
 
 function MyPlanCard({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
  const version=row.document?.versions.at(-1);const openDoc=useOpenDocument();const rank=myPlanRank(row);
@@ -74,7 +74,7 @@ function PlanActions({row,onOpen}:{row:DocRow;onOpen:()=>void}){
 }
 
 function PlanRow({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
- return <tr className="border-t align-top"><td className="py-2 px-3 font-medium">{row.employee_name}</td><td className="py-2 px-3">{row.department_name}</td><td className="py-2 px-3 whitespace-nowrap">{periodLabel(periodKind,year,period)}</td><td className="py-2 px-3 whitespace-nowrap">{dateText(row.deadline)}</td><td className="py-2 px-3"><StatusBadges row={row}/></td><td className="py-2 px-3"><Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge></td><td className="py-2 px-3"><PlanActions row={row} onOpen={onOpen}/></td></tr>;
+ return <tr className="border-t align-top"><td className="py-2 px-3 font-medium">{row.employee_name}</td><td className="py-2 px-3">{row.department_name}</td><td className="py-2 px-3 whitespace-nowrap">{periodLabel(periodKind,year,period)}</td><td className="py-2 px-3 whitespace-nowrap">{dateText(row.deadline)}</td><td className="py-2 px-3"><StatusBadges row={row} showView={false}/></td><td className="py-2 px-3"><Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge></td><td className="py-2 px-3"><PlanActions row={row} onOpen={onOpen}/></td></tr>;
 }
 
 function PlanCard({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
