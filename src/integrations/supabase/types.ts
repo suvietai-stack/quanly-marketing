@@ -1660,11 +1660,13 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           decision_comment: string | null
+          department_id: string | null
           id: string
           kind: string
           period: number
           period_kind: string
           reason: string
+          revision: number
           status: string
           used_at: string | null
           user_id: string
@@ -1675,11 +1677,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_comment?: string | null
+          department_id?: string | null
           id?: string
           kind: string
           period: number
           period_kind: string
           reason: string
+          revision?: number
           status?: string
           used_at?: string | null
           user_id: string
@@ -1690,11 +1694,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_comment?: string | null
+          department_id?: string | null
           id?: string
           kind?: string
           period?: number
           period_kind?: string
           reason?: string
+          revision?: number
           status?: string
           used_at?: string | null
           user_id?: string
@@ -1706,6 +1712,13 @@ export type Database = {
             columns: ["decided_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_late_requests_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
             referencedColumns: ["id"]
           },
           {
@@ -5844,7 +5857,12 @@ export type Database = {
         Args: { _code: string; _label: string; _metric_id: string }
         Returns: undefined
       }
+      biz_late_can_act: { Args: { _request: string }; Returns: boolean }
       biz_late_expire_closed: { Args: never; Returns: number }
+      biz_late_request_adopt: {
+        Args: { _confirmed?: boolean; _id: string }
+        Returns: string
+      }
       biz_late_request_create: {
         Args: {
           _kind: string
