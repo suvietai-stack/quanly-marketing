@@ -17,7 +17,8 @@ import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dia
 import {supabase} from '@/integrations/supabase/client';
 import {BizQuarterSummary} from './BizQuarterSummary';
 const dateText=(v:string|null)=>v?new Date(v).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa quy định';
-export function BizDocuments({kind}:{kind:DocKind}){
+export function BizDocuments({kind}:{kind:DocKind}){return kind==='plan'?<BizPlans/>:<BizDocumentsClassic kind={kind}/>;}
+function BizDocumentsClassic({kind}:{kind:DocKind}){
  const uid=useAuth(s=>s.currentUserId)??'';const {can}=useCurrentUser();const [periodKind,setPeriodKind]=useState<PeriodKind>('month');const [year,setYear]=useState(new Date().getFullYear());const [period,setPeriod]=useState(new Date().getMonth()+1);const [scope,setScope]=useState('own');const [dept,setDept]=useState('all');const [employee,setEmployee]=useState('all');const [time,setTime]=useState('all');const [status,setStatus]=useState('all');const [selected,setSelected]=useState<string|null>(null);
  const query=useQuery({...documentsQuery(uid,kind,periodKind,year,period),enabled:!!uid});const rows=query.data??[];const shown=rows.filter(r=>(scope!=='own'||r.user_id===uid)&&(dept==='all'||r.department_id===dept)&&(employee==='all'||r.user_id===employee)&&(time==='all'||deadlineStatus(r.deadline,r.document?.first_submitted_at??null,r.server_now)===time)&&(status==='all'||(r.document?.versions.at(-1)?.status??'missing')===status));
  const selectedRow=rows.find(r=>r.user_id===selected);const first=shown.filter(r=>r.document?.first_submitted_at).length;const max=periodKind==='month'?12:periodKind==='quarter'?4:1;
@@ -33,7 +34,7 @@ export function BizDocuments({kind}:{kind:DocKind}){
   {selectedRow&&<DocumentDialog key={`${selectedRow.user_id}-${kind}-${periodKind}-${year}-${period}`} row={selectedRow} uid={uid} kind={kind} periodKind={periodKind} year={year} period={period} onClose={()=>setSelected(null)}/>}
  </div>;
 }
-function DocumentDialog({row,uid,kind,periodKind,year,period,onClose}:{row:DocRow;uid:string;kind:DocKind;periodKind:PeriodKind;year:number;period:number;onClose:()=>void}){
+export function DocumentDialog({row,uid,kind,periodKind,year,period,onClose}:{row:DocRow;uid:string;kind:DocKind;periodKind:PeriodKind;year:number;period:number;onClose:()=>void}){
  const {can}=useCurrentUser();const action=useDocumentAction();const [view,setView]=useState('');const [reason,setReason]=useState('');const [showHistory,setShowHistory]=useState(false);const version=row.document?.versions.find(v=>v.id===view)??row.document?.versions.at(-1);const canSubmit=row.user_id===uid&&can(kind==='plan'?'biz.plan_submit':'biz.report_submit');
  const start=async()=>{try{await action.mutateAsync({kind:'start',docKind:kind,periodKind,year,period,reason});setView('');toast.success('Đã tạo bản nháp.');}catch(e){toast.error(e instanceof Error?e.message:String(e));}};
  return <Dialog open onOpenChange={o=>!o&&onClose()}><DialogContent className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>{kind==='plan'?'Kế hoạch':'Báo cáo'} · {periodLabel(periodKind,year,period)}</DialogTitle></DialogHeader><p className="text-sm">{row.employee_name} · {row.department_name}</p><div className="flex flex-wrap gap-2"><Badge variant="outline">{TIME_STATUS[deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now)]}</Badge>{version&&<Badge>{docStatusLabel(kind,version.status)}</Badge>}</div><p className="text-xs text-muted-foreground">Hạn: {dateText(row.deadline)} (giờ Việt Nam)</p>{row.document?.first_submitted_at&&<p className="text-xs">Nộp lần đầu: {dateText(row.document.first_submitted_at)} · Gửi gần nhất: {dateText(row.document.last_submitted_at)}</p>}
