@@ -1,6 +1,7 @@
 import type { GoalItem } from './goals';
+import { periodLabel as cyclePeriodLabel } from './periodCycle';
 export type DocKind = 'plan' | 'report';
-export type PeriodKind = 'month' | 'quarter' | 'year';
+export type PeriodKind = 'day' | 'week' | 'month' | 'quarter' | 'year';
 export type DocStatus = 'draft' | 'pending' | 'changes' | 'approved' | 'resubmitted';
 export interface ReportItem { metric_id: string; definition: GoalItem['definition']; target: string | null; annual_target: string | null; actual: string | null; percent?: string | null; complete?: boolean; confirmed_months?: number[]; missing_months?: number[]; excluded_months?: number[]; difference?: string | null; remaining?: string | null; ytd_actual?: string | null; ytd_target?: string | null; ytd_difference?: string | null; annual_percent?: string | null; ytd_missing_months?: number[] }
 export interface DocAttachment { name: string; url: string; description?: string }
@@ -31,7 +32,7 @@ export const TIME_STATUS = { none: 'Chưa cấu hình deadline', upcoming: 'Chư
 export function deadlineStatus(deadline: string | null, first: string | null, now: string): keyof typeof TIME_STATUS { if (!deadline) return 'none'; const end = Date.parse(deadline); if (first) return Date.parse(first) <= end ? 'ontime' : 'late'; const left = end - Date.parse(now); return left < 0 ? 'overdue' : left <= 86400000 ? 'soon' : 'upcoming'; }
 export function googleDocsOk(url: string) { return /^https:\/\/docs\.google\.com\/document\/d\/[A-Za-z0-9_-]+(\/(edit|view|preview))?(\?[A-Za-z0-9_=&%.-]*)?(#[A-Za-z0-9_=&%.-]*)?$/.test(url.trim()); }
 export function attachmentUrlOk(url: string) { return /^https:\/\/\S{1,2000}$/.test(url.trim()); }
-export function periodLabel(kind: PeriodKind, year: number, period: number) { return kind === 'month' ? `Tháng ${period}/${year}` : kind === 'quarter' ? `Quý ${period}/${year}` : `Năm ${year}`; }
+export function periodLabel(kind: PeriodKind, year: number, period: number) { return cyclePeriodLabel(kind, year, period); }
 export function metricPercent(item: ReportItem): number | null { if (item.actual === null || item.target === null || item.definition.direction !== 'higher' || Number(item.target) <= 0) return null; return Number(item.actual) / Number(item.target) * 100; }
 export function numberText(value: string | null | undefined) { if (value === null || value === undefined) return '—'; if (/^-?\d+$/.test(value)) return BigInt(value).toLocaleString('vi-VN'); return Number(value).toLocaleString('vi-VN', { maximumFractionDigits: 2 }); }
 export function progressTone(item: ReportItem) { const p = metricPercent(item); return item.actual === null ? 'text-muted-foreground' : !item.complete && item.complete !== undefined ? 'text-warning' : p === null ? 'text-muted-foreground' : p >= 100 ? 'text-success' : 'text-warning'; }
