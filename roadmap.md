@@ -13,6 +13,7 @@
 ## Chuẩn hóa quyền tự động theo chức vụ
 - [x] Rà soát Role cũ, bổ nhiệm hiệu lực và mọi đường đọc/duyệt/tổng hợp: biz_all_scope chấp nhận assigned + view_all; Role Giám Đốc Kinh Doanh có quyền cấu hình; nộp bù đọc chưa theo scope và chưa dùng luồng.
 - [x] Chốt chuyển đổi: bỏ quyền cài đặt Kinh doanh Role Giám Đốc; giữ ngoại lệ xem chi tiết toàn Khối Admin/Viewer; không đổi quyền module khác.
-- [ ] Tự động quyền nghiệp vụ/phạm vi từ cơ cấu; tách Dashboard tổng hợp; đúng lượt phê duyệt.
-- [ ] Đơn giản hóa bổ nhiệm, xem trước/xem quyền thực tế và làm mới quyền.
-- [ ] Kiểm thử từng cấp, kiêm nhiệm/hết hiệu lực, API ngoài phạm vi, Super Admin, desktop/mobile.
+- [x] Tự động quyền nghiệp vụ/phạm vi từ cơ cấu; Dashboard công bố riêng không trả hồ sơ nhân viên; luồng nộp bù nhiều cấp, đúng lượt, giữ yêu cầu cũ và chuyển luồng có xác nhận.
+- [x] Xem trước quyền bổ nhiệm, quyền thực tế từng người, chức vụ điều hành cấu hình được, ngoại lệ cấp/thu hồi có nhật ký; làm mới quyền và cache khi thay phạm vi.
+- [x] 159/159 kiểm thử Biz đạt; Admin thật xem Dashboard tổng hợp/chi tiết và cài đặt; desktop/mobile 390px không tràn, không lỗi console.
+- [ ] Nghiệm thu bằng tài khoản Sale/Trưởng Phòng/Giám Đốc thật và duyệt nộp bù thật: phiên hiện tại chỉ là Super Admin; không tạo hồ sơ thử trong dữ liệu vận hành. Chưa Publish.
