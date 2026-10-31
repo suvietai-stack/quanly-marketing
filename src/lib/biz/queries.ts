@@ -88,7 +88,7 @@ export const bizMilestonesQuery = (kind: string, year: number, period: number) =
     queryFn: async () => {
       const { data, error } = await supabase.rpc("biz_deadline_milestones", { _kind: kind, _year: year, _period: period });
       if (error) throw error;
-      return data as BizMilestonesIso;
+      return data as unknown as BizMilestonesIso;
     },
   });
 
