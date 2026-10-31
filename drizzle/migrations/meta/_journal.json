@@ -1177,6 +1177,13 @@
       "when": 1793440862035,
       "tag": "0167_biz_rolling_validation_and_source_fences",
       "breakpoints": true
+    },
+    {
+      "idx": 168,
+      "version": "7",
+      "when": 1793440992105,
+      "tag": "0168_biz_rolling_snapshot_identity_fence",
+      "breakpoints": true
     }
   ]
 }
