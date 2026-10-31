@@ -1,0 +1,12 @@
+DO $$DECLARE d text;BEGIN
+SELECT pg_get_functiondef('public.biz_org_save(text,jsonb)'::regprocedure) INTO d;
+d:=replace(d,'IF _action<>''member'' THEN RETURN private.biz_org_save_before_sync(_action,_data);END IF;', 'IF _action=''manager'' THEN SELECT id INTO p FROM biz_positions WHERE code=_data->>''position'' AND active; IF p IS NULL OR u IS NULL THEN RAISE EXCEPTION ''Chọn chức vụ/người phụ trách hoặc kết thúc quyết định bổ nhiệm cụ thể.'';END IF; RETURN public.biz_appointment_save(_data||jsonb_build_object(''position_id'',p,''scope_kind'',(SELECT unit_kind FROM biz_positions WHERE id=p)));END IF; IF _action<>''member'' THEN RETURN private.biz_org_save_before_sync(_action,_data);END IF;');EXECUTE d;
+END $$;
+CREATE OR REPLACE FUNCTION public.biz_member_end(_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$DECLARE m biz_department_members;ts timestamptz:=clock_timestamp();BEGIN
+IF NOT public.biz_org_can_manage() THEN RAISE EXCEPTION 'Không có quyền kết thúc phân công.';END IF;PERFORM pg_advisory_xact_lock(hashtext('biz_org_structure'));
+SELECT * INTO m FROM biz_department_members WHERE id=_id AND started_at<ts AND (ended_at IS NULL OR ended_at>ts) FOR UPDATE;IF m.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy phân công đang hiệu lực.';END IF;
+IF EXISTS(SELECT 1 FROM biz_appointments WHERE user_id=m.user_id AND scope_kind<>'individual' AND status<>'cancelled' AND (ended_at IS NULL OR ended_at>ts)) OR EXISTS(SELECT 1 FROM biz_management_assignments WHERE user_id=m.user_id AND (ended_at IS NULL OR ended_at>ts)) THEN RAISE EXCEPTION 'Cần xử lý bổ nhiệm quản lý trước khi kết thúc phân công nhân sự.';END IF;
+UPDATE biz_department_members SET ended_at=ts,effective_to=(ts AT TIME ZONE 'Asia/Ho_Chi_Minh')::date WHERE id=m.id;
+UPDATE biz_team_members SET ended_at=ts WHERE user_id=m.user_id AND started_at<ts AND (ended_at IS NULL OR ended_at>ts) AND team_id IN (SELECT id FROM biz_teams WHERE department_id=m.department_id);
+UPDATE biz_appointments SET ended_at=ts WHERE user_id=m.user_id AND department_id=m.department_id AND scope_kind='individual' AND status='active' AND started_at<ts AND (ended_at IS NULL OR ended_at>ts);
+INSERT INTO biz_org_events(actor_id,action,payload) VALUES(auth.uid(),'member_end_sync',to_jsonb(m));END $$;
