@@ -17,7 +17,7 @@ beforeAll(async () => {
  for (const id of [sale,lead,head,director,outsider]) await db.query("insert into user_roles values($1,'staff')",[id]);
  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order) VALUES ('director','Giám Đốc',3,'system',0),('department_head','Trưởng Phòng',2,'department',1),('team_lead','Trưởng Nhóm',1,'team',2),('employee','Nhân viên Kinh doanh',0,'individual',3)");
  await actor(admin); sys = await org('system',{name:'Hệ thử tách biệt'}); dep = await org('department',{name:'Phòng thử',system_id:sys}); team = await org('team',{name:'Nhóm thử',department_id:dep}); await org('member',{user_id:sale,department_id:dep,team_id:team});
- for (let n=118;n<=139;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
+ for (let n=118;n<=140;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
 }, 60000);
 afterAll(() => db.close());
 
@@ -73,4 +73,64 @@ it('late permission uses sequential steps and only final approval enables submis
  await db.query('select biz_late_request_decide($1,true,null)',[request]);
  expect(await scalar('select status v from biz_late_requests where id=$1',[request])).toBe('approved');
  expect(await scalar("select count(*)::int v from notifications where kind='biz_late_approved' and recipient_id=$1",[sale])).toBe(1);
+});
+
+it('level 5 executive and level 4 deputy hold block scope without a system assignment or personal obligation',async()=>{
+ await actor(admin);
+ const executive=await scalar('select biz_position_save($1) v',[JSON.stringify({name:'Giám Đốc Điều hành',level:5,unit_kind:'system',business_policy:'executive',all_business:true})]);
+ const deputy=await scalar('select biz_position_save($1) v',[JSON.stringify({name:'Phó Giám Đốc Điều hành',level:4,unit_kind:'system',business_policy:'executive',all_business:true})]);
+ await db.query("update biz_positions set code='executive_director' where id=$1",[executive]);
+ await db.query("update biz_positions set code='deputy_executive_director' where id=$1",[deputy]);
+ await appoint({position_id:executive,user_id:outsider,scope_kind:'system'});
+ await appoint({position_id:deputy,user_id:head,scope_kind:'system'});
+ expect(await scalar('select level v from biz_positions where id=$1',[executive])).toBe(5);
+ expect(await scalar('select level v from biz_positions where id=$1',[deputy])).toBe(4);
+ for(const id of [outsider,head]){
+  expect(await scalar('select biz_all_scope($1) v',[id])).toBe(true);
+  expect(await scalar("select biz_can($1,'biz.plan_submit') v",[id])).toBe(false);
+  expect(await scalar('select biz_scope_ok($1,$2,$3) v',[id,sale,dep])).toBe(true);
+ }
+ expect(await scalar('select biz_resolve_position($1,$2,$3,$4) v',[executive,sys,dep,team])).toBe(outsider);
+ expect(await scalar('select biz_resolve_position($1,$2,$3,$4) v',[deputy,sys,dep,team])).toBe(head);
+ expect(await scalar("select biz_can($1,'biz.intervene') v",[outsider])).toBe(true);
+ expect(await scalar("select biz_can($1,'biz.intervene') v",[head])).toBe(false);
+ expect(await scalar("select biz_can($1,'biz.org_manage') v",[head])).toBe(false);
+ await expect(appoint({position_id:deputy,user_id:director,scope_kind:'system'})).rejects.toThrow('mâu thuẫn');
+});
+it('trusted existing Admin has business administration without granting other modules',async()=>{
+ await db.exec("insert into app_roles(id,name,permissions) values('role-admin','Tên được đổi',ARRAY[]::text[])");
+ await db.query("insert into user_roles values($1,'role-admin')",[director]);
+ for(const permission of ['biz.org_manage','biz.workflow_manage','biz.kr_manage','biz.deadline_manage','biz.intervene','biz.access_manage'])expect(await scalar('select biz_can($1,$2) v',[director,permission])).toBe(true);
+ expect(await scalar('select biz_all_scope($1) v',[director])).toBe(true);
+ expect(await scalar("select private.sig_can($1,'settings.role') v",[director])).toBe(false);
+ await db.query("delete from user_roles where user_id=$1 and role_id='role-admin'",[director]);
+ expect(await scalar("select biz_can($1,'biz.org_manage') v",[director])).toBe(false);
+});
+it('replacement retires old rights atomically and permits a different holder',async()=>{
+ await actor(admin);const p=await scalar("select id v from biz_positions where code='team_lead'");
+ const old=await scalar('select id v from biz_appointments where position_id=$1 and user_id=$2',[p,lead]);
+ await expect(appoint({position_id:p,user_id:sale,scope_kind:'team',system_id:sys,department_id:dep,team_id:'00000000-0000-0000-0000-999999999999',replaces_id:old})).rejects.toThrow();
+ expect(await scalar('select ended_at v from biz_appointments where id=$1',[old])).toBe(null);
+ const next=await appoint({position_id:p,user_id:sale,scope_kind:'team',system_id:sys,department_id:dep,team_id:team,replaces_id:old});
+ expect(await scalar('select replaces_id v from biz_appointments where id=$1',[next])).toBe(old);
+ expect(await scalar('select biz_manager($1) v',[lead])).toBe(false);
+ expect(await scalar('select biz_manager($1) v',[sale])).toBe(true);
+ expect(await scalar('select count(*)::int v from biz_appointments where id=$1',[old])).toBe(1);
+});
+it('deputy cannot approve the mandatory executive step or self-approve',async()=>{
+ await actor(admin);
+ const executive=await scalar("select id v from biz_positions where code='executive_director'");
+ const deputy=await scalar("select id v from biz_positions where code='deputy_executive_director'");
+ await scalar('select biz_workflow_save($1) v',[JSON.stringify({name:'Nộp bù điều hành',system_id:sys,kind:'late_report_month',active:true,steps:[{label:'Phó điều hành',type:'position',position_id:deputy},{label:'Giám Đốc Điều hành',type:'position',position_id:executive}]})]);
+ await scalar('select biz_deadline_save($1) v',[JSON.stringify({report_month:{open:{day:1,offset:0,hour:0},due:{day:2,offset:0,hour:0},late_close:{day:28,offset:1,hour:23}}})]);
+ await actor(sale);const request=await scalar("select biz_late_request_create('report','month',2026,10,'Công tác') v");
+ expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
+ await actor(outsider);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
+ await actor(head);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
+ await db.query('select biz_late_request_decide($1,true,null)',[request]);
+ expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
+ await expect(db.query('select biz_late_request_decide($1,true,null)',[request])).rejects.toThrow();
+ await actor(outsider);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
+ await db.query('select biz_late_request_decide($1,true,null)',[request]);
+ expect(await scalar('select status v from biz_late_requests where id=$1',[request])).toBe('approved');
 });
