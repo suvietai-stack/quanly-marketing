@@ -143,7 +143,19 @@ function GoalEditor({ version, canEdit, canReview }: { version: GoalVersion; can
   {canReview && <div className="border-t pt-4 space-y-3"><Label htmlFor="goal-review">Nhận xét</Label><Textarea id="goal-review" value={comment} onChange={e => setComment(e.target.value)} /><div className="flex flex-wrap gap-2">{[true, false].map(approve => <Button key={String(approve)} variant={approve ? 'default' : 'outline'} disabled={action.isPending || (!approve && !comment.trim())} onClick={async () => { try { await action.mutateAsync({ kind: 'decide', id: version.id, revision: version.revision, approve, comment }); toast.success(approve ? 'Đã duyệt mục tiêu.' : 'Đã yêu cầu chỉnh sửa.'); } catch (e) { toast.error(e instanceof Error ? e.message : String(e)); } }}>{approve && <Check className="h-4 w-4 mr-2" />}{approve ? 'Duyệt mục tiêu' : 'Yêu cầu chỉnh sửa'}</Button>)}</div></div>}
  </div>;
 }
-function GoalHistory({ goal, uid, onClose, onVersion }: { goal: AnnualGoal; uid: string; onClose: () => void; onVersion: (id: string) => void }) {
+function GoalHistory({ goal, uid, onClose }: { goal: AnnualGoal; uid: string; onClose: () => void; onVersion: (id: string) => void }) {
  const events = useQuery(bizGoalEventsQuery(uid, goal.id)); const users = useAuth(s => s.users); const [snapshotId, setSnapshotId] = useState(''); const labels: Record<string, string> = { created: 'Tạo phiên bản', saved: 'Lưu nháp', submitted: 'Gửi duyệt', approved: 'Duyệt', returned: 'Yêu cầu chỉnh sửa' };
- return <Dialog open onOpenChange={open => !open && onClose()}><DialogContent className="max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử mục tiêu {goal.year}</DialogTitle></DialogHeader>{events.isPending && <p>Đang tải…</p>}{events.error && <p role="alert">Không tải được lịch sử.</p>}{events.data?.map(e => <div key={e.id} className="border-b pb-3 text-sm space-y-1"><div className="font-medium">{labels[e.action] ?? e.action} · {users.find(u => u.id === e.actor_id)?.fullName ?? 'Nhân viên'}</div><div className="text-xs text-muted-foreground">{dateText(e.created_at)}</div>{e.comment && <p className="break-words">{e.comment}</p>}{Array.isArray(e.payload) && <Button variant="link" size="sm" onClick={() => setSnapshotId(snapshotId === e.id ? '' : e.id)}>Dữ liệu tại lần {e.action === 'submitted' ? 'gửi' : 'lưu'} này</Button>}{snapshotId === e.id && Array.isArray(e.payload) && (e.payload as unknown as GoalItem[]).map(item => <div key={item.metric_id} className="py-2 space-y-2"><strong>{goal.versions.find(v => v.id === e.version_id)?.items.find(i => i.metric_id === item.metric_id)?.definition.name} · Năm: {fmtGoal(item.annual)}</strong><div className="grid grid-cols-2 gap-2 text-xs">{item.months.map((value, m) => <div key={m} className="break-all">Tháng {m + 1}: {fmtGoal(value)}</div>)}</div>)}</div>)}</DialogContent></Dialog>;
+ return <Dialog open onOpenChange={open => !open && onClose()}><DialogContent className="max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử mục tiêu {goal.year}</DialogTitle></DialogHeader>
+  {events.isPending && <p>Đang tải…</p>}{events.error && <p role="alert">Không tải được lịch sử.</p>}
+  {events.data?.map(e => <div key={e.id} className="border-b pb-3 text-sm space-y-1">
+   <div className="font-medium">{labels[e.action] ?? e.action} · {users.find(u => u.id === e.actor_id)?.fullName ?? 'Nhân viên'}</div>
+   <div className="text-xs text-muted-foreground">{dateText(e.created_at)}</div>
+   {e.comment && <p className="break-words">{e.comment}</p>}
+   {Array.isArray(e.payload) && <Button variant="link" size="sm" onClick={() => setSnapshotId(snapshotId === e.id ? '' : e.id)}>Dữ liệu tại lần {e.action === 'submitted' ? 'gửi' : 'lưu'} này</Button>}
+   {snapshotId === e.id && Array.isArray(e.payload) && (e.payload as unknown as GoalItem[]).map(item => <div key={item.metric_id} className="py-2 space-y-2">
+    <strong>{goal.versions.find(v => v.id === e.version_id)?.items.find(i => i.metric_id === item.metric_id)?.definition.name} · Năm: {fmtGoal(item.annual)}</strong>
+    <div className="grid grid-cols-2 gap-2 text-xs">{item.months.map((value, m) => <div key={m} className="break-all">Tháng {m + 1}: {fmtGoal(value)}</div>)}</div>
+   </div>)}
+  </div>)}
+ </DialogContent></Dialog>;
 }
