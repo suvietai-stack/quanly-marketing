@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { BizDeadlineData, BizDepartment, BizKrMetric, BizMember } from "./types";
+import type { BizDeadlineData, BizDepartment, BizKrMetric, BizLateRequest, BizMember } from "./types";
 
 export const bizDepartmentsQuery = queryOptions({
   queryKey: ["biz_departments"],
