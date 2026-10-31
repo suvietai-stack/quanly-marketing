@@ -1,5 +1,11 @@
 # Roadmap — Nâng cấp giao diện Mục tiêu KR & quản lý bản nháp (31/10/2026)
 
+## Đồng bộ nhân sự, chức vụ và cơ cấu
+- [ ] Đối chiếu thao tác hiện tại, quyền và dữ liệu; chốt chuyển đổi an toàn, không tự sửa hàng loạt bổ nhiệm.
+- [ ] Đồng bộ nguyên tử thêm người/bổ nhiệm/điều chuyển/kết thúc; chống trùng và chức vụ mặc định, giữ lịch sử.
+- [ ] Thống nhất hiển thị chức danh/kiêm nhiệm/thống kê, form theo đơn vị và cập nhật quyền/tuyến duyệt.
+- [ ] Kiểm thử các quy tắc, desktop/mobile và báo cáo đối soát; không DEMO, chưa Publish.
+
 ## Khôi phục Dashboard Tổng quan
 - [x] Mở rộng dữ liệu tổng hợp chính thức an toàn: KR động, chuỗi tháng/lũy kế, kỳ trước, các Hệ và độ phủ KR; không trả hồ sơ cá nhân (0141–0142).
 - [x] Tái sử dụng biểu đồ cũ, khôi phục đầy đủ Tổng hợp toàn Khối; đồng bộ bộ lọc/làm mới, giữ Chi tiết trong phạm vi và quyền bổ nhiệm.
