@@ -1030,6 +1030,13 @@
       "when": 1793425806434,
       "tag": "0146_biz_affiliation_binding_and_appointment_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1793425892139,
+      "tag": "0147_biz_secondary_team_scope",
+      "breakpoints": true
     }
   ]
 }
