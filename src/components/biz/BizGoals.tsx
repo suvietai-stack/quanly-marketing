@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { BizRollingPlan } from './BizRollingPlan';
 const dateText = (v: string) => new Date(v).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 const STATE_BADGE: Record<GoalState, 'default' | 'secondary' | 'outline' | 'destructive'> = { none: 'outline', draft: 'outline', pending: 'secondary', changes: 'secondary', approved: 'default', adjusting: 'secondary' };
 
@@ -80,6 +81,7 @@ function MyGoalCard({ goal, uid }: { goal: AnnualGoal; uid: string }) {
   <Dialog open={!!editing} onOpenChange={open => !open && setEditing(null)}><DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Chỉnh sửa mục tiêu {goal.year}</DialogTitle></DialogHeader>{editing && (() => { const v = goal.versions.find(x => x.id === editing); return v ? <GoalEditor key={`${v.id}-${v.revision}`} version={v} canEdit canReview={false} /> : null; })()}</DialogContent></Dialog>
   <Dialog open={adjust} onOpenChange={setAdjust}><DialogContent><DialogHeader><DialogTitle>Điều chỉnh mục tiêu năm</DialogTitle></DialogHeader><Label htmlFor="adjust-reason">Lý do điều chỉnh</Label><Textarea id="adjust-reason" value={reason} onChange={e => setReason(e.target.value)} /><Button disabled={!reason.trim() || action.isPending} onClick={async () => { try { await action.mutateAsync({ kind: 'start', year: goal.year, reason }); setAdjust(false); toast.success('Đã tạo bản điều chỉnh. Bản chính thức vẫn được giữ nguyên.'); } catch (e) { toast.error(e instanceof Error ? e.message : String(e)); } }}>Tạo bản điều chỉnh</Button></DialogContent></Dialog>
   <Dialog open={!!deleting} onOpenChange={open => !open && setDeleting(null)}><DialogContent><DialogHeader><DialogTitle>Xóa bản nháp mục tiêu {goal.year}</DialogTitle></DialogHeader>{deleting && <div className="space-y-3 text-sm"><p>Bạn sắp xóa <strong>bản nháp {deleting.version} ({deleting.reason ? 'điều chỉnh' : 'lập mới'})</strong> của năm {goal.year}.</p><p className="text-destructive">Nội dung chưa gửi duyệt sẽ bị mất và không khôi phục được.{goal.official_version_id ? ' Mục tiêu chính thức hiện hành được giữ nguyên.' : ''}</p><div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setDeleting(null)}>Giữ lại</Button><Button variant="destructive" disabled={action.isPending} onClick={remove}>Xác nhận xóa</Button></div></div>}</DialogContent></Dialog>
+  <BizRollingPlan goal={goal} uid={uid} />
   {history && <GoalHistory goal={goal} uid={uid} onClose={() => setHistory(false)} onVersion={() => setHistory(false)} />}
  </div>;
 }
