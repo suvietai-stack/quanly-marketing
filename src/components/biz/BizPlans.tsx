@@ -2,6 +2,7 @@ import {useEffect,useMemo,useState} from 'react';
 import {useQuery} from '@tanstack/react-query';
 import {Eye,ExternalLink,FileText,RefreshCw,Search} from 'lucide-react';
 import {useAuth,useCurrentUser} from '@/lib/auth';
+import {hasSubmittedDocument} from '@/lib/biz/planSubmission';
 import {documentsQuery} from '@/lib/biz/documentQueries';
 import {bizLateRequestsQuery} from '@/lib/biz/queries';
 import {deadlineStatus,manageRank,periodLabel,TIME_STATUS,VIEW_STATUS,viewTone,type DocRow,type PeriodKind,type ViewStatus} from '@/lib/biz/documents';
@@ -65,11 +66,11 @@ export function LateStats({kind,periodKind,year,period}:{kind:'plan'|'report';pe
 
 function PlanActions({row,onOpen}:{row:DocRow;onOpen:()=>void}){
  const version=row.document?.versions.at(-1);const openDoc=useOpenDocument();
- return <div className="flex flex-wrap gap-2">{version?.url&&<Button size="sm" variant="outline" onClick={()=>openDoc(version.id)}><ExternalLink className="h-4 w-4 mr-2"/>Xem tài liệu</Button>}<Button size="sm" variant="ghost" onClick={onOpen}><Eye className="h-4 w-4 mr-2"/>Hồ sơ</Button></div>;
+ return <div className="flex flex-wrap gap-2">{version?.submitted_at&&version.url&&<Button size="sm" variant="outline" onClick={()=>openDoc(version.id)}><ExternalLink className="h-4 w-4 mr-2"/>Xem tài liệu</Button>}<Button size="sm" variant="ghost" onClick={onOpen}><Eye className="h-4 w-4 mr-2"/>Hồ sơ</Button></div>;
 }
 
 function PlanRow({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
- return <tr className="border-t align-top"><td className="py-2 px-3 font-medium">{row.employee_name}</td><td className="py-2 px-3">{row.department_name}</td><td className="py-2 px-3 whitespace-nowrap">{periodLabel(periodKind,year,period)}</td><td className="py-2 px-3 whitespace-nowrap">{dateText(row.deadline)}</td><td className="py-2 px-3"><StatusBadges row={row} kind="plan" showView={false}/></td><td className="py-2 px-3"><Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge></td><td className="py-2 px-3"><PlanActions row={row} onOpen={onOpen}/></td></tr>;
+ return <tr className="border-t align-top"><td className="py-2 px-3 font-medium">{row.employee_name}</td><td className="py-2 px-3">{row.department_name}</td><td className="py-2 px-3 whitespace-nowrap">{periodLabel(periodKind,year,period)}</td><td className="py-2 px-3 whitespace-nowrap">{dateText(row.deadline)}</td><td className="py-2 px-3"><StatusBadges row={row} kind="plan" showView={false}/></td><td className="py-2 px-3">{hasSubmittedDocument(row)?<Badge variant="outline" className={viewTone(row.my_view)}>{VIEW_STATUS[row.my_view]}</Badge>:<span className="text-muted-foreground">—</span>}</td><td className="py-2 px-3"><PlanActions row={row} onOpen={onOpen}/></td></tr>;
 }
 
 function PlanCard({row,periodKind,year,period,onOpen}:{row:DocRow;periodKind:PeriodKind;year:number;period:number;onOpen:()=>void}){
