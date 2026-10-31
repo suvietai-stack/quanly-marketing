@@ -1009,6 +1009,13 @@
       "when": 1793425552227,
       "tag": "0143_biz_atomic_personnel_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1793425587768,
+      "tag": "0144_biz_concurrent_affiliations_and_guards",
+      "breakpoints": true
     }
   ]
 }
