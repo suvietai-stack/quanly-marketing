@@ -8,6 +8,7 @@ import { BizDeadlineEditor } from "./BizDeadlineEditor";
 import { BizOrganization } from './BizOrganization';
 import { BizWorkflows } from './BizWorkflows';
 import { BizPositions } from './BizPositions';
+import { BizReset } from './BizReset';
 import {
   bizDepartmentsQuery, bizKrMetricsQuery,
   useBizKrSave, useBizKrStandardSave,
