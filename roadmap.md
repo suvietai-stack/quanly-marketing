@@ -4,3 +4,4 @@
 - [x] Bước 2: Nghĩa vụ nộp & form theo chu kỳ (biz_my_work theo chu kỳ được giao, save/start/late-request nhận day/week, phân bổ tuần giao tháng) — migration 0157, typecheck+build đạt
 - [ ] Bước 3: Tổng hợp & đối chiếu mục tiêu (nguồn chính thức duy nhất, tổng hợp theo khoảng ngày, không suy diễn)
 - [ ] Bước 4: Giao diện & Dashboard (cài đặt chu kỳ trong Báo cáo, bộ lọc xem 5 cấp, thống kê nghĩa vụ theo chu kỳ thực, mobile)
+- [ ] Yêu cầu bổ sung: Cài đặt ngay trong Báo cáo, kế thừa/hiệu lực/lịch sử/xem trước, deadline Ngày/Tuần, form và phân bổ tuần; chặn nộp sai hạn tại máy chủ; nghiệm thu và ghi rõ giới hạn kiểm chứng.
