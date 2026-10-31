@@ -19,6 +19,9 @@ beforeAll(async()=>{
  INSERT INTO profiles VALUES('${user}','Employee');INSERT INTO biz_department_members VALUES(gen_random_uuid(),'${dept}','${user}','2026-01-01',NULL);`);
  const sync=readFileSync('drizzle/migrations/0163_biz_report_official_deadline_sync.sql','utf8');await db.exec(sync.slice(0,sync.indexOf('CREATE OR REPLACE FUNCTION public.biz_report_target_version')));
  const coverage=readFileSync('drizzle/migrations/0164_biz_report_cycle_obligations_and_coverage.sql','utf8');await db.exec(coverage.slice(0,coverage.indexOf('DO $patch$')));
+ await db.exec(`CREATE FUNCTION biz_department_at(uuid,date) RETURNS uuid LANGUAGE sql AS $$SELECT department_id FROM biz_department_members WHERE user_id=$1 AND started_at<(($2+1)::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh') AND (ended_at IS NULL OR ended_at>($2::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) ORDER BY started_at DESC LIMIT 1$$;`);
+ const transition=readFileSync('drizzle/migrations/0165_biz_report_transition_no_duplicate_duties.sql','utf8');await db.exec(transition.slice(0,transition.indexOf('DO $patch$')));
+ await db.exec(transition.slice(transition.indexOf('DO $patch$'),transition.indexOf("SELECT pg_get_functiondef('public.biz_documents_read"))+'END $patch$;');
 },20000);
 afterAll(()=>db.close());
 it('November management view counts five weekly duties, no month quarter year duplicate',async()=>{const rows=await scalar("select private.biz_report_obligations(2026,'month',11) v");expect(rows).toHaveLength(5);expect(rows.every((r:any)=>r.period_kind==='week')).toBe(true);expect(rows.find((r:any)=>r.period===45).period_start).toBe('2026-11-02');});
