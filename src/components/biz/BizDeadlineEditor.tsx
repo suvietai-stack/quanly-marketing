@@ -20,13 +20,15 @@ const DOC_GROUPS = [
   { key: 'report', label: 'Báo cáo' },
   { key: 'goal', label: 'Mục tiêu KR' },
 ] as const;
-const PERIOD_TABS: { key: PeriodKind; label: string }[] = [{ key: 'month', label: 'Tháng' }, { key: 'quarter', label: 'Quý' }, { key: 'year', label: 'Năm' }];
+// Editor này chỉ quản mốc deadline theo tháng cho kỳ Tháng/Quý/Năm; deadline Ngày/Tuần nằm trong cấu hình chu kỳ báo cáo.
+type MilestonePeriod = 'month' | 'quarter' | 'year';
+const PERIOD_TABS: { key: MilestonePeriod; label: string }[] = [{ key: 'month', label: 'Tháng' }, { key: 'quarter', label: 'Quý' }, { key: 'year', label: 'Năm' }];
 const MILESTONES: { key: MilestoneKey; label: string; desc: string; optional: boolean }[] = [
   { key: 'open', label: 'Mốc 1 · Mở nộp', desc: 'Từ thời điểm này nhân viên bắt đầu nộp được. Để trống nếu cho nộp bất kỳ lúc nào.', optional: true },
   { key: 'due', label: 'Mốc 2 · Hạn cuối nộp', desc: 'Sau thời điểm này không nộp trực tiếp được nữa — nhân viên phải xin nộp bù và chờ duyệt.', optional: false },
   { key: 'late_close', label: 'Mốc 3 · Đóng nộp bù', desc: 'Sau thời điểm này kỳ đóng hoàn toàn; yêu cầu nộp bù chưa xử lý sẽ hết hiệu lực. Để trống nếu không giới hạn.', optional: true },
 ];
-const OFFSET_OPTIONS: Record<PeriodKind, { value: number; label: string }[]> = {
+const OFFSET_OPTIONS: Record<MilestonePeriod, { value: number; label: string }[]> = {
   month: [{ value: -1, label: 'Tháng trước kỳ' }, { value: 0, label: 'Tháng của kỳ' }, { value: 1, label: 'Tháng sau kỳ' }],
   quarter: [{ value: -1, label: 'Tháng cuối quý trước' }, { value: 0, label: 'Tháng 1 của quý' }, { value: 1, label: 'Tháng 2 của quý' }, { value: 2, label: 'Tháng 3 của quý' }, { value: 3, label: 'Tháng đầu quý sau' }],
   year: [{ value: -1, label: 'Tháng 12 năm trước' }, ...Array.from({ length: 12 }, (_, i) => ({ value: i, label: `Tháng ${i + 1} của năm` })), { value: 12, label: 'Tháng 1 năm sau' }],
