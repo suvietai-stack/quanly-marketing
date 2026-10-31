@@ -5583,6 +5583,7 @@ export type Database = {
         Args: { _kind: string; _period?: number; _year: number }
         Returns: string
       }
+      biz_deadline_auto_notify: { Args: never; Returns: Json }
       biz_deadline_milestones: {
         Args: { _kind: string; _period?: number; _year: number }
         Returns: Json

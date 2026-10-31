@@ -4,6 +4,7 @@ import {toast} from 'sonner';
 import {ExternalLink,Eye,FileText,RefreshCw,Search} from 'lucide-react';
 import {useAuth,useCurrentUser} from '@/lib/auth';
 import {documentsQuery,useDocumentOpen} from '@/lib/biz/documentQueries';
+import {bizLateRequestsQuery} from '@/lib/biz/queries';
 import {deadlineStatus,docStatusLabel,manageRank,myPlanRank,periodLabel,TIME_STATUS,VIEW_STATUS,viewTone,type DocRow,type PeriodKind,type ViewStatus} from '@/lib/biz/documents';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -38,6 +39,7 @@ export function BizPlans(){
   {!query.isPending&&!myRow&&!showTeam&&<div className="py-10 border-y space-y-3"><FileText className="h-8 w-8 text-muted-foreground"/><p>Bạn không thuộc diện nộp kế hoạch trong kỳ đang chọn.</p></div>}
   {showTeam&&<section className="space-y-4">
    <h2 className="text-lg font-semibold">Kế hoạch trong phạm vi quản lý</h2>
+   <LateStats kind="plan" periodKind={periodKind} year={year} period={period}/>
    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">{(Object.keys(QUICK_LABEL) as Quick[]).map(key=>{const count=teamRows.filter(r=>quickMatch(r,key)).length;return <button key={key} type="button" onClick={()=>setQuick(quick===key?'all':key)} className={`border rounded-lg p-3 text-left transition-colors ${quick===key?'border-primary bg-primary/5':'bg-card hover:border-primary/40'}`}><p className="text-xs text-muted-foreground">{QUICK_LABEL[key]}</p><strong className="text-xl tabular-nums">{count}</strong></button>;})}</div>
    <div className="flex flex-wrap gap-2 items-center">
     <div className="relative"><Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><Input aria-label="Tìm nhân sự" placeholder="Tìm theo tên…" className="pl-9 w-52" value={search} onChange={e=>setSearch(e.target.value)}/></div>
@@ -52,6 +54,13 @@ export function BizPlans(){
   </section>}
   {selectedRow&&<DocumentDialog key={`${selectedRow.user_id}-plan-${periodKind}-${year}-${period}`} row={selectedRow} uid={uid} kind="plan" periodKind={periodKind} year={year} period={period} onClose={()=>setSelected(null)}/>}
  </div>;
+}
+
+function LateStats({kind,periodKind,year,period}:{kind:'plan'|'report';periodKind:PeriodKind;year:number;period:number}){
+ const query=useQuery(bizLateRequestsQuery(kind,periodKind,year,period));const rows=query.data?.requests??[];
+ if(!rows.length)return null;
+ const count=(s:string)=>rows.filter(r=>r.status===s).length;
+ return <div className="flex flex-wrap gap-4 text-sm border rounded-lg p-3 bg-muted/30">{[['Đang xin nộp bù',count('pending')],['Được duyệt nộp bù',count('approved')],['Đã nộp bù',count('used')],['Bị từ chối',count('rejected')],['Hết hiệu lực',count('expired')]].map(([label,value])=><span key={String(label)} className="text-muted-foreground">{label}: <strong className="text-foreground tabular-nums">{value}</strong></span>)}</div>;
 }
 
 function useOpenDocument(){const open=useDocumentOpen();return async(versionId:string)=>{const win=window.open('','_blank');try{const url=await open.mutateAsync(versionId);if(win){win.location.href=url;}else{window.location.href=url;}}catch(e){win?.close();toast.error(e instanceof Error?e.message:String(e));}};}
