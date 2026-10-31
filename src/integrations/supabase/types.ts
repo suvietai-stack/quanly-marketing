@@ -2062,6 +2062,124 @@ export type Database = {
           },
         ]
       }
+      biz_rolling_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          payload: Json
+          plan_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          payload: Json
+          plan_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_rolling_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_rolling_events_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "biz_rolling_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_rolling_plans: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          base_version_id: string
+          basis: Json
+          created_at: string
+          first_month: number
+          goal_id: string
+          id: string
+          items: Json
+          reason: string
+          review_comment: string | null
+          revision: number
+          status: string
+          submitted_at: string | null
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_version_id: string
+          basis: Json
+          created_at?: string
+          first_month: number
+          goal_id: string
+          id?: string
+          items: Json
+          reason: string
+          review_comment?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          version: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          base_version_id?: string
+          basis?: Json
+          created_at?: string
+          first_month?: number
+          goal_id?: string
+          id?: string
+          items?: Json
+          reason?: string
+          review_comment?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_rolling_plans_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_rolling_plans_base_version_id_fkey"
+            columns: ["base_version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_goal_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_rolling_plans_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "biz_annual_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_systems: {
         Row: {
           active: boolean
@@ -6314,6 +6432,26 @@ export type Database = {
         Returns: undefined
       }
       biz_role_scopes_read: { Args: never; Returns: Json }
+      biz_rolling_decide: {
+        Args: {
+          _approve: boolean
+          _comment: string
+          _id: string
+          _revision: number
+        }
+        Returns: undefined
+      }
+      biz_rolling_read: { Args: { _goal: string }; Returns: Json }
+      biz_rolling_save: {
+        Args: {
+          _goal: string
+          _items: Json
+          _reason: string
+          _revision?: number
+          _submit?: boolean
+        }
+        Returns: string
+      }
       biz_run_assigned: {
         Args: { _pending?: boolean; _version: string }
         Returns: boolean
