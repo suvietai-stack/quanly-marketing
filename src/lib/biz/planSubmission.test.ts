@@ -1,0 +1,15 @@
+import {expect,it} from 'vitest';
+import {canSubmitInPhase,documentError,hasSubmittedDocument,officialLinkValid} from './planSubmission';
+import {phaseFromIso} from './deadline';
+import type {DocRow} from './documents';
+it('plans allow empty draft but never empty official submission',()=>{expect(officialLinkValid('plan','',false)).toBe(true);expect(officialLinkValid('plan','',true)).toBe(false);});
+it('supplementary documents cannot replace the official plan URL',()=>{expect(officialLinkValid('plan','https://drive.google.com/file/d/abc',true)).toBe(false);expect(officialLinkValid('plan','not a URL',true)).toBe(false);});
+it('official Google Docs link is accepted',()=>expect(officialLinkValid('plan',' https://docs.google.com/document/d/abc_123/edit?usp=sharing ',true)).toBe(true));
+it('KR report does not require a Google Docs URL',()=>expect(officialLinkValid('report','',true)).toBe(true));
+it('October 31 November plan is open, not not_open',()=>{const phase=phaseFromIso({open:'2026-10-25T00:00:00+07:00',due:'2026-11-03T23:59:00+07:00',late_close:'2026-11-15T23:59:00+07:00'},'2026-10-31T16:13:00+07:00');expect(phase).toBe('open');expect(canSubmitInPhase(phase,null)).toBe(true);});
+it('first submission before opening blocked',()=>expect(canSubmitInPhase('not_open',null)).toBe(false));
+it('overdue first submission requires approved late permission',()=>{expect(canSubmitInPhase('overdue',null,'pending')).toBe(false);expect(canSubmitInPhase('overdue',null,'approved')).toBe(true);});
+it('closed period blocks new submission even with late approval',()=>expect(canSubmitInPhase('closed',null,'approved')).toBe(false));
+it('requested revision can be resubmitted after closure',()=>expect(canSubmitInPhase('closed','2026-11-01T00:00:00Z')).toBe(true));
+it('drafts with URL are not documents submitted for viewer tracking',()=>{const row={document:{versions:[{url:'https://docs.google.com/document/d/abc',submitted_at:null}]}} as DocRow;expect(hasSubmittedDocument(row)).toBe(false);row.document?.versions.forEach(v=>v.submitted_at='2026-11-01T00:00:00Z');expect(hasSubmittedDocument(row)).toBe(true);});
+it('structured errors preserve usable messages and never stringify objects',()=>{expect(documentError({message:'Cần link Google Docs hợp lệ trước khi gửi.'})).toContain('Google Docs kế hoạch chính thức');expect(documentError({details:'Dữ liệu đã thay đổi.'})).toBe('Dữ liệu đã thay đổi.');expect(documentError({})).not.toBe('[object Object]');expect(documentError({code:'42501'})).toContain('không có quyền');});
