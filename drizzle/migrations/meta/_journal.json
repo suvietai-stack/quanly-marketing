@@ -1016,6 +1016,13 @@
       "when": 1793425587768,
       "tag": "0144_biz_concurrent_affiliations_and_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1793425702001,
+      "tag": "0145_biz_personnel_sync_interval_fences",
+      "breakpoints": true
     }
   ]
 }
