@@ -18,7 +18,7 @@ it('backfilled legacy config exposes only the due milestone',async()=>{
  await db.exec(`UPDATE public.biz_deadline_config c SET data = coalesce((SELECT jsonb_object_agg(k, CASE WHEN v ? 'due' OR v ? 'open' OR v ? 'late_close' THEN v ELSE jsonb_build_object('open', null, 'due', CASE WHEN v ? 'day' THEN jsonb_build_object('phase', coalesce(v->>'phase','during'), 'day', (v->>'day')::int, 'hour', coalesce((v->>'hour')::int,17), 'minute', coalesce((v->>'minute')::int,0)) ELSE null END, 'late_close', null, 'exceptions', coalesce((SELECT jsonb_object_agg(ek, jsonb_build_object('due', ev#>>'{}')) FROM jsonb_each(v->'exceptions') e(ek,ev)), '{}'::jsonb)) END) FROM jsonb_each(c.data) e(k,v)), '{}'::jsonb) WHERE id = true;`);
  const m=await scalar("select biz_deadline_milestones('plan_month',2026,11) v");
  expect(m.due).toContain('2026-11-02T17:00');expect(m.open).toBeNull();expect(m.late_close).toBeNull();
- const raw=await db.query("select biz_deadline_at('plan_month',2026,11) v");console.log('DEBUG deadline_at:',JSON.stringify(raw.rows));
+ expect(await scalar("select biz_deadline_at('plan_month',2026,11) v")).toContain('2026-11-02T17:00');
 });
 it('spec example: month 11/2026 opens 25/10, due 03/11, closes 15/11 (VN time, PGlite trả UTC)',async()=>{
  await saveCfg('plan_month',{open:{day:25,offset:-1,hour:0,minute:0},due:{day:3,offset:0,hour:23,minute:59},late_close:{day:15,offset:0,hour:23,minute:59}});
