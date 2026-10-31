@@ -134,3 +134,16 @@ it('deputy cannot approve the mandatory executive step or self-approve',async()=
  await db.query('select biz_late_request_decide($1,true,null)',[request]);
  expect(await scalar('select status v from biz_late_requests where id=$1',[request])).toBe('approved');
 });
+it('explicit legacy replacement ends the old assignment and preserves its audit history',async()=>{
+ await actor(admin);const sys2=await org('system',{name:'Hệ riêng'});const dep2=await org('department',{name:'Phòng riêng',system_id:sys2});
+ const legacy=await scalar("insert into biz_management_assignments(position,user_id,system_id,started_at,actor_id) values('director',$1,$2,'2020-01-01',$3) returning id v",[lead,sys2,admin]);
+ expect(await scalar('select biz_scope_ok($1,$2,$3) v',[lead,sale,dep2])).toBe(true);
+ const p=await scalar("select id v from biz_positions where code='director'");
+ await expect(appoint({position_id:p,user_id:director,scope_kind:'system',system_id:'00000000-0000-0000-0000-999999999999',legacy_replaces_id:legacy})).rejects.toThrow();
+ expect(await scalar('select ended_at v from biz_management_assignments where id=$1',[legacy])).toBe(null);
+ await appoint({position_id:p,user_id:director,scope_kind:'system',system_id:sys2,legacy_replaces_id:legacy});
+ expect(await scalar('select biz_scope_ok($1,$2,$3) v',[lead,sale,dep2])).toBe(false);
+ expect(await scalar('select biz_scope_ok($1,$2,$3) v',[director,sale,dep2])).toBe(true);
+ expect(await scalar('select count(*)::int v from biz_management_assignments where id=$1',[legacy])).toBe(1);
+ expect(await scalar("select count(*)::int v from biz_org_events where action='appointment_transition' and payload->'old'->>'id'=$1",[legacy])).toBe(1);
+});
