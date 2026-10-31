@@ -15,7 +15,7 @@ export const Route = createFileRoute("/biz/settings")({
   component: () => (
     <RequirePermission perm={["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"]}>
       <div>
-        <PageHeader title="Cài đặt — Quản trị Kinh doanh" description="Phòng ban, chỉ số KR, deadline và phân quyền của module." />
+        <PageHeader title="Cài đặt — Quản trị Kinh doanh" description="Cơ cấu tổ chức, chức vụ, quy trình phê duyệt, chỉ số KR, deadline và phân quyền của module." />
         <BizSettings />
       </div>
     </RequirePermission>
