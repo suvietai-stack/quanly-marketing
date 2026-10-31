@@ -66,7 +66,7 @@ it('closed period rejects late requests and expires pending ones',async()=>{
  await expect(db.query("select biz_document_start('plan','quarter',2026,3)")).rejects.toThrow('đã đóng');
 });
 it('auto notify sends overdue once per obligation and never repeats',async()=>{
- await saveCfg('plan_month',{open:{day:25,offset:-1,hour:0,minute:0},due:{day:3,offset:0,hour:23,minute:59},late_close:{day:28,offset:1,hour:23,minute:59}});
+ await saveCfg('report_month',{open:{day:25,offset:-1,hour:0,minute:0},due:{day:3,offset:0,hour:23,minute:59},late_close:{day:28,offset:1,hour:23,minute:59}});
  const first=await scalar('select biz_deadline_auto_notify() v');
  expect(first.sent).toBeGreaterThan(0);
  expect(await scalar("select count(*)::int v from notifications where kind='biz_deadline' and recipient_id=$1",[sale])).toBeGreaterThan(0);
