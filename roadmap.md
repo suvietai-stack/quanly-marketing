@@ -37,3 +37,11 @@
 - [x] Xem trước quyền bổ nhiệm, quyền thực tế từng người, chức vụ điều hành cấu hình được, ngoại lệ cấp/thu hồi có nhật ký; làm mới quyền và cache khi thay phạm vi.
 - [x] 159/159 kiểm thử Biz đạt; Admin thật xem Dashboard tổng hợp/chi tiết và cài đặt; desktop/mobile 390px không tràn, không lỗi console.
 - [ ] Nghiệm thu bằng tài khoản Sale/Trưởng Phòng/Giám Đốc thật và duyệt nộp bù thật: phiên hiện tại chỉ là Super Admin; không tạo hồ sơ thử trong dữ liệu vận hành. Chưa Publish.
+
+## Fix bản 32 + Reset nghiệp vụ Quản trị Kinh doanh (31/10/2026)
+- [x] Biểu đồ vẽ thực tế một phần, tooltip độ đầy đủ, null không biến thành 0 (BizDashboardCharts).
+- [x] Tỷ trọng trên doanh số đã ghi nhận, xếp hạng/xu hướng tạm tính có ghi chú, Hệ thiếu dữ liệu không tính 0 (publishedDashboard + BizPublishedDashboard).
+- [x] Luồng "Thay người phụ trách": khóa vị trí, hiện người đang giữ, xem trước cấp/thu hồi quyền; không nhầm chức vụ cũ của người mới (BizAppointments).
+- [x] Reset an toàn: migration 0149 (biz_reset_preview/biz_reset_execute, backup private.biz_reset_backups, xác nhận RESET KINH DOANH), UI Cài đặt → Quản trị nâng cao chỉ Super Admin (BizReset.tsx).
+- [x] 207/207 test Biz, tsgo/build OK, Playwright Super Admin desktop; docs/biz-reset-and-dashboard-fixes.md.
+- [ ] Admin tự xác nhận reset trong UI (preview hiện: 2 Kế hoạch, 1 Báo cáo, 1 Mục tiêu KR, 3 hồ sơ Lê Minh Ngọc); chưa Publish.

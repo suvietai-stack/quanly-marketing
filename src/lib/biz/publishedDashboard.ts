@@ -14,10 +14,11 @@ export function publishedState(m: PublishedMetric) {
   return m.percent === null ? 'Đủ dữ liệu · Chưa có quy tắc đánh giá' : Number(m.percent) >= 100 ? 'Đạt mục tiêu' : 'Chưa đạt mục tiêu';
 }
 export function comparable(m: PublishedMetric | undefined) { return !!m && m.target_complete && m.actual_complete && m.expected_current === m.expected && m.actual !== null && m.missing_due === 0; }
+export function hasActual(m: PublishedMetric | undefined) { return !!m && m.actual !== null && m.actual !== undefined; }
 export function trend(current: PublishedMetric | undefined, previous: PublishedMetric | undefined) {
-  if (!comparable(current) || !comparable(previous) || !current || !previous || current.actual === null || previous.actual === null || current.metric_key !== previous.metric_key) return null;
+  if (!hasActual(current) || !hasActual(previous) || !current || !previous || current.actual === null || previous.actual === null || current.metric_key !== previous.metric_key) return null;
   const difference = subDec(current.actual, previous.actual);
-  return { difference, percent: Number(previous.actual) === 0 ? null : Number(difference) / Number(previous.actual) * 100 };
+  return { difference, percent: Number(previous.actual) === 0 ? null : Number(difference) / Number(previous.actual) * 100, provisional: !comparable(current) || !comparable(previous) };
 }
 export function chartRows(rows: PublishedMetric[], key: string, lo: number, hi: number, evaluationHi: number) {
   const template=rows.find(m=>m.metric_key===key);
@@ -31,6 +32,6 @@ export function chartRows(rows: PublishedMetric[], key: string, lo: number, hi: 
 }
 export function distribution(groups: PublishedGroup[], key: string) {
   const applicable = groups.filter(g => g.level === 'system').map(g => ({ g, m: g.metrics.find(m => m.metric_key === key) }));
-  if (!applicable.length || applicable.some(({m}) => !comparable(m))) return [];
-  return applicable.flatMap(({g,m}) => m?.actual !== null && m?.actual !== undefined ? [{ name:g.name,value:Number(m.actual) }] : []);
+  const rows = applicable.flatMap(({g,m}) => hasActual(m) && m?.actual != null ? [{ name:g.name,value:Number(m.actual) }] : []);
+  return { rows, covered: rows.length, total: applicable.length, partial: rows.length > 0 && rows.length < applicable.length };
 }
