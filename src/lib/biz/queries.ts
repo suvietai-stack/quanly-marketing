@@ -50,14 +50,8 @@ function useBizMutation<TArgs extends Record<string, unknown>>(fn: string, keys:
   });
 }
 
-export const useBizDeptSave = () =>
-  useBizMutation<{ _id: string | null; _name: string; _description: string; _active: boolean; _sort_order: number }>("biz_dept_save", [["biz_departments"]]);
-
-export const useBizMemberSave = () =>
-  useBizMutation<{ _department_id: string; _user_id: string; _is_manager: boolean }>("biz_member_save", [["biz_department_members"]]);
-
-export const useBizMemberEnd = () =>
-  useBizMutation<{ _id: string }>("biz_member_end", [["biz_department_members"]]);
+// Phòng/thành viên/Trưởng Phòng quản lý thống nhất tại Cơ cấu tổ chức (biz_org_save/biz_appointment_save);
+// biz_dept_save/biz_member_save/biz_member_end không còn UI nào gọi.
 
 export const useBizKrSave = () =>
   useBizMutation<{
