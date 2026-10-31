@@ -8,7 +8,7 @@ import { BizDeadlineEditor } from "./BizDeadlineEditor";
 import { BizOrganization } from './BizOrganization';
 import { BizWorkflows } from './BizWorkflows';
 import { BizPositions } from './BizPositions';
-import { BizRoleScopes } from './BizRoleScopes';
+import { BizAccessExceptions } from './BizAccessExceptions';
 import { BIZ_PERM_CATEGORIES } from "@/lib/biz/permCategories";
 import {
   bizDepartmentsQuery, bizKrMetricsQuery,
@@ -54,8 +54,8 @@ export function BizSettings() {
       {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
       {canDeadline && <TabsContent value="deadline" className="mt-4"><BizDeadlineEditor /></TabsContent>}
       {canRole && <TabsContent value="perm" className="mt-4">
-        <BizRoleScopes />
-        <RolePermissionMatrix categories={BIZ_PERM_CATEGORIES} personal={["biz.view_own"]} />
+        <BizAccessExceptions />
+        <RolePermissionMatrix categories={BIZ_PERM_CATEGORIES.filter(c=>c.key==='settings')} personal={[]} />
       </TabsContent>}
     </Tabs>
   );
