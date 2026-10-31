@@ -13,11 +13,12 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {Link} from '@tanstack/react-router';
+import {reportDeadlineError,shortReportWindow} from '@/lib/biz/reportPolicy';
 
 type MilestoneKey = 'open' | 'due' | 'late_close';
 const DOC_GROUPS = [
   { key: 'plan', label: 'Kế hoạch' },
-  { key: 'report', label: 'Báo cáo' },
   { key: 'goal', label: 'Mục tiêu KR' },
 ] as const;
 // Editor này chỉ quản mốc deadline theo tháng cho kỳ Tháng/Quý/Năm; deadline Ngày/Tuần nằm trong cấu hình chu kỳ báo cáo.
@@ -52,8 +53,8 @@ export function BizDeadlineEditor({reportOnly=false}:{reportOnly?:boolean}={}) {
   const { data } = useQuery(bizDeadlineQuery);
   const save = useBizDeadlineSave();
   const [form, setForm] = useState<Record<string, BizDeadlineRule> | null>(null);
-  const [group, setGroup] = useState<(typeof DOC_GROUPS)[number]['key']>(reportOnly?'report':'plan');
-  const [periodKind, setPeriodKind] = useState<MilestonePeriod>('month');
+  const [group, setGroup] = useState<'plan'|'report'|'goal'>(reportOnly?'report':'plan');
+  const [periodKind, setPeriodKind] = useState<MilestonePeriod>(reportOnly?'week':'month');
   const cur = useMemo(() => {
     const source = form ?? data ?? {};
     return Object.fromEntries(Object.entries(source).map(([k, v]) => [k, normalize(v)]));
@@ -65,7 +66,8 @@ export function BizDeadlineEditor({reportOnly=false}:{reportOnly?:boolean}={}) {
   const update = (next: BizDeadlineRule) => setForm({ ...cur, [kind]: next });
   const milestones = group === 'goal' ? MILESTONES.filter((m) => m.key === 'due') : MILESTONES;
   const submit = async () => {
-    for (const k of kinds) {
+    for (const k of kinds.filter(k=>JSON.stringify(cur[k])!==JSON.stringify(normalize(data?.[k])))) {
+      if(k.startsWith('report_')){const c=k.replace('report_','') as 'day'|'week'|'month'|'quarter';const error=reportDeadlineError(c,cur[k],new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh'}).format(new Date()));if(error){toast.error(error);return;}}
       const error = milestoneOrderError(k, cur[k] ?? {});
       if (error) { toast.error(error); return; }
     }
@@ -80,8 +82,9 @@ export function BizDeadlineEditor({reportOnly=false}:{reportOnly?:boolean}={}) {
       {!reportOnly&&<Tabs value={group} onValueChange={(v) => {setGroup(v as typeof group);setPeriodKind('month');}}><TabsList className="h-auto flex-wrap">{DOC_GROUPS.map((g) => <TabsTrigger key={g.key} value={g.key}>{g.label}</TabsTrigger>)}</TabsList></Tabs>}
       {group !== 'goal' && <Tabs value={periodKind} onValueChange={(v) => setPeriodKind(v as MilestonePeriod)}><TabsList className="flex-wrap h-auto">{tabs.map((t) => <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>)}</TabsList></Tabs>}
     </div>
+    {!reportOnly&&<Button asChild variant="outline"><Link to="/biz/reports" search={{settings:'deadline'} as never}>Đi đến Cài đặt Báo cáo</Link></Button>}
     <div className="grid gap-4 lg:grid-cols-3">
-      {milestones.map((m) => <MilestoneCard key={m.key} meta={m} kind={kind} periodKind={group === 'goal' ? 'year' : periodKind} rule={rule[m.key]} onChange={(value) => update({ ...rule, [m.key]: value })} />)}
+      {milestones.map((m) => <MilestoneCard key={m.key} meta={m} required={group==='report'} kind={kind} periodKind={group === 'goal' ? 'year' : periodKind} rule={rule[m.key]} onChange={(value) => update({ ...rule, [m.key]: value })} />)}
     </div>
     <SchedulePreview kind={kind} rule={rule} />
     <ExceptionEditor daily={periodKind==='day'||periodKind==='week'} values={rule.exceptions ?? {}} onChange={(exceptions) => update({ ...rule, exceptions })} />
@@ -93,14 +96,14 @@ export function BizDeadlineEditor({reportOnly=false}:{reportOnly?:boolean}={}) {
   </div>;
 }
 
-function MilestoneCard({ meta, kind, periodKind, rule, onChange }: { meta: (typeof MILESTONES)[number]; kind: string; periodKind: MilestonePeriod; rule: BizMilestoneRule | null | undefined; onChange: (v: BizMilestoneRule | null) => void }) {
+function MilestoneCard({ meta, kind, periodKind, rule, onChange,required=false }: { required?:boolean;meta: (typeof MILESTONES)[number]; kind: string; periodKind: MilestonePeriod; rule: BizMilestoneRule | null | undefined; onChange: (v: BizMilestoneRule | null) => void }) {
   const enabled = !meta.optional || rule != null;
   const value = rule ?? {};
   const set = (field: keyof BizMilestoneRule, v: unknown) => onChange({ ...value, [field]: v });
   return <section className="border rounded-lg bg-card p-4 space-y-3">
     <div className="flex items-start justify-between gap-2">
-      <div><h3 className="font-semibold">{meta.label}</h3><p className="text-xs text-muted-foreground mt-1">{meta.desc}</p></div>
-      {meta.optional && <Button variant={enabled ? 'secondary' : 'outline'} size="sm" onClick={() => onChange(enabled ? null : periodKind==='day'||periodKind==='week'?{offset_days:meta.key==='open'?0:7,hour:17,minute:0}:{ offset: 0, day: 1, hour: 17, minute: 0 })}>{enabled ? 'Đang áp dụng' : 'Không áp dụng'}</Button>}
+      <div><h3 className="font-semibold">{meta.label}</h3><p className="text-xs text-muted-foreground mt-1">{required?'Mốc bắt buộc cho chu kỳ Báo cáo.':meta.desc}</p></div>
+      {meta.optional && <Button variant={enabled ? 'secondary' : 'outline'} size="sm" disabled={required&&enabled} onClick={() => onChange(enabled ? null : periodKind==='day'||periodKind==='week'?{offset_days:undefined,hour:17,minute:0}:{ offset: 0, day: undefined, hour: 17, minute: 0 })}>{enabled ? 'Đang áp dụng' : required?'Cần cấu hình':'Không áp dụng'}</Button>}
     </div>
     {enabled && <div className="space-y-3">
       {periodKind==='day'||periodKind==='week'?<div className="space-y-1"><Label>Số ngày sau khi kỳ kết thúc</Label><Input aria-label={`${meta.label} số ngày sau kỳ`} type="number" min={0} max={62} value={value.offset_days??''} onChange={e=>set('offset_days',e.target.value===''?undefined:Number(e.target.value))}/></div>:<div className="space-y-1">
@@ -132,9 +135,11 @@ function SchedulePreview({ kind, rule }: { kind: string; rule: BizDeadlineRule }
         const special = !!rule.exceptions?.[`${year}-${String(period).padStart(2, '0')}`];
         return <div key={`${year}-${period}`} className="border rounded-lg bg-card p-3 space-y-1 text-sm">
           <p className="font-medium">{label} {periodLabel(pk, year, period)} {special && <Badge variant="outline" className="text-warning border-warning/40 ml-1">Lịch đặc biệt</Badge>}</p>
-          <p>Mở nộp: <strong>{fmtVN(m.open)}</strong></p>
-          <p>Hạn cuối: <strong>{fmtVN(m.due)}</strong></p>
-          <p>Đóng nộp bù: <strong>{fmtVN(m.late_close)}</strong></p>
+          <p>Mở nộp: <strong>{m.open?fmtVN(m.open):'Chưa cấu hình'}</strong></p>
+          <p>Hạn cuối: <strong>{m.due?fmtVN(m.due):'Chưa cấu hình'}</strong></p>
+          <p>Đóng nộp bù: <strong>{m.late_close?fmtVN(m.late_close):'Chưa cấu hình'}</strong></p>
+          {kind.startsWith('report_')&&reportDeadlineError(pk as 'day'|'week'|'month'|'quarter',rule,`${year}-01-04`)&&<p role="alert" className="text-warning">Cần hoàn tất ba mốc trước khi áp dụng.</p>}
+          {kind==='report_week'&&shortReportWindow('week',rule,`${year}-01-04`)&&<p className="text-warning">Khoảng nộp dưới 24 giờ — hãy kiểm tra trước khi lưu.</p>}
         </div>;
       })}
     </div>
