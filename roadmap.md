@@ -11,8 +11,8 @@
 - [ ] Chưa kiểm: tài khoản Sale/Trưởng phòng thật (phiên hiện tại là Super Admin); chưa Publish.
 
 ## Chuẩn hóa quyền tự động theo chức vụ
-- [ ] Rà soát Role cũ, bổ nhiệm hiệu lực và mọi đường đọc/duyệt/tổng hợp.
-- [ ] Chốt phương án chuyển đổi an toàn quyền chi tiết và ngoại lệ, không ảnh hưởng module khác.
+- [x] Rà soát Role cũ, bổ nhiệm hiệu lực và mọi đường đọc/duyệt/tổng hợp: biz_all_scope chấp nhận assigned + view_all; Role Giám Đốc Kinh Doanh có quyền cấu hình; nộp bù đọc chưa theo scope và chưa dùng luồng.
+- [ ] Chốt phương án chuyển đổi an toàn quyền chi tiết và ngoại lệ, không ảnh hưởng module khác — chờ xác nhận quyền quản trị Role Giám Đốc và quyền xem toàn Khối Admin/Viewer.
 - [ ] Tự động quyền nghiệp vụ/phạm vi từ cơ cấu; tách Dashboard tổng hợp; đúng lượt phê duyệt.
 - [ ] Đơn giản hóa bổ nhiệm, xem trước/xem quyền thực tế và làm mới quyền.
 - [ ] Kiểm thử từng cấp, kiêm nhiệm/hết hiệu lực, API ngoài phạm vi, Super Admin, desktop/mobile.
