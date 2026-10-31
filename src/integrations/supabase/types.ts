@@ -1270,6 +1270,7 @@ export type Database = {
           id: string
           kind: string
           last_submitted_at: string | null
+          late_submitted: boolean
           official_version_id: string | null
           period: number
           period_kind: string
@@ -1286,6 +1287,7 @@ export type Database = {
           id?: string
           kind: string
           last_submitted_at?: string | null
+          late_submitted?: boolean
           official_version_id?: string | null
           period: number
           period_kind: string
@@ -1302,6 +1304,7 @@ export type Database = {
           id?: string
           kind?: string
           last_submitted_at?: string | null
+          late_submitted?: boolean
           official_version_id?: string | null
           period?: number
           period_kind?: string
@@ -1550,6 +1553,69 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_late_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_comment: string | null
+          id: string
+          kind: string
+          period: number
+          period_kind: string
+          reason: string
+          status: string
+          used_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_comment?: string | null
+          id?: string
+          kind: string
+          period: number
+          period_kind: string
+          reason: string
+          status?: string
+          used_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_comment?: string | null
+          id?: string
+          kind?: string
+          period?: number
+          period_kind?: string
+          reason?: string
+          status?: string
+          used_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_late_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_late_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5650,6 +5716,30 @@ export type Database = {
       biz_kr_standard_save: {
         Args: { _code: string; _label: string; _metric_id: string }
         Returns: undefined
+      }
+      biz_late_expire_closed: { Args: never; Returns: number }
+      biz_late_request_create: {
+        Args: {
+          _kind: string
+          _period: number
+          _period_kind: string
+          _reason: string
+          _year: number
+        }
+        Returns: string
+      }
+      biz_late_request_decide: {
+        Args: { _approve: boolean; _comment?: string; _id: string }
+        Returns: undefined
+      }
+      biz_late_requests_read: {
+        Args: {
+          _kind?: string
+          _period?: number
+          _period_kind?: string
+          _year?: number
+        }
+        Returns: Json
       }
       biz_member_access: {
         Args: { _department_id: string; _user_id: string }
