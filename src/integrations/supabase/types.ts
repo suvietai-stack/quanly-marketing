@@ -102,6 +102,7 @@ export type Database = {
         Row: {
           biz_detail_exception: boolean
           biz_scope: string
+          biz_settings_disabled: boolean
           created_at: string
           description: string | null
           id: string
@@ -115,6 +116,7 @@ export type Database = {
         Insert: {
           biz_detail_exception?: boolean
           biz_scope?: string
+          biz_settings_disabled?: boolean
           created_at?: string
           description?: string | null
           id: string
@@ -128,6 +130,7 @@ export type Database = {
         Update: {
           biz_detail_exception?: boolean
           biz_scope?: string
+          biz_settings_disabled?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -5901,6 +5904,7 @@ export type Database = {
         Returns: string
       }
       biz_my_work: { Args: { _kind: string }; Returns: Json }
+      biz_my_work_access_guard: { Args: { _kind: string }; Returns: boolean }
       biz_org_can_manage: { Args: never; Returns: boolean }
       biz_org_read: { Args: never; Returns: Json }
       biz_org_save: { Args: { _action: string; _data: Json }; Returns: string }
