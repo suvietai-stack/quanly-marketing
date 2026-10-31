@@ -932,6 +932,13 @@
       "when": 1793418269685,
       "tag": "0132_biz_my_work_open_periods",
       "breakpoints": true
+    },
+    {
+      "idx": 133,
+      "version": "7",
+      "when": 1793418753102,
+      "tag": "0133_biz_my_work_membership_guard",
+      "breakpoints": true
     }
   ]
 }
