@@ -76,6 +76,7 @@ export type BizDeadlineData = Record<string, BizDeadlineRule>;
 export type BizLateStatus = "pending" | "approved" | "rejected" | "used" | "expired";
 export const LATE_STATUS_LABELS: Record<BizLateStatus, string> = { pending: "Chờ duyệt", approved: "Được duyệt nộp bù", rejected: "Bị từ chối", used: "Đã nộp bù", expired: "Hết hiệu lực" };
 export interface BizLateRequest {
+  legacy?: boolean; can_adopt?: boolean;
   id: string; user_id: string; employee_name: string; kind: "plan" | "report"; period_kind: "month" | "quarter" | "year";
   year: number; period: number; reason: string; status: BizLateStatus; decided_by: string | null; decider_name: string | null;
   decided_at: string | null; decision_comment: string | null; created_at: string; used_at: string | null;
