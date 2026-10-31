@@ -884,6 +884,38 @@ export type Database = {
           },
         ]
       }
+      biz_deadline_config_log: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          new_data: Json
+          old_data: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          new_data: Json
+          old_data: Json
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          new_data?: Json
+          old_data?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_deadline_config_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_demo_sets: {
         Row: {
           created_at: string
@@ -5485,6 +5517,14 @@ export type Database = {
         Args: { _kind: string; _period?: number; _year: number }
         Returns: string
       }
+      biz_deadline_milestones: {
+        Args: { _kind: string; _period?: number; _year: number }
+        Returns: Json
+      }
+      biz_deadline_phase: {
+        Args: { _kind: string; _now?: string; _period?: number; _year: number }
+        Returns: string
+      }
       biz_deadline_remind: {
         Args: {
           _kind: string
@@ -5618,6 +5658,10 @@ export type Database = {
       biz_member_end: { Args: { _id: string }; Returns: undefined }
       biz_member_save: {
         Args: { _department_id: string; _is_manager: boolean; _user_id: string }
+        Returns: string
+      }
+      biz_milestone_at: {
+        Args: { _kind: string; _period: number; _rule: Json; _year: number }
         Returns: string
       }
       biz_org_can_manage: { Args: never; Returns: boolean }
