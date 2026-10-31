@@ -1065,6 +1065,13 @@
       "when": 1793431285355,
       "tag": "0151_biz_reset_execute_fix_update_where",
       "breakpoints": true
+    },
+    {
+      "idx": 152,
+      "version": "7",
+      "when": 1793433772155,
+      "tag": "0152_leave_zalo_group",
+      "breakpoints": true
     }
   ]
 }
