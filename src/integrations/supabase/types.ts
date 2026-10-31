@@ -6013,6 +6013,8 @@ export type Database = {
         }
         Returns: string
       }
+      biz_reset_execute: { Args: { _confirm: string }; Returns: Json }
+      biz_reset_preview: { Args: never; Returns: Json }
       biz_resolve_position: {
         Args: {
           _at?: string
