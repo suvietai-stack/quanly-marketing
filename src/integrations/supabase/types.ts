@@ -6264,6 +6264,10 @@ export type Database = {
         }
         Returns: string
       }
+      biz_report_deadline_ready: {
+        Args: { _kind: string; _p: number; _pk: string; _y: number }
+        Returns: boolean
+      }
       biz_report_metrics: {
         Args: {
           _mode?: string
@@ -6273,6 +6277,10 @@ export type Database = {
           _year: number
         }
         Returns: Json
+      }
+      biz_report_period_matches: {
+        Args: { _period: number; _pk: string; _user: string; _year: number }
+        Returns: boolean
       }
       biz_report_target_version: {
         Args: {
