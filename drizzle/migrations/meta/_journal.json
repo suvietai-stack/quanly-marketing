@@ -981,6 +981,13 @@
       "when": 1793422473805,
       "tag": "0139_biz_explicit_reviewer_assignment_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "7",
+      "when": 1793422735739,
+      "tag": "0140_biz_block_leadership_and_appointment_transition",
+      "breakpoints": true
     }
   ]
 }

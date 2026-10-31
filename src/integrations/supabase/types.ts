@@ -5636,6 +5636,7 @@ export type Database = {
           id: string
         }[]
       }
+      biz_admin: { Args: { _actor: string }; Returns: boolean }
       biz_all_scope: { Args: { _actor: string }; Returns: boolean }
       biz_appointment_save: { Args: { _data: Json }; Returns: string }
       biz_appointment_scope: {
