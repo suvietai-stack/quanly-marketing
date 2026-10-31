@@ -23,6 +23,16 @@ const ROWS:[keyof ResetPreview,string][]=[
  ['notifications','Thông báo gắn với hồ sơ bị reset'],
 ];
 
+/** Trích thông báo lỗi Supabase/PostgREST (message/details/hint/code) — tránh hiển thị [object Object]. */
+function errText(e:unknown):string{
+  if(e&&typeof e==='object'){
+    const o=e as {message?:unknown;details?:unknown;hint?:unknown;code?:unknown};
+    const parts=[o.message,o.details,o.hint,o.code?`Mã lỗi: ${o.code}`:null].filter((x):x is string=>typeof x==='string'&&x.length>0);
+    if(parts.length)return parts.join(' · ');
+  }
+  return e instanceof Error?e.message:'Có lỗi xảy ra. Dữ liệu được giữ nguyên, chưa có gì bị xóa.';
+}
+
 /** Reset sạch dữ liệu nghiệp vụ Quản trị Kinh doanh — chỉ Super Admin, có sao lưu riêng tư và nhật ký. */
 export function BizReset() {
   const uid=useAuth(s=>s.currentUserId)??'';
@@ -36,12 +46,12 @@ export function BizReset() {
     try{
       const {data,error}=await supabase.rpc('biz_reset_execute',{_confirm:confirm});
       if(error)throw error;
-      const r=data as {counts:Record<string,number>};
-      toast.success(`Đã reset ${r.counts.plans+r.counts.reports} hồ sơ Kế hoạch/Báo cáo, ${r.counts.goals} mục tiêu KR. Dữ liệu cũ đã được sao lưu an toàn.`);
+      const r=data as {counts:Record<string,number>;backup_id:string};
+      toast.success(`Đã reset ${r.counts.plans+r.counts.reports} hồ sơ Kế hoạch/Báo cáo, ${r.counts.goals} mục tiêu KR. Mã bản sao lưu: ${r.backup_id}`);
       setConfirm('');
       await qc.invalidateQueries();
       await preview.refetch();
-    }catch(e){toast.error(e instanceof Error?e.message:String(e));}
+    }catch(e){toast.error(`Reset thất bại: ${errText(e)}. Toàn bộ dữ liệu được giữ nguyên.`);}
     finally{setBusy(false);}
   };
 
