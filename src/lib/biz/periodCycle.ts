@@ -18,12 +18,13 @@ export function mondayOf(d: Date): Date {
   return addDays(d, 1 - isoDow(d));
 }
 
-/** Tuần ISO: { isoYear, week } — năm chuẩn của tuần (tuần 1 chứa Thứ Năm đầu tiên). */
+/** Tuần ISO: { isoYear, week } — năm chuẩn của tuần (tuần 1 chứa Thứ Năm đầu tiên của năm). */
 export function isoWeek(d: Date): { isoYear: number; week: number } {
   const thursday = addDays(mondayOf(d), 3);
   const isoYear = thursday.getUTCFullYear();
   const jan1 = new Date(Date.UTC(isoYear, 0, 1));
-  const week1Monday = mondayOf(jan1);
+  const firstThursday = addDays(jan1, (4 - isoDow(jan1) + 7) % 7);
+  const week1Monday = mondayOf(firstThursday);
   const week = Math.round((mondayOf(d).getTime() - week1Monday.getTime()) / (7 * 86400000)) + 1;
   return { isoYear, week };
 }
