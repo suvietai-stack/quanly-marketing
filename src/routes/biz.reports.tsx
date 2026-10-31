@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BizDocuments } from "@/components/biz/BizDocuments";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
+import {BizReportSettings} from '@/components/biz/BizReportSettings';
 
 export const Route = createFileRoute("/biz/reports")({
   head: () => ({ meta: [
     { title: "Báo cáo kinh doanh — Quản trị Kinh doanh" },
-    { name: "description", content: "Nộp báo cáo kinh doanh Tháng / Quý / Năm, nhập số thực tế, tài liệu đính kèm tùy chọn." },
+    { name: "description", content: "Báo cáo Sứ Việt theo chu kỳ Ngày, Tuần, Tháng, Quý; cấu hình lịch nộp và xem kết quả kinh doanh." },
     { property: "og:title", content: "Báo cáo kinh doanh — Quản trị Kinh doanh" },
     { property: "og:description", content: "Nộp báo cáo kinh doanh theo kỳ, lãnh đạo xác nhận kết quả." },
     { property: "og:type", content: "website" },
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/biz/reports")({
   component: () => (
     <RequirePermission perm={["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"]}>
       <div>
-        <PageHeader title="Báo cáo kinh doanh" description="Nộp báo cáo Tháng / Quý / Năm, nhập số thực tế, tài liệu đính kèm tùy chọn." />
+        <PageHeader title="Báo cáo kinh doanh" actions={<BizReportSettings/>} />
         <BizDocuments kind="report" />
       </div>
     </RequirePermission>
