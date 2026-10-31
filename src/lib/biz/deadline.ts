@@ -1,10 +1,16 @@
 import type { BizDeadlineRule, BizMilestoneRule } from './types';
+import {storedRange,parseDate,addDays,isoDate,upcomingPeriods as cycleUpcoming} from './periodCycle';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const monthsOf = (kind: string) => (kind.endsWith('month') ? 1 : kind.endsWith('quarter') ? 3 : 12);
 
 /** Mirrors biz_milestone_at: relative month offset, last-day clamping, Vietnam wall time. */
 export function milestoneAt(kind: string, rule: BizMilestoneRule | null | undefined, year: number, period: number): string | null {
+  if (kind==='report_day'||kind==='report_week') {
+    if(!rule||rule.offset_days===undefined)return null;
+    const range=storedRange(kind==='report_day'?'day':'week',year,period);
+    return `${isoDate(addDays(parseDate(range.end),rule.offset_days))} ${pad(rule.hour??17)}:${pad(rule.minute??0)}`;
+  }
   if (!rule || rule.day === undefined || !Number.isInteger(rule.day) || rule.day < 1 || rule.day > 31) return null;
   const months = monthsOf(kind);
   const offset = rule.offset ?? (rule.phase === 'before' ? -1 : rule.phase === 'after' ? months : 0);
@@ -20,7 +26,7 @@ export interface BizMilestones { open: string | null; due: string | null; late_c
 /** Mirrors biz_deadline_milestones: per-period exception overrides each milestone. */
 export function milestonesFor(kind: string, rule: BizDeadlineRule | undefined, year: number, period: number): BizMilestones {
   if (!rule) return { open: null, due: null, late_close: null };
-  const key = `${year}-${pad(period)}`;
+  const key = kind==='report_day'||kind==='report_week'?storedRange(kind==='report_day'?'day':'week',year,period).start:`${year}-${pad(period)}`;
   const ex = rule.exceptions?.[key];
   const text = (v: unknown) => (typeof v === 'string' && v ? v.replace('T', ' ') : null);
   if (typeof ex === 'string') return { open: null, due: text(ex), late_close: null };
@@ -68,6 +74,7 @@ export function milestoneOrderError(kind: string, rule: BizDeadlineRule): string
 
 /** 3 kỳ liên tiếp bắt đầu từ kỳ chứa thời điểm hiện tại (giờ Việt Nam). */
 export function upcomingPeriods(kind: string, now = new Date()): { year: number; period: number }[] {
+  if(kind==='report_day'||kind==='report_week')return cycleUpcoming(kind==='report_day'?'day':'week',new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(now),3);
   const vn = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit' }).format(now);
   const [y, mo] = vn.split('-').map(Number);
   const months = monthsOf(kind);

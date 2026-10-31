@@ -68,7 +68,7 @@ export const DEADLINE_KINDS: { key: string; label: string }[] = [
 ];
 
 /** Một mốc thời gian tương đối với kỳ: offset = số tháng lệch so với tháng đầu kỳ (phase cũ vẫn được hiểu). */
-export interface BizMilestoneRule { offset?: number; day?: number; hour?: number; minute?: number; phase?: "before" | "during" | "after" }
+export interface BizMilestoneRule { offset_days?: number; offset?: number; day?: number; hour?: number; minute?: number; phase?: "before" | "during" | "after" }
 export interface BizDeadlineException { open?: string | null; due?: string | null; late_close?: string | null }
 export interface BizDeadlineRule { open?: BizMilestoneRule | null; due?: BizMilestoneRule | null; late_close?: BizMilestoneRule | null; exceptions?: Record<string, BizDeadlineException | string> }
 export type BizDeadlineData = Record<string, BizDeadlineRule>;
