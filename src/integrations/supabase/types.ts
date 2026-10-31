@@ -1243,6 +1243,7 @@ export type Database = {
       }
       biz_document_versions: {
         Row: {
+          allocations: Json | null
           approved_at: string | null
           approved_by: string | null
           attachments: Json
@@ -1261,6 +1262,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          allocations?: Json | null
           approved_at?: string | null
           approved_by?: string | null
           attachments?: Json
@@ -1279,6 +1281,7 @@ export type Database = {
           version: number
         }
         Update: {
+          allocations?: Json | null
           approved_at?: string | null
           approved_by?: string | null
           attachments?: Json
@@ -5901,6 +5904,24 @@ export type Database = {
       }
       biz_admin: { Args: { _actor: string }; Returns: boolean }
       biz_all_scope: { Args: { _actor: string }; Returns: boolean }
+      biz_any_deadline_at: {
+        Args: { _kind: string; _p: number; _y: number }
+        Returns: string
+      }
+      biz_any_milestones: {
+        Args: { _kind: string; _p: number; _pk: string; _y: number }
+        Returns: Json
+      }
+      biz_any_phase: {
+        Args: {
+          _kind: string
+          _now?: string
+          _p: number
+          _pk: string
+          _y: number
+        }
+        Returns: string
+      }
       biz_appointment_save: { Args: { _data: Json }; Returns: string }
       biz_appointment_scope: {
         Args: { _at?: string; _dept: string; _id: string; _user: string }
@@ -6054,6 +6075,7 @@ export type Database = {
       biz_document_save: {
         Args: {
           _actuals: Json
+          _allocations?: Json
           _attachments?: Json
           _id: string
           _notes: string
@@ -6197,8 +6219,20 @@ export type Database = {
         Args: { _kind: string; _period: number; _user: string; _year: number }
         Returns: string
       }
+      biz_period_department_any: {
+        Args: { _kind: string; _p: number; _user: string; _y: number }
+        Returns: string
+      }
+      biz_period_end_date: {
+        Args: { _kind: string; _p: number; _y: number }
+        Returns: string
+      }
       biz_period_start: {
         Args: { _kind: string; _period: number; _year: number }
+        Returns: string
+      }
+      biz_period_start_date: {
+        Args: { _kind: string; _p: number; _y: number }
         Returns: string
       }
       biz_plans_unviewed: {
@@ -6207,6 +6241,10 @@ export type Database = {
       }
       biz_position_save: { Args: { _data: Json }; Returns: string }
       biz_positions_read: { Args: never; Returns: Json }
+      biz_report_cycle_config_of: {
+        Args: { _at: string; _user: string }
+        Returns: Json
+      }
       biz_report_cycle_delete: { Args: { _id: string }; Returns: undefined }
       biz_report_cycle_of: {
         Args: { _at: string; _user: string }
