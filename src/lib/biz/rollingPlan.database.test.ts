@@ -11,7 +11,7 @@ async function value(sql:string){return (await db.query<{v:any}>(sql)).rows[0]?.
 beforeAll(async()=>{
  await db.exec(`CREATE SCHEMA auth;CREATE SCHEMA private;CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT current_setting('test.uid')::uuid$$;
- CREATE TABLE biz_documents(id uuid,user_id uuid,kind text,year integer);CREATE TABLE profiles(id uuid PRIMARY KEY);CREATE TABLE biz_annual_goals(id uuid PRIMARY KEY,user_id uuid,department_id uuid,year integer,official_version_id uuid);
+ CREATE TABLE biz_documents(id uuid,user_id uuid,kind text,year integer,period_kind text,period integer,period_start date,period_end date,official_version_id uuid); CREATE FUNCTION biz_period_start_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT make_date($2,1,1)$$;CREATE FUNCTION biz_period_end_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT make_date($2,12,31)$$;CREATE TABLE profiles(id uuid PRIMARY KEY);CREATE TABLE biz_annual_goals(id uuid PRIMARY KEY,user_id uuid,department_id uuid,year integer,official_version_id uuid);
  CREATE TABLE biz_goal_versions(id uuid PRIMARY KEY,goal_id uuid,revision integer);CREATE TABLE biz_goal_items(version_id uuid,metric_id uuid,definition jsonb,annual numeric,months numeric[]);
  CREATE TABLE biz_approval_runs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),version_id uuid,status text,owner_id uuid,content_snapshot jsonb);
  CREATE FUNCTION biz_goal_can_read(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
@@ -23,7 +23,7 @@ beforeAll(async()=>{
  INSERT INTO profiles VALUES('${owner}'),('${reviewer}');INSERT INTO biz_annual_goals VALUES('${goal}','${owner}',gen_random_uuid(),extract(year FROM now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::integer,'${version}');INSERT INTO biz_goal_versions VALUES('${version}','${goal}',0);
  INSERT INTO biz_goal_items VALUES('${version}','${metric}','{"name":"Doanh số","aggregation":"sum","unit":"VNĐ","value_kind":"money","direction":"higher","description":null}',1200000000,ARRAY[100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000]);
  SET test.actual='7000000';SET test.uid='${owner}';`);
- const sql=readFileSync('drizzle/migrations/0166_biz_rolling_plan_proposals.sql','utf8');await db.exec(sql.slice(0,sql.indexOf('DO $patch$')));await db.exec(readFileSync('drizzle/migrations/0167_biz_rolling_validation_and_source_fences.sql','utf8')); 
+ const sql=readFileSync('drizzle/migrations/0166_biz_rolling_plan_proposals.sql','utf8');await db.exec(sql.slice(0,sql.indexOf('DO $patch$')));await db.exec(readFileSync('drizzle/migrations/0167_biz_rolling_validation_and_source_fences.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0168_biz_rolling_snapshot_identity_fence.sql','utf8')); 
 },20000);
 afterAll(()=>db.close());
 async function payload(){const b=await value(`SELECT private.biz_rolling_basis('${goal}') v`);const i=b.items[0];const months=[...i.current];months[b.first_month-1]=i.remaining;return {b,items:[{metric_id:i.metric_id,definition:i.definition,annual:i.annual,months}]};}
