@@ -46,6 +46,7 @@ export function BizSettings() {
         {canKr && <TabsTrigger value="kr"><Target className="h-4 w-4 mr-1.5" />Chỉ số KR</TabsTrigger>}
         {canDeadline && <TabsTrigger value="deadline"><Timer className="h-4 w-4 mr-1.5" />Deadline</TabsTrigger>}
         {canRole && <TabsTrigger value="perm">Phân quyền</TabsTrigger>}
+        {isSuperAdmin && <TabsTrigger value="advanced">Quản trị nâng cao</TabsTrigger>}
       </TabsList>
       {canOrg && <TabsContent value="org" className="mt-4"><BizOrganization /></TabsContent>}
       {canOrg && <TabsContent value="positions" className="mt-4"><BizPositions /></TabsContent>}
@@ -55,6 +56,7 @@ export function BizSettings() {
       {canRole && <TabsContent value="perm" className="mt-4">
         <BizAutomaticPermissions />
       </TabsContent>}
+      {isSuperAdmin && <TabsContent value="advanced" className="mt-4"><BizReset /></TabsContent>}
     </Tabs>
   );
 }
