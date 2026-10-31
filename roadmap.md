@@ -1,10 +1,11 @@
 # Roadmap — Nâng cấp giao diện Mục tiêu KR & quản lý bản nháp (31/10/2026)
 
 ## Chuẩn hóa cơ cấu tổ chức cấp Khối
-- [ ] Bổ sung danh mục Giám Đốc Điều hành cấp 5 / Phó Giám Đốc Điều hành cấp 4; không bổ nhiệm tự động.
-- [ ] Cây tổ chức có lãnh đạo cấp Khối và bổ nhiệm/thay thế/miễn nhiệm theo vị trí, quyền tự động và kiêm nhiệm rõ ràng.
-- [ ] Admin hiện có toàn quyền riêng Biz; Phó điều hành không vượt bước Giám Đốc; tinh gọn Phân quyền và kiểm thử bảo toàn lịch sử/phạm vi.
-- [ ] Kiểm thử chức vụ, dữ liệu thật và desktop/mobile 360/375/390/430; chưa Publish.
+- [x] Bổ sung danh mục Giám Đốc Điều hành cấp 5 / Phó Giám Đốc Điều hành cấp 4; không bổ nhiệm tự động.
+- [x] Cây tổ chức có lãnh đạo cấp Khối và bổ nhiệm/thay thế/miễn nhiệm theo vị trí, quyền tự động và kiêm nhiệm rõ ràng.
+- [x] Admin hiện có quyền quản trị riêng Biz; Phó điều hành không vượt bước Giám Đốc; tinh gọn Phân quyền. 164/164 test Biz, dữ liệu hồ sơ/phân công giữ nguyên.
+- [x] Playwright Super Admin thật, desktop/mobile 360/375/390/430; không tràn/lỗi runtime. Báo cáo docs/biz-block-leadership.md; chưa Publish.
+- [ ] Nghiệm thu bổ nhiệm/thu hồi và duyệt từng chức vụ qua UI thật: chờ thông tin bổ nhiệm thực tế và phiên tài khoản tương ứng; không tạo nhân sự/hồ sơ test trong dữ liệu chung.
 
 - [x] 1. Khảo sát BizGoals: tab Của tôi/Trong phạm vi, form 12 tháng mở ngay; RPC biz_goals_read/biz_goal_start/biz_goal_save/biz_goal_decide giữ nguyên.
 - [x] 2. Hai khu vực một trang: "Mục tiêu KR của tôi" trên, "Trong phạm vi quản lý" dưới (chỉ khi có quyền view_dept/view_all/goal_approve); bỏ tab chuyển đổi.
