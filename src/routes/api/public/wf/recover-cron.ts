@@ -15,7 +15,14 @@ export const Route = createFileRoute("/api/public/wf/recover-cron")({
         let finRemind: unknown = null;
         try { const f = await import("@/lib/finance/gmf.server"); finRemind = await f.runAutoReminders(); }
         catch (e: any) { console.error("[fin] remind failed", e?.message); }
-        try { return Response.json({ ok: true, finRemind, ...(await s.recoverEvents(20)) }); }
+        // Cùng nhịp: thông báo lịch nộp Kế hoạch/Báo cáo (độc lập, lỗi không chặn các bên khác).
+        let bizDeadline: unknown = null;
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data, error } = await (supabaseAdmin as any).rpc("biz_deadline_auto_notify");
+          bizDeadline = error ? { error: error.message } : data;
+        } catch (e: any) { console.error("[biz] deadline notify failed", e?.message); }
+        try { return Response.json({ ok: true, finRemind, bizDeadline, ...(await s.recoverEvents(20)) }); }
         catch (e: any) { console.error("[wf] recover failed", e?.message); return Response.json({ ok: false }, { status: 500 }); }
       },
     },
