@@ -4,6 +4,7 @@ import {toast} from 'sonner';
 import {ExternalLink,Eye,FileText,RefreshCw,Search} from 'lucide-react';
 import {useAuth,useCurrentUser} from '@/lib/auth';
 import {documentsQuery,useDocumentOpen} from '@/lib/biz/documentQueries';
+import {bizLateRequestsQuery} from '@/lib/biz/queries';
 import {deadlineStatus,docStatusLabel,manageRank,myPlanRank,periodLabel,TIME_STATUS,VIEW_STATUS,viewTone,type DocRow,type PeriodKind,type ViewStatus} from '@/lib/biz/documents';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -53,6 +54,13 @@ export function BizPlans(){
   </section>}
   {selectedRow&&<DocumentDialog key={`${selectedRow.user_id}-plan-${periodKind}-${year}-${period}`} row={selectedRow} uid={uid} kind="plan" periodKind={periodKind} year={year} period={period} onClose={()=>setSelected(null)}/>}
  </div>;
+}
+
+function LateStats({kind,periodKind,year,period}:{kind:'plan'|'report';periodKind:PeriodKind;year:number;period:number}){
+ const query=useQuery(bizLateRequestsQuery(kind,periodKind,year,period));const rows=query.data?.requests??[];
+ if(!rows.length)return null;
+ const count=(s:string)=>rows.filter(r=>r.status===s).length;
+ return <div className="flex flex-wrap gap-4 text-sm border rounded-lg p-3 bg-muted/30">{[['Đang xin nộp bù',count('pending')],['Được duyệt nộp bù',count('approved')],['Đã nộp bù',count('used')],['Bị từ chối',count('rejected')],['Hết hiệu lực',count('expired')]].map(([label,value])=><span key={String(label)} className="text-muted-foreground">{label}: <strong className="text-foreground tabular-nums">{value}</strong></span>)}</div>;
 }
 
 function useOpenDocument(){const open=useDocumentOpen();return async(versionId:string)=>{const win=window.open('','_blank');try{const url=await open.mutateAsync(versionId);if(win){win.location.href=url;}else{window.location.href=url;}}catch(e){win?.close();toast.error(e instanceof Error?e.message:String(e));}};}
