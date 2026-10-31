@@ -29,3 +29,5 @@
 - Facebook discovery merges user/business Pages; encrypted sessions keep tokens out of UI, verify identity/lead access before saving — discovery is not eligibility.
 - Subdirectories may have their own AGENTS.md (e.g. src/components/biz) — read it before changing files there.
 - Biz: biz_can enforces appointment scope; null-system executives, trusted Admin, no deputy override; replacements retire old rights atomically. Published RPC uses private official/semantic aggregate helpers and shared charts, never grants detail access; goal/report decisions invalidate its cache. History/modules unchanged.
+
+- Biz reset: biz_reset_preview/biz_reset_execute (Super Admin only, confirm string, backup in private.biz_reset_backups) clear business records only — plans, reports, user KR goals, late requests, approval runs and their notifications; org structure, positions, appointments, roles, KR catalog, deadlines, workflows and biz_deadline notifications are never touched. Execution always requires explicit in-UI confirmation; never run via tooling on shared data.
