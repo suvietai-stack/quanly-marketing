@@ -9,6 +9,7 @@
 - Personal OA reminders mount once in AppShell, use authenticated user-scoped link reads and safe OA health fields, and store per-user browser snoozes; only existing verified webhook updates establish interaction — navigation and opening OA never renew eligibility or affect GMF.
 - Tiền Về resets use Super-Admin-only fin_reset_* RPCs with explicit confirmation, table lock before shared advisory lock, private scoped JSON recovery snapshots and atomic dependent deletion; fin_operation_guard ignores bank INSERTs at/before reset_at — prevents replay and concurrent reset inconsistencies.
 - Leave writes only via SECURITY DEFINER RPCs checking `private.sig_can` and server time; client tables SELECT-only — prevents bypassing permission/deadlines.
+- Leave HR group Zalo: `leave_zalo_group_config`/`leave_zalo_group_events` outbox filled by trigger `private.leave_zalo_group_queue` (dedup_key), sent by `src/lib/leave/zaloGroup.server.ts` reusing finance `postGroup`; config is independent from the Tiền Về GMF group — one OA, separate groups per module.
 - Change `src/lib/leave/calc.ts` and `private.leave_eval` together — keeps preview and authoritative calculation aligned.
 - Read app_branding for UI/server share metadata — crawlers cannot run client updates.
 - Attendance (att_* RPCs) is separate from leave; UI split /leave vs /attendance sharing backend; /leave?att= redirects. Gear settings on both pages reuse the shared Role store (updateRole) and LeaveSettings (mode leave/att); att.settings may save only the attendance key (enforced in leave_settings_save).
