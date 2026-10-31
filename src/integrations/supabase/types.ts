@@ -5674,6 +5674,10 @@ export type Database = {
         }
         Returns: Json
       }
+      biz_dashboard_published: {
+        Args: { _period?: number; _period_kind?: string; _year: number }
+        Returns: Json
+      }
       biz_dashboard_read: {
         Args: {
           _department_id?: string
@@ -5788,6 +5792,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      biz_exception_save: { Args: { _data: Json }; Returns: string }
       biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
       biz_goal_can_review: {
         Args: { _department_id: string; _user_id: string }
