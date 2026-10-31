@@ -1072,6 +1072,13 @@
       "when": 1793433772155,
       "tag": "0152_leave_zalo_group",
       "breakpoints": true
+    },
+    {
+      "idx": 153,
+      "version": "7",
+      "when": 1793433838612,
+      "tag": "0153_leave_zalo_group_event_summary",
+      "breakpoints": true
     }
   ]
 }

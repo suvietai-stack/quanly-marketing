@@ -3097,6 +3097,7 @@ export type Database = {
           request_id: string
           sent_at: string | null
           status: string
+          summary: string | null
         }
         Insert: {
           attempts?: number
@@ -3109,6 +3110,7 @@ export type Database = {
           request_id: string
           sent_at?: string | null
           status?: string
+          summary?: string | null
         }
         Update: {
           attempts?: number
@@ -3121,6 +3123,7 @@ export type Database = {
           request_id?: string
           sent_at?: string | null
           status?: string
+          summary?: string | null
         }
         Relationships: [
           {
