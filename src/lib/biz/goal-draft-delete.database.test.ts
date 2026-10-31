@@ -17,18 +17,18 @@ afterAll(()=>db.close());
 
 it('chủ sở hữu xóa được bản nháp chưa gửi; hồ sơ năm không còn phiên bản nào thì biến mất',async()=>{
  const v=await newDraft(2031);
- expect(await scalar('select count(*) v from biz_goal_items where version_id=$1',[v])).toBe('1');
+ expect(Number(await scalar('select count(*) v from biz_goal_items where version_id=$1',[v]))).toBe(1);
  await db.query('select biz_goal_draft_delete($1)',[v]);
- expect(await scalar('select count(*) v from biz_goal_versions where id=$1',[v])).toBe('0');
- expect(await scalar('select count(*) v from biz_goal_items where version_id=$1',[v])).toBe('0');
- expect(await scalar('select count(*) v from biz_goal_events where version_id=$1',[v])).toBe('0');
- expect(await scalar(`select count(*) v from biz_annual_goals where user_id='${sale}' and year=2031`)).toBe('0');
+ expect(Number(await scalar('select count(*) v from biz_goal_versions where id=$1',[v]))).toBe(0);
+ expect(Number(await scalar('select count(*) v from biz_goal_items where version_id=$1',[v]))).toBe(0);
+ expect(Number(await scalar('select count(*) v from biz_goal_events where version_id=$1',[v]))).toBe(0);
+ expect(Number(await scalar(`select count(*) v from biz_annual_goals where user_id='${sale}' and year=2031`))).toBe(0);
 });
 
 it('biz_goal_start không tạo trùng bản nháp: gọi lại trả về đúng bản đang dở',async()=>{
  const v1=await newDraft(2032);const v2=await newDraft(2032);
  expect(v2).toBe(v1);
- expect(await scalar(`select count(*) v from biz_goal_versions v join biz_annual_goals g on g.id=v.goal_id where g.user_id='${sale}' and g.year=2032`)).toBe('1');
+ expect(Number(await scalar(`select count(*) v from biz_goal_versions v join biz_annual_goals g on g.id=v.goal_id where g.user_id='${sale}' and g.year=2032`))).toBe(1);
 });
 
 it('chặn xóa bản chờ duyệt và bản đã duyệt/chính thức',async()=>{
@@ -48,7 +48,7 @@ it('xóa bản nháp điều chỉnh giữ nguyên mục tiêu chính thức',as
  expect(adj).toBeTruthy();
  await db.query('select biz_goal_draft_delete($1)',[adj]);
  // Bản chính thức vẫn còn nguyên và là bản duy nhất.
- expect(await scalar(`select count(*) v from biz_goal_versions v join biz_annual_goals g on g.id=v.goal_id where g.user_id='${sale}' and g.year=2032`)).toBe('1');
+ expect(Number(await scalar(`select count(*) v from biz_goal_versions v join biz_annual_goals g on g.id=v.goal_id where g.user_id='${sale}' and g.year=2032`))).toBe(1);
  expect(await scalar(`select status v from biz_goal_versions v join biz_annual_goals g on g.id=v.goal_id where g.user_id='${sale}' and g.year=2032`)).toBe('approved');
  expect(await scalar(`select official_version_id is not null v from biz_annual_goals where user_id='${sale}' and year=2032`)).toBe(true);
 });
@@ -58,5 +58,5 @@ it('người khác không xóa được bản nháp không thuộc quyền',asyn
  await actor(other);
  await expect(db.query('select biz_goal_draft_delete($1)',[v])).rejects.toThrow('Không có quyền');
  await actor(admin);await db.query('select biz_goal_draft_delete($1)',[v]);
- expect(await scalar('select count(*) v from biz_goal_versions where id=$1',[v])).toBe('0');
+ expect(Number(await scalar('select count(*) v from biz_goal_versions where id=$1',[v]))).toBe(0);
 });
