@@ -38,6 +38,7 @@ export function BizPlans(){
   {!query.isPending&&!myRow&&!showTeam&&<div className="py-10 border-y space-y-3"><FileText className="h-8 w-8 text-muted-foreground"/><p>Bạn không thuộc diện nộp kế hoạch trong kỳ đang chọn.</p></div>}
   {showTeam&&<section className="space-y-4">
    <h2 className="text-lg font-semibold">Kế hoạch trong phạm vi quản lý</h2>
+   <LateStats kind="plan" periodKind={periodKind} year={year} period={period}/>
    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">{(Object.keys(QUICK_LABEL) as Quick[]).map(key=>{const count=teamRows.filter(r=>quickMatch(r,key)).length;return <button key={key} type="button" onClick={()=>setQuick(quick===key?'all':key)} className={`border rounded-lg p-3 text-left transition-colors ${quick===key?'border-primary bg-primary/5':'bg-card hover:border-primary/40'}`}><p className="text-xs text-muted-foreground">{QUICK_LABEL[key]}</p><strong className="text-xl tabular-nums">{count}</strong></button>;})}</div>
    <div className="flex flex-wrap gap-2 items-center">
     <div className="relative"><Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><Input aria-label="Tìm nhân sự" placeholder="Tìm theo tên…" className="pl-9 w-52" value={search} onChange={e=>setSearch(e.target.value)}/></div>
