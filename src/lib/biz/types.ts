@@ -67,7 +67,20 @@ export const DEADLINE_KINDS: { key: string; label: string }[] = [
   { key: "report_year", label: "Báo cáo Năm" },
 ];
 
-export type BizDeadlineData = Record<string, { day?: number; phase?: "before" | "during" | "after"; hour?: number; minute?: number; exceptions?: Record<string, string> }>;
+/** Một mốc thời gian tương đối với kỳ: offset = số tháng lệch so với tháng đầu kỳ (phase cũ vẫn được hiểu). */
+export interface BizMilestoneRule { offset?: number; day?: number; hour?: number; minute?: number; phase?: "before" | "during" | "after" }
+export interface BizDeadlineException { open?: string | null; due?: string | null; late_close?: string | null }
+export interface BizDeadlineRule { open?: BizMilestoneRule | null; due?: BizMilestoneRule | null; late_close?: BizMilestoneRule | null; exceptions?: Record<string, BizDeadlineException | string> }
+export type BizDeadlineData = Record<string, BizDeadlineRule>;
+
+export type BizLateStatus = "pending" | "approved" | "rejected" | "used" | "expired";
+export const LATE_STATUS_LABELS: Record<BizLateStatus, string> = { pending: "Chờ duyệt", approved: "Được duyệt nộp bù", rejected: "Bị từ chối", used: "Đã nộp bù", expired: "Hết hiệu lực" };
+export interface BizLateRequest {
+  id: string; user_id: string; employee_name: string; kind: "plan" | "report"; period_kind: "month" | "quarter" | "year";
+  year: number; period: number; reason: string; status: BizLateStatus; decided_by: string | null; decider_name: string | null;
+  decided_at: string | null; decision_comment: string | null; created_at: string; used_at: string | null;
+  phase: string; milestones: { open: string | null; due: string | null; late_close: string | null }; can_decide: boolean;
+}
 
 /** Định dạng số tiền VNĐ gọn: 1,2 tỷ / 500 triệu / 50.000 đ. */
 export function fmtVnd(n: number): string {
