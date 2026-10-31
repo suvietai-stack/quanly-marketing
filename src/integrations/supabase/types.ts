@@ -1188,6 +1188,45 @@ export type Database = {
           },
         ]
       }
+      biz_document_views: {
+        Row: {
+          first_opened_at: string
+          id: string
+          latest_opened_at: string
+          version_id: string
+          viewer_id: string
+        }
+        Insert: {
+          first_opened_at?: string
+          id?: string
+          latest_opened_at?: string
+          version_id: string
+          viewer_id: string
+        }
+        Update: {
+          first_opened_at?: string
+          id?: string
+          latest_opened_at?: string
+          version_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_document_views_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "biz_document_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_document_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_documents: {
         Row: {
           created_at: string
@@ -5493,6 +5532,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      biz_document_open: { Args: { _version_id: string }; Returns: string }
       biz_document_save: {
         Args: {
           _actuals: Json
@@ -5590,6 +5630,10 @@ export type Database = {
       biz_period_start: {
         Args: { _kind: string; _period: number; _year: number }
         Returns: string
+      }
+      biz_plans_unviewed: {
+        Args: { _period: number; _period_kind: string; _year: number }
+        Returns: number
       }
       biz_position_save: { Args: { _data: Json }; Returns: string }
       biz_positions_read: { Args: never; Returns: Json }
