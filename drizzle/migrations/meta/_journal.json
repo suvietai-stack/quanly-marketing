@@ -925,6 +925,13 @@
       "when": 1793416755093,
       "tag": "0131_biz_department_head_single_source",
       "breakpoints": true
+    },
+    {
+      "idx": 132,
+      "version": "7",
+      "when": 1793418269685,
+      "tag": "0132_biz_my_work_open_periods",
+      "breakpoints": true
     }
   ]
 }

@@ -5755,6 +5755,7 @@ export type Database = {
         Args: { _kind: string; _period: number; _rule: Json; _year: number }
         Returns: string
       }
+      biz_my_work: { Args: { _kind: string }; Returns: Json }
       biz_org_can_manage: { Args: never; Returns: boolean }
       biz_org_read: { Args: never; Returns: Json }
       biz_org_save: { Args: { _action: string; _data: Json }; Returns: string }
