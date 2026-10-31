@@ -1,0 +1,30 @@
+import {readFileSync} from 'node:fs';
+import {PGlite} from '@electric-sql/pglite';
+import {beforeAll,afterAll,it,expect} from 'vitest';
+const db=new PGlite();const user='00000000-0000-0000-0000-000000000001',metric='00000000-0000-0000-0000-000000000002';
+async function scalar(sql:string){return (await db.query<{v:unknown}>(sql)).rows[0]?.v;}
+beforeAll(async()=>{
+ await db.exec(`CREATE SCHEMA private;CREATE SCHEMA auth;CREATE ROLE anon;CREATE ROLE authenticated;CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT '${user}'::uuid$$;
+ CREATE TABLE biz_documents(id uuid PRIMARY KEY,user_id uuid,kind text,period_kind text,year int,period int,period_start date,period_end date,official_version_id uuid,first_submitted_at timestamptz);
+ CREATE TABLE biz_document_versions(id uuid PRIMARY KEY,document_id uuid,items jsonb,allocations jsonb,status text,version int,submitted_at timestamptz);
+ CREATE TABLE biz_late_requests(id uuid PRIMARY KEY,user_id uuid,kind text,period_kind text,year int,period int,status text,created_at timestamptz,used_at timestamptz);
+ CREATE FUNCTION biz_any_phase(text,text,int,int,timestamptz) RETURNS text LANGUAGE sql AS $$SELECT coalesce(nullif(current_setting('test.phase',true),''),'open')$$;
+ CREATE FUNCTION biz_period_start_date(text,int,int) RETURNS date LANGUAGE sql AS $$SELECT make_date($2,$3,1)$$;
+ CREATE FUNCTION biz_period_end_date(text,int,int) RETURNS date LANGUAGE sql AS $$SELECT (make_date($2,$3,1)+interval '1 month - 1 day')::date$$;
+ CREATE FUNCTION biz_department_at(uuid,date) RETURNS uuid LANGUAGE sql AS $$SELECT '${user}'::uuid$$;
+ CREATE FUNCTION biz_report_cycle_of(uuid,date) RETURNS text LANGUAGE sql AS $$SELECT 'week'::text$$;
+ CREATE FUNCTION biz_report_cycle_config_of(uuid,date) RETURNS jsonb LANGUAGE sql AS $$SELECT '{"cycle":"week"}'::jsonb$$;`);
+ const source=readFileSync('drizzle/migrations/0159_biz_report_multi_cycle_sources.sql','utf8');await db.exec(source.slice(source.indexOf('CREATE OR REPLACE FUNCTION private.'),source.indexOf('-- Existing report summary')));
+ const gate=readFileSync('drizzle/migrations/0158_biz_report_submission_deadline_gate.sql','utf8');await db.exec(gate.slice(0,gate.indexOf('-- Gate must run')));
+ await db.exec(`INSERT INTO biz_documents VALUES('10000000-0000-0000-0000-000000000001','${user}','report','week',2026,44,'2026-10-26','2026-11-01','20000000-0000-0000-0000-000000000001',NULL);
+ INSERT INTO biz_document_versions VALUES('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','[{"metric_id":"${metric}","actual":"100","definition":{"aggregation":"sum"}}]','[{"metric_id":"${metric}","from":"2026-10-26","to":"2026-10-31","actual":"80"},{"metric_id":"${metric}","from":"2026-11-01","to":"2026-11-01","actual":"20"}]','draft',1,NULL);`);
+},20000);
+afterAll(()=>db.close());
+const range=(from:string,to:string)=>scalar(`SELECT private.biz_report_actual_range('${user}','${metric}','${from}','${to}') v`);
+it('weekly allocation assigns 80 to October and 20 to November, no equal division',async()=>{expect(await range('2026-10-26','2026-10-31')).toBe('80');expect(await range('2026-11-01','2026-11-01')).toBe('20');expect(await range('2026-10-26','2026-11-01')).toBe('100');});
+it('quarter/month totals cannot infer smaller daily actuals',async()=>{expect(await range('2026-10-27','2026-10-27')).toBeNull();});
+it('first submission before open blocked at database',async()=>{await db.exec("SELECT set_config('test.phase','not_open',false)");await expect(db.exec("UPDATE biz_document_versions SET status='approved',submitted_at=now()")).rejects.toThrow('chưa mở');});
+it('first submission after due without approved late request blocked',async()=>{await db.exec("SELECT set_config('test.phase','overdue',false)");await expect(db.exec("UPDATE biz_document_versions SET status='approved',submitted_at=now()")).rejects.toThrow('nộp bù');});
+it('closed period blocks submission',async()=>{await db.exec("SELECT set_config('test.phase','closed',false)");await expect(db.exec("UPDATE biz_document_versions SET status='approved',submitted_at=now()")).rejects.toThrow('đóng');});
+it('approved late request consumed once atomically',async()=>{await db.exec(`SELECT set_config('test.phase','overdue',false);INSERT INTO biz_late_requests VALUES('30000000-0000-0000-0000-000000000001','${user}','report','week',2026,44,'approved',now(),NULL);UPDATE biz_document_versions SET status='approved',submitted_at=now();`);expect(await scalar('SELECT status v FROM biz_late_requests')).toBe('used');expect(await scalar('SELECT used_at IS NOT NULL v FROM biz_late_requests')).toBe(true);});
+it('overlapping official sources return unknown instead of double count',async()=>{await db.exec(`INSERT INTO biz_documents VALUES('10000000-0000-0000-0000-000000000002','${user}','report','day',2026,305,'2026-11-01','2026-11-01','20000000-0000-0000-0000-000000000002',now());INSERT INTO biz_document_versions VALUES('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','[{"metric_id":"${metric}","actual":"7","definition":{"aggregation":"sum"}}]',NULL,'approved',1,now());`);expect(await range('2026-11-01','2026-11-01')).toBeNull();});
