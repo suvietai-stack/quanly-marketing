@@ -41,6 +41,7 @@ beforeAll(async()=>{
   ('${execPos}','executive_director','Giám Đốc Điều hành',5,'system',true,true);`);
  const sql=readFileSync('drizzle/migrations/0105_biz_sequential_approvals.sql','utf8');
  await db.exec(sql.slice(0,sql.indexOf('CREATE FUNCTION public.biz_workflow_manage')));
+ await db.exec(`ALTER TABLE biz_approval_workflows DROP CONSTRAINT biz_approval_workflows_kind_check;ALTER TABLE biz_approval_workflows ADD CONSTRAINT biz_approval_workflows_kind_check CHECK(kind IN ('goal_year','rolling_plan','report_day','report_week','report_month','report_quarter','report_year','late_plan_month','late_plan_quarter','late_plan_year','late_report_day','late_report_week','late_report_month','late_report_quarter','late_report_year'));`);
  await db.exec(readFileSync('drizzle/migrations/0171_biz_default_workflow_templates.sql','utf8'));
 },20000);
 afterAll(()=>db.close());
