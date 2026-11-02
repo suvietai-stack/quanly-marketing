@@ -24,7 +24,7 @@ beforeAll(async()=>{
  CREATE TABLE biz_document_versions(id uuid PRIMARY KEY,document_id uuid,items jsonb,allocations jsonb);
  CREATE TABLE biz_kr_metrics(id uuid PRIMARY KEY,name text);
  CREATE TABLE biz_departments(id uuid,system_id uuid);
- CREATE TABLE biz_approval_workflows(id uuid,system_id uuid,department_id uuid,kind text,active boolean,effective_from timestamptz);
+ CREATE TABLE biz_approval_workflows(id uuid,system_id uuid,department_id uuid,kind text CONSTRAINT biz_approval_workflows_kind_check CHECK(kind IN ('goal_year')),active boolean,effective_from timestamptz);
  CREATE FUNCTION biz_period_start_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT CASE $1 WHEN 'month' THEN make_date($2,$3,1) WHEN 'quarter' THEN make_date($2,($3-1)*3+1,1) ELSE make_date($2,1,1) END$$;
  CREATE FUNCTION biz_period_end_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT CASE $1 WHEN 'month' THEN (make_date($2,$3,1)+interval '1 month - 1 day')::date WHEN 'quarter' THEN (make_date($2,($3-1)*3+1,1)+interval '3 months - 1 day')::date ELSE make_date($2,12,31) END$$;
  CREATE TABLE profiles(id uuid PRIMARY KEY);CREATE TABLE biz_annual_goals(id uuid PRIMARY KEY,user_id uuid,department_id uuid,year integer,official_version_id uuid);
