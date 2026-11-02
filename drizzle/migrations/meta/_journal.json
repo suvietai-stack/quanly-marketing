@@ -1198,6 +1198,13 @@
       "when": 1793601356096,
       "tag": "0170_biz_rolling_workflow_kind_and_lock_narrowing",
       "breakpoints": true
+    },
+    {
+      "idx": 171,
+      "version": "7",
+      "when": 1793601638178,
+      "tag": "0171_biz_default_workflow_templates",
+      "breakpoints": true
     }
   ]
 }
