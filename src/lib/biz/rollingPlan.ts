@@ -1,8 +1,15 @@
 import type { GoalItem } from './goals';
 
+export interface RollingCoverage {
+ status: 'full' | 'partial' | 'none' | 'na';
+ source: 'reports' | 'opening';
+ expected: number; received: number;
+ missing: { period_kind: string; year: number; period: number; period_start: string; period_end: string }[];
+}
 export interface RollingMetric extends GoalItem {
  current: (string | null)[];
  actuals: (string | null)[];
+ coverage?: (RollingCoverage | null)[];
  complete: boolean;
  actual: string | null;
  remaining: string | null;
