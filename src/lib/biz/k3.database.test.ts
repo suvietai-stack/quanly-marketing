@@ -33,7 +33,7 @@ beforeAll(async () => {
   // Kích hoạt module bằng quyền cấu hình (super admin stub=false → cấp trực tiếp qua sig_can thay thế)
   await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT $2='k3.settings' AND $1='${manager}'::uuid$$;`);
   await as(manager);
-  await db.query(`SELECT k3_settings_save(true, '2020-01-01', '08:45', '18:00', 3)`);
+  await db.query(`SELECT k3_settings_save(true, '2020-01-01'::date, '08:45'::time, '18:00'::time, 3::smallint)`);
   await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;`);
   await as(staff);
 }, 30000);
@@ -129,7 +129,7 @@ it('không tạo 3K trùng cho cùng nhân viên/ngày và chặn ngày quá xa'
 it('cấu hình ghi lịch sử và không đổi dữ liệu lịch sử', async () => {
   await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT $2='k3.settings' AND $1='${manager}'::uuid$$;`);
   await as(manager);
-  await value(`SELECT k3_settings_save(true, '2020-01-01', '08:30', '17:30', 2) v`);
+  await value(`SELECT k3_settings_save(true, '2020-01-01'::date, '08:30'::time, '17:30'::time, 2::smallint) v`);
   const logs = await value(`SELECT count(*)::int v FROM k3_settings_log`);
   expect(logs).toBe(2);
   expect(await value(`SELECT max_focus::int v FROM k3_settings`)).toBe(2);
