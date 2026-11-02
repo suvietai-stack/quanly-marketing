@@ -32,7 +32,8 @@ export type PermissionGroup =
   | "Tích hợp Marketing"
   | "Tài khoản"
   | "Sao Sứ Việt"
-  | "Quản trị Kinh doanh";
+  | "Quản trị Kinh doanh"
+  | "Quản lý 3K";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -71,6 +72,11 @@ export const PERMISSIONS: PermissionDef[] = [
   P('biz.org_manage', 'Quản lý cơ cấu tổ chức và phân công', 'Quản trị Kinh doanh', 'Cài đặt'),
   P('biz.workflow_manage', 'Cấu hình quy trình phê duyệt', 'Quản trị Kinh doanh', 'Cài đặt'),
   P('biz.approval_view', 'Xem Trung tâm Phê duyệt trong phạm vi', 'Quản trị Kinh doanh', 'Duyệt'),
+  // ===== Quản lý 3K =====
+  P('k3.use', 'Lập và cập nhật 3K cá nhân', 'Quản lý 3K', 'Sử dụng'),
+  P('k3.view_scope', 'Xem 3K trong phạm vi quản lý', 'Quản lý 3K', 'Xem'),
+  P('k3.comment', 'Nhận xét 3K nhân viên', 'Quản lý 3K', 'Xem'),
+  P('k3.settings', 'Cấu hình module 3K', 'Quản lý 3K', 'Cài đặt'),
   // ===== A. Tổng Quan =====
   P("overview.view", "Xem Tổng Quan", "Tổng Quan", "Tổng quan"),
   P("overview.alerts", "Xem việc cần chú ý", "Tổng Quan", "Tổng quan"),
@@ -715,7 +721,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Quản trị Kinh doanh", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Quản trị Kinh doanh", "Quản lý 3K", "Cài Đặt", "Tài khoản",
 ];
 
 // ============ Default permissions per role ============
