@@ -11,7 +11,7 @@ import { Biz3KSettings } from './Biz3KSettings';
 type Section = 'mine' | 'manage' | 'settings';
 
 export function Biz3K() {
-  const uid = useAuth((s) => s.user?.id ?? '');
+  const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data: settings, isLoading, error, refetch } = useQuery({ ...k3SettingsQuery(uid), enabled: !!uid });
   const [section, setSection] = useState<Section>('mine');
 

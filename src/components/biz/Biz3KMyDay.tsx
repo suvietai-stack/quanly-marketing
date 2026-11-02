@@ -29,7 +29,7 @@ function StatusBadge({ status }: { status: K3Status }) {
 }
 
 export function Biz3KMyDay({ settings }: { settings: K3Settings }) {
-  const uid = useAuth((s) => s.user?.id ?? '');
+  const uid = useAuth((s) => s.currentUserId) ?? '';
   const [date, setDate] = useState(settings.today);
   const { data, isLoading, error, refetch } = useQuery({ ...k3DayQuery(uid, date), enabled: !!uid && !!date });
   const [editing, setEditing] = useState<K3Task | null | 'new'>(null);

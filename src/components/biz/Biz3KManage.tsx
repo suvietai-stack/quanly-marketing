@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 type Filter = 'all' | 'planned' | 'summarized' | 'none' | 'issues';
 
 export function Biz3KManage({ settings }: { settings: K3Settings }) {
-  const uid = useAuth((s) => s.user?.id ?? '');
+  const uid = useAuth((s) => s.currentUserId) ?? '';
   const [date, setDate] = useState(settings.today);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
@@ -131,7 +131,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; date: string; settings: K3Settings; onClose: () => void }) {
-  const uid = useAuth((s) => s.user?.id ?? '');
+  const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data, isLoading } = useQuery({ ...k3UserDayQuery(uid, row?.user_id ?? '', date), enabled: !!uid && !!row });
   const comment = useK3Comment();
   const [body, setBody] = useState('');
