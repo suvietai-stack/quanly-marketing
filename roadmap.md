@@ -2,13 +2,13 @@
 
 ## QUẢN LÝ 3K GIAI ĐOẠN 1 — spec 830 dòng
 Nguyên tắc: phân hệ độc lập (dữ liệu/giao diện/cài đặt/lịch sử riêng), không bắt có Kế hoạch/KR mới được lập 3K, không đưa kết quả 3K vào KR/Dashboard KD, tái dùng đăng nhập/tài khoản/cơ cấu/chức danh, không dữ liệu giả, múi giờ VN, chưa Publish.
-- [ ] K3-1. Database + RLS + RPC: k3_settings/log, k3_days (KG, planned_at, summarized_at, unique user+ngày), k3_tasks (KF, KPI dự kiến/thực tế, tiến độ, trạng thái, mũi khoan, VNGB), k3_task_events, k3_comments; quyền k3.use/view_scope/comment/settings qua k3_can (tái dùng sig_can/biz_manager/biz_all_scope), scope qua biz_scope_ok; giới hạn mũi khoan theo cấu hình; tổng kết bắt VNGB cho việc chưa xong; không hồi tố nghĩa vụ trước ngày hiệu lực.
-- [ ] K3-2. Giao diện "3K của tôi": chọn ngày + Hôm nay, thẻ tổng quan, ô KG, thêm/sửa/xóa công việc nhanh, cập nhật tiến độ/kết quả, mũi khoan (tối đa theo cấu hình), VNGB, nút Tổng kết 3K hôm nay, đúng hạn/trễ hạn.
-- [ ] K3-3. "Trong phạm vi quản lý": tổng quan ngày, danh sách nhân viên theo scope (Trưởng Nhóm/Phòng/GĐ Hệ/lãnh đạo Khối), chi tiết 3K nhân viên, nhận xét quản lý; quyền xem tách quyền sửa; kiểm tra máy chủ.
-- [ ] K3-4. Cài đặt 3K trong module: bật/tắt, ngày hiệu lực, giờ lập (08:45)/tổng kết (18:00), số mũi khoan tối đa (3), xem phạm vi kế thừa, quy chuẩn trạng thái, lịch sử cấu hình.
-- [ ] K3-5. Quyền & menu: nhóm quyền "Quản lý 3K" trong registry, menu Quản trị Kinh doanh → Quản lý 3K, route /biz/3k.
-- [ ] K3-6. Kiểm thử: đơn vị (tiến độ/trạng thái/mũi khoan/VNGB), database (scope, giới hạn, tổng kết), UI desktop + 360/375/390/430px; không ảnh hưởng KR/Kế hoạch/Báo cáo/cơ cấu.
-- [ ] K3-7. Nghiệm thu thật bằng tài khoản nhân viên/quản lý thật; chưa Publish.
+- [x] K3-1. Database + RLS + RPC: migration 0173 — k3_settings/log, k3_days (KG, planned_at, summarized_at, unique user+ngày), k3_tasks (KF, KPI dự kiến/thực tế, tiến độ, trạng thái, mũi khoan, VNGB), k3_task_events, k3_comments; quyền k3.use/view_scope/comment/settings qua k3_can (tái dùng sig_can/biz_manager/biz_all_scope), scope qua biz_scope_ok; giới hạn mũi khoan theo cấu hình; tổng kết bắt VNGB cho việc chưa xong; không hồi tố nghĩa vụ trước ngày hiệu lực.
+- [x] K3-2. Giao diện "3K của tôi": chọn ngày + Hôm nay, thẻ tổng quan, ô KG, thêm/sửa/xóa công việc nhanh, cập nhật tiến độ/kết quả, mũi khoan (tối đa theo cấu hình), VNGB, nút Tổng kết 3K hôm nay, đúng hạn/trễ hạn.
+- [x] K3-3. "Trong phạm vi quản lý": tổng quan ngày, danh sách nhân viên theo scope (Trưởng Nhóm/Phòng/GĐ Hệ/lãnh đạo Khối), chi tiết 3K nhân viên, nhận xét quản lý; quyền xem tách quyền sửa; kiểm tra máy chủ.
+- [x] K3-4. Cài đặt 3K trong module: bật/tắt, ngày hiệu lực, giờ lập (08:45)/tổng kết (18:00), số mũi khoan tối đa (3), xem phạm vi kế thừa, quy chuẩn trạng thái, lịch sử cấu hình.
+- [x] K3-5. Quyền & menu: nhóm quyền "Quản lý 3K" trong registry, menu Quản trị Kinh doanh → Quản lý 3K, route /biz/3k.
+- [x] K3-6. Kiểm thử: 10 đơn vị + 10 database (scope, giới hạn mũi khoan, VNGB tổng kết, chống sửa chéo, lịch sử xóa, chống trùng ngày) đạt; typecheck/build đạt; UI thật desktop + 390px không tràn, không lỗi trình duyệt; module mặc định Tắt, chưa tạo nghĩa vụ.
+- [ ] K3-7. Nghiệm thu thật: cần Admin chọn ngày hiệu lực và bật module trong Cài đặt 3K, sau đó nhân viên/quản lý thật tạo–cập nhật–tổng kết–nhận xét; chưa Publish.
 
 ## FIX TỔNG THỂ QUẢN TRỊ KINH DOANH (SOURCE 35) — spec 909 dòng, 10 phần
 Nguyên tắc: không xây lại module, không xóa/reset dữ liệu thật, không động module khác, không tự khóa Báo cáo 2027, chưa Publish.
