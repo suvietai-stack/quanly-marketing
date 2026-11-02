@@ -3136,6 +3136,275 @@ export type Database = {
         }
         Relationships: []
       }
+      k3_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          day_id: string
+          id: string
+          task_id: string | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          day_id: string
+          id?: string
+          task_id?: string | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          day_id?: string
+          id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_comments_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "k3_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "k3_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_days: {
+        Row: {
+          created_at: string
+          id: string
+          kg: string | null
+          planned_at: string | null
+          summarized_at: string | null
+          summary_note: string | null
+          updated_at: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kg?: string | null
+          planned_at?: string | null
+          summarized_at?: string | null
+          summary_note?: string | null
+          updated_at?: string
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kg?: string | null
+          planned_at?: string | null
+          summarized_at?: string | null
+          summary_note?: string | null
+          updated_at?: string
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
+      k3_settings: {
+        Row: {
+          effective_from: string | null
+          enabled: boolean
+          id: boolean
+          max_focus: number
+          plan_by: string
+          summary_by: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          effective_from?: string | null
+          enabled?: boolean
+          id?: boolean
+          max_focus?: number
+          plan_by?: string
+          summary_by?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          effective_from?: string | null
+          enabled?: boolean
+          id?: boolean
+          max_focus?: number
+          plan_by?: string
+          summary_by?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      k3_settings_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: number
+          snapshot: Json
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: never
+          snapshot: Json
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: never
+          snapshot?: Json
+        }
+        Relationships: []
+      }
+      k3_task_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          day_id: string
+          detail: Json | null
+          id: number
+          task_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          day_id: string
+          detail?: Json | null
+          id?: never
+          task_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          day_id?: string
+          detail?: Json | null
+          id?: never
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_task_events_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "k3_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_task_events_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "k3_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_tasks: {
+        Row: {
+          cause: string | null
+          created_at: string
+          created_by: string | null
+          day_id: string
+          end_time: string | null
+          how: string | null
+          id: string
+          is_focus: boolean
+          kpi_actual: number | null
+          kpi_target: number | null
+          kpi_unit: string | null
+          links: Json | null
+          name: string
+          note: string | null
+          place: string | null
+          problem: string | null
+          progress: number
+          solution: string | null
+          sort_order: number
+          start_time: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          cause?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_id: string
+          end_time?: string | null
+          how?: string | null
+          id?: string
+          is_focus?: boolean
+          kpi_actual?: number | null
+          kpi_target?: number | null
+          kpi_unit?: string | null
+          links?: Json | null
+          name: string
+          note?: string | null
+          place?: string | null
+          problem?: string | null
+          progress?: number
+          solution?: string | null
+          sort_order?: number
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          cause?: string | null
+          created_at?: string
+          created_by?: string | null
+          day_id?: string
+          end_time?: string | null
+          how?: string | null
+          id?: string
+          is_focus?: boolean
+          kpi_actual?: number | null
+          kpi_target?: number | null
+          kpi_unit?: string | null
+          links?: Json | null
+          name?: string
+          note?: string | null
+          place?: string | null
+          problem?: string | null
+          progress?: number
+          solution?: string | null
+          sort_order?: number
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_tasks_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "k3_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       keywords: {
         Row: {
           created_at: string
@@ -6757,6 +7026,49 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      k3_can: {
+        Args: { _actor: string; _permission: string }
+        Returns: boolean
+      }
+      k3_comment_save: {
+        Args: { _body: string; _day_id: string; _task_id: string }
+        Returns: Json
+      }
+      k3_day_read: { Args: { _date: string }; Returns: Json }
+      k3_day_save: { Args: { _date: string; _kg: string }; Returns: Json }
+      k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
+      k3_settings_read: { Args: never; Returns: Json }
+      k3_settings_save: {
+        Args: {
+          _effective_from: string
+          _enabled: boolean
+          _max_focus: number
+          _plan_by: string
+          _summary_by: string
+        }
+        Returns: Json
+      }
+      k3_summary_confirm: { Args: { _date: string }; Returns: Json }
+      k3_task_delete: { Args: { _id: string }; Returns: boolean }
+      k3_task_save: { Args: { _payload: Json }; Returns: Json }
+      k3_task_update: {
+        Args: {
+          _cause: string
+          _id: string
+          _kpi_actual: number
+          _note: string
+          _problem: string
+          _progress: number
+          _solution: string
+          _status: string
+        }
+        Returns: Json
+      }
+      k3_team_read: { Args: { _date: string }; Returns: Json }
+      k3_user_day_read: {
+        Args: { _date: string; _user: string }
+        Returns: Json
+      }
       leave_approvers: {
         Args: never
         Returns: {
