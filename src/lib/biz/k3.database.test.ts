@@ -57,7 +57,7 @@ it('KPI số lượng tự tính tỷ lệ và cho phép vượt kế hoạch', 
   expect(updated.status).toBe('doing');
   const over = await value(`SELECT k3_task_update('${t}', 'doing', 12, NULL, '', '', '', '') v`) as { progress: number; kpi_actual: string };
   expect(over.progress).toBe(100); // tiến độ lưu tối đa 100, tỷ lệ 120% hiển thị từ actual/target
-  expect(over.kpi_actual).toBe('12');
+  expect(Number(over.kpi_actual)).toBe(12);
 });
 
 it('không nhận số âm và không cho sửa công việc người khác', async () => {
