@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
-import { distributeExact, remainingTarget, rollingError, type RollingBasis } from './rollingPlan';
+import { describe } from 'vitest';
+import { coverageLabel, coverageMissingText, distributeExact, isStaleDraft, rebaseMonths, remainingTarget, rollingError, type RollingBasis, type RollingProposal } from './rollingPlan';
 it('1.2 billion less January 70 million leaves 1.13 billion', () => expect(remainingTarget('1200000000','70000000')).toBe('1130000000'));
 it('January 150 million leaves 1.05 billion', () => expect(remainingTarget('1200000000','150000000')).toBe('1050000000'));
 it('exceeding the annual commitment leaves zero', () => expect(remainingTarget('1200000000','1300000000')).toBe('0'));
