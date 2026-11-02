@@ -1212,6 +1212,13 @@
       "when": 1793602238899,
       "tag": "0172_biz_rolling_basis_coverage_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 173,
+      "version": "7",
+      "when": 1793604731972,
+      "tag": "0173_k3_daily_management_phase1",
+      "breakpoints": true
     }
   ]
 }
