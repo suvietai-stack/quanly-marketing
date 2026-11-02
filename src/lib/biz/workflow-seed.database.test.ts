@@ -81,8 +81,8 @@ it('simulate resolves the real approval chain for a chosen employee',async()=>{
  expect(missing.steps.some((s:any)=>s.missing)).toBe(true);
 });
 it('simulate reports a clear reason when no active workflow exists',async()=>{
- const r=await value(`SELECT biz_workflow_simulate('goal_year','${employee}') v`);
- expect(r.error).toBeUndefined();
+ const inactive=await value(`SELECT biz_workflow_simulate('goal_year','${employee}') v`);
+ expect(inactive.error).toContain('Chưa có luồng hoạt động');
  const none=await value(`SELECT biz_workflow_simulate('report_year','${employee}') v`);
  expect(none.error).toContain('Chưa có luồng hoạt động');
 });
