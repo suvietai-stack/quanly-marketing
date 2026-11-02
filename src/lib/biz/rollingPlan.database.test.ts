@@ -54,7 +54,7 @@ beforeAll(async()=>{
  await db.exec(cov.slice(0,cov.indexOf('-- Opening confirmations fill ranges')));
  await db.exec(cov.slice(cov.indexOf('-- Rolling basis consumes coverage'),cov.indexOf('-- Opening balance confirmation')));
  await db.exec(cov.slice(cov.indexOf('-- Opening balance confirmation')));
- await db.exec(readFileSync('drizzle/migrations/0170_biz_rolling_workflow_kind_and_lock_narrowing.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0170_biz_rolling_workflow_kind_and_lock_narrowing.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0172_biz_rolling_basis_coverage_cleanup.sql','utf8'));
  for(let m=1;m<=elapsed;m++)await addReport(m,'7000000');
 },30000);
 afterAll(()=>db.close());
