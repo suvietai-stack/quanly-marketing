@@ -78,7 +78,7 @@ export function useK3TaskUpdate() {
       const { data, error } = await supabase.rpc('k3_task_update', {
         _id: a.id, _status: a.status, _kpi_actual: a.kpi_actual ?? null, _progress: a.progress ?? null,
         _problem: a.problem ?? '', _cause: a.cause ?? '', _solution: a.solution ?? '', _note: a.note ?? '',
-      });
+      } as never);
       if (error) throw error;
       return data;
     },
@@ -113,7 +113,7 @@ export function useK3Comment() {
   const invalidate = useK3Invalidate();
   return useMutation({
     mutationFn: async (a: { day_id: string; task_id?: string | null; body: string }) => {
-      const { data, error } = await supabase.rpc('k3_comment_save', { _day_id: a.day_id, _task_id: a.task_id ?? null, _body: a.body });
+      const { data, error } = await supabase.rpc('k3_comment_save', { _day_id: a.day_id, _task_id: a.task_id ?? null, _body: a.body } as never);
       if (error) throw error;
       return data;
     },
@@ -127,7 +127,7 @@ export function useK3SettingsSave() {
     mutationFn: async (a: { enabled: boolean; effective_from: string | null; plan_by: string; summary_by: string; max_focus: number }) => {
       const { data, error } = await supabase.rpc('k3_settings_save', {
         _enabled: a.enabled, _effective_from: a.effective_from, _plan_by: a.plan_by, _summary_by: a.summary_by, _max_focus: a.max_focus,
-      });
+      } as never);
       if (error) throw error;
       return data;
     },
