@@ -27,7 +27,7 @@ beforeAll(async()=>{
  CREATE TABLE biz_approval_workflows(id uuid,system_id uuid,department_id uuid,kind text CONSTRAINT biz_approval_workflows_kind_check CHECK(kind IN ('goal_year')),active boolean,effective_from timestamptz);
  CREATE FUNCTION biz_period_start_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT CASE $1 WHEN 'month' THEN make_date($2,$3,1) WHEN 'quarter' THEN make_date($2,($3-1)*3+1,1) ELSE make_date($2,1,1) END$$;
  CREATE FUNCTION biz_period_end_date(text,integer,integer) RETURNS date LANGUAGE sql AS $$SELECT CASE $1 WHEN 'month' THEN (make_date($2,$3,1)+interval '1 month - 1 day')::date WHEN 'quarter' THEN (make_date($2,($3-1)*3+1,1)+interval '3 months - 1 day')::date ELSE make_date($2,12,31) END$$;
- CREATE TABLE profiles(id uuid PRIMARY KEY);CREATE TABLE biz_annual_goals(id uuid PRIMARY KEY,user_id uuid,department_id uuid,year integer,official_version_id uuid);
+ CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text,status text);CREATE TABLE biz_annual_goals(id uuid PRIMARY KEY,user_id uuid,department_id uuid,year integer,official_version_id uuid);
  CREATE TABLE biz_goal_versions(id uuid PRIMARY KEY,goal_id uuid,revision integer);CREATE TABLE biz_goal_items(version_id uuid,metric_id uuid,definition jsonb,annual numeric,months numeric[]);
  CREATE TABLE biz_approval_runs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),version_id uuid,status text,owner_id uuid,content_snapshot jsonb);
  CREATE FUNCTION biz_goal_can_read(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
@@ -45,7 +45,7 @@ beforeAll(async()=>{
  CREATE FUNCTION public.biz_workflow_preview(jsonb) RETURNS jsonb LANGUAGE sql AS $$SELECT '[]'::jsonb$$;
  CREATE FUNCTION public.biz_approvals_read() RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;
  CREATE FUNCTION public.biz_document_save(uuid,integer,text,text,jsonb,boolean,jsonb,jsonb) RETURNS void LANGUAGE plpgsql AS $$DECLARE v record;d record;BEGIN IF v.status NOT IN ('draft','changes') THEN RAISE EXCEPTION 'Tài liệu đang chờ duyệt hoặc đã khóa.'; END IF;END$$;
- INSERT INTO profiles VALUES('${owner}'),('${reviewer}');INSERT INTO biz_departments VALUES('${dept}',NULL);INSERT INTO biz_kr_metrics VALUES('${metric}','Doanh số');
+ INSERT INTO profiles VALUES('${owner}','Owner','Đang hoạt động'),('${reviewer}','Reviewer','Đang hoạt động');INSERT INTO biz_departments VALUES('${dept}',NULL);INSERT INTO biz_kr_metrics VALUES('${metric}','Doanh số');
  INSERT INTO biz_annual_goals VALUES('${goal}','${owner}','${dept}',${goalYear},'${version}');INSERT INTO biz_goal_versions VALUES('${version}','${goal}',0);
  INSERT INTO biz_goal_items VALUES('${version}','${metric}','{"name":"Doanh số","aggregation":"sum","unit":"VNĐ","value_kind":"money","direction":"higher","description":null}',1200000000,ARRAY[100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000,100000000]);
  SET test.uid='${owner}';`);
