@@ -1,8 +1,15 @@
 import type { GoalItem } from './goals';
 
+export interface RollingCoverage {
+ status: 'full' | 'partial' | 'none' | 'na';
+ source: 'reports' | 'opening';
+ expected: number; received: number;
+ missing: { period_kind: string; year: number; period: number; period_start: string; period_end: string }[];
+}
 export interface RollingMetric extends GoalItem {
  current: (string | null)[];
  actuals: (string | null)[];
+ coverage?: (RollingCoverage | null)[];
  complete: boolean;
  actual: string | null;
  remaining: string | null;
@@ -46,6 +53,24 @@ export function proposeMonths(metric: RollingMetric, firstMonth: number, mode: '
  const start = firstMonth - 1;
  const weights = metric.current.slice(start).map(v => mode === 'equal' ? '1' : v ?? '0');
  return [...metric.current.slice(0, start), ...distributeExact(metric.remaining, weights)];
+}
+/** Rebase a stale draft after month rollover: locked months follow the current plan, still-editable months keep their proposed values. */
+export function rebaseMonths(metric: RollingMetric, oldMonths: (string | null)[], firstMonth: number): (string | null)[] {
+ return metric.current.map((current, m) => (m < firstMonth - 1 ? current : oldMonths[m] ?? current));
+}
+/** True when a saved draft was created for an earlier first_month than the live basis allows. */
+export function isStaleDraft(proposal: RollingProposal | undefined, basis: RollingBasis): boolean {
+ return !!proposal && proposal.status !== 'approved' && proposal.first_month < basis.first_month;
+}
+const COVERAGE_LABEL: Record<RollingCoverage['status'], string> = { full: 'Đầy đủ', partial: 'Chưa đầy đủ', none: 'Chưa có dữ liệu', na: 'Không áp dụng' };
+export function coverageLabel(c: RollingCoverage | null | undefined): string {
+ return c ? COVERAGE_LABEL[c.status] : '—';
+}
+/** Human-readable list of missing obligation periods, e.g. "Tuần 44, Tuần 45". */
+export function coverageMissingText(c: RollingCoverage | null | undefined): string {
+ if (!c?.missing.length) return '';
+ const KIND: Record<string, string> = { day: 'Ngày', week: 'Tuần', month: 'Tháng', quarter: 'Quý' };
+ return c.missing.map(m => `${KIND[m.period_kind] ?? m.period_kind} ${m.period}`).join(', ');
 }
 export function rollingError(items: GoalItem[], basis: RollingBasis): string | null {
  if (basis.first_month > 12) return 'Không còn tháng tương lai để điều chỉnh.';

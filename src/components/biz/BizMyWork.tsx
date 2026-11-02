@@ -32,8 +32,9 @@ export function MyWorkSection({ kind, onOpen }: { kind: DocKind; onOpen: (period
   const query = useQuery({ ...myWorkQuery(uid, kind), enabled: !!uid });
   const [askLate, setAskLate] = useState<MyWorkRow | null>(null);
   const rows = (query.data?.rows ?? []).slice().sort((a, b) => myWorkRank(a) - myWorkRank(b) || Date.parse(a.due_at ?? '') - Date.parse(b.due_at ?? ''));
-  if (query.isPending || query.error || !rows.length) return null;
   const label = kind === 'plan' ? 'Kế hoạch' : 'Báo cáo';
+  if (query.error) return <section className="space-y-3"><h2 className="text-lg font-semibold">Công việc của tôi</h2><div role="alert" className="border border-destructive/40 rounded-lg p-4 space-y-2"><p className="text-sm text-destructive">Không tải được danh sách công việc: {query.error.message}</p><Button size="sm" variant="outline" onClick={() => query.refetch()}>Thử lại</Button></div></section>;
+  if (query.isPending || !rows.length) return null;
   return <section className="space-y-3">
     <h2 className="text-lg font-semibold">Công việc của tôi</h2>
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

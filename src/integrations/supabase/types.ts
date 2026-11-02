@@ -6575,6 +6575,11 @@ export type Database = {
       biz_workflow_manage: { Args: never; Returns: boolean }
       biz_workflow_preview: { Args: { _data: Json }; Returns: Json }
       biz_workflow_save: { Args: { _data: Json }; Returns: string }
+      biz_workflow_seed_defaults: { Args: never; Returns: Json }
+      biz_workflow_simulate: {
+        Args: { _kind: string; _user: string }
+        Returns: Json
+      }
       biz_workflows_read: { Args: never; Returns: Json }
       branding_save: {
         Args: {

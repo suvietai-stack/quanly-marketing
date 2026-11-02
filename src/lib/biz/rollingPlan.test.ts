@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
-import { distributeExact, remainingTarget, rollingError, type RollingBasis } from './rollingPlan';
+import { describe } from 'vitest';
+import { coverageLabel, coverageMissingText, distributeExact, isStaleDraft, rebaseMonths, remainingTarget, rollingError, type RollingBasis, type RollingProposal } from './rollingPlan';
 it('1.2 billion less January 70 million leaves 1.13 billion', () => expect(remainingTarget('1200000000','70000000')).toBe('1130000000'));
 it('January 150 million leaves 1.05 billion', () => expect(remainingTarget('1200000000','150000000')).toBe('1050000000'));
 it('exceeding the annual commitment leaves zero', () => expect(remainingTarget('1200000000','1300000000')).toBe('0'));
@@ -20,3 +21,34 @@ it('missing official history blocks submission',()=>expect(rollingError(proposal
 it('underfunding cannot be sent without correction',()=>{const items=proposal();items[0].months[11]='0';expect(rollingError(items,basis)).toBe('Tổng kế hoạch tương lai chưa đủ phần còn phải đạt.');});
 it('ambition may exceed the floor without changing the annual commitment',()=>{const items=proposal();items[0].months[11]='500';expect(rollingError(items,basis)).toBeNull();expect(items[0].annual).toBe('1200');});
 it('fractional counts cannot enter the proposal',()=>{const items=proposal();items[0].months[11]='1.5';expect(rollingError(items,basis)).toBe('Cần nhập đủ số nguyên không âm cho các tháng.');});
+describe('stale draft rebase after month rollover',()=>{
+ const metric=basis.items[0];
+ it('keeps proposed values for still-editable months and follows current plan for newly locked months',()=>{
+  const old=['100','100','150','150','150','150','150','150','150','150','150','150'];
+  expect(rebaseMonths(metric,old,4)).toEqual(['100','100','100','150','150','150','150','150','150','150','150','150']);
+ });
+ it('falls back to the current plan when the old draft has no value',()=>{
+  const old=Array(12).fill(null);
+  expect(rebaseMonths(metric,old,3)).toEqual(metric.current);
+ });
+ it('detects a draft created for an earlier first month',()=>{
+  const p={first_month:3,status:'draft'} as RollingProposal;
+  expect(isStaleDraft(p,{...basis,first_month:4})).toBe(true);
+  expect(isStaleDraft(p,basis)).toBe(false);
+  expect(isStaleDraft(undefined,basis)).toBe(false);
+  expect(isStaleDraft({...p,status:'approved'}, {...basis,first_month:4})).toBe(false);
+ });
+});
+describe('month coverage labels',()=>{
+ it('maps the four coverage states',()=>{
+  expect(coverageLabel({status:'full',source:'reports',expected:4,received:4,missing:[]})).toBe('Đầy đủ');
+  expect(coverageLabel({status:'partial',source:'reports',expected:4,received:3,missing:[]})).toBe('Chưa đầy đủ');
+  expect(coverageLabel({status:'none',source:'reports',expected:4,received:0,missing:[]})).toBe('Chưa có dữ liệu');
+  expect(coverageLabel({status:'na',source:'reports',expected:0,received:0,missing:[]})).toBe('Không áp dụng');
+  expect(coverageLabel(null)).toBe('—');
+ });
+ it('lists missing obligation periods in Vietnamese',()=>{
+  expect(coverageMissingText({status:'partial',source:'reports',expected:5,received:3,missing:[{period_kind:'week',year:2026,period:44,period_start:'2026-10-26',period_end:'2026-11-01'},{period_kind:'week',year:2026,period:45,period_start:'2026-11-02',period_end:'2026-11-08'}]})).toBe('Tuần 44, Tuần 45');
+  expect(coverageMissingText({status:'full',source:'reports',expected:1,received:1,missing:[]})).toBe('');
+ });
+});
