@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, GitBranch, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, GitBranch, Plus, Sparkles, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { orgQuery, workflowsQuery, useOrganizationAction } from '@/lib/biz/organizationQueries';
-import { defaultApprovalSteps, POSITIONS, WORKFLOW_KINDS, orgDate, type ApprovalStep, type Workflow, type OrgData } from '@/lib/biz/organization';
+import { defaultApprovalSteps, POSITIONS, WORKFLOW_KINDS, orgDate, type ApprovalStep, type Workflow, type WorkflowKind, type OrgData } from '@/lib/biz/organization';
 import { positionsQuery, previewWorkflow } from '@/lib/biz/positionQueries';
 import type { PreviewReviewer } from '@/lib/biz/positions';
 import { Button } from '@/components/ui/button';
