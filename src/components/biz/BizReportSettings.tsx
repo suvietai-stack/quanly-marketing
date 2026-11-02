@@ -1,10 +1,13 @@
 import {useState,useEffect} from 'react';
 import {useQuery} from '@tanstack/react-query';
-import {History,Settings,Save,Undo2,CalendarDays} from 'lucide-react';
+import {History,Settings,Save,Trash2,Undo2,CalendarDays} from 'lucide-react';
 import {toast} from 'sonner';
 import {useAuth,useCurrentUser} from '@/lib/auth';
 import {orgQuery} from '@/lib/biz/organizationQueries';
 import {cycleConfigsQuery,cycleLogQuery,useCycleAction,asJson} from '@/lib/biz/reportCycleQueries';
+import {openingActualsQuery,useOpeningAction} from '@/lib/biz/rollingQueries';
+import {bizGoalsQuery} from '@/lib/biz/goalQueries';
+import {fmtGoal} from '@/lib/biz/goals';
 import {effectiveConfig,alignedEffectiveDate} from '@/lib/biz/reportCycleSettings';
 import {CYCLE_LABEL,upcomingPeriods,type ReportCycle} from '@/lib/biz/periodCycle';
 import {bizDeadlineQuery} from '@/lib/biz/queries';
@@ -22,7 +25,7 @@ import {BizDeadlineEditor} from './BizDeadlineEditor';
 import {defaultReportCycle,reportDeadlineError,shortReportWindow,WEEKLY_EFFECTIVE_FROM} from '@/lib/biz/reportPolicy';
 const todayVN=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const SCOPE_LABEL:Record<string,string>={block:'Toàn Khối',system:'Hệ',department:'Phòng',default:'Mặc định'};
-export function BizReportSettings(){const {can,isSuperAdmin}=useCurrentUser();const [open,setOpen]=useState(false);const [tab,setTab]=useState('cycle');useEffect(()=>{if(new URLSearchParams(window.location.search).get('settings')==='deadline'){setTab('deadline');setOpen(true);}},[]);if(!isSuperAdmin&&!can('biz.deadline_manage'))return null;return <><Button variant="outline" onClick={()=>setOpen(true)}><Settings className="h-4 w-4 mr-2"/>Cài đặt</Button>{open&&<Dialog open onOpenChange={setOpen}><DialogContent className="sm:max-w-6xl max-h-[90dvh] overflow-y-auto min-w-0"><DialogHeader><DialogTitle>Cài đặt Báo cáo</DialogTitle></DialogHeader><Tabs value={tab} onValueChange={setTab}><TabsList className="flex flex-wrap h-auto"><TabsTrigger value="cycle">Chu kỳ báo cáo</TabsTrigger><TabsTrigger value="deadline">Deadline báo cáo</TabsTrigger><TabsTrigger value="history">Lịch sử cấu hình</TabsTrigger></TabsList><TabsContent value="cycle"><CycleEditor/></TabsContent><TabsContent value="deadline"><BizDeadlineEditor reportOnly/></TabsContent><TabsContent value="history"><CycleHistory/></TabsContent></Tabs></DialogContent></Dialog>}</>;}
+export function BizReportSettings(){const {can,isSuperAdmin}=useCurrentUser();const [open,setOpen]=useState(false);const [tab,setTab]=useState('cycle');useEffect(()=>{if(new URLSearchParams(window.location.search).get('settings')==='deadline'){setTab('deadline');setOpen(true);}},[]);if(!isSuperAdmin&&!can('biz.deadline_manage'))return null;return <><Button variant="outline" onClick={()=>setOpen(true)}><Settings className="h-4 w-4 mr-2"/>Cài đặt</Button>{open&&<Dialog open onOpenChange={setOpen}><DialogContent className="sm:max-w-6xl max-h-[90dvh] overflow-y-auto min-w-0"><DialogHeader><DialogTitle>Cài đặt Báo cáo</DialogTitle></DialogHeader><Tabs value={tab} onValueChange={setTab}><TabsList className="flex flex-wrap h-auto"><TabsTrigger value="cycle">Chu kỳ báo cáo</TabsTrigger><TabsTrigger value="deadline">Deadline báo cáo</TabsTrigger>{(isSuperAdmin||can('biz.intervene'))&&<TabsTrigger value="opening">Số liệu đầu kỳ</TabsTrigger>}<TabsTrigger value="history">Lịch sử cấu hình</TabsTrigger></TabsList><TabsContent value="cycle"><CycleEditor/></TabsContent><TabsContent value="deadline"><BizDeadlineEditor reportOnly/></TabsContent><TabsContent value="opening"><OpeningActualsEditor/></TabsContent><TabsContent value="history"><CycleHistory/></TabsContent></Tabs></DialogContent></Dialog>}</>;}
 function CycleEditor(){
  const uid=useAuth(s=>s.currentUserId)??'';const org=useQuery(orgQuery(uid));const configs=useQuery(cycleConfigsQuery(uid));const deadlines=useQuery(bizDeadlineQuery);const action=useCycleAction();
  const today=todayVN();const [unitKey,setUnitKey]=useState('block:all');const [cycle,setCycle]=useState<ReportCycle>('week');const [date,setDate]=useState(today<WEEKLY_EFFECTIVE_FROM?WEEKLY_EFFECTIVE_FROM:alignedEffectiveDate('week',today));const [days,setDays]=useState<Record<string,boolean>>({'1':true,'2':true,'3':true,'4':true,'5':true,'6':false,'7':false});const [confirm,setConfirm]=useState(false);
