@@ -1,6 +1,19 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
-## Điều chỉnh phân bổ KR (Rolling Plan)
+## FIX TỔNG THỂ QUẢN TRỊ KINH DOANH (SOURCE 35) — spec 909 dòng, 10 phần
+Nguyên tắc: không xây lại module, không xóa/reset dữ liệu thật, không động module khác, không tự khóa Báo cáo 2027, chưa Publish.
+
+- [ ] P1. Độ chính xác Báo cáo: 3 trạng thái độ phủ (Đầy đủ/Chưa đầy đủ/Chưa có) + Không áp dụng; tháng chỉ đủ khi đủ nghĩa vụ bắt buộc (kể cả phân bổ tuần giao tháng); không coi thiếu = 0; cơ chế Xác nhận số liệu thực tế đầu kỳ (có quyền, có nguồn/người xác nhận/lịch sử, không tự tạo 0, không cộng trùng).
+- [ ] P2. KR cuốn chiếu: Dashboard dùng phân bổ mới nhất đã duyệt cho tháng tương lai (giữ mục tiêu năm, giữ tháng lịch sử); nhãn phân biệt mục tiêu/chỉ tiêu/phân bổ/thực tế/còn phải đạt; bản nháp qua tháng mới được cảnh báo/cập nhật/hủy; thực tế đổi → tính lại còn phải đạt + đánh dấu rà soát + chặn duyệt đề xuất hết hiệu lực.
+- [ ] P3. Chuyển chu kỳ: không bỏ sót ngày, không trùng nghĩa vụ, không hồi tố; kỳ lịch sử xử lý theo chu kỳ có hiệu lực tại kỳ đó (front+back); mở Báo cáo mặc định đúng chu kỳ/kỳ hiện tại.
+- [ ] P4. Phê duyệt KR cuốn chiếu: nhận diện rõ "ĐIỀU CHỈNH PHÂN BỔ KR THÁNG"; chi tiết duyệt có tổng quan + bảng trước/sau + lịch sử; xử lý chuyển phòng (snapshot đơn vị/người duyệt, không chuyển doanh số lịch sử).
+- [ ] P5. Bộ luồng duyệt mẫu Sứ Việt: 5 mẫu (KR Năm, Điều chỉnh KR Tháng, Điều chỉnh Báo cáo, Nộp bù Báo cáo, Nộp bù Kế hoạch); theo từng Hệ, idempotent, người duyệt theo chức danh bổ nhiệm, trạng thái Cần hoàn thiện khi thiếu người, không ghi đè luồng tùy chỉnh; UI Quy trình mẫu + Khởi tạo + Kiểm tra quy trình; tự nhận cấp người nộp, cấm tự duyệt.
+- [ ] P6. An toàn phê duyệt: không luồng hợp lệ → không tự thông qua, hiển thị nguyên nhân + lối tới cấu hình; xác minh người duyệt đúng lượt/quyền/không tự duyệt; thông báo đúng người theo cấp.
+- [ ] P7. Giao diện: Công việc của tôi đủ 7 trạng thái + lỗi tải có Thử lại; Dashboard độ phủ dữ liệu; Phê duyệt có bộ lọc (Chờ tôi duyệt/Tôi đã xử lý/Trong phạm vi/Loại/Thời gian); mobile không tràn.
+- [ ] P8. Hiệu năng: rà soát khóa bảng biz_documents trong 0168 (cân nhắc khóa theo hồ sơ/advisory), không bỏ kiểm soát đồng thời.
+- [ ] P9. Kiểm thử nghiệm thu Nhóm A–D (44 mục) + báo cáo kết quả theo Phần 10.
+
+## Điều chỉnh phân bổ KR (Rolling Plan) — đã xong trước đó
 - [x] Hồ sơ phân bổ riêng, tái sử dụng phê duyệt KR, kiểm tra nguồn chính thức/phiên bản và thời điểm khi duyệt; không thay cam kết năm.
 - [x] Tính phần còn phải đạt từ tháng đã kết thúc đủ dữ liệu; khóa tháng lịch sử/hiện tại; chia đều/tỷ trọng/tự nhập bằng số nguyên chính xác.
 - [x] Giao diện điều chỉnh, lịch sử, cảnh báo nguồn thay đổi và tổng phân bổ hiện hành tại KR; Dashboard đánh giá giữ cam kết chính thức.
