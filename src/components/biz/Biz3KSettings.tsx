@@ -1,0 +1,109 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useK3SettingsSave } from '@/lib/biz/k3Queries';
+import { K3_STATUS, k3Error, type K3Settings, type K3Status } from '@/lib/biz/k3';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+
+interface LogRow {
+  id: number;
+  changed_by: string | null;
+  changed_at: string;
+  snapshot: { old: unknown; new: { enabled: boolean; effective_from: string | null; plan_by: string; summary_by: string; max_focus: number } };
+}
+
+export function Biz3KSettings({ settings }: { settings: K3Settings }) {
+  const save = useK3SettingsSave();
+  const [f, setF] = useState({
+    enabled: settings.enabled,
+    effective_from: settings.effective_from ?? '',
+    plan_by: settings.plan_by.slice(0, 5),
+    summary_by: settings.summary_by.slice(0, 5),
+    max_focus: settings.max_focus.toString(),
+  });
+  const { data: logs } = useQuery({
+    queryKey: ['k3_settings_log'],
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('k3_settings_log').select('*').order('changed_at', { ascending: false }).limit(20);
+      if (error) throw error;
+      return data as unknown as LogRow[];
+    },
+  });
+  const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
+  const submit = async () => {
+    try {
+      await save.mutateAsync({
+        enabled: f.enabled,
+        effective_from: f.effective_from || null,
+        plan_by: f.plan_by,
+        summary_by: f.summary_by,
+        max_focus: Number(f.max_focus),
+      });
+      toast.success('Đã lưu cấu hình 3K.');
+    } catch (e) {
+      toast.error(k3Error(e));
+    }
+  };
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+        <h3 className="font-medium">Quy định thực thi</h3>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>Áp dụng 3K hằng ngày</span>
+          <Switch checked={f.enabled} onCheckedChange={(v) => set('enabled', v)} />
+        </label>
+        <div className="space-y-1">
+          <Label htmlFor="k3s-from">Ngày bắt đầu áp dụng chính thức</Label>
+          <Input id="k3s-from" type="date" value={f.effective_from} onChange={(e) => set('effective_from', e.target.value)} />
+          <p className="text-xs text-muted-foreground">Nghĩa vụ 3K chỉ áp dụng từ ngày này; hệ thống không tạo ngày quá hạn trong lịch sử.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1"><Label htmlFor="k3s-plan">Giờ lập 3K đầu ngày</Label><Input id="k3s-plan" type="time" value={f.plan_by} onChange={(e) => set('plan_by', e.target.value)} /></div>
+          <div className="space-y-1"><Label htmlFor="k3s-summary">Giờ tổng kết cuối ngày</Label><Input id="k3s-summary" type="time" value={f.summary_by} onChange={(e) => set('summary_by', e.target.value)} /></div>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="k3s-focus">Số mũi khoan trọng tâm tối đa / ngày</Label>
+          <Input id="k3s-focus" type="number" min={1} max={5} value={f.max_focus} onChange={(e) => set('max_focus', e.target.value)} className="w-28" />
+        </div>
+        <Button type="button" disabled={save.isPending} onClick={submit}>{save.isPending ? 'Đang lưu…' : 'Lưu cấu hình'}</Button>
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <h3 className="font-medium">Phân quyền</h3>
+          <p className="text-sm text-muted-foreground">
+            Phạm vi xem kế thừa từ Cơ cấu tổ chức: Trưởng Nhóm xem Nhóm, Trưởng Phòng xem Phòng, Giám Đốc Hệ xem Hệ, lãnh đạo điều hành xem toàn Khối.
+            Quyền riêng của 3K (k3.use / k3.view_scope / k3.comment / k3.settings) được cấp trong Cài đặt → Tài khoản &amp; Phân quyền, nhóm quyền "Quản lý 3K".
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <h3 className="font-medium">Quy chuẩn trạng thái</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {(Object.keys(K3_STATUS) as K3Status[]).map((s) => <Badge key={s} variant="secondary">{K3_STATUS[s].label}</Badge>)}
+          </div>
+          <p className="text-xs text-muted-foreground">Công việc chưa hoàn thành khi tổng kết phải có đủ Vấn đề – Nguyên nhân – Giải pháp. Kết quả vượt kế hoạch vẫn được ghi nhận.</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <h3 className="font-medium">Lịch sử cấu hình</h3>
+          {!logs?.length && <p className="text-sm text-muted-foreground">Chưa có thay đổi nào được ghi nhận.</p>}
+          <div className="space-y-2">
+            {logs?.map((l) => (
+              <div key={l.id} className="rounded-md border border-border p-2 text-xs">
+                <p className="text-muted-foreground">{new Date(l.changed_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
+                <p>
+                  {l.snapshot.new.enabled ? 'Bật' : 'Tắt'} · từ {l.snapshot.new.effective_from ?? '—'} · lập {l.snapshot.new.plan_by?.slice(0, 5)} · tổng kết {l.snapshot.new.summary_by?.slice(0, 5)} · tối đa {l.snapshot.new.max_focus} mũi khoan
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
