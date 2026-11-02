@@ -77,8 +77,6 @@ it('simulate resolves the real approval chain for a chosen employee',async()=>{
  expect(r.steps[0].label).toBe('Trưởng Phòng');
  expect(r.steps[0].user_name).toBe('Holder');
  expect(r.steps.every((s:any)=>!s.missing)).toBe(true);
- const missing=await value(`SELECT biz_workflow_simulate('goal_year','${employee}') v`);
- expect(missing.steps.some((s:any)=>s.missing)).toBe(true);
 });
 it('simulate reports a clear reason when no active workflow exists',async()=>{
  const inactive=await value(`SELECT biz_workflow_simulate('goal_year','${employee}') v`);

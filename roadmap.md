@@ -3,15 +3,15 @@
 ## FIX TỔNG THỂ QUẢN TRỊ KINH DOANH (SOURCE 35) — spec 909 dòng, 10 phần
 Nguyên tắc: không xây lại module, không xóa/reset dữ liệu thật, không động module khác, không tự khóa Báo cáo 2027, chưa Publish.
 
-- [ ] P1. Độ chính xác Báo cáo: 3 trạng thái độ phủ (Đầy đủ/Chưa đầy đủ/Chưa có) + Không áp dụng; tháng chỉ đủ khi đủ nghĩa vụ bắt buộc (kể cả phân bổ tuần giao tháng); không coi thiếu = 0; cơ chế Xác nhận số liệu thực tế đầu kỳ (có quyền, có nguồn/người xác nhận/lịch sử, không tự tạo 0, không cộng trùng).
-- [ ] P2. KR cuốn chiếu: Dashboard dùng phân bổ mới nhất đã duyệt cho tháng tương lai (giữ mục tiêu năm, giữ tháng lịch sử); nhãn phân biệt mục tiêu/chỉ tiêu/phân bổ/thực tế/còn phải đạt; bản nháp qua tháng mới được cảnh báo/cập nhật/hủy; thực tế đổi → tính lại còn phải đạt + đánh dấu rà soát + chặn duyệt đề xuất hết hiệu lực.
-- [ ] P3. Chuyển chu kỳ: không bỏ sót ngày, không trùng nghĩa vụ, không hồi tố; kỳ lịch sử xử lý theo chu kỳ có hiệu lực tại kỳ đó (front+back); mở Báo cáo mặc định đúng chu kỳ/kỳ hiện tại.
-- [ ] P4. Phê duyệt KR cuốn chiếu: nhận diện rõ "ĐIỀU CHỈNH PHÂN BỔ KR THÁNG"; chi tiết duyệt có tổng quan + bảng trước/sau + lịch sử; xử lý chuyển phòng (snapshot đơn vị/người duyệt, không chuyển doanh số lịch sử).
-- [ ] P5. Bộ luồng duyệt mẫu Sứ Việt: 5 mẫu (KR Năm, Điều chỉnh KR Tháng, Điều chỉnh Báo cáo, Nộp bù Báo cáo, Nộp bù Kế hoạch); theo từng Hệ, idempotent, người duyệt theo chức danh bổ nhiệm, trạng thái Cần hoàn thiện khi thiếu người, không ghi đè luồng tùy chỉnh; UI Quy trình mẫu + Khởi tạo + Kiểm tra quy trình; tự nhận cấp người nộp, cấm tự duyệt.
-- [ ] P6. An toàn phê duyệt: không luồng hợp lệ → không tự thông qua, hiển thị nguyên nhân + lối tới cấu hình; xác minh người duyệt đúng lượt/quyền/không tự duyệt; thông báo đúng người theo cấp.
-- [ ] P7. Giao diện: Công việc của tôi đủ 7 trạng thái + lỗi tải có Thử lại; Dashboard độ phủ dữ liệu; Phê duyệt có bộ lọc (Chờ tôi duyệt/Tôi đã xử lý/Trong phạm vi/Loại/Thời gian); mobile không tràn.
-- [ ] P8. Hiệu năng: rà soát khóa bảng biz_documents trong 0168 (cân nhắc khóa theo hồ sơ/advisory), không bỏ kiểm soát đồng thời.
-- [ ] P9. Kiểm thử nghiệm thu Nhóm A–D (44 mục) + báo cáo kết quả theo Phần 10.
+- [x] P1. Độ chính xác Báo cáo: migration 0169 — biz_report_month_coverage (4 trạng thái Đầy đủ/Chưa đầy đủ/Chưa có/Không áp dụng, liệt kê kỳ thiếu), biz_opening_actuals + RPC xác nhận số liệu đầu kỳ (quyền, nguồn bắt buộc, lịch sử sự kiện, không tự tạo 0, chống cộng trùng với báo cáo chính thức), biz_report_coverage_read; biz_rolling_basis dùng độ phủ thay vì NULL=0.
+- [x] P2. KR cuốn chiếu: nhãn rõ trên giao diện Rolling; bản nháp qua tháng mới có cảnh báo + Cập nhật theo tháng mới (rebaseMonths giữ tháng còn chỉnh được, theo kế hoạch hiện hành cho tháng mới khóa) + Hủy; duyệt kiểm tra lại nguồn tại thời điểm duyệt (đã có từ 0167/0168). Lớp biểu đồ Dashboard riêng vẫn chưa nối (mục riêng bên dưới).
+- [x] P3. Chuyển chu kỳ: BizDocuments mặc định chu kỳ/kỳ theo cấu hình hiệu lực tại kỳ đó (kể cả kỳ lịch sử), đổi tab chọn kỳ hiện tại của chu kỳ; nghĩa vụ theo chu kỳ từng ngày (0164/0165) giữ không sót/trùng/hồi tố.
+- [x] P4. Phê duyệt KR cuốn chiếu: nhãn "Điều chỉnh phân bổ tháng", chi tiết duyệt có tổng quan + bảng trước/sau từng chỉ số/tháng + cơ sở tính; snapshot đơn vị/người duyệt đóng băng khi gửi.
+- [x] P5. Bộ luồng duyệt mẫu: migration 0171 — biz_workflow_seed_defaults (5 nhóm × từng Hệ, idempotent, chức danh bổ nhiệm, Cần hoàn thiện khi thiếu người, không ghi đè luồng có sẵn) + biz_workflow_simulate; UI Quy trình mẫu Sứ Việt trong Cài đặt → Quy trình phê duyệt. Đã chạy khởi tạo trên dữ liệu thật: 45 luồng (8 hoạt động, 37 cần hoàn thiện, 0 ghi đè).
+- [x] P6. An toàn phê duyệt: luồng thiếu người ở trạng thái Cần hoàn thiện (không kích hoạt, không tự thông qua); Kiểm tra quy trình hiển thị chuỗi duyệt/nguyên nhân thiếu; cấm tự duyệt qua skip_if_submitter + kiểm tra lượt máy chủ (đã có, test mới xác nhận).
+- [x] P7. Giao diện: Công việc của tôi có trạng thái lỗi + Thử lại; Phê duyệt có lọc thời gian gửi + tab Trong phạm vi quản lý; mobile 390px không tràn (Báo cáo/Phê duyệt/Cài đặt).
+- [x] P8. Hiệu năng: migration 0170 thay khóa bảng biz_documents bằng khóa advisory theo người dùng, phối hợp giữa lưu báo cáo và xác nhận đầu kỳ; giữ kiểm soát đồng thời.
+- [ ] P9. Nghiệm thu Nhóm A–D trên dữ liệu thật: cần nhân viên thật có mục tiêu + báo cáo nguồn đủ để nộp/duyệt thật; không tạo dữ liệu giả.
 
 ## Điều chỉnh phân bổ KR (Rolling Plan) — đã xong trước đó
 - [x] Hồ sơ phân bổ riêng, tái sử dụng phê duyệt KR, kiểm tra nguồn chính thức/phiên bản và thời điểm khi duyệt; không thay cam kết năm.
