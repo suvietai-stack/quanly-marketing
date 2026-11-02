@@ -1184,6 +1184,20 @@
       "when": 1793440992105,
       "tag": "0168_biz_rolling_snapshot_identity_fence",
       "breakpoints": true
+    },
+    {
+      "idx": 169,
+      "version": "7",
+      "when": 1793601271175,
+      "tag": "0169_biz_report_month_coverage_and_opening_actuals",
+      "breakpoints": true
+    },
+    {
+      "idx": 170,
+      "version": "7",
+      "when": 1793601356096,
+      "tag": "0170_biz_rolling_workflow_kind_and_lock_narrowing",
+      "breakpoints": true
     }
   ]
 }

@@ -1883,6 +1883,99 @@ export type Database = {
           },
         ]
       }
+      biz_opening_actual_events: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          opening_id: string
+          payload: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          opening_id: string
+          payload?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          opening_id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_opening_actual_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biz_opening_actuals: {
+        Row: {
+          confirmed_by: string
+          created_at: string
+          id: string
+          metric_id: string
+          period_end: string
+          period_start: string
+          source_note: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          confirmed_by: string
+          created_at?: string
+          id?: string
+          metric_id: string
+          period_end: string
+          period_start: string
+          source_note: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          confirmed_by?: string
+          created_at?: string
+          id?: string
+          metric_id?: string
+          period_end?: string
+          period_start?: string
+          source_note?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biz_opening_actuals_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_opening_actuals_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "biz_kr_metrics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "biz_opening_actuals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_org_events: {
         Row: {
           action: string
@@ -6332,6 +6425,9 @@ export type Database = {
       }
       biz_my_work: { Args: { _kind: string }; Returns: Json }
       biz_my_work_access_guard: { Args: { _kind: string }; Returns: boolean }
+      biz_opening_actual_delete: { Args: { _id: string }; Returns: undefined }
+      biz_opening_actual_save: { Args: { _data: Json }; Returns: string }
+      biz_opening_actuals_read: { Args: { _user: string }; Returns: Json }
       biz_org_can_manage: { Args: never; Returns: boolean }
       biz_org_read: { Args: never; Returns: Json }
       biz_org_save: { Args: { _action: string; _data: Json }; Returns: string }
@@ -6362,6 +6458,10 @@ export type Database = {
       }
       biz_position_save: { Args: { _data: Json }; Returns: string }
       biz_positions_read: { Args: never; Returns: Json }
+      biz_report_coverage_read: {
+        Args: { _month: number; _user: string; _year: number }
+        Returns: Json
+      }
       biz_report_cycle_config_of: {
         Args: { _at: string; _user: string }
         Returns: Json
