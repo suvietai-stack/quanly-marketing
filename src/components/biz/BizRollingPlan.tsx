@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { rollingQuery, useRollingSave } from '@/lib/biz/rollingQueries';
-import { proposeMonths, rollingError, type RollingData } from '@/lib/biz/rollingPlan';
+import { coverageLabel, coverageMissingText, isStaleDraft, proposeMonths, rebaseMonths, rollingError, type RollingData } from '@/lib/biz/rollingPlan';
 import { fmtGoal, STATUS_LABELS, type AnnualGoal, type GoalItem } from '@/lib/biz/goals';
 
 export function BizRollingPlan({goal,uid}:{goal:AnnualGoal;uid:string}) {
