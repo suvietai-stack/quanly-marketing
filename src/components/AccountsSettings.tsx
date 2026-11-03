@@ -671,7 +671,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Tất cả</SelectItem>
-            {PERMISSION_GROUPS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            {PERMISSION_GROUPS.filter((g) => !BIZ_ORG_GROUPS.includes(g)).map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
         <div className="relative w-[260px]">
@@ -729,8 +729,8 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    if (!qq) return PERMISSIONS;
-    return PERMISSIONS.filter((p) =>
+    if (!qq) return ROLE_PERMISSIONS;
+    return ROLE_PERMISSIONS.filter((p) =>
       p.label.toLowerCase().includes(qq) ||
       p.key.toLowerCase().includes(qq) ||
       p.group.toLowerCase().includes(qq) ||
