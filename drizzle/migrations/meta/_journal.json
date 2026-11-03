@@ -1240,6 +1240,13 @@
       "when": 1793674224307,
       "tag": "0176_k3_period_writes_and_task_links",
       "breakpoints": true
+    },
+    {
+      "idx": 177,
+      "version": "7",
+      "when": 1793674275647,
+      "tag": "0177_k3_period_reads_summaries_scope",
+      "breakpoints": true
     }
   ]
 }

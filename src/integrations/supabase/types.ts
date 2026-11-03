@@ -7410,12 +7410,35 @@ export type Database = {
         Returns: boolean
       }
       k3_goal_save: { Args: { _payload: Json }; Returns: Json }
+      k3_period_comment_save: {
+        Args: {
+          _action?: string
+          _body: string
+          _date: string
+          _goal?: string
+          _type: string
+          _user: string
+        }
+        Returns: Json
+      }
       k3_period_config_read: { Args: never; Returns: Json }
       k3_period_end: { Args: { _date: string; _type: string }; Returns: string }
+      k3_period_read: {
+        Args: { _date: string; _type: string; _user?: string }
+        Returns: Json
+      }
       k3_period_settings_save: { Args: { _payload: Json }; Returns: Json }
       k3_period_start: {
         Args: { _date: string; _type: string }
         Returns: string
+      }
+      k3_period_summary_confirm: {
+        Args: { _date: string; _note: string; _type: string }
+        Returns: Json
+      }
+      k3_period_team_read: {
+        Args: { _date: string; _type: string }
+        Returns: Json
       }
       k3_plan_task_save: { Args: { _payload: Json }; Returns: Json }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
