@@ -8,6 +8,7 @@ import {
 } from "@/lib/accounts.functions";
 import { passwordIssues, isFakeEmail } from '@/lib/password';
 import { authErrorMessage, accountAccess } from '@/lib/auth-errors';
+import '@/lib/recovery-session';
 
 export type ID = string;
 

@@ -23,6 +23,8 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { toast } from "sonner";
+import { passwordIssues } from '@/lib/password';
+import { AccountAuthPanel } from '@/components/AccountAuthPanel';
 
 const STATUSES: AccountStatus[] = ["Chờ duyệt","Đang hoạt động","Tạm khóa","Từ chối","Lưu trữ"];
 
@@ -342,33 +344,47 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
   });
   const [perms, setPerms] = useState<PermissionKey[]>(user.customPermissions || []);
   const [newPwd, setNewPwd] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const isSystem = !!user.system;
 
-  const save = () => {
-    s.updateUser(user.id, {
-      fullName: form.fullName, email: form.email || undefined, phone: form.phone || undefined,
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+    await s.updateUser(user.id, {
+      fullName: form.fullName, phone: form.phone || undefined,
       desiredPosition: form.desiredPosition || undefined, notes: form.notes || undefined,
     });
     if (!isSystem) {
-      if (form.roleId && form.roleId !== user.roleId) s.setRole(user.id, form.roleId);
-      if (form.status !== user.status) s.setStatus(user.id, form.status);
-      s.setUseCustom(user.id, form.useCustom);
-      if (form.useCustom) s.setCustomPerms(user.id, perms);
+      if (form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
+      if (form.status !== user.status) {
+        if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
+          const result = await s.approve(user.id);
+          if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
+        } else await s.setStatus(user.id, form.status);
+      }
+      await s.setUseCustom(user.id, form.useCustom);
+      if (form.useCustom) await s.setCustomPerms(user.id, perms);
     }
     toast.success("Đã lưu");
     onClose();
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Không lưu được tài khoản.'); }
+    finally { setSaving(false); }
   };
 
   const reset = async () => {
-    if (newPwd.length < 6) return toast.error("Mật khẩu mới tối thiểu 6 ký tự");
+    if (resetting) return;
+    const issues = passwordIssues(newPwd);
+    if (issues.length) return toast.error(issues[0]);
+    setResetting(true);
     try {
-      await s.resetPassword(user.id, newPwd);
+      const result = await s.resetPassword(user.id, newPwd);
+      setNewPwd('');
+      toast.success(result.ready ? 'Đã đặt lại mật khẩu cho tài khoản được chọn.' : 'Đã đặt lại mật khẩu; tài khoản vẫn cần hoàn tất xác nhận email hoặc điều kiện truy cập.');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Không reset được mật khẩu.");
-      return;
-    }
-    setNewPwd("");
-    toast.success("Đã reset mật khẩu");
+    } finally { setResetting(false); }
   };
 
   return (
@@ -384,7 +400,7 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
           <TabsContent value="info" className="mt-4 grid gap-3 sm:grid-cols-2">
             <div><Label>Tên đăng nhập</Label><Input value={user.username} disabled /></div>
             <div><Label>Họ tên *</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
-            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><Label>Email đăng nhập</Label><Input value={form.email} readOnly /><p className="mt-1 text-xs text-muted-foreground">Email do hệ thống xác thực quản lý.</p></div>
             <div><Label>SĐT</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
             <div><Label>Vị trí</Label><Input value={form.desiredPosition} onChange={(e) => setForm({ ...form, desiredPosition: e.target.value })} /></div>
             <div>
@@ -427,18 +443,19 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
           </TabsContent>
 
           <TabsContent value="security" className="mt-4 space-y-4">
+            <AccountAuthPanel userId={user.id} email={user.email} />
             <div className="text-sm text-muted-foreground">Mật khẩu được lưu dạng hash an toàn. Không hiển thị mật khẩu gốc.</div>
             {canReset ? (
               <div className="grid gap-2 sm:grid-cols-[1fr_auto] items-end">
-                <div><Label htmlFor="admin-reset-password">Mật khẩu mới</Label><PasswordInput id="admin-reset-password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="≥ 6 ký tự" /></div>
-                <Button onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />Reset mật khẩu</Button>
+                <div><Label htmlFor="admin-reset-password">Mật khẩu mới</Label><PasswordInput id="admin-reset-password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /><p className="mt-1 text-xs text-muted-foreground">8–200 ký tự, gồm chữ cái và chữ số.</p></div>
+                <Button disabled={resetting || user.id === s.currentUserId} onClick={reset}><KeyRound className="h-4 w-4 mr-1.5" />{resetting ? 'Đang cập nhật…' : 'Đặt lại mật khẩu'}</Button>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Bạn không có quyền reset mật khẩu tài khoản khác.</p>
             )}
           </TabsContent>
         </Tabs>
-        <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Đóng</Button><Button onClick={save}>Lưu</Button></DialogFooter>
+        <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Đóng</Button><Button disabled={saving} onClick={save}>{saving ? 'Đang lưu…' : 'Lưu'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -449,6 +466,15 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
   const s = useAuth();
   const [assignFor, setAssignFor] = useState<User | null>(null);
   const [roleId, setRoleId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState<User | null>(null);
+  const approve = async (id: string, role?: string) => {
+    if (busy) return;
+    setBusy(true);
+    try { const result = await s.approve(id, role); toast.success(result.ready ? 'Đã duyệt. Tài khoản có thể đăng nhập.' : 'Đã duyệt hồ sơ. Nhân viên cần xác nhận email trước khi đăng nhập.'); setAssignFor(null); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Không duyệt được tài khoản.'); }
+    finally { setBusy(false); }
+  };
 
   return (<>
     <Card><CardContent className="p-0 overflow-x-auto">
@@ -478,12 +504,13 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
                   <Button size="sm" variant="outline" onClick={() => { setAssignFor(u); setRoleId(""); }}>
                     Gán role rồi duyệt
                   </Button>
-                  <Button size="sm" variant="ghost" className="ml-1 text-emerald-700" onClick={() => { s.approve(u.id); toast.success("Đã duyệt"); }}>
+                  <Button size="sm" variant="ghost" disabled={busy} className="ml-1 text-emerald-700" onClick={() => void approve(u.id)}>
                     <Check className="h-4 w-4 mr-1" />Duyệt
                   </Button>
-                  <Button size="sm" variant="ghost" className="ml-1 text-rose-700" onClick={() => { s.reject(u.id); toast.success("Đã từ chối"); }}>
+                  <Button size="sm" variant="ghost" className="ml-1 text-rose-700" onClick={async () => { try { await s.reject(u.id); toast.success('Đã từ chối'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Không từ chối được tài khoản.'); } }}>
                     <X className="h-4 w-4 mr-1" />Từ chối
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => setChecking(u)}>Kiểm tra xác thực</Button>
                 </> : <span className="text-xs text-muted-foreground">Không có quyền</span>}
               </td>
             </tr>
@@ -501,12 +528,13 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
         </Select>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setAssignFor(null)}>Huỷ</Button>
-          <Button disabled={!roleId} onClick={() => {
-            if (assignFor && roleId) { s.approve(assignFor.id, roleId); toast.success("Đã duyệt"); setAssignFor(null); }
+          <Button disabled={!roleId || busy} onClick={() => {
+            if (assignFor && roleId) void approve(assignFor.id, roleId);
           }}>Duyệt</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <Dialog open={!!checking} onOpenChange={open => !open && setChecking(null)}><DialogContent><DialogHeader><DialogTitle>Trạng thái xác thực — {checking?.fullName}</DialogTitle></DialogHeader>{checking && <AccountAuthPanel userId={checking.id} email={checking.email} />}</DialogContent></Dialog>
     </>
   );
 }

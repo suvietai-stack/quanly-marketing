@@ -3,6 +3,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 
 const PUBLIC_PATHS = ["/login", "/register", "/chinh-sach-bao-mat", "/reset-password"];
 const PENDING_PATH = "/pending";
@@ -31,7 +32,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   // Presence heartbeat: ping every 60s while signed-in; also on focus/visibility.
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!currentUserId || currentUser?.status !== 'Đang hoạt động') return;
     touchPresence();
     const iv = setInterval(() => touchPresence(), 60_000);
     const onVis = () => { if (!document.hidden) touchPresence(); };
@@ -42,7 +43,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       window.removeEventListener("focus", onVis);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [currentUserId, touchPresence]);
+  }, [currentUserId, currentUser?.status, touchPresence]);
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -78,7 +79,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       navigate({ to: "/login" });
       return;
     }
-    if (currentUserId && loaded && currentUser?.status === "Chờ duyệt" && !isPending) {
+    if (currentUserId && loaded && currentUser?.status === "Chờ duyệt" && !isPending && !isPublic) {
       navigate({ to: "/pending" });
       return;
     }
@@ -102,5 +103,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     if (isPending) return <>{children}</>;
     return null;
   }
+  if (currentUser?.status !== 'Đang hoạt động') return <div className="flex min-h-screen items-center justify-center px-4"><div className="max-w-md space-y-4 text-center"><p role="alert" className="text-sm text-muted-foreground">{currentUser ? 'Tài khoản hiện không được phép truy cập. Vui lòng liên hệ quản trị viên.' : 'Không kiểm tra được hồ sơ tài khoản. Vui lòng tải lại hoặc liên hệ quản trị viên.'}</p><div className="flex justify-center gap-2"><Button variant="outline" onClick={() => void useAuth.getState().reload()}>Thử lại</Button><Button onClick={() => void useAuth.getState().logout()}>Đăng xuất</Button></div></div></div>;
   return <>{children}</>;
 }

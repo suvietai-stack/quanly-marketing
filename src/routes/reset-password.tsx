@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeyRound, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
+import { hasRecoverySession, clearRecoverySession } from '@/lib/recovery-session';
+import { authErrorMessage } from '@/lib/auth-errors';
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [
@@ -34,29 +36,24 @@ function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Phiên khôi phục được thiết lập khi người dùng mở liên kết từ email
-    // (Supabase trả về type=recovery trong hash và phát sự kiện PASSWORD_RECOVERY).
-    const hash = typeof window !== "undefined" ? window.location.hash : "";
-    if (hash.includes("type=recovery")) setPhase("ready");
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setPhase("ready");
-    });
-    // Nếu đã có phiên khôi phục sẵn (hash đã được client xử lý), cho phép đặt lại.
-    supabase.auth.getSession().then(({ data }) => {
-      setPhase((p) => (p === "checking" ? (data.session && hash.includes("type=recovery") ? "ready" : p) : p));
-    });
+    // Only an SDK-accepted recovery event plus a revalidated matching user opens this form.
+    let active = true;
+    const check = async () => { if (await hasRecoverySession() && active) setPhase('ready'); };
+    void check();
+    const interval = setInterval(() => void check(), 300);
     const timer = setTimeout(() => {
       setPhase((p) => (p === "checking" ? "invalid" : p));
     }, 4000);
     return () => {
-      sub.subscription.unsubscribe();
+      active = false;
+      clearInterval(interval);
       clearTimeout(timer);
     };
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
+    if (loading || phase !== 'ready') return;
     const issues = passwordIssues(n1);
     if (issues.length) {
       setErr(issues[0]);
@@ -69,17 +66,19 @@ function ResetPasswordPage() {
     setErr("");
     setLoading(true);
     try {
+      if (!await hasRecoverySession()) { setPhase('invalid'); return; }
       // Trang khôi phục: không gửi current_password (phiên recovery được miễn).
       const { error } = await supabase.auth.updateUser({ password: n1 });
       if (error) {
-        setErr("Liên kết khôi phục đã hết hạn hoặc đã được sử dụng. Vui lòng yêu cầu liên kết mới.");
+        setErr(authErrorMessage(error, 'password'));
         return;
       }
       // Kết thúc phiên khôi phục — người dùng đăng nhập lại bằng mật khẩu mới.
       await supabase.auth.signOut();
+      clearRecoverySession();
       setPhase("done");
       toast.success("Đã đặt lại mật khẩu thành công");
-    } finally {
+    } catch { setErr('Không cập nhật được mật khẩu lúc này. Vui lòng thử lại.'); } finally {
       setLoading(false);
     }
   };

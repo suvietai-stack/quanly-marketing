@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { passwordIssues } from '@/lib/password';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 
 export const Route = createFileRoute("/register")({
   head: () => ({ meta: [
@@ -31,12 +33,16 @@ function RegisterPage() {
   });
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
   const set = (p: Partial<typeof f>) => setF({ ...f, ...p });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
-    if (f.password.length < 6) return setErr("Mật khẩu tối thiểu 6 ký tự.");
+    if (loading) return;
+    const issues = passwordIssues(f.password);
+    if (issues.length) return setErr(issues[0]);
     if (f.password !== f.confirm) return setErr("Mật khẩu xác nhận không khớp.");
     setLoading(true);
     const res = await register({
@@ -47,8 +53,8 @@ function RegisterPage() {
     });
     setLoading(false);
     if (!res.ok) return setErr(res.error || "Đăng ký thất bại.");
-    toast.success("Đăng ký thành công. Tài khoản của bạn đang chờ Admin phê duyệt.");
-    navigate({ to: "/login" });
+    setRegistered(true);
+    setF(previous => ({ ...previous, password: '', confirm: '' }));
   };
 
   return (
@@ -61,22 +67,23 @@ function RegisterPage() {
         </div>
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+            {registered ? <div className="space-y-4"><h2 className="font-semibold">Kiểm tra email xác nhận</h2><p role="status" className="text-sm text-muted-foreground">Vui lòng mở liên kết xác nhận trong email và chờ quản trị viên phê duyệt. Sau khi hoàn tất cả hai bước, bạn đăng nhập bằng mật khẩu vừa đăng ký, không cần đặt lại mật khẩu.</p><div className="flex flex-wrap gap-2"><Button onClick={() => navigate({ to: '/login' })}>Về đăng nhập</Button><Button variant="outline" onClick={() => setConfirmationOpen(true)}>Gửi lại email xác nhận</Button></div></div> : <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2"><Label>Họ tên *</Label><Input value={f.fullName} onChange={(e) => set({ fullName: e.target.value })} required /></div>
-              <div><Label>Email</Label><Input type="email" value={f.email} onChange={(e) => set({ email: e.target.value })} /></div>
+              <div><Label>Email *</Label><Input type="email" value={f.email} onChange={(e) => set({ email: e.target.value })} required /></div>
               <div><Label>Số điện thoại</Label><Input value={f.phone} onChange={(e) => set({ phone: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Bộ phận / vị trí mong muốn</Label><Input value={f.desiredPosition} onChange={(e) => set({ desiredPosition: e.target.value })} placeholder="VD: Content Web" /></div>
               <div className="sm:col-span-2"><Label>Ghi chú</Label><Textarea rows={2} value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
               <div><Label>Tên đăng nhập *</Label><Input value={f.username} onChange={(e) => set({ username: e.target.value })} required /></div>
               <div></div>
-              <div><Label htmlFor="register-password">Mật khẩu *</Label><PasswordInput id="register-password" value={f.password} onChange={(e) => set({ password: e.target.value })} required /></div>
+              <div><Label htmlFor="register-password">Mật khẩu *</Label><PasswordInput id="register-password" value={f.password} onChange={(e) => set({ password: e.target.value })} required /><p className="mt-1 text-xs text-muted-foreground">8–200 ký tự, gồm chữ cái và chữ số.</p></div>
               <div><Label htmlFor="register-confirm">Xác nhận mật khẩu *</Label><PasswordInput id="register-confirm" value={f.confirm} onChange={(e) => set({ confirm: e.target.value })} required /></div>
               {err && <div className="sm:col-span-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">{err}</div>}
               <div className="sm:col-span-2 flex items-center justify-between gap-3 pt-2">
                 <Link to="/login" className="text-sm text-primary hover:underline">Đã có tài khoản? Đăng nhập</Link>
                 <Button type="submit" disabled={loading}><UserPlus className="h-4 w-4 mr-1.5" />{loading ? "Đang xử lý..." : "Đăng ký"}</Button>
               </div>
-            </form>
+            </form>}
+            <ConfirmationDialog open={confirmationOpen} onClose={() => setConfirmationOpen(false)} />
           </CardContent>
         </Card>
       </div>
