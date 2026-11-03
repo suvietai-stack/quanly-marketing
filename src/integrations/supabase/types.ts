@@ -3180,39 +3180,65 @@ export type Database = {
       }
       k3_days: {
         Row: {
+          confirmed_at: string | null
+          confirmed_revision: number | null
           created_at: string
+          data_revision: number
+          department_id: string | null
           id: string
           kg: string | null
+          plan_deadline: string | null
           planned_at: string | null
           summarized_at: string | null
+          summary_deadline: string | null
           summary_note: string | null
           updated_at: string
           user_id: string
           work_date: string
         }
         Insert: {
+          confirmed_at?: string | null
+          confirmed_revision?: number | null
           created_at?: string
+          data_revision?: number
+          department_id?: string | null
           id?: string
           kg?: string | null
+          plan_deadline?: string | null
           planned_at?: string | null
           summarized_at?: string | null
+          summary_deadline?: string | null
           summary_note?: string | null
           updated_at?: string
           user_id: string
           work_date: string
         }
         Update: {
+          confirmed_at?: string | null
+          confirmed_revision?: number | null
           created_at?: string
+          data_revision?: number
+          department_id?: string | null
           id?: string
           kg?: string | null
+          plan_deadline?: string | null
           planned_at?: string | null
           summarized_at?: string | null
+          summary_deadline?: string | null
           summary_note?: string | null
           updated_at?: string
           user_id?: string
           work_date?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "k3_days_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       k3_settings: {
         Row: {
@@ -3268,6 +3294,41 @@ export type Database = {
         }
         Relationships: []
       }
+      k3_summary_versions: {
+        Row: {
+          actor_id: string
+          confirmed_at: string
+          day_id: string
+          id: string
+          revision: number
+          snapshot: Json
+        }
+        Insert: {
+          actor_id: string
+          confirmed_at?: string
+          day_id: string
+          id?: string
+          revision: number
+          snapshot: Json
+        }
+        Update: {
+          actor_id?: string
+          confirmed_at?: string
+          day_id?: string
+          id?: string
+          revision?: number
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_summary_versions_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "k3_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       k3_task_events: {
         Row: {
           action: string
@@ -3319,6 +3380,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           day_id: string
+          deleted_at: string | null
           end_time: string | null
           how: string | null
           id: string
@@ -3332,6 +3394,8 @@ export type Database = {
           place: string | null
           problem: string | null
           progress: number
+          request_key: string | null
+          revision: number
           solution: string | null
           sort_order: number
           start_time: string | null
@@ -3346,6 +3410,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           day_id: string
+          deleted_at?: string | null
           end_time?: string | null
           how?: string | null
           id?: string
@@ -3359,6 +3424,8 @@ export type Database = {
           place?: string | null
           problem?: string | null
           progress?: number
+          request_key?: string | null
+          revision?: number
           solution?: string | null
           sort_order?: number
           start_time?: string | null
@@ -3373,6 +3440,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           day_id?: string
+          deleted_at?: string | null
           end_time?: string | null
           how?: string | null
           id?: string
@@ -3386,6 +3454,8 @@ export type Database = {
           place?: string | null
           problem?: string | null
           progress?: number
+          request_key?: string | null
+          revision?: number
           solution?: string | null
           sort_order?: number
           start_time?: string | null
@@ -7036,6 +7106,10 @@ export type Database = {
       }
       k3_day_read: { Args: { _date: string }; Returns: Json }
       k3_day_save: { Args: { _date: string; _kg: string }; Returns: Json }
+      k3_day_scope_ok: {
+        Args: { _actor: string; _day: string }
+        Returns: boolean
+      }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
