@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, Loader2, MessageSquarePlus, Star } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3TeamQuery, k3UserDayQuery, useK3Comment } from '@/lib/biz/k3Queries';
-import { K3_STATUS, hasText, k3Error, k3NeedsConfirmation, k3ProgressLabel, type K3Settings, type K3TeamRow } from '@/lib/biz/k3';
+import { K3_STATUS, hasText, k3DisplayStatus, k3Error, k3NeedsConfirmation, k3ProgressLabel, type K3Settings, type K3TeamRow } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -173,7 +173,7 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
                 <div key={t.id} className={cn('rounded-lg border bg-card p-3 space-y-1', t.is_focus ? 'border-primary/60' : 'border-border')}>
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium leading-snug">{t.is_focus && <Star className="mr-1 inline h-3.5 w-3.5 fill-primary text-primary" />}{t.name}</p>
-                    <Badge className="border-0" variant={t.status === 'done' ? 'default' : 'secondary'}>{K3_STATUS[t.status].label}</Badge>
+                    <Badge className="border-0" variant={k3DisplayStatus(t) === 'done' ? 'default' : 'secondary'}>{K3_STATUS[k3DisplayStatus(t)].label}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {(t.start_time || t.end_time) && `${t.start_time?.slice(0, 5) ?? '…'}–${t.end_time?.slice(0, 5) ?? '…'} · `}

@@ -74,11 +74,8 @@ export function useK3TaskSave() {
 export function useK3TaskUpdate() {
   const invalidate = useK3Invalidate();
   return useMutation({
-    mutationFn: async (a: { id: string; status: string; kpi_actual?: number | null; progress?: number | null; problem?: string; cause?: string; solution?: string; note?: string }) => {
-      const { data, error } = await supabase.rpc('k3_task_update', {
-        _id: a.id, _status: a.status, _kpi_actual: a.kpi_actual ?? null, _progress: a.progress ?? null,
-        _problem: a.problem ?? '', _cause: a.cause ?? '', _solution: a.solution ?? '', _note: a.note ?? '',
-      } as never);
+    mutationFn: async (a: { id: string; revision?:number; status: string; kpi_actual?: number | null; progress?: number | null; problem?: string; cause?: string; solution?: string; note?: string }) => {
+      const { data, error } = await supabase.rpc('k3_task_save', { _payload: a as never });
       if (error) throw error;
       return data;
     },

@@ -1,4 +1,4 @@
-import { k3Counts, type K3Task, type K3Comment } from './k3';
+import { k3Counts,k3IsComplete,k3DisplayStatus, type K3Task, type K3Comment } from './k3';
 
 export type K3PeriodType = 'week' | 'month';
 export interface K3Goal {
@@ -16,6 +16,7 @@ export interface K3PeriodData {
   comments: (K3Comment & { goal_id: string | null; action_id: string | null })[];
   fingerprint: string; needs_confirmation: boolean; can_comment: boolean;
   events: { id: number; action: string; created_at: string }[];
+  planned_at?:string|null; plan_deadline?:string|null; summary_deadline?:string|null;
 }
 export interface K3PeriodConfig {
   week_enabled: boolean; month_enabled: boolean; period_effective_from: string | null;
@@ -35,7 +36,7 @@ export function k3ShiftPeriod(type: K3PeriodType, date: string, amount: number) 
 }
 export function k3PeriodCounts(tasks: K3PeriodTask[], today: string) {
   const scheduled=tasks.filter(t=>!t.is_unscheduled);
-  return { ...k3Counts(scheduled), incomplete: scheduled.filter(t=>t.status==='incomplete').length, overdue: scheduled.filter(t=>t.work_date<today && t.status!=='done' && t.status!=='incomplete').length, unscheduled:tasks.filter(t=>t.is_unscheduled).length };
+  return { ...k3Counts(tasks), incomplete: scheduled.filter(t=>k3DisplayStatus(t)==='incomplete').length, overdue: scheduled.filter(t=>t.work_date<today && !k3IsComplete(t) && k3DisplayStatus(t)!=='incomplete').length, unscheduled:tasks.filter(t=>t.is_unscheduled).length };
 }
 export function k3UnitActuals(tasks: K3PeriodTask[]) {
   const seen=new Set<string>(); const totals=new Map<string,number>();

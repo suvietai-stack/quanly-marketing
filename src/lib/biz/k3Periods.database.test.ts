@@ -18,7 +18,7 @@ beforeAll(async()=>{
  CREATE FUNCTION public.biz_scope_ok(uuid,uuid,uuid,timestamptz DEFAULT now()) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${manager}'::uuid AND $2='${staff}'::uuid AND $3='${dept}'::uuid$$;
  CREATE FUNCTION public.biz_department_at(uuid,date) RETURNS uuid LANGUAGE sql AS $$SELECT department_id FROM biz_department_members WHERE user_id=$1 LIMIT 1$$;
  INSERT INTO profiles VALUES('${staff}','A','Đang hoạt động'),('${other}','B','Đang hoạt động'),('${manager}','Quản lý','Đang hoạt động');INSERT INTO biz_departments VALUES('${dept}','Phòng cũ');INSERT INTO biz_department_members VALUES('${staff}','${dept}'),('${other}','${dept}');SET test.uid='${staff}';`);
- for(const file of ['0173_k3_daily_management_phase1.sql','0174_k3_daily_integrity_and_summary_versions.sql','0175_k3_period_entities.sql','0176_k3_period_writes_and_task_links.sql','0177_k3_period_reads_summaries_scope.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`,'utf8'));
+ for(const file of ['0173_k3_daily_management_phase1.sql','0174_k3_daily_integrity_and_summary_versions.sql','0175_k3_period_entities.sql','0176_k3_period_writes_and_task_links.sql','0177_k3_period_reads_summaries_scope.sql','0178_k3_summary_semantics_and_deadline_readback.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`,'utf8'));
  await as(manager);await val(`SELECT k3_settings_save(true,'2020-01-01','08:45','18:00',3::smallint) v`);
  await val(`SELECT k3_period_settings_save('{"week_enabled":true,"month_enabled":true,"period_effective_from":"2020-01-01"}') v`);await as(staff);
 },30000);afterAll(()=>db.close());

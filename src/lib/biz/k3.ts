@@ -110,12 +110,21 @@ export function k3ProgressLabel(t: Pick<K3Task, 'kpi_target' | 'kpi_actual' | 'p
 }
 
 export function k3Counts(tasks: K3Task[]) {
-  const done = tasks.filter((t) => t.status === 'done').length;
+  const done = tasks.filter(k3IsComplete).length;
   const doing = tasks.filter((t) => t.status === 'doing').length;
   const open = tasks.length - done;
   const focus = tasks.filter((t) => t.is_focus).length;
   const issues = tasks.filter((t) => t.status !== 'done' && (hasText(t.problem) || hasText(t.solution))).length;
   return { total: tasks.length, done, doing, open, focus, issues };
+}
+
+export function k3IsComplete(t: Pick<K3Task,'status'|'kpi_target'|'kpi_actual'|'progress'>): boolean {
+  if(t.status!=='done') return false;
+  return t.kpi_target!=null && t.kpi_target>0 ? Number(t.kpi_actual??0)>=Number(t.kpi_target) : t.progress==null || t.progress>=100;
+}
+
+export function k3DisplayStatus(t: Pick<K3Task,'status'|'kpi_target'|'kpi_actual'|'progress'>): K3Status {
+  return t.status==='done'&&!k3IsComplete(t)?'incomplete':t.status;
 }
 
 export function hasText(v: string | null | undefined): boolean {

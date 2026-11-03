@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3DaySave, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
-import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
+import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -203,7 +203,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
   const hasIssue = task.status !== 'done' && (hasText(task.problem) || hasText(task.solution));
   const quick = async (status: K3Status) => {
     try {
-      await update.mutateAsync({ id: task.id, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
+      await update.mutateAsync({ id: task.id, revision:task.revision, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
     } catch (e) {
       toast.error(k3Error(e));
     }
@@ -237,7 +237,8 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <StatusBadge status={task.status} />
+          <StatusBadge status={k3DisplayStatus(task)} />
+          {task.status==='done'&&k3DisplayStatus(task)!=='done'&&<span className="max-w-36 text-right text-xs text-muted-foreground">Trạng thái cũ: Hoàn thành</span>}
           {task.is_focus && <Badge variant="outline" className="border-primary text-primary">Mũi khoan</Badge>}
           {hasIssue && (
             <Badge variant="outline" className="border-amber-500 text-amber-600"><AlertTriangle className="mr-1 h-3 w-3" />Có vấn đề</Badge>
@@ -265,6 +266,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
 
 export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void }) {
   const save = useK3TaskSave();
+  const [requestKey]=useState(()=>crypto.randomUUID());
   const [f, setF] = useState({
     name: task?.name ?? '',
     start_time: task?.start_time?.slice(0, 5) ?? '',
@@ -283,7 +285,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date
   const submit = async () => {
     try {
       await save.mutateAsync({
-        id: task?.id, revision: task?.revision, request_key: task ? undefined : crypto.randomUUID(), work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
+        id: task?.id, revision: task?.revision, request_key: task ? undefined : requestKey, work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
         kpi_target: f.kpi_target === '' ? null : Number(f.kpi_target), kpi_unit: f.kpi_unit,
         is_focus: f.is_focus, status: task?.status ?? 'todo', progress: task?.progress ?? 0,
         kpi_actual: task?.kpi_actual ?? null, how: f.how, place: f.place, note: f.note,
@@ -354,7 +356,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
   const submit = async () => {
     try {
       await update.mutateAsync({
-        id: task.id, status: f.status,
+        id: task.id, revision:task.revision, status: f.status,
         kpi_actual: f.kpi_actual === '' ? null : Number(f.kpi_actual),
         progress: f.progress === '' ? null : Number(f.progress),
         problem: f.problem, cause: f.cause, solution: f.solution, note: f.note,
