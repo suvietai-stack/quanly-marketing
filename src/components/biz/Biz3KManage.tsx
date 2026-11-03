@@ -139,10 +139,11 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
   const { data, isLoading, error, refetch } = useQuery({ ...k3UserDayQuery(uid, row?.user_id ?? '', date), enabled: !!uid && !!row });
   const comment = useK3Comment();
   const [body, setBody] = useState('');
+  const [taskId,setTaskId]=useState('day');
   const send = async () => {
     if (!data?.day) return;
     try {
-      await comment.mutateAsync({ day_id: data.day.id, body });
+      await comment.mutateAsync({ day_id: data.day.id, task_id:taskId==='day'?null:taskId, body });
       setBody('');
       toast.success('Đã gửi nhận xét.');
     } catch (e) {
@@ -204,6 +205,7 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
             {data.can_comment && (
               <div className="space-y-2 border-t border-border pt-3">
                 <Label htmlFor="k3c-body" className="text-xs">Nhận xét / hướng dẫn của quản lý</Label>
+                <Select value={taskId} onValueChange={setTaskId}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="day">Tổng kết ngày</SelectItem>{data.tasks.map(t=><SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
                 <Textarea id="k3c-body" rows={2} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Nhập nhận xét cho nhân viên…" />
                 <Button type="button" size="sm" disabled={comment.isPending || !body.trim()} onClick={send}>
                   <MessageSquarePlus className="mr-1 h-4 w-4" /> Gửi nhận xét

@@ -24,7 +24,7 @@ export function Biz3K() {
     return (
       <div className="py-8 text-center space-y-3">
         <p className="text-sm text-destructive">Không tải được cấu hình 3K.</p>
-        <button type="button" className="text-sm underline" onClick={() => refetch()}>Thử lại</button>
+        <Button variant="ghost" onClick={() => refetch()}>Thử lại</Button>
       </div>
     );
   }
@@ -42,7 +42,7 @@ export function Biz3K() {
       {visible.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {visible.map((t) => (
-            <button
+            <Button variant="ghost"
               key={t.key}
               type="button"
               onClick={() => setSection(t.key)}
@@ -53,7 +53,7 @@ export function Biz3K() {
             >
               <t.icon className="h-4 w-4" />
               {t.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}
