@@ -5,7 +5,7 @@ const fixture = vi.hoisted(() => ({
 }));
 vi.mock('@tanstack/react-start', () => ({ createServerFn: () => {
   let validate = (input: any) => input;
-  const builder: any = { middleware: () => builder, inputValidator: (fn: any) => { validate = fn; return builder; }, handler: (fn: any) => (input: any) => fn({ data: validate(input.data), context: { userId: fixture.actor, supabase: client } }) };
+  const builder: any = { middleware: () => builder, inputValidator: (fn: any) => { validate = fn; return builder; }, handler: (fn: any) => async (input: any) => fn({ data: validate(input.data), context: { userId: fixture.actor, supabase: client } }) };
   return builder;
 } }));
 vi.mock('@/integrations/supabase/auth-middleware', () => ({ requireSupabaseAuth: {} }));
