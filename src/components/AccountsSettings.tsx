@@ -204,9 +204,10 @@ function PermissionDebugTab() {
           )}
           <div>
             <Label className="text-xs">Quyền hiệu lực ({effective.size}/{ALL_PERMS.length})</Label>
+            <p className="text-xs text-muted-foreground mt-1">Quyền Quản trị Kinh doanh và Quản lý 3K không cấp qua Role tổng — quản lý tại Quản trị Kinh doanh → Cài đặt (Cơ cấu tổ chức & Bổ nhiệm).</p>
             <div className="mt-2 max-h-96 overflow-y-auto border rounded p-2">
-              {PERMISSION_GROUPS.map((g) => {
-                const items = PERMISSIONS.filter((p) => p.group === g);
+              {PERMISSION_GROUPS.filter((g) => !BIZ_ORG_GROUPS.includes(g)).map((g) => {
+                const items = ROLE_PERMISSIONS.filter((p) => p.group === g);
                 const granted = items.filter((p) => effective.has(p.key));
                 if (granted.length === 0) return null;
                 return (
@@ -655,7 +656,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    return PERMISSIONS.filter((p) => {
+    return ROLE_PERMISSIONS.filter((p) => {
       if (group !== "ALL" && p.group !== group) return false;
       if (!qq) return true;
       return p.label.toLowerCase().includes(qq) || p.key.toLowerCase().includes(qq) || (p.subGroup || "").toLowerCase().includes(qq);
