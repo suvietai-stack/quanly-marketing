@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, CheckCircle2, History } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { k3Error, k3ProgressLabel, K3_STATUS, type K3Settings } from '@/lib/biz/k3';
+import { k3Error, k3IsComplete, k3DisplayStatus, k3ProgressLabel, K3_STATUS, type K3Settings } from '@/lib/biz/k3';
 import { k3PeriodBounds,k3ShiftPeriod,k3PeriodCounts,k3UnitActuals,k3ActionMetrics,type K3PeriodType,type K3PeriodData,type K3Goal,type K3Action,type K3PeriodTask } from '@/lib/biz/k3Periods';
 import { k3PeriodQuery,k3PeriodTeamQuery,k3PeriodConfigQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
 import { TaskCard,TaskDialog,UpdateDialog,DeleteDialog } from './Biz3KMyDay';
@@ -54,11 +54,12 @@ function PeriodContent({data,settings,enabled,type,date,readOnly=false}:{data:K3
  const [scheduleDate,setScheduleDate]=useState(date);const [summary,setSummary]=useState(false);const [note,setNote]=useState('');const [history,setHistory]=useState(false);const [onlyOpen,setOnlyOpen]=useState(false);const [goalFilter,setGoalFilter]=useState('all');const [actionFilter,setActionFilter]=useState('all');
  const [comment,setComment]=useState('');const [commentTarget,setCommentTarget]=useState('period');
  const c=k3PeriodCounts(data.tasks,settings.today);const totals=k3UnitActuals(data.tasks);const canWrite=enabled&&!readOnly;
- const shown=data.tasks.filter(t=>(!onlyOpen||t.status!=='done')&&(actionFilter==='all'||t.action_id===actionFilter)&&(goalFilter==='all'||data.actions.some(a=>a.id===t.action_id&&a.goal_id===goalFilter)));
+ const shown=data.tasks.filter(t=>(!onlyOpen||!k3IsComplete(t))&&(actionFilter==='all'||t.action_id===actionFilter)&&(goalFilter==='all'||data.actions.some(a=>a.id===t.action_id&&a.goal_id===goalFilter)));
  const groups=Array.from(new Set(shown.map(t=>t.is_unscheduled?'unscheduled':t.work_date))).sort();
  return <div className="min-w-0 space-y-4">
   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[['Tổng công việc',c.total],['Hoàn thành',c.done],['Đang thực hiện',c.doing],['Chưa đạt',c.incomplete],['Quá hạn',c.overdue],['Mũi khoan',c.focus],['Chưa xếp lịch',c.unscheduled],['Tiến độ công việc',`${c.total?Math.round(c.done/c.total*100):0}%`]].map(([label,value])=><div key={label} className="rounded-lg border border-border bg-card p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold">{value}</p></div>)}</div>
   {totals.length>0&&<div className="flex flex-wrap gap-2">{totals.map(v=><Badge variant="secondary" key={v.unit}>Thực tế: {v.actual} {v.unit}</Badge>)}</div>}
+  {(data.plan_deadline||data.summary_deadline)&&<div className="flex flex-wrap gap-3 text-xs text-muted-foreground">{data.plan_deadline&&<span>Hạn lập: {new Date(data.plan_deadline).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})}{data.planned_at&&new Date(data.planned_at)>new Date(data.plan_deadline)?' · Trễ hạn':''}</span>}{data.summary_deadline&&<span>Hạn tổng kết: {new Date(data.summary_deadline).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})}{data.summaries[0]&&new Date(data.summaries[0].confirmed_at)>new Date(data.summary_deadline)?' · Trễ hạn':''}</span>}</div>}
   <div className="flex flex-wrap items-center gap-2"><h3 className="mr-auto font-medium">Mục tiêu KG · Hành động KF</h3>{canWrite&&<><Button size="sm" variant="outline" onClick={()=>setGoal('new')}><Plus className="mr-1 h-4 w-4"/>Lập KG {type==='week'?'tuần':'tháng'}</Button><Button size="sm" onClick={()=>setNewTask(true)}><Plus className="mr-1 h-4 w-4"/>Thêm công việc</Button></>}</div>
   {!data.goals.length&&<p className="text-sm text-muted-foreground">Chưa có mục tiêu KG trong kỳ này.</p>}
   {data.goals.map(g=><details key={g.id} className="border-b border-border py-3" open><summary className="cursor-pointer font-medium break-words">{g.name} <Badge variant="outline">{g.period_type==='week'?'Tuần':'Tháng'} · {g.period_start}</Badge></summary>
@@ -75,7 +76,7 @@ function PeriodContent({data,settings,enabled,type,date,readOnly=false}:{data:K3
   {goal&&<PlanEditor kind="goal" type={type} date={date} goal={goal==='new'?null:goal} onClose={()=>setGoal(null)}/>}
   {action&&<PlanEditor kind="action" type={type} date={date} goal={action.goal} action={action.action} onClose={()=>setAction(null)}/>}
   {newTask&&<NewPlanTask data={data} date={date} onClose={()=>setNewTask(false)}/>}
-  {editing&&<TaskDialog date={editing.work_date} task={editing} focusCount={data.tasks.filter(t=>t.work_date===editing.work_date&&t.is_focus).length} maxFocus={settings.max_focus} onClose={()=>setEditing(null)}/>}
+  {editing&&<TaskDialog date={editing.work_date} task={editing} actions={data.actions} focusCount={data.tasks.filter(t=>t.work_date===editing.work_date&&t.is_focus).length} maxFocus={settings.max_focus} onClose={()=>setEditing(null)}/>}
   {updating&&<UpdateDialog task={updating} onClose={()=>setUpdating(null)}/>}{deleting&&<DeleteDialog task={deleting} onClose={()=>setDeleting(null)}/>}
   <Dialog open={!!schedule} onOpenChange={o=>!o&&setSchedule(null)}><DialogContent><DialogHeader><DialogTitle>Xếp lịch công việc</DialogTitle></DialogHeader><Input type="date" value={scheduleDate} min={settings.today} onChange={e=>setScheduleDate(e.target.value)}/><DialogFooter><Button disabled={mutation.isPending} onClick={async()=>{if(!schedule)return;try{await mutation.mutateAsync({kind:'schedule',id:schedule.id,date:scheduleDate,revision:schedule.revision??0});setSchedule(null)}catch(e){toast.error(k3Error(e))}}}>Lưu ngày thực hiện</Button></DialogFooter></DialogContent></Dialog>
   <Dialog open={summary} onOpenChange={setSummary}><DialogContent><DialogHeader><DialogTitle>Tổng kết {data.period_start} – {data.period_end}</DialogTitle></DialogHeader><p className="text-sm">{c.total} công việc · {c.done} hoàn thành · {c.incomplete} chưa đạt</p><Textarea aria-label="Nhận xét tổng kết" value={note} onChange={e=>setNote(e.target.value)} placeholder="Nhận xét tổng kết…"/><DialogFooter><Button disabled={mutation.isPending} onClick={async()=>{try{await mutation.mutateAsync({kind:'summary',type,date,note});setSummary(false);toast.success('Đã lưu phiên bản tổng kết.')}catch(e){toast.error(k3Error(e))}}}>Xác nhận</Button></DialogFooter></DialogContent></Dialog>
