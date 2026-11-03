@@ -1296,6 +1296,13 @@
       "when": 1793695194974,
       "tag": "0184_account_caller_permission_check",
       "breakpoints": true
+    },
+    {
+      "idx": 185,
+      "version": "7",
+      "when": 1793697545251,
+      "tag": "0185_biz_permission_unification",
+      "breakpoints": true
     }
   ]
 }
