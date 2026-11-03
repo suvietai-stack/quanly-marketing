@@ -6,7 +6,7 @@ export const K3_STATUS: Record<K3Status, { label: string; tone: 'neutral' | 'inf
   doing: { label: 'Đang thực hiện', tone: 'info' },
   done: { label: 'Hoàn thành', tone: 'success' },
   paused: { label: 'Tạm dừng', tone: 'warning' },
-  incomplete: { label: 'Chưa hoàn thành', tone: 'danger' },
+  incomplete: { label: 'Kết thúc – Chưa đạt chỉ tiêu', tone: 'danger' },
 };
 
 export interface K3Settings {
@@ -47,6 +47,8 @@ export interface K3Task {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  revision?: number;
+  deleted_at?: string | null;
 }
 
 export interface K3Day {
@@ -57,6 +59,11 @@ export interface K3Day {
   planned_at: string | null;
   summarized_at: string | null;
   summary_note: string | null;
+  data_revision?: number;
+  confirmed_revision?: number | null;
+  confirmed_at?: string | null;
+  plan_deadline?: string | null;
+  summary_deadline?: string | null;
 }
 
 export interface K3Comment {
@@ -74,13 +81,15 @@ export interface K3DayData {
   day: K3Day | null;
   tasks: K3Task[];
   comments: K3Comment[];
+  events?: { id: number; task_id: string | null; action: string; detail: Record<string, unknown>; created_at: string }[];
+  summaries?: { id: string; revision: number; confirmed_at: string; snapshot: { kg: string | null; tasks: K3Task[] } }[];
 }
 
 export interface K3TeamRow {
   user_id: string;
   full_name: string;
   departments: string[];
-  day: { id: string; kg: string | null; planned_at: string | null; summarized_at: string | null } | null;
+  day: K3Day | null;
   total: number;
   done: number;
   open: number;
@@ -119,11 +128,20 @@ export function k3VngbComplete(t: Pick<K3Task, 'problem' | 'cause' | 'solution'>
 }
 
 /** Đúng hạn/trễ hạn theo mốc cài đặt; trả null khi chưa có dữ liệu để so. */
-export function k3LateFlags(day: K3Day | null, s: K3Settings, workDate: string) {
-  const planLate = day?.planned_at ? day.planned_at.slice(0, 10) === workDate && day.planned_at.slice(11, 16) > s.plan_by.slice(0, 5) : null;
-  const summaryLate = day?.summarized_at ? day.summarized_at.slice(0, 10) === workDate && day.summarized_at.slice(11, 16) > s.summary_by.slice(0, 5) : null;
-  const summaryOverdue = !day?.summarized_at && workDate < s.today;
-  return { planLate, summaryLate, summaryOverdue };
+export function k3NeedsConfirmation(day: K3Day | null | undefined): boolean {
+  return !!day?.summarized_at && day.data_revision != null && day.confirmed_revision !== day.data_revision;
+}
+
+export function k3LateFlags(day: K3Day | null, s: K3Settings, workDate: string, now = new Date()) {
+  const deadline = (value: string) => Date.parse(`${workDate}T${value.length === 5 ? `${value}:00` : value}+07:00`);
+  const instant = (value: string) => Date.parse(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : `${value}+07:00`);
+  const planDue = day?.plan_deadline ? instant(day.plan_deadline) : deadline(s.plan_by);
+  const summaryDue = day?.summary_deadline ? instant(day.summary_deadline) : deadline(s.summary_by);
+  const planLate = day?.planned_at ? instant(day.planned_at) > planDue : null;
+  const summaryLate = day?.summarized_at ? instant(day.summarized_at) > summaryDue : null;
+  const summaryOverdue = (!day?.summarized_at || k3NeedsConfirmation(day)) && !!s.effective_from && workDate >= s.effective_from && now.getTime() > summaryDue;
+  const planLateMinutes = day?.planned_at ? Math.max(0, Math.floor((instant(day.planned_at) - planDue) / 60000)) : null;
+  return { planLate, summaryLate, summaryOverdue, planLateMinutes };
 }
 
 /** Chuẩn hóa thông báo lỗi từ RPC — không bao giờ hiển thị [object Object]. */

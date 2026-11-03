@@ -46,6 +46,20 @@ describe('k3Counts', () => {
 });
 
 describe('k3LateFlags', () => {
+  it('09:10 giờ Việt Nam là lập muộn 25 phút, không lấy giờ UTC', () => {
+    const flags = k3LateFlags({ planned_at: '2026-11-02T02:10:00Z', summarized_at: null } as never, settings, '2026-11-02');
+    expect(flags.planLate).toBe(true);
+    expect(flags.planLateMinutes).toBe(25);
+  });
+  it('08:30 Việt Nam đúng hạn', () => {
+    expect(k3LateFlags({ planned_at: '2026-11-02T01:30:00Z' } as never, settings, '2026-11-02').planLate).toBe(false);
+  });
+  it('00:10 Việt Nam thuộc ngày sau dù timestamp UTC thuộc ngày trước', () => {
+    expect(k3LateFlags({ planned_at: '2026-11-01T17:10:00Z' } as never, settings, '2026-11-02').planLate).toBe(false);
+  });
+  it('lập ở ngày sau vẫn là muộn so với ngày cần lập', () => {
+    expect(k3LateFlags({ planned_at: '2026-11-02T17:01:00Z' } as never, settings, '2026-11-02').planLate).toBe(true);
+  });
   it('ghi nhận lập trễ và tổng kết trễ theo mốc cài đặt', () => {
     const day = { planned_at: '2026-11-02T09:10:00', summarized_at: '2026-11-02T18:30:00' } as never;
     const flags = k3LateFlags(day, settings, '2026-11-02');
@@ -53,7 +67,7 @@ describe('k3LateFlags', () => {
     expect(flags.summaryLate).toBe(true);
   });
   it('ngày quá khứ chưa tổng kết là quá hạn', () => {
-    const flags = k3LateFlags({ planned_at: '2026-11-01T08:00:00', summarized_at: null } as never, settings, '2026-11-01');
+    const flags = k3LateFlags({ planned_at: '2026-11-01T08:00:00', summarized_at: null } as never, { ...settings, effective_from: '2026-10-01' }, '2026-11-01');
     expect(flags.summaryOverdue).toBe(true);
     expect(flags.planLate).toBe(false);
   });
