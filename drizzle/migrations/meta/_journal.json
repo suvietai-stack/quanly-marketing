@@ -1219,6 +1219,13 @@
       "when": 1793604731972,
       "tag": "0173_k3_daily_management_phase1",
       "breakpoints": true
+    },
+    {
+      "idx": 174,
+      "version": "7",
+      "when": 1793673614006,
+      "tag": "0174_k3_daily_integrity_and_summary_versions",
+      "breakpoints": true
     }
   ]
 }

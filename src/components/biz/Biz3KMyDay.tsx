@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3DaySave, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
-import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3Error, k3LateFlags, k3ProgressLabel, k3VngbComplete, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
+import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -18,8 +18,8 @@ import { cn } from '@/lib/utils';
 const toneClass: Record<string, string> = {
   neutral: 'bg-secondary text-secondary-foreground',
   info: 'bg-primary text-primary-foreground',
-  success: 'bg-emerald-600 text-white',
-  warning: 'bg-amber-500 text-white',
+  success: 'bg-success text-success-foreground',
+  warning: 'bg-warning text-warning-foreground',
   danger: 'bg-destructive text-destructive-foreground',
 };
 
@@ -28,44 +28,51 @@ function StatusBadge({ status }: { status: K3Status }) {
   return <Badge className={cn('gap-1 border-0', toneClass[meta.tone])}>{meta.label}</Badge>;
 }
 
-export function Biz3KMyDay({ settings }: { settings: K3Settings }) {
+export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings: K3Settings; selectedDate?: string; onDateChange?: (date: string) => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
-  const [date, setDate] = useState(settings.today);
+  const [localDate, setLocalDate] = useState(settings.today);
+  const date = selectedDate ?? localDate;
+  const setDate = onDateChange ?? setLocalDate;
   const { data, isLoading, error, refetch } = useQuery({ ...k3DayQuery(uid, date), enabled: !!uid && !!date });
   const [editing, setEditing] = useState<K3Task | null | 'new'>(null);
   const [updating, setUpdating] = useState<K3Task | null>(null);
   const [deleting, setDeleting] = useState<K3Task | null>(null);
   const [confirmSummary, setConfirmSummary] = useState(false);
+  const [history, setHistory] = useState(false);
   const summary = useK3Summary();
 
   const tasks = data?.tasks ?? [];
   const counts = useMemo(() => k3Counts(tasks), [tasks]);
   const late = data ? k3LateFlags(data.day, settings, date) : null;
   const summarized = !!data?.day?.summarized_at;
+  const needsConfirmation = k3NeedsConfirmation(data?.day);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-2">
         <div className="space-y-1">
           <Label htmlFor="k3-date" className="text-xs">Ngày thực hiện</Label>
-          <Input id="k3-date" type="date" value={date} max={settings.today} onChange={(e) => setDate(e.target.value)} className="w-40" />
+          <Input id="k3-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setDate(settings.today)} disabled={date === settings.today}>
           <CalendarDays className="mr-1 h-4 w-4" /> Hôm nay
         </Button>
         <div className="flex-1" />
-        <Button type="button" size="sm" onClick={() => setEditing('new')}>
+        <Button type="button" size="sm" disabled={!settings.enabled} onClick={() => setEditing('new')}>
           <Plus className="mr-1 h-4 w-4" /> Thêm công việc
         </Button>
-        <Button type="button" size="sm" variant="secondary" onClick={() => setConfirmSummary(true)} disabled={!data?.day || tasks.length === 0}>
-          <CheckCircle2 className="mr-1 h-4 w-4" /> {summarized ? 'Cập nhật tổng kết' : 'Tổng kết 3K hôm nay'}
+        <Button type="button" size="sm" variant="secondary" onClick={() => setConfirmSummary(true)} disabled={!settings.enabled || date > settings.today || !data?.day || tasks.length === 0}>
+          <CheckCircle2 className="mr-1 h-4 w-4" /> {needsConfirmation ? 'Xác nhận lại tổng kết' : summarized ? 'Xem lại tổng kết' : 'Tổng kết 3K ngày'}
         </Button>
+        <Button variant="ghost" size="sm" onClick={() => setHistory(true)}><History className="mr-1 h-4 w-4" />Lịch sử</Button>
       </div>
 
       {data?.day && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {data.day.planned_at && <span>Lập lúc {new Date(data.day.planned_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}{late?.planLate ? ' (trễ hạn lập)' : ''}</span>}
-          {summarized && <span>· Đã tổng kết lúc {new Date(data.day.summarized_at!).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}{late?.summaryLate ? ' (trễ hạn)' : ''}</span>}
+          {data.day.planned_at && <span>Lập lúc {new Date(data.day.planned_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}{late?.planLate ? ` (muộn ${late.planLateMinutes} phút)` : ' (đúng hạn)'}</span>}
+          {data.day.summarized_at && <span>· Tổng kết lần đầu {new Date(data.day.summarized_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}{late?.summaryLate ? ' (trễ hạn)' : ''}</span>}
+          {needsConfirmation && <Badge variant="destructive">Cần xác nhận lại tổng kết</Badge>}
+          {data.day.confirmed_at && <span>· Xác nhận gần nhất {new Date(data.day.confirmed_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</span>}
           {late?.summaryOverdue && <Badge variant="destructive">Chưa tổng kết (quá {settings.summary_by.slice(0, 5)})</Badge>}
         </div>
       )}
@@ -78,7 +85,7 @@ export function Biz3KMyDay({ settings }: { settings: K3Settings }) {
         <StatCard label="Mũi khoan" value={counts.focus} />
       </div>
 
-      <KgBox date={date} data={data} />
+      <KgBox key={date} date={date} data={data} enabled={settings.enabled} />
 
       {isLoading && <p className="py-6 text-center text-sm text-muted-foreground"><Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Đang tải…</p>}
       {error && (
@@ -96,7 +103,7 @@ export function Biz3KMyDay({ settings }: { settings: K3Settings }) {
       )}
 
       <div className="space-y-2">
-        {tasks.map((t) => (
+        {[...tasks].sort((a,b) => Number(b.is_focus)-Number(a.is_focus)).map((t) => (
           <TaskCard key={t.id} task={t} settings={settings} onEdit={() => setEditing(t)} onUpdate={() => setUpdating(t)} onDelete={() => setDeleting(t)} />
         ))}
       </div>
@@ -112,6 +119,11 @@ export function Biz3KMyDay({ settings }: { settings: K3Settings }) {
       )}
       {updating && <UpdateDialog task={updating} onClose={() => setUpdating(null)} />}
       {deleting && <DeleteDialog task={deleting} onClose={() => setDeleting(null)} />}
+      <Dialog open={history} onOpenChange={setHistory}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử 3K ngày {date}</DialogTitle></DialogHeader>
+        {data?.summaries?.map((v) => <div key={v.id} className="border-b border-border py-2 text-sm"><p className="font-medium">Tổng kết phiên bản {v.revision}</p><p className="text-xs text-muted-foreground">{new Date(v.confirmed_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>{v.snapshot.tasks.map((t) => <p key={t.id}>{t.name} · {k3ProgressLabel(t)}</p>)}</div>)}
+        {data?.events?.map((e) => <div key={e.id} className="border-b border-border py-2 text-sm"><p>{({ create:'Thêm công việc', update:'Cập nhật công việc', delete:'Xóa công việc', plan:'Lưu mục tiêu', summary:'Xác nhận tổng kết', progress:'Cập nhật kết quả' } as Record<string,string>)[e.action] ?? 'Thay đổi công việc'}</p><p className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p></div>)}
+        {!data?.events?.length && <p className="text-sm text-muted-foreground">Chưa có lịch sử.</p>}
+      </DialogContent></Dialog>
 
       <AlertDialog open={confirmSummary} onOpenChange={setConfirmSummary}>
         <AlertDialogContent>
@@ -154,7 +166,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function KgBox({ date, data }: { date: string; data?: K3DayData }) {
+function KgBox({ date, data, enabled }: { date: string; data?: K3DayData; enabled: boolean }) {
   const save = useK3DaySave();
   const [kg, setKg] = useState<string | null>(null);
   const value = kg ?? data?.day?.kg ?? '';
@@ -167,7 +179,7 @@ function KgBox({ date, data }: { date: string; data?: K3DayData }) {
           type="button"
           variant="outline"
           size="sm"
-          disabled={save.isPending || kg === null}
+          disabled={!enabled || save.isPending || kg === null}
           onClick={async () => {
             try {
               await save.mutateAsync({ date, kg: value });
@@ -185,7 +197,7 @@ function KgBox({ date, data }: { date: string; data?: K3DayData }) {
   );
 }
 
-function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
+export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
   const update = useK3TaskUpdate();
   const save = useK3TaskSave();
   const hasIssue = task.status !== 'done' && (hasText(task.problem) || hasText(task.solution));
@@ -206,14 +218,14 @@ function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task
   return (
     <div className={cn('rounded-lg border bg-card p-3 space-y-2', task.is_focus ? 'border-primary/60' : 'border-border')}>
       <div className="flex items-start gap-2">
-        <button
+        <Button variant="ghost" size="icon" disabled={!settings.enabled}
           type="button"
           onClick={toggleFocus}
           title={task.is_focus ? 'Bỏ mũi khoan trọng tâm' : `Đánh dấu mũi khoan trọng tâm (tối đa ${settings.max_focus})`}
           className={cn('mt-0.5 rounded-full p-1 transition-colors', task.is_focus ? 'text-primary' : 'text-muted-foreground hover:text-foreground')}
         >
           <Star className={cn('h-4 w-4', task.is_focus && 'fill-primary')} />
-        </button>
+        </Button>
         <div className="min-w-0 flex-1">
           <p className="font-medium leading-snug">{task.name}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -239,19 +251,19 @@ function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task
           {hasText(task.solution) && <p><span className="font-medium">Giải pháp:</span> {task.solution}</p>}
         </div>
       )}
-      <div className="flex flex-wrap gap-1.5">
+      {settings.enabled && <div className="flex flex-wrap gap-1.5">
         {task.status === 'todo' && <Button type="button" size="sm" variant="outline" onClick={() => quick('doing')}><Play className="mr-1 h-3.5 w-3.5" />Bắt đầu</Button>}
         {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>}
         {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={() => quick('done')}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Hoàn thành</Button>}
         {task.status === 'done' && <Button type="button" size="sm" variant="ghost" onClick={onUpdate}>Điều chỉnh</Button>}
         <Button type="button" size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>
         <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={onDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
-      </div>
+      </div>}
     </div>
   );
 }
 
-function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void }) {
+export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void }) {
   const save = useK3TaskSave();
   const [f, setF] = useState({
     name: task?.name ?? '',
@@ -263,6 +275,7 @@ function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: strin
     how: task?.how ?? '',
     place: task?.place ?? '',
     note: task?.note ?? '',
+    link: task?.links?.[0]?.url ?? '',
   });
   const [more, setMore] = useState(!!task && (!!task.how || !!task.place || !!task.note));
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
@@ -270,11 +283,12 @@ function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: strin
   const submit = async () => {
     try {
       await save.mutateAsync({
-        id: task?.id, work_date: date, name: f.name, start_time: f.start_time, end_time: f.end_time,
+        id: task?.id, revision: task?.revision, request_key: task ? undefined : crypto.randomUUID(), work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
         kpi_target: f.kpi_target === '' ? null : Number(f.kpi_target), kpi_unit: f.kpi_unit,
         is_focus: f.is_focus, status: task?.status ?? 'todo', progress: task?.progress ?? 0,
         kpi_actual: task?.kpi_actual ?? null, how: f.how, place: f.place, note: f.note,
         problem: task?.problem ?? '', cause: task?.cause ?? '', solution: task?.solution ?? '',
+        links: f.link ? [{ url: f.link }] : [],
       });
       toast.success(task ? 'Đã lưu công việc.' : 'Đã thêm công việc.');
       onClose();
@@ -310,6 +324,7 @@ function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: strin
               <div className="space-y-1"><Label htmlFor="k3t-how">Cách thực hiện (How)</Label><Textarea id="k3t-how" rows={2} value={f.how} onChange={(e) => set('how', e.target.value)} /></div>
               <div className="space-y-1"><Label htmlFor="k3t-place">Địa điểm (Where)</Label><Input id="k3t-place" value={f.place} onChange={(e) => set('place', e.target.value)} /></div>
               <div className="space-y-1"><Label htmlFor="k3t-note">Ghi chú</Label><Textarea id="k3t-note" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} /></div>
+              <div className="space-y-1"><Label htmlFor="k3t-link">Link tài liệu</Label><Input id="k3t-link" type="url" value={f.link} onChange={(e) => set('link',e.target.value)} /></div>
             </div>
           )}
         </div>
@@ -322,7 +337,7 @@ function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: strin
   );
 }
 
-function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => void }) {
+export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => void }) {
   const update = useK3TaskUpdate();
   const quantified = task.kpi_target != null && task.kpi_target > 0;
   const [f, setF] = useState({
@@ -368,6 +383,7 @@ function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => void }) 
             <div className="space-y-1">
               <Label htmlFor="k3u-actual">Kết quả thực tế (kế hoạch {task.kpi_target}{task.kpi_unit ? ` ${task.kpi_unit}` : ''})</Label>
               <Input id="k3u-actual" type="number" min={0} value={f.kpi_actual} onChange={(e) => set('kpi_actual', e.target.value)} />
+              <p className="text-sm font-medium">Tiến độ: {k3ProgressLabel({ kpi_target:task.kpi_target,kpi_actual:f.kpi_actual === '' ? 0 : Number(f.kpi_actual),progress:Number(f.progress) })}</p>
               <p className="text-xs text-muted-foreground">Hệ thống tự tính tỷ lệ; kết quả vượt kế hoạch vẫn được ghi nhận.</p>
             </div>
           ) : (
@@ -395,7 +411,7 @@ function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => void }) 
   );
 }
 
-function DeleteDialog({ task, onClose }: { task: K3Task; onClose: () => void }) {
+export function DeleteDialog({ task, onClose }: { task: K3Task; onClose: () => void }) {
   const del = useK3TaskDelete();
   return (
     <AlertDialog open onOpenChange={(o) => !o && onClose()}>
