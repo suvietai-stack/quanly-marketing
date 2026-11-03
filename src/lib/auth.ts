@@ -1229,14 +1229,14 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   reject: async (id) => {
-    const { error } = await supabase.from("profiles").update({ status: "Từ chối" }).eq("id", id);
-    if (error) throw new Error(error.message);
+    const { data, error } = await supabase.from("profiles").update({ status: "Từ chối" }).eq("id", id).select('id');
+    if (error || !data?.length) throw new Error(error?.message ?? 'Không cập nhật được tài khoản. Vui lòng kiểm tra quyền.');
     await get().reload();
   },
 
   setStatus: async (id, status) => {
-    const { error } = await supabase.from("profiles").update({ status }).eq("id", id);
-    if (error) throw new Error(error.message);
+    const { data, error } = await supabase.from("profiles").update({ status }).eq("id", id).select('id');
+    if (error || !data?.length) throw new Error(error?.message ?? 'Không cập nhật được trạng thái tài khoản.');
     await get().reload();
   },
 
@@ -1281,8 +1281,8 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (patch.notes !== undefined) dbPatch.notes = patch.notes || null;
     if (patch.mustChangePassword !== undefined) dbPatch.must_change_password = patch.mustChangePassword;
     if (Object.keys(dbPatch).length === 0) return;
-    const { error } = await supabase.from("profiles").update(dbPatch).eq("id", id);
-    if (error) throw new Error(error.message);
+    const { data, error } = await supabase.from("profiles").update(dbPatch).eq("id", id).select('id');
+    if (error || !data?.length) throw new Error(error?.message ?? 'Không lưu được hồ sơ tài khoản.');
     await get().reload();
   },
 

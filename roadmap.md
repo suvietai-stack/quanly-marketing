@@ -2,9 +2,10 @@
 
 ## FIX ĐĂNG NHẬP, DUYỆT TÀI KHOẢN VÀ RESET MẬT KHẨU — spec 411 dòng
 - [x] AUTH-1. Nhật ký xác minh email_not_confirmed; cấu hình đọc thật email bật/auto-confirm tắt. 25 hồ sơ có Auth/email khớp/mật khẩu/đã xác nhận; reset gọi đúng admin API, duyệt không xác nhận email; độ mạnh mật khẩu hosted chưa đọc được đầy đủ. Không đổi tài khoản thật.
-- [ ] AUTH-2. Sửa đúng nguyên nhân, kiểm quyền phía máy chủ, xác nhận email tách trạng thái duyệt; giữ dữ liệu, quyền và phiên hợp lệ.
-- [ ] AUTH-3. Đồng bộ kiểm tra mật khẩu và thông báo, trạng thái xác thực/thao tác liên quan trong quản lý tài khoản; không sửa module khác.
-- [ ] AUTH-4. Kiểm thử hồi quy và luồng đăng ký→xác nhận→duyệt→đăng nhập, admin reset→đăng nhập mới; báo rõ phần chưa xác minh, chưa Publish.
+- [x] AUTH-2. Migrations 0181–0184: duyệt nguyên tử, xác nhận email độc lập, caller-scoped kiểm quyền, active guards/RPC, định danh/role guards và hạn mức/nhật ký reset; giữ tài khoản/dữ liệu thật.
+- [x] AUTH-3. Yêu cầu email thật cho đăng ký mới, gửi lại xác nhận, username sign-in không lộ email, mật khẩu chung, thông báo và xác thực recovery SDK; UI duyệt/lưu chờ kết quả, trạng thái Auth thật đọc được tại tài khoản Nguyễn Thị Thanh Mai.
+- [x] AUTH-4a. 101 kiểm thử cô lập/hồi quy đạt; UI Admin thật đọc trạng thái Email đã xác nhận, hộp gửi lại và recovery giả bị chặn; không lỗi trình duyệt; build OK. Chi tiết docs/auth-p0-verification.md.
+- [ ] AUTH-4b. Hai nghiệm thu ghi thật đăng ký→email→duyệt→mật khẩu ban đầu và Admin reset→mật khẩu mới/cũ: cần tài khoản hoặc môi trường thử được người dùng cho phép và truy cập hộp thư xác nhận. Không đổi mật khẩu/tạo tài khoản/gửi email thử trên backend dùng chung; độ mạnh mật khẩu hosted/redirect allowlist chưa đọc đầy đủ; chưa Publish.
 
 ## FIX 3K NGÀY + TUẦN/THÁNG — spec 1086 dòng
 - [x] A. VN timezone/deadline snapshot, khóa ghi, ngày gốc/owner, KPI/trạng thái, phiên bản tổng kết, nhận xét và lịch sử; dữ liệu legacy Hoàn thành dưới KPI được trình bày Chưa đạt, không sửa trạng thái/timestamp gốc.
