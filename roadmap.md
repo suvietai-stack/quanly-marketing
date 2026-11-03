@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## FIX 3K NGÀY + TUẦN/THÁNG — spec 1086 dòng
+- [ ] A. Sửa VN timezone/deadline, quyền ghi khi khóa, ngày gốc/owner, KPI/trạng thái, phiên bản tổng kết, nhận xét và lịch sử.
+- [ ] B. Mở rộng KG/KF, liên kết cùng k3_tasks, chưa xếp lịch/xếp lịch, tổng kết kỳ/lịch sử, chống gửi trùng và cập nhật đồng thời; phạm vi đơn vị lịch sử.
+- [ ] C. Ngày/Tuần/Tháng giữ ngữ cảnh, KG/KF, danh sách theo ngày, KPI theo đơn vị, quản lý/nhận xét, cài đặt riêng.
+- [ ] D. Kiểm thử nghiệp vụ/database/phân quyền/chống trùng/tuần giao tháng, giao diện 360/375/390/430px và kiểm tra luồng thật không dữ liệu giả; chưa Publish.
+
 ## QUẢN LÝ 3K GIAI ĐOẠN 1 — spec 830 dòng
 Nguyên tắc: phân hệ độc lập (dữ liệu/giao diện/cài đặt/lịch sử riêng), không bắt có Kế hoạch/KR mới được lập 3K, không đưa kết quả 3K vào KR/Dashboard KD, tái dùng đăng nhập/tài khoản/cơ cấu/chức danh, không dữ liệu giả, múi giờ VN, chưa Publish.
 - [x] K3-1. Database + RLS + RPC: migration 0173 — k3_settings/log, k3_days (KG, planned_at, summarized_at, unique user+ngày), k3_tasks (KF, KPI dự kiến/thực tế, tiến độ, trạng thái, mũi khoan, VNGB), k3_task_events, k3_comments; quyền k3.use/view_scope/comment/settings qua k3_can (tái dùng sig_can/biz_manager/biz_all_scope), scope qua biz_scope_ok; giới hạn mũi khoan theo cấu hình; tổng kết bắt VNGB cho việc chưa xong; không hồi tố nghĩa vụ trước ngày hiệu lực.
