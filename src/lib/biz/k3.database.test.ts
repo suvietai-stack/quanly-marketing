@@ -131,13 +131,11 @@ it('không tạo 3K trùng và cho chuẩn bị ngày tương lai', async () => 
 });
 
 it('cấu hình ghi lịch sử và không đổi dữ liệu lịch sử', async () => {
-  await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT $2='k3.settings' AND $1='${manager}'::uuid$$;`);
   await as(manager);
   await value(`SELECT k3_settings_save(true, '2020-01-01'::date, '08:30'::time, '17:30'::time, 2::smallint) v`);
   const logs = await value(`SELECT count(*)::int v FROM k3_settings_log`);
   expect(logs).toBe(2);
   expect(await value(`SELECT max_focus::int v FROM k3_settings`)).toBe(2);
   expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE user_id='${staff}' AND deleted_at IS NULL`)).toBe(3);
-  await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;`);
   await as(staff);
 });

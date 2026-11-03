@@ -11,7 +11,8 @@ beforeAll(async()=>{
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT current_setting('test.uid')::uuid$$;
  CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text,status text);CREATE TABLE biz_departments(id uuid PRIMARY KEY,name text);CREATE TABLE biz_department_members(user_id uuid,department_id uuid);
  CREATE FUNCTION public.is_super_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
- CREATE FUNCTION private.sig_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${manager}'::uuid AND $2='k3.settings'$$;
+ CREATE FUNCTION public.biz_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${manager}'::uuid$$;
+ CREATE FUNCTION private.sig_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
  CREATE FUNCTION public.biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM biz_department_members WHERE user_id=$1)$$;
  CREATE FUNCTION public.biz_manager(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${manager}'::uuid$$;
  CREATE FUNCTION public.biz_all_scope(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
