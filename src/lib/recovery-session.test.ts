@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 const fixture = vi.hoisted(() => ({ callback: null as null | ((event: string, session: any) => void), getUser: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { onAuthStateChange: (callback: any) => { fixture.callback = callback; }, getUser: fixture.getUser } } }));
 import { clearRecoverySession, hasRecoverySession } from './recovery-session';
-beforeEach(() => { clearRecoverySession(); fixture.getUser.mockResolvedValue({ data: { user: { id: 'A' } }, error: null }); });
+beforeEach(() => { vi.clearAllMocks(); clearRecoverySession(); fixture.getUser.mockResolvedValue({ data: { user: { id: 'A' } }, error: null }); });
 it('ordinary session and URL text are insufficient for recovery', async () => {
   fixture.callback?.('SIGNED_IN',{ user: { id: 'A' } });
   expect(await hasRecoverySession()).toBe(false);

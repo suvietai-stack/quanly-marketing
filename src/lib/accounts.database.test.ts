@@ -12,7 +12,7 @@ beforeAll(async () => {
     GRANT USAGE ON SCHEMA public,auth,private TO authenticated,service_role;
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$;
     CREATE TYPE account_status AS ENUM('Chờ duyệt','Đang hoạt động','Tạm khóa','Từ chối','Lưu trữ');
-    CREATE TABLE profiles(id uuid PRIMARY KEY,username text,full_name text,email text,phone text,status account_status,is_system_admin boolean DEFAULT false,must_change_password boolean DEFAULT false,last_seen_at timestamptz,created_at timestamptz DEFAULT now());
+    CREATE TABLE profiles(id uuid PRIMARY KEY,username text,full_name text,email text,phone text,desired_position text,notes text,status account_status,is_system_admin boolean DEFAULT false,must_change_password boolean DEFAULT false,last_seen_at timestamptz,created_at timestamptz DEFAULT now());
     CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,email_confirmed_at timestamptz,encrypted_password text,banned_until timestamptz,raw_user_meta_data jsonb);
     CREATE TABLE app_roles(id text PRIMARY KEY,permissions text[] DEFAULT '{}');
     CREATE TABLE user_roles(user_id uuid,role_id text);
