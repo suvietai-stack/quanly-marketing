@@ -62,3 +62,9 @@ Nguyên tắc: không xây lại module, không xóa/reset dữ liệu thật, k
 - [ ] Nghiệm thu lưu cấu hình → nhân viên nộp Ngày/Tuần/Tháng/Quý trên dữ liệu thật: cần xác nhận lịch và hồ sơ thật; giữ cấu hình hiện có.
 - [x] Thống kê nghĩa vụ Dashboard theo chu kỳ thực thay vì kỳ xem; kiểm thử lịch chuyển chu kỳ và thành viên không tạo nghĩa vụ trùng.
 - [ ] Nghiệm thu tổng hợp đa chu kỳ/mục tiêu lịch sử qua luồng thật: cần hồ sơ nguồn thật và xác nhận nộp, không tạo dữ liệu giả.
+
+## FIX P0 Thống nhất phân quyền Kinh doanh (2026-11-03)
+- [x] Backend: biz_participant/biz_all_scope/biz_can/k3_can/biz_effective_access bỏ mọi nhánh Role tổng; 7 RPC (cycle_milestones, deadline_save, document_save/start, my_work, report_cycle_save/delete) kiểm quyền qua biz_can — migrations 0185–0188.
+- [x] Frontend: can('k3.*') đọc quyền hiệu lực máy chủ; Cài đặt tổng ẩn nhóm Quản trị Kinh doanh/Quản lý 3K khỏi ma trận Role + quyền riêng; bỏ hiển thị ngoại lệ theo Role.
+- [x] Test: permission-unification.database.test.ts 6/6; cập nhật harness k3 sang biz_admin; 349/354 (5 lỗi lịch có sẵn); build OK; UI Super Admin: menu Biz đầy đủ, ma trận Role 391 quyền không còn biz/k3.
+- [ ] Nghiệm thu bằng tài khoản thật: nhân viên có Role legacy nhưng chưa bổ nhiệm (ví dụ tài khoản Showroom/Kinh Doanh Phân Phối chưa vào Cơ cấu) phải mất menu Biz; cần xác nhận trước khi thao tác dữ liệu thật. Chưa Publish.
