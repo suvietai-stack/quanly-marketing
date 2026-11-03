@@ -1275,6 +1275,13 @@
       "when": 1793692635702,
       "tag": "0181_account_auth_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 182,
+      "version": "7",
+      "when": 1793694619412,
+      "tag": "0182_account_identity_and_role_guards",
+      "breakpoints": true
     }
   ]
 }
