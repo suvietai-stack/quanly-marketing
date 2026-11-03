@@ -769,8 +769,8 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
   // Audit broken deps to surface visual warnings
   const broken = useMemo(() => new Map(auditDependencies(value).map((b) => [b.key, b.missing])), [value]);
 
-  const totalSelected = value.length;
-  const totalAll = PERMISSIONS.length;
+  const totalSelected = value.filter((k) => !isBizOrgPerm(k)).length;
+  const totalAll = ROLE_PERMISSIONS.length;
 
   return (
     <div className="space-y-3">
@@ -779,7 +779,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm quyền..." className="pl-8 h-9" />
         </div>
-        <Button size="sm" variant="outline" onClick={() => onChange(ALL_PERMS)}>Chọn tất cả</Button>
+        <Button size="sm" variant="outline" onClick={() => onChange(ROLE_ALL_PERMS)}>Chọn tất cả</Button>
         <Button size="sm" variant="outline" onClick={() => onChange([])}>Bỏ chọn tất cả</Button>
         <Badge variant="secondary" className="ml-auto">{totalSelected}/{totalAll} quyền</Badge>
       </div>
