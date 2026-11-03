@@ -3,7 +3,7 @@ import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
-  ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS,
+  ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS, isBizOrgPerm,
   SUPER_ADMIN_ID, PERMISSION_DEPENDS, allDependencies, allDependents,
   auditDependencies, explainPermission,
 } from "@/lib/auth";
@@ -783,6 +783,7 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
         <Button size="sm" variant="outline" onClick={() => onChange([])}>Bỏ chọn tất cả</Button>
         <Badge variant="secondary" className="ml-auto">{totalSelected}/{totalAll} quyền</Badge>
       </div>
+      <p className="text-xs text-muted-foreground">Quyền Quản trị Kinh doanh (biz.*) và Quản lý 3K (k3.*) không cấp qua Role tổng — hệ thống tự cấp theo chức vụ và bổ nhiệm tại Quản trị Kinh doanh → Cài đặt → Cơ cấu tổ chức.</p>
 
       <Accordion type="multiple" className="space-y-2" defaultValue={Object.keys(groups)}>
         {Object.entries(groups).map(([g, subs]) => {
