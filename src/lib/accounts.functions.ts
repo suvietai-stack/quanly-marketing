@@ -5,7 +5,6 @@ import { passwordIssues } from '@/lib/password';
 import { authErrorMessage } from '@/lib/auth-errors';
 
 const SUPER_ADMIN_ROLE = "role-super-admin";
-const ADMIN_ROLE = "role-admin";
 
 export const adminResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -22,13 +21,13 @@ export const adminResetPassword = createServerFn({ method: "POST" })
     await assertAccountPermission(context.supabase, context.userId, 'settings.user_reset_password');
     if (data.userId === context.userId) throw new Error('Vui lòng dùng chức năng Đổi mật khẩu cho tài khoản của bạn.');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const [{ data: target }, { data: targetRoles }, { data: actorRoles }, { data: actor }] = await Promise.all([
+    const [{ data: target, error: targetError }, { data: targetRoles, error: targetRoleError }, { data: actorRoles, error: actorRoleError }, { data: actor, error: actorError }] = await Promise.all([
       supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle(),
       supabaseAdmin.from('user_roles').select('role_id').eq('user_id', data.userId),
       context.supabase.from('user_roles').select('role_id').eq('user_id', context.userId),
       context.supabase.from('profiles').select('is_system_admin').eq('id', context.userId).maybeSingle(),
     ]);
-    if (!target) throw new Error('Không tìm thấy hồ sơ tài khoản.');
+    if (!target || targetError || targetRoleError || actorRoleError || actorError) throw new Error('Không kiểm tra được hồ sơ và quyền tài khoản.');
     const targetIsSuper = target.is_system_admin || targetRoles?.some(r => r.role_id === SUPER_ADMIN_ROLE);
     if (targetIsSuper && !actor?.is_system_admin && !actorRoles?.some(r => r.role_id === SUPER_ADMIN_ROLE)) {
       throw new Error("Chỉ Super Admin mới được reset mật khẩu tài khoản quản trị cấp cao.");
@@ -53,8 +52,12 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
     const { assertAccountPermission } = await import('@/lib/accounts.server');
     await assertAccountPermission(context.supabase, context.userId, 'settings.user_delete');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data: target } = await supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle();
-    if (target?.is_system_admin || data.userId === context.userId) {
+    const [{ data: target, error: targetError }, { data: roles, error: rolesError }] = await Promise.all([
+      supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle(),
+      supabaseAdmin.from('user_roles').select('role_id').eq('user_id', data.userId),
+    ]);
+    if (targetError || rolesError || !target) throw new Error('Không kiểm tra được tài khoản được chọn.');
+    if (target.is_system_admin || roles?.some(r => r.role_id === SUPER_ADMIN_ROLE) || data.userId === context.userId) {
       throw new Error("Không thể xóa tài khoản hệ thống.");
     }
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);

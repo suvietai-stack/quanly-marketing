@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { isFakeEmail } from '@/lib/password';
 
 export function AccountAuthPanel({ userId, email }: { userId: string; email?: string }) {
-  const query = useQuery({ queryKey: ['account-auth-status', userId], queryFn: () => accountAuthStatus({ data: { userId } }), staleTime: 0 });
+  const query = useQuery({ queryKey: ['account-auth-status', userId], queryFn: () => accountAuthStatus({ data: { userId } }), staleTime: 0, retry: false });
   const [sending, setSending] = useState(false);
   const state = query.data;
   const needsCheck = state && (!state.authExists || !state.profileExists || !state.emailMatches);

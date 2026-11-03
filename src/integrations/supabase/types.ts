@@ -6761,6 +6761,7 @@ export type Database = {
         }
         Returns: string
       }
+      account_caller_can: { Args: { _permission: string }; Returns: boolean }
       account_username_identity: {
         Args: { _username: string }
         Returns: string

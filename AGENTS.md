@@ -1,5 +1,5 @@
 # Architecture rules
-- Password management: src/lib/password.ts shares validation and fake-email guards; changeOwnPassword verifies via a temporary non-persisting client before updateUser; adminResetPassword enforces hierarchy, hourly cap and account_security_logs; sync_profile_email keeps confirmed Auth/profile emails aligned — preserves sessions and one security policy.
+- Auth: shared password rules; nonpersisting own-change probe; admin-reset uses Auth with hierarchy and atomic quota/audit; transactional approval never confirms email. Confirmed Auth email mirrors to profiles. Server-only username login hides identity; live active-status SQL/RLS and SDK-verified recovery preserve security.
 - PasswordInput keeps independent visibility/caret; toggles never submit or invoke auth/storage — preserves security.
 - Signal list surfaces delegate to the existing detail Sheet through shared selection-aware interaction guards; keyboard activation lives on the customer-name control, not table rows; custom child actions opt out with data-signal-interactive — preserves table semantics, copy and independent actions without duplicate opens.
 - ChipiAssistant mounts once per user in AppShell and observes NotificationBell's recipient-scoped cache; preferences and greetings/dedupe are user-keyed; decoration never overrides business states — no second delivery channel.

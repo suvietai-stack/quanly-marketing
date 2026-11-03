@@ -1275,6 +1275,27 @@
       "when": 1793692635702,
       "tag": "0181_account_auth_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 182,
+      "version": "7",
+      "when": 1793694619412,
+      "tag": "0182_account_identity_and_role_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 183,
+      "version": "7",
+      "when": 1793694803269,
+      "tag": "0183_account_rpc_active_and_signup_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 184,
+      "version": "7",
+      "when": 1793695194974,
+      "tag": "0184_account_caller_permission_check",
+      "breakpoints": true
     }
   ]
 }

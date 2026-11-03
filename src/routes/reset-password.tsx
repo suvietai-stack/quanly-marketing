@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { KeyRound, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
-import { hasRecoverySession, clearRecoverySession } from '@/lib/recovery-session';
+import { hasRecoverySession, clearRecoverySession, onRecoveryChange } from '@/lib/recovery-session';
 import { authErrorMessage } from '@/lib/auth-errors';
 
 export const Route = createFileRoute("/reset-password")({
@@ -38,16 +38,12 @@ function ResetPasswordPage() {
   useEffect(() => {
     // Only an SDK-accepted recovery event plus a revalidated matching user opens this form.
     let active = true;
-    const check = async () => { if (await hasRecoverySession() && active) setPhase('ready'); };
+    const check = async () => { const valid = await hasRecoverySession(); if (active) setPhase(valid ? 'ready' : 'invalid'); };
+    const unsubscribe = onRecoveryChange(() => void check());
     void check();
-    const interval = setInterval(() => void check(), 300);
-    const timer = setTimeout(() => {
-      setPhase((p) => (p === "checking" ? "invalid" : p));
-    }, 4000);
     return () => {
       active = false;
-      clearInterval(interval);
-      clearTimeout(timer);
+      unsubscribe();
     };
   }, []);
 

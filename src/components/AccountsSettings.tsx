@@ -301,11 +301,11 @@ function AllAccountsTab({ users, canLock }: { users: User[]; canLock: boolean })
                   </Button>
                   {!u.system && canLock && (
                     u.status === "Tạm khóa" ? (
-                      <Button size="icon" variant="ghost" title="Mở khóa" onClick={() => s.setStatus(u.id, "Đang hoạt động")}>
+                      <Button size="icon" variant="ghost" title="Mở khóa" onClick={async () => { try { await s.setStatus(u.id,'Đang hoạt động'); toast.success('Đã mở khóa hồ sơ.'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Không mở khóa được.'); } }}>
                         <Unlock className="h-3.5 w-3.5" />
                       </Button>
                     ) : (
-                      <Button size="icon" variant="ghost" title="Khóa" onClick={() => s.setStatus(u.id, "Tạm khóa")}>
+                      <Button size="icon" variant="ghost" title="Khóa" onClick={async () => { try { await s.setStatus(u.id,'Tạm khóa'); toast.success('Đã khóa tài khoản.'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Không khóa được.'); } }}>
                         <Lock className="h-3.5 w-3.5" />
                       </Button>
                     )
@@ -357,10 +357,11 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
       desiredPosition: form.desiredPosition || undefined, notes: form.notes || undefined,
     });
     if (!isSystem) {
-      if (form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
+      const approving = user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động';
+      if (!approving && form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
       if (form.status !== user.status) {
         if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
-          const result = await s.approve(user.id);
+          const result = await s.approve(user.id, form.roleId !== user.roleId ? form.roleId || undefined : undefined);
           if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
         } else await s.setStatus(user.id, form.status);
       }

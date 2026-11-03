@@ -31,6 +31,10 @@ describe("passwordIssues", () => {
     expect(passwordIssues("suviet2026")).toEqual([]);
     expect(passwordIssues("Matkhau1")).toEqual([]);
   });
+  it('new password limit is identical at the shared maximum', () => {
+    expect(passwordIssues('a1' + 'a'.repeat(198))).toEqual([]);
+    expect(passwordIssues('a1' + 'a'.repeat(199))).toContain('Mật khẩu tối đa 200 ký tự.');
+  });
 });
 
 describe("changePasswordError", () => {

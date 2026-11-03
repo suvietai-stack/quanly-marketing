@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * Caller must be Super Admin (role-super-admin) OR a system admin profile
@@ -9,6 +8,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * no role rows exist yet.
  */
 async function assertSuperAdminOrSystem(userId: string) {
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
   const [{ data: prof }, { data: roles }] = await Promise.all([
     supabaseAdmin.from("profiles").select("is_system_admin").eq("id", userId).maybeSingle(),
     supabaseAdmin.from("user_roles").select("role_id").eq("user_id", userId),
@@ -35,7 +35,10 @@ export const restoreDefaultRoles = createServerFn({ method: "POST" })
     z.object({ roles: z.array(RoleSchema).min(1).max(50) }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { data: profile, error: profileError } = await context.supabase.from('profiles').select('status').eq('id',context.userId).maybeSingle();
+    if (profileError || profile?.status !== 'Đang hoạt động') throw new Error('Tài khoản hiện không được phép truy cập.');
     const { isSystem } = await assertSuperAdminOrSystem(context.userId);
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
 
     // Upsert all default roles. is_system flag is enforced from payload.
     const rows = data.roles.map((r) => ({
