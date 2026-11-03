@@ -1,10 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## FIX 3K NGÀY + TUẦN/THÁNG — spec 1086 dòng
-- [ ] A. Sửa VN timezone/deadline, quyền ghi khi khóa, ngày gốc/owner, KPI/trạng thái, phiên bản tổng kết, nhận xét và lịch sử.
-- [ ] B. Mở rộng KG/KF, liên kết cùng k3_tasks, chưa xếp lịch/xếp lịch, tổng kết kỳ/lịch sử, chống gửi trùng và cập nhật đồng thời; phạm vi đơn vị lịch sử.
-- [ ] C. Ngày/Tuần/Tháng giữ ngữ cảnh, KG/KF, danh sách theo ngày, KPI theo đơn vị, quản lý/nhận xét, cài đặt riêng.
-- [ ] D. Kiểm thử nghiệp vụ/database/phân quyền/chống trùng/tuần giao tháng, giao diện 360/375/390/430px và kiểm tra luồng thật không dữ liệu giả; chưa Publish.
+- [x] A. VN timezone/deadline snapshot, khóa ghi, ngày gốc/owner, KPI/trạng thái, phiên bản tổng kết, nhận xét và lịch sử; dữ liệu legacy Hoàn thành dưới KPI được trình bày Chưa đạt, không sửa trạng thái/timestamp gốc.
+- [x] B. Migrations 0174–0180: KG/KF, một k3_tasks dùng chung, chưa xếp lịch/xếp lịch, tổng kết kỳ/lịch sử, request-key + revision fences và phạm vi đơn vị lịch sử; dữ liệu thật giữ 1 ngày/1 công việc, không seed.
+- [x] C. Ngày/Tuần/Tháng giữ ngữ cảnh, KG/KF, danh sách theo ngày, KPI theo đơn vị, quản lý/nhận xét, cài đặt bật riêng và deadline tùy chọn.
+- [x] D1. 50 kiểm thử 3K + 55 regression Báo cáo/Cơ cấu đạt; build OK; phiên Admin thật mở Ngày/Tuần/Tháng/quản lý/cài đặt và form có dữ liệu hiện hữu; 360/375/390/430px không tràn, không lỗi trình duyệt.
+- [ ] D2. Nghiệm thu ghi qua UI: chờ người dùng bật Tuần/Tháng, chọn ngày vận hành và cung cấp KG/KF/công việc thật để tạo–cập nhật–tổng kết–nhận xét; không tạo dữ liệu thử trên database dùng chung. Tuần/Tháng còn Tắt, chưa Publish.
 
 ## QUẢN LÝ 3K GIAI ĐOẠN 1 — spec 830 dòng
 Nguyên tắc: phân hệ độc lập (dữ liệu/giao diện/cài đặt/lịch sử riêng), không bắt có Kế hoạch/KR mới được lập 3K, không đưa kết quả 3K vào KR/Dashboard KD, tái dùng đăng nhập/tài khoản/cơ cấu/chức danh, không dữ liệu giả, múi giờ VN, chưa Publish.
@@ -14,7 +15,7 @@ Nguyên tắc: phân hệ độc lập (dữ liệu/giao diện/cài đặt/lị
 - [x] K3-4. Cài đặt 3K trong module: bật/tắt, ngày hiệu lực, giờ lập (08:45)/tổng kết (18:00), số mũi khoan tối đa (3), xem phạm vi kế thừa, quy chuẩn trạng thái, lịch sử cấu hình.
 - [x] K3-5. Quyền & menu: nhóm quyền "Quản lý 3K" trong registry, menu Quản trị Kinh doanh → Quản lý 3K, route /biz/3k.
 - [x] K3-6. Kiểm thử: 10 đơn vị + 10 database (scope, giới hạn mũi khoan, VNGB tổng kết, chống sửa chéo, lịch sử xóa, chống trùng ngày) đạt; typecheck/build đạt; UI thật desktop + 390px không tràn, không lỗi trình duyệt; module mặc định Tắt, chưa tạo nghĩa vụ.
-- [ ] K3-7. Nghiệm thu thật: cần Admin chọn ngày hiệu lực và bật module trong Cài đặt 3K, sau đó nhân viên/quản lý thật tạo–cập nhật–tổng kết–nhận xét; chưa Publish.
+- [ ] K3-7. Module Ngày đã được người dùng bật từ 02/11/2026 và có 1 công việc thật; chờ nghiệm thu ghi/cập nhật/tổng kết/nhận xét với hồ sơ thật được cho phép; chưa Publish.
 
 ## FIX TỔNG THỂ QUẢN TRỊ KINH DOANH (SOURCE 35) — spec 909 dòng, 10 phần
 Nguyên tắc: không xây lại module, không xóa/reset dữ liệu thật, không động module khác, không tự khóa Báo cáo 2027, chưa Publish.
