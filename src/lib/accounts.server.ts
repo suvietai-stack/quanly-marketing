@@ -4,10 +4,8 @@ import type { Database } from '@/integrations/supabase/types';
 export async function assertAccountPermission(client: SupabaseClient<Database>, userId: string, permission: string) {
   const { data: profile, error } = await client.from('profiles').select('status,is_system_admin').eq('id', userId).maybeSingle();
   if (error || profile?.status !== 'Đang hoạt động') throw new Error('Tài khoản hiện không được phép truy cập.');
-  const [{ data: admin, error: adminError }, { data: allowed, error: permissionError }] = await Promise.all([
-    client.rpc('is_admin', { _user_id: userId }), client.rpc('has_permission', { _user_id: userId, _permission: permission }),
-  ]);
-  if (adminError || permissionError || (!admin && !allowed)) throw new Error('Bạn không có quyền thao tác tài khoản này.');
+  const { data: allowed, error: permissionError } = await client.rpc('account_caller_can', { _permission: permission });
+  if (permissionError || !allowed) throw new Error('Bạn không có quyền thao tác tài khoản này.');
 }
 
 export function publicAuthClient() {

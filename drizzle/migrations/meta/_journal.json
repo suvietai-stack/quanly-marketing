@@ -1289,6 +1289,13 @@
       "when": 1793694803269,
       "tag": "0183_account_rpc_active_and_signup_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 184,
+      "version": "7",
+      "when": 1793695194974,
+      "tag": "0184_account_caller_permission_check",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,3 @@
+CREATE FUNCTION public.account_caller_can(_permission text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $$SELECT auth.uid() IS NOT NULL AND private.is_active(auth.uid()) AND (private.is_admin(auth.uid()) OR private.has_permission(auth.uid(),_permission));$$;
+REVOKE ALL ON FUNCTION public.account_caller_can(text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.account_caller_can(text) TO authenticated;
