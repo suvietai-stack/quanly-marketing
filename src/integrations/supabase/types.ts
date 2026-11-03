@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_auth_requests: {
+        Row: {
+          action: string
+          actor_id: string | null
+          bucket: string
+          created_at: string
+          finished_at: string | null
+          id: string
+          state: string
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          bucket: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          state?: string
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          bucket?: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          state?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       account_security_logs: {
         Row: {
           action: string
@@ -6711,6 +6744,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_approve: {
+        Args: { _role?: string; _target: string }
+        Returns: Json
+      }
+      account_auth_finish: {
+        Args: { _id: string; _state: string }
+        Returns: undefined
+      }
+      account_auth_reserve: {
+        Args: {
+          _action: string
+          _actor?: string
+          _bucket: string
+          _target?: string
+        }
+        Returns: string
+      }
+      account_username_identity: {
+        Args: { _username: string }
+        Returns: string
+      }
       att_note: { Args: { _id: string; _note: string }; Returns: undefined }
       att_recall: { Args: { _id: string }; Returns: undefined }
       att_reconcile: {

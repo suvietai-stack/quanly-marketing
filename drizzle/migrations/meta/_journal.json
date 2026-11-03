@@ -1268,6 +1268,13 @@
       "when": 1793675017281,
       "tag": "0180_k3_task_metadata_and_summary_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 181,
+      "version": "7",
+      "when": 1793692635702,
+      "tag": "0181_account_auth_integrity",
+      "breakpoints": true
     }
   ]
 }
