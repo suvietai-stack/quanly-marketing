@@ -1296,6 +1296,34 @@
       "when": 1793695194974,
       "tag": "0184_account_caller_permission_check",
       "breakpoints": true
+    },
+    {
+      "idx": 185,
+      "version": "7",
+      "when": 1793697545251,
+      "tag": "0185_biz_permission_unification",
+      "breakpoints": true
+    },
+    {
+      "idx": 186,
+      "version": "7",
+      "when": 1793697603743,
+      "tag": "0186_biz_rpc_permission_via_biz_can",
+      "breakpoints": true
+    },
+    {
+      "idx": 187,
+      "version": "7",
+      "when": 1793697652321,
+      "tag": "0187_biz_document_rpc_permission_via_biz_can",
+      "breakpoints": true
+    },
+    {
+      "idx": 188,
+      "version": "7",
+      "when": 1793697718206,
+      "tag": "0188_biz_mywork_cycle_rpc_permission_via_biz_can",
+      "breakpoints": true
     }
   ]
 }

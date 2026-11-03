@@ -3,6 +3,7 @@ import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
+  ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS, isBizOrgPerm,
   SUPER_ADMIN_ID, PERMISSION_DEPENDS, allDependencies, allDependents,
   auditDependencies, explainPermission,
 } from "@/lib/auth";
@@ -177,7 +178,7 @@ function PermissionDebugTab() {
           <Select value={testKey} onValueChange={setTestKey}>
             <SelectTrigger><SelectValue placeholder="— chọn quyền để test —" /></SelectTrigger>
             <SelectContent className="max-h-72">
-              {PERMISSIONS.map((p) => (
+              {ROLE_PERMISSIONS.map((p) => (
                 <SelectItem key={p.key} value={p.key}>{p.key} — {p.label}</SelectItem>
               ))}
             </SelectContent>
@@ -203,9 +204,10 @@ function PermissionDebugTab() {
           )}
           <div>
             <Label className="text-xs">Quyền hiệu lực ({effective.size}/{ALL_PERMS.length})</Label>
+            <p className="text-xs text-muted-foreground mt-1">Quyền Quản trị Kinh doanh và Quản lý 3K không cấp qua Role tổng — quản lý tại Quản trị Kinh doanh → Cài đặt (Cơ cấu tổ chức & Bổ nhiệm).</p>
             <div className="mt-2 max-h-96 overflow-y-auto border rounded p-2">
-              {PERMISSION_GROUPS.map((g) => {
-                const items = PERMISSIONS.filter((p) => p.group === g);
+              {PERMISSION_GROUPS.filter((g) => !BIZ_ORG_GROUPS.includes(g)).map((g) => {
+                const items = ROLE_PERMISSIONS.filter((p) => p.group === g);
                 const granted = items.filter((p) => effective.has(p.key));
                 if (granted.length === 0) return null;
                 return (
@@ -654,7 +656,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
   const [q, setQ] = useState("");
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    return PERMISSIONS.filter((p) => {
+    return ROLE_PERMISSIONS.filter((p) => {
       if (group !== "ALL" && p.group !== group) return false;
       if (!qq) return true;
       return p.label.toLowerCase().includes(qq) || p.key.toLowerCase().includes(qq) || (p.subGroup || "").toLowerCase().includes(qq);
@@ -669,7 +671,7 @@ function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Tất cả</SelectItem>
-            {PERMISSION_GROUPS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+            {PERMISSION_GROUPS.filter((g) => !BIZ_ORG_GROUPS.includes(g)).map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
           </SelectContent>
         </Select>
         <div className="relative w-[260px]">
@@ -727,8 +729,8 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    if (!qq) return PERMISSIONS;
-    return PERMISSIONS.filter((p) =>
+    if (!qq) return ROLE_PERMISSIONS;
+    return ROLE_PERMISSIONS.filter((p) =>
       p.label.toLowerCase().includes(qq) ||
       p.key.toLowerCase().includes(qq) ||
       p.group.toLowerCase().includes(qq) ||
@@ -767,8 +769,8 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
   // Audit broken deps to surface visual warnings
   const broken = useMemo(() => new Map(auditDependencies(value).map((b) => [b.key, b.missing])), [value]);
 
-  const totalSelected = value.length;
-  const totalAll = PERMISSIONS.length;
+  const totalSelected = value.filter((k) => !isBizOrgPerm(k)).length;
+  const totalAll = ROLE_PERMISSIONS.length;
 
   return (
     <div className="space-y-3">
@@ -777,10 +779,11 @@ function PermissionMatrix({ value, onChange, signalScope }: { value: PermissionK
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm quyền..." className="pl-8 h-9" />
         </div>
-        <Button size="sm" variant="outline" onClick={() => onChange(ALL_PERMS)}>Chọn tất cả</Button>
+        <Button size="sm" variant="outline" onClick={() => onChange(ROLE_ALL_PERMS)}>Chọn tất cả</Button>
         <Button size="sm" variant="outline" onClick={() => onChange([])}>Bỏ chọn tất cả</Button>
         <Badge variant="secondary" className="ml-auto">{totalSelected}/{totalAll} quyền</Badge>
       </div>
+      <p className="text-xs text-muted-foreground">Quyền Quản trị Kinh doanh (biz.*) và Quản lý 3K (k3.*) không cấp qua Role tổng — hệ thống tự cấp theo chức vụ và bổ nhiệm tại Quản trị Kinh doanh → Cài đặt → Cơ cấu tổ chức.</p>
 
       <Accordion type="multiple" className="space-y-2" defaultValue={Object.keys(groups)}>
         {Object.entries(groups).map(([g, subs]) => {

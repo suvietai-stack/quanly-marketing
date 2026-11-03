@@ -524,6 +524,16 @@ export const PERMISSIONS: PermissionDef[] = [
 ];
 
 export const ALL_PERMS = PERMISSIONS.map((p) => p.key);
+
+/**
+ * Quyền Quản trị Kinh doanh (biz.*) và Quản lý 3K (k3.*) do Cơ cấu tổ chức Kinh doanh
+ * quyết định (chức vụ → bổ nhiệm → phạm vi), KHÔNG cấp qua Role tổng.
+ * Role tổng chỉ còn hiển thị/gán các quyền ngoài hai nhóm này.
+ */
+export const BIZ_ORG_GROUPS: PermissionGroup[] = ["Quản trị Kinh doanh", "Quản lý 3K"];
+export const isBizOrgPerm = (key: string) => key.startsWith("biz.") || key.startsWith("k3.");
+export const ROLE_PERMISSIONS = PERMISSIONS.filter((p) => !BIZ_ORG_GROUPS.includes(p.group));
+export const ROLE_ALL_PERMS = ROLE_PERMISSIONS.map((p) => p.key);
 export const PERMISSION_BY_KEY: Record<string, PermissionDef> = Object.fromEntries(
   PERMISSIONS.map((p) => [p.key, p]),
 );
@@ -750,7 +760,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   // Super Admin handled at runtime (returns true for any key) — also gets ALL_PERMS persisted.
   "role-super-admin": ALL_PERMS.slice(),
   // Admin: gần như toàn quyền, NHƯNG không quản lý role/ma trận/quyền riêng — chỉ Super Admin.
-  "role-admin": ALL_PERMS.filter((k) => ![
+  "role-admin": ALL_PERMS.filter((k) => !isBizOrgPerm(k) && ![
     "settings.role",
     "settings.permission",
     "settings.user_custom_perm",
@@ -873,7 +883,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
     "local.view", "local.view_all",
     "video.view", "video.view_all",
     "order.view", "order.view_all", "order.report_view",
-    "biz.view_all",
   ],
 };
 
@@ -1486,7 +1495,8 @@ export function useCurrentUser() {
     perms.has(key) || perms.has(resolvePermKey(key));
   const can = (key: PermissionKey): boolean => {
     if (isSuperAdmin) return true;
-    if (key.startsWith('biz.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
+    // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
+    if (key.startsWith('biz.') || key.startsWith('k3.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
     const resolved = resolvePermKey(key);
     if (!hasRaw(resolved)) return false;
     // Dependency check — every parent must also be granted.
