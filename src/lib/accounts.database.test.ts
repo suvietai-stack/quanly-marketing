@@ -13,7 +13,7 @@ beforeAll(async () => {
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$;
     CREATE TYPE account_status AS ENUM('Chờ duyệt','Đang hoạt động','Tạm khóa','Từ chối','Lưu trữ');
     CREATE TABLE profiles(id uuid PRIMARY KEY,username text,full_name text,email text,phone text,status account_status,is_system_admin boolean DEFAULT false,must_change_password boolean DEFAULT false,last_seen_at timestamptz,created_at timestamptz DEFAULT now());
-    CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,email_confirmed_at timestamptz,encrypted_password text,banned_until timestamptz);
+    CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,email_confirmed_at timestamptz,encrypted_password text,banned_until timestamptz,raw_user_meta_data jsonb);
     CREATE TABLE app_roles(id text PRIMARY KEY,permissions text[] DEFAULT '{}');
     CREATE TABLE user_roles(user_id uuid,role_id text);
     CREATE TABLE user_permission_overrides(user_id uuid,use_custom boolean,permissions text[]);
@@ -29,13 +29,22 @@ beforeAll(async () => {
     CREATE FUNCTION private.is_active(uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$SELECT EXISTS(SELECT 1 FROM profiles WHERE id=$1 AND status='Đang hoạt động')$$;
     CREATE TRIGGER profiles_prevent_privilege_escalation BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
     INSERT INTO profiles(id,username,email,status) VALUES('${admin}','admin','admin@local','Đang hoạt động'),('${staff}','staff','staff@example.test','Chờ duyệt'),('${other}','other','other@example.test','Đang hoạt động');
-    INSERT INTO auth.users VALUES('${admin}','admin@local',now(),'opaque-test-password',NULL),('${staff}','staff@example.test',NULL,'opaque-original-password',NULL),('${other}','other@example.test',now(),'opaque-other-password',NULL);
+    INSERT INTO auth.users(id,email,email_confirmed_at,encrypted_password,banned_until) VALUES('${admin}','admin@local',now(),'opaque-test-password',NULL),('${staff}','staff@example.test',NULL,'opaque-original-password',NULL),('${other}','other@example.test',now(),'opaque-other-password',NULL);
     INSERT INTO app_roles VALUES('role-super-admin','{}'),('role-admin','{}'),('staff','{}');
     INSERT INTO user_roles VALUES('${admin}','role-super-admin'),('${staff}','staff'),('${other}','staff');
     INSERT INTO protected_items VALUES(1,'${staff}'),(2,'${other}');
   `);
   await db.exec(readFileSync('drizzle/migrations/0181_account_auth_integrity.sql','utf8'));
   await db.exec(`DROP TRIGGER profiles_prevent_privilege_escalation ON profiles;CREATE TRIGGER profiles_prevent_privilege_escalation BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION prevent_profile_privilege_escalation();`);
+  await db.exec(`CREATE TABLE k3_settings(id boolean,enabled boolean,effective_from date,plan_by time,summary_by time,max_focus int,updated_at timestamptz);
+    CREATE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+    CREATE FUNCTION private.leave_settings_current() RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;
+    CREATE TABLE oq_requests(id uuid,creator_id uuid,status text);
+    CREATE TABLE oq_items(id uuid,request_id uuid);
+    CREATE TABLE oq_item_images(id uuid DEFAULT gen_random_uuid(),request_id uuid,item_id uuid,path text,category text,caption text,created_by uuid);
+  `);
+  for (const migration of ['0182_account_identity_and_role_guards','0183_account_rpc_active_and_signup_guards','0184_account_caller_permission_check']) await db.exec(readFileSync(`drizzle/migrations/${migration}.sql`,'utf8'));
+  await db.exec(`CREATE TRIGGER test_signup AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user();`);
 }, 30000);
 afterAll(() => db.close());
 it('pending users cannot read owned internal rows with a valid identity', async () => {
@@ -96,4 +105,25 @@ it('successful reset records target-only audit and cannot complete twice', async
   expect(await value(`SELECT count(*)::int v FROM account_security_logs WHERE target_id='${staff}' AND action='reset_password'`)).toBe(1);
   expect(await value(`SELECT count(*)::int v FROM account_security_logs WHERE target_id='${other}' AND action='reset_password'`)).toBe(0);
   await expect(db.query(`SELECT account_auth_finish('${id}','completed')`)).rejects.toThrow('Invalid reservation');
+});
+it('signup lifecycle creates a pending linked profile and prevents duplicate case identities', async () => {
+  await db.exec(`RESET ROLE;INSERT INTO auth.users(id,email,encrypted_password,raw_user_meta_data) VALUES('00000000-0000-0000-0000-000000000004','new@example.test','opaque-new-password','{"username":"NewStaff","is_system_admin":true}');`);
+  expect(await value(`SELECT status::text v FROM profiles WHERE username='NewStaff'`)).toBe('Chờ duyệt');
+  expect(await value(`SELECT is_system_admin v FROM profiles WHERE username='NewStaff'`)).toBe(false);
+  await expect(db.exec(`INSERT INTO auth.users(id,email,encrypted_password,raw_user_meta_data) VALUES('00000000-0000-0000-0000-000000000005','duplicate@example.test','opaque-password','{"username":"newstaff"}');`)).rejects.toThrow('unique');
+  expect(await value(`SELECT count(*)::int v FROM auth.users WHERE id='00000000-0000-0000-0000-000000000005'`)).toBe(0);
+});
+it('reserved admin handle is rejected by the lifecycle, not only UI', async () => {
+  await expect(db.exec(`INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES('00000000-0000-0000-0000-000000000006','reserved@example.test','{"username":"ADMIN"}');`)).rejects.toThrow('Tên đăng nhập');
+});
+it('inactive users cannot invoke formerly owner-only privileged RPCs', async () => {
+  await as(admin);
+  expect(await value('SELECT leave_settings_get() v')).toBeNull();
+  await expect(db.query('SELECT k3_settings_read()')).rejects.toThrow('không được phép');
+  await expect(db.query(`SELECT oq_delete_draft('${staff}')`)).rejects.toThrow('không được phép');
+  await expect(db.query(`SELECT oq_image_add('${staff}','x','other','')`)).rejects.toThrow('không được phép');
+  await expect(db.query(`SELECT oq_image_update('${staff}','other','',false)`)).rejects.toThrow('không được phép');
+});
+it('inactive callers cannot use the caller-scoped account permission checker', async () => {
+  await as(admin); expect(await value(`SELECT account_caller_can('settings.user_reset_password') v`)).toBe(false);
 });
