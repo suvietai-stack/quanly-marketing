@@ -20,6 +20,7 @@ beforeAll(async () => {
   CREATE TABLE biz_departments(id uuid PRIMARY KEY, name text);
   CREATE TABLE biz_department_members(user_id uuid, department_id uuid);
   CREATE FUNCTION public.is_super_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+  CREATE FUNCTION public.biz_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${manager}'::uuid$$;
   CREATE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
   CREATE FUNCTION public.biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM biz_department_members m WHERE m.user_id=$1)$$;
   CREATE FUNCTION public.biz_manager(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${manager}'::uuid$$;
@@ -31,12 +32,13 @@ beforeAll(async () => {
   SET test.uid='${staff}';`);
   await db.exec(readFileSync('drizzle/migrations/0173_k3_daily_management_phase1.sql', 'utf8'));
   await db.exec(`CREATE FUNCTION public.biz_department_at(uuid,date) RETURNS uuid LANGUAGE sql AS $$SELECT department_id FROM biz_department_members WHERE user_id=$1 LIMIT 1$$;`);
-  await db.exec(readFileSync('drizzle/migrations/0174_k3_daily_integrity_and_summary_versions.sql', 'utf8')); 
-  // Kích hoạt module bằng quyền cấu hình (super admin stub=false → cấp trực tiếp qua sig_can thay thế)
-  await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT $2='k3.settings' AND $1='${manager}'::uuid$$;`);
+  await db.exec(readFileSync('drizzle/migrations/0174_k3_daily_integrity_and_summary_versions.sql', 'utf8'));
+  // Quyền 3K thống nhất theo Cơ cấu tổ chức (0185): k3_can không còn dùng Role tổng/sig_can.
+  const m0185 = readFileSync('drizzle/migrations/0185_biz_permission_unification.sql', 'utf8');
+  await db.exec(m0185.match(/CREATE OR REPLACE FUNCTION public\.k3_can[\s\S]*?\$function\$;/)![0]);
+  // Kích hoạt module bằng quyền cấu hình: quản lý có biz_admin → k3.settings.
   await as(manager);
   await db.query(`SELECT k3_settings_save(true, '2020-01-01'::date, '08:45'::time, '18:00'::time, 3::smallint)`);
-  await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;`);
   await as(staff);
 }, 30000);
 
