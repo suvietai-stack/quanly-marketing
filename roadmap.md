@@ -1,7 +1,7 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## FIX ĐĂNG NHẬP, DUYỆT TÀI KHOẢN VÀ RESET MẬT KHẨU — spec 411 dòng
-- [ ] AUTH-1. Xác minh luồng đăng ký/duyệt/đăng nhập/reset, trạng thái Auth/Profile, chính sách xác thực thực tế; không đổi mật khẩu hoặc dữ liệu tài khoản thật.
+- [x] AUTH-1. Nhật ký xác minh email_not_confirmed; cấu hình đọc thật email bật/auto-confirm tắt. 25 hồ sơ có Auth/email khớp/mật khẩu/đã xác nhận; reset gọi đúng admin API, duyệt không xác nhận email; độ mạnh mật khẩu hosted chưa đọc được đầy đủ. Không đổi tài khoản thật.
 - [ ] AUTH-2. Sửa đúng nguyên nhân, kiểm quyền phía máy chủ, xác nhận email tách trạng thái duyệt; giữ dữ liệu, quyền và phiên hợp lệ.
 - [ ] AUTH-3. Đồng bộ kiểm tra mật khẩu và thông báo, trạng thái xác thực/thao tác liên quan trong quản lý tài khoản; không sửa module khác.
 - [ ] AUTH-4. Kiểm thử hồi quy và luồng đăng ký→xác nhận→duyệt→đăng nhập, admin reset→đăng nhập mới; báo rõ phần chưa xác minh, chưa Publish.
