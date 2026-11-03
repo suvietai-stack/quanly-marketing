@@ -1241,7 +1241,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   setRole: async (id, roleId) => {
-    await supabase.from("user_roles").delete().eq("user_id", id);
+    const { error: deleteError } = await supabase.from("user_roles").delete().eq("user_id", id);
+    if (deleteError) throw new Error(deleteError.message);
     const { error } = await supabase.from("user_roles").insert({ user_id: id, role_id: roleId });
     if (error) throw new Error(error.message);
     await get().reload();
