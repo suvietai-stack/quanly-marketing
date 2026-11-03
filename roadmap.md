@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## FIX ĐĂNG NHẬP, DUYỆT TÀI KHOẢN VÀ RESET MẬT KHẨU — spec 411 dòng
+- [ ] AUTH-1. Xác minh luồng đăng ký/duyệt/đăng nhập/reset, trạng thái Auth/Profile, chính sách xác thực thực tế; không đổi mật khẩu hoặc dữ liệu tài khoản thật.
+- [ ] AUTH-2. Sửa đúng nguyên nhân, kiểm quyền phía máy chủ, xác nhận email tách trạng thái duyệt; giữ dữ liệu, quyền và phiên hợp lệ.
+- [ ] AUTH-3. Đồng bộ kiểm tra mật khẩu và thông báo, trạng thái xác thực/thao tác liên quan trong quản lý tài khoản; không sửa module khác.
+- [ ] AUTH-4. Kiểm thử hồi quy và luồng đăng ký→xác nhận→duyệt→đăng nhập, admin reset→đăng nhập mới; báo rõ phần chưa xác minh, chưa Publish.
+
 ## FIX 3K NGÀY + TUẦN/THÁNG — spec 1086 dòng
 - [x] A. VN timezone/deadline snapshot, khóa ghi, ngày gốc/owner, KPI/trạng thái, phiên bản tổng kết, nhận xét và lịch sử; dữ liệu legacy Hoàn thành dưới KPI được trình bày Chưa đạt, không sửa trạng thái/timestamp gốc.
 - [x] B. Migrations 0174–0180: KG/KF, một k3_tasks dùng chung, chưa xếp lịch/xếp lịch, tổng kết kỳ/lịch sử, request-key + revision fences và phạm vi đơn vị lịch sử; dữ liệu thật giữ 1 ngày/1 công việc, không seed.
