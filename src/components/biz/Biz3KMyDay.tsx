@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3DaySave, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
 import { k3PeriodQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
 import type { K3Action } from '@/lib/biz/k3Periods';
-import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
+import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3IsComplete, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -135,7 +135,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
             <AlertDialogTitle>Tổng kết 3K ngày {date}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-1 text-sm">
-                <p>Tổng {counts.total} công việc · Hoàn thành {counts.done} · Chưa hoàn thành {counts.open} · Mũi khoan hoàn thành {tasks.filter((t) => t.is_focus && t.status === 'done').length}/{counts.focus}</p>
+                <p>Tổng {counts.total} công việc · Hoàn thành {counts.done} · Chưa hoàn thành {counts.open} · Mũi khoan hoàn thành {tasks.filter((t) => t.is_focus && k3IsComplete(t)).length}/{counts.focus}</p>
                 {counts.open > 0 && <p className="text-amber-600">Các công việc chưa hoàn thành phải có đủ Vấn đề – Nguyên nhân – Giải pháp trước khi tổng kết.</p>}
               </div>
             </AlertDialogDescription>
@@ -204,7 +204,7 @@ function KgBox({ date, data, enabled }: { date: string; data?: K3DayData; enable
 export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
   const update = useK3TaskUpdate();
   const save = useK3TaskSave();
-  const hasIssue = task.status !== 'done' && (hasText(task.problem) || hasText(task.solution));
+  const hasIssue = !k3IsComplete(task) && (hasText(task.problem) || hasText(task.solution));
   const quick = async (status: K3Status) => {
     try {
       await update.mutateAsync({ id: task.id, revision:task.revision, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
@@ -231,7 +231,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           <Star className={cn('h-4 w-4', task.is_focus && 'fill-primary')} />
         </Button>
         <div className="min-w-0 flex-1">
-          <p className="font-medium leading-snug">{task.name}</p>
+          <p className="break-words font-medium leading-snug">{task.name}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {(task.start_time || task.end_time) && <span>{task.start_time?.slice(0, 5) ?? '…'}–{task.end_time?.slice(0, 5) ?? '…'}</span>}
             {task.kpi_target != null && (
@@ -241,7 +241,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <StatusBadge status={k3DisplayStatus(task)} />
+          <span className="max-w-36 whitespace-normal text-right"><StatusBadge status={k3DisplayStatus(task)} /></span>
           {task.status==='done'&&k3DisplayStatus(task)!=='done'&&<span className="max-w-36 text-right text-xs text-muted-foreground">Trạng thái cũ: Hoàn thành</span>}
           {task.is_focus && <Badge variant="outline" className="border-primary text-primary">Mũi khoan</Badge>}
           {hasIssue && (
@@ -249,7 +249,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           )}
         </div>
       </div>
-      {task.status !== 'done' && (hasText(task.problem) || hasText(task.cause) || hasText(task.solution)) && (
+      {!k3IsComplete(task) && (hasText(task.problem) || hasText(task.cause) || hasText(task.solution)) && (
         <div className="rounded-md bg-secondary/60 p-2 text-xs space-y-0.5">
           {hasText(task.problem) && <p><span className="font-medium">Vấn đề:</span> {task.problem}</p>}
           {hasText(task.cause) && <p><span className="font-medium">Nguyên nhân:</span> {task.cause}</p>}
@@ -296,7 +296,8 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
         is_focus: f.is_focus, status: task?.status ?? 'todo', progress: task?.progress ?? 0,
         kpi_actual: task?.kpi_actual ?? null, how: f.how, place: f.place, note: f.note,
         problem: task?.problem ?? '', cause: task?.cause ?? '', solution: task?.solution ?? '',
-        links: f.link ? [{ url: f.link }] : [],
+        links: f.link ? [{ ...(task?.links?.[0]??{}), url: f.link },...(task?.links?.slice(1)??[])] : task?.links?.slice(1)??[],
+        action_id:actionId==='none'?null:actionId,
       };
       if(actionId!=='none') await planSave.mutateAsync({kind:'task',payload:{...payload,action_id:actionId}});
       else await save.mutateAsync(payload);
@@ -308,7 +309,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>{task ? 'Sửa công việc' : 'Thêm công việc'}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
@@ -352,7 +353,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
   const update = useK3TaskUpdate();
   const quantified = task.kpi_target != null && task.kpi_target > 0;
   const [f, setF] = useState({
-    status: task.status as K3Status,
+    status: k3DisplayStatus(task),
     kpi_actual: task.kpi_actual?.toString() ?? '',
     progress: task.progress.toString(),
     problem: task.problem ?? '',
@@ -378,7 +379,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>Cập nhật: {task.name}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">

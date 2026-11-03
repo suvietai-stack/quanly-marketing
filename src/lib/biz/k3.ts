@@ -114,7 +114,7 @@ export function k3Counts(tasks: K3Task[]) {
   const doing = tasks.filter((t) => t.status === 'doing').length;
   const open = tasks.length - done;
   const focus = tasks.filter((t) => t.is_focus).length;
-  const issues = tasks.filter((t) => t.status !== 'done' && (hasText(t.problem) || hasText(t.solution))).length;
+  const issues = tasks.filter((t) => !k3IsComplete(t) && (hasText(t.problem) || hasText(t.solution))).length;
   return { total: tasks.length, done, doing, open, focus, issues };
 }
 
