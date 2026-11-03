@@ -1303,6 +1303,13 @@
       "when": 1793697545251,
       "tag": "0185_biz_permission_unification",
       "breakpoints": true
+    },
+    {
+      "idx": 186,
+      "version": "7",
+      "when": 1793697603743,
+      "tag": "0186_biz_rpc_permission_via_biz_can",
+      "breakpoints": true
     }
   ]
 }
