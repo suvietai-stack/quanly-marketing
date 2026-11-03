@@ -524,6 +524,16 @@ export const PERMISSIONS: PermissionDef[] = [
 ];
 
 export const ALL_PERMS = PERMISSIONS.map((p) => p.key);
+
+/**
+ * Quyền Quản trị Kinh doanh (biz.*) và Quản lý 3K (k3.*) do Cơ cấu tổ chức Kinh doanh
+ * quyết định (chức vụ → bổ nhiệm → phạm vi), KHÔNG cấp qua Role tổng.
+ * Role tổng chỉ còn hiển thị/gán các quyền ngoài hai nhóm này.
+ */
+export const BIZ_ORG_GROUPS: PermissionGroup[] = ["Quản trị Kinh doanh", "Quản lý 3K"];
+export const isBizOrgPerm = (key: string) => key.startsWith("biz.") || key.startsWith("k3.");
+export const ROLE_PERMISSIONS = PERMISSIONS.filter((p) => !BIZ_ORG_GROUPS.includes(p.group));
+export const ROLE_ALL_PERMS = ROLE_PERMISSIONS.map((p) => p.key);
 export const PERMISSION_BY_KEY: Record<string, PermissionDef> = Object.fromEntries(
   PERMISSIONS.map((p) => [p.key, p]),
 );
