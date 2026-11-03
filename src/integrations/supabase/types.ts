@@ -7394,6 +7394,7 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      k3_action_save: { Args: { _payload: Json }; Returns: Json }
       k3_can: {
         Args: { _actor: string; _permission: string }
         Returns: boolean
@@ -7408,6 +7409,7 @@ export type Database = {
         Args: { _actor: string; _day: string }
         Returns: boolean
       }
+      k3_goal_save: { Args: { _payload: Json }; Returns: Json }
       k3_period_config_read: { Args: never; Returns: Json }
       k3_period_end: { Args: { _date: string; _type: string }; Returns: string }
       k3_period_settings_save: { Args: { _payload: Json }; Returns: Json }
@@ -7415,6 +7417,7 @@ export type Database = {
         Args: { _date: string; _type: string }
         Returns: string
       }
+      k3_plan_task_save: { Args: { _payload: Json }; Returns: Json }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
@@ -7430,6 +7433,10 @@ export type Database = {
       k3_summary_confirm: { Args: { _date: string }; Returns: Json }
       k3_task_delete: { Args: { _id: string }; Returns: boolean }
       k3_task_save: { Args: { _payload: Json }; Returns: Json }
+      k3_task_schedule: {
+        Args: { _date: string; _id: string; _revision: number }
+        Returns: Json
+      }
       k3_task_update: {
         Args: {
           _cause: string
