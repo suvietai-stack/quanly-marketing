@@ -1,70 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { passwordIssues } from '@/lib/password';
+import { authErrorMessage } from '@/lib/auth-errors';
 
 const SUPER_ADMIN_ROLE = "role-super-admin";
 const ADMIN_ROLE = "role-admin";
-const RESET_RATE_LIMIT_PER_HOUR = 10;
-
-async function callerRoles(userId: string): Promise<string[]> {
-  const { data, error } = await supabaseAdmin
-    .from("user_roles")
-    .select("role_id")
-    .eq("user_id", userId);
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => r.role_id as string);
-}
-
-async function isSystemAdminUser(userId: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
-    .from("profiles")
-    .select("is_system_admin")
-    .eq("id", userId)
-    .maybeSingle();
-  return !!data?.is_system_admin;
-}
-
-async function isSuperAdminUser(userId: string): Promise<boolean> {
-  if (await isSystemAdminUser(userId)) return true;
-  return (await callerRoles(userId)).includes(SUPER_ADMIN_ROLE);
-}
-
-/** Người gọi được phép reset mật khẩu tài khoản khác không. */
-async function assertCanResetPassword(userId: string) {
-  const roles = await callerRoles(userId);
-  if (roles.includes(SUPER_ADMIN_ROLE) || roles.includes(ADMIN_ROLE)) return;
-  if (await isSystemAdminUser(userId)) return;
-  const { data, error } = await supabaseAdmin.rpc("has_permission", {
-    _user_id: userId,
-    _permission: "settings.user_reset_password",
-  });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Bạn không có quyền reset mật khẩu tài khoản khác.");
-}
-
-/** Ghi nhật ký bảo mật — tuyệt đối không ghi mật khẩu. */
-async function logSecurityAction(actorId: string, targetId: string, action: string) {
-  await supabaseAdmin.from("account_security_logs").insert({
-    actor_id: actorId,
-    target_id: targetId,
-    action,
-  });
-}
-
-async function assertResetRateLimit(actorId: string) {
-  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count, error } = await supabaseAdmin
-    .from("account_security_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("actor_id", actorId)
-    .eq("action", "reset_password")
-    .gte("created_at", since);
-  if (error) throw new Error(error.message);
-  if ((count ?? 0) >= RESET_RATE_LIMIT_PER_HOUR) {
-    throw new Error("Bạn đã reset mật khẩu quá nhiều lần trong một giờ. Vui lòng thử lại sau.");
-  }
-}
 
 export const adminResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -72,60 +13,94 @@ export const adminResetPassword = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        newPassword: z
-          .string()
-          .min(8, "Mật khẩu mới tối thiểu 8 ký tự.")
-          .max(200)
-          .refine((v) => /[a-zA-Z]/.test(v) && /[0-9]/.test(v), {
-            message: "Mật khẩu mới cần có cả chữ cái và chữ số.",
-          }),
+        newPassword: z.string().refine(v => passwordIssues(v).length === 0, { message: 'Mật khẩu cần 8–200 ký tự, gồm chữ cái và chữ số.' }),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertCanResetPassword(context.userId);
-    // Phân cấp: tài khoản hệ thống / Super Admin chỉ Super Admin mới được reset.
-    const targetIsSuper =
-      (await isSystemAdminUser(data.userId)) ||
-      (await callerRoles(data.userId)).includes(SUPER_ADMIN_ROLE);
-    if (targetIsSuper && !(await isSuperAdminUser(context.userId))) {
+    const { assertAccountPermission, authState } = await import('@/lib/accounts.server');
+    await assertAccountPermission(context.supabase, context.userId, 'settings.user_reset_password');
+    if (data.userId === context.userId) throw new Error('Vui lòng dùng chức năng Đổi mật khẩu cho tài khoản của bạn.');
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const [{ data: target }, { data: targetRoles }, { data: actorRoles }, { data: actor }] = await Promise.all([
+      supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle(),
+      supabaseAdmin.from('user_roles').select('role_id').eq('user_id', data.userId),
+      context.supabase.from('user_roles').select('role_id').eq('user_id', context.userId),
+      context.supabase.from('profiles').select('is_system_admin').eq('id', context.userId).maybeSingle(),
+    ]);
+    if (!target) throw new Error('Không tìm thấy hồ sơ tài khoản.');
+    const targetIsSuper = target.is_system_admin || targetRoles?.some(r => r.role_id === SUPER_ADMIN_ROLE);
+    if (targetIsSuper && !actor?.is_system_admin && !actorRoles?.some(r => r.role_id === SUPER_ADMIN_ROLE)) {
       throw new Error("Chỉ Super Admin mới được reset mật khẩu tài khoản quản trị cấp cao.");
     }
-    await assertResetRateLimit(context.userId);
+    const state = await authState(supabaseAdmin, data.userId);
+    if (!state.authExists || !state.emailMatches) throw new Error('Hồ sơ và tài khoản xác thực cần kiểm tra trước khi đặt lại mật khẩu.');
+    const { data: reservation, error: reserveError } = await supabaseAdmin.rpc('account_auth_reserve', { _bucket: `reset:${context.userId}`, _action: 'reset_password', _actor: context.userId, _target: data.userId });
+    if (reserveError || !reservation) throw new Error('Bạn đã thao tác quá nhiều lần hoặc nhật ký chưa sẵn sàng. Vui lòng thử lại sau.');
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.newPassword,
     });
-    if (error) throw new Error(error.message);
-    await logSecurityAction(context.userId, data.userId, "reset_password");
-    return { ok: true };
+    const { error: logError } = await supabaseAdmin.rpc('account_auth_finish', { _id: reservation, _state: error ? 'failed' : 'completed' });
+    if (error) throw new Error(authErrorMessage(error, 'password'));
+    if (logError) throw new Error('Mật khẩu đã cập nhật nhưng chưa xác nhận được nhật ký. Không đặt lại lần nữa; hãy kiểm tra trạng thái.');
+    return { ok: true, emailConfirmed: state.emailConfirmed, ready: state.emailConfirmed && state.status === 'Đang hoạt động' && !state.banned };
   });
 
 export const adminDeleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const roles = await callerRoles(context.userId);
-    if (!roles.includes(SUPER_ADMIN_ROLE) && !roles.includes(ADMIN_ROLE) && !(await isSystemAdminUser(context.userId))) {
-      throw new Error("Chỉ Admin/Super Admin mới có quyền thao tác.");
-    }
-    if (await isSystemAdminUser(data.userId)) {
+    const { assertAccountPermission } = await import('@/lib/accounts.server');
+    await assertAccountPermission(context.supabase, context.userId, 'settings.user_delete');
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { data: target } = await supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle();
+    if (target?.is_system_admin || data.userId === context.userId) {
       throw new Error("Không thể xóa tài khoản hệ thống.");
     }
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
-    await logSecurityAction(context.userId, data.userId, "delete_user");
+    const { error: logError } = await supabaseAdmin.from('account_security_logs').insert({ actor_id: context.userId, target_id: data.userId, action: 'delete_user' });
+    if (logError) throw new Error('Đã xóa tài khoản nhưng chưa lưu được nhật ký.');
     return { ok: true };
   });
 
-export const adminLookupEmailByUsername = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ username: z.string().min(1).max(100) }).parse(input))
+export const usernameSignIn = createServerFn({ method: 'POST' })
+  .inputValidator(input => z.object({ username: z.string().min(1).max(100), password: z.string().min(1).max(1000) }).parse(input))
   .handler(async ({ data }) => {
-    // Public lookup (no auth required) — used during login to map username -> email.
-    // Returns email or null. Does not leak any other profile data.
-    const { data: prof } = await supabaseAdmin
-      .from("profiles")
-      .select("email")
-      .ilike("username", data.username)
-      .maybeSingle();
-    return { email: prof?.email ?? null };
+    const { publicAuthClient } = await import('@/lib/accounts.server');
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data.username.trim().toLowerCase())))).map(v => v.toString(16).padStart(2, '0')).join('');
+    const { error: throttle } = await supabaseAdmin.rpc('account_auth_reserve', { _bucket: `login:${digest}`, _action: 'username_login' });
+    if (throttle) return { ok: false as const, error: 'Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau.' };
+    const { data: id, error: lookupError } = await supabaseAdmin.rpc('account_username_identity', { _username: data.username });
+    if (lookupError || !id) return { ok: false as const, error: 'Thông tin đăng nhập không chính xác.' };
+    const { data: identity, error: identityError } = await supabaseAdmin.auth.admin.getUserById(id);
+    if (identityError || !identity.user?.email) return { ok: false as const, error: 'Thông tin đăng nhập không chính xác.' };
+    const { data: signed, error } = await publicAuthClient().auth.signInWithPassword({ email: identity.user.email, password: data.password });
+    if (error || !signed.session) return { ok: false as const, error: authErrorMessage(error) };
+    return { ok: true as const, session: { access_token: signed.session.access_token, refresh_token: signed.session.refresh_token } };
+  });
+
+export const accountAuthStatus = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(input => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { assertAccountPermission, authState } = await import('@/lib/accounts.server');
+    await assertAccountPermission(context.supabase, context.userId, 'settings.user_view');
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    return authState(supabaseAdmin, data.userId);
+  });
+
+export const resendConfirmation = createServerFn({ method: 'POST' })
+  .inputValidator(input => z.object({ email: z.string().email().max(254), redirect: z.string().url() }).parse(input))
+  .handler(async ({ data }) => {
+    const { publicAuthClient, safeRedirect } = await import('@/lib/accounts.server');
+    const redirect = safeRedirect(data.redirect);
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data.email.trim().toLowerCase())))).map(v => v.toString(16).padStart(2, '0')).join('');
+    const { error: throttle } = await supabaseAdmin.rpc('account_auth_reserve', { _bucket: `confirmation:${digest}`, _action: 'confirmation' });
+    if (throttle) throw new Error('Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.');
+    const { error } = await publicAuthClient().auth.resend({ type: 'signup', email: data.email.trim().toLowerCase(), options: { emailRedirectTo: redirect } });
+    if (error && !['user_not_found','email_not_confirmed'].includes(error.code ?? '')) throw new Error(authErrorMessage(error, 'send'));
+    return { ok: true };
   });

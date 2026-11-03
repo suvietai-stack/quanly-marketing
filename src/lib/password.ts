@@ -12,6 +12,7 @@ export function isFakeEmail(email: string): boolean {
 export function passwordIssues(pw: string): string[] {
   const issues: string[] = [];
   if (pw.length < 8) issues.push("Mật khẩu mới tối thiểu 8 ký tự.");
+  if (pw.length > 200) issues.push("Mật khẩu tối đa 200 ký tự.");
   if (!/[a-zA-Z]/.test(pw)) issues.push("Mật khẩu mới cần có ít nhất một chữ cái.");
   if (!/[0-9]/.test(pw)) issues.push("Mật khẩu mới cần có ít nhất một chữ số.");
   return issues;
