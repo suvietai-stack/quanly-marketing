@@ -3,6 +3,7 @@ import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
+  ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS,
   SUPER_ADMIN_ID, PERMISSION_DEPENDS, allDependencies, allDependents,
   auditDependencies, explainPermission,
 } from "@/lib/auth";
@@ -177,7 +178,7 @@ function PermissionDebugTab() {
           <Select value={testKey} onValueChange={setTestKey}>
             <SelectTrigger><SelectValue placeholder="— chọn quyền để test —" /></SelectTrigger>
             <SelectContent className="max-h-72">
-              {PERMISSIONS.map((p) => (
+              {ROLE_PERMISSIONS.map((p) => (
                 <SelectItem key={p.key} value={p.key}>{p.key} — {p.label}</SelectItem>
               ))}
             </SelectContent>
