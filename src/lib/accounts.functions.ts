@@ -5,7 +5,6 @@ import { passwordIssues } from '@/lib/password';
 import { authErrorMessage } from '@/lib/auth-errors';
 
 const SUPER_ADMIN_ROLE = "role-super-admin";
-const ADMIN_ROLE = "role-admin";
 
 export const adminResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

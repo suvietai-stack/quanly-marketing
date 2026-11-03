@@ -357,10 +357,11 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
       desiredPosition: form.desiredPosition || undefined, notes: form.notes || undefined,
     });
     if (!isSystem) {
-      if (form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
+      const approving = user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động';
+      if (!approving && form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
       if (form.status !== user.status) {
         if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
-          const result = await s.approve(user.id);
+          const result = await s.approve(user.id, form.roleId !== user.roleId ? form.roleId || undefined : undefined);
           if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
         } else await s.setStatus(user.id, form.status);
       }
