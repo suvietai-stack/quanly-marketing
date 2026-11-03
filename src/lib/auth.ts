@@ -1211,7 +1211,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       },
     });
     if (error) {
-      const msg = error.code === 'user_already_exists' ? 'Không thể đăng ký với thông tin này. Vui lòng đăng nhập hoặc yêu cầu xác nhận email.' : authErrorMessage(error, 'password');
+      const msg = ['user_already_exists','unexpected_failure'].includes(error.code ?? '') ? 'Không thể đăng ký với thông tin này. Vui lòng kiểm tra tên đăng nhập/email hoặc yêu cầu xác nhận email nếu đã đăng ký.' : authErrorMessage(error, 'password');
       return { ok: false, error: msg };
     }
     if (!data.user) return { ok: false, error: 'Không tạo được tài khoản. Vui lòng thử lại.' };

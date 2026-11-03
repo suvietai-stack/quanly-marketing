@@ -1282,6 +1282,13 @@
       "when": 1793694619412,
       "tag": "0182_account_identity_and_role_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 183,
+      "version": "7",
+      "when": 1793694803269,
+      "tag": "0183_account_rpc_active_and_signup_guards",
+      "breakpoints": true
     }
   ]
 }
