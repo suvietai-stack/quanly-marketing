@@ -4,8 +4,11 @@ import type { EffectiveBizAccess } from '@/lib/biz/access';
 import {
   adminResetPassword,
   adminDeleteUser,
-  adminLookupEmailByUsername,
+  usernameSignIn,
 } from "@/lib/accounts.functions";
+import { passwordIssues, isFakeEmail } from '@/lib/password';
+import { authErrorMessage, accountAccess } from '@/lib/auth-errors';
+import '@/lib/recovery-session';
 
 export type ID = string;
 
@@ -980,14 +983,14 @@ interface AuthState {
     desiredPosition?: string; notes?: string; password: string;
   }) => Promise<{ ok: boolean; error?: string }>;
 
-  approve: (id: ID, roleId?: ID) => Promise<void>;
+  approve: (id: ID, roleId?: ID) => Promise<{ emailConfirmed: boolean; ready: boolean }>;
   reject: (id: ID) => Promise<void>;
   setStatus: (id: ID, status: AccountStatus) => Promise<void>;
   setRole: (id: ID, roleId: ID) => Promise<void>;
   setUseCustom: (id: ID, useCustom: boolean) => Promise<void>;
   setCustomPerms: (id: ID, perms: PermissionKey[]) => Promise<void>;
   updateUser: (id: ID, patch: Partial<User>) => Promise<void>;
-  resetPassword: (id: ID, newPassword: string) => Promise<void>;
+  resetPassword: (id: ID, newPassword: string) => Promise<{ emailConfirmed: boolean; ready: boolean }>;
   changeOwnPassword: (oldPwd: string, newPwd: string) => Promise<{ ok: boolean; error?: string }>;
   removeUser: (id: ID) => Promise<void>;
 
@@ -1053,20 +1056,26 @@ export const useAuth = create<AuthState>((set, get) => ({
   init: async () => {
     if (get().initialized) return;
     set({ initialized: true });
-    supabase.auth.onAuthStateChange((_event, session) => {
-      set({ currentUserId: session?.user?.id ?? null, bizAccess: null });
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
+      const nextId = session?.user?.id ?? null;
+      if (nextId !== get().currentUserId) set({ users: [], roles: [], loaded: false });
+      set({ currentUserId: nextId, bizAccess: null });
       if (session) {
-        get().reload();
+        // Do not make Auth calls inside the SDK's locked callback.
+        setTimeout(() => void get().reload(), 0);
       } else {
         set({ users: [], roles: [], loaded: false });
       }
     });
-    const { data: { session } } = await supabase.auth.getSession();
-    set({ currentUserId: session?.user?.id ?? null });
-    if (session) await get().reload();
+    const { data: { user } } = await supabase.auth.getUser();
+    set({ currentUserId: user?.id ?? null });
+    if (user) await get().reload();
   },
 
   reload: async () => {
+    const requestedUser = get().currentUserId;
+    if (!requestedUser) return;
     const [dirRes, fullProfRes, rolesRes, urRes, ovRes] = await Promise.all([
       supabase.rpc("get_profiles_directory"),
       // RLS limits this to self + (admins see all). Sensitive fields are merged in for those rows.
@@ -1075,7 +1084,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       supabase.from("user_roles").select("*"),
       supabase.from("user_permission_overrides").select("*"),
     ]);
-    const directory = (dirRes.data ?? []) as any[];
+    if (get().currentUserId !== requestedUser) return;
+    if (fullProfRes.error) { set({ users: [], roles: [], loaded: true, bizAccess: null }); return; }
+    const directory = (dirRes.data ?? fullProfRes.data ?? []) as any[];
     const fullProfiles = (fullProfRes.data ?? []) as any[];
     const fullById = new Map(fullProfiles.map((p) => [p.id, p]));
     // Merge: prefer full row (with email/phone/notes/etc.) when accessible; otherwise use directory entry.
@@ -1130,21 +1141,19 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   login: async (usernameOrEmail, password) => {
+    try {
     const input = usernameOrEmail.trim();
-    let email = input.includes("@") ? input.toLowerCase() : "";
-    if (!email) {
-      // Special case for system Admin
-      if (input.toLowerCase() === "admin") {
-        email = "admin@local";
-      } else {
-        const res = await adminLookupEmailByUsername({ data: { username: input } });
-        if (!res.email) return { ok: false, error: "Sai tên đăng nhập hoặc mật khẩu." };
-        email = res.email;
-      }
-    }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error || !data.user) return { ok: false, error: "Sai tên đăng nhập hoặc mật khẩu." };
-    const { data: prof } = await supabase
+    const result = input.includes('@')
+      ? await supabase.auth.signInWithPassword({ email: input.toLowerCase(), password })
+      : await (async () => {
+          const signed = await usernameSignIn({ data: { username: input, password } });
+          if (!signed.ok) return { data: { user: null }, error: null, loginError: signed.error };
+          return supabase.auth.setSession(signed.session);
+        })();
+    if ('loginError' in result) return { ok: false, error: result.loginError };
+    const { data, error } = result;
+    if (error || !data.user) return { ok: false, error: authErrorMessage(error) };
+    const { data: prof, error: profileError } = await supabase
       .from("profiles")
       .select("status")
       .eq("id", data.user.id)
@@ -1152,7 +1161,11 @@ export const useAuth = create<AuthState>((set, get) => ({
     const status = prof?.status as AccountStatus | undefined;
     // Cho phép "Chờ duyệt" đăng nhập để hiển thị màn chờ duyệt.
     // Các trạng thái còn lại (Tạm khóa / Từ chối / Lưu trữ) vẫn chặn đăng nhập.
-    if (status && status !== "Đang hoạt động" && status !== "Chờ duyệt") {
+    if (profileError || accountAccess(status) === 'missing') {
+      await supabase.auth.signOut({ scope: 'local' });
+      return { ok: false, error: 'Không kiểm tra được hồ sơ tài khoản. Vui lòng thử lại hoặc liên hệ quản trị viên.' };
+    }
+    if (accountAccess(status) === 'blocked') {
       await supabase.auth.signOut();
       const msg =
         status === "Tạm khóa" ? "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin." :
@@ -1161,7 +1174,9 @@ export const useAuth = create<AuthState>((set, get) => ({
         "Tài khoản không khả dụng.";
       return { ok: false, error: msg };
     }
+    await get().reload();
     return { ok: true };
+    } catch { return { ok: false, error: authErrorMessage(null) }; }
   },
 
   logout: async () => {
@@ -1171,17 +1186,17 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   register: async (input) => {
+    try {
+    const issues = passwordIssues(input.password);
+    if (issues.length) return { ok: false, error: issues[0] };
     const username = input.username.trim();
     if (!username) return { ok: false, error: "Vui lòng nhập tên đăng nhập." };
     if (username.toLowerCase() === "admin") return { ok: false, error: "Tên đăng nhập 'Admin' đã được hệ thống sử dụng." };
-    // Check username uniqueness via server function (bypasses RLS)
-    const lookup = await adminLookupEmailByUsername({ data: { username } });
-    if (lookup.email) return { ok: false, error: "Tên đăng nhập đã tồn tại." };
-
-    const email = input.email?.trim().toLowerCase() || `${username.toLowerCase()}@user.local`;
+    const email = input.email?.trim().toLowerCase() ?? '';
+    if (isFakeEmail(email)) return { ok: false, error: 'Vui lòng nhập email thật để nhận liên kết xác nhận tài khoản.' };
     const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/login` : undefined;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password: input.password,
       options: {
@@ -1196,26 +1211,21 @@ export const useAuth = create<AuthState>((set, get) => ({
       },
     });
     if (error) {
-      const msg = error.message?.includes("already") ? "Email hoặc tài khoản đã tồn tại." : error.message;
+      const msg = error.code === 'user_already_exists' ? 'Không thể đăng ký với thông tin này. Vui lòng đăng nhập hoặc yêu cầu xác nhận email.' : authErrorMessage(error, 'password');
       return { ok: false, error: msg };
     }
-    // Sign out immediately — account must be approved before login
+    if (!data.user) return { ok: false, error: 'Không tạo được tài khoản. Vui lòng thử lại.' };
+    // Confirmation and business approval are independent; never auto-confirm.
     await supabase.auth.signOut();
     return { ok: true };
+    } catch { return { ok: false, error: 'Không đăng ký được lúc này. Vui lòng thử lại.' }; }
   },
 
   approve: async (id, roleId) => {
-    const { error: e1 } = await supabase
-      .from("profiles")
-      .update({ status: "Đang hoạt động" })
-      .eq("id", id);
-    if (e1) throw new Error(e1.message);
-    if (roleId) {
-      await supabase.from("user_roles").delete().eq("user_id", id);
-      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: id, role_id: roleId });
-      if (e2) throw new Error(e2.message);
-    }
+    const { data, error } = await supabase.rpc('account_approve', { _target: id, ...roleId ? { _role: roleId } : {} });
+    if (error) throw new Error(error.message);
     await get().reload();
+    return data as { emailConfirmed: boolean; ready: boolean };
   },
 
   reject: async (id) => {
@@ -1258,14 +1268,13 @@ export const useAuth = create<AuthState>((set, get) => ({
   updateUser: async (id, patch) => {
     const dbPatch: {
       full_name?: string;
-      email?: string | null;
       phone?: string | null;
       desired_position?: string | null;
       notes?: string | null;
       must_change_password?: boolean;
     } = {};
     if (patch.fullName !== undefined) dbPatch.full_name = patch.fullName;
-    if (patch.email !== undefined) dbPatch.email = patch.email || null;
+    if (patch.email !== undefined && patch.email !== get().users.find(u => u.id === id)?.email) throw new Error('Email đăng nhập phải được thay đổi qua xác thực email.');
     if (patch.phone !== undefined) dbPatch.phone = patch.phone || null;
     if (patch.desiredPosition !== undefined) dbPatch.desired_position = patch.desiredPosition || null;
     if (patch.notes !== undefined) dbPatch.notes = patch.notes || null;
@@ -1277,13 +1286,15 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   resetPassword: async (id, newPassword) => {
-    await adminResetPassword({ data: { userId: id, newPassword } });
+    return adminResetPassword({ data: { userId: id, newPassword } });
   },
 
   changeOwnPassword: async (oldPwd, newPwd) => {
-    const { data: sess } = await supabase.auth.getSession();
-    const email = sess.session?.user?.email;
-    const userId = sess.session?.user?.id;
+    const issues = passwordIssues(newPwd);
+    if (issues.length) return { ok: false, error: issues[0] };
+    const { data: identity } = await supabase.auth.getUser();
+    const email = identity.user?.email;
+    const userId = identity.user?.id;
     if (!email || !userId) return { ok: false, error: "Chưa đăng nhập." };
     // Bước 1: xác minh mật khẩu hiện tại bằng một client tạm KHÔNG lưu phiên,
     // để phiên đăng nhập hiện tại không bị thay đổi.
@@ -1294,16 +1305,12 @@ export const useAuth = create<AuthState>((set, get) => ({
       { auth: { persistSession: false, autoRefreshToken: false, storage: undefined } },
     );
     const { error: verifyErr } = await probe.auth.signInWithPassword({ email, password: oldPwd });
-    if (verifyErr) return { ok: false, error: "Mật khẩu hiện tại không đúng." };
+    if (verifyErr) return { ok: false, error: verifyErr.code === 'invalid_credentials' ? 'Mật khẩu hiện tại không đúng.' : authErrorMessage(verifyErr) };
     // Bước 2: đổi mật khẩu trên phiên hiện tại; server vẫn kiểm tra current_password
     // (require_current_password) như lớp bảo vệ thứ hai.
     const { error } = await supabase.auth.updateUser({ password: newPwd, current_password: oldPwd });
     if (error) {
-      const msg = error.message?.toLowerCase() ?? "";
-      if (msg.includes("weak") || msg.includes("at least") || msg.includes("password")) {
-        return { ok: false, error: "Mật khẩu mới chưa đủ mạnh theo yêu cầu hệ thống." };
-      }
-      return { ok: false, error: "Không đổi được mật khẩu. Vui lòng thử lại." };
+      return { ok: false, error: authErrorMessage(error, 'password') };
     }
     await supabase.from("profiles").update({ must_change_password: false }).eq("id", userId);
     await get().reload();

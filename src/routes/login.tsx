@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { supabase } from "@/integrations/supabase/client";
 import { isFakeEmail } from "@/lib/password";
 import { toast } from "sonner";
+import { authErrorMessage } from '@/lib/auth-errors';
+import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 
 const FORGOT_COOLDOWN_MS = 60_000;
 const FORGOT_COOLDOWN_KEY = "forgot_password_last_at";
@@ -39,13 +41,14 @@ function ForgotPasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
     } catch { /* ignore */ }
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(value, {
+      const { error } = await supabase.auth.resetPasswordForEmail(value, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
+      if (error) { toast.error(authErrorMessage(error, 'send')); return; }
       try { localStorage.setItem(FORGOT_COOLDOWN_KEY, String(Date.now())); } catch { /* ignore */ }
       // Phản hồi trung tính: không tiết lộ email có tồn tại hay không.
       setSent(true);
-    } finally {
+    } catch { toast.error('Không gửi được email lúc này. Vui lòng thử lại.'); } finally {
       setLoading(false);
     }
   };
@@ -109,19 +112,23 @@ function LoginPage() {
   const navigate = useNavigate();
   const login = useAuth((s) => s.login);
   const currentUserId = useAuth((s) => s.currentUserId);
+  const loaded = useAuth(s => s.loaded);
+  const status = useAuth(s => s.users.find(u => u.id === s.currentUserId)?.status);
 
   const [username, setU] = useState("");
   const [password, setP] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
 
   useEffect(() => {
-    if (currentUserId) goBack(navigate);
-  }, [currentUserId, navigate]);
+    if (currentUserId && loaded && status === 'Đang hoạt động' && !loading) goBack(navigate);
+  }, [currentUserId, loaded, status, loading, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setErr("");
     setLoading(true);
     const res = await login(username.trim(), password);
@@ -173,8 +180,10 @@ function LoginPage() {
                   <MailQuestion aria-hidden="true" className="mr-1 h-3.5 w-3.5" />Quên mật khẩu
                 </Button>
               </div>
+              <Button type="button" variant="link" className="h-auto w-full whitespace-normal text-xs" onClick={() => setConfirmationOpen(true)}>Gửi lại email xác nhận tài khoản</Button>
             </form>
             <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} />
+            <ConfirmationDialog open={confirmationOpen} onClose={() => setConfirmationOpen(false)} />
           </CardContent>
         </Card>
         <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">{brand.org_name}</p>
