@@ -32,7 +32,7 @@ beforeAll(async () => {
   // Role tổng legacy giữ quyền biz.*/k3.* (dữ liệu cũ được giữ để audit nhưng không còn hiệu lực).
   await db.exec("insert into app_roles(id,name,permissions) values('staff','Nhân viên',ARRAY['biz.view_own','biz.view_dept','biz.plan_submit','biz.goal_submit','biz.report_submit','biz.deadline_manage','k3.use','k3.view_scope','k3.settings'])");
   await db.query("insert into user_roles values($1,'staff')", [legacy]);
-  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order) VALUES ('director','Giám Đốc',3,'system',0),('department_head','Trưởng Phòng',2,'department',1),('team_lead','Trưởng Nhóm',1,'team',2),('employee','Nhân viên Kinh doanh',0,'individual',3)");
+  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order,business_policy) VALUES ('director','Giám Đốc',3,'system',0,'manager'),('department_head','Trưởng Phòng',2,'department',1,'manager'),('team_lead','Trưởng Nhóm',1,'team',2,'manager'),('employee','Nhân viên Kinh doanh',0,'individual',3,'personal')");
   await actor(admin); sys = await org('system', { name: 'Hệ thống nhất' }); dep = await org('department', { name: 'Phòng thống nhất', system_id: sys }); team = await org('team', { name: 'Nhóm thống nhất', department_id: dep });
   await org('member', { user_id: sale, department_id: dep, team_id: team });
 }, 60000);
