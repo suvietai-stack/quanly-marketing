@@ -92,3 +92,26 @@ it('dữ liệu lịch sử giữ đơn vị cũ sau chuyển phòng',async()=>{
  const read=await val<{tasks:{id:string}[]}>(`SELECT k3_period_read('week','${today}','${staff}') v`);expect(read.tasks.some(t=>t.id===task)).toBe(true);
  expect(await val(`SELECT department_id::text v FROM k3_days WHERE work_date='${today}' AND user_id='${staff}'`)).toBe(dept);await as(staff);
 });
+it('tổng kết tuần/tháng giữ phiên bản, cập nhật kết quả cần xác nhận lại',async()=>{
+ await db.exec(`UPDATE biz_department_members SET department_id='${dept}' WHERE user_id='${staff}'`);
+ const t=await val<{id:string}>(`SELECT k3_task_save('{"name":"Kết quả kỳ cũ","work_date":"2020-02-10","kpi_target":10,"kpi_actual":10,"kpi_unit":"khách","status":"done"}') v`);
+ for(const type of ['week','month'])await val(`SELECT k3_period_summary_confirm('${type}','2020-02-10','Tổng kết thật theo công việc') v`);
+ await val(`SELECT k3_task_update('${t.id}','doing',8,NULL,'Thiếu 2 khách','Khách bận','Gọi bổ sung','') v`);
+ for(const type of ['week','month']) {
+  const before=await val<{needs_confirmation:boolean}>(`SELECT k3_period_read('${type}','2020-02-10') v`);expect(before.needs_confirmation).toBe(true);
+  await val(`SELECT k3_period_summary_confirm('${type}','2020-02-10','Xác nhận lại') v`);
+  const after=await val<{summaries:unknown[];needs_confirmation:boolean}>(`SELECT k3_period_read('${type}','2020-02-10') v`);expect(after.summaries).toHaveLength(2);expect(after.needs_confirmation).toBe(false);
+ }
+});
+it('nhận xét tuần không vô hiệu tổng kết',async()=>{
+ await as(manager);await val(`SELECT k3_period_comment_save('${staff}','week','2020-02-10','Hỗ trợ bổ sung') v`);await as(staff);
+ expect((await val<{needs_confirmation:boolean}>(`SELECT k3_period_read('week','2020-02-10') v`)).needs_confirmation).toBe(false);
+});
+it('deadline trống không đánh dấu trễ, cấu hình đầy đủ tính đúng giờ VN',async()=>{
+ expect((await val<{plan_deadline:string|null}>(`SELECT k3_period_read('week','${today}') v`)).plan_deadline).toBeNull();
+ await as(manager);await val(`SELECT k3_period_settings_save('{"week_enabled":true,"month_enabled":true,"period_effective_from":"2020-01-01","period_deadlines":{"week_plan":{"offset":0,"time":"08:45","effective_from":"2020-01-01"}}}') v`);await as(staff);
+ const future=await val<{plan_deadline:string}>(`SELECT k3_period_read('week','2099-01-05') v`);expect(future.plan_deadline).toContain('01:45:00');
+});
+it('link tài liệu từ chối javascript',async()=>{
+ await expect(db.query(`SELECT k3_task_save('{"name":"Link sai","work_date":"${today}","links":[{"url":"javascript:alert(1)"}]}')`)).rejects.toThrow('https');
+});
