@@ -30,6 +30,8 @@ beforeAll(async () => {
   INSERT INTO biz_department_members VALUES ('${staff}','${dept}'),('${other}','${dept}'),('${outsider}','${dept}');
   SET test.uid='${staff}';`);
   await db.exec(readFileSync('drizzle/migrations/0173_k3_daily_management_phase1.sql', 'utf8'));
+  await db.exec(`CREATE FUNCTION public.biz_department_at(uuid,date) RETURNS uuid LANGUAGE sql AS $$SELECT department_id FROM biz_department_members WHERE user_id=$1 LIMIT 1$$;`);
+  await db.exec(readFileSync('drizzle/migrations/0174_k3_daily_integrity_and_summary_versions.sql', 'utf8')); 
   // Kích hoạt module bằng quyền cấu hình (super admin stub=false → cấp trực tiếp qua sig_can thay thế)
   await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT $2='k3.settings' AND $1='${manager}'::uuid$$;`);
   await as(manager);
@@ -64,7 +66,7 @@ it('không nhận số âm và không cho sửa công việc người khác', as
   await expect(db.query(`SELECT k3_task_save('{"work_date":"${today}","name":"X","kpi_target":-1}')`)).rejects.toThrow('không được âm');
   const t = await value(`SELECT id::text v FROM k3_tasks LIMIT 1`);
   await as(other);
-  await expect(db.query(`SELECT k3_task_update('${t}', 'done', NULL, NULL, '', '', '', '')`)).rejects.toThrow('người khác');
+  await expect(db.query(`SELECT k3_task_update('${t}', 'done', NULL, 100, '', '', '', '')`)).rejects.toThrow('người khác');
   await expect(db.query(`SELECT k3_task_delete('${t}')`)).rejects.toThrow('người khác');
   await as(staff);
 });
@@ -79,9 +81,9 @@ it('tổng kết bắt buộc VNGB cho việc chưa hoàn thành, không nhận 
   const t = await value(`SELECT id::text v FROM k3_tasks WHERE name='Việc 1'`);
   await value(`SELECT k3_task_update('${t}', 'incomplete', NULL, 50, 'Khách không nghe máy', 'Gọi giờ nghỉ trưa', 'Gọi lại sáng mai', '') v`);
   const t2 = await value(`SELECT id::text v FROM k3_tasks WHERE name='Việc 2'`);
-  await value(`SELECT k3_task_update('${t2}', 'done', NULL, NULL, '', '', '', '') v`);
+  await value(`SELECT k3_task_update('${t2}', 'done', NULL, 100, '', '', '', '') v`);
   const t3 = await value(`SELECT id::text v FROM k3_tasks WHERE name='Việc 3'`);
-  await value(`SELECT k3_task_update('${t3}', 'done', NULL, NULL, '', '', '', '') v`);
+  await value(`SELECT k3_task_update('${t3}', 'done', NULL, 100, '', '', '', '') v`);
   const t0 = await value(`SELECT id::text v FROM k3_tasks WHERE kpi_target=10`);
   await value(`SELECT k3_task_update('${t0}', 'done', 12, NULL, '', '', '', '') v`);
   const day = await value(`SELECT k3_summary_confirm('${today}') v`) as { summarized_at: string };
@@ -93,7 +95,7 @@ it('xóa công việc vẫn giữ lịch sử sự kiện', async () => {
   await value(`SELECT k3_task_delete('${t}') v`);
   const ev = await value(`SELECT count(*)::int v FROM k3_task_events WHERE action='delete'`);
   expect(ev).toBe(1);
-  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE name='Việc 3'`)).toBe(0);
+  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE name='Việc 3' AND deleted_at IS NULL`)).toBe(0);
 });
 
 it('quản lý xem đúng phạm vi, người ngoài không xem được', async () => {
@@ -119,11 +121,11 @@ it('quản lý nhận xét trong phạm vi, nhân viên đọc được nhận x
   expect(day.comments[0]?.body).toBe('Ưu tiên gọi lại khách sáng mai');
 });
 
-it('không tạo 3K trùng cho cùng nhân viên/ngày và chặn ngày quá xa', async () => {
+it('không tạo 3K trùng và cho chuẩn bị ngày tương lai', async () => {
   await value(`SELECT k3_day_save('${today}', 'Cập nhật KG') v`);
   expect(await value(`SELECT count(*)::int v FROM k3_days WHERE user_id='${staff}' AND work_date='${today}'`)).toBe(1);
   await expect(db.query(`SELECT k3_day_save('${today.slice(0, 8)}99', 'x')`)).rejects.toThrow();
-  await expect(db.query(`SELECT k3_day_save('2099-01-01', 'x')`)).rejects.toThrow('hôm nay hoặc ngày kế tiếp');
+  expect((await value(`SELECT k3_day_save('2099-01-01', 'Chuẩn bị tương lai') v`) as { work_date: string }).work_date).toBe('2099-01-01');
 });
 
 it('cấu hình ghi lịch sử và không đổi dữ liệu lịch sử', async () => {
@@ -133,7 +135,7 @@ it('cấu hình ghi lịch sử và không đổi dữ liệu lịch sử', asyn
   const logs = await value(`SELECT count(*)::int v FROM k3_settings_log`);
   expect(logs).toBe(2);
   expect(await value(`SELECT max_focus::int v FROM k3_settings`)).toBe(2);
-  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE user_id='${staff}'`)).toBe(3);
+  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE user_id='${staff}' AND deleted_at IS NULL`)).toBe(3);
   await db.exec(`CREATE OR REPLACE FUNCTION private.sig_can(uuid, text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;`);
   await as(staff);
 });
