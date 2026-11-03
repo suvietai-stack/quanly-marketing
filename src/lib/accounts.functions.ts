@@ -52,8 +52,12 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
     const { assertAccountPermission } = await import('@/lib/accounts.server');
     await assertAccountPermission(context.supabase, context.userId, 'settings.user_delete');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-    const { data: target } = await supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle();
-    if (target?.is_system_admin || data.userId === context.userId) {
+    const [{ data: target, error: targetError }, { data: roles, error: rolesError }] = await Promise.all([
+      supabaseAdmin.from('profiles').select('is_system_admin').eq('id', data.userId).maybeSingle(),
+      supabaseAdmin.from('user_roles').select('role_id').eq('user_id', data.userId),
+    ]);
+    if (targetError || rolesError || !target) throw new Error('Không kiểm tra được tài khoản được chọn.');
+    if (target.is_system_admin || roles?.some(r => r.role_id === SUPER_ADMIN_ROLE) || data.userId === context.userId) {
       throw new Error("Không thể xóa tài khoản hệ thống.");
     }
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
