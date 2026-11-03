@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/auth';
+import { k3PeriodConfigQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
+import type { K3PeriodConfig } from '@/lib/biz/k3Periods';
 
 interface LogRow {
   id: number;
@@ -75,6 +78,7 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
       </div>
 
       <div className="space-y-4">
+        <PeriodSettings/>
         <div className="rounded-lg border border-border bg-card p-4 space-y-2">
           <h3 className="font-medium">Phân quyền</h3>
           <p className="text-sm text-muted-foreground">
@@ -106,4 +110,19 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
       </div>
     </div>
   );
+}
+
+function PeriodSettings() {
+ const uid=useAuth(s=>s.currentUserId)??'';const query=useQuery(k3PeriodConfigQuery(uid));
+ if(query.error)return <div><p className="text-destructive">{k3Error(query.error)}</p><Button variant="outline" onClick={()=>query.refetch()}>Thử lại</Button></div>;
+ return query.data?<PeriodSettingsForm key={JSON.stringify(query.data)} config={query.data}/>:<p className="text-sm text-muted-foreground">Đang tải cài đặt Tuần/Tháng…</p>;
+}
+function PeriodSettingsForm({config}:{config:K3PeriodConfig}) {
+ const save=useK3PeriodMutation();const [f,setF]=useState(config);
+ return <section className="space-y-3 border-b border-border pb-4"><h3 className="font-medium">3K Tuần và Tháng</h3>
+ {(['week','month'] as const).map(v=><label key={v} className="flex justify-between gap-2 text-sm"><span>Áp dụng 3K {v==='week'?'Tuần':'Tháng'}</span><Switch checked={f[v==='week'?'week_enabled':'month_enabled']} onCheckedChange={value=>setF({...f,[v==='week'?'week_enabled':'month_enabled']:value})}/></label>)}
+ <div className="space-y-1"><Label htmlFor="k3-period-effective">Ngày bắt đầu áp dụng Tuần/Tháng</Label><Input id="k3-period-effective" type="date" value={f.period_effective_from??''} onChange={e=>setF({...f,period_effective_from:e.target.value||null})}/></div>
+ <details><summary className="cursor-pointer text-sm text-primary">Deadline Tuần/Tháng</summary><div className="mt-2 space-y-3">{(['week_plan','week_summary','month_plan','month_summary'] as const).map(key=>{const d=f.period_deadlines[key];const set=(field:string,value:string)=>setF({...f,period_deadlines:{...f.period_deadlines,[key]:{offset:d?.offset??0,time:d?.time??'',effective_from:d?.effective_from??'', [field]:field==='offset'?Number(value):value}}});return <div key={key} className="space-y-2 border-b border-border pb-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!d} onChange={e=>{const next={...f.period_deadlines};if(e.target.checked)next[key]={offset:0,time:'',effective_from:''};else delete next[key];setF({...f,period_deadlines:next})}}/>{({week_plan:'Lập kế hoạch Tuần',week_summary:'Tổng kết Tuần',month_plan:'Lập kế hoạch Tháng',month_summary:'Tổng kết Tháng'})[key]}</label>{d&&<div className="grid grid-cols-2 gap-2"><div><Label>Ngày lệch từ đầu kỳ</Label><Input type="number" min={-31} max={62} value={d.offset} onChange={e=>set('offset',e.target.value)}/></div><div><Label>Giờ Việt Nam</Label><Input type="time" value={d.time} onChange={e=>set('time',e.target.value)}/></div><div className="col-span-2"><Label>Ngày hiệu lực deadline</Label><Input type="date" value={d.effective_from} onChange={e=>set('effective_from',e.target.value)}/></div></div>}</div>})}</div></details>
+ <Button disabled={save.isPending} onClick={async()=>{try{await save.mutateAsync({kind:'settings',payload:{...f}});toast.success('Đã lưu cài đặt Tuần/Tháng.')}catch(e){toast.error(k3Error(e))}}}>Lưu Tuần/Tháng</Button>
+ </section>;
 }

@@ -4,7 +4,9 @@ import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3DaySave, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
-import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
+import { k3PeriodQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
+import type { K3Action } from '@/lib/biz/k3Periods';
+import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -34,6 +36,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
   const date = selectedDate ?? localDate;
   const setDate = onDateChange ?? setLocalDate;
   const { data, isLoading, error, refetch } = useQuery({ ...k3DayQuery(uid, date), enabled: !!uid && !!date });
+  const period=useQuery({...k3PeriodQuery(uid,'month',date),enabled:!!uid&&!!date});
   const [editing, setEditing] = useState<K3Task | null | 'new'>(null);
   const [updating, setUpdating] = useState<K3Task | null>(null);
   const [deleting, setDeleting] = useState<K3Task | null>(null);
@@ -114,6 +117,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
           task={editing === 'new' ? null : editing}
           focusCount={counts.focus}
           maxFocus={settings.max_focus}
+          actions={period.data?.actions}
           onClose={() => setEditing(null)}
         />
       )}
@@ -203,7 +207,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
   const hasIssue = task.status !== 'done' && (hasText(task.problem) || hasText(task.solution));
   const quick = async (status: K3Status) => {
     try {
-      await update.mutateAsync({ id: task.id, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
+      await update.mutateAsync({ id: task.id, revision:task.revision, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
     } catch (e) {
       toast.error(k3Error(e));
     }
@@ -237,7 +241,8 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <StatusBadge status={task.status} />
+          <StatusBadge status={k3DisplayStatus(task)} />
+          {task.status==='done'&&k3DisplayStatus(task)!=='done'&&<span className="max-w-36 text-right text-xs text-muted-foreground">Trạng thái cũ: Hoàn thành</span>}
           {task.is_focus && <Badge variant="outline" className="border-primary text-primary">Mũi khoan</Badge>}
           {hasIssue && (
             <Badge variant="outline" className="border-amber-500 text-amber-600"><AlertTriangle className="mr-1 h-3 w-3" />Có vấn đề</Badge>
@@ -254,7 +259,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
       {settings.enabled && <div className="flex flex-wrap gap-1.5">
         {task.status === 'todo' && <Button type="button" size="sm" variant="outline" onClick={() => quick('doing')}><Play className="mr-1 h-3.5 w-3.5" />Bắt đầu</Button>}
         {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>}
-        {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={() => quick('done')}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Hoàn thành</Button>}
+        {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Hoàn thành</Button>}
         {task.status === 'done' && <Button type="button" size="sm" variant="ghost" onClick={onUpdate}>Điều chỉnh</Button>}
         <Button type="button" size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>
         <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={onDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
@@ -263,8 +268,11 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
   );
 }
 
-export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void }) {
+export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void; actions?:K3Action[] }) {
   const save = useK3TaskSave();
+  const planSave=useK3PeriodMutation();
+  const [actionId,setActionId]=useState((task as K3Task & { action_id?:string } | null)?.action_id??'none');
+  const [requestKey]=useState(()=>crypto.randomUUID());
   const [f, setF] = useState({
     name: task?.name ?? '',
     start_time: task?.start_time?.slice(0, 5) ?? '',
@@ -282,14 +290,16 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date
   const focusBlocked = f.is_focus && !task?.is_focus && focusCount >= maxFocus;
   const submit = async () => {
     try {
-      await save.mutateAsync({
-        id: task?.id, revision: task?.revision, request_key: task ? undefined : crypto.randomUUID(), work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
+      const payload={
+        id: task?.id, revision: task?.revision, request_key: task ? undefined : requestKey, work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
         kpi_target: f.kpi_target === '' ? null : Number(f.kpi_target), kpi_unit: f.kpi_unit,
         is_focus: f.is_focus, status: task?.status ?? 'todo', progress: task?.progress ?? 0,
         kpi_actual: task?.kpi_actual ?? null, how: f.how, place: f.place, note: f.note,
         problem: task?.problem ?? '', cause: task?.cause ?? '', solution: task?.solution ?? '',
         links: f.link ? [{ url: f.link }] : [],
-      });
+      };
+      if(actionId!=='none') await planSave.mutateAsync({kind:'task',payload:{...payload,action_id:actionId}});
+      else await save.mutateAsync(payload);
       toast.success(task ? 'Đã lưu công việc.' : 'Đã thêm công việc.');
       onClose();
     } catch (e) {
@@ -310,6 +320,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date
             <div className="space-y-1"><Label htmlFor="k3t-start">Giờ bắt đầu dự kiến</Label><Input id="k3t-start" type="time" value={f.start_time} onChange={(e) => set('start_time', e.target.value)} /></div>
             <div className="space-y-1"><Label htmlFor="k3t-end">Giờ kết thúc dự kiến</Label><Input id="k3t-end" type="time" value={f.end_time} onChange={(e) => set('end_time', e.target.value)} /></div>
           </div>
+          {!!actions?.length&&<div className="space-y-1"><Label>Liên kết KF (tùy chọn)</Label><Select value={actionId} onValueChange={setActionId}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="none">Không liên kết</SelectItem>{actions.map(a=><SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select></div>}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1"><Label htmlFor="k3t-target">Chỉ tiêu / KPI (số lượng)</Label><Input id="k3t-target" type="number" min={0} value={f.kpi_target} onChange={(e) => set('kpi_target', e.target.value)} placeholder="Để trống nếu đánh giá theo %" /></div>
             <div className="space-y-1"><Label htmlFor="k3t-unit">Đơn vị đo</Label><Input id="k3t-unit" value={f.kpi_unit} onChange={(e) => set('kpi_unit', e.target.value)} placeholder="khách, cuộc gọi…" /></div>
@@ -330,7 +341,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose }: { date
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
-          <Button type="button" disabled={save.isPending || !f.name.trim()} onClick={submit}>{save.isPending ? 'Đang lưu…' : 'Lưu công việc'}</Button>
+          <Button type="button" disabled={save.isPending || planSave.isPending || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : 'Lưu công việc'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -354,7 +365,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
   const submit = async () => {
     try {
       await update.mutateAsync({
-        id: task.id, status: f.status,
+        id: task.id, revision:task.revision, status: f.status,
         kpi_actual: f.kpi_actual === '' ? null : Number(f.kpi_actual),
         progress: f.progress === '' ? null : Number(f.progress),
         problem: f.problem, cause: f.cause, solution: f.solution, note: f.note,

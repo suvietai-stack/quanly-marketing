@@ -3136,6 +3136,68 @@ export type Database = {
         }
         Relationships: []
       }
+      k3_actions: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          goal_id: string
+          id: string
+          kpi_target: number | null
+          kpi_unit: string | null
+          manual_progress: number | null
+          name: string
+          note: string | null
+          progress_source: string | null
+          request_key: string
+          revision: number
+          start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          goal_id: string
+          id?: string
+          kpi_target?: number | null
+          kpi_unit?: string | null
+          manual_progress?: number | null
+          name: string
+          note?: string | null
+          progress_source?: string | null
+          request_key: string
+          revision?: number
+          start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          goal_id?: string
+          id?: string
+          kpi_target?: number | null
+          kpi_unit?: string | null
+          manual_progress?: number | null
+          name?: string
+          note?: string | null
+          progress_source?: string | null
+          request_key?: string
+          revision?: number
+          start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_actions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "k3_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       k3_comments: {
         Row: {
           author_id: string
@@ -3240,36 +3302,256 @@ export type Database = {
           },
         ]
       }
+      k3_goals: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          description: string | null
+          due_date: string | null
+          expected_result: string | null
+          id: string
+          kpi_target: number | null
+          kpi_unit: string | null
+          name: string
+          period_end: string
+          period_start: string
+          period_type: string
+          request_key: string
+          revision: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          expected_result?: string | null
+          id?: string
+          kpi_target?: number | null
+          kpi_unit?: string | null
+          name: string
+          period_end: string
+          period_start: string
+          period_type: string
+          request_key: string
+          revision?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          expected_result?: string | null
+          id?: string
+          kpi_target?: number | null
+          kpi_unit?: string | null
+          name?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          request_key?: string
+          revision?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_goals_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_period_comments: {
+        Row: {
+          action_id: string | null
+          author_id: string
+          body: string
+          created_at: string
+          goal_id: string | null
+          id: string
+          period_start: string
+          period_type: string
+          user_id: string
+        }
+        Insert: {
+          action_id?: string | null
+          author_id: string
+          body: string
+          created_at?: string
+          goal_id?: string | null
+          id?: string
+          period_start: string
+          period_type: string
+          user_id: string
+        }
+        Update: {
+          action_id?: string | null
+          author_id?: string
+          body?: string
+          created_at?: string
+          goal_id?: string | null
+          id?: string
+          period_start?: string
+          period_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_period_comments_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "k3_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_period_comments_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "k3_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_period_summaries: {
+        Row: {
+          confirmed_at: string
+          department_id: string | null
+          fingerprint: string
+          id: string
+          note: string | null
+          period_start: string
+          period_type: string
+          snapshot: Json
+          user_id: string
+        }
+        Insert: {
+          confirmed_at?: string
+          department_id?: string | null
+          fingerprint: string
+          id?: string
+          note?: string | null
+          period_start: string
+          period_type: string
+          snapshot: Json
+          user_id: string
+        }
+        Update: {
+          confirmed_at?: string
+          department_id?: string | null
+          fingerprint?: string
+          id?: string
+          note?: string | null
+          period_start?: string
+          period_type?: string
+          snapshot?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_period_summaries_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_plan_events: {
+        Row: {
+          action: string
+          action_id: string | null
+          actor_id: string
+          created_at: string
+          detail: Json
+          goal_id: string | null
+          id: number
+          user_id: string
+        }
+        Insert: {
+          action: string
+          action_id?: string | null
+          actor_id: string
+          created_at?: string
+          detail: Json
+          goal_id?: string | null
+          id?: never
+          user_id: string
+        }
+        Update: {
+          action?: string
+          action_id?: string | null
+          actor_id?: string
+          created_at?: string
+          detail?: Json
+          goal_id?: string | null
+          id?: never
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_plan_events_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "k3_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_plan_events_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "k3_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       k3_settings: {
         Row: {
           effective_from: string | null
           enabled: boolean
           id: boolean
           max_focus: number
+          month_enabled: boolean
+          period_deadlines: Json
+          period_effective_from: string | null
           plan_by: string
           summary_by: string
           updated_at: string
           updated_by: string | null
+          week_enabled: boolean
         }
         Insert: {
           effective_from?: string | null
           enabled?: boolean
           id?: boolean
           max_focus?: number
+          month_enabled?: boolean
+          period_deadlines?: Json
+          period_effective_from?: string | null
           plan_by?: string
           summary_by?: string
           updated_at?: string
           updated_by?: string | null
+          week_enabled?: boolean
         }
         Update: {
           effective_from?: string | null
           enabled?: boolean
           id?: boolean
           max_focus?: number
+          month_enabled?: boolean
+          period_deadlines?: Json
+          period_effective_from?: string | null
           plan_by?: string
           summary_by?: string
           updated_at?: string
           updated_by?: string | null
+          week_enabled?: boolean
         }
         Relationships: []
       }
@@ -3376,6 +3658,7 @@ export type Database = {
       }
       k3_tasks: {
         Row: {
+          action_id: string | null
           cause: string | null
           created_at: string
           created_by: string | null
@@ -3385,12 +3668,14 @@ export type Database = {
           how: string | null
           id: string
           is_focus: boolean
+          is_unscheduled: boolean
           kpi_actual: number | null
           kpi_target: number | null
           kpi_unit: string | null
           links: Json | null
           name: string
           note: string | null
+          original_work_date: string | null
           place: string | null
           problem: string | null
           progress: number
@@ -3406,6 +3691,7 @@ export type Database = {
           work_date: string
         }
         Insert: {
+          action_id?: string | null
           cause?: string | null
           created_at?: string
           created_by?: string | null
@@ -3415,12 +3701,14 @@ export type Database = {
           how?: string | null
           id?: string
           is_focus?: boolean
+          is_unscheduled?: boolean
           kpi_actual?: number | null
           kpi_target?: number | null
           kpi_unit?: string | null
           links?: Json | null
           name: string
           note?: string | null
+          original_work_date?: string | null
           place?: string | null
           problem?: string | null
           progress?: number
@@ -3436,6 +3724,7 @@ export type Database = {
           work_date: string
         }
         Update: {
+          action_id?: string | null
           cause?: string | null
           created_at?: string
           created_by?: string | null
@@ -3445,12 +3734,14 @@ export type Database = {
           how?: string | null
           id?: string
           is_focus?: boolean
+          is_unscheduled?: boolean
           kpi_actual?: number | null
           kpi_target?: number | null
           kpi_unit?: string | null
           links?: Json | null
           name?: string
           note?: string | null
+          original_work_date?: string | null
           place?: string | null
           problem?: string | null
           progress?: number
@@ -3466,6 +3757,13 @@ export type Database = {
           work_date?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "k3_tasks_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "k3_actions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "k3_tasks_day_id_fkey"
             columns: ["day_id"]
@@ -7096,6 +7394,7 @@ export type Database = {
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      k3_action_save: { Args: { _payload: Json }; Returns: Json }
       k3_can: {
         Args: { _actor: string; _permission: string }
         Returns: boolean
@@ -7110,6 +7409,38 @@ export type Database = {
         Args: { _actor: string; _day: string }
         Returns: boolean
       }
+      k3_goal_save: { Args: { _payload: Json }; Returns: Json }
+      k3_period_comment_save: {
+        Args: {
+          _action?: string
+          _body: string
+          _date: string
+          _goal?: string
+          _type: string
+          _user: string
+        }
+        Returns: Json
+      }
+      k3_period_config_read: { Args: never; Returns: Json }
+      k3_period_end: { Args: { _date: string; _type: string }; Returns: string }
+      k3_period_read: {
+        Args: { _date: string; _type: string; _user?: string }
+        Returns: Json
+      }
+      k3_period_settings_save: { Args: { _payload: Json }; Returns: Json }
+      k3_period_start: {
+        Args: { _date: string; _type: string }
+        Returns: string
+      }
+      k3_period_summary_confirm: {
+        Args: { _date: string; _note: string; _type: string }
+        Returns: Json
+      }
+      k3_period_team_read: {
+        Args: { _date: string; _type: string }
+        Returns: Json
+      }
+      k3_plan_task_save: { Args: { _payload: Json }; Returns: Json }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
@@ -7125,6 +7456,10 @@ export type Database = {
       k3_summary_confirm: { Args: { _date: string }; Returns: Json }
       k3_task_delete: { Args: { _id: string }; Returns: boolean }
       k3_task_save: { Args: { _payload: Json }; Returns: Json }
+      k3_task_schedule: {
+        Args: { _date: string; _id: string; _revision: number }
+        Returns: Json
+      }
       k3_task_update: {
         Args: {
           _cause: string

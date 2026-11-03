@@ -6,9 +6,9 @@ import { RequirePermission } from "@/components/PermissionGate";
 export const Route = createFileRoute("/biz/3k")({
   head: () => ({ meta: [
     { title: "Quản lý 3K — Quản trị Kinh doanh" },
-    { name: "description", content: "Lập và thực thi công việc 3K hằng ngày: mục tiêu KG, công việc KF, chỉ số KPI, mũi khoan trọng tâm và tổng kết cuối ngày." },
+    { name: "description", content: "Quản lý thực thi 3K Ngày, Tuần và Tháng tại Sứ Việt: mục tiêu KG, hành động KF, KPI, công việc và tổng kết." },
     { property: "og:title", content: "Quản lý 3K — Quản trị Kinh doanh" },
-    { property: "og:description", content: "Công cụ thực thi hằng ngày theo phương pháp 3K của Sứ Việt." },
+    { property: "og:description", content: "Một công việc xuyên suốt 3K Ngày, Tuần và Tháng của Sứ Việt." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),

@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { Biz3KMyDay } from './Biz3KMyDay';
 import { Biz3KManage } from './Biz3KManage';
 import { Biz3KSettings } from './Biz3KSettings';
+import { Biz3KPeriod } from './Biz3KPeriod';
+import { Button } from '@/components/ui/button';
 
 type Section = 'mine' | 'manage' | 'settings';
 
@@ -14,6 +16,8 @@ export function Biz3K() {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data: settings, isLoading, error, refetch } = useQuery({ ...k3SettingsQuery(uid), enabled: !!uid });
   const [section, setSection] = useState<Section>('mine');
+  const [mode,setMode] = useState<'day'|'week'|'month'>('day');
+  const [date,setDate] = useState<string|null>(null);
 
   if (isLoading) return <p className="py-8 text-center text-sm text-muted-foreground">Đang tải cấu hình 3K…</p>;
   if (error || !settings) {
@@ -58,10 +62,12 @@ export function Biz3K() {
           Module 3K chưa được kích hoạt{settings.effective_from ? ` (áp dụng từ ${settings.effective_from})` : ''}. Vui lòng liên hệ quản trị viên.
         </div>
       )}
-      {(settings.enabled || active !== 'mine') && (
+      {active!=='settings'&&<div className="flex gap-1 border-b border-border pb-3">{(['day','week','month'] as const).map(v=><Button key={v} variant={mode===v?'default':'ghost'} size="sm" onClick={()=>setMode(v)}>{({day:'Ngày',week:'Tuần',month:'Tháng'})[v]}</Button>)}</div>}
+      {(
         <>
-          {active === 'mine' && <Biz3KMyDay settings={settings} />}
-          {active === 'manage' && <Biz3KManage settings={settings} />}
+          {active === 'mine' && mode==='day' && <Biz3KMyDay settings={settings} selectedDate={date??settings.today} onDateChange={setDate}/>}
+          {active === 'manage' && mode==='day' && <Biz3KManage settings={settings} selectedDate={date??settings.today} onDateChange={setDate}/>}
+          {active!=='settings'&&mode!=='day'&&<Biz3KPeriod settings={settings} type={mode} date={date??settings.today} onDateChange={setDate} manage={active==='manage'}/>}
           {active === 'settings' && <Biz3KSettings settings={settings} />}
         </>
       )}
