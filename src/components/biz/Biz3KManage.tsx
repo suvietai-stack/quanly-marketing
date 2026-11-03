@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, Loader2, MessageSquarePlus, Star } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3TeamQuery, k3UserDayQuery, useK3Comment } from '@/lib/biz/k3Queries';
-import { K3_STATUS, hasText, k3Error, k3ProgressLabel, type K3Settings, type K3TeamRow } from '@/lib/biz/k3';
+import { K3_STATUS, hasText, k3Error, k3NeedsConfirmation, k3ProgressLabel, type K3Settings, type K3TeamRow } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -14,11 +14,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-type Filter = 'all' | 'planned' | 'summarized' | 'none' | 'issues';
+type Filter = 'all' | 'planned' | 'summarized' | 'none' | 'issues' | 'done';
 
-export function Biz3KManage({ settings }: { settings: K3Settings }) {
+export function Biz3KManage({ settings, selectedDate, onDateChange }: { settings: K3Settings; selectedDate?:string; onDateChange?:(date:string)=>void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
-  const [date, setDate] = useState(settings.today);
+  const [localDate,setLocalDate]=useState(settings.today);
+  const date=selectedDate??localDate; const setDate=onDateChange??setLocalDate;
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<K3TeamRow | null>(null);
@@ -27,8 +28,9 @@ export function Biz3KManage({ settings }: { settings: K3Settings }) {
   const rows = useMemo(() => {
     let list = data ?? [];
     if (search.trim()) list = list.filter((r) => r.full_name.toLowerCase().includes(search.trim().toLowerCase()));
-    if (filter === 'planned') list = list.filter((r) => r.day && !r.day.summarized_at);
-    if (filter === 'summarized') list = list.filter((r) => !!r.day?.summarized_at);
+    if (filter === 'planned') list = list.filter((r) => r.day && (!r.day.summarized_at || k3NeedsConfirmation(r.day)));
+    if (filter === 'summarized') list = list.filter((r) => !!r.day?.summarized_at && !k3NeedsConfirmation(r.day));
+    if (filter === 'done') list = list.filter((r) => r.total>0 && r.done===r.total);
     if (filter === 'none') list = list.filter((r) => !r.day);
     if (filter === 'issues') list = list.filter((r) => r.issues > 0);
     return list;
@@ -51,7 +53,7 @@ export function Biz3KManage({ settings }: { settings: K3Settings }) {
       <div className="flex flex-wrap items-end gap-2">
         <div className="space-y-1">
           <Label htmlFor="k3m-date" className="text-xs">Ngày</Label>
-          <Input id="k3m-date" type="date" value={date} max={settings.today} onChange={(e) => setDate(e.target.value)} className="w-40" />
+          <Input id="k3m-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-40" />
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => setDate(settings.today)} disabled={date === settings.today}>
           <CalendarDays className="mr-1 h-4 w-4" /> Hôm nay
@@ -62,10 +64,11 @@ export function Biz3KManage({ settings }: { settings: K3Settings }) {
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="planned">Đã lập 3K</SelectItem>
+              <SelectItem value="planned">Chưa tổng kết</SelectItem>
               <SelectItem value="summarized">Đã tổng kết</SelectItem>
               <SelectItem value="none">Chưa lập 3K</SelectItem>
               <SelectItem value="issues">Có việc vướng mắc</SelectItem>
+              <SelectItem value="done">Đã hoàn thành</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -106,7 +109,8 @@ export function Biz3KManage({ settings }: { settings: K3Settings }) {
               <div className="flex flex-wrap items-center justify-end gap-1.5">
                 {!r.day && <Badge variant="secondary">Chưa lập 3K</Badge>}
                 {r.day && !r.day.summarized_at && <Badge className="border-0 bg-primary text-primary-foreground">Đã lập · chưa tổng kết</Badge>}
-                {r.day?.summarized_at && <Badge className="border-0 bg-emerald-600 text-white">Đã tổng kết</Badge>}
+                {r.day?.summarized_at && !k3NeedsConfirmation(r.day) && <Badge className="border-0 bg-success text-success-foreground">Đã tổng kết</Badge>}
+                {k3NeedsConfirmation(r.day)&&<Badge variant="destructive">Cần xác nhận lại tổng kết</Badge>}
                 {r.total > 0 && <Badge variant="outline">{r.done}/{r.total} hoàn thành</Badge>}
                 {r.focus > 0 && <Badge variant="outline" className="border-primary text-primary"><Star className="mr-1 h-3 w-3" />{r.focus}</Badge>}
                 {r.issues > 0 && <Badge variant="outline" className="border-amber-500 text-amber-600"><AlertTriangle className="mr-1 h-3 w-3" />{r.issues} vướng</Badge>}
@@ -132,7 +136,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; date: string; settings: K3Settings; onClose: () => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
-  const { data, isLoading } = useQuery({ ...k3UserDayQuery(uid, row?.user_id ?? '', date), enabled: !!uid && !!row });
+  const { data, isLoading, error, refetch } = useQuery({ ...k3UserDayQuery(uid, row?.user_id ?? '', date), enabled: !!uid && !!row });
   const comment = useK3Comment();
   const [body, setBody] = useState('');
   const send = async () => {
@@ -150,6 +154,7 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader><SheetTitle>3K ngày {date} — {row?.full_name}</SheetTitle></SheetHeader>
         {isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Đang tải…</p>}
+        {error&&<div><p className="text-destructive">{k3Error(error)}</p><Button variant="outline" onClick={()=>refetch()}>Thử lại</Button></div>}
         {data && !data.day && <p className="py-6 text-center text-sm text-muted-foreground">Nhân viên chưa lập 3K cho ngày này.</p>}
         {data?.day && (
           <div className="mt-4 space-y-3">
@@ -191,7 +196,7 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
                 {data.comments.map((c) => (
                   <div key={c.id} className="rounded-md border border-border p-2 text-xs">
                     <p>{c.body}</p>
-                    <p className="text-muted-foreground">{new Date(c.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
+                    <p className="text-muted-foreground">{c.author_name} · {new Date(c.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>
                   </div>
                 ))}
               </div>
