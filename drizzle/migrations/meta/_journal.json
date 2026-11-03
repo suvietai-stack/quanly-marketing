@@ -1310,6 +1310,13 @@
       "when": 1793697603743,
       "tag": "0186_biz_rpc_permission_via_biz_can",
       "breakpoints": true
+    },
+    {
+      "idx": 187,
+      "version": "7",
+      "when": 1793697652321,
+      "tag": "0187_biz_document_rpc_permission_via_biz_can",
+      "breakpoints": true
     }
   ]
 }
