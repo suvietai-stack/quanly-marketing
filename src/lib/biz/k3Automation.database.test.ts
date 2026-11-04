@@ -68,6 +68,8 @@ beforeAll(async () => {
   for (const file of ['0221_k3_frozen_measurement_report_details.sql','0222_k3_preserve_close_fingerprints_and_acceptance_scope.sql','0223_k3_acceptance_frozen_at_confirmation.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0224_k3_employee_review_separate_from_system_close.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0225_k3_review_configuration_and_close_run_audit.sql', 'utf8'));
+  await db.exec(`CREATE TABLE leave_requests(owner_id uuid,type text,status text,payload jsonb);CREATE TABLE notifications(recipient_id uuid,kind text,dedup_key text UNIQUE,zalo_status text,push_status text,payload jsonb);CREATE FUNCTION cron.unschedule(bigint) RETURNS boolean LANGUAGE sql AS $$ SELECT true $$;ALTER TABLE cron.job ADD COLUMN jobid bigint GENERATED ALWAYS AS IDENTITY; CREATE FUNCTION biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;`);
+  for (const file of ['0226_k3_base_review_reminders_daily.sql','0227_k3_scoped_review_monitor_and_notification_payload.sql','0228_k3_review_stable_versions_and_safe_history.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -223,4 +225,21 @@ it('20 reviewed then replaced with 30 requires review again; auto close never co
   if (!now) throw new Error('Missing review');
   await db.query(`SELECT k3_employee_review_confirm('${date}','${now.source_version}','${crypto.randomUUID()}',true)`);
   expect(await value<number>(`SELECT count(*)::int v FROM k3_employee_reviews WHERE work_date='${date}'`)).toBe(2);
+});
+it('missing scheduled KF warns but employee may confirm without invented KPI values', async () => {
+  const id=crypto.randomUUID();
+  await db.exec(`INSERT INTO k3_actions VALUES('${id}','${goal}','${user}','2026-11-03','in_progress',NULL,'KF chưa cập nhật','2026-12-31')`);
+  const s = await value<{source_version:string;missing:number}>(`SELECT k3_employee_review_read('2026-11-03') v`);
+  expect(s?.missing).toBe(1);
+  if(!s) throw new Error('Missing review');
+  await expect(db.query(`SELECT k3_employee_review_confirm('2026-11-03','${s.source_version}','${crypto.randomUUID()}',false)`)).rejects.toThrow('cảnh báo');
+  const before=await value<number>('SELECT count(*)::int v FROM k3_kpi_results');
+  await db.query(`SELECT k3_employee_review_confirm('2026-11-03','${s.source_version}','${crypto.randomUUID()}',true)`);
+  expect(await value<number>('SELECT count(*)::int v FROM k3_kpi_results')).toBe(before);
+});
+it('other-date KPI progress does not invalidate the employee daily review', async () => {
+  const date='2026-11-03';
+  const before=await value(`SELECT k3_employee_review_read('${date}')->>'source_version' v`);
+  await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:kpi,work_date:'2026-10-31',value:5,request_key:crypto.randomUUID()})}')`);
+  expect(await value(`SELECT k3_employee_review_read('${date}')->>'source_version' v`)).toBe(before);
 });

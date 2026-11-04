@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { k3DailyReport, type K3ReportPerson } from '@/lib/biz/k3DailyReport';
 
 interface Config { auto_close: boolean; close_time: string; zalo_enabled: boolean; send_time: string; group_id?: string; group_name?: string; scope_kind: 'all'|'system'|'department'; scope_id?: string; employee_review_enabled: boolean; review_reminders: boolean; review_remind_time: string; review_second_reminder: boolean; review_second_time: string }
 export function Biz3KAutomation() {
@@ -24,6 +25,8 @@ function AutomationForm({ config }: { config: Config }) {
   const qc = useQueryClient();
   const [f,setF] = useState(config);
   const [busy,setBusy] = useState(false);
+  const [preview,setPreview] = useState<string | null>(null);
+  const [previewDate,setPreviewDate] = useState(new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));
   const [groups,setGroups] = useState<{id:string;name:string}[]>(config.group_id ? [{id:config.group_id,name:config.group_name ?? config.group_id}] : []);
   const listGroups = useServerFn(k3ReportGroups);
   const units = useQuery({ queryKey: ['k3_report_units',uid], queryFn: async () => {
@@ -46,6 +49,8 @@ function AutomationForm({ config }: { config: Config }) {
     <div className="space-y-2"><Label>Nhóm Zalo nhận báo cáo</Label><Select value={f.group_id ?? ''} onValueChange={(v) => setF({...f,group_id:v,group_name:groups.find((g) => g.id === v)?.name})}><SelectTrigger className="w-full"><SelectValue placeholder="Chọn nhóm Zalo" /></SelectTrigger><SelectContent>{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent></Select><Button variant="outline" size="sm" disabled={busy} onClick={async () => { setBusy(true); try { const result = await listGroups(); if(!result.ok) throw new Error(result.message); setGroups(result.groups); } catch(e) { toast.error(k3Error(e)); } finally { setBusy(false); } }}>Tải danh sách nhóm</Button></div>
     <div className="space-y-2"><Label>Phạm vi báo cáo</Label><Select value={f.scope_kind} onValueChange={(v: Config['scope_kind']) => setF({...f,scope_kind:v,scope_id:undefined})}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toàn Khối</SelectItem><SelectItem value="system">Theo Hệ</SelectItem><SelectItem value="department">Theo Phòng</SelectItem></SelectContent></Select>{f.scope_kind !== 'all' && <Select value={f.scope_id ?? ''} onValueChange={(v) => setF({...f,scope_id:v})}><SelectTrigger><SelectValue placeholder={f.scope_kind==='system'?'Chọn Hệ':'Chọn Phòng'} /></SelectTrigger><SelectContent>{units.data?.[f.scope_kind].map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent></Select>}{units.error && <p className="text-sm text-destructive">{k3Error(units.error)}</p>}</div>
     <Button disabled={busy} onClick={async () => { setBusy(true); try { const {error} = await supabase.rpc('k3_automation_save',{_payload:f as never}); if(error) throw error; await qc.invalidateQueries({predicate:(q) => String(q.queryKey[0]).startsWith('k3_')}); toast.success('Đã lưu tự động chốt sổ và báo cáo Zalo.'); } catch(e) { toast.error(k3Error(e)); } finally { setBusy(false); } }}>Lưu cài đặt tự động</Button>
+    <div className="flex flex-wrap gap-2"><Input aria-label="Ngày xem trước báo cáo" type="date" value={previewDate} onChange={(e)=>setPreviewDate(e.target.value)} className="w-40"/><Button variant="outline" disabled={busy} onClick={async()=>{setBusy(true);try{const {data,error}=await supabase.rpc('k3_zalo_report_preview',{_date:previewDate});if(error)throw error;const people=data as unknown as K3ReportPerson[];setPreview(people.length?k3DailyReport(previewDate,people):'Chưa có bản chốt hệ thống trong phạm vi đã lưu.');}catch(e){toast.error(k3Error(e));}finally{setBusy(false);}}}>Xem trước báo cáo đã chốt</Button></div>
+    {preview&&<pre className="whitespace-pre-wrap break-words border-y border-border py-3 text-sm">{preview}</pre>}
     <div className="space-y-2"><h4 className="text-sm font-medium">Lịch sử gửi báo cáo</h4>{history.error && <p className="text-sm text-destructive">{k3Error(history.error)}</p>}{!history.data?.length && <p className="text-sm text-muted-foreground">Chưa có báo cáo gửi.</p>}{history.data?.map((r) => <div key={r.id} className="border-b border-border py-2 text-sm"><p>{r.work_date} · {({pending:'Chờ gửi',sending:'Đang gửi',sent:'Đã gửi',failed:'Gửi lỗi',unknown:'Cần đối soát',skipped:'Bỏ qua'} as Record<string,string>)[r.status]}</p>{r.error && <p className="text-xs text-destructive">{r.error}</p>}</div>)}</div>
   </section>;
 }
