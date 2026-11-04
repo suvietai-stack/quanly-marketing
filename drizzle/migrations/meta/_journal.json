@@ -1513,6 +1513,13 @@
       "when": 1793784971734,
       "tag": "0215_k3_goal_activity_from_measured_actions",
       "breakpoints": true
+    },
+    {
+      "idx": 216,
+      "version": "7",
+      "when": 1793786580959,
+      "tag": "0216_k3_ten_measurement_contract_and_review_safety",
+      "breakpoints": true
     }
   ]
 }

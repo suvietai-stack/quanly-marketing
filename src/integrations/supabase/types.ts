@@ -3653,6 +3653,79 @@ export type Database = {
           },
         ]
       }
+      k3_kpi_acceptances: {
+        Row: {
+          actor_id: string
+          created_at: string
+          decision: string
+          id: string
+          reason: string
+          result_id: string
+          result_revision: number
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          decision: string
+          id?: string
+          reason: string
+          result_id: string
+          result_revision: number
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          decision?: string
+          id?: string
+          reason?: string
+          result_id?: string
+          result_revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_kpi_acceptances_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "k3_kpi_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_kpi_config_versions: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kpi_id: string
+          revision: number
+          snapshot: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kpi_id: string
+          revision: number
+          snapshot: Json
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kpi_id?: string
+          revision?: number
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_kpi_config_versions_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "k3_kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       k3_kpi_day_confirmations: {
         Row: {
           actor_id: string
@@ -3726,12 +3799,14 @@ export type Database = {
           action_id: string | null
           cause: string | null
           completed: Json
+          config_revision: number
           created_at: string
           deleted_at: string | null
           denominator: number | null
           evidence: string | null
           goal_id: string
           id: string
+          intervals: Json
           kpi_id: string
           note: string | null
           numerator: number | null
@@ -3750,12 +3825,14 @@ export type Database = {
           action_id?: string | null
           cause?: string | null
           completed?: Json
+          config_revision?: number
           created_at?: string
           deleted_at?: string | null
           denominator?: number | null
           evidence?: string | null
           goal_id: string
           id?: string
+          intervals?: Json
           kpi_id: string
           note?: string | null
           numerator?: number | null
@@ -3774,12 +3851,14 @@ export type Database = {
           action_id?: string | null
           cause?: string | null
           completed?: Json
+          config_revision?: number
           created_at?: string
           deleted_at?: string | null
           denominator?: number | null
           evidence?: string | null
           goal_id?: string
           id?: string
+          intervals?: Json
           kpi_id?: string
           note?: string | null
           numerator?: number | null
@@ -3822,6 +3901,8 @@ export type Database = {
         Row: {
           action_id: string | null
           condition: string
+          config: Json
+          config_revision: number
           created_at: string
           created_by: string | null
           goal_id: string | null
@@ -3832,6 +3913,7 @@ export type Database = {
           measure: string
           milestones: Json
           name: string
+          replaces_kpi_id: string | null
           request_key: string | null
           required: boolean
           sort_order: number
@@ -3843,6 +3925,8 @@ export type Database = {
         Insert: {
           action_id?: string | null
           condition?: string
+          config?: Json
+          config_revision?: number
           created_at?: string
           created_by?: string | null
           goal_id?: string | null
@@ -3853,6 +3937,7 @@ export type Database = {
           measure?: string
           milestones?: Json
           name: string
+          replaces_kpi_id?: string | null
           request_key?: string | null
           required?: boolean
           sort_order?: number
@@ -3864,6 +3949,8 @@ export type Database = {
         Update: {
           action_id?: string | null
           condition?: string
+          config?: Json
+          config_revision?: number
           created_at?: string
           created_by?: string | null
           goal_id?: string | null
@@ -3874,6 +3961,7 @@ export type Database = {
           measure?: string
           milestones?: Json
           name?: string
+          replaces_kpi_id?: string | null
           request_key?: string | null
           required?: boolean
           sort_order?: number
@@ -3895,6 +3983,13 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "k3_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_kpis_replaces_kpi_id_fkey"
+            columns: ["replaces_kpi_id"]
+            isOneToOne: false
+            referencedRelation: "k3_kpis"
             referencedColumns: ["id"]
           },
         ]
