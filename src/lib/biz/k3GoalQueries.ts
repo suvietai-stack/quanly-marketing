@@ -33,6 +33,7 @@ export const k3MemberSearchQuery = (uid: string, q: string) => queryOptions({
 });
 
 type K3GoalMutationInput =
+  | { kind: 'quick_create'; payload: Record<string, unknown> }
   | { kind: 'goal'; payload: Record<string, unknown> }
   | { kind: 'goal_status'; id: string; status: string; note?: string; revision: number }
   | { kind: 'invite'; goal_id: string; user_ids: string[] }
