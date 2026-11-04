@@ -1555,6 +1555,13 @@
       "when": 1793787090529,
       "tag": "0221_k3_frozen_measurement_report_details",
       "breakpoints": true
+    },
+    {
+      "idx": 222,
+      "version": "7",
+      "when": 1793787189805,
+      "tag": "0222_k3_preserve_close_fingerprints_and_acceptance_scope",
+      "breakpoints": true
     }
   ]
 }
