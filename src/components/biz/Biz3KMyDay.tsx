@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
+import { Biz3KQuickCreate } from './Biz3KQuickCreate';
 import { useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
 import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3IsComplete, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3AssignedAction, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
   const setDate = onDateChange ?? setLocalDate;
   const { data, isLoading, error, refetch } = useQuery({ ...k3DayQuery(uid, date), enabled: !!uid && !!date });
   const [editing, setEditing] = useState<K3Task | null | 'new'>(null);
+  const [quickCreate, setQuickCreate] = useState(false);
+  const [logging, setLogging] = useState(false);
   const [updating, setUpdating] = useState<K3Task | null>(null);
   const [deleting, setDeleting] = useState<K3Task | null>(null);
   const [confirmSummary, setConfirmSummary] = useState(false);
@@ -59,8 +62,11 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
           <CalendarDays className="mr-1 h-4 w-4" /> Hôm nay
         </Button>
         <div className="flex-1" />
-        <Button type="button" size="sm" disabled={!settings.enabled} onClick={() => setEditing('new')}>
-          <Plus className="mr-1 h-4 w-4" /> Thêm công việc
+        <Button type="button" size="sm" disabled={!settings.enabled} onClick={() => setQuickCreate(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Tạo công việc
+        </Button>
+        <Button type="button" size="sm" variant="outline" disabled={!settings.enabled} onClick={() => setLogging(true)}>
+          <ClipboardCheck className="mr-1 h-4 w-4" /> Ghi nhận thực hiện
         </Button>
         <Button type="button" size="sm" variant="secondary" onClick={() => setConfirmSummary(true)} disabled={!settings.enabled || date > settings.today || !data?.day || tasks.length === 0}>
           <CheckCircle2 className="mr-1 h-4 w-4" /> {needsConfirmation ? 'Xác nhận lại tổng kết' : summarized ? 'Xem lại tổng kết' : 'Tổng kết 3K ngày'}
@@ -98,7 +104,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
       {data && tasks.length === 0 && !isLoading && (
         <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center space-y-3">
           <CircleDashed className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Chưa có công việc nào cho ngày này. Bấm <strong>Thêm công việc</strong> để lập 3K đầu ngày.</p>
+          <p className="text-sm text-muted-foreground">Chưa có công việc nào cho ngày này. Bấm <strong>Tạo công việc</strong> để lập mục tiêu mới, hoặc <strong>Ghi nhận thực hiện</strong> để cập nhật KF đang theo đuổi.</p>
           <p className="text-xs text-muted-foreground">{K3_TIME_HINT}</p>
         </div>
       )}
@@ -121,6 +127,8 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
       )}
       {updating && <UpdateDialog task={updating} onClose={() => setUpdating(null)} />}
       {deleting && <DeleteDialog task={deleting} onClose={() => setDeleting(null)} />}
+      {quickCreate && <Biz3KQuickCreate variant="personal" defaultDate={date} onClose={() => setQuickCreate(false)} />}
+      {logging && <LogExecutionDialog date={date} actions={data?.assigned_actions ?? []} onClose={() => setLogging(false)} onCreateNew={() => { setLogging(false); setQuickCreate(true); }} />}
       <Dialog open={history} onOpenChange={setHistory}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử 3K ngày {date}</DialogTitle></DialogHeader>
         {data?.summaries?.map((v) => <div key={v.id} className="border-b border-border py-2 text-sm"><p className="font-medium">Tổng kết phiên bản {v.revision}</p><p className="text-xs text-muted-foreground">{new Date(v.confirmed_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p>{v.snapshot.tasks.map((t) => <p key={t.id}>{t.name} · {k3ProgressLabel(t)}</p>)}</div>)}
         {data?.events?.map((e) => <div key={e.id} className="border-b border-border py-2 text-sm"><p>{({ create:'Thêm công việc', update:'Cập nhật công việc', delete:'Xóa công việc', plan:'Lưu mục tiêu', summary:'Xác nhận tổng kết', progress:'Cập nhật kết quả' } as Record<string,string>)[e.action] ?? 'Thay đổi công việc'}</p><p className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</p></div>)}
