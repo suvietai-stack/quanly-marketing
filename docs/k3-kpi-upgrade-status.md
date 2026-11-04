@@ -24,7 +24,7 @@ Số chuyển đổi: **0**. Số cách ly tự động: **0**. Đã bổ sung t
 
 ## Chưa hoàn tất
 - Chưa thực hiện chuyển đổi A/B/C; KG/KF/KPI legacy có quan hệ mơ hồ cần quyết định hồ sơ, không tự cascade hoặc đoán liên kết.
-- Chưa hoàn tất kiểm thử purge/concurrency thật và giao diện bảy kích thước.
+- Purge/revision/lease đã kiểm thử cô lập; bảy kích thước 360/375/390/430/768/1280/1440px không tràn. Không thực hiện purge trên dữ liệu thật.
 - Chưa nghiệm thu ghi/chốt qua UI và gửi OA: cần cho phép thao tác hồ sơ thật và chọn nhóm/bật gửi; không tự ghi dữ liệu thử vào hệ thống dùng chung.
 - Spec 670 dòng về deadline tới giờ/phút và lộ trình định kỳ còn trong roadmap; không tự đặt lịch vận hành.
 

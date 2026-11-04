@@ -6,7 +6,7 @@
 - [x] F3. Tự chốt 18:00 VN, không actor giả, khóa và sửa có lý do/lịch sử; cài đặt/chốt sớm; kiểm thử cô lập đạt.
 - [x] F4. Báo cáo Zalo độc lập, nhóm/giờ/phạm vi, outbox chống trùng và nhật ký; gửi vẫn Tắt.
 - [x] F5. Thao tác lưu trữ/khôi phục task thiếu KPI có bản sao khớp nguyên bản, purge 15 ngày giữ chốt; không tự chuyển/xóa dữ liệu thật.
-- [x] F6a. 123/123 test 3K, build OK; Admin thật đọc ngày/cài đặt/theo dõi; desktop/mobile 390px không tràn.
+- [x] F6a. 123/123 test 3K, build OK; Admin thật đọc ngày/cài đặt/theo dõi và form sửa sau chốt bắt lý do; 360/375/390/430/768/1280/1440px không tràn.
 - [ ] F6b. Nghiệm thu ghi/chốt và gửi Zalo thật: chờ người dùng cho phép thao tác nghiệp vụ và chọn nhóm/bật gửi. Lưu trữ KG/KF/KPI cũ có quan hệ mơ hồ chờ quyết định hồ sơ, không tự cascade hay đoán liên kết. Chưa Publish.
 
 ## FIX TOÀN DIỆN KPI 3K — spec 964 dòng (04/11/2026)
