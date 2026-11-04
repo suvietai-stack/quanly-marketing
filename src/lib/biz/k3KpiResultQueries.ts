@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { K3DailyValue, K3Measurement, K3ResultMetric } from './k3KpiResults';
+import type { K3DailyValue, K3Measurement } from './k3KpiResults';
+import type { K3TypedMetric } from './k3Measurement';
 
 export interface K3SavedResult extends K3DailyValue {
   id: string; user_id: string; work_date: string; revision: number; full_name?: string;
@@ -10,8 +11,10 @@ export interface K3ResultData {
   kpi: K3Measurement & { id: string; name: string; unit: string | null };
   can_update: boolean;
   day_closed?: boolean;
-  metric: K3ResultMetric;
-  official_metric: K3ResultMetric;
+  metric: K3TypedMetric;
+  official_metric: K3TypedMetric;
+  daily_metric?: K3TypedMetric;
+  daily_plan?: number | null;
   daily: K3SavedResult | null;
   results: K3SavedResult[];
   history: { id: string; revision: number; snapshot: K3SavedResult; created_at: string }[];
