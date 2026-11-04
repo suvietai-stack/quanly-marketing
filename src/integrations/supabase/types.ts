@@ -3294,10 +3294,15 @@ export type Database = {
         Row: {
           auto_close: boolean
           close_time: string
+          employee_review_enabled: boolean
           enabled_from: string
           group_id: string | null
           group_name: string | null
           id: boolean
+          review_remind_time: string
+          review_reminders: boolean
+          review_second_reminder: boolean
+          review_second_time: string
           scope_id: string | null
           scope_kind: string
           send_time: string
@@ -3308,10 +3313,15 @@ export type Database = {
         Insert: {
           auto_close?: boolean
           close_time?: string
+          employee_review_enabled?: boolean
           enabled_from?: string
           group_id?: string | null
           group_name?: string | null
           id?: boolean
+          review_remind_time?: string
+          review_reminders?: boolean
+          review_second_reminder?: boolean
+          review_second_time?: string
           scope_id?: string | null
           scope_kind?: string
           send_time?: string
@@ -3322,16 +3332,48 @@ export type Database = {
         Update: {
           auto_close?: boolean
           close_time?: string
+          employee_review_enabled?: boolean
           enabled_from?: string
           group_id?: string | null
           group_name?: string | null
           id?: boolean
+          review_remind_time?: string
+          review_reminders?: boolean
+          review_second_reminder?: boolean
+          review_second_time?: string
           scope_id?: string | null
           scope_kind?: string
           send_time?: string
           updated_at?: string
           updated_by?: string | null
           zalo_enabled?: boolean
+        }
+        Relationships: []
+      }
+      k3_close_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          status: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          status: string
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+          work_date?: string
         }
         Relationships: []
       }
