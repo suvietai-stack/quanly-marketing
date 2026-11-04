@@ -40,6 +40,12 @@ beforeAll(async () => {
   await as(manager);
   await val(`SELECT k3_settings_save(true, '2020-01-01'::date, '08:45'::time, '18:00'::time, 3::smallint) v`);
   await as(staff);
+  for (const file of ['0202_k3_daily_kpi_result_foundation.sql','0203_k3_kpi_metric_and_configuration_guards.sql','0206_k3_result_privacy_and_configuration_fences.sql','0207_k3_configuration_module_and_legacy_history_guards.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
+  const contract = readFileSync('drizzle/migrations/0216_k3_ten_measurement_contract_and_review_safety.sql', 'utf8');
+  await db.exec(contract.slice(0, contract.indexOf('COMMENT ON TABLE')));
+  await db.exec(readFileSync('drizzle/migrations/0217_k3_measurement_configuration_validation.sql', 'utf8'));
+  const creation = readFileSync('drizzle/migrations/0220_k3_configured_creation_and_date_preview.sql', 'utf8');
+  await db.exec(creation.slice(0, creation.indexOf(" def:=pg_get_functiondef('public.k3_kpi_result_read")) + 'END $patch$;');
 }, 30000);
 
 afterAll(() => db.close());
@@ -78,7 +84,7 @@ it('KF tên trống bị từ chối và toàn bộ giao dịch được hoàn t
 });
 
 it('tạo công việc nhóm kèm lời mời thành viên; lọc collab chỉ trả KG có phối hợp', async () => {
-  const r = await val<{ goal_id: string }>(`SELECT k3_quick_create('{"request_key":"50000000-0000-0000-0000-0000000000a5","name":"Chiến dịch chào hàng đại lý Q4","period_start":"${today}","period_end":"${nextMonth}","start_now":true,"member_ids":["${other}"],"kfs":[{"name":"Chuẩn bị tài liệu chào hàng"}]}') v`);
+  const r = await val<{ goal_id: string }>(`SELECT k3_quick_create('{"request_key":"50000000-0000-0000-0000-0000000000a5","name":"Chiến dịch chào hàng đại lý Q4","period_start":"${today}","period_end":"${nextMonth}","start_now":true,"member_ids":["${other}"],"kfs":[{"name":"Chuẩn bị tài liệu chào hàng","kpis":[{"name":"Tài liệu","measure":"binary","config":{"valid_condition":"Đã chuẩn bị đủ"}}]}]}') v`);
   expect(await val<string>(`SELECT status v FROM k3_goal_members WHERE goal_id='${r.goal_id}' AND user_id='${other}'`)).toBe('invited');
   const collab = await val<{ id: string }[]>(`SELECT k3_goal_list('collab','') v`);
   expect(collab.some((g) => g.id === r.goal_id)).toBe(true);
@@ -89,6 +95,16 @@ it('tạo công việc nhóm kèm lời mời thành viên; lọc collab chỉ t
   const collabOther = await val<{ id: string }[]>(`SELECT k3_goal_list('collab','') v`);
   expect(collabOther.some((g) => g.id === r.goal_id)).toBe(true);
   await as(staff);
+});
+it('one KF stores multiple typed required KPIs atomically', async () => {
+  const payload = {request_key:crypto.randomUUID(),name:'Một KF nhiều KPI',period_start:today,period_end:nextMonth,start_now:true,kfs:[{name:'Tư vấn',kpis:[{name:'Gọi',measure:'cumulative',target:20,required:true},{name:'Hợp đồng',measure:'binary',required:true,config:{valid_condition:'Đã ký'}}]}]};
+  const r = await val<{goal_id:string}>(`SELECT k3_quick_create('${JSON.stringify(payload)}') v`);
+  expect(await val(`SELECT jsonb_agg(measure ORDER BY measure) v FROM k3_kpis WHERE action_id IN(SELECT id FROM k3_actions WHERE goal_id='${r.goal_id}')`)).toEqual(['binary','cumulative']);
+});
+it('starting KF without KPI rolls back its KG and KF together', async () => {
+  const before = await val<number>('SELECT count(*)::int v FROM k3_goals');
+  await expect(db.query(`SELECT k3_quick_create('${JSON.stringify({request_key:crypto.randomUUID(),name:'Thiếu KPI',period_start:today,period_end:nextMonth,start_now:true,kfs:[{name:'KF thiếu KPI'}]})}')`)).rejects.toThrow('ít nhất một KPI');
+  expect(await val<number>('SELECT count(*)::int v FROM k3_goals')).toBe(before);
 });
 
 it('theo dõi nhân viên: trạng thái none → planned → updated → summarized và bộ đếm KG/KF', async () => {
