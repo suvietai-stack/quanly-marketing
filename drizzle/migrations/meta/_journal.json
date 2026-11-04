@@ -1541,6 +1541,13 @@
       "when": 1793786814824,
       "tag": "0219_k3_typed_daily_result_values",
       "breakpoints": true
+    },
+    {
+      "idx": 220,
+      "version": "7",
+      "when": 1793786954913,
+      "tag": "0220_k3_configured_creation_and_date_preview",
+      "breakpoints": true
     }
   ]
 }
