@@ -19,7 +19,7 @@ beforeAll(async () => {
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.uid',true),'')::uuid $$;
   CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text);
   INSERT INTO profiles VALUES('${staff}','A'),('${other}','B');
-  CREATE TABLE k3_goals(id uuid PRIMARY KEY,user_id uuid,period_start date,period_end date,status text,deleted_at timestamptz);
+  CREATE TABLE k3_goals(id uuid PRIMARY KEY,user_id uuid,period_start date,period_end date,status text,deleted_at timestamptz,department_id uuid);
   CREATE TABLE k3_actions(id uuid PRIMARY KEY,goal_id uuid,assignee_id uuid,start_date date,status text,deleted_at timestamptz);
   CREATE TABLE k3_kpis(id uuid PRIMARY KEY,goal_id uuid,action_id uuid,kind text,target numeric,name text);
   CREATE TABLE k3_plan_events(user_id uuid,goal_id uuid,action_id uuid,actor_id uuid,action text,detail jsonb);
@@ -29,13 +29,15 @@ beforeAll(async () => {
   CREATE FUNCTION private.k3_action_worker_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='${staff}'::uuid AND $2='${action}'::uuid $$;
   CREATE FUNCTION private.k3_write_guard(date) RETURNS void LANGUAGE plpgsql AS $$ BEGIN IF $1<'2026-01-01' THEN RAISE EXCEPTION 'Ngày khóa'; END IF; END $$;
   CREATE FUNCTION private.k3_goal_manage_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='${staff}'::uuid AND $2='${goal}'::uuid $$;
-  INSERT INTO k3_goals VALUES('${goal}','${staff}','2026-01-01','2026-12-31','in_progress',NULL);
+  CREATE FUNCTION biz_scope_ok(uuid,uuid,uuid,timestamptz) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
+  INSERT INTO k3_goals VALUES('${goal}','${staff}','2026-01-01','2026-12-31','in_progress',NULL,NULL);
   INSERT INTO k3_actions VALUES('${action}','${goal}','${staff}','2026-01-01','in_progress',NULL);
   INSERT INTO k3_kpis VALUES('${kpi}',NULL,'${action}','cumulative',200,'200 đại lý');
   SET test.uid='${staff}';`);
   await db.exec(readFileSync('drizzle/migrations/0202_k3_daily_kpi_result_foundation.sql', 'utf8'));
   await db.exec(`ALTER TABLE k3_kpis ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz;`);
   await db.exec(readFileSync('drizzle/migrations/0203_k3_kpi_metric_and_configuration_guards.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0206_k3_result_privacy_and_configuration_fences.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
@@ -91,4 +93,19 @@ it('database: sửa sau chốt không cộng bản cũ, cần chốt lại; snap
 });
 it('database: không đổi công thức hồi tố khi đã có kết quả', async () => {
   await expect(db.query(`SELECT k3_kpi_configure('{"id":"${kpi}","name":"X","measure":"ratio","target":2}')`)).rejects.toThrow('hồi tố');
+});
+it('database: thành viên chỉ xem tổng không nhận ghi chú riêng hoặc lịch sử người khác', async () => {
+  await db.exec(`UPDATE k3_kpi_results SET note='Ghi chú riêng',evidence='Nguồn riêng'; SET test.uid='${other}';`);
+  const r = await result<{results:Record<string,unknown>[];history:unknown[]}>(`SELECT k3_kpi_result_read('${kpi}','2026-11-01') v`);
+  expect(r?.results.length).toBe(3);
+  expect(r?.results.every((row) => !('note' in row) && !('evidence' in row))).toBe(true);
+  expect(r?.history).toEqual([]);
+  await db.exec(`SET test.uid='${staff}'`);
+});
+it('database: cấu hình KPI mới lưu đúng phương thức, không lỗi tên biến/cột', async () => {
+  const r = await result<{measure:string;condition:string;target:number}>(`SELECT k3_kpi_configure('{"goal_id":"${goal}","request_key":"10000000-0000-0000-0000-777777777777","name":"Tỷ lệ","measure":"ratio","condition":"lte","target":10}') v`);
+  expect(r).toMatchObject({measure:'ratio',condition:'lte',target:10});
+});
+it('database: đường ghi KPI cũ không cho gán giá trị xác nhận thủ công', async () => {
+  await expect(db.query(`SELECT k3_kpi_save('{"manual_actual":100}')`)).rejects.toThrow('theo ngày');
 });

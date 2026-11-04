@@ -28,7 +28,7 @@ export function Biz3KKpiResult({ kpiId, date }: { kpiId: string; date: string })
       <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{data.kpi.name}</p><p className="text-xs text-muted-foreground">{K3_MEASURE_LABELS[data.kpi.measure]} · Chỉ tiêu {data.kpi.target ?? data.kpi.milestones?.length ?? '—'} {data.kpi.unit}</p></div>
       <Badge variant={data.metric.attained ? 'default' : 'secondary'}>{data.metric.status === 'not_started' ? 'Chưa bắt đầu' : data.metric.attained ? 'Hoàn thành' : 'Đang thực hiện'}</Badge>
     </div>
-    <p className="text-sm tabular-nums">Đang cập nhật: {metricText(data.metric)}</p>
+    <p className="text-sm tabular-nums">{data.kpi.measure === 'current' ? 'Giá trị mới nhất' : 'Kết quả chung KPI'}: {metricText(data.metric)}</p>
     <p className="text-xs text-muted-foreground">Đã chốt: {metricText(data.official_metric)}</p>
     <div className="flex flex-wrap gap-2">
       {data.can_update && <Button size="sm" variant="outline" onClick={() => setOpen('edit')}><Plus className="mr-1 h-3.5 w-3.5" />Cập nhật KPI</Button>}
@@ -37,7 +37,7 @@ export function Biz3KKpiResult({ kpiId, date }: { kpiId: string; date: string })
     {open === 'edit' && <KpiResultDialog key={data.daily?.revision ?? 0} data={data} date={date} onClose={() => setOpen(null)} />}
     {open === 'history' && <Dialog open onOpenChange={(o) => !o && setOpen(null)}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Nhật ký KPI · {data.kpi.name}</DialogTitle></DialogHeader>
       {!data.results.length && <p className="text-sm text-muted-foreground">Chưa có kết quả.</p>}
-      {data.results.map((r, i) => <div key={r.id} className="border-b border-border py-2 text-sm"><p>{r.work_date} · {r.full_name ?? '—'}</p><p>Kết quả ngày: {r.value ?? (r.numerator != null ? `${r.numerator}/${r.denominator}` : (r.objects ?? r.completed)?.join(', '))} · Lũy kế: {metricText(k3ResultPreview(data.kpi, data.results.slice(0, i + 1)))}</p><Badge variant="outline">{r.is_confirmed ? 'Đã chốt' : 'Chưa chốt / Cần xác nhận lại'}</Badge></div>)}
+      {data.results.map((r, i) => <div key={r.id} className="border-b border-border py-2 text-sm"><p>{r.work_date} · {r.full_name ?? '—'}</p><p>Kết quả ngày: {r.value ?? (r.numerator != null ? `${r.numerator}/${r.denominator}` : (data.kpi.measure === 'milestone' ? r.completed : r.objects)?.join(', '))} · Lũy kế: {metricText(k3ResultPreview(data.kpi, data.results.slice(0, i + 1)))}</p><Badge variant="outline">{r.is_confirmed ? 'Đã chốt' : 'Chưa chốt / Cần xác nhận lại'}</Badge></div>)}
       {data.history.map((v) => <p key={v.id} className="text-xs text-muted-foreground">Phiên bản {v.revision} · {v.snapshot.work_date} · {new Date(v.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · Kết quả {v.snapshot.value ?? `${v.snapshot.numerator ?? '—'}/${v.snapshot.denominator ?? '—'}`}</p>)}
     </DialogContent></Dialog>}
   </div>;
