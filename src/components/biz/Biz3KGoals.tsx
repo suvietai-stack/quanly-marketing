@@ -302,7 +302,6 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                     {g.status === 'draft' && <Button size="sm" variant="outline" onClick={() => setStatusTo('not_started')}>Sẵn sàng</Button>}
                     {(g.status === 'draft' || g.status === 'not_started' || g.status === 'paused') && <Button size="sm" onClick={() => setStatusTo('in_progress')}>Bắt đầu thực hiện</Button>}
                     {g.status === 'in_progress' && <Button size="sm" variant="outline" onClick={() => setStatusTo('paused')}>Tạm dừng</Button>}
-                    {g.status === 'in_progress' && <Button size="sm" variant="secondary" onClick={() => setStatusTo('done')}>Hoàn thành KG</Button>}
                     {g.status === 'in_progress' && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setStatusTo('ended_missed')}>Kết thúc chưa đạt</Button>}
                   </>
                 )}
@@ -472,7 +471,6 @@ function ActionButtons({ a, canManage, settings, onEdit, onKpi }: { a: K3GoalDet
       {(canManage || settings.can_use) && <Button size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>}
       {canManage && <Button size="sm" variant="ghost" onClick={onKpi}><Plus className="mr-1 h-3.5 w-3.5" />KPI</Button>}
       {st === 'not_started' && <Button size="sm" variant="outline" onClick={() => setStatus('in_progress')}>Bắt đầu</Button>}
-      {st === 'in_progress' && <Button size="sm" variant="outline" onClick={() => setStatus('done')}>Hoàn thành</Button>}
       {st === 'in_progress' && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setEnding(true)}>Kết thúc chưa đạt</Button>}
       {(st === 'done' || st === 'ended_missed') && <Button size="sm" variant="outline" onClick={() => setStatus('in_progress')}>Mở lại</Button>}
       {ending && (
