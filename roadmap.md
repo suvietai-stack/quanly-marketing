@@ -1,5 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## FIX TOÀN DIỆN KPI 3K — spec 964 dòng (04/11/2026)
+- [ ] KPI-1. Kiểm kê dữ liệu thật và rà soát mọi đường ghi/đọc KPI; xác minh phương án sao lưu trước chuyển đổi hàng loạt.
+- [ ] KPI-2. Chuẩn hóa phương thức/điều kiện đo và nguồn KPI-người-ngày, ghi thay thế có revision/idempotency, tính toán/trạng thái authoritative.
+- [ ] KPI-3. Form Cập nhật KPI chung, nhật ký, chốt sổ/điều chỉnh có phiên bản; bỏ trạng thái/%/Hoàn thành thủ công.
+- [ ] KPI-4. Hoàn thiện Thùng lưu trữ cũ và Dữ liệu cần rà soát riêng; cách ly không vào purge 15 ngày, quyền Admin và lịch sử xử lý.
+- [ ] KPI-5. Phân loại/chuyển đổi an toàn A/B/C, bảo toàn chốt cũ và đối soát trước/sau; không đoán liên kết nguồn.
+- [ ] KPI-6. Kiểm thử công thức, concurrent writes, quyền, chốt sổ, rà soát/purge và UI bảy kích thước; nghiệm thu thật không tạo dữ liệu giả, chưa Publish.
+
 ## FIX ĐĂNG NHẬP, DUYỆT TÀI KHOẢN VÀ RESET MẬT KHẨU — spec 411 dòng
 - [x] AUTH-1. Nhật ký xác minh email_not_confirmed; cấu hình đọc thật email bật/auto-confirm tắt. 25 hồ sơ có Auth/email khớp/mật khẩu/đã xác nhận; reset gọi đúng admin API, duyệt không xác nhận email; độ mạnh mật khẩu hosted chưa đọc được đầy đủ. Không đổi tài khoản thật.
 - [x] AUTH-2. Migrations 0181–0184: duyệt nguyên tử, xác nhận email độc lập, caller-scoped kiểm quyền, active guards/RPC, định danh/role guards và hạn mức/nhật ký reset; giữ tài khoản/dữ liệu thật.
