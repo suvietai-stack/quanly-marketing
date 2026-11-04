@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 const metricText = (data: { actual: number | null; progress: number | null; attained: boolean | null }) =>
   `${data.actual == null ? 'Chưa có số liệu' : data.actual.toLocaleString('vi-VN')}${data.progress == null ? '' : ` · ${data.progress}%`} · ${data.attained == null ? 'Chưa đủ dữ liệu' : data.attained ? 'Đạt' : 'Chưa đạt'}`;
 
-export function Biz3KKpiResult({ kpiId, date }: { kpiId: string; date: string }) {
+export function Biz3KKpiResult({ kpiId, date, showStatus = true }: { kpiId: string; date: string; showStatus?: boolean }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const query = useQuery({ ...k3KpiResultQuery(uid, kpiId, date), enabled: !!uid });
   const [open, setOpen] = useState<'edit' | 'history' | null>(null);
@@ -26,9 +26,12 @@ export function Biz3KKpiResult({ kpiId, date }: { kpiId: string; date: string })
   return <div className="space-y-2 border-b border-border py-2">
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{data.kpi.name}</p><p className="text-xs text-muted-foreground">{K3_MEASURE_LABELS[data.kpi.measure]} · Chỉ tiêu {data.kpi.target ?? data.kpi.milestones?.length ?? '—'} {data.kpi.unit}</p></div>
-      <Badge variant={data.metric.attained ? 'default' : 'secondary'}>{data.metric.status === 'not_started' ? 'Chưa bắt đầu' : data.metric.attained ? 'Hoàn thành' : 'Đang thực hiện'}</Badge>
+      {showStatus && <Badge variant={data.metric.attained ? 'default' : 'secondary'}>{data.metric.status === 'not_started' ? 'Chưa bắt đầu' : data.metric.attained ? 'Hoàn thành' : 'Đang thực hiện'}</Badge>}
     </div>
-    <p className="text-sm tabular-nums">{data.kpi.measure === 'current' ? 'Giá trị mới nhất' : 'Kết quả chung KPI'}: {metricText(data.metric)}</p>
+    <div className="grid gap-1 text-sm tabular-nums sm:grid-cols-2">
+      <p>Ngày {date === new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }) ? 'hôm nay' : date}: {data.daily ? k3ResultPreview(data.kpi, [data.daily]).actual?.toLocaleString('vi-VN') ?? 'Chưa đủ dữ liệu' : 'Chưa cập nhật'} {data.kpi.unit}</p>
+      <p>{data.kpi.measure === 'current' ? 'Giá trị mới nhất' : 'Lũy kế chung'}: {data.metric.actual?.toLocaleString('vi-VN') ?? '—'}/{data.kpi.target ?? data.kpi.milestones?.length ?? '—'} {data.kpi.unit}{data.metric.progress != null && ` · ${data.metric.progress}%`}</p>
+    </div>
     <p className="text-xs text-muted-foreground">Đã chốt: {metricText(data.official_metric)}</p>
     <div className="flex flex-wrap gap-2">
       {data.can_update && <Button size="sm" variant="outline" onClick={() => setOpen('edit')}><Plus className="mr-1 h-3.5 w-3.5" />Cập nhật KPI</Button>}
@@ -47,6 +50,7 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const save = useK3KpiResultSave();
   const [key] = useState(() => crypto.randomUUID());
+  const [correctionReason, setCorrectionReason] = useState('');
   const [f, setF] = useState({ value: data.daily?.value?.toString() ?? '', numerator: data.daily?.numerator?.toString() ?? '', denominator: data.daily?.denominator?.toString() ?? '', objects: data.daily?.objects?.join('\n') ?? '', completed: data.daily?.completed ?? [], evidence: data.daily?.evidence ?? '', note: data.daily?.note ?? '', problem: data.daily?.problem ?? '', cause: data.daily?.cause ?? '', solution: data.daily?.solution ?? '' });
   const measure = data.kpi.measure;
   const daily = { ...f, id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0, value: f.value === '' ? null : Number(f.value), numerator: f.numerator === '' ? null : Number(f.numerator), denominator: f.denominator === '' ? null : Number(f.denominator), objects: f.objects.split('\n').map((s) => s.trim()).filter(Boolean), user_id: uid, work_date: date };
@@ -62,6 +66,7 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
     <div className="border-y border-border py-2"><p className="text-sm font-medium">Lũy kế mới: {metricText(preview)}</p><p className="text-xs text-muted-foreground">{data.daily ? 'Thay thế tổng kết quả ngày đã ghi.' : 'Kết quả ngày chưa chốt.'}</p></div>
     <Label htmlFor="k3-result-note">Ghi chú</Label><Textarea id="k3-result-note" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} />
     <details><summary className="text-sm">Vấn đề – Nguyên nhân – Giải pháp</summary><div className="mt-2 space-y-2">{(['problem', 'cause', 'solution'] as const).map((name, i) => <Textarea key={name} aria-label={['Vấn đề', 'Nguyên nhân', 'Giải pháp'][i]} rows={2} value={f[name]} onChange={(e) => set(name, e.target.value)} />)}</div></details>
-    <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={save.isPending} onClick={async () => { try { await save.mutateAsync({ ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key }); toast.success('Đã lưu kết quả KPI.'); onClose(); } catch (e) { toast.error(k3Error(e)); } }}>{save.isPending ? 'Đang lưu…' : 'Lưu kết quả'}</Button></DialogFooter>
+    {data.day_closed && <div className="space-y-1"><Label htmlFor="k3-correction">Lý do bổ sung / sửa sau chốt *</Label><Textarea id="k3-correction" value={correctionReason} onChange={(e) => setCorrectionReason(e.target.value)} /><p className="text-xs text-muted-foreground">Giữ bản chốt cũ, ghi lịch sử điều chỉnh và yêu cầu xác nhận lại.</p></div>}
+    <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={save.isPending || (data.day_closed && !correctionReason.trim())} onClick={async () => { try { await save.mutateAsync({ ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key, correction_reason: correctionReason }); toast.success('Đã lưu kết quả KPI.'); onClose(); } catch (e) { toast.error(k3Error(e)); } }}>{save.isPending ? 'Đang lưu…' : 'Lưu kết quả'}</Button></DialogFooter>
   </DialogContent></Dialog>;
 }

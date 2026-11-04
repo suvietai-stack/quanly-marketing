@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { k3PeriodConfigQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
 import { useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import type { K3PeriodConfig } from '@/lib/biz/k3Periods';
+import { Biz3KAutomation } from './Biz3KAutomation';
 
 interface LogRow {
   id: number;
@@ -81,11 +82,12 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
       <div className="space-y-4">
         <ModulePermissionSettings settings={settings} />
         <PeriodSettings/>
+        <Biz3KAutomation />
         <div className="rounded-lg border border-border bg-card p-4 space-y-2">
           <h3 className="font-medium">Phân quyền</h3>
           <p className="text-sm text-muted-foreground">
             Phạm vi xem kế thừa từ Cơ cấu tổ chức: Trưởng Nhóm xem Nhóm, Trưởng Phòng xem Phòng, Giám Đốc Hệ xem Hệ, lãnh đạo điều hành xem toàn Khối.
-            Quyền riêng của 3K (k3.use / k3.view_scope / k3.comment / k3.settings) được cấp trong Cài đặt → Tài khoản &amp; Phân quyền, nhóm quyền "Quản lý 3K".
+            Quyền 3K chỉ đến từ bổ nhiệm hiệu lực trong Cơ cấu tổ chức; Role tổng không cấp quyền Kinh doanh. Cài đặt 3K dành cho Admin/Super Admin.
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4 space-y-2">

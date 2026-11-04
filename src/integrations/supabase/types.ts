@@ -3290,6 +3290,51 @@ export type Database = {
           },
         ]
       }
+      k3_automation_config: {
+        Row: {
+          auto_close: boolean
+          close_time: string
+          enabled_from: string
+          group_id: string | null
+          group_name: string | null
+          id: boolean
+          scope_id: string | null
+          scope_kind: string
+          send_time: string
+          updated_at: string
+          updated_by: string | null
+          zalo_enabled: boolean
+        }
+        Insert: {
+          auto_close?: boolean
+          close_time?: string
+          enabled_from?: string
+          group_id?: string | null
+          group_name?: string | null
+          id?: boolean
+          scope_id?: string | null
+          scope_kind?: string
+          send_time?: string
+          updated_at?: string
+          updated_by?: string | null
+          zalo_enabled?: boolean
+        }
+        Update: {
+          auto_close?: boolean
+          close_time?: string
+          enabled_from?: string
+          group_id?: string | null
+          group_name?: string | null
+          id?: boolean
+          scope_id?: string | null
+          scope_kind?: string
+          send_time?: string
+          updated_at?: string
+          updated_by?: string | null
+          zalo_enabled?: boolean
+        }
+        Relationships: []
+      }
       k3_comments: {
         Row: {
           author_id: string
@@ -3331,6 +3376,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      k3_daily_closes: {
+        Row: {
+          actor_id: string | null
+          closed_at: string
+          department_id: string | null
+          id: string
+          snapshot: Json
+          source: string
+          system_id: string | null
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          actor_id?: string | null
+          closed_at?: string
+          department_id?: string | null
+          id?: string
+          snapshot: Json
+          source: string
+          system_id?: string | null
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          actor_id?: string | null
+          closed_at?: string
+          department_id?: string | null
+          id?: string
+          snapshot?: Json
+          source?: string
+          system_id?: string | null
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
       }
       k3_data_reviews: {
         Row: {
@@ -3569,6 +3650,7 @@ export type Database = {
           confirmed_at: string
           id: string
           snapshot: Json
+          source: string
           user_id: string
           work_date: string
         }
@@ -3577,6 +3659,7 @@ export type Database = {
           confirmed_at?: string
           id?: string
           snapshot: Json
+          source?: string
           user_id: string
           work_date: string
         }
@@ -3585,6 +3668,7 @@ export type Database = {
           confirmed_at?: string
           id?: string
           snapshot?: Json
+          source?: string
           user_id?: string
           work_date?: string
         }
@@ -4236,6 +4320,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      k3_zalo_reports: {
+        Row: {
+          attempted_at: string | null
+          created_at: string
+          error: string | null
+          group_id: string
+          id: string
+          lease: string | null
+          scope_id: string | null
+          scope_kind: string
+          sent_at: string | null
+          snapshot: Json
+          status: string
+          work_date: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          created_at?: string
+          error?: string | null
+          group_id: string
+          id?: string
+          lease?: string | null
+          scope_id?: string | null
+          scope_kind: string
+          sent_at?: string | null
+          snapshot: Json
+          status?: string
+          work_date: string
+        }
+        Update: {
+          attempted_at?: string | null
+          created_at?: string
+          error?: string | null
+          group_id?: string
+          id?: string
+          lease?: string | null
+          scope_id?: string | null
+          scope_kind?: string
+          sent_at?: string | null
+          snapshot?: Json
+          status?: string
+          work_date?: string
+        }
+        Relationships: []
       }
       keywords: {
         Row: {
@@ -7896,6 +8025,9 @@ export type Database = {
         Args: { _action: string; _actor: string }
         Returns: boolean
       }
+      k3_auto_close_run: { Args: never; Returns: Json }
+      k3_automation_read: { Args: never; Returns: Json }
+      k3_automation_save: { Args: { _payload: Json }; Returns: Json }
       k3_can: {
         Args: { _actor: string; _permission: string }
         Returns: boolean
@@ -7937,6 +8069,10 @@ export type Database = {
       }
       k3_kpi_result_save: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_save: { Args: { _payload: Json }; Returns: Json }
+      k3_measured_period_read: {
+        Args: { _end: string; _manage?: boolean; _start: string }
+        Returns: Json
+      }
       k3_member_invite: {
         Args: { _goal_id: string; _user_ids: string[] }
         Returns: Json
@@ -8024,6 +8160,34 @@ export type Database = {
         Args: { _date: string; _user: string }
         Returns: Json
       }
+      k3_zalo_report_claim: {
+        Args: never
+        Returns: {
+          attempted_at: string | null
+          created_at: string
+          error: string | null
+          group_id: string
+          id: string
+          lease: string | null
+          scope_id: string | null
+          scope_kind: string
+          sent_at: string | null
+          snapshot: Json
+          status: string
+          work_date: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "k3_zalo_reports"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      k3_zalo_report_finish: {
+        Args: { _error?: string; _id: string; _lease: string; _status: string }
+        Returns: boolean
+      }
+      k3_zalo_report_queue: { Args: never; Returns: number }
       leave_approvers: {
         Args: never
         Returns: {

@@ -1,5 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## FIX MODULE QUẢN LÝ 3K — 04/11/2026
+- [ ] F1. Một badge KF, kết quả hôm nay/lũy kế/% rõ ràng; tổng ngày thay thế (20→30=30), khác ngày cộng dồn.
+- [ ] F2. KF có lịch tự xuất hiện; đồng bộ các góc nhìn và trạng thái theo KPI.
+- [ ] F3. Tự chốt ngày 18:00 VN, khóa và sửa có lịch sử; cài đặt và chốt sớm.
+- [ ] F4. Báo cáo Zalo độc lập, nhóm/giờ/phạm vi, outbox chống trùng và nhật ký.
+- [ ] F5. Dữ liệu cần rà soát vào lưu trữ 15 ngày theo xác nhận mới; sao lưu/đối soát trước chuyển, giữ chốt hợp lệ.
+- [ ] F6. Kiểm thử luật, hồi quy và desktop/mobile; chưa Publish.
+
 ## FIX TOÀN DIỆN KPI 3K — spec 964 dòng (04/11/2026)
 - [x] KPI-1a. Kiểm kê thật: 2 KG/1 KF/2 KPI/3 tasks/3 ngày; 3 task thiếu KPI, 2 thiếu KF, 2 ngày chốt; giữ nguyên. RPC inventory + private counted backup bổ sung, chưa chạy backup/chuyển đổi.
 - [ ] KPI-1b. Xác minh bản sao qua RPC trước chuyển đổi hàng loạt.

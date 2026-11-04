@@ -1464,6 +1464,27 @@
       "when": 1793776043465,
       "tag": "0208_k3_canonical_official_delete_protection",
       "breakpoints": true
+    },
+    {
+      "idx": 209,
+      "version": "7",
+      "when": 1793784060651,
+      "tag": "0209_k3_auto_close_and_zalo_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 210,
+      "version": "7",
+      "when": 1793784356689,
+      "tag": "0210_k3_system_close_history_safety",
+      "breakpoints": true
+    },
+    {
+      "idx": 211,
+      "version": "7",
+      "when": 1793784560486,
+      "tag": "0211_k3_scoped_measured_period_reads",
+      "breakpoints": true
     }
   ]
 }
