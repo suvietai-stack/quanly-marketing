@@ -40,6 +40,8 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0203_k3_kpi_metric_and_configuration_guards.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0206_k3_result_privacy_and_configuration_fences.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0207_k3_configuration_module_and_legacy_history_guards.sql', 'utf8'));
+  await db.exec(`CREATE FUNCTION private.k3_goal_has_official(_goal uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false) $$; CREATE FUNCTION private.k3_action_has_official(_action uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false) $$;`);
+  await db.exec(readFileSync('drizzle/migrations/0208_k3_canonical_official_delete_protection.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
@@ -78,6 +80,8 @@ it('database: chưa chốt không vào số chính thức; chốt lưu snapshot'
   expect(await result(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`)).toBeNull();
   await db.query(`SELECT k3_kpi_day_confirm('2026-11-01')`);
   expect(Number(await result(`SELECT (private.k3_result_metric('${kpi}',true)->>'actual')::numeric v`))).toBe(20);
+  expect(await result(`SELECT private.k3_goal_has_official('${goal}') v`)).toBe(true);
+  expect(await result(`SELECT private.k3_action_has_official('${action}') v`)).toBe(true);
 });
 it('database: dữ liệu chờ rà soát chặn cập nhật và không có thời hạn xóa', async () => {
   await db.exec(`INSERT INTO k3_data_reviews(kind,record_id,reason,original_snapshot) VALUES('kpi','${kpi}','Thiếu nguồn','{}');`);

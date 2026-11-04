@@ -5,10 +5,11 @@
 - [ ] KPI-1b. Xác minh bản sao qua RPC trước chuyển đổi hàng loạt.
 - [x] KPI-2a. 0202–0205: nguồn KPI-người-ngày, 7 phương thức/4 điều kiện, thay thế có revision/idempotency, versions/chốt và derived KG/KF status; không sửa legacy.
 - [ ] KPI-2b. Nối mọi tổng hợp kỳ/monitor và chặn toàn bộ đường legacy ghi thủ công.
-- [ ] KPI-3. Form Cập nhật KPI chung, nhật ký, chốt sổ/điều chỉnh có phiên bản; bỏ trạng thái/%/Hoàn thành thủ công.
+- [x] KPI-3a. Form chung tại Ngày/chi tiết KG/KF/nhóm, nhật ký và chốt sổ theo phiên bản. 0206–0208: ghi chú riêng/lịch sử theo scope, khóa cấu hình, không đổi KPI có thực tế cũ và bảo vệ kết quả canonical đã chốt khỏi xóa KG/KF.
+- [ ] KPI-3b. Bỏ hoàn toàn các biểu mẫu legacy khỏi Tuần/Tháng và nối các tổng hợp kỳ/monitor; hiện Ngày cũ chỉ đọc, không dùng làm KPI mới.
 - [ ] KPI-4. Hoàn thiện Thùng lưu trữ cũ và Dữ liệu cần rà soát riêng; cách ly không vào purge 15 ngày, quyền Admin và lịch sử xử lý.
 - [ ] KPI-5. Phân loại/chuyển đổi an toàn A/B/C, bảo toàn chốt cũ và đối soát trước/sau; không đoán liên kết nguồn.
-- [ ] KPI-6. Kiểm thử công thức, concurrent writes, quyền, chốt sổ, rà soát/purge và UI bảy kích thước; nghiệm thu thật không tạo dữ liệu giả, chưa Publish.
+- [ ] KPI-6. Kiểm thử bổ sung concurrent/purge và UI bảy kích thước; bộ 3K 106/106 đạt trước bổ sung mới. Phiên injected không đăng nhập được; mint --self không tìm thấy tài khoản, cần người dùng đăng nhập Preview để nghiệm thu thật. Không tạo dữ liệu giả, chưa Publish.
 
 ## FIX ĐĂNG NHẬP, DUYỆT TÀI KHOẢN VÀ RESET MẬT KHẨU — spec 411 dòng
 - [x] AUTH-1. Nhật ký xác minh email_not_confirmed; cấu hình đọc thật email bật/auto-confirm tắt. 25 hồ sơ có Auth/email khớp/mật khẩu/đã xác nhận; reset gọi đúng admin API, duyệt không xác nhận email; độ mạnh mật khẩu hosted chưa đọc được đầy đủ. Không đổi tài khoản thật.
