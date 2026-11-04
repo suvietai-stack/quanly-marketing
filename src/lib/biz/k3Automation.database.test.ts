@@ -66,6 +66,10 @@ beforeAll(async () => {
     await db.exec(sql);
   }
   for (const file of ['0221_k3_frozen_measurement_report_details.sql','0222_k3_preserve_close_fingerprints_and_acceptance_scope.sql','0223_k3_acceptance_frozen_at_confirmation.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0224_k3_employee_review_separate_from_system_close.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0225_k3_review_configuration_and_close_run_audit.sql', 'utf8'));
+  await db.exec(`CREATE TABLE leave_requests(owner_id uuid,type text,status text,payload jsonb);CREATE TABLE notifications(recipient_id uuid,kind text,dedup_key text UNIQUE,zalo_status text,push_status text,payload jsonb);CREATE FUNCTION cron.unschedule(bigint) RETURNS boolean LANGUAGE sql AS $$ SELECT true $$;ALTER TABLE cron.job ADD COLUMN jobid bigint GENERATED ALWAYS AS IDENTITY; CREATE FUNCTION biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;`);
+  for (const file of ['0226_k3_base_review_reminders_daily.sql','0227_k3_scoped_review_monitor_and_notification_payload.sql','0228_k3_review_stable_versions_and_safe_history.sql','0229_k3_review_close_identity_comparison.sql','0230_k3_review_source_only_fingerprint.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -77,7 +81,7 @@ it('saving schedules keeps one job and converts Vietnam times across midnight',a
     await db.query(`SELECT k3_automation_save('${JSON.stringify({auto_close:true,close_time:time,send_time:'18:05',scope_kind:'all',zalo_enabled:false})}')`);
     expect(await value("SELECT schedule v FROM cron.job WHERE jobname='k3-auto-close'")).toBe(expected);
   }
-  expect(await value('SELECT count(*)::int v FROM cron.job')).toBe(1);
+  expect(await value("SELECT count(*)::int v FROM cron.job WHERE jobname='k3-auto-close'")).toBe(1);
 });
 it('auto close freezes 20 without impersonating an employee and is idempotent',async()=>{
   await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:kpi,work_date:'2026-11-01',value:20,revision:0,request_key:crypto.randomUUID()})}')`);
@@ -86,6 +90,7 @@ it('auto close freezes 20 without impersonating an employee and is idempotent',a
   expect(await value('SELECT count(*)::int v FROM k3_daily_closes')).toBe(1);
   expect(await value('SELECT actor_id v FROM k3_daily_closes')).toBeNull();
   expect(await value('SELECT count(*)::int v FROM k3_kpi_day_confirmations')).toBe(0);
+  expect(await value("SELECT private.k3_employee_review_state(auth.uid(),'2026-11-01')->>'system_status' v")).toBe('auto_closed');
   expect(Number(await value(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`))).toBe(20);
   expect(await value(`SELECT private.k3_goal_has_official('${goal}') v`)).toBe(true);
 });
@@ -94,6 +99,7 @@ it('after close a correction needs a reason and reconfirmation while the old 20 
   await expect(db.query(`SELECT k3_kpi_result_save('${JSON.stringify(payload)}')`)).rejects.toThrow('lý do');
   await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({...payload,correction_reason:'Đối soát cuối ngày'})}')`);
   expect(await value(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`)).toBeNull();
+  expect(await value("SELECT private.k3_employee_review_state(auth.uid(),'2026-11-01')->>'system_status' v")).toBe('adjusted');
   expect(await value("SELECT snapshot->'results'->0->>'value' v FROM k3_daily_closes")).toBe('20');
   await db.query("SELECT k3_kpi_day_confirm('2026-11-01')");
   expect(Number(await value(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`))).toBe(30);
@@ -191,4 +197,51 @@ it('pending review KPI stays excluded by the new engine', async () => {
   await db.exec(`INSERT INTO k3_data_reviews(kind,record_id,reason,original_snapshot) VALUES('kpi','${kpi}','Thiếu căn cứ','{}')`);
   expect(await value(`SELECT private.k3_result_metric('${kpi}',false)->>'actual' v`)).toBeNull();
   await db.exec(`UPDATE k3_data_reviews SET status='resolved' WHERE record_id='${kpi}'`);
+});
+it('manual review never creates a system close or a legacy confirmation', async () => {
+  const date = '2026-11-03';
+  const before = await value<number>('SELECT count(*)::int v FROM k3_daily_closes');
+  const s = await value<{source_version:string;manual_status:string}>(`SELECT k3_employee_review_read('${date}') v`);
+  expect(s?.manual_status).toBe('none');
+  if (!s) throw new Error('Missing review');
+  const r = await value<{manual_status:string}>(`SELECT k3_employee_review_confirm('${date}','${s.source_version}','${crypto.randomUUID()}',true) v`);
+  expect(r?.manual_status).toBe('reviewed');
+  expect(await value<number>('SELECT count(*)::int v FROM k3_daily_closes')).toBe(before);
+  expect(await value<number>(`SELECT count(*)::int v FROM k3_kpi_day_confirmations WHERE work_date='${date}'`)).toBe(0);
+});
+it('20 reviewed then replaced with 30 requires review again; auto close never confirms the employee', async () => {
+  const date='2026-11-04';
+  const payload={kpi_id:kpi,work_date:date,value:20,request_key:crypto.randomUUID()};
+  await db.query(`SELECT k3_kpi_result_save('${JSON.stringify(payload)}')`);
+  const s = await value<{source_version:string}>(`SELECT k3_employee_review_read('${date}') v`);
+  if (!s) throw new Error('Missing review');
+  await db.query(`SELECT k3_employee_review_confirm('${date}','${s.source_version}','${crypto.randomUUID()}',true)`);
+  await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({...payload,value:30,revision:1,request_key:crypto.randomUUID()})}')`);
+  expect(await value(`SELECT k3_employee_review_read('${date}')->>'manual_status' v`)).toBe('reconfirm');
+  await expect(db.query(`SELECT k3_employee_review_confirm('${date}','${s.source_version}','${crypto.randomUUID()}',true)`)).rejects.toThrow('thay đổi');
+  await db.query(`SELECT private.k3_close_one('${user}','${date}','auto')`);
+  expect(await value(`SELECT snapshot->'employee_review'->>'status' v FROM k3_daily_closes WHERE work_date='${date}'`)).toBe('reconfirm');
+  expect(await value(`SELECT snapshot->'results'->0->>'value' v FROM k3_daily_closes WHERE work_date='${date}'`)).toBe('30');
+  expect(await value(`SELECT k3_employee_review_read('${date}')->>'manual_status' v`)).toBe('reconfirm');
+  const now = await value<{source_version:string}>(`SELECT k3_employee_review_read('${date}') v`);
+  if (!now) throw new Error('Missing review');
+  await db.query(`SELECT k3_employee_review_confirm('${date}','${now.source_version}','${crypto.randomUUID()}',true)`);
+  expect(await value<number>(`SELECT count(*)::int v FROM k3_employee_reviews WHERE work_date='${date}'`)).toBe(2);
+});
+it('missing scheduled KF warns but employee may confirm without invented KPI values', async () => {
+  const id=crypto.randomUUID();
+  await db.exec(`INSERT INTO k3_actions VALUES('${id}','${goal}','${user}','2026-11-03','in_progress',NULL,'KF chưa cập nhật','2026-12-31')`);
+  const s = await value<{source_version:string;missing:number}>(`SELECT k3_employee_review_read('2026-11-03') v`);
+  expect(s?.missing).toBe(1);
+  if(!s) throw new Error('Missing review');
+  await expect(db.query(`SELECT k3_employee_review_confirm('2026-11-03','${s.source_version}','${crypto.randomUUID()}',false)`)).rejects.toThrow('cảnh báo');
+  const before=await value<number>('SELECT count(*)::int v FROM k3_kpi_results');
+  await db.query(`SELECT k3_employee_review_confirm('2026-11-03','${s.source_version}','${crypto.randomUUID()}',true)`);
+  expect(await value<number>('SELECT count(*)::int v FROM k3_kpi_results')).toBe(before);
+});
+it('other-date KPI progress does not invalidate the employee daily review', async () => {
+  const date='2026-11-03';
+  const before=await value(`SELECT k3_employee_review_read('${date}')->>'source_version' v`);
+  await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:kpi,work_date:'2026-10-31',value:5,request_key:crypto.randomUUID()})}')`);
+  expect(await value(`SELECT k3_employee_review_read('${date}')->>'source_version' v`)).toBe(before);
 });

@@ -3294,10 +3294,15 @@ export type Database = {
         Row: {
           auto_close: boolean
           close_time: string
+          employee_review_enabled: boolean
           enabled_from: string
           group_id: string | null
           group_name: string | null
           id: boolean
+          review_remind_time: string
+          review_reminders: boolean
+          review_second_reminder: boolean
+          review_second_time: string
           scope_id: string | null
           scope_kind: string
           send_time: string
@@ -3308,10 +3313,15 @@ export type Database = {
         Insert: {
           auto_close?: boolean
           close_time?: string
+          employee_review_enabled?: boolean
           enabled_from?: string
           group_id?: string | null
           group_name?: string | null
           id?: boolean
+          review_remind_time?: string
+          review_reminders?: boolean
+          review_second_reminder?: boolean
+          review_second_time?: string
           scope_id?: string | null
           scope_kind?: string
           send_time?: string
@@ -3322,16 +3332,48 @@ export type Database = {
         Update: {
           auto_close?: boolean
           close_time?: string
+          employee_review_enabled?: boolean
           enabled_from?: string
           group_id?: string | null
           group_name?: string | null
           id?: boolean
+          review_remind_time?: string
+          review_reminders?: boolean
+          review_second_reminder?: boolean
+          review_second_time?: string
           scope_id?: string | null
           scope_kind?: string
           send_time?: string
           updated_at?: string
           updated_by?: string | null
           zalo_enabled?: boolean
+        }
+        Relationships: []
+      }
+      k3_close_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          status: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          status: string
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+          work_date?: string
         }
         Relationships: []
       }
@@ -3522,6 +3564,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      k3_employee_reviews: {
+        Row: {
+          actor_id: string
+          confirmed_at: string
+          id: string
+          missing_acknowledged: boolean
+          request_key: string
+          revision: number
+          snapshot: Json
+          source_version: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          actor_id: string
+          confirmed_at?: string
+          id?: string
+          missing_acknowledged?: boolean
+          request_key: string
+          revision?: never
+          snapshot: Json
+          source_version: string
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          actor_id?: string
+          confirmed_at?: string
+          id?: string
+          missing_acknowledged?: boolean
+          request_key?: string
+          revision?: never
+          snapshot?: Json
+          source_version?: string
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
       }
       k3_goal_members: {
         Row: {
@@ -8150,6 +8231,20 @@ export type Database = {
         Args: { _actor: string; _day: string }
         Returns: boolean
       }
+      k3_employee_review_confirm: {
+        Args: {
+          _ack_missing?: boolean
+          _date: string
+          _request_key: string
+          _version: string
+        }
+        Returns: Json
+      }
+      k3_employee_review_read: {
+        Args: { _date: string; _user?: string }
+        Returns: Json
+      }
+      k3_employee_review_team: { Args: { _date: string }; Returns: Json }
       k3_goal_detail: { Args: { _id: string }; Returns: Json }
       k3_goal_list: { Args: { _filter?: string; _q?: string }; Returns: Json }
       k3_goal_save: { Args: { _payload: Json }; Returns: Json }
@@ -8243,6 +8338,7 @@ export type Database = {
       k3_purge_expired: { Args: { _batch?: number }; Returns: Json }
       k3_quick_create: { Args: { _payload: Json }; Returns: Json }
       k3_restore: { Args: { _id: string; _kind: string }; Returns: Json }
+      k3_review_reminder_run: { Args: never; Returns: number }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
@@ -8309,6 +8405,7 @@ export type Database = {
         Args: { _error?: string; _id: string; _lease: string; _status: string }
         Returns: boolean
       }
+      k3_zalo_report_preview: { Args: { _date: string }; Returns: Json }
       k3_zalo_report_queue: { Args: never; Returns: number }
       leave_approvers: {
         Args: never

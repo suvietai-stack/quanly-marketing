@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION private.k3_review_fingerprint(_source jsonb) RETURNS text LANGUAGE sql IMMUTABLE SET search_path=public AS $fn$
+ SELECT md5(jsonb_build_object('results',_source->'results','actions',coalesce((SELECT jsonb_agg(a-'metric'-'overdue' ORDER BY a->>'id') FROM jsonb_array_elements(_source->'actions') a),'[]'),'goal_kpis',_source->'goal_kpis','missing',_source->'missing','result_count',_source->'result_count','action_count',_source->'action_count','goal_count',_source->'goal_count')::text);
+$fn$;
+REVOKE ALL ON FUNCTION private.k3_review_fingerprint(jsonb) FROM PUBLIC,anon,authenticated;

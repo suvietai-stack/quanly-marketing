@@ -1569,6 +1569,55 @@
       "when": 1793787347698,
       "tag": "0223_k3_acceptance_frozen_at_confirmation",
       "breakpoints": true
+    },
+    {
+      "idx": 224,
+      "version": "7",
+      "when": 1793787815181,
+      "tag": "0224_k3_employee_review_separate_from_system_close",
+      "breakpoints": true
+    },
+    {
+      "idx": 225,
+      "version": "7",
+      "when": 1793787932481,
+      "tag": "0225_k3_review_configuration_and_close_run_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 226,
+      "version": "7",
+      "when": 1793788190421,
+      "tag": "0226_k3_base_review_reminders_daily",
+      "breakpoints": true
+    },
+    {
+      "idx": 227,
+      "version": "7",
+      "when": 1793788241142,
+      "tag": "0227_k3_scoped_review_monitor_and_notification_payload",
+      "breakpoints": true
+    },
+    {
+      "idx": 228,
+      "version": "7",
+      "when": 1793788312207,
+      "tag": "0228_k3_review_stable_versions_and_safe_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 229,
+      "version": "7",
+      "when": 1793788525646,
+      "tag": "0229_k3_review_close_identity_comparison",
+      "breakpoints": true
+    },
+    {
+      "idx": 230,
+      "version": "7",
+      "when": 1793788555440,
+      "tag": "0230_k3_review_source_only_fingerprint",
+      "breakpoints": true
     }
   ]
 }

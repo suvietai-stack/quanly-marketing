@@ -13,3 +13,9 @@ it('no update is never reported as updated',() => {
   const p = person('C');p.data.updated=false;p.data.results=[];
   expect(k3DailyReport('2026-11-04',[p])).toContain('Đã cập nhật 0 · Chưa cập nhật 1');
 });
+it('manual review counts use only employee status, never KPI update or system close', () => {
+  const a=person('A'),b=person('B'),c=person('C');
+  a.data.employee_review={status:'reviewed'}; b.data.employee_review={status:'reconfirm'};
+  const text=k3DailyReport('2026-11-04',[a,b,c]);
+  expect(text).toContain('Đã tổng kết thủ công: 1 · Chưa tổng kết: 1 · Cần tổng kết lại: 1');
+});
