@@ -183,7 +183,7 @@ it('B. sửa ngày bắt đầu/hạn hoàn thành KG custom được backend l�
   const g = await val<{ period_start: string; period_end: string }>(`SELECT k3_goal_save('{"id":"${goal}","revision":${rev},"name":"Phát triển 30 khách hàng tiềm năng","period_start":"2026-10-05","period_end":"2027-02-10"}') v`);
   expect(g.period_start).toBe('2026-10-05');
   expect(g.period_end).toBe('2027-02-10');
-  const stored = await val<{ period_start: string; period_end: string }>(`SELECT period_start::text, period_end::text FROM k3_goals WHERE id='${goal}'`);
+  const stored = await val<{ period_start: string; period_end: string }>(`SELECT jsonb_build_object('period_start',period_start,'period_end',period_end) v FROM k3_goals WHERE id='${goal}'`);
   expect(stored.period_start).toBe('2026-10-05');
   expect(stored.period_end).toBe('2027-02-10');
 });
