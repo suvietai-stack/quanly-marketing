@@ -15,7 +15,7 @@ export interface K3KpiDraft {
 }
 export const newK3KpiDraft = (): K3KpiDraft => ({ request_key: crypto.randomUUID(), name: '', measure: 'cumulative', condition: 'gte', target: '', target_max: '', unit: '', required: true, config: {} });
 export function k3KpiPayload(k: K3KpiDraft) {
-  return { ...k, target: k.measure === 'binary' ? 1 : k.target === '' ? null : Number(k.target), target_max: k.target_max === '' ? null : Number(k.target_max), milestones: k.config.milestones?.map((m) => m.id) ?? [] };
+  return { ...k, target: k.measure === 'binary' ? 1 : k.target === '' ? null : Number(k.target) * (k.measure === 'duration' && k.config.duration_unit === 'hours' ? 60 : 1), target_max: k.target_max === '' ? null : Number(k.target_max), milestones: k.config.milestones?.map((m) => m.id) ?? [] };
 }
 export interface K3TypedMetric extends K3ResultMetric {
   numerator?: number; denominator?: number; total_actual?: number; longest_streak?: number;
@@ -24,6 +24,7 @@ export interface K3TypedMetric extends K3ResultMetric {
 }
 const number = (x: number | null | undefined) => x == null ? '—' : Number(x).toLocaleString('vi-VN');
 export function k3MetricDisplay(measure: K3Measure, metric: K3TypedMetric, target: number | null, unit = '') {
+  if (metric.pending_acceptance && metric.actual == null) return 'Chờ nghiệm thu';
   if (metric.actual == null) return 'Chưa đủ dữ liệu';
   if (measure === 'binary') return metric.pending_acceptance ? 'Chờ nghiệm thu' : metric.attained ? 'Đã đáp ứng điều kiện' : 'Chưa đáp ứng';
   if (measure === 'ratio') return `${number(metric.numerator)}/${number(metric.denominator)} = ${number(metric.actual)}%`;
