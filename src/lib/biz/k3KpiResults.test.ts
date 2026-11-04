@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { k3ReplaceDaily, k3ResultPreview, type K3DailyValue, type K3Measurement } from './k3KpiResults';
+import { k3ReplaceDaily, k3RequiredStatus, k3ResultPreview, type K3DailyValue, type K3Measurement } from './k3KpiResults';
 
 const base: K3Measurement = { measure: 'cumulative', condition: 'gte', target: 200 };
 describe('KPI theo tổng ngày', () => {
@@ -28,4 +28,13 @@ describe('công thức phương thức đo', () => {
   it('tỷ lệ lỗi ≤ 2% không tạo phần trăm cải thiện giả', () => expect(calc('ratio', [{ numerator: 1, denominator: 100 }], { target: 2, condition: 'lte' })).toMatchObject({ attained: true, progress: null }));
   it('điều kiện bằng mục tiêu', () => expect(calc('current', [{ value: 20 }], { target: 20, condition: 'eq' }).attained).toBe(true));
   it('điều kiện trong khoảng', () => expect(calc('current', [{ value: 20 }], { target: 10, target_max: 15, condition: 'range' }).attained).toBe(false));
+});
+it('KF có 3 KPI bắt buộc: đạt 2/3 chưa hoàn thành, đạt đủ 3 mới hoàn thành', () => {
+  const done = k3ResultPreview(base, [{value:200}]);
+  const open = k3ResultPreview(base, [{value:100}]);
+  expect(k3RequiredStatus([{required:true,metric:done},{required:true,metric:done},{required:true,metric:open}])).toEqual({total:3,attained:2,status:'in_progress'});
+  expect(k3RequiredStatus(Array.from({length:3},()=>({required:true,metric:done})))).toEqual({total:3,attained:3,status:'done'});
+});
+it('không có KPI bắt buộc thì không tự kết luận KG hoàn thành từ KF', () => {
+  expect(k3RequiredStatus([]).status).toBe('not_started');
 });

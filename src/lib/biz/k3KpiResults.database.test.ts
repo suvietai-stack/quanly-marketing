@@ -19,23 +19,29 @@ beforeAll(async () => {
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.uid',true),'')::uuid $$;
   CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text);
   INSERT INTO profiles VALUES('${staff}','A'),('${other}','B');
-  CREATE TABLE k3_goals(id uuid PRIMARY KEY,user_id uuid,period_start date,period_end date,status text,deleted_at timestamptz);
+  CREATE TABLE k3_goals(id uuid PRIMARY KEY,user_id uuid,period_start date,period_end date,status text,deleted_at timestamptz,department_id uuid);
   CREATE TABLE k3_actions(id uuid PRIMARY KEY,goal_id uuid,assignee_id uuid,start_date date,status text,deleted_at timestamptz);
   CREATE TABLE k3_kpis(id uuid PRIMARY KEY,goal_id uuid,action_id uuid,kind text,target numeric,name text);
   CREATE TABLE k3_plan_events(user_id uuid,goal_id uuid,action_id uuid,actor_id uuid,action text,detail jsonb);
+  CREATE TABLE k3_tasks(kpi_id uuid,action_id uuid,kpi_actual numeric);
   CREATE FUNCTION biz_admin(uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
   CREATE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$ SELECT $1 IN ('${staff}'::uuid,'${other}'::uuid) $$;
   CREATE FUNCTION k3_goal_visible(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1 IN ('${staff}'::uuid,'${other}'::uuid) AND $2='${goal}'::uuid $$;
   CREATE FUNCTION private.k3_action_worker_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='${staff}'::uuid AND $2='${action}'::uuid $$;
   CREATE FUNCTION private.k3_write_guard(date) RETURNS void LANGUAGE plpgsql AS $$ BEGIN IF $1<'2026-01-01' THEN RAISE EXCEPTION 'Ngày khóa'; END IF; END $$;
   CREATE FUNCTION private.k3_goal_manage_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='${staff}'::uuid AND $2='${goal}'::uuid $$;
-  INSERT INTO k3_goals VALUES('${goal}','${staff}','2026-01-01','2026-12-31','in_progress',NULL);
+  CREATE FUNCTION biz_scope_ok(uuid,uuid,uuid,timestamptz) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
+  INSERT INTO k3_goals VALUES('${goal}','${staff}','2026-01-01','2026-12-31','in_progress',NULL,NULL);
   INSERT INTO k3_actions VALUES('${action}','${goal}','${staff}','2026-01-01','in_progress',NULL);
   INSERT INTO k3_kpis VALUES('${kpi}',NULL,'${action}','cumulative',200,'200 đại lý');
   SET test.uid='${staff}';`);
   await db.exec(readFileSync('drizzle/migrations/0202_k3_daily_kpi_result_foundation.sql', 'utf8'));
-  await db.exec(`ALTER TABLE k3_kpis ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz;`);
+  await db.exec(`ALTER TABLE k3_kpis ALTER COLUMN id SET DEFAULT gen_random_uuid(), ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz, ADD COLUMN manual_actual numeric;`);
   await db.exec(readFileSync('drizzle/migrations/0203_k3_kpi_metric_and_configuration_guards.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0206_k3_result_privacy_and_configuration_fences.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0207_k3_configuration_module_and_legacy_history_guards.sql', 'utf8'));
+  await db.exec(`CREATE FUNCTION private.k3_goal_has_official(_goal uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false) $$; CREATE FUNCTION private.k3_action_has_official(_action uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false) $$;`);
+  await db.exec(readFileSync('drizzle/migrations/0208_k3_canonical_official_delete_protection.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
@@ -74,6 +80,8 @@ it('database: chưa chốt không vào số chính thức; chốt lưu snapshot'
   expect(await result(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`)).toBeNull();
   await db.query(`SELECT k3_kpi_day_confirm('2026-11-01')`);
   expect(Number(await result(`SELECT (private.k3_result_metric('${kpi}',true)->>'actual')::numeric v`))).toBe(20);
+  expect(await result(`SELECT private.k3_goal_has_official('${goal}') v`)).toBe(true);
+  expect(await result(`SELECT private.k3_action_has_official('${action}') v`)).toBe(true);
 });
 it('database: dữ liệu chờ rà soát chặn cập nhật và không có thời hạn xóa', async () => {
   await db.exec(`INSERT INTO k3_data_reviews(kind,record_id,reason,original_snapshot) VALUES('kpi','${kpi}','Thiếu nguồn','{}');`);
@@ -91,4 +99,38 @@ it('database: sửa sau chốt không cộng bản cũ, cần chốt lại; snap
 });
 it('database: không đổi công thức hồi tố khi đã có kết quả', async () => {
   await expect(db.query(`SELECT k3_kpi_configure('{"id":"${kpi}","name":"X","measure":"ratio","target":2}')`)).rejects.toThrow('hồi tố');
+});
+it('database: thành viên chỉ xem tổng không nhận ghi chú riêng hoặc lịch sử người khác', async () => {
+  await db.exec(`UPDATE k3_kpi_results SET note='Ghi chú riêng',evidence='Nguồn riêng'; SET test.uid='${other}';`);
+  const r = await result<{results:Record<string,unknown>[];history:unknown[]}>(`SELECT k3_kpi_result_read('${kpi}','2026-11-01') v`);
+  expect(r?.results.length).toBe(3);
+  expect(r?.results.every((row) => !('note' in row) && !('evidence' in row))).toBe(true);
+  expect(r?.history).toEqual([]);
+  await db.exec(`SET test.uid='${staff}'`);
+});
+it('database: cấu hình KPI mới lưu đúng phương thức, không lỗi tên biến/cột', async () => {
+  const r = await result<{measure:string;condition:string;target:number}>(`SELECT k3_kpi_configure('{"goal_id":"${goal}","request_key":"10000000-0000-0000-0000-777777777777","name":"Tỷ lệ","measure":"ratio","condition":"lte","target":10}') v`);
+  expect(r).toMatchObject({measure:'ratio',condition:'lte',target:10});
+});
+it('database: đường ghi KPI cũ không cho gán giá trị xác nhận thủ công', async () => {
+  await expect(db.query(`SELECT k3_kpi_save('{"manual_actual":100}')`)).rejects.toThrow('theo ngày');
+});
+it.each([
+  ['distinct', 2, {objects:['A','B','A']}, 2],
+  ['current', 100, {value:40}, 40],
+  ['ratio', 50, {numerator:2,denominator:4}, 50],
+  ['average', 10, {numerator:30,denominator:3}, 10],
+  ['milestone', null, {completed:['Bước 1'],evidence:'Đã đối chiếu'}, 1],
+  ['duration', 60, {value:90}, 90],
+] as const)('database: phép đo %s có kết quả đúng tại máy chủ', async (measure,target,values,expected) => {
+  const key = `20000000-0000-0000-0000-${String(++seq).padStart(12,'0')}`;
+  const config = await result<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,request_key:key,name:measure,measure,target,milestones:measure==='milestone'?['Bước 1']:[]})}') v`);
+  expect(config?.id).toBeTruthy();
+  const saved = await result<{metric:{actual:number}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:config?.id,work_date:'2026-11-01',revision:0,request_key:crypto.randomUUID(),...values})}') v`);
+  expect(saved?.metric.actual).toBe(expected);
+});
+it('database: KPI có thực tế cũ chưa liên kết không bị đổi công thức hồi tố', async () => {
+  await db.exec(`INSERT INTO k3_tasks VALUES(NULL,'${action}',5);`);
+  const k = await result<{id:string}>(`SELECT k3_kpi_configure('{"action_id":"${action}","request_key":"30000000-0000-0000-0000-777777777777","name":"Nguồn cũ","measure":"cumulative","target":20}') v`);
+  await expect(db.query(`SELECT k3_kpi_configure('${JSON.stringify({id:k?.id,name:'Đổi nguồn',measure:'ratio',target:10})}')`)).rejects.toThrow('hồi tố');
 });

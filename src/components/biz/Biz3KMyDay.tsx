@@ -333,7 +333,6 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
       {settings.enabled && <div className="flex flex-wrap gap-1.5">
         {task.status === 'todo' && <Button type="button" size="sm" variant="outline" onClick={() => quick('doing')}><Play className="mr-1 h-3.5 w-3.5" />Bắt đầu</Button>}
         {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>}
-        {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Hoàn thành</Button>}
         {task.status === 'done' && <Button type="button" size="sm" variant="ghost" onClick={onUpdate}>Điều chỉnh</Button>}
         <Button type="button" size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>
         <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={onDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
