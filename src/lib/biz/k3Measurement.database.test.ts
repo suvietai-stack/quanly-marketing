@@ -7,6 +7,10 @@ beforeAll(async () => {
   await db.exec('CREATE SCHEMA private; CREATE ROLE anon; CREATE ROLE authenticated;');
   const sql = readFileSync('drizzle/migrations/0218_k3_shared_ten_mode_evaluator.sql', 'utf8');
   await db.exec(sql.slice(0, sql.indexOf('CREATE FUNCTION private.k3_measure_rows')));
+  const patch = readFileSync('drizzle/migrations/0220_k3_configured_creation_and_date_preview.sql', 'utf8');
+  const start = patch.indexOf(" def:=pg_get_functiondef('private.k3_measure_eval");
+  const end = patch.indexOf('END $patch$;', start);
+  await db.exec('DO $patch$ DECLARE def text; BEGIN\n' + patch.slice(start, end) + 'END $patch$;');
 });
 afterAll(() => db.close());
 async function evalKpi(measure: string, rows: Record<string, unknown>[], config: Record<string, unknown> = {}, target = 3, extras: Record<string, unknown> = {}) {
@@ -51,4 +55,7 @@ it('trung bình có trọng số: tổng 40 trên 5 quan sát = 8', async () => 
 });
 it('thời lượng chuẩn phút: 60 + 90 = 150', async () => {
   expect(await evalKpi('duration', [{ value: 60 }, { value: 90 }], {}, 120)).toMatchObject({ actual: 150, progress: 125 });
+});
+it('selected date excludes future rows and quarantined observations from all aggregates', async () => {
+  expect(await evalKpi('cumulative', [{value:20,work_date:'2026-11-04'},{value:100,work_date:'2026-11-05'},{value:40,review_reason:'Thiếu nguồn'}],{},200)).toMatchObject({actual:20,total_actual:20,progress:10});
 });
