@@ -15,6 +15,8 @@ export interface K3ResultData {
   official_metric: K3TypedMetric;
   daily_metric?: K3TypedMetric;
   daily_plan?: number | null;
+  can_accept?: boolean;
+  acceptances?: { id: string; result_id: string; result_revision: number; decision: string; reason: string }[];
   daily: K3SavedResult | null;
   results: K3SavedResult[];
   history: { id: string; revision: number; snapshot: K3SavedResult; created_at: string }[];

@@ -7,6 +7,7 @@ export interface K3ReportPerson {
     name: string; department: string | null; updated: boolean;
     actions: { id: string; goal_id: string; updated: boolean; overdue: boolean; metric: { status: string } }[];
     results: { value?: number | null; numerator?: number | null; denominator?: number | null; objects?: string[]; completed?: string[]; kpi_snapshot?: K3Measurement & { name: string; unit?: string }; day_metric?: K3TypedMetric; kpi_id: string; problem?: string | null; solution?: string | null }[];
+    measurements?: K3ReportPerson['data']['results'];
   };
 }
 export function k3DailyReport(date: string, people: K3ReportPerson[], labels: Record<string, string> = {}) {
@@ -19,7 +20,7 @@ export function k3DailyReport(date: string, people: K3ReportPerson[], labels: Re
     `${new Set(active.map((a) => a.goal_id)).size} KG / ${active.length} KF đang thực hiện · ${active.filter((a) => a.overdue).length} KF quá hạn · ${issues} vướng mắc`, ''];
   if (people.length <= 12) {
     for (const p of people) {
-      const highlights = p.data.results.slice(0, 2).map((r) => r.kpi_snapshot && r.day_metric ? `${r.kpi_snapshot.name}: ${k3MetricDisplay(r.kpi_snapshot.measure, r.day_metric, null, r.kpi_snapshot.unit ?? '')}` : r.numerator != null ? `${r.numerator}/${r.denominator ?? '—'} ${labels[r.kpi_id] ?? 'kết quả'}` : r.objects ? `${new Set(r.objects).size} đối tượng` : r.completed ? `${r.completed.length} mốc` : r.value == null ? 'Chưa đủ dữ liệu' : `${Number(r.value).toLocaleString('vi-VN')} ${labels[r.kpi_id] ?? 'kết quả'}`);
+      const highlights = (p.data.measurements ?? p.data.results).slice(0, 2).map((r) => r.kpi_snapshot && r.day_metric ? `${r.kpi_snapshot.name}: ${k3MetricDisplay(r.kpi_snapshot.measure, r.day_metric, null, r.kpi_snapshot.unit ?? '')}` : r.numerator != null ? `${r.numerator}/${r.denominator ?? '—'} ${labels[r.kpi_id] ?? 'kết quả'}` : r.objects ? `${new Set(r.objects).size} đối tượng` : r.completed ? `${r.completed.length} mốc` : r.value == null ? 'Chưa đủ dữ liệu' : `${Number(r.value).toLocaleString('vi-VN')} ${labels[r.kpi_id] ?? 'kết quả'}`);
       lines.push(`${p.data.name}: ${p.data.updated ? `${p.data.actions.filter((a) => a.updated).length}/${p.data.actions.length} KF đã cập nhật` : 'Chưa cập nhật'}${highlights.length ? ` · ${highlights.join(' · ')}` : ''}`);
     }
   } else {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { History, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { k3Error } from '@/lib/biz/k3';
 import { k3KpiResultQuery, useK3KpiResultSave, type K3ResultData } from '@/lib/biz/k3KpiResultQueries';
-import { K3_MEASURE_LABELS, k3ReplaceDaily, k3ResultPreview } from '@/lib/biz/k3KpiResults';
+import { K3_MEASURE_LABELS } from '@/lib/biz/k3KpiResults';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,9 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true }: { kpiId: stri
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const query = useQuery({ ...k3KpiResultQuery(uid, kpiId, date), enabled: !!uid });
   const [open, setOpen] = useState<'edit' | 'history' | null>(null);
+  const qc = useQueryClient();
+  const [acceptanceReason, setAcceptanceReason] = useState('');
+  const [acceptanceBusy, setAcceptanceBusy] = useState(false);
   if (query.isLoading) return <p className="text-xs text-muted-foreground">Đang tải kết quả KPI…</p>;
   if (query.error || !query.data) return <div className="text-xs text-destructive">{k3Error(query.error)} <Button size="sm" variant="ghost" onClick={() => query.refetch()}>Thử lại</Button></div>;
   const data = query.data;
@@ -44,7 +47,8 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true }: { kpiId: stri
     {open === 'edit' && <KpiResultDialog key={data.daily?.revision ?? 0} data={data} date={date} onClose={() => setOpen(null)} />}
     {open === 'history' && <Dialog open onOpenChange={(o) => !o && setOpen(null)}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Nhật ký KPI · {data.kpi.name}</DialogTitle></DialogHeader>
       {!data.results.length && <p className="text-sm text-muted-foreground">Chưa có kết quả.</p>}
-      {data.results.map((r, i) => <div key={r.id} className="border-b border-border py-2 text-sm"><p>{r.work_date} · {r.full_name ?? '—'}</p><p>Kết quả ngày: {r.value ?? (r.numerator != null ? `${r.numerator}/${r.denominator}` : (data.kpi.measure === 'milestone' ? r.completed : r.objects)?.join(', '))} · Lũy kế: {metricText(k3ResultPreview(data.kpi, data.results.slice(0, i + 1)))}</p><Badge variant="outline">{r.is_confirmed ? 'Đã chốt' : 'Chưa chốt / Cần xác nhận lại'}</Badge></div>)}
+      {data.can_accept && <Textarea aria-label="Lý do nghiệm thu" value={acceptanceReason} onChange={(e) => setAcceptanceReason(e.target.value)} />}
+      {data.results.map((r) => <div key={r.id} className="space-y-2 border-b border-border py-2 text-sm"><p>{r.work_date} · {r.full_name ?? '—'}</p><p>Kết quả ngày: {r.value ?? (r.numerator != null ? `${r.numerator}/${r.denominator}` : (data.kpi.measure === 'milestone' ? r.completed : r.objects)?.join(', '))}</p><Badge variant="outline">{r.is_confirmed ? 'Đã chốt' : 'Chưa chốt / Cần xác nhận lại'}</Badge>{data.can_accept && <div className="flex gap-2">{(['accepted', 'rejected'] as const).map((decision) => <Button key={decision} size="sm" variant="outline" disabled={acceptanceBusy || !acceptanceReason.trim()} onClick={async () => { setAcceptanceBusy(true); try { const { error } = await supabase.rpc('k3_kpi_accept', { _result: r.id, _revision: r.revision, _decision: decision, _reason: acceptanceReason }); if (error) throw error; await qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); toast.success('Đã lưu quyết định nghiệm thu.'); } catch (e) { toast.error(k3Error(e)); } finally { setAcceptanceBusy(false); } }}>{decision === 'accepted' ? 'Nghiệm thu' : 'Từ chối'}</Button>)}</div>}{data.acceptances?.filter((a) => a.result_id === r.id).map((a) => <p key={a.id} className="text-xs text-muted-foreground">{a.decision === 'accepted' ? 'Đã nghiệm thu' : 'Từ chối'} · Phiên bản {a.result_revision} · {a.reason}</p>)}</div>)}
       {data.history.map((v) => <p key={v.id} className="text-xs text-muted-foreground">Phiên bản {v.revision} · {v.snapshot.work_date} · {new Date(v.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} · Kết quả {v.snapshot.value ?? `${v.snapshot.numerator ?? '—'}/${v.snapshot.denominator ?? '—'}`}</p>)}
     </DialogContent></Dialog>}
   </div>;

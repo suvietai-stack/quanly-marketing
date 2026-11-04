@@ -59,12 +59,13 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0214_k3_archive_backup_alias_guard.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0215_k3_goal_activity_from_measured_actions.sql','utf8'));
   for (const file of ['0216_k3_ten_measurement_contract_and_review_safety.sql', '0217_k3_measurement_configuration_validation.sql', '0218_k3_shared_ten_mode_evaluator.sql', '0219_k3_typed_daily_result_values.sql', '0220_k3_configured_creation_and_date_preview.sql']) {
-    let sql = readFileSync(`drizzle/migrations/${file}`, 'utf8');
+    const sql = readFileSync(`drizzle/migrations/${file}`, 'utf8');
     if (file.startsWith('0220')) {
       await db.exec(`CREATE FUNCTION k3_quick_create(jsonb) RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;`);
     }
     await db.exec(sql);
   }
+  for (const file of ['0221_k3_frozen_measurement_report_details.sql','0222_k3_preserve_close_fingerprints_and_acceptance_scope.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -166,4 +167,9 @@ it('saved ratio accepts zero denominator as insufficient data', async () => {
   if (!k) throw new Error('Missing KPI');
   const r = await value<{metric:{actual:number|null}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:k.id,work_date:'2026-11-02',numerator:0,denominator:0,request_key:crypto.randomUUID()})}') v`);
   expect(r?.metric.actual).toBeNull();
+});
+it('new close keeps raw result fingerprints and freezes separate measurement configuration', async () => {
+  await db.query(`SELECT private.k3_close_one('${user}','2026-11-02','auto')`);
+  expect(await value(`SELECT snapshot->'measurements'->0 ? 'kpi_snapshot' v FROM k3_daily_closes WHERE work_date='2026-11-02'`)).toBe(true);
+  expect(await value(`SELECT snapshot->'results'->0 ? 'kpi_snapshot' v FROM k3_daily_closes WHERE work_date='2026-11-02'`)).toBe(false);
 });
