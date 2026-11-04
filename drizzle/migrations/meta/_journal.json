@@ -1548,6 +1548,13 @@
       "when": 1793786954913,
       "tag": "0220_k3_configured_creation_and_date_preview",
       "breakpoints": true
+    },
+    {
+      "idx": 221,
+      "version": "7",
+      "when": 1793787090529,
+      "tag": "0221_k3_frozen_measurement_report_details",
+      "breakpoints": true
     }
   ]
 }
