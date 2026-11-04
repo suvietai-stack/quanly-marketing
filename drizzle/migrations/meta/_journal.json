@@ -1485,6 +1485,13 @@
       "when": 1793784560486,
       "tag": "0211_k3_scoped_measured_period_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 212,
+      "version": "7",
+      "when": 1793784723089,
+      "tag": "0212_k3_verified_legacy_task_archive",
+      "breakpoints": true
     }
   ]
 }

@@ -3415,10 +3415,13 @@ export type Database = {
       }
       k3_data_reviews: {
         Row: {
+          archived_at: string | null
+          backup_id: string | null
           created_at: string
           id: string
           kind: string
           original_snapshot: Json
+          purge_at: string | null
           reason: string
           record_id: string
           resolution_note: string | null
@@ -3427,10 +3430,13 @@ export type Database = {
           status: string
         }
         Insert: {
+          archived_at?: string | null
+          backup_id?: string | null
           created_at?: string
           id?: string
           kind: string
           original_snapshot: Json
+          purge_at?: string | null
           reason: string
           record_id: string
           resolution_note?: string | null
@@ -3439,10 +3445,13 @@ export type Database = {
           status?: string
         }
         Update: {
+          archived_at?: string | null
+          backup_id?: string | null
           created_at?: string
           id?: string
           kind?: string
           original_snapshot?: Json
+          purge_at?: string | null
           reason?: string
           record_id?: string
           resolution_note?: string | null
@@ -8069,6 +8078,11 @@ export type Database = {
       }
       k3_kpi_result_save: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_save: { Args: { _payload: Json }; Returns: Json }
+      k3_legacy_task_archive: {
+        Args: { _id: string; _reason: string }
+        Returns: Json
+      }
+      k3_legacy_task_restore: { Args: { _review: string }; Returns: boolean }
       k3_measured_period_read: {
         Args: { _end: string; _manage?: boolean; _start: string }
         Returns: Json
