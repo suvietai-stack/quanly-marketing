@@ -94,3 +94,16 @@ Nguyên tắc: Tạo công việc = tạo KG; một KG một/nhiều KF kèm KPI
 - [x] B5. UX: Biz3KQuickCreate (form KG + KF + KPI một lần lưu, Lưu nháp/Lưu và bắt đầu, mời thành viên cho KG nhóm); Biz3KMyDay thay "Thêm công việc" bằng "Tạo công việc" + "Ghi nhận thực hiện" (chọn KF có sẵn, không tạo KG giả); Biz3KManage trạng thái mới + 8 chỉ số tổng quan + lọc đơn vị + chi tiết KG/KF nhân viên.
 - [x] B6. Kiểm thử: 7 test database mới (0196) đạt; toàn bộ 3K 73/73; hồi quy Biz 372/377 (5 lỗi lịch có sẵn: effective-access, my-work); typecheck/build OK; UI thật desktop 1280 + mobile 390 qua menu: đủ 3 tab, form tạo, không tràn ngang, không lỗi trình duyệt.
 - [ ] Nghiệm thu luồng ghi thật bằng tài khoản nhân viên/quản lý (tạo công việc → KF → ghi kết quả nhiều ngày → chốt sổ → quản lý theo dõi): cần tài khoản thật được phép; chưa Publish.
+
+## 3K – Thùng lưu trữ (đang làm)
+- [x] Migration 0197: xóa mềm/khôi phục/trash_list/purge + cron 02:30
+- [x] 0198: RPC đọc loại trừ bản ghi đã xóa mềm
+- [x] 0199/0200: guard ghi goal/action/plan_task
+- [ ] 0201: guard kpi_save + task_save (đang sửa lỗi cú pháp nullif)
+- [ ] UI: menu ba chấm, hộp xác nhận, Thùng lưu trữ, khôi phục
+- [ ] Test database k3Trash + hồi quy
+
+## 3K – Nâng cấp mới (spec 670 dòng, chờ)
+- [ ] Deadline KG/KF tới giờ/phút (VN)
+- [ ] KPI đa phương thức đo; tự tính tiến độ/trạng thái
+- [ ] Lộ trình KF theo ngày/giờ/định kỳ; tự hiển thị vào 3K Của Tôi
