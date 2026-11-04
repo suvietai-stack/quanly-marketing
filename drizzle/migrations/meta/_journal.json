@@ -1401,6 +1401,13 @@
       "when": 1793772570092,
       "tag": "0199_k3_trash_guard_goal_save",
       "breakpoints": true
+    },
+    {
+      "idx": 200,
+      "version": "7",
+      "when": 1793772616676,
+      "tag": "0200_k3_trash_guard_action_plan",
+      "breakpoints": true
     }
   ]
 }
