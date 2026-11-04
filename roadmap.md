@@ -77,3 +77,10 @@ Nguyên tắc: MỘT KG – NHIỀU KF – NHIỀU NGƯỜI – NHIỀU NGÀY �
 - [x] 3K2-3. Bước 3 — Desktop: tab KG tham gia (lọc/lời mời/chi tiết/KF/KPI/thành viên), bỏ ô KG văn bản ngày (giữ lịch sử đọc), chọn KF vào hôm nay, góc nhìn Quý chỉ đọc, cài đặt quyền nghiệp vụ. Typecheck + 56 test hồi quy đạt.
 - [x] 3K2-4. Bước 4 — Desktop 1280px: tab KG tham gia, Tạo KG, Quý, Cài đặt, bỏ ô KG văn bản, không lỗi JS. Mobile 390/768 chưa đo được màn 3K (harness điều hướng preview bị chặn), bố cục dùng cùng lớp responsive đã kiểm trước đó.
 - [ ] 3K2-5. Còn lại: nghiệm thu ghi thật (tạo KG/KF/mời thành viên/chốt sổ bằng tài khoản thật được cho phép), kiểm mobile thật, chưa Publish.
+
+## NÂNG CẤP 3K THỐNG NHẤT 2 KHU VỰC — spec 1240 dòng (2026-11-04)
+Nguyên tắc: một mô hình KG/KF/KPI, hai không gian (3K Của Tôi / 3K Nhóm-Phòng Ban), một nguồn dữ liệu; bỏ tab "KG tham gia" và "Trong phạm vi quản lý" độc lập; quyền chỉ từ Cơ cấu tổ chức; bảo toàn dữ liệu/lịch sử; chưa Publish.
+- [ ] 3K3-1. Backend fix A–D (migration 0194): thu hồi thành viên chặn ghi KF cũ; sửa ngày KG custom lưu thật; KPI cùng đơn vị tách theo kpi_id trên k3_tasks; KF chưa tới ngày bắt đầu không vào danh sách hôm nay.
+- [ ] 3K3-2. Test database cho A–D + hồi quy 3K.
+- [ ] 3K3-3. Giao diện: Biz3K còn 2 tab + Cài đặt; Biz3KGoals thêm variant personal/scope; "3K Của Tôi" có Tạo KG trực tiếp; "3K Nhóm/Phòng Ban" gộp Theo nhân viên + Theo KG.
+- [ ] 3K3-4. Kiểm thử UI desktop/mobile, typecheck/build; cập nhật AGENTS.md biz.

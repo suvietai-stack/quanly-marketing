@@ -3893,6 +3893,7 @@ export type Database = {
           is_focus: boolean
           is_unscheduled: boolean
           kpi_actual: number | null
+          kpi_id: string | null
           kpi_target: number | null
           kpi_unit: string | null
           links: Json | null
@@ -3926,6 +3927,7 @@ export type Database = {
           is_focus?: boolean
           is_unscheduled?: boolean
           kpi_actual?: number | null
+          kpi_id?: string | null
           kpi_target?: number | null
           kpi_unit?: string | null
           links?: Json | null
@@ -3959,6 +3961,7 @@ export type Database = {
           is_focus?: boolean
           is_unscheduled?: boolean
           kpi_actual?: number | null
+          kpi_id?: string | null
           kpi_target?: number | null
           kpi_unit?: string | null
           links?: Json | null
@@ -3992,6 +3995,13 @@ export type Database = {
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "k3_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_tasks_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "k3_kpis"
             referencedColumns: ["id"]
           },
         ]

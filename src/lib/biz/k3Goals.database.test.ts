@@ -33,7 +33,7 @@ beforeAll(async () => {
   INSERT INTO biz_departments VALUES ('${dept}','Phòng Kinh doanh');
   INSERT INTO biz_department_members VALUES ('${staff}','${dept}'),('${other}','${dept}'),('${manager}','${dept}');
   SET test.uid='${staff}';`);
-  for (const file of ['0173_k3_daily_management_phase1.sql', '0174_k3_daily_integrity_and_summary_versions.sql', '0175_k3_period_entities.sql', '0176_k3_period_writes_and_task_links.sql', '0177_k3_period_reads_summaries_scope.sql', '0178_k3_summary_semantics_and_deadline_readback.sql', '0179_k3_unscheduled_creation_and_scope_fences.sql', '0180_k3_task_metadata_and_summary_integrity.sql', '0189_k3_cross_period_goal_model.sql', '0190_k3_goal_collaboration_rpcs.sql', '0191_k3_execution_integration.sql', '0192_k3_kpi_and_list_fixes.sql', '0193_k3_goal_detail_member_actuals_fix.sql'])
+  for (const file of ['0173_k3_daily_management_phase1.sql', '0174_k3_daily_integrity_and_summary_versions.sql', '0175_k3_period_entities.sql', '0176_k3_period_writes_and_task_links.sql', '0177_k3_period_reads_summaries_scope.sql', '0178_k3_summary_semantics_and_deadline_readback.sql', '0179_k3_unscheduled_creation_and_scope_fences.sql', '0180_k3_task_metadata_and_summary_integrity.sql', '0189_k3_cross_period_goal_model.sql', '0190_k3_goal_collaboration_rpcs.sql', '0191_k3_execution_integration.sql', '0192_k3_kpi_and_list_fixes.sql', '0193_k3_goal_detail_member_actuals_fix.sql', '0194_k3_unify_fixes_revoke_dates_kpi_future.sql'])
     await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
   // Quyền 3K thống nhất theo Cơ cấu tổ chức (0185): k3_can không còn dùng Role tổng/sig_can.
   const m0185 = readFileSync('drizzle/migrations/0185_biz_permission_unification.sql', 'utf8');
@@ -151,6 +151,10 @@ it('góc nhìn Quý tính đúng khoảng và đọc được', async () => {
 });
 
 it('đọc ngày kèm KG đang thực hiện và KF được phân công', async () => {
+  // other đang ở trạng thái invited sau khi được mời lại — chấp nhận để trở thành thành viên hợp lệ.
+  await as(other);
+  await val(`SELECT k3_member_respond('${goal}', true) v`);
+  await as(staff);
   const day = await val<{ active_goals: { id: string }[]; assigned_actions: { id: string; my_part: string }[] }>(`SELECT k3_day_read('${today}') v`);
   expect(day.active_goals.some((g) => g.id === goal)).toBe(true);
   // KF của staff đã kết thúc chưa đạt nên không còn trong danh sách cần làm; KF của other vẫn đang thực hiện.
@@ -170,4 +174,62 @@ it('cài đặt quyền nghiệp vụ ghi lịch sử và chặn tạo KG khi t�
   await val(`SELECT k3_module_settings_save('{"allow_personal_goal":true}') v`);
   expect(await val(`SELECT count(*)::int v FROM k3_settings_log`)).toBeGreaterThanOrEqual(3);
   await as(staff);
+});
+
+// --- FIX A–D (migration 0194) ---
+
+it('B. sửa ngày bắt đầu/hạn hoàn thành KG custom được backend lưu thật', async () => {
+  const rev = await val<number>(`SELECT revision::int v FROM k3_goals WHERE id='${goal}'`);
+  const g = await val<{ period_start: string; period_end: string }>(`SELECT k3_goal_save('{"id":"${goal}","revision":${rev},"name":"Phát triển 30 khách hàng tiềm năng","period_start":"2026-10-05","period_end":"2027-02-10"}') v`);
+  expect(g.period_start).toBe('2026-10-05');
+  expect(g.period_end).toBe('2027-02-10');
+  const stored = await val<{ period_start: string; period_end: string }>(`SELECT period_start::text, period_end::text FROM k3_goals WHERE id='${goal}'`);
+  expect(stored.period_start).toBe('2026-10-05');
+  expect(stored.period_end).toBe('2027-02-10');
+});
+
+it('D. KF chưa tới ngày bắt đầu không xuất hiện trong danh sách cần làm hôm nay', async () => {
+  const future = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  const a = await val<{ id: string }>(`SELECT k3_action_save('{"goal_id":"${goal}","name":"KF tương lai","start_date":"${future}","request_key":"20000000-0000-0000-0000-0000000000c1"}') v`);
+  const day = await val<{ assigned_actions: { id: string }[] }>(`SELECT k3_day_read('${today}') v`);
+  expect(day.assigned_actions.some((x) => x.id === a.id)).toBe(false);
+  // Đến ngày bắt đầu thì xuất hiện.
+  const dayFuture = await val<{ assigned_actions: { id: string }[] }>(`SELECT k3_day_read('${future}') v`);
+  expect(dayFuture.assigned_actions.some((x) => x.id === a.id)).toBe(true);
+});
+
+it('C. một KF có nhiều KPI cùng đơn vị: kết quả gắn đúng từng KPI, không cộng chung', async () => {
+  const a = await val<{ id: string }>(`SELECT k3_action_save('{"goal_id":"${goal}","name":"Gọi và gặp khách","request_key":"20000000-0000-0000-0000-0000000000c2"}') v`);
+  const k1 = await val<{ id: string }>(`SELECT k3_kpi_save('{"action_id":"${a.id}","name":"Cuộc gọi đạt chuẩn","kind":"cumulative","target":50,"unit":"cuộc gọi","request_key":"40000000-0000-0000-0000-0000000000c1"}') v`);
+  const k2 = await val<{ id: string }>(`SELECT k3_kpi_save('{"action_id":"${a.id}","name":"Cuộc gọi có hẹn","kind":"cumulative","target":20,"unit":"cuộc gọi","request_key":"40000000-0000-0000-0000-0000000000c2"}') v`);
+  // Bản ghi gắn đúng KPI 1.
+  await val(`SELECT k3_plan_task_save('{"name":"Gọi 7 cuộc đạt chuẩn","action_id":"${a.id}","kpi_id":"${k1.id}","work_date":"${today}","kpi_actual":7,"kpi_unit":"cuộc gọi","status":"doing","request_key":"30000000-0000-0000-0000-0000000000c1"}') v`);
+  // Bản ghi cũ không gắn KPI (legacy) vẫn tính theo đơn vị cho cả hai.
+  await val(`SELECT k3_plan_task_save('{"name":"Gọi 3 cuộc (bản ghi cũ)","action_id":"${a.id}","work_date":"${today}","kpi_actual":3,"kpi_unit":"cuộc gọi","status":"doing","request_key":"30000000-0000-0000-0000-0000000000c2"}') v`);
+  const detail = await val<{ actions: { action: { id: string }; kpis: { id: string; actual: number }[] }[] }>(`SELECT k3_goal_detail('${goal}') v`);
+  const kpis = detail.actions.find((x) => x.action.id === a.id)!.kpis;
+  expect(Number(kpis.find((k) => k.id === k1.id)!.actual)).toBe(10);
+  expect(Number(kpis.find((k) => k.id === k2.id)!.actual)).toBe(3);
+  // KPI không thuộc KF bị từ chối.
+  await expect(db.query(`SELECT k3_plan_task_save('{"name":"Sai KPI","action_id":"${a.id}","kpi_id":"${k1.id.replace(/.$/, '0')}","work_date":"${today}","request_key":"30000000-0000-0000-0000-0000000000c3"}')`)).rejects.toThrow();
+});
+
+it('A. thu hồi thành viên: không còn sửa/đổi trạng thái/ghi kết quả KF đã được giao', async () => {
+  // other đang là thành viên accepted và phụ trách action2.
+  const action2 = await val<string>(`SELECT id::text v FROM k3_actions WHERE assignee_id='${other}' AND status NOT IN ('cancelled') LIMIT 1`);
+  await val(`SELECT k3_member_revoke('${goal}','${other}') v`);
+  await as(other);
+  await expect(db.query(`SELECT k3_plan_task_save('{"name":"Ghi sau thu hồi","action_id":"${action2}","work_date":"${today}","request_key":"30000000-0000-0000-0000-0000000000d1"}')`)).rejects.toThrow();
+  const rev = await val<number>(`SELECT revision::int v FROM k3_actions WHERE id='${action2}'`);
+  await expect(db.query(`SELECT k3_action_status('${action2}','in_progress',NULL,NULL,NULL,${rev})`)).rejects.toThrow();
+  await expect(db.query(`SELECT k3_action_save('{"id":"${action2}","revision":${rev},"name":"Sửa sau thu hồi"}')`)).rejects.toThrow();
+  // Không còn thấy KF trong danh sách cần làm.
+  const day = await val<{ assigned_actions: { id: string }[]; active_goals: { id: string }[] }>(`SELECT k3_day_read('${today}') v`);
+  expect(day.assigned_actions.some((x) => x.id === action2)).toBe(false);
+  expect(day.active_goals.some((g) => g.id === goal)).toBe(false);
+  // Chủ trì vẫn quản lý được và lịch sử thực hiện cũ của other vẫn còn.
+  await as(staff);
+  const detail = await val<{ can_manage: boolean; executions: { user_id: string }[] }>(`SELECT k3_goal_detail('${goal}') v`);
+  expect(detail.can_manage).toBe(true);
+  expect(detail.executions.some((e) => e.user_id === other)).toBe(true);
 });
