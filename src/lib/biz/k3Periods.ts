@@ -1,6 +1,6 @@
 import { k3Counts,k3IsComplete,k3DisplayStatus, type K3Task, type K3Comment } from './k3';
 
-export type K3PeriodType = 'week' | 'month';
+export type K3PeriodType = 'week' | 'month' | 'quarter';
 export interface K3Goal {
   id: string; name: string; user_id: string; period_type: K3PeriodType; period_start: string; period_end: string;
   description: string | null; expected_result: string | null; kpi_target: number | null; kpi_unit: string | null; due_date: string | null; revision: number;
@@ -27,12 +27,18 @@ export function k3AddDays(date: string, amount: number) { const d = new Date(`${
 export function k3PeriodBounds(type: K3PeriodType, date: string) {
   const d = new Date(`${date}T12:00:00Z`);
   if (type === 'week') { const start = k3AddDays(date,-((d.getUTCDay()+6)%7)); return { start, end: k3AddDays(start,6) }; }
+  if (type === 'quarter') {
+    const qm = Math.floor(d.getUTCMonth()/3)*3;
+    return { start: iso(new Date(Date.UTC(d.getUTCFullYear(),qm,1,12))), end: iso(new Date(Date.UTC(d.getUTCFullYear(),qm+3,0,12))) };
+  }
   const start = `${date.slice(0,7)}-01`;
   return { start, end: iso(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0,12))) };
 }
 export function k3ShiftPeriod(type: K3PeriodType, date: string, amount: number) {
   if (type==='week') return k3AddDays(date,amount*7);
-  const d=new Date(`${date}T12:00:00Z`); return iso(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+amount,1,12)));
+  const d=new Date(`${date}T12:00:00Z`);
+  if (type==='quarter') return iso(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+amount*3,1,12)));
+  return iso(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+amount,1,12)));
 }
 export function k3PeriodCounts(tasks: K3PeriodTask[], today: string) {
   const scheduled=tasks.filter(t=>!t.is_unscheduled);
