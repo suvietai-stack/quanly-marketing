@@ -1366,6 +1366,13 @@
       "when": 1793767138097,
       "tag": "0194_k3_unify_fixes_revoke_dates_kpi_future",
       "breakpoints": true
+    },
+    {
+      "idx": 195,
+      "version": "7",
+      "when": 1793767339747,
+      "tag": "0195_k3_restore_vietnamese_messages",
+      "breakpoints": true
     }
   ]
 }
