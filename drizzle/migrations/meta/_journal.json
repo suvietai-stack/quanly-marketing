@@ -1478,6 +1478,13 @@
       "when": 1793784356689,
       "tag": "0210_k3_system_close_history_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 211,
+      "version": "7",
+      "when": 1793784560486,
+      "tag": "0211_k3_scoped_measured_period_reads",
+      "breakpoints": true
     }
   ]
 }

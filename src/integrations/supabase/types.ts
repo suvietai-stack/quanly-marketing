@@ -8069,6 +8069,10 @@ export type Database = {
       }
       k3_kpi_result_save: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_save: { Args: { _payload: Json }; Returns: Json }
+      k3_measured_period_read: {
+        Args: { _end: string; _manage?: boolean; _start: string }
+        Returns: Json
+      }
       k3_member_invite: {
         Args: { _goal_id: string; _user_ids: string[] }
         Returns: Json
