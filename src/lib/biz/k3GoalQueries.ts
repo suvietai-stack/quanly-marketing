@@ -50,7 +50,8 @@ export function useK3GoalMutation() {
   return useMutation({
     mutationFn: async (input: K3GoalMutationInput) => {
       let result;
-      if (input.kind === 'goal') result = await supabase.rpc('k3_goal_save', { _payload: input.payload as never });
+      if (input.kind === 'quick_create') result = await supabase.rpc('k3_quick_create', { _payload: input.payload as never });
+      else if (input.kind === 'goal') result = await supabase.rpc('k3_goal_save', { _payload: input.payload as never });
       else if (input.kind === 'goal_status') result = await supabase.rpc('k3_goal_status', { _id: input.id, _status: input.status, _note: input.note ?? null, _revision: input.revision } as never);
       else if (input.kind === 'invite') result = await supabase.rpc('k3_member_invite', { _goal_id: input.goal_id, _user_ids: input.user_ids } as never);
       else if (input.kind === 'respond') result = await supabase.rpc('k3_member_respond', { _goal_id: input.goal_id, _accept: input.accept } as never);
