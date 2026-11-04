@@ -83,15 +83,17 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
 
       <div className="flex flex-wrap items-center gap-2">
         <Input placeholder="Tìm mục tiêu…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {FILTERS.filter((f) => !f.scope || settings.can_view_scope).map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {variant === 'personal' && (
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {FILTERS.filter((f) => !f.scope).map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <div className="flex-1" />
-        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled}>
-          <Plus className="mr-1 h-4 w-4" /> Tạo KG
+        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant === 'scope' && !settings.allow_team_goal)}>
+          <Plus className="mr-1 h-4 w-4" /> {variant === 'scope' ? 'Tạo KG nhóm' : 'Tạo KG'}
         </Button>
       </div>
 
