@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { k3Error } from '@/lib/biz/k3';
 import { k3PeriodBounds, type K3PeriodType } from '@/lib/biz/k3Periods';
-import type { K3ResultMetric } from '@/lib/biz/k3KpiResults';
+import type { K3Measure } from '@/lib/biz/k3KpiResults';
+import { k3MetricDisplay, type K3TypedMetric } from '@/lib/biz/k3Measurement';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 
-interface Person { user_id: string; name: string; department: string | null; updated: boolean; closes: number; kpis: { id:string;name:string;unit:string|null;target:number|null;goal_name:string;action_name:string|null;metric:K3ResultMetric;official_metric:K3ResultMetric }[] }
+interface Person { user_id: string; name: string; department: string | null; updated: boolean; closes: number; kpis: { id:string;name:string;unit:string|null;measure:K3Measure;target:number|null;goal_name:string;action_name:string|null;metric:K3TypedMetric;official_metric:K3TypedMetric }[] }
 export function Biz3KMeasuredPeriod({type,date,onDateChange,manage=false}:{type:'day'|K3PeriodType;date:string;onDateChange:(date:string)=>void;manage?:boolean}) {
   const uid=useAuth((s)=>s.currentUserId)??'';
   const [search,setSearch]=useState('');
@@ -24,7 +25,7 @@ export function Biz3KMeasuredPeriod({type,date,onDateChange,manage=false}:{type:
     {query.error&&<div><p className="text-sm text-destructive">{k3Error(query.error)}</p><Button variant="outline" onClick={()=>query.refetch()}>Thử lại</Button></div>}
     {people.filter((p)=>p.name.toLowerCase().includes(search.toLowerCase())).map((p)=><section key={p.user_id} className="space-y-3 border-b border-border pb-4">
       {manage&&<div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-medium">{p.name}</h3><p className="text-xs text-muted-foreground">{p.department??'Chưa có phòng'} · {p.closes} ngày đã chốt</p></div><Badge variant="outline">{p.updated?'Đã cập nhật':'Chưa cập nhật'}</Badge></div>}
-      {p.kpis.map((k)=><div key={k.id} className="border-l-2 border-border pl-3"><p className="break-words font-medium">{k.name}</p><p className="text-xs text-muted-foreground">{k.goal_name}{k.action_name&&` · ${k.action_name}`}</p><p className="text-sm tabular-nums">Trong kỳ: {k.metric.actual?.toLocaleString('vi-VN')??'—'} {k.unit}{k.metric.progress!=null&&` · ${k.metric.progress}%`}</p><p className="text-xs text-muted-foreground">Đã chốt: {k.official_metric.actual?.toLocaleString('vi-VN')??'Chưa có số liệu'} {k.unit}</p></div>)}
+      {p.kpis.map((k)=><div key={k.id} className="border-l-2 border-border pl-3"><p className="break-words font-medium">{k.name}</p><p className="text-xs text-muted-foreground">{k.goal_name}{k.action_name&&` · ${k.action_name}`}</p><p className="text-sm tabular-nums">Trong kỳ: {k3MetricDisplay(k.measure,k.metric,k.target,k.unit??'')}</p><p className="text-xs text-muted-foreground">Đã chốt: {k3MetricDisplay(k.measure,k.official_metric,k.target,k.unit??'')}</p></div>)}
       {!p.kpis.length&&<p className="text-sm text-muted-foreground">Chưa có kết quả KPI trong kỳ.</p>}
     </section>)}
     {!query.isLoading&&!query.error&&!people.length&&<p className="text-sm text-muted-foreground">Chưa có nhân viên phù hợp phạm vi.</p>}

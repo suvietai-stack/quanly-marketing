@@ -1,11 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## BỘ ĐO KPI ĐA DẠNG — spec 866 dòng (04/11/2026)
-- [ ] M1. Mở rộng 10 kiểu đo và cấu hình có cấu trúc; giữ nguồn KPI/người/ngày và lịch sử cấu hình.
-- [ ] M2. Máy tính chung phía máy chủ, chu kỳ/lịch/chuỗi, bằng chứng và nghiệm thu, nhiều KPI bắt buộc.
-- [ ] M3. Bộ chọn thẻ và form động dùng chung Tạo KG/KF, cấu hình và cập nhật; tổng KPI tách kế hoạch ngày.
-- [ ] M4. Đồng bộ chốt sổ/báo cáo/quản lý/Zalo; Lưu trữ chờ rà soát không tự purge, Thùng rác xác nhận xóa 15 ngày.
-- [ ] M5. Kiểm kê A/B/C và đối soát chỉ đọc, kiểm thử nghiệp vụ/hồi quy/mobile; không chuyển dữ liệu thật hoặc gửi Zalo chưa được phép; chưa Publish.
+- [x] M1a. 0216–0223: 10 kiểu đo, cấu hình JSON, snapshot cấu hình và revision kết quả; chặn đổi công thức đã có kết quả.
+- [x] M2a. Máy tính chung, lịch/chu kỳ/chuỗi, bằng chứng, nghiệm thu theo revision; thời lượng chuẩn phút, chống chồng lấn, mốc tuần tự, nhiều KPI bắt buộc.
+- [x] M3a. Bộ chọn 6+4 thẻ dùng chung Tạo KG/KF và Thêm KPI, nhiều KPI/KF; form kết quả động, preview phía máy chủ, nhật ký nghiệm thu; kế hoạch ngày tách tổng KPI.
+- [x] M4a. Tổng hợp kỳ/monitor và báo cáo dùng kiểu đo; snapshot đo lường riêng không đổi fingerprint chốt; rà soát không tự purge, Thùng rác riêng 15 ngày.
+- [x] M5a. Đối soát chỉ đọc giữ 2 KPI/1 kết quả/3 task/0 rà soát, Zalo vẫn Tắt; giao diện tài khoản thật 360/375/390/430/768/1280/1440px không tràn.
+- [ ] M5b. Nghiệm thu tạo/cập nhật/chốt/nghiệm thu và gửi Zalo trên hồ sơ thật: cần người dùng cho phép thao tác và chọn hồ sơ/nhóm; chưa chuyển dữ liệu cũ, chưa Publish.
 
 ## FIX MODULE QUẢN LÝ 3K — 04/11/2026
 - [x] F1. Một badge KF, kết quả ngày/lũy kế/%; cùng ngày thay tổng, khác ngày cộng dồn; UI thật hiển thị 30/200=15%.
