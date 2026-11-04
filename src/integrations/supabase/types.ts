@@ -8337,6 +8337,7 @@ export type Database = {
       k3_purge_expired: { Args: { _batch?: number }; Returns: Json }
       k3_quick_create: { Args: { _payload: Json }; Returns: Json }
       k3_restore: { Args: { _id: string; _kind: string }; Returns: Json }
+      k3_review_reminder_run: { Args: never; Returns: number }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
