@@ -1464,6 +1464,13 @@
       "when": 1793776043465,
       "tag": "0208_k3_canonical_official_delete_protection",
       "breakpoints": true
+    },
+    {
+      "idx": 209,
+      "version": "7",
+      "when": 1793784060651,
+      "tag": "0209_k3_auto_close_and_zalo_reports",
+      "breakpoints": true
     }
   ]
 }
