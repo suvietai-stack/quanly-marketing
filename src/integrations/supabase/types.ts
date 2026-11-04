@@ -7921,6 +7921,7 @@ export type Database = {
         Args: { _actor: string; _goal: string }
         Returns: boolean
       }
+      k3_kpi_configure: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_day_confirm: { Args: { _date: string }; Returns: Json }
       k3_kpi_delete: { Args: { _id: string }; Returns: boolean }
       k3_kpi_result_read: {

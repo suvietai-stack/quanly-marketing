@@ -1422,6 +1422,13 @@
       "when": 1793774172636,
       "tag": "0202_k3_daily_kpi_result_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 203,
+      "version": "7",
+      "when": 1793774280710,
+      "tag": "0203_k3_kpi_metric_and_configuration_guards",
+      "breakpoints": true
     }
   ]
 }
