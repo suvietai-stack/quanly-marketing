@@ -109,3 +109,17 @@ it('database: cấu hình KPI mới lưu đúng phương thức, không lỗi t�
 it('database: đường ghi KPI cũ không cho gán giá trị xác nhận thủ công', async () => {
   await expect(db.query(`SELECT k3_kpi_save('{"manual_actual":100}')`)).rejects.toThrow('theo ngày');
 });
+it.each([
+  ['distinct', 2, {objects:['A','B','A']}, 2],
+  ['current', 100, {value:40}, 40],
+  ['ratio', 50, {numerator:2,denominator:4}, 50],
+  ['average', 10, {numerator:30,denominator:3}, 10],
+  ['milestone', null, {completed:['Bước 1'],evidence:'Đã đối chiếu'}, 1],
+  ['duration', 60, {value:90}, 90],
+] as const)('database: phép đo %s có kết quả đúng tại máy chủ', async (measure,target,values,expected) => {
+  const key = `20000000-0000-0000-0000-${String(++seq).padStart(12,'0')}`;
+  const config = await result<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,request_key:key,name:measure,measure,target,milestones:measure==='milestone'?['Bước 1']:[]})}') v`);
+  expect(config?.id).toBeTruthy();
+  const saved = await result<{metric:{actual:number}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:config?.id,work_date:'2026-11-01',revision:0,request_key:crypto.randomUUID(),...values})}') v`);
+  expect(saved?.metric.actual).toBe(expected);
+});
