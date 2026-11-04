@@ -3332,6 +3332,45 @@ export type Database = {
           },
         ]
       }
+      k3_data_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          original_snapshot: Json
+          reason: string
+          record_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          original_snapshot: Json
+          reason: string
+          record_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          original_snapshot?: Json
+          reason?: string
+          record_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       k3_days: {
         Row: {
           confirmed_at: string | null
@@ -3524,9 +3563,172 @@ export type Database = {
           },
         ]
       }
+      k3_kpi_day_confirmations: {
+        Row: {
+          actor_id: string
+          confirmed_at: string
+          id: string
+          snapshot: Json
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          actor_id: string
+          confirmed_at?: string
+          id?: string
+          snapshot: Json
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          actor_id?: string
+          confirmed_at?: string
+          id?: string
+          snapshot?: Json
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
+      k3_kpi_result_versions: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          request_key: string
+          result_id: string
+          revision: number
+          snapshot: Json
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          request_key: string
+          result_id: string
+          revision: number
+          snapshot: Json
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          request_key?: string
+          result_id?: string
+          revision?: number
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_kpi_result_versions_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "k3_kpi_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3_kpi_results: {
+        Row: {
+          action_id: string | null
+          cause: string | null
+          completed: Json
+          created_at: string
+          deleted_at: string | null
+          denominator: number | null
+          evidence: string | null
+          goal_id: string
+          id: string
+          kpi_id: string
+          note: string | null
+          numerator: number | null
+          objects: Json
+          problem: string | null
+          review_reason: string | null
+          revision: number
+          solution: string | null
+          updated_at: string
+          updated_by: string
+          user_id: string
+          value: number | null
+          work_date: string
+        }
+        Insert: {
+          action_id?: string | null
+          cause?: string | null
+          completed?: Json
+          created_at?: string
+          deleted_at?: string | null
+          denominator?: number | null
+          evidence?: string | null
+          goal_id: string
+          id?: string
+          kpi_id: string
+          note?: string | null
+          numerator?: number | null
+          objects?: Json
+          problem?: string | null
+          review_reason?: string | null
+          revision?: number
+          solution?: string | null
+          updated_at?: string
+          updated_by: string
+          user_id: string
+          value?: number | null
+          work_date: string
+        }
+        Update: {
+          action_id?: string | null
+          cause?: string | null
+          completed?: Json
+          created_at?: string
+          deleted_at?: string | null
+          denominator?: number | null
+          evidence?: string | null
+          goal_id?: string
+          id?: string
+          kpi_id?: string
+          note?: string | null
+          numerator?: number | null
+          objects?: Json
+          problem?: string | null
+          review_reason?: string | null
+          revision?: number
+          solution?: string | null
+          updated_at?: string
+          updated_by?: string
+          user_id?: string
+          value?: number | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3_kpi_results_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "k3_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_kpi_results_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "k3_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_kpi_results_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "k3_kpis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       k3_kpis: {
         Row: {
           action_id: string | null
+          condition: string
           created_at: string
           created_by: string | null
           goal_id: string | null
@@ -3534,15 +3736,20 @@ export type Database = {
           kind: string
           manual_actual: number | null
           manual_source: string | null
+          measure: string
+          milestones: Json
           name: string
           request_key: string | null
+          required: boolean
           sort_order: number
           target: number | null
+          target_max: number | null
           unit: string | null
           updated_at: string
         }
         Insert: {
           action_id?: string | null
+          condition?: string
           created_at?: string
           created_by?: string | null
           goal_id?: string | null
@@ -3550,15 +3757,20 @@ export type Database = {
           kind?: string
           manual_actual?: number | null
           manual_source?: string | null
+          measure?: string
+          milestones?: Json
           name: string
           request_key?: string | null
+          required?: boolean
           sort_order?: number
           target?: number | null
+          target_max?: number | null
           unit?: string | null
           updated_at?: string
         }
         Update: {
           action_id?: string | null
+          condition?: string
           created_at?: string
           created_by?: string | null
           goal_id?: string | null
@@ -3566,10 +3778,14 @@ export type Database = {
           kind?: string
           manual_actual?: number | null
           manual_source?: string | null
+          measure?: string
+          milestones?: Json
           name?: string
           request_key?: string | null
+          required?: boolean
           sort_order?: number
           target?: number | null
+          target_max?: number | null
           unit?: string | null
           updated_at?: string
         }
@@ -7705,7 +7921,14 @@ export type Database = {
         Args: { _actor: string; _goal: string }
         Returns: boolean
       }
+      k3_kpi_configure: { Args: { _payload: Json }; Returns: Json }
+      k3_kpi_day_confirm: { Args: { _date: string }; Returns: Json }
       k3_kpi_delete: { Args: { _id: string }; Returns: boolean }
+      k3_kpi_result_read: {
+        Args: { _date: string; _kpi: string }
+        Returns: Json
+      }
+      k3_kpi_result_save: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_save: { Args: { _payload: Json }; Returns: Json }
       k3_member_invite: {
         Args: { _goal_id: string; _user_ids: string[] }
