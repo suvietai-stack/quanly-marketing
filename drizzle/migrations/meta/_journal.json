@@ -1443,6 +1443,13 @@
       "when": 1793775374342,
       "tag": "0205_k3_daily_kpi_unified_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 206,
+      "version": "7",
+      "when": 1793775740241,
+      "tag": "0206_k3_result_privacy_and_configuration_fences",
+      "breakpoints": true
     }
   ]
 }
