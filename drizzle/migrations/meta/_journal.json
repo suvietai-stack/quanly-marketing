@@ -1597,6 +1597,13 @@
       "when": 1793788241142,
       "tag": "0227_k3_scoped_review_monitor_and_notification_payload",
       "breakpoints": true
+    },
+    {
+      "idx": 228,
+      "version": "7",
+      "when": 1793788312207,
+      "tag": "0228_k3_review_stable_versions_and_safe_history",
+      "breakpoints": true
     }
   ]
 }

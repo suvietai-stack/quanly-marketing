@@ -8405,6 +8405,7 @@ export type Database = {
         Args: { _error?: string; _id: string; _lease: string; _status: string }
         Returns: boolean
       }
+      k3_zalo_report_preview: { Args: { _date: string }; Returns: Json }
       k3_zalo_report_queue: { Args: never; Returns: number }
       leave_approvers: {
         Args: never
