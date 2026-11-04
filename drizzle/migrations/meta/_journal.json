@@ -1324,6 +1324,27 @@
       "when": 1793697718206,
       "tag": "0188_biz_mywork_cycle_rpc_permission_via_biz_can",
       "breakpoints": true
+    },
+    {
+      "idx": 189,
+      "version": "7",
+      "when": 1793756991753,
+      "tag": "0189_k3_cross_period_goal_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 190,
+      "version": "7",
+      "when": 1793757294029,
+      "tag": "0190_k3_goal_collaboration_rpcs",
+      "breakpoints": true
+    },
+    {
+      "idx": 191,
+      "version": "7",
+      "when": 1793757399815,
+      "tag": "0191_k3_execution_integration",
+      "breakpoints": true
     }
   ]
 }
