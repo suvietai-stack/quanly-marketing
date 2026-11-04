@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Check, Loader2, Plus, Star, Target, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3Error, type K3Settings } from '@/lib/biz/k3';
-import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
+import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalMember, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
 import { k3GoalDetailQuery, k3GoalListQuery, k3MemberSearchQuery, useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
