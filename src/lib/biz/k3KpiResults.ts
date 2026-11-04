@@ -1,5 +1,5 @@
 /** Preview only. The database is authoritative for saved KPI results. */
-export type K3Measure = 'cumulative' | 'distinct' | 'current' | 'ratio' | 'average' | 'milestone' | 'duration';
+export type K3Measure = 'cumulative' | 'distinct' | 'current' | 'ratio' | 'average' | 'milestone' | 'duration' | 'binary' | 'frequency' | 'streak';
 export type K3Condition = 'gte' | 'lte' | 'eq' | 'range';
 export interface K3Measurement {
   measure: K3Measure;
@@ -7,6 +7,7 @@ export interface K3Measurement {
   target: number | null;
   target_max?: number | null;
   milestones?: string[];
+  config?: import('./k3Measurement').K3MeasureConfig;
 }
 export interface K3DailyValue {
   value?: number | null;
@@ -15,6 +16,7 @@ export interface K3DailyValue {
   objects?: string[];
   completed?: string[];
   evidence?: string;
+  intervals?: { start: string; end: string }[];
 }
 export interface K3ResultMetric {
   actual: number | null;
@@ -30,6 +32,7 @@ export function k3RequiredStatus(metrics: { required: boolean; metric: K3ResultM
 export const K3_MEASURE_LABELS: Record<K3Measure, string> = {
   cumulative: 'Số lượng cộng dồn', distinct: 'Số lượng không trùng', current: 'Giá trị hiện tại',
   ratio: 'Tỷ lệ phần trăm', average: 'Giá trị trung bình', milestone: 'Mốc hoàn thành', duration: 'Thời lượng (phút)',
+  binary: 'Có / Chưa', frequency: 'Tần suất', streak: 'Chuỗi liên tục',
 };
 export const K3_CONDITION_LABELS: Record<K3Condition, string> = {
   gte: '≥ mục tiêu', lte: '≤ mục tiêu', eq: '= mục tiêu', range: 'Trong khoảng',
