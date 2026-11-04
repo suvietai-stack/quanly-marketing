@@ -118,3 +118,15 @@ it('official legacy history cannot be placed on a 15-day deletion clock',async()
   await expect(db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`)).rejects.toThrow('chốt sổ lịch sử');
   expect(await value(`SELECT deleted_at v FROM k3_tasks WHERE id='${tid}'`)).toBeNull();
 });
+it('expired archive purges only the unconfirmed source and retains backup and audit',async()=>{
+  const tid=crypto.randomUUID(),day=crypto.randomUUID(),backup=crypto.randomUUID();
+  await db.exec(`INSERT INTO k3_days VALUES('${day}',NULL);INSERT INTO k3_tasks(id,day_id,user_id) VALUES('${tid}','${day}','${user}');
+  INSERT INTO private.k3_kpi_upgrade_backups VALUES('${backup}',now(),'${user}',jsonb_build_object('tasks',(SELECT jsonb_agg(to_jsonb(t)) FROM k3_tasks t)),jsonb_build_object('tasks',(SELECT count(*) FROM k3_tasks)));`);
+  await db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu cấu trúc')`);
+  expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(0);
+  await db.exec(`UPDATE k3_data_reviews SET purge_at=now()-interval '1 second' WHERE record_id='${tid}';`);
+  expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(1);
+  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE id='${tid}'`)).toBe(0);
+  expect(await value(`SELECT count(*)::int v FROM private.k3_kpi_upgrade_backups WHERE id='${backup}'`)).toBe(1);
+  expect(await value(`SELECT status v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBe('delete_confirmed');
+});

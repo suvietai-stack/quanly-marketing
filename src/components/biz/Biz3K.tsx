@@ -47,7 +47,7 @@ export function Biz3K() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex min-w-0 flex-1 flex-wrap gap-2 overflow-x-auto">
+        <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:flex-1">
           {visible.map((t) => (
             <Button variant="ghost"
               key={t.key}
