@@ -15,12 +15,42 @@ export interface K3Settings {
   plan_by: string;
   summary_by: string;
   max_focus: number;
+  allow_personal_goal?: boolean;
+  allow_team_goal?: boolean;
+  allow_invite?: boolean;
+  allow_assign?: boolean;
   updated_at: string | null;
   can_use: boolean;
   can_view_scope: boolean;
   can_comment: boolean;
   can_settings: boolean;
   today: string;
+}
+
+/** KG đang thực hiện có liên quan đến nhân viên trong ngày. */
+export interface K3ActiveGoal {
+  id: string;
+  name: string;
+  status: string;
+  period_start: string;
+  period_end: string;
+  due_date: string | null;
+  is_key: boolean;
+  owner_name: string | null;
+  my_role: string | null;
+}
+
+/** KF nhân viên được phân công/phối hợp và còn đang thực hiện. */
+export interface K3AssignedAction {
+  id: string;
+  goal_id: string;
+  goal_name: string;
+  name: string;
+  status: string;
+  due_date: string | null;
+  is_key: boolean;
+  my_part: 'assignee' | 'collaborator';
+  already_today: boolean;
 }
 
 export interface K3Task {
@@ -83,6 +113,8 @@ export interface K3DayData {
   comments: K3Comment[];
   events?: { id: number; task_id: string | null; action: string; detail: Record<string, unknown>; created_at: string }[];
   summaries?: { id: string; revision: number; confirmed_at: string; snapshot: { kg: string | null; tasks: K3Task[] } }[];
+  active_goals?: K3ActiveGoal[];
+  assigned_actions?: K3AssignedAction[];
 }
 
 export interface K3TeamRow {

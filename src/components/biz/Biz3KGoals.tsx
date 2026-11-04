@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, Check, History, Loader2, Plus, Star, Target, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { Check, Loader2, Plus, Star, Target, UserPlus, Users, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3Error, type K3Settings } from '@/lib/biz/k3';
 import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
@@ -634,16 +634,4 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
       </DialogContent>
     </Dialog>
   );
-}
-
-export function K3GoalHistoryIcon() {
-  return <History className="h-4 w-4" />;
-}
-
-export function K3OverdueIcon() {
-  return <AlertTriangle className="h-4 w-4" />;
-}
-
-export function K3TrashIcon() {
-  return <Trash2 className="h-4 w-4" />;
 }
