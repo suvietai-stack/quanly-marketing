@@ -1380,6 +1380,41 @@
       "when": 1793770522817,
       "tag": "0196_k3_standardize_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 197,
+      "version": "7",
+      "when": 1793772047925,
+      "tag": "0197_k3_soft_delete_trash",
+      "breakpoints": true
+    },
+    {
+      "idx": 198,
+      "version": "7",
+      "when": 1793772257393,
+      "tag": "0198_k3_trash_read_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 199,
+      "version": "7",
+      "when": 1793772570092,
+      "tag": "0199_k3_trash_guard_goal_save",
+      "breakpoints": true
+    },
+    {
+      "idx": 200,
+      "version": "7",
+      "when": 1793772616676,
+      "tag": "0200_k3_trash_guard_action_plan",
+      "breakpoints": true
+    },
+    {
+      "idx": 201,
+      "version": "7",
+      "when": 1793772707616,
+      "tag": "0201_k3_trash_guard_kpi_task",
+      "breakpoints": true
     }
   ]
 }

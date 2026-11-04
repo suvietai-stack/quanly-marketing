@@ -3205,6 +3205,8 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           due_date: string | null
           goal_id: string
           id: string
@@ -3230,6 +3232,8 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           due_date?: string | null
           goal_id: string
           id?: string
@@ -3255,6 +3259,8 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           due_date?: string | null
           goal_id?: string
           id?: string
@@ -3438,6 +3444,8 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           department_id: string | null
           description: string | null
           due_date: string | null
@@ -3461,6 +3469,8 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           department_id?: string | null
           description?: string | null
           due_date?: string | null
@@ -3484,6 +3494,8 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           department_id?: string | null
           description?: string | null
           due_date?: string | null
@@ -3887,6 +3899,7 @@ export type Database = {
           created_by: string | null
           day_id: string
           deleted_at: string | null
+          deleted_by: string | null
           end_time: string | null
           how: string | null
           id: string
@@ -3921,6 +3934,7 @@ export type Database = {
           created_by?: string | null
           day_id: string
           deleted_at?: string | null
+          deleted_by?: string | null
           end_time?: string | null
           how?: string | null
           id?: string
@@ -3955,6 +3969,7 @@ export type Database = {
           created_by?: string | null
           day_id?: string
           deleted_at?: string | null
+          deleted_by?: string | null
           end_time?: string | null
           how?: string | null
           id?: string
@@ -7737,7 +7752,9 @@ export type Database = {
         Returns: Json
       }
       k3_plan_task_save: { Args: { _payload: Json }; Returns: Json }
+      k3_purge_expired: { Args: { _batch?: number }; Returns: Json }
       k3_quick_create: { Args: { _payload: Json }; Returns: Json }
+      k3_restore: { Args: { _id: string; _kind: string }; Returns: Json }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
@@ -7750,6 +7767,7 @@ export type Database = {
         }
         Returns: Json
       }
+      k3_soft_delete: { Args: { _id: string; _kind: string }; Returns: Json }
       k3_summary_confirm: { Args: { _date: string }; Returns: Json }
       k3_task_delete: { Args: { _id: string }; Returns: boolean }
       k3_task_save: { Args: { _payload: Json }; Returns: Json }
@@ -7771,6 +7789,7 @@ export type Database = {
         Returns: Json
       }
       k3_team_read: { Args: { _date: string }; Returns: Json }
+      k3_trash_list: { Args: { _kind?: string }; Returns: Json }
       k3_user_day_read: {
         Args: { _date: string; _user: string }
         Returns: Json
