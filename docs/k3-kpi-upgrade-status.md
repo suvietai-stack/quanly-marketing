@@ -13,6 +13,9 @@
 Kiểm kê ban đầu: 2 KG, 1 KF, 2 KPI, 3 công việc cũ, 3 ngày, 2 ngày tổng kết; cả 3 công việc chưa có KPI ID và 2 chưa có KF. Không đoán liên kết, không đổi số liệu/timestamp, không tạo dữ liệu giả.
 Số chuyển đổi: **0**. Số cách ly tự động: **0**. Đã bổ sung tạo bản sao riêng tư kiểm đếm, nhưng chưa chạy hoặc kiểm tra khôi phục; không coi tồn tại RPC là sao lưu đã xác minh.
 
+## Kiểm tra đã chạy
+109/109 kiểm thử 3K đạt: 16 công thức/điều kiện và KPI bắt buộc, 20 kiểm thử máy chủ mới, 73 hồi quy cũ. Các kiểm thử mới dùng dữ liệu cô lập, không tạo kết quả thử trong hệ thống thật. Kiểm tra biên dịch gần nhất thành công. Trình duyệt vẫn ở trang đăng nhập nên chưa chứng minh luồng nhập/lưu/đọc lại qua giao diện.
+
 ## Chưa hoàn tất
 - Tổng hợp kỳ/monitor còn dùng nguồn legacy; chưa nghiệm thu tính thống nhất toàn bộ màn hình.
 - Còn biểu mẫu cập nhật legacy ở các màn kỳ; màn ngày lịch sử chỉ đọc.
