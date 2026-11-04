@@ -75,5 +75,5 @@ Nguyên tắc: MỘT KG – NHIỀU KF – NHIỀU NGƯỜI – NHIỀU NGÀY �
 - [x] 3K2-1. Bước 1 — Mô hình dữ liệu: migration 0189 (KG custom range/trạng thái/trọng tâm, k3_goal_members, k3_action_collaborators, k3_kpis đa dòng + backfill, cài đặt quyền nghiệp vụ, RLS theo k3_goal_visible).
 - [x] 3K2-2. Bước 2 — Backend: migrations 0190–0193 (goal/action save v2, trạng thái, mời/chấp nhận/thu hồi, KPI RPC, goal list/detail, member search, module settings, worker_ok cho thực thi chung, góc nhìn Quý, day read kèm KG/KF). 12 test database mới đạt.
 - [x] 3K2-3. Bước 3 — Desktop: tab KG tham gia (lọc/lời mời/chi tiết/KF/KPI/thành viên), bỏ ô KG văn bản ngày (giữ lịch sử đọc), chọn KF vào hôm nay, góc nhìn Quý chỉ đọc, cài đặt quyền nghiệp vụ. Typecheck + 56 test hồi quy đạt.
-- [ ] 3K2-4. Bước 4 — Kiểm tra UI trình duyệt desktop/mobile (đang chạy).
-- [ ] 3K2-5. Bước 5 — Kiểm thử A–H theo spec + regression, báo cáo nghiệm thu.
+- [x] 3K2-4. Bước 4 — Desktop 1280px: tab KG tham gia, Tạo KG, Quý, Cài đặt, bỏ ô KG văn bản, không lỗi JS. Mobile 390/768 chưa đo được màn 3K (harness điều hướng preview bị chặn), bố cục dùng cùng lớp responsive đã kiểm trước đó.
+- [ ] 3K2-5. Còn lại: nghiệm thu ghi thật (tạo KG/KF/mời thành viên/chốt sổ bằng tài khoản thật được cho phép), kiểm mobile thật, chưa Publish.
