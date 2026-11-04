@@ -14,14 +14,18 @@ Kiểm kê ban đầu: 2 KG, 1 KF, 2 KPI, 3 công việc cũ, 3 ngày, 2 ngày t
 Số chuyển đổi: **0**. Số cách ly tự động: **0**. Đã bổ sung tạo bản sao riêng tư kiểm đếm, nhưng chưa chạy hoặc kiểm tra khôi phục; không coi tồn tại RPC là sao lưu đã xác minh.
 
 ## Kiểm tra đã chạy
-109/109 kiểm thử 3K đạt: 16 công thức/điều kiện và KPI bắt buộc, 20 kiểm thử máy chủ mới, 73 hồi quy cũ. Các kiểm thử mới dùng dữ liệu cô lập, không tạo kết quả thử trong hệ thống thật. Kiểm tra biên dịch gần nhất thành công. Trình duyệt vẫn ở trang đăng nhập nên chưa chứng minh luồng nhập/lưu/đọc lại qua giao diện.
+123/123 kiểm thử 3K đạt, gồm chốt tự động không actor giả, điều chỉnh sau chốt, phạm vi ngày, lease chống gửi lại, bản sao khớp nguyên bản, lưu trữ/khôi phục/purge 15 ngày và chặn xóa lịch sử chốt. Kiểm tra biên dịch thành công. Admin thật đã đọc màn ngày (30/200=15%), cài đặt (18:00/18:05, Zalo Tắt) và theo dõi nhân viên. Desktop và mobile 390px không tràn. Không ghi kết quả thử, không chốt/sửa hồ sơ thật, không gửi Zalo thử.
+
+## Bổ sung 0209–0215
+- SQL tự chốt ngày, k3_daily_closes source=auto actor NULL; không tạo xác nhận nhân viên giả. Công thức chính thức dùng snapshot chốt, sửa cần lý do và xác nhận lại.
+- Kỳ/quản lý dùng k3_measured_period_read và scoped range metrics; không dùng task legacy làm số KPI chính thức.
+- Cài đặt Zalo riêng, outbox và claim không reclaim, kết quả mơ hồ không gửi lại; dispatch nối cron pulse hiện hữu. Gửi chưa bật và chưa nghiệm thu OA thật.
+- Task cũ chưa chốt thiếu KPI có lưu trữ/khôi phục 15 ngày sau backup đối chiếu; bảo vệ chốt và giữ private backup/audit. Chưa chuyển bản ghi thật.
 
 ## Chưa hoàn tất
-- Tổng hợp kỳ/monitor còn dùng nguồn legacy; chưa nghiệm thu tính thống nhất toàn bộ màn hình.
-- Còn biểu mẫu cập nhật legacy ở các màn kỳ; màn ngày lịch sử chỉ đọc.
-- Chưa có quy trình đầy đủ liên kết/khôi phục/xác nhận xóa dữ liệu cần rà soát, chưa thực hiện chuyển đổi A/B/C hay đối soát sau chuyển đổi.
+- Chưa thực hiện chuyển đổi A/B/C; KG/KF/KPI legacy có quan hệ mơ hồ cần quyết định hồ sơ, không tự cascade hoặc đoán liên kết.
 - Chưa hoàn tất kiểm thử purge/concurrency thật và giao diện bảy kích thước.
-- Chưa nghiệm thu ghi qua UI: phiên cung cấp không khôi phục đăng nhập, mint --self không có tài khoản tương ứng. Cần đăng nhập Preview và hồ sơ thật được phép; không tự chọn nhân viên khác hoặc ghi dữ liệu thử vào hệ thống dùng chung.
+- Chưa nghiệm thu ghi/chốt qua UI và gửi OA: cần cho phép thao tác hồ sơ thật và chọn nhóm/bật gửi; không tự ghi dữ liệu thử vào hệ thống dùng chung.
 - Spec 670 dòng về deadline tới giờ/phút và lộ trình định kỳ còn trong roadmap; không tự đặt lịch vận hành.
 
 Không Publish. Các thay đổi lưu trữ chạy trên hệ thống dùng chung, không chuyển đổi/xóa dữ liệu thật trong lượt này.

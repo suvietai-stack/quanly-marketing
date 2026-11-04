@@ -1,12 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## FIX MODULE QUẢN LÝ 3K — 04/11/2026
-- [ ] F1. Một badge KF, kết quả hôm nay/lũy kế/% rõ ràng; tổng ngày thay thế (20→30=30), khác ngày cộng dồn.
-- [ ] F2. KF có lịch tự xuất hiện; đồng bộ các góc nhìn và trạng thái theo KPI.
-- [ ] F3. Tự chốt ngày 18:00 VN, khóa và sửa có lịch sử; cài đặt và chốt sớm.
-- [ ] F4. Báo cáo Zalo độc lập, nhóm/giờ/phạm vi, outbox chống trùng và nhật ký.
-- [ ] F5. Dữ liệu cần rà soát vào lưu trữ 15 ngày theo xác nhận mới; sao lưu/đối soát trước chuyển, giữ chốt hợp lệ.
-- [ ] F6. Kiểm thử luật, hồi quy và desktop/mobile; chưa Publish.
+- [x] F1. Một badge KF, kết quả ngày/lũy kế/%; cùng ngày thay tổng, khác ngày cộng dồn; UI thật hiển thị 30/200=15%.
+- [x] F2. KF có lịch tự xuất hiện qua đọc ngày; kỳ/quản lý dùng nguồn đo lường có scope, không form trạng thái thủ công; KG có hoạt động KF không còn Chưa bắt đầu nhưng không tự hoàn thành.
+- [x] F3. Tự chốt 18:00 VN, không actor giả, khóa và sửa có lý do/lịch sử; cài đặt/chốt sớm; kiểm thử cô lập đạt.
+- [x] F4. Báo cáo Zalo độc lập, nhóm/giờ/phạm vi, outbox chống trùng và nhật ký; gửi vẫn Tắt.
+- [x] F5. Thao tác lưu trữ/khôi phục task thiếu KPI có bản sao khớp nguyên bản, purge 15 ngày giữ chốt; không tự chuyển/xóa dữ liệu thật.
+- [x] F6a. 123/123 test 3K, build OK; Admin thật đọc ngày/cài đặt/theo dõi; desktop/mobile 390px không tràn.
+- [ ] F6b. Nghiệm thu ghi/chốt và gửi Zalo thật: chờ người dùng cho phép thao tác nghiệp vụ và chọn nhóm/bật gửi. Lưu trữ KG/KF/KPI cũ có quan hệ mơ hồ chờ quyết định hồ sơ, không tự cascade hay đoán liên kết. Chưa Publish.
 
 ## FIX TOÀN DIỆN KPI 3K — spec 964 dòng (04/11/2026)
 - [x] KPI-1a. Kiểm kê thật: 2 KG/1 KF/2 KPI/3 tasks/3 ngày; 3 task thiếu KPI, 2 thiếu KF, 2 ngày chốt; giữ nguyên. RPC inventory + private counted backup bổ sung, chưa chạy backup/chuyển đổi.
@@ -14,8 +15,9 @@
 - [x] KPI-2a. 0202–0205: nguồn KPI-người-ngày, 7 phương thức/4 điều kiện, thay thế có revision/idempotency, versions/chốt và derived KG/KF status; không sửa legacy.
 - [ ] KPI-2b. Nối mọi tổng hợp kỳ/monitor và chặn toàn bộ đường legacy ghi thủ công.
 - [x] KPI-3a. Form chung tại Ngày/chi tiết KG/KF/nhóm, nhật ký và chốt sổ theo phiên bản. 0206–0208: ghi chú riêng/lịch sử theo scope, khóa cấu hình, không đổi KPI có thực tế cũ và bảo vệ kết quả canonical đã chốt khỏi xóa KG/KF.
-- [ ] KPI-3b. Bỏ hoàn toàn các biểu mẫu legacy khỏi Tuần/Tháng và nối các tổng hợp kỳ/monitor; hiện Ngày cũ chỉ đọc, không dùng làm KPI mới.
-- [ ] KPI-4. Hoàn thiện Thùng lưu trữ cũ và Dữ liệu cần rà soát riêng; cách ly không vào purge 15 ngày, quyền Admin và lịch sử xử lý.
+- [x] KPI-3b. Tuần/Tháng/Quý/monitor dùng measured read; form legacy không còn trong luồng chính, Ngày cũ chỉ đọc.
+- [x] KPI-4a. Lưu trữ/khôi phục task chưa chốt thiếu KPI, sao lưu khớp, 15 ngày; lịch sử chốt giữ nguyên.
+- [ ] KPI-4b. KG/KF/KPI legacy mơ hồ: chờ quyết định hồ sơ, không tự cascade; task thật chưa chuyển khi chưa cho phép.
 - [ ] KPI-5. Phân loại/chuyển đổi an toàn A/B/C, bảo toàn chốt cũ và đối soát trước/sau; không đoán liên kết nguồn.
 - [ ] KPI-6. Kiểm thử bổ sung concurrent/purge và UI bảy kích thước; bộ 3K 109/109 đạt (36 mới + 73 hồi quy), build OK. Phiên injected không đăng nhập được; mint --self không tìm thấy tài khoản, cần người dùng đăng nhập Preview để nghiệm thu thật. Không tạo dữ liệu giả, chưa Publish.
 
