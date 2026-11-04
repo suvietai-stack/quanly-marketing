@@ -58,7 +58,7 @@ export function useK3GoalMutation() {
       else if (input.kind === 'revoke') result = await supabase.rpc('k3_member_revoke', { _goal_id: input.goal_id, _user_id: input.user_id } as never);
       else if (input.kind === 'action') result = await supabase.rpc('k3_action_save', { _payload: input.payload as never });
       else if (input.kind === 'action_status') result = await supabase.rpc('k3_action_status', { _id: input.id, _status: input.status, _problem: input.problem ?? null, _cause: input.cause ?? null, _solution: input.solution ?? null, _revision: input.revision } as never);
-      else if (input.kind === 'kpi') result = await supabase.rpc('k3_kpi_save', { _payload: input.payload as never });
+      else if (input.kind === 'kpi') result = await supabase.rpc('k3_kpi_configure', { _payload: input.payload as never });
       else if (input.kind === 'kpi_delete') result = await supabase.rpc('k3_kpi_delete', { _id: input.id } as never);
       else result = await supabase.rpc('k3_module_settings_save', { _payload: input.payload as never });
       if (result.error) throw result.error;

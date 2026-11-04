@@ -8,6 +8,8 @@ import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabe
 import { k3GoalDetailQuery, k3GoalListQuery, useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import { MemberPicker } from './Biz3KMemberPicker';
 import { Biz3KQuickCreate } from './Biz3KQuickCreate';
+import { Biz3KKpiResult } from './Biz3KKpiResult';
+import { K3_CONDITION_LABELS, K3_MEASURE_LABELS, type K3Condition, type K3Measure } from '@/lib/biz/k3KpiResults';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -95,7 +97,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
       {(invited.data?.length ?? 0) > 0 && (
         <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
           <p className="text-sm font-medium">Lời mời tham gia mục tiêu</p>
-          {invited.data!.map((g) => (
+          {(invited.data ?? []).map((g) => (
             <div key={g.id} className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2">
               <Target className="h-4 w-4 text-primary" />
               <span className="min-w-0 flex-1 text-sm"><strong>{g.name}</strong> · chủ trì {g.owner_name}</span>
@@ -288,7 +290,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
               {data.kpis.length > 0 && (
                 <div className="space-y-1.5 border-t border-border pt-2">
                   <p className="text-xs font-medium text-muted-foreground">KPI kết quả KG</p>
-                  {data.kpis.map((k) => <KpiLine key={k.id} kpi={k} />)}
+                  {data.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} />)}
                 </div>
               )}
               <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
@@ -355,7 +357,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                       </div>
                       <GoalStatusBadge status={a.action.status} overdueDays={a.overdue_days} />
                     </div>
-                    {a.kpis.map((k) => <KpiLine key={k.id} kpi={k} />)}
+                    {a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} />)}
                     {a.member_actuals.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Đóng góp: {a.member_actuals.map((m) => `${m.full_name} ${m.actual}`).join(' · ')}
@@ -584,15 +586,15 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
 function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: string; onClose: () => void }) {
   const mutation = useK3GoalMutation();
   const [key] = useState(() => crypto.randomUUID());
-  const [f, setF] = useState({ name: '', kind: 'cumulative' as K3KpiKind, target: '', unit: '', manual_actual: '', manual_source: '' });
+  const [f, setF] = useState({ name: '', kind: 'cumulative' as K3Measure, condition: 'gte' as K3Condition, target: '', target_max: '', unit: '', milestones: '' });
   const submit = async () => {
     try {
       await mutation.mutateAsync({
         kind: 'kpi',
         payload: {
-          goal_id: goalId, action_id: actionId, request_key: key, name: f.name, kind: f.kind,
-          target: f.target === '' ? null : Number(f.target), unit: f.unit,
-          manual_actual: f.manual_actual === '' ? null : Number(f.manual_actual), manual_source: f.manual_source,
+          goal_id: goalId, action_id: actionId, request_key: key, name: f.name, measure: f.kind, condition: f.condition,
+          target: f.target === '' ? null : Number(f.target), target_max: f.target_max === '' ? null : Number(f.target_max), unit: f.unit,
+          milestones: f.milestones.split('\n').map((s) => s.trim()).filter(Boolean),
         },
       });
       toast.success('Đã thêm KPI.');
@@ -609,10 +611,10 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
           <div className="space-y-1"><Label htmlFor="k3k-name">Tên KPI *</Label><Input id="k3k-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Ví dụ: 100 cuộc gọi kết nối" /></div>
           <div className="space-y-1">
             <Label>Loại đo lường</Label>
-            <Select value={f.kind} onValueChange={(v) => setF({ ...f, kind: v as K3KpiKind })}>
+            <Select value={f.kind} onValueChange={(v) => setF({ ...f, kind: v as K3Measure })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {(Object.keys(K3_KPI_KIND) as K3KpiKind[]).map((k) => <SelectItem key={k} value={k}>{K3_KPI_KIND[k]}</SelectItem>)}
+                {(Object.keys(K3_MEASURE_LABELS) as K3Measure[]).map((k) => <SelectItem key={k} value={k}>{K3_MEASURE_LABELS[k]}</SelectItem>)}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
@@ -625,12 +627,9 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
             <div className="space-y-1"><Label htmlFor="k3k-target">Mục tiêu</Label><Input id="k3k-target" type="number" min={0} value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })} /></div>
             <div className="space-y-1"><Label htmlFor="k3k-unit">Đơn vị đo</Label><Input id="k3k-unit" value={f.unit} onChange={(e) => setF({ ...f, unit: e.target.value })} placeholder="khách, cuộc gọi, %…" /></div>
           </div>
-          {f.kind !== 'cumulative' && (
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1"><Label htmlFor="k3k-actual">Giá trị xác nhận</Label><Input id="k3k-actual" type="number" min={0} value={f.manual_actual} onChange={(e) => setF({ ...f, manual_actual: e.target.value })} /></div>
-              <div className="space-y-1"><Label htmlFor="k3k-source">Nguồn xác nhận</Label><Input id="k3k-source" value={f.manual_source} onChange={(e) => setF({ ...f, manual_source: e.target.value })} placeholder="Ví dụ: Đối chiếu CRM tuần 45" /></div>
-            </div>
-          )}
+          <div className="space-y-1"><Label>Điều kiện đạt</Label><Select value={f.condition} onValueChange={(v) => setF({ ...f, condition: v as K3Condition })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(Object.keys(K3_CONDITION_LABELS) as K3Condition[]).map((c) => <SelectItem key={c} value={c}>{K3_CONDITION_LABELS[c]}</SelectItem>)}</SelectContent></Select></div>
+          {f.condition === 'range' && <div><Label htmlFor="k3k-upper">Giới hạn trên</Label><Input id="k3k-upper" type="number" min={0} value={f.target_max} onChange={(e) => setF({ ...f, target_max: e.target.value })} /></div>}
+          {f.kind === 'milestone' && <div><Label htmlFor="k3k-milestones">Tiêu chí / mốc (mỗi dòng một mốc)</Label><Textarea id="k3k-milestones" value={f.milestones} onChange={(e) => setF({ ...f, milestones: e.target.value })} /></div>}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>

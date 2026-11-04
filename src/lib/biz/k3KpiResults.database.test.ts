@@ -28,11 +28,14 @@ beforeAll(async () => {
   CREATE FUNCTION k3_goal_visible(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1 IN ('${staff}'::uuid,'${other}'::uuid) AND $2='${goal}'::uuid $$;
   CREATE FUNCTION private.k3_action_worker_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='${staff}'::uuid AND $2='${action}'::uuid $$;
   CREATE FUNCTION private.k3_write_guard(date) RETURNS void LANGUAGE plpgsql AS $$ BEGIN IF $1<'2026-01-01' THEN RAISE EXCEPTION 'Ngày khóa'; END IF; END $$;
+  CREATE FUNCTION private.k3_goal_manage_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='${staff}'::uuid AND $2='${goal}'::uuid $$;
   INSERT INTO k3_goals VALUES('${goal}','${staff}','2026-01-01','2026-12-31','in_progress',NULL);
   INSERT INTO k3_actions VALUES('${action}','${goal}','${staff}','2026-01-01','in_progress',NULL);
   INSERT INTO k3_kpis VALUES('${kpi}',NULL,'${action}','cumulative',200,'200 đại lý');
   SET test.uid='${staff}';`);
   await db.exec(readFileSync('drizzle/migrations/0202_k3_daily_kpi_result_foundation.sql', 'utf8'));
+  await db.exec(`ALTER TABLE k3_kpis ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz;`);
+  await db.exec(readFileSync('drizzle/migrations/0203_k3_kpi_metric_and_configuration_guards.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
@@ -56,7 +59,7 @@ it('database: request lặp không tạo thêm phiên bản/kết quả', async 
 });
 it('database: revision cũ từ thiết bị khác bị từ chối', async () => {
   await expect(save('2026-11-03', 100, 1)).rejects.toThrow('nơi khác');
-  expect(await result<number>(`SELECT (private.k3_result_metric('${kpi}',false)->>'actual')::numeric v`)).toBe(60);
+  expect(Number(await result(`SELECT (private.k3_result_metric('${kpi}',false)->>'actual')::numeric v`))).toBe(60);
 });
 it('database: không nhận kết quả âm hoặc ngày tương lai', async () => {
   await expect(save('2026-11-03', -1, 2)).rejects.toThrow('không âm');
@@ -70,7 +73,7 @@ it('database: người chỉ xem không được cập nhật KPI người khác
 it('database: chưa chốt không vào số chính thức; chốt lưu snapshot', async () => {
   expect(await result(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`)).toBeNull();
   await db.query(`SELECT k3_kpi_day_confirm('2026-11-01')`);
-  expect(await result<number>(`SELECT (private.k3_result_metric('${kpi}',true)->>'actual')::numeric v`)).toBe(20);
+  expect(Number(await result(`SELECT (private.k3_result_metric('${kpi}',true)->>'actual')::numeric v`))).toBe(20);
 });
 it('database: dữ liệu chờ rà soát chặn cập nhật và không có thời hạn xóa', async () => {
   await db.exec(`INSERT INTO k3_data_reviews(kind,record_id,reason,original_snapshot) VALUES('kpi','${kpi}','Thiếu nguồn','{}');`);
@@ -78,4 +81,14 @@ it('database: dữ liệu chờ rà soát chặn cập nhật và không có th�
   expect(await result(`SELECT private.k3_result_metric('${kpi}',false)->>'actual' v`)).toBeNull();
   expect(await result<number>(`SELECT count(*)::int v FROM information_schema.columns WHERE table_name='k3_data_reviews' AND column_name='deleted_at'`)).toBe(0);
   await db.exec(`UPDATE k3_data_reviews SET status='resolved'`);
+});
+it('database: sửa sau chốt không cộng bản cũ, cần chốt lại; snapshot cũ giữ 20', async () => {
+  await save('2026-11-01', 25, 1);
+  expect(await result(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`)).toBeNull();
+  expect(await result(`SELECT snapshot->0->>'value' v FROM k3_kpi_day_confirmations ORDER BY confirmed_at LIMIT 1`)).toBe('20');
+  await db.query(`SELECT k3_kpi_day_confirm('2026-11-01')`);
+  expect(Number(await result(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`))).toBe(25);
+});
+it('database: không đổi công thức hồi tố khi đã có kết quả', async () => {
+  await expect(db.query(`SELECT k3_kpi_configure('{"id":"${kpi}","name":"X","measure":"ratio","target":2}')`)).rejects.toThrow('hồi tố');
 });
