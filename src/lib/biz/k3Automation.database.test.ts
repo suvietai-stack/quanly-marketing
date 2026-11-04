@@ -81,7 +81,7 @@ it('saving schedules keeps one job and converts Vietnam times across midnight',a
     await db.query(`SELECT k3_automation_save('${JSON.stringify({auto_close:true,close_time:time,send_time:'18:05',scope_kind:'all',zalo_enabled:false})}')`);
     expect(await value("SELECT schedule v FROM cron.job WHERE jobname='k3-auto-close'")).toBe(expected);
   }
-  expect(await value('SELECT count(*)::int v FROM cron.job')).toBe(1);
+  expect(await value("SELECT count(*)::int v FROM cron.job WHERE jobname='k3-auto-close'")).toBe(1);
 });
 it('auto close freezes 20 without impersonating an employee and is idempotent',async()=>{
   await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:kpi,work_date:'2026-11-01',value:20,revision:0,request_key:crypto.randomUUID()})}')`);

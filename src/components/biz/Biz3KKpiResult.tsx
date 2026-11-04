@@ -19,7 +19,7 @@ import { k3MetricDisplay, type K3TypedMetric } from '@/lib/biz/k3Measurement';
 const metricText = (data: { actual: number | null; progress: number | null; attained: boolean | null }) =>
   `${data.actual == null ? 'Chưa có số liệu' : data.actual.toLocaleString('vi-VN')}${data.progress == null ? '' : ` · ${data.progress}%`} · ${data.attained == null ? 'Chưa đủ dữ liệu' : data.attained ? 'Đạt' : 'Chưa đạt'}`;
 
-export function Biz3KKpiResult({ kpiId, date, showStatus = true }: { kpiId: string; date: string; showStatus?: boolean }) {
+export function Biz3KKpiResult({ kpiId, date, showStatus = true, readOnly = false }: { kpiId: string; date: string; showStatus?: boolean; readOnly?: boolean }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const query = useQuery({ ...k3KpiResultQuery(uid, kpiId, date), enabled: !!uid });
   const [open, setOpen] = useState<'edit' | 'history' | null>(null);
@@ -41,7 +41,7 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true }: { kpiId: stri
     {data.daily_plan != null && <p className="text-xs">Kế hoạch ngày: {data.daily?.value ?? '—'}/{data.daily_plan} {data.kpi.unit}{data.daily?.value != null && data.daily_plan > 0 ? ` · ${Math.round(data.daily.value / data.daily_plan * 100)}%` : ''}</p>}
     <p className="text-xs text-muted-foreground">Đã chốt: {metricText(data.official_metric)}</p>
     <div className="flex flex-wrap gap-2">
-      {data.can_update && <Button size="sm" variant="outline" onClick={() => setOpen('edit')}><Plus className="mr-1 h-3.5 w-3.5" />Cập nhật KPI</Button>}
+      {data.can_update && !readOnly && <Button size="sm" variant="outline" onClick={() => setOpen('edit')}><Plus className="mr-1 h-3.5 w-3.5" />Cập nhật KPI</Button>}
       <Button size="sm" variant="ghost" onClick={() => setOpen('history')}><History className="mr-1 h-3.5 w-3.5" />Nhật ký kết quả</Button>
     </div>
     {open === 'edit' && <KpiResultDialog key={data.daily?.revision ?? 0} data={data} date={date} onClose={() => setOpen(null)} />}
