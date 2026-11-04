@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## BỘ ĐO KPI ĐA DẠNG — spec 866 dòng (04/11/2026)
+- [ ] M1. Mở rộng 10 kiểu đo và cấu hình có cấu trúc; giữ nguồn KPI/người/ngày và lịch sử cấu hình.
+- [ ] M2. Máy tính chung phía máy chủ, chu kỳ/lịch/chuỗi, bằng chứng và nghiệm thu, nhiều KPI bắt buộc.
+- [ ] M3. Bộ chọn thẻ và form động dùng chung Tạo KG/KF, cấu hình và cập nhật; tổng KPI tách kế hoạch ngày.
+- [ ] M4. Đồng bộ chốt sổ/báo cáo/quản lý/Zalo; Lưu trữ chờ rà soát không tự purge, Thùng rác xác nhận xóa 15 ngày.
+- [ ] M5. Kiểm kê A/B/C và đối soát chỉ đọc, kiểm thử nghiệp vụ/hồi quy/mobile; không chuyển dữ liệu thật hoặc gửi Zalo chưa được phép; chưa Publish.
+
 ## FIX MODULE QUẢN LÝ 3K — 04/11/2026
 - [x] F1. Một badge KF, kết quả ngày/lũy kế/%; cùng ngày thay tổng, khác ngày cộng dồn; UI thật hiển thị 30/200=15%.
 - [x] F2. KF có lịch tự xuất hiện qua đọc ngày; kỳ/quản lý dùng nguồn đo lường có scope, không form trạng thái thủ công; KG có hoạt động KF không còn Chưa bắt đầu nhưng không tự hoàn thành.
