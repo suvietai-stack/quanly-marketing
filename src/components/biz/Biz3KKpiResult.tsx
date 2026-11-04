@@ -29,7 +29,7 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true }: { kpiId: stri
       {showStatus && <Badge variant={data.metric.attained ? 'default' : 'secondary'}>{data.metric.status === 'not_started' ? 'Chưa bắt đầu' : data.metric.attained ? 'Hoàn thành' : 'Đang thực hiện'}</Badge>}
     </div>
     <div className="grid gap-1 text-sm tabular-nums sm:grid-cols-2">
-      <p>Ngày {date === new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }) ? 'hôm nay' : date}: {data.daily ? k3ResultPreview(data.kpi, [data.daily]).actual?.toLocaleString('vi-VN') ?? 'Chưa đủ dữ liệu' : 'Chưa cập nhật'} {data.kpi.unit}</p>
+      <p>Ngày {date}: {data.daily ? k3ResultPreview(data.kpi, [data.daily]).actual?.toLocaleString('vi-VN') ?? 'Chưa đủ dữ liệu' : 'Chưa cập nhật'} {data.kpi.unit}</p>
       <p>{data.kpi.measure === 'current' ? 'Giá trị mới nhất' : 'Lũy kế chung'}: {data.metric.actual?.toLocaleString('vi-VN') ?? '—'}/{data.kpi.target ?? data.kpi.milestones?.length ?? '—'} {data.kpi.unit}{data.metric.progress != null && ` · ${data.metric.progress}%`}</p>
     </div>
     <p className="text-xs text-muted-foreground">Đã chốt: {metricText(data.official_metric)}</p>

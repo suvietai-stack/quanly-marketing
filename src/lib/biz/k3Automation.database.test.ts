@@ -53,6 +53,7 @@ beforeAll(async () => {
   CREATE FUNCTION k3_purge_expired(integer) RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;`);
   await db.exec(readFileSync('drizzle/migrations/0212_k3_verified_legacy_task_archive.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0213_k3_existing_confirmations_close_fences.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0214_k3_archive_backup_alias_guard.sql','utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
