@@ -1520,6 +1520,13 @@
       "when": 1793786580959,
       "tag": "0216_k3_ten_measurement_contract_and_review_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 217,
+      "version": "7",
+      "when": 1793786625288,
+      "tag": "0217_k3_measurement_configuration_validation",
+      "breakpoints": true
     }
   ]
 }
