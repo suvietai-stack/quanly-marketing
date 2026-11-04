@@ -80,7 +80,8 @@ Nguyên tắc: MỘT KG – NHIỀU KF – NHIỀU NGƯỜI – NHIỀU NGÀY �
 
 ## NÂNG CẤP 3K THỐNG NHẤT 2 KHU VỰC — spec 1240 dòng (2026-11-04)
 Nguyên tắc: một mô hình KG/KF/KPI, hai không gian (3K Của Tôi / 3K Nhóm-Phòng Ban), một nguồn dữ liệu; bỏ tab "KG tham gia" và "Trong phạm vi quản lý" độc lập; quyền chỉ từ Cơ cấu tổ chức; bảo toàn dữ liệu/lịch sử; chưa Publish.
-- [ ] 3K3-1. Backend fix A–D (migration 0194): thu hồi thành viên chặn ghi KF cũ; sửa ngày KG custom lưu thật; KPI cùng đơn vị tách theo kpi_id trên k3_tasks; KF chưa tới ngày bắt đầu không vào danh sách hôm nay.
-- [ ] 3K3-2. Test database cho A–D + hồi quy 3K.
-- [ ] 3K3-3. Giao diện: Biz3K còn 2 tab + Cài đặt; Biz3KGoals thêm variant personal/scope; "3K Của Tôi" có Tạo KG trực tiếp; "3K Nhóm/Phòng Ban" gộp Theo nhân viên + Theo KG.
-- [ ] 3K3-4. Kiểm thử UI desktop/mobile, typecheck/build; cập nhật AGENTS.md biz.
+- [x] 3K3-1. Backend fix A–D: migrations 0194 (logic) + 0195 (khôi phục thông báo tiếng Việt); thu hồi thành viên chặn ghi KF cũ, sửa ngày KG custom lưu thật, KPI cùng đơn vị tách theo kpi_id, KF chưa tới ngày không vào danh sách hôm nay.
+- [x] 3K3-2. Test database A–D: 16/16 k3Goals, 45/45 toàn bộ 3K; hồi quy biz 365/370 (5 lỗi lịch có sẵn, không liên quan).
+- [x] 3K3-3. Giao diện: Biz3K còn 2 tab + Cài đặt; Biz3KGoals variant personal/scope; "3K Của Tôi" có Tạo KG trực tiếp; "3K Nhóm/Phòng Ban" gộp Theo nhân viên + Theo KG.
+- [x] 3K3-4. UI desktop 1280 + mobile 390 qua menu thật: 2 tab mới, không còn tab cũ, không tràn ngang, không lỗi JS; typecheck sạch.
+- [ ] 3K3-5. Nghiệm thu ghi thật bằng tài khoản nhân viên/quản lý được cho phép (tạo KG → mời → chấp nhận → ghi kết quả → chốt sổ); chưa Publish.
