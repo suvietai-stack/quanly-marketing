@@ -93,7 +93,7 @@ export function Biz3K() {
                 <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
-            {mode === 'day' && <><Biz3KKpiDay date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
+            {mode === 'day' && <><Biz3KKpiDay date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
             {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage={false} />}
             {mode === 'all' && (
               <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">

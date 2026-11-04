@@ -35,7 +35,7 @@ beforeAll(async () => {
   INSERT INTO k3_kpis VALUES('${kpi}',NULL,'${action}','cumulative',200,'200 đại lý');
   SET test.uid='${staff}';`);
   await db.exec(readFileSync('drizzle/migrations/0202_k3_daily_kpi_result_foundation.sql', 'utf8'));
-  await db.exec(`ALTER TABLE k3_kpis ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz;`);
+  await db.exec(`ALTER TABLE k3_kpis ALTER COLUMN id SET DEFAULT gen_random_uuid(), ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz, ADD COLUMN manual_actual numeric;`);
   await db.exec(readFileSync('drizzle/migrations/0203_k3_kpi_metric_and_configuration_guards.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0206_k3_result_privacy_and_configuration_fences.sql', 'utf8'));
 }, 30000);
