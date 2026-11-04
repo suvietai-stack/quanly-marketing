@@ -85,6 +85,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
     if (n.kind.startsWith('biz_')) {
+      if (n.payload?.module === 'k3') { window.location.href = '/biz/3k'; return; }
       if (n.payload?.approval_run_id) { window.location.href = '/biz/approvals'; return; }
       const params = new URLSearchParams({ year: String(n.payload?.year ?? ''), period: String(n.payload?.period ?? ''), period_kind: String(n.payload?.period_kind ?? ''), user: String(n.payload?.user_id ?? '') });
       window.location.href = `/biz/${n.payload?.kind === 'plan' ? 'plans' : 'reports'}?${params}`;

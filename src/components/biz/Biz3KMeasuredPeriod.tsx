@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Biz3KReviewMonitor } from './Biz3KReviewMonitor';
 
 interface Person { user_id: string; name: string; department: string | null; updated: boolean; closes: number; kpis: { id:string;name:string;unit:string|null;measure:K3Measure;target:number|null;goal_name:string;action_name:string|null;metric:K3TypedMetric;official_metric:K3TypedMetric }[] }
 export function Biz3KMeasuredPeriod({type,date,onDateChange,manage=false}:{type:'day'|K3PeriodType;date:string;onDateChange:(date:string)=>void;manage?:boolean}) {
@@ -20,7 +21,7 @@ export function Biz3KMeasuredPeriod({type,date,onDateChange,manage=false}:{type:
   const people=query.data??[];
   return <div className="space-y-4">
     <div className="flex flex-wrap items-end gap-3"><div><Label htmlFor="k3-measured-date">Ngày trong kỳ</Label><Input id="k3-measured-date" type="date" value={date} onChange={(e)=>e.target.value&&onDateChange(e.target.value)} className="w-40" /></div><span className="text-sm text-muted-foreground">{bounds.start} – {bounds.end}</span>{manage&&<Input aria-label="Tìm nhân viên" placeholder="Tìm nhân viên…" value={search} onChange={(e)=>setSearch(e.target.value)} className="w-48" />}</div>
-    {manage&&<div className="grid grid-cols-3 gap-3 border-y border-border py-3">{[['Nhân viên',people.length],['Đã cập nhật',people.filter((p)=>p.updated).length],['Chưa cập nhật',people.filter((p)=>!p.updated).length]].map(([label,n])=><div key={label}><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold">{n}</p></div>)}</div>}
+    {manage && type === 'day' && <Biz3KReviewMonitor date={date} today={new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())} />}
     {query.isLoading&&<p className="text-sm text-muted-foreground">Đang tải kết quả…</p>}
     {query.error&&<div><p className="text-sm text-destructive">{k3Error(query.error)}</p><Button variant="outline" onClick={()=>query.refetch()}>Thử lại</Button></div>}
     {people.filter((p)=>p.name.toLowerCase().includes(search.toLowerCase())).map((p)=><section key={p.user_id} className="space-y-3 border-b border-border pb-4">
