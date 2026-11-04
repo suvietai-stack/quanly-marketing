@@ -3,10 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { k3DayQuery, useK3DaySave, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
-import { k3PeriodQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
-import type { K3Action } from '@/lib/biz/k3Periods';
-import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3IsComplete, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
+import { k3DayQuery, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
+import { useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
+import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3IsComplete, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3AssignedAction, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -36,7 +35,6 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
   const date = selectedDate ?? localDate;
   const setDate = onDateChange ?? setLocalDate;
   const { data, isLoading, error, refetch } = useQuery({ ...k3DayQuery(uid, date), enabled: !!uid && !!date });
-  const period=useQuery({...k3PeriodQuery(uid,'month',date),enabled:!!uid&&!!date});
   const [editing, setEditing] = useState<K3Task | null | 'new'>(null);
   const [updating, setUpdating] = useState<K3Task | null>(null);
   const [deleting, setDeleting] = useState<K3Task | null>(null);
@@ -88,7 +86,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
         <StatCard label="Mũi khoan" value={counts.focus} />
       </div>
 
-      <KgBox key={date} date={date} data={data} enabled={settings.enabled} />
+      <GoalSection key={date} date={date} data={data} enabled={settings.enabled} />
 
       {isLoading && <p className="py-6 text-center text-sm text-muted-foreground"><Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Đang tải…</p>}
       {error && (
@@ -117,7 +115,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
           task={editing === 'new' ? null : editing}
           focusCount={counts.focus}
           maxFocus={settings.max_focus}
-          actions={period.data?.actions}
+          actions={data?.assigned_actions}
           onClose={() => setEditing(null)}
         />
       )}
@@ -170,33 +168,57 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function KgBox({ date, data, enabled }: { date: string; data?: K3DayData; enabled: boolean }) {
-  const save = useK3DaySave();
-  const [kg, setKg] = useState<string | null>(null);
-  const value = kg ?? data?.day?.kg ?? '';
+/** KG đang thực hiện + KF cần làm hôm nay. Ô KG văn bản tự do đã bỏ; dữ liệu KG ngày cũ chỉ hiển thị như ghi chú lịch sử. */
+function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; enabled: boolean }) {
+  const planSave = useK3PeriodMutation();
+  const goals = data?.active_goals ?? [];
+  const actions = data?.assigned_actions ?? [];
+  const legacyKg = data?.day?.kg;
+  if (!goals.length && !actions.length && !hasText(legacyKg)) return null;
+  const addToday = async (a: K3AssignedAction) => {
+    try {
+      await planSave.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: crypto.randomUUID() } });
+      toast.success('Đã thêm KF vào công việc hôm nay.');
+    } catch (e) {
+      toast.error(k3Error(e));
+    }
+  };
   return (
-    <div className="rounded-lg border border-border bg-card p-3 space-y-1">
-      <Label htmlFor="k3-kg" className="text-xs font-medium">Mục tiêu / trọng tâm hôm nay (KG)</Label>
-      <div className="flex gap-2">
-        <Input id="k3-kg" value={value} placeholder="Ví dụ: Phát triển khách hàng mới" onChange={(e) => setKg(e.target.value)} />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!enabled || save.isPending || kg === null}
-          onClick={async () => {
-            try {
-              await save.mutateAsync({ date, kg: value });
-              setKg(null);
-              toast.success('Đã lưu mục tiêu ngày.');
-            } catch (e) {
-              toast.error(k3Error(e));
-            }
-          }}
-        >
-          Lưu
-        </Button>
-      </div>
+    <div className="space-y-3 rounded-lg border border-border bg-card p-3">
+      {goals.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">KG đang thực hiện</p>
+          <div className="flex flex-wrap gap-1.5">
+            {goals.map((g) => (
+              <Badge key={g.id} variant="outline" className={cn('gap-1 whitespace-normal text-left', g.is_key && 'border-primary text-primary')}>
+                {g.is_key && <Star className="h-3 w-3 fill-primary" />}
+                {g.name}
+                <span className="text-xs text-muted-foreground">· hạn {g.due_date ?? g.period_end}</span>
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+      {actions.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">KF cần thực hiện hôm nay</p>
+          {actions.map((a) => (
+            <div key={a.id} className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm">
+              <span className="min-w-0 flex-1">
+                {a.is_key && <Star className="mr-1 inline h-3.5 w-3.5 fill-primary text-primary" />}
+                {a.name}
+                <span className="block text-xs text-muted-foreground">KG: {a.goal_name}{a.due_date ? ` · Hạn ${a.due_date}` : ''}{a.my_part === 'collaborator' ? ' · Bạn phối hợp' : ''}</span>
+              </span>
+              {a.already_today
+                ? <Badge variant="secondary">Đã có trong hôm nay</Badge>
+                : <Button type="button" size="sm" variant="outline" disabled={!enabled || planSave.isPending} onClick={() => addToday(a)}>Thêm vào hôm nay</Button>}
+            </div>
+          ))}
+        </div>
+      )}
+      {hasText(legacyKg) && (
+        <p className="text-xs text-muted-foreground">Ghi chú mục tiêu ngày cũ: {legacyKg}</p>
+      )}
     </div>
   );
 }
@@ -268,7 +290,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
   );
 }
 
-export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void; actions?:K3Action[] }) {
+export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void; actions?: { id: string; name: string }[] }) {
   const save = useK3TaskSave();
   const planSave=useK3PeriodMutation();
   const [actionId,setActionId]=useState((task as K3Task & { action_id?:string } | null)?.action_id??'none');

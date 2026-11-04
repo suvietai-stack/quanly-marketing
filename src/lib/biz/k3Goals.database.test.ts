@@ -33,7 +33,7 @@ beforeAll(async () => {
   INSERT INTO biz_departments VALUES ('${dept}','Phòng Kinh doanh');
   INSERT INTO biz_department_members VALUES ('${staff}','${dept}'),('${other}','${dept}'),('${manager}','${dept}');
   SET test.uid='${staff}';`);
-  for (const file of ['0173_k3_daily_management_phase1.sql', '0174_k3_daily_integrity_and_summary_versions.sql', '0175_k3_period_entities.sql', '0176_k3_period_writes_and_task_links.sql', '0177_k3_period_reads_summaries_scope.sql', '0178_k3_summary_semantics_and_deadline_readback.sql', '0179_k3_unscheduled_creation_and_scope_fences.sql', '0180_k3_task_metadata_and_summary_integrity.sql', '0189_k3_cross_period_goal_model.sql', '0190_k3_goal_collaboration_rpcs.sql', '0191_k3_execution_integration.sql'])
+  for (const file of ['0173_k3_daily_management_phase1.sql', '0174_k3_daily_integrity_and_summary_versions.sql', '0175_k3_period_entities.sql', '0176_k3_period_writes_and_task_links.sql', '0177_k3_period_reads_summaries_scope.sql', '0178_k3_summary_semantics_and_deadline_readback.sql', '0179_k3_unscheduled_creation_and_scope_fences.sql', '0180_k3_task_metadata_and_summary_integrity.sql', '0189_k3_cross_period_goal_model.sql', '0190_k3_goal_collaboration_rpcs.sql', '0191_k3_execution_integration.sql', '0192_k3_kpi_and_list_fixes.sql', '0193_k3_goal_detail_member_actuals_fix.sql'])
     await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
   // Quyền 3K thống nhất theo Cơ cấu tổ chức (0185): k3_can không còn dùng Role tổng/sig_can.
   const m0185 = readFileSync('drizzle/migrations/0185_biz_permission_unification.sql', 'utf8');
@@ -46,7 +46,7 @@ beforeAll(async () => {
 afterAll(() => db.close());
 
 it('tạo KG tùy chỉnh kéo dài xuyên tháng, gửi lặp không nhân đôi', async () => {
-  const payload = `{"name":"Phát triển 30 khách hàng tiềm năng","period_type":"custom","period_start":"2026-11-15","period_end":"2027-01-15","request_key":"10000000-0000-0000-0000-0000000000b1"}`;
+  const payload = `{"name":"Phát triển 30 khách hàng tiềm năng","period_type":"custom","period_start":"2026-10-01","period_end":"2027-01-15","request_key":"10000000-0000-0000-0000-0000000000b1"}`;
   const g = await val<{ id: string; status: string; period_type: string }>(`SELECT k3_goal_save('${payload}') v`);
   goal = g.id;
   expect(g.period_type).toBe('custom');
@@ -153,7 +153,12 @@ it('góc nhìn Quý tính đúng khoảng và đọc được', async () => {
 it('đọc ngày kèm KG đang thực hiện và KF được phân công', async () => {
   const day = await val<{ active_goals: { id: string }[]; assigned_actions: { id: string; my_part: string }[] }>(`SELECT k3_day_read('${today}') v`);
   expect(day.active_goals.some((g) => g.id === goal)).toBe(true);
-  expect(day.assigned_actions.some((a) => a.id === action)).toBe(true);
+  // KF của staff đã kết thúc chưa đạt nên không còn trong danh sách cần làm; KF của other vẫn đang thực hiện.
+  expect(day.assigned_actions.some((a) => a.id === action)).toBe(false);
+  await as(other);
+  const day2 = await val<{ assigned_actions: { id: string; my_part: string }[] }>(`SELECT k3_day_read('${today}') v`);
+  expect(day2.assigned_actions.some((a) => a.my_part === 'assignee')).toBe(true);
+  await as(staff);
 });
 
 it('cài đặt quyền nghiệp vụ ghi lịch sử và chặn tạo KG khi tắt', async () => {

@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
 import { k3PeriodConfigQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
+import { useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import type { K3PeriodConfig } from '@/lib/biz/k3Periods';
 
 interface LogRow {
@@ -78,6 +79,7 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
       </div>
 
       <div className="space-y-4">
+        <ModulePermissionSettings settings={settings} />
         <PeriodSettings/>
         <div className="rounded-lg border border-border bg-card p-4 space-y-2">
           <h3 className="font-medium">Phân quyền</h3>
@@ -108,6 +110,42 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ModulePermissionSettings({ settings }: { settings: K3Settings }) {
+  const mutation = useK3GoalMutation();
+  const [f, setF] = useState({
+    allow_personal_goal: settings.allow_personal_goal ?? true,
+    allow_team_goal: settings.allow_team_goal ?? true,
+    allow_invite: settings.allow_invite ?? true,
+    allow_assign: settings.allow_assign ?? true,
+  });
+  const items: { key: keyof typeof f; label: string }[] = [
+    { key: 'allow_personal_goal', label: 'Cho phép tạo KG cá nhân' },
+    { key: 'allow_team_goal', label: 'Cho phép tạo KG nhóm / liên nhóm' },
+    { key: 'allow_invite', label: 'Cho phép mời thành viên tham gia KG' },
+    { key: 'allow_assign', label: 'Cho phép phân công KF cho thành viên' },
+  ];
+  return (
+    <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+      <h3 className="font-medium">Quyền nghiệp vụ 3K</h3>
+      <p className="text-xs text-muted-foreground">Áp dụng cho người dùng thường; Admin/Super Admin luôn đủ quyền. Phạm vi xem vẫn theo Cơ cấu tổ chức.</p>
+      {items.map((it) => (
+        <label key={it.key} className="flex items-center justify-between gap-3 text-sm">
+          <span>{it.label}</span>
+          <Switch checked={f[it.key]} onCheckedChange={(v) => setF((p) => ({ ...p, [it.key]: v }))} />
+        </label>
+      ))}
+      <Button type="button" size="sm" disabled={mutation.isPending} onClick={async () => {
+        try {
+          await mutation.mutateAsync({ kind: 'module_settings', payload: f });
+          toast.success('Đã lưu quyền nghiệp vụ 3K.');
+        } catch (e) {
+          toast.error(k3Error(e));
+        }
+      }}>{mutation.isPending ? 'Đang lưu…' : 'Lưu quyền nghiệp vụ'}</Button>
     </div>
   );
 }
