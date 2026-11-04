@@ -22,6 +22,11 @@ export interface K3ResultMetric {
   attained: boolean | null;
   status: 'not_started' | 'in_progress' | 'done';
 }
+export function k3RequiredStatus(metrics: { required: boolean; metric: K3ResultMetric }[]) {
+  const required = metrics.filter((m) => m.required);
+  const attained = required.filter((m) => m.metric.attained === true).length;
+  return { total: required.length, attained, status: required.length > 0 && attained === required.length ? 'done' : metrics.some((m) => m.metric.status !== 'not_started') ? 'in_progress' : 'not_started' } as const;
+}
 export const K3_MEASURE_LABELS: Record<K3Measure, string> = {
   cumulative: 'Số lượng cộng dồn', distinct: 'Số lượng không trùng', current: 'Giá trị hiện tại',
   ratio: 'Tỷ lệ phần trăm', average: 'Giá trị trung bình', milestone: 'Mốc hoàn thành', duration: 'Thời lượng (phút)',
