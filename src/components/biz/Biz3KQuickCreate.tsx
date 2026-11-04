@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { k3Error } from '@/lib/biz/k3';
-import { K3_KPI_KIND, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
+import { type K3MemberSearchRow } from '@/lib/biz/k3Goals';
 import { useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import { MemberPicker } from './Biz3KMemberPicker';
 import { Button } from '@/components/ui/button';
@@ -10,20 +10,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Biz3KKpiConfig } from './Biz3KKpiConfig';
+import { newK3KpiDraft, k3KpiPayload, type K3KpiDraft } from '@/lib/biz/k3Measurement';
 
 interface KfDraft {
   key: string;
   name: string;
-  kpiName: string;
-  kpiTarget: string;
-  kpiUnit: string;
-  kpiKind: K3KpiKind;
+  kpis: K3KpiDraft[];
   start_date: string;
   due_date: string;
 }
 
-const newKf = (): KfDraft => ({ key: crypto.randomUUID(), name: '', kpiName: '', kpiTarget: '', kpiUnit: '', kpiKind: 'cumulative', start_date: '', due_date: '' });
+const newKf = (): KfDraft => ({ key: crypto.randomUUID(), name: '', kpis: [newK3KpiDraft()], start_date: '', due_date: '' });
 
 /** Form "Tạo công việc" thống nhất: tạo KG + các KF kèm KPI trong một lần lưu nguyên tử (k3_quick_create). */
 export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
@@ -42,7 +40,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
 
   const validKfs = kfs.filter((k) => k.name.trim());
   const canDraft = !!f.name.trim() && !!f.period_start && !!f.period_end;
-  const canStart = canDraft && validKfs.length > 0;
+  const canStart = canDraft && validKfs.length > 0 && validKfs.every((kf) => kf.kpis.some((kpi) => kpi.name.trim()));
 
   const submit = async (startNow: boolean) => {
     try {
@@ -56,9 +54,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
           member_ids: variant === 'team' ? members.map((m) => m.id) : [],
           kfs: validKfs.map((k) => ({
             request_key: k.key, name: k.name, start_date: k.start_date, due_date: k.due_date,
-            kpis: k.kpiName.trim()
-              ? [{ name: k.kpiName, kind: k.kpiKind, target: k.kpiTarget, unit: k.kpiUnit }]
-              : [],
+            kpis: k.kpis.filter((kpi) => kpi.name.trim()).map(k3KpiPayload),
           })),
         },
       }) as { goal_id: string; duplicated?: boolean };
@@ -115,17 +111,11 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
                   <div className="space-y-1"><Label className="text-xs">Ngày bắt đầu</Label><Input type="date" value={k.start_date} onChange={(e) => setKf(k.key, 'start_date', e.target.value)} /></div>
                   <div className="space-y-1"><Label className="text-xs">Hạn KF</Label><Input type="date" value={k.due_date} onChange={(e) => setKf(k.key, 'due_date', e.target.value)} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1"><Label className="text-xs">Tên chỉ tiêu KPI</Label><Input placeholder="Ví dụ: 100 đại lý hợp lệ" value={k.kpiName} onChange={(e) => setKf(k.key, 'kpiName', e.target.value)} /></div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Cách đo</Label>
-                    <Select value={k.kpiKind} onValueChange={(v) => setKf(k.key, 'kpiKind', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
-                      {(Object.keys(K3_KPI_KIND) as K3KpiKind[]).map((kind) => <SelectItem key={kind} value={kind}>{K3_KPI_KIND[kind]}</SelectItem>)}
-                    </SelectContent></Select>
-                  </div>
-                  <div className="space-y-1"><Label className="text-xs">Chỉ tiêu (số)</Label><Input type="number" min={0} value={k.kpiTarget} onChange={(e) => setKf(k.key, 'kpiTarget', e.target.value)} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Đơn vị đo</Label><Input placeholder="đại lý, cuộc gọi…" value={k.kpiUnit} onChange={(e) => setKf(k.key, 'kpiUnit', e.target.value)} /></div>
-                </div>
+                {k.kpis.map((kpi, j) => <div key={kpi.request_key} className="space-y-2 border-t border-border py-3">
+                  <div className="flex items-center justify-between"><p className="text-sm font-medium">KPI {j + 1}</p><Button type="button" size="icon" variant="ghost" aria-label={`Xóa KPI ${j + 1}`} onClick={() => setKfs((prev) => prev.map((x) => x.key === k.key ? { ...x, kpis: x.kpis.filter((v) => v.request_key !== kpi.request_key) } : x))}><Trash2 className="h-4 w-4" /></Button></div>
+                  <Biz3KKpiConfig value={kpi} onChange={(next) => setKfs((prev) => prev.map((x) => x.key === k.key ? { ...x, kpis: x.kpis.map((v) => v.request_key === next.request_key ? next : v) } : x))} />
+                </div>)}
+                <Button type="button" variant="outline" size="sm" onClick={() => setKfs((prev) => prev.map((x) => x.key === k.key ? { ...x, kpis: [...x.kpis, newK3KpiDraft()] } : x))}><Plus className="mr-1 h-4 w-4" />Thêm KPI</Button>
               </div>
             ))}
             <p className="text-xs text-muted-foreground">Có thể lưu nháp chưa có KF; khi bắt đầu thực hiện chính thức cần ít nhất một KF.</p>
