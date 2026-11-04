@@ -69,7 +69,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0224_k3_employee_review_separate_from_system_close.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0225_k3_review_configuration_and_close_run_audit.sql', 'utf8'));
   await db.exec(`CREATE TABLE leave_requests(owner_id uuid,type text,status text,payload jsonb);CREATE TABLE notifications(recipient_id uuid,kind text,dedup_key text UNIQUE,zalo_status text,push_status text,payload jsonb);CREATE FUNCTION cron.unschedule(bigint) RETURNS boolean LANGUAGE sql AS $$ SELECT true $$;ALTER TABLE cron.job ADD COLUMN jobid bigint GENERATED ALWAYS AS IDENTITY; CREATE FUNCTION biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;`);
-  for (const file of ['0226_k3_base_review_reminders_daily.sql','0227_k3_scoped_review_monitor_and_notification_payload.sql','0228_k3_review_stable_versions_and_safe_history.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
+  for (const file of ['0226_k3_base_review_reminders_daily.sql','0227_k3_scoped_review_monitor_and_notification_payload.sql','0228_k3_review_stable_versions_and_safe_history.sql','0229_k3_review_close_identity_comparison.sql','0230_k3_review_source_only_fingerprint.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -90,6 +90,7 @@ it('auto close freezes 20 without impersonating an employee and is idempotent',a
   expect(await value('SELECT count(*)::int v FROM k3_daily_closes')).toBe(1);
   expect(await value('SELECT actor_id v FROM k3_daily_closes')).toBeNull();
   expect(await value('SELECT count(*)::int v FROM k3_kpi_day_confirmations')).toBe(0);
+  expect(await value("SELECT private.k3_employee_review_state(auth.uid(),'2026-11-01')->>'system_status' v")).toBe('auto_closed');
   expect(Number(await value(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`))).toBe(20);
   expect(await value(`SELECT private.k3_goal_has_official('${goal}') v`)).toBe(true);
 });
@@ -98,6 +99,7 @@ it('after close a correction needs a reason and reconfirmation while the old 20 
   await expect(db.query(`SELECT k3_kpi_result_save('${JSON.stringify(payload)}')`)).rejects.toThrow('lý do');
   await db.query(`SELECT k3_kpi_result_save('${JSON.stringify({...payload,correction_reason:'Đối soát cuối ngày'})}')`);
   expect(await value(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`)).toBeNull();
+  expect(await value("SELECT private.k3_employee_review_state(auth.uid(),'2026-11-01')->>'system_status' v")).toBe('adjusted');
   expect(await value("SELECT snapshot->'results'->0->>'value' v FROM k3_daily_closes")).toBe('20');
   await db.query("SELECT k3_kpi_day_confirm('2026-11-01')");
   expect(Number(await value(`SELECT private.k3_result_metric('${kpi}',true)->>'actual' v`))).toBe(30);

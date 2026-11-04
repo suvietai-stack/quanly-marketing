@@ -1,11 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## TỔNG KẾT THỦ CÔNG / CHỐT TỰ ĐỘNG — spec 731 dòng (04/11/2026)
-- [ ] S1. Xác nhận Sale độc lập, version nguồn tại máy chủ, lịch sử và phạm vi ngày đúng lịch/kết quả.
-- [ ] S2. Tổng kết hôm nay: rà soát KG/KF/KPI/VNGB, cảnh báo thiếu, xác nhận không nhập lại KPI, không chốt hệ thống.
-- [ ] S3. Chốt 18h snapshot trạng thái thủ công riêng; nhật ký lỗi/idempotency/điều chỉnh; giữ chốt cũ.
-- [ ] S4. Theo dõi trạng thái tách biệt, nhắc Base 17h/17h30 theo nghĩa vụ và quyền, cài đặt tập trung.
-- [ ] S5. Báo cáo Zalo 18h05 từ snapshot, xem trước/rút gọn an toàn; không tự gửi/bật/chuyển dữ liệu cũ; kiểm thử và UI.
+- [x] S1. Xác nhận Sale độc lập, version nguồn tại máy chủ, lịch sử và phạm vi ngày đúng lịch/kết quả.
+- [x] S2. Tổng kết hôm nay: rà soát KG/KF/KPI/VNGB, cảnh báo thiếu, xác nhận không nhập lại KPI, không chốt hệ thống.
+- [x] S3. Chốt 18h snapshot trạng thái thủ công riêng; nhật ký lỗi/idempotency/điều chỉnh; giữ chốt cũ; so sánh ID/revision tránh cảnh báo giả do thêm trường.
+- [x] S4. Theo dõi trạng thái tách biệt, nhắc Base 17h/17h30 theo nghĩa vụ và quyền, cài đặt tập trung; click thông báo mở 3K.
+- [x] S5a. Báo cáo Zalo 18h05 từ snapshot, xem trước/rút gọn giữ liên kết; không tự gửi/bật/chuyển dữ liệu cũ; 151 test và UI 360–1440px đạt.
+- [ ] S5b. Nghiệm thu xác nhận→cập nhật→xác nhận lại→chốt→gửi Zalo thật: chờ người dùng cho phép thao tác và chọn hồ sơ/nhóm; Zalo vẫn Tắt, chưa Publish.
 
 ## BỘ ĐO KPI ĐA DẠNG — spec 866 dòng (04/11/2026)
 - [x] M1a. 0216–0223: 10 kiểu đo, cấu hình JSON, snapshot cấu hình và revision kết quả; chặn đổi công thức đã có kết quả.
