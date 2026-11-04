@@ -46,7 +46,7 @@ beforeAll(async () => {
 afterAll(() => db.close());
 
 it('tạo KG tùy chỉnh kéo dài xuyên tháng, gửi lặp không nhân đôi', async () => {
-  const payload = `{"name":"Phát triển 30 khách hàng tiềm năng","period_type":"custom","period_start":"2026-11-15","period_end":"2027-01-15","request_key":"10000000-0000-0000-0000-0000000000b1"}`;
+  const payload = `{"name":"Phát triển 30 khách hàng tiềm năng","period_type":"custom","period_start":"2026-10-01","period_end":"2027-01-15","request_key":"10000000-0000-0000-0000-0000000000b1"}`;
   const g = await val<{ id: string; status: string; period_type: string }>(`SELECT k3_goal_save('${payload}') v`);
   goal = g.id;
   expect(g.period_type).toBe('custom');
@@ -153,7 +153,12 @@ it('góc nhìn Quý tính đúng khoảng và đọc được', async () => {
 it('đọc ngày kèm KG đang thực hiện và KF được phân công', async () => {
   const day = await val<{ active_goals: { id: string }[]; assigned_actions: { id: string; my_part: string }[] }>(`SELECT k3_day_read('${today}') v`);
   expect(day.active_goals.some((g) => g.id === goal)).toBe(true);
-  expect(day.assigned_actions.some((a) => a.id === action)).toBe(true);
+  // KF của staff đã kết thúc chưa đạt nên không còn trong danh sách cần làm; KF của other vẫn đang thực hiện.
+  expect(day.assigned_actions.some((a) => a.id === action)).toBe(false);
+  await as(other);
+  const day2 = await val<{ assigned_actions: { id: string; my_part: string }[] }>(`SELECT k3_day_read('${today}') v`);
+  expect(day2.assigned_actions.some((a) => a.my_part === 'assignee')).toBe(true);
+  await as(staff);
 });
 
 it('cài đặt quyền nghiệp vụ ghi lịch sử và chặn tạo KG khi tắt', async () => {
