@@ -46,9 +46,9 @@ const FILTERS: { value: string; label: string; scope?: boolean }[] = [
   { value: 'scope', label: 'Trong phạm vi quản lý', scope: true },
 ];
 
-export function Biz3KGoals({ settings }: { settings: K3Settings }) {
+export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Settings; variant?: 'personal' | 'scope' }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : 'all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
