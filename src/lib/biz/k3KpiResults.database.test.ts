@@ -23,6 +23,7 @@ beforeAll(async () => {
   CREATE TABLE k3_actions(id uuid PRIMARY KEY,goal_id uuid,assignee_id uuid,start_date date,status text,deleted_at timestamptz);
   CREATE TABLE k3_kpis(id uuid PRIMARY KEY,goal_id uuid,action_id uuid,kind text,target numeric,name text);
   CREATE TABLE k3_plan_events(user_id uuid,goal_id uuid,action_id uuid,actor_id uuid,action text,detail jsonb);
+  CREATE TABLE k3_tasks(kpi_id uuid,action_id uuid,kpi_actual numeric);
   CREATE FUNCTION biz_admin(uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$;
   CREATE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$ SELECT $1 IN ('${staff}'::uuid,'${other}'::uuid) $$;
   CREATE FUNCTION k3_goal_visible(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $1 IN ('${staff}'::uuid,'${other}'::uuid) AND $2='${goal}'::uuid $$;
@@ -38,6 +39,7 @@ beforeAll(async () => {
   await db.exec(`ALTER TABLE k3_kpis ALTER COLUMN id SET DEFAULT gen_random_uuid(), ADD COLUMN request_key uuid, ADD COLUMN unit text, ADD COLUMN required_legacy boolean, ADD COLUMN created_by uuid, ADD COLUMN updated_at timestamptz, ADD COLUMN manual_actual numeric;`);
   await db.exec(readFileSync('drizzle/migrations/0203_k3_kpi_metric_and_configuration_guards.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0206_k3_result_privacy_and_configuration_fences.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0207_k3_configuration_module_and_legacy_history_guards.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
@@ -122,4 +124,9 @@ it.each([
   expect(config?.id).toBeTruthy();
   const saved = await result<{metric:{actual:number}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:config?.id,work_date:'2026-11-01',revision:0,request_key:crypto.randomUUID(),...values})}') v`);
   expect(saved?.metric.actual).toBe(expected);
+});
+it('database: KPI có thực tế cũ chưa liên kết không bị đổi công thức hồi tố', async () => {
+  await db.exec(`INSERT INTO k3_tasks VALUES(NULL,'${action}',5);`);
+  const k = await result<{id:string}>(`SELECT k3_kpi_configure('{"action_id":"${action}","request_key":"30000000-0000-0000-0000-777777777777","name":"Nguồn cũ","measure":"cumulative","target":20}') v`);
+  await expect(db.query(`SELECT k3_kpi_configure('${JSON.stringify({id:k?.id,name:'Đổi nguồn',measure:'ratio',target:10})}')`)).rejects.toThrow('hồi tố');
 });
