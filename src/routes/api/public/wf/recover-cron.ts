@@ -22,7 +22,10 @@ export const Route = createFileRoute("/api/public/wf/recover-cron")({
           const { data, error } = await (supabaseAdmin as any).rpc("biz_deadline_auto_notify");
           bizDeadline = error ? { error: error.message } : data;
         } catch (e: any) { console.error("[biz] deadline notify failed", e?.message); }
-        try { return Response.json({ ok: true, finRemind, bizDeadline, ...(await s.recoverEvents(20)) }); }
+        let k3Report: unknown = null;
+        try { const k = await import('@/lib/biz/k3Automation.server'); k3Report = await k.processK3Reports(); }
+        catch { k3Report = { error: 'Báo cáo 3K chưa gửi được; chốt sổ vẫn được giữ.' }; }
+        try { return Response.json({ ok: true, finRemind, bizDeadline, k3Report, ...(await s.recoverEvents(20)) }); }
         catch (e: any) { console.error("[wf] recover failed", e?.message); return Response.json({ ok: false }, { status: 500 }); }
       },
     },
