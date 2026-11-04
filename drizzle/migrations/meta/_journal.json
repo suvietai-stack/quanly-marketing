@@ -1380,6 +1380,13 @@
       "when": 1793770522817,
       "tag": "0196_k3_standardize_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 197,
+      "version": "7",
+      "when": 1793772047925,
+      "tag": "0197_k3_soft_delete_trash",
+      "breakpoints": true
     }
   ]
 }
