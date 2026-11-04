@@ -1534,6 +1534,13 @@
       "when": 1793786723837,
       "tag": "0218_k3_shared_ten_mode_evaluator",
       "breakpoints": true
+    },
+    {
+      "idx": 219,
+      "version": "7",
+      "when": 1793786814824,
+      "tag": "0219_k3_typed_daily_result_values",
+      "breakpoints": true
     }
   ]
 }
