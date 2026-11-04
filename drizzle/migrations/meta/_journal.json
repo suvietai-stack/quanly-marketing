@@ -1394,6 +1394,13 @@
       "when": 1793772257393,
       "tag": "0198_k3_trash_read_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 199,
+      "version": "7",
+      "when": 1793772570092,
+      "tag": "0199_k3_trash_guard_goal_save",
+      "breakpoints": true
     }
   ]
 }
