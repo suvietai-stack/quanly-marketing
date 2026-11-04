@@ -33,7 +33,7 @@ beforeAll(async () => {
   INSERT INTO biz_departments VALUES ('${dept}','Phòng Kinh doanh');
   INSERT INTO biz_department_members VALUES ('${staff}','${dept}'),('${other}','${dept}'),('${manager}','${dept}');
   SET test.uid='${staff}';`);
-  for (const file of ['0173_k3_daily_management_phase1.sql', '0174_k3_daily_integrity_and_summary_versions.sql', '0175_k3_period_entities.sql', '0176_k3_period_writes_and_task_links.sql', '0177_k3_period_reads_summaries_scope.sql', '0178_k3_summary_semantics_and_deadline_readback.sql', '0179_k3_unscheduled_creation_and_scope_fences.sql', '0180_k3_task_metadata_and_summary_integrity.sql', '0189_k3_cross_period_goal_model.sql', '0190_k3_goal_collaboration_rpcs.sql', '0191_k3_execution_integration.sql', '0192_k3_kpi_and_list_fixes.sql', '0193_k3_goal_detail_member_actuals_fix.sql', '0194_k3_unify_fixes_revoke_dates_kpi_future.sql'])
+  for (const file of ['0173_k3_daily_management_phase1.sql', '0174_k3_daily_integrity_and_summary_versions.sql', '0175_k3_period_entities.sql', '0176_k3_period_writes_and_task_links.sql', '0177_k3_period_reads_summaries_scope.sql', '0178_k3_summary_semantics_and_deadline_readback.sql', '0179_k3_unscheduled_creation_and_scope_fences.sql', '0180_k3_task_metadata_and_summary_integrity.sql', '0189_k3_cross_period_goal_model.sql', '0190_k3_goal_collaboration_rpcs.sql', '0191_k3_execution_integration.sql', '0192_k3_kpi_and_list_fixes.sql', '0193_k3_goal_detail_member_actuals_fix.sql', '0194_k3_unify_fixes_revoke_dates_kpi_future.sql', '0195_k3_restore_vietnamese_messages.sql'])
     await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
   // Quyền 3K thống nhất theo Cơ cấu tổ chức (0185): k3_can không còn dùng Role tổng/sig_can.
   const m0185 = readFileSync('drizzle/migrations/0185_biz_permission_unification.sql', 'utf8');
@@ -183,7 +183,7 @@ it('B. sửa ngày bắt đầu/hạn hoàn thành KG custom được backend l�
   const g = await val<{ period_start: string; period_end: string }>(`SELECT k3_goal_save('{"id":"${goal}","revision":${rev},"name":"Phát triển 30 khách hàng tiềm năng","period_start":"2026-10-05","period_end":"2027-02-10"}') v`);
   expect(g.period_start).toBe('2026-10-05');
   expect(g.period_end).toBe('2027-02-10');
-  const stored = await val<{ period_start: string; period_end: string }>(`SELECT period_start::text, period_end::text FROM k3_goals WHERE id='${goal}'`);
+  const stored = await val<{ period_start: string; period_end: string }>(`SELECT jsonb_build_object('period_start',period_start,'period_end',period_end) v FROM k3_goals WHERE id='${goal}'`);
   expect(stored.period_start).toBe('2026-10-05');
   expect(stored.period_end).toBe('2027-02-10');
 });

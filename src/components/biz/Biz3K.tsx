@@ -11,8 +11,9 @@ import { Biz3KPeriod } from './Biz3KPeriod';
 import { Biz3KGoals } from './Biz3KGoals';
 import { Button } from '@/components/ui/button';
 
-type Section = 'mine' | 'goals' | 'manage' | 'settings';
+type Section = 'mine' | 'team' | 'settings';
 type Mode = 'day' | 'week' | 'month' | 'quarter';
+type TeamView = 'members' | 'goals';
 
 const MODE_LABEL: Record<Mode, string> = { day: 'Ngày', week: 'Tuần', month: 'Tháng', quarter: 'Quý' };
 
@@ -20,8 +21,9 @@ export function Biz3K() {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data: settings, isLoading, error, refetch } = useQuery({ ...k3SettingsQuery(uid), enabled: !!uid });
   const [section, setSection] = useState<Section>('mine');
-  const [mode,setMode] = useState<Mode>('day');
-  const [date,setDate] = useState<string|null>(null);
+  const [mode, setMode] = useState<Mode>('day');
+  const [date, setDate] = useState<string | null>(null);
+  const [teamView, setTeamView] = useState<TeamView>('members');
 
   if (isLoading) return <p className="py-8 text-center text-sm text-muted-foreground">Đang tải cấu hình 3K…</p>;
   if (error || !settings) {
@@ -34,9 +36,8 @@ export function Biz3K() {
   }
 
   const tabs: { key: Section; label: string; icon: typeof ListChecks; show: boolean }[] = [
-    { key: 'mine', label: '3K của tôi', icon: ListChecks, show: settings.can_use },
-    { key: 'goals', label: 'KG tham gia', icon: Target, show: settings.can_use },
-    { key: 'manage', label: 'Trong phạm vi quản lý', icon: Users, show: settings.can_view_scope },
+    { key: 'mine', label: '3K Của Tôi', icon: ListChecks, show: settings.can_use },
+    { key: 'team', label: '3K Nhóm/Phòng Ban', icon: Users, show: settings.can_view_scope },
     { key: 'settings', label: 'Cài đặt 3K', icon: Settings2, show: settings.can_settings },
   ];
   const visible = tabs.filter((t) => t.show);
@@ -67,16 +68,47 @@ export function Biz3K() {
           Module 3K chưa được kích hoạt{settings.effective_from ? ` (áp dụng từ ${settings.effective_from})` : ''}. Vui lòng liên hệ quản trị viên.
         </div>
       )}
-      {active!=='settings'&&active!=='goals'&&<div className="flex gap-1 border-b border-border pb-3">{(['day','week','month','quarter'] as const).map(v=><Button key={v} variant={mode===v?'default':'ghost'} size="sm" onClick={()=>setMode(v)}>{MODE_LABEL[v]}</Button>)}</div>}
-      {(
-        <>
-          {active === 'mine' && mode==='day' && <Biz3KMyDay settings={settings} selectedDate={date??settings.today} onDateChange={setDate}/>}
-          {active === 'manage' && mode==='day' && <Biz3KManage settings={settings} selectedDate={date??settings.today} onDateChange={setDate}/>}
-          {active === 'goals' && <Biz3KGoals settings={settings} />}
-          {active!=='settings'&&active!=='goals'&&mode!=='day'&&<Biz3KPeriod settings={settings} type={mode} date={date??settings.today} onDateChange={setDate} manage={active==='manage'}/>}
-          {active === 'settings' && <Biz3KSettings settings={settings} />}
-        </>
+
+      {active === 'mine' && (
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-semibold"><Target className="h-4 w-4 text-primary" />Mục tiêu KG của tôi</div>
+            <Biz3KGoals settings={settings} variant="personal" />
+          </section>
+          <section className="space-y-3 border-t border-border pt-4">
+            <div className="flex gap-1 border-b border-border pb-3">
+              {(['day', 'week', 'month', 'quarter'] as const).map((v) => (
+                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+              ))}
+            </div>
+            {mode === 'day' && <Biz3KMyDay settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} />}
+            {mode !== 'day' && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage={false} />}
+          </section>
+        </div>
       )}
+
+      {active === 'team' && (
+        <div className="space-y-4">
+          <div className="flex gap-1 border-b border-border pb-3">
+            <Button variant={teamView === 'members' ? 'default' : 'ghost'} size="sm" onClick={() => setTeamView('members')}>Theo nhân viên</Button>
+            <Button variant={teamView === 'goals' ? 'default' : 'ghost'} size="sm" onClick={() => setTeamView('goals')}>Theo KG</Button>
+          </div>
+          {teamView === 'goals' && <Biz3KGoals settings={settings} variant="scope" />}
+          {teamView === 'members' && (
+            <div className="space-y-3">
+              <div className="flex gap-1 border-b border-border pb-3">
+                {(['day', 'week', 'month', 'quarter'] as const).map((v) => (
+                  <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+                ))}
+              </div>
+              {mode === 'day' && <Biz3KManage settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} />}
+              {mode !== 'day' && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
+            </div>
+          )}
+        </div>
+      )}
+
+      {active === 'settings' && <Biz3KSettings settings={settings} />}
     </div>
   );
 }
