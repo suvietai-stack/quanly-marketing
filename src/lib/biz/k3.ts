@@ -121,12 +121,36 @@ export interface K3TeamRow {
   user_id: string;
   full_name: string;
   departments: string[];
+  department_id?: string | null;
   day: K3Day | null;
   total: number;
   done: number;
   open: number;
   issues: number;
   focus: number;
+  status_key?: K3TrackStatus;
+  goals_active?: number;
+  kf_active?: number;
+  kf_overdue?: number;
+}
+
+/** Trạng thái theo dõi ngày của nhân viên (thay cho "Chưa lập 3K"). */
+export type K3TrackStatus = 'none' | 'planned' | 'updated' | 'summarized' | 'reconfirm';
+
+export const K3_TRACK_STATUS: Record<K3TrackStatus, { label: string; tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger' }> = {
+  none: { label: 'Chưa cập nhật hôm nay', tone: 'neutral' },
+  planned: { label: 'Đã lập nội dung thực thi', tone: 'info' },
+  updated: { label: 'Đã cập nhật kết quả', tone: 'info' },
+  summarized: { label: 'Đã chốt sổ', tone: 'success' },
+  reconfirm: { label: 'Cần xác nhận lại', tone: 'danger' },
+};
+
+export function k3TrackStatus(r: Pick<K3TeamRow, 'status_key' | 'day'>): K3TrackStatus {
+  if (r.status_key) return r.status_key;
+  if (!r.day) return 'none';
+  if (k3NeedsConfirmation(r.day)) return 'reconfirm';
+  if (r.day.summarized_at) return 'summarized';
+  return 'planned';
 }
 
 /** Tỷ lệ hoàn thành theo số lượng; có thể vượt 100% khi thực tế vượt kế hoạch. */

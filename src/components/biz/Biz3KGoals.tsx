@@ -5,7 +5,9 @@ import { Check, Loader2, Plus, Star, Target, UserPlus, Users, X } from 'lucide-r
 import { useAuth } from '@/lib/auth';
 import { k3Error, type K3Settings } from '@/lib/biz/k3';
 import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalMember, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
-import { k3GoalDetailQuery, k3GoalListQuery, k3MemberSearchQuery, useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
+import { k3GoalDetailQuery, k3GoalListQuery, useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
+import { MemberPicker } from './Biz3KMemberPicker';
+import { Biz3KQuickCreate } from './Biz3KQuickCreate';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -46,15 +48,38 @@ const FILTERS: { value: string; label: string; scope?: boolean }[] = [
   { value: 'scope', label: 'Trong phạm vi quản lý', scope: true },
 ];
 
-export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Settings; variant?: 'personal' | 'scope' }) {
+const COLLAB_FILTERS: { value: string; label: string }[] = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'lead', label: 'Tôi chủ trì' },
+  { value: 'join', label: 'Tôi tham gia' },
+  { value: 'active', label: 'Đang thực hiện' },
+  { value: 'overdue', label: 'Quá hạn' },
+  { value: 'done', label: 'Hoàn thành' },
+];
+
+export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Settings; variant?: 'personal' | 'scope' | 'collab' }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
-  const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : 'all');
+  const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : variant === 'collab' ? 'collab' : 'all');
+  const [sub, setSub] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { data, isLoading, error, refetch } = useQuery({ ...k3GoalListQuery(uid, filter, search.trim()), enabled: !!uid });
   const invited = useQuery({ ...k3GoalListQuery(uid, 'invited', ''), enabled: !!uid });
   const mutation = useK3GoalMutation();
+
+  const shown = useMemo(() => {
+    const list = data ?? [];
+    if (variant !== 'collab') return list;
+    switch (sub) {
+      case 'lead': return list.filter((g) => g.my_role === 'owner');
+      case 'join': return list.filter((g) => g.my_role === 'accepted');
+      case 'active': return list.filter((g) => ['not_started', 'in_progress', 'paused'].includes(g.status));
+      case 'overdue': return list.filter((g) => g.overdue_days > 0);
+      case 'done': return list.filter((g) => ['done', 'ended_missed'].includes(g.status));
+      default: return list;
+    }
+  }, [data, sub, variant]);
 
   const respond = async (goalId: string, accept: boolean) => {
     try {
@@ -82,7 +107,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input placeholder="Tìm mục tiêu…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
+        <Input placeholder="Tìm công việc…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
         {variant === 'personal' && (
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
@@ -91,9 +116,16 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
             </SelectContent>
           </Select>
         )}
+        {variant === 'collab' && (
+          <div className="flex flex-wrap gap-1">
+            {COLLAB_FILTERS.map((f) => (
+              <Button key={f.value} type="button" size="sm" variant={sub === f.value ? 'default' : 'outline'} onClick={() => setSub(f.value)}>{f.label}</Button>
+            ))}
+          </div>
+        )}
         <div className="flex-1" />
-        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant === 'scope' && !settings.allow_team_goal)}>
-          <Plus className="mr-1 h-4 w-4" /> {variant === 'scope' ? 'Tạo KG nhóm' : 'Tạo KG'}
+        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant !== 'personal' && !settings.allow_team_goal)}>
+          <Plus className="mr-1 h-4 w-4" /> {variant === 'personal' ? 'Tạo công việc' : 'Tạo công việc nhóm'}
         </Button>
       </div>
 
@@ -104,14 +136,16 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
           <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>Thử lại</Button>
         </div>
       )}
-      {data && data.length === 0 && !isLoading && (
+      {data && shown.length === 0 && !isLoading && (
         <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Chưa có mục tiêu KG nào phù hợp. Bấm <strong>Tạo KG</strong> để lập mục tiêu có thời hạn riêng.
+          {variant === 'collab'
+            ? <>Chưa có công việc nhóm nào phù hợp. Bấm <strong>Tạo công việc nhóm</strong> để lập KG có nhiều người phối hợp.</>
+            : <>Chưa có công việc nào phù hợp. Bấm <strong>Tạo công việc</strong> để lập mục tiêu (KG) cùng các bước thực hiện (KF).</>}
         </div>
       )}
 
       <div className="space-y-2">
-        {(data ?? []).map((g) => (
+        {shown.map((g) => (
           <button key={g.id} type="button" onClick={() => setSelected(g.id)}
             className="w-full rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/50">
             <div className="flex items-start gap-2">
@@ -131,7 +165,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
         ))}
       </div>
 
-      {creating && <GoalDialog onClose={() => setCreating(false)} />}
+      {creating && <Biz3KQuickCreate variant={variant === 'personal' ? 'personal' : 'team'} defaultDate={settings.today} onClose={() => setCreating(false)} onCreated={(id) => setSelected(id)} />}
       {selected && <GoalDetailSheet id={selected} settings={settings} onClose={() => setSelected(null)} />}
     </div>
   );
@@ -198,37 +232,6 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
   );
 }
 
-function MemberPicker({ selected, onChange, exclude }: { selected: K3MemberSearchRow[]; onChange: (rows: K3MemberSearchRow[]) => void; exclude?: string[] }) {
-  const uid = useAuth((s) => s.currentUserId) ?? '';
-  const [q, setQ] = useState('');
-  const { data } = useQuery({ ...k3MemberSearchQuery(uid, q), enabled: !!uid });
-  const options = (data ?? []).filter((r) => !selected.some((s) => s.id === r.id) && !exclude?.includes(r.id));
-  return (
-    <div className="space-y-2">
-      <Input placeholder="Tìm theo tên nhân sự…" value={q} onChange={(e) => setQ(e.target.value)} />
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {selected.map((s) => (
-            <Badge key={s.id} variant="secondary" className="gap-1">
-              {s.full_name}
-              <button type="button" aria-label={`Bỏ ${s.full_name}`} onClick={() => onChange(selected.filter((x) => x.id !== s.id))}><X className="h-3 w-3" /></button>
-            </Badge>
-          ))}
-        </div>
-      )}
-      <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border border-border p-1">
-        {options.map((r) => (
-          <button key={r.id} type="button" onClick={() => onChange([...selected, r])}
-            className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-secondary">
-            <span>{r.full_name}</span>
-            <span className="text-xs text-muted-foreground">{r.departments.join(' · ') || '—'}</span>
-          </button>
-        ))}
-        {options.length === 0 && <p className="px-2 py-1 text-xs text-muted-foreground">Không có nhân sự phù hợp.</p>}
-      </div>
-    </div>
-  );
-}
 
 function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Settings; onClose: () => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';

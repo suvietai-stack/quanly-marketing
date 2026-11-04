@@ -7737,6 +7737,7 @@ export type Database = {
         Returns: Json
       }
       k3_plan_task_save: { Args: { _payload: Json }; Returns: Json }
+      k3_quick_create: { Args: { _payload: Json }; Returns: Json }
       k3_scope_ok: { Args: { _actor: string; _user: string }; Returns: boolean }
       k3_settings_read: { Args: never; Returns: Json }
       k3_settings_save: {
