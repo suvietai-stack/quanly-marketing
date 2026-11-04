@@ -85,3 +85,12 @@ Nguyên tắc: một mô hình KG/KF/KPI, hai không gian (3K Của Tôi / 3K Nh
 - [x] 3K3-3. Giao diện: Biz3K còn 2 tab + Cài đặt; Biz3KGoals variant personal/scope; "3K Của Tôi" có Tạo KG trực tiếp; "3K Nhóm/Phòng Ban" gộp Theo nhân viên + Theo KG.
 - [x] 3K3-4. UI desktop 1280 + mobile 390 qua menu thật: 2 tab mới, không còn tab cũ, không tràn ngang, không lỗi JS; typecheck sạch.
 - [ ] 3K3-5. Nghiệm thu ghi thật bằng tài khoản nhân viên/quản lý được cho phép (tạo KG → mời → chấp nhận → ghi kết quả → chốt sổ); chưa Publish.
+
+## CHUẨN HÓA GIAO DIỆN VÀ QUY TRÌNH 3K — spec 899 dòng
+Nguyên tắc: Tạo công việc = tạo KG; một KG một/nhiều KF kèm KPI/deadline/người phụ trách; mỗi ngày chỉ ghi nhận thực hiện; bảo toàn dữ liệu/lịch sử cũ; quyền theo Cơ cấu tổ chức kiểm tra tại backend; chưa Publish.
+- [x] B1–B2. Migration 0196: k3_quick_create (KG+KF+KPI nguyên tử, request_key chống tạo trùng, bắt đầu cần ≥1 KF, mời thành viên kèm), k3_goal_list thêm lọc 'collab' (chỉ KG có phối hợp), k3_team_read thêm status_key (none/planned/updated/summarized/reconfirm) + goals_active/kf_active/kf_overdue thay khái niệm "Chưa lập 3K".
+- [x] B3. Ba tab nghiệp vụ + nút Cài đặt riêng (Biz3K.tsx): 3K Của Tôi (KG cá nhân + KF được giao + Ngày/Tuần/Tháng/Quý/Tất cả), 3K Nhóm/Phòng Ban (chỉ KG phối hợp, lọc Tôi chủ trì/Tôi tham gia/Đang thực hiện/Quá hạn/Hoàn thành), Theo Dõi Nhân Viên (chỉ cấp quản lý).
+- [x] B4. Quyền backend đã có từ 0185–0194 (k3_can theo bổ nhiệm, thu hồi thành viên chặn ghi); không cấp quyền qua Role tổng.
+- [x] B5. UX: Biz3KQuickCreate (form KG + KF + KPI một lần lưu, Lưu nháp/Lưu và bắt đầu, mời thành viên cho KG nhóm); Biz3KMyDay thay "Thêm công việc" bằng "Tạo công việc" + "Ghi nhận thực hiện" (chọn KF có sẵn, không tạo KG giả); Biz3KManage trạng thái mới + 8 chỉ số tổng quan + lọc đơn vị + chi tiết KG/KF nhân viên.
+- [x] B6. Kiểm thử: 7 test database mới (0196) đạt; toàn bộ 3K 73/73; hồi quy Biz 372/377 (5 lỗi lịch có sẵn: effective-access, my-work); typecheck/build OK; UI thật desktop 1280 + mobile 390 qua menu: đủ 3 tab, form tạo, không tràn ngang, không lỗi trình duyệt.
+- [ ] Nghiệm thu luồng ghi thật bằng tài khoản nhân viên/quản lý (tạo công việc → KF → ghi kết quả nhiều ngày → chốt sổ → quản lý theo dõi): cần tài khoản thật được phép; chưa Publish.
