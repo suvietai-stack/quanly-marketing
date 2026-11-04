@@ -40,6 +40,7 @@ beforeAll(async () => {
   await as(manager);
   await val(`SELECT k3_settings_save(true, '2020-01-01'::date, '08:45'::time, '18:00'::time, 3::smallint) v`);
   await as(staff);
+  await db.exec('ALTER TABLE k3_goals ADD COLUMN deleted_at timestamptz; ALTER TABLE k3_actions ADD COLUMN deleted_at timestamptz;');
   for (const file of ['0202_k3_daily_kpi_result_foundation.sql','0203_k3_kpi_metric_and_configuration_guards.sql','0206_k3_result_privacy_and_configuration_fences.sql','0207_k3_configuration_module_and_legacy_history_guards.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
   const contract = readFileSync('drizzle/migrations/0216_k3_ten_measurement_contract_and_review_safety.sql', 'utf8');
   await db.exec(contract.slice(0, contract.indexOf('COMMENT ON TABLE')));
