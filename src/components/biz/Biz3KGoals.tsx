@@ -107,7 +107,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input placeholder="Tìm mục tiêu…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
+        <Input placeholder="Tìm công việc…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
         {variant === 'personal' && (
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
@@ -116,9 +116,16 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
             </SelectContent>
           </Select>
         )}
+        {variant === 'collab' && (
+          <div className="flex flex-wrap gap-1">
+            {COLLAB_FILTERS.map((f) => (
+              <Button key={f.value} type="button" size="sm" variant={sub === f.value ? 'default' : 'outline'} onClick={() => setSub(f.value)}>{f.label}</Button>
+            ))}
+          </div>
+        )}
         <div className="flex-1" />
-        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant === 'scope' && !settings.allow_team_goal)}>
-          <Plus className="mr-1 h-4 w-4" /> {variant === 'scope' ? 'Tạo KG nhóm' : 'Tạo KG'}
+        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant !== 'personal' && !settings.allow_team_goal)}>
+          <Plus className="mr-1 h-4 w-4" /> {variant === 'personal' ? 'Tạo công việc' : 'Tạo công việc nhóm'}
         </Button>
       </div>
 
@@ -129,14 +136,16 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
           <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>Thử lại</Button>
         </div>
       )}
-      {data && data.length === 0 && !isLoading && (
+      {data && shown.length === 0 && !isLoading && (
         <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          Chưa có mục tiêu KG nào phù hợp. Bấm <strong>Tạo KG</strong> để lập mục tiêu có thời hạn riêng.
+          {variant === 'collab'
+            ? <>Chưa có công việc nhóm nào phù hợp. Bấm <strong>Tạo công việc nhóm</strong> để lập KG có nhiều người phối hợp.</>
+            : <>Chưa có công việc nào phù hợp. Bấm <strong>Tạo công việc</strong> để lập mục tiêu (KG) cùng các bước thực hiện (KF).</>}
         </div>
       )}
 
       <div className="space-y-2">
-        {(data ?? []).map((g) => (
+        {shown.map((g) => (
           <button key={g.id} type="button" onClick={() => setSelected(g.id)}
             className="w-full rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/50">
             <div className="flex items-start gap-2">
