@@ -99,7 +99,7 @@ Nguyên tắc: Tạo công việc = tạo KG; một KG một/nhiều KF kèm KPI
 - [x] Migration 0197: xóa mềm/khôi phục/trash_list/purge + cron 02:30
 - [x] 0198: RPC đọc loại trừ bản ghi đã xóa mềm
 - [x] 0199/0200: guard ghi goal/action/plan_task
-- [ ] 0201: guard kpi_save + task_save (đang sửa lỗi cú pháp nullif)
+- [x] 0201: guard kpi_save + task_save
 - [ ] UI: menu ba chấm, hộp xác nhận, Thùng lưu trữ, khôi phục
 - [ ] Test database k3Trash + hồi quy
 
