@@ -1457,6 +1457,13 @@
       "when": 1793775971585,
       "tag": "0207_k3_configuration_module_and_legacy_history_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 208,
+      "version": "7",
+      "when": 1793776043465,
+      "tag": "0208_k3_canonical_official_delete_protection",
+      "breakpoints": true
     }
   ]
 }
