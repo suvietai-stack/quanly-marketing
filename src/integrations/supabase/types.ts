@@ -7904,6 +7904,10 @@ export type Database = {
         Args: { _body: string; _day_id: string; _task_id: string }
         Returns: Json
       }
+      k3_data_review_save: {
+        Args: { _id: string; _kind: string; _reason: string }
+        Returns: Json
+      }
       k3_day_read: { Args: { _date: string }; Returns: Json }
       k3_day_save: { Args: { _date: string; _kg: string }; Returns: Json }
       k3_day_scope_ok: {
@@ -7921,9 +7925,11 @@ export type Database = {
         Args: { _actor: string; _goal: string }
         Returns: boolean
       }
+      k3_kpi_backup_create: { Args: never; Returns: Json }
       k3_kpi_configure: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_day_confirm: { Args: { _date: string }; Returns: Json }
       k3_kpi_delete: { Args: { _id: string }; Returns: boolean }
+      k3_kpi_inventory: { Args: never; Returns: Json }
       k3_kpi_result_read: {
         Args: { _date: string; _kpi: string }
         Returns: Json
