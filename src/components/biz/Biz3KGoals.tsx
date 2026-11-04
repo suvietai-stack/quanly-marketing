@@ -290,7 +290,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
               {data.kpis.length > 0 && (
                 <div className="space-y-1.5 border-t border-border pt-2">
                   <p className="text-xs font-medium text-muted-foreground">KPI kết quả KG</p>
-                  {data.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} />)}
+                  {data.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
                 </div>
               )}
               <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
@@ -356,7 +356,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                       </div>
                       <GoalStatusBadge status={a.action.status} overdueDays={a.overdue_days} />
                     </div>
-                    {a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} />)}
+                    {a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
                     {a.member_actuals.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Đóng góp: {a.member_actuals.map((m) => `${m.full_name} ${m.actual}`).join(' · ')}

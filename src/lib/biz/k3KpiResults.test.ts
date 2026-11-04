@@ -3,6 +3,11 @@ import { k3ReplaceDaily, k3RequiredStatus, k3ResultPreview, type K3DailyValue, t
 
 const base: K3Measurement = { measure: 'cumulative', condition: 'gte', target: 200 };
 describe('KPI theo tổng ngày', () => {
+  it('sáng 20 chiều nhập tổng mới 30: ngày là 30, không phải 50', () => {
+    const rows = k3ReplaceDaily([{ user_id: 'sale', work_date: '2026-11-04', value: 20 }], { user_id: 'sale', work_date: '2026-11-04', value: 30 });
+    expect(rows).toHaveLength(1);
+    expect(k3ResultPreview(base, rows)).toMatchObject({ actual: 30, progress: 15 });
+  });
   it('20 + 30 = 50/200, 25%; sửa 30 thành 25 không cộng 55', () => {
     let rows = [{ user_id: 'a', work_date: '2026-11-04', value: 20 }, { user_id: 'a', work_date: '2026-11-05', value: 30 }];
     expect(k3ResultPreview(base, rows)).toMatchObject({ actual: 50, progress: 25, attained: false });

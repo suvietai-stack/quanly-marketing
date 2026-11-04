@@ -9,6 +9,7 @@ export interface K3SavedResult extends K3DailyValue {
 export interface K3ResultData {
   kpi: K3Measurement & { id: string; name: string; unit: string | null };
   can_update: boolean;
+  day_closed?: boolean;
   metric: K3ResultMetric;
   official_metric: K3ResultMetric;
   daily: K3SavedResult | null;
