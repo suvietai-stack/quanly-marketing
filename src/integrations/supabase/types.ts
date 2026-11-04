@@ -3523,6 +3523,7 @@ export type Database = {
           manual_actual: number | null
           manual_source: string | null
           name: string
+          request_key: string | null
           sort_order: number
           target: number | null
           unit: string | null
@@ -3538,6 +3539,7 @@ export type Database = {
           manual_actual?: number | null
           manual_source?: string | null
           name: string
+          request_key?: string | null
           sort_order?: number
           target?: number | null
           unit?: string | null
@@ -3553,6 +3555,7 @@ export type Database = {
           manual_actual?: number | null
           manual_source?: string | null
           name?: string
+          request_key?: string | null
           sort_order?: number
           target?: number | null
           unit?: string | null
@@ -7637,6 +7640,17 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       k3_action_save: { Args: { _payload: Json }; Returns: Json }
+      k3_action_status: {
+        Args: {
+          _cause: string
+          _id: string
+          _problem: string
+          _revision: number
+          _solution: string
+          _status: string
+        }
+        Returns: Json
+      }
       k3_action_visible: {
         Args: { _action: string; _actor: string }
         Returns: boolean
@@ -7655,11 +7669,33 @@ export type Database = {
         Args: { _actor: string; _day: string }
         Returns: boolean
       }
+      k3_goal_detail: { Args: { _id: string }; Returns: Json }
+      k3_goal_list: { Args: { _filter?: string; _q?: string }; Returns: Json }
       k3_goal_save: { Args: { _payload: Json }; Returns: Json }
+      k3_goal_status: {
+        Args: { _id: string; _note: string; _revision: number; _status: string }
+        Returns: Json
+      }
       k3_goal_visible: {
         Args: { _actor: string; _goal: string }
         Returns: boolean
       }
+      k3_kpi_delete: { Args: { _id: string }; Returns: boolean }
+      k3_kpi_save: { Args: { _payload: Json }; Returns: Json }
+      k3_member_invite: {
+        Args: { _goal_id: string; _user_ids: string[] }
+        Returns: Json
+      }
+      k3_member_respond: {
+        Args: { _accept: boolean; _goal_id: string }
+        Returns: Json
+      }
+      k3_member_revoke: {
+        Args: { _goal_id: string; _user_id: string }
+        Returns: Json
+      }
+      k3_member_search: { Args: { _q: string }; Returns: Json }
+      k3_module_settings_save: { Args: { _payload: Json }; Returns: Json }
       k3_period_comment_save: {
         Args: {
           _action?: string
