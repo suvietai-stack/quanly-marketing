@@ -65,7 +65,7 @@ beforeAll(async () => {
     }
     await db.exec(sql);
   }
-  for (const file of ['0221_k3_frozen_measurement_report_details.sql','0222_k3_preserve_close_fingerprints_and_acceptance_scope.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
+  for (const file of ['0221_k3_frozen_measurement_report_details.sql','0222_k3_preserve_close_fingerprints_and_acceptance_scope.sql','0223_k3_acceptance_frozen_at_confirmation.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`, 'utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -172,4 +172,23 @@ it('new close keeps raw result fingerprints and freezes separate measurement con
   await db.query(`SELECT private.k3_close_one('${user}','2026-11-02','auto')`);
   expect(await value(`SELECT snapshot->'measurements'->0 ? 'kpi_snapshot' v FROM k3_daily_closes WHERE work_date='2026-11-02'`)).toBe(true);
   expect(await value(`SELECT snapshot->'results'->0 ? 'kpi_snapshot' v FROM k3_daily_closes WHERE work_date='2026-11-02'`)).toBe(false);
+});
+it('interval duration rejects overlap and stores 90 minutes without double counting', async () => {
+  const k = await value<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,name:'Khoảng giờ',measure:'duration',target:90,request_key:crypto.randomUUID(),config:{duration_unit:'minutes',duration_method:'intervals'}})}') v`);
+  if (!k) throw new Error('Missing KPI');
+  const payload = {kpi_id:k.id,work_date:'2026-11-03',request_key:crypto.randomUUID(),intervals:[{start:'2026-11-03T08:00:00+07:00',end:'2026-11-03T09:00:00+07:00'},{start:'2026-11-03T08:30:00+07:00',end:'2026-11-03T09:30:00+07:00'}]};
+  await expect(db.query(`SELECT k3_kpi_result_save('${JSON.stringify(payload)}')`)).rejects.toThrow('chồng lấn');
+  const r = await value<{daily:{value:number}}>(`SELECT k3_kpi_result_save('${JSON.stringify({...payload,request_key:crypto.randomUUID(),intervals:[{start:'2026-11-03T08:00:00+07:00',end:'2026-11-03T09:30:00+07:00'}]})}') v`);
+  expect(r?.daily.value).toBe(90);
+});
+it('sequential milestones cannot skip an unfinished predecessor', async () => {
+  const config={sequential:true,milestones:[{id:'a',name:'Bước 1',condition:'Xong bước 1',required:true},{id:'b',name:'Bước 2',condition:'Xong bước 2',required:true}]};
+  const k = await value<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,name:'Trình tự',measure:'milestone',milestones:['a','b'],config,request_key:crypto.randomUUID()})}') v`);
+  if (!k) throw new Error('Missing KPI');
+  await expect(db.query(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:k.id,work_date:'2026-11-03',completed:['b'],evidence:'Nguồn',request_key:crypto.randomUUID()})}')`)).rejects.toThrow('thứ tự');
+});
+it('pending review KPI stays excluded by the new engine', async () => {
+  await db.exec(`INSERT INTO k3_data_reviews(kind,record_id,reason,original_snapshot) VALUES('kpi','${kpi}','Thiếu căn cứ','{}')`);
+  expect(await value(`SELECT private.k3_result_metric('${kpi}',false)->>'actual' v`)).toBeNull();
+  await db.exec(`UPDATE k3_data_reviews SET status='resolved' WHERE record_id='${kpi}'`);
 });
