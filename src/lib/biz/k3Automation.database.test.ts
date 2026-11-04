@@ -58,6 +58,13 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0213_k3_existing_confirmations_close_fences.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0214_k3_archive_backup_alias_guard.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0215_k3_goal_activity_from_measured_actions.sql','utf8'));
+  for (const file of ['0216_k3_ten_measurement_contract_and_review_safety.sql', '0217_k3_measurement_configuration_validation.sql', '0218_k3_shared_ten_mode_evaluator.sql', '0219_k3_typed_daily_result_values.sql', '0220_k3_configured_creation_and_date_preview.sql']) {
+    let sql = readFileSync(`drizzle/migrations/${file}`, 'utf8');
+    if (file.startsWith('0220')) {
+      await db.exec(`CREATE FUNCTION k3_quick_create(jsonb) RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;`);
+    }
+    await db.exec(sql);
+  }
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -108,13 +115,13 @@ it('child KPI activity marks KG in progress without inventing goal completion',a
   expect(await value(`SELECT private.k3_entity_metric('goal','${goal}')->>'status' v`)).toBe('in_progress');
   expect(await value(`SELECT private.k3_entity_metric('goal','${goal}')->>'kpi_total' v`)).toBe('0');
 });
-it('legacy archive requires an exact verified backup and expires after 15 days',async()=>{
+it('review archive requires an exact verified backup and never expires automatically',async()=>{
   const tid=crypto.randomUUID(),day=crypto.randomUUID(),backup=crypto.randomUUID();
   await db.exec(`INSERT INTO k3_days VALUES('${day}',NULL);INSERT INTO k3_tasks(id,day_id,user_id,kpi_actual) VALUES('${tid}','${day}','${user}',7);`);
   await expect(db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`)).rejects.toThrow('bản sao');
   await db.exec(`INSERT INTO private.k3_kpi_upgrade_backups VALUES('${backup}',now(),'${user}',jsonb_build_object('tasks',(SELECT jsonb_agg(to_jsonb(t)) FROM k3_tasks t)),jsonb_build_object('tasks',(SELECT count(*) FROM k3_tasks)));`);
   await db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`);
-  expect(await value(`SELECT extract(epoch FROM purge_at-archived_at)::int v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBe(15*24*60*60);
+  expect(await value(`SELECT purge_at v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBeNull();
   expect(Number(await value(`SELECT kpi_actual v FROM k3_tasks WHERE id='${tid}'`))).toBe(7);
   const rid=await value<string>(`SELECT id v FROM k3_data_reviews WHERE record_id='${tid}'`);
   await db.query(`SELECT k3_legacy_task_restore('${rid}')`);
@@ -126,15 +133,37 @@ it('official legacy history cannot be placed on a 15-day deletion clock',async()
   await expect(db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`)).rejects.toThrow('chốt sổ lịch sử');
   expect(await value(`SELECT deleted_at v FROM k3_tasks WHERE id='${tid}'`)).toBeNull();
 });
-it('expired archive purges only the unconfirmed source and retains backup and audit',async()=>{
+it('pending review is retained even if an old expiry is present',async()=>{
   const tid=crypto.randomUUID(),day=crypto.randomUUID(),backup=crypto.randomUUID();
   await db.exec(`INSERT INTO k3_days VALUES('${day}',NULL);INSERT INTO k3_tasks(id,day_id,user_id) VALUES('${tid}','${day}','${user}');
   INSERT INTO private.k3_kpi_upgrade_backups VALUES('${backup}',now(),'${user}',jsonb_build_object('tasks',(SELECT jsonb_agg(to_jsonb(t)) FROM k3_tasks t)),jsonb_build_object('tasks',(SELECT count(*) FROM k3_tasks)));`);
   await db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu cấu trúc')`);
   expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(0);
   await db.exec(`UPDATE k3_data_reviews SET purge_at=now()-interval '1 second' WHERE record_id='${tid}';`);
-  expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(1);
-  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE id='${tid}'`)).toBe(0);
+  expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(0);
+  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE id='${tid}'`)).toBe(1);
   expect(await value(`SELECT count(*)::int v FROM private.k3_kpi_upgrade_backups WHERE id='${backup}'`)).toBe(1);
-  expect(await value(`SELECT status v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBe('delete_confirmed');
+  expect(await value(`SELECT status v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBe('pending');
+});
+it('configured binary save and acceptance use the authoritative evaluator', async () => {
+  const k = await value<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,name:'Hợp đồng',measure:'binary',request_key:crypto.randomUUID(),config:{valid_condition:'Đã ký',evidence_required:true,acceptance_required:true}})}') v`);
+  if (!k) throw new Error('Missing KPI');
+  const r = await value<{daily:{id:string;revision:number};metric:{actual:number|null;attained:boolean}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:k.id,work_date:'2026-11-02',value:1,evidence:'Đã ký',request_key:crypto.randomUUID()})}') v`);
+  expect(r?.metric).toMatchObject({actual:null,attained:false});
+  if (!r?.daily) throw new Error('Missing daily result');
+  await db.query(`SELECT k3_kpi_accept('${r.daily.id}',${r.daily.revision},'accepted','Đối chiếu hợp đồng')`);
+  expect(Number(await value(`SELECT private.k3_result_metric('${k.id}',false)->>'actual' v`))).toBe(1);
+});
+it('duration input hours is stored as minutes and evaluated against minutes', async () => {
+  const k = await value<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,name:'Đào tạo',measure:'duration',target:120,request_key:crypto.randomUUID(),config:{duration_unit:'hours',duration_method:'total'}})}') v`);
+  if (!k) throw new Error('Missing KPI');
+  const r = await value<{daily:{value:number};metric:{actual:number}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:k.id,work_date:'2026-11-02',value:2,request_key:crypto.randomUUID()})}') v`);
+  expect(r?.daily.value).toBe(120);
+  expect(r?.metric.actual).toBe(120);
+});
+it('saved ratio accepts zero denominator as insufficient data', async () => {
+  const k = await value<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:goal,name:'Tỷ lệ',measure:'ratio',target:20,request_key:crypto.randomUUID()})}') v`);
+  if (!k) throw new Error('Missing KPI');
+  const r = await value<{metric:{actual:number|null}}>(`SELECT k3_kpi_result_save('${JSON.stringify({kpi_id:k.id,work_date:'2026-11-02',numerator:0,denominator:0,request_key:crypto.randomUUID()})}') v`);
+  expect(r?.metric.actual).toBeNull();
 });
