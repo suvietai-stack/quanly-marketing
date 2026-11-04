@@ -1,8 +1,10 @@
--- FIX A-D spec thong nhat 3K: thu hoi thanh vien chan ghi KF cu; sua ngay KG luu that; KPI cung don vi tach theo kpi_id; KF chua toi ngay khong vao danh sach hom nay.
+-- FIX A–D spec thống nhất 3K: thu hồi thành viên chặn ghi KF cũ; sửa ngày KG lưu thật; KPI cùng đơn vị tách theo kpi_id; KF chưa tới ngày không vào danh sách hôm nay.
 
+-- C. Liên kết bản ghi thực thi với đúng KPI (tránh cộng chung khi một KF có nhiều KPI cùng đơn vị).
 ALTER TABLE public.k3_tasks ADD COLUMN kpi_id uuid REFERENCES public.k3_kpis(id) ON DELETE SET NULL;
 CREATE INDEX k3_tasks_kpi_id ON public.k3_tasks(kpi_id) WHERE kpi_id IS NOT NULL;
 
+-- C. Thực tế KPI theo đúng chỉ số: bản ghi đã gắn kpi_id chỉ tính cho KPI đó; bản ghi cũ (kpi_id NULL) tính theo đơn vị như trước.
 CREATE FUNCTION private.k3_action_kpi_actual(_action uuid, _kpi uuid, _unit text) RETURNS numeric LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
   SELECT coalesce(sum(t.kpi_actual),0) FROM public.k3_tasks t
   WHERE t.action_id=_action AND t.deleted_at IS NULL AND NOT t.is_unscheduled AND t.kpi_actual IS NOT NULL
@@ -11,6 +13,7 @@ $$;
 REVOKE ALL ON FUNCTION private.k3_action_kpi_actual(uuid,uuid,text) FROM PUBLIC, anon, authenticated;
 DROP FUNCTION private.k3_action_kpi_actual(uuid,text);
 
+-- A. Người thực thi KF: chủ trì KG, hoặc người phụ trách/phối hợp CÒN là thành viên đã chấp nhận (thu hồi = mất quyền ghi).
 CREATE OR REPLACE FUNCTION private.k3_action_worker_ok(_user uuid, _action uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
   SELECT EXISTS(
     SELECT 1 FROM public.k3_actions a JOIN public.k3_goals g ON g.id=a.goal_id
@@ -22,15 +25,16 @@ CREATE OR REPLACE FUNCTION private.k3_action_worker_ok(_user uuid, _action uuid)
   )
 $$;
 
+-- B. Sửa ngày bắt đầu/hạn hoàn thành KG (custom) lưu thật ở backend.
 CREATE OR REPLACE FUNCTION public.k3_goal_save(_payload jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE g public.k3_goals; old public.k3_goals; p jsonb:=_payload; _id uuid:=nullif(p->>'id','')::uuid; typ text:=coalesce(nullif(p->>'period_type',''),'custom'); dt date:=nullif(p->>'period_start','')::date; de date:=nullif(p->>'period_end','')::date; key uuid:=nullif(p->>'request_key','')::uuid; st text;
 BEGIN
-  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
   PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
   IF _id IS NOT NULL THEN
     SELECT * INTO old FROM public.k3_goals WHERE id=_id FOR UPDATE;
-    IF old.id IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(), old.id) THEN RAISE EXCEPTION 'Ban khong duoc sua muc tieu nay.'; END IF;
-    IF (p->>'revision')::bigint IS DISTINCT FROM old.revision THEN RAISE EXCEPTION 'Muc tieu da thay doi. Vui long tai lai.'; END IF;
+    IF old.id IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(), old.id) THEN RAISE EXCEPTION 'Bạn không được sửa mục tiêu này.'; END IF;
+    IF (p->>'revision')::bigint IS DISTINCT FROM old.revision THEN RAISE EXCEPTION 'Mục tiêu đã thay đổi. Vui lòng tải lại.'; END IF;
     typ:=old.period_type;
     IF typ='custom' THEN
       dt:=coalesce(dt, old.period_start);
@@ -39,24 +43,24 @@ BEGIN
       dt:=old.period_start; de:=old.period_end;
     END IF;
   ELSE
-    IF key IS NULL THEN RAISE EXCEPTION 'Thieu ma yeu cau luu muc tieu.'; END IF;
+    IF key IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu lưu mục tiêu.'; END IF;
     SELECT * INTO g FROM public.k3_goals WHERE user_id=auth.uid() AND request_key=key;
     IF g.id IS NOT NULL THEN RETURN to_jsonb(g); END IF;
-    IF NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Ban khong co quyen su dung 3K.'; END IF;
-    IF NOT coalesce((SELECT allow_personal_goal FROM public.k3_settings WHERE id),true) AND NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Quyen tao KG dang tat trong Cai dat 3K.'; END IF;
+    IF NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF;
+    IF NOT coalesce((SELECT allow_personal_goal FROM public.k3_settings WHERE id),true) AND NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Quyền tạo KG đang tắt trong Cài đặt 3K.'; END IF;
   END IF;
   IF typ='custom' THEN
-    IF dt IS NULL OR de IS NULL OR de < dt THEN RAISE EXCEPTION 'Can chon ngay bat dau va han hoan thanh hop le.'; END IF;
+    IF dt IS NULL OR de IS NULL OR de < dt THEN RAISE EXCEPTION 'Cần chọn ngày bắt đầu và hạn hoàn thành hợp lệ.'; END IF;
     PERFORM private.k3_write_guard(greatest(dt, coalesce((SELECT effective_from FROM public.k3_settings WHERE id), dt)));
   ELSE
     dt:=public.k3_period_start(typ,dt);
-    IF dt IS NULL THEN RAISE EXCEPTION 'Can chon ky.'; END IF;
+    IF dt IS NULL THEN RAISE EXCEPTION 'Cần chọn kỳ.'; END IF;
     de:=public.k3_period_end(typ,dt);
     PERFORM private.k3_period_write_guard(typ,dt);
   END IF;
-  IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Ten muc tieu khong duoc trong.'; END IF;
+  IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Tên mục tiêu không được trống.'; END IF;
   st:=coalesce(nullif(p->>'status',''),'draft');
-  IF st NOT IN ('draft','not_started','in_progress') THEN RAISE EXCEPTION 'Trang thai khoi tao khong hop le.'; END IF;
+  IF st NOT IN ('draft','not_started','in_progress') THEN RAISE EXCEPTION 'Trạng thái khởi tạo không hợp lệ.'; END IF;
   IF _id IS NULL THEN
     INSERT INTO public.k3_goals(user_id,period_type,period_start,period_end,name,description,expected_result,due_date,department_id,request_key,status,is_key)
     VALUES(auth.uid(),typ,dt,de,btrim(p->>'name'),nullif(btrim(p->>'description'),''),nullif(btrim(p->>'expected_result'),''),coalesce(nullif(p->>'due_date','')::date,de),public.biz_department_at(auth.uid(),greatest(dt,coalesce((SELECT period_effective_from FROM public.k3_settings WHERE id),dt))),key,st,coalesce((p->>'is_key')::boolean,false))
@@ -72,34 +76,35 @@ BEGIN
   RETURN to_jsonb(g);
 END$$;
 
+-- A. KF chỉ sửa/đổi trạng thái bởi chủ trì KG hoặc người thực thi còn hiệu lực.
 CREATE OR REPLACE FUNCTION public.k3_action_save(_payload jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE a public.k3_actions; old public.k3_actions; g public.k3_goals; p jsonb:=_payload; _id uuid:=nullif(p->>'id','')::uuid; key uuid:=nullif(p->>'request_key','')::uuid; _assignee uuid; _collab uuid; _collabs uuid[]:=coalesce((SELECT array_agg(value::uuid) FROM jsonb_array_elements_text(coalesce(p->'collaborators','[]'::jsonb))),'{}'::uuid[]);
 BEGIN
-  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
   PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
   IF _id IS NOT NULL THEN
     SELECT * INTO old FROM public.k3_actions WHERE id=_id FOR UPDATE;
-    IF old.id IS NULL OR NOT (private.k3_goal_manage_ok(auth.uid(), old.goal_id) OR private.k3_action_worker_ok(auth.uid(), old.id)) THEN RAISE EXCEPTION 'Ban khong duoc sua hanh dong nay.'; END IF;
-    IF (p->>'revision')::bigint IS DISTINCT FROM old.revision THEN RAISE EXCEPTION 'Hanh dong da thay doi. Vui long tai lai.'; END IF;
-    IF (p ? 'assignee_id' OR p ? 'collaborators') AND NOT private.k3_goal_manage_ok(auth.uid(), old.goal_id) THEN RAISE EXCEPTION 'Chi nguoi chu tri KG duoc phan cong lai KF.'; END IF;
+    IF old.id IS NULL OR NOT (private.k3_goal_manage_ok(auth.uid(), old.goal_id) OR private.k3_action_worker_ok(auth.uid(), old.id)) THEN RAISE EXCEPTION 'Bạn không được sửa hành động này.'; END IF;
+    IF (p->>'revision')::bigint IS DISTINCT FROM old.revision THEN RAISE EXCEPTION 'Hành động đã thay đổi. Vui lòng tải lại.'; END IF;
+    IF (p ? 'assignee_id' OR p ? 'collaborators') AND NOT private.k3_goal_manage_ok(auth.uid(), old.goal_id) THEN RAISE EXCEPTION 'Chỉ người chủ trì KG được phân công lại KF.'; END IF;
   ELSE
-    IF key IS NULL THEN RAISE EXCEPTION 'Thieu ma yeu cau luu hanh dong.'; END IF;
+    IF key IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu lưu hành động.'; END IF;
     SELECT * INTO a FROM public.k3_actions WHERE user_id=auth.uid() AND request_key=key;
     IF a.id IS NOT NULL THEN RETURN to_jsonb(a); END IF;
   END IF;
   SELECT * INTO g FROM public.k3_goals WHERE id=coalesce(old.goal_id,nullif(p->>'goal_id','')::uuid) FOR UPDATE;
-  IF g.id IS NULL THEN RAISE EXCEPTION 'Khong tim thay muc tieu.'; END IF;
-  IF _id IS NULL AND NOT private.k3_goal_manage_ok(auth.uid(), g.id) THEN RAISE EXCEPTION 'Chi nguoi chu tri KG duoc them KF.'; END IF;
-  IF g.status IN ('done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Muc tieu da ket thuc.'; END IF;
+  IF g.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy mục tiêu.'; END IF;
+  IF _id IS NULL AND NOT private.k3_goal_manage_ok(auth.uid(), g.id) THEN RAISE EXCEPTION 'Chỉ người chủ trì KG được thêm KF.'; END IF;
+  IF g.status IN ('done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Mục tiêu đã kết thúc.'; END IF;
   IF g.period_type='custom' THEN PERFORM private.k3_write_guard(greatest(g.period_start, coalesce((SELECT effective_from FROM public.k3_settings WHERE id), g.period_start)));
   ELSE PERFORM private.k3_period_write_guard(g.period_type,g.period_start); END IF;
-  IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Ten hanh dong khong duoc trong.'; END IF;
-  IF nullif(p->>'manual_progress','') IS NOT NULL AND btrim(coalesce(p->>'progress_source',''))='' THEN RAISE EXCEPTION 'Xac nhan tien do thu cong can ghi nguon.'; END IF;
-  IF nullif(p->>'start_date','')::date > nullif(p->>'due_date','')::date THEN RAISE EXCEPTION 'Ngay bat dau phai truoc han hoan thanh.'; END IF;
+  IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Tên hành động không được trống.'; END IF;
+  IF nullif(p->>'manual_progress','') IS NOT NULL AND btrim(coalesce(p->>'progress_source',''))='' THEN RAISE EXCEPTION 'Xác nhận tiến độ thủ công cần ghi nguồn.'; END IF;
+  IF nullif(p->>'start_date','')::date > nullif(p->>'due_date','')::date THEN RAISE EXCEPTION 'Ngày bắt đầu phải trước hạn hoàn thành.'; END IF;
   _assignee:=coalesce(nullif(p->>'assignee_id','')::uuid, old.assignee_id, g.user_id);
-  IF _assignee<>g.user_id AND NOT EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_assignee AND m.status='accepted') THEN RAISE EXCEPTION 'Nguoi phu trach KF phai la chu tri hoac thanh vien da chap nhan tham gia KG.'; END IF;
+  IF _assignee<>g.user_id AND NOT EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_assignee AND m.status='accepted') THEN RAISE EXCEPTION 'Người phụ trách KF phải là chủ trì hoặc thành viên đã chấp nhận tham gia KG.'; END IF;
   FOREACH _collab IN ARRAY _collabs LOOP
-    IF _collab<>g.user_id AND NOT EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_collab AND m.status='accepted') THEN RAISE EXCEPTION 'Nguoi phoi hop phai la thanh vien da chap nhan tham gia KG.'; END IF;
+    IF _collab<>g.user_id AND NOT EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_collab AND m.status='accepted') THEN RAISE EXCEPTION 'Người phối hợp phải là thành viên đã chấp nhận tham gia KG.'; END IF;
   END LOOP;
   IF _id IS NULL THEN
     INSERT INTO public.k3_actions(goal_id,user_id,name,start_date,due_date,note,manual_progress,progress_source,request_key,assignee_id,is_key)
@@ -121,16 +126,16 @@ END$$;
 CREATE OR REPLACE FUNCTION public.k3_action_status(_id uuid, _status text, _problem text, _cause text, _solution text, _revision bigint) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE a public.k3_actions; unmet text;
 BEGIN
-  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
   SELECT * INTO a FROM public.k3_actions WHERE id=_id FOR UPDATE;
-  IF a.id IS NULL OR NOT (private.k3_goal_manage_ok(auth.uid(), a.goal_id) OR private.k3_action_worker_ok(auth.uid(), a.id)) THEN RAISE EXCEPTION 'Ban khong co quyen doi trang thai hanh dong nay.'; END IF;
-  IF _revision IS NULL OR _revision <> a.revision THEN RAISE EXCEPTION 'Hanh dong da thay doi. Vui long tai lai.'; END IF;
-  IF _status NOT IN ('draft','not_started','in_progress','paused','done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Trang thai khong hop le.'; END IF;
+  IF a.id IS NULL OR NOT (private.k3_goal_manage_ok(auth.uid(), a.goal_id) OR private.k3_action_worker_ok(auth.uid(), a.id)) THEN RAISE EXCEPTION 'Bạn không có quyền đổi trạng thái hành động này.'; END IF;
+  IF _revision IS NULL OR _revision <> a.revision THEN RAISE EXCEPTION 'Hành động đã thay đổi. Vui lòng tải lại.'; END IF;
+  IF _status NOT IN ('draft','not_started','in_progress','paused','done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Trạng thái không hợp lệ.'; END IF;
   IF _status='done' THEN
     SELECT string_agg(k.name,'; ') INTO unmet FROM public.k3_kpis k WHERE k.action_id=a.id AND k.kind='cumulative' AND coalesce(k.target,0)>0 AND private.k3_action_kpi_actual(a.id,k.id,k.unit) < k.target;
-    IF unmet IS NOT NULL THEN RAISE EXCEPTION 'Chua dat KPI: %. Hay ghi nhan Ket thuc chua dat neu dung hanh dong nay.', unmet; END IF;
+    IF unmet IS NOT NULL THEN RAISE EXCEPTION 'Chưa đạt KPI: %. Hãy ghi nhận Kết thúc chưa đạt nếu dừng hành động này.', unmet; END IF;
   END IF;
-  IF _status='ended_missed' AND (btrim(coalesce(_problem,''))='' OR btrim(coalesce(_cause,''))='' OR btrim(coalesce(_solution,''))='') THEN RAISE EXCEPTION 'Ket thuc chua dat can du Van de - Nguyen nhan - Giai phap.'; END IF;
+  IF _status='ended_missed' AND (btrim(coalesce(_problem,''))='' OR btrim(coalesce(_cause,''))='' OR btrim(coalesce(_solution,''))='') THEN RAISE EXCEPTION 'Kết thúc chưa đạt cần đủ Vấn đề - Nguyên nhân - Giải pháp.'; END IF;
   UPDATE public.k3_actions SET status=_status,
     problem=CASE WHEN _status='ended_missed' THEN btrim(_problem) ELSE problem END,
     cause=CASE WHEN _status='ended_missed' THEN btrim(_cause) ELSE cause END,
@@ -143,14 +148,15 @@ BEGIN
   RETURN to_jsonb(a);
 END$$;
 
+-- C. Tạo công việc từ KF: cho phép gắn đúng KPI của KF đó.
 CREATE OR REPLACE FUNCTION public.k3_plan_task_save(_payload jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$DECLARE p jsonb:=_payload; a public.k3_actions; g public.k3_goals; t public.k3_tasks; result jsonb; _kpi uuid:=nullif(_payload->>'kpi_id','')::uuid; BEGIN
- IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF; PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF; PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
  SELECT * INTO a FROM public.k3_actions WHERE id=nullif(p->>'action_id','')::uuid; SELECT * INTO g FROM public.k3_goals WHERE id=a.goal_id;
- IF a.id IS NULL OR NOT private.k3_action_worker_ok(auth.uid(), a.id) THEN RAISE EXCEPTION 'Ban khong tham gia thuc hien hanh dong nay.'; END IF;
- IF _kpi IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.k3_kpis k WHERE k.id=_kpi AND k.action_id=a.id) THEN RAISE EXCEPTION 'KPI khong thuoc hanh dong nay.'; END IF;
+ IF a.id IS NULL OR NOT private.k3_action_worker_ok(auth.uid(), a.id) THEN RAISE EXCEPTION 'Bạn không tham gia thực hiện hành động này.'; END IF;
+ IF _kpi IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.k3_kpis k WHERE k.id=_kpi AND k.action_id=a.id) THEN RAISE EXCEPTION 'KPI không thuộc hành động này.'; END IF;
  IF g.period_type='custom' THEN PERFORM private.k3_write_guard(greatest(g.period_start, coalesce((SELECT effective_from FROM public.k3_settings WHERE id), g.period_start))); ELSE PERFORM private.k3_period_write_guard(g.period_type,g.period_start); END IF;
- IF nullif(p->>'id','') IS NOT NULL THEN SELECT * INTO t FROM public.k3_tasks WHERE id=(p->>'id')::uuid; IF t.user_id IS DISTINCT FROM auth.uid() THEN RAISE EXCEPTION 'Ban khong duoc sua viec nguoi khac.'; END IF;
- ELSE IF nullif(p->>'request_key','') IS NULL THEN RAISE EXCEPTION 'Thieu ma yeu cau cong viec.'; END IF; SELECT * INTO t FROM public.k3_tasks WHERE user_id=auth.uid() AND request_key=(p->>'request_key')::uuid; IF t.id IS NOT NULL THEN RETURN to_jsonb(t); END IF; END IF;
+ IF nullif(p->>'id','') IS NOT NULL THEN SELECT * INTO t FROM public.k3_tasks WHERE id=(p->>'id')::uuid; IF t.user_id IS DISTINCT FROM auth.uid() THEN RAISE EXCEPTION 'Bạn không được sửa việc người khác.'; END IF;
+ ELSE IF nullif(p->>'request_key','') IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu công việc.'; END IF; SELECT * INTO t FROM public.k3_tasks WHERE user_id=auth.uid() AND request_key=(p->>'request_key')::uuid; IF t.id IS NOT NULL THEN RETURN to_jsonb(t); END IF; END IF;
  IF nullif(p->>'work_date','') IS NULL THEN p:=p||jsonb_build_object('work_date',coalesce(t.work_date,greatest(g.period_start,(SELECT effective_from FROM public.k3_settings WHERE id)))); END IF;
  IF t.id IS NULL AND nullif(_payload->>'work_date','') IS NULL THEN PERFORM set_config('k3.creating_unscheduled','yes',true); END IF; result:=public.k3_task_save(p); PERFORM set_config('k3.creating_unscheduled','',true);
  PERFORM set_config('k3.scheduling','yes',true);
@@ -158,9 +164,10 @@ CREATE OR REPLACE FUNCTION public.k3_plan_task_save(_payload jsonb) RETURNS json
  PERFORM set_config('k3.scheduling','',true);
  INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,auth.uid(),'link',jsonb_build_object('action_id',a.id,'kpi_id',_kpi,'is_unscheduled',t.is_unscheduled)); RETURN to_jsonb(t); END$$;
 
+-- A + D. Đọc ngày: KG/KF chỉ hiện với thành viên còn hiệu lực; KF chưa tới ngày bắt đầu không vào danh sách hôm nay.
 CREATE OR REPLACE FUNCTION public.k3_user_day_read(_user uuid,_date date) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$DECLARE d public.k3_days; BEGIN
- IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF; SELECT * INTO d FROM public.k3_days WHERE user_id=_user AND work_date=_date;
- IF (_user=auth.uid() AND NOT public.k3_can(auth.uid(),'k3.use')) OR (_user<>auth.uid() AND NOT (public.k3_can(auth.uid(),'k3.view_scope') AND CASE WHEN d.id IS NOT NULL THEN public.k3_day_scope_ok(auth.uid(),d.id) ELSE public.biz_scope_ok(auth.uid(),_user,public.biz_department_at(_user,_date),(_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) END)) THEN RAISE EXCEPTION 'Ban khong co quyen xem 3K cua nhan vien nay.'; END IF;
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF; SELECT * INTO d FROM public.k3_days WHERE user_id=_user AND work_date=_date;
+ IF (_user=auth.uid() AND NOT public.k3_can(auth.uid(),'k3.use')) OR (_user<>auth.uid() AND NOT (public.k3_can(auth.uid(),'k3.view_scope') AND CASE WHEN d.id IS NOT NULL THEN public.k3_day_scope_ok(auth.uid(),d.id) ELSE public.biz_scope_ok(auth.uid(),_user,public.biz_department_at(_user,_date),(_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) END)) THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K của nhân viên này.'; END IF;
  RETURN jsonb_build_object('settings',public.k3_settings_read(),'user',(SELECT jsonb_build_object('id',id,'full_name',full_name) FROM public.profiles WHERE id=_user),'day',CASE WHEN d.id IS NULL THEN NULL ELSE to_jsonb(d) END,
  'tasks',coalesce((SELECT jsonb_agg(to_jsonb(t) ORDER BY is_focus DESC,sort_order,start_time NULLS LAST,created_at) FROM public.k3_tasks t WHERE day_id=d.id AND deleted_at IS NULL AND NOT is_unscheduled),'[]'::jsonb),
  'comments',coalesce((SELECT jsonb_agg(to_jsonb(c)||jsonb_build_object('author_name',p.full_name) ORDER BY c.created_at) FROM public.k3_comments c LEFT JOIN public.profiles p ON p.id=c.author_id WHERE c.day_id=d.id),'[]'::jsonb),
@@ -177,11 +184,12 @@ CREATE OR REPLACE FUNCTION public.k3_user_day_read(_user uuid,_date date) RETURN
      AND (g.user_id=_user OR EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_user AND m.status='accepted'))
      AND (a.assignee_id=_user OR EXISTS(SELECT 1 FROM public.k3_action_collaborators c WHERE c.action_id=a.id AND c.user_id=_user))),'[]'::jsonb)); END$$;
 
+-- A. Danh sách KG: lọc "Tôi phụ trách KF" chỉ tính khi còn là thành viên hợp lệ.
 CREATE OR REPLACE FUNCTION public.k3_goal_list(_filter text DEFAULT 'all', _q text DEFAULT '') RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 DECLARE today date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
 BEGIN
-  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF;
-  IF NOT public.k3_can(auth.uid(),'k3.use') AND NOT public.k3_can(auth.uid(),'k3.view_scope') THEN RAISE EXCEPTION 'Ban khong co quyen xem 3K.'; END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  IF NOT public.k3_can(auth.uid(),'k3.use') AND NOT public.k3_can(auth.uid(),'k3.view_scope') THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K.'; END IF;
   RETURN coalesce((SELECT jsonb_agg(row) FROM (
     SELECT row FROM (
       SELECT jsonb_build_object(
@@ -212,12 +220,13 @@ BEGIN
   ) sorted),'[]'::jsonb);
 END$$;
 
+-- C. Chi tiết KG: KPI tính theo đúng chỉ số (kpi_id), giữ tương thích bản ghi cũ theo đơn vị.
 CREATE OR REPLACE FUNCTION public.k3_goal_detail(_id uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 DECLARE g public.k3_goals; today date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
 BEGIN
-  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chua dang nhap.'; END IF;
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
   SELECT * INTO g FROM public.k3_goals WHERE id=_id;
-  IF g.id IS NULL OR NOT public.k3_goal_visible(auth.uid(), g.id) THEN RAISE EXCEPTION 'Ban khong co quyen xem muc tieu nay.'; END IF;
+  IF g.id IS NULL OR NOT public.k3_goal_visible(auth.uid(), g.id) THEN RAISE EXCEPTION 'Bạn không có quyền xem mục tiêu này.'; END IF;
   RETURN jsonb_build_object(
     'goal', to_jsonb(g) || jsonb_build_object('owner_name',(SELECT full_name FROM public.profiles WHERE id=g.user_id),'overdue_days',CASE WHEN g.status IN ('not_started','in_progress','paused') AND coalesce(g.due_date,g.period_end) < today THEN (today - coalesce(g.due_date,g.period_end)) ELSE 0 END),
     'kpis', coalesce((SELECT jsonb_agg(row) FROM (
