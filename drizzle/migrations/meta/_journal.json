@@ -1611,6 +1611,13 @@
       "when": 1793788525646,
       "tag": "0229_k3_review_close_identity_comparison",
       "breakpoints": true
+    },
+    {
+      "idx": 230,
+      "version": "7",
+      "when": 1793788555440,
+      "tag": "0230_k3_review_source_only_fingerprint",
+      "breakpoints": true
     }
   ]
 }
