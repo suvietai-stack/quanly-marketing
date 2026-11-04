@@ -1,0 +1,26 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
+import { k3Error } from '@/lib/biz/k3';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+type TrashRow = { kind: string; id: string; name: string; owner_name: string; deleted_at: string; purge_at: string; restorable: boolean };
+type Inventory = { counts: Record<string, number>; backup_verified: boolean; tasks: { id: string; name: string; owner_name: string; work_date: string; has_official: boolean; classification: string; reason: string }[] };
+export function Biz3KArchive({ admin }: { admin: boolean }) {
+  const uid = useAuth((s) => s.currentUserId) ?? '';
+  const qc = useQueryClient();
+  const [mode, setMode] = useState<'trash' | 'review'>('trash');
+  const [busy, setBusy] = useState(false);
+  const trash = useQuery({ queryKey: ['k3_trash', uid], queryFn: async () => { const { data, error } = await supabase.rpc('k3_trash_list', { _kind: 'all' }); if (error) throw error; return data as unknown as TrashRow[]; } });
+  const inventory = useQuery({ queryKey: ['k3_inventory', uid], enabled: admin, queryFn: async () => { const { data, error } = await supabase.rpc('k3_kpi_inventory'); if (error) throw error; return data as unknown as Inventory; } });
+  const reviews = useQuery({ queryKey: ['k3_reviews', uid], enabled: admin, queryFn: async () => { const { data, error } = await supabase.from('k3_data_reviews').select('*').order('created_at', { ascending: false }); if (error) throw error; return data; } });
+  return <div className="space-y-4"><div className="flex flex-wrap gap-2"><Button variant={mode === 'trash' ? 'default' : 'outline'} onClick={() => setMode('trash')}>Thùng rác 15 ngày</Button>{admin && <Button variant={mode === 'review' ? 'default' : 'outline'} onClick={() => setMode('review')}>Dữ liệu cần rà soát</Button>}</div>
+    {mode === 'trash' && <>{trash.error && <p className="text-destructive">{k3Error(trash.error)}</p>}{!trash.data?.length && <p className="text-sm text-muted-foreground">Thùng rác đang trống.</p>}{trash.data?.map((r) => <div key={r.id} className="flex flex-wrap items-center gap-2 border-b border-border py-3"><div className="min-w-0 flex-1"><p className="break-words font-medium">{r.name}</p><p className="text-xs text-muted-foreground">{r.owner_name} · Xóa {new Date(r.deleted_at).toLocaleString('vi-VN')} · Hết hạn {new Date(r.purge_at).toLocaleString('vi-VN')}</p></div><Button variant="outline" size="sm" disabled={!r.restorable || busy} onClick={async () => { setBusy(true); try { const { error } = await supabase.rpc('k3_restore', { _kind: r.kind, _id: r.id }); if (error) throw error; await qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); toast.success('Đã khôi phục.'); } catch (e) { toast.error(k3Error(e)); } finally { setBusy(false); } }}><RotateCcw className="mr-1 h-4 w-4" />Khôi phục</Button></div>)}</>}
+    {mode === 'review' && admin && <>{inventory.error && <p className="text-destructive">{k3Error(inventory.error)}</p>}<div className="flex flex-wrap gap-2">{Object.entries(inventory.data?.counts ?? {}).map(([k, n]) => <Badge key={k} variant="outline">{k}: {n}</Badge>)}</div><p className="text-sm">Bản sao kiểm đếm: {inventory.data?.backup_verified ? 'Đã có' : 'Chưa xác minh'}</p><p className="text-sm text-muted-foreground">Dữ liệu chờ rà soát không tự xóa sau 15 ngày.</p>
+    {inventory.data?.tasks.map((t) => <div key={t.id} className="border-b border-border py-2 text-sm"><p className="font-medium">{t.name} <Badge variant="outline">{t.classification}</Badge></p><p>{t.owner_name} · {t.work_date} · {t.has_official ? 'Có chốt sổ lịch sử' : 'Chưa chốt'}</p><p className="text-muted-foreground">{t.reason}</p></div>)}
+    <p className="text-sm font-medium">Đang chờ rà soát: {reviews.data?.filter((r) => r.status === 'pending').length ?? 0}</p>{reviews.data?.map((r) => <div key={r.id} className="border-b border-border py-2 text-sm"><p>{r.kind} · {r.reason} · {r.status}</p></div>)}</>}
+  </div>;
+}
