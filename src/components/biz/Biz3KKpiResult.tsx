@@ -49,7 +49,7 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
   const [key] = useState(() => crypto.randomUUID());
   const [f, setF] = useState({ value: data.daily?.value?.toString() ?? '', numerator: data.daily?.numerator?.toString() ?? '', denominator: data.daily?.denominator?.toString() ?? '', objects: data.daily?.objects?.join('\n') ?? '', completed: data.daily?.completed ?? [], evidence: data.daily?.evidence ?? '', note: data.daily?.note ?? '', problem: data.daily?.problem ?? '', cause: data.daily?.cause ?? '', solution: data.daily?.solution ?? '' });
   const measure = data.kpi.measure;
-  const daily = { ...f, value: f.value === '' ? null : Number(f.value), numerator: f.numerator === '' ? null : Number(f.numerator), denominator: f.denominator === '' ? null : Number(f.denominator), objects: f.objects.split('\n').map((s) => s.trim()).filter(Boolean), user_id: uid, work_date: date };
+  const daily = { ...f, id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0, value: f.value === '' ? null : Number(f.value), numerator: f.numerator === '' ? null : Number(f.numerator), denominator: f.denominator === '' ? null : Number(f.denominator), objects: f.objects.split('\n').map((s) => s.trim()).filter(Boolean), user_id: uid, work_date: date };
   const preview = k3ResultPreview(data.kpi, k3ReplaceDaily(data.results, daily));
   const set = (name: keyof typeof f, value: string) => setF((p) => ({ ...p, [name]: value }));
   return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật KPI · {data.kpi.name}</DialogTitle></DialogHeader>

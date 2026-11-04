@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardList, ListChecks, Settings2, Users } from 'lucide-react';
+import { Archive, ClipboardList, ListChecks, Settings2, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3SettingsQuery } from '@/lib/biz/k3Queries';
 import { cn } from '@/lib/utils';
@@ -9,9 +9,11 @@ import { Biz3KManage } from './Biz3KManage';
 import { Biz3KSettings } from './Biz3KSettings';
 import { Biz3KPeriod } from './Biz3KPeriod';
 import { Biz3KGoals } from './Biz3KGoals';
+import { Biz3KKpiDay } from './Biz3KKpiDay';
+import { Biz3KArchive } from './Biz3KArchive';
 import { Button } from '@/components/ui/button';
 
-type Section = 'mine' | 'collab' | 'monitor' | 'settings';
+type Section = 'mine' | 'collab' | 'monitor' | 'settings' | 'archive';
 type Mode = 'day' | 'week' | 'month' | 'quarter' | 'all';
 
 const MODE_LABEL: Record<Mode, string> = { day: 'Ngày', week: 'Tuần', month: 'Tháng', quarter: 'Quý', all: 'Tất cả' };
@@ -39,7 +41,7 @@ export function Biz3K() {
     { key: 'monitor', label: 'Theo Dõi Nhân Viên', icon: ClipboardList, show: settings.can_view_scope },
   ];
   const visible = tabs.filter((t) => t.show);
-  const active = section === 'settings'
+  const active = section === 'archive' ? 'archive' : section === 'settings'
     ? (settings.can_settings ? 'settings' : (visible[0]?.key ?? 'mine'))
     : visible.some((t) => t.key === section) ? section : (visible[0]?.key ?? 'mine');
 
@@ -62,6 +64,7 @@ export function Biz3K() {
             </Button>
           ))}
         </div>
+        <Button variant="outline" size="sm" onClick={() => setSection('archive')}><Archive className="mr-1 h-4 w-4" />Thùng lưu trữ</Button>
         {settings.can_settings && (
           <Button variant="ghost" type="button" onClick={() => setSection('settings')}
             className={cn(
@@ -90,7 +93,7 @@ export function Biz3K() {
                 <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
-            {mode === 'day' && <Biz3KMyDay settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} />}
+            {mode === 'day' && <><Biz3KKpiDay date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
             {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage={false} />}
             {mode === 'all' && (
               <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
@@ -116,6 +119,7 @@ export function Biz3K() {
       )}
 
       {active === 'settings' && <Biz3KSettings settings={settings} />}
+      {active === 'archive' && <Biz3KArchive admin={settings.can_settings} />}
     </div>
   );
 }

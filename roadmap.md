@@ -1,8 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## FIX TOÀN DIỆN KPI 3K — spec 964 dòng (04/11/2026)
-- [ ] KPI-1. Kiểm kê dữ liệu thật và rà soát mọi đường ghi/đọc KPI; xác minh phương án sao lưu trước chuyển đổi hàng loạt.
-- [ ] KPI-2. Chuẩn hóa phương thức/điều kiện đo và nguồn KPI-người-ngày, ghi thay thế có revision/idempotency, tính toán/trạng thái authoritative.
+- [x] KPI-1a. Kiểm kê thật: 2 KG/1 KF/2 KPI/3 tasks/3 ngày; 3 task thiếu KPI, 2 thiếu KF, 2 ngày chốt; giữ nguyên. RPC inventory + private counted backup bổ sung, chưa chạy backup/chuyển đổi.
+- [ ] KPI-1b. Xác minh bản sao qua RPC trước chuyển đổi hàng loạt.
+- [x] KPI-2a. 0202–0205: nguồn KPI-người-ngày, 7 phương thức/4 điều kiện, thay thế có revision/idempotency, versions/chốt và derived KG/KF status; không sửa legacy.
+- [ ] KPI-2b. Nối mọi tổng hợp kỳ/monitor và chặn toàn bộ đường legacy ghi thủ công.
 - [ ] KPI-3. Form Cập nhật KPI chung, nhật ký, chốt sổ/điều chỉnh có phiên bản; bỏ trạng thái/%/Hoàn thành thủ công.
 - [ ] KPI-4. Hoàn thiện Thùng lưu trữ cũ và Dữ liệu cần rà soát riêng; cách ly không vào purge 15 ngày, quyền Admin và lịch sử xử lý.
 - [ ] KPI-5. Phân loại/chuyển đổi an toàn A/B/C, bảo toàn chốt cũ và đối soát trước/sau; không đoán liên kết nguồn.
