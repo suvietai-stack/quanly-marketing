@@ -7928,6 +7928,7 @@ export type Database = {
       k3_kpi_backup_create: { Args: never; Returns: Json }
       k3_kpi_configure: { Args: { _payload: Json }; Returns: Json }
       k3_kpi_day_confirm: { Args: { _date: string }; Returns: Json }
+      k3_kpi_day_read: { Args: { _date: string }; Returns: Json }
       k3_kpi_delete: { Args: { _id: string }; Returns: boolean }
       k3_kpi_inventory: { Args: never; Returns: Json }
       k3_kpi_result_read: {

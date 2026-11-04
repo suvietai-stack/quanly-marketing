@@ -1436,6 +1436,13 @@
       "when": 1793775297799,
       "tag": "0204_k3_kpi_archive_inventory_and_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 205,
+      "version": "7",
+      "when": 1793775374342,
+      "tag": "0205_k3_daily_kpi_unified_reads",
+      "breakpoints": true
     }
   ]
 }
