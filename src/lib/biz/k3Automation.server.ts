@@ -18,8 +18,8 @@ export async function processK3Reports() {
       for (const k of data ?? []) labels[k.id] = k.unit ?? k.name;
     }
     const result = await postGroup(report.group_id, k3DailyReport(report.work_date, people, labels));
-    const { error: finished } = await db.rpc('k3_zalo_report_finish', { _id: report.id, _lease: report.lease, _status: result.ok ? 'sent' : result.ambiguous ? 'unknown' : 'failed', _error: result.ok ? undefined : `${result.code}: ${result.message}` });
-    if (finished) throw new Error('Chưa xác nhận được kết quả gửi; cần đối soát.');
+    const { data: finalized, error: finished } = await db.rpc('k3_zalo_report_finish', { _id: report.id, _lease: report.lease, _status: result.ok ? 'sent' : result.ambiguous ? 'unknown' : 'failed', _error: result.ok ? undefined : `${result.code}: ${result.message}` });
+    if (finished || !finalized) throw new Error('Chưa xác nhận được kết quả gửi; cần đối soát.');
     processed++;
   }
   return { processed };

@@ -42,8 +42,22 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0202_k3_daily_kpi_result_foundation.sql','utf8'));
   await db.exec(`ALTER TABLE k3_kpis ALTER COLUMN id SET DEFAULT gen_random_uuid(),ADD COLUMN request_key uuid,ADD COLUMN unit text,ADD COLUMN created_by uuid,ADD COLUMN updated_at timestamptz,ADD COLUMN manual_actual numeric;`);
   for(const file of ['0203_k3_kpi_metric_and_configuration_guards.sql','0206_k3_result_privacy_and_configuration_fences.sql','0207_k3_configuration_module_and_legacy_history_guards.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`,'utf8'));
+  const entity=readFileSync('drizzle/migrations/0205_k3_daily_kpi_unified_reads.sql','utf8').match(/CREATE FUNCTION private\.k3_entity_metric[\s\S]*?END\$fn\$;/)?.[0];
+  if(!entity)throw new Error('Missing authoritative entity metric');
+  await db.exec(entity.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION'));
   await db.exec(`CREATE FUNCTION private.k3_goal_has_official(_goal uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false)$$;CREATE FUNCTION private.k3_action_has_official(_action uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false)$$;`);
   for(const file of ['0208_k3_canonical_official_delete_protection.sql','0209_k3_auto_close_and_zalo_reports.sql','0210_k3_system_close_history_safety.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`,'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0211_k3_scoped_measured_period_reads.sql','utf8'));
+  await db.exec(`CREATE TABLE private.k3_kpi_upgrade_backups(id uuid PRIMARY KEY,created_at timestamptz,created_by uuid,snapshot jsonb,counts jsonb);
+  CREATE TABLE k3_days(id uuid PRIMARY KEY,summarized_at timestamptz);
+  ALTER TABLE k3_tasks ADD COLUMN id uuid,ADD COLUMN day_id uuid,ADD COLUMN user_id uuid,ADD COLUMN deleted_at timestamptz,ADD COLUMN deleted_by uuid;
+  CREATE TABLE k3_summary_versions(snapshot jsonb);CREATE TABLE k3_period_summaries(snapshot jsonb);
+  CREATE TABLE k3_task_events(day_id uuid,task_id uuid,actor_id uuid,action text,detail jsonb);
+  CREATE FUNCTION k3_purge_expired(integer) RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;`);
+  await db.exec(readFileSync('drizzle/migrations/0212_k3_verified_legacy_task_archive.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0213_k3_existing_confirmations_close_fences.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0214_k3_archive_backup_alias_guard.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0215_k3_goal_activity_from_measured_actions.sql','utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -85,4 +99,42 @@ it('Zalo send claims cannot be replayed or completed by another lease',async()=>
   expect(await value(`SELECT k3_zalo_report_finish('${r.id}','${crypto.randomUUID()}','sent') v`)).toBe(false);
   expect(await value(`SELECT k3_zalo_report_finish('${r.id}','${r.lease}','unknown') v`)).toBe(true);
   expect((await db.query('SELECT * FROM k3_zalo_report_claim()')).rows.length).toBe(0);
+});
+it('period metrics only count dates in the requested range',async()=>{
+  expect(Number(await value(`SELECT private.k3_result_metric_range('${kpi}',true,'2026-11-01','2026-11-01','${user}')->>'actual' v`))).toBe(30);
+  expect(await value(`SELECT private.k3_result_metric_range('${kpi}',true,'2026-11-02','2026-11-02','${user}')->>'actual' v`)).toBeNull();
+});
+it('child KPI activity marks KG in progress without inventing goal completion',async()=>{
+  expect(await value(`SELECT private.k3_entity_metric('goal','${goal}')->>'status' v`)).toBe('in_progress');
+  expect(await value(`SELECT private.k3_entity_metric('goal','${goal}')->>'kpi_total' v`)).toBe('0');
+});
+it('legacy archive requires an exact verified backup and expires after 15 days',async()=>{
+  const tid=crypto.randomUUID(),day=crypto.randomUUID(),backup=crypto.randomUUID();
+  await db.exec(`INSERT INTO k3_days VALUES('${day}',NULL);INSERT INTO k3_tasks(id,day_id,user_id,kpi_actual) VALUES('${tid}','${day}','${user}',7);`);
+  await expect(db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`)).rejects.toThrow('bản sao');
+  await db.exec(`INSERT INTO private.k3_kpi_upgrade_backups VALUES('${backup}',now(),'${user}',jsonb_build_object('tasks',(SELECT jsonb_agg(to_jsonb(t)) FROM k3_tasks t)),jsonb_build_object('tasks',(SELECT count(*) FROM k3_tasks)));`);
+  await db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`);
+  expect(await value(`SELECT extract(epoch FROM purge_at-archived_at)::int v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBe(15*24*60*60);
+  expect(Number(await value(`SELECT kpi_actual v FROM k3_tasks WHERE id='${tid}'`))).toBe(7);
+  const rid=await value<string>(`SELECT id v FROM k3_data_reviews WHERE record_id='${tid}'`);
+  await db.query(`SELECT k3_legacy_task_restore('${rid}')`);
+  expect(await value(`SELECT deleted_at v FROM k3_tasks WHERE id='${tid}'`)).toBeNull();
+});
+it('official legacy history cannot be placed on a 15-day deletion clock',async()=>{
+  const tid=crypto.randomUUID(),day=crypto.randomUUID();
+  await db.exec(`INSERT INTO k3_days VALUES('${day}',now());INSERT INTO k3_tasks(id,day_id,user_id) VALUES('${tid}','${day}','${user}');`);
+  await expect(db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu KPI')`)).rejects.toThrow('chốt sổ lịch sử');
+  expect(await value(`SELECT deleted_at v FROM k3_tasks WHERE id='${tid}'`)).toBeNull();
+});
+it('expired archive purges only the unconfirmed source and retains backup and audit',async()=>{
+  const tid=crypto.randomUUID(),day=crypto.randomUUID(),backup=crypto.randomUUID();
+  await db.exec(`INSERT INTO k3_days VALUES('${day}',NULL);INSERT INTO k3_tasks(id,day_id,user_id) VALUES('${tid}','${day}','${user}');
+  INSERT INTO private.k3_kpi_upgrade_backups VALUES('${backup}',now(),'${user}',jsonb_build_object('tasks',(SELECT jsonb_agg(to_jsonb(t)) FROM k3_tasks t)),jsonb_build_object('tasks',(SELECT count(*) FROM k3_tasks)));`);
+  await db.query(`SELECT k3_legacy_task_archive('${tid}','Thiếu cấu trúc')`);
+  expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(0);
+  await db.exec(`UPDATE k3_data_reviews SET purge_at=now()-interval '1 second' WHERE record_id='${tid}';`);
+  expect(await value('SELECT private.k3_review_purge_expired() v')).toBe(1);
+  expect(await value(`SELECT count(*)::int v FROM k3_tasks WHERE id='${tid}'`)).toBe(0);
+  expect(await value(`SELECT count(*)::int v FROM private.k3_kpi_upgrade_backups WHERE id='${backup}'`)).toBe(1);
+  expect(await value(`SELECT status v FROM k3_data_reviews WHERE record_id='${tid}'`)).toBe('delete_confirmed');
 });
