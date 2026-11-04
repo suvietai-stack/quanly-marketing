@@ -5,9 +5,8 @@ import { useAuth } from '@/lib/auth';
 import { k3SettingsQuery } from '@/lib/biz/k3Queries';
 import { cn } from '@/lib/utils';
 import { Biz3KMyDay } from './Biz3KMyDay';
-import { Biz3KManage } from './Biz3KManage';
 import { Biz3KSettings } from './Biz3KSettings';
-import { Biz3KPeriod } from './Biz3KPeriod';
+import { Biz3KMeasuredPeriod } from './Biz3KMeasuredPeriod';
 import { Biz3KGoals } from './Biz3KGoals';
 import { Biz3KKpiDay } from './Biz3KKpiDay';
 import { Biz3KArchive } from './Biz3KArchive';
@@ -94,7 +93,7 @@ export function Biz3K() {
               ))}
             </div>
             {mode === 'day' && <><Biz3KKpiDay date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
-            {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage={false} />}
+            {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} />}
             {mode === 'all' && (
               <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
                 Toàn bộ công việc (KG) và KF được giao của bạn nằm trong danh sách phía trên — một KG kéo dài nhiều kỳ chỉ tồn tại một lần. Chọn Ngày/Tuần/Tháng/Quý để xem theo kỳ.
@@ -113,8 +112,7 @@ export function Biz3K() {
               <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
             ))}
           </div>
-          {mode === 'day' && <Biz3KManage settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} />}
-          {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
+          {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
         </div>
       )}
 
