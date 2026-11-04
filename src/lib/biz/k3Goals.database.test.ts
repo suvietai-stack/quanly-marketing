@@ -151,6 +151,10 @@ it('góc nhìn Quý tính đúng khoảng và đọc được', async () => {
 });
 
 it('đọc ngày kèm KG đang thực hiện và KF được phân công', async () => {
+  // other đang ở trạng thái invited sau khi được mời lại — chấp nhận để trở thành thành viên hợp lệ.
+  await as(other);
+  await val(`SELECT k3_member_respond('${goal}', true) v`);
+  await as(staff);
   const day = await val<{ active_goals: { id: string }[]; assigned_actions: { id: string; my_part: string }[] }>(`SELECT k3_day_read('${today}') v`);
   expect(day.active_goals.some((g) => g.id === goal)).toBe(true);
   // KF của staff đã kết thúc chưa đạt nên không còn trong danh sách cần làm; KF của other vẫn đang thực hiện.
