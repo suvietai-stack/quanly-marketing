@@ -231,6 +231,50 @@ function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; 
   );
 }
 
+/** Ghi nhận thực hiện: chọn KF đang tồn tại để thêm bản ghi thực thi vào ngày — không tạo KG/KF mới. */
+function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: string; actions: K3AssignedAction[]; onClose: () => void; onCreateNew: () => void }) {
+  const planSave = useK3PeriodMutation();
+  const add = async (a: K3AssignedAction) => {
+    try {
+      await planSave.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: crypto.randomUUID() } });
+      toast.success('Đã thêm KF vào công việc hôm nay. Cập nhật kết quả ngay trên thẻ công việc.');
+      onClose();
+    } catch (e) {
+      toast.error(k3Error(e));
+    }
+  };
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+        <DialogHeader><DialogTitle>Ghi nhận thực hiện ngày {date}</DialogTitle></DialogHeader>
+        {actions.length === 0 && (
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>Bạn chưa có KF nào đang thực hiện. Nếu phát sinh việc chưa có KG, hãy tạo công việc mới ngay tại đây.</p>
+            <Button type="button" size="sm" onClick={onCreateNew}><Plus className="mr-1 h-4 w-4" />Tạo công việc</Button>
+          </div>
+        )}
+        <div className="space-y-2">
+          {actions.map((a) => (
+            <div key={a.id} className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm">
+              <span className="min-w-0 flex-1">
+                {a.is_key && <Star className="mr-1 inline h-3.5 w-3.5 fill-primary text-primary" />}
+                {a.name}
+                <span className="block text-xs text-muted-foreground">KG: {a.goal_name}{a.due_date ? ` · Hạn ${a.due_date}` : ''}{a.my_part === 'collaborator' ? ' · Bạn phối hợp' : ''}</span>
+              </span>
+              {a.already_today
+                ? <Badge variant="secondary">Đã có trong hôm nay</Badge>
+                : <Button type="button" size="sm" variant="outline" disabled={planSave.isPending} onClick={() => add(a)}>Thêm vào hôm nay</Button>}
+            </div>
+          ))}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>Đóng</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
   const update = useK3TaskUpdate();
   const save = useK3TaskSave();
