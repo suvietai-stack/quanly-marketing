@@ -42,6 +42,9 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0202_k3_daily_kpi_result_foundation.sql','utf8'));
   await db.exec(`ALTER TABLE k3_kpis ALTER COLUMN id SET DEFAULT gen_random_uuid(),ADD COLUMN request_key uuid,ADD COLUMN unit text,ADD COLUMN created_by uuid,ADD COLUMN updated_at timestamptz,ADD COLUMN manual_actual numeric;`);
   for(const file of ['0203_k3_kpi_metric_and_configuration_guards.sql','0206_k3_result_privacy_and_configuration_fences.sql','0207_k3_configuration_module_and_legacy_history_guards.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`,'utf8'));
+  const entity=readFileSync('drizzle/migrations/0205_k3_daily_kpi_unified_reads.sql','utf8').match(/CREATE FUNCTION private\.k3_entity_metric[\s\S]*?END\$fn\$;/)?.[0];
+  if(!entity)throw new Error('Missing authoritative entity metric');
+  await db.exec(entity.replace('CREATE FUNCTION','CREATE OR REPLACE FUNCTION'));
   await db.exec(`CREATE FUNCTION private.k3_goal_has_official(_goal uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false)$$;CREATE FUNCTION private.k3_action_has_official(_action uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM k3_tasks WHERE false)$$;`);
   for(const file of ['0208_k3_canonical_official_delete_protection.sql','0209_k3_auto_close_and_zalo_reports.sql','0210_k3_system_close_history_safety.sql']) await db.exec(readFileSync(`drizzle/migrations/${file}`,'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0211_k3_scoped_measured_period_reads.sql','utf8'));
@@ -54,6 +57,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0212_k3_verified_legacy_task_archive.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0213_k3_existing_confirmations_close_fences.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0214_k3_archive_backup_alias_guard.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0215_k3_goal_activity_from_measured_actions.sql','utf8'));
 },30000);
 afterAll(()=>db.close());
 it('default automatic close is 18:00 Vietnam and Zalo remains off at 18:05',async()=>{
@@ -99,6 +103,10 @@ it('Zalo send claims cannot be replayed or completed by another lease',async()=>
 it('period metrics only count dates in the requested range',async()=>{
   expect(Number(await value(`SELECT private.k3_result_metric_range('${kpi}',true,'2026-11-01','2026-11-01','${user}')->>'actual' v`))).toBe(30);
   expect(await value(`SELECT private.k3_result_metric_range('${kpi}',true,'2026-11-02','2026-11-02','${user}')->>'actual' v`)).toBeNull();
+});
+it('child KPI activity marks KG in progress without inventing goal completion',async()=>{
+  expect(await value(`SELECT private.k3_entity_metric('goal','${goal}')->>'status' v`)).toBe('in_progress');
+  expect(await value(`SELECT private.k3_entity_metric('goal','${goal}')->>'kpi_total' v`)).toBe('0');
 });
 it('legacy archive requires an exact verified backup and expires after 15 days',async()=>{
   const tid=crypto.randomUUID(),day=crypto.randomUUID(),backup=crypto.randomUUID();
