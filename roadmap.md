@@ -71,9 +71,9 @@ Nguyên tắc: không xây lại module, không xóa/reset dữ liệu thật, k
 
 ## NÂNG CẤP TOÀN DIỆN QUẢN LÝ 3K — spec 1386 dòng
 Nguyên tắc: MỘT KG – NHIỀU KF – NHIỀU NGƯỜI – NHIỀU NGÀY – MỘT NGUỒN DỮ LIỆU. KG/KF xuyên thời gian (start→deadline tùy ý, không hardcode kỳ), Ngày/Tuần/Tháng/Quý chỉ là góc nhìn. Bỏ ô KG văn bản theo ngày (giữ lịch sử, không tự chuyển). Lời mời thành viên chấp nhận/từ chối, phân công KF, phối hợp liên nhóm không mở rộng quyền xem. Chốt sổ cá nhân theo ngày, sửa sau chốt ghi lịch sử không cộng trùng. KPI: cộng dồn/tỷ lệ/mốc, chống cộng trùng và cộng chéo đơn vị. Quyền 3K chỉ từ Cơ cấu tổ chức + cài đặt module, Admin/Super Admin full. Độc lập KR/Kế hoạch/Báo cáo KD. Bảo toàn dữ liệu cũ, không dữ liệu giả, giờ VN, chưa Publish.
-- [ ] 3K2-0. Khảo sát mô hình 0173–0180 thực tế (đang chạy).
-- [ ] 3K2-1. Bước 1 — Mô hình dữ liệu: KG độc lập thời hạn, KF thuộc KG, KPI KG/KF, thành viên/lời mời, phụ trách/phối hợp KF, bản ghi thực thi theo ngày, trọng tâm/mũi khoan, chốt sổ cá nhân, chuyển đổi dữ liệu cũ an toàn.
-- [ ] 3K2-2. Bước 2 — Backend: phân quyền RPC/RLS, ghi nhận thực thi, tổng hợp KPI chống trùng, chốt sổ/sửa sau chốt.
-- [ ] 3K2-3. Bước 3 — Desktop: 3K của tôi (Ngày/Tuần/Tháng/Quý), KG tham gia, quản lý KG, chi tiết KG, thao tác nhanh.
-- [ ] 3K2-4. Bước 4 — Mobile: card KF, cập nhật nhanh, chốt sổ; kiểm 1440/1280/768/430/390/375/360.
+- [x] 3K2-0. Khảo sát mô hình 0173–0180 thực tế.
+- [x] 3K2-1. Bước 1 — Mô hình dữ liệu: migration 0189 (KG custom range/trạng thái/trọng tâm, k3_goal_members, k3_action_collaborators, k3_kpis đa dòng + backfill, cài đặt quyền nghiệp vụ, RLS theo k3_goal_visible).
+- [x] 3K2-2. Bước 2 — Backend: migrations 0190–0193 (goal/action save v2, trạng thái, mời/chấp nhận/thu hồi, KPI RPC, goal list/detail, member search, module settings, worker_ok cho thực thi chung, góc nhìn Quý, day read kèm KG/KF). 12 test database mới đạt.
+- [x] 3K2-3. Bước 3 — Desktop: tab KG tham gia (lọc/lời mời/chi tiết/KF/KPI/thành viên), bỏ ô KG văn bản ngày (giữ lịch sử đọc), chọn KF vào hôm nay, góc nhìn Quý chỉ đọc, cài đặt quyền nghiệp vụ. Typecheck + 56 test hồi quy đạt.
+- [ ] 3K2-4. Bước 4 — Kiểm tra UI trình duyệt desktop/mobile (đang chạy).
 - [ ] 3K2-5. Bước 5 — Kiểm thử A–H theo spec + regression, báo cáo nghiệm thu.
