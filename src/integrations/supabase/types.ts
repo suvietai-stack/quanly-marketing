@@ -3523,6 +3523,45 @@ export type Database = {
           },
         ]
       }
+      k3_employee_reviews: {
+        Row: {
+          actor_id: string
+          confirmed_at: string
+          id: string
+          missing_acknowledged: boolean
+          request_key: string
+          revision: number
+          snapshot: Json
+          source_version: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          actor_id: string
+          confirmed_at?: string
+          id?: string
+          missing_acknowledged?: boolean
+          request_key: string
+          revision?: never
+          snapshot: Json
+          source_version: string
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          actor_id?: string
+          confirmed_at?: string
+          id?: string
+          missing_acknowledged?: boolean
+          request_key?: string
+          revision?: never
+          snapshot?: Json
+          source_version?: string
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       k3_goal_members: {
         Row: {
           goal_id: string
@@ -8149,6 +8188,19 @@ export type Database = {
       k3_day_scope_ok: {
         Args: { _actor: string; _day: string }
         Returns: boolean
+      }
+      k3_employee_review_confirm: {
+        Args: {
+          _ack_missing?: boolean
+          _date: string
+          _request_key: string
+          _version: string
+        }
+        Returns: Json
+      }
+      k3_employee_review_read: {
+        Args: { _date: string; _user?: string }
+        Returns: Json
       }
       k3_goal_detail: { Args: { _id: string }; Returns: Json }
       k3_goal_list: { Args: { _filter?: string; _q?: string }; Returns: Json }
