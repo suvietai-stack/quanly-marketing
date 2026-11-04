@@ -4,7 +4,7 @@ import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { k3Error } from '@/lib/biz/k3';
 import { K3_KPI_KIND, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
 import { useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
-import { MemberPicker } from './Biz3KGoals';
+import { MemberPicker } from './Biz3KMemberPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

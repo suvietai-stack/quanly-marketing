@@ -111,7 +111,7 @@ export function Biz3K() {
             ))}
           </div>
           {mode === 'day' && <Biz3KManage settings={settings} selectedDate={date ?? settings.today} onDateChange={setDate} />}
-          {mode !== 'day' && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
+          {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KPeriod settings={settings} type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
         </div>
       )}
 
