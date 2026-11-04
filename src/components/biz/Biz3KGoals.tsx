@@ -6,6 +6,8 @@ import { useAuth } from '@/lib/auth';
 import { k3Error, type K3Settings } from '@/lib/biz/k3';
 import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalMember, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
 import { k3GoalDetailQuery, k3GoalListQuery, k3MemberSearchQuery, useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
+import { MemberPicker } from './Biz3KMemberPicker';
+import { Biz3KQuickCreate } from './Biz3KQuickCreate';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -46,15 +48,38 @@ const FILTERS: { value: string; label: string; scope?: boolean }[] = [
   { value: 'scope', label: 'Trong phạm vi quản lý', scope: true },
 ];
 
-export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Settings; variant?: 'personal' | 'scope' }) {
+const COLLAB_FILTERS: { value: string; label: string }[] = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'lead', label: 'Tôi chủ trì' },
+  { value: 'join', label: 'Tôi tham gia' },
+  { value: 'active', label: 'Đang thực hiện' },
+  { value: 'overdue', label: 'Quá hạn' },
+  { value: 'done', label: 'Hoàn thành' },
+];
+
+export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Settings; variant?: 'personal' | 'scope' | 'collab' }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
-  const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : 'all');
+  const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : variant === 'collab' ? 'collab' : 'all');
+  const [sub, setSub] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { data, isLoading, error, refetch } = useQuery({ ...k3GoalListQuery(uid, filter, search.trim()), enabled: !!uid });
   const invited = useQuery({ ...k3GoalListQuery(uid, 'invited', ''), enabled: !!uid });
   const mutation = useK3GoalMutation();
+
+  const shown = useMemo(() => {
+    const list = data ?? [];
+    if (variant !== 'collab') return list;
+    switch (sub) {
+      case 'lead': return list.filter((g) => g.my_role === 'owner');
+      case 'join': return list.filter((g) => g.my_role === 'accepted');
+      case 'active': return list.filter((g) => ['not_started', 'in_progress', 'paused'].includes(g.status));
+      case 'overdue': return list.filter((g) => g.overdue_days > 0);
+      case 'done': return list.filter((g) => ['done', 'ended_missed'].includes(g.status));
+      default: return list;
+    }
+  }, [data, sub, variant]);
 
   const respond = async (goalId: string, accept: boolean) => {
     try {
