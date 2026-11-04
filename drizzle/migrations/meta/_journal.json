@@ -1450,6 +1450,13 @@
       "when": 1793775740241,
       "tag": "0206_k3_result_privacy_and_configuration_fences",
       "breakpoints": true
+    },
+    {
+      "idx": 207,
+      "version": "7",
+      "when": 1793775971585,
+      "tag": "0207_k3_configuration_module_and_legacy_history_guards",
+      "breakpoints": true
     }
   ]
 }
