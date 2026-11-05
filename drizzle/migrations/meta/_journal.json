@@ -1639,6 +1639,13 @@
       "when": 1793846917208,
       "tag": "0233_k3_trash_alias_and_retention_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 234,
+      "version": "7",
+      "when": 1793847081279,
+      "tag": "0234_k3_draft_purge_config_history_safety",
+      "breakpoints": true
     }
   ]
 }
