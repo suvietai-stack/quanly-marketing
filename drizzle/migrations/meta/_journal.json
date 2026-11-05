@@ -1688,6 +1688,13 @@
       "when": 1793858850732,
       "tag": "0240_k3_delete_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 241,
+      "version": "7",
+      "when": 1793859163383,
+      "tag": "0241_k3_soft_delete_variable_conflict_fix",
+      "breakpoints": true
     }
   ]
 }
