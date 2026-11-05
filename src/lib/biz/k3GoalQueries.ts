@@ -5,6 +5,7 @@ import type { K3GoalDetail, K3GoalRow, K3MemberSearchRow } from './k3Goals';
 export const k3GoalListQuery = (uid: string, filter: string, q: string) => queryOptions({
   queryKey: ['k3_goals', uid, filter, q],
   staleTime: 0,
+  refetchInterval: 30000,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_goal_list', { _filter: filter, _q: q } as never);
     if (error) throw error;
@@ -15,6 +16,7 @@ export const k3GoalListQuery = (uid: string, filter: string, q: string) => query
 export const k3GoalDetailQuery = (uid: string, id: string) => queryOptions({
   queryKey: ['k3_goal', uid, id],
   staleTime: 0,
+  refetchInterval: 30000,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_goal_detail', { _id: id } as never);
     if (error) throw error;

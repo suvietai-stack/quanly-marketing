@@ -50,14 +50,14 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
           ...(mode === 'basic' && first ? { kpi: k3KpiPayload(inheritKpi(first.kpis[0] ?? newK3KpiDraft(), f.name, f.expected_result, f.period_start, f.period_end)) } : {}),
           name: f.name, period_start: f.period_start, period_end: f.period_end,
           due_date: f.period_end, expected_result: f.expected_result, description: f.description,
-          is_key: f.is_key, start_now: startNow,
+          is_key: f.is_key, save_valid: startNow,
           member_ids: variant === 'team' ? members.map((m) => m.id) : [],
           kfs: validKfs.map((k) => creationKfPayload(k, f.name, f.expected_result, f.period_start, f.period_end)),
         },
       }) as { goal_id: string; duplicated?: boolean };
       toast.success(res?.duplicated
         ? 'Công việc đã được tạo trước đó (không tạo trùng).'
-        : startNow ? 'Đã tạo công việc và bắt đầu thực hiện.' : 'Đã lưu nháp công việc.');
+        : startNow ? 'Đã lưu công việc.' : 'Đã lưu nháp công việc.');
       onCreated?.(res?.goal_id);
       onClose();
     } catch (e) {
@@ -114,7 +114,6 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
                 <Button type="button" variant="outline" size="sm" onClick={() => setKfs((prev) => prev.map((x) => x.key === k.key ? { ...x, kpis: [...x.kpis, newK3KpiDraft()] } : x))}><Plus className="mr-1 h-4 w-4" />Thêm KPI</Button>
               </div>
             ))}
-            <p className="text-xs text-muted-foreground">Có thể lưu nháp chưa có KF; khi bắt đầu thực hiện chính thức cần ít nhất một KF.</p>
           </div>}
 
           {variant === 'team' && (
@@ -131,7 +130,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
             {mutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}Lưu nháp
           </Button>
           <Button type="button" disabled={mutation.isPending || !canStart} onClick={() => submit(true)}>
-            {mutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}Lưu và bắt đầu
+            {mutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}Lưu công việc
           </Button>
         </DialogFooter>
         {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
