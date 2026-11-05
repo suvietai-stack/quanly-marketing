@@ -2,6 +2,8 @@
 
 export type K3GoalStatus = 'draft' | 'not_started' | 'in_progress' | 'paused' | 'done' | 'ended_missed' | 'cancelled';
 
+export interface K3EntityMetric { status: K3GoalStatus; overdue: boolean; overdue_seconds: number; kpi_total: number; kpi_met: number; kf_total: number; kf_done: number; completion_basis: 'own_kpis' | 'actions'; result_count: number; review_required: boolean; }
+
 export const K3_GOAL_STATUS: Record<K3GoalStatus, { label: string; tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger' }> = {
   draft: { label: 'Nháp', tone: 'neutral' },
   not_started: { label: 'Chưa bắt đầu', tone: 'neutral' },
@@ -24,6 +26,7 @@ export interface K3GoalRow {
   id: string;
   name: string;
   status: K3GoalStatus;
+  metric?: K3EntityMetric;
   period_type: 'week' | 'month' | 'custom';
   period_start: string;
   period_end: string;
@@ -58,6 +61,8 @@ export interface K3GoalAction {
     start_date: string | null; due_date: string | null; note: string | null;
     start_time?: string | null; due_time?: string | null; inherit_timeline?: boolean;
     execution_schedule?: import('./k3Creation').K3CreationKf['execution_schedule'];
+    kpi_summary?: K3EntityMetric;
+    required?: boolean;
     assignee_id: string; manual_progress: number | null; progress_source: string | null;
     problem: string | null; cause: string | null; solution: string | null; revision: number;
   };

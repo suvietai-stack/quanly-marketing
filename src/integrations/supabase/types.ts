@@ -3222,6 +3222,7 @@ export type Database = {
           problem: string | null
           progress_source: string | null
           request_key: string
+          required: boolean
           revision: number
           solution: string | null
           start_date: string | null
@@ -3253,6 +3254,7 @@ export type Database = {
           problem?: string | null
           progress_source?: string | null
           request_key: string
+          required?: boolean
           revision?: number
           solution?: string | null
           start_date?: string | null
@@ -3284,6 +3286,7 @@ export type Database = {
           problem?: string | null
           progress_source?: string | null
           request_key?: string
+          required?: boolean
           revision?: number
           solution?: string | null
           start_date?: string | null
@@ -8264,6 +8267,10 @@ export type Database = {
         Returns: Json
       }
       k3_employee_review_team: { Args: { _date: string }; Returns: Json }
+      k3_goal_activate: {
+        Args: { _id: string; _revision: number }
+        Returns: Json
+      }
       k3_goal_detail: { Args: { _id: string }; Returns: Json }
       k3_goal_list: { Args: { _filter?: string; _q?: string }; Returns: Json }
       k3_goal_save: { Args: { _payload: Json }; Returns: Json }

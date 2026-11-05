@@ -1646,6 +1646,41 @@
       "when": 1793847081279,
       "tag": "0234_k3_draft_purge_config_history_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 235,
+      "version": "7",
+      "when": 1793856949439,
+      "tag": "0235_k3_authoritative_automatic_states",
+      "breakpoints": true
+    },
+    {
+      "idx": 236,
+      "version": "7",
+      "when": 1793857033467,
+      "tag": "0236_k3_valid_save_and_legacy_state_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 237,
+      "version": "7",
+      "when": 1793857130887,
+      "tag": "0237_k3_required_actions_and_safe_special_decisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 238,
+      "version": "7",
+      "when": 1793857323558,
+      "tag": "0238_k3_activate_configured_kf_without_start_button",
+      "breakpoints": true
+    },
+    {
+      "idx": 239,
+      "version": "7",
+      "when": 1793857392136,
+      "tag": "0239_k3_configured_action_revision_alias",
+      "breakpoints": true
     }
   ]
 }

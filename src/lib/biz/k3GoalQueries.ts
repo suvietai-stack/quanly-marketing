@@ -5,6 +5,7 @@ import type { K3GoalDetail, K3GoalRow, K3MemberSearchRow } from './k3Goals';
 export const k3GoalListQuery = (uid: string, filter: string, q: string) => queryOptions({
   queryKey: ['k3_goals', uid, filter, q],
   staleTime: 0,
+  refetchInterval: 30000,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_goal_list', { _filter: filter, _q: q } as never);
     if (error) throw error;
@@ -15,6 +16,7 @@ export const k3GoalListQuery = (uid: string, filter: string, q: string) => query
 export const k3GoalDetailQuery = (uid: string, id: string) => queryOptions({
   queryKey: ['k3_goal', uid, id],
   staleTime: 0,
+  refetchInterval: 30000,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_goal_detail', { _id: id } as never);
     if (error) throw error;
@@ -34,6 +36,7 @@ export const k3MemberSearchQuery = (uid: string, q: string) => queryOptions({
 
 type K3GoalMutationInput =
   | { kind: 'quick_create'; payload: Record<string, unknown> }
+  | { kind: 'activate'; id: string; revision: number }
   | { kind: 'goal'; payload: Record<string, unknown> }
   | { kind: 'goal_status'; id: string; status: string; note?: string; revision: number }
   | { kind: 'invite'; goal_id: string; user_ids: string[] }
@@ -51,6 +54,7 @@ export function useK3GoalMutation() {
     mutationFn: async (input: K3GoalMutationInput) => {
       let result;
       if (input.kind === 'quick_create') result = await supabase.rpc('k3_quick_create', { _payload: input.payload as never });
+      else if (input.kind === 'activate') result = await supabase.rpc('k3_goal_activate', { _id: input.id, _revision: input.revision });
       else if (input.kind === 'goal') result = await supabase.rpc('k3_goal_save', { _payload: input.payload as never });
       else if (input.kind === 'goal_status') result = await supabase.rpc('k3_goal_status', { _id: input.id, _status: input.status, _note: input.note ?? null, _revision: input.revision } as never);
       else if (input.kind === 'invite') result = await supabase.rpc('k3_member_invite', { _goal_id: input.goal_id, _user_ids: input.user_ids } as never);
