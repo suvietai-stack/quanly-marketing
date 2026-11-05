@@ -63,6 +63,8 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0237_k3_required_actions_and_safe_special_decisions.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0238_k3_activate_configured_kf_without_start_button.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0239_k3_configured_action_revision_alias.sql','utf8'));
+  const dailyContext = readFileSync('drizzle/migrations/0242_k3_daily_context_and_cancelled_visibility.sql','utf8');
+  await db.exec(dailyContext.slice(0, dailyContext.indexOf(" def:=pg_get_functiondef('public.k3_kpi_day_read")) + 'END $patch$;');
 }, 30000);
 
 afterAll(() => db.close());
@@ -214,4 +216,22 @@ it('adding a KF and mandatory KPI to valid work does not require a start click',
  const a=await val<{id:string}>(`SELECT k3_action_save('${JSON.stringify({goal_id:r.goal_id,name:'Kiểm tra báo giá',request_key:crypto.randomUUID(),inherit_timeline:true})}') v`);
  await val(`SELECT k3_kpi_configure('${JSON.stringify({action_id:a.id,name:'Đã kiểm tra',measure:'binary',request_key:crypto.randomUUID(),config:{valid_condition:'Đã kiểm tra báo giá'}})}') v`);
  expect(await val(`SELECT private.k3_entity_state('action','${a.id}','2026-11-05T10:00+07')->>'status' v`)).toBe('in_progress');
+});
+
+it('cancelled work is hidden from All while its original record and history remain', async () => {
+ await as(staff);
+ const cancelled=await create(payload({save_valid:true,period_start:today,period_end:today,start_time:'',due_time:''}));
+ const active=await create(payload({save_valid:true,period_start:today,period_end:today,start_time:'',due_time:''}));
+ await db.exec(`UPDATE k3_goals SET status='cancelled' WHERE id='${cancelled.goal_id}'`);
+ const rows=await val<{id:string}[]>("SELECT k3_goal_list('all','') v");
+ expect(rows.some(g=>g.id===cancelled.goal_id)).toBe(false);
+ expect(rows.some(g=>g.id===active.goal_id)).toBe(true);
+ expect(await val(`SELECT count(*)::int v FROM k3_goals WHERE id='${cancelled.goal_id}' AND deleted_at IS NULL`)).toBe(1);
+ expect(await val(`SELECT count(*)::int v FROM k3_plan_events WHERE goal_id='${cancelled.goal_id}'`)).toBeGreaterThan(0);
+});
+
+it('simple name-only binary criterion stores one KG/KF/KPI without changing its meaning',async()=>{
+ const r=await create(payload({expected_result:'Soạn báo giá khách sạn Vinh Nghệ An',save_valid:true,start_time:'',due_time:''}));
+ expect(await val(`SELECT config->>'valid_condition' v FROM k3_kpis WHERE action_id IN(SELECT id FROM k3_actions WHERE goal_id='${r.goal_id}')`)).toBe('Soạn báo giá khách sạn Vinh Nghệ An');
+ expect(await val(`SELECT count(*)::int v FROM k3_kpis WHERE action_id IN(SELECT id FROM k3_actions WHERE goal_id='${r.goal_id}')`)).toBe(1);
 });
