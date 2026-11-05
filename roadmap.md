@@ -2,11 +2,12 @@
 
 ## TỐI GIẢN GIAO DIỆN 3K + CHUẨN SỬA/XÓA — spec 656 dòng (05/11/2026)
 Nguyên tắc: một thông tin một lần hiển thị; một chức năng một nút; chưa có lịch sử bảo vệ → được xóa, đã có kết quả/chốt → không xóa; backend vẫn kiểm tra, không chỉ ẩn nút; bảo toàn dữ liệu/lịch sử; chưa Publish.
-- [ ] G1. Thẻ công việc tối giản: Tên/Deadline/Trạng thái/Kết quả/Cập nhật + menu 3 chấm; KG Cơ bản 1 KF cùng tên chỉ hiện một tên; một badge trạng thái; bỏ dòng chốt sổ kỹ thuật trên thẻ.
-- [ ] G2. Hiển thị KPI theo kiểu đo: Có/Chưa, Tích lũy x/y–%, tần suất, chuỗi, tỷ lệ, mốc, thời lượng; tách kết quả ngày vs lũy kế, không cộng lẫn đơn vị.
-- [ ] G3. Chuẩn Sửa/Xóa: chỉ 2 thao tác trong menu 3 chấm; Xóa chỉ khi chưa có kết quả/chốt/lịch sử bảo vệ (backend enforce + ẩn menu); xác nhận Thùng rác 15 ngày; form tạo/sửa chỉ Bỏ thay đổi/Lưu nháp/Lưu; validation tại trường.
-- [ ] G4. UI Thùng rác 15 ngày (backend 0197–0201 đã có): danh sách, khôi phục, hạn còn lại.
-- [ ] G5. Test: quy tắc xóa backend, hiển thị KPI, hồi quy 3K; desktop/mobile.
+- [x] G1. Thẻ công việc tối giản: bỏ nút Bắt đầu/Sửa/Xóa rời → nút Cập nhật kết quả + menu 3 chấm; KG Cơ bản trùng tên KF không lặp dòng "KG:"; bỏ dòng "Đã chốt/Chưa đủ dữ liệu" khỏi thẻ (chuyển vào Nhật ký KPI); bỏ chọn trạng thái thủ công trong form cập nhật (tự động từ KPI).
+- [x] G2. KPI Có/Chưa hiện một dòng "Kết quả: Đã/Chưa hoàn thành", bỏ "Chỉ tiêu 1"; các kiểu khác tách "Hôm nay" vs "Lũy kế", giữ hiển thị theo kiểu đo.
+- [x] G3. Migrations 0240–0241: k3_soft_delete/k3_task_delete chặn xóa khi đã có kết quả KPI hoặc chốt sổ (kể cả chưa chốt), KF duy nhất của KG đang chạy không xóa lẻ; RPC k3_deletable cho UI ẩn Xóa đúng quy tắc; K3DeleteMenuItem dùng chung, xác nhận "Thùng rác 15 ngày"; bỏ nút Kết thúc chưa đạt/Tạm dừng/Hủy KG khỏi giao diện thường ngày (trạng thái lịch sử giữ nguyên); form đổi "Hủy"→"Bỏ thay đổi", cảnh báo thiếu hạn hoàn thành tại trường.
+- [x] G4. Thùng rác 15 ngày đã có UI (Thùng lưu trữ) + backend 0197–0201; khôi phục đúng quan hệ, purge cron 02:30.
+- [x] G5a. 7/7 test quy tắc xóa mới (k3DeleteRules.database.test.ts); toàn bộ 3K 182/182; typecheck sạch; build OK. Phát hiện và sửa lỗi thật: xung đột tên biến trong k3_soft_delete (0241).
+- [ ] G5b. Nghiệm thu UI desktop/mobile và luồng xóa/khôi phục thật: phiên hết hạn, mint --self không khớp tài khoản; cần người dùng đăng nhập Preview. Chưa Publish.
 
 ## TRẠNG THÁI 3K TỰ ĐỘNG — spec 585 dòng (05/11/2026)
 - [x] T1. 0235–0239: nguồn trạng thái KG/KF từ thời gian/KPI/nghiệm thu; KG không KPI riêng dùng KF bắt buộc, done counter/filter đồng bộ.
