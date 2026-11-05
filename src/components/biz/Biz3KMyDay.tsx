@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, MoreHorizontal, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
 import { Biz3KQuickCreate } from './Biz3KQuickCreate';
@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 const toneClass: Record<string, string> = {
@@ -111,7 +112,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
 
       <div className="space-y-2">
         {[...tasks].sort((a,b) => Number(b.is_focus)-Number(a.is_focus)).map((t) => (
-          <TaskCard key={t.id} task={t} settings={settings} onEdit={() => setEditing(t)} onUpdate={() => setUpdating(t)} onDelete={() => setDeleting(t)} />
+          <TaskCard key={t.id} task={t} settings={settings} onEdit={() => setEditing(t)} onUpdate={() => setUpdating(t)} onDelete={!summarized && t.kpi_actual == null ? () => setDeleting(t) : undefined} />
         ))}
       </div>
 
@@ -275,17 +276,9 @@ function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: str
   );
 }
 
-export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
-  const update = useK3TaskUpdate();
+export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete?: () => void }) {
   const save = useK3TaskSave();
   const hasIssue = !k3IsComplete(task) && (hasText(task.problem) || hasText(task.solution));
-  const quick = async (status: K3Status) => {
-    try {
-      await update.mutateAsync({ id: task.id, revision:task.revision, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
-    } catch (e) {
-      toast.error(k3Error(e));
-    }
-  };
   const toggleFocus = async () => {
     try {
       await save.mutateAsync({ ...task, is_focus: !task.is_focus });
@@ -308,10 +301,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           <p className="break-words font-medium leading-snug">{task.name}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {(task.start_time || task.end_time) && <span>{task.start_time?.slice(0, 5) ?? '…'}–{task.end_time?.slice(0, 5) ?? '…'}</span>}
-            {task.kpi_target != null && (
-              <span>Chỉ tiêu: {task.kpi_target}{task.kpi_unit ? ` ${task.kpi_unit}` : ''} · Thực tế: {task.kpi_actual ?? 0}</span>
-            )}
-            <span>Tiến độ: {k3ProgressLabel(task)}</span>
+            <span>Kết quả: {k3ProgressLabel(task)}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -330,12 +320,15 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           {hasText(task.solution) && <p><span className="font-medium">Giải pháp:</span> {task.solution}</p>}
         </div>
       )}
-      {settings.enabled && <div className="flex flex-wrap gap-1.5">
-        {task.status === 'todo' && <Button type="button" size="sm" variant="outline" onClick={() => quick('doing')}><Play className="mr-1 h-3.5 w-3.5" />Bắt đầu</Button>}
-        {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>}
-        {task.status === 'done' && <Button type="button" size="sm" variant="ghost" onClick={onUpdate}>Điều chỉnh</Button>}
-        <Button type="button" size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>
-        <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={onDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
+      {settings.enabled && <div className="flex flex-wrap items-center gap-1.5">
+        <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button type="button" size="icon" variant="ghost" aria-label={`Thao tác khác cho ${task.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onEdit}><Pencil className="mr-2 h-4 w-4" />Sửa công việc</DropdownMenuItem>
+            {onDelete && <DropdownMenuItem className="text-destructive" onSelect={onDelete}><Trash2 className="mr-2 h-4 w-4" />Xóa công việc</DropdownMenuItem>}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>}
     </div>
   );
@@ -414,7 +407,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
           )}
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={save.isPending || planSave.isPending || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : 'Lưu công việc'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -426,7 +419,6 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
   const update = useK3TaskUpdate();
   const quantified = task.kpi_target != null && task.kpi_target > 0;
   const [f, setF] = useState({
-    status: k3DisplayStatus(task),
     kpi_actual: task.kpi_actual?.toString() ?? '',
     progress: task.progress.toString(),
     problem: task.problem ?? '',
@@ -435,11 +427,18 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
     note: task.note ?? '',
   });
   const set = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
-  const needsVngb = f.status !== 'done';
+  // Trạng thái tự động từ kết quả KPI — nhân viên không chọn thủ công.
+  const nextStatus = k3DisplayStatus({
+    status: task.status,
+    kpi_target: task.kpi_target,
+    kpi_actual: f.kpi_actual === '' ? null : Number(f.kpi_actual),
+    progress: f.progress === '' ? 0 : Number(f.progress),
+  });
+  const needsVngb = nextStatus !== 'done';
   const submit = async () => {
     try {
       await update.mutateAsync({
-        id: task.id, revision:task.revision, status: f.status,
+        id: task.id, revision:task.revision, status: nextStatus,
         kpi_actual: f.kpi_actual === '' ? null : Number(f.kpi_actual),
         progress: f.progress === '' ? null : Number(f.progress),
         problem: f.problem, cause: f.cause, solution: f.solution, note: f.note,
@@ -455,15 +454,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
       <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>Cập nhật: {task.name}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Trạng thái</Label>
-            <Select value={f.status} onValueChange={(v) => set('status', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(K3_STATUS) as K3Status[]).map((s) => <SelectItem key={s} value={s}>{K3_STATUS[s].label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          <p className="text-xs text-muted-foreground">Trạng thái tự động theo kết quả: <Badge className={cn('border-0', toneClass[K3_STATUS[nextStatus].tone])}>{K3_STATUS[nextStatus].label}</Badge></p>
           {quantified ? (
             <div className="space-y-1">
               <Label htmlFor="k3u-actual">Kết quả thực tế (kế hoạch {task.kpi_target}{task.kpi_unit ? ` ${task.kpi_unit}` : ''})</Label>
@@ -488,7 +479,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
           <div className="space-y-1"><Label htmlFor="k3u-note">Ghi chú</Label><Textarea id="k3u-note" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={update.isPending} onClick={submit}>{update.isPending ? 'Đang lưu…' : 'Lưu cập nhật'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -502,24 +493,24 @@ export function DeleteDialog({ task, onClose }: { task: K3Task; onClose: () => v
     <AlertDialog open onOpenChange={(o) => !o && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa công việc?</AlertDialogTitle>
-          <AlertDialogDescription>Công việc "{task.name}" sẽ bị xóa khỏi 3K ngày {task.work_date}. Lịch sử thay đổi vẫn được lưu lại.</AlertDialogDescription>
+          <AlertDialogTitle>Xóa công việc này?</AlertDialogTitle>
+          <AlertDialogDescription>"{task.name}" sẽ được chuyển vào Thùng rác và có thể khôi phục trong 15 ngày.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogCancel>Quay lại</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground"
             onClick={async () => {
               try {
                 await del.mutateAsync(task.id);
-                toast.success('Đã xóa công việc.');
+                toast.success('Đã chuyển vào Thùng rác. Có thể khôi phục trong 15 ngày.');
                 onClose();
               } catch (e) {
                 toast.error(k3Error(e));
               }
             }}
           >
-            Xóa
+            Xóa công việc
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

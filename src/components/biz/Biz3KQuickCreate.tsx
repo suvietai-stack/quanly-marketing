@@ -80,6 +80,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
               <Input id="k3q-name" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Ví dụ: Lập danh sách 100 đại lý tiềm năng khu vực miền Nam" />
             </div>
             <Biz3KTimeline id="k3q" start={f.period_start} end={f.period_end} startTime={f.start_time} endTime={f.due_time} onChange={(field, value) => set(({ start: 'period_start', end: 'period_end', startTime: 'start_time', endTime: 'due_time' })[field], value)} />
+            {f.name.trim() && !f.period_end && <p role="alert" className="text-sm text-destructive">Chưa chọn hạn hoàn thành.</p>}
             {canDraft && timeError && <p role="alert" className="text-sm text-destructive">{timeError}</p>}
             <div className="space-y-1"><Label htmlFor="k3q-result">Kết quả cần đạt *</Label><Textarea id="k3q-result" rows={2} value={f.expected_result} onChange={(e) => set('expected_result', e.target.value)} /></div>
             <div className="space-y-1"><Label htmlFor="k3q-desc">Mô tả ngắn</Label><Textarea id="k3q-desc" rows={2} value={f.description} onChange={(e) => set('description', e.target.value)} /></div>
@@ -125,7 +126,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
           )}
         </div>
         <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button type="button" variant="outline" onClick={close}>Hủy soạn</Button>
+          <Button type="button" variant="outline" onClick={close}>Bỏ thay đổi</Button>
           <Button type="button" variant="secondary" disabled={mutation.isPending || !canDraft} onClick={() => submit(false)}>
             {mutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}Lưu nháp
           </Button>
