@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## HOTFIX 3K DATABASE / XÓA — 05/11/2026
+- [ ] H1. Xác minh schema/RPC thật; bổ sung creation_mode nullable, legacy không suy đoán; lưu đúng cho công việc mới.
+- [ ] H2. Một thao tác Xóa; kiểm tra quyền/kết quả/lịch sử con tại máy chủ, giữ Thùng rác/khôi phục 15 ngày.
+- [ ] H3. Lỗi thân thiện, ghi chẩn đoán; thao tác độc lập không bị lỗi danh sách vô hiệu hóa.
+- [ ] H4. Kiểm thử hồi quy và RPC đang chạy, đối soát lịch sử; nghiệm thu UI cần phiên hợp lệ, chưa Publish.
+
 ## TỐI ƯU TỔNG THỂ 3K CHO SALE — spec 840 dòng (05/11/2026)
 - [x] O1a. Một form tên/hạn/ba cách đo; tùy chọn mở rộng, kế thừa tên/tiêu chí không nhập lặp; validation tại form và lưu nguyên tử hiện có.
 - [x] O2a. Ngày ưu tiên công việc theo lịch thay danh sách KG tổng; thẻ một KPI cập nhật trực tiếp, nhiều KPI mở ngắn gọn; binary không chỉ tiêu 1, bằng chứng theo ngữ cảnh.
