@@ -84,21 +84,14 @@ export function Biz3K() {
       {active === 'mine' && (
         <div className="space-y-6">
           <section className="space-y-3">
-            <Biz3KGoals settings={settings} variant="personal" />
-          </section>
-          <section className="space-y-3 border-t border-border pt-4">
             <div className="flex gap-1 overflow-x-auto border-b border-border pb-3">
               {(['day', 'week', 'month', 'quarter', 'all'] as const).map((v) => (
                 <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
-            {mode === 'day' && <><Biz3KKpiDay date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
-            {(mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} />}
-            {mode === 'all' && (
-              <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
-                Toàn bộ công việc (KG) và KF được giao của bạn nằm trong danh sách phía trên — một KG kéo dài nhiều kỳ chỉ tồn tại một lần. Chọn Ngày/Tuần/Tháng/Quý để xem theo kỳ.
-              </p>
-            )}
+            {mode === 'day' && <><Biz3KKpiDay settings={settings} date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
+            {(mode === 'week' || mode === 'month' || mode === 'quarter') && <><Biz3KGoals settings={settings} variant="personal" compact /><Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} /></>}
+            {mode === 'all' && <Biz3KGoals settings={settings} variant="personal" />}
           </section>
         </div>
       )}
