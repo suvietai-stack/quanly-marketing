@@ -173,14 +173,14 @@ it('date-only deadline is end of Vietnam day and drafts remain excluded',async()
 it('all mandatory KPIs must attain; optional KPI never blocks, own KG result takes precedence',async()=>{
  const r=await create(payload({save_valid:true,start_time:'09:00'}));const a=await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);
  const k=await val<string>(`SELECT id v FROM k3_kpis WHERE action_id='${a}'`);
- const second=await val<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({action_id:a,name:'Thông tin hợp lệ',measure:'ratio',target:95,config:{valid_condition:'Thông tin hợp lệ'}})}') v`);
- await val(`SELECT k3_kpi_configure('${JSON.stringify({action_id:a,name:'Theo dõi thêm',measure:'binary',required:false,config:{valid_condition:'Ghi nhận'}})}') v`);
+ const second=await val<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({request_key:crypto.randomUUID(),action_id:a,name:'Thông tin hợp lệ',measure:'ratio',target:95,config:{valid_condition:'Thông tin hợp lệ'}})}') v`);
+ await val(`SELECT k3_kpi_configure('${JSON.stringify({request_key:crypto.randomUUID(),action_id:a,name:'Theo dõi thêm',measure:'binary',required:false,config:{valid_condition:'Ghi nhận'}})}') v`);
  const insert=async(id:string,v:number,num:string='NULL',den:string='NULL')=>db.exec(`INSERT INTO k3_kpi_results(kpi_id,goal_id,action_id,user_id,work_date,value,numerator,denominator,updated_by,updated_at) VALUES('${id}','${r.goal_id}','${a}','${staff}','2026-11-05',${v},${num},${den},'${staff}','2026-11-05T10:00+07')`);
  await insert(k,1);await insert(second.id,0,'94','100');
  expect(await val(`SELECT private.k3_entity_state('action','${a}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
  await db.exec(`UPDATE k3_kpi_results SET numerator=95 WHERE kpi_id='${second.id}'`);
  expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('done');
- await val(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:r.goal_id,name:'200 đại lý hợp lệ',measure:'cumulative',target:200,unit:'đại lý'})}') v`);
+ await val(`SELECT k3_kpi_configure('${JSON.stringify({request_key:crypto.randomUUID(),goal_id:r.goal_id,name:'200 đại lý hợp lệ',measure:'cumulative',target:200,unit:'đại lý'})}') v`);
  expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
 });
 it('revision-specific acceptance is required before automatic completion',async()=>{
