@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TRẠNG THÁI 3K TỰ ĐỘNG — spec 585 dòng (05/11/2026)
+- [ ] T1. Một nguồn trạng thái KG/KF phía máy chủ từ thời gian, KPI bắt buộc/nghiệm thu; bộ đếm và mọi màn hình đồng bộ.
+- [ ] T2. Lưu hợp lệ tự vận hành; bỏ Sẵn sàng/Bắt đầu/Hoàn thành/chọn trạng thái và tiến độ thủ công; giữ nháp và menu ngoại lệ có lý do.
+- [ ] T3. Ngày/lộ trình/theo dõi/tổng kết/chốt/Zalo dùng cùng nguồn; giữ quyền, lịch sử và chốt cũ.
+- [ ] T4. Đối soát legacy chỉ đọc, không đoán kết quả; kiểm thử quy tắc và giao diện; chưa Publish hoặc bật Zalo.
+
 ## UX TẠO CÔNG VIỆC 3K — spec 703 dòng (05/11/2026)
 - [x] U1a. 0231–0234: giờ/phút nullable KG/KF/lịch, kế thừa, cuối ngày VN, ghi nguyên tử và cảnh báo ngoài KG; giữ dữ liệu cũ.
 - [x] U2a. Cơ bản mặc định/Nâng cao chung form và RPC, binary kế thừa tiêu chí nguyên văn; không suy diễn số/đơn vị, giữ request identity.
