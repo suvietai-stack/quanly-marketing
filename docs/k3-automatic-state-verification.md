@@ -12,6 +12,6 @@ Không chuyển đổi hay sửa số liệu/trạng thái/timestamp lịch sử
 Không thay chốt/measurement/report snapshot cũ hoặc fingerprint xác nhận. Kết quả quá khứ dùng ngày đánh giá, revision/bản ghi và thời điểm nghiệm thu có sẵn; đây không phải phục dựng đầy đủ lịch sử cấu hình đã thay đổi.
 
 ## Kiểm thử và giới hạn
-Bộ trạng thái/tạo việc đạt 18/18. Full suite gần nhất 174/175; một kiểm thử k3Goals cũ không ổn định, chạy lại goals+creation đạt 34/34. Build OK. Test cơ sở dữ liệu cô lập có thời điểm 05/11/2026 08:00/09:00/10:30/11:00/13:00, ngày-only, Done legacy, nhiều KPI, nghiệm thu, KG riêng, 1/1 và filter.
+Bộ trạng thái/tạo việc đạt 18/18; toàn bộ 3K cuối đạt 175/175. Một lượt trước có kiểm thử k3Goals cũ không ổn định; chạy lại goals+creation 34/34 và full 175/175 đạt. Build OK. Test cơ sở dữ liệu cô lập có thời điểm 05/11/2026 08:00/09:00/10:30/11:00/13:00, ngày-only, Done legacy, nhiều KPI, nghiệm thu, KG riêng, 1/1 và filter.
 Phiên trình duyệt được khôi phục nhưng /biz/3k chuyển về /login. Chưa nghiệm thu desktop/mobile hoặc ghi→đọc UI thật; không tự chọn tài khoản khác hay tạo dữ liệu thử trên backend chung.
 Chưa nghiệm thu chốt và gửi Zalo thật; test tự động hóa hồi quy giữ nguyên lịch 18:00/18:05. Lịch sử công việc ngày cũ tiếp tục chỉ đọc; không tự diễn giải dữ liệu thiếu KPI. Ma trận vai trò và phục hồi legacy thật còn cần hồ sơ được người dùng cho phép.
