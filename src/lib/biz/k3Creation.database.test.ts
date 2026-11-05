@@ -55,6 +55,9 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0234_k3_draft_purge_config_history_safety.sql', 'utf8'));
   const evaluator = readFileSync('drizzle/migrations/0218_k3_shared_ten_mode_evaluator.sql','utf8');
   await db.exec(evaluator.slice(0,evaluator.indexOf('CREATE FUNCTION private.k3_measure_rows')));
+  const unified = readFileSync('drizzle/migrations/0205_k3_daily_kpi_unified_reads.sql','utf8');
+  const projectionStart = unified.indexOf('DO $patch$');
+  await db.exec(unified.slice(projectionStart,unified.indexOf('-- Existing API callers',projectionStart)));
   await db.exec(readFileSync('drizzle/migrations/0235_k3_authoritative_automatic_states.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0236_k3_valid_save_and_legacy_state_guards.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0237_k3_required_actions_and_safe_special_decisions.sql','utf8'));
