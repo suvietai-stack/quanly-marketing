@@ -227,7 +227,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
           </label>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy soạn</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={mutation.isPending || !f.name.trim() || !f.period_start || !f.period_end} onClick={submit}>
             {mutation.isPending ? 'Đang lưu…' : 'Lưu mục tiêu'}
           </Button>
@@ -248,24 +248,11 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
   const [kpiFor, setKpiFor] = useState<{ goalId?: string; actionId?: string } | null>(null);
   const [inviting, setInviting] = useState(false);
   const [invitees, setInvitees] = useState<K3MemberSearchRow[]>([]);
-  const [statusTo, setStatusTo] = useState<K3GoalStatus | null>(null);
-  const [statusNote, setStatusNote] = useState('');
   const [tab, setTab] = useState<'kf' | 'log' | 'history'>('kf');
 
   const g = data?.goal;
   const canManage = !!data?.can_manage;
   const closed = g ? ['ended_missed', 'cancelled'].includes(g.status) : false;
-
-  const changeStatus = async () => {
-    if (!g || !statusTo) return;
-    try {
-      await mutation.mutateAsync({ kind: 'goal_status', id: g.id, status: statusTo, note: statusNote, revision: g.revision });
-      toast.success('Đã đổi trạng thái mục tiêu.');
-      setStatusTo(null); setStatusNote('');
-    } catch (e) {
-      toast.error(k3Error(e));
-    }
-  };
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -439,23 +426,6 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
             </DialogContent>
           </Dialog>
         )}
-        {statusTo && g && (
-          <Dialog open onOpenChange={(o) => !o && setStatusTo(null)}>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Chuyển sang "{K3_GOAL_STATUS[statusTo].label}"?</DialogTitle></DialogHeader>
-              {statusTo && (
-                <div className="space-y-1">
-                  <Label htmlFor="k3g-note">Ghi chú kết thúc</Label>
-                  <Textarea id="k3g-note" rows={2} value={statusNote} onChange={(e) => setStatusNote(e.target.value)} />
-                </div>
-              )}
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setStatusTo(null)}>Hủy</Button>
-                <Button disabled={mutation.isPending || !statusNote.trim()} onClick={changeStatus}>Xác nhận</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
       </SheetContent>
     </Sheet>
   );
@@ -556,7 +526,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
           </label>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy soạn</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={mutation.isPending || !f.name.trim()} onClick={submit}>{mutation.isPending ? 'Đang lưu…' : 'Lưu hành động'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -587,7 +557,7 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
         <DialogHeader><DialogTitle>Thêm KPI {actionId ? 'thực thi KF' : 'kết quả KG'}</DialogTitle></DialogHeader>
         <Biz3KKpiConfig value={f} onChange={setF} />
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy soạn</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={mutation.isPending || !f.name.trim()} onClick={submit}>{mutation.isPending ? 'Đang lưu…' : 'Lưu KPI'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -595,7 +565,3 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
   );
 }
 
-function DraftDelete({ kind, id, name, onDeleted }: { kind: 'goal' | 'action'; id: string; name: string; onDeleted?: () => void }) {
-  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false); const qc = useQueryClient();
-  return <><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Thao tác bản nháp ${name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem className="text-destructive" onSelect={() => setOpen(true)}><Trash2 className="mr-2 h-4 w-4" />Xóa bản nháp</DropdownMenuItem></DropdownMenuContent></DropdownMenu><Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Xóa bản nháp “{name}”?</DialogTitle></DialogHeader><p className="text-sm">Chuyển bản nháp cùng cấu trúc con vào Thùng rác. Có thể khôi phục trong 15 ngày.</p><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>Giữ bản nháp</Button><Button variant="destructive" disabled={busy} onClick={async () => { setBusy(true); try { const { error } = await supabase.rpc('k3_draft_delete', { _kind: kind, _id: id }); if (error) throw error; await qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); setOpen(false); onDeleted?.(); toast.success('Đã chuyển bản nháp vào Thùng rác 15 ngày.'); } catch (e) { toast.error(k3Error(e)); } finally { setBusy(false); } }}>Xác nhận xóa</Button></DialogFooter></DialogContent></Dialog></>;
-}
