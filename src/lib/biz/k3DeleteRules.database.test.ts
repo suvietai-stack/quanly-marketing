@@ -62,6 +62,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0238_k3_activate_configured_kf_without_start_button.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0239_k3_configured_action_revision_alias.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0240_k3_delete_rules.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0241_k3_soft_delete_variable_conflict_fix.sql', 'utf8'));
   // Một công việc Cơ bản đang thực hiện (KG + 1 KF + 1 KPI binary).
   const r = await val<{ goal_id: string }>(`SELECT k3_quick_create('${JSON.stringify({ request_key: crypto.randomUUID(), creation_mode: 'basic', name: 'Soạn báo giá khách sạn Vinh Nghệ An', expected_result: 'Có file báo giá', period_start: '2026-11-05', period_end: '2026-11-05', kpi: { measure: 'binary' }, save_valid: true })}') v`);
   goalId = r.goal_id;
