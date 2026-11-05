@@ -1,11 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## UX TẠO CÔNG VIỆC 3K — spec 703 dòng (05/11/2026)
-- [ ] U1. Giờ/phút tùy chọn KG/KF/lịch, kế thừa rõ, deadline ngày-only cuối ngày VN; giữ dữ liệu cũ.
-- [ ] U2. Cơ bản mặc định/Nâng cao chung cấu trúc, KPI không nhập lặp, đổi chế độ giữ dữ liệu/idempotency.
-- [ ] U3. RPC danh sách/tổng kết cá nhân đúng người kể cả Admin; theo dõi nhân viên theo phạm vi bổ nhiệm.
-- [ ] U4. Xóa KG/KF nháp có xác nhận, bảo vệ chốt, khôi phục cấu trúc/ID trong 15×24h.
-- [ ] U5. Kiểm thử database/hồi quy, UI desktop/mobile; không dữ liệu giả, Zalo vẫn Tắt, chưa Publish.
+- [x] U1a. 0231–0234: giờ/phút nullable KG/KF/lịch, kế thừa, cuối ngày VN, ghi nguyên tử và cảnh báo ngoài KG; giữ dữ liệu cũ.
+- [x] U2a. Cơ bản mặc định/Nâng cao chung form và RPC, binary kế thừa tiêu chí nguyên văn; không suy diễn số/đơn vị, giữ request identity.
+- [x] U3a. RPC all/active/overdue/done bỏ bypass Admin cá nhân; worker chỉ phần việc được giao/phối hợp, nguồn tổng kết dùng lịch; Xem 3K nhân viên chỉ đọc và lọc phòng.
+- [ ] U3b. Hoàn thiện bộ lọc Khối/Hệ/Phòng/Nhóm và chi tiết lịch sử/lộ trình đầy đủ; chưa hoàn tất triển khai.
+- [x] U4a. Xóa nháp xác nhận qua RPC, bảo vệ kết quả/chốt, restore chặn đúng 360 giờ, purge xử lý config history; cron thật hoạt động.
+- [x] U5a. 168/168 hồi quy 3K cuối cùng (maxWorkers=2), 11/11 test database tạo/trash, build OK; docs/k3-creation-ux-verification.md.
+- [ ] U5b. Desktop/mobile và ghi→đọc lại UI thật: phiên injected không đăng nhập, mint --self không khớp tài khoản; cần đăng nhập Preview. Ma trận từng chức danh chưa nghiệm thu. Không dữ liệu giả, không bật Zalo, chưa Publish.
 
 ## TỔNG KẾT THỦ CÔNG / CHỐT TỰ ĐỘNG — spec 731 dòng (04/11/2026)
 - [x] S1. Xác nhận Sale độc lập, version nguồn tại máy chủ, lịch sử và phạm vi ngày đúng lịch/kết quả.
