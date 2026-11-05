@@ -9,6 +9,7 @@ export interface K3ReportPerson {
     results: { value?: number | null; numerator?: number | null; denominator?: number | null; objects?: string[]; completed?: string[]; kpi_snapshot?: K3Measurement & { name: string; unit?: string }; day_metric?: K3TypedMetric; kpi_id: string; problem?: string | null; solution?: string | null }[];
     measurements?: K3ReportPerson['data']['results'];
     employee_review?: { status: 'none' | 'reviewed' | 'reconfirm'; confirmed_at?: string };
+    discipline?: { obligated: boolean; plan_status: string; source?: string; summary_late?: boolean };
   };
 }
 export function k3DailyReport(date: string, people: K3ReportPerson[], labels: Record<string, string> = {}) {
@@ -18,8 +19,10 @@ export function k3DailyReport(date: string, people: K3ReportPerson[], labels: Re
   const issues = people.reduce((n, p) => n + p.data.results.filter((r) => r.problem?.trim() || r.solution?.trim()).length, 0);
   const manual = (p: K3ReportPerson) => ({ none: 'Chưa tổng kết', reviewed: 'Đã tổng kết', reconfirm: 'Cần tổng kết lại' })[p.data.employee_review?.status ?? 'none'];
   const lines = [`3K · CHỐT SỔ NGÀY ${date.split('-').reverse().join('/')}`,
+    `Kế hoạch đầu ngày: Đúng hạn ${people.filter(p => p.data.discipline?.obligated && p.data.discipline.plan_status === 'on_time').length}/${people.filter(p => p.data.discipline?.obligated).length} · Thiết lập muộn ${people.filter(p => p.data.discipline?.plan_status === 'late').length} · Chưa thiết lập ${people.filter(p => p.data.discipline?.plan_status === 'none').length} · Chưa có dấu mốc ${people.filter(p => !p.data.discipline || p.data.discipline.plan_status === 'unobserved').length}`,
     `${people.length} nhân viên · Đã cập nhật ${updated} · Chưa cập nhật ${people.length - updated}`,
     `Đã tổng kết thủ công: ${people.filter((p) => p.data.employee_review?.status === 'reviewed').length} · Chưa tổng kết: ${people.filter((p) => !p.data.employee_review || p.data.employee_review.status === 'none').length} · Cần tổng kết lại: ${people.filter((p) => p.data.employee_review?.status === 'reconfirm').length}`,
+    `Tổng kết muộn: ${people.filter(p => p.data.employee_review?.status === 'reviewed' && p.data.discipline?.summary_late).length}`,
     `${new Set(active.map((a) => a.goal_id)).size} KG / ${active.length} KF đang thực hiện · ${active.filter((a) => a.overdue).length} KF quá hạn · ${issues} vướng mắc`, ''];
   if (people.length <= 12) {
     for (const p of people) {

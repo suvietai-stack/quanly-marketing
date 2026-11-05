@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Biz3KReviewMonitor } from './Biz3KReviewMonitor';
+import { Biz3KDiscipline } from './Biz3KDiscipline';
 import { Biz3KDayReview } from './Biz3KDayReview';
 
 interface Person { user_id: string; name: string; department: string | null; updated: boolean; closes: number; kpis: { id:string;name:string;unit:string|null;measure:K3Measure;target:number|null;goal_name:string;action_name:string|null;metric:K3TypedMetric;official_metric:K3TypedMetric }[] }
@@ -24,7 +24,7 @@ export function Biz3KMeasuredPeriod({type,date,onDateChange,manage=false}:{type:
   const people=query.data??[];
   return <div className="space-y-4">
     <div className="flex flex-wrap items-end gap-3"><div><Label htmlFor="k3-measured-date">Ngày trong kỳ</Label><Input id="k3-measured-date" type="date" value={date} onChange={(e)=>e.target.value&&onDateChange(e.target.value)} className="w-40" /></div><span className="text-sm text-muted-foreground">{bounds.start} – {bounds.end}</span>{manage&&<Input aria-label="Tìm nhân viên" placeholder="Tìm nhân viên…" value={search} onChange={(e)=>setSearch(e.target.value)} className="w-48" />}</div>
-    {manage && type === 'day' && <Biz3KReviewMonitor date={date} today={new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())} />}
+    <Biz3KDiscipline start={bounds.start} end={bounds.end} manage={manage} />
     {query.isLoading&&<p className="text-sm text-muted-foreground">Đang tải kết quả…</p>}
     {query.error&&<div><p className="text-sm text-destructive">{k3Error(query.error)}</p><Button variant="outline" onClick={()=>query.refetch()}>Thử lại</Button></div>}
     {manage && <div className="flex flex-wrap gap-1"><Button variant={!department ? 'default' : 'outline'} size="sm" onClick={() => setDepartment('')}>Tất cả phòng</Button>{[...new Set(people.map((p) => p.department).filter((d): d is string => !!d))].map((d) => <Button key={d} variant={department === d ? 'default' : 'outline'} size="sm" onClick={() => setDepartment(d)}>{d}</Button>)}</div>}
