@@ -11,6 +11,7 @@ import { Biz3KGoals } from './Biz3KGoals';
 import { Biz3KKpiDay } from './Biz3KKpiDay';
 import { Biz3KArchive } from './Biz3KArchive';
 import { Button } from '@/components/ui/button';
+import { K3DeleteProvider } from './Biz3KDelete';
 
 type Section = 'mine' | 'collab' | 'monitor' | 'settings' | 'archive';
 type Mode = 'day' | 'week' | 'month' | 'quarter' | 'all';
@@ -18,6 +19,10 @@ type Mode = 'day' | 'week' | 'month' | 'quarter' | 'all';
 const MODE_LABEL: Record<Mode, string> = { day: 'Ngày', week: 'Tuần', month: 'Tháng', quarter: 'Quý', all: 'Tất cả' };
 
 export function Biz3K() {
+  return <K3DeleteProvider><Biz3KScreen /></K3DeleteProvider>;
+}
+
+function Biz3KScreen() {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data: settings, isLoading, error, refetch } = useQuery({ ...k3SettingsQuery(uid), enabled: !!uid });
   const [section, setSection] = useState<Section>('mine');
