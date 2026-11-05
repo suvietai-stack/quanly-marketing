@@ -57,6 +57,7 @@ beforeAll(async () => {
   await db.exec(evaluator.slice(0,evaluator.indexOf('CREATE FUNCTION private.k3_measure_rows')));
   await db.exec(readFileSync('drizzle/migrations/0235_k3_authoritative_automatic_states.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0236_k3_valid_save_and_legacy_state_guards.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0237_k3_required_actions_and_safe_special_decisions.sql','utf8'));
 }, 30000);
 
 afterAll(() => db.close());
@@ -164,7 +165,31 @@ it('legacy Done cannot force completion and ordinary status RPCs are blocked', a
 it('date-only deadline is end of Vietnam day and drafts remain excluded',async()=>{
  const r=await create(payload({start_time:'',due_time:''}));
  expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T13:00+07')->>'status' v`)).toBe('draft');
- await val(`SELECT k3_goal_activate('${r.goal_id}',1) v`);
+ await val(`SELECT k3_goal_activate('${r.goal_id}',(SELECT revision FROM k3_goals WHERE id='${r.goal_id}')) v`);
  expect(await val(`SELECT private.k3_goal_overdue('${r.goal_id}','2026-11-05T23:59:59+07') v`)).toBe(false);
  expect(await val(`SELECT private.k3_goal_overdue('${r.goal_id}','2026-11-06T00:00+07') v`)).toBe(true);
+});
+
+it('all mandatory KPIs must attain; optional KPI never blocks, own KG result takes precedence',async()=>{
+ const r=await create(payload({save_valid:true,start_time:'09:00'}));const a=await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);
+ const k=await val<string>(`SELECT id v FROM k3_kpis WHERE action_id='${a}'`);
+ const second=await val<{id:string}>(`SELECT k3_kpi_configure('${JSON.stringify({action_id:a,name:'Thông tin hợp lệ',measure:'ratio',target:95,config:{valid_condition:'Thông tin hợp lệ'}})}') v`);
+ await val(`SELECT k3_kpi_configure('${JSON.stringify({action_id:a,name:'Theo dõi thêm',measure:'binary',required:false,config:{valid_condition:'Ghi nhận'}})}') v`);
+ const insert=async(id:string,v:number,num:string='NULL',den:string='NULL')=>db.exec(`INSERT INTO k3_kpi_results(kpi_id,goal_id,action_id,user_id,work_date,value,numerator,denominator,updated_by,updated_at) VALUES('${id}','${r.goal_id}','${a}','${staff}','2026-11-05',${v},${num},${den},'${staff}','2026-11-05T10:00+07')`);
+ await insert(k,1);await insert(second.id,0,'94','100');
+ expect(await val(`SELECT private.k3_entity_state('action','${a}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
+ await db.exec(`UPDATE k3_kpi_results SET numerator=95 WHERE kpi_id='${second.id}'`);
+ expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('done');
+ await val(`SELECT k3_kpi_configure('${JSON.stringify({goal_id:r.goal_id,name:'200 đại lý hợp lệ',measure:'cumulative',target:200,unit:'đại lý'})}') v`);
+ expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
+});
+it('revision-specific acceptance is required before automatic completion',async()=>{
+ const r=await create(payload({save_valid:true,kpi:{measure:'binary',config:{valid_condition:'Có file báo giá',acceptance_required:true}}}));
+ const a=await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);const k=await val<string>(`SELECT id v FROM k3_kpis WHERE action_id='${a}'`);
+ const result=crypto.randomUUID();await db.exec(`INSERT INTO k3_kpi_results(id,kpi_id,goal_id,action_id,user_id,work_date,value,updated_by,updated_at) VALUES('${result}','${k}','${r.goal_id}','${a}','${staff}','2026-11-05',1,'${staff}','2026-11-05T10:00+07')`);
+ expect(await val(`SELECT private.k3_entity_state('action','${a}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
+ await db.exec(`INSERT INTO k3_kpi_acceptances(result_id,result_revision,decision,actor_id,reason,created_at) SELECT id,revision,'accepted','${manager}','Đã kiểm tra','2026-11-05T10:20+07' FROM k3_kpi_results WHERE id='${result}'`);
+ expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('done');
+ await db.exec(`UPDATE k3_kpi_results SET revision=revision+1 WHERE id='${result}'`);
+ expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
 });
