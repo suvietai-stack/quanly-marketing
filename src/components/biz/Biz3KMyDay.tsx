@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, Play, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, MoreHorizontal, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
 import { Biz3KQuickCreate } from './Biz3KQuickCreate';
@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 const toneClass: Record<string, string> = {
@@ -406,7 +407,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
           )}
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={save.isPending || planSave.isPending || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : 'Lưu công việc'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -418,7 +419,6 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
   const update = useK3TaskUpdate();
   const quantified = task.kpi_target != null && task.kpi_target > 0;
   const [f, setF] = useState({
-    status: k3DisplayStatus(task),
     kpi_actual: task.kpi_actual?.toString() ?? '',
     progress: task.progress.toString(),
     problem: task.problem ?? '',
@@ -427,11 +427,18 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
     note: task.note ?? '',
   });
   const set = (k: string, v: string) => setF((p) => ({ ...p, [k]: v }));
-  const needsVngb = f.status !== 'done';
+  // Trạng thái tự động từ kết quả KPI — nhân viên không chọn thủ công.
+  const nextStatus = k3DisplayStatus({
+    status: task.status,
+    kpi_target: task.kpi_target,
+    kpi_actual: f.kpi_actual === '' ? null : Number(f.kpi_actual),
+    progress: f.progress === '' ? 0 : Number(f.progress),
+  });
+  const needsVngb = nextStatus !== 'done';
   const submit = async () => {
     try {
       await update.mutateAsync({
-        id: task.id, revision:task.revision, status: f.status,
+        id: task.id, revision:task.revision, status: nextStatus,
         kpi_actual: f.kpi_actual === '' ? null : Number(f.kpi_actual),
         progress: f.progress === '' ? null : Number(f.progress),
         problem: f.problem, cause: f.cause, solution: f.solution, note: f.note,
@@ -447,15 +454,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
       <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>Cập nhật: {task.name}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-1">
-            <Label>Trạng thái</Label>
-            <Select value={f.status} onValueChange={(v) => set('status', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {(Object.keys(K3_STATUS) as K3Status[]).map((s) => <SelectItem key={s} value={s}>{K3_STATUS[s].label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          <p className="text-xs text-muted-foreground">Trạng thái tự động theo kết quả: <Badge className={cn('border-0', toneClass[K3_STATUS[nextStatus].tone])}>{K3_STATUS[nextStatus].label}</Badge></p>
           {quantified ? (
             <div className="space-y-1">
               <Label htmlFor="k3u-actual">Kết quả thực tế (kế hoạch {task.kpi_target}{task.kpi_unit ? ` ${task.kpi_unit}` : ''})</Label>
@@ -480,7 +479,7 @@ export function UpdateDialog({ task, onClose }: { task: K3Task; onClose: () => v
           <div className="space-y-1"><Label htmlFor="k3u-note">Ghi chú</Label><Textarea id="k3u-note" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
           <Button type="button" disabled={update.isPending} onClick={submit}>{update.isPending ? 'Đang lưu…' : 'Lưu cập nhật'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -494,24 +493,24 @@ export function DeleteDialog({ task, onClose }: { task: K3Task; onClose: () => v
     <AlertDialog open onOpenChange={(o) => !o && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Xóa công việc?</AlertDialogTitle>
-          <AlertDialogDescription>Công việc "{task.name}" sẽ bị xóa khỏi 3K ngày {task.work_date}. Lịch sử thay đổi vẫn được lưu lại.</AlertDialogDescription>
+          <AlertDialogTitle>Xóa công việc này?</AlertDialogTitle>
+          <AlertDialogDescription>"{task.name}" sẽ được chuyển vào Thùng rác và có thể khôi phục trong 15 ngày.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogCancel>Quay lại</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-destructive-foreground"
             onClick={async () => {
               try {
                 await del.mutateAsync(task.id);
-                toast.success('Đã xóa công việc.');
+                toast.success('Đã chuyển vào Thùng rác. Có thể khôi phục trong 15 ngày.');
                 onClose();
               } catch (e) {
                 toast.error(k3Error(e));
               }
             }}
           >
-            Xóa
+            Xóa công việc
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
