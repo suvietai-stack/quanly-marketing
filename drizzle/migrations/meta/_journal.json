@@ -1674,6 +1674,13 @@
       "when": 1793857323558,
       "tag": "0238_k3_activate_configured_kf_without_start_button",
       "breakpoints": true
+    },
+    {
+      "idx": 239,
+      "version": "7",
+      "when": 1793857392136,
+      "tag": "0239_k3_configured_action_revision_alias",
+      "breakpoints": true
     }
   ]
 }

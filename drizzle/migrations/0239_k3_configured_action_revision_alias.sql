@@ -1,0 +1,1 @@
+DO $patch$ DECLARE def text; BEGIN def:=pg_get_functiondef('public.k3_kpi_configure(jsonb)'::regprocedure);def:=replace(def,$old$UPDATE k3_actions a SET status='not_started',revision=revision+1$old$,$new$UPDATE k3_actions a SET status='not_started',revision=a.revision+1$new$);EXECUTE def;END $patch$;
