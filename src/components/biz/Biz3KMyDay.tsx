@@ -276,16 +276,8 @@ function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: str
 }
 
 export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
-  const update = useK3TaskUpdate();
   const save = useK3TaskSave();
   const hasIssue = !k3IsComplete(task) && (hasText(task.problem) || hasText(task.solution));
-  const quick = async (status: K3Status) => {
-    try {
-      await update.mutateAsync({ id: task.id, revision:task.revision, status, problem: task.problem ?? '', cause: task.cause ?? '', solution: task.solution ?? '' });
-    } catch (e) {
-      toast.error(k3Error(e));
-    }
-  };
   const toggleFocus = async () => {
     try {
       await save.mutateAsync({ ...task, is_focus: !task.is_focus });
@@ -308,10 +300,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           <p className="break-words font-medium leading-snug">{task.name}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {(task.start_time || task.end_time) && <span>{task.start_time?.slice(0, 5) ?? '…'}–{task.end_time?.slice(0, 5) ?? '…'}</span>}
-            {task.kpi_target != null && (
-              <span>Chỉ tiêu: {task.kpi_target}{task.kpi_unit ? ` ${task.kpi_unit}` : ''} · Thực tế: {task.kpi_actual ?? 0}</span>
-            )}
-            <span>Tiến độ: {k3ProgressLabel(task)}</span>
+            <span>Kết quả: {k3ProgressLabel(task)}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -330,12 +319,15 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           {hasText(task.solution) && <p><span className="font-medium">Giải pháp:</span> {task.solution}</p>}
         </div>
       )}
-      {settings.enabled && <div className="flex flex-wrap gap-1.5">
-        {task.status === 'todo' && <Button type="button" size="sm" variant="outline" onClick={() => quick('doing')}><Play className="mr-1 h-3.5 w-3.5" />Bắt đầu</Button>}
-        {task.status !== 'done' && <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>}
-        {task.status === 'done' && <Button type="button" size="sm" variant="ghost" onClick={onUpdate}>Điều chỉnh</Button>}
-        <Button type="button" size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>
-        <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={onDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
+      {settings.enabled && <div className="flex flex-wrap items-center gap-1.5">
+        <Button type="button" size="sm" variant="outline" onClick={onUpdate}>Cập nhật kết quả</Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button type="button" size="icon" variant="ghost" aria-label={`Thao tác khác cho ${task.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onEdit}><Pencil className="mr-2 h-4 w-4" />Sửa công việc</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onSelect={onDelete}><Trash2 className="mr-2 h-4 w-4" />Xóa công việc</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>}
     </div>
   );
