@@ -1667,6 +1667,13 @@
       "when": 1793857130887,
       "tag": "0237_k3_required_actions_and_safe_special_decisions",
       "breakpoints": true
+    },
+    {
+      "idx": 238,
+      "version": "7",
+      "when": 1793857323558,
+      "tag": "0238_k3_activate_configured_kf_without_start_button",
+      "breakpoints": true
     }
   ]
 }
