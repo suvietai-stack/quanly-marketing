@@ -3222,6 +3222,7 @@ export type Database = {
           problem: string | null
           progress_source: string | null
           request_key: string
+          required: boolean
           revision: number
           solution: string | null
           start_date: string | null
@@ -3253,6 +3254,7 @@ export type Database = {
           problem?: string | null
           progress_source?: string | null
           request_key: string
+          required?: boolean
           revision?: number
           solution?: string | null
           start_date?: string | null
@@ -3284,6 +3286,7 @@ export type Database = {
           problem?: string | null
           progress_source?: string | null
           request_key?: string
+          required?: boolean
           revision?: number
           solution?: string | null
           start_date?: string | null

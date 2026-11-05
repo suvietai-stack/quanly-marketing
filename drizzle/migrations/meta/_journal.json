@@ -1646,6 +1646,13 @@
       "when": 1793847081279,
       "tag": "0234_k3_draft_purge_config_history_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 235,
+      "version": "7",
+      "when": 1793856949439,
+      "tag": "0235_k3_authoritative_automatic_states",
+      "breakpoints": true
     }
   ]
 }
