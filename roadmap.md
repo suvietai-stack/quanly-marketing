@@ -1,10 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## TỐI ƯU TỔNG THỂ 3K CHO SALE — spec 840 dòng (05/11/2026)
-- [ ] O1. Một form tên/hạn/cách đo; tùy chọn mở rộng, kế thừa không nhập lặp, validation rõ và lưu nguyên tử.
-- [ ] O2. Ưu tiên công việc hôm nay; không lặp danh sách KG dài hạn; thẻ/kết quả theo ngữ cảnh, một nút cập nhật.
-- [ ] O3. Kiểm tra hủy/xóa/lịch sử, trạng thái đồng bộ, phạm vi cá nhân, tổng kết/chốt/Zalo không đổi cấu hình.
-- [ ] O4. Kiểm thử quy tắc/hồi quy và desktop/mobile; nghiệm thu ghi thật chỉ với hồ sơ được phép; chưa Publish.
+- [x] O1a. Một form tên/hạn/ba cách đo; tùy chọn mở rộng, kế thừa tên/tiêu chí không nhập lặp; validation tại form và lưu nguyên tử hiện có.
+- [x] O2a. Ngày ưu tiên công việc theo lịch thay danh sách KG tổng; thẻ một KPI cập nhật trực tiếp, nhiều KPI mở ngắn gọn; binary không chỉ tiêu 1, bằng chứng theo ngữ cảnh.
+- [x] O3a. 0242 loại công việc hủy khỏi danh sách, giữ nguyên bản ghi; ngày có goal_id và deadline kế thừa. Quy tắc xóa/khôi phục/trạng thái/phạm vi/chốt/Zalo hiện có giữ nguyên và kiểm thử đạt.
+- [x] O4a. 187 kiểm thử 3K đạt (185 toàn bộ + 2 mới chạy focused), build OK; đã xác minh 0242 trên backend. Không sửa dữ liệu thật, chưa Publish.
+- [ ] O1b/O2b/O3b/O4b. Chưa nghiệm thu UI desktop/mobile và ghi→đọc thật: phiên chuyển /login, mint --self không khớp. Còn hoàn thiện xóa công việc đơn giản trực tiếp trên thẻ Ngày (hiện guard KF duy nhất vẫn chặn), lịch sử hủy riêng, hoạt động ngoài lịch và rà soát mở rộng nhiều KPI/nhóm; cần phiên hợp lệ và hồ sơ được phép cho nghiệm thu ghi. Không coi đợt tối ưu tổng thể đã hoàn tất.
 
 ## TỐI GIẢN GIAO DIỆN 3K + CHUẨN SỬA/XÓA — spec 656 dòng (05/11/2026)
 Nguyên tắc: một thông tin một lần hiển thị; một chức năng một nút; chưa có lịch sử bảo vệ → được xóa, đã có kết quả/chốt → không xóa; backend vẫn kiểm tra, không chỉ ẩn nút; bảo toàn dữ liệu/lịch sử; chưa Publish.
