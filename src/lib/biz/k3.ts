@@ -12,6 +12,7 @@ export const K3_STATUS: Record<K3Status, { label: string; tone: 'neutral' | 'inf
 export interface K3Settings {
   enabled: boolean;
   effective_from: string | null;
+  discipline_from?: string;
   plan_by: string;
   summary_by: string;
   max_focus: number;

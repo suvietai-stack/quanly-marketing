@@ -17,6 +17,8 @@ beforeAll(async()=>{
  CREATE TABLE profiles(id uuid,full_name text,status text);INSERT INTO profiles VALUES('${user}','Sale','Đang hoạt động');
  CREATE TABLE biz_departments(id uuid,name text);
  CREATE TABLE k3_settings(id boolean,enabled boolean,effective_from date,plan_by time,summary_by time);INSERT INTO k3_settings VALUES(true,true,'2020-01-01','08:45','18:00');
+ CREATE TABLE k3_employee_reviews(user_id uuid,work_date date,summary_deadline_at_placeholder text);
+ CREATE FUNCTION private.k3_close_discipline_snapshot() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RETURN NEW;END$$;
  CREATE FUNCTION k3_settings_save(boolean,date,time,time,smallint) RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RETURN public.k3_settings_read();END$$;
  CREATE FUNCTION k3_settings_read() RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;
  CREATE TABLE cron.job(jobid bigint,jobname text);CREATE FUNCTION cron.unschedule(bigint) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;CREATE FUNCTION cron.schedule(text,text,text) RETURNS bigint LANGUAGE sql AS $$SELECT 1::bigint$$;
@@ -30,13 +32,19 @@ beforeAll(async()=>{
  CREATE FUNCTION private.k3_employee_review_state(uuid,date) RETURNS jsonb LANGUAGE sql AS $$SELECT '{"manual_status":"none","confirmed_at":null,"system_status":"open","action_count":0,"result_count":0}'::jsonb$$;`);
  await db.exec(readFileSync('drizzle/migrations/0246_k3_morning_discipline_snapshots.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0248_k3_checkpoint_concurrency_and_exclusion_fences.sql','utf8'));
+ expect(await val(`SELECT plan_by::text v FROM k3_settings`)).toBe('08:45:00');
+ await db.exec(readFileSync('drizzle/migrations/0249_k3_frozen_employee_review_deadlines.sql','utf8'));
  await db.exec(`UPDATE k3_settings SET discipline_from=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,plan_by=((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')-interval '1 minute')::time`);
 },30000);
 afterAll(()=>db.close());
 it('default checkpoint setting is exactly 08:45 Vietnam',async()=>{
- expect(await val(`SELECT '08:45:00'::time = '08:45'::time v`)).toBe(true);
  // The existing setting, not an independent hidden time, supplies the checkpoint.
  expect(await val(`SELECT position('plan_by' in pg_get_functiondef('private.k3_plan_schedule()'::regprocedure))>0 v`)).toBe(true);
+});
+it('summary deadline remains frozen when the current setting changes',async()=>{
+ const deadline=await val(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`);
+ await db.exec(`UPDATE k3_settings SET summary_by='20:00'`);
+ expect(await val(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`)).toBe(deadline);
 });
 it('checkpoint stores no plan then a later creation stays late, not on time',async()=>{
  await db.query(`SELECT private.k3_plan_capture('${user}')`);
