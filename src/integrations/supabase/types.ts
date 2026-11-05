@@ -8252,6 +8252,7 @@ export type Database = {
         Args: { _actor: string; _day: string }
         Returns: boolean
       }
+      k3_deletable: { Args: { _id: string; _kind: string }; Returns: Json }
       k3_draft_delete: { Args: { _id: string; _kind: string }; Returns: Json }
       k3_employee_review_confirm: {
         Args: {
