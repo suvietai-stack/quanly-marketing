@@ -61,6 +61,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0235_k3_authoritative_automatic_states.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0236_k3_valid_save_and_legacy_state_guards.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0237_k3_required_actions_and_safe_special_decisions.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0238_k3_activate_configured_kf_without_start_button.sql','utf8'));
 }, 30000);
 
 afterAll(() => db.close());
@@ -205,4 +206,11 @@ it('list returns exactly 1/1 completed KF and done filter uses measured state, n
  expect(rows.find(g=>g.id===r.goal_id)).toMatchObject({status:'done',kf_done:1,kf_total:1});
  const active=await val<{id:string}[]>(`SELECT k3_goal_list('active','') v`);expect(active.some(g=>g.id===r.goal_id)).toBe(false);
  expect(await val(`SELECT status v FROM k3_actions WHERE id='${a}'`)).not.toBe('done');
+});
+
+it('adding a KF and mandatory KPI to valid work does not require a start click',async()=>{
+ const r=await create(payload({save_valid:true}));
+ const a=await val<{id:string}>(`SELECT k3_action_save('${JSON.stringify({goal_id:r.goal_id,name:'Kiểm tra báo giá',request_key:crypto.randomUUID(),inherit_timeline:true})}') v`);
+ await val(`SELECT k3_kpi_configure('${JSON.stringify({action_id:a.id,name:'Đã kiểm tra',measure:'binary',request_key:crypto.randomUUID(),config:{valid_condition:'Đã kiểm tra báo giá'}})}') v`);
+ expect(await val(`SELECT private.k3_entity_state('action','${a.id}','2026-11-05T10:00+07')->>'status' v`)).toBe('in_progress');
 });
