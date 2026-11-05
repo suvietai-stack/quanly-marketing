@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Check, Loader2, Plus, Star, Target, UserPlus, Users, X } from 'lucide-react';
+import { Check, Loader2, Plus, Star, Target, UserPlus, Users, X, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3Error, type K3Settings } from '@/lib/biz/k3';
 import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalMember, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
@@ -21,6 +21,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { Biz3KTimeline, Biz3KSchedule } from './Biz3KTimeline';
+import { timelineLabel, type K3CreationKf } from '@/lib/biz/k3Creation';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const toneClass: Record<string, string> = {
   neutral: 'bg-secondary text-secondary-foreground',
@@ -158,7 +163,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
                   {g.name}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Chủ trì {g.owner_name} · {g.period_start} → {g.due_date ?? g.period_end} · {g.kf_done}/{g.kf_total} KF hoàn thành
+                  Chủ trì {g.owner_name} · {timelineLabel(g.period_start, g.start_time)} → {timelineLabel(g.due_date ?? g.period_end, g.due_time)} · {g.kf_done}/{g.kf_total} KF hoàn thành
                   {g.member_count > 0 && ` · ${g.member_count + 1} người tham gia`}
                 </p>
               </div>
@@ -184,7 +189,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
     period_start: goal?.period_start ?? '',
     period_end: goal?.period_end ?? '',
     due_date: goal?.due_date ?? '',
-    is_key: goal?.is_key ?? false,
+    is_key: goal?.is_key ?? false, start_time: goal?.start_time?.slice(0, 5) ?? '', due_time: goal?.due_time?.slice(0, 5) ?? '',
   });
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
   const submit = async () => {
@@ -195,7 +200,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
           id: goal?.id, revision: goal?.revision, request_key: goal ? undefined : key,
           period_type: 'custom', period_start: f.period_start, period_end: f.period_end,
           name: f.name, description: f.description, expected_result: f.expected_result,
-          due_date: f.due_date || null, is_key: f.is_key,
+          due_date: f.period_end, is_key: f.is_key, start_time: f.start_time, due_time: f.due_time,
         },
       });
       toast.success(goal ? 'Đã lưu mục tiêu.' : 'Đã tạo mục tiêu KG (bản nháp). Thêm KF rồi bắt đầu thực hiện.');
@@ -213,10 +218,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
             <Label htmlFor="k3g-name">Tên mục tiêu *</Label>
             <Input id="k3g-name" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Ví dụ: Phát triển 30 khách hàng tiềm năng đủ điều kiện" />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1"><Label htmlFor="k3g-start">Ngày bắt đầu *</Label><Input id="k3g-start" type="date" value={f.period_start} onChange={(e) => set('period_start', e.target.value)} /></div>
-            <div className="space-y-1"><Label htmlFor="k3g-end">Hạn hoàn thành *</Label><Input id="k3g-end" type="date" value={f.period_end} onChange={(e) => set('period_end', e.target.value)} /></div>
-          </div>
+          <Biz3KTimeline id="k3g" start={f.period_start} end={f.period_end} startTime={f.start_time} endTime={f.due_time} onChange={(field, value) => set(({ start: 'period_start', end: 'period_end', startTime: 'start_time', endTime: 'due_time' })[field], value)} />
           <div className="space-y-1"><Label htmlFor="k3g-result">Kết quả cần đạt / tiêu chí hoàn thành</Label><Textarea id="k3g-result" rows={2} value={f.expected_result} onChange={(e) => set('expected_result', e.target.value)} /></div>
           <div className="space-y-1"><Label htmlFor="k3g-desc">Mô tả ngắn</Label><Textarea id="k3g-desc" rows={2} value={f.description} onChange={(e) => set('description', e.target.value)} /></div>
           <label className="flex items-center gap-2 text-sm">
@@ -225,7 +227,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
           </label>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Hủy soạn</Button>
           <Button type="button" disabled={mutation.isPending || !f.name.trim() || !f.period_start || !f.period_end} onClick={submit}>
             {mutation.isPending ? 'Đang lưu…' : 'Lưu mục tiêu'}
           </Button>
@@ -236,7 +238,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
 }
 
 
-function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Settings; onClose: () => void }) {
+export function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Settings; onClose: () => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data, isLoading, error, refetch } = useQuery({ ...k3GoalDetailQuery(uid, id), enabled: !!uid && !!id });
   const mutation = useK3GoalMutation();
@@ -284,7 +286,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                 {g.is_key && <Badge variant="outline" className="border-primary text-primary"><Star className="mr-1 h-3 w-3" />Trọng tâm</Badge>}
               </div>
               <p className="text-sm text-muted-foreground">
-                {g.period_start} → {g.due_date ?? g.period_end} · Chủ trì <strong>{g.owner_name}</strong>
+                {timelineLabel(g.period_start, g.start_time)} → {timelineLabel(g.due_date ?? g.period_end, g.due_time)} · Chủ trì <strong>{g.owner_name}</strong>
               </p>
               {g.expected_result && <p className="text-sm"><span className="font-medium">Kết quả cần đạt:</span> {g.expected_result}</p>}
               {g.description && <p className="text-sm text-muted-foreground">{g.description}</p>}
@@ -300,6 +302,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                     <Button size="sm" variant="outline" onClick={() => setEditGoal(true)}>Sửa KG</Button>
                     <Button size="sm" variant="outline" onClick={() => setKpiFor({ goalId: g.id })}><Plus className="mr-1 h-3.5 w-3.5" />KPI kết quả</Button>
                     <Button size="sm" variant="outline" onClick={() => setInviting(true)}><UserPlus className="mr-1 h-3.5 w-3.5" />Mời thành viên</Button>
+                    {g.status === 'draft' && <DraftDelete kind="goal" id={g.id} name={g.name} onDeleted={onClose} />}
                     {g.status === 'draft' && <Button size="sm" variant="outline" onClick={() => setStatusTo('not_started')}>Sẵn sàng</Button>}
                     {(g.status === 'draft' || g.status === 'not_started' || g.status === 'paused') && <Button size="sm" onClick={() => setStatusTo('in_progress')}>Bắt đầu thực hiện</Button>}
                     {g.status === 'in_progress' && <Button size="sm" variant="outline" onClick={() => setStatusTo('paused')}>Tạm dừng</Button>}
@@ -351,7 +354,8 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           Phụ trách: {a.assignee_name ?? '—'}
                           {a.collaborators.length > 0 && ` · Phối hợp: ${a.collaborators.map((c) => c.full_name).join(', ')}`}
-                          {a.action.due_date && ` · Hạn ${a.action.due_date}`}
+                          {` · Hạn ${timelineLabel(a.action.inherit_timeline ? g.due_date ?? g.period_end : a.action.due_date ?? g.period_end, a.action.inherit_timeline ? g.due_time : a.action.due_time)}`}
+                          {a.action.execution_schedule?.start_time && ` · Lịch ${a.action.execution_schedule.start_time}–${a.action.execution_schedule.end_time ?? '…'}`}
                           {` · ${a.task_done}/${a.task_total} việc hoàn thành`}
                         </p>
                       </div>
@@ -370,6 +374,7 @@ function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Se
                         <p><span className="font-medium">Giải pháp:</span> {a.action.solution}</p>
                       </div>
                     )}
+                    {canManage && (g.status === 'draft' || a.action.status === 'draft') && <DraftDelete kind="action" id={a.action.id} name={a.action.name} />}
                     {!closed && (
                       <ActionButtons a={a} canManage={canManage} settings={settings}
                         onEdit={() => setEditAction(a)} onKpi={() => setKpiFor({ actionId: a.action.id })} />
@@ -522,8 +527,9 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
     due_date: action?.action.due_date ?? '',
     note: action?.action.note ?? '',
     assignee_id: action?.action.assignee_id ?? goal.owner_id,
-    is_key: action?.action.is_key ?? false,
+    is_key: action?.action.is_key ?? false, start_time: action?.action.start_time?.slice(0, 5) ?? '', due_time: action?.action.due_time?.slice(0, 5) ?? '', inherit_timeline: action?.action.inherit_timeline ?? !action,
   });
+  const [schedule, setSchedule] = useState<K3CreationKf['execution_schedule']>(action?.action.execution_schedule ?? { mode: 'daily' });
   const [collabs, setCollabs] = useState<K3MemberSearchRow[]>(action?.collaborators.map((c) => ({ id: c.user_id, full_name: c.full_name, departments: [] })) ?? []);
   const submit = async () => {
     try {
@@ -532,7 +538,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
         payload: {
           id: action?.action.id, revision: action?.action.revision, request_key: action ? undefined : key,
           goal_id: goal.id, name: f.name, start_date: f.start_date || null, due_date: f.due_date || null,
-          note: f.note, assignee_id: f.assignee_id, is_key: f.is_key, collaborators: collabs.map((c) => c.id),
+          note: f.note, assignee_id: f.assignee_id, is_key: f.is_key, start_time: f.start_time, due_time: f.due_time, inherit_timeline: f.inherit_timeline, execution_schedule: schedule, collaborators: collabs.map((c) => c.id),
         },
       });
       toast.success(action ? 'Đã lưu hành động KF.' : 'Đã thêm hành động KF.');
@@ -550,10 +556,9 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
             <Label htmlFor="k3a-name">Tên hành động *</Label>
             <Input id="k3a-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Ví dụ: Liên hệ và tư vấn 100 khách hàng" />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1"><Label htmlFor="k3a-start">Ngày bắt đầu</Label><Input id="k3a-start" type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></div>
-            <div className="space-y-1"><Label htmlFor="k3a-due">Hạn hoàn thành</Label><Input id="k3a-due" type="date" value={f.due_date} onChange={(e) => setF({ ...f, due_date: e.target.value })} /></div>
-          </div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.inherit_timeline} onChange={(e) => setF({ ...f, inherit_timeline: e.target.checked })} />Kế thừa thời gian KG</label>
+          {f.inherit_timeline ? <p className="text-sm text-muted-foreground">{timelineLabel(goal.period_start, goal.start_time)} → {timelineLabel(goal.due_date ?? goal.period_end, goal.due_time)}</p> : <Biz3KTimeline id="k3a" start={f.start_date || goal.period_start} end={f.due_date || goal.due_date || goal.period_end} startTime={f.start_time} endTime={f.due_time} onChange={(field, value) => setF({ ...f, [({ start: 'start_date', end: 'due_date', startTime: 'start_time', endTime: 'due_time' })[field]]: value })} />}
+          <Biz3KSchedule value={schedule} onChange={setSchedule} />
           <div className="space-y-1">
             <Label>Người phụ trách chính</Label>
             <Select value={f.assignee_id} onValueChange={(v) => setF({ ...f, assignee_id: v })}>
@@ -574,7 +579,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
           </label>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Hủy soạn</Button>
           <Button type="button" disabled={mutation.isPending || !f.name.trim()} onClick={submit}>{mutation.isPending ? 'Đang lưu…' : 'Lưu hành động'}</Button>
         </DialogFooter>
       </DialogContent>
@@ -605,10 +610,15 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
         <DialogHeader><DialogTitle>Thêm KPI {actionId ? 'thực thi KF' : 'kết quả KG'}</DialogTitle></DialogHeader>
         <Biz3KKpiConfig value={f} onChange={setF} />
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
+          <Button type="button" variant="outline" onClick={onClose}>Hủy soạn</Button>
           <Button type="button" disabled={mutation.isPending || !f.name.trim()} onClick={submit}>{mutation.isPending ? 'Đang lưu…' : 'Lưu KPI'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
+}
+
+function DraftDelete({ kind, id, name, onDeleted }: { kind: 'goal' | 'action'; id: string; name: string; onDeleted?: () => void }) {
+  const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false); const qc = useQueryClient();
+  return <><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Thao tác bản nháp ${name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem className="text-destructive" onSelect={() => setOpen(true)}><Trash2 className="mr-2 h-4 w-4" />Xóa bản nháp</DropdownMenuItem></DropdownMenuContent></DropdownMenu><Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Xóa bản nháp “{name}”?</DialogTitle></DialogHeader><p className="text-sm">Chuyển bản nháp cùng cấu trúc con vào Thùng rác. Có thể khôi phục trong 15 ngày.</p><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>Giữ bản nháp</Button><Button variant="destructive" disabled={busy} onClick={async () => { setBusy(true); try { const { error } = await supabase.rpc('k3_draft_delete', { _kind: kind, _id: id }); if (error) throw error; await qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); setOpen(false); onDeleted?.(); toast.success('Đã chuyển bản nháp vào Thùng rác 15 ngày.'); } catch (e) { toast.error(k3Error(e)); } finally { setBusy(false); } }}>Xác nhận xóa</Button></DialogFooter></DialogContent></Dialog></>;
 }
