@@ -32,6 +32,7 @@ async def main():
                     else:
                         await route.fulfill(content_type='application/json',body='{"ok":true}')
                 await page.route('**/rest/v1/rpc/k3_soft_delete', delete)
+                page.on('console',lambda m: print(m.text) if m.type=='error' else None)
                 await page.goto('http://localhost:8080/k3-delete-fixture')
                 async def open_delete():
                     await page.get_by_role('button',name=f'Menu {label}',exact=True).click()
