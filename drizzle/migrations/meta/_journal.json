@@ -1744,6 +1744,13 @@
       "when": 1793872748553,
       "tag": "0248_k3_checkpoint_concurrency_and_exclusion_fences",
       "breakpoints": true
+    },
+    {
+      "idx": 249,
+      "version": "7",
+      "when": 1793872941538,
+      "tag": "0249_k3_frozen_employee_review_deadlines",
+      "breakpoints": true
     }
   ]
 }

@@ -3620,6 +3620,7 @@ export type Database = {
           revision: number
           snapshot: Json
           source_version: string
+          summary_deadline_at: string | null
           user_id: string
           work_date: string
         }
@@ -3632,6 +3633,7 @@ export type Database = {
           revision?: never
           snapshot: Json
           source_version: string
+          summary_deadline_at?: string | null
           user_id: string
           work_date: string
         }
@@ -3644,6 +3646,7 @@ export type Database = {
           revision?: never
           snapshot?: Json
           source_version?: string
+          summary_deadline_at?: string | null
           user_id?: string
           work_date?: string
         }
@@ -4238,6 +4241,7 @@ export type Database = {
           obligated: boolean
           observed_at: string
           source: string | null
+          summary_deadline_at: string | null
           user_id: string
           work_date: string
         }
@@ -4254,6 +4258,7 @@ export type Database = {
           obligated: boolean
           observed_at?: string
           source?: string | null
+          summary_deadline_at?: string | null
           user_id: string
           work_date: string
         }
@@ -4270,6 +4275,7 @@ export type Database = {
           obligated?: boolean
           observed_at?: string
           source?: string | null
+          summary_deadline_at?: string | null
           user_id?: string
           work_date?: string
         }
