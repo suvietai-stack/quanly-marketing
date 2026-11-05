@@ -1,5 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TỐI GIẢN GIAO DIỆN 3K + CHUẨN SỬA/XÓA — spec 656 dòng (05/11/2026)
+Nguyên tắc: một thông tin một lần hiển thị; một chức năng một nút; chưa có lịch sử bảo vệ → được xóa, đã có kết quả/chốt → không xóa; backend vẫn kiểm tra, không chỉ ẩn nút; bảo toàn dữ liệu/lịch sử; chưa Publish.
+- [ ] G1. Thẻ công việc tối giản: Tên/Deadline/Trạng thái/Kết quả/Cập nhật + menu 3 chấm; KG Cơ bản 1 KF cùng tên chỉ hiện một tên; một badge trạng thái; bỏ dòng chốt sổ kỹ thuật trên thẻ.
+- [ ] G2. Hiển thị KPI theo kiểu đo: Có/Chưa, Tích lũy x/y–%, tần suất, chuỗi, tỷ lệ, mốc, thời lượng; tách kết quả ngày vs lũy kế, không cộng lẫn đơn vị.
+- [ ] G3. Chuẩn Sửa/Xóa: chỉ 2 thao tác trong menu 3 chấm; Xóa chỉ khi chưa có kết quả/chốt/lịch sử bảo vệ (backend enforce + ẩn menu); xác nhận Thùng rác 15 ngày; form tạo/sửa chỉ Bỏ thay đổi/Lưu nháp/Lưu; validation tại trường.
+- [ ] G4. UI Thùng rác 15 ngày (backend 0197–0201 đã có): danh sách, khôi phục, hạn còn lại.
+- [ ] G5. Test: quy tắc xóa backend, hiển thị KPI, hồi quy 3K; desktop/mobile.
+
 ## TRẠNG THÁI 3K TỰ ĐỘNG — spec 585 dòng (05/11/2026)
 - [x] T1. 0235–0239: nguồn trạng thái KG/KF từ thời gian/KPI/nghiệm thu; KG không KPI riêng dùng KF bắt buộc, done counter/filter đồng bộ.
 - [x] T2. Lưu công việc nguyên tử tự vận hành, KF bổ sung đủ KPI không cần bắt đầu; bỏ ready/start/reopen thường, chặn RPC trạng thái/progress, ngoại lệ có lý do/khóa/quyền.
