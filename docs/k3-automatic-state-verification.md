@@ -1,7 +1,7 @@
 # Trạng thái KG/KF tự động — 05/11/2026
 
 ## Đã triển khai
-- 0235–0238: `private.k3_entity_state` là nguồn KG/KF, bộ đếm và quá hạn. Giờ Việt Nam; trước giờ bắt đầu chưa bắt đầu, đến giờ đang thực hiện dù chưa nhập KPI.
+- 0235–0239: `private.k3_entity_state` là nguồn KG/KF, bộ đếm và quá hạn. Giờ Việt Nam; trước giờ bắt đầu chưa bắt đầu, đến giờ đang thực hiện dù chưa nhập KPI.
 - KF phải đủ KPI bắt buộc và nghiệm thu đúng revision. KG ưu tiên KPI bắt buộc riêng; nếu không có thì tất cả KF bắt buộc. Optional KPI/KF không chặn. Không tạo KPI trùng.
 - `k3_goal_activate` kiểm quyền/khóa/revision/cấu trúc hợp lệ; quick-create lưu nháp rồi kích hoạt nguyên tử khi Lưu công việc. KF mới có KPI hợp lệ tự vận hành. API trạng thái thường và manual_progress bị chặn; quyết định đặc biệt cần lý do.
 - Danh sách/bộ lọc/KF done, chi tiết, ngày, nguồn tổng kết và chốt mới dùng nguồn chung. Cache sau KPI/nghiệm thu được invalidation; danh sách/chi tiết/ngày tải lại mỗi 30 giây.
@@ -12,6 +12,6 @@ Không chuyển đổi hay sửa số liệu/trạng thái/timestamp lịch sử
 Không thay chốt/measurement/report snapshot cũ hoặc fingerprint xác nhận. Kết quả quá khứ dùng ngày đánh giá, revision/bản ghi và thời điểm nghiệm thu có sẵn; đây không phải phục dựng đầy đủ lịch sử cấu hình đã thay đổi.
 
 ## Kiểm thử và giới hạn
-Bộ 3K đạt 174/174 trước test KF mới; lượt cuối ghi trong roadmap. Test cơ sở dữ liệu cô lập có thời điểm 05/11/2026 08:00/09:00/10:30/11:00/13:00, ngày-only, Done legacy, nhiều KPI, nghiệm thu, KG riêng, 1/1 và filter.
+Bộ trạng thái/tạo việc đạt 18/18. Full suite gần nhất 174/175; một kiểm thử k3Goals cũ không ổn định, chạy lại goals+creation đạt 34/34. Build OK. Test cơ sở dữ liệu cô lập có thời điểm 05/11/2026 08:00/09:00/10:30/11:00/13:00, ngày-only, Done legacy, nhiều KPI, nghiệm thu, KG riêng, 1/1 và filter.
 Phiên trình duyệt được khôi phục nhưng /biz/3k chuyển về /login. Chưa nghiệm thu desktop/mobile hoặc ghi→đọc UI thật; không tự chọn tài khoản khác hay tạo dữ liệu thử trên backend chung.
 Chưa nghiệm thu chốt và gửi Zalo thật; test tự động hóa hồi quy giữ nguyên lịch 18:00/18:05. Lịch sử công việc ngày cũ tiếp tục chỉ đọc; không tự diễn giải dữ liệu thiếu KPI. Ma trận vai trò và phục hồi legacy thật còn cần hồ sơ được người dùng cho phép.

@@ -1,10 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## TRẠNG THÁI 3K TỰ ĐỘNG — spec 585 dòng (05/11/2026)
-- [ ] T1. Một nguồn trạng thái KG/KF phía máy chủ từ thời gian, KPI bắt buộc/nghiệm thu; bộ đếm và mọi màn hình đồng bộ.
-- [ ] T2. Lưu hợp lệ tự vận hành; bỏ Sẵn sàng/Bắt đầu/Hoàn thành/chọn trạng thái và tiến độ thủ công; giữ nháp và menu ngoại lệ có lý do.
-- [ ] T3. Ngày/lộ trình/theo dõi/tổng kết/chốt/Zalo dùng cùng nguồn; giữ quyền, lịch sử và chốt cũ.
-- [ ] T4. Đối soát legacy chỉ đọc, không đoán kết quả; kiểm thử quy tắc và giao diện; chưa Publish hoặc bật Zalo.
+- [x] T1. 0235–0239: nguồn trạng thái KG/KF từ thời gian/KPI/nghiệm thu; KG không KPI riêng dùng KF bắt buộc, done counter/filter đồng bộ.
+- [x] T2. Lưu công việc nguyên tử tự vận hành, KF bổ sung đủ KPI không cần bắt đầu; bỏ ready/start/reopen thường, chặn RPC trạng thái/progress, ngoại lệ có lý do/khóa/quyền.
+- [x] T3a. Ngày/nguồn tổng kết/chốt mới dùng nguồn chung, snapshot/fingerprint/chốt/Zalo cũ giữ nguyên, tải lại 30 giây. 8 KG/4 KF/3 KPI/2 kết quả/1 chốt/38 events không đổi.
+- [x] T4a. 18/18 test creation-state; full suite gần nhất 174/175, một test hồi quy cũ không ổn định; chạy lại goals+creation 34/34. Build OK; docs/k3-automatic-state-verification.md.
+- [ ] T3b/T4b. Ghi→đọc UI thật, desktop/mobile, chốt/gửi Zalo và ma trận chức danh: phiên hiện tại chuyển /biz/3k→/login; cần người dùng đăng nhập/chọn hồ sơ thật. Không dữ liệu giả, không chuyển legacy hay Publish/bật Zalo.
 
 ## UX TẠO CÔNG VIỆC 3K — spec 703 dòng (05/11/2026)
 - [x] U1a. 0231–0234: giờ/phút nullable KG/KF/lịch, kế thừa, cuối ngày VN, ghi nguyên tử và cảnh báo ngoài KG; giữ dữ liệu cũ.
