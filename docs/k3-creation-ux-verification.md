@@ -17,7 +17,7 @@ Frontend: `Biz3KQuickCreate.tsx`, `Biz3KKpiConfig.tsx`, `Biz3KTimeline.tsx`, `Bi
 Chung/kiểm thử: `k3Creation.ts`, `k3Goals.ts`, `k3Creation.test.ts`, `k3Creation.database.test.ts`.
 
 ## Kiểm thử và giới hạn
-- Bộ 3K trước bổ sung test purge: 167/167 đạt. Test tạo/thời gian/phạm vi/trash sau bổ sung purge: 11/11 đạt; unit tạo: 6/6.
+- Bộ 3K cuối cùng: 168/168 đạt khi chạy tối đa hai worker; lượt chạy nhiều worker trước đó có một timeout khởi tạo, không lỗi quy tắc. Test tạo/thời gian/phạm vi/trash: 11/11; unit tạo: 6/6.
 - Build tự động hiện OK.
 - Scheduler thật `k3-trash-purge` hoạt động, lịch `30 2 * * *`; chỉ xác minh cấu hình, không tự chạy xóa trên dữ liệu vận hành.
 - Phiên trình duyệt được cấp không đăng nhập thành công; khôi phục phiên của người yêu cầu thất bại vì không tìm thấy tài khoản tương ứng. Chưa kiểm tra trực quan desktop/mobile hoặc ghi/đọc lại qua UI thật.

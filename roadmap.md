@@ -6,7 +6,7 @@
 - [x] U3a. RPC all/active/overdue/done bỏ bypass Admin cá nhân; worker chỉ phần việc được giao/phối hợp, nguồn tổng kết dùng lịch; Xem 3K nhân viên chỉ đọc và lọc phòng.
 - [ ] U3b. Hoàn thiện bộ lọc Khối/Hệ/Phòng/Nhóm và chi tiết lịch sử/lộ trình đầy đủ; chưa hoàn tất triển khai.
 - [x] U4a. Xóa nháp xác nhận qua RPC, bảo vệ kết quả/chốt, restore chặn đúng 360 giờ, purge xử lý config history; cron thật hoạt động.
-- [x] U5a. 167/167 hồi quy 3K trước test purge, 11/11 test database tạo/trash sau purge, build OK; docs/k3-creation-ux-verification.md.
+- [x] U5a. 168/168 hồi quy 3K cuối cùng (maxWorkers=2), 11/11 test database tạo/trash, build OK; docs/k3-creation-ux-verification.md.
 - [ ] U5b. Desktop/mobile và ghi→đọc lại UI thật: phiên injected không đăng nhập, mint --self không khớp tài khoản; cần đăng nhập Preview. Ma trận từng chức danh chưa nghiệm thu. Không dữ liệu giả, không bật Zalo, chưa Publish.
 
 ## TỔNG KẾT THỦ CÔNG / CHỐT TỰ ĐỘNG — spec 731 dòng (04/11/2026)
