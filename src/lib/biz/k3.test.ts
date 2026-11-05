@@ -74,6 +74,10 @@ describe('k3LateFlags', () => {
 });
 
 describe('k3Error', () => {
+  it('ẩn lỗi schema thô nhưng giữ thông báo nghiệp vụ', () => {
+    expect(k3Error({code:'42703',message:'column g.creation_mode does not exist'})).not.toContain('creation_mode');
+    expect(k3Error({code:'P0001',message:'Đã có kết quả KPI được ghi nhận.'})).toBe('Đã có kết quả KPI được ghi nhận.');
+  });
   it('không bao giờ trả về [object Object]', () => {
     expect(k3Error(new Error('Lỗi máy chủ'))).toBe('Lỗi máy chủ');
     expect(k3Error({ message: 'Từ RPC' })).toBe('Từ RPC');
