@@ -1,0 +1,31 @@
+DO $patch$
+DECLARE def text; changed text;
+BEGIN
+ def:=pg_get_functiondef('public.k3_soft_delete(text,uuid)'::regprocedure);
+ changed:=regexp_replace(def,'IF private\.k3_(goal|action)_has_(official|results)\([^\n]+?END IF;','','g');
+ IF changed=def THEN RAISE EXCEPTION 'Deletion history anchors missing'; END IF;
+ changed:=replace(changed,'va.assignee_id=uid AND NOT EXISTS','va.user_id=uid AND va.assignee_id=uid AND NOT EXISTS');
+ changed:=regexp_replace(changed,'UPDATE public\.k3_tasks t SET deleted_at=stamp[^;]+;','','g');
+ EXECUTE changed;
+ def:=pg_get_functiondef('public.k3_deletable(text,uuid)'::regprocedure);
+ def:=regexp_replace(def,'IF private\.k3_(goal|action)_has_(official|results)\([^\n]+?END IF;','','g');
+ def:=replace(def,'a.assignee_id=uid AND NOT EXISTS','a.user_id=uid AND a.assignee_id=uid AND NOT EXISTS');
+ def:=regexp_replace(def,'IF EXISTS\(SELECT 1 FROM public\.k3_days d WHERE d.id=t.day_id AND d.summarized_at IS NOT NULL\) THEN[^\n]+?END IF;','','g');
+ def:=regexp_replace(def,'IF t.kpi_actual IS NOT NULL THEN[^\n]+?END IF;','','g');
+ EXECUTE def;
+ def:=pg_get_functiondef('public.k3_task_delete(uuid)'::regprocedure);
+ def:=regexp_replace(def,'IF EXISTS\(SELECT 1 FROM public\.k3_days d WHERE d.id=t.day_id AND d.summarized_at IS NOT NULL\) THEN[^\n]+?END IF;','','g');
+ def:=regexp_replace(def,'IF t.kpi_actual IS NOT NULL THEN[^\n]+?END IF;','','g');
+ EXECUTE def;
+ def:=pg_get_functiondef('public.k3_restore(text,uuid)'::regprocedure);
+ def:=regexp_replace(def,'IF EXISTS\(SELECT 1 FROM public\.k3_days d WHERE d.id=t.day_id AND d.summarized_at IS NOT NULL\) THEN[^\n]+?END IF;','','g');
+ EXECUTE def;
+ def:=pg_get_functiondef('public.k3_purge_expired(integer)'::regprocedure);
+ def:=replace(def,'IF private.k3_goal_has_official(g.id) THEN','IF private.k3_goal_has_official(g.id) OR private.k3_goal_has_results(g.id) THEN');
+ def:=replace(def,'IF private.k3_action_has_official(a.id) THEN','IF private.k3_action_has_official(a.id) OR private.k3_action_has_results(a.id) THEN');
+ def:=replace(def,'AND d.summarized_at IS NULL','AND d.summarized_at IS NULL AND t.kpi_actual IS NULL AND NOT EXISTS(SELECT 1 FROM k3_kpi_results r WHERE r.kpi_id=t.kpi_id) AND NOT EXISTS(SELECT 1 FROM k3_employee_reviews r WHERE jsonb_path_exists(r.snapshot,''$.** ? (@ == $id)'',jsonb_build_object(''id'',t.id::text))) AND NOT EXISTS(SELECT 1 FROM k3_daily_closes c WHERE jsonb_path_exists(c.snapshot,''$.** ? (@ == $id)'',jsonb_build_object(''id'',t.id::text)))');
+ EXECUTE def;
+END $patch$;
+COMMENT ON FUNCTION public.k3_soft_delete(text,uuid) IS 'Authorized calendar removal retains KPI results, versions, reviews and closes permanently; restoration stays limited to 15 days.';
+REVOKE ALL ON FUNCTION public.k3_soft_delete(text,uuid),public.k3_deletable(text,uuid),public.k3_task_delete(uuid),public.k3_restore(text,uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.k3_soft_delete(text,uuid),public.k3_deletable(text,uuid),public.k3_task_delete(uuid),public.k3_restore(text,uuid) TO authenticated;

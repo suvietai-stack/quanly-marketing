@@ -72,6 +72,7 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
           <div className="space-y-1"><Label htmlFor="k3s-plan">Giờ lập 3K đầu ngày</Label><Input id="k3s-plan" type="time" value={f.plan_by} onChange={(e) => set('plan_by', e.target.value)} /></div>
           <div className="space-y-1"><Label htmlFor="k3s-summary">Giờ tổng kết cuối ngày</Label><Input id="k3s-summary" type="time" value={f.summary_by} onChange={(e) => set('summary_by', e.target.value)} /></div>
         </div>
+        {settings.discipline_from && <p className="text-xs text-muted-foreground">Kỷ luật đầu ngày áp dụng từ {settings.discipline_from.split('-').reverse().join('/')}.</p>}
         <div className="space-y-1">
           <Label htmlFor="k3s-focus">Số mũi khoan trọng tâm tối đa / ngày</Label>
           <Input id="k3s-focus" type="number" min={1} max={5} value={f.max_focus} onChange={(e) => set('max_focus', e.target.value)} className="w-28" />

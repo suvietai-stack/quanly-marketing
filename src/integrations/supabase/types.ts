@@ -3580,6 +3580,36 @@ export type Database = {
           },
         ]
       }
+      k3_discipline_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          id: number
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail: Json
+          id?: never
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: never
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       k3_employee_reviews: {
         Row: {
           actor_id: string
@@ -3590,6 +3620,7 @@ export type Database = {
           revision: number
           snapshot: Json
           source_version: string
+          summary_deadline_at: string | null
           user_id: string
           work_date: string
         }
@@ -3602,6 +3633,7 @@ export type Database = {
           revision?: never
           snapshot: Json
           source_version: string
+          summary_deadline_at?: string | null
           user_id: string
           work_date: string
         }
@@ -3614,6 +3646,7 @@ export type Database = {
           revision?: never
           snapshot?: Json
           source_version?: string
+          summary_deadline_at?: string | null
           user_id?: string
           work_date?: string
         }
@@ -4194,6 +4227,60 @@ export type Database = {
           },
         ]
       }
+      k3_plan_checkpoints: {
+        Row: {
+          current_status: string
+          deadline_at: string
+          department_id: string | null
+          excluded_at: string | null
+          excluded_by: string | null
+          exclusion_reason: string | null
+          first_plan_at: string | null
+          initial_snapshot: Json
+          initial_status: string
+          obligated: boolean
+          observed_at: string
+          source: string | null
+          summary_deadline_at: string | null
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          current_status: string
+          deadline_at: string
+          department_id?: string | null
+          excluded_at?: string | null
+          excluded_by?: string | null
+          exclusion_reason?: string | null
+          first_plan_at?: string | null
+          initial_snapshot: Json
+          initial_status: string
+          obligated: boolean
+          observed_at?: string
+          source?: string | null
+          summary_deadline_at?: string | null
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          current_status?: string
+          deadline_at?: string
+          department_id?: string | null
+          excluded_at?: string | null
+          excluded_by?: string | null
+          exclusion_reason?: string | null
+          first_plan_at?: string | null
+          initial_snapshot?: Json
+          initial_status?: string
+          obligated?: boolean
+          observed_at?: string
+          source?: string | null
+          summary_deadline_at?: string | null
+          user_id?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
       k3_plan_events: {
         Row: {
           action: string
@@ -4248,6 +4335,7 @@ export type Database = {
           allow_invite: boolean
           allow_personal_goal: boolean
           allow_team_goal: boolean
+          discipline_from: string
           effective_from: string | null
           enabled: boolean
           id: boolean
@@ -4266,6 +4354,7 @@ export type Database = {
           allow_invite?: boolean
           allow_personal_goal?: boolean
           allow_team_goal?: boolean
+          discipline_from?: string
           effective_from?: string | null
           enabled?: boolean
           id?: boolean
@@ -4284,6 +4373,7 @@ export type Database = {
           allow_invite?: boolean
           allow_personal_goal?: boolean
           allow_team_goal?: boolean
+          discipline_from?: string
           effective_from?: string | null
           enabled?: boolean
           id?: boolean
@@ -8256,6 +8346,14 @@ export type Database = {
         Returns: boolean
       }
       k3_deletable: { Args: { _id: string; _kind: string }; Returns: Json }
+      k3_discipline_exclude: {
+        Args: { _date: string; _reason: string; _user: string }
+        Returns: boolean
+      }
+      k3_discipline_read: {
+        Args: { _end: string; _manage?: boolean; _start: string }
+        Returns: Json
+      }
       k3_draft_delete: { Args: { _id: string; _kind: string }; Returns: Json }
       k3_employee_review_confirm: {
         Args: {
@@ -8364,6 +8462,7 @@ export type Database = {
         Args: { _date: string; _type: string }
         Returns: Json
       }
+      k3_plan_checkpoint_run: { Args: never; Returns: number }
       k3_plan_task_save: { Args: { _payload: Json }; Returns: Json }
       k3_purge_expired: { Args: { _batch?: number }; Returns: Json }
       k3_quick_create: { Args: { _payload: Json }; Returns: Json }

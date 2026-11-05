@@ -16,6 +16,7 @@ import { K3DeleteMenuItem } from './Biz3KDelete';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Biz3KDayReview, employeeReviewQuery, manualReviewLabels } from './Biz3KDayReview';
+import { Biz3KDiscipline } from './Biz3KDiscipline';
 interface DayAction { id: string; goal_id?: string; delete_kind?: 'goal' | 'action'; name: string; goal_name: string; due_date: string | null; due_time?: string | null; metric: K3EntityMetric; kpis: { id: string; name: string }[] }
 interface DayData { actions: DayAction[] }
 export function Biz3KKpiDay({ settings, date, today, onDateChange }: { settings: K3Settings; date: string; today: string; onDateChange: (date: string) => void }) {
@@ -39,6 +40,7 @@ export function Biz3KKpiDay({ settings, date, today, onDateChange }: { settings:
       {!a.kpis.length && <p className="text-sm text-muted-foreground">Chưa có chỉ số đo kết quả.</p>}
     </div>)}
     {query.data && !query.data.actions.filter(a=>a.metric.status!=='cancelled').length && <p className="py-4 text-sm text-muted-foreground">Chưa có công việc trong ngày này.</p>}
+    <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm">Kỷ luật ngày của tôi</summary><Biz3KDiscipline start={date} end={date} /></details>
     {history && <Dialog open onOpenChange={o=>!o&&setHistory(null)}><DialogContent><DialogHeader><DialogTitle>Lịch sử · {history.name}</DialogTitle></DialogHeader>{history.kpis.map(k=><Biz3KKpiResult key={k.id} kpiId={k.id} date={date} historyOnly />)}</DialogContent></Dialog>}
   </div>;
 }

@@ -1,5 +1,14 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## 3K LINH HOẠT / KỶ LUẬT NGÀY — 05/11/2026
+- [x] F1. 0245/0247: xóa cá nhân có kết quả/chốt; khôi phục 15 ngày, purge giữ lịch sử bảo vệ; không mở quyền xóa nhóm. 12 kiểm thử xóa đạt.
+- [x] F2a. 0246/0248: checkpoint theo plan_by 08:45, cron ngày 01:45 UTC; nguồn/lịch/nghỉ phép, dấu mốc bất biến và chống trùng. Áp dụng từ 06/11/2026, không hồi tố.
+- [ ] F2b. Nghiệm thu checkpoint vận hành sau ngày hiệu lực và tinh chỉnh timestamp nguồn khi sửa lịch đã có: cần phiên/hồ sơ thật; chưa diễn giải checkpoint thiếu thành vi phạm.
+- [x] F3. Sửa sau chốt giữ giá trị gốc và versions; tổng kết lại độc lập, 0249 đóng băng deadline xác nhận mới, giữ NULL lịch sử. Giữ giờ tổng kết thật đang cấu hình 20:00, không tự đổi.
+- [x] F4a. Kỷ luật Ngày/Tuần/Tháng/Quý và cá nhân, mẫu số nghĩa vụ; close/Zalo mới có snapshot kỷ luật, không thay báo cáo cũ hoặc bật gửi.
+- [ ] F4b/F5b. Nghiệm thu ghi→đọc UI 3K desktop/mobile và gửi Zalo: mint --self không khớp, cả hai viewport chuyển /login; cần người dùng đăng nhập Preview/chọn hồ sơ và cho phép gửi thật.
+- [x] F5a. 210/210 kiểm thử 3K đạt, build OK, schema/deadline/cron thật xác minh. Không tạo dữ liệu thử thật, không Publish/bật Zalo.
+
 ## HOTFIX 3K DATABASE / XÓA — 05/11/2026
 - [x] H1. 0244 áp dụng trên backend thật: creation_mode nullable; 18 legacy giữ NULL, 1 công việc mới lưu kiểu. Đã loại phụ thuộc kiểu tạo khỏi delete target ngày.
 - [x] H2. k3_draft_delete alias thao tác Xóa thống nhất; KF duy nhất chuyển sang cha; guard quyền/kết quả kể cả lưu trữ/versions/thực hiện/tổng kết/chốt, khóa KPI và recheck writer; không purge bản hủy. Detail một bước không lặp Xóa KF.

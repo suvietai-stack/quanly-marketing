@@ -1716,6 +1716,41 @@
       "when": 1793871032879,
       "tag": "0244_k3_creation_mode_and_safe_work_delete_hotfix",
       "breakpoints": true
+    },
+    {
+      "idx": 245,
+      "version": "7",
+      "when": 1793872360054,
+      "tag": "0245_k3_flexible_personal_delete_and_retained_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 246,
+      "version": "7",
+      "when": 1793872428535,
+      "tag": "0246_k3_morning_discipline_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 247,
+      "version": "7",
+      "when": 1793872609934,
+      "tag": "0247_k3_discipline_close_and_retention_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 248,
+      "version": "7",
+      "when": 1793872748553,
+      "tag": "0248_k3_checkpoint_concurrency_and_exclusion_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 249,
+      "version": "7",
+      "when": 1793872941538,
+      "tag": "0249_k3_frozen_employee_review_deadlines",
+      "breakpoints": true
     }
   ]
 }

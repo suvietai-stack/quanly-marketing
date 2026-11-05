@@ -22,6 +22,7 @@ export interface K3DayReviewData {
   results: { id: string; action_id: string; problem?: string; cause?: string; solution?: string }[];
   history: { id: string; revision: number; confirmed_at: string; missing: number }[];
   legacy_confirmation: boolean;
+  summary_late?: boolean;
 }
 export const manualReviewLabels = { none: 'Chưa tổng kết', reviewed: 'Đã tổng kết', reconfirm: 'Cần tổng kết lại' };
 export const systemCloseLabels = { open: 'Chưa chốt hệ thống', auto_closed: 'Đã chốt tự động', legacy_closed: 'Chốt theo cơ chế cũ', adjusted: 'Có điều chỉnh sau chốt' };
@@ -40,7 +41,7 @@ export function Biz3KDayReview({ date, today, user, onClose }: { date: string; t
     {query.isLoading && <p>Đang tải tổng kết…</p>}
     {query.error && <div><p className="text-destructive">{k3Error(query.error)}</p><Button variant="outline" onClick={() => query.refetch()}>Thử lại</Button></div>}
     {data && <>
-      <div className="flex flex-wrap gap-2"><Badge variant={data.manual_status === 'reconfirm' ? 'destructive' : 'secondary'}>{manualReviewLabels[data.manual_status]}</Badge><Badge variant="outline">{systemCloseLabels[data.system_status]}</Badge></div>
+      <div className="flex flex-wrap gap-2"><Badge variant={data.manual_status === 'reconfirm' ? 'destructive' : 'secondary'}>{data.manual_status === 'reviewed' && data.summary_late ? 'Đã tổng kết muộn' : manualReviewLabels[data.manual_status]}</Badge><Badge variant="outline">{systemCloseLabels[data.system_status]}</Badge></div>
       <div className="grid grid-cols-2 gap-3 border-y border-border py-3 sm:grid-cols-3">{[['Công việc trong ngày', data.action_count], ['Đã cập nhật', data.action_count - data.missing], ['Chưa cập nhật', data.missing]].map(([label, count]) => <div key={label}><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-semibold">{count}</p></div>)}</div>
       <p className="text-xs text-muted-foreground">Chốt tự động dự kiến {data.auto_close_time?.slice(0, 5)} · Giờ Việt Nam{data.confirmed_at ? ` · Xác nhận gần nhất ${new Date(data.confirmed_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}` : ''}</p>
       {groups.map((goalId) => <section key={goalId} className="space-y-3 border-b border-border pb-3"><h3 className="font-semibold">{data.actions.find((a) => a.goal_id === goalId)?.goal_name}</h3>{data.actions.filter((a) => a.goal_id === goalId).map((a) => <div key={a.id} className="space-y-2 border-l-2 border-border pl-3"><div className="flex flex-wrap justify-between gap-2"><div className="min-w-0"><p className="break-words font-medium">{a.name}</p><p className="text-xs text-muted-foreground">{a.assignee_name ?? '—'} · Hạn {a.due_date ?? '—'}</p></div><div className="flex flex-wrap gap-1"><Badge variant={a.updated ? 'secondary' : 'outline'}>{a.updated ? 'Có cập nhật KPI' : 'Chưa cập nhật'}</Badge>{a.metric && <GoalStatusBadge status={a.metric.status} metric={a.metric} />}</div></div>{a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={date} showStatus={false} readOnly={!!user} />)}{data.results.filter((r) => r.action_id === a.id && (r.problem || r.cause || r.solution)).map((r) => <div key={r.id} className="text-sm">{r.problem && <p>Vấn đề: {r.problem}</p>}{r.cause && <p>Nguyên nhân: {r.cause}</p>}{r.solution && <p>Giải pháp: {r.solution}</p>}</div>)}</div>)}</section>)}

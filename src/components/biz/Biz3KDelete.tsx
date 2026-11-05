@@ -9,11 +9,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 export type K3DeleteKind = 'goal' | 'action' | 'task';
 
-const LABEL: Record<K3DeleteKind, string> = { goal: 'Xóa công việc', action: 'Xóa công việc', task: 'Xóa công việc' };
+const LABEL: Record<K3DeleteKind, string> = { goal: 'Xóa', action: 'Xóa', task: 'Xóa' };
 
 /**
  * Mục "Xóa" thống nhất trong menu ba chấm. Điều kiện xóa do backend quyết định
- * (k3_deletable): chưa có kết quả KPI/chốt sổ/lịch sử bảo vệ mới hiện thao tác;
+ * (k3_deletable): quyền xóa lịch cá nhân độc lập bảo vệ lịch sử phía sau;
  * k3_soft_delete vẫn kiểm tra lại khi thực hiện.
  */
 export function K3DeleteMenuItem({ kind, id, name, onDeleted }: { kind: K3DeleteKind; id: string; name: string; onDeleted?: () => void }) {
@@ -40,7 +40,7 @@ export function K3DeleteMenuItem({ kind, id, name, onDeleted }: { kind: K3Delete
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa công việc này?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{name}" sẽ được chuyển vào Thùng rác và có thể khôi phục trong 15 ngày.
+              Công việc “{name}” sẽ không còn trong danh sách của bạn. Có thể khôi phục trong 15 ngày.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -65,7 +65,7 @@ export function K3DeleteMenuItem({ kind, id, name, onDeleted }: { kind: K3Delete
                 }
               }}
             >
-              {busy ? 'Đang xóa…' : 'Xóa công việc'}
+              {busy ? 'Đang xóa…' : 'Xóa'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
