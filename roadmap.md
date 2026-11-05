@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TỐI ƯU TỔNG THỂ 3K CHO SALE — spec 840 dòng (05/11/2026)
+- [ ] O1. Một form tên/hạn/cách đo; tùy chọn mở rộng, kế thừa không nhập lặp, validation rõ và lưu nguyên tử.
+- [ ] O2. Ưu tiên công việc hôm nay; không lặp danh sách KG dài hạn; thẻ/kết quả theo ngữ cảnh, một nút cập nhật.
+- [ ] O3. Kiểm tra hủy/xóa/lịch sử, trạng thái đồng bộ, phạm vi cá nhân, tổng kết/chốt/Zalo không đổi cấu hình.
+- [ ] O4. Kiểm thử quy tắc/hồi quy và desktop/mobile; nghiệm thu ghi thật chỉ với hồ sơ được phép; chưa Publish.
+
 ## TỐI GIẢN GIAO DIỆN 3K + CHUẨN SỬA/XÓA — spec 656 dòng (05/11/2026)
 Nguyên tắc: một thông tin một lần hiển thị; một chức năng một nút; chưa có lịch sử bảo vệ → được xóa, đã có kết quả/chốt → không xóa; backend vẫn kiểm tra, không chỉ ẩn nút; bảo toàn dữ liệu/lịch sử; chưa Publish.
 - [x] G1. Thẻ công việc tối giản: bỏ nút Bắt đầu/Sửa/Xóa rời → nút Cập nhật kết quả + menu 3 chấm; KG Cơ bản trùng tên KF không lặp dòng "KG:"; bỏ dòng "Đã chốt/Chưa đủ dữ liệu" khỏi thẻ (chuyển vào Nhật ký KPI); bỏ chọn trạng thái thủ công trong form cập nhật (tự động từ KPI).
