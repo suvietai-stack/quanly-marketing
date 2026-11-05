@@ -193,3 +193,13 @@ it('revision-specific acceptance is required before automatic completion',async(
  await db.exec(`UPDATE k3_kpi_results SET revision=revision+1 WHERE id='${result}'`);
  expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:30+07')->>'status' v`)).toBe('in_progress');
 });
+
+it('list returns exactly 1/1 completed KF and done filter uses measured state, not stored state',async()=>{
+ const r=await create(payload({save_valid:true,period_start:today,period_end:today,start_time:'',due_time:''}));
+ const a=await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);const k=await val<string>(`SELECT id v FROM k3_kpis WHERE action_id='${a}'`);
+ await db.exec(`INSERT INTO k3_kpi_results(kpi_id,goal_id,action_id,user_id,work_date,value,updated_by) VALUES('${k}','${r.goal_id}','${a}','${staff}','${today}',1,'${staff}')`);
+ const rows=await val<{id:string;status:string;kf_done:number;kf_total:number}[]>(`SELECT k3_goal_list('done','') v`);
+ expect(rows.find(g=>g.id===r.goal_id)).toMatchObject({status:'done',kf_done:1,kf_total:1});
+ const active=await val<{id:string}[]>(`SELECT k3_goal_list('active','') v`);expect(active.some(g=>g.id===r.goal_id)).toBe(false);
+ expect(await val(`SELECT status v FROM k3_actions WHERE id='${a}'`)).not.toBe('done');
+});
