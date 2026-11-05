@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## HỘP XÁC NHẬN XÓA 3K — 05/11/2026
+- [ ] D1. Tái hiện và tách hộp xác nhận khỏi dropdown tại cha ổn định cho Ngày/KG/KF; không timer.
+- [ ] D2. Chặn gửi trùng, lỗi giữ hộp mở, thành công cập nhật danh sách/Thùng rác; quyền và lịch sử không đổi.
+- [ ] D3. Kiểm thử trình duyệt desktop/mobile và xóa/khôi phục; phân biệt kiểm thử cô lập với phiên/dữ liệu thật.
+
 ## 3K LINH HOẠT / KỶ LUẬT NGÀY — 05/11/2026
 - [x] F1. 0245/0247: xóa cá nhân có kết quả/chốt; khôi phục 15 ngày, purge giữ lịch sử bảo vệ; không mở quyền xóa nhóm. 12 kiểm thử xóa đạt.
 - [x] F2a. 0246/0248: checkpoint theo plan_by 08:45, cron ngày 01:45 UTC; nguồn/lịch/nghỉ phép, dấu mốc bất biến và chống trùng. Áp dụng từ 06/11/2026, không hồi tố.
