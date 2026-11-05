@@ -15,7 +15,7 @@ export const Route = createFileRoute("/biz/3k")({
   component: () => (
     <RequirePermission perm={["k3.use", "k3.view_scope", "k3.settings", "biz.view_dept", "biz.view_all"]}>
       <div>
-        <PageHeader title="Quản lý 3K" description="Lập công việc đầu ngày, cập nhật tiến độ trong ngày và tổng kết cuối ngày theo phương pháp 3K." />
+        <PageHeader title="Quản lý 3K" />
         <Biz3K />
       </div>
     </RequirePermission>

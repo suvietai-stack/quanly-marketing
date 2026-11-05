@@ -13,13 +13,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { k3MetricDisplay, type K3TypedMetric } from '@/lib/biz/k3Measurement';
 
 const metricText = (data: { actual: number | null; progress: number | null; attained: boolean | null }) =>
   `${data.actual == null ? 'Chưa có số liệu' : data.actual.toLocaleString('vi-VN')}${data.progress == null ? '' : ` · ${data.progress}%`} · ${data.attained == null ? 'Chưa đủ dữ liệu' : data.attained ? 'Đạt' : 'Chưa đạt'}`;
 
-export function Biz3KKpiResult({ kpiId, date, showStatus = true, readOnly = false }: { kpiId: string; date: string; showStatus?: boolean; readOnly?: boolean }) {
+export function Biz3KKpiResult({ kpiId, date, showStatus = true, readOnly = false, compact = false, hideName = false, historyOnly = false }: { kpiId: string; date: string; showStatus?: boolean; readOnly?: boolean; compact?: boolean; hideName?: boolean; historyOnly?: boolean }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const query = useQuery({ ...k3KpiResultQuery(uid, kpiId, date), enabled: !!uid });
   const [open, setOpen] = useState<'edit' | 'history' | null>(null);
@@ -30,26 +31,26 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true, readOnly = fals
   if (query.error || !query.data) return <div className="text-xs text-destructive">{k3Error(query.error)} <Button size="sm" variant="ghost" onClick={() => query.refetch()}>Thử lại</Button></div>;
   const data = query.data;
   const isBinary = data.kpi.measure === 'binary';
-  const binaryText = data.daily_metric?.pending_acceptance ? 'Chờ nghiệm thu'
-    : data.daily_metric ? (data.daily_metric.attained ? 'Đã hoàn thành' : 'Chưa hoàn thành')
+  const binaryText = data.metric?.pending_acceptance ? 'Chờ nghiệm thu'
+    : data.metric ? (data.metric.attained ? 'Đã hoàn thành' : 'Chưa hoàn thành')
     : data.daily ? 'Đã cập nhật' : 'Chưa cập nhật';
   return <div className="space-y-2 border-b border-border py-2">
-    <div className="flex flex-wrap items-start justify-between gap-2">
-      <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{data.kpi.name}</p><p className="text-xs text-muted-foreground">{K3_MEASURE_LABELS[data.kpi.measure]}{isBinary ? '' : ` · Chỉ tiêu ${data.kpi.target ?? data.kpi.milestones?.length ?? '—'} ${data.kpi.unit}`}</p></div>
+    {!historyOnly && <><div className="flex flex-wrap items-start justify-between gap-2">
+      {!hideName && <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{data.kpi.name}</p>{!compact && <p className="text-xs text-muted-foreground">{K3_MEASURE_LABELS[data.kpi.measure]}{isBinary ? '' : ` · Chỉ tiêu ${data.kpi.target ?? data.kpi.milestones?.length ?? '—'} ${data.kpi.unit}`}</p>}</div>}
       {showStatus && <Badge variant={data.metric.attained ? 'default' : 'secondary'}>{data.metric.status === 'not_started' ? 'Chưa bắt đầu' : data.metric.attained ? 'Hoàn thành' : 'Đang thực hiện'}</Badge>}
     </div>
     {isBinary ? (
       <p className="text-sm">Kết quả: <span className="font-medium">{binaryText}</span></p>
-    ) : (
+    ) : compact ? <><p className="text-sm tabular-nums">Kết quả: {k3MetricDisplay(data.kpi.measure, data.metric, data.kpi.target, data.kpi.unit ?? '')}</p>{data.kpi.measure === 'cumulative' && data.metric.progress != null && <Progress aria-label="Tiến độ công việc" className="h-1.5 max-w-64" value={Math.min(100, Math.max(0,data.metric.progress))} />}</> : (
       <div className="grid gap-1 text-sm tabular-nums sm:grid-cols-2">
         <p>Hôm nay: {data.daily_metric ? k3MetricDisplay(data.kpi.measure, data.daily_metric, null, data.kpi.unit ?? '') : data.daily ? data.daily.value ?? 'Đã cập nhật' : 'Chưa cập nhật'}</p>
         <p>{data.kpi.measure === 'current' ? 'Giá trị mới nhất' : 'Lũy kế'}: {k3MetricDisplay(data.kpi.measure, data.metric, data.kpi.target, data.kpi.unit ?? '')}</p>
       </div>
     )}
-    {!isBinary && data.daily_plan != null && <p className="text-xs">Kế hoạch ngày: {data.daily?.value ?? '—'}/{data.daily_plan} {data.kpi.unit}{data.daily?.value != null && data.daily_plan > 0 ? ` · ${Math.round(data.daily.value / data.daily_plan * 100)}%` : ''}</p>}
+    {!compact && !isBinary && data.daily_plan != null && <p className="text-xs">Kế hoạch ngày: {data.daily?.value ?? '—'}/{data.daily_plan} {data.kpi.unit}{data.daily?.value != null && data.daily_plan > 0 ? ` · ${Math.round(data.daily.value / data.daily_plan * 100)}%` : ''}</p>}</>}
     <div className="flex flex-wrap gap-2">
-      {data.can_update && !readOnly && <Button size="sm" variant="outline" onClick={() => setOpen('edit')}><Plus className="mr-1 h-3.5 w-3.5" />Cập nhật KPI</Button>}
-      <Button size="sm" variant="ghost" onClick={() => setOpen('history')}><History className="mr-1 h-3.5 w-3.5" />Nhật ký kết quả</Button>
+      {!historyOnly && data.can_update && !readOnly && <Button size="sm" variant="outline" onClick={() => setOpen('edit')}><Plus className="mr-1 h-3.5 w-3.5" />Cập nhật kết quả</Button>}
+      {(!compact || historyOnly) && <Button size="sm" variant="ghost" onClick={() => setOpen('history')}><History className="mr-1 h-3.5 w-3.5" />{historyOnly ? data.kpi.name : 'Nhật ký kết quả'}</Button>}
     </div>
     {open === 'edit' && <KpiResultDialog key={data.daily?.revision ?? 0} data={data} date={date} onClose={() => setOpen(null)} />}
     {open === 'history' && <Dialog open onOpenChange={(o) => !o && setOpen(null)}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Nhật ký KPI · {data.kpi.name}</DialogTitle></DialogHeader>
@@ -73,19 +74,20 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
   const daily = { ...f, intervals, id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0, value: f.value === '' ? null : Number(f.value), numerator: f.numerator === '' ? null : Number(f.numerator), denominator: f.denominator === '' ? null : Number(f.denominator), objects: f.objects.split('\n').filter((s) => s.trim()), user_id: uid, work_date: date };
   const previewQuery = useQuery({ queryKey: ['k3_preview', uid, data.kpi.id, date, daily], retry: false, queryFn: async () => { const { data: result, error } = await supabase.rpc('k3_kpi_result_preview', { _kpi: data.kpi.id, _date: date, _payload: daily as never }); if (error) throw error; return result as unknown as K3TypedMetric; } });
   const set = (name: keyof typeof f, value: string) => setF((p) => ({ ...p, [name]: value }));
-  return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật KPI · {data.kpi.name}</DialogTitle></DialogHeader>
-    <p className="text-sm">Ngày {date} · Chỉ tiêu {data.kpi.target ?? data.kpi.milestones?.length} {data.kpi.unit}</p>
+  return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật kết quả · {data.kpi.name}</DialogTitle></DialogHeader>
+    <p className="text-sm">Ngày {date}{measure !== 'binary' && <> · Mục tiêu {data.kpi.target ?? data.kpi.milestones?.length} {data.kpi.unit}</>}</p>
     {['cumulative', 'current', 'duration', 'frequency'].includes(measure) && !(measure === 'duration' && data.kpi.config?.duration_method === 'intervals') && <div className="space-y-1"><Label htmlFor="k3-result-value">{measure === 'current' ? 'Giá trị hiện tại' : measure === 'duration' ? `Thời lượng trong ngày (${data.kpi.config?.duration_unit === 'hours' ? 'giờ' : 'phút'})` : measure === 'frequency' ? 'Số lần hợp lệ trong ngày' : 'Tổng số lượng thực hiện trong ngày'}</Label><Input id="k3-result-value" type="number" inputMode="decimal" min={0} value={f.value} onChange={(e) => set('value', e.target.value)} /></div>}
-    {['binary', 'streak'].includes(measure) && <div className="space-y-2"><p className="text-sm">{data.kpi.config?.valid_condition}</p><label className="flex items-center gap-2 text-sm"><Checkbox checked={f.value === '1'} onCheckedChange={(v) => set('value', v === true ? '1' : '0')} />Đã đáp ứng điều kiện trong ngày</label></div>}
+    {measure === 'binary' && <div className="flex flex-wrap gap-2" role="group" aria-label="Kết quả hoàn thành">{[['0','Chưa hoàn thành'],['1','Đã hoàn thành']].map(([value,label])=><Button key={value} variant={f.value===value?'default':'outline'} aria-pressed={f.value===value} onClick={()=>set('value',value)}>{label}</Button>)}</div>}
+    {measure === 'streak' && <div className="space-y-2"><p className="text-sm">{data.kpi.config?.valid_condition}</p><label className="flex items-center gap-2 text-sm"><Checkbox checked={f.value === '1'} onCheckedChange={(v) => set('value', v === true ? '1' : '0')} />Đã đáp ứng điều kiện trong ngày</label></div>}
     {measure === 'duration' && data.kpi.config?.duration_method === 'intervals' && <div className="space-y-2">{intervals.map((item, i) => <div className="grid grid-cols-2 gap-2" key={i}>{(['start', 'end'] as const).map((field) => <Input key={field} aria-label={`${field === 'start' ? 'Bắt đầu' : 'Kết thúc'} khoảng ${i + 1}`} type="datetime-local" value={item[field].slice(0, 16)} onChange={(e) => setIntervals((prev) => prev.map((x, j) => j === i ? { ...x, [field]: `${e.target.value}:00+07:00` } : x))} />)}</div>)}<Button size="sm" variant="outline" onClick={() => setIntervals((prev) => [...prev, { start: `${date}T08:00:00+07:00`, end: `${date}T09:00:00+07:00` }])}><Plus className="mr-1 h-4 w-4" />Thêm khoảng thời gian</Button></div>}
     {(measure === 'ratio' || measure === 'average') && <div className="grid grid-cols-2 gap-2"><div><Label htmlFor="k3-result-num">{measure === 'ratio' ? 'Tử số' : 'Tổng giá trị quan sát'}</Label><Input id="k3-result-num" type="number" inputMode="decimal" min={0} value={f.numerator} onChange={(e) => set('numerator', e.target.value)} /></div><div><Label htmlFor="k3-result-den">{measure === 'ratio' ? 'Mẫu số' : 'Số lượng quan sát'}</Label><Input id="k3-result-den" type="number" inputMode="decimal" min={0} value={f.denominator} onChange={(e) => set('denominator', e.target.value)} /></div></div>}
     {measure === 'distinct' && <div><Label htmlFor="k3-result-objects">Định danh đối tượng (mỗi dòng một mã)</Label><Textarea id="k3-result-objects" rows={4} value={f.objects} onChange={(e) => set('objects', e.target.value)} /></div>}
     {measure === 'milestone' && <div className="space-y-2">{data.kpi.milestones?.map((m) => <label key={m} className="flex items-center gap-2 text-sm"><Checkbox checked={f.completed.includes(m)} onCheckedChange={(v) => setF((p) => ({ ...p, completed: v === true ? [...p.completed, m] : p.completed.filter((x) => x !== m) }))} />{data.kpi.config?.milestones?.find((x) => x.id === m)?.name ?? m}</label>)}</div>}
-    <div className="space-y-1"><Label htmlFor="k3-result-evidence">Bằng chứng / nguồn{measure === 'milestone' ? ' *' : ''}</Label><Input id="k3-result-evidence" value={f.evidence} onChange={(e) => set('evidence', e.target.value)} /></div>
+    {(data.kpi.config?.evidence_required || measure === 'milestone' || f.evidence) ? <div className="space-y-1"><Label htmlFor="k3-result-evidence">Bằng chứng / nguồn *</Label><Input id="k3-result-evidence" value={f.evidence} onChange={(e) => set('evidence', e.target.value)} /></div> : <details><summary className="cursor-pointer text-sm">Thêm bằng chứng</summary><Input className="mt-2" aria-label="Bằng chứng / nguồn" value={f.evidence} onChange={e=>set('evidence',e.target.value)} /></details>}
     <div className="border-y border-border py-2"><p className="text-sm font-medium">Kết quả mới: {previewQuery.data ? k3MetricDisplay(measure, previewQuery.data, data.kpi.target, data.kpi.unit ?? '') : previewQuery.error ? 'Chưa đủ dữ liệu hợp lệ' : 'Đang tính…'}</p><p className="text-xs text-muted-foreground">{data.daily ? 'Thay thế tổng kết quả ngày đã ghi.' : 'Kết quả ngày chưa chốt.'}</p></div>
     <Label htmlFor="k3-result-note">Ghi chú</Label><Textarea id="k3-result-note" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} />
     <details><summary className="text-sm">Vấn đề – Nguyên nhân – Giải pháp</summary><div className="mt-2 space-y-2">{(['problem', 'cause', 'solution'] as const).map((name, i) => <Textarea key={name} aria-label={['Vấn đề', 'Nguyên nhân', 'Giải pháp'][i]} rows={2} value={f[name]} onChange={(e) => set(name, e.target.value)} />)}</div></details>
     {data.day_closed && <div className="space-y-1"><Label htmlFor="k3-correction">Lý do bổ sung / sửa sau chốt *</Label><Textarea id="k3-correction" value={correctionReason} onChange={(e) => setCorrectionReason(e.target.value)} /><p className="text-xs text-muted-foreground">Giữ bản chốt cũ, ghi lịch sử điều chỉnh và yêu cầu xác nhận lại.</p></div>}
-    <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={save.isPending || (data.day_closed && !correctionReason.trim())} onClick={async () => { try { await save.mutateAsync({ ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key, correction_reason: correctionReason }); toast.success('Đã lưu kết quả KPI.'); onClose(); } catch (e) { toast.error(k3Error(e)); } }}>{save.isPending ? 'Đang lưu…' : 'Lưu kết quả'}</Button></DialogFooter>
+    <DialogFooter><Button variant="outline" onClick={onClose}>Bỏ thay đổi</Button><Button disabled={save.isPending} onClick={async () => { try { if(data.day_closed && !correctionReason.trim()) throw new Error('Nhập lý do bổ sung hoặc sửa sau chốt.'); if(measure==='binary' && f.value==='') throw new Error('Chọn Đã hoàn thành hoặc Chưa hoàn thành.'); await save.mutateAsync({ ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key, correction_reason: correctionReason }); toast.success('Đã lưu kết quả KPI.'); onClose(); } catch (e) { toast.error(k3Error(e)); } }}>{save.isPending ? 'Đang lưu…' : 'Lưu kết quả'}</Button></DialogFooter>
   </DialogContent></Dialog>;
 }

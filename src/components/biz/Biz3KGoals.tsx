@@ -65,7 +65,7 @@ const COLLAB_FILTERS: { value: string; label: string }[] = [
   { value: 'done', label: 'Hoàn thành' },
 ];
 
-export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Settings; variant?: 'personal' | 'scope' | 'collab' }) {
+export function Biz3KGoals({ settings, variant = 'personal', compact = false }: { settings: K3Settings; variant?: 'personal' | 'scope' | 'collab'; compact?: boolean }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : variant === 'collab' ? 'collab' : 'all');
   const [sub, setSub] = useState('all');
@@ -77,7 +77,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
   const mutation = useK3GoalMutation();
 
   const shown = useMemo(() => {
-    const list = data ?? [];
+    const list = (data ?? []).filter(g => g.status !== 'cancelled');
     if (variant !== 'collab') return list;
     switch (sub) {
       case 'lead': return list.filter((g) => g.my_role === 'owner');
@@ -100,7 +100,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
 
   return (
     <div className="space-y-4">
-      {(invited.data?.length ?? 0) > 0 && (
+      {!compact && (invited.data?.length ?? 0) > 0 && (
         <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
           <p className="text-sm font-medium">Lời mời tham gia mục tiêu</p>
           {(invited.data ?? []).map((g) => (
@@ -115,8 +115,8 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input placeholder="Tìm công việc…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />
-        {variant === 'personal' && (
+        {!compact && <Input placeholder="Tìm công việc…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />}
+        {!compact && variant === 'personal' && (
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -137,14 +137,14 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
         </Button>
       </div>
 
-      {isLoading && <p className="py-6 text-center text-sm text-muted-foreground"><Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Đang tải…</p>}
+      {!compact && isLoading && <p className="py-6 text-center text-sm text-muted-foreground"><Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Đang tải…</p>}
       {error && (
         <div className="rounded-lg border border-destructive/40 p-4 text-center text-sm">
           <p className="text-destructive">{k3Error(error)}</p>
           <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>Thử lại</Button>
         </div>
       )}
-      {data && shown.length === 0 && !isLoading && (
+      {!compact && data && shown.length === 0 && !isLoading && (
         <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
           {variant === 'collab'
             ? <>Chưa có công việc nhóm nào phù hợp. Bấm <strong>Tạo công việc nhóm</strong> để lập KG có nhiều người phối hợp.</>
@@ -152,7 +152,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
         </div>
       )}
 
-      <div className="space-y-2">
+      {!compact && <div className="space-y-2">
         {shown.map((g) => (
           <button key={g.id} type="button" onClick={() => setSelected(g.id)}
             className="w-full rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/50">
@@ -171,9 +171,9 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
             </div>
           </button>
         ))}
-      </div>
+      </div>}
 
-      {creating && <Biz3KQuickCreate variant={variant === 'personal' ? 'personal' : 'team'} defaultDate={settings.today} onClose={() => setCreating(false)} onCreated={(id) => setSelected(id)} />}
+      {creating && <Biz3KQuickCreate variant={variant === 'personal' ? 'personal' : 'team'} defaultDate={settings.today} onClose={() => setCreating(false)} />}
       {selected && <GoalDetailSheet id={selected} settings={settings} onClose={() => setSelected(null)} />}
     </div>
   );

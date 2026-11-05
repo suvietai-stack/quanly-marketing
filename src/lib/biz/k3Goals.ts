@@ -2,7 +2,7 @@
 
 export type K3GoalStatus = 'draft' | 'not_started' | 'in_progress' | 'paused' | 'done' | 'ended_missed' | 'cancelled';
 
-export interface K3EntityMetric { status: K3GoalStatus; overdue: boolean; overdue_seconds: number; kpi_total: number; kpi_met: number; kf_total: number; kf_done: number; completion_basis: 'own_kpis' | 'actions'; result_count: number; review_required: boolean; }
+export interface K3EntityMetric { status: K3GoalStatus; overdue: boolean; overdue_seconds: number; kpi_total: number; kpi_met: number; kf_total: number; kf_done: number; completion_basis: 'own_kpis' | 'actions'; result_count: number; review_required: boolean; deadline_at?: string; start_at?: string; }
 
 export const K3_GOAL_STATUS: Record<K3GoalStatus, { label: string; tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger' }> = {
   draft: { label: 'Nháp', tone: 'neutral' },
