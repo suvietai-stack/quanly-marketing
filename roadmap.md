@@ -4,8 +4,8 @@
 - [x] O1a. Một form tên/hạn/ba cách đo; tùy chọn mở rộng, kế thừa tên/tiêu chí không nhập lặp; validation tại form và lưu nguyên tử hiện có.
 - [x] O2a. Ngày ưu tiên công việc theo lịch thay danh sách KG tổng; thẻ một KPI cập nhật trực tiếp, nhiều KPI mở ngắn gọn; binary không chỉ tiêu 1, bằng chứng theo ngữ cảnh.
 - [x] O3a. 0242 loại công việc hủy khỏi danh sách, giữ nguyên bản ghi; ngày có goal_id và deadline kế thừa. Quy tắc xóa/khôi phục/trạng thái/phạm vi/chốt/Zalo hiện có giữ nguyên và kiểm thử đạt.
-- [x] O4a. 187 kiểm thử 3K đạt (185 toàn bộ + 2 mới chạy focused), build OK; đã xác minh 0242 trên backend. Không sửa dữ liệu thật, chưa Publish.
-- [ ] O1b/O2b/O3b/O4b. Chưa nghiệm thu UI desktop/mobile và ghi→đọc thật: phiên chuyển /login, mint --self không khớp. Còn hoàn thiện xóa công việc đơn giản trực tiếp trên thẻ Ngày (hiện guard KF duy nhất vẫn chặn), lịch sử hủy riêng, hoạt động ngoài lịch và rà soát mở rộng nhiều KPI/nhóm; cần phiên hợp lệ và hồ sơ được phép cho nghiệm thu ghi. Không coi đợt tối ưu tổng thể đã hoàn tất.
+- [x] O4a. 191/191 kiểm thử 3K đạt, build OK; đã xác minh 0242–0243 trên backend. 0243 nối xóa công việc đơn giản qua cha và hiện kết quả cá nhân ngoài lịch, không bỏ guard quyền/trạng thái/rà soát. Không sửa dữ liệu thật, chưa Publish.
+- [ ] O1b/O2b/O3b/O4b. Chưa nghiệm thu UI desktop/mobile, nhiều KPI/phối hợp và ghi→đọc thật: phiên chuyển /login, mint --self không khớp; cần phiên hợp lệ và hồ sơ được phép. Lịch sử hủy vẫn lưu nguyên nhưng chưa có danh sách lịch sử hủy riêng. Không coi đợt tối ưu tổng thể đã nghiệm thu.
 
 ## TỐI GIẢN GIAO DIỆN 3K + CHUẨN SỬA/XÓA — spec 656 dòng (05/11/2026)
 Nguyên tắc: một thông tin một lần hiển thị; một chức năng một nút; chưa có lịch sử bảo vệ → được xóa, đã có kết quả/chốt → không xóa; backend vẫn kiểm tra, không chỉ ẩn nút; bảo toàn dữ liệu/lịch sử; chưa Publish.
