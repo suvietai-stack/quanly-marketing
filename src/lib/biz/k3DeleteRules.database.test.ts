@@ -63,6 +63,10 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0239_k3_configured_action_revision_alias.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0240_k3_delete_rules.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0241_k3_soft_delete_variable_conflict_fix.sql', 'utf8'));
+  await db.exec(`CREATE TABLE k3_employee_reviews(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), snapshot jsonb); CREATE TABLE k3_daily_closes(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),snapshot jsonb);`);
+  await db.exec(readFileSync('drizzle/migrations/0244_k3_creation_mode_and_safe_work_delete_hotfix.sql', 'utf8'));
+  // Reapplying the hotfix must preserve rows and not duplicate function patches.
+  await db.exec(readFileSync('drizzle/migrations/0244_k3_creation_mode_and_safe_work_delete_hotfix.sql', 'utf8'));
   // Một công việc Cơ bản đang thực hiện (KG + 1 KF + 1 KPI binary).
   const r = await val<{ goal_id: string }>(`SELECT k3_quick_create('${JSON.stringify({ request_key: crypto.randomUUID(), creation_mode: 'basic', name: 'Soạn báo giá khách sạn Vinh Nghệ An', expected_result: 'Có file báo giá', period_start: '2026-11-05', period_end: '2026-11-05', kpi: { measure: 'binary' }, save_valid: true })}') v`);
   goalId = r.goal_id;
@@ -77,11 +81,25 @@ it('công việc chưa có kết quả: k3_deletable cho phép xóa KG', async (
   expect(d.ok).toBe(true);
 });
 
-it('không được xóa KF duy nhất của công việc đang thực hiện', async () => {
+it('công việc cũ không bị tự suy đoán kiểu tạo', async () => {
+  const id = await val<string>(`INSERT INTO k3_goals(user_id,period_type,period_start,period_end,name,request_key,status) VALUES('${staff}','custom','2026-11-05','2026-11-05','Legacy',gen_random_uuid(),'draft') RETURNING id v`);
+  expect(await val(`SELECT creation_mode v FROM k3_goals WHERE id='${id}'`)).toBeNull();
+});
+
+it('nháp không kết quả xóa vào Thùng rác và khôi phục trước 15 ngày', async () => {
+  const id = await val<string>(`INSERT INTO k3_goals(user_id,period_type,period_start,period_end,name,request_key,status) VALUES('${staff}','custom','2026-11-05','2026-11-05','Draft',gen_random_uuid(),'draft') RETURNING id v`);
+  await val(`SELECT k3_draft_delete('goal','${id}') v`);
+  expect(await val(`SELECT deleted_at IS NOT NULL v FROM k3_goals WHERE id='${id}'`)).toBe(true);
+  const trash = await val<{id:string}[]>(`SELECT k3_trash_list('all') v`);
+  expect(trash.some(r=>r.id===id)).toBe(true);
+  await val(`SELECT k3_restore('goal','${id}') v`);
+  expect(await val(`SELECT deleted_at IS NULL v FROM k3_goals WHERE id='${id}'`)).toBe(true);
+});
+
+it('KF duy nhất nhắm vào cả công việc, không bị chặn sai vì đang thực hiện', async () => {
   const d = await val<{ ok: boolean; reason: string }>(`SELECT k3_deletable('action','${actionId}') v`);
-  expect(d.ok).toBe(false);
-  expect(d.reason).toContain('KF duy nhất');
-  await expect(val(`SELECT k3_soft_delete('action','${actionId}') v`)).rejects.toThrow(/KF duy nhất/);
+  expect(d.ok).toBe(true);
+  expect(await val(`SELECT creation_mode v FROM k3_goals WHERE id='${goalId}'`)).toBe('basic');
 });
 
 it('đã có kết quả KPI: k3_deletable từ chối và k3_soft_delete chặn ở backend', async () => {
@@ -92,11 +110,11 @@ it('đã có kết quả KPI: k3_deletable từ chối và k3_soft_delete chặn
   await expect(val(`SELECT k3_soft_delete('goal','${goalId}') v`)).rejects.toThrow(/kết quả KPI/);
 });
 
-it('xóa kết quả giả lập điều kiện thay đổi: sau khi không còn kết quả, xóa mềm + khôi phục 15 ngày hoạt động', async () => {
+it('sau khi không còn kết quả, alias cũ xóa việc đang chạy + khôi phục cùng cấu trúc', async () => {
   await db.exec(`DELETE FROM k3_kpi_results WHERE kpi_id='${kpiId}'`);
   const d = await val<{ ok: boolean }>(`SELECT k3_deletable('goal','${goalId}') v`);
   expect(d.ok).toBe(true);
-  await val(`SELECT k3_soft_delete('goal','${goalId}') v`);
+  await val(`SELECT k3_draft_delete('action','${actionId}') v`);
   expect(await val(`SELECT deleted_at IS NOT NULL v FROM k3_goals WHERE id='${goalId}'`)).toBe(true);
   expect(await val(`SELECT deleted_at IS NOT NULL v FROM k3_actions WHERE id='${actionId}'`)).toBe(true);
   await val(`SELECT k3_restore('goal','${goalId}') v`);
@@ -128,4 +146,24 @@ it('người khác không được xóa công việc của tôi', async () => {
   expect(d.ok).toBe(false);
   await expect(val(`SELECT k3_soft_delete('goal','${goalId}') v`)).rejects.toThrow(/chủ trì|Admin/);
   await as(staff);
+});
+
+it('kết quả đã lưu trữ vẫn được bảo vệ, không xóa lịch sử qua cha', async () => {
+  await db.exec(`INSERT INTO k3_kpi_results(kpi_id,goal_id,action_id,user_id,work_date,value,updated_by,deleted_at) VALUES('${kpiId}','${goalId}','${actionId}','${staff}','2026-11-05',0,'${staff}',now())`);
+  expect((await val<{ok:boolean}>(`SELECT k3_deletable('goal','${goalId}') v`)).ok).toBe(false);
+  await expect(val(`SELECT k3_soft_delete('goal','${goalId}') v`)).rejects.toThrow(/kết quả KPI/);
+  await db.exec(`DELETE FROM k3_kpi_results WHERE kpi_id='${kpiId}'`);
+});
+
+it('tổng kết thủ công chứa công việc chưa có kết quả vẫn chặn xóa', async () => {
+  await db.exec(`INSERT INTO k3_employee_reviews(snapshot) VALUES(jsonb_build_object('actions',jsonb_build_array(jsonb_build_object('id','${actionId}','goal_id','${goalId}'))))`);
+  expect((await val<{ok:boolean}>(`SELECT k3_deletable('goal','${goalId}') v`)).ok).toBe(false);
+  await expect(val(`SELECT k3_soft_delete('action','${actionId}') v`)).rejects.toThrow(/chốt sổ/);
+  await db.exec('DELETE FROM k3_employee_reviews');
+});
+
+it('bản hủy không vào Thùng rác dù không có kết quả', async () => {
+  await db.exec(`UPDATE k3_goals SET status='cancelled' WHERE id='${goalId}'`);
+  expect((await val<{ok:boolean}>(`SELECT k3_deletable('goal','${goalId}') v`)).ok).toBe(false);
+  await expect(val(`SELECT k3_soft_delete('goal','${goalId}') v`)).rejects.toThrow(/lịch sử/);
 });

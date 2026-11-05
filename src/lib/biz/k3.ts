@@ -211,8 +211,13 @@ export function k3LateFlags(day: K3Day | null, s: K3Settings, workDate: string, 
 
 /** Chuẩn hóa thông báo lỗi từ RPC — không bao giờ hiển thị [object Object]. */
 export function k3Error(e: unknown): string {
-  if (e instanceof Error && e.message) return e.message;
-  if (typeof e === 'object' && e && 'message' in e && typeof (e as { message: unknown }).message === 'string') return (e as { message: string }).message;
+  const message = e instanceof Error ? e.message : typeof e === 'object' && e && 'message' in e && typeof e.message === 'string' ? e.message : '';
+  const code = typeof e === 'object' && e && 'code' in e ? String(e.code) : '';
+  if (/^(?:42|22|23|XX|PGRST)/.test(code) || /column .* does not exist|relation .* does not exist|syntax error|permission denied|violates .*constraint|invalid input syntax|SQLSTATE/i.test(message)) {
+    console.error('[3K] RPC failure', { code, message });
+    return 'Chưa thể xử lý công việc lúc này. Vui lòng thử lại; nếu vẫn lỗi, báo quản trị viên.';
+  }
+  if (message) return message;
   return 'Có lỗi xảy ra. Vui lòng thử lại.';
 }
 

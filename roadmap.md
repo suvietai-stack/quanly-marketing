@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## HOTFIX 3K DATABASE / XÓA — 05/11/2026
+- [x] H1. 0244 áp dụng trên backend thật: creation_mode nullable; 18 legacy giữ NULL, 1 công việc mới lưu kiểu. Đã loại phụ thuộc kiểu tạo khỏi delete target ngày.
+- [x] H2. k3_draft_delete alias thao tác Xóa thống nhất; KF duy nhất chuyển sang cha; guard quyền/kết quả kể cả lưu trữ/versions/thực hiện/tổng kết/chốt, khóa KPI và recheck writer; không purge bản hủy. Detail một bước không lặp Xóa KF.
+- [x] H3. Lỗi SQL được ghi console kỹ thuật và thay thông báo thân thiện; giữ nguyên tạo/tổng kết độc lập khi lỗi danh sách.
+- [x] H4a. 197/197 kiểm thử đạt, 12 quy tắc Xóa gồm nháp/trash/restore/legacy/reapply; build OK. Schema và execute grants thật xác minh. Kết quả 9/versions 15/chốt 1 không đổi; có hoạt động người dùng đồng thời, không tuyên bố toàn bộ rows bất biến. Chi tiết docs/k3-hotfix-database-verification.md.
+- [ ] H4b. Nghiệm thu RPC theo phiên và UI thật chưa thực hiện: read-query từ chối EXECUTE k3_can, --self không khớp và trình duyệt chuyển /login. Cần người dùng đăng nhập Preview; không tạo dữ liệu thử trên backend chung, chưa Publish.
+
 ## TỐI ƯU TỔNG THỂ 3K CHO SALE — spec 840 dòng (05/11/2026)
 - [x] O1a. Một form tên/hạn/ba cách đo; tùy chọn mở rộng, kế thừa tên/tiêu chí không nhập lặp; validation tại form và lưu nguyên tử hiện có.
 - [x] O2a. Ngày ưu tiên công việc theo lịch thay danh sách KG tổng; thẻ một KPI cập nhật trực tiếp, nhiều KPI mở ngắn gọn; binary không chỉ tiêu 1, bằng chứng theo ngữ cảnh.

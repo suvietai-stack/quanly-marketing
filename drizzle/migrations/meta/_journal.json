@@ -1709,6 +1709,13 @@
       "when": 1793867921900,
       "tag": "0243_k3_daily_results_context_and_delete_target",
       "breakpoints": true
+    },
+    {
+      "idx": 244,
+      "version": "7",
+      "when": 1793871032879,
+      "tag": "0244_k3_creation_mode_and_safe_work_delete_hotfix",
+      "breakpoints": true
     }
   ]
 }

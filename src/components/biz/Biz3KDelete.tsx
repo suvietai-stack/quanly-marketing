@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 export type K3DeleteKind = 'goal' | 'action' | 'task';
 
-const LABEL: Record<K3DeleteKind, string> = { goal: 'Xóa công việc', action: 'Xóa KF', task: 'Xóa công việc' };
+const LABEL: Record<K3DeleteKind, string> = { goal: 'Xóa công việc', action: 'Xóa công việc', task: 'Xóa công việc' };
 
 /**
  * Mục "Xóa" thống nhất trong menu ba chấm. Điều kiện xóa do backend quyết định
@@ -25,7 +25,7 @@ export function K3DeleteMenuItem({ kind, id, name, onDeleted }: { kind: K3Delete
     staleTime: 0,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('k3_deletable', { _kind: kind, _id: id } as never);
-      if (error) throw error;
+      if (error) { k3Error(error); throw error; }
       return data as unknown as { ok: boolean; reason?: string };
     },
   });

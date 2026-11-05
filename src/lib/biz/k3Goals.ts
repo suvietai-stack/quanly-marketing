@@ -24,6 +24,7 @@ export const K3_KPI_KIND: Record<K3KpiKind, string> = {
 
 export interface K3GoalRow {
   id: string;
+  creation_mode?: 'basic' | 'advanced' | null;
   name: string;
   status: K3GoalStatus;
   metric?: K3EntityMetric;

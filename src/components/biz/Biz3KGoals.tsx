@@ -253,6 +253,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
   const g = data?.goal;
   const canManage = !!data?.can_manage;
   const closed = g ? ['ended_missed', 'cancelled'].includes(g.status) : false;
+  const singleStep = data?.actions.length === 1;
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -291,8 +292,8 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                       <DropdownMenuTrigger asChild><Button size="sm" variant="outline" aria-label="Thao tác quản lý công việc"><MoreHorizontal className="mr-1 h-4 w-4" />Thao tác</Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onSelect={() => setEditGoal(true)}><Pencil className="mr-2 h-4 w-4" />Sửa công việc</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setKpiFor({ goalId: g.id })}><Plus className="mr-2 h-4 w-4" />Thêm KPI kết quả</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setInviting(true)}><UserPlus className="mr-2 h-4 w-4" />Mời thành viên</DropdownMenuItem>
+                        {g.creation_mode !== 'basic' && <DropdownMenuItem onSelect={() => setKpiFor({ goalId: g.id })}><Plus className="mr-2 h-4 w-4" />Thêm KPI kết quả</DropdownMenuItem>}
+                        {g.creation_mode !== 'basic' && <DropdownMenuItem onSelect={() => setInviting(true)}><UserPlus className="mr-2 h-4 w-4" />Mời thành viên</DropdownMenuItem>}
                         <K3DeleteMenuItem kind="goal" id={g.id} name={g.name} onDeleted={onClose} />
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -365,7 +366,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                     )}
                     {!closed && (
                       <ActionButtons a={a} canManage={canManage} settings={settings}
-                        onEdit={() => setEditAction(a)} onKpi={() => setKpiFor({ actionId: a.action.id })} />
+                        hideDelete={singleStep} onEdit={() => setEditAction(a)} onKpi={() => setKpiFor({ actionId: a.action.id })} />
                     )}
                   </div>
                 ))}
@@ -431,17 +432,17 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
   );
 }
 
-function ActionButtons({ a, canManage, settings, onEdit, onKpi }: { a: K3GoalDetail['actions'][number]; canManage: boolean; settings: K3Settings; onEdit: () => void; onKpi: () => void }) {
+function ActionButtons({ a, canManage, settings, hideDelete, onEdit, onKpi }: { a: K3GoalDetail['actions'][number]; canManage: boolean; settings: K3Settings; hideDelete?: boolean; onEdit: () => void; onKpi: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-t border-border pt-2">
       {(canManage || settings.can_use) && <Button size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>}
       {canManage && <Button size="sm" variant="ghost" onClick={onKpi}><Plus className="mr-1 h-3.5 w-3.5" />KPI</Button>}
-      <DropdownMenu>
+      {!hideDelete && <DropdownMenu>
         <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label={`Thao tác khác cho ${a.action.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <K3DeleteMenuItem kind="action" id={a.action.id} name={a.action.name} />
         </DropdownMenuContent>
-      </DropdownMenu>
+      </DropdownMenu>}
     </div>
   );
 }
