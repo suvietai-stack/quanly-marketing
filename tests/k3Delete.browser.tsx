@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { supabase } from '../src/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { K3DeleteMenuItem } from '../src/components/biz/Biz3KDelete';
 import { Button } from '../src/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../src/components/ui/dropdown-menu';
