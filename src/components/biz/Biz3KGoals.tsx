@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Check, Loader2, Plus, Star, Target, UserPlus, Users, X, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3Error, type K3Settings } from '@/lib/biz/k3';
-import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3GoalDetail, type K3GoalMember, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
+import { K3_GOAL_EVENT, K3_GOAL_STATUS, K3_KPI_KIND, K3_MEMBER_STATUS, k3KpiLabel, k3KpiPercent, type K3EntityMetric, type K3GoalDetail, type K3GoalMember, type K3GoalRow, type K3GoalStatus, type K3KpiKind, type K3MemberSearchRow } from '@/lib/biz/k3Goals';
 import { k3GoalDetailQuery, k3GoalListQuery, useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import { MemberPicker } from './Biz3KMemberPicker';
 import { Biz3KQuickCreate } from './Biz3KQuickCreate';
@@ -35,12 +35,13 @@ const toneClass: Record<string, string> = {
   danger: 'bg-destructive text-destructive-foreground',
 };
 
-export function GoalStatusBadge({ status, overdueDays }: { status: K3GoalStatus; overdueDays?: number }) {
+export function GoalStatusBadge({ status, overdueDays, metric }: { status: K3GoalStatus; overdueDays?: number; metric?: K3EntityMetric }) {
   const meta = K3_GOAL_STATUS[status] ?? K3_GOAL_STATUS.draft;
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       <Badge className={cn('border-0', toneClass[meta.tone])}>{meta.label}</Badge>
-      {!!overdueDays && overdueDays > 0 && <Badge variant="destructive">Quá hạn {overdueDays} ngày</Badge>}
+      {metric?.overdue && <Badge variant="destructive">Quá hạn {Math.max(1, Math.floor(metric.overdue_seconds / 3600))} giờ</Badge>}
+      {!metric && !!overdueDays && overdueDays > 0 && <Badge variant="destructive">Quá hạn {overdueDays} ngày</Badge>}
     </span>
   );
 }
@@ -52,7 +53,7 @@ const FILTERS: { value: string; label: string; scope?: boolean }[] = [
   { value: 'assigned', label: 'Tôi phụ trách KF' },
   { value: 'active', label: 'Đang thực hiện' },
   { value: 'overdue', label: 'Quá hạn' },
-  { value: 'done', label: 'Đã kết thúc' },
+  { value: 'done', label: 'Hoàn thành' },
   { value: 'scope', label: 'Trong phạm vi quản lý', scope: true },
 ];
 
@@ -84,7 +85,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
       case 'join': return list.filter((g) => g.my_role === 'accepted');
       case 'active': return list.filter((g) => ['not_started', 'in_progress', 'paused'].includes(g.status));
       case 'overdue': return list.filter((g) => g.overdue_days > 0);
-      case 'done': return list.filter((g) => ['done', 'ended_missed'].includes(g.status));
+      case 'done': return list.filter((g) => g.status === 'done');
       default: return list;
     }
   }, [data, sub, variant]);
@@ -167,7 +168,7 @@ export function Biz3KGoals({ settings, variant = 'personal' }: { settings: K3Set
                   {g.member_count > 0 && ` · ${g.member_count + 1} người tham gia`}
                 </p>
               </div>
-              <GoalStatusBadge status={g.status} overdueDays={g.overdue_days} />
+              <GoalStatusBadge status={g.status} metric={g.metric} overdueDays={g.overdue_days} />
             </div>
           </button>
         ))}
@@ -203,7 +204,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
           due_date: f.period_end, is_key: f.is_key, start_time: f.start_time, due_time: f.due_time,
         },
       });
-      toast.success(goal ? 'Đã lưu mục tiêu.' : 'Đã tạo mục tiêu KG (bản nháp). Thêm KF rồi bắt đầu thực hiện.');
+      toast.success(goal ? 'Đã lưu mục tiêu.' : 'Đã lưu nháp mục tiêu KG.');
       onClose();
     } catch (e) {
       toast.error(k3Error(e));
@@ -254,7 +255,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
 
   const g = data?.goal;
   const canManage = !!data?.can_manage;
-  const closed = g ? ['done', 'ended_missed', 'cancelled'].includes(g.status) : false;
+  const closed = g ? ['ended_missed', 'cancelled'].includes(g.status) : false;
 
   const changeStatus = async () => {
     if (!g || !statusTo) return;
@@ -282,7 +283,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
           <div className="mt-3 space-y-4">
             <div className="space-y-2 rounded-lg border border-border bg-card p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <GoalStatusBadge status={g.status} overdueDays={g.overdue_days} />
+                <GoalStatusBadge status={g.status} metric={g.metric} overdueDays={g.overdue_days} />
                 {g.is_key && <Badge variant="outline" className="border-primary text-primary"><Star className="mr-1 h-3 w-3" />Trọng tâm</Badge>}
               </div>
               <p className="text-sm text-muted-foreground">
@@ -303,13 +304,12 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                     <Button size="sm" variant="outline" onClick={() => setKpiFor({ goalId: g.id })}><Plus className="mr-1 h-3.5 w-3.5" />KPI kết quả</Button>
                     <Button size="sm" variant="outline" onClick={() => setInviting(true)}><UserPlus className="mr-1 h-3.5 w-3.5" />Mời thành viên</Button>
                     {g.status === 'draft' && <DraftDelete kind="goal" id={g.id} name={g.name} onDeleted={onClose} />}
-                    {g.status === 'draft' && <Button size="sm" variant="outline" onClick={() => setStatusTo('not_started')}>Sẵn sàng</Button>}
-                    {(g.status === 'draft' || g.status === 'not_started' || g.status === 'paused') && <Button size="sm" onClick={() => setStatusTo('in_progress')}>Bắt đầu thực hiện</Button>}
-                    {g.status === 'in_progress' && <Button size="sm" variant="outline" onClick={() => setStatusTo('paused')}>Tạm dừng</Button>}
-                    {g.status === 'in_progress' && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setStatusTo('ended_missed')}>Kết thúc chưa đạt</Button>}
+        
+                    {g.status === 'draft' && <Button size="sm" disabled={mutation.isPending} onClick={async () => { try { await mutation.mutateAsync({kind:'activate', id:g.id, revision:g.revision}); toast.success('Đã lưu công việc.'); } catch(e) { toast.error(k3Error(e)); } }}>Lưu công việc</Button>}
+                    {g.status !== 'draft' && <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Quyết định đặc biệt KG"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent>{(['paused','ended_missed','cancelled'] as const).map((st) => <DropdownMenuItem key={st} onSelect={() => setStatusTo(st)}>{K3_GOAL_STATUS[st].label}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>}
                   </>
                 )}
-                {canManage && closed && <Button size="sm" variant="outline" onClick={() => setStatusTo('in_progress')}>Mở lại thực hiện</Button>}
+
               </div>
             </div>
 
@@ -342,7 +342,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                 {canManage && !closed && (
                   <Button size="sm" onClick={() => setAddAction(true)}><Plus className="mr-1 h-4 w-4" />Thêm KF</Button>
                 )}
-                {data.actions.length === 0 && <p className="text-sm text-muted-foreground">Chưa có hành động KF. KG bắt đầu thực hiện cần ít nhất một KF.</p>}
+                {data.actions.length === 0 && <p className="text-sm text-muted-foreground">Chưa có hành động KF. Công việc cần ít nhất một KF và KPI hợp lệ.</p>}
                 {data.actions.map((a) => (
                   <div key={a.action.id} className="space-y-2 rounded-lg border border-border bg-card p-3">
                     <div className="flex items-start gap-2">
@@ -359,7 +359,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                           {` · ${a.task_done}/${a.task_total} việc hoàn thành`}
                         </p>
                       </div>
-                      <GoalStatusBadge status={a.action.status} overdueDays={a.overdue_days} />
+                      <GoalStatusBadge status={a.action.status} metric={a.action.kpi_summary} overdueDays={a.overdue_days} />
                     </div>
                     {a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
                     {a.member_actuals.length > 0 && (
@@ -442,7 +442,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
           <Dialog open onOpenChange={(o) => !o && setStatusTo(null)}>
             <DialogContent>
               <DialogHeader><DialogTitle>Chuyển sang "{K3_GOAL_STATUS[statusTo].label}"?</DialogTitle></DialogHeader>
-              {(statusTo === 'done' || statusTo === 'ended_missed' || statusTo === 'cancelled') && (
+              {statusTo && (
                 <div className="space-y-1">
                   <Label htmlFor="k3g-note">Ghi chú kết thúc</Label>
                   <Textarea id="k3g-note" rows={2} value={statusNote} onChange={(e) => setStatusNote(e.target.value)} />
@@ -450,7 +450,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
               )}
               <DialogFooter>
                 <Button variant="outline" onClick={() => setStatusTo(null)}>Hủy</Button>
-                <Button disabled={mutation.isPending} onClick={changeStatus}>Xác nhận</Button>
+                <Button disabled={mutation.isPending || !statusNote.trim()} onClick={changeStatus}>Xác nhận</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -476,9 +476,7 @@ function ActionButtons({ a, canManage, settings, onEdit, onKpi }: { a: K3GoalDet
     <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
       {(canManage || settings.can_use) && <Button size="sm" variant="ghost" onClick={onEdit}>Sửa</Button>}
       {canManage && <Button size="sm" variant="ghost" onClick={onKpi}><Plus className="mr-1 h-3.5 w-3.5" />KPI</Button>}
-      {st === 'not_started' && <Button size="sm" variant="outline" onClick={() => setStatus('in_progress')}>Bắt đầu</Button>}
-      {st === 'in_progress' && <Button size="sm" variant="outline" className="text-destructive" onClick={() => setEnding(true)}>Kết thúc chưa đạt</Button>}
-      {(st === 'done' || st === 'ended_missed') && <Button size="sm" variant="outline" onClick={() => setStatus('in_progress')}>Mở lại</Button>}
+      {canManage && st === 'in_progress' && <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Quyết định đặc biệt KF"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem onSelect={() => setEnding(true)}>Kết thúc chưa đạt</DropdownMenuItem></DropdownMenuContent></DropdownMenu>}
       {ending && (
         <Dialog open onOpenChange={(o) => !o && setEnding(false)}>
           <DialogContent>
@@ -527,7 +525,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
     due_date: action?.action.due_date ?? '',
     note: action?.action.note ?? '',
     assignee_id: action?.action.assignee_id ?? goal.owner_id,
-    is_key: action?.action.is_key ?? false, start_time: action?.action.start_time?.slice(0, 5) ?? '', due_time: action?.action.due_time?.slice(0, 5) ?? '', inherit_timeline: action?.action.inherit_timeline ?? !action,
+    required: action?.action.required ?? true, is_key: action?.action.is_key ?? false, start_time: action?.action.start_time?.slice(0, 5) ?? '', due_time: action?.action.due_time?.slice(0, 5) ?? '', inherit_timeline: action?.action.inherit_timeline ?? !action,
   });
   const [schedule, setSchedule] = useState<K3CreationKf['execution_schedule']>(action?.action.execution_schedule ?? { mode: 'daily' });
   const [collabs, setCollabs] = useState<K3MemberSearchRow[]>(action?.collaborators.map((c) => ({ id: c.user_id, full_name: c.full_name, departments: [] })) ?? []);
@@ -538,7 +536,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
         payload: {
           id: action?.action.id, revision: action?.action.revision, request_key: action ? undefined : key,
           goal_id: goal.id, name: f.name, start_date: f.start_date || null, due_date: f.due_date || null,
-          note: f.note, assignee_id: f.assignee_id, is_key: f.is_key, start_time: f.start_time, due_time: f.due_time, inherit_timeline: f.inherit_timeline, execution_schedule: schedule, collaborators: collabs.map((c) => c.id),
+          required: f.required, note: f.note, assignee_id: f.assignee_id, is_key: f.is_key, start_time: f.start_time, due_time: f.due_time, inherit_timeline: f.inherit_timeline, execution_schedule: schedule, collaborators: collabs.map((c) => c.id),
         },
       });
       toast.success(action ? 'Đã lưu hành động KF.' : 'Đã thêm hành động KF.');
@@ -558,6 +556,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
           </div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.inherit_timeline} onChange={(e) => setF({ ...f, inherit_timeline: e.target.checked })} />Kế thừa thời gian KG</label>
           {f.inherit_timeline ? <p className="text-sm text-muted-foreground">{timelineLabel(goal.period_start, goal.start_time)} → {timelineLabel(goal.due_date ?? goal.period_end, goal.due_time)}</p> : <Biz3KTimeline id="k3a" start={f.start_date || goal.period_start} end={f.due_date || goal.due_date || goal.period_end} startTime={f.start_time} endTime={f.due_time} onChange={(field, value) => setF({ ...f, [({ start: 'start_date', end: 'due_date', startTime: 'start_time', endTime: 'due_time' })[field]]: value })} />}
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.required} onChange={(e) => setF({ ...f, required: e.target.checked })} />KF bắt buộc để hoàn thành KG</label>
           <Biz3KSchedule value={schedule} onChange={setSchedule} />
           <div className="space-y-1">
             <Label>Người phụ trách chính</Label>
