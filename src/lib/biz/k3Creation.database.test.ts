@@ -52,7 +52,6 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0231_k3_creation_timeline_personal_drafts.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0232_k3_atomic_timeline_write_and_personal_execution.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0233_k3_trash_alias_and_retention_guards.sql', 'utf8'));
-  await db.exec(`CREATE TABLE k3_kpi_config_versions(kpi_id uuid REFERENCES k3_kpis(id),snapshot jsonb);`);
   await db.exec(readFileSync('drizzle/migrations/0234_k3_draft_purge_config_history_safety.sql', 'utf8'));
 }, 30000);
 
@@ -128,7 +127,7 @@ it('protected result prevents simple draft deletion',async()=>{
 });
 it('expired draft purge removes children with config history without orphaning', async () => {
  const r = await create(payload()); const a = await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);
- await db.exec(`INSERT INTO k3_kpi_config_versions SELECT id,'{}' FROM k3_kpis WHERE action_id='${a}'`);
+ expect(await val(`SELECT count(*)::int v FROM k3_kpi_config_versions WHERE kpi_id IN(SELECT id FROM k3_kpis WHERE action_id='${a}')`)).toBe(1);
  await val(`SELECT k3_draft_delete('goal','${r.goal_id}') v`);
  await db.exec(`UPDATE k3_goals SET deleted_at=now()-interval '361 hours' WHERE id='${r.goal_id}'`);
  await val('SELECT k3_purge_expired(100) v');
