@@ -1653,6 +1653,13 @@
       "when": 1793856949439,
       "tag": "0235_k3_authoritative_automatic_states",
       "breakpoints": true
+    },
+    {
+      "idx": 236,
+      "version": "7",
+      "when": 1793857033467,
+      "tag": "0236_k3_valid_save_and_legacy_state_guards",
+      "breakpoints": true
     }
   ]
 }
