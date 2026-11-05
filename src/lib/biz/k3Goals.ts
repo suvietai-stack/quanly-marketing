@@ -28,6 +28,8 @@ export interface K3GoalRow {
   period_start: string;
   period_end: string;
   due_date: string | null;
+  start_time?: string | null;
+  due_time?: string | null;
   is_key: boolean;
   owner_id: string;
   owner_name: string;
@@ -54,6 +56,8 @@ export interface K3GoalAction {
   action: {
     id: string; goal_id: string; name: string; status: K3GoalStatus; is_key: boolean;
     start_date: string | null; due_date: string | null; note: string | null;
+    start_time?: string | null; due_time?: string | null; inherit_timeline?: boolean;
+    execution_schedule?: import('./k3Creation').K3CreationKf['execution_schedule'];
     assignee_id: string; manual_progress: number | null; progress_source: string | null;
     problem: string | null; cause: string | null; solution: string | null; revision: number;
   };

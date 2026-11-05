@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## UX TẠO CÔNG VIỆC 3K — spec 703 dòng (05/11/2026)
+- [ ] U1. Giờ/phút tùy chọn KG/KF/lịch, kế thừa rõ, deadline ngày-only cuối ngày VN; giữ dữ liệu cũ.
+- [ ] U2. Cơ bản mặc định/Nâng cao chung cấu trúc, KPI không nhập lặp, đổi chế độ giữ dữ liệu/idempotency.
+- [ ] U3. RPC danh sách/tổng kết cá nhân đúng người kể cả Admin; theo dõi nhân viên theo phạm vi bổ nhiệm.
+- [ ] U4. Xóa KG/KF nháp có xác nhận, bảo vệ chốt, khôi phục cấu trúc/ID trong 15×24h.
+- [ ] U5. Kiểm thử database/hồi quy, UI desktop/mobile; không dữ liệu giả, Zalo vẫn Tắt, chưa Publish.
+
 ## TỔNG KẾT THỦ CÔNG / CHỐT TỰ ĐỘNG — spec 731 dòng (04/11/2026)
 - [x] S1. Xác nhận Sale độc lập, version nguồn tại máy chủ, lịch sử và phạm vi ngày đúng lịch/kết quả.
 - [x] S2. Tổng kết hôm nay: rà soát KG/KF/KPI/VNGB, cảnh báo thiếu, xác nhận không nhập lại KPI, không chốt hệ thống.

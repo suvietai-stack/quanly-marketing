@@ -3208,8 +3208,11 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           due_date: string | null
+          due_time: string | null
+          execution_schedule: Json
           goal_id: string
           id: string
+          inherit_timeline: boolean
           is_key: boolean
           kpi_target: number | null
           kpi_unit: string | null
@@ -3222,6 +3225,7 @@ export type Database = {
           revision: number
           solution: string | null
           start_date: string | null
+          start_time: string | null
           status: string
           updated_at: string
           user_id: string
@@ -3235,8 +3239,11 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           due_date?: string | null
+          due_time?: string | null
+          execution_schedule?: Json
           goal_id: string
           id?: string
+          inherit_timeline?: boolean
           is_key?: boolean
           kpi_target?: number | null
           kpi_unit?: string | null
@@ -3249,6 +3256,7 @@ export type Database = {
           revision?: number
           solution?: string | null
           start_date?: string | null
+          start_time?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -3262,8 +3270,11 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           due_date?: string | null
+          due_time?: string | null
+          execution_schedule?: Json
           goal_id?: string
           id?: string
+          inherit_timeline?: boolean
           is_key?: boolean
           kpi_target?: number | null
           kpi_unit?: string | null
@@ -3276,6 +3287,7 @@ export type Database = {
           revision?: number
           solution?: string | null
           start_date?: string | null
+          start_time?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -3659,6 +3671,7 @@ export type Database = {
           department_id: string | null
           description: string | null
           due_date: string | null
+          due_time: string | null
           expected_result: string | null
           id: string
           is_key: boolean
@@ -3670,6 +3683,7 @@ export type Database = {
           period_type: string
           request_key: string
           revision: number
+          start_time: string | null
           status: string
           updated_at: string
           user_id: string
@@ -3684,6 +3698,7 @@ export type Database = {
           department_id?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           expected_result?: string | null
           id?: string
           is_key?: boolean
@@ -3695,6 +3710,7 @@ export type Database = {
           period_type: string
           request_key: string
           revision?: number
+          start_time?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -3709,6 +3725,7 @@ export type Database = {
           department_id?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           expected_result?: string | null
           id?: string
           is_key?: boolean
@@ -3720,6 +3737,7 @@ export type Database = {
           period_type?: string
           request_key?: string
           revision?: number
+          start_time?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -8231,6 +8249,7 @@ export type Database = {
         Args: { _actor: string; _day: string }
         Returns: boolean
       }
+      k3_draft_delete: { Args: { _id: string; _kind: string }; Returns: Json }
       k3_employee_review_confirm: {
         Args: {
           _ack_missing?: boolean

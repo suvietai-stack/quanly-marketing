@@ -1618,6 +1618,34 @@
       "when": 1793788555440,
       "tag": "0230_k3_review_source_only_fingerprint",
       "breakpoints": true
+    },
+    {
+      "idx": 231,
+      "version": "7",
+      "when": 1793846667599,
+      "tag": "0231_k3_creation_timeline_personal_drafts",
+      "breakpoints": true
+    },
+    {
+      "idx": 232,
+      "version": "7",
+      "when": 1793846884856,
+      "tag": "0232_k3_atomic_timeline_write_and_personal_execution",
+      "breakpoints": true
+    },
+    {
+      "idx": 233,
+      "version": "7",
+      "when": 1793846917208,
+      "tag": "0233_k3_trash_alias_and_retention_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 234,
+      "version": "7",
+      "when": 1793847081279,
+      "tag": "0234_k3_draft_purge_config_history_safety",
+      "breakpoints": true
     }
   ]
 }
