@@ -62,6 +62,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0236_k3_valid_save_and_legacy_state_guards.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0237_k3_required_actions_and_safe_special_decisions.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0238_k3_activate_configured_kf_without_start_button.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0239_k3_configured_action_revision_alias.sql','utf8'));
 }, 30000);
 
 afterAll(() => db.close());
