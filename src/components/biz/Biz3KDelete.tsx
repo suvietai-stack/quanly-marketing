@@ -42,7 +42,11 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
     setBusy(false);
     selected.onDeleted?.();
     toast.success('Đã chuyển vào Thùng rác. Có thể khôi phục trong 15 ngày.');
-    await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('k3_') });
+    try {
+      await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('k3_') });
+    } catch {
+      toast.error('Đã xóa công việc nhưng danh sách chưa cập nhật. Vui lòng tải lại.');
+    }
   };
   return <DeleteContext.Provider value={selected => {
     if (inFlight.current) return;

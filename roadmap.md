@@ -1,9 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## HỘP XÁC NHẬN XÓA 3K — 05/11/2026
-- [ ] D1. Tái hiện và tách hộp xác nhận khỏi dropdown tại cha ổn định cho Ngày/KG/KF; không timer.
-- [ ] D2. Chặn gửi trùng, lỗi giữ hộp mở, thành công cập nhật danh sách/Thùng rác; quyền và lịch sử không đổi.
-- [ ] D3. Kiểm thử trình duyệt desktop/mobile và xóa/khôi phục; phân biệt kiểm thử cô lập với phiên/dữ liệu thật.
+- [x] D1. Tái hiện dialog count=0 sau menu đóng; K3DeleteProvider ngoài Biz3KScreen giữ target/dialog cho Ngày/KG/KF, không timer.
+- [x] D2. Guard đồng bộ chống gửi trùng, busy/inline error giữ mở; thành công đóng và invalidate toàn bộ k3_* gồm Thùng rác. Quyền/RPC/lịch sử không đổi.
+- [x] D3a. 6 kiểm thử trình duyệt (1280/390 × Ngày/KG/KF) đạt với RPC chặn trong kiểm thử: đóng menu/refetch/blur/Quay lại/busy/Escape/lỗi/retry/đúng ID, không lỗi JS/tràn. 12 kiểm thử database xóa/khôi phục/lịch sử đạt.
+- [ ] D3b. Xóa→Thùng rác→khôi phục trên phiên thật chưa nghiệm thu: --self không khớp tài khoản, người dùng đang /login; cần đăng nhập Preview, không tự chọn tài khoản/ghi dữ liệu thử thật. Chưa Publish.
 
 ## 3K LINH HOẠT / KỶ LUẬT NGÀY — 05/11/2026
 - [x] F1. 0245/0247: xóa cá nhân có kết quả/chốt; khôi phục 15 ngày, purge giữ lịch sử bảo vệ; không mở quyền xóa nhóm. 12 kiểm thử xóa đạt.
