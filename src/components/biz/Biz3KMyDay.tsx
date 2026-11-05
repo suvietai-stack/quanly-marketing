@@ -112,7 +112,7 @@ export function Biz3KMyDay({ settings, selectedDate, onDateChange }: { settings:
 
       <div className="space-y-2">
         {[...tasks].sort((a,b) => Number(b.is_focus)-Number(a.is_focus)).map((t) => (
-          <TaskCard key={t.id} task={t} settings={settings} onEdit={() => setEditing(t)} onUpdate={() => setUpdating(t)} onDelete={() => setDeleting(t)} />
+          <TaskCard key={t.id} task={t} settings={settings} onEdit={() => setEditing(t)} onUpdate={() => setUpdating(t)} onDelete={!summarized && t.kpi_actual == null ? () => setDeleting(t) : undefined} />
         ))}
       </div>
 
@@ -276,7 +276,7 @@ function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: str
   );
 }
 
-export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete: () => void }) {
+export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task: K3Task; settings: K3Settings; onEdit: () => void; onUpdate: () => void; onDelete?: () => void }) {
   const save = useK3TaskSave();
   const hasIssue = !k3IsComplete(task) && (hasText(task.problem) || hasText(task.solution));
   const toggleFocus = async () => {
@@ -326,7 +326,7 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
           <DropdownMenuTrigger asChild><Button type="button" size="icon" variant="ghost" aria-label={`Thao tác khác cho ${task.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={onEdit}><Pencil className="mr-2 h-4 w-4" />Sửa công việc</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onSelect={onDelete}><Trash2 className="mr-2 h-4 w-4" />Xóa công việc</DropdownMenuItem>
+            {onDelete && <DropdownMenuItem className="text-destructive" onSelect={onDelete}><Trash2 className="mr-2 h-4 w-4" />Xóa công việc</DropdownMenuItem>}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>}
