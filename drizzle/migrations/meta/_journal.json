@@ -1730,6 +1730,13 @@
       "when": 1793872428535,
       "tag": "0246_k3_morning_discipline_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 247,
+      "version": "7",
+      "when": 1793872609934,
+      "tag": "0247_k3_discipline_close_and_retention_fences",
+      "breakpoints": true
     }
   ]
 }
