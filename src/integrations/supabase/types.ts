@@ -3669,6 +3669,7 @@ export type Database = {
           closed_at: string | null
           closed_by: string | null
           created_at: string
+          creation_mode: string | null
           deleted_at: string | null
           deleted_by: string | null
           department_id: string | null
@@ -3696,6 +3697,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          creation_mode?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           department_id?: string | null
@@ -3723,6 +3725,7 @@ export type Database = {
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string
+          creation_mode?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
           department_id?: string | null
