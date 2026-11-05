@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { Biz3KDayReview } from './Biz3KDayReview';
 
 type Filter = 'all' | K3TrackStatus | 'issues' | 'done';
 
@@ -175,6 +176,7 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
   const comment = useK3Comment();
   const [body, setBody] = useState('');
   const [taskId, setTaskId] = useState('day');
+  const [review, setReview] = useState(false);
   const send = async () => {
     if (!data?.day) return;
     try {
@@ -193,10 +195,12 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
         {error && <div><p className="text-destructive">{k3Error(error)}</p><Button variant="outline" onClick={() => refetch()}>Thử lại</Button></div>}
         {data && (
           <div className="mt-4 space-y-4">
+            <Button variant="outline" onClick={() => setReview(true)}>Xem KG/KF/KPI và tổng kết</Button>
+            {review && row && <Biz3KDayReview date={date} today={settings.today} user={row.user_id} onClose={() => setReview(false)} />}
             {(data.active_goals?.length ?? 0) > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground"><Target className="mr-1 inline h-3.5 w-3.5" />KG đang thực hiện</p>
-                {data.active_goals!.map((g) => (
+                {data.active_goals?.map((g) => (
                   <div key={g.id} className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2 text-sm">
                     <span className="min-w-0 flex-1">
                       {g.is_key && <Star className="mr-1 inline h-3.5 w-3.5 fill-primary text-primary" />}
@@ -210,7 +214,7 @@ function MemberSheet({ row, date, settings, onClose }: { row: K3TeamRow | null; 
             {(data.assigned_actions?.length ?? 0) > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground">KF được giao / phối hợp</p>
-                {data.assigned_actions!.map((a) => (
+                {data.assigned_actions?.map((a) => (
                   <div key={a.id} className="rounded-md border border-border p-2 text-sm">
                     {a.name}
                     <span className="block text-xs text-muted-foreground">KG: {a.goal_name}{a.due_date ? ` · Hạn ${a.due_date}` : ''}{a.my_part === 'collaborator' ? ' · Phối hợp' : ''}{a.already_today ? ' · Đã ghi hôm nay' : ''}</span>
