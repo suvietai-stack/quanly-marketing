@@ -41,11 +41,6 @@ it('default checkpoint setting is exactly 08:45 Vietnam',async()=>{
  // The existing setting, not an independent hidden time, supplies the checkpoint.
  expect(await val(`SELECT position('plan_by' in pg_get_functiondef('private.k3_plan_schedule()'::regprocedure))>0 v`)).toBe(true);
 });
-it('summary deadline remains frozen when the current setting changes',async()=>{
- const deadline=await val(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`);
- await db.exec(`UPDATE k3_settings SET summary_by='20:00'`);
- expect(await val(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`)).toBe(deadline);
-});
 it('checkpoint stores no plan then a later creation stays late, not on time',async()=>{
  await db.query(`SELECT private.k3_plan_capture('${user}')`);
  expect(await val(`SELECT initial_status v FROM k3_plan_checkpoints`)).toBe('none');
@@ -81,4 +76,10 @@ it('Sunday remains a working day when the actual schedule says so',async()=>{
 });
 it('non-admin cannot silently exclude a checkpoint',async()=>{
  await expect(db.query(`SELECT k3_discipline_exclude('${user}',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'Test')`)).rejects.toThrow('Admin');
+});
+it('summary deadline remains frozen when the current setting changes',async()=>{
+ const deadline=await val<string>(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`);
+ expect(deadline).toContain('11:00:00');
+ await db.exec(`UPDATE k3_settings SET summary_by='20:00'`);
+ expect(await val(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`)).toBe(deadline);
 });
