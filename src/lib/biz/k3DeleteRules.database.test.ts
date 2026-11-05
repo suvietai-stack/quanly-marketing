@@ -63,7 +63,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0239_k3_configured_action_revision_alias.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0240_k3_delete_rules.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0241_k3_soft_delete_variable_conflict_fix.sql', 'utf8'));
-  await db.exec(`CREATE TABLE k3_employee_reviews(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), snapshot jsonb);`);
+  await db.exec(`CREATE TABLE k3_employee_reviews(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), snapshot jsonb); CREATE TABLE k3_daily_closes(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),snapshot jsonb);`);
   await db.exec(readFileSync('drizzle/migrations/0244_k3_creation_mode_and_safe_work_delete_hotfix.sql', 'utf8'));
   // Reapplying the hotfix must preserve rows and not duplicate function patches.
   await db.exec(readFileSync('drizzle/migrations/0244_k3_creation_mode_and_safe_work_delete_hotfix.sql', 'utf8'));
