@@ -130,7 +130,7 @@ it('expired draft purge removes children with config history without orphaning',
  expect(await val(`SELECT count(*)::int v FROM k3_kpi_config_versions WHERE kpi_id IN(SELECT id FROM k3_kpis WHERE action_id='${a}')`)).toBe(1);
  await val(`SELECT k3_draft_delete('goal','${r.goal_id}') v`);
  await db.exec(`UPDATE k3_goals SET deleted_at=now()-interval '361 hours' WHERE id='${r.goal_id}'`);
- await val('SELECT k3_purge_expired(100) v');
+ await as(manager); await val('SELECT k3_purge_expired(100) v'); await as(staff);
  expect(await val(`SELECT count(*)::int v FROM k3_goals WHERE id='${r.goal_id}'`)).toBe(0);
  expect(await val(`SELECT count(*)::int v FROM k3_actions WHERE id='${a}'`)).toBe(0);
 });
