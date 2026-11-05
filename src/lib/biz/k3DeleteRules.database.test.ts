@@ -81,6 +81,21 @@ it('công việc chưa có kết quả: k3_deletable cho phép xóa KG', async (
   expect(d.ok).toBe(true);
 });
 
+it('công việc cũ không bị tự suy đoán kiểu tạo', async () => {
+  const id = await val<string>(`INSERT INTO k3_goals(user_id,period_type,period_start,period_end,name,request_key,status) VALUES('${staff}','custom','2026-11-05','2026-11-05','Legacy',gen_random_uuid(),'draft') RETURNING id v`);
+  expect(await val(`SELECT creation_mode v FROM k3_goals WHERE id='${id}'`)).toBeNull();
+});
+
+it('nháp không kết quả xóa vào Thùng rác và khôi phục trước 15 ngày', async () => {
+  const id = await val<string>(`INSERT INTO k3_goals(user_id,period_type,period_start,period_end,name,request_key,status) VALUES('${staff}','custom','2026-11-05','2026-11-05','Draft',gen_random_uuid(),'draft') RETURNING id v`);
+  await val(`SELECT k3_draft_delete('goal','${id}') v`);
+  expect(await val(`SELECT deleted_at IS NOT NULL v FROM k3_goals WHERE id='${id}'`)).toBe(true);
+  const trash = await val<{id:string}[]>(`SELECT k3_trash_list('all') v`);
+  expect(trash.some(r=>r.id===id)).toBe(true);
+  await val(`SELECT k3_restore('goal','${id}') v`);
+  expect(await val(`SELECT deleted_at IS NULL v FROM k3_goals WHERE id='${id}'`)).toBe(true);
+});
+
 it('KF duy nhất nhắm vào cả công việc, không bị chặn sai vì đang thực hiện', async () => {
   const d = await val<{ ok: boolean; reason: string }>(`SELECT k3_deletable('action','${actionId}') v`);
   expect(d.ok).toBe(true);
