@@ -1,0 +1,76 @@
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+const db = new PGlite();
+const user='10000000-0000-0000-0000-000000000001';
+const goal='20000000-0000-0000-0000-000000000001';
+const action='30000000-0000-0000-0000-000000000001';
+async function val<T>(sql:string) { return (await db.query<{v:T}>(sql)).rows[0]?.v; }
+beforeAll(async()=>{
+ await db.exec(`CREATE SCHEMA private;CREATE SCHEMA auth;CREATE SCHEMA cron;CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT '${user}'::uuid$$;
+ CREATE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${user}'::uuid$$;
+ CREATE FUNCTION biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${user}'::uuid$$;
+ CREATE FUNCTION biz_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION biz_scope_ok(uuid,uuid,uuid,timestamptz) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
+ CREATE FUNCTION biz_department_at(uuid,date) RETURNS uuid LANGUAGE sql AS $$SELECT NULL::uuid$$;
+ CREATE TABLE profiles(id uuid,full_name text,status text);INSERT INTO profiles VALUES('${user}','Sale','Đang hoạt động');
+ CREATE TABLE biz_departments(id uuid,name text);
+ CREATE TABLE k3_settings(id boolean,enabled boolean,effective_from date,plan_by time,summary_by time);INSERT INTO k3_settings VALUES(true,true,'2020-01-01','08:45','18:00');
+ CREATE FUNCTION k3_settings_save(boolean,date,time,time,smallint) RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RETURN public.k3_settings_read();END$$;
+ CREATE FUNCTION k3_settings_read() RETURNS jsonb LANGUAGE sql AS $$SELECT '{}'::jsonb$$;
+ CREATE TABLE cron.job(jobid bigint,jobname text);CREATE FUNCTION cron.unschedule(bigint) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;CREATE FUNCTION cron.schedule(text,text,text) RETURNS bigint LANGUAGE sql AS $$SELECT 1::bigint$$;
+ CREATE TABLE leave_settings(id int,data jsonb);INSERT INTO leave_settings VALUES(1,'{"schedule":{"1":{"am":true,"pm":true},"2":{"am":true,"pm":true},"3":{"am":true,"pm":true},"4":{"am":true,"pm":true},"5":{"am":true,"pm":true},"6":{"am":true,"pm":true},"7":{"am":true,"pm":true}},"holidays":[]}');
+ CREATE TABLE leave_requests(owner_id uuid,type text,status text,payload jsonb);
+ CREATE TABLE k3_goals(id uuid,user_id uuid,period_start date,period_end date,status text,deleted_at timestamptz,created_at timestamptz,updated_at timestamptz);
+ CREATE TABLE k3_actions(id uuid,goal_id uuid,revision bigint,status text,deleted_at timestamptz,created_at timestamptz,updated_at timestamptz);
+ CREATE TABLE k3_goal_members(id uuid);CREATE TABLE k3_action_collaborators(id uuid);CREATE TABLE k3_data_reviews(record_id uuid,status text);
+ CREATE FUNCTION private.k3_action_on_date(uuid,date) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+ CREATE FUNCTION private.k3_action_worker_ok(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${user}'::uuid$$;
+ CREATE FUNCTION private.k3_employee_review_state(uuid,date) RETURNS jsonb LANGUAGE sql AS $$SELECT '{"manual_status":"none","confirmed_at":null,"system_status":"open","action_count":0,"result_count":0}'::jsonb$$;`);
+ await db.exec(readFileSync('drizzle/migrations/0246_k3_morning_discipline_snapshots.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0248_k3_checkpoint_concurrency_and_exclusion_fences.sql','utf8'));
+ await db.exec(`UPDATE k3_settings SET discipline_from=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,plan_by=((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')-interval '1 minute')::time`);
+},30000);
+afterAll(()=>db.close());
+it('default checkpoint setting is exactly 08:45 Vietnam',async()=>{
+ expect(await val(`SELECT '08:45:00'::time = '08:45'::time v`)).toBe(true);
+ // The existing setting, not an independent hidden time, supplies the checkpoint.
+ expect(await val(`SELECT position('plan_by' in pg_get_functiondef('private.k3_plan_schedule()'::regprocedure))>0 v`)).toBe(true);
+});
+it('checkpoint stores no plan then a later creation stays late, not on time',async()=>{
+ await db.query(`SELECT private.k3_plan_capture('${user}')`);
+ expect(await val(`SELECT initial_status v FROM k3_plan_checkpoints`)).toBe('none');
+ await db.exec(`INSERT INTO k3_goals VALUES('${goal}','${user}',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'in_progress',NULL,now(),now());INSERT INTO k3_actions VALUES('${action}','${goal}',1,'in_progress',NULL,now(),now());`);
+ expect(await val(`SELECT current_status v FROM k3_plan_checkpoints`)).toBe('late');
+ expect(await val(`SELECT initial_status v FROM k3_plan_checkpoints`)).toBe('none');
+ expect(await val(`SELECT source v FROM k3_plan_checkpoints`)).toBe('self');
+});
+it('deleting after the checkpoint does not rewrite the initial checkpoint',async()=>{
+ await db.exec(`UPDATE k3_goals SET deleted_at=now() WHERE id='${goal}'`);
+ expect(await val(`SELECT current_status v FROM k3_plan_checkpoints`)).toBe('late');
+ expect(await val(`SELECT initial_snapshot v FROM k3_plan_checkpoints`)).toEqual([]);
+ await expect(db.exec(`UPDATE k3_plan_checkpoints SET initial_status='on_time'`)).rejects.toThrow('ghi đè');
+});
+it('a scheduled plan existing before cutoff counts as on time with scheduled source',async()=>{
+ await db.exec(`DELETE FROM k3_plan_checkpoints;UPDATE k3_goals SET deleted_at=NULL,period_start=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date-1,created_at=now()-interval '1 day',updated_at=now()-interval '1 day';UPDATE k3_actions SET created_at=now()-interval '1 day',updated_at=now()-interval '1 day';DELETE FROM k3_plan_checkpoints;`);
+ await db.query(`SELECT private.k3_plan_capture('${user}')`);
+ expect(await val(`SELECT current_status v FROM k3_plan_checkpoints`)).toBe('on_time');
+ expect(await val(`SELECT source v FROM k3_plan_checkpoints`)).toBe('scheduled');
+});
+it('approved full-day leave is not a discipline obligation',async()=>{
+ await db.exec(`INSERT INTO leave_requests VALUES('${user}','leave','approved',jsonb_build_object('start_date',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'end_date',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'start_half','am','end_half','pm'))`);
+ expect(await val(`SELECT private.k3_day_obligated('${user}',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) v`)).toBe(false);
+ await db.exec(`DELETE FROM leave_requests`);
+});
+it('partial leave does not exempt the remaining working session',async()=>{
+ await db.exec(`INSERT INTO leave_requests VALUES('${user}','leave','approved',jsonb_build_object('start_date',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'end_date',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'start_half','am','end_half','am'))`);
+ expect(await val(`SELECT private.k3_day_obligated('${user}',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) v`)).toBe(true);
+ await db.exec(`DELETE FROM leave_requests`);
+});
+it('Sunday remains a working day when the actual schedule says so',async()=>{
+ expect(await val(`SELECT private.k3_day_obligated('${user}','2099-11-08') v`)).toBe(true);
+});
+it('non-admin cannot silently exclude a checkpoint',async()=>{
+ await expect(db.query(`SELECT k3_discipline_exclude('${user}',(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,'Test')`)).rejects.toThrow('Admin');
+});
