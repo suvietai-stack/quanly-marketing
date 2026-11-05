@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## 3K LINH HOẠT / KỶ LUẬT NGÀY — 05/11/2026
+- [ ] F1. Xóa cá nhân kể cả có kết quả/chốt; khôi phục 15 ngày, giữ vĩnh viễn lịch sử bảo vệ; không mở quyền xóa nhóm.
+- [ ] F2. Dấu mốc kế hoạch 08:45 cấu hình được, nguồn lộ trình/tự tạo và lịch/nghỉ phép; không hồi tố.
+- [ ] F3. Sửa sau chốt giữ snapshot/versions; tổng kết lại và thời gian xác nhận muộn thật.
+- [ ] F4. Theo dõi Ngày/Tuần/Tháng/Quý ưu tiên kỷ luật kế hoạch/tổng kết, mẫu số nghĩa vụ; Zalo snapshot không gửi trùng.
+- [ ] F5. Kiểm thử quy tắc/cơ cấu/history, kiểm tra UI desktop/mobile và báo giới hạn; chưa Publish/bật Zalo.
+
 ## HOTFIX 3K DATABASE / XÓA — 05/11/2026
 - [x] H1. 0244 áp dụng trên backend thật: creation_mode nullable; 18 legacy giữ NULL, 1 công việc mới lưu kiểu. Đã loại phụ thuộc kiểu tạo khỏi delete target ngày.
 - [x] H2. k3_draft_delete alias thao tác Xóa thống nhất; KF duy nhất chuyển sang cha; guard quyền/kết quả kể cả lưu trữ/versions/thực hiện/tổng kết/chốt, khóa KPI và recheck writer; không purge bản hủy. Detail một bước không lặp Xóa KF.
