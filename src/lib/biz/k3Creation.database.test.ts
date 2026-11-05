@@ -50,6 +50,7 @@ beforeAll(async () => {
   const creation = readFileSync('drizzle/migrations/0220_k3_configured_creation_and_date_preview.sql', 'utf8');
   await db.exec(creation.slice(0, creation.indexOf(" def:=pg_get_functiondef('public.k3_kpi_result_read")) + 'END $patch$;');
   await db.exec(readFileSync('drizzle/migrations/0231_k3_creation_timeline_personal_drafts.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0232_k3_atomic_timeline_write_and_personal_execution.sql', 'utf8'));
 }, 30000);
 
 afterAll(() => db.close());
