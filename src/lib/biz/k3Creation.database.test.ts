@@ -53,6 +53,10 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0232_k3_atomic_timeline_write_and_personal_execution.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0233_k3_trash_alias_and_retention_guards.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0234_k3_draft_purge_config_history_safety.sql', 'utf8'));
+  const evaluator = readFileSync('drizzle/migrations/0218_k3_shared_ten_mode_evaluator.sql','utf8');
+  await db.exec(evaluator.slice(0,evaluator.indexOf('CREATE FUNCTION private.k3_measure_rows')));
+  await db.exec(readFileSync('drizzle/migrations/0235_k3_authoritative_automatic_states.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0236_k3_valid_save_and_legacy_state_guards.sql','utf8'));
 }, 30000);
 
 afterAll(() => db.close());
@@ -133,4 +137,34 @@ it('expired draft purge removes children with config history without orphaning',
  await as(manager); await val('SELECT k3_purge_expired(100) v'); await as(staff);
  expect(await val(`SELECT count(*)::int v FROM k3_goals WHERE id='${r.goal_id}'`)).toBe(0);
  expect(await val(`SELECT count(*)::int v FROM k3_actions WHERE id='${a}'`)).toBe(0);
+});
+
+it('valid Basic save automatically starts at 09:00 and completes KG/KF together from KPI', async () => {
+ await as(staff); const r=await create(payload({start_time:'09:00',save_valid:true}));
+ const a=await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);
+ const k=await val<string>(`SELECT id v FROM k3_kpis WHERE action_id='${a}'`);
+ const state=(kind:string,id:string,time:string)=>val<Record<string,unknown>>(`SELECT private.k3_entity_state('${kind}','${id}','2026-11-05T${time}+07') v`);
+ expect(await state('goal',r.goal_id,'08:00')).toMatchObject({status:'not_started'});
+ expect(await state('action',a,'09:00')).toMatchObject({status:'in_progress',kpi_met:0});
+ expect(await state('action',a,'13:00')).toMatchObject({status:'in_progress',overdue:true,overdue_seconds:7200});
+ await db.exec(`INSERT INTO k3_kpi_results(kpi_id,goal_id,action_id,user_id,work_date,value,updated_by,updated_at) VALUES('${k}','${r.goal_id}','${a}','${staff}','2026-11-05',1,'${staff}','2026-11-05T10:30+07')`);
+ expect(await state('action',a,'10:30')).toMatchObject({status:'done',overdue:false});
+ expect(await state('goal',r.goal_id,'11:00')).toMatchObject({status:'done',kf_done:1,kf_total:1});
+ await db.exec(`UPDATE k3_kpi_results SET value=0,updated_at='2026-11-05T10:40+07' WHERE kpi_id='${k}'`);
+ expect(await state('goal',r.goal_id,'11:00')).toMatchObject({status:'in_progress',kf_done:0});
+});
+it('legacy Done cannot force completion and ordinary status RPCs are blocked', async () => {
+ const r=await create(payload({save_valid:true}));
+ const a=await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${r.goal_id}'`);
+ await db.exec(`UPDATE k3_goals SET status='done' WHERE id='${r.goal_id}'; UPDATE k3_actions SET status='done' WHERE id='${a}'`);
+ expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T10:00+07')->>'status' v`)).toBe('in_progress');
+ await expect(val(`SELECT k3_goal_status('${r.goal_id}','done',NULL,1) v`)).rejects.toThrow('tự động');
+ await expect(val(`SELECT k3_action_status('${a}','in_progress',NULL,NULL,NULL,1) v`)).rejects.toThrow('tự động');
+});
+it('date-only deadline is end of Vietnam day and drafts remain excluded',async()=>{
+ const r=await create(payload({start_time:'',due_time:''}));
+ expect(await val(`SELECT private.k3_entity_state('goal','${r.goal_id}','2026-11-05T13:00+07')->>'status' v`)).toBe('draft');
+ await val(`SELECT k3_goal_activate('${r.goal_id}',1) v`);
+ expect(await val(`SELECT private.k3_goal_overdue('${r.goal_id}','2026-11-05T23:59:59+07') v`)).toBe(false);
+ expect(await val(`SELECT private.k3_goal_overdue('${r.goal_id}','2026-11-06T00:00+07') v`)).toBe(true);
 });
