@@ -40,8 +40,9 @@ describe('Presentation-only navigation', () => {
     expect(new Set(destinations).size).toBe(destinations.length);
     expect(destinations).toHaveLength(30);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
+    const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
-      expect(routeSources.some(source => source.includes(`createFileRoute("${path}")`) || source.includes(`createFileRoute('${path}')`) || source.includes(`createFileRoute("${path}/")`) || source.includes(`createFileRoute('${path}/')`)), path).toBe(true);
+      expect(declaredPaths, path).toContain(path);
     }
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
