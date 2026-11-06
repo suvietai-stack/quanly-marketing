@@ -18,7 +18,7 @@ async def main():
     name=route.request.url.split('/')[-1];payload=route.request.post_data_json or {};result=[]
     print("RPC",name)
     if name=='k3_day_read':result={'day':None,'tasks':[],'summaries':[],'events':[],'assigned_actions':[],'active_goals':[]}
-    elif name=='k3_settings_read': result={'today':TODAY,'enabled':True,'can_use':True,'can_view_scope':True,'can_settings':False,'allow_team_goal':True,'summary_by':'18:00','max_focus':3}
+    elif name=='k3_settings_read': result={'today':TODAY,'enabled':True,'can_use':True,'can_view_scope':True,'can_settings':False,'allow_team_goal':True,'plan_by':'08:45','summary_by':'18:00','max_focus':3}
     elif name=='k3_kpi_day_read':result={'actions':actions}
     elif name=='k3_employee_review_read':result={'date':TODAY,'source_version':'v1','manual_status':'reviewed' if reviewed else 'none','system_status':'open','auto_close_time':'18:00','missing':1,'result_count':1,'action_count':2,'goal_count':2,'actions':[{**a,'assignee_name':'Sale','updated':i==0} for i,a in enumerate(actions)],'goal_kpis':[],'results':[],'history':[]}
     elif name=='k3_kpi_result_read':
