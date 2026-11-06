@@ -1,0 +1,1 @@
+DO $$ DECLARE d text; BEGIN SELECT pg_get_functiondef('public.crm_read(boolean,uuid,text,boolean)'::regprocedure) INTO d; d:=replace(d,'AND (NOT _mine OR c.owner_id=auth.uid())','AND (CASE WHEN _mine THEN c.owner_id=auth.uid() ELSE c.owner_id<>auth.uid() END)'); EXECUTE d; END $$;

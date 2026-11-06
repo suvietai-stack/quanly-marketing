@@ -1779,6 +1779,13 @@
       "when": 1793951375626,
       "tag": "0253_crm_atomic_initial_schedule_and_historical_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 254,
+      "version": "7",
+      "when": 1793951695310,
+      "tag": "0254_crm_monitoring_personal_separation",
+      "breakpoints": true
     }
   ]
 }
