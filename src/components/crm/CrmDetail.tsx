@@ -429,7 +429,7 @@ export function CrmDetail({
                     e.before_data?.due_at !== e.after_data?.due_at &&
                     Boolean(e.before_data?.due_at) && (
                       <p>
-                        Ngày cũ: {formatDate(String(e.before_data.due_at))} →{" "}
+                        Ngày cũ: {formatDate(String(e.before_data?.due_at))} →{" "}
                         {formatDate(String(e.after_data?.due_at))}
                       </p>
                     )}
