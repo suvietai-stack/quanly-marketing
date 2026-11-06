@@ -39,7 +39,7 @@ async def main():
    await dialog.get_by_role('button',name='Lưu thay đổi',exact=True).click();await expect(dialog.get_by_role('alert')).to_be_visible()
    await expect(dialog.get_by_label('Mức độ tiềm năng',exact=True)).to_have_value('high')
    await dialog.get_by_role('button',name='Lưu thay đổi',exact=True).click();await expect(dialog).not_to_be_visible()
-   await expect(page.get_by_text('🔥 Cao',exact=True).first).to_be_visible()
+   await expect(page.get_by_role('dialog').get_by_text('🔥 Cao',exact=True).first).to_be_visible()
    assert writes[0]['_request_id']==writes[1]['_request_id']
    assert writes[1]['_labels']==[x['id'] for x in labels]
    await page.get_by_role('dialog').get_by_role('button',name='Close',exact=True).click()
