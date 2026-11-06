@@ -115,19 +115,19 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        {!compact && <Input placeholder="Tìm công việc…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-56" />}
+        {!compact && <Input placeholder="Tìm công việc…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full md:w-56" />}
         {!compact && variant === 'personal' && (
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full md:w-52"><SelectValue /></SelectTrigger>
             <SelectContent>
               {FILTERS.filter((f) => !f.scope).map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
         {variant === 'collab' && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex min-w-0 max-w-full overflow-x-auto gap-1 md:flex-wrap">
             {COLLAB_FILTERS.map((f) => (
-              <Button key={f.value} type="button" size="sm" variant={sub === f.value ? 'default' : 'outline'} onClick={() => setSub(f.value)}>{f.label}</Button>
+              <Button key={f.value} type="button" className="shrink-0 max-md:min-h-11" size="sm" variant={sub === f.value ? 'default' : 'outline'} onClick={() => setSub(f.value)}>{f.label}</Button>
             ))}
           </div>
         )}
@@ -156,7 +156,7 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
         {shown.map((g) => (
           <button key={g.id} type="button" onClick={() => setSelected(g.id)}
             className="w-full rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/50">
-            <div className="flex items-start gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 md:flex">
               <div className="min-w-0 flex-1">
                 <p className="break-words font-medium leading-snug">
                   {g.is_key && <Star className="mr-1 inline h-4 w-4 fill-primary text-primary" />}
@@ -211,7 +211,7 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+      <DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>{goal ? 'Sửa mục tiêu KG' : 'Tạo mục tiêu KG'}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
@@ -257,7 +257,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+      <SheetContent className="k3-mobile-sheet w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader><SheetTitle className="pr-6">{g?.name ?? 'Mục tiêu KG'}</SheetTitle></SheetHeader>
         {isLoading && <p className="py-6 text-center text-sm text-muted-foreground"><Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Đang tải…</p>}
         {error && (
@@ -321,7 +321,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
               </div>
             )}
 
-            <div className="flex gap-1 border-b border-border">
+            <div className="flex min-w-0 overflow-x-auto gap-1 border-b border-border">
               {([['kf', 'Hành động KF'], ['log', 'Nhật ký thực thi'], ['history', 'Hoạt động']] as const).map(([v, l]) => (
                 <Button key={v} variant={tab === v ? 'default' : 'ghost'} size="sm" onClick={() => setTab(v)}>{l}</Button>
               ))}
@@ -335,7 +335,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                 {data.actions.length === 0 && <p className="text-sm text-muted-foreground">Chưa có hành động KF. Công việc cần ít nhất một KF và KPI hợp lệ.</p>}
                 {data.actions.map((a) => (
                   <div key={a.action.id} className="space-y-2 rounded-lg border border-border bg-card p-3">
-                    <div className="flex items-start gap-2">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 md:flex">
                       <div className="min-w-0 flex-1">
                         <p className="break-words font-medium leading-snug">
                           {a.action.is_key && <Star className="mr-1 inline h-3.5 w-3.5 fill-primary text-primary" />}
@@ -410,7 +410,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
         {data && kpiFor && <KpiDialog goalId={kpiFor.goalId} actionId={kpiFor.actionId} onClose={() => setKpiFor(null)} />}
         {inviting && g && (
           <Dialog open onOpenChange={(o) => !o && setInviting(false)}>
-            <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+            <DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto">
               <DialogHeader><DialogTitle>Mời thành viên tham gia KG</DialogTitle></DialogHeader>
               <p className="text-xs text-muted-foreground">Người được mời cần Chấp nhận trước khi trở thành thành viên và được phân công KF.</p>
               <MemberPicker selected={invitees} onChange={setInvitees} exclude={[g.owner_id, ...(data?.members.filter((m) => m.status === 'accepted' || m.status === 'invited').map((m) => m.user_id) ?? [])]} />
@@ -496,7 +496,7 @@ function ActionDialog({ goal, members, action, onClose }: { goal: K3GoalDetail['
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+      <DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>{action ? 'Sửa hành động KF' : 'Thêm hành động KF'}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
@@ -554,7 +554,7 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+      <DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>Thêm KPI {actionId ? 'thực thi KF' : 'kết quả KG'}</DialogTitle></DialogHeader>
         <Biz3KKpiConfig value={f} onChange={setF} />
         <DialogFooter>
