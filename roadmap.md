@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## KHUNG MOBILE CỐ ĐỊNH TOÀN BASE — 06/11/2026
+- [ ] S1. Header/nav dưới cố định chung mọi trang đã đăng nhập; tên trang, quay lại nội bộ an toàn và tab đang chọn.
+- [ ] S2. Nội dung một vùng cuộn, safe-area/bàn phím, tránh xung đột nút cố định/modal; desktop và deep link giữ nguyên.
+- [ ] S3. Kiểm thử khung thật trong harness, luồng Launcher→khu vực→module và nghiệm thu tài khoản thật nếu có phiên; chưa Publish.
+
 ## TRANG CHỦ MOBILE APP LAUNCHER — 06/11/2026
 - [x] L1. Cùng visibleNavigation với Sidebar; trang chủ mobile, màn hình khu vực qua root search, tìm kiếm chỉ chức năng đúng quyền.
 - [x] L2. Ghim/bỏ ghim/sắp xếp theo tài khoản trên thiết bị; sáu ghim + Xem thêm; thanh dưới nối Task/chuông/hồ sơ thật, giữ deep link/desktop, không đổi backend.
