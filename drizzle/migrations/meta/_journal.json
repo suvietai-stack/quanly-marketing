@@ -1772,6 +1772,13 @@
       "when": 1793951317901,
       "tag": "0252_crm_history_fences_export_and_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 253,
+      "version": "7",
+      "when": 1793951375626,
+      "tag": "0253_crm_atomic_initial_schedule_and_historical_scope",
+      "breakpoints": true
     }
   ]
 }

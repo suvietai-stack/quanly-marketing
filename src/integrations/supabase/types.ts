@@ -8769,6 +8769,7 @@ export type Database = {
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
       content_notify_save: { Args: { _data: Json }; Returns: undefined }
       content_remind_run: { Args: never; Returns: number }
+      crm_access_list: { Args: never; Returns: Json }
       crm_access_save: { Args: { _data: Json }; Returns: string }
       crm_can: {
         Args: { _actor: string; _permission: string }
