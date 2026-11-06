@@ -160,6 +160,20 @@
 .launcher-tone-reward { --launcher-ink: var(--chipi-orange); }
 .launcher-tone-muted { --launcher-ink: var(--muted-foreground); }
 .mobile-bottom-nav { padding-bottom: max(8px,env(safe-area-inset-bottom)); }
+.mobile-app-header { padding-top: env(safe-area-inset-top); }
+.mobile-header-notifications > button { min-width: 44px; min-height: 44px; }
+@media (max-width: 767px) {
+  .base-app-shell { --mobile-header-height: 64px; --mobile-nav-height: calc(72px + env(safe-area-inset-bottom)); min-height: 100dvh; }
+  .base-app-content { padding-top: calc(var(--mobile-header-height) + 24px); padding-bottom: calc(var(--mobile-nav-height) + 24px); }
+  .base-app-content :is(input,textarea,select,button,[tabindex]) { scroll-margin-top: calc(var(--mobile-header-height) + 12px); scroll-margin-bottom: calc(var(--mobile-nav-height) + 24px); }
+  .base-app-content .fixed.bottom-0 { bottom: var(--mobile-nav-height); }
+  .base-app-content .fixed.bottom-4 { bottom: calc(var(--mobile-nav-height) + 16px); }
+  .base-app-content:has(.fixed.bottom-0) { padding-bottom: calc(var(--mobile-nav-height) + 120px); }
+  .base-app-content .sticky.top-14 { top: var(--mobile-header-height); }
+  .base-app-content .sticky.bottom-0 { bottom: var(--mobile-nav-height); }
+  .base-app-shell:has(.mobile-keyboard-open) { --mobile-nav-height: 0px; }
+  .mobile-bottom-nav.mobile-keyboard-open { display: none; }
+}
 @media (max-width: 359px) { .launcher-app-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 .login-page::before {
   content: "";

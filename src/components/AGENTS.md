@@ -1,2 +1,3 @@
 # Navigation architecture
 - Mobile Launcher and desktop Sidebar consume the same visibleNavigation output. Root search selects area/dashboard; user-keyed local pins store only route preferences and are revalidated against live visibility. This preserves permissions, deep links and business data without a second catalog.
+- Authenticated AppShell owns one persistent MobileAppChrome for all routes; document scrolling uses measured safe-area chrome offsets, and back navigation accepts only history entries observed by this mounted user shell — avoids external/login back targets and duplicate module layouts.
