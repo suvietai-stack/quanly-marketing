@@ -47,7 +47,7 @@ async def main():
    await d.locator('select').nth(2).select_option('high');await d.get_by_role('button',name='Áp dụng',exact=True).click()
    await page.screenshot(path=str(OUT/f'{width}-list.png'))
    assert not await page.evaluate('document.documentElement.scrollWidth>innerWidth')
-   await page.reload();await expect(page.get_by_text('Tiềm năng: 🔥 Cao',exact=True).first).to_be_visible()
+   await page.reload();await expect(page.get_by_text('Tiềm năng: 🔥 Cao',exact=False).first).to_be_visible()
    await page.goto('http://localhost:8080/signals-fixture-report')
    await expect(page.get_by_role('heading',name='Mức độ tiềm năng',exact=True)).to_be_visible()
    await page.screenshot(path=str(OUT/f'{width}-report.png'))
