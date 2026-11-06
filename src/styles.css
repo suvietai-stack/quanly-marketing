@@ -151,7 +151,7 @@
 .k3-mobile :is(h1,h2,h3), .k3-mobile-dialog :is(h1,h2,h3) { letter-spacing: 0; }
 @media (max-width: 767px) {
   .k3-mobile { overflow-wrap: anywhere; }
-  .k3-mobile-dialog { top: 0; left: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; transform: none; translate: none; border-radius: 0; padding: max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); align-content: start; overflow-y: auto; overscroll-behavior: contain; }
+  .k3-mobile-dialog { top: 0; left: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; transform: none; translate: 0 0 !important; border-radius: 0; padding: max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); align-content: start; overflow-y: auto; overscroll-behavior: contain; }
   .k3-mobile-dialog :is(input,textarea,select,[role="combobox"]) { min-width: 0; max-width: 100%; font-size: 16px; }
   .k3-mobile-dialog input { min-height: 44px; }
   .k3-mobile-dialog :is(h2,h3) { line-height: 1.4; padding-right: 24px; overflow-wrap: anywhere; }
