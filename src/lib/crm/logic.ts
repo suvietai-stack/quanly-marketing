@@ -50,7 +50,10 @@ export function customerSubset(data: ReportData, kind: string, catalogs: Catalog
     const pending = own.filter((s) => s.status === "pending");
     if (kind === "scheduled") return pending.length > 0;
     if (kind === "unscheduled") return pending.length === 0;
-    if (kind === "overdue") return pending.some((s) => s.original_due_at < data.as_of);
+    if (kind === "overdue") return pending.some((s) => Date.parse(s.original_due_at) < Date.parse(data.as_of));
+    if (kind === 'on-time') return own.some(s=>Date.parse(s.original_due_at)>=Date.parse(`${data.start}T00:00:00+07:00`) && Date.parse(s.original_due_at)<Date.parse(data.as_of) && s.completed_at && Date.parse(s.completed_at)<=Date.parse(s.original_due_at));
+    if (kind === 'untouched' || kind==='priority-untouched') return !data.interactions.some(i=>i.customer_id===c.id && i.completed) && (kind==='untouched' || catalogs.some(x=>x.id===c.priority_id && x.config.key_customer===true));
+    if (kind==='long-untouched') return !!c.last_care_at && Date.parse(data.as_of)-Date.parse(c.last_care_at)>30*86400000;
     if (kind === "priority")
       return catalogs.some((x) => x.id === c.priority_id && x.config.key_customer === true);
     return true;

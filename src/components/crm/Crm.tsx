@@ -18,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pick, Field } from "./CrmControls";
+import { Pick, Field, SearchPick } from "./CrmControls";
+import { segmentOptions } from '@/lib/crm/classification';
 import { CrmModal, CustomerForm, InteractionForm } from "./CrmForms";
 import { CrmDetail } from "./CrmDetail";
 import { CrmReports } from "./CrmReports";
@@ -32,6 +33,7 @@ export function Crm() {
   const [owner, setOwner] = useState("");
   const [filter, setFilter] = useState("all");
   const [group, setGroup] = useState("");
+  const [segment,setSegment]=useState('');
   const [priority, setPriority] = useState("");
   const [archived, setArchived] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -70,7 +72,7 @@ export function Crm() {
         (filter === "done" && !!s.processed_at),
     );
   const customers = (data?.customers || []).filter(
-    (c) => (!group || c.group_id === group) && (!priority || c.priority_id === priority),
+    (c) => (!group || c.group_id === group) && (!segment || c.segment_id===segment) && (!priority || c.priority_id === priority),
   );
   return (
     <div className="crm-module space-y-5 pb-5">
@@ -327,13 +329,14 @@ export function Crm() {
       {filterOpen && (
         <CrmModal title="Bộ lọc khách hàng" onClose={() => setFilterOpen(false)}>
           <Field label="Nhóm khách">
-            <Pick
+            <SearchPick
               label="Tất cả nhóm khách"
               value={group}
-              onChange={setGroup}
-              options={cats.filter((c) => c.kind === "group")}
+              onChange={v=>{setGroup(v);setSegment('');}}
+              options={cats.filter((c) => c.kind === "group").map(c=>({code:c.id,name:c.name}))}
             />
           </Field>
+          <Field label="Tệp khách"><SearchPick label="Tất cả tệp khách" value={segment} onChange={setSegment} options={(group?segmentOptions(cats,group):cats.filter(c=>c.kind==='segment')).map(c=>({code:c.id,name:c.name}))}/></Field>
           <Field label="Mức độ ưu tiên">
             <Pick
               label="Tất cả mức ưu tiên"
@@ -356,6 +359,7 @@ export function Crm() {
               variant="outline"
               onClick={() => {
                 setGroup("");
+                setSegment('');
                 setPriority("");
                 setArchived(false);
               }}

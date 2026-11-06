@@ -59,7 +59,7 @@ export const crmReportQuery = (
   queryOptions({
     queryKey: ["crm_report", uid, start, end, mine, filters],
     queryFn: () =>
-      crmRpc<ReportData>("crm_report", {
+      crmRpc<ReportData>("crm_report_filtered", {
         _start: start,
         _end: end,
         _mine: mine,
@@ -69,6 +69,9 @@ export const crmReportQuery = (
         _department: filters.department || null,
         _system: filters.system || null,
         _team: filters.team || null,
+        _segment: filters.segment || null,
+        _priority: filters.priority || null,
+        _relationship: filters.relationship || null,
       }),
   });
 export function useCrmMutation(fn: string) {

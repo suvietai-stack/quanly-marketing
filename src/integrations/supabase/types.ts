@@ -8882,6 +8882,8 @@ export type Database = {
         Args: { _actor: string; _permission: string }
         Returns: boolean
       }
+      crm_catalog_counts: { Args: never; Returns: Json }
+      crm_catalog_reorder: { Args: { _data: Json }; Returns: undefined }
       crm_catalog_save: { Args: { _data: Json }; Returns: string }
       crm_contact_save: { Args: { _data: Json }; Returns: string }
       crm_customer_action: {
@@ -8946,6 +8948,24 @@ export type Database = {
           _mine?: boolean
           _owner?: string
           _province?: string
+          _start: string
+          _system?: string
+          _team?: string
+        }
+        Returns: Json
+      }
+      crm_report_filtered: {
+        Args: {
+          _department?: string
+          _end: string
+          _export?: boolean
+          _group?: string
+          _mine?: boolean
+          _owner?: string
+          _priority?: string
+          _province?: string
+          _relationship?: string
+          _segment?: string
           _start: string
           _system?: string
           _team?: string

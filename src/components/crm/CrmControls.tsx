@@ -108,7 +108,7 @@ export function SearchPick({
                     setOpen(false);
                   }}
                 >
-                  {o.name}
+                  <span className="min-w-0 whitespace-normal break-words">{o.name}</span>
                   {o.code === value && <Check className="ml-auto h-4 w-4" />}
                 </CommandItem>
               ))}

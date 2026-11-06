@@ -34,6 +34,7 @@ export interface Customer {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  last_care_at?: string | null;
 }
 export interface Contact {
   id: string;
@@ -172,5 +173,6 @@ export const KINDS: Record<string, string> = {
   contact_role: "Vai trò liên hệ",
   channel: "Kênh bán hàng",
   cooperation: "Hình thức hợp tác",
+  output: "Khách đầu ra",
   occasion: "Dịp mua hàng",
 };

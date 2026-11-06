@@ -20,6 +20,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { CrmModal } from "./CrmForms";
 import { Field, Pick, SearchPick } from "./CrmControls";
 import locations from "@/lib/crm/locations.json";
+import { CrmStructureReport } from './CrmStructureReport';
+import { segmentOptions } from '@/lib/crm/classification';
 const config = {
   count: { label: "Khách hàng", color: "var(--primary)" },
   connected: { label: "Đã kết nối", color: "var(--success)" },
@@ -39,18 +41,20 @@ export function CrmReports({
   const { can } = useCurrentUser();
   const [period, setPeriod] = useState("month");
   const [date, setDate] = useState(vnDay());
+  const [customStart,setCustomStart]=useState(vnDay());
+  const [customEnd,setCustomEnd]=useState(vnDay());
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [detail, setDetail] = useState("");
   const [dimension, setDimension] = useState("group_id");
   const people = useQuery(crmPeopleQuery(uid));
-  const [start, end] = periodRange(period, date);
+  const [start, end] = period==='custom'?[customStart,customEnd]:periodRange(period, date);
   const q = useQuery(crmReportQuery(uid, start, end, mine, filters));
   const [ps, pe] = previousRange(start, end);
   const previous = useQuery(crmReportQuery(uid, ps, pe, mine, filters));
   const data = q.data;
   const ratios = data ? reportRatios(data.totals) : null;
-  const filter = (k: string, v: string) => setFilters((f) => ({ ...f, [k]: v }));
+  const filter = (k: string, v: string) => setFilters((f) => ({ ...f, [k]: v, ...(k==='group'?{segment:''}:{}) }));
   const distribution = data
     ? Array.from(
         new Set(data.customers.map((c) => String(c[dimension as keyof typeof c] || "none"))),
@@ -93,16 +97,17 @@ export function CrmReports({
               { id: "month", name: "Tháng" },
               { id: "quarter", name: "Quý" },
               { id: "year", name: "Năm" },
+              { id: "custom", name: "Khoảng ngày" },
             ]}
           />
         </div>
-        <Input
+        {period==='custom'?<><Input aria-label="Từ ngày" type="date" className="w-auto max-w-full" value={customStart} onChange={e=>setCustomStart(e.target.value)}/><Input aria-label="Đến ngày" type="date" className="w-auto max-w-full" value={customEnd} onChange={e=>setCustomEnd(e.target.value)}/></>:<Input
           aria-label="Ngày báo cáo"
           type="date"
           className="w-auto max-w-full"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-        />
+        />}
         <Button variant="outline" onClick={() => setFilterOpen(true)}>
           <SlidersHorizontal className="h-4 w-4" />
           Bộ lọc
@@ -114,7 +119,7 @@ export function CrmReports({
             onClick={async () => {
               if (!data) return;
               try {
-                const exported = await crmRpc<ReportData>("crm_export", {
+                const exported = await crmRpc<ReportData>("crm_report_filtered", {
                   _start: start,
                   _end: end,
                   _mine: mine,
@@ -124,6 +129,10 @@ export function CrmReports({
                   _department: filters.department || null,
                   _system: filters.system || null,
                   _team: filters.team || null,
+                  _segment: filters.segment || null,
+                  _priority: filters.priority || null,
+                  _relationship: filters.relationship || null,
+                  _export: true,
                 });
                 const r = await import("xlsx");
                 const sheet = r.utils.json_to_sheet(
@@ -132,6 +141,7 @@ export function CrmReports({
                     "Khách hàng": c.name,
                     "Điện thoại": c.phone,
                     Nhóm: catalogs.find((x) => x.id === c.group_id)?.name || "",
+                    Tệp: catalogs.find((x)=>x.id===c.segment_id)?.name || 'Chưa phân loại tệp',
                     Sale: people.data?.find((x) => x.id === c.owner_id)?.name || "",
                   })),
                 );
@@ -167,11 +177,11 @@ export function CrmReports({
               ["customers", "Tổng khách duy nhất", "all"],
               ["new_customers", "Khách mới trong kỳ", "new"],
               ["priority_customers", "Khách trọng điểm", "priority"],
-              ["scheduled_customers", "Khách có lịch", "scheduled"],
-              ["due", "Lịch đến hạn", "due"],
-              ["processed", "Lịch đã xử lý", "processed"],
-              ["overdue", "Lịch quá hạn", "overdue"],
-              ["attempts", "Lượt thử liên hệ", "attempts"],
+              ["cooperating_customers", "Đang hợp tác", "cooperating"],
+              ["unclassified_customers", "Chưa phân loại tệp", "unclassified"],
+              ["scheduled_ratio", "Tỷ lệ có lịch", "scheduled"],
+              ["on_time_ratio", "Chăm sóc đúng hạn", "on-time"],
+              ["overdue_customers", "Khách có lịch quá hạn", "overdue"],
             ].map(([k, label, mode]) => (
               <Button
                 key={k}
@@ -180,8 +190,8 @@ export function CrmReports({
                 onClick={() => setDetail(mode)}
               >
                 <span className="text-xs text-muted-foreground">{label}</span>
-                <strong className="text-2xl">{data.totals[k]}</strong>
-                {previous.data && (
+                <strong className={k.endsWith('_ratio')?'text-base':'text-2xl'}>{k==='scheduled_ratio'?formatRatio(ratios.scheduled):k==='on_time_ratio'?formatRatio(ratios.on_time):data.totals[k]??0}</strong>
+                {previous.data && !k.endsWith('_ratio') && (
                   <span className="text-[11px] text-muted-foreground">
                     Kỳ trước: {previous.data.totals[k]}
                   </span>
@@ -205,6 +215,7 @@ export function CrmReports({
               </div>
             ))}
           </div>
+          <CrmStructureReport data={data} catalogs={catalogs} group={filters.group||''} onDetail={setDetail}/>
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-semibold">Cơ cấu khách hàng</h3>
@@ -214,7 +225,7 @@ export function CrmReports({
                   value={dimension}
                   onChange={setDimension}
                   options={[
-                    { id: "group_id", name: "Mảng kinh doanh" },
+                    { id: "group_id", name: "Nhóm khách" },
                     { id: "segment_id", name: "Tệp khách" },
                     { id: "priority_id", name: "Mức độ ưu tiên" },
                     { id: "relationship_id", name: "Tình trạng hợp tác" },
@@ -225,7 +236,7 @@ export function CrmReports({
               </div>
             </div>
             {distribution.length ? (
-              <ChartContainer config={config} className="h-64 w-full">
+              <ChartContainer config={config} className="aspect-auto min-w-0 h-64 w-full">
                 <BarChart data={distribution}>
                   <CartesianGrid vertical={false} />
                   <XAxis
@@ -251,7 +262,7 @@ export function CrmReports({
           <section className="space-y-3">
             <h3 className="font-semibold">Hoạt động chăm sóc</h3>
             {trend.length ? (
-              <ChartContainer config={config} className="h-64 w-full">
+              <ChartContainer config={config} className="aspect-auto min-w-0 h-64 w-full">
                 <LineChart data={trend}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="day" tickFormatter={(v) => String(v).slice(5)} />
@@ -353,13 +364,15 @@ export function CrmReports({
             </>
           )}
           <Field label="Nhóm khách">
-            <Pick
+            <SearchPick
               label="Tất cả nhóm"
               value={filters.group || ""}
               onChange={(v) => filter("group", v)}
-              options={catalogs.filter((c) => c.kind === "group")}
+              options={catalogs.filter((c) => c.kind === "group").map(c=>({code:c.id,name:c.name}))}
             />
           </Field>
+          <Field label="Tệp khách"><SearchPick label="Tất cả tệp khách" value={filters.segment||''} onChange={v=>filter('segment',v)} options={(filters.group?segmentOptions(catalogs,filters.group):catalogs.filter(c=>c.kind==='segment')).map(c=>({code:c.id,name:c.name}))}/></Field>
+          {([['priority','Mức độ ưu tiên'],['relationship','Tình trạng hợp tác']] as const).map(([kind,label])=><Field key={kind} label={label}><SearchPick label={`Tất cả ${label.toLowerCase()}`} value={filters[kind]||''} onChange={v=>filter(kind,v)} options={catalogs.filter(c=>c.kind===kind).map(c=>({code:c.id,name:c.name}))}/></Field>)}
           <Field label="Tỉnh / Thành phố">
             <SearchPick
               label="Tất cả tỉnh / thành phố"
@@ -469,6 +482,10 @@ function ReportDetails({
     customers = customers.filter(
       (c) => String(c[dimension as keyof typeof c] || "none") === kind.slice(4),
     );
+  if(kind==='unclassified') customers=customers.filter(c=>!c.segment_id);
+  if(kind==='cooperating') customers=customers.filter(c=>catalogs.some(x=>x.id===c.relationship_id && x.config.cooperating===true));
+  if(kind.startsWith('segment:') || kind.startsWith('segment-new:')) {customers=customers.filter(c=>(c.segment_id||'none')===kind.split(':')[1]);if(kind.startsWith('segment-new:'))customers=customers.filter(c=>Date.parse(c.created_at)>=Date.parse(`${data.start}T00:00:00+07:00`));}
+  if(kind.startsWith('care:')) {const [,mode,id]=kind.split(':');customers=customerSubset(data,mode,catalogs).filter(c=>(c.segment_id||'none')===id);}
   if (["due", "processed"].includes(kind)) {
     const ids = data.schedules
       .filter(

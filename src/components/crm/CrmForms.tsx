@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, Pick, SearchPick, MultiCatalog } from "./CrmControls";
 import { crmRpc, crmTemplatesQuery, useCrmMutation } from "@/lib/crm/queries";
 import { descendant, vnDay } from "@/lib/crm/logic";
+import { FEATURE_KINDS, featureInGroup, segmentOptions } from '@/lib/crm/classification';
 import {
   CHANNELS,
   type Catalog,
@@ -108,6 +109,7 @@ export function CustomerForm({
   const [confirmed, setConfirmed] = useState(false);
   const [discard, setDiscard] = useState(false);
   const key = useRef(crypto.randomUUID());
+  const [pendingGroup, setPendingGroup] = useState<string | null>(null);
   const lock = useRef(false);
   const save = useCrmMutation("crm_customer_save");
   const value = (k: string) => String(data[k] ?? "");
@@ -194,26 +196,26 @@ export function CustomerForm({
           </details>
         )}
         <Field label="Nhóm khách">
-          <Pick
+          <SearchPick
             label="Chọn nhóm khách"
             value={value("group_id")}
             onChange={(v) => {
+              if (customer && value('segment_id') && !descendant(value('segment_id'),v,catalogs)) {setPendingGroup(v);return;}
               set("group_id", v);
-              set("segment_id", "");
+              if(value('segment_id') && !descendant(value('segment_id'),v,catalogs)) set("segment_id", "");
             }}
-            options={items("group")}
+            options={items("group").map(c=>({code:c.id,name:c.name+(c.active?'':' (Đã ngừng)')}))}
           />
         </Field>
         <Field label="Tệp khách">
-          <Pick
+          <SearchPick
             label="Chọn tệp khách"
             value={value("segment_id")}
             onChange={(v) => set("segment_id", v)}
-            options={items("segment").filter(
-              (c) => !value("group_id") || descendant(c.id, value("group_id"), catalogs),
-            )}
+            options={segmentOptions(catalogs,value('group_id'),value('segment_id'),true).map(c=>({code:c.id,name:c.name+(c.active?'':' (Đã ngừng)')}))}
           />
         </Field>
+        {Object.entries(FEATURE_KINDS).map(([kind,label])=>{const selected=data.related_ids as string[];const options=catalogs.filter(c=>c.kind===kind && ((c.active && featureInGroup(c,value('group_id'))) || selected.includes(c.id)));return options.length?<MultiCatalog key={kind} label={label} items={options} value={selected.filter(id=>options.some(c=>c.id===id))} onChange={ids=>set('related_ids',[...selected.filter(id=>!options.some(c=>c.id===id)),...ids])}/>:null;})}
         <Field label="Tỉnh / Thành phố">
           <SearchPick
             label="Chọn tỉnh / thành phố"
@@ -269,23 +271,7 @@ export function CustomerForm({
                 />
               </Field>
             ))}
-            <MultiCatalog
-              label="Đặc điểm / Mảng liên quan / Nhu cầu"
-              items={catalogs.filter(
-                (c) =>
-                  [
-                    "trait",
-                    "product",
-                    "need",
-                    "group",
-                    "channel",
-                    "cooperation",
-                    "occasion",
-                  ].includes(c.kind) && c.active,
-              )}
-              value={data.related_ids as string[]}
-              onChange={(v) => set("related_ids", v)}
-            />
+            <MultiCatalog label="Mảng liên quan / Dịp mua hàng" items={catalogs.filter(c=>['group','occasion'].includes(c.kind) && (c.active || (data.related_ids as string[]).includes(c.id)))} value={(data.related_ids as string[]).filter(id=>catalogs.some(c=>c.id===id && ['group','occasion'].includes(c.kind)))} onChange={ids=>set('related_ids',[...(data.related_ids as string[]).filter(id=>!catalogs.some(c=>c.id===id && ['group','occasion'].includes(c.kind))),...ids])}/>
             {value("group_id") && (
               <details>
                 <summary className="cursor-pointer text-sm font-medium">
@@ -376,6 +362,7 @@ export function CustomerForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={pendingGroup!==null} onOpenChange={open=>{if(!open)setPendingGroup(null);}}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Đổi Nhóm khách?</AlertDialogTitle><AlertDialogDescription>Tệp khách hiện tại không thuộc nhóm mới và sẽ được bỏ chọn. Các thông tin khác được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Giữ nhóm hiện tại</AlertDialogCancel><AlertDialogAction onClick={()=>{if(pendingGroup===null)return;set('group_id',pendingGroup);set('segment_id','');setPendingGroup(null);}}>Đổi nhóm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </CrmModal>
   );
 }
