@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TÍN HIỆU CƠ HỘI & MOBILE — 06/11/2026
+- [ ] SIG1. Tiềm năng độc lập, nhãn chung/cá nhân có ID ổn định và lịch theo dõi thật; ghi có quyền/lịch sử/chống trùng, giữ dữ liệu cũ.
+- [ ] SIG2. Danh sách thẻ mobile, quick filters và bottom sheet áp dụng/xóa/giữ bộ lọc, sắp xếp ưu tiên theo lịch; shell dùng chung.
+- [ ] SIG3. Chi tiết/tạo/sửa/chuyển trạng thái/cập nhật nhanh/nhãn/lịch mobile; không bỏ kiểm tra quy trình hoặc ghi liên hệ từ nút gọi.
+- [ ] SIG4. Báo cáo tiềm năng/giai đoạn/xu hướng/quá hạn, tỷ lệ chốt theo bộ lọc không trùng, quyền backend hiện hành.
+- [ ] SIG5. Hồi quy nghiệp vụ/quyền/lịch sử/tích hợp và mobile; nghiệm thu phiên thật cần đăng nhập Preview, chưa Publish.
+
 ## CRM KHÁCH HÀNG — 06/11/2026
 - [x] CRM1a. Nền tảng riêng CRM, quyền bổ nhiệm/phạm vi, danh mục tùy chỉnh và kiểm thử backend cách ly.
 - [x] CRM2a. Hồ sơ tổ chức/cá nhân, liên hệ/địa điểm, chống trùng, lịch sử/bàn giao, file riêng tư và giao diện.
