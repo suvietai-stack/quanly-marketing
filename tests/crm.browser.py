@@ -39,6 +39,7 @@ async def main():
    await dialog.get_by_role('combobox',name='Chọn tỉnh / thành phố',exact=True).click()
    await page.get_by_placeholder('Tìm chọn tỉnh / thành phố').fill('Hà Nội')
    await page.get_by_role('option',name='Thành phố Hà Nội',exact=True).click()
+   await page.wait_for_timeout(400)
    await page.screenshot(path=str(OUT/f'{width}-create.png'))
    await dialog.get_by_role('button',name='Lưu khách hàng',exact=True).click()
    await expect(dialog.get_by_role('alert')).to_be_visible()
