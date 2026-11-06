@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { navigationGroups, visibleNavigation, activeNavigationPath, type NavigationAccess } from './navigation';
 
 const access = (permissions: string[] = [], extra: Partial<NavigationAccess> = {}): NavigationAccess => ({ can: p => permissions.includes(p), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0, ...extra });
@@ -39,9 +39,9 @@ describe('Presentation-only navigation', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
     expect(destinations).toHaveLength(30);
+    const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     for (const path of destinations) {
-      const base = `src/routes/${path === '/' ? 'index' : path.slice(1).replaceAll('/','.')}`;
-      expect(existsSync(`${base}.tsx`) || existsSync(`${base}.index.tsx`), path).toBe(true);
+      expect(routeSources.some(source => source.includes(`createFileRoute("${path}")`) || source.includes(`createFileRoute('${path}')`) || source.includes(`createFileRoute("${path}/")`) || source.includes(`createFileRoute('${path}/')`)), path).toBe(true);
     }
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
