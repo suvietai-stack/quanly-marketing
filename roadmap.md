@@ -1,11 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## TÍN HIỆU CƠ HỘI & MOBILE — 06/11/2026
-- [ ] SIG1. Tiềm năng độc lập, nhãn chung/cá nhân có ID ổn định và lịch theo dõi thật; ghi có quyền/lịch sử/chống trùng, giữ dữ liệu cũ.
-- [ ] SIG2. Danh sách thẻ mobile, quick filters và bottom sheet áp dụng/xóa/giữ bộ lọc, sắp xếp ưu tiên theo lịch; shell dùng chung.
-- [ ] SIG3. Chi tiết/tạo/sửa/chuyển trạng thái/cập nhật nhanh/nhãn/lịch mobile; không bỏ kiểm tra quy trình hoặc ghi liên hệ từ nút gọi.
-- [ ] SIG4. Báo cáo tiềm năng/giai đoạn/xu hướng/quá hạn, tỷ lệ chốt theo bộ lọc không trùng, quyền backend hiện hành.
-- [ ] SIG5. Hồi quy nghiệp vụ/quyền/lịch sử/tích hợp và mobile; nghiệm thu phiên thật cần đăng nhập Preview, chưa Publish.
+- [x] SIG1. Migration 0255–0257: tiềm năng/audit, nhãn chung/cá nhân ID ổn định, RPC-only có quyền và chống request trùng; 9 nhãn chung, 573 tín hiệu cũ Chưa đánh giá, không sửa phân công/lịch sử.
+- [x] SIG2. Thẻ mobile, năm quick filters, bottom sheet giai đoạn/trạng thái/tiềm năng/nhãn/lịch, áp dụng/xóa/giữ phiên theo user; ưu tiên theo lịch thật, shell giữ nguyên.
+- [x] SIG3a. Cập nhật nhanh tiềm năng/nhãn/lịch, quản lý nhãn cá nhân/chung, sticky save và guard double click tạo; giữ chuyển trạng thái/Gọi/Zalo cũ.
+- [x] SIG4. Cơ cấu/biểu đồ tỷ lệ tiềm năng, giai đoạn tiềm năng cao, quá hạn, xu hướng ngày chốt thật và mẫu số theo toàn bộ bộ lọc; bảng mobile gọn.
+- [x] SIG5a. 122 test tín hiệu đạt; browser cách ly 320/360/390/430/1280 đạt lưu→lỗi→retry→đọc lại→lọc/reload→báo cáo không tràn; build OK. docs/signal-potential-verification.md.
+- [ ] SIG3b/SIG5b. Nghiệm thu phiên thật Sale/quản lý/lưu/đọc/report/Zalo và thiết bị/bàn phím cần người dùng đăng nhập Preview và hồ sơ được phép; mint --self không khớp, không chọn tài khoản khác. Chưa Publish; không thêm Tạm hoãn theo kế hoạch.
 
 ## CRM KHÁCH HÀNG — 06/11/2026
 - [x] CRM1a. Nền tảng riêng CRM, quyền bổ nhiệm/phạm vi, danh mục tùy chỉnh và kiểm thử backend cách ly.
