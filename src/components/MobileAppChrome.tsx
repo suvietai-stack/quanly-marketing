@@ -68,7 +68,7 @@ export function MobileAppChrome({ groups, userId, name, brandName, logo, notific
     <nav ref={footer} aria-label="Điều hướng mobile" className={cn('mobile-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t bg-card px-2 pt-2', keyboard && 'mobile-keyboard-open')}>
       <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', home && 'text-primary bg-accent')}><Link to="/" search={{}} aria-current={home ? 'page' : undefined}><Home className="h-5 w-5" />Trang chủ</Link></Button>
       {tasks && <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', location.pathname.startsWith('/tasks') && 'text-primary bg-accent')}><Link to="/tasks" aria-current={location.pathname.startsWith('/tasks') ? 'page' : undefined}><ListChecks className="h-5 w-5" />Công việc</Link></Button>}
-      <Button variant="ghost" className="h-14 flex-col gap-1 text-[10px]" onClick={() => header.current?.querySelector<HTMLButtonElement>('[aria-label="Thông báo"]')?.click()}><Bell className="h-5 w-5" />Thông báo</Button>
+      <Button variant="ghost" className="mobile-notifications-tab h-14 flex-col gap-1 text-[10px]" onClick={() => header.current?.querySelector<HTMLButtonElement>('[aria-label="Thông báo"]')?.click()}><Bell className="h-5 w-5" />Thông báo</Button>
       <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', location.pathname === '/profile' && 'text-primary bg-accent')}><Link to="/profile" aria-current={location.pathname === '/profile' ? 'page' : undefined}><User className="h-5 w-5" />Cá nhân</Link></Button>
     </nav>
   </>;

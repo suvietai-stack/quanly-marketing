@@ -163,7 +163,8 @@
 .mobile-app-header { padding-top: env(safe-area-inset-top); }
 .mobile-header-notifications > button { min-width: 44px; min-height: 44px; }
 @media (max-width: 767px) {
-  .base-app-shell { --mobile-header-height: 64px; --mobile-nav-height: calc(72px + env(safe-area-inset-bottom)); min-height: 100dvh; }
+  :root { --mobile-header-height: calc(64px + env(safe-area-inset-top)); --mobile-nav-height: calc(64px + max(8px,env(safe-area-inset-bottom))); }
+  .base-app-shell { min-height: 100dvh; }
   .base-app-content { padding-top: calc(var(--mobile-header-height) + 24px); padding-bottom: calc(var(--mobile-nav-height) + 24px); }
   .base-app-content :is(input,textarea,select,button,[tabindex]) { scroll-margin-top: calc(var(--mobile-header-height) + 12px); scroll-margin-bottom: calc(var(--mobile-nav-height) + 24px); }
   .base-app-content .fixed.bottom-0 { bottom: var(--mobile-nav-height); }
@@ -173,6 +174,7 @@
   .base-app-content .sticky.bottom-0 { bottom: var(--mobile-nav-height); }
   .base-app-shell:has(.mobile-keyboard-open) { --mobile-nav-height: 0px; }
   .mobile-bottom-nav.mobile-keyboard-open { display: none; }
+  .base-app-shell:has(.mobile-header-notifications [aria-expanded="true"]) .mobile-notifications-tab { color: var(--primary); background: var(--accent); }
 }
 @media (max-width: 359px) { .launcher-app-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 .login-page::before {
