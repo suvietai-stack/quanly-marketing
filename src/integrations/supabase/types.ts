@@ -9707,6 +9707,26 @@ export type Database = {
         Args: { _name: string; _scope: string }
         Returns: number
       }
+      signal_enrichment_save: {
+        Args: {
+          _id: string
+          _labels: string[]
+          _next?: string
+          _next_at?: string
+          _potential: string
+          _request_id: string
+        }
+        Returns: string
+      }
+      signal_label_save: {
+        Args: {
+          _active?: boolean
+          _id: string
+          _name: string
+          _personal?: boolean
+        }
+        Returns: string
+      }
       signal_note_is_progression: {
         Args: { _event: string; _marker: boolean; _note: string }
         Returns: boolean

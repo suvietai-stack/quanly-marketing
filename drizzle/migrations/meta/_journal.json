@@ -1793,6 +1793,13 @@
       "when": 1793954122320,
       "tag": "0255_signal_potential_label_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 256,
+      "version": "7",
+      "when": 1793954165712,
+      "tag": "0256_signal_label_and_enrichment_rpc",
+      "breakpoints": true
     }
   ]
 }
