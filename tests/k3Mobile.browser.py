@@ -38,7 +38,7 @@ async def main():
    await page.route('**/rest/v1/rpc/**',rpc)
    await page.goto('http://localhost:8080/k3-mobile-fixture')
    await page.screenshot(path=str(OUT/f"{width}-start.png"));print((await page.locator("body").inner_text())[:1000],errors)
-   await expect(page.get_by_text(actions[0]['name'],exact=True)).to_be_visible(timeout=15000)
+   await page.wait_for_timeout(2000);print((await page.locator("body").inner_text())[:2000],errors);await page.screenshot(path=str(OUT/"debug.png"));await expect(page.get_by_text(actions[0]["name"],exact=True)).to_be_visible(timeout=15000)
    if width<768:
     await expect(page.get_by_role('heading',name='Quản lý 3K',exact=True)).to_have_count(1)
     await page.get_by_role('button',name='Ngày trước',exact=True).click()
