@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## CRM PHÂN LOẠI / DANH MỤC / BÁO CÁO — 06/11/2026
+- [ ] CC1. Kiểm kê danh mục thật; thêm idempotent 7 tệp Trung Gian Quà Tặng và 8 tệp Đại Lý Đồ Thờ vào ID nhóm hiện có, không sửa tệp/khách cũ.
+- [ ] CC2. Cài đặt cây Nhóm–Tệp, thêm trực tiếp, mô tả/thứ tự/ẩn/số khách; đặc điểm nhiều lựa chọn theo phạm vi nhóm, ID ổn định và quyền hiện có.
+- [ ] CC3. Form tìm kiếm Nhóm→Tệp→đặc điểm; xác nhận đổi nhóm khi tệp không tương thích, hiển thị danh mục cũ ngừng dùng; lọc danh sách đồng bộ.
+- [ ] CC4. Báo cáo scoped theo kỳ/cơ cấu, đủ bộ lọc, tám chỉ số bấm được, donut/cột/bảng tệp và Chưa phân loại, xu hướng khách mới/chất lượng chăm sóc/drill-down.
+- [ ] CC5. Kiểm thử dữ liệu/quyền/tỷ lệ 100%/danh mục động/mobile; nghiệm thu phiên thật khi có tài khoản và hồ sơ được phép, chưa Publish.
+
 ## TÍN HIỆU CƠ HỘI & MOBILE — 06/11/2026
 - [x] SIG1. Migration 0255–0257: tiềm năng/audit, nhãn chung/cá nhân ID ổn định, RPC-only có quyền và chống request trùng; 9 nhãn chung, 573 tín hiệu cũ Chưa đánh giá, không sửa phân công/lịch sử.
 - [x] SIG2. Thẻ mobile, năm quick filters, bottom sheet giai đoạn/trạng thái/tiềm năng/nhãn/lịch, áp dụng/xóa/giữ phiên theo user; ưu tiên theo lịch thật, shell giữ nguyên.
