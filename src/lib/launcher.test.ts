@@ -29,4 +29,12 @@ describe('Mobile launcher shares live navigation visibility', () => {
   it('isolates preferences between two accounts', () => {
     expect(pinStorageKey('employee-a')).not.toBe(pinStorageKey('employee-b'));
   });
+  it('keeps existing saved applications and their order when opening customization', () => {
+    const saved = ['/leave', '/biz/3k', '/orders'];
+    const draft = allowedPins(saved, groups(['leave.create', 'k3.use', 'order.view']));
+    expect(draft).toEqual(['/leave', '/biz/3k', '/orders']);
+    const changed = movePin(draft, '/orders', -1);
+    expect(changed).toEqual(['/leave', '/orders', '/biz/3k']);
+    expect(saved).toEqual(['/leave', '/biz/3k', '/orders']);
+  });
 });
