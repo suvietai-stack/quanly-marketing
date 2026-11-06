@@ -96,6 +96,7 @@ export function LeavePage() {
   const [openId, setOpenId] = useState<string | null>(() => initial?.get("open") || null);
   const [form, setForm] = useState<FormState | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mineFilter, setMineFilter] = useState('all');
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["leave"] });
   const mine = all.filter((r) => r.owner_id === uid);
@@ -111,7 +112,8 @@ export function LeavePage() {
 
   const settings = settingsQ.data;
   return (
-    <>
+    <div className="leave-mobile min-w-0 space-y-4">
+      <div className="hidden md:block">
       <PageHeader
         title="Nghỉ phép & Đi sớm muộn"
         description="Nghỉ phép, đi muộn, về sớm — gửi đơn và theo dõi phê duyệt."
@@ -124,15 +126,21 @@ export function LeavePage() {
           </div>
         }
       />
+      </div>
+      <div className="md:hidden space-y-3">
+        {can('leave.settings') && <div className="flex justify-end"><FunctionSettingsButton onClick={() => setSettingsOpen(true)} /></div>}
+        {(can('leave.create') || can('leave.create_for')) && <div className="grid grid-cols-3 gap-2">{(Object.keys(TYPE_LABEL) as LeaveType[]).map(type => <Button key={type} variant="outline" disabled={!settings} className="h-auto min-h-24 min-w-0 flex-col gap-2 whitespace-normal rounded-lg bg-card px-1 py-3" onClick={() => setForm({ mode:'create', type })}><TypeIcon type={type} /><span className="text-xs">{TYPE_LABEL[type]}</span></Button>)}</div>}
+      </div>
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex-wrap h-auto">
+        <TabsList className="max-md:flex max-md:w-full max-md:justify-start max-md:overflow-x-auto max-md:flex-nowrap max-md:min-h-11 md:flex-wrap h-auto">
           {showMine && <TabsTrigger value="mine">Đơn của tôi</TabsTrigger>}
           {showApprove && <TabsTrigger value="approve">Chờ tôi duyệt{pendingApprove > 0 && <span className="ml-1.5 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5">{pendingApprove}</span>}</TabsTrigger>}
           {showManage && <TabsTrigger value="manage">Quản lý đơn</TabsTrigger>}
           {showReport && <TabsTrigger value="report">Báo cáo</TabsTrigger>}
         </TabsList>
         {showMine && <TabsContent value="mine" className="mt-4">
-          <RequestList rows={mine} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty="Bạn chưa có đơn nghỉ phép, đi muộn, về sớm." />
+          <div className="md:hidden flex gap-1 overflow-x-auto mb-3">{[['all','Tất cả'],['pending','Chờ duyệt'],['approved','Đã duyệt'],['other','Khác']].map(([value,label]) => <Button key={value} size="sm" className="min-h-11 shrink-0" variant={mineFilter === value ? 'default' : 'outline'} onClick={() => setMineFilter(value)}>{label}</Button>)}</div>
+          <div className="md:hidden"><RequestList rows={[...mine].filter(r => mineFilter === 'all' || r.status === mineFilter || (mineFilter === 'other' && !['pending','approved'].includes(r.status))).sort((a,b) => Number(b.status === 'pending') - Number(a.status === 'pending'))} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty="Không có đơn phù hợp." /></div><div className="hidden md:block"><RequestList rows={mine} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty="Bạn chưa có đơn nghỉ phép, đi muộn, về sớm." /></div>
         </TabsContent>}
         {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
         {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
@@ -159,7 +167,7 @@ export function LeavePage() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -170,20 +178,20 @@ function RequestList({ rows, loading, onOpen, name, showOwner, empty }: { rows: 
   return (
     <div className="space-y-2">
       {rows.map((r) => (
-        <button key={r.id} onClick={() => onOpen(r.id)} className="w-full text-left rounded-lg border bg-card p-3 hover:bg-accent/40 transition-colors">
+        <Button variant="ghost" key={r.id} onClick={() => onOpen(r.id)} className="h-auto w-full whitespace-normal text-left rounded-lg border bg-card p-3 hover:bg-accent/40 transition-colors justify-start">
           <div className="flex items-start gap-3">
             <TypeIcon type={r.type} />
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                 {TYPE_LABEL[r.type]}{showOwner && <span className="text-muted-foreground font-normal">· {name(r.owner_id)}</span>}
               </div>
-              <div className="text-sm text-muted-foreground truncate">{summary(r)}</div>
+              <div className="text-sm text-muted-foreground max-md:whitespace-normal max-md:break-words md:truncate">{summary(r)}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{r.reason_name} · Người duyệt: {name(r.approver_id)}</div>
               <div className="mt-1.5"><StatusBadge r={r} /></div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
           </div>
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -218,7 +226,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
     <div className="flex flex-wrap gap-2 mb-3">
       <Input placeholder="Tìm nhân viên…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-56" />
       <Select value={st} onValueChange={setSt}>
-        <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="w-full md:w-40"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Mọi trạng thái</SelectItem>
           {(Object.keys(api.STATUS_LABEL) as LeaveStatus[]).map((k) => <SelectItem key={k} value={k}>{api.STATUS_LABEL[k]}</SelectItem>)}
@@ -227,7 +235,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
         </SelectContent>
       </Select>
       <Select value={tp} onValueChange={setTp}>
-        <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+        <SelectTrigger className="w-full md:w-36"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Mọi loại đơn</SelectItem>
           {(Object.keys(TYPE_LABEL) as LeaveType[]).map((k) => <SelectItem key={k} value={k}>{TYPE_LABEL[k]}</SelectItem>)}
@@ -239,7 +247,7 @@ function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean;
 }
 
 /* ================= Form ================= */
-type FormState = { mode: "create" | "edit" | "resubmit"; request?: LeaveRequest };
+type FormState = { mode: "create" | "edit" | "resubmit"; request?: LeaveRequest; type?: LeaveType };
 
 const LATE_SUGGESTIONS = [
   "Ốm đột xuất, không thể gửi đơn trước",
@@ -253,7 +261,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const users = useAuth((s) => s.users);
   const r = state.request;
   const today = todayVn();
-  const [type, setType] = useState<LeaveType>(r?.type || "leave");
+  const [type, setType] = useState<LeaveType>(r?.type || state.type || "leave");
   const [owner, setOwner] = useState<string>(r?.owner_id || user?.id || "");
   const [lp, setLp] = useState<any>(r?.type === "leave" ? r.payload : { start_date: today, start_half: "am", end_date: today, end_half: "pm" });
   const [sp, setSp] = useState<any>(r && r.type !== "leave" ? r.payload : { date: today, half: "am", minutes: 15 });
@@ -264,6 +272,10 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const [exception, setException] = useState(r?.late_reason || "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [discarding, setDiscarding] = useState(false);
+  const [rangeMode, setRangeMode] = useState('day');
+  const [dirty, setDirty] = useState(false);
+  const close = () => { if (dirty && !busy) setDiscarding(true); else if (!busy) onClose(); };
   const approversQ = useQuery({ queryKey: ["leave", "approvers"], queryFn: api.listApprovers });
   const approvers = (approversQ.data || []).filter((a) => a.id !== owner);
   const canFor = can("leave.create_for") && state.mode === "create";
@@ -299,14 +311,14 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
 
   const title = state.mode === "create" ? "Tạo đơn" : state.mode === "edit" ? "Sửa đơn" : "Sửa và gửi lại";
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          {state.mode === "create" && (
+    <Dialog open onOpenChange={(o) => !o && close()}>
+      <DialogContent className="leave-mobile-dialog max-w-lg w-full md:max-h-[90vh] overflow-y-auto" onChangeCapture={() => setDirty(true)}>
+        <DialogHeader><DialogTitle>{state.mode === 'create' && state.type ? TYPE_LABEL[type] : title}</DialogTitle></DialogHeader>
+        <div className="space-y-4" onClickCapture={() => setDirty(true)}>
+          {state.mode === "create" && !state.type && (
             <div className="grid grid-cols-3 gap-2">
               {(Object.keys(TYPE_LABEL) as LeaveType[]).map((t) => (
-                <button key={t} onClick={() => setType(t)} className={cn("rounded-md border py-2.5 text-sm font-medium", type === t ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{TYPE_LABEL[t]}</button>
+                <Button key={t} variant={type === t ? 'default' : 'outline'} className="min-h-11" onClick={() => setType(t)}>{TYPE_LABEL[t]}</Button>
               ))}
             </div>
           )}
@@ -321,25 +333,26 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
           )}
 
           {type === "leave" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label>Ngày bắt đầu nghỉ</Label><Input type="date" value={lp.start_date} onChange={(e) => setLp({ ...lp, start_date: e.target.value, end_date: lp.end_date < e.target.value ? e.target.value : lp.end_date })} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:hidden grid grid-cols-2 gap-2">{[['day','Cả ngày'],['am','Buổi sáng'],['pm','Buổi chiều'],['range','Nhiều ngày']].map(([value,label]) => <Button key={value} variant={rangeMode === value ? 'default' : 'outline'} className="min-h-11" onClick={() => { setRangeMode(value); if(value !== 'range') setLp({ ...lp, end_date: lp.start_date, start_half: value === 'pm' ? 'pm' : 'am', end_half: value === 'am' ? 'am' : 'pm' }); }}>{label}</Button>)}</div>
+              <div className="space-y-1.5"><Label htmlFor="leave-start-date">Ngày bắt đầu nghỉ</Label><Input id="leave-start-date" type="date" value={lp.start_date} onChange={(e) => setLp({ ...lp, start_date: e.target.value, end_date: lp.end_date < e.target.value ? e.target.value : lp.end_date })} /></div>
               <div className="space-y-1.5"><Label>Bắt đầu từ buổi</Label><HalfPick value={lp.start_half} onChange={(v) => setLp({ ...lp, start_half: v })} /></div>
-              <div className="space-y-1.5"><Label>Ngày kết thúc nghỉ</Label><Input type="date" value={lp.end_date} min={lp.start_date} onChange={(e) => setLp({ ...lp, end_date: e.target.value })} /></div>
+              <div className="space-y-1.5 max-md:row-start-3"><Label htmlFor="leave-end-date">Ngày kết thúc nghỉ</Label><Input id="leave-end-date" type="date" value={lp.end_date} min={lp.start_date} onChange={(e) => setLp({ ...lp, end_date: e.target.value })} /></div>
               <div className="space-y-1.5"><Label>Nghỉ đến hết buổi</Label><HalfPick value={lp.end_half} onChange={(v) => setLp({ ...lp, end_half: v })} /></div>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Ngày xin {type === "late" ? "đi muộn" : "về sớm"}</Label><Input type="date" value={sp.date} onChange={(e) => setSp({ ...sp, date: e.target.value })} /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label htmlFor="leave-shift-date">Ngày xin {type === "late" ? "đi muộn" : "về sớm"}</Label><Input id="leave-shift-date" type="date" value={sp.date} onChange={(e) => setSp({ ...sp, date: e.target.value })} /></div>
                 <div className="space-y-1.5"><Label>Ca làm việc</Label><HalfPick value={sp.half} onChange={(v) => setSp({ ...sp, half: v })} /></div>
               </div>
               <div className="space-y-1.5">
                 <Label>Thời gian {type === "late" ? "đi muộn" : "về sớm"}</Label>
                 <div className="flex flex-wrap gap-1.5">
-                  {QUICK.map((m) => <button key={m} onClick={() => { setCustom(false); setSp({ ...sp, minutes: m }); }} className={cn("rounded-md border px-3 py-1.5 text-sm", !custom && sp.minutes === m ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{m} phút</button>)}
-                  <button onClick={() => setCustom(true)} className={cn("rounded-md border px-3 py-1.5 text-sm", custom ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>Khác</button>
+                  {QUICK.map((m) => <Button key={m} variant={!custom && sp.minutes === m ? 'default' : 'outline'} className="max-md:min-h-11" onClick={() => { setCustom(false); setSp({ ...sp, minutes: m }); }}>{m} phút</Button>)}
+                  <Button variant={custom ? 'default' : 'outline'} className="max-md:min-h-11" onClick={() => setCustom(true)}>Khác</Button>
                 </div>
-                {custom && <Input type="number" min={1} max={480} value={sp.minutes || ""} onChange={(e) => setSp({ ...sp, minutes: Number(e.target.value) })} placeholder="Số phút" className="w-32 mt-1.5" />}
+                {custom && <Input type="number" inputMode="numeric" min={1} max={480} value={sp.minutes || ""} onChange={(e) => setSp({ ...sp, minutes: Number(e.target.value) })} placeholder="Số phút" className="w-32 mt-1.5" />}
               </div>
             </>
           )}
@@ -348,8 +361,8 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
           {res.ok ? (
             <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
               {type === "leave" ? <>
-                {res.details!.map((d) => <div key={d.date} className="flex justify-between"><span>{DOW_LABEL[isoDow(d.date)]} {fmtDate(d.date)}: {d.am && d.pm ? "Cả ngày" : d.am ? "Buổi sáng" : "Buổi chiều"}</span><span>{fmtDays(d.days)} ngày</span></div>)}
-                <div className="border-t pt-1 font-semibold flex justify-between"><span>TỔNG CỘNG</span><span>{fmtDays(res.days!)} NGÀY</span></div>
+                <p className="md:hidden font-semibold">Bạn đăng ký nghỉ: {fmtDays(res.days ?? 0)} ngày</p><details className="leave-preview-details"><summary className="md:hidden cursor-pointer py-2">Chi tiết ngày / buổi</summary><div>{res.details?.map((d) => <div key={d.date} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><span className="min-w-0">{DOW_LABEL[isoDow(d.date)]} {fmtDate(d.date)}: {d.am && d.pm ? "Cả ngày" : d.am ? "Buổi sáng" : "Buổi chiều"}</span><span>{fmtDays(d.days)} ngày</span></div>)}</div></details>
+                <div className="hidden md:flex border-t pt-1 font-semibold justify-between"><span>TỔNG CỘNG</span><span>{fmtDays(res.days ?? 0)} NGÀY</span></div>
               </> : <>
                 <div>Giờ {type === "late" ? "bắt đầu" : "kết thúc"} buổi: {type === "late" ? res.sessionStart : res.sessionEnd}</div>
                 <div className="font-semibold">{type === "late" ? "Dự kiến có mặt" : "Dự kiến ra về"}: {fmtVn(res.expectedAt!, false)}</div>
@@ -370,8 +383,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
                 <Label>Lý do gửi đơn bổ sung <span className="text-destructive">*</span></Label>
                 <div className="flex flex-wrap gap-1.5">
                   {LATE_SUGGESTIONS.map((s) => (
-                    <button key={s} type="button" onClick={() => setException(s)}
-                      className={cn("rounded-full border px-2.5 py-1 text-xs", exception === s ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{s}</button>
+                    <Button key={s} type="button" variant={exception === s ? 'default' : 'outline'} onClick={() => setException(s)} className="max-md:min-h-11 h-auto whitespace-normal text-left rounded-lg px-2.5 py-2 text-xs">{s}</Button>
                   ))}
                 </div>
                 <Textarea value={exception} onChange={(e) => setException(e.target.value)} rows={2} placeholder="Vì sao không nộp đơn đúng hạn…" />
@@ -379,14 +391,14 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
             </div>
           )}
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" >
             <Label>Lý do</Label>
             <Select value={reasonId} onValueChange={setReasonId}>
               <SelectTrigger><SelectValue placeholder="Chọn lý do" /></SelectTrigger>
               <SelectContent>{reasons.map((x) => <SelectItem key={x.id} value={x.id}>{x.name}{!x.active ? " (ngừng dùng)" : ""}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div className={cn('space-y-1.5', reasonId !== 'other' && !detail && 'max-md:hidden')}>
             <Label>Chi tiết lý do{reasonId === "other" && <span className="text-destructive"> *</span>}</Label>
             <Textarea value={detail} onChange={(e) => setDetail(e.target.value)} rows={2} placeholder="Diễn giải ngắn gọn (không cần nêu thông tin quá riêng tư)" />
           </div>
@@ -397,15 +409,17 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
               <SelectContent>{approvers.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          {err && <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive whitespace-pre-line">{err}</div>}
+          {reasonId !== 'other' && !detail && <details className="md:hidden"><summary className="cursor-pointer py-2 text-sm">Thêm chi tiết lý do</summary><Textarea aria-label="Chi tiết lý do" value={detail} onChange={e => setDetail(e.target.value)} rows={2} /></details>}
+          {err && <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive whitespace-pre-line">{err}</div>}
         </div>
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>Hủy</Button>
+        <DialogFooter className="leave-form-footer gap-2">
+          <Button variant="outline" onClick={close}>Hủy</Button>
           <Button onClick={submit} disabled={blocked || busy || (approver !== "" && !approvers.some((a) => a.id === approver))}>
             {busy ? "Đang gửi…" : state.mode === "edit" ? "Lưu thay đổi" : state.mode === "resubmit" ? (late ? "Gửi lại đơn bổ sung" : "Gửi xin duyệt lại") : late ? "Gửi đơn bổ sung" : "Gửi đơn"}
           </Button>
         </DialogFooter>
       </DialogContent>
+      {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa gửi?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
     </Dialog>
   );
 }
@@ -413,7 +427,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
 function HalfPick({ value, onChange }: { value: Half; onChange: (v: Half) => void }) {
   return (
     <div className="grid grid-cols-2 gap-1.5">
-      {(["am", "pm"] as Half[]).map((h) => <button key={h} type="button" onClick={() => onChange(h)} className={cn("rounded-md border h-9 text-sm", value === h ? "border-primary bg-primary/10 text-primary" : "hover:bg-accent")}>{HALF_LABEL[h]}</button>)}
+      {(["am", "pm"] as Half[]).map((h) => <Button key={h} type="button" variant={value === h ? 'default' : 'outline'} className="max-md:min-h-11" onClick={() => onChange(h)}>{HALF_LABEL[h]}</Button>)}
     </div>
   );
 }
@@ -477,7 +491,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="w-full h-full max-w-none sm:max-w-xl overflow-y-auto">
+      <SheetContent side="right" className="leave-mobile-sheet w-full h-full max-w-none sm:max-w-xl overflow-y-auto">
         <SheetHeader><SheetTitle>{r ? `Đơn ${TYPE_LABEL[r.type].toLowerCase()}` : "Chi tiết đơn"}</SheetTitle></SheetHeader>
         {q.isLoading ? <p className="text-sm text-muted-foreground mt-6">Đang tải…</p> : !r ? (
           <div className="mt-10 text-center">
@@ -487,7 +501,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
         ) : (
           <div className="mt-4 space-y-4 text-sm">
             <StatusBadge r={r} />
-            <dl className="grid grid-cols-[120px_1fr] gap-y-1.5">
+            <dl className="grid grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[120px_1fr] gap-x-2 gap-y-1.5">
               <dt className="text-muted-foreground">Người đứng tên</dt><dd>{name(r.owner_id)}</dd>
               {r.created_by !== r.owner_id && <><dt className="text-muted-foreground">Người tạo hộ</dt><dd>{name(r.created_by)}</dd></>}
               <dt className="text-muted-foreground">Thời gian</dt><dd>{summary(r)}</dd>
@@ -521,7 +535,7 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
               </div>
             )}
 
-            <HistoryBlock type={r.type} subs={h.data?.subs || []} events={h.data?.events || []} name={name} />
+            <details><summary className="cursor-pointer py-2 font-medium">Lịch sử gửi và xử lý</summary><HistoryBlock type={r.type} subs={h.data?.subs || []} events={h.data?.events || []} name={name} /></details>
           </div>
         )}
       </SheetContent>
