@@ -1,0 +1,22 @@
+ALTER TABLE public.opportunity_signals ADD COLUMN potential text NOT NULL DEFAULT 'unrated' CHECK (potential IN ('high','medium','low','unrated')), ADD COLUMN potential_updated_by uuid, ADD COLUMN potential_updated_at timestamptz;
+CREATE TABLE public.signal_labels (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),owner_id uuid,name text NOT NULL CHECK(length(btrim(name)) BETWEEN 1 AND 100),active boolean NOT NULL DEFAULT true,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.signal_labels TO authenticated;
+GRANT ALL ON public.signal_labels TO service_role;
+ALTER TABLE public.signal_labels ENABLE ROW LEVEL SECURITY;
+CREATE POLICY signal_labels_read ON public.signal_labels FOR SELECT TO authenticated USING ((owner_id IS NULL OR owner_id=auth.uid()) AND (private.sig_can(auth.uid(),'signal.sale') OR private.sig_can(auth.uid(),'signal.create') OR private.sig_can(auth.uid(),'signal.view_all') OR private.sig_can(auth.uid(),'signal.manage') OR private.sig_can(auth.uid(),'signal.report') OR private.sig_can(auth.uid(),'signal.catalog') OR private.sig_can(auth.uid(),'signal.edit') OR private.sig_can(auth.uid(),'signal.assign')));
+CREATE UNIQUE INDEX signal_labels_unique ON public.signal_labels (coalesce(owner_id,'00000000-0000-0000-0000-000000000000'::uuid),lower(btrim(name)));
+CREATE TABLE public.signal_label_links (signal_id uuid NOT NULL REFERENCES public.opportunity_signals(id) ON DELETE CASCADE,label_id uuid NOT NULL REFERENCES public.signal_labels(id),created_by uuid NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(signal_id,label_id));
+GRANT SELECT ON public.signal_label_links TO authenticated;
+GRANT ALL ON public.signal_label_links TO service_role;
+ALTER TABLE public.signal_label_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY signal_label_links_read ON public.signal_label_links FOR SELECT TO authenticated USING (EXISTS(SELECT 1 FROM public.signal_labels l WHERE l.id=label_id AND (l.owner_id IS NULL OR l.owner_id=auth.uid())) AND EXISTS(SELECT 1 FROM public.opportunity_signals s WHERE s.id=signal_id AND private.sig_visible(auth.uid(),s.created_by,s.assigned_to,s.need_groups)));
+CREATE TABLE public.signal_enrichment_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),signal_id uuid NOT NULL REFERENCES public.opportunity_signals(id) ON DELETE CASCADE,actor_id uuid NOT NULL,request_id uuid NOT NULL,detail jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),UNIQUE(actor_id,request_id));
+GRANT SELECT ON public.signal_enrichment_events TO authenticated;
+GRANT ALL ON public.signal_enrichment_events TO service_role;
+ALTER TABLE public.signal_enrichment_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY signal_enrichment_events_read ON public.signal_enrichment_events FOR SELECT TO authenticated USING (actor_id=auth.uid() AND EXISTS(SELECT 1 FROM public.opportunity_signals s WHERE s.id=signal_id AND private.sig_visible(auth.uid(),s.created_by,s.assigned_to,s.need_groups)));
+CREATE FUNCTION private.signal_potential_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN
+IF TG_OP='INSERT' THEN NEW.potential:='unrated'; NEW.potential_updated_by:=NULL; NEW.potential_updated_at:=NULL;
+ELSIF (NEW.potential IS DISTINCT FROM OLD.potential OR NEW.potential_updated_by IS DISTINCT FROM OLD.potential_updated_by OR NEW.potential_updated_at IS DISTINCT FROM OLD.potential_updated_at) AND coalesce(current_setting('app.sig_enrichment',true),'') <> '1' THEN RAISE EXCEPTION 'Đánh giá tiềm năng chỉ lưu qua thao tác được cấp quyền'; END IF;
+RETURN NEW; END $$;
+CREATE TRIGGER signal_potential_guard BEFORE INSERT OR UPDATE ON public.opportunity_signals FOR EACH ROW EXECUTE FUNCTION private.signal_potential_guard();

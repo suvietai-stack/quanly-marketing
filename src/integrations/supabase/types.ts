@@ -5887,6 +5887,9 @@ export type Database = {
           next_contact_at: string | null
           next_contact_on: string | null
           phone: string
+          potential: string
+          potential_updated_at: string | null
+          potential_updated_by: string | null
           products: string[]
           revenue: number | null
           source: string
@@ -5914,6 +5917,9 @@ export type Database = {
           next_contact_at?: string | null
           next_contact_on?: string | null
           phone: string
+          potential?: string
+          potential_updated_at?: string | null
+          potential_updated_by?: string | null
           products?: string[]
           revenue?: number | null
           source: string
@@ -5941,6 +5947,9 @@ export type Database = {
           next_contact_at?: string | null
           next_contact_on?: string | null
           phone?: string
+          potential?: string
+          potential_updated_at?: string | null
+          potential_updated_by?: string | null
           products?: string[]
           revenue?: number | null
           source?: string
@@ -7479,6 +7488,104 @@ export type Database = {
           data?: Json
           id?: string
           is_demo?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      signal_enrichment_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          detail: Json
+          id: string
+          request_id: string
+          signal_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          detail: Json
+          id?: string
+          request_id: string
+          signal_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          request_id?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_enrichment_events_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_label_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          label_id: string
+          signal_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          label_id: string
+          signal_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          label_id?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_label_links_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "signal_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_label_links_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_labels: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          owner_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          owner_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Relationships: []
