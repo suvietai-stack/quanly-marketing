@@ -63,7 +63,7 @@ async def main():
                 await expect(page.get_by_role('link',name='Báo cáo tín hiệu')).to_have_count(0)
                 await search.fill('')
                 await quick.get_by_role('button',name='Tùy chỉnh').click()
-                await page.get_by_role('button',name='Thu hồi 3K').evaluate('(el) => el.click()')
+                await page.get_by_role('button',name='Thu hồi 3K',include_hidden=True).evaluate('(el) => el.click()')
                 await expect(dialog.get_by_role('checkbox',name='Ghim Quản lý 3K',exact=True)).to_have_count(0)
                 await dialog.get_by_role('button',name='Lưu thay đổi').click()
                 await expect(quick.get_by_role('link',name='Quản lý 3K')).to_have_count(0)
