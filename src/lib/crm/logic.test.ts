@@ -29,7 +29,7 @@ it("processed rate counts schedules rather than customers", () => {
     processed: 75,
     on_time: 50,
     connected: 40,
-    scheduled: 200 / 3,
+    scheduled: (2 / 3) * 100,
     priority_overdue: 50,
   });
 });
