@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## MOBILE QUẢN LÝ 3K — 06/11/2026
+- [ ] M3K1. Gọn điều hướng/kỳ/ngày/tóm tắt và thẻ việc; giữ nguồn đo/thao tác/quyền và desktop.
+- [ ] M3K2. Tối ưu form tạo/cập nhật/tổng kết, sheet chi tiết, nhóm/theo dõi; không đổi API/database/nghiệp vụ.
+- [ ] M3K3. Kiểm tra 320/375/390/430/tablet/desktop, lưu/lỗi/lịch sử/tổng kết/hộp Xóa; báo rõ hành trình thật chưa kiểm được, chưa Publish.
+
 ## TÙY CHỈNH GHIM MOBILE — 06/11/2026
 - [x] P1. Bỏ menu ô ứng dụng mọi khu vực/tìm kiếm/truy cập nhanh; Tùy chỉnh tại Truy cập nhanh với chọn/bỏ/sắp xếp, nháp độc lập và Lưu; giữ storage/quyền cũ, desktop không đổi.
 - [x] P2a. 29 unit test đạt; Launcher + chrome cách ly 320/390/767/1280 đạt: ghim cũ, lưu/hủy/reload/thứ tự/thu hồi quyền ngay trong dialog, route/desktop/không tràn/không lỗi JS; ảnh màn hình xác minh, build OK, chưa Publish.
