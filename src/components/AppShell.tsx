@@ -1,16 +1,18 @@
 import { useBranding, BrandMark } from "@/lib/branding";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  Menu, LogOut, User as UserIcon, PanelLeftClose, PanelLeftOpen,
+  Menu, LogOut, User as UserIcon, PanelLeftClose, PanelLeftOpen, Home, ListChecks, Bell,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useQuery } from '@tanstack/react-query';
 import { approvalsQuery } from '@/lib/biz/organizationQueries';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AppNavigation } from "@/components/AppNavigation";
 import { visibleNavigation } from "@/lib/navigation";
+import { MobileLauncher } from '@/components/MobileLauncher';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from "@/components/ZaloUi";
 import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
 import { ChipiAssistant } from "@/components/ChipiAssistant";
@@ -24,6 +26,10 @@ import {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const search = useRouterState({ select: r => r.location.search as { area?: string; view?: string } });
+  const mobile = useIsMobile();
+  const mobileHeader = useRef<HTMLElement>(null);
+  const launcher = mobile && path === '/' && search.view !== 'dashboard';
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
@@ -103,26 +109,31 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden sticky top-0 z-30 flex items-center gap-3 bg-card border-b px-4 h-14">
+        <header ref={mobileHeader} className="md:hidden sticky top-0 z-30 flex items-center gap-3 bg-card border-b px-4 h-16">
+          {launcher ? <BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" /> :
           <Button variant="ghost" size="icon"
             onClick={() => setOpen(true)}
             className="p-2 -ml-2 rounded hover:bg-accent"
             aria-label="Mở menu"
           >
             <Menu className="h-5 w-5" />
-          </Button>
-          <div className="font-semibold flex-1 truncate">{brand.app_name}</div>
+          </Button>}
+          <div className="flex-1 min-w-0"><div className="font-semibold text-sm truncate">{brand.app_name}</div>{launcher && user && <div className="text-[11px] text-muted-foreground truncate">Xin chào, {user.fullName}</div>}</div>
           <NotificationBell />
           {user && (
-            <Button variant="ghost" size="icon" onClick={onLogout} className="p-2 rounded hover:bg-accent" title="Đăng xuất">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <Button variant="ghost" size="icon" asChild className="rounded-full bg-accent text-accent-foreground text-xs" title="Cá nhân"><Link to="/profile" aria-label="Hồ sơ cá nhân">{user.fullName.slice(0, 1).toUpperCase()}</Link></Button>
           )}
         </header>
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
           {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
-          {children}
+          {launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} area={search.area} /> : children}
         </main>
+        <nav aria-label="Điều hướng mobile" className={cn('mobile-bottom-nav md:hidden grid auto-cols-fr grid-flow-col border-t bg-card px-2 pt-2', launcher && 'sticky bottom-0 z-30')}>
+          <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', launcher && !search.area && 'text-primary bg-accent')}><Link to="/" search={{}}><Home className="h-5 w-5" />Trang chủ</Link></Button>
+          {visibleGroups.some(g => g.items.some(i => i.to === '/tasks' && !i.comingSoon)) && <Button asChild variant="ghost" className="h-14 flex-col gap-1 text-[10px]"><Link to="/tasks"><ListChecks className="h-5 w-5" />Công việc</Link></Button>}
+          <Button variant="ghost" className="h-14 flex-col gap-1 text-[10px]" onClick={() => mobileHeader.current?.querySelector<HTMLButtonElement>('[aria-label="Thông báo"]')?.click()}><Bell className="h-5 w-5" />Thông báo</Button>
+          <Button asChild variant="ghost" className="h-14 flex-col gap-1 text-[10px]"><Link to="/profile"><UserIcon className="h-5 w-5" />Cá nhân</Link></Button>
+        </nav>
         {user && <ChipiAssistant key={user.id} userId={user.id} />}
         {user && <RewardPopup key={`sao-${user.id}`} userId={user.id} />}
       </div>
