@@ -110,6 +110,19 @@ export function trendSeries(list: Signal[], g: TrendGranularity): TrendPoint[] {
   return [...m.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
+/** Event-date trend: discovery and actual close dates are independent. */
+export function eventTrendSeries(list:Signal[],g:TrendGranularity,from?:string,to?:string):TrendPoint[] {
+  const map=new Map<string,TrendPoint>();
+  const add=(date:string,field:'created'|'won')=>{
+    if((from&&date<from)||(to&&date>to))return;
+    const key=g==='day'?date:g==='week'?weekStart(date):date.slice(0,7);
+    const label=g==='day'?ddmm(key):g==='week'?'Tuần '+ddmm(key):key.slice(5,7)+'/'+key.slice(0,4);
+    let point=map.get(key);if(!point){point={key,label,created:0,won:0};map.set(key,point);}point[field]++;
+  };
+  for(const s of list){add(s.detected_on,'created');if(s.status==='won'&&s.closed_at)add(todayKey(new Date(s.closed_at)),'won');}
+  return [...map.values()].sort((a,b)=>a.key.localeCompare(b.key));
+}
+
 /* ---------- Điểm đáng chú ý (tính từ dữ liệu thật, không suy diễn) ---------- */
 export interface Insight { kind: "source" | "rate" | "backlog" | "need"; text: string; note?: string }
 

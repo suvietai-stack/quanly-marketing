@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { SIGNAL_LOST_REASONS, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import {
-  filterSignals, groupBy, lostReasons, reportInsights, summarize, trendSeries,
+  filterSignals, groupBy, lostReasons, reportInsights, summarize, eventTrendSeries,
   type ReportFilter, type Summary, type TrendGranularity,
 } from "@/lib/signals/report";
 import { errMsg, listAcceptNotes, listAssignEvents, listCareNotes } from "@/lib/signals/api";
@@ -46,7 +46,7 @@ const C = {
 
 const TREND_CONFIG: ChartConfig = {
   created: { label: "Tín hiệu tạo trong kỳ", color: C.brand },
-  won: { label: "Trong đó hiện đã Chốt", color: C.orange },
+  won: { label: "Chốt phát sinh trong kỳ", color: C.orange },
 };
 const STATUS_CONFIG: ChartConfig = { n: { label: "Số tín hiệu", color: C.brand } };
 const SOURCE_CONFIG: ChartConfig = { v: { label: "Giá trị", color: C.brand } };
@@ -108,7 +108,7 @@ export function SignalsReport() {
 
   /* ---- Dữ liệu cho các khu vực mới (tất cả đều theo bộ lọc chung) ---- */
   const insights = useMemo(() => reportInsights({ sum, bySource, byNeed }), [sum, bySource, byNeed]);
-  const trend = useMemo(() => trendSeries(kpiList, gran), [kpiList, gran]);
+  const trend = useMemo(() => eventTrendSeries(filterSignals(data,{...f,from:undefined,to:undefined}),gran,f.from,f.to), [data,f,gran]);
   const statusDist = useMemo(() => {
     const rows: { key: string; label: string; n: number; fill: string }[] = [];
     if (sum.unassigned) rows.push({ key: "unassigned", label: "Chưa phân công", n: sum.unassigned, fill: C.muted });
@@ -146,7 +146,7 @@ export function SignalsReport() {
   );
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
+    <div className="signals-report space-y-6 pb-20 md:pb-0">
       {/* 1. Tiêu đề + bộ lọc báo cáo */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -239,10 +239,10 @@ export function SignalsReport() {
                   </ChartContainer>
                   <div className="flex flex-wrap gap-4 px-1 pt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: C.brand }} />Tín hiệu tạo trong kỳ</span>
-                    <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full" style={{ background: C.orange }} />Trong đó hiện đã Chốt</span>
+                    <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full" style={{ background: C.orange }} />Chốt phát sinh trong kỳ</span>
                   </div>
                   <p className="px-1 pt-1 text-[11px] text-muted-foreground">
-                    Cột = số tín hiệu <b>tạo</b> trong từng {gran === "day" ? "ngày" : gran === "week" ? "tuần" : "tháng"}; đường = số tín hiệu thuộc nhóm đó <b>hiện đã Chốt</b> (không phải số chốt phát sinh trong kỳ).
+                    Cột theo ngày phát hiện tín hiệu; đường theo ngày Chốt thực tế trong khoảng thời gian và bộ lọc đã chọn.
                   </p>
                 </>
               )}
