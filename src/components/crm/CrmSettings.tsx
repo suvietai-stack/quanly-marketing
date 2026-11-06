@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Pencil } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth";
-import { useCrmMutation, crmPeopleQuery, crmTemplatesQuery } from "@/lib/crm/queries";
+import { useCrmMutation, crmPeopleQuery, crmTemplatesQuery, crmRpc } from "@/lib/crm/queries";
 import { KINDS, CHANNELS, type Catalog, type Template } from "@/lib/crm/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
   const saveGrant = useCrmMutation("crm_access_save");
   const people = useQuery(crmPeopleQuery(uid));
   const templates = useQuery(crmTemplatesQuery(uid));
+  const grants = useQuery({queryKey:['crm_access',uid],enabled:can('biz.crm_access'),queryFn:()=>crmRpc<{id:string;user_id:string;permission:string;reason:string;revoked_at:string|null;ended_at:string|null}[]>('crm_access_list')});
   return (
     <div className="space-y-4">
       <Tabs defaultValue="catalogs">
@@ -122,6 +123,7 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
             <Plus className="h-4 w-4" />
             Cấp quyền nghiệp vụ riêng
           </Button>
+          <div className="divide-y border-y">{grants.data?.map(g=><div className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm" key={g.id}><div><strong>{people.data?.find(p=>p.id===g.user_id)?.name||'Nhân sự'}</strong><p className="text-xs text-muted-foreground">{g.permission} · {g.reason}{g.revoked_at?' · Đã thu hồi':''}</p></div>{!g.revoked_at&&<Button variant="outline" size="sm" disabled={saveGrant.isPending} onClick={async()=>{try{await saveGrant.mutateAsync({user_id:g.user_id,permission:g.permission,revoke_id:g.id,reason:'Thu hồi quyền CRM'});}catch(e){setError(e instanceof Error?e.message:'Chưa thu hồi được.');}}}>Thu hồi</Button>}</div>)}</div>
         </TabsContent>
       </Tabs>
       {edit && (
