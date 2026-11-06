@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## CRM KHÁCH HÀNG — 06/11/2026
+- [ ] CRM1. Nền tảng riêng CRM, quyền bổ nhiệm/phạm vi, danh mục tùy chỉnh và kiểm thử backend.
+- [ ] CRM2. Khách tổ chức/cá nhân, nhiều liên hệ/địa điểm, chống trùng, lịch sử/bàn giao và file riêng tư.
+- [ ] CRM3. Lịch hẹn/định kỳ/mùa vụ, tương tác, quá hạn/dời lịch và nhắc Base chống trùng.
+- [ ] CRM4. Báo cáo thật theo kỳ/phạm vi, công thức thống nhất, biểu đồ/drill-down/so sánh.
+- [ ] CRM5. Mobile chung shell/menu/ghim, kiểm thử hồi quy và nghiệm thu tài khoản/hồ sơ được phép; chưa Publish.
+
 ## MOBILE NGHỈ PHÉP & ĐI SỚM MUỘN — 06/11/2026
 - [x] ML1. Ba ô tạo trực tiếp, tab/danh sách/bộ lọc mobile gọn đúng quyền; giữ /leave và deep link, tách attendance.
 - [x] ML2. Form/chi tiết/duyệt/báo cáo mobile, chọn nhanh và safe-area; giữ phép tính/hạn/bổ sung/API/quyền/Zalo.
