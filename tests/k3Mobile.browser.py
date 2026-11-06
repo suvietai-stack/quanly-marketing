@@ -11,7 +11,7 @@ async def main():
   browser=await p.chromium.launch(headless=True)
   for width,height in [(320,740),(375,812),(390,844),(430,932),(768,1024),(1280,1800)]:
    page=await browser.new_page(viewport={'width':width,'height':height});errors=[];writes=[];saved=15;reviewed=False;fail=True
-   page.on('pageerror',lambda e:errors.append(str(e)))
+   page.on('pageerror',lambda e:errors.append(e.stack))
    await page.route('**/k3-mobile-fixture',lambda r:r.fulfill(content_type='text/html',body=HTML))
    async def rpc(route):
     nonlocal saved,reviewed,fail
