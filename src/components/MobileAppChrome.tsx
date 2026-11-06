@@ -60,7 +60,7 @@ export function MobileAppChrome({ groups, userId, name, brandName, logo, notific
     <header ref={header} className="mobile-app-header md:hidden fixed inset-x-0 top-0 z-30 border-b bg-card" aria-label="Đầu trang mobile">
       <div className="flex min-h-16 items-center gap-2 px-3">
         {home ? logo : <Button variant="ghost" size="icon" onClick={back} aria-label="Quay lại"><ArrowLeft /></Button>}
-        <div className="min-w-0 flex-1"><div className={cn('truncate font-semibold tracking-normal', home ? 'text-sm' : 'text-[10px] text-muted-foreground')}>{brandName}</div><div className={cn('leading-snug break-words', home ? 'text-[11px] text-muted-foreground truncate' : 'text-sm font-semibold')}>{home ? `Xin chào, ${name ?? ''}` : page.title}</div></div>
+        <div className="min-w-0 flex-1"><div className="truncate font-semibold tracking-normal text-[10px] text-muted-foreground">{brandName}</div><h1 className="text-sm font-semibold leading-snug break-words tracking-normal">{page.title}</h1></div>
         <div className="mobile-header-notifications">{notifications}</div>
         {home ? <Button variant="ghost" size="icon" asChild className="rounded-full bg-accent text-accent-foreground text-xs"><Link to="/profile" aria-label="Hồ sơ cá nhân">{name?.slice(0,1).toUpperCase() ?? <User />}</Link></Button> : <Button variant="ghost" size="icon" aria-label="Mở menu" onClick={onMenu}><Menu /></Button>}
       </div>

@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## BỎ HEADER LAUNCHER LẶP — 06/11/2026
+- [x] H1. Bỏ h1/nút quay lại nội dung Launcher ở mọi khu vực; header chung có tên Trang chủ/khu vực, tìm kiếm cách header 16px, lưới gọn và giữ ghim.
+- [x] H2a. Mười khu vực tại 320/390/767px chỉ một header/tiêu đề/back; ghim/bỏ ghim/back/home/fixed chrome và desktop hồi quy đạt; 25 unit test và build OK. docs/mobile-single-header-verification.md; không đổi nghiệp vụ, chưa Publish.
+- [ ] H2b. Nghiệm thu phiên AppShell thật cần đăng nhập Preview (hiện signed_out, mint --self trước đó không khớp); không tự chọn tài khoản khác.
+
 ## KHUNG MOBILE CỐ ĐỊNH TOÀN BASE — 06/11/2026
 - [x] S1. MobileAppChrome chung AppShell: header/nav fixed mọi route, tên module/cha, quay lại chỉ lịch sử được quan sát cùng user, fallback khu vực/home, tab đang chọn.
 - [x] S2a. Một vùng cuộn document; đo chiều cao/safe-area, chừa nội dung và nâng nút fixed/sticky; modal z-50 trên chrome z-30; xử lý visualViewport bàn phím, desktop/deep link nguyên trạng.

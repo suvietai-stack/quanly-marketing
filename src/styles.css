@@ -150,7 +150,7 @@
 .mobile-launcher { letter-spacing: 0; }
 .mobile-launcher :is(h1,h2,h3) { letter-spacing: 0; }
 .launcher-section-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--foreground); }
-.launcher-app-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px 8px; }
+.launcher-app-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
 .launcher-icon { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 8px; color: var(--launcher-ink); background: color-mix(in oklab,var(--launcher-ink) 12%,var(--card)); }
 .launcher-icon svg { width: 24px; height: 24px; }
 .launcher-tone-primary { --launcher-ink: var(--primary); }
@@ -166,6 +166,7 @@
   :root { --mobile-header-height: calc(64px + env(safe-area-inset-top)); --mobile-nav-height: calc(64px + max(8px,env(safe-area-inset-bottom))); }
   .base-app-shell { min-height: 100dvh; }
   .base-app-content { padding-top: calc(var(--mobile-header-height) + 24px); padding-bottom: calc(var(--mobile-nav-height) + 24px); }
+  .base-app-content:has(> .mobile-launcher) { padding-top: calc(var(--mobile-header-height) + 16px); }
   .base-app-content :is(input,textarea,select,button,[tabindex]) { scroll-margin-top: calc(var(--mobile-header-height) + 12px); scroll-margin-bottom: calc(var(--mobile-nav-height) + 24px); }
   .base-app-content .fixed.bottom-0 { bottom: var(--mobile-nav-height); }
   .base-app-content .fixed.bottom-4 { bottom: calc(var(--mobile-nav-height) + 16px); }
