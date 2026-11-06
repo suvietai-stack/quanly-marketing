@@ -161,7 +161,7 @@
   .signals-report { overflow-wrap:anywhere; }
 }
 .crm-module, .crm-dialog { letter-spacing: 0; overflow-wrap: anywhere; }
-.crm-module [data-slot="chart"] { min-width: 0; aspect-ratio: auto; }
+.crm-module [data-chart] { min-width: 0; aspect-ratio: auto; }
 .crm-module :is(h1,h2,h3), .crm-dialog :is(h1,h2,h3) { letter-spacing: 0; }
 .crm-form-footer { position: sticky; bottom: 0; background: var(--background); padding: 12px 0; z-index: 1; }
 @media (max-width: 767px) {
