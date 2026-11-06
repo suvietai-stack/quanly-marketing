@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Archive, ClipboardList, ListChecks, Settings2, Users } from 'lucide-react';
+import { Archive, ClipboardList, ListChecks, Settings2, Users, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3SettingsQuery } from '@/lib/biz/k3Queries';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,8 @@ import { Biz3KKpiDay } from './Biz3KKpiDay';
 import { Biz3KArchive } from './Biz3KArchive';
 import { Button } from '@/components/ui/button';
 import { K3DeleteProvider } from './Biz3KDelete';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 type Section = 'mine' | 'collab' | 'monitor' | 'settings' | 'archive';
 type Mode = 'day' | 'week' | 'month' | 'quarter' | 'all';
@@ -50,8 +52,12 @@ function Biz3KScreen() {
     : visible.some((t) => t.key === section) ? section : (visible[0]?.key ?? 'mine');
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="k3-mobile space-y-4 min-w-0">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 md:hidden">
+        <Select value={active} onValueChange={value => setSection(value as Section)}><SelectTrigger aria-label="Khu vực 3K" className="h-11 min-w-0"><SelectValue /></SelectTrigger><SelectContent>{visible.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}<SelectItem value="archive">Thùng lưu trữ</SelectItem>{settings.can_settings && <SelectItem value="settings">Cài đặt 3K</SelectItem>}</SelectContent></Select>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Thao tác phụ 3K"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setSection('archive')}><Archive />Thùng lưu trữ</DropdownMenuItem>{settings.can_settings && <DropdownMenuItem onSelect={() => setSection('settings')}><Settings2 />Cài đặt 3K</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>
+      </div>
+      <div className="hidden md:flex flex-wrap items-center gap-2">
         <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:flex-1">
           {visible.map((t) => (
             <Button variant="ghost"
@@ -89,9 +95,9 @@ function Biz3KScreen() {
       {active === 'mine' && (
         <div className="space-y-6">
           <section className="space-y-3">
-            <div className="flex gap-1 overflow-x-auto border-b border-border pb-3">
+            <div className="flex min-w-0 gap-1 overflow-x-auto border-b border-border pb-2">
               {(['day', 'week', 'month', 'quarter', 'all'] as const).map((v) => (
-                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
             {mode === 'day' && <><Biz3KKpiDay settings={settings} date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}

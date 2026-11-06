@@ -148,6 +148,20 @@
 }
 
 .mobile-launcher { letter-spacing: 0; }
+.k3-mobile :is(h1,h2,h3), .k3-mobile-dialog :is(h1,h2,h3) { letter-spacing: 0; }
+@media (max-width: 767px) {
+  .k3-mobile { overflow-wrap: anywhere; }
+  .k3-mobile-dialog { top: 0; left: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; transform: none; border-radius: 0; padding: max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); align-content: start; overflow-y: auto; overscroll-behavior: contain; }
+  .k3-mobile-dialog :is(input,textarea,select,[role="combobox"]) { min-width: 0; max-width: 100%; font-size: 16px; }
+  .k3-mobile-dialog input { min-height: 44px; }
+  .k3-mobile-dialog :is(h2,h3) { line-height: 1.4; padding-right: 24px; overflow-wrap: anywhere; }
+  .k3-mobile-dialog > div:last-of-type:has(>button) { position: sticky; bottom: 0; background: var(--background); padding-top: 12px; padding-bottom: env(safe-area-inset-bottom); z-index: 1; }
+  .k3-mobile-dialog button { min-height: 44px; }
+  .k3-work-card > div:last-child { border-bottom: 0; }
+  .k3-work-card button:has(>svg):not([aria-label]) { min-height: 44px; }
+  .k3-review-item > summary { min-height: 44px; cursor: pointer; }
+}
+@media (min-width: 768px) { .k3-review-item > summary { display: none; } .k3-review-item > div { display: block; } }
 .mobile-launcher :is(h1,h2,h3) { letter-spacing: 0; }
 .launcher-section-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--foreground); }
 .launcher-app-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
