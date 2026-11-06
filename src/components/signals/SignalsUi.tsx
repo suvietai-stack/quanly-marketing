@@ -35,6 +35,9 @@ import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 
 import { SignalDeadlineFilters } from './SignalDeadlineFilters';
 import { deadlineCounts, type DeadlineQuick } from '@/lib/signals/deadlineFilters';
+import { DEADLINE_QUICK } from '@/lib/signals/deadlineFilters';
+import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
+import { SignalMobileCard } from './SignalMobileCard';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
   return <Button asChild variant="link" className="h-auto min-h-11 md:min-h-0 justify-start whitespace-normal p-0 text-left font-semibold leading-tight select-text">
@@ -156,6 +159,8 @@ export function SignalsPage() {
   useEffect(()=>{if(p.userId&&restored.current===p.userId){try{sessionStorage.setItem(`sig:filters:${p.userId}`,JSON.stringify({f,workQuick,sort,deadlineFilter}));}catch{}}},[f,workQuick,sort,deadlineFilter,p.userId]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(MOBILE_SIGNAL_BATCH);
+  useEffect(() => { setVisibleCount(MOBILE_SIGNAL_BATCH); }, [f, workQuick, deadlineFilter]);
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const id = sp.get("open");
@@ -206,7 +211,7 @@ export function SignalsPage() {
   const needCount = (g?: string) => (g ? needBase.filter((s) => needGroupsOf(s).includes(g)).length : needBase.length);
   const open = data.find((s) => s.id === openId) || null;
   const denied = !!openId && !isLoading && !open;
-  const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
+  const extra = appliedSignalFilters(f, deadlineFilter, workQuick);
 
 
   return (
@@ -231,13 +236,13 @@ export function SignalsPage() {
         </div>
       )}
 
-      <div className="flex gap-2">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-1.5 md:flex md:gap-2">
+        <div className="relative min-w-0 md:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={f.q ?? ""} onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))} placeholder="Tìm khách hàng hoặc SĐT" className="pl-9 h-11" />
+          <Input aria-label="Tìm tín hiệu" value={f.q ?? ""} onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))} placeholder="Tìm khách, SĐT" className="pl-9 h-11 min-w-0" />
         </div>
-        <Button variant="outline" className="h-11" onClick={() => setFilterOpen(true)}>
-          <SlidersHorizontal className="h-4 w-4 mr-1" />Bộ lọc{extra ? ` (${extra})` : ""}
+        <Button variant="outline" className="h-11 shrink-0 px-2 md:px-4 gap-1" onClick={() => setFilterOpen(true)}>
+          <SlidersHorizontal className="h-4 w-4" />Bộ lọc{extra ? ` (${extra})` : ""}
         </Button>
         {p.create&&<Button className="h-11 w-11 shrink-0 md:hidden" size="icon" aria-label="Thêm tín hiệu" onClick={()=>setCreating(true)}><Plus className="h-4 w-4"/></Button>}
       </div>
@@ -247,9 +252,11 @@ export function SignalsPage() {
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </Button>
       )}
-      <div className="md:hidden min-w-0 space-y-2">
-        <SignalDeadlineFilters value={deadlineFilter} counts={dueCounts} loading={deadlines.isPending} error={deadlines.error?errMsg(deadlines.error):undefined} onChange={pickDeadline}/>
-        <ActiveFilters f={f} name={name} onChange={setF} />
+      <div className="md:hidden min-w-0 relative">
+        <div className="signal-status-scroll flex gap-1.5 overflow-x-auto pb-1 pr-5" role="group" aria-label="Trạng thái tín hiệu">
+          {[QUICK[0], ...QUICK.filter(x => !['all','waiting'].includes(x.k)), ...QUICK.filter(x => x.k === 'waiting')].map(x => <Button key={x.k} size="sm" variant={f.quick === x.k && !care.on ? 'default' : 'outline'} aria-pressed={f.quick === x.k && !care.on} className="h-9 shrink-0 rounded-full px-3 text-xs gap-1.5" onClick={() => {setCare({on:false});setF(y=>({...y,quick:x.k}));}}>{x.label}<span className="tabular-nums opacity-75">{isLoading ? '…' : count(x.k)}</span></Button>)}
+        </div>
+        <span className="pointer-events-none absolute right-0 top-0 grid h-9 w-4 place-items-center bg-background text-muted-foreground" aria-hidden="true">›</span>
       </div>
       <div className="hidden md:block rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
         <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
@@ -292,19 +299,8 @@ export function SignalsPage() {
         : (
           <>
             <div className="md:hidden space-y-2">
-              {list.map((s) => (
-                <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card w-full text-left rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
-                  <div className="flex items-start justify-between gap-2">
-                    <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
-                    <StatusPill s={s} />
-                  </div>
-                  <div className="text-xs text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
-                  {s.revenue!=null&&<div className="text-sm font-medium">{fmtVnd(s.revenue)}</div>}
-                  <div className="flex flex-wrap items-center gap-1.5"><PotentialPill s={s}/><SignalLabelPills s={s} labels={labels.data??[]}/></div>
-                  <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-muted-foreground"><span>{!saleOnly&&(s.assigned_to?name(s.assigned_to):'Chưa phân công')}</span><span>{s.next_contact_on?`Theo dõi ${fmtNext(s)}`:deadlines.data?.[s.id]?`Hạn cập nhật ${fmtDate(deadlines.data[s.id].due_on)}`:'Chưa có lịch theo dõi'}</span></div>
-                  <div className="grid grid-cols-2 gap-2 pt-1" data-signal-interactive><Button asChild variant="outline" className="min-h-11"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1"/>Gọi</a></Button><Button variant="secondary" className="min-h-11" onClick={()=>setOpenId(s.id)}>Xem / Cập nhật</Button></div>
-                </div>
-              ))}
+              {list.slice(0, visibleCount).map(s => <SignalMobileCard key={s.id} s={s} status={<StatusPill s={s}/>} owner={s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'} deadline={deadlines.data?.[s.id]} labels={labels.data??[]} onOpen={()=>setOpenId(s.id)}/>)}
+              <div className="space-y-2 pt-2 text-center"><p className="text-xs text-muted-foreground">{Math.min(visibleCount,list.length)} / {list.length} tín hiệu</p>{visibleCount < list.length && <Button variant="outline" className="h-11 w-full" onClick={()=>setVisibleCount(n=>n+MOBILE_SIGNAL_BATCH)}>Tải thêm</Button>}</div>
             </div>
             <div className="hidden md:block rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <table className="w-full text-sm">
@@ -333,7 +329,7 @@ export function SignalsPage() {
           </>
         )}
 
-      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
+      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} deadline={deadlineFilter} onDeadline={pickDeadline} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
       <Sheet open={labelsOpen} onOpenChange={setLabelsOpen}><SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto sm:max-w-xl sm:mx-auto"><SheetHeader className="mb-4"><SheetTitle>Nhãn cá nhân</SheetTitle></SheetHeader><SignalLabelManager uid={p.userId} catalog={false} sale={p.sale} personalOnly/></SheetContent></Sheet>
       {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
@@ -362,8 +358,8 @@ export function SignalsPage() {
   );
 }
 
-function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, workQuick, sort, onOptions }: {
-  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void;
+function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, workQuick, sort, onOptions, deadline, onDeadline }: {
+  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void; deadline:DeadlineQuick|null; onDeadline:(v:DeadlineQuick|null)=>void;
 }) {
   const name = useUserName();
   const prodOpts = useOptions("signal_products");
@@ -372,15 +368,17 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, wor
   const lr = useLostReasons();
   const p=useSignalPerms();const labels=useSignalLabels(p.userId);
   const [work,setWork]=useState(workQuick);const [order,setOrder]=useState(sort);
+  const [due,setDue]=useState(deadline);
   const [f, setF] = useState<ListFilter>(value);
-  useEffect(() => { if (open) {setF(value);setWork(workQuick);setOrder(sort);} }, [open, value,workQuick,sort]);
+  useEffect(() => { if (open) {setF(value);setWork(workQuick);setOrder(sort);setDue(deadline);} }, [open, value,workQuick,sort,deadline]);
   const set = (k: keyof ListFilter, v: any) => setF((x) => ({ ...x, [k]: v || undefined }));
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => [id, name(id)] as [string, string]);
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+      <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] flex flex-col overflow-hidden p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
         <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
-        <div className="px-4 grid grid-cols-2 gap-3 pb-4">
+        <div className="min-h-0 overflow-y-auto px-4 grid grid-cols-2 gap-3 pb-4">
+          <label className="col-span-2 space-y-1.5 text-sm font-medium">Hạn cập nhật diễn biến<select aria-label="Hạn cập nhật diễn biến" className="h-11 w-full min-w-0 rounded-md border bg-background px-2 text-sm" value={due??''} onChange={e=>setDue((e.target.value||null) as DeadlineQuick|null)}>{DEADLINE_QUICK.map(x=><option key={x.key??'all'} value={x.key??''}>{x.label}</option>)}</select></label>
           <Field label="Lọc nhanh"><Pick value={work} onChange={v=>setWork((v||'all') as WorkQuick)} opts={[["all","Tất cả"],["high","Tiềm năng cao"],["action","Cần xử lý"],["overdue","Quá hạn xử lý"],["won","Đã chốt"]]}/></Field>
           <Field label="Sắp xếp"><Pick value={order} onChange={v=>setOrder((v||'work') as SignalSort)} opts={[["work","Ưu tiên công việc"],["newest","Mới nhất"],["oldest","Cũ nhất"],["soonest","Cần xử lý sớm"],["potential","Tiềm năng cao trước"],["value","Giá trị đã ghi nhận"],["activity","Cập nhật mới nhất"]]}/></Field>
           <Field label="Giai đoạn"><Pick value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/></Field>
@@ -411,9 +409,9 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, wor
             </label>
           </>}
         </div>
-        <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
-          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOptions("all",sort); onOpenChange(false); }}>Xóa bộ lọc</Button>
-          <Button size="lg" onClick={() => { onApply(f); onOptions(work,order); onOpenChange(false); }}>Áp dụng</Button>
+        <div className="shrink-0 bg-background border-t p-3 pb-[max(12px,env(safe-area-inset-bottom))] grid grid-cols-2 gap-2">
+          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOptions("all",sort); onDeadline(null); onOpenChange(false); }}>Xóa bộ lọc</Button>
+          <Button size="lg" onClick={() => { onApply(f); onOptions(work,order); onDeadline(due); onOpenChange(false); }}>Áp dụng</Button>
         </div>
       </SheetContent>
     </Sheet>
