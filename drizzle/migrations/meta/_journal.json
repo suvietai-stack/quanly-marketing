@@ -1821,6 +1821,13 @@
       "when": 1793956743489,
       "tag": "0259_crm_atomic_catalog_order_and_care_history",
       "breakpoints": true
+    },
+    {
+      "idx": 260,
+      "version": "7",
+      "when": 1793957126582,
+      "tag": "0260_signal_assessment_save",
+      "breakpoints": true
     }
   ]
 }

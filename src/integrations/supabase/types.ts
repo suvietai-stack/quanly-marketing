@@ -9711,6 +9711,15 @@ export type Database = {
         Args: { _enabled: boolean; _source: string; _stars: number }
         Returns: undefined
       }
+      signal_assessment_save: {
+        Args: {
+          _id: string
+          _labels: string[]
+          _potential: string
+          _request_id: string
+        }
+        Returns: string
+      }
       signal_assign: {
         Args: { _id: string; _user: string }
         Returns: undefined
