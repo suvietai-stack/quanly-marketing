@@ -13,7 +13,7 @@ export function useSignalLabels(uid: string|null) {
   return useQuery({queryKey:['sig:labels',uid],queryFn:listSignalLabels,enabled:!!uid});
 }
 export function PotentialPill({s}:{s:Signal}) {
-  return <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${potentialOf(s)==='high'?'bg-warning/15 text-warning':'bg-muted text-muted-foreground'}`}>{POTENTIAL_LABEL[potentialOf(s)]}</span>;
+  return <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${potentialOf(s)==='high'?'bg-warning/20 text-warning-foreground':'bg-muted text-muted-foreground'}`}>{POTENTIAL_LABEL[potentialOf(s)]}</span>;
 }
 export function SignalLabelPills({s,labels}:{s:Signal;labels:SignalLabel[]}) {
   const selected=labels.filter(l=>s.label_ids?.includes(l.id));
@@ -61,7 +61,7 @@ export function SignalEnrichment({s,uid,canEdit,catalog,sale,onSaved}:{s:Signal;
     try{await saveSignalEnrichment(s.id,request.current.id,potential,ids,next||null,nextAt);onSaved();setOpen(false);}
     catch(e){setError(errMsg(e));}finally{lock.current=false;setBusy(false);}
   };
-  const close=(value:boolean)=>{if(busy)return;if(!value&&(potential!==potentialOf(s)||JSON.stringify([...ids].sort())!==JSON.stringify([...(s.label_ids??[])].sort())||next!==(s.next_contact_on??''))&&!window.confirm('Bỏ các thay đổi chưa lưu?'))return;setOpen(value);};
+  const close=(value:boolean)=>{if(busy)return;if(!value&&(potential!==potentialOf(s)||JSON.stringify([...ids].sort())!==JSON.stringify([...(s.label_ids??[])].sort())||next!==(s.next_contact_on??'')||hour!==(s.next_contact_at?new Date(Date.parse(s.next_contact_at)+7*3600000).toISOString().slice(11,16):''))&&!window.confirm('Bỏ các thay đổi chưa lưu?'))return;setOpen(value);};
   return <section className="space-y-2">
     <div className="flex flex-wrap gap-1.5 items-center"><PotentialPill s={s}/><SignalLabelPills s={s} labels={q.data??[]}/>{canEdit&&<Button variant="outline" size="sm" className="min-h-11" onClick={()=>setOpen(true)}><Pencil className="h-3.5 w-3.5 mr-1"/>Tiềm năng · Nhãn · Lịch</Button>}</div>
     {s.potential_updated_at&&<p className="text-xs text-muted-foreground">Đánh giá {new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(s.potential_updated_at))}</p>}

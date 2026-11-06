@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect,useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -61,6 +61,8 @@ export function SignalsReport() {
   const t = todayKey();
   const [f, setF] = useState<ReportFilter>({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [draft,setDraft]=useState<ReportFilter>(f);
+  useEffect(()=>{if(filterOpen)setDraft(f);},[filterOpen]);
   const [gran, setGran] = useState<TrendGranularity>("day");
   const [srcMetric, setSrcMetric] = useState<"total" | "won" | "rate">("total");
   const set = (k: keyof ReportFilter, v: string) => setF((x) => ({ ...x, [k]: v || undefined }));
@@ -68,10 +70,10 @@ export function SignalsReport() {
 
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
-  // KPI tỷ lệ chốt: giữ tập gốc theo bộ lọc nghiệp vụ, không bị bộ lọc trạng thái làm sai lệch
+  // All KPI and Sale rates use exactly the same filtered population.
   const kpiList = list;
   const kpi = useMemo(() => summarize(kpiList, t), [kpiList, t]);
-  // Tỷ lệ chốt theo Sale: cùng tập không lọc trạng thái, mẫu số = tổng tín hiệu được giao
+  // Sale rate denominator is its full filtered signal population.
   const rateBySale = useMemo(() => new Map(groupBy(kpiList, (s) => s.assigned_to).map((r) => [r.key, r.s])), [kpiList]);
   const signalsBySale = useMemo(() => {
     const m = new Map<string, Signal[]>();
@@ -167,12 +169,12 @@ export function SignalsReport() {
         <div className="grid grid-cols-4 lg:grid-cols-5 gap-3 text-sm">{filterFields}</div>
       </div>
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+        <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
           <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc báo cáo</SheetTitle></SheetHeader>
-          <div className="px-4 grid grid-cols-2 gap-3 pb-4 text-sm">{filterFields}</div>
+          <div className="px-4 grid grid-cols-2 gap-3 pb-4 text-sm"><ReportFilterFields f={draft} set={(k,v)=>setDraft(x=>({...x,[k]:v||undefined}))} setF={setDraft} sources={srcOpts.names} products={prodOpts.names} needs={needOpts.names} sales={people(data.map(s=>s.assigned_to))} creators={people(data.map(s=>s.created_by))} labels={(labels.data??[]).map(l=>[l.id,l.name])}/></div>
           <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
-            <Button variant="outline" size="lg" onClick={() => { reset(); }}>Đặt lại</Button>
-            <Button size="lg" onClick={() => setFilterOpen(false)}>Áp dụng</Button>
+            <Button variant="outline" size="lg" onClick={() => { setDraft({basis:"created",from:`${t.slice(0,7)}-01`,to:t}); }}>Xóa bộ lọc</Button>
+            <Button size="lg" onClick={() => {setF(draft);setFilterOpen(false);}}>Áp dụng</Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -323,7 +325,7 @@ export function SignalsReport() {
             <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <div className="px-4 py-2.5 font-medium text-sm border-b">Theo lý do trượt</div>
               {lost.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có tín hiệu trượt.</p> : (
-                <table className="w-full text-sm"><tbody>
+                <table className="hidden md:table w-full text-sm"><tbody>
                   {lost.map((r) => <tr key={r.key} className="border-t first:border-t-0"><td className="px-4 py-2">{r.key}</td><td className="px-4 py-2 text-right">{r.n}</td></tr>)}
                 </tbody></table>
               )}
@@ -411,8 +413,9 @@ function Tbl({ title, first, rows, cols }: { title: string; first: string; rows:
   return (
     <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
       <div className="px-4 py-2.5 font-medium text-sm border-b">{title}</div>
+      <div className="md:hidden divide-y px-3">{rows.map(([key,s])=><div key={key} className="py-3 text-sm"><b>{key}</b><div className="grid grid-cols-2 gap-1 mt-2 text-xs"><span>Tín hiệu: {s.total}</span><span>Chốt / Trượt: {s.won} / {s.lost}</span><span>Tỷ lệ chốt: {pct(s)}</span><span>{fmtVnd(s.revenue)}</span></div></div>)}</div>
       {rows.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có dữ liệu.</p> : (
-        <table className="w-full text-sm">
+        <table className="hidden md:table w-full text-sm">
           <thead className="text-xs text-muted-foreground bg-muted/40"><tr><th className="px-4 py-2 text-left font-medium">{first}</th>{head.map((h) => <th key={h} className="px-4 py-2 text-right font-medium whitespace-nowrap">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map(([k, s]) => (
@@ -464,8 +467,9 @@ function SaleTable({ rows, name, rates, signalsBySale, events, notes }: {
   return (
     <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
       <div className="px-4 py-2.5 font-medium text-sm border-b">Theo Sale được phân công</div>
+      <div className="md:hidden divide-y px-3">{sorted.map(r=><div key={r.key} className="py-3 text-sm"><b>{name(r.key)}</b><div className="grid grid-cols-2 gap-1 mt-2 text-xs"><span>Được giao: {r.s.total-r.s.unassigned}</span><span>Chốt / Trượt: {r.s.won} / {r.s.lost}</span><span>Tỷ lệ: {r.rate==null?'—':r.rate.toLocaleString('vi-VN',{maximumFractionDigits:1})+'%'}</span><span>Tiếp nhận: {fmtMinutes(r.acc.avg)}</span><span className="col-span-2">Doanh số: {fmtVnd(r.s.revenue)}</span></div></div>)}</div>
       {rows.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có dữ liệu.</p> : (
-        <table className="w-full text-sm">
+        <table className="hidden md:table w-full text-sm">
           <thead className="text-xs text-muted-foreground bg-muted/40">
             <tr>
               <th className="px-4 py-2 text-left font-medium">Sale</th>
@@ -529,7 +533,7 @@ function CareTable({ data, name, userId, all }: { data: any[]; name: (id: string
     <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
       <div className="px-4 py-2.5 text-sm font-medium border-b">Theo dõi chăm sóc <span className="text-xs font-normal text-muted-foreground">— tình trạng hiện tại, chỉ để nhắc việc</span></div>
       {rows.length === 0 ? <p className="p-3 text-sm text-muted-foreground">Không có tín hiệu cần kiểm tra.</p> : (
-        <table className="w-full text-sm">
+        <table className="hidden md:table w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2">Nhân viên</th><th className="px-4 py-2">Chưa tiếp nhận</th><th className="px-4 py-2">Lâu chưa cập nhật</th></tr></thead>
           <tbody>{rows.map(([id, r]) => (
             <tr key={id} className="border-t"><td className="px-4 py-2">{name(id)}</td><td className="px-4 py-2">{link(id, "unaccepted", r.u)}</td><td className="px-4 py-2">{link(id, "stale", r.s)}</td></tr>

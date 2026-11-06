@@ -189,14 +189,14 @@ export function SignalsPage() {
     const rows=filtered.filter(s=>(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)&&matchWork(s,workQuick,deadlines.data?.[s.id],today));
     return sort==='activity'?rows:sortSignals(rows,sort,deadlines.data??{},today);
   }, [data, f, today, last,deadlineFilter,deadlines.data,workQuick,sort]);
-  const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
+  const base = useMemo(() => applyDetailFilter(data, f, today).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)), [data, f, today,workQuick,deadlines.data,deadlineFilter]);
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
   const needOpts = useOptions("signal_need_groups");
   // Đếm nhóm nhu cầu: áp dụng mọi điều kiện khác (kể cả trạng thái) trừ chính nhóm nhu cầu
   const needBase = useMemo(() => {
     const b = applyDetailFilter(data, { ...f, needGroup: undefined }, today);
-    return f.quick === "all" ? b : b.filter((s) => s.status === f.quick);
-  }, [data, f, today]);
+    return b.filter(s=>(f.quick==='all'||s.status===f.quick)&&matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter));
+  }, [data, f, today,workQuick,deadlines.data,deadlineFilter]);
   const needCount = (g?: string) => (g ? needBase.filter((s) => needGroupsOf(s).includes(g)).length : needBase.length);
   const open = data.find((s) => s.id === openId) || null;
   const denied = !!openId && !isLoading && !open;
@@ -336,7 +336,7 @@ export function SignalsPage() {
       <Sheet open={labelsOpen} onOpenChange={setLabelsOpen}><SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto sm:max-w-xl sm:mx-auto"><SheetHeader className="mb-4"><SheetTitle>Nhãn cá nhân</SheetTitle></SheetHeader><SignalLabelManager uid={p.userId} catalog={false} sale={p.sale} personalOnly/></SheetContent></Sheet>
       {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent side="right" className="signal-mobile-sheet w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader><SheetTitle>Thêm tín hiệu</SheetTitle></SheetHeader>
           <SignalForm onDone={() => setCreating(false)} />
         </SheetContent>
@@ -347,8 +347,8 @@ export function SignalsPage() {
         const u = new URL(window.location.href);
         if (u.searchParams.has("open")) { u.searchParams.delete("open"); window.history.replaceState(null, "", u.pathname + u.search); }
       }}>
-        <SheetContent side="right" className="w-full h-full max-w-none sm:max-w-xl overflow-y-auto p-0">
-          {open && <SignalDetail s={open} last={last[open.id]} />}
+        <SheetContent side="right" className="signal-mobile-sheet w-full h-full max-w-none sm:max-w-xl overflow-y-auto p-0">
+          {open && <SignalDetail key={open.id} s={open} last={last[open.id]} />}
           {denied && (
             <div className="p-6 pt-12 space-y-2">
               <SheetHeader><SheetTitle>Không thể mở tín hiệu</SheetTitle></SheetHeader>
@@ -376,7 +376,7 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => [id, name(id)] as [string, string]);
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+      <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
         <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
         <div className="px-4 grid grid-cols-2 gap-3 pb-4">
           <Field label="Giai đoạn"><Pick value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/></Field>
@@ -830,7 +830,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       </div>
 
       <Sheet open={updating} onOpenChange={setUpdating}>
-        <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+        <SheetContent side="bottom" className="signal-mobile-sheet max-h-[90dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
           <SheetHeader className="p-4 pb-2"><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader>
           {updating && <UpdateForm s={s} onSaved={() => { setUpdating(false); refresh(); }} />}
         </SheetContent>
