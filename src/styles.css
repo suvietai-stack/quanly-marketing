@@ -151,6 +151,7 @@
 .signals-page,.signals-report,.signal-mobile-sheet { min-width: 0; letter-spacing: 0; }
 .signals-page :is(h1,h2,h3),.signals-report :is(h1,h2,h3),.signal-mobile-sheet :is(h1,h2,h3) { letter-spacing: 0; }
 .signal-mobile-action-short { display: none; }
+.signal-mobile-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .signal-status-scroll { overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .signal-mobile-status > span { max-width: 132px; white-space: normal; text-align: center; line-height: 1.3; border-radius: 6px; }
 @media (max-width:359px) { .signal-mobile-action-long { display:none; } .signal-mobile-action-short { display:inline; } .signal-mobile-status > span { max-width:110px; } }

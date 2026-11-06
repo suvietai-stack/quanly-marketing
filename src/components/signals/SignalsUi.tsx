@@ -29,7 +29,7 @@ import { zaloCareCounts } from "@/lib/zalo.functions";
 import { ProgressionSummary } from "./ProgressionSummary";
 import { composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
-import { SignalEnrichment, SignalLabelManager, PotentialPill, SignalLabelPills, useSignalLabels } from './SignalEnrichment';
+import { SignalEnrichment, SignalLabelManager, PotentialPill, useSignalLabels } from './SignalEnrichment';
 import { POTENTIAL_LABEL, STAGES, matchWork, sortSignals, type WorkQuick, type SignalSort } from '@/lib/signals/potential';
 import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 
@@ -275,7 +275,9 @@ export function SignalsPage() {
           </div>
           {careList.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg bg-card">Không có tín hiệu cần kiểm tra.</p>
             : careList.map(({ s, flag, since }) => (
-              <div key={s.id} onClick={signalSurfaceClick(() => setOpenId(s.id))} className="signal-card rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
+              <div key={s.id}>
+              <div className="md:hidden"><SignalMobileCard s={s} status={<StatusPill s={s}/>} owner={s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'} deadline={deadlines.data?.[s.id]} labels={labels.data??[]} onOpen={()=>setOpenId(s.id)}/></div>
+              <div onClick={signalSurfaceClick(() => setOpenId(s.id))} className="hidden md:block signal-card rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
                 <div className="flex items-start justify-between gap-2">
                   <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
                   <StatusPill s={s} />
@@ -287,6 +289,7 @@ export function SignalsPage() {
                   </span>
                   <Button size="sm" variant="outline" className="min-h-11 md:min-h-0" onClick={() => setOpenId(s.id)}>Xem tín hiệu</Button>
                 </div>
+              </div>
               </div>
             ))}
         </div>
