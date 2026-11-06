@@ -13,8 +13,6 @@ export const navigationGroups: NavGroup[] = [
     { to: "/biz", label: "Tổng quan Kinh doanh", icon: Briefcase, exact: true, anyPerm: ["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"] },
     { to: "/signals", label: "Danh sách tín hiệu", icon: Radar, anyPerm: ["signal.create", "signal.view_all", "signal.manage", "signal.sale", "signal.assign"] },
     { to: "/signals/report", label: "Báo cáo tín hiệu", icon: FileText, anyPerm: ["signal.report", "signal.manage"] },
-    { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, anyPerm: ["kpi.view_own", "kpi.view_all", "kpi.goal_create", "kpi.goal_edit", "kpi.goal_archive", "kpi.goal_delete", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"] },
-    { to: "/reports-v2", label: "Báo cáo KPI", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
     { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
     { to: "/biz/goals", label: "Mục tiêu KR", icon: Target, anyPerm: ["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"] },
     { to: "/biz/reports", label: "Báo cáo Kinh doanh", icon: ClipboardCheck, anyPerm: ["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"] },
@@ -32,6 +30,8 @@ export const navigationGroups: NavGroup[] = [
       { to: "/social", label: "Kênh Social", icon: Share2, perm: "social.view" },
       { to: "/local", label: "Local Map", icon: MapPin, perm: "local.view" },
 { to: "/videos", label: "Sản Xuất Video", icon: Video, perm: "video.view" },
+    { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, anyPerm: ["kpi.view_own", "kpi.view_all", "kpi.goal_create", "kpi.goal_edit", "kpi.goal_archive", "kpi.goal_delete", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"] },
+    { to: "/reports-v2", label: "Báo cáo KPI", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
   ] },
   { label: "Thiết Kế", icon: Palette, items: [
       { to: "/orders", label: "Order Thiết Kế", icon: Palette, perm: "order.view" },
