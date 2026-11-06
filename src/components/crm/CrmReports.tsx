@@ -1,24 +1,490 @@
-import {useState} from 'react';
-import {useQuery} from '@tanstack/react-query';
-import {BarChart,Bar,CartesianGrid,XAxis,YAxis,LineChart,Line} from 'recharts';
-import {Download,SlidersHorizontal} from 'lucide-react';
-import {toast} from 'sonner';
-import {useCurrentUser} from '@/lib/auth';
-import {crmReportQuery,crmPeopleQuery} from '@/lib/crm/queries';
-import {vnDay,periodRange,previousRange,reportRatios,formatRatio,customerSubset} from '@/lib/crm/logic';
-import type {Catalog,ReportData} from '@/lib/crm/types';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {ChartContainer,ChartTooltip,ChartTooltipContent} from '@/components/ui/chart';
-import {CrmModal} from './CrmForms';
-import {Field,Pick,SearchPick} from './CrmControls';
-import locations from '@/lib/crm/locations.json';
-const config={count:{label:'Khách hàng',color:'var(--primary)'},connected:{label:'Đã kết nối',color:'var(--success)'},attempts:{label:'Lượt thử',color:'var(--info)'}};
-export function CrmReports({uid,catalogs,mine,onOpen}: {uid:string;catalogs:Catalog[];mine:boolean;onOpen:(id:string)=>void}) {const {can}=useCurrentUser();const [period,setPeriod]=useState('month');const [date,setDate]=useState(vnDay());const [filters,setFilters]=useState<Record<string,string>>({});const [filterOpen,setFilterOpen]=useState(false);const [detail,setDetail]=useState('');const [dimension,setDimension]=useState('group_id');const people=useQuery(crmPeopleQuery(uid));const [start,end]=periodRange(period,date);const q=useQuery(crmReportQuery(uid,start,end,mine,filters));const [ps,pe]=previousRange(start,end);const previous=useQuery(crmReportQuery(uid,ps,pe,mine,filters));const data=q.data;const ratios=data?reportRatios(data.totals):null;const filter=(k:string,v:string)=>setFilters(f=>({...f,[k]:v}));
- const distribution=data?Array.from(new Set(data.customers.map(c=>String(c[dimension as keyof typeof c]||'none')))).map(id=>({id,name:id==='none'?'Chưa phân loại':dimension==='province_code'?locations.provinces.find(p=>p.code===id)?.name||id:catalogs.find(c=>c.id===id)?.name||'Danh mục cũ',count:data.customers.filter(c=>String(c[dimension as keyof typeof c]||'none')===id).length})).sort((a,b)=>b.count-a.count):[];
- const trend=data?Array.from(new Set(data.interactions.map(i=>vnDay(i.happened_at)))).sort().map(day=>({day,attempts:data.interactions.filter(i=>vnDay(i.happened_at)===day).length,connected:data.interactions.filter(i=>vnDay(i.happened_at)===day&&i.connected).length})):[];
- return <div className="space-y-6"><div className="flex flex-wrap items-center gap-2"><div className="w-32"><Pick label="Chu kỳ" value={period} onChange={setPeriod} options={[{id:'day',name:'Ngày'},{id:'week',name:'Tuần'},{id:'month',name:'Tháng'},{id:'quarter',name:'Quý'},{id:'year',name:'Năm'}]}/></div><Input aria-label="Ngày báo cáo" type="date" className="w-auto max-w-full" value={date} onChange={e=>setDate(e.target.value)}/><Button variant="outline" onClick={()=>setFilterOpen(true)}><SlidersHorizontal className="h-4 w-4"/>Bộ lọc</Button>{can('biz.crm_export')&&<Button variant="outline" disabled={!data} onClick={async()=>{if(!data)return;try{const r=await import('xlsx');const sheet=r.utils.json_to_sheet(data.customers.map(c=>({'Mã':c.code,'Khách hàng':c.name,'Điện thoại':c.phone,'Nhóm':catalogs.find(x=>x.id===c.group_id)?.name||'','Sale':people.data?.find(x=>x.id===c.owner_id)?.name||''})));const workbook=r.utils.book_new();r.utils.book_append_sheet(workbook,sheet,'Khách hàng');r.writeFile(workbook,`CRM-${start}-${end}.xlsx`);}catch{toast.error('Chưa xuất được dữ liệu.');}}}><Download className="h-4 w-4"/>Xuất</Button>}</div><p className="text-xs text-muted-foreground">{start.split('-').reverse().join('/')} – {end.split('-').reverse().join('/')}</p>{q.error&&<div role="alert" className="text-destructive">{q.error.message}<Button variant="link" onClick={()=>q.refetch()}>Thử lại</Button></div>}{q.isPending&&<p className="text-muted-foreground">Đang tải báo cáo…</p>}{data&&ratios&&<><div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[['customers','Tổng khách duy nhất','all'],['new_customers','Khách mới trong kỳ','new'],['priority_customers','Khách trọng điểm','priority'],['scheduled_customers','Khách có lịch','scheduled'],['due','Lịch đến hạn','due'],['processed','Lịch đã xử lý','processed'],['overdue','Lịch quá hạn','overdue'],['attempts','Lượt thử liên hệ','attempts']].map(([k,label,mode])=><Button key={k} variant="outline" className="h-auto min-h-24 flex-col items-start gap-2 whitespace-normal rounded-lg px-4 py-3 text-left" onClick={()=>setDetail(mode)}><span className="text-xs text-muted-foreground">{label}</span><strong className="text-2xl">{data.totals[k]}</strong>{previous.data&&<span className="text-[11px] text-muted-foreground">Kỳ trước: {previous.data.totals[k]}</span>}</Button>)}</div><div className="grid grid-cols-2 gap-x-4 gap-y-5 border-y py-5 lg:grid-cols-5">{[['processed','Xử lý lịch'],['on_time','Chăm sóc đúng hạn'],['connected','Liên hệ thành công'],['scheduled','Khách có lịch'],['priority_overdue','Trọng điểm quá hạn']].map(([k,l])=><div key={k}><p className="text-xs text-muted-foreground">{l}</p><strong className="mt-2 block text-base">{formatRatio(ratios[k as keyof typeof ratios])}</strong></div>)}</div><section className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Cơ cấu khách hàng</h3><div className="w-44"><Pick label="Phân loại biểu đồ" value={dimension} onChange={setDimension} options={[{id:'group_id',name:'Mảng kinh doanh'},{id:'segment_id',name:'Tệp khách'},{id:'priority_id',name:'Mức độ ưu tiên'},{id:'relationship_id',name:'Tình trạng hợp tác'},{id:'province_code',name:'Tỉnh / Thành phố'},{id:'source_id',name:'Nguồn khách'}]}/></div></div>{distribution.length?<ChartContainer config={config} className="h-64 w-full"><BarChart data={distribution}><CartesianGrid vertical={false}/><XAxis dataKey="name" tickLine={false} tickFormatter={v=>String(v).slice(0,14)} interval={0}/><YAxis allowDecimals={false}/><ChartTooltip content={<ChartTooltipContent/>}/><Bar dataKey="count" fill="var(--primary)" radius={4} onClick={entry=>setDetail(`dim:${entry.id}`)}/></BarChart></ChartContainer>:<Empty/>}</section><section className="space-y-3"><h3 className="font-semibold">Hoạt động chăm sóc</h3>{trend.length?<ChartContainer config={config} className="h-64 w-full"><LineChart data={trend}><CartesianGrid vertical={false}/><XAxis dataKey="day" tickFormatter={v=>String(v).slice(5)}/><YAxis allowDecimals={false}/><ChartTooltip content={<ChartTooltipContent/>}/><Line dataKey="attempts" stroke="var(--info)" strokeWidth={2}/><Line dataKey="connected" stroke="var(--success)" strokeWidth={2}/></LineChart></ChartContainer>:<Empty/>}</section>{!mine&&<section className="space-y-3"><h3 className="font-semibold">Hiệu quả theo nhân viên</h3><div className="divide-y border-y">{(people.data||[]).filter(p=>!filters.owner||p.id===filters.owner).map(p=>{const customers=data.customers.filter(c=>c.owner_id===p.id);const schedules=data.schedules.filter(s=>s.owner_id===p.id&&s.original_due_at>=`${start}T00:00:00+07:00`&&s.original_due_at<data.as_of);const interactions=data.interactions.filter(i=>i.owner_id===p.id);return <Button key={p.id} variant="ghost" className="h-auto w-full flex-wrap justify-between gap-2 rounded-none py-4 text-left" onClick={()=>filter('owner',p.id)}><span><strong className="block">{p.name}</strong><span className="text-xs text-muted-foreground">{[p.system,p.department,p.team].filter(Boolean).join(' / ')}</span></span><span className="text-xs">{customers.length} khách · {schedules.length} lịch · Kết nối {formatRatio(interactions.length?interactions.filter(i=>i.connected).length/interactions.length*100:null)}</span></Button>;})}</div></section>}<Insights data={data} previous={previous.data} catalogs={catalogs} onDetail={setDetail}/></>}{filterOpen&&<CrmModal title="Bộ lọc báo cáo" onClose={()=>setFilterOpen(false)}>{!mine&&<>{[['system','Hệ','system_id','system'],['department','Phòng','department_id','department'],['team','Nhóm','team_id','team']].map(([k,l,id,name])=><Field key={k} label={l}><Pick label={`Tất cả ${l}`} value={filters[k]||''} onChange={v=>filter(k,v)} options={Array.from(new Map((people.data||[]).filter(p=>p[id as keyof typeof p]).map(p=>[String(p[id as keyof typeof p]),{id:String(p[id as keyof typeof p]),name:String(p[name as keyof typeof p])}])).values())}/></Field>)}<Field label="Nhân viên"><Pick label="Tất cả nhân viên" value={filters.owner||''} onChange={v=>filter('owner',v)} options={people.data||[]}/></Field></>}<Field label="Nhóm khách"><Pick label="Tất cả nhóm" value={filters.group||''} onChange={v=>filter('group',v)} options={catalogs.filter(c=>c.kind==='group')}/></Field><Field label="Tỉnh / Thành phố"><SearchPick label="Tất cả tỉnh / thành phố" value={filters.province||''} onChange={v=>filter('province',v)} options={locations.provinces}/></Field><div className="crm-form-footer flex gap-2"><Button variant="outline" onClick={()=>setFilters({})}>Xóa bộ lọc</Button><Button onClick={()=>setFilterOpen(false)}>Xem báo cáo</Button></div></CrmModal>}{detail&&data&&<CrmModal title="Chi tiết số liệu" onClose={()=>setDetail('')}><ReportDetails data={data} kind={detail} catalogs={catalogs} dimension={dimension} onOpen={onOpen}/></CrmModal>}</div>;
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, LineChart, Line } from "recharts";
+import { Download, SlidersHorizontal } from "lucide-react";
+import { toast } from "sonner";
+import { useCurrentUser } from "@/lib/auth";
+import { crmReportQuery, crmPeopleQuery } from "@/lib/crm/queries";
+import {
+  vnDay,
+  periodRange,
+  previousRange,
+  reportRatios,
+  formatRatio,
+  customerSubset,
+} from "@/lib/crm/logic";
+import type { Catalog, ReportData } from "@/lib/crm/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { CrmModal } from "./CrmForms";
+import { Field, Pick, SearchPick } from "./CrmControls";
+import locations from "@/lib/crm/locations.json";
+const config = {
+  count: { label: "Khách hàng", color: "var(--primary)" },
+  connected: { label: "Đã kết nối", color: "var(--success)" },
+  attempts: { label: "Lượt thử", color: "var(--info)" },
+};
+export function CrmReports({
+  uid,
+  catalogs,
+  mine,
+  onOpen,
+}: {
+  uid: string;
+  catalogs: Catalog[];
+  mine: boolean;
+  onOpen: (id: string) => void;
+}) {
+  const { can } = useCurrentUser();
+  const [period, setPeriod] = useState("month");
+  const [date, setDate] = useState(vnDay());
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [detail, setDetail] = useState("");
+  const [dimension, setDimension] = useState("group_id");
+  const people = useQuery(crmPeopleQuery(uid));
+  const [start, end] = periodRange(period, date);
+  const q = useQuery(crmReportQuery(uid, start, end, mine, filters));
+  const [ps, pe] = previousRange(start, end);
+  const previous = useQuery(crmReportQuery(uid, ps, pe, mine, filters));
+  const data = q.data;
+  const ratios = data ? reportRatios(data.totals) : null;
+  const filter = (k: string, v: string) => setFilters((f) => ({ ...f, [k]: v }));
+  const distribution = data
+    ? Array.from(
+        new Set(data.customers.map((c) => String(c[dimension as keyof typeof c] || "none"))),
+      )
+        .map((id) => ({
+          id,
+          name:
+            id === "none"
+              ? "Chưa phân loại"
+              : dimension === "province_code"
+                ? locations.provinces.find((p) => p.code === id)?.name || id
+                : catalogs.find((c) => c.id === id)?.name || "Danh mục cũ",
+          count: data.customers.filter(
+            (c) => String(c[dimension as keyof typeof c] || "none") === id,
+          ).length,
+        }))
+        .sort((a, b) => b.count - a.count)
+    : [];
+  const trend = data
+    ? Array.from(new Set(data.interactions.map((i) => vnDay(i.happened_at))))
+        .sort()
+        .map((day) => ({
+          day,
+          attempts: data.interactions.filter((i) => vnDay(i.happened_at) === day).length,
+          connected: data.interactions.filter((i) => vnDay(i.happened_at) === day && i.connected)
+            .length,
+        }))
+    : [];
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="w-32">
+          <Pick
+            label="Chu kỳ"
+            value={period}
+            onChange={setPeriod}
+            options={[
+              { id: "day", name: "Ngày" },
+              { id: "week", name: "Tuần" },
+              { id: "month", name: "Tháng" },
+              { id: "quarter", name: "Quý" },
+              { id: "year", name: "Năm" },
+            ]}
+          />
+        </div>
+        <Input
+          aria-label="Ngày báo cáo"
+          type="date"
+          className="w-auto max-w-full"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+        <Button variant="outline" onClick={() => setFilterOpen(true)}>
+          <SlidersHorizontal className="h-4 w-4" />
+          Bộ lọc
+        </Button>
+        {can("biz.crm_export") && (
+          <Button
+            variant="outline"
+            disabled={!data}
+            onClick={async () => {
+              if (!data) return;
+              try {
+                const r = await import("xlsx");
+                const sheet = r.utils.json_to_sheet(
+                  data.customers.map((c) => ({
+                    Mã: c.code,
+                    "Khách hàng": c.name,
+                    "Điện thoại": c.phone,
+                    Nhóm: catalogs.find((x) => x.id === c.group_id)?.name || "",
+                    Sale: people.data?.find((x) => x.id === c.owner_id)?.name || "",
+                  })),
+                );
+                const workbook = r.utils.book_new();
+                r.utils.book_append_sheet(workbook, sheet, "Khách hàng");
+                r.writeFile(workbook, `CRM-${start}-${end}.xlsx`);
+              } catch {
+                toast.error("Chưa xuất được dữ liệu.");
+              }
+            }}
+          >
+            <Download className="h-4 w-4" />
+            Xuất
+          </Button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {start.split("-").reverse().join("/")} – {end.split("-").reverse().join("/")}
+      </p>
+      {q.error && (
+        <div role="alert" className="text-destructive">
+          {q.error.message}
+          <Button variant="link" onClick={() => q.refetch()}>
+            Thử lại
+          </Button>
+        </div>
+      )}
+      {q.isPending && <p className="text-muted-foreground">Đang tải báo cáo…</p>}
+      {data && ratios && (
+        <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[
+              ["customers", "Tổng khách duy nhất", "all"],
+              ["new_customers", "Khách mới trong kỳ", "new"],
+              ["priority_customers", "Khách trọng điểm", "priority"],
+              ["scheduled_customers", "Khách có lịch", "scheduled"],
+              ["due", "Lịch đến hạn", "due"],
+              ["processed", "Lịch đã xử lý", "processed"],
+              ["overdue", "Lịch quá hạn", "overdue"],
+              ["attempts", "Lượt thử liên hệ", "attempts"],
+            ].map(([k, label, mode]) => (
+              <Button
+                key={k}
+                variant="outline"
+                className="h-auto min-h-24 flex-col items-start gap-2 whitespace-normal rounded-lg px-4 py-3 text-left"
+                onClick={() => setDetail(mode)}
+              >
+                <span className="text-xs text-muted-foreground">{label}</span>
+                <strong className="text-2xl">{data.totals[k]}</strong>
+                {previous.data && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Kỳ trước: {previous.data.totals[k]}
+                  </span>
+                )}
+              </Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-5 border-y py-5 lg:grid-cols-5">
+            {[
+              ["processed", "Xử lý lịch"],
+              ["on_time", "Chăm sóc đúng hạn"],
+              ["connected", "Liên hệ thành công"],
+              ["scheduled", "Khách có lịch"],
+              ["priority_overdue", "Trọng điểm quá hạn"],
+            ].map(([k, l]) => (
+              <div key={k}>
+                <p className="text-xs text-muted-foreground">{l}</p>
+                <strong className="mt-2 block text-base">
+                  {formatRatio(ratios[k as keyof typeof ratios])}
+                </strong>
+              </div>
+            ))}
+          </div>
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">Cơ cấu khách hàng</h3>
+              <div className="w-44">
+                <Pick
+                  label="Phân loại biểu đồ"
+                  value={dimension}
+                  onChange={setDimension}
+                  options={[
+                    { id: "group_id", name: "Mảng kinh doanh" },
+                    { id: "segment_id", name: "Tệp khách" },
+                    { id: "priority_id", name: "Mức độ ưu tiên" },
+                    { id: "relationship_id", name: "Tình trạng hợp tác" },
+                    { id: "province_code", name: "Tỉnh / Thành phố" },
+                    { id: "source_id", name: "Nguồn khách" },
+                  ]}
+                />
+              </div>
+            </div>
+            {distribution.length ? (
+              <ChartContainer config={config} className="h-64 w-full">
+                <BarChart data={distribution}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    tickFormatter={(v) => String(v).slice(0, 14)}
+                    interval={0}
+                  />
+                  <YAxis allowDecimals={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar
+                    dataKey="count"
+                    fill="var(--primary)"
+                    radius={4}
+                    onClick={(entry) => setDetail(`dim:${entry.id}`)}
+                  />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <Empty />
+            )}
+          </section>
+          <section className="space-y-3">
+            <h3 className="font-semibold">Hoạt động chăm sóc</h3>
+            {trend.length ? (
+              <ChartContainer config={config} className="h-64 w-full">
+                <LineChart data={trend}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="day" tickFormatter={(v) => String(v).slice(5)} />
+                  <YAxis allowDecimals={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line dataKey="attempts" stroke="var(--info)" strokeWidth={2} />
+                  <Line dataKey="connected" stroke="var(--success)" strokeWidth={2} />
+                </LineChart>
+              </ChartContainer>
+            ) : (
+              <Empty />
+            )}
+          </section>
+          {!mine && (
+            <section className="space-y-3">
+              <h3 className="font-semibold">Hiệu quả theo nhân viên</h3>
+              <div className="divide-y border-y">
+                {(people.data || [])
+                  .filter((p) => !filters.owner || p.id === filters.owner)
+                  .map((p) => {
+                    const customers = data.customers.filter((c) => c.owner_id === p.id);
+                    const schedules = data.schedules.filter(
+                      (s) =>
+                        s.owner_id === p.id &&
+                        s.original_due_at >= `${start}T00:00:00+07:00` &&
+                        s.original_due_at < data.as_of,
+                    );
+                    const interactions = data.interactions.filter((i) => i.owner_id === p.id);
+                    return (
+                      <Button
+                        key={p.id}
+                        variant="ghost"
+                        className="h-auto w-full flex-wrap justify-between gap-2 rounded-none py-4 text-left"
+                        onClick={() => filter("owner", p.id)}
+                      >
+                        <span>
+                          <strong className="block">{p.name}</strong>
+                          <span className="text-xs text-muted-foreground">
+                            {[p.system, p.department, p.team].filter(Boolean).join(" / ")}
+                          </span>
+                        </span>
+                        <span className="text-xs">
+                          {customers.length} khách · {schedules.length} lịch · Kết nối{" "}
+                          {formatRatio(
+                            interactions.length
+                              ? (interactions.filter((i) => i.connected).length /
+                                  interactions.length) *
+                                  100
+                              : null,
+                          )}
+                        </span>
+                      </Button>
+                    );
+                  })}
+              </div>
+            </section>
+          )}
+          <Insights data={data} previous={previous.data} catalogs={catalogs} onDetail={setDetail} />
+        </>
+      )}
+      {filterOpen && (
+        <CrmModal title="Bộ lọc báo cáo" onClose={() => setFilterOpen(false)}>
+          {!mine && (
+            <>
+              {[
+                ["system", "Hệ", "system_id", "system"],
+                ["department", "Phòng", "department_id", "department"],
+                ["team", "Nhóm", "team_id", "team"],
+              ].map(([k, l, id, name]) => (
+                <Field key={k} label={l}>
+                  <Pick
+                    label={`Tất cả ${l}`}
+                    value={filters[k] || ""}
+                    onChange={(v) => filter(k, v)}
+                    options={Array.from(
+                      new Map(
+                        (people.data || [])
+                          .filter((p) => p[id as keyof typeof p])
+                          .map((p) => [
+                            String(p[id as keyof typeof p]),
+                            {
+                              id: String(p[id as keyof typeof p]),
+                              name: String(p[name as keyof typeof p]),
+                            },
+                          ]),
+                      ).values(),
+                    )}
+                  />
+                </Field>
+              ))}
+              <Field label="Nhân viên">
+                <Pick
+                  label="Tất cả nhân viên"
+                  value={filters.owner || ""}
+                  onChange={(v) => filter("owner", v)}
+                  options={people.data || []}
+                />
+              </Field>
+            </>
+          )}
+          <Field label="Nhóm khách">
+            <Pick
+              label="Tất cả nhóm"
+              value={filters.group || ""}
+              onChange={(v) => filter("group", v)}
+              options={catalogs.filter((c) => c.kind === "group")}
+            />
+          </Field>
+          <Field label="Tỉnh / Thành phố">
+            <SearchPick
+              label="Tất cả tỉnh / thành phố"
+              value={filters.province || ""}
+              onChange={(v) => filter("province", v)}
+              options={locations.provinces}
+            />
+          </Field>
+          <div className="crm-form-footer flex gap-2">
+            <Button variant="outline" onClick={() => setFilters({})}>
+              Xóa bộ lọc
+            </Button>
+            <Button onClick={() => setFilterOpen(false)}>Xem báo cáo</Button>
+          </div>
+        </CrmModal>
+      )}
+      {detail && data && (
+        <CrmModal title="Chi tiết số liệu" onClose={() => setDetail("")}>
+          <ReportDetails
+            data={data}
+            kind={detail}
+            catalogs={catalogs}
+            dimension={dimension}
+            onOpen={onOpen}
+          />
+        </CrmModal>
+      )}
+    </div>
+  );
 }
-function Empty(){return <p className="flex min-h-32 items-center justify-center text-sm text-muted-foreground">Chưa có dữ liệu</p>;}
-function Insights({data,previous,catalogs,onDetail}: {data:ReportData;previous?:ReportData;catalogs:Catalog[];onDetail:(x:string)=>void}) {const unscheduled=customerSubset(data,'unscheduled',catalogs);const current=reportRatios(data.totals).on_time;const old=previous?reportRatios(previous.totals).on_time:null;return <section className="space-y-3 border-t pt-5"><h3 className="font-semibold">Nhận định</h3>{!data.customers.length?<Empty/>:<div className="space-y-2 text-sm">{unscheduled.length>0&&<Button className="h-auto justify-start whitespace-normal text-left" variant="link" onClick={()=>onDetail('unscheduled')}>{unscheduled.length} khách chưa có lịch chăm sóc hiệu lực</Button>}{data.totals.priority_overdue>0&&<p className="text-destructive">{data.totals.priority_overdue} khách trọng điểm có lịch quá hạn chưa xử lý</p>}{current!==null&&old!==null&&current<old&&<p>Tỷ lệ đúng hạn giảm {(old-current).toLocaleString('vi-VN',{maximumFractionDigits:1})} điểm phần trăm so với kỳ trước</p>}{!unscheduled.length&&!data.totals.priority_overdue&&<p className="text-muted-foreground">Chưa ghi nhận khách thiếu lịch hoặc trọng điểm quá hạn trong phạm vi này.</p>}</div>}</section>;}
-function ReportDetails({data,kind,catalogs,dimension,onOpen}: {data:ReportData;kind:string;catalogs:Catalog[];dimension:string;onOpen:(id:string)=>void}) {let customers=customerSubset(data,kind,catalogs);if(kind==='new')customers=customers.filter(c=>c.created_at>=`${data.start}T00:00:00+07:00`);if(kind.startsWith('dim:'))customers=customers.filter(c=>String(c[dimension as keyof typeof c]||'none')===kind.slice(4));if(['due','processed'].includes(kind)){const ids=data.schedules.filter(s=>s.original_due_at>=`${data.start}T00:00:00+07:00`&&s.original_due_at<data.as_of&&(kind!=='processed'||!!s.processed_at)).map(s=>s.customer_id);customers=customers.filter(c=>ids.includes(c.id));}if(kind==='attempts')customers=customers.filter(c=>data.interactions.some(i=>i.customer_id===c.id));return customers.length?<div className="divide-y">{customers.map(c=><Button key={c.id} className="h-auto w-full justify-start whitespace-normal py-3 text-left" variant="ghost" onClick={()=>onOpen(c.id)}>{c.name} · {c.code}</Button>)}</div>:<Empty/>;}
+function Empty() {
+  return (
+    <p className="flex min-h-32 items-center justify-center text-sm text-muted-foreground">
+      Chưa có dữ liệu
+    </p>
+  );
+}
+function Insights({
+  data,
+  previous,
+  catalogs,
+  onDetail,
+}: {
+  data: ReportData;
+  previous?: ReportData;
+  catalogs: Catalog[];
+  onDetail: (x: string) => void;
+}) {
+  const unscheduled = customerSubset(data, "unscheduled", catalogs);
+  const current = reportRatios(data.totals).on_time;
+  const old = previous ? reportRatios(previous.totals).on_time : null;
+  return (
+    <section className="space-y-3 border-t pt-5">
+      <h3 className="font-semibold">Nhận định</h3>
+      {!data.customers.length ? (
+        <Empty />
+      ) : (
+        <div className="space-y-2 text-sm">
+          {unscheduled.length > 0 && (
+            <Button
+              className="h-auto justify-start whitespace-normal text-left"
+              variant="link"
+              onClick={() => onDetail("unscheduled")}
+            >
+              {unscheduled.length} khách chưa có lịch chăm sóc hiệu lực
+            </Button>
+          )}
+          {data.totals.priority_overdue > 0 && (
+            <p className="text-destructive">
+              {data.totals.priority_overdue} khách trọng điểm có lịch quá hạn chưa xử lý
+            </p>
+          )}
+          {current !== null && old !== null && current < old && (
+            <p>
+              Tỷ lệ đúng hạn giảm{" "}
+              {(old - current).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} điểm phần trăm
+              so với kỳ trước
+            </p>
+          )}
+          {!unscheduled.length && !data.totals.priority_overdue && (
+            <p className="text-muted-foreground">
+              Chưa ghi nhận khách thiếu lịch hoặc trọng điểm quá hạn trong phạm vi này.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+function ReportDetails({
+  data,
+  kind,
+  catalogs,
+  dimension,
+  onOpen,
+}: {
+  data: ReportData;
+  kind: string;
+  catalogs: Catalog[];
+  dimension: string;
+  onOpen: (id: string) => void;
+}) {
+  let customers = customerSubset(data, kind, catalogs);
+  if (kind === "new")
+    customers = customers.filter((c) => c.created_at >= `${data.start}T00:00:00+07:00`);
+  if (kind.startsWith("dim:"))
+    customers = customers.filter(
+      (c) => String(c[dimension as keyof typeof c] || "none") === kind.slice(4),
+    );
+  if (["due", "processed"].includes(kind)) {
+    const ids = data.schedules
+      .filter(
+        (s) =>
+          s.original_due_at >= `${data.start}T00:00:00+07:00` &&
+          s.original_due_at < data.as_of &&
+          (kind !== "processed" || !!s.processed_at),
+      )
+      .map((s) => s.customer_id);
+    customers = customers.filter((c) => ids.includes(c.id));
+  }
+  if (kind === "attempts")
+    customers = customers.filter((c) => data.interactions.some((i) => i.customer_id === c.id));
+  return customers.length ? (
+    <div className="divide-y">
+      {customers.map((c) => (
+        <Button
+          key={c.id}
+          className="h-auto w-full justify-start whitespace-normal py-3 text-left"
+          variant="ghost"
+          onClick={() => onOpen(c.id)}
+        >
+          {c.name} · {c.code}
+        </Button>
+      ))}
+    </div>
+  ) : (
+    <Empty />
+  );
+}
