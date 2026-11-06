@@ -3,7 +3,6 @@ import { useQuery,useQueryClient } from '@tanstack/react-query';
 import { Plus,Pencil,EyeOff,Eye,Check,Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Sheet,SheetContent,SheetHeader,SheetTitle } from '@/components/ui/sheet';
 import { listSignalLabels,saveSignalLabel,saveSignalEnrichment,errMsg } from '@/lib/signals/api';
 import { POTENTIAL_LABEL,potentialOf,type Potential,type SignalLabel } from '@/lib/signals/potential';

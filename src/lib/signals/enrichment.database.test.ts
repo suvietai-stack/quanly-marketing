@@ -20,6 +20,7 @@ beforeAll(async()=>{
  await db.exec(readFileSync('drizzle/migrations/0255_signal_potential_label_schema.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0256_signal_label_and_enrichment_rpc.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0257_signal_enrichment_write_privileges.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0260_signal_assessment_save.sql','utf8'));
  await db.query("insert into opportunity_signals(id,created_by,assigned_to,need_groups,status) values($1,$2,$2,'{}','consulting')",[signal,sale]);
 },60000);
 afterAll(()=>db.close());
@@ -36,3 +37,27 @@ it('manager preserves hidden personal links and shared rename keeps associations
  const links=(await db.query<{label_id:string}>('select label_id from signal_label_links')).rows.map(x=>x.label_id);expect(links).toContain(personal);expect(links).toContain(common);
 });
 it('closed signals cannot schedule new follow-up',async()=>{await db.query("update opportunity_signals set status='won' where id=$1",[signal]);await actor(sale);await expect(db.query("select signal_enrichment_save($1,$2,'high','{}','2026-11-09',null)",[signal,crypto.randomUUID()])).rejects.toThrow('đã kết thúc');expect((await db.query<{status:string}>('select status from opportunity_signals')).rows[0]?.status).toBe('won');});
+it('assessment preserves the latest schedule even on a closed signal',async()=>{
+ await db.query("update opportunity_signals set next_contact_on='2026-11-12',next_contact_at='2026-11-12T09:00:00+07:00' where id=$1",[signal]);
+ await actor(sale);
+ await db.query("select signal_assessment_save($1,$2,'low','{}')",[signal,crypto.randomUUID()]);
+ const row=(await db.query<{potential:string,status:string,next:string,time:string}>("select potential,status,next_contact_on::text as next,to_char(next_contact_at at time zone 'Asia/Ho_Chi_Minh','YYYY-MM-DD HH24:MI') as time from opportunity_signals")).rows[0];
+ expect(row).toEqual({potential:'low',status:'won',next:'2026-11-12',time:'2026-11-12 09:00'});
+});
+it('assessment does not trigger progression lifecycle or insert a progression note',async()=>{
+ await db.exec(`CREATE TABLE opportunity_signal_notes(id uuid,signal_id uuid,note text);
+ CREATE TABLE test_lifecycle(id uuid);
+ CREATE FUNCTION private.test_lifecycle() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN INSERT INTO test_lifecycle VALUES(NEW.id); RETURN NEW; END$$;
+ CREATE TRIGGER progression_signal_lifecycle AFTER INSERT OR UPDATE OF assigned_to,status,cancelled_at ON opportunity_signals FOR EACH ROW EXECUTE FUNCTION private.test_lifecycle();`);
+ await actor(sale);await db.query("select signal_assessment_save($1,$2,'medium','{}')",[signal,crypto.randomUUID()]);
+ expect((await db.query('select * from test_lifecycle')).rows).toHaveLength(0);
+ expect((await db.query('select * from opportunity_signal_notes')).rows).toHaveLength(0);
+});
+it('assessment is authorized and idempotent independently of follow-up',async()=>{
+ await actor(other);await expect(db.query("select signal_assessment_save($1,$2,'high','{}')",[signal,crypto.randomUUID()])).rejects.toThrow('Không có quyền xem');
+ await actor(sale);const r=crypto.randomUUID();const a=await db.query("select signal_assessment_save($1,$2,'high','{}') id",[signal,r]);
+ await db.query("update opportunity_signals set next_contact_on='2026-11-13' where id=$1",[signal]);
+ expect((await db.query("select signal_assessment_save($1,$2,'high','{}') id",[signal,r])).rows).toEqual(a.rows);
+ await expect(db.query("select signal_assessment_save($1,$2,'low','{}')",[signal,r])).rejects.toThrow('Mã thao tác');
+ expect((await db.query<{v:boolean}>("select has_function_privilege('anon','signal_assessment_save(uuid,uuid,text,uuid[])','EXECUTE') v")).rows[0]?.v).toBe(false);
+});
