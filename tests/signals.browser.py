@@ -48,7 +48,7 @@ async def main():
    reopened=page.get_by_role('dialog',name='Đánh giá cơ hội',exact=True)
    await expect(reopened.get_by_label('Mức độ tiềm năng',exact=True)).to_have_value('high')
    await expect(reopened.get_by_role('checkbox',name='Khách trọng điểm',exact=True)).to_have_attribute('aria-checked','true')
-   await page.screenshot(path=str(OUT/f'{width}-assessment.png'))
+   await reopened.wait_for(state='visible');await page.wait_for_timeout(300);await page.screenshot(path=str(OUT/f'{width}-assessment.png'))
    await reopened.get_by_role('button',name='Close',exact=True).click()
    await page.get_by_role('dialog').get_by_role('button',name='Close',exact=True).click()
    await page.get_by_role('button',name='Bộ lọc',exact=True).click();d=page.get_by_role('dialog',name='Bộ lọc',exact=True)
