@@ -1800,6 +1800,13 @@
       "when": 1793954165712,
       "tag": "0256_signal_label_and_enrichment_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 257,
+      "version": "7",
+      "when": 1793954532620,
+      "tag": "0257_signal_enrichment_write_privileges",
+      "breakpoints": true
     }
   ]
 }
