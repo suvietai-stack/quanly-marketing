@@ -70,7 +70,7 @@ async def main():
    await expect(dialog).not_to_be_visible(timeout=15000)
    await page.get_by_role('button',name='Thao tác khác cho '+actions[0]['name'],exact=True).click()
    await page.get_by_role('menuitem',name='Lịch sử kết quả',exact=True).click()
-   await expect(page.get_by_role('dialog')).to_be_visible();await page.keyboard.press('Escape')
+   await expect(page.get_by_role('dialog')).to_be_visible();await page.get_by_role('dialog').get_by_role('button',name='Close',exact=True).click();await expect(page.get_by_role('dialog')).to_have_count(0);await page.wait_for_timeout(400)
    await page.get_by_role('button',name='Tổng kết hôm nay',exact=True).click()
    dialog=page.get_by_role('dialog',name='Tổng kết hôm nay · '+TODAY,exact=True)
    await expect(dialog.get_by_role('button',name='Xác nhận đã tổng kết',exact=True)).to_be_disabled()
