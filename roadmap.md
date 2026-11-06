@@ -1,5 +1,9 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## BỎ HEADER LAUNCHER LẶP — 06/11/2026
+- [ ] H1. Bỏ tiêu đề/nút quay lại trong Launcher ở mọi khu vực; header chung có tên Trang chủ/khu vực, tìm kiếm sát dưới, lưới gọn và giữ ghim.
+- [ ] H2. Kiểm thử một header/tiêu đề ở tất cả khu vực, back/home, ghim/bỏ ghim và desktop; không đổi nghiệp vụ, chưa Publish.
+
 ## KHUNG MOBILE CỐ ĐỊNH TOÀN BASE — 06/11/2026
 - [x] S1. MobileAppChrome chung AppShell: header/nav fixed mọi route, tên module/cha, quay lại chỉ lịch sử được quan sát cùng user, fallback khu vực/home, tab đang chọn.
 - [x] S2a. Một vùng cuộn document; đo chiều cao/safe-area, chừa nội dung và nâng nút fixed/sticky; modal z-50 trên chrome z-30; xử lý visualViewport bàn phím, desktop/deep link nguyên trạng.
