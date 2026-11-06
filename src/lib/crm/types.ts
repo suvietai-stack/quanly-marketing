@@ -34,6 +34,7 @@ export interface Customer {
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+  last_care_at?: string | null;
 }
 export interface Contact {
   id: string;

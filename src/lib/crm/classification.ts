@@ -21,8 +21,9 @@ export function structureRows(data: ReportData, catalogs: Catalog[], group: stri
     const scheduled = own.filter(c=>schedules.some(s=>s.customer_id===c.id && s.status==='pending')).length;
     const overdue = own.filter(c=>schedules.some(s=>s.customer_id===c.id && s.status==='pending' && Date.parse(s.original_due_at)<Date.parse(data.as_of))).length;
     const untouched = own.filter(c=>!data.interactions.some(i=>i.customer_id===c.id && i.completed));
+    const longUntouched = own.filter(c=>c.last_care_at && Date.parse(data.as_of)-Date.parse(c.last_care_at)>30*86400000);
     const priority = (c: Customer)=>catalogs.some(x=>x.id===c.priority_id && x.config.key_customer===true);
-    return {id,name:id==='none'?'Chưa phân loại tệp':catalogs.find(c=>c.id===id)?.name || 'Danh mục cũ',count:own.length,share:ratio(own.length,customers.length),new:own.filter(c=>Date.parse(c.created_at)>=Date.parse(`${data.start}T00:00:00+07:00`)).length,priority:own.filter(priority).length,scheduled,unscheduled:own.length-scheduled,overdue,onTime:ratio(due.filter(s=>s.completed_at && Date.parse(s.completed_at)<=Date.parse(s.original_due_at)).length,due.length),untouched:untouched.length,priorityUntouched:untouched.filter(priority).length};
+    return {id,name:id==='none'?'Chưa phân loại tệp':catalogs.find(c=>c.id===id)?.name || 'Danh mục cũ',count:own.length,share:ratio(own.length,customers.length),new:own.filter(c=>Date.parse(c.created_at)>=Date.parse(`${data.start}T00:00:00+07:00`)).length,priority:own.filter(priority).length,scheduled,unscheduled:own.length-scheduled,overdue,onTime:ratio(due.filter(s=>s.completed_at && Date.parse(s.completed_at)<=Date.parse(s.original_due_at)).length,due.length),untouched:untouched.length,longUntouched:longUntouched.length,priorityUntouched:untouched.filter(priority).length};
   });
 }
 export function newCustomerTrend(data: ReportData, unit: string) {

@@ -29,7 +29,7 @@ CREATE FUNCTION biz_effective_access(_user uuid DEFAULT NULL) RETURNS jsonb LANG
   for (const u of [admin, sale, other, lead, outsider])
     await db.query("insert into profiles values($1::uuid,$1::text,'Đang hoạt động')", [u]);
   await db.query("insert into scope_access values($1,$2)", [lead, sale]);
-  for (const n of [250, 251, 252, 253, 258]) {
+  for (const n of [250, 251, 252, 253, 258, 259]) {
     const file = readdirSync("drizzle/migrations").find((x) =>
       x.startsWith(String(n).padStart(4, "0") + "_"),
     );
@@ -67,6 +67,7 @@ it('catalog file parent changes with existing customers reject and rename keeps 
 it('catalog root and file rules reject incorrect parents and sibling duplicates',async()=>{await actor(admin);await expect(rpc('crm_catalog_save',{kind:'group',name:'Nhóm con',parent_id:group})).rejects.toThrow('gốc');await expect(rpc('crm_catalog_save',{kind:'segment',name:'Tệp không nhóm'})).rejects.toThrow('cần thuộc');await expect(rpc('crm_catalog_save',{kind:'segment',name:'Tệp thử',parent_id:group})).rejects.toThrow('đã tồn tại');});
 it('scoped output features reject unrelated group and unauthorized settings writes',async()=>{await actor(admin);const g=await rpc('crm_catalog_save',{kind:'group',name:'Đối tác Dự án'});const t=await rpc('crm_catalog_save',{kind:'output',name:'Ngân hàng',config:{group_ids:[g]}});await actor(sale);await expect(rpc('crm_customer_save',{name:'Sai phạm vi',group_id:group,related_ids:[t],request_key:crypto.randomUUID()})).rejects.toThrow('phạm vi');await expect(rpc('crm_catalog_save',{kind:'group',name:'Không quyền'})).rejects.toThrow('quyền');await expect(scalar('select crm_catalog_counts() v')).rejects.toThrow('quyền');});
 it('filtered reports scope customer and dependent rows together with export permission separate',async()=>{await actor(sale);const r=await scalar('select crm_report_filtered(current_date-1,current_date,true,null,$1,null,null,null,null,$2) v',[group,segment]);expect(r.customers.map((c:any)=>c.id)).toEqual([customer]);expect(r.totals.customers).toBe(1);expect(r.schedules.every((s:any)=>s.customer_id===customer)).toBe(true);await expect(scalar('select crm_report_filtered(current_date,current_date,true,null,null,null,null,null,null,null,null,null,true) v')).rejects.toThrow('xuất');});
+it('atomic reorder preserves catalog IDs and disallows moving unrelated types',async()=>{await actor(admin);const g=await rpc('crm_catalog_save',{kind:'group',name:'Nhóm thứ tự',sort_order:10});await rpc('crm_catalog_reorder',{id:group,other_id:g,direction:1});expect(await scalar('select sort_order v from crm_catalogs where id=$1',[group])).toBe(10);await expect(rpc('crm_catalog_reorder',{id:group,other_id:segment,direction:1})).rejects.toThrow('cùng nhóm');});
 it("initial optional care date saves atomically with the customer", async () => {
   await actor(sale);
   const id = await rpc("crm_customer_save", {
