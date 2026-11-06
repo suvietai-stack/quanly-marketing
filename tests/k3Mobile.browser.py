@@ -64,7 +64,7 @@ async def main():
    await expect(dialog).not_to_be_visible();await expect(page.get_by_text('Kết quả: 30/100 đại lý')).to_be_visible(timeout=15000)
    await page.get_by_role('button',name='Cập nhật kết quả',exact=True).nth(1).click()
    dialog=page.get_by_role('dialog',name='Cập nhật kết quả · Gửi báo giá',exact=True)
-   await page.screenshot(path=str(OUT/f'{width}-binary.png'));print('BINARY',await dialog.bounding_box())
+   await page.screenshot(path=str(OUT/f'{width}-binary.png'));await page.wait_for_timeout(500);print('BINARY',await dialog.bounding_box(),await dialog.evaluate('(el)=>({translate:getComputedStyle(el).translate,transform:getComputedStyle(el).transform,top:getComputedStyle(el).top})'))
    await dialog.get_by_role('button',name='Chưa hoàn thành',exact=True).click()
    await dialog.get_by_role('button',name='Lưu kết quả',exact=True).click()
    await expect(dialog).not_to_be_visible(timeout=15000)
