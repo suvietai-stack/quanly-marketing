@@ -39,7 +39,10 @@ describe('Presentation-only navigation', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
     expect(destinations).toHaveLength(30);
-    for (const path of destinations) expect(existsSync(`src/routes/${path === '/' ? 'index' : path.slice(1).replaceAll('/','.')}.tsx`), path).toBe(true);
+    for (const path of destinations) {
+      const base = `src/routes/${path === '/' ? 'index' : path.slice(1).replaceAll('/','.')}`;
+      expect(existsSync(`${base}.tsx`) || existsSync(`${base}.index.tsx`), path).toBe(true);
+    }
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(6);
