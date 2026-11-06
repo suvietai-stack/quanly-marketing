@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## KHUNG MOBILE CỐ ĐỊNH TOÀN BASE — 06/11/2026
+- [x] S1. MobileAppChrome chung AppShell: header/nav fixed mọi route, tên module/cha, quay lại chỉ lịch sử được quan sát cùng user, fallback khu vực/home, tab đang chọn.
+- [x] S2a. Một vùng cuộn document; đo chiều cao/safe-area, chừa nội dung và nâng nút fixed/sticky; modal z-50 trên chrome z-30; xử lý visualViewport bàn phím, desktop/deep link nguyên trạng.
+- [x] S3a. 25 unit test đạt; chrome harness 320/390/767/1280, Launcher và Sidebar hồi quy đạt, build OK. docs/mobile-shell-verification.md; chưa Publish.
+- [ ] S2b/S3b. Nghiệm thu AppShell/module/modal thật và bàn phím/safe-area/PWA thiết bị: cần đăng nhập Preview (mint --self không khớp hồ sơ) và thiết bị thật; không tự chọn tài khoản khác.
+
 ## TRANG CHỦ MOBILE APP LAUNCHER — 06/11/2026
 - [x] L1. Cùng visibleNavigation với Sidebar; trang chủ mobile, màn hình khu vực qua root search, tìm kiếm chỉ chức năng đúng quyền.
 - [x] L2. Ghim/bỏ ghim/sắp xếp theo tài khoản trên thiết bị; sáu ghim + Xem thêm; thanh dưới nối Task/chuông/hồ sơ thật, giữ deep link/desktop, không đổi backend.
