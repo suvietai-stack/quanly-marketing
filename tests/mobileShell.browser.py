@@ -49,7 +49,8 @@ async def main():
     await n.get_by_role('button',name='Thông báo',exact=True).click()
     await page.get_by_role('link',name='Thông báo đơn hàng').click()
     await expect(page).to_have_url('http://localhost:8080/order-tracking/order-notification');await chrome(page)
-    await page.keyboard.press('Escape')
+    await h.get_by_role('button',name='Thông báo',exact=True).click()
+    await expect(h.get_by_role('button',name='Thông báo',exact=True)).to_have_attribute('aria-expanded','false')
     await page.screenshot(path=str(OUT/f'{w}-module.png'))
     assert not await page.evaluate('document.documentElement.scrollWidth>innerWidth')
    assert not errs,errs
