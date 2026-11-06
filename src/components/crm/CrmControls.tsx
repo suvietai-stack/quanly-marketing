@@ -82,7 +82,10 @@ export function SearchPick({
           <ChevronsUpDown className="h-4 w-4 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" onCloseAutoFocus={e=>e.preventDefault()}>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0"
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         <Command>
           <CommandInput placeholder={`Tìm ${label.toLowerCase()}`} />
           <CommandList>

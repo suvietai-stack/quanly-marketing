@@ -1,37 +1,291 @@
-import {PGlite} from '@electric-sql/pglite';
-import {readFileSync,readdirSync} from 'node:fs';
-import {beforeAll,afterAll,it,expect} from 'vitest';
-const db=new PGlite();
-const admin='00000000-0000-0000-0000-000000000001',sale='00000000-0000-0000-0000-000000000002',other='00000000-0000-0000-0000-000000000003',lead='00000000-0000-0000-0000-000000000004',outsider='00000000-0000-0000-0000-000000000005';
-let customer='',second='',group='',segment='',success='',failure='';
-async function actor(u:string){await db.query("select set_config('test.uid',$1,false)",[u]);}
-async function scalar(sql:string,args:unknown[]=[]){return (await db.query<{v:any}>(sql,args)).rows[0]?.v;}
-async function rpc(fn:string,data:Record<string,unknown>){return scalar(`select ${fn}($1::jsonb) v`,[JSON.stringify(data)]);}
-beforeAll(async()=>{
-await db.exec(`CREATE SCHEMA auth; CREATE SCHEMA private; CREATE SCHEMA storage; CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$; CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text,status text); CREATE TABLE biz_department_members(user_id uuid,department_id uuid,started_at timestamptz,ended_at timestamptz,id uuid DEFAULT gen_random_uuid()); CREATE TABLE biz_departments(id uuid PRIMARY KEY,name text,system_id uuid); CREATE TABLE biz_systems(id uuid PRIMARY KEY,name text); CREATE TABLE biz_teams(id uuid PRIMARY KEY,name text); CREATE TABLE biz_team_members(user_id uuid,team_id uuid,started_at timestamptz,ended_at timestamptz); CREATE TABLE biz_department_system_history(department_id uuid,system_id uuid,started_at timestamptz,ended_at timestamptz); CREATE TABLE storage.objects(id uuid DEFAULT gen_random_uuid(),bucket_id text,name text); ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+import { PGlite } from "@electric-sql/pglite";
+import { readFileSync, readdirSync } from "node:fs";
+import { beforeAll, afterAll, it, expect } from "vitest";
+const db = new PGlite();
+const admin = "00000000-0000-0000-0000-000000000001",
+  sale = "00000000-0000-0000-0000-000000000002",
+  other = "00000000-0000-0000-0000-000000000003",
+  lead = "00000000-0000-0000-0000-000000000004",
+  outsider = "00000000-0000-0000-0000-000000000005";
+let customer = "",
+  second = "",
+  group = "",
+  segment = "",
+  success = "",
+  failure = "";
+async function actor(u: string) {
+  await db.query("select set_config('test.uid',$1,false)", [u]);
+}
+async function scalar(sql: string, args: unknown[] = []) {
+  return (await db.query<{ v: any }>(sql, args)).rows[0]?.v;
+}
+async function rpc(fn: string, data: Record<string, unknown>) {
+  return scalar(`select ${fn}($1::jsonb) v`, [JSON.stringify(data)]);
+}
+beforeAll(async () => {
+  await db.exec(`CREATE SCHEMA auth; CREATE SCHEMA private; CREATE SCHEMA storage; CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$; CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text,status text); CREATE TABLE biz_department_members(user_id uuid,department_id uuid,started_at timestamptz,ended_at timestamptz,id uuid DEFAULT gen_random_uuid()); CREATE TABLE biz_departments(id uuid PRIMARY KEY,name text,system_id uuid); CREATE TABLE biz_systems(id uuid PRIMARY KEY,name text); CREATE TABLE biz_teams(id uuid PRIMARY KEY,name text); CREATE TABLE biz_team_members(user_id uuid,team_id uuid,started_at timestamptz,ended_at timestamptz); CREATE TABLE biz_department_system_history(department_id uuid,system_id uuid,started_at timestamptz,ended_at timestamptz); CREATE TABLE storage.objects(id uuid DEFAULT gen_random_uuid(),bucket_id text,name text); ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,kind text,dedup_key text UNIQUE,payload jsonb,zalo_status text,push_status text); CREATE TABLE scope_access(actor uuid,owner uuid); CREATE FUNCTION biz_admin(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT u='${admin}'::uuid AND EXISTS(SELECT 1 FROM profiles WHERE id=u AND status='Đang hoạt động')$$; CREATE FUNCTION biz_participant(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT u IN ('${sale}'::uuid,'${other}'::uuid,'${lead}'::uuid)$$; CREATE FUNCTION biz_manager(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT u='${lead}'::uuid AND EXISTS(SELECT 1 FROM scope_access WHERE actor=u)$$; CREATE FUNCTION biz_all_scope(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT biz_admin(u)$$; CREATE FUNCTION biz_scope_ok(a uuid,u uuid,d uuid,t timestamptz DEFAULT now()) RETURNS boolean LANGUAGE sql AS $$SELECT biz_admin(a) OR EXISTS(SELECT 1 FROM scope_access WHERE actor=a AND owner=u)$$;
 CREATE FUNCTION biz_effective_access(_user uuid DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql AS $$DECLARE u uuid:=coalesce(_user,auth.uid()); perms jsonb; BEGIN SELECT coalesce(jsonb_agg(p),'[]') INTO perms FROM (SELECT p FROM unnest(ARRAY['k3.use','k3.view_scope','k3.comment','k3.settings']) p WHERE public.k3_can(u,p)) q; RETURN jsonb_build_object('permissions',perms); END$$; CREATE FUNCTION k3_can(u uuid,p text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;`);
-for(const u of [admin,sale,other,lead,outsider])await db.query("insert into profiles values($1::uuid,$1::text,'Đang hoạt động')",[u]);
-await db.query('insert into scope_access values($1,$2)',[lead,sale]);
-for(const n of [250,251,252,253]){const file=readdirSync('drizzle/migrations').find(x=>x.startsWith(String(n).padStart(4,'0')+'_'));if(file)await db.exec(readFileSync('drizzle/migrations/'+file,'utf8'));}
-await actor(admin);group=await rpc('crm_catalog_save',{kind:'group',name:'Nhóm thử'});segment=await rpc('crm_catalog_save',{kind:'segment',name:'Tệp thử',parent_id:group});success=await rpc('crm_catalog_save',{kind:'outcome',name:'Kết nối',config:{connected:true,completed:true}});failure=await rpc('crm_catalog_save',{kind:'outcome',name:'Thất bại',config:{connected:false,completed:false}});
-await actor(sale);customer=await rpc('crm_customer_save',{name:'Đơn vị thật trong DB cách ly',group_id:group,segment_id:segment,request_key:crypto.randomUUID()});await actor(other);second=await rpc('crm_customer_save',{name:'Khách riêng',phone:'0901111111',request_key:crypto.randomUUID()});
-},60000);
-afterAll(()=>db.close());
-it('initial optional care date saves atomically with the customer',async()=>{await actor(sale);const id=await rpc('crm_customer_save',{name:'Khách có lịch ngay',request_key:crypto.randomUUID(),next_local:'2026-12-01T09:00'});expect(await scalar('select count(*)::int v from crm_schedules where customer_id=$1',[id])).toBe(1);await actor(admin);await scalar("select crm_customer_action($1,1,'archive','Lưu trữ hồ sơ kiểm thử') v",[id]);});
-it('Sale cannot read another owner through detail or duplicates',async()=>{await actor(sale);await expect(scalar('select crm_detail($1) v',[second])).rejects.toThrow('quyền');expect(await scalar("select crm_duplicates('Khách riêng','0901111111','') v")).toEqual([]);});
-it('manager reads only assigned scope and cannot edit by default',async()=>{await actor(lead);expect((await scalar('select crm_read(false) v')).customers.map((c:any)=>c.id)).toEqual([customer]);await expect(rpc('crm_customer_save',{id:customer,revision:1,name:'Sửa hộ'})).rejects.toThrow('quyền');});
-it('Admin mine list never includes other owners',async()=>{await actor(admin);expect((await scalar('select crm_read(true) v')).customers).toEqual([]);expect((await scalar('select crm_read(false) v')).customers).toHaveLength(2);});
-it('no membership means no CRM or direct-table writes',async()=>{await actor(outsider);await expect(scalar('select crm_read() v')).rejects.toThrow('quyền');await db.exec('SET ROLE authenticated');await expect(db.exec("insert into crm_customers(owner_id,created_by,name,request_key) values('"+outsider+"','"+outsider+"','Hack',gen_random_uuid())")).rejects.toThrow();await db.exec('RESET ROLE');});
-it('double save request creates one customer and stale revisions cannot overwrite',async()=>{await actor(sale);const key=crypto.randomUUID();const i=await rpc('crm_customer_save',{name:'Cá nhân',profile_kind:'individual',request_key:key});expect(await rpc('crm_customer_save',{name:'Cá nhân',request_key:key})).toBe(i);expect(await scalar('select count(*)::int v from crm_customers where request_key=$1',[key])).toBe(1);await rpc('crm_customer_save',{id:i,revision:1,name:'Đã đổi'});await expect(rpc('crm_customer_save',{id:i,revision:1,name:'Ghi đè'})).rejects.toThrow('thay đổi');});
-it('custom rename retains IDs, inactive catalog cannot be newly assigned, cycles reject',async()=>{await actor(admin);await rpc('crm_catalog_save',{id:segment,kind:'segment',name:'Đổi tên',parent_id:group,active:false});expect(await scalar('select segment_id v from crm_customers where id=$1',[customer])).toBe(segment);await expect(rpc('crm_catalog_save',{id:group,kind:'group',name:'Nhóm thử',parent_id:segment})).rejects.toThrow();await actor(sale);await expect(rpc('crm_customer_save',{name:'Khách mới',segment_id:segment,request_key:crypto.randomUUID()})).rejects.toThrow('ngừng');});
-it('failed contact keeps overdue obligation and counts only an attempt',async()=>{await actor(sale);const s=await rpc('crm_schedule_save',{customer_id:customer,kind:'appointment',due_at:'2026-01-01T09:00:00+07:00',request_key:crypto.randomUUID()});await rpc('crm_interaction_save',{customer_id:customer,schedule_id:s,revision:1,outcome_id:failure,content:'Chưa nghe máy',request_key:crypto.randomUUID()});expect(await scalar('select status v from crm_schedules where id=$1',[s])).toBe('pending');expect(await scalar('select connected v from crm_interactions where schedule_id=$1',[s])).toBe(false);});
-it('valid recurring completion creates one next obligation and leaves appointment independent',async()=>{await actor(sale);const s=await rpc('crm_schedule_save',{customer_id:customer,kind:'recurring',interval_days:15,due_at:new Date().toISOString(),request_key:crypto.randomUUID()});const key=crypto.randomUUID();const args={customer_id:customer,schedule_id:s,revision:1,outcome_id:success,content:'Trao đổi được',next_action:'continue',request_key:key};const i=await rpc('crm_interaction_save',args);expect(await rpc('crm_interaction_save',args)).toBe(i);expect(await scalar('select count(*)::int v from crm_schedules where request_key=$1',[key])).toBe(1);expect(await scalar('select completed v from crm_interactions where id=$1',[i])).toBe(true);expect(await scalar('select count(*)::int v from crm_schedules where kind=\'appointment\' and status=\'pending\' and customer_id=$1',[customer])).toBe(1);});
-it('reschedule preserves original due and requires reason',async()=>{await actor(sale);const s=await rpc('crm_schedule_save',{customer_id:customer,kind:'seasonal',due_at:'2026-01-02T09:00:00+07:00',request_key:crypto.randomUUID()});await expect(rpc('crm_schedule_save',{id:s,customer_id:customer,revision:1,kind:'seasonal',due_at:'2026-12-01T09:00:00+07:00'})).rejects.toThrow('lý do');await rpc('crm_schedule_save',{id:s,customer_id:customer,revision:1,kind:'seasonal',due_at:'2026-12-01T09:00:00+07:00',reason:'Khách đổi lịch'});expect(await scalar("select original_due_at::text v from crm_schedules where id=$1",[s])).toContain('2026-01-02');});
-it('report uses backend unique counts and no future customer in past periods',async()=>{await actor(admin);const r=await scalar("select crm_report('2026-01-01','2026-01-31',false) v");expect(r.totals.customers).toBe(0);await actor(sale);const r2=await scalar("select crm_report(current_date-1,current_date,true) v");expect(r2.totals.customers).toBe(2);expect(r2.totals.connected).toBe(1);expect(r2.totals.attempts).toBe(2);});
-it('private file predicate follows customer visibility and separate edit rights',async()=>{await actor(lead);expect(await scalar('select crm_file_allowed($1,false) v',[customer+'/file.pdf'])).toBe(true);expect(await scalar('select crm_file_allowed($1,true) v',[customer+'/file.pdf'])).toBe(false);expect(await scalar('select crm_file_allowed($1,false) v',[second+'/file.pdf'])).toBe(false);});
-it('appointment scope revocation immediately removes manager data access',async()=>{await db.query('delete from scope_access where actor=$1',[lead]);await actor(lead);await expect(scalar('select crm_read(false) v')).rejects.toThrow('quyền');});
-it('export is separately guarded on the backend',async()=>{await actor(sale);await expect(scalar('select crm_export(current_date,current_date) v')).rejects.toThrow('xuất');await actor(admin);expect((await scalar('select crm_export(current_date,current_date,false) v')).totals.customers).toBeGreaterThan(0);});
-it('official interactions cannot be overwritten even through privileged direct writes',async()=>{await expect(db.exec("update crm_interactions set content='Overwrite'")).rejects.toThrow('ghi đè');});
-it('recurring schedule cannot use zero or negative cycle on any write path',async()=>{await actor(sale);await expect(rpc('crm_schedule_save',{customer_id:customer,kind:'recurring',interval_days:0,due_at:new Date().toISOString(),request_key:crypto.randomUUID()})).rejects.toThrow('chu kỳ');});
-it('CRM reminders are deduplicated and never eligible for Zalo or Push',async()=>{await actor(admin);await scalar('select crm_remind() v');await scalar('select crm_remind() v');expect(await scalar('select count(*)::int v from notifications where recipient_id=$1',[sale])).toBe(1);expect(await scalar('select zalo_status v from notifications limit 1')).toBe('ineligible');expect(await scalar('select push_status v from notifications limit 1')).toBe('none');});
+  for (const u of [admin, sale, other, lead, outsider])
+    await db.query("insert into profiles values($1::uuid,$1::text,'Đang hoạt động')", [u]);
+  await db.query("insert into scope_access values($1,$2)", [lead, sale]);
+  for (const n of [250, 251, 252, 253]) {
+    const file = readdirSync("drizzle/migrations").find((x) =>
+      x.startsWith(String(n).padStart(4, "0") + "_"),
+    );
+    if (file) await db.exec(readFileSync("drizzle/migrations/" + file, "utf8"));
+  }
+  await actor(admin);
+  group = await rpc("crm_catalog_save", { kind: "group", name: "Nhóm thử" });
+  segment = await rpc("crm_catalog_save", { kind: "segment", name: "Tệp thử", parent_id: group });
+  success = await rpc("crm_catalog_save", {
+    kind: "outcome",
+    name: "Kết nối",
+    config: { connected: true, completed: true },
+  });
+  failure = await rpc("crm_catalog_save", {
+    kind: "outcome",
+    name: "Thất bại",
+    config: { connected: false, completed: false },
+  });
+  await actor(sale);
+  customer = await rpc("crm_customer_save", {
+    name: "Đơn vị thật trong DB cách ly",
+    group_id: group,
+    segment_id: segment,
+    request_key: crypto.randomUUID(),
+  });
+  await actor(other);
+  second = await rpc("crm_customer_save", {
+    name: "Khách riêng",
+    phone: "0901111111",
+    request_key: crypto.randomUUID(),
+  });
+}, 60000);
+afterAll(() => db.close());
+it("initial optional care date saves atomically with the customer", async () => {
+  await actor(sale);
+  const id = await rpc("crm_customer_save", {
+    name: "Khách có lịch ngay",
+    request_key: crypto.randomUUID(),
+    next_local: "2026-12-01T09:00",
+  });
+  expect(await scalar("select count(*)::int v from crm_schedules where customer_id=$1", [id])).toBe(
+    1,
+  );
+  await actor(admin);
+  await scalar("select crm_customer_action($1,1,'archive','Lưu trữ hồ sơ kiểm thử') v", [id]);
+});
+it("Sale cannot read another owner through detail or duplicates", async () => {
+  await actor(sale);
+  await expect(scalar("select crm_detail($1) v", [second])).rejects.toThrow("quyền");
+  expect(await scalar("select crm_duplicates('Khách riêng','0901111111','') v")).toEqual([]);
+});
+it("manager reads only assigned scope and cannot edit by default", async () => {
+  await actor(lead);
+  expect((await scalar("select crm_read(false) v")).customers.map((c: any) => c.id)).toEqual([
+    customer,
+  ]);
+  await expect(
+    rpc("crm_customer_save", { id: customer, revision: 1, name: "Sửa hộ" }),
+  ).rejects.toThrow("quyền");
+});
+it("Admin mine list never includes other owners", async () => {
+  await actor(admin);
+  expect((await scalar("select crm_read(true) v")).customers).toEqual([]);
+  expect((await scalar("select crm_read(false) v")).customers).toHaveLength(2);
+});
+it("no membership means no CRM or direct-table writes", async () => {
+  await actor(outsider);
+  await expect(scalar("select crm_read() v")).rejects.toThrow("quyền");
+  await db.exec("SET ROLE authenticated");
+  await expect(
+    db.exec(
+      "insert into crm_customers(owner_id,created_by,name,request_key) values('" +
+        outsider +
+        "','" +
+        outsider +
+        "','Hack',gen_random_uuid())",
+    ),
+  ).rejects.toThrow();
+  await db.exec("RESET ROLE");
+});
+it("double save request creates one customer and stale revisions cannot overwrite", async () => {
+  await actor(sale);
+  const key = crypto.randomUUID();
+  const i = await rpc("crm_customer_save", {
+    name: "Cá nhân",
+    profile_kind: "individual",
+    request_key: key,
+  });
+  expect(await rpc("crm_customer_save", { name: "Cá nhân", request_key: key })).toBe(i);
+  expect(
+    await scalar("select count(*)::int v from crm_customers where request_key=$1", [key]),
+  ).toBe(1);
+  await rpc("crm_customer_save", { id: i, revision: 1, name: "Đã đổi" });
+  await expect(rpc("crm_customer_save", { id: i, revision: 1, name: "Ghi đè" })).rejects.toThrow(
+    "thay đổi",
+  );
+});
+it("custom rename retains IDs, inactive catalog cannot be newly assigned, cycles reject", async () => {
+  await actor(admin);
+  await rpc("crm_catalog_save", {
+    id: segment,
+    kind: "segment",
+    name: "Đổi tên",
+    parent_id: group,
+    active: false,
+  });
+  expect(await scalar("select segment_id v from crm_customers where id=$1", [customer])).toBe(
+    segment,
+  );
+  await expect(
+    rpc("crm_catalog_save", { id: group, kind: "group", name: "Nhóm thử", parent_id: segment }),
+  ).rejects.toThrow();
+  await actor(sale);
+  await expect(
+    rpc("crm_customer_save", {
+      name: "Khách mới",
+      segment_id: segment,
+      request_key: crypto.randomUUID(),
+    }),
+  ).rejects.toThrow("ngừng");
+});
+it("failed contact keeps overdue obligation and counts only an attempt", async () => {
+  await actor(sale);
+  const s = await rpc("crm_schedule_save", {
+    customer_id: customer,
+    kind: "appointment",
+    due_at: "2026-01-01T09:00:00+07:00",
+    request_key: crypto.randomUUID(),
+  });
+  await rpc("crm_interaction_save", {
+    customer_id: customer,
+    schedule_id: s,
+    revision: 1,
+    outcome_id: failure,
+    content: "Chưa nghe máy",
+    request_key: crypto.randomUUID(),
+  });
+  expect(await scalar("select status v from crm_schedules where id=$1", [s])).toBe("pending");
+  expect(await scalar("select connected v from crm_interactions where schedule_id=$1", [s])).toBe(
+    false,
+  );
+});
+it("valid recurring completion creates one next obligation and leaves appointment independent", async () => {
+  await actor(sale);
+  const s = await rpc("crm_schedule_save", {
+    customer_id: customer,
+    kind: "recurring",
+    interval_days: 15,
+    due_at: new Date().toISOString(),
+    request_key: crypto.randomUUID(),
+  });
+  const key = crypto.randomUUID();
+  const args = {
+    customer_id: customer,
+    schedule_id: s,
+    revision: 1,
+    outcome_id: success,
+    content: "Trao đổi được",
+    next_action: "continue",
+    request_key: key,
+  };
+  const i = await rpc("crm_interaction_save", args);
+  expect(await rpc("crm_interaction_save", args)).toBe(i);
+  expect(
+    await scalar("select count(*)::int v from crm_schedules where request_key=$1", [key]),
+  ).toBe(1);
+  expect(await scalar("select completed v from crm_interactions where id=$1", [i])).toBe(true);
+  expect(
+    await scalar(
+      "select count(*)::int v from crm_schedules where kind='appointment' and status='pending' and customer_id=$1",
+      [customer],
+    ),
+  ).toBe(1);
+});
+it("reschedule preserves original due and requires reason", async () => {
+  await actor(sale);
+  const s = await rpc("crm_schedule_save", {
+    customer_id: customer,
+    kind: "seasonal",
+    due_at: "2026-01-02T09:00:00+07:00",
+    request_key: crypto.randomUUID(),
+  });
+  await expect(
+    rpc("crm_schedule_save", {
+      id: s,
+      customer_id: customer,
+      revision: 1,
+      kind: "seasonal",
+      due_at: "2026-12-01T09:00:00+07:00",
+    }),
+  ).rejects.toThrow("lý do");
+  await rpc("crm_schedule_save", {
+    id: s,
+    customer_id: customer,
+    revision: 1,
+    kind: "seasonal",
+    due_at: "2026-12-01T09:00:00+07:00",
+    reason: "Khách đổi lịch",
+  });
+  expect(
+    await scalar("select original_due_at::text v from crm_schedules where id=$1", [s]),
+  ).toContain("2026-01-02");
+});
+it("report uses backend unique counts and no future customer in past periods", async () => {
+  await actor(admin);
+  const r = await scalar("select crm_report('2026-01-01','2026-01-31',false) v");
+  expect(r.totals.customers).toBe(0);
+  await actor(sale);
+  const r2 = await scalar("select crm_report(current_date-1,current_date,true) v");
+  expect(r2.totals.customers).toBe(2);
+  expect(r2.totals.connected).toBe(1);
+  expect(r2.totals.attempts).toBe(2);
+});
+it("private file predicate follows customer visibility and separate edit rights", async () => {
+  await actor(lead);
+  expect(await scalar("select crm_file_allowed($1,false) v", [customer + "/file.pdf"])).toBe(true);
+  expect(await scalar("select crm_file_allowed($1,true) v", [customer + "/file.pdf"])).toBe(false);
+  expect(await scalar("select crm_file_allowed($1,false) v", [second + "/file.pdf"])).toBe(false);
+});
+it("appointment scope revocation immediately removes manager data access", async () => {
+  await db.query("delete from scope_access where actor=$1", [lead]);
+  await actor(lead);
+  await expect(scalar("select crm_read(false) v")).rejects.toThrow("quyền");
+});
+it("export is separately guarded on the backend", async () => {
+  await actor(sale);
+  await expect(scalar("select crm_export(current_date,current_date) v")).rejects.toThrow("xuất");
+  await actor(admin);
+  expect(
+    (await scalar("select crm_export(current_date,current_date,false) v")).totals.customers,
+  ).toBeGreaterThan(0);
+});
+it("official interactions cannot be overwritten even through privileged direct writes", async () => {
+  await expect(db.exec("update crm_interactions set content='Overwrite'")).rejects.toThrow(
+    "ghi đè",
+  );
+});
+it("recurring schedule cannot use zero or negative cycle on any write path", async () => {
+  await actor(sale);
+  await expect(
+    rpc("crm_schedule_save", {
+      customer_id: customer,
+      kind: "recurring",
+      interval_days: 0,
+      due_at: new Date().toISOString(),
+      request_key: crypto.randomUUID(),
+    }),
+  ).rejects.toThrow("chu kỳ");
+});
+it("CRM reminders are deduplicated and never eligible for Zalo or Push", async () => {
+  await actor(admin);
+  await scalar("select crm_remind() v");
+  await scalar("select crm_remind() v");
+  expect(
+    await scalar("select count(*)::int v from notifications where recipient_id=$1", [sale]),
+  ).toBe(1);
+  expect(await scalar("select zalo_status v from notifications limit 1")).toBe("ineligible");
+  expect(await scalar("select push_status v from notifications limit 1")).toBe("none");
+});
