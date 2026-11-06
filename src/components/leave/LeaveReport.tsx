@@ -64,9 +64,9 @@ export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { r
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-2">
-        <div className="inline-flex rounded-lg bg-muted p-1 text-sm">
+        <div className="inline-flex max-w-full overflow-x-auto rounded-lg bg-muted p-1 text-sm">
           {KINDS.map(([k, l]) => (
-            <button key={k} onClick={() => setKind(k)} className={`rounded-md px-3 py-1.5 ${kind === k ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>{l}</button>
+            <Button variant={kind === k ? 'secondary' : 'ghost'} key={k} onClick={() => setKind(k)} className="shrink-0 max-md:min-h-11">{l}</Button>
           ))}
         </div>
         {kind === "week" && <select className={sel} value={week} onChange={(e) => setWeek(+e.target.value)}>{Array.from({ length: weeksInYear(year) }, (_, i) => <option key={i} value={i + 1}>Tuần {i + 1}</option>)}</select>}
@@ -88,7 +88,8 @@ export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { r
             <Card key={l as string}><CardContent className="p-4"><div className="text-xs text-muted-foreground">{l}</div><div className="text-2xl font-semibold mt-1">{v}</div></CardContent></Card>
           ))}
         </div>
-        <Card><CardContent className="p-0 overflow-x-auto">
+        <div className={cnReportMobile(attOnly)}>{data.map(r => <article key={r.userId} className="rounded-lg border bg-card p-3 space-y-2"><Button variant="ghost" className="h-auto w-full justify-between px-0 whitespace-normal text-left" onClick={() => setOpenUser(openUser === r.userId ? null : r.userId)}><span className="min-w-0 font-medium">{name(r.userId)}</span>{openUser === r.userId ? <ChevronDown className="shrink-0" /> : <ChevronRight className="shrink-0" />}</Button><p className="text-sm">{fmtDays(r.leaveDays)} ngày nghỉ · {r.lateCount} lần đi muộn · {r.earlyCount} lần về sớm</p><p className="text-xs text-muted-foreground">{r.pending} chờ duyệt · {r.rejected} từ chối</p>{openUser === r.userId && <div className="border-t pt-2 space-y-2">{details.filter(d => d.userId === r.userId).map((d,i) => <div key={d.id ?? i} className="text-sm"><p>{TYPE_LABEL[d.type as LeaveType]} · {whenText(d)}</p><p className="text-xs text-muted-foreground">{d.type === 'leave' ? `${fmtDays(d.days)} ngày` : `${d.minutes} phút`} · {STATUS_LABEL[d.status as LeaveStatus]}</p></div>)}</div>}</article>)}</div>
+        <Card className={attOnly ? '' : 'hidden md:block'}><CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs text-muted-foreground"><tr>
               {["Nhân viên", "Đơn nghỉ", "Ngày nghỉ", "Đi muộn (lần/phút)", "Về sớm (lần/phút)", "Chờ duyệt", "Từ chối"].map((h) => <th key={h} className="text-left font-medium px-3 py-2 whitespace-nowrap">{h}</th>)}
@@ -118,6 +119,8 @@ export function LeaveReport({ rows, atts, name, onOpenAtt, mode = "leave" }: { r
     </div>
   );
 }
+
+const cnReportMobile = (attOnly: boolean) => attOnly ? 'hidden' : 'md:hidden space-y-2';
 
 function whenText(d: DetailRow) {
   if (d.type !== "leave") return fmtDate(d.when);
