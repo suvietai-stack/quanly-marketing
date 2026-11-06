@@ -16,7 +16,6 @@ async def main():
    async def rpc(route):
     nonlocal saved,reviewed,fail
     name=route.request.url.split('/')[-1];payload=route.request.post_data_json or {};result=[]
-    print("RPC",name)
     if name=='k3_day_read':result={'day':None,'tasks':[],'summaries':[],'events':[],'assigned_actions':[],'active_goals':[]}
     elif name=='k3_settings_read': result={'today':TODAY,'enabled':True,'can_use':True,'can_view_scope':True,'can_settings':False,'allow_team_goal':True,'plan_by':'08:45','summary_by':'18:00','max_focus':3}
     elif name=='k3_kpi_day_read':result={'actions':actions}
@@ -37,8 +36,7 @@ async def main():
     await route.fulfill(content_type='application/json',body=json.dumps(result))
    await page.route('**/rest/v1/rpc/**',rpc)
    await page.goto('http://localhost:8080/k3-mobile-fixture')
-   await page.screenshot(path=str(OUT/f"{width}-start.png"));print((await page.locator("body").inner_text())[:1000],errors)
-   await page.wait_for_timeout(2000);print((await page.locator("body").inner_text())[:2000],errors);await page.screenshot(path=str(OUT/"debug.png"));await expect(page.get_by_text(actions[0]["name"],exact=True)).to_be_visible(timeout=15000)
+   await expect(page.get_by_text(actions[0]["name"],exact=True)).to_be_visible(timeout=15000)
    if width<768:
     await expect(page.get_by_role('heading',name='Quản lý 3K',exact=True)).to_have_count(1)
     await page.get_by_role('button',name='Ngày trước',exact=True).click()
@@ -64,7 +62,7 @@ async def main():
    await expect(dialog).not_to_be_visible();await expect(page.get_by_text('Kết quả: 30/100 đại lý')).to_be_visible(timeout=15000)
    await page.get_by_role('button',name='Cập nhật kết quả',exact=True).nth(1).click()
    dialog=page.get_by_role('dialog',name='Cập nhật kết quả · Gửi báo giá',exact=True)
-   await page.screenshot(path=str(OUT/f'{width}-binary.png'));await page.wait_for_timeout(500);print('BINARY',await dialog.bounding_box(),await dialog.evaluate('(el)=>({translate:getComputedStyle(el).translate,transform:getComputedStyle(el).transform,top:getComputedStyle(el).top})'))
+   await page.wait_for_timeout(400);await page.screenshot(path=str(OUT/f{width}-binary.png))
    await dialog.get_by_role('button',name='Chưa hoàn thành',exact=True).click()
    await dialog.get_by_role('button',name='Lưu kết quả',exact=True).click()
    await expect(dialog).not_to_be_visible(timeout=15000)
@@ -78,7 +76,7 @@ async def main():
    await page.screenshot(path=str(OUT/f'{width}-review.png'))
    await dialog.get_by_role('button',name='Xác nhận đã tổng kết',exact=True).click()
    await expect(dialog).not_to_be_visible(timeout=15000)
-   await expect(page.get_by_text('Đã tổng kết',exact=True).first).to_be_visible(timeout=15000)
+   await expect(page.get_by_text('Đã tổng kết',exact=True).filter(visible=True).first).to_be_visible(timeout=15000)
    assert not await page.evaluate('document.documentElement.scrollWidth > innerWidth')
    assert not errors,errors
    print('PASS',width,'day/date/create-error-retry/numeric-replace/binary/history/review-warning-confirm/overflow')

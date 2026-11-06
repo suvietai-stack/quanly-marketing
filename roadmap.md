@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## MOBILE NGHỈ PHÉP & ĐI SỚM MUỘN — 06/11/2026
+- [ ] ML1. Ba ô tạo trực tiếp, tab/danh sách/bộ lọc mobile gọn đúng quyền; giữ /leave và deep link, tách attendance.
+- [ ] ML2. Form/chi tiết/duyệt/báo cáo mobile, chọn nhanh và safe-area; giữ phép tính/hạn/bổ sung/API/quyền/Zalo.
+- [ ] ML3. Kiểm tra mobile/desktop với hành trình cách ly, ghi rõ nghiệm thu phiên thật còn thiếu; chưa Publish.
+
 ## MOBILE QUẢN LÝ 3K — 06/11/2026
 - [ ] M3K1. Gọn điều hướng/kỳ/ngày/tóm tắt và thẻ việc; giữ nguồn đo/thao tác/quyền và desktop.
 - [ ] M3K2. Tối ưu form tạo/cập nhật/tổng kết, sheet chi tiết, nhóm/theo dõi; không đổi API/database/nghiệp vụ.
