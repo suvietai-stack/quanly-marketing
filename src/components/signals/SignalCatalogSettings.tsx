@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { addOption, moveOption, removeOption, renameOption, toggleOption, type CatOption, type OptionScope } from "@/lib/signals/catalog";
 import { errMsg, optionUsage, renameOptionEverywhere, saveOptions } from "@/lib/signals/api";
-import { useOptions } from "./SignalsUi";
+import { SignalLabelManager } from "./SignalEnrichment";
+import { useSignalPerms, useOptions } from "./SignalsUi";
 
 const SIG = "sig:";
 const LISTS: { scope: OptionScope; title: string; hint: string }[] = [
@@ -19,7 +20,8 @@ const LISTS: { scope: OptionScope; title: string; hint: string }[] = [
 
 /** Cài đặt → Danh mục tín hiệu: dùng chung bảng danh mục đã có, quyền kiểm tra ở cơ sở dữ liệu. */
 export function SignalCatalogSettings() {
-  return <div className="grid gap-4 lg:grid-cols-3">{LISTS.map((l) => <CatalogCard key={l.scope} {...l} />)}</div>;
+  const p=useSignalPerms();
+  return <div className="space-y-6"><div className="grid gap-4 lg:grid-cols-3">{LISTS.map((l) => <CatalogCard key={l.scope} {...l} />)}</div><SignalLabelManager uid={p.userId} catalog={p.catalog} sale={p.sale}/></div>;
 }
 
 function CatalogCard({ scope, title, hint }: { scope: OptionScope; title: string; hint: string }) {

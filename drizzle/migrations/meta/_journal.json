@@ -1786,6 +1786,27 @@
       "when": 1793951695310,
       "tag": "0254_crm_monitoring_personal_separation",
       "breakpoints": true
+    },
+    {
+      "idx": 255,
+      "version": "7",
+      "when": 1793954122320,
+      "tag": "0255_signal_potential_label_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 256,
+      "version": "7",
+      "when": 1793954165712,
+      "tag": "0256_signal_label_and_enrichment_rpc",
+      "breakpoints": true
+    },
+    {
+      "idx": 257,
+      "version": "7",
+      "when": 1793954532620,
+      "tag": "0257_signal_enrichment_write_privileges",
+      "breakpoints": true
     }
   ]
 }

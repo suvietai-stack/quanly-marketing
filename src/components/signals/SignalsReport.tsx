@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect,useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { SIGNAL_LOST_REASONS, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import {
-  filterSignals, groupBy, lostReasons, reportInsights, summarize, trendSeries,
+  filterSignals, groupBy, lostReasons, reportInsights, summarize, eventTrendSeries,
   type ReportFilter, type Summary, type TrendGranularity,
 } from "@/lib/signals/report";
 import { errMsg, listAcceptNotes, listAssignEvents, listCareNotes } from "@/lib/signals/api";
@@ -27,6 +27,10 @@ import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } fro
 import { needGroupsOf } from "@/lib/signals/catalog";
 import { cn } from "@/lib/utils";
 import { ProgressionReport } from './ProgressionReport';
+import { useSignalLabels } from './SignalEnrichment';
+import { SignalPotentialReport } from './SignalPotentialReport';
+import { POTENTIAL_LABEL, STAGES } from '@/lib/signals/potential';
+import { listDeadlines } from '@/lib/signals/api';
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
 
@@ -42,7 +46,7 @@ const C = {
 
 const TREND_CONFIG: ChartConfig = {
   created: { label: "Tín hiệu tạo trong kỳ", color: C.brand },
-  won: { label: "Trong đó hiện đã Chốt", color: C.orange },
+  won: { label: "Chốt phát sinh trong kỳ", color: C.orange },
 };
 const STATUS_CONFIG: ChartConfig = { n: { label: "Số tín hiệu", color: C.brand } };
 const SOURCE_CONFIG: ChartConfig = { v: { label: "Giá trị", color: C.brand } };
@@ -52,9 +56,13 @@ export function SignalsReport() {
   const name = useUserName();
   const { data = [], isLoading, error } = useSignals();
   const { data: last = {} } = useLastNotes();
+  const labels=useSignalLabels(p.userId);
+  const deadlines=useQuery({queryKey:['sig:deadlines',p.userId],queryFn:listDeadlines,enabled:!!p.userId});
   const t = todayKey();
   const [f, setF] = useState<ReportFilter>({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [draft,setDraft]=useState<ReportFilter>(f);
+  useEffect(()=>{if(filterOpen)setDraft(f);},[filterOpen]);
   const [gran, setGran] = useState<TrendGranularity>("day");
   const [srcMetric, setSrcMetric] = useState<"total" | "won" | "rate">("total");
   const set = (k: keyof ReportFilter, v: string) => setF((x) => ({ ...x, [k]: v || undefined }));
@@ -62,10 +70,10 @@ export function SignalsReport() {
 
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
-  // KPI tỷ lệ chốt: giữ tập gốc theo bộ lọc nghiệp vụ, không bị bộ lọc trạng thái làm sai lệch
-  const kpiList = useMemo(() => filterSignals(data, { ...f, status: undefined }), [data, f]);
+  // All KPI and Sale rates use exactly the same filtered population.
+  const kpiList = list;
   const kpi = useMemo(() => summarize(kpiList, t), [kpiList, t]);
-  // Tỷ lệ chốt theo Sale: cùng tập không lọc trạng thái, mẫu số = tổng tín hiệu được giao
+  // Sale rate denominator is its full filtered signal population.
   const rateBySale = useMemo(() => new Map(groupBy(kpiList, (s) => s.assigned_to).map((r) => [r.key, r.s])), [kpiList]);
   const signalsBySale = useMemo(() => {
     const m = new Map<string, Signal[]>();
@@ -102,7 +110,7 @@ export function SignalsReport() {
 
   /* ---- Dữ liệu cho các khu vực mới (tất cả đều theo bộ lọc chung) ---- */
   const insights = useMemo(() => reportInsights({ sum, bySource, byNeed }), [sum, bySource, byNeed]);
-  const trend = useMemo(() => trendSeries(kpiList, gran), [kpiList, gran]);
+  const trend = useMemo(() => eventTrendSeries(filterSignals(data,{...f,from:undefined,to:undefined}),gran,f.from,f.to), [data,f,gran]);
   const statusDist = useMemo(() => {
     const rows: { key: string; label: string; n: number; fill: string }[] = [];
     if (sum.unassigned) rows.push({ key: "unassigned", label: "Chưa phân công", n: sum.unassigned, fill: C.muted });
@@ -125,13 +133,14 @@ export function SignalsReport() {
     [kpiList, assignEvents, acceptNotes],
   );
   const processing = sum.contacting + sum.consulting + sum.quoted + sum.deposit;
-  const activeCount = [f.source, f.product, f.needGroup, f.saleId, f.creatorId, f.status, f.lostReason].filter(Boolean).length;
+  const activeCount = [f.source, f.product, f.needGroup, f.saleId, f.creatorId, f.status, f.lostReason,f.potential,f.labelId,f.stage].filter(Boolean).length;
 
   if (!p.report) return <p className="py-16 text-center text-muted-foreground">Bạn không có quyền xem báo cáo tín hiệu.</p>;
 
   const filterFields = (
     <ReportFilterFields
       f={f} set={set} setF={setF}
+      labels={(labels.data??[]).map(l=>[l.id,l.name])}
       sources={[...new Set([...srcOpts.names, ...data.map((x) => x.source)])]}
       products={prodOpts.names} needs={needOpts.names}
       sales={people(data.map((s) => s.assigned_to))} creators={people(data.map((s) => s.created_by))}
@@ -139,11 +148,11 @@ export function SignalsReport() {
   );
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
+    <div className="signals-report space-y-6 pb-20 md:pb-0">
       {/* 1. Tiêu đề + bộ lọc báo cáo */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Báo cáo tín hiệu</h1>
+          <h1 className="hidden md:block text-2xl font-semibold tracking-tight">Báo cáo tín hiệu</h1>
           <p className="text-sm text-muted-foreground">
             Đang phân tích <b>{f.from ?? "…"} → {f.to ?? "…"}</b> theo <b>{f.basis === "created" ? "ngày tạo tín hiệu" : "ngày Chốt / Trượt"}</b>. Doanh số là số Sale khai báo khi Chốt, chưa phải doanh thu kế toán xác nhận.
           </p>
@@ -160,12 +169,12 @@ export function SignalsReport() {
         <div className="grid grid-cols-4 lg:grid-cols-5 gap-3 text-sm">{filterFields}</div>
       </div>
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+        <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
           <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc báo cáo</SheetTitle></SheetHeader>
-          <div className="px-4 grid grid-cols-2 gap-3 pb-4 text-sm">{filterFields}</div>
+          <div className="px-4 grid grid-cols-2 gap-3 pb-4 text-sm"><ReportFilterFields f={draft} set={(k,v)=>setDraft(x=>({...x,[k]:v||undefined}))} setF={setDraft} sources={srcOpts.names} products={prodOpts.names} needs={needOpts.names} sales={people(data.map(s=>s.assigned_to))} creators={people(data.map(s=>s.created_by))} labels={(labels.data??[]).map(l=>[l.id,l.name])}/></div>
           <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
-            <Button variant="outline" size="lg" onClick={() => { reset(); }}>Đặt lại</Button>
-            <Button size="lg" onClick={() => setFilterOpen(false)}>Áp dụng</Button>
+            <Button variant="outline" size="lg" onClick={() => { setDraft({basis:"created",from:`${t.slice(0,7)}-01`,to:t}); }}>Xóa bộ lọc</Button>
+            <Button size="lg" onClick={() => {setF(draft);setFilterOpen(false);}}>Áp dụng</Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -193,7 +202,7 @@ export function SignalsReport() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
               <Kpi icon={<SignalIcon className="h-4 w-4" />} k="Tổng tín hiệu" v={sum.total} hint="Mọi tín hiệu hợp lệ trong bộ lọc (không tính tín hiệu đã hủy)." />
               <Kpi icon={<CheckCircle2 className="h-4 w-4" />} tone="green" k="Đã chốt" v={sum.won} hint="Tín hiệu có trạng thái Chốt trong bộ lọc." />
-              <Kpi icon={<Percent className="h-4 w-4" />} tone="orange" k="Tỷ lệ chốt" v={pct(kpi)} hint={`Chốt / Tổng tín hiệu hợp lệ = ${kpi.won}/${kpi.total}. Không phụ thuộc bộ lọc Trạng thái.`} />
+              <Kpi icon={<Percent className="h-4 w-4" />} tone="orange" k="Tỷ lệ chốt" v={pct(kpi)} hint={`Chốt / Tổng tín hiệu thuộc toàn bộ bộ lọc = ${kpi.won}/${kpi.total}.`} />
               <Kpi icon={<Loader2 className="h-4 w-4" />} tone="brand" k="Đang xử lý" v={processing} hint="Đang liên hệ + Đang tư vấn + Đã báo giá + Chờ xác nhận/cọc." />
               <Kpi icon={<XCircle className="h-4 w-4" />} tone="red" k="Trượt" v={sum.lost} hint="Tín hiệu có trạng thái Trượt trong bộ lọc." />
               <Kpi icon={<UserX className="h-4 w-4" />} k="Chưa phân công / Chờ nhận" v={`${sum.unassigned} / ${sum.waiting}`} hint="Chưa có Sale phụ trách / đã giao nhưng Sale chưa tiếp nhận." />
@@ -206,6 +215,7 @@ export function SignalsReport() {
           </section>
 
           {/* 4. Xu hướng theo thời gian */}
+          {deadlines.error?<p className="text-sm text-destructive">Không tải được hạn theo dõi: {errMsg(deadlines.error)}</p>:<SignalPotentialReport list={list} deadlines={deadlines.data??{}}/>}
           <section className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <H>Xu hướng tín hiệu</H>
@@ -231,10 +241,10 @@ export function SignalsReport() {
                   </ChartContainer>
                   <div className="flex flex-wrap gap-4 px-1 pt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: C.brand }} />Tín hiệu tạo trong kỳ</span>
-                    <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full" style={{ background: C.orange }} />Trong đó hiện đã Chốt</span>
+                    <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full" style={{ background: C.orange }} />Chốt phát sinh trong kỳ</span>
                   </div>
                   <p className="px-1 pt-1 text-[11px] text-muted-foreground">
-                    Cột = số tín hiệu <b>tạo</b> trong từng {gran === "day" ? "ngày" : gran === "week" ? "tuần" : "tháng"}; đường = số tín hiệu thuộc nhóm đó <b>hiện đã Chốt</b> (không phải số chốt phát sinh trong kỳ).
+                    Cột theo ngày phát hiện tín hiệu; đường theo ngày Chốt thực tế trong khoảng thời gian và bộ lọc đã chọn.
                   </p>
                 </>
               )}
@@ -315,7 +325,7 @@ export function SignalsReport() {
             <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <div className="px-4 py-2.5 font-medium text-sm border-b">Theo lý do trượt</div>
               {lost.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có tín hiệu trượt.</p> : (
-                <table className="w-full text-sm"><tbody>
+                <table className="hidden md:table w-full text-sm"><tbody>
                   {lost.map((r) => <tr key={r.key} className="border-t first:border-t-0"><td className="px-4 py-2">{r.key}</td><td className="px-4 py-2 text-right">{r.n}</td></tr>)}
                 </tbody></table>
               )}
@@ -345,12 +355,16 @@ function Sel({ label, value, onChange, opts, noEmpty }: { label: string; value?:
   );
 }
 
-function ReportFilterFields({ f, set, setF, sources, products, needs, sales, creators }: {
+function ReportFilterFields({ f, set, setF, sources, products, needs, sales, creators,labels }: {
   f: ReportFilter; set: (k: keyof ReportFilter, v: string) => void; setF: React.Dispatch<React.SetStateAction<ReportFilter>>;
   sources: string[]; products: string[]; needs: string[]; sales: { id: string; n: string }[]; creators: { id: string; n: string }[];
+  labels:[string,string][];
 }) {
   return (
     <>
+      <Sel label="Tiềm năng" value={f.potential} onChange={v=>set('potential',v)} opts={Object.entries(POTENTIAL_LABEL)}/>
+      <Sel label="Giai đoạn" value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/>
+      <Sel label="Nhãn" value={f.labelId} onChange={v=>set('labelId',v)} opts={labels}/>
       <Sel label="Tính theo" value={f.basis} onChange={(v) => setF((x) => ({ ...x, basis: (v || "created") as any }))} opts={[["created", "Ngày tạo tín hiệu"], ["closed", "Ngày chốt / trượt"]]} noEmpty />
       <label className="space-y-1"><span className="text-xs text-muted-foreground">Từ ngày</span><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></label>
       <label className="space-y-1"><span className="text-xs text-muted-foreground">Đến ngày</span><Input type="date" value={f.to ?? ""} onChange={(e) => set("to", e.target.value)} /></label>
@@ -399,8 +413,9 @@ function Tbl({ title, first, rows, cols }: { title: string; first: string; rows:
   return (
     <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
       <div className="px-4 py-2.5 font-medium text-sm border-b">{title}</div>
+      <div className="md:hidden divide-y px-3">{rows.map(([key,s])=><div key={key} className="py-3 text-sm"><b>{key}</b><div className="grid grid-cols-2 gap-1 mt-2 text-xs"><span>Tín hiệu: {s.total}</span><span>Chốt / Trượt: {s.won} / {s.lost}</span><span>Tỷ lệ chốt: {pct(s)}</span><span>{fmtVnd(s.revenue)}</span></div></div>)}</div>
       {rows.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có dữ liệu.</p> : (
-        <table className="w-full text-sm">
+        <table className="hidden md:table w-full text-sm">
           <thead className="text-xs text-muted-foreground bg-muted/40"><tr><th className="px-4 py-2 text-left font-medium">{first}</th>{head.map((h) => <th key={h} className="px-4 py-2 text-right font-medium whitespace-nowrap">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map(([k, s]) => (
@@ -452,8 +467,9 @@ function SaleTable({ rows, name, rates, signalsBySale, events, notes }: {
   return (
     <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
       <div className="px-4 py-2.5 font-medium text-sm border-b">Theo Sale được phân công</div>
+      <div className="md:hidden divide-y px-3">{sorted.map(r=><div key={r.key} className="py-3 text-sm"><b>{name(r.key)}</b><div className="grid grid-cols-2 gap-1 mt-2 text-xs"><span>Được giao: {r.s.total-r.s.unassigned}</span><span>Chốt / Trượt: {r.s.won} / {r.s.lost}</span><span>Tỷ lệ: {r.rate==null?'—':r.rate.toLocaleString('vi-VN',{maximumFractionDigits:1})+'%'}</span><span>Tiếp nhận: {fmtMinutes(r.acc.avg)}</span><span className="col-span-2">Doanh số: {fmtVnd(r.s.revenue)}</span></div></div>)}</div>
       {rows.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Chưa có dữ liệu.</p> : (
-        <table className="w-full text-sm">
+        <table className="hidden md:table w-full text-sm">
           <thead className="text-xs text-muted-foreground bg-muted/40">
             <tr>
               <th className="px-4 py-2 text-left font-medium">Sale</th>
@@ -517,7 +533,7 @@ function CareTable({ data, name, userId, all }: { data: any[]; name: (id: string
     <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
       <div className="px-4 py-2.5 text-sm font-medium border-b">Theo dõi chăm sóc <span className="text-xs font-normal text-muted-foreground">— tình trạng hiện tại, chỉ để nhắc việc</span></div>
       {rows.length === 0 ? <p className="p-3 text-sm text-muted-foreground">Không có tín hiệu cần kiểm tra.</p> : (
-        <table className="w-full text-sm">
+        <table className="hidden md:table w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2">Nhân viên</th><th className="px-4 py-2">Chưa tiếp nhận</th><th className="px-4 py-2">Lâu chưa cập nhật</th></tr></thead>
           <tbody>{rows.map(([id, r]) => (
             <tr key={id} className="border-t"><td className="px-4 py-2">{name(id)}</td><td className="px-4 py-2">{link(id, "unaccepted", r.u)}</td><td className="px-4 py-2">{link(id, "stale", r.s)}</td></tr>

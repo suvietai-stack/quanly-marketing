@@ -29,6 +29,8 @@ import { zaloCareCounts } from "@/lib/zalo.functions";
 import { ProgressionSummary } from "./ProgressionSummary";
 import { composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
+import { SignalEnrichment, SignalLabelManager, PotentialPill, SignalLabelPills, useSignalLabels } from './SignalEnrichment';
+import { POTENTIAL_LABEL, STAGES, matchWork, sortSignals, type WorkQuick, type SignalSort } from '@/lib/signals/potential';
 import { DEADLINE_LABEL, suggestedProgressionStatus, type DeadlineState } from '@/lib/signals/deadlines';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
@@ -137,7 +139,18 @@ export function SignalsPage() {
   const careFn = useServerFn(zaloCareCounts);
   const { data: careCfg } = useQuery({ queryKey: [`${SIG}carecfg`], queryFn: () => careFn(), staleTime: 600000 });
   const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
+  const labels = useSignalLabels(p.userId);
+  const [workQuick,setWorkQuick]=useState<WorkQuick>('all');
+  const [sort,setSort]=useState<SignalSort>('work');
+  const [labelsOpen,setLabelsOpen]=useState(false);
   const [f, setF] = useState<ListFilter>(emptyFilter());
+  const restored=useRef<string|null>(null);
+  useEffect(()=>{
+    if(!p.userId)return;
+    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort??'work');setDeadlineFilter(saved.deadlineFilter??null);}}catch{}
+    restored.current=p.userId;
+  },[p.userId]);
+  useEffect(()=>{if(p.userId&&restored.current===p.userId){try{sessionStorage.setItem(`sig:filters:${p.userId}`,JSON.stringify({f,workQuick,sort,deadlineFilter}));}catch{}}},[f,workQuick,sort,deadlineFilter,p.userId]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   useEffect(() => {
@@ -173,26 +186,26 @@ export function SignalsPage() {
     && (f.quick === 'all' || x.s.status === f.quick)), [careScope, care, f, today]);
   const list = useMemo(() => {
     const filtered=applyListFilter(data,f,today,last);
-    if(!deadlineFilter) return filtered;
-    return filtered.filter(s=>deadlines.data?.[s.id]?.deadline_state===deadlineFilter).sort((a,b)=>(deadlines.data?.[b.id]?.overdue_days??0)-(deadlines.data?.[a.id]?.overdue_days??0));
-  }, [data, f, today, last,deadlineFilter,deadlines.data]);
-  const base = useMemo(() => applyDetailFilter(data, f, today), [data, f, today]);
+    const rows=filtered.filter(s=>(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)&&matchWork(s,workQuick,deadlines.data?.[s.id],today));
+    return sort==='activity'?rows:sortSignals(rows,sort,deadlines.data??{},today);
+  }, [data, f, today, last,deadlineFilter,deadlines.data,workQuick,sort]);
+  const base = useMemo(() => applyDetailFilter(data, f, today).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)), [data, f, today,workQuick,deadlines.data,deadlineFilter]);
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
   const needOpts = useOptions("signal_need_groups");
   // Đếm nhóm nhu cầu: áp dụng mọi điều kiện khác (kể cả trạng thái) trừ chính nhóm nhu cầu
   const needBase = useMemo(() => {
     const b = applyDetailFilter(data, { ...f, needGroup: undefined }, today);
-    return f.quick === "all" ? b : b.filter((s) => s.status === f.quick);
-  }, [data, f, today]);
+    return b.filter(s=>(f.quick==='all'||s.status===f.quick)&&matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter));
+  }, [data, f, today,workQuick,deadlines.data,deadlineFilter]);
   const needCount = (g?: string) => (g ? needBase.filter((s) => needGroupsOf(s).includes(g)).length : needBase.length);
   const open = data.find((s) => s.id === openId) || null;
   const denied = !!openId && !isLoading && !open;
-  const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time", "needGroup"].includes(k) && v).length + (f.time ? 1 : 0);
+  const extra = Object.entries(f).filter(([k, v]) => !["q", "quick", "time"].includes(k) && v).length + (f.time ? 1 : 0);
 
 
   return (
     <div className="signals-page space-y-4 pb-[calc(13rem+env(safe-area-inset-bottom))] md:pb-0">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="hidden md:flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{saleOnly ? "Tín hiệu của tôi" : "Tín hiệu cơ hội"}</h1>
           <p className="text-sm text-muted-foreground">Tín hiệu có khả năng phát sinh đơn hàng, giao Kinh doanh tư vấn.</p>
@@ -204,7 +217,7 @@ export function SignalsPage() {
       </div>
 
       {p.sale && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2">
           <Stat label="Chờ nhận" v={mine.filter((s) => s.status === "waiting").length} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
           <Stat label="Đang xử lý" v={mine.filter((s) => isOpen(s.status) && s.status !== "waiting").length} />
           <Stat label="Đã báo giá" v={mine.filter((s) => s.status === "quoted").length} onClick={() => setF({ ...emptyFilter(), quick: "quoted" })} />
@@ -220,7 +233,9 @@ export function SignalsPage() {
         <Button variant="outline" className="h-11" onClick={() => setFilterOpen(true)}>
           <SlidersHorizontal className="h-4 w-4 mr-1" />Bộ lọc{extra ? ` (${extra})` : ""}
         </Button>
+        {p.create&&<Button className="h-11 w-11 shrink-0 md:hidden" size="icon" aria-label="Thêm tín hiệu" onClick={()=>setCreating(true)}><Plus className="h-4 w-4"/></Button>}
       </div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{[['work','Ưu tiên công việc'],['newest','Mới nhất'],['oldest','Cũ nhất'],['soonest','Cần xử lý sớm'],['potential','Tiềm năng cao trước'],['value','Giá trị đã ghi nhận'],['activity','Cập nhật mới nhất']].map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
       {careScope.length > 0 && !care.on && (
         <button onClick={() => setCare({ on: true })} className="w-full text-left rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-medium">
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
@@ -228,22 +243,8 @@ export function SignalsPage() {
       )}
       {/* Mobile: bộ lọc nhanh gọn trong hàng cuộn ngang; nhóm dài nằm trong sheet "Bộ lọc". */}
       <div className="md:hidden space-y-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1" aria-label="Lọc theo trạng thái">
-          {QUICK.map((x) => (
-            <button key={x.k} onClick={() => { setCare({ on: false }); setF((y) => ({ ...y, quick: x.k })); }}
-              className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", !care.on && f.quick === x.k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-card hover:bg-muted/60")}>
-              {x.label} <span className="opacity-70">{count(x.k)}</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1" aria-label="Hạn cập nhật diễn biến">
-          <button onClick={() => setDeadlineFilter(null)} className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", !deadlineFilter ? "bg-secondary text-secondary-foreground border-secondary font-medium" : "bg-card")}>Tất cả hạn</button>
-          {(['today', 'soon', 'overdue'] as const).map((k) => (
-            <button key={k} onClick={() => { setCare({ on: false }); setDeadlineFilter(k); }}
-              className={cn("shrink-0 rounded-full border px-3 py-1.5 text-[13px]", deadlineFilter === k ? "bg-primary text-primary-foreground border-primary font-medium" : "bg-card")}>
-              {k === 'today' ? 'Cần cập nhật hôm nay' : DEADLINE_LABEL[k]} · {base.filter((s) => deadlines.data?.[s.id]?.deadline_state === k).length}
-            </button>
-          ))}
+        <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Lọc nhanh tín hiệu">
+          {([['all','Tất cả'],['high','Tiềm năng cao'],['action','Cần xử lý'],['overdue','Quá hạn'],['won','Đã chốt']] as [WorkQuick,string][]).map(([k,label])=><Button key={k} variant={workQuick===k?'default':'outline'} className="shrink-0 min-h-11 rounded-full" onClick={()=>{setCare({on:false});setDeadlineFilter(null);setWorkQuick(k);}}>{label} <span className="ml-1 opacity-70">{base.filter(s=>matchWork(s,k,deadlines.data?.[s.id],today)).length}</span></Button>)}
         </div>
         {deadlines.error && <p className="text-xs text-destructive">Không tải được hạn cập nhật: {errMsg(deadlines.error)}</p>}
         <ActiveFilters f={f} name={name} onChange={setF} />
@@ -282,7 +283,7 @@ export function SignalsPage() {
             ))}
         </div>
       )}
-      <p className="text-xs text-muted-foreground -mt-2">Sắp xếp theo cập nhật mới nhất.</p>
+
 
       {care.on ? null : isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
         : error ? <p className="text-sm text-destructive py-8 text-center">{errMsg(error)}</p>
@@ -297,12 +298,10 @@ export function SignalsPage() {
                     <StatusPill s={s} />
                   </div>
                   <div className="text-xs text-muted-foreground line-clamp-1">{needGroupsOf(s).join(", ") || s.products.join(", ") || s.need_detail || "—"}</div>
-                  <div className="text-sm line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có diễn biến</span>}</div>
-                  {progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} deadline={deadlines.data?.[s.id]} compact />}
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <span className="min-w-0 truncate">{!saleOnly && (s.assigned_to ? `Sale: ${name(s.assigned_to)}` : "Chưa phân công")}</span>
-                    <span className="shrink-0">Cập nhật {fmtTime(lastActivity(s, last[s.id]))}</span>
-                  </div>
+                  {s.revenue!=null&&<div className="text-sm font-medium">{fmtVnd(s.revenue)}</div>}
+                  <div className="flex flex-wrap items-center gap-1.5"><PotentialPill s={s}/><SignalLabelPills s={s} labels={labels.data??[]}/></div>
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-muted-foreground"><span>{!saleOnly&&(s.assigned_to?name(s.assigned_to):'Chưa phân công')}</span><span>{s.next_contact_on?`Theo dõi ${fmtNext(s)}`:deadlines.data?.[s.id]?`Hạn cập nhật ${fmtDate(deadlines.data[s.id].due_on)}`:'Chưa có lịch theo dõi'}</span></div>
+                  <div className="grid grid-cols-2 gap-2 pt-1" data-signal-interactive><Button asChild variant="outline" className="min-h-11"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1"/>Gọi</a></Button><Button variant="secondary" className="min-h-11" onClick={()=>setOpenId(s.id)}>Xem / Cập nhật</Button></div>
                 </div>
               ))}
             </div>
@@ -319,7 +318,7 @@ export function SignalsPage() {
                       <td className="px-4 py-2.5 max-w-[180px] truncate">{needGroupsOf(s).join(", ") || s.products.join(", ") || "—"}</td>
                       <td className="px-4 py-2.5 whitespace-nowrap">{s.source}</td>
                       <td className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
-                      <td className="px-4 py-2.5"><StatusPill s={s} />{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
+                      <td className="px-4 py-2.5"><StatusPill s={s} /><div className="mt-1"><PotentialPill s={s}/></div>{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
                       <td className="px-4 py-2.5 max-w-[240px]"><div className="line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</div>{progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} deadline={deadlines.data?.[s.id]} compact />}</td>
                       <td className="px-4 py-2.5 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
                         ? <div className="line-clamp-2 whitespace-pre-line" title={s.need_detail}>{s.need_detail}</div>
@@ -333,14 +332,11 @@ export function SignalsPage() {
           </>
         )}
 
-      {p.create && (
-        <Button size="icon" onClick={() => setCreating(true)} aria-label="Thêm tín hiệu" title="Thêm tín hiệu" className="md:hidden fixed bottom-4 right-4 z-30 rounded-full shadow-lg h-12 w-12"><Plus className="h-5 w-5" /></Button>
-      )}
-
       <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} />
+      <Sheet open={labelsOpen} onOpenChange={setLabelsOpen}><SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto sm:max-w-xl sm:mx-auto"><SheetHeader className="mb-4"><SheetTitle>Nhãn cá nhân</SheetTitle></SheetHeader><SignalLabelManager uid={p.userId} catalog={false} sale={p.sale} personalOnly/></SheetContent></Sheet>
       {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent side="right" className="signal-mobile-sheet w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader><SheetTitle>Thêm tín hiệu</SheetTitle></SheetHeader>
           <SignalForm onDone={() => setCreating(false)} />
         </SheetContent>
@@ -351,8 +347,8 @@ export function SignalsPage() {
         const u = new URL(window.location.href);
         if (u.searchParams.has("open")) { u.searchParams.delete("open"); window.history.replaceState(null, "", u.pathname + u.search); }
       }}>
-        <SheetContent side="right" className="w-full h-full max-w-none sm:max-w-xl overflow-y-auto p-0">
-          {open && <SignalDetail s={open} last={last[open.id]} />}
+        <SheetContent side="right" className="signal-mobile-sheet w-full h-full max-w-none sm:max-w-xl overflow-y-auto p-0">
+          {open && <SignalDetail key={open.id} s={open} last={last[open.id]} />}
           {denied && (
             <div className="p-6 pt-12 space-y-2">
               <SheetHeader><SheetTitle>Không thể mở tín hiệu</SheetTitle></SheetHeader>
@@ -373,15 +369,22 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
   const needOpts = useOptions("signal_need_groups");
   const srcOpts = useOptions("signal_sources");
   const lr = useLostReasons();
+  const p=useSignalPerms();const labels=useSignalLabels(p.userId);
   const [f, setF] = useState<ListFilter>(value);
   useEffect(() => { if (open) setF(value); }, [open, value]);
   const set = (k: keyof ListFilter, v: any) => setF((x) => ({ ...x, [k]: v || undefined }));
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => [id, name(id)] as [string, string]);
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+      <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
         <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
         <div className="px-4 grid grid-cols-2 gap-3 pb-4">
+          <Field label="Giai đoạn"><Pick value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/></Field>
+          <Field label="Trạng thái"><Pick value={f.quick==='all'?'':f.quick} onChange={v=>setF(x=>({...x,quick:(v||'all') as Quick}))} opts={Object.entries(STATUS_LABEL)}/></Field>
+          <Field label="Mức độ tiềm năng"><Pick value={f.potential} onChange={v=>set('potential',v)} opts={Object.entries(POTENTIAL_LABEL)}/></Field>
+          <Field label="Nhãn"><Pick value={f.labelId} onChange={v=>set('labelId',v)} opts={(labels.data??[]).map(l=>[l.id,l.name])}/></Field>
+          <Field label="Theo dõi từ"><Input type="date" value={f.nextFrom??''} onChange={e=>set('nextFrom',e.target.value)}/></Field>
+          <Field label="Theo dõi đến"><Input type="date" value={f.nextTo??''} onChange={e=>set('nextTo',e.target.value)}/></Field>
           <Field label="Thời gian (ngày tạo)"><Pick value={f.time} onChange={(v) => setF((x) => ({ ...x, time: (v || "") as any }))} opts={[["today", "Hôm nay"], ["7d", "7 ngày"], ["month", "Tháng này"], ["custom", "Tùy chỉnh"]]} /></Field>
           {f.time === "custom" && <>
             <Field label="Từ ngày"><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></Field>
@@ -453,6 +456,12 @@ function ChipRow({ label, items, active, onPick, extra, max = 6 }: {
 function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string | null) => string; onChange: (f: ListFilter) => void }) {
   const timeLabel: Record<string, string> = { today: "Hôm nay", "7d": "7 ngày", month: "Tháng này", custom: "Tùy chỉnh" };
   const chips: { key: keyof ListFilter; label: string }[] = [];
+  if (f.potential) chips.push({key:'potential',label:`Tiềm năng: ${POTENTIAL_LABEL[f.potential]}`});
+  if (f.stage) chips.push({key:'stage',label:`Giai đoạn: ${STAGES[f.stage]}`});
+  if (f.labelId) chips.push({key:'labelId',label:'Nhãn đã chọn'});
+  if (f.quick!=='all') chips.push({key:'quick',label:STATUS_LABEL[f.quick]});
+  if (f.nextFrom) chips.push({key:'nextFrom',label:`Theo dõi từ ${f.nextFrom}`});
+  if (f.nextTo) chips.push({key:'nextTo',label:`Theo dõi đến ${f.nextTo}`});
   if (f.time) chips.push({ key: "time", label: `Thời gian: ${timeLabel[f.time] ?? f.time}${f.time === "custom" && (f.from || f.to) ? ` ${f.from ?? "…"}→${f.to ?? "…"}` : ""}` });
   if (f.source) chips.push({ key: "source", label: `Nguồn: ${f.source}` });
   if (f.product) chips.push({ key: "product", label: `Sản phẩm: ${f.product}` });
@@ -463,7 +472,7 @@ function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string
   if (f.unassigned) chips.push({ key: "unassigned", label: "Chưa phân công" });
   if (f.cancelled) chips.push({ key: "cancelled", label: "Đã hủy" });
   if (chips.length === 0) return null;
-  const clear = (k: keyof ListFilter) => onChange({ ...f, [k]: undefined, ...(k === "time" ? { from: undefined, to: undefined } : {}) });
+  const clear = (k: keyof ListFilter) => onChange({ ...f, [k]: k==='quick'?'all':undefined, ...(k === "time" ? { from: undefined, to: undefined } : {}) });
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-t pt-2.5">
       <span className="text-xs text-muted-foreground">Đang lọc:</span>
@@ -515,6 +524,7 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
   const [f, setF] = useState<SignalInput>(initial ?? emptyInput());
   const [sale, setSale] = useState("");
   const [busy, setBusy] = useState(false);
+  const submitLock=useRef(false);
   const [createdId, setCreatedId] = useState<string | null>(null); // đã tạo, chờ phân công lại
   const [dups, setDups] = useState<{ id: string; customer_name: string; status: string | null; detected_on: string }[]>([]);
   const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign && !id });
@@ -540,12 +550,15 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
     if (!f.source) return toast.error("Chọn nguồn tín hiệu");
     if (!f.detected_on) return toast.error("Chọn ngày phát hiện");
     const clean: SignalInput = { ...f, need_group: f.need_groups[0] ?? null, customer_name: name, phone, address: f.address?.trim() || null, need_detail: f.need_detail?.trim() || null, marketing_note: f.marketing_note?.trim() || null };
+    if (submitLock.current) return;
+    submitLock.current=true;
     setBusy(true);
     try {
       if (id) {
         await updateSignalInfo(id, clean);
       } else {
-        const s = await createSignal(clean, p.userId!);
+        if(!p.userId) throw new Error('Bạn cần đăng nhập');
+        const s = await createSignal(clean, p.userId);
         if (sale) {
           try { await assignSignal(s.id, sale); }
           catch (e) {
@@ -559,7 +572,7 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
       await invalidateSig(qc);
       toast.success(id ? "Đã cập nhật tín hiệu" : "Đã thêm tín hiệu");
       onDone();
-    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+    } catch (e) { toast.error(errMsg(e)); } finally { submitLock.current=false; setBusy(false); }
   };
 
   if (createdId) return (
@@ -613,7 +626,7 @@ function SignalForm({ initial, id, onDone }: { initial?: SignalInput; id?: strin
           </Field>
         )}
       </Section>
-      <Button size="lg" className="w-full" disabled={busy} onClick={submit}>{busy ? "Đang lưu…" : id ? "Lưu thay đổi" : "Thêm tín hiệu"}</Button>
+      <div className="sticky bottom-0 border-t bg-background py-3"><Button size="lg" className="w-full" disabled={busy} onClick={submit}>{busy ? "Đang lưu…" : id ? "Lưu thay đổi" : "Thêm tín hiệu"}</Button></div>
     </div>
   );
 }
@@ -719,6 +732,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
             : e.kind === "reopen" ? `Mở lại tín hiệu (trước: ${statusLabel(e.detail?.prev_status)}${e.detail?.prev_revenue ? ` · ${fmtVnd(e.detail.prev_revenue)}` : ""}${e.detail?.prev_lost_reason ? ` · ${e.detail.prev_lost_reason}` : ""}). Lý do: ${e.detail?.reason}`
             : e.kind === "cancel" ? `Hủy tín hiệu. Lý do: ${e.detail?.reason ?? ""}`
             : e.kind === "uncancel" ? `Bỏ hủy tín hiệu${e.detail?.prev_reason ? ` (lý do hủy trước: ${e.detail.prev_reason})` : ""}`
+            : e.kind === 'enrichment' ? `Tiềm năng: ${POTENTIAL_LABEL[e.detail?.potential_from as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'} → ${POTENTIAL_LABEL[e.detail?.potential_to as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'} · Theo dõi: ${fmtDate(e.detail?.next_from)} → ${fmtDate(e.detail?.next_to)}`
             : "Cập nhật thông tin khách hàng"}
         </div>
       </>
@@ -765,6 +779,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       </div>
 
       <div className="p-4 space-y-5 flex-1">
+        <SignalEnrichment key={s.id} s={s} uid={p.userId} canEdit={!cancelled&&((p.sale&&s.assigned_to===p.userId)||p.manage)} catalog={p.catalog} sale={p.sale} onSaved={()=>void refresh()}/>
+        {s.next_contact_on&&<p className="text-sm">Lịch theo dõi: <b>{fmtNext(s)}</b></p>}
         {progression.error || deadlines.error ? <p className="text-sm text-destructive">Không tải được diễn biến: {errMsg(progression.error||deadlines.error)}</p> : progression.isPending ? <p className="text-sm text-muted-foreground">Đang tải diễn biến…</p> : <ProgressionSummary s={s} row={progression.data?.[s.id]} deadline={deadlines.data?.[s.id]} onUpdate={canConsult?()=>setUpdating(true):undefined} />}
         {!!periods.data?.length && <Section title="Lịch sử kỳ cập nhật"><ol className="space-y-3 border-l pl-4">{periods.data.slice(0,showProgression?undefined:3).map(r=><li key={`${r.assignment_id}:${r.sequence}`} className="text-sm"><p className="font-medium">Kỳ {r.sequence} · {name(r.sale_id)}</p><p className="text-xs text-muted-foreground">Hạn {r.due_on.split('-').reverse().join('/')} · {({pending:'Chưa đến hạn',on_time:'Đúng hạn',missed:'Trễ hạn',exempt:'Miễn — kết thúc trách nhiệm trước hạn'})[r.outcome]}</p></li>)}</ol></Section>}
         {periods.error && <p className="text-xs text-destructive">Không tải được lịch sử kỳ: {errMsg(periods.error)}</p>}
@@ -814,7 +830,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       </div>
 
       <Sheet open={updating} onOpenChange={setUpdating}>
-        <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
+        <SheetContent side="bottom" className="signal-mobile-sheet max-h-[90dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
           <SheetHeader className="p-4 pb-2"><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader>
           {updating && <UpdateForm s={s} onSaved={() => { setUpdating(false); refresh(); }} />}
         </SheetContent>
@@ -987,7 +1003,7 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
                   <span className={cn("flex-1", !it.active && "line-through text-muted-foreground")}>{it.name}</span>
                   <button type="button" className="text-xs underline" onClick={async () => {
                     const to = window.prompt("Tên mới", it.name); if (!to || to.trim() === it.name) return;
-                    try { const items = renameOption(o.all, it.name, to); const nn = items.find((x, i) => o.all[i].name === it.name)!.name; await renameOptionEverywhere(scope, it.name, nn, items); await qc.invalidateQueries({ queryKey: [`${SIG}opt:${scope}`] }); await invalidateSig(qc); onChange(value.map((v) => (v === it.name ? nn : v))); toast.success("Đã đổi tên, tín hiệu cũ được cập nhật theo"); }
+                    try { const items = renameOption(o.all, it.name, to); const renamed = items.find((x, i) => o.all[i].name === it.name); if(!renamed)return;const nn=renamed.name; await renameOptionEverywhere(scope, it.name, nn, items); await qc.invalidateQueries({ queryKey: [`${SIG}opt:${scope}`] }); await invalidateSig(qc); onChange(value.map((v) => (v === it.name ? nn : v))); toast.success("Đã đổi tên, tín hiệu cũ được cập nhật theo"); }
                     catch (e) { toast.error(errMsg(e)); }
                   }}>Đổi tên</button>
                   <button type="button" className="text-xs underline" onClick={async () => { try { await persist(toggleOption(o.all, it.name)); } catch (e) { toast.error(errMsg(e)); } }}>{it.active ? "Ngừng dùng" : "Dùng lại"}</button>
