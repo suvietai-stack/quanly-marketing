@@ -1,6 +1,6 @@
 import { useBranding, BrandMark } from "@/lib/branding";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Menu, LogOut, User as UserIcon, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";

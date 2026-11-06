@@ -10,15 +10,23 @@ export const navigationGroups: NavGroup[] = [
 { to: "", label: "Trung tâm phê duyệt", icon: ClipboardCheck, comingSoon: true },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
-{ to: "/biz", label: "Tổng quan Kinh doanh", icon: Briefcase, exact: true, anyPerm: ["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"
-{ to: "/signals", label: "Danh sách tín hiệu", icon: Radar, anyPerm: ["signal.create", "signal.view_all", "signal.manage", "signal.sale", "signal.assign"
-{ to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, anyPerm: ["kpi.view_own", "kpi.view_all", "kpi.goal_create", "kpi.goal_edit", "kpi.goal_archive", "kpi.goal_delete", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"
+    { to: "/biz", label: "Tổng quan Kinh doanh", icon: Briefcase, exact: true, anyPerm: ["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"] },
+    { to: "/signals", label: "Danh sách tín hiệu", icon: Radar, anyPerm: ["signal.create", "signal.view_all", "signal.manage", "signal.sale", "signal.assign"] },
+    { to: "/signals/report", label: "Báo cáo tín hiệu", icon: FileText, anyPerm: ["signal.report", "signal.manage"] },
+    { to: "/settings/kpi-v2", label: "Giao KPI", icon: Target, kpi: true, anyPerm: ["kpi.view_own", "kpi.view_all", "kpi.goal_create", "kpi.goal_edit", "kpi.goal_archive", "kpi.goal_delete", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"] },
+    { to: "/reports-v2", label: "Báo cáo KPI", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
+    { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
+    { to: "/biz/goals", label: "Mục tiêu KR", icon: Target, anyPerm: ["biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"] },
+    { to: "/biz/reports", label: "Báo cáo Kinh doanh", icon: ClipboardCheck, anyPerm: ["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"] },
+    { to: "/biz/approvals", label: "Phê duyệt", icon: ClipboardCheck, anyPerm: ["biz.approval_view", "biz.goal_approve", "biz.report_approve", "biz.view_all", "biz.view_dept"] },
+    { to: "/biz/3k", label: "Quản lý 3K", icon: ListChecks, anyPerm: ["k3.use", "k3.view_scope", "k3.settings", "biz.view_dept", "biz.view_all"] },
+    { to: "/biz/settings", label: "Cài đặt Kinh doanh", icon: Settings, anyPerm: ["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
   ] },
   { label: "Showroom", icon: Store, comingSoon: true, items: [
 
   ] },
   { label: "Marketing", icon: Megaphone, items: [
-{ to: "/brands", label: "Thương Hiệu", icon: Building2, perm: "brand.view" }
+{ to: "/brands", label: "Thương Hiệu", icon: Building2, perm: "brand.view" },
 { to: "/websites", label: "Dự Án Web", icon: Globe, perm: "web.view" },
       { to: "/web-contents", label: "Tất cả Content Web", icon: FileText, perm: "web.view" },
       { to: "/social", label: "Kênh Social", icon: Share2, perm: "social.view" },
@@ -29,7 +37,8 @@ export const navigationGroups: NavGroup[] = [
       { to: "/orders", label: "Order Thiết Kế", icon: Palette, perm: "order.view" },
   ] },
   { label: "Mua Hàng & Giao Vận", icon: Truck, items: [
-{ to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"
+{ to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"] },
+{ to: "/order-tracking", label: "Theo Dõi Đơn Hàng", icon: Truck, anyPerm: ["ot.view_own", "ot.view_all", "ot.create", "ot.task_view", "ot.supplier", "ot.manage"] },
 { to: "", label: "Quản Lý Mua Hàng", icon: PackageSearch, comingSoon: true },
 { to: "", label: "Quản Lý Giao Vận", icon: Truck, comingSoon: true },
   ] },
@@ -40,13 +49,14 @@ export const navigationGroups: NavGroup[] = [
 { to: "", label: "Tạm Ứng Lương", icon: BanknoteArrowDown, comingSoon: true },
   ] },
   { label: "Hành Chính & Nhân Sự", icon: Users, items: [
-{ to: "/leave", label: "Nghỉ phép & Đi sớm muộn", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"
+{ to: "/leave", label: "Nghỉ phép & Đi sớm muộn", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
+{ to: "/attendance", label: "Giải trình chấm công", icon: Fingerprint, anyPerm: ["att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"] },
   ] },
   { label: "Sao Sứ Việt", icon: Star, items: [
 { to: '/sao', label: 'Ví Sao của tôi', icon: Wallet },
     { to: '/sao/leaderboard', label: 'Bảng thành tích', icon: Trophy },
     { to: '/sao/shop', label: 'Gian hàng đổi quà', icon: Gift },
-    { to: '/sao/admin', label: 'Quản lý thưởng Sao', icon: Star, anyPerm: ['sao.program_manage', 'sao.shop_manage', 'sao.manual_grant'
+    { to: '/sao/admin', label: 'Quản lý thưởng Sao', icon: Star, anyPerm: ['sao.program_manage', 'sao.shop_manage', 'sao.manual_grant'] },
   ] },
   { label: "Hệ thống", icon: Settings, items: [
 { to: "/settings", label: "Cài Đặt", icon: Settings, perm: "settings.view" },
