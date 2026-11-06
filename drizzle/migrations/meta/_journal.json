@@ -1807,6 +1807,13 @@
       "when": 1793954532620,
       "tag": "0257_signal_enrichment_write_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 258,
+      "version": "7",
+      "when": 1793956053583,
+      "tag": "0258_crm_catalog_classification_and_filtered_reports",
+      "breakpoints": true
     }
   ]
 }
