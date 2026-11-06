@@ -41,8 +41,8 @@ export async function saveSignalLabel(id: string | null,name: string,personal: b
   const {data,error}=await db.rpc('signal_label_save',{_id:id,_name:name,_personal:personal,_active:active});
   if(error) throw error; return data;
 }
-export async function saveSignalEnrichment(id:string,requestId:string,potential:Potential,labels:string[],next:string|null,nextAt:string|null) {
-  const {error}=await db.rpc('signal_enrichment_save',{_id:id,_request_id:requestId,_potential:potential,_labels:labels,_next:next,_next_at:nextAt});
+export async function saveSignalEnrichment(id:string,requestId:string,potential:Potential,labels:string[]) {
+  const {error}=await db.rpc('signal_assessment_save',{_id:id,_request_id:requestId,_potential:potential,_labels:labels});
   if(error) throw error;
 }
 

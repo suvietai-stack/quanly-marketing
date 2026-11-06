@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## ĐÁNH GIÁ CƠ HỘI / LỌC HẠN — 06/11/2026
+- [x] AS1. Đánh giá chỉ tiềm năng/nhãn, tìm kiếm/chip/chọn nhiều/Quản lý nhãn, Lưu đánh giá; 0260 field-limited RPC giữ lịch đồng thời, trạng thái và diễn biến cũ.
+- [x] AS2. Bốn chip hạn độc lập một hàng cuộn ngang; đếm cùng tập lọc khác trừ hạn đang chọn, dùng deadline_state; mobile chuyển các lựa chọn khác vào Bộ lọc.
+- [x] AS3. 128 test Tín hiệu đạt; browser cách ly 320/360/390/430/1280 lưu/lỗi/retry/đọc lại/lọc/báo cáo, 320/390/430/1280 hạn/số đếm/tìm nhãn/giữ chọn/nút Lưu đạt, build OK; không Publish.
+- [ ] AS4. Nghiệm thu phiên thật: Preview signed_out, mint --self không khớp; cần người dùng đăng nhập Preview và hồ sơ được phép. Chưa kiểm bàn phím/PWA thiết bị thật.
+
 ## CRM PHÂN LOẠI / DANH MỤC / BÁO CÁO — 06/11/2026
 - [x] CC1. Đã thêm 7/8 tệp đang sử dụng vào ID nhóm thật; chống trùng và không ghi đè tệp cũ, 0 khách/liên hệ/lịch trước và sau.
 - [x] CC2. Cây Nhóm–Tệp, thêm tệp trực tiếp/thêm nhóm, mô tả/thứ tự/ẩn/số khách theo scope; đặc điểm dùng config.group_ids; 0258–0259 guard phân loại, sắp xếp nguyên tử, tên trùng/cha có khách bảo vệ.
