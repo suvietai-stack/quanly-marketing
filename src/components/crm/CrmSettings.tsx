@@ -14,7 +14,7 @@ import { CrmModal } from "./CrmForms";
 import { CrmCatalogTree } from './CrmCatalogTree';
 import { FEATURE_KINDS } from '@/lib/crm/classification';
 export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[] }) {
-  const [kind, setKind] = useState("group");
+  const [kind, setKind] = useState("trait");
   const [edit, setEdit] = useState<Record<string, unknown> | null>(null);
   const [template, setTemplate] = useState<Partial<Template> | null>(null);
   const [grant, setGrant] = useState<Record<string, unknown> | null>(null);
