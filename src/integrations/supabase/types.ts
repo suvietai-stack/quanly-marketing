@@ -8742,12 +8742,47 @@ export type Database = {
       crm_customer_save: { Args: { _data: Json }; Returns: string }
       crm_customer_visible: { Args: { _id: string }; Returns: boolean }
       crm_department: { Args: { _at?: string; _user: string }; Returns: string }
+      crm_detail: { Args: { _id: string }; Returns: Json }
+      crm_duplicates: {
+        Args: { _name?: string; _phone?: string; _tax?: string }
+        Returns: Json
+      }
+      crm_file_allowed: {
+        Args: { _name: string; _write?: boolean }
+        Returns: boolean
+      }
       crm_interaction_save: { Args: { _data: Json }; Returns: string }
+      crm_location_save: { Args: { _data: Json }; Returns: string }
       crm_owner_visible: {
         Args: { _at?: string; _department?: string; _owner: string }
         Returns: boolean
       }
+      crm_people: { Args: never; Returns: Json }
+      crm_read: {
+        Args: {
+          _archived?: boolean
+          _mine?: boolean
+          _owner?: string
+          _search?: string
+        }
+        Returns: Json
+      }
+      crm_report: {
+        Args: {
+          _department?: string
+          _end: string
+          _group?: string
+          _mine?: boolean
+          _owner?: string
+          _province?: string
+          _start: string
+          _system?: string
+          _team?: string
+        }
+        Returns: Json
+      }
       crm_schedule_save: { Args: { _data: Json }; Returns: string }
+      crm_template_save: { Args: { _data: Json }; Returns: string }
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
       fbl_can_manage: { Args: never; Returns: boolean }

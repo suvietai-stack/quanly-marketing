@@ -1758,6 +1758,13 @@
       "when": 1793950642706,
       "tag": "0250_crm_customer_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 251,
+      "version": "7",
+      "when": 1793950732565,
+      "tag": "0251_crm_scoped_reads_reports_and_private_files",
+      "breakpoints": true
     }
   ]
 }
