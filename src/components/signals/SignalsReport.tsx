@@ -27,6 +27,10 @@ import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } fro
 import { needGroupsOf } from "@/lib/signals/catalog";
 import { cn } from "@/lib/utils";
 import { ProgressionReport } from './ProgressionReport';
+import { useSignalLabels } from './SignalEnrichment';
+import { SignalPotentialReport } from './SignalPotentialReport';
+import { POTENTIAL_LABEL, STAGES } from '@/lib/signals/potential';
+import { listDeadlines } from '@/lib/signals/api';
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
 
@@ -52,6 +56,8 @@ export function SignalsReport() {
   const name = useUserName();
   const { data = [], isLoading, error } = useSignals();
   const { data: last = {} } = useLastNotes();
+  const labels=useSignalLabels(p.userId);
+  const deadlines=useQuery({queryKey:['sig:deadlines',p.userId],queryFn:listDeadlines,enabled:!!p.userId});
   const t = todayKey();
   const [f, setF] = useState<ReportFilter>({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
   const [filterOpen, setFilterOpen] = useState(false);
@@ -63,7 +69,7 @@ export function SignalsReport() {
   const list = useMemo(() => filterSignals(data, f), [data, f]);
   const sum = summarize(list, t, last);
   // KPI tỷ lệ chốt: giữ tập gốc theo bộ lọc nghiệp vụ, không bị bộ lọc trạng thái làm sai lệch
-  const kpiList = useMemo(() => filterSignals(data, { ...f, status: undefined }), [data, f]);
+  const kpiList = list;
   const kpi = useMemo(() => summarize(kpiList, t), [kpiList, t]);
   // Tỷ lệ chốt theo Sale: cùng tập không lọc trạng thái, mẫu số = tổng tín hiệu được giao
   const rateBySale = useMemo(() => new Map(groupBy(kpiList, (s) => s.assigned_to).map((r) => [r.key, r.s])), [kpiList]);
@@ -125,13 +131,14 @@ export function SignalsReport() {
     [kpiList, assignEvents, acceptNotes],
   );
   const processing = sum.contacting + sum.consulting + sum.quoted + sum.deposit;
-  const activeCount = [f.source, f.product, f.needGroup, f.saleId, f.creatorId, f.status, f.lostReason].filter(Boolean).length;
+  const activeCount = [f.source, f.product, f.needGroup, f.saleId, f.creatorId, f.status, f.lostReason,f.potential,f.labelId,f.stage].filter(Boolean).length;
 
   if (!p.report) return <p className="py-16 text-center text-muted-foreground">Bạn không có quyền xem báo cáo tín hiệu.</p>;
 
   const filterFields = (
     <ReportFilterFields
       f={f} set={set} setF={setF}
+      labels={(labels.data??[]).map(l=>[l.id,l.name])}
       sources={[...new Set([...srcOpts.names, ...data.map((x) => x.source)])]}
       products={prodOpts.names} needs={needOpts.names}
       sales={people(data.map((s) => s.assigned_to))} creators={people(data.map((s) => s.created_by))}
@@ -143,7 +150,7 @@ export function SignalsReport() {
       {/* 1. Tiêu đề + bộ lọc báo cáo */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Báo cáo tín hiệu</h1>
+          <h1 className="hidden md:block text-2xl font-semibold tracking-tight">Báo cáo tín hiệu</h1>
           <p className="text-sm text-muted-foreground">
             Đang phân tích <b>{f.from ?? "…"} → {f.to ?? "…"}</b> theo <b>{f.basis === "created" ? "ngày tạo tín hiệu" : "ngày Chốt / Trượt"}</b>. Doanh số là số Sale khai báo khi Chốt, chưa phải doanh thu kế toán xác nhận.
           </p>
@@ -193,7 +200,7 @@ export function SignalsReport() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
               <Kpi icon={<SignalIcon className="h-4 w-4" />} k="Tổng tín hiệu" v={sum.total} hint="Mọi tín hiệu hợp lệ trong bộ lọc (không tính tín hiệu đã hủy)." />
               <Kpi icon={<CheckCircle2 className="h-4 w-4" />} tone="green" k="Đã chốt" v={sum.won} hint="Tín hiệu có trạng thái Chốt trong bộ lọc." />
-              <Kpi icon={<Percent className="h-4 w-4" />} tone="orange" k="Tỷ lệ chốt" v={pct(kpi)} hint={`Chốt / Tổng tín hiệu hợp lệ = ${kpi.won}/${kpi.total}. Không phụ thuộc bộ lọc Trạng thái.`} />
+              <Kpi icon={<Percent className="h-4 w-4" />} tone="orange" k="Tỷ lệ chốt" v={pct(kpi)} hint={`Chốt / Tổng tín hiệu thuộc toàn bộ bộ lọc = ${kpi.won}/${kpi.total}.`} />
               <Kpi icon={<Loader2 className="h-4 w-4" />} tone="brand" k="Đang xử lý" v={processing} hint="Đang liên hệ + Đang tư vấn + Đã báo giá + Chờ xác nhận/cọc." />
               <Kpi icon={<XCircle className="h-4 w-4" />} tone="red" k="Trượt" v={sum.lost} hint="Tín hiệu có trạng thái Trượt trong bộ lọc." />
               <Kpi icon={<UserX className="h-4 w-4" />} k="Chưa phân công / Chờ nhận" v={`${sum.unassigned} / ${sum.waiting}`} hint="Chưa có Sale phụ trách / đã giao nhưng Sale chưa tiếp nhận." />
@@ -206,6 +213,7 @@ export function SignalsReport() {
           </section>
 
           {/* 4. Xu hướng theo thời gian */}
+          {deadlines.error?<p className="text-sm text-destructive">Không tải được hạn theo dõi: {errMsg(deadlines.error)}</p>:<SignalPotentialReport list={list} deadlines={deadlines.data??{}}/>}
           <section className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <H>Xu hướng tín hiệu</H>
@@ -345,12 +353,16 @@ function Sel({ label, value, onChange, opts, noEmpty }: { label: string; value?:
   );
 }
 
-function ReportFilterFields({ f, set, setF, sources, products, needs, sales, creators }: {
+function ReportFilterFields({ f, set, setF, sources, products, needs, sales, creators,labels }: {
   f: ReportFilter; set: (k: keyof ReportFilter, v: string) => void; setF: React.Dispatch<React.SetStateAction<ReportFilter>>;
   sources: string[]; products: string[]; needs: string[]; sales: { id: string; n: string }[]; creators: { id: string; n: string }[];
+  labels:[string,string][];
 }) {
   return (
     <>
+      <Sel label="Tiềm năng" value={f.potential} onChange={v=>set('potential',v)} opts={Object.entries(POTENTIAL_LABEL)}/>
+      <Sel label="Giai đoạn" value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/>
+      <Sel label="Nhãn" value={f.labelId} onChange={v=>set('labelId',v)} opts={labels}/>
       <Sel label="Tính theo" value={f.basis} onChange={(v) => setF((x) => ({ ...x, basis: (v || "created") as any }))} opts={[["created", "Ngày tạo tín hiệu"], ["closed", "Ngày chốt / trượt"]]} noEmpty />
       <label className="space-y-1"><span className="text-xs text-muted-foreground">Từ ngày</span><Input type="date" value={f.from ?? ""} onChange={(e) => set("from", e.target.value)} /></label>
       <label className="space-y-1"><span className="text-xs text-muted-foreground">Đến ngày</span><Input type="date" value={f.to ?? ""} onChange={(e) => set("to", e.target.value)} /></label>
