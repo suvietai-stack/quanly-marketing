@@ -23,9 +23,15 @@ export const Route = createFileRoute("/api/public/wf/recover-cron")({
           bizDeadline = error ? { error: error.message } : data;
         } catch (e: any) { console.error("[biz] deadline notify failed", e?.message); }
         let k3Report: unknown = null;
+        let crmRemind: unknown = null;
+        try {
+          const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+          const { data, error } = await supabaseAdmin.rpc('crm_remind');
+          crmRemind = error ? { error: 'Chưa tạo được nhắc lịch CRM.' } : data;
+        } catch { crmRemind = { error: 'Chưa tạo được nhắc lịch CRM.' }; }
         try { const k = await import('@/lib/biz/k3Automation.server'); k3Report = await k.processK3Reports(); }
         catch { k3Report = { error: 'Báo cáo 3K chưa gửi được; chốt sổ vẫn được giữ.' }; }
-        try { return Response.json({ ok: true, finRemind, bizDeadline, k3Report, ...(await s.recoverEvents(20)) }); }
+        try { return Response.json({ ok: true, finRemind, bizDeadline, k3Report, crmRemind, ...(await s.recoverEvents(20)) }); }
         catch (e: any) { console.error("[wf] recover failed", e?.message); return Response.json({ ok: false }, { status: 500 }); }
       },
     },

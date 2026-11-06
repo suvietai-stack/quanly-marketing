@@ -4,7 +4,7 @@ import { BarChart, Bar, CartesianGrid, XAxis, YAxis, LineChart, Line } from "rec
 import { Download, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUser } from "@/lib/auth";
-import { crmReportQuery, crmPeopleQuery } from "@/lib/crm/queries";
+import { crmReportQuery, crmPeopleQuery, crmRpc } from "@/lib/crm/queries";
 import {
   vnDay,
   periodRange,
@@ -114,9 +114,10 @@ export function CrmReports({
             onClick={async () => {
               if (!data) return;
               try {
+                const exported = await crmRpc<ReportData>('crm_export', {_start:start,_end:end,_mine:mine,_owner:filters.owner||null,_group:filters.group||null,_province:filters.province||null,_department:filters.department||null,_system:filters.system||null,_team:filters.team||null});
                 const r = await import("xlsx");
                 const sheet = r.utils.json_to_sheet(
-                  data.customers.map((c) => ({
+                  exported.customers.map((c) => ({
                     Mã: c.code,
                     "Khách hàng": c.name,
                     "Điện thoại": c.phone,

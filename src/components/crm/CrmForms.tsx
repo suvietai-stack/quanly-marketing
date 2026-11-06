@@ -106,6 +106,7 @@ export function CustomerForm({
   const [error, setError] = useState("");
   const [duplicates, setDuplicates] = useState<{ id: string; name: string; code: string }[]>([]);
   const [confirmed, setConfirmed] = useState(false);
+  const [discard, setDiscard] = useState(false);
   const key = useRef(crypto.randomUUID());
   const lock = useRef(false);
   const save = useCrmMutation("crm_customer_save");
@@ -224,6 +225,7 @@ export function CustomerForm({
             options={locations.provinces}
           />
         </Field>
+        {!customer && <Field label="Lịch chăm sóc tiếp theo (không bắt buộc)"><Input aria-label="Lịch chăm sóc tiếp theo" type="datetime-local" value={value('next_local')} onChange={e=>set('next_local',e.target.value)}/></Field>}
         <details>
           <summary className="cursor-pointer text-sm font-medium">Thông tin mở rộng</summary>
           <div className="grid gap-4 pt-4">
@@ -334,7 +336,7 @@ export function CustomerForm({
         )}
         <ErrorText error={error} />
         <div className="crm-form-footer flex gap-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={save.isPending}>
+          <Button type="button" variant="outline" onClick={()=>dirty?setDiscard(true):onClose()} disabled={save.isPending}>
             Hủy
           </Button>
           <Button
@@ -346,6 +348,7 @@ export function CustomerForm({
           </Button>
         </div>
       </form>
+      <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Bỏ thay đổi?</AlertDialogTitle><AlertDialogDescription>Thông tin khách chưa lưu sẽ không được giữ lại.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Tiếp tục nhập</AlertDialogCancel><AlertDialogAction onClick={onClose}>Bỏ thay đổi</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </CrmModal>
   );
 }
