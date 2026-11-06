@@ -1,10 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## DANH SÁCH TÍN HIỆU MOBILE — 06/11/2026
-- [ ] SM1. Một hàng tìm/thao tác, trạng thái cuộn ngang có đếm; hạn trong Bộ lọc nháp áp dụng/xóa/số điều kiện.
-- [ ] SM2. Thẻ gọn tên/trạng thái/SĐT/nhu cầu/tiềm năng/người/hạn, Gọi/Zalo/chi tiết, tải thêm; giữ desktop/nghiệp vụ.
-- [ ] SM3. Kiểm thử 320–430px và desktop, lọc/chi tiết/vị trí/quyền/liên hệ không ghi dữ liệu; không Publish.
-- [ ] SM4. Nghiệm thu phiên thật và thiết bị Zalo/PWA: cần phiên được phép nếu không thể mint chính chủ.
+- [x] SM1. Một hàng tìm/thao tác, trạng thái cuộn ngang có đếm theo cùng tập RLS trừ trạng thái đang chọn; hạn trong Bộ lọc nháp áp dụng/xóa/số điều kiện, giữ phiên theo user.
+- [x] SM2. Thẻ gọn tên tối đa hai dòng/trạng thái/SĐT/nhu cầu thật/tiềm năng/người/hạn diễn biến, Gọi/Zalo sao chép số/chi tiết hiện có; tải thêm 30 thẻ từ cache chung; desktop/nghiệp vụ không đổi.
+- [x] SM3. 131 unit/database test đạt; browser cách ly 320/360/390/430/1280 đạt liên hệ không ghi dữ liệu/lọc nháp/hạn/status/count/giữ phiên/tải thêm/giữ cuộn/desktop, hồi quy đánh giá và lọc hạn đạt; build OK, không Publish.
+- [ ] SM4. Nghiệm thu phiên thật và thiết bị Zalo/PWA: mint --self không khớp tài khoản, cần người dùng đăng nhập Preview; chưa xác minh ứng dụng gọi/Zalo trên điện thoại thật.
 
 ## ĐÁNH GIÁ CƠ HỘI / LỌC HẠN — 06/11/2026
 - [x] AS1. Đánh giá chỉ tiềm năng/nhãn, tìm kiếm/chip/chọn nhiều/Quản lý nhãn, Lưu đánh giá; 0260 field-limited RPC giữ lịch đồng thời, trạng thái và diễn biến cũ.
