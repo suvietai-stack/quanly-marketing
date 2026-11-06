@@ -36,7 +36,8 @@ export type PermissionGroup =
   | "Tài khoản"
   | "Sao Sứ Việt"
   | "Quản trị Kinh doanh"
-  | "Quản lý 3K";
+  | "Quản lý 3K"
+  | "CRM Khách Hàng";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -54,6 +55,14 @@ const P = (
 ): PermissionDef => ({ key, label, group, subGroup });
 
 export const PERMISSIONS: PermissionDef[] = [
+  P('biz.crm_use', 'Sử dụng CRM cá nhân', 'CRM Khách Hàng'),
+  P('biz.crm_view_scope', 'Xem CRM nhân viên trong phạm vi', 'CRM Khách Hàng'),
+  P('biz.crm_edit_other', 'Sửa hộ khách trong phạm vi', 'CRM Khách Hàng'),
+  P('biz.crm_transfer', 'Bàn giao khách trong phạm vi', 'CRM Khách Hàng'),
+  P('biz.crm_export', 'Xuất dữ liệu CRM', 'CRM Khách Hàng'),
+  P('biz.crm_archive', 'Lưu trữ và khôi phục khách', 'CRM Khách Hàng'),
+  P('biz.crm_settings', 'Cài đặt danh mục CRM', 'CRM Khách Hàng'),
+  P('biz.crm_access', 'Cấp quyền nghiệp vụ CRM', 'CRM Khách Hàng'),
   P('sao.program_manage', 'Quản lý chương trình thưởng Sao', 'Sao Sứ Việt'),
   P('sao.shop_manage', 'Quản lý quà và xác nhận phát quà', 'Sao Sứ Việt'),
   P('sao.manual_grant', 'Cộng Sao thủ công có lý do', 'Sao Sứ Việt'),
@@ -530,7 +539,7 @@ export const ALL_PERMS = PERMISSIONS.map((p) => p.key);
  * quyết định (chức vụ → bổ nhiệm → phạm vi), KHÔNG cấp qua Role tổng.
  * Role tổng chỉ còn hiển thị/gán các quyền ngoài hai nhóm này.
  */
-export const BIZ_ORG_GROUPS: PermissionGroup[] = ["Quản trị Kinh doanh", "Quản lý 3K"];
+export const BIZ_ORG_GROUPS: PermissionGroup[] = ["Quản trị Kinh doanh", "Quản lý 3K", "CRM Khách Hàng"];
 export const isBizOrgPerm = (key: string) => key.startsWith("biz.") || key.startsWith("k3.");
 export const ROLE_PERMISSIONS = PERMISSIONS.filter((p) => !BIZ_ORG_GROUPS.includes(p.group));
 export const ROLE_ALL_PERMS = ROLE_PERMISSIONS.map((p) => p.key);

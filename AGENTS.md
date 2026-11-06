@@ -1,4 +1,5 @@
 # Architecture rules
+- CRM uses separate crm_* tables and guarded RPCs with organization-only biz.crm_* effective permissions; current ownership is distinct from frozen schedule/activity attribution, and all report surfaces consume the scoped historical report RPC — prevents parallel organization, Role bypass and future-data leakage.
 - Auth: shared password rules; nonpersisting own-change probe; admin-reset uses Auth with hierarchy and atomic quota/audit; transactional approval never confirms email. Confirmed Auth email mirrors to profiles. Server-only username login hides identity; live active-status SQL/RLS and SDK-verified recovery preserve security.
 - PasswordInput keeps independent visibility/caret; toggles never submit or invoke auth/storage — preserves security.
 - Signal list surfaces delegate to the existing detail Sheet through shared selection-aware interaction guards; keyboard activation lives on the customer-name control, not table rows; custom child actions opt out with data-signal-interactive — preserves table semantics, copy and independent actions without duplicate opens.
