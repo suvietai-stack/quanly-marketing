@@ -1,11 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## CRM PHÂN LOẠI / DANH MỤC / BÁO CÁO — 06/11/2026
-- [ ] CC1. Kiểm kê danh mục thật; thêm idempotent 7 tệp Trung Gian Quà Tặng và 8 tệp Đại Lý Đồ Thờ vào ID nhóm hiện có, không sửa tệp/khách cũ.
-- [ ] CC2. Cài đặt cây Nhóm–Tệp, thêm trực tiếp, mô tả/thứ tự/ẩn/số khách; đặc điểm nhiều lựa chọn theo phạm vi nhóm, ID ổn định và quyền hiện có.
-- [ ] CC3. Form tìm kiếm Nhóm→Tệp→đặc điểm; xác nhận đổi nhóm khi tệp không tương thích, hiển thị danh mục cũ ngừng dùng; lọc danh sách đồng bộ.
-- [ ] CC4. Báo cáo scoped theo kỳ/cơ cấu, đủ bộ lọc, tám chỉ số bấm được, donut/cột/bảng tệp và Chưa phân loại, xu hướng khách mới/chất lượng chăm sóc/drill-down.
-- [ ] CC5. Kiểm thử dữ liệu/quyền/tỷ lệ 100%/danh mục động/mobile; nghiệm thu phiên thật khi có tài khoản và hồ sơ được phép, chưa Publish.
+- [x] CC1. Đã thêm 7/8 tệp đang sử dụng vào ID nhóm thật; chống trùng và không ghi đè tệp cũ, 0 khách/liên hệ/lịch trước và sau.
+- [x] CC2. Cây Nhóm–Tệp, thêm tệp trực tiếp/thêm nhóm, mô tả/thứ tự/ẩn/số khách theo scope; đặc điểm dùng config.group_ids; 0258–0259 guard phân loại, sắp xếp nguyên tử, tên trùng/cha có khách bảo vệ.
+- [x] CC3. Search Nhóm→Tệp→đặc điểm; xác nhận đổi nhóm/cancel giữ tệp, chỉ lựa chọn mới đang dùng, tên mục cũ ngừng dùng; lọc tệp danh sách/báo cáo.
+- [x] CC4. crm_report_filtered từ RPC lịch sử có scope, đủ bộ lọc/khoảng ngày, tám chỉ số, donut/cột/danh sách tỷ trọng, Chưa phân loại, xu hướng tháng/quý/năm theo tệp và chăm sóc/drill-down/export. Lâu chưa chăm sóc dùng lần hoàn tất >30 ngày có nhãn rõ; không suy diễn mất khách.
+- [x] CC5a. 35 test CRM đạt; browser cách ly 320/390/430/1280 phân loại/cancel/lưu/đọc/cây/thêm tệp/lọc/drill-down và hồi quy 320/390/430/768/1280 đều đạt, build OK. docs/crm-classification-verification.md.
+- [ ] CC5b. Nghiệm thu phiên thật Sale/quản lý/cài đặt/export: Preview signed_out, mint --self không có tài khoản khớp; cần người dùng đăng nhập và hồ sơ được phép. Không khách giả, chưa Publish.
 
 ## TÍN HIỆU CƠ HỘI & MOBILE — 06/11/2026
 - [x] SIG1. Migration 0255–0257: tiềm năng/audit, nhãn chung/cá nhân ID ổn định, RPC-only có quyền và chống request trùng; 9 nhãn chung, 573 tín hiệu cũ Chưa đánh giá, không sửa phân công/lịch sử.
