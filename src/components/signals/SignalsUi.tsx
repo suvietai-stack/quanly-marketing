@@ -31,7 +31,10 @@ import { composeProgression, progressionSuggestions, validProgression } from "@/
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
 import { SignalEnrichment, SignalLabelManager, PotentialPill, SignalLabelPills, useSignalLabels } from './SignalEnrichment';
 import { POTENTIAL_LABEL, STAGES, matchWork, sortSignals, type WorkQuick, type SignalSort } from '@/lib/signals/potential';
-import { DEADLINE_LABEL, suggestedProgressionStatus, type DeadlineState } from '@/lib/signals/deadlines';
+import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
+
+import { SignalDeadlineFilters } from './SignalDeadlineFilters';
+import { deadlineCounts, type DeadlineQuick } from '@/lib/signals/deadlineFilters';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
   return <Button asChild variant="link" className="h-auto min-h-11 md:min-h-0 justify-start whitespace-normal p-0 text-left font-semibold leading-tight select-text">
@@ -135,7 +138,7 @@ export function SignalsPage() {
   const { data: careNotes = {} } = useQuery({ queryKey: [`${SIG}care`, p.userId], queryFn: listCareNotes, enabled: !!p.userId });
   const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchInterval: 10000, refetchOnWindowFocus: "always" });
   const deadlines = useQuery({queryKey:[`${SIG}deadlines`,p.userId],queryFn:listDeadlines,enabled:!!p.userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
-  const [deadlineFilter,setDeadlineFilter]=useState<DeadlineState|null>(null);
+  const [deadlineFilter,setDeadlineFilter]=useState<DeadlineQuick|null>(null);
   const careFn = useServerFn(zaloCareCounts);
   const { data: careCfg } = useQuery({ queryKey: [`${SIG}carecfg`], queryFn: () => careFn(), staleTime: 600000 });
   const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
@@ -190,6 +193,9 @@ export function SignalsPage() {
     return sort==='activity'?rows:sortSignals(rows,sort,deadlines.data??{},today);
   }, [data, f, today, last,deadlineFilter,deadlines.data,workQuick,sort]);
   const base = useMemo(() => applyDetailFilter(data, f, today).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)), [data, f, today,workQuick,deadlines.data,deadlineFilter]);
+  const deadlineBase = useMemo(() => applyListFilter(data,f,today,last).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)), [data,f,today,last,workQuick,deadlines.data]);
+  const dueCounts = deadlineCounts(deadlineBase,deadlines.data??{});
+  const pickDeadline = (value: DeadlineQuick|null) => {setCare({on:false});setDeadlineFilter(value);};
   const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
   const needOpts = useOptions("signal_need_groups");
   // Đếm nhóm nhu cầu: áp dụng mọi điều kiện khác (kể cả trạng thái) trừ chính nhóm nhu cầu
@@ -235,18 +241,14 @@ export function SignalsPage() {
         </Button>
         {p.create&&<Button className="h-11 w-11 shrink-0 md:hidden" size="icon" aria-label="Thêm tín hiệu" onClick={()=>setCreating(true)}><Plus className="h-4 w-4"/></Button>}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{[['work','Ưu tiên công việc'],['newest','Mới nhất'],['oldest','Cũ nhất'],['soonest','Cần xử lý sớm'],['potential','Tiềm năng cao trước'],['value','Giá trị đã ghi nhận'],['activity','Cập nhật mới nhất']].map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{[['work','Ưu tiên công việc'],['newest','Mới nhất'],['oldest','Cũ nhất'],['soonest','Cần xử lý sớm'],['potential','Tiềm năng cao trước'],['value','Giá trị đã ghi nhận'],['activity','Cập nhật mới nhất']].map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
       {careScope.length > 0 && !care.on && (
         <button onClick={() => setCare({ on: true })} className="w-full text-left rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-medium">
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
         </button>
       )}
-      {/* Mobile: bộ lọc nhanh gọn trong hàng cuộn ngang; nhóm dài nằm trong sheet "Bộ lọc". */}
-      <div className="md:hidden space-y-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Lọc nhanh tín hiệu">
-          {([['all','Tất cả'],['high','Tiềm năng cao'],['action','Cần xử lý'],['overdue','Quá hạn'],['won','Đã chốt']] as [WorkQuick,string][]).map(([k,label])=><Button key={k} variant={workQuick===k?'default':'outline'} className="shrink-0 min-h-11 rounded-full" onClick={()=>{setCare({on:false});setDeadlineFilter(null);setWorkQuick(k);}}>{label} <span className="ml-1 opacity-70">{base.filter(s=>matchWork(s,k,deadlines.data?.[s.id],today)).length}</span></Button>)}
-        </div>
-        {deadlines.error && <p className="text-xs text-destructive">Không tải được hạn cập nhật: {errMsg(deadlines.error)}</p>}
+      <div className="md:hidden min-w-0 space-y-2">
+        <SignalDeadlineFilters value={deadlineFilter} counts={dueCounts} loading={deadlines.isPending} error={deadlines.error?errMsg(deadlines.error):undefined} onChange={pickDeadline}/>
         <ActiveFilters f={f} name={name} onChange={setF} />
       </div>
       <div className="hidden md:block rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
@@ -255,8 +257,7 @@ export function SignalsPage() {
         <ChipRow label="Trạng thái" items={QUICK.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
           active={care.on ? "__care__" : f.quick} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, quick: k as Quick })); }}
           />
-        <div className="flex flex-wrap gap-2" aria-label="Hạn cập nhật diễn biến"><Button size="sm" variant={!deadlineFilter?'secondary':'outline'} onClick={()=>setDeadlineFilter(null)}>Tất cả hạn</Button>{(['today','soon','overdue'] as const).map(k=><Button key={k} size="sm" variant={deadlineFilter===k?'default':'outline'} className="h-auto min-h-11 whitespace-normal" onClick={()=>{setCare({on:false});setDeadlineFilter(k);}}>{k==='today'?'Cần cập nhật hôm nay':DEADLINE_LABEL[k]} · {base.filter(s=>deadlines.data?.[s.id]?.deadline_state===k).length}</Button>)}</div>
-        {deadlines.error && <p className="text-xs text-destructive">Không tải được hạn cập nhật: {errMsg(deadlines.error)}</p>}
+        <SignalDeadlineFilters value={deadlineFilter} counts={dueCounts} loading={deadlines.isPending} error={deadlines.error?errMsg(deadlines.error):undefined} onChange={pickDeadline}/>
         <ActiveFilters f={f} name={name} onChange={setF} />
       </div>
       {care.on && (
@@ -332,7 +333,7 @@ export function SignalsPage() {
           </>
         )}
 
-      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} />
+      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
       <Sheet open={labelsOpen} onOpenChange={setLabelsOpen}><SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto sm:max-w-xl sm:mx-auto"><SheetHeader className="mb-4"><SheetTitle>Nhãn cá nhân</SheetTitle></SheetHeader><SignalLabelManager uid={p.userId} catalog={false} sale={p.sale} personalOnly/></SheetContent></Sheet>
       {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
@@ -361,8 +362,8 @@ export function SignalsPage() {
   );
 }
 
-function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
-  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean;
+function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, workQuick, sort, onOptions }: {
+  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void;
 }) {
   const name = useUserName();
   const prodOpts = useOptions("signal_products");
@@ -370,8 +371,9 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
   const srcOpts = useOptions("signal_sources");
   const lr = useLostReasons();
   const p=useSignalPerms();const labels=useSignalLabels(p.userId);
+  const [work,setWork]=useState(workQuick);const [order,setOrder]=useState(sort);
   const [f, setF] = useState<ListFilter>(value);
-  useEffect(() => { if (open) setF(value); }, [open, value]);
+  useEffect(() => { if (open) {setF(value);setWork(workQuick);setOrder(sort);} }, [open, value,workQuick,sort]);
   const set = (k: keyof ListFilter, v: any) => setF((x) => ({ ...x, [k]: v || undefined }));
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => [id, name(id)] as [string, string]);
   return (
@@ -379,6 +381,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
       <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
         <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
         <div className="px-4 grid grid-cols-2 gap-3 pb-4">
+          <Field label="Lọc nhanh"><Pick value={work} onChange={v=>setWork((v||'all') as WorkQuick)} opts={[["all","Tất cả"],["high","Tiềm năng cao"],["action","Cần xử lý"],["overdue","Quá hạn xử lý"],["won","Đã chốt"]]}/></Field>
+          <Field label="Sắp xếp"><Pick value={order} onChange={v=>setOrder((v||'work') as SignalSort)} opts={[["work","Ưu tiên công việc"],["newest","Mới nhất"],["oldest","Cũ nhất"],["soonest","Cần xử lý sớm"],["potential","Tiềm năng cao trước"],["value","Giá trị đã ghi nhận"],["activity","Cập nhật mới nhất"]]}/></Field>
           <Field label="Giai đoạn"><Pick value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/></Field>
           <Field label="Trạng thái"><Pick value={f.quick==='all'?'':f.quick} onChange={v=>setF(x=>({...x,quick:(v||'all') as Quick}))} opts={Object.entries(STATUS_LABEL)}/></Field>
           <Field label="Mức độ tiềm năng"><Pick value={f.potential} onChange={v=>set('potential',v)} opts={Object.entries(POTENTIAL_LABEL)}/></Field>
@@ -408,8 +412,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople }: {
           </>}
         </div>
         <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
-          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOpenChange(false); }}>Xóa bộ lọc</Button>
-          <Button size="lg" onClick={() => { onApply(f); onOpenChange(false); }}>Áp dụng</Button>
+          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOptions("all",sort); onOpenChange(false); }}>Xóa bộ lọc</Button>
+          <Button size="lg" onClick={() => { onApply(f); onOptions(work,order); onOpenChange(false); }}>Áp dụng</Button>
         </div>
       </SheetContent>
     </Sheet>
