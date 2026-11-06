@@ -243,9 +243,9 @@ export function SignalsPage() {
       </div>
       <div className="hidden md:flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{[['work','Ưu tiên công việc'],['newest','Mới nhất'],['oldest','Cũ nhất'],['soonest','Cần xử lý sớm'],['potential','Tiềm năng cao trước'],['value','Giá trị đã ghi nhận'],['activity','Cập nhật mới nhất']].map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
       {careScope.length > 0 && !care.on && (
-        <button onClick={() => setCare({ on: true })} className="w-full text-left rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-medium">
+        <Button variant="outline" onClick={() => setCare({ on: true })} className="hidden md:block h-auto w-full text-left rounded-lg border-warning/40 bg-warning/10 px-3 py-2 text-sm font-medium">
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
-        </button>
+        </Button>
       )}
       <div className="md:hidden min-w-0 space-y-2">
         <SignalDeadlineFilters value={deadlineFilter} counts={dueCounts} loading={deadlines.isPending} error={deadlines.error?errMsg(deadlines.error):undefined} onChange={pickDeadline}/>
@@ -736,7 +736,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
             : e.kind === "reopen" ? `Mở lại tín hiệu (trước: ${statusLabel(e.detail?.prev_status)}${e.detail?.prev_revenue ? ` · ${fmtVnd(e.detail.prev_revenue)}` : ""}${e.detail?.prev_lost_reason ? ` · ${e.detail.prev_lost_reason}` : ""}). Lý do: ${e.detail?.reason}`
             : e.kind === "cancel" ? `Hủy tín hiệu. Lý do: ${e.detail?.reason ?? ""}`
             : e.kind === "uncancel" ? `Bỏ hủy tín hiệu${e.detail?.prev_reason ? ` (lý do hủy trước: ${e.detail.prev_reason})` : ""}`
-            : e.kind === 'enrichment' ? `Tiềm năng: ${POTENTIAL_LABEL[e.detail?.potential_from as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'} → ${POTENTIAL_LABEL[e.detail?.potential_to as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'} · Theo dõi: ${fmtDate(e.detail?.next_from)} → ${fmtDate(e.detail?.next_to)}`
+            : e.kind === 'enrichment' ? `Tiềm năng: ${POTENTIAL_LABEL[e.detail?.potential_from as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'} → ${POTENTIAL_LABEL[e.detail?.potential_to as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'}${e.detail && ('next_from' in e.detail || 'next_to' in e.detail) ? ` · Theo dõi: ${fmtDate(e.detail.next_from)} → ${fmtDate(e.detail.next_to)}` : ''}`
             : "Cập nhật thông tin khách hàng"}
         </div>
       </>
