@@ -172,5 +172,6 @@ export const KINDS: Record<string, string> = {
   contact_role: "Vai trò liên hệ",
   channel: "Kênh bán hàng",
   cooperation: "Hình thức hợp tác",
+  output: "Khách đầu ra",
   occasion: "Dịp mua hàng",
 };
