@@ -1751,6 +1751,13 @@
       "when": 1793872941538,
       "tag": "0249_k3_frozen_employee_review_deadlines",
       "breakpoints": true
+    },
+    {
+      "idx": 250,
+      "version": "7",
+      "when": 1793950642706,
+      "tag": "0250_crm_customer_foundation",
+      "breakpoints": true
     }
   ]
 }

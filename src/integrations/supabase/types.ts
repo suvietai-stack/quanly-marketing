@@ -2474,6 +2474,581 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_access_grants: {
+        Row: {
+          ended_at: string | null
+          granted_by: string
+          id: string
+          permission: string
+          reason: string
+          revoked_at: string | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          granted_by: string
+          id?: string
+          permission: string
+          reason: string
+          revoked_at?: string | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          granted_by?: string
+          id?: string
+          permission?: string
+          reason?: string
+          revoked_at?: string | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crm_catalogs: {
+        Row: {
+          active: boolean
+          config: Json
+          created_at: string
+          description: string
+          id: string
+          kind: string
+          name: string
+          parent_id: string | null
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          config?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          kind: string
+          name: string
+          parent_id?: string | null
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          config?: Json
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: string
+          name?: string
+          parent_id?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_catalogs_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contacts: {
+        Row: {
+          active: boolean
+          created_at: string
+          customer_id: string
+          department: string
+          email: string
+          id: string
+          is_primary: boolean
+          name: string
+          note: string
+          phone: string
+          preferred_channel: string
+          role_ids: string[]
+          title: string
+          zalo: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          customer_id: string
+          department?: string
+          email?: string
+          id?: string
+          is_primary?: boolean
+          name: string
+          note?: string
+          phone?: string
+          preferred_channel?: string
+          role_ids?: string[]
+          title?: string
+          zalo?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          customer_id?: string
+          department?: string
+          email?: string
+          id?: string
+          is_primary?: boolean
+          name?: string
+          note?: string
+          phone?: string
+          preferred_channel?: string
+          role_ids?: string[]
+          title?: string
+          zalo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_customers: {
+        Row: {
+          address: string
+          archived_at: string | null
+          code: string
+          created_at: string
+          created_by: string
+          details: Json
+          email: string
+          group_id: string | null
+          id: string
+          legal_name: string
+          name: string
+          note: string
+          owner_id: string
+          phone: string
+          priority_id: string | null
+          profile_kind: string
+          province_code: string | null
+          related_ids: string[]
+          relationship_id: string | null
+          request_key: string
+          revision: number
+          segment_id: string | null
+          source_id: string | null
+          tax_code: string
+          updated_at: string
+          ward_code: string | null
+          website: string
+        }
+        Insert: {
+          address?: string
+          archived_at?: string | null
+          code?: string
+          created_at?: string
+          created_by: string
+          details?: Json
+          email?: string
+          group_id?: string | null
+          id?: string
+          legal_name?: string
+          name: string
+          note?: string
+          owner_id: string
+          phone?: string
+          priority_id?: string | null
+          profile_kind?: string
+          province_code?: string | null
+          related_ids?: string[]
+          relationship_id?: string | null
+          request_key: string
+          revision?: number
+          segment_id?: string | null
+          source_id?: string | null
+          tax_code?: string
+          updated_at?: string
+          ward_code?: string | null
+          website?: string
+        }
+        Update: {
+          address?: string
+          archived_at?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string
+          details?: Json
+          email?: string
+          group_id?: string | null
+          id?: string
+          legal_name?: string
+          name?: string
+          note?: string
+          owner_id?: string
+          phone?: string
+          priority_id?: string | null
+          profile_kind?: string
+          province_code?: string | null
+          related_ids?: string[]
+          relationship_id?: string | null
+          request_key?: string
+          revision?: number
+          segment_id?: string | null
+          source_id?: string | null
+          tax_code?: string
+          updated_at?: string
+          ward_code?: string | null
+          website?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_customers_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_customers_priority_id_fkey"
+            columns: ["priority_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_customers_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_customers_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_customers_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_events: {
+        Row: {
+          action: string
+          actor_id: string
+          after_data: Json | null
+          before_data: Json | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          reason: string
+          schedule_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          reason?: string
+          schedule_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          reason?: string
+          schedule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "crm_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_interactions: {
+        Row: {
+          actor_id: string
+          channel: string
+          completed: boolean
+          connected: boolean
+          contact_id: string | null
+          content: string
+          customer_id: string
+          department_id: string | null
+          happened_at: string
+          id: string
+          next_schedule_id: string | null
+          outcome_id: string
+          owner_id: string
+          request_key: string
+          schedule_id: string | null
+        }
+        Insert: {
+          actor_id: string
+          channel: string
+          completed: boolean
+          connected: boolean
+          contact_id?: string | null
+          content: string
+          customer_id: string
+          department_id?: string | null
+          happened_at?: string
+          id?: string
+          next_schedule_id?: string | null
+          outcome_id: string
+          owner_id: string
+          request_key: string
+          schedule_id?: string | null
+        }
+        Update: {
+          actor_id?: string
+          channel?: string
+          completed?: boolean
+          connected?: boolean
+          contact_id?: string | null
+          content?: string
+          customer_id?: string
+          department_id?: string | null
+          happened_at?: string
+          id?: string
+          next_schedule_id?: string | null
+          outcome_id?: string
+          owner_id?: string
+          request_key?: string
+          schedule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_interactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_interactions_next_schedule_id_fkey"
+            columns: ["next_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "crm_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_interactions_outcome_id_fkey"
+            columns: ["outcome_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_interactions_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "crm_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_locations: {
+        Row: {
+          active: boolean
+          address: string
+          customer_id: string
+          id: string
+          is_primary: boolean
+          label: string
+          province_code: string | null
+          ward_code: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string
+          customer_id: string
+          id?: string
+          is_primary?: boolean
+          label?: string
+          province_code?: string | null
+          ward_code?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          customer_id?: string
+          id?: string
+          is_primary?: boolean
+          label?: string
+          province_code?: string | null
+          ward_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_locations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_schedules: {
+        Row: {
+          attributed_at: string
+          channel: string
+          completed_at: string | null
+          contact_id: string | null
+          content: string
+          created_at: string
+          created_by: string
+          customer_id: string
+          department_id: string | null
+          due_at: string
+          fixed_weekday: number | null
+          goal: string
+          id: string
+          interval_days: number | null
+          kind: string
+          original_due_at: string
+          owner_id: string
+          processed_at: string | null
+          reminder_days: number
+          request_key: string
+          revision: number
+          status: string
+        }
+        Insert: {
+          attributed_at?: string
+          channel?: string
+          completed_at?: string | null
+          contact_id?: string | null
+          content?: string
+          created_at?: string
+          created_by: string
+          customer_id: string
+          department_id?: string | null
+          due_at: string
+          fixed_weekday?: number | null
+          goal?: string
+          id?: string
+          interval_days?: number | null
+          kind: string
+          original_due_at: string
+          owner_id: string
+          processed_at?: string | null
+          reminder_days?: number
+          request_key: string
+          revision?: number
+          status?: string
+        }
+        Update: {
+          attributed_at?: string
+          channel?: string
+          completed_at?: string | null
+          contact_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          customer_id?: string
+          department_id?: string | null
+          due_at?: string
+          fixed_weekday?: number | null
+          goal?: string
+          id?: string
+          interval_days?: number | null
+          kind?: string
+          original_due_at?: string
+          owner_id?: string
+          processed_at?: string | null
+          reminder_days?: number
+          request_key?: string
+          revision?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_schedules_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_templates: {
+        Row: {
+          active: boolean
+          channel: string
+          goal: string
+          group_id: string | null
+          id: string
+          interval_days: number
+          name: string
+          owner_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          channel?: string
+          goal?: string
+          group_id?: string | null
+          id?: string
+          interval_days?: number
+          name: string
+          owner_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          goal?: string
+          group_id?: string | null
+          id?: string
+          interval_days?: number
+          name?: string
+          owner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_templates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_kpi_adjustments: {
         Row: {
           created_at: string
@@ -8146,6 +8721,33 @@ export type Database = {
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
       content_notify_save: { Args: { _data: Json }; Returns: undefined }
       content_remind_run: { Args: never; Returns: number }
+      crm_access_save: { Args: { _data: Json }; Returns: string }
+      crm_can: {
+        Args: { _actor: string; _permission: string }
+        Returns: boolean
+      }
+      crm_catalog_save: { Args: { _data: Json }; Returns: string }
+      crm_contact_save: { Args: { _data: Json }; Returns: string }
+      crm_customer_action: {
+        Args: {
+          _action: string
+          _id: string
+          _owner?: string
+          _reason: string
+          _revision: number
+        }
+        Returns: undefined
+      }
+      crm_customer_editable: { Args: { _id: string }; Returns: boolean }
+      crm_customer_save: { Args: { _data: Json }; Returns: string }
+      crm_customer_visible: { Args: { _id: string }; Returns: boolean }
+      crm_department: { Args: { _at?: string; _user: string }; Returns: string }
+      crm_interaction_save: { Args: { _data: Json }; Returns: string }
+      crm_owner_visible: {
+        Args: { _at?: string; _department?: string; _owner: string }
+        Returns: boolean
+      }
+      crm_schedule_save: { Args: { _data: Json }; Returns: string }
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
       fbl_can_manage: { Args: never; Returns: boolean }
