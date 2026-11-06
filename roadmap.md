@@ -1,14 +1,16 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## MOBILE NGHỈ PHÉP & ĐI SỚM MUỘN — 06/11/2026
-- [ ] ML1. Ba ô tạo trực tiếp, tab/danh sách/bộ lọc mobile gọn đúng quyền; giữ /leave và deep link, tách attendance.
-- [ ] ML2. Form/chi tiết/duyệt/báo cáo mobile, chọn nhanh và safe-area; giữ phép tính/hạn/bổ sung/API/quyền/Zalo.
-- [ ] ML3. Kiểm tra mobile/desktop với hành trình cách ly, ghi rõ nghiệm thu phiên thật còn thiếu; chưa Publish.
+- [x] ML1. Ba ô tạo trực tiếp, tab/danh sách/bộ lọc mobile gọn đúng quyền; giữ /leave và deep link, tách attendance.
+- [x] ML2. Form/chi tiết/duyệt/báo cáo mobile, chọn nhanh và safe-area; giữ phép tính/hạn/bổ sung/API/quyền/Zalo.
+- [x] ML3a. Browser cách ly 320/375/390/430/1280 đạt: tạo trực tiếp, nửa/cả ngày, lỗi/retry/giữ dữ liệu/bỏ thay đổi, phút/bổ sung/lý do, báo cáo, không lỗi JS/tràn; unit test và build OK. docs/mobile-3k-leave-verification.md; chưa Publish.
+- [ ] ML3b. Gửi/duyệt/từ chối/hủy/gửi lại/Excel trên hồ sơ và phiên thật: cần người dùng đăng nhập Preview và cho phép hồ sơ thử; chưa kiểm thiết bị vật lý.
 
 ## MOBILE QUẢN LÝ 3K — 06/11/2026
-- [ ] M3K1. Gọn điều hướng/kỳ/ngày/tóm tắt và thẻ việc; giữ nguồn đo/thao tác/quyền và desktop.
-- [ ] M3K2. Tối ưu form tạo/cập nhật/tổng kết, sheet chi tiết, nhóm/theo dõi; không đổi API/database/nghiệp vụ.
-- [ ] M3K3. Kiểm tra 320/375/390/430/tablet/desktop, lưu/lỗi/lịch sử/tổng kết/hộp Xóa; báo rõ hành trình thật chưa kiểm được, chưa Publish.
+- [x] M3K1. Gọn điều hướng/kỳ/ngày/tóm tắt và thẻ việc; giữ nguồn đo/thao tác/quyền và desktop.
+- [x] M3K2. Tối ưu form tạo/cập nhật/tổng kết, sheet chi tiết, nhóm/theo dõi; không đổi API/database/nghiệp vụ.
+- [x] M3K3a. Browser cách ly 320/375/390/430/768/1280 đạt: ngày/tạo/lỗi/retry/KPI số thay tổng/Có-Chưa/lịch sử/cảnh báo tổng kết; 6 hồi quy hộp Xóa đạt. Tổng 95 unit test hai module đạt, build OK; docs/mobile-3k-leave-verification.md, chưa Publish.
+- [ ] M3K3b. Nghiệm thu AppShell/nhóm/phạm vi/10 kiểu đo/điều chỉnh sau chốt/tổng kết lại bằng phiên và hồ sơ thật: đang /login, mint --self không khớp; cần đăng nhập và hồ sơ được phép, không tự chọn tài khoản/ghi dữ liệu giả.
 
 ## TÙY CHỈNH GHIM MOBILE — 06/11/2026
 - [x] P1. Bỏ menu ô ứng dụng mọi khu vực/tìm kiếm/truy cập nhanh; Tùy chỉnh tại Truy cập nhanh với chọn/bỏ/sắp xếp, nháp độc lập và Lưu; giữ storage/quyền cũ, desktop không đổi.
