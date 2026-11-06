@@ -148,6 +148,18 @@
 }
 
 .mobile-launcher { letter-spacing: 0; }
+.signals-page,.signals-report,.signal-mobile-sheet { min-width: 0; letter-spacing: 0; }
+.signals-page :is(h1,h2,h3),.signals-report :is(h1,h2,h3),.signal-mobile-sheet :is(h1,h2,h3) { letter-spacing: 0; }
+@media (max-width:767px) {
+  .signals-page { overflow-wrap: anywhere; padding-bottom: 16px; }
+  .signals-page .signal-card { border-radius: 8px; }
+  .signal-mobile-sheet { overscroll-behavior: contain; padding-bottom: env(safe-area-inset-bottom); max-width:100%; }
+  .signal-mobile-sheet :is(input,textarea,select) { min-width:0; max-width:100%; font-size:16px; }
+  .signal-mobile-sheet :is(button,[role="button"]) { min-height:44px; }
+  .signal-mobile-sheet h2 { padding-right:24px; overflow-wrap:anywhere; }
+  .signal-mobile-sheet .sticky.bottom-0 { bottom:0; padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+  .signals-report { overflow-wrap:anywhere; }
+}
 .crm-module, .crm-dialog { letter-spacing: 0; overflow-wrap: anywhere; }
 .crm-module :is(h1,h2,h3), .crm-dialog :is(h1,h2,h3) { letter-spacing: 0; }
 .crm-form-footer { position: sticky; bottom: 0; background: var(--background); padding: 12px 0; z-index: 1; }
