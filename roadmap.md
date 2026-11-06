@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TRANG CHỦ MOBILE APP LAUNCHER — 06/11/2026
+- [ ] L1. Dùng cùng cấu hình menu/quyền với Sidebar; trang chủ mobile, màn hình khu vực và tìm kiếm.
+- [ ] L2. Ghim/bỏ ghim/sắp xếp theo tài khoản trên thiết bị; điều hướng dưới dùng chức năng thật, giữ deep link/desktop.
+- [ ] L3. Kiểm thử quyền/tìm kiếm/ghim/thu hồi quyền, mobile/desktop và nghiệm thu phiên thật; không đổi backend hoặc Publish.
+
 ## QUY HOẠCH MENU BASE — 06/11/2026
 - [x] N1. Kiểm kê/ánh xạ 30 URL cũ sang 10 khu vực; Showroom và 6 mục con tương lai không có liên kết, không nhân bản chức năng.
 - [x] N2. Sidebar hai cấp, giữ nguyên predicate quyền/route; mở/đóng theo người dùng, tự mở trang con, chọn đường dẫn cụ thể nhất, thu gọn/mobile.
