@@ -9,8 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Field, Pick } from "./CrmControls";
+import { Field, Pick, SearchPick } from "./CrmControls";
 import { CrmModal } from "./CrmForms";
+import { CrmCatalogTree } from './CrmCatalogTree';
+import { FEATURE_KINDS } from '@/lib/crm/classification';
 export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[] }) {
   const [kind, setKind] = useState("group");
   const [edit, setEdit] = useState<Record<string, unknown> | null>(null);
@@ -47,12 +49,14 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
           {can("biz.crm_access") && <TabsTrigger value="access">Quyền CRM</TabsTrigger>}
         </TabsList>
         <TabsContent value="catalogs" className="space-y-4">
+          <CrmCatalogTree uid={uid} catalogs={catalogs} onEdit={(c)=>{setError('');setEdit(c);}} />
+          <h3 className="border-t pt-5 font-semibold">Đặc điểm & Danh mục khác</h3>
           <div className="flex gap-2">
             <Pick
               label="Loại danh mục"
               value={kind}
               onChange={setKind}
-              options={Object.entries(KINDS).map(([id, name]) => ({ id, name }))}
+              options={Object.entries(KINDS).filter(([id])=>!['group','segment'].includes(id)).map(([id, name]) => ({ id, name }))}
             />
             <Button
               onClick={() => {
@@ -199,17 +203,18 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
                 onChange={(e) => setEdit({ ...edit, name: e.target.value })}
               />
             </Field>
-            <Field label="Nhóm cha">
-              <Pick
+            {edit.kind !== 'group' && <Field label="Nhóm cha">
+              <SearchPick
                 label="Không có nhóm cha"
                 value={String(edit.parent_id || "")}
                 onChange={(v) => setEdit({ ...edit, parent_id: v })}
                 options={catalogs.filter(
                   (c) =>
-                    ["group", "block", "segment"].includes(c.kind) && c.active && c.id !== edit.id,
-                )}
+                    ["group", "block"].includes(c.kind) && (c.active || c.id===edit.parent_id) && c.id !== edit.id,
+                ).map(c=>({code:c.id,name:c.name}))}
               />
-            </Field>
+            </Field>}
+            {Object.hasOwn(FEATURE_KINDS,String(edit.kind)) && <Field label="Phạm vi Nhóm khách"><p className="text-xs text-muted-foreground">Không chọn nhóm: dùng chung</p>{catalogs.filter(c=>c.kind==='group').map(g=>{const cfg=edit.config as Record<string,unknown>;const ids=Array.isArray(cfg?.group_ids)?cfg.group_ids as string[]:[];return <label key={g.id} className="flex items-center gap-2"><Checkbox checked={ids.includes(g.id)} onCheckedChange={yes=>setEdit({...edit,config:{...cfg,group_ids:yes?[...ids,g.id]:ids.filter(id=>id!==g.id)}})}/>{g.name}</label>;})}</Field>}
             <Field label="Mô tả">
               <Textarea
                 value={String(edit.description || "")}
@@ -230,10 +235,11 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
               />
               Đang sử dụng
             </label>
-            {(edit.kind === "priority" || edit.kind === "outcome") && (
+            {(edit.kind === "priority" || edit.kind === "outcome" || edit.kind === 'relationship') && (
               <div className="grid gap-3">
                 {(edit.kind === "priority"
                   ? [["key_customer", "Khách trọng điểm"]]
+                  : edit.kind === 'relationship' ? [['cooperating','Đang hợp tác']]
                   : [
                       ["connected", "Thực sự kết nối / Trao đổi được"],
                       ["completed", "Hoàn tất hợp lệ"],
