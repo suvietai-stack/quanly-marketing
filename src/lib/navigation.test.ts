@@ -1,10 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { navigationGroups, visibleNavigation, activeNavigationPath, type NavigationAccess } from './navigation';
+import { allowedPins, searchLauncher } from './launcher';
+import { mobilePage } from './mobileShell';
 
 const access = (permissions: string[] = [], extra: Partial<NavigationAccess> = {}): NavigationAccess => ({ can: p => permissions.includes(p), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0, ...extra });
 const paths = (a: NavigationAccess) => visibleNavigation(a).flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
 describe('Presentation-only navigation', () => {
+  it.each(['/settings/kpi-v2', '/reports-v2'])('places KPI %s only in Marketing with its original destination', path => {
+    expect(navigationGroups.filter(g => g.items.some(i => i.to === path)).map(g => g.label)).toEqual(['Marketing']);
+    expect(navigationGroups.flatMap(g => g.items).filter(i => i.to === path)).toHaveLength(1);
+    expect(mobilePage(navigationGroups, path).area).toBe('Marketing');
+  });
+  it('keeps existing KPI pins and search valid in Marketing, and 3K/KR in Business', () => {
+    const groups = visibleNavigation(access(['kpi.view_own', 'kpi.report', 'k3.use', 'biz.goal_submit']));
+    expect(allowedPins(['/settings/kpi-v2', '/reports-v2'], groups)).toEqual(['/settings/kpi-v2', '/reports-v2']);
+    expect(searchLauncher(groups, 'Marketing KPI').map(i => i.to)).toEqual(['/settings/kpi-v2', '/reports-v2']);
+    expect(groups.find(g => g.label === 'Marketing')?.items.find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
+    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/3k']);
+  });
   it('has ten areas in the mandated order', () => {
     expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
   });
