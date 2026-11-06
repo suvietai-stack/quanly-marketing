@@ -58,7 +58,6 @@ async def main():
    await page.get_by_role('tab',name='Báo cáo',exact=True).click();await expect(page.get_by_text('Cơ cấu khách hàng',exact=True)).to_be_visible()
    await page.screenshot(path=str(OUT/f'{width}-report.png'))
    assert writes[0]['request_key']==writes[1]['request_key']
-   print(await page.evaluate('Array.from(document.querySelectorAll("*")).filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,4).map(e=>[e.tagName,e.className,e.getBoundingClientRect().right,getComputedStyle(e).aspectRatio])'))
    assert not await page.evaluate('document.documentElement.scrollWidth>innerWidth')
    assert not errors,errors
    print('PASS',width,'create/error-retains/retry/readback/care/history/report/no-overflow')
