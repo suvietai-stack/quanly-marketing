@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TÙY CHỈNH GHIM MOBILE — 06/11/2026
+- [x] P1. Bỏ menu ô ứng dụng mọi khu vực/tìm kiếm/truy cập nhanh; Tùy chỉnh tại Truy cập nhanh với chọn/bỏ/sắp xếp, nháp độc lập và Lưu; giữ storage/quyền cũ, desktop không đổi.
+- [x] P2a. 29 unit test đạt; Launcher + chrome cách ly 320/390/767/1280 đạt: ghim cũ, lưu/hủy/reload/thứ tự/thu hồi quyền ngay trong dialog, route/desktop/không tràn/không lỗi JS; ảnh màn hình xác minh, build OK, chưa Publish.
+- [ ] P2b. Nghiệm thu AppShell bằng phiên thật: Preview đang /login, mint --self không có tài khoản khớp; cần người dùng đăng nhập Preview, không tự chọn tài khoản khác.
+
 ## CHUYỂN MENU KPI SANG MARKETING — 06/11/2026
 - [x] K1. Chuyển nguyên hai mục /settings/kpi-v2 và /reports-v2 sang Marketing trong cấu hình chung, giữ predicate quyền/nhãn/route/ghim, không đổi nghiệp vụ.
 - [x] K2. 28 unit test đạt: KPI chỉ ở Marketing, route/ghim/tìm kiếm/nhãn/quyền cũ và 3K/KR giữ nguyên; Sidebar/Launcher/chrome hồi quy đạt. Trình duyệt cách ly 1280/390 xác minh mở hai route KPI cũ từ Marketing, không KPI trong Kinh doanh; build OK, chưa Publish. Không nghiệm thu dữ liệu KPI thật khi phiên chưa đăng nhập.
