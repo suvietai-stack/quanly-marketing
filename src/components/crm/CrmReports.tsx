@@ -236,7 +236,7 @@ export function CrmReports({
               </div>
             </div>
             {distribution.length ? (
-              <ChartContainer config={config} className="h-64 w-full">
+              <ChartContainer config={config} className="aspect-auto min-w-0 h-64 w-full">
                 <BarChart data={distribution}>
                   <CartesianGrid vertical={false} />
                   <XAxis
@@ -262,7 +262,7 @@ export function CrmReports({
           <section className="space-y-3">
             <h3 className="font-semibold">Hoạt động chăm sóc</h3>
             {trend.length ? (
-              <ChartContainer config={config} className="h-64 w-full">
+              <ChartContainer config={config} className="aspect-auto min-w-0 h-64 w-full">
                 <LineChart data={trend}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="day" tickFormatter={(v) => String(v).slice(5)} />
