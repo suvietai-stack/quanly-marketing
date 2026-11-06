@@ -30,6 +30,7 @@ import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as BizIndexRouteImport } from './routes/biz.index'
 import { Route as Biz3kRouteImport } from './routes/biz.3k'
 import { Route as BizApprovalsRouteImport } from './routes/biz.approvals'
+import { Route as BizCrmRouteImport } from './routes/biz.crm'
 import { Route as BizGoalsRouteImport } from './routes/biz.goals'
 import { Route as BizPlansRouteImport } from './routes/biz.plans'
 import { Route as BizReportsRouteImport } from './routes/biz.reports'
@@ -176,6 +177,11 @@ const Biz3kRoute = Biz3kRouteImport.update({
 const BizApprovalsRoute = BizApprovalsRouteImport.update({
   id: '/biz/approvals',
   path: '/biz/approvals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizCrmRoute = BizCrmRouteImport.update({
+  id: '/biz/crm',
+  path: '/biz/crm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BizGoalsRoute = BizGoalsRouteImport.update({
@@ -416,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
   '/biz/approvals': typeof BizApprovalsRoute
+  '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
   '/biz/reports': typeof BizReportsRoute
@@ -481,6 +488,7 @@ export interface FileRoutesByTo {
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
   '/biz/approvals': typeof BizApprovalsRoute
+  '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
   '/biz/reports': typeof BizReportsRoute
@@ -547,6 +555,7 @@ export interface FileRoutesById {
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
   '/biz/approvals': typeof BizApprovalsRoute
+  '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
   '/biz/reports': typeof BizReportsRoute
@@ -614,6 +623,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/biz/3k'
     | '/biz/approvals'
+    | '/biz/crm'
     | '/biz/goals'
     | '/biz/plans'
     | '/biz/reports'
@@ -679,6 +689,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/biz/3k'
     | '/biz/approvals'
+    | '/biz/crm'
     | '/biz/goals'
     | '/biz/plans'
     | '/biz/reports'
@@ -744,6 +755,7 @@ export interface FileRouteTypes {
     | '/web-contents'
     | '/biz/3k'
     | '/biz/approvals'
+    | '/biz/crm'
     | '/biz/goals'
     | '/biz/plans'
     | '/biz/reports'
@@ -810,6 +822,7 @@ export interface RootRouteChildren {
   WebContentsRoute: typeof WebContentsRoute
   Biz3kRoute: typeof Biz3kRoute
   BizApprovalsRoute: typeof BizApprovalsRoute
+  BizCrmRoute: typeof BizCrmRoute
   BizGoalsRoute: typeof BizGoalsRoute
   BizPlansRoute: typeof BizPlansRoute
   BizReportsRoute: typeof BizReportsRoute
@@ -1002,6 +1015,13 @@ declare module '@tanstack/react-router' {
       path: '/biz/approvals'
       fullPath: '/biz/approvals'
       preLoaderRoute: typeof BizApprovalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/crm': {
+      id: '/biz/crm'
+      path: '/biz/crm'
+      fullPath: '/biz/crm'
+      preLoaderRoute: typeof BizCrmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biz/goals': {
@@ -1322,6 +1342,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebContentsRoute: WebContentsRoute,
   Biz3kRoute: Biz3kRoute,
   BizApprovalsRoute: BizApprovalsRoute,
+  BizCrmRoute: BizCrmRoute,
   BizGoalsRoute: BizGoalsRoute,
   BizPlansRoute: BizPlansRoute,
   BizReportsRoute: BizReportsRoute,
