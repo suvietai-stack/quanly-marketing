@@ -8883,6 +8883,7 @@ export type Database = {
         Returns: boolean
       }
       crm_catalog_counts: { Args: never; Returns: Json }
+      crm_catalog_reorder: { Args: { _data: Json }; Returns: undefined }
       crm_catalog_save: { Args: { _data: Json }; Returns: string }
       crm_contact_save: { Args: { _data: Json }; Returns: string }
       crm_customer_action: {
