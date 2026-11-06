@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## QUY HOẠCH MENU BASE — 06/11/2026
+- [ ] N1. Kiểm kê, ánh xạ menu cũ sang 10 khu vực; xác định chức năng Sắp ra mắt.
+- [ ] N2. Sidebar hai cấp, giữ quyền chức năng và route; mở/đóng, tự mở trang con, thu gọn và mobile.
+- [ ] N3. Kiểm thử quyền/đường dẫn và giao diện desktop/mobile; báo cáo phạm vi thay đổi, chưa Publish.
+
 ## HỘP XÁC NHẬN XÓA 3K — 05/11/2026
 - [x] D1. Tái hiện dialog count=0 sau menu đóng; K3DeleteProvider ngoài Biz3KScreen giữ target/dialog cho Ngày/KG/KF, không timer.
 - [x] D2. Guard đồng bộ chống gửi trùng, busy/inline error giữ mở; thành công đóng và invalidate toàn bộ k3_* gồm Thùng rác. Quyền/RPC/lịch sử không đổi.
