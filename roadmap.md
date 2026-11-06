@@ -1,5 +1,9 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TÙY CHỈNH GHIM MOBILE — 06/11/2026
+- [ ] P1. Bỏ menu ô ứng dụng mọi khu vực, thêm Tùy chỉnh tại Truy cập nhanh với chọn/bỏ/sắp xếp và Lưu; giữ storage và quyền cũ, desktop không đổi.
+- [ ] P2. Kiểm tra ghim cũ, lưu/hủy/reload/thu hồi quyền và mobile 320/390/767, desktop; chưa Publish.
+
 ## CHUYỂN MENU KPI SANG MARKETING — 06/11/2026
 - [x] K1. Chuyển nguyên hai mục /settings/kpi-v2 và /reports-v2 sang Marketing trong cấu hình chung, giữ predicate quyền/nhãn/route/ghim, không đổi nghiệp vụ.
 - [x] K2. 28 unit test đạt: KPI chỉ ở Marketing, route/ghim/tìm kiếm/nhãn/quyền cũ và 3K/KR giữ nguyên; Sidebar/Launcher/chrome hồi quy đạt. Trình duyệt cách ly 1280/390 xác minh mở hai route KPI cũ từ Marketing, không KPI trong Kinh doanh; build OK, chưa Publish. Không nghiệm thu dữ liệu KPI thật khi phiên chưa đăng nhập.
