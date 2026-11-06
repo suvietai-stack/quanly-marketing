@@ -2918,6 +2918,54 @@ export type Database = {
           },
         ]
       }
+      crm_schedule_history: {
+        Row: {
+          attributed_at: string
+          customer_id: string
+          data: Json
+          department_id: string | null
+          id: string
+          owner_id: string
+          recorded_at: string
+          schedule_id: string
+        }
+        Insert: {
+          attributed_at: string
+          customer_id: string
+          data: Json
+          department_id?: string | null
+          id?: string
+          owner_id: string
+          recorded_at?: string
+          schedule_id: string
+        }
+        Update: {
+          attributed_at?: string
+          customer_id?: string
+          data?: Json
+          department_id?: string | null
+          id?: string
+          owner_id?: string
+          recorded_at?: string
+          schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_schedule_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_schedule_history_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "crm_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_schedules: {
         Row: {
           attributed_at: string
@@ -8721,6 +8769,7 @@ export type Database = {
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
       content_notify_save: { Args: { _data: Json }; Returns: undefined }
       content_remind_run: { Args: never; Returns: number }
+      crm_access_list: { Args: never; Returns: Json }
       crm_access_save: { Args: { _data: Json }; Returns: string }
       crm_can: {
         Args: { _actor: string; _permission: string }
@@ -8747,6 +8796,20 @@ export type Database = {
         Args: { _name?: string; _phone?: string; _tax?: string }
         Returns: Json
       }
+      crm_export: {
+        Args: {
+          _department?: string
+          _end: string
+          _group?: string
+          _mine?: boolean
+          _owner?: string
+          _province?: string
+          _start: string
+          _system?: string
+          _team?: string
+        }
+        Returns: Json
+      }
       crm_file_allowed: {
         Args: { _name: string; _write?: boolean }
         Returns: boolean
@@ -8767,6 +8830,7 @@ export type Database = {
         }
         Returns: Json
       }
+      crm_remind: { Args: never; Returns: number }
       crm_report: {
         Args: {
           _department?: string

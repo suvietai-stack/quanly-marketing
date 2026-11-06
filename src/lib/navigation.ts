@@ -10,6 +10,7 @@ export const navigationGroups: NavGroup[] = [
 { to: "", label: "Trung tâm phê duyệt", icon: ClipboardCheck, comingSoon: true },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
+    { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
     { to: "/biz", label: "Tổng quan Kinh doanh", icon: Briefcase, exact: true, anyPerm: ["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"] },
     { to: "/signals", label: "Danh sách tín hiệu", icon: Radar, anyPerm: ["signal.create", "signal.view_all", "signal.manage", "signal.sale", "signal.assign"] },
     { to: "/signals/report", label: "Báo cáo tín hiệu", icon: FileText, anyPerm: ["signal.report", "signal.manage"] },

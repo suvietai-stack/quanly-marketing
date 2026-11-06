@@ -52,12 +52,19 @@ describe('Presentation-only navigation', () => {
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations).toHaveLength(30);
+    expect(destinations).toHaveLength(31);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
       expect(declaredPaths, path).toContain(path);
     }
+  });
+  it('CRM is permission scoped, searchable and pinnable only within Kinh doanh', () => {
+    const groups = visibleNavigation(access(['biz.crm_use']));
+    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/crm']);
+    expect(paths(access())).not.toContain('/biz/crm');
+    expect(allowedPins(['/biz/crm'], groups)).toEqual(['/biz/crm']);
+    expect(searchLauncher(groups, 'CRM').map(i => i.to)).toContain('/biz/crm');
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(6);

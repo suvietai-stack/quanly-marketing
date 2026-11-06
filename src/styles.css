@@ -148,6 +148,15 @@
 }
 
 .mobile-launcher { letter-spacing: 0; }
+.crm-module, .crm-dialog { letter-spacing: 0; overflow-wrap: anywhere; }
+.crm-module :is(h1,h2,h3), .crm-dialog :is(h1,h2,h3) { letter-spacing: 0; }
+.crm-form-footer { position: sticky; bottom: 0; background: var(--background); padding: 12px 0; z-index: 1; }
+@media (max-width: 767px) {
+  .crm-dialog { top: 0; left: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; transform: none; translate: 0 0 !important; border-radius: 0; padding: max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); overflow-y: auto; align-content: start; }
+  .crm-dialog :is(input,textarea,[role="combobox"]) { min-width: 0; max-width: 100%; min-height: 44px; font-size: 16px; }
+  .crm-dialog button,.crm-module button { min-height: 44px; }
+  .crm-form-footer { padding-bottom: env(safe-area-inset-bottom); }
+}
 .k3-mobile :is(h1,h2,h3), .k3-mobile-dialog :is(h1,h2,h3) { letter-spacing: 0; }
 .leave-mobile :is(h1,h2,h3), .leave-mobile-dialog :is(h1,h2,h3) { letter-spacing: 0; }
 @media (max-width: 767px) {
