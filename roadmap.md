@@ -1,11 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## CRM KHÁCH HÀNG — 06/11/2026
-- [ ] CRM1. Nền tảng riêng CRM, quyền bổ nhiệm/phạm vi, danh mục tùy chỉnh và kiểm thử backend.
-- [ ] CRM2. Khách tổ chức/cá nhân, nhiều liên hệ/địa điểm, chống trùng, lịch sử/bàn giao và file riêng tư.
-- [ ] CRM3. Lịch hẹn/định kỳ/mùa vụ, tương tác, quá hạn/dời lịch và nhắc Base chống trùng.
-- [ ] CRM4. Báo cáo thật theo kỳ/phạm vi, công thức thống nhất, biểu đồ/drill-down/so sánh.
-- [ ] CRM5. Mobile chung shell/menu/ghim, kiểm thử hồi quy và nghiệm thu tài khoản/hồ sơ được phép; chưa Publish.
+- [x] CRM1a. Nền tảng riêng CRM, quyền bổ nhiệm/phạm vi, danh mục tùy chỉnh và kiểm thử backend cách ly.
+- [x] CRM2a. Hồ sơ tổ chức/cá nhân, liên hệ/địa điểm, chống trùng, lịch sử/bàn giao, file riêng tư và giao diện.
+- [x] CRM3a. Lịch hẹn/chu kỳ/mùa vụ, tương tác, quá hạn/dời lịch, snapshot lịch sử và nhắc Base chống trùng.
+- [x] CRM4a. Báo cáo theo kỳ/phạm vi, năm tỷ lệ, biểu đồ cơ cấu/hoạt động, drill-down, so sánh cơ bản và xuất có quyền.
+- [x] CRM5a. Menu/ghim dùng chung, mobile 320/390/430/768/1280 cách ly đạt; 52 test đạt, build OK; docs/crm-verification.md. Chưa Publish.
+- [ ] CRM5b. Nghiệm thu lưu→đọc→chăm sóc→báo cáo/quyền/file/nhắc thật: cần đăng nhập Preview và hồ sơ/lịch được phép; --self không khớp, không tự chọn tài khoản khác.
+- [ ] CRM4b/UX. Chưa hoàn thiện phân tích đa mảng/khối/lâu chưa chăm sóc, tổng hợp so sánh đa cấp đầy đủ, trường chuyên sâu cấu hình theo nhóm, lịch cố định ngày tháng và màn quản lý mẫu cá nhân cho Sale; ghi rõ giới hạn trong docs/crm-verification.md.
 
 ## MOBILE NGHỈ PHÉP & ĐI SỚM MUỘN — 06/11/2026
 - [x] ML1. Ba ô tạo trực tiếp, tab/danh sách/bộ lọc mobile gọn đúng quyền; giữ /leave và deep link, tách attendance.
