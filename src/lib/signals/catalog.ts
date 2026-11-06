@@ -34,6 +34,10 @@ export const statusLabel = (s: string | null | undefined) => (s ? STATUS_LABEL[s
 export const isOpen = (s: string | null | undefined) => !!s && OPEN_STATUSES.includes(s as SignalStatus);
 
 export interface Signal {
+  potential?: 'high' | 'medium' | 'low' | 'unrated';
+  potential_updated_by?: string | null;
+  potential_updated_at?: string | null;
+  label_ids?: string[];
   id: string;
   detected_on: string;
   customer_name: string;

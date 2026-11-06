@@ -1,7 +1,9 @@
 import { needGroupsOf, isDueToday, isOverdue, todayKey, type LastNote, type Signal, type SignalStatus } from "./catalog";
+import { potentialOf,stageOf,type Potential,type Stage } from './potential';
 
 export type DateBasis = "created" | "closed";
 export interface ReportFilter {
+  potential?: Potential; labelId?: string; stage?: Stage;
   from?: string; to?: string; basis: DateBasis;
   source?: string; product?: string; needGroup?: string;
   saleId?: string; creatorId?: string; status?: string; lostReason?: string;
@@ -15,6 +17,9 @@ export const reasonGroup = (r: string | null) => (!r ? null : r.startsWith("Khá
 
 export function filterSignals(list: Signal[], f: ReportFilter): Signal[] {
   return list.filter((s) => {
+    if(f.potential && potentialOf(s)!==f.potential) return false;
+    if(f.labelId && !s.label_ids?.includes(f.labelId)) return false;
+    if(f.stage && stageOf(s)!==f.stage) return false;
     if (s.cancelled_at) return false; // Hủy ≠ Trượt: loại khỏi báo cáo thường
     if (f.from || f.to) {
       const d = dateOf(s, f.basis);
@@ -144,6 +149,7 @@ export function reportInsights(args: {
 export type Quick = "all" | SignalStatus;
 export type TimeRange = "" | "today" | "7d" | "month" | "custom";
 export interface ListFilter {
+  potential?: Potential; labelId?: string; stage?: Stage; nextFrom?: string; nextTo?: string;
   q?: string; quick: Quick; time: TimeRange; from?: string; to?: string;
   source?: string; product?: string; needGroup?: string; saleId?: string; creatorId?: string;
   lostReason?: string; unassigned?: boolean; cancelled?: boolean;
@@ -171,6 +177,11 @@ export function applyDetailFilter(list: Signal[], f: ListFilter, today = todayKe
   const t = f.q?.trim().toLowerCase();
   const [from, to] = timeBounds(f, today);
   return list.filter((s) => {
+    if(f.potential && potentialOf(s)!==f.potential) return false;
+    if(f.labelId && !s.label_ids?.includes(f.labelId)) return false;
+    if(f.stage && stageOf(s)!==f.stage) return false;
+    if(f.nextFrom && (!s.next_contact_on || s.next_contact_on<f.nextFrom)) return false;
+    if(f.nextTo && (!s.next_contact_on || s.next_contact_on>f.nextTo)) return false;
     if (t && !(s.customer_name.toLowerCase().includes(t) || s.phone.includes(t))) return false;
     if (!!f.cancelled !== !!s.cancelled_at) return false;
     if (f.unassigned && s.assigned_to !== null) return false;

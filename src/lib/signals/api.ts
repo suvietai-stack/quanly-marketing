@@ -8,6 +8,7 @@ import { resolveOptions, type CatOption, type LastNote, type OptionScope, type S
 import type { AcceptNoteRow, AssignEventRow } from "./acceptTime";
 import type { ProgressionRow } from './progression';
 import type { DeadlineRow, DeadlineReport, DeadlineHistory } from './deadlines';
+import type { SignalLabel, LabelLink, Potential } from './potential';
 
 const db = supabase as any;
 const PAGE = 1000;
@@ -24,8 +25,25 @@ export async function fetchAll<T>(build: (from: number, to: number) => any): Pro
 }
 
 export async function listSignals(): Promise<Signal[]> {
-  return fetchAll<Signal>((a, b) => db.from("opportunity_signals").select("*")
-    .order("detected_on", { ascending: false }).order("created_at", { ascending: false }).order("id").range(a, b));
+  const [rows,links] = await Promise.all([
+    fetchAll<Signal>((a,b)=>db.from('opportunity_signals').select('*').order('detected_on',{ascending:false}).order('created_at',{ascending:false}).order('id').range(a,b)),
+    fetchAll<LabelLink>((a,b)=>db.from('signal_label_links').select('signal_id,label_id').order('signal_id').order('label_id').range(a,b)),
+  ]);
+  const labels: Record<string,string[]> = {};
+  for(const link of links) (labels[link.signal_id] ??= []).push(link.label_id);
+  return rows.map(s=>({...s,label_ids:labels[s.id]??[]}));
+}
+
+export async function listSignalLabels(): Promise<SignalLabel[]> {
+  return fetchAll<SignalLabel>((a,b)=>db.from('signal_labels').select('*').order('name').order('id').range(a,b));
+}
+export async function saveSignalLabel(id: string | null,name: string,personal: boolean,active = true): Promise<string> {
+  const {data,error}=await db.rpc('signal_label_save',{_id:id,_name:name,_personal:personal,_active:active});
+  if(error) throw error; return data;
+}
+export async function saveSignalEnrichment(id:string,requestId:string,potential:Potential,labels:string[],next:string|null,nextAt:string|null) {
+  const {error}=await db.rpc('signal_enrichment_save',{_id:id,_request_id:requestId,_potential:potential,_labels:labels,_next:next,_next_at:nextAt});
+  if(error) throw error;
 }
 
 /** Diễn biến gần nhất của mỗi tín hiệu (trong phạm vi được xem). */
