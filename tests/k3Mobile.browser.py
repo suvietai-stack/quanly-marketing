@@ -35,6 +35,7 @@ async def main():
     await route.fulfill(content_type='application/json',body=json.dumps(result))
    await page.route('**/rest/v1/rpc/**',rpc)
    await page.goto('http://localhost:8080/k3-mobile-fixture')
+   await page.screenshot(path=str(OUT/f"{width}-start.png"));print((await page.locator("body").inner_text())[:1000],errors)
    await expect(page.get_by_text(actions[0]['name'],exact=True)).to_be_visible()
    if width<768:
     await expect(page.get_by_role('heading',name='Quản lý 3K',exact=True)).to_have_count(1)
