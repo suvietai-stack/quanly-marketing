@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## ĐÁNH GIÁ CƠ HỘI / LỌC HẠN — 06/11/2026
+- [ ] AS1. Rút gọn đánh giá chỉ tiềm năng/nhãn, tìm kiếm/chip/chọn nhiều/Quản lý nhãn, Lưu đánh giá giữ lịch và diễn biến cũ dưới khóa.
+- [ ] AS2. Bốn chip hạn độc lập một hàng cuộn ngang; đếm cùng tập lọc khác, mobile chuyển các lựa chọn khác vào Bộ lọc.
+- [ ] AS3. Kiểm thử quyền/lịch/diễn biến/hạn/số đếm và browser mobile/desktop; không Publish.
+- [ ] AS4. Nghiệm thu phiên thật: cần người dùng đăng nhập Preview và hồ sơ được phép nếu mint phiên riêng không khớp.
+
 ## CRM PHÂN LOẠI / DANH MỤC / BÁO CÁO — 06/11/2026
 - [x] CC1. Đã thêm 7/8 tệp đang sử dụng vào ID nhóm thật; chống trùng và không ghi đè tệp cũ, 0 khách/liên hệ/lịch trước và sau.
 - [x] CC2. Cây Nhóm–Tệp, thêm tệp trực tiếp/thêm nhóm, mô tả/thứ tự/ẩn/số khách theo scope; đặc điểm dùng config.group_ids; 0258–0259 guard phân loại, sắp xếp nguyên tử, tên trùng/cha có khách bảo vệ.
