@@ -3,7 +3,7 @@ import { featureInGroup, segmentOptions, structureRows, newCustomerTrend } from 
 import type { Catalog, Customer, ReportData } from './types';
 const cats=[{id:'g',kind:'group',parent_id:null,name:'Nhóm tùy chỉnh',active:true,config:{}},{id:'s',kind:'segment',parent_id:'g',name:'Tệp tùy chỉnh',active:true,config:{}},{id:'x',kind:'segment',parent_id:'h',active:true,config:{}},{id:'p',kind:'priority',config:{key_customer:true}}] as Catalog[];
 const c={id:'1',group_id:'g',segment_id:'s',priority_id:'p',created_at:'2026-11-02T00:00:00+07:00'} as Customer;
-const data={customers:[c,{...c,id:'2',segment_id:null},c],schedules:[],interactions:[],totals:{},start:'2026-11-01',end:'2026-11-30',as_of:'2026-11-06T00:00:00+07:00'} as ReportData;
+const data={customers:[c,{...c,id:'2',segment_id:null},c],schedules:[],interactions:[],totals:{},start:'2026-11-01',end:'2026-11-30',as_of:'2026-11-06T00:00:00+07:00',server_now:'2026-11-06T00:00:00+07:00'} as ReportData;
 it('Tệp only belongs to selected group and cannot be chosen before group',()=>{expect(segmentOptions(cats,'g').map(c=>c.id)).toEqual(['s']);expect(segmentOptions(cats,'')).toEqual([]);});
 it('unique main files plus unclassified shares equal 100 without related label duplication',()=>{const rows=structureRows(data,cats,'g');expect(rows.find(r=>r.id==='s')?.count).toBe(1);expect(rows.find(r=>r.id==='none')?.count).toBe(1);expect(rows.reduce((s,r)=>s+(r.share||0),0)).toBe(100);});
 it('new dynamic catalog shows zero customers without code changes',()=>{const rows=structureRows(data,[...cats,{...cats[1],id:'new',name:'Đơn vị thiết kế'}],'g');expect(rows.find(r=>r.id==='new')?.count).toBe(0);});
