@@ -2,7 +2,7 @@
 
 ## CHUYỂN MENU KPI SANG MARKETING — 06/11/2026
 - [x] K1. Chuyển nguyên hai mục /settings/kpi-v2 và /reports-v2 sang Marketing trong cấu hình chung, giữ predicate quyền/nhãn/route/ghim, không đổi nghiệp vụ.
-- [ ] K2. Kiểm thử Sidebar/Launcher, tìm kiếm/ghim/tiêu đề và giữ 3K/KR ở Kinh doanh; chưa Publish.
+- [x] K2. 28 unit test đạt: KPI chỉ ở Marketing, route/ghim/tìm kiếm/nhãn/quyền cũ và 3K/KR giữ nguyên; Sidebar/Launcher/chrome hồi quy đạt. Trình duyệt cách ly 1280/390 xác minh mở hai route KPI cũ từ Marketing, không KPI trong Kinh doanh; build OK, chưa Publish. Không nghiệm thu dữ liệu KPI thật khi phiên chưa đăng nhập.
 
 ## BỎ HEADER LAUNCHER LẶP — 06/11/2026
 - [x] H1. Bỏ h1/nút quay lại nội dung Launcher ở mọi khu vực; header chung có tên Trang chủ/khu vực, tìm kiếm cách header 16px, lưới gọn và giữ ghim.
