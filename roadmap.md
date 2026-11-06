@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## QUY HOẠCH MENU BASE — 06/11/2026
+- [x] N1. Kiểm kê/ánh xạ 30 URL cũ sang 10 khu vực; Showroom và 6 mục con tương lai không có liên kết, không nhân bản chức năng.
+- [x] N2. Sidebar hai cấp, giữ nguyên predicate quyền/route; mở/đóng theo người dùng, tự mở trang con, chọn đường dẫn cụ thể nhất, thu gọn/mobile.
+- [x] N3a. Kiểm thử menu cách ly desktop 1280/mobile 390/tablet 768 đạt; không lỗi JS/tràn, build OK. Báo cáo tại docs/base-navigation-verification.md; không sửa nghiệp vụ/database, chưa Publish.
+- [ ] N3b. Nghiệm thu AppShell và trang nghiệp vụ bằng phiên thật: đang /login, mint --self không khớp tài khoản; cần người dùng đăng nhập Preview. Khác biệt quyền menu Tiền Về/trang được ghi riêng, không tự sửa.
+
 ## HỘP XÁC NHẬN XÓA 3K — 05/11/2026
 - [x] D1. Tái hiện dialog count=0 sau menu đóng; K3DeleteProvider ngoài Biz3KScreen giữ target/dialog cho Ngày/KG/KF, không timer.
 - [x] D2. Guard đồng bộ chống gửi trùng, busy/inline error giữ mở; thành công đóng và invalidate toàn bộ k3_* gồm Thùng rác. Quyền/RPC/lịch sử không đổi.
