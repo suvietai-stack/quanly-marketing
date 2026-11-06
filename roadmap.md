@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TRANG CHỦ MOBILE APP LAUNCHER — 06/11/2026
+- [x] L1. Cùng visibleNavigation với Sidebar; trang chủ mobile, màn hình khu vực qua root search, tìm kiếm chỉ chức năng đúng quyền.
+- [x] L2. Ghim/bỏ ghim/sắp xếp theo tài khoản trên thiết bị; sáu ghim + Xem thêm; thanh dưới nối Task/chuông/hồ sơ thật, giữ deep link/desktop, không đổi backend.
+- [x] L3a. 17 unit test đạt; Launcher cách ly 320/390/767/1280 và Sidebar hồi quy 1280/390/768 đạt; trang thật signed-out về login, build OK. Chi tiết docs/mobile-launcher-verification.md; chưa Publish.
+- [ ] L3b. Nghiệm thu AppShell/chuông/deep link qua đăng nhập và thu hồi quyền thật: Preview đang đăng xuất, mint --self không khớp hồ sơ; cần người dùng đăng nhập, không tự chọn tài khoản khác.
+
 ## QUY HOẠCH MENU BASE — 06/11/2026
 - [x] N1. Kiểm kê/ánh xạ 30 URL cũ sang 10 khu vực; Showroom và 6 mục con tương lai không có liên kết, không nhân bản chức năng.
 - [x] N2. Sidebar hai cấp, giữ nguyên predicate quyền/route; mở/đóng theo người dùng, tự mở trang con, chọn đường dẫn cụ thể nhất, thu gọn/mobile.

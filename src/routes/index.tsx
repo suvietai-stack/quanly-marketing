@@ -21,15 +21,19 @@ import { getPublicBranding } from "@/lib/branding.functions";
 import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): { area?: string; view?: 'dashboard' } => ({
+    area: typeof search.area === 'string' ? search.area : undefined,
+    view: search.view === 'dashboard' ? 'dashboard' : undefined,
+  }),
   loader: () => getPublicBranding(),
   head: ({ loaderData }) => ({ meta: [
-    { title: `Tổng Quan — ${loaderData?.app_name ?? "Base Marketing"}` },
+    { title: `Trang chủ — ${loaderData?.app_name ?? "Base Sứ Việt"}` },
     { name: "description", content: loaderData?.description ?? "Quản lý công việc" },
-    { property: "og:title", content: `Tổng Quan — ${loaderData?.app_name ?? "Base Marketing"}` },
+    { property: "og:title", content: `Trang chủ — ${loaderData?.app_name ?? "Base Sứ Việt"}` },
     { property: "og:description", content: loaderData?.description ?? "Quản lý công việc" },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
-    { name: "twitter:title", content: `Tổng Quan — ${loaderData?.app_name ?? "Base Marketing"}` },
+    { name: "twitter:title", content: `Trang chủ — ${loaderData?.app_name ?? "Base Sứ Việt"}` },
     { name: "twitter:description", content: loaderData?.description ?? "Quản lý công việc" },
   ] }),
   component: () => (

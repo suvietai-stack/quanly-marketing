@@ -146,6 +146,21 @@
   position: relative;
   isolation: isolate;
 }
+
+.mobile-launcher { letter-spacing: 0; }
+.mobile-launcher :is(h1,h2,h3) { letter-spacing: 0; }
+.launcher-section-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--foreground); }
+.launcher-app-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px 8px; }
+.launcher-icon { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 8px; color: var(--launcher-ink); background: color-mix(in oklab,var(--launcher-ink) 12%,var(--card)); }
+.launcher-icon svg { width: 24px; height: 24px; }
+.launcher-tone-primary { --launcher-ink: var(--primary); }
+.launcher-tone-success { --launcher-ink: var(--success); }
+.launcher-tone-info { --launcher-ink: var(--info); }
+.launcher-tone-design { --launcher-ink: var(--biz-secondary); }
+.launcher-tone-reward { --launcher-ink: var(--chipi-orange); }
+.launcher-tone-muted { --launcher-ink: var(--muted-foreground); }
+.mobile-bottom-nav { padding-bottom: max(8px,env(safe-area-inset-bottom)); }
+@media (max-width: 359px) { .launcher-app-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 .login-page::before {
   content: "";
   position: absolute;

@@ -1,0 +1,2 @@
+# Navigation architecture
+- Mobile Launcher and desktop Sidebar consume the same visibleNavigation output. Root search selects area/dashboard; user-keyed local pins store only route preferences and are revalidated against live visibility. This preserves permissions, deep links and business data without a second catalog.
