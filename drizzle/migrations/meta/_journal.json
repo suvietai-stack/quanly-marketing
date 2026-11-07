@@ -1884,6 +1884,13 @@
       "when": 1794022480574,
       "tag": "0268_design_order_transition_timestamp_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 269,
+      "version": "7",
+      "when": 1794022567348,
+      "tag": "0269_design_order_file_permission_compatibility",
+      "breakpoints": true
     }
   ]
 }
