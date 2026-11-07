@@ -16,6 +16,7 @@ import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan, designLabel, DESIGN_FLOWS } from '@/lib/orders/design';
 import {DesignClassification} from './DesignClassification';
 import {DesignAttachments} from './DesignAttachments';
+import {validDocumentUrl} from '@/lib/orders/catalogs';
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const s = useStore();
@@ -407,7 +408,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
             </div>
           </TabsContent>
         </Tabs>
-        {Object.keys(o.specialty || {}).length>0 && <section className="border-t pt-3"><h3 className="text-sm font-semibold">Yêu cầu chuyên môn</h3>{Object.entries(o.specialty || {}).map(([key,value])=><p key={key} className="text-sm mt-2"><span className="text-muted-foreground">{key}: </span>{value || '—'}</p>)}</section>}
+        {Object.keys(o.specialty || {}).length>0 && <section className="border-t pt-3"><h3 className="text-sm font-semibold">Yêu cầu chuyên môn</h3><div className="grid gap-3 sm:grid-cols-2 mt-3">{Object.entries(o.specialty || {}).map(([key,value])=>key==='Logo khách hàng'?<p key={key} className="text-sm break-words"><span className="text-muted-foreground">{key} (lịch sử): </span>{validDocumentUrl(value)?<a href={value} target="_blank" rel="noopener noreferrer" className="text-primary underline">{value}</a>:value || '—'}</p>:<div key={key}><Label>{key}</Label><Input disabled={!canEdit} value={value || ''} onChange={e=>setField({specialty:{...o.specialty,[key]:e.target.value}})}/></div>)}</div></section>}
         {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
       </DialogContent>
     </Dialog>
