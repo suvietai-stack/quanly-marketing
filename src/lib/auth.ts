@@ -365,6 +365,10 @@ export const PERMISSIONS: PermissionDef[] = [
   P("video.create_design_order", "Tạo order thiết kế từ video", "Video", "Tích hợp"),
 
   // ===== H. Order Thiết Kế =====
+  ...(['photo', 'marketing_design', 'order_mockup'] as const).flatMap((flow) => {
+    const label = flow === 'photo' ? 'Chụp ảnh' : flow === 'marketing_design' ? 'Ấn phẩm Marketing' : 'Ma-két đơn hàng';
+    return [['view','Xem việc'],['view_all','Xem toàn bộ'],['create','Tạo yêu cầu'],['edit','Sửa thông tin'],['assign','Phân công'],['take','Nhận việc'],['submit','Gửi duyệt'],['resubmit','Gửi lại'],['approve','Duyệt'],['request_changes','Yêu cầu sửa'],['deliver','Bàn giao'],['complete','Xác nhận hoàn thành'],['cancel','Hủy'],['restore','Khôi phục'],['report_view','Xem báo cáo'],['edit_reviewer','Đổi người duyệt'],['send_request','Gửi yêu cầu'],['update_draft','Cập nhật file'],['force_status','Can thiệp trạng thái'],['delete','Xóa nháp']].map(([action, text]) => P(`order.${flow}.${action}`, `${text} — ${label}`, 'Thiết Kế', label));
+  }),
   P("order.view", "Xem order thiết kế", "Thiết Kế", "Dữ liệu"),
   P("order.view_all", "Xem tất cả order", "Thiết Kế", "Dữ liệu"),
   P("order.view_mine", "Chỉ xem order liên quan", "Thiết Kế", "Dữ liệu"),

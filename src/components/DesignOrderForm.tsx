@@ -16,6 +16,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { saveDesignOrder } from '@/lib/orders/api';
+import { designCan } from '@/lib/orders/design';
 
 function suggestDeadline(publishDate?: string): string {
   if (!publishDate) return "";
@@ -68,9 +70,11 @@ export function DesignOrderFormFromContent({
   const [refLink, setRefLink] = useState("");
   const [draftLink, setDraftLink] = useState(content.draftLink || "");
   const [outlineLinkRef, setOutlineLinkRef] = useState(content.outlineLink || "");
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = () => {
-    if (!can("order.create")) {
+  const handleSubmit = async () => {
+    if (saving) return;
+    if (!designCan(can,'marketing_design','create')) {
       toast.error("Bạn không có quyền tạo Order thiết kế");
       return;
     }
@@ -95,8 +99,9 @@ export function DesignOrderFormFromContent({
       type,
       source: "Web",
       sourceModule: "Content Web",
+      workflowKind: 'marketing_design',
       refLinkObject: content.title,
-      requester: requester || defaultCreator,
+      requester: defaultCreator,
       assignee: finalAssignee,
       reviewer: reviewer || requester || defaultCreator || undefined,
       deadline: deadline || undefined,
@@ -118,10 +123,15 @@ export function DesignOrderFormFromContent({
       }],
     };
 
-    s.add("orders", order);
+    setSaving(true);
+    try {
+    if (content.designOrderId && s.orders.some(o=>o.id===content.designOrderId)) {toast.error('Bài viết đã có Order thiết kế');return;}
+    await saveDesignOrder(order.id, order);
+    await s.reload();
     s.update("webContents", content.id, { designOrderId: order.id, needsDesign: true });
     toast.success("Đã tạo order thiết kế và liên kết với bài content.");
     onClose();
+    } catch(e) {toast.error(e instanceof Error?e.message:'Không tạo được Order');} finally {setSaving(false);}
   };
 
   return (
@@ -281,7 +291,7 @@ export function DesignOrderFormFromContent({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Hủy</Button>
-          <Button onClick={handleSubmit}>Tạo order</Button>
+          <Button disabled={saving} onClick={handleSubmit}>{saving?'Đang lưu…':'Tạo order'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

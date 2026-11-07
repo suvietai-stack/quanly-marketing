@@ -37,6 +37,10 @@ import { Route as BizReportsRouteImport } from './routes/biz.reports'
 import { Route as BizSettingsRouteImport } from './routes/biz.settings'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
+import { Route as DesignMarketingRouteImport } from './routes/design.marketing'
+import { Route as DesignMockupsRouteImport } from './routes/design.mockups'
+import { Route as DesignPhotoRouteImport } from './routes/design.photo'
+import { Route as DesignReportsRouteImport } from './routes/design.reports'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
@@ -212,6 +216,26 @@ const BrandsIndexRoute = BrandsIndexRouteImport.update({
 const BrandsIdRoute = BrandsIdRouteImport.update({
   id: '/brands/$id',
   path: '/brands/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignMarketingRoute = DesignMarketingRouteImport.update({
+  id: '/design/marketing',
+  path: '/design/marketing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignMockupsRoute = DesignMockupsRouteImport.update({
+  id: '/design/mockups',
+  path: '/design/mockups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignPhotoRoute = DesignPhotoRouteImport.update({
+  id: '/design/photo',
+  path: '/design/photo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignReportsRoute = DesignReportsRouteImport.update({
+  id: '/design/reports',
+  path: '/design/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocalIndexRoute = LocalIndexRouteImport.update({
@@ -428,6 +452,10 @@ export interface FileRoutesByFullPath {
   '/biz/reports': typeof BizReportsRoute
   '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
+  '/design/marketing': typeof DesignMarketingRoute
+  '/design/mockups': typeof DesignMockupsRoute
+  '/design/photo': typeof DesignPhotoRoute
+  '/design/reports': typeof DesignReportsRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -494,6 +522,10 @@ export interface FileRoutesByTo {
   '/biz/reports': typeof BizReportsRoute
   '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
+  '/design/marketing': typeof DesignMarketingRoute
+  '/design/mockups': typeof DesignMockupsRoute
+  '/design/photo': typeof DesignPhotoRoute
+  '/design/reports': typeof DesignReportsRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -561,6 +593,10 @@ export interface FileRoutesById {
   '/biz/reports': typeof BizReportsRoute
   '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
+  '/design/marketing': typeof DesignMarketingRoute
+  '/design/mockups': typeof DesignMockupsRoute
+  '/design/photo': typeof DesignPhotoRoute
+  '/design/reports': typeof DesignReportsRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -629,6 +665,10 @@ export interface FileRouteTypes {
     | '/biz/reports'
     | '/biz/settings'
     | '/brands/$id'
+    | '/design/marketing'
+    | '/design/mockups'
+    | '/design/photo'
+    | '/design/reports'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -695,6 +735,10 @@ export interface FileRouteTypes {
     | '/biz/reports'
     | '/biz/settings'
     | '/brands/$id'
+    | '/design/marketing'
+    | '/design/mockups'
+    | '/design/photo'
+    | '/design/reports'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -761,6 +805,10 @@ export interface FileRouteTypes {
     | '/biz/reports'
     | '/biz/settings'
     | '/brands/$id'
+    | '/design/marketing'
+    | '/design/mockups'
+    | '/design/photo'
+    | '/design/reports'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -828,6 +876,10 @@ export interface RootRouteChildren {
   BizReportsRoute: typeof BizReportsRoute
   BizSettingsRoute: typeof BizSettingsRoute
   BrandsIdRoute: typeof BrandsIdRoute
+  DesignMarketingRoute: typeof DesignMarketingRoute
+  DesignMockupsRoute: typeof DesignMockupsRoute
+  DesignPhotoRoute: typeof DesignPhotoRoute
+  DesignReportsRoute: typeof DesignReportsRoute
   LocalIdRoute: typeof LocalIdRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
@@ -1064,6 +1116,34 @@ declare module '@tanstack/react-router' {
       path: '/brands/$id'
       fullPath: '/brands/$id'
       preLoaderRoute: typeof BrandsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design/marketing': {
+      id: '/design/marketing'
+      path: '/design/marketing'
+      fullPath: '/design/marketing'
+      preLoaderRoute: typeof DesignMarketingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design/mockups': {
+      id: '/design/mockups'
+      path: '/design/mockups'
+      fullPath: '/design/mockups'
+      preLoaderRoute: typeof DesignMockupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design/photo': {
+      id: '/design/photo'
+      path: '/design/photo'
+      fullPath: '/design/photo'
+      preLoaderRoute: typeof DesignPhotoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design/reports': {
+      id: '/design/reports'
+      path: '/design/reports'
+      fullPath: '/design/reports'
+      preLoaderRoute: typeof DesignReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/local/': {
@@ -1348,6 +1428,10 @@ const rootRouteChildren: RootRouteChildren = {
   BizReportsRoute: BizReportsRoute,
   BizSettingsRoute: BizSettingsRoute,
   BrandsIdRoute: BrandsIdRoute,
+  DesignMarketingRoute: DesignMarketingRoute,
+  DesignMockupsRoute: DesignMockupsRoute,
+  DesignPhotoRoute: DesignPhotoRoute,
+  DesignReportsRoute: DesignReportsRoute,
   LocalIdRoute: LocalIdRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
