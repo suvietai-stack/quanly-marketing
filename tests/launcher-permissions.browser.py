@@ -24,7 +24,7 @@ async def main():
             quick = page.get_by_role('region', name='Truy cập nhanh')
             await expect(quick.get_by_role('link', name='Nghỉ phép & Đi sớm muộn')).to_be_visible()
             await expect(quick.get_by_role('link', name='CRM Khách Hàng')).to_have_count(0)
-            assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) == PINS, 'initial loading erased pins'
+            assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) == PINS, 'initial loading erased pins: ' + str(await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY))
             await page.evaluate("window.dispatchEvent(new CustomEvent('fixture-access-pending', {detail:false}))")
             await expect(quick.get_by_role('link', name='CRM Khách Hàng')).to_be_visible()
             await expect(quick.get_by_role('link', name='Phê duyệt', exact=True)).to_be_visible()
