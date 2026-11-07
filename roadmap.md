@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## TÁI CẤU TRÚC THIẾT KẾ — 07/11/2026
+- [ ] DS1. Rà soát Order/schema/quyền/workflow/Content/Video/KPI/thông báo và chốt phương án bảo toàn.
+- [ ] DS2. Bổ sung phân luồng độc lập loại sản phẩm, phân loại nguồn chắc chắn, giữ Order cũ không rõ và URL cũ.
+- [ ] DS3. Năm mục menu dùng quyền chung, All-in-One/ba luồng, form chuyên môn và xử lý hiện có.
+- [ ] DS4. Ba báo cáo riêng và dashboard tổng hợp thật, thời gian/kỳ/mẫu số/phạm vi/drill-down đồng bộ.
+- [ ] DS5. Kiểm thử dữ liệu/quyền/liên kết/workflow và Mobile/Desktop; nghiệm thu phiên thật, không Publish.
+
 ## HOTFIX ƯU TIÊN CÔNG VIỆC TÍN HIỆU — 07/11/2026
 - [x] SF1. Hợp nhất Ưu tiên công việc và ưu tiên tiếp nhận; bảy thứ hạng đúng hạn diễn biến, mặc định work và chuyển lựa chọn priority cũ.
 - [x] SF2. 0263 thêm list_work_priority/lịch diễn biến trước range, RLS/SELECT-only; cùng comparator Desktop/Mobile, kiểu khác độc lập; không ghi nghiệp vụ.
