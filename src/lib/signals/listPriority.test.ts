@@ -3,6 +3,7 @@ import { matchesSignalStatus, signalStatusTabs } from './listPriority';
 import { sortSignals } from './potential';
 import { applyListFilter } from './report';
 import type { Signal } from './catalog';
+import type { DeadlineRow } from './deadlines';
 const row = (id: string, extra: Partial<Signal> = {}): Signal => ({ id, detected_on:'2026-11-06', customer_name:'Khách', phone:'0901234567', address:null, need_detail:null, products:[], need_group:null, source:'Website', marketing_note:null, created_by:'creator', assigned_to:'sale', assigned_at:'2026-11-02T00:00:00Z', status:'consulting', next_contact_on:null, revenue:null, lost_reason:null, closed_at:null, created_at:'2026-11-01T00:00:00Z', updated_at:'2026-11-06T00:00:00Z', ...extra });
 it('shows unassigned only when allowed and waiting directly after all for Sale', () => {
   expect(signalStatusTabs(false).map(x=>x.k)).toEqual(['all','waiting','contacting','consulting','quoted','deposit','won','lost']);
@@ -30,4 +31,18 @@ it('leaving waiting immediately changes priority while cancellation remains last
   expect(sortSignals([active,waiting],'priority')[0]?.id).toBe('waiting');
   expect(sortSignals([active,{...waiting,status:'contacting'}],'priority')[0]?.id).toBe('active');
   expect(sortSignals([row('cancelled',{cancelled_at:'2026-11-07T00:00:00Z',status:null,assigned_to:null}),active],'priority').at(-1)?.id).toBe('cancelled');
+});
+it('work puts all four unassigned and two waiting records before 573 active records',()=>{
+  const rows=[...Array.from({length:573},(_,i)=>row(`active-${i}`,{list_work_priority:2})),...Array.from({length:4},(_,i)=>row(`unassigned-${i}`,{status:null,assigned_to:null})),row('waiting-new',{status:'waiting',assigned_at:'2026-11-05T00:00:00Z'}),row('waiting-old',{status:'waiting'})];
+  expect(sortSignals(rows,'work').slice(0,6).map(s=>s.id)).toEqual(['unassigned-0','unassigned-1','unassigned-2','unassigned-3','waiting-old','waiting-new']);
+  expect(sortSignals(rows,'priority').map(s=>s.id)).toEqual(sortSignals(rows,'work').map(s=>s.id));
+});
+it('work enforces all seven groups and ignores potential and contact dates',()=>{
+  const rows=[row('closed',{status:'won',list_work_priority:2}),row('other',{potential:'high',next_contact_on:'2026-01-01'}),row('soon',{list_work_priority:4}),row('today',{list_work_priority:3}),row('overdue',{list_work_priority:2}),row('waiting',{status:'waiting',list_work_priority:2}),row('unassigned',{status:null,assigned_to:null,list_work_priority:2})];
+  expect(sortSignals(rows,'work').map(s=>s.id)).toEqual(['unassigned','waiting','overdue','today','soon','other','closed']);
+});
+it('Sale waiting leads and refreshed progression state reorders the full set',()=>{
+  const rows=[row('a',{list_work_priority:2}),row('b',{list_work_priority:5}),row('waiting',{status:'waiting'})];
+  const deadline=(signal_id:string,deadline_state:DeadlineRow['deadline_state']):DeadlineRow=>({signal_id,deadline_state,sale_id:'sale',sequence:1,due_on:'2026-11-07',next_due_on:'2026-11-14',calculated_at:'2026-11-07T00:00:00Z',overdue_days:0});
+  expect(sortSignals(rows,'work',{a:deadline('a','updated'),b:deadline('b','overdue')}).map(s=>s.id)).toEqual(['waiting','b','a']);
 });

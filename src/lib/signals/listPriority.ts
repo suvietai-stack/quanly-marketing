@@ -48,6 +48,6 @@ export function compareWorkPriority(a: Signal, b: Signal, deadlines: Record<stri
   if (difference) return difference;
   if (rank < 2) return waitingSince(a).localeCompare(waitingSince(b)) || a.id.localeCompare(b.id);
   const due = (s: Signal) => deadlines[s.id]?.due_on ?? s.list_progression_due_on ?? '9999-12-31';
-  return (rank < 5 ? due(a).localeCompare(due(b)) : 0)
+  return due(a).localeCompare(due(b))
     || (b.list_activity_at ?? b.updated_at).localeCompare(a.list_activity_at ?? a.updated_at) || a.id.localeCompare(b.id);
 }
