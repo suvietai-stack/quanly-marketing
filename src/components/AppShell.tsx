@@ -37,6 +37,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
   const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id });
+  const bizAccess = useAuth(s => s.bizAccess);
+  const launcherAccessReady = !!user && (isSuperAdmin || bizAccess?.user_id === user.id) && approvals.isSuccess && !!approvals.data;
   const logout = useAuth((s) => s.logout);
   const brand = useBranding();
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
@@ -114,7 +116,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={<NotificationBell />} onMenu={() => setOpen(true)} />
         <main className="base-app-content flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
           {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
-          {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} area={search.area} /> : children}
+          {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} area={search.area} accessReady={launcherAccessReady} /> : children}
         </main>
         {user && <ChipiAssistant key={user.id} userId={user.id} />}
         {user && <RewardPopup key={`sao-${user.id}`} userId={user.id} />}

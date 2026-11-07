@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { allowedPins, launcherApps, movePin, pinStorageKey, searchLauncher } from '@/lib/launcher';
+import { allowedPins, launcherApps, movePin, pinStorageKey, reconcilePins, searchLauncher, storedPins } from '@/lib/launcher';
 import type { NavGroup, NavItem } from '@/lib/navigation';
 
 const tones: Record<string, string> = {
@@ -13,7 +13,7 @@ const tones: Record<string, string> = {
   'Marketing': 'launcher-tone-info', 'Thiết Kế': 'launcher-tone-design', 'Mua Hàng & Giao Vận': 'launcher-tone-primary',
   'Kế Toán & Tài Chính': 'launcher-tone-success', 'Hành Chính & Nhân Sự': 'launcher-tone-info', 'Sao Sứ Việt': 'launcher-tone-reward', 'Hệ thống': 'launcher-tone-muted',
 };
-export function MobileLauncher({ groups, userId, area }: { groups: NavGroup[]; userId: string; area?: string }) {
+export function MobileLauncher({ groups, userId, area, accessReady = true }: { groups: NavGroup[]; userId: string; area?: string; accessReady?: boolean }) {
   const [query, setQuery] = useState('');
   const [saved, setSaved] = useState<{ uid: string; pins: string[] }>();
   const [showAll, setShowAll] = useState(false);
@@ -24,21 +24,21 @@ export function MobileLauncher({ groups, userId, area }: { groups: NavGroup[]; u
   useEffect(() => {
     let value: unknown = [];
     try { value = JSON.parse(localStorage.getItem(pinStorageKey(userId)) ?? '[]'); } catch { /* malformed preferences are ignored */ }
-    setSaved({ uid: userId, pins: allowedPins(value, groups) });
+    setSaved({ uid: userId, pins: storedPins(value) });
     setQuery('');
   }, [userId]);
   useEffect(() => {
-    if (saved?.uid !== userId) return;
-    const clean = allowedPins(saved.pins, groups);
+    if (saved?.uid !== userId || !accessReady) return;
+    const clean = reconcilePins(saved.pins, groups, accessReady);
     try { localStorage.setItem(pinStorageKey(userId), JSON.stringify(clean)); setStorageError(false); }
     catch { setStorageError(true); }
     if (clean.join('|') !== saved.pins.join('|')) setSaved({ uid: userId, pins: clean });
-  }, [saved, userId, signature]);
+  }, [saved, userId, signature, accessReady]);
   useEffect(() => { setQuery(''); }, [area]);
   const draft = allowedPins(editing?.uid === userId ? editing.pins : [], groups);
-  const updateDraft = (next: string[]) => setEditing({ uid: userId, pins: allowedPins(next, groups) });
+  const updateDraft = (next: string[]) => { if (accessReady) setEditing({ uid: userId, pins: allowedPins(next, groups) }); };
   const savePins = () => {
-    if (editing?.uid !== userId) return;
+    if (editing?.uid !== userId || !accessReady) return;
     try {
       localStorage.setItem(pinStorageKey(userId), JSON.stringify(draft));
       setSaved({ uid: userId, pins: draft });
@@ -63,7 +63,7 @@ export function MobileLauncher({ groups, userId, area }: { groups: NavGroup[]; u
     <div className="relative"><Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input aria-label="Tìm chức năng trong Base" placeholder="Tìm chức năng trong Base..." className="h-12 rounded-lg bg-card pl-10 pr-11 text-sm" value={query} onChange={e => setQuery(e.target.value)} />{query && <Button variant="ghost" size="icon" className="absolute right-1 top-1 h-10 w-10" onClick={() => setQuery('')} aria-label="Xóa tìm kiếm"><X /></Button>}</div>
     {storageError && <p role="status" className="text-xs text-muted-foreground">Chưa lưu được ghim trên thiết bị này.</p>}
     {query.trim() ? <section aria-label="Kết quả tìm kiếm"><h2 className="launcher-section-title">Kết quả tìm kiếm</h2>{results.length ? <div className="launcher-app-grid">{results.map(i => tile(i))}</div> : <p className="py-8 text-center text-sm text-muted-foreground">Không tìm thấy chức năng.</p>}</section> : group ? <section aria-label={`Chức năng ${group.label}`}><div className="launcher-app-grid">{group.items.map(i => tile(i))}</div>{group.comingSoon && <p className="py-8 text-center text-sm text-muted-foreground">Sắp ra mắt</p>}</section> : <>
-      <section aria-label="Truy cập nhanh"><div className="flex items-center justify-between gap-2 mb-3"><h2 className="launcher-section-title mb-0">Truy cập nhanh</h2><Button variant="ghost" size="sm" disabled={saved?.uid !== userId} onClick={() => { setStorageError(false); setEditing({ uid: userId, pins: [...pins] }); }}><SlidersHorizontal className="h-4 w-4" />Tùy chỉnh</Button></div>{pins.length ? <><div className="launcher-app-grid">{(showAll ? pins : pins.slice(0, 6)).map(path => apps.find(i => i.to === path)).filter((i): i is NavItem => !!i).map(i => tile(i))}</div>{pins.length > 6 && <Button variant="ghost" size="sm" className="mt-2" onClick={() => setShowAll(v => !v)}>{showAll ? 'Thu gọn' : 'Xem thêm'}</Button>}</> : <div className="flex items-center gap-3 border border-dashed rounded-lg p-4 text-muted-foreground"><Pin className="h-5 w-5 shrink-0" /><span className="text-sm">Chưa có chức năng ghim.</span></div>}</section>
+      <section aria-label="Truy cập nhanh"><div className="flex items-center justify-between gap-2 mb-3"><h2 className="launcher-section-title mb-0">Truy cập nhanh</h2><Button variant="ghost" size="sm" disabled={saved?.uid !== userId || !accessReady} onClick={() => { setStorageError(false); setEditing({ uid: userId, pins: [...pins] }); }}><SlidersHorizontal className="h-4 w-4" />Tùy chỉnh</Button></div>{pins.length ? <><div className="launcher-app-grid">{(showAll ? pins : pins.slice(0, 6)).map(path => apps.find(i => i.to === path)).filter((i): i is NavItem => !!i).map(i => tile(i))}</div>{pins.length > 6 && <Button variant="ghost" size="sm" className="mt-2" onClick={() => setShowAll(v => !v)}>{showAll ? 'Thu gọn' : 'Xem thêm'}</Button>}</> : <div className="flex items-center gap-3 border border-dashed rounded-lg p-4 text-muted-foreground"><Pin className="h-5 w-5 shrink-0" /><span className="text-sm">{accessReady ? 'Chưa có chức năng ghim.' : 'Đang tải truy cập nhanh…'}</span></div>}</section>
       <section aria-label="Các khu vực của bạn"><h2 className="launcher-section-title">Các khu vực của bạn</h2><div className="grid grid-cols-2 gap-3">{groups.map(g => { const Icon = g.icon ?? LayoutGrid; return <Button key={g.label} asChild={!g.comingSoon} variant="outline" disabled={g.comingSoon} className="h-auto min-h-36 items-start justify-between flex-col gap-4 rounded-lg bg-card p-4 whitespace-normal text-left shadow-soft">
         {g.comingSoon ? <><span className={`launcher-icon ${tones[g.label]}`}><Icon /></span><span className="text-sm leading-relaxed">{g.label}<span className="block text-[10px] text-muted-foreground mt-1">Sắp ra mắt</span></span></> : <Link to="/" search={{ area: g.label }}><span className={`launcher-icon ${tones[g.label]}`}><Icon /></span><span className="flex w-full items-center justify-between gap-2"><span className="text-sm leading-relaxed font-semibold">{g.label}</span><ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" /></span></Link>}
       </Button>; })}</div></section>
@@ -88,7 +88,7 @@ export function MobileLauncher({ groups, userId, area }: { groups: NavGroup[]; u
         </div>
         <DialogFooter className="gap-2 border-t pt-3">
           {storageError && <p role="alert" className="text-sm text-destructive">Chưa lưu được. Vui lòng thử lại.</p>}
-          <Button variant="outline" onClick={() => setEditing(undefined)}>Hủy</Button><Button onClick={savePins}><Save className="h-4 w-4" />Lưu thay đổi</Button>
+          <Button variant="outline" onClick={() => setEditing(undefined)}>Hủy</Button><Button disabled={!accessReady} onClick={savePins}><Save className="h-4 w-4" />Lưu thay đổi</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
