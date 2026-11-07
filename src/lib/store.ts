@@ -802,6 +802,11 @@ export interface OrderHistoryEntry {
 
 export interface DesignOrder {
   id: ID;
+  workflowKind?: 'photo' | 'marketing_design' | 'order_mockup';
+  recordCreatedAt?: string;
+  recordUpdatedAt?: string;
+  recordCreatedBy?: string;
+  specialty?: Record<string, string>;
   title: string;
   brandId: ID;
   type: OrderType;
@@ -1197,13 +1202,13 @@ async function loadAllFromSupabase() {
       const table = TABLE_FOR[key];
       const { data, error } = await (supabase as any)
         .from(table)
-        .select("id, data")
+        .select(key === 'orders' ? 'id, data, created_at, updated_at, created_by, workflow_kind' : 'id, data')
         .order("created_at", { ascending: false });
       if (error) {
         console.error(`Load ${table} failed:`, error.message);
         return [key, [] as any[]] as const;
       }
-      let items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}) }));
+      let items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}), ...(key === 'orders' ? {workflowKind: r.workflow_kind ?? r.data?.workflowKind, recordCreatedAt: r.created_at, recordUpdatedAt: r.updated_at, recordCreatedBy: r.created_by} : {}) }));
       if (key === "socialPosts") {
         items = items.map((p: any) => ({ ...p, status: normalizeSocialStatus(p.status) }));
       }
@@ -1234,6 +1239,11 @@ async function loadAllFromSupabase() {
 type TableKey = Exclude<CollectionKey, "people">;
 
 async function syncInsert<K extends TableKey>(key: K, item: Collections[K]) {
+  if (key === 'orders') {
+    try { const { saveDesignOrder } = await import('@/lib/orders/api'); await saveDesignOrder(item.id, item as DesignOrder); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Không lưu được Order'); await useStore.getState().reload(); }
+    return;
+  }
   const table = TABLE_FOR[key];
   const { id, ...rest } = item as any;
   const { data: sess } = await supabase.auth.getSession();
@@ -1248,7 +1258,12 @@ async function syncInsert<K extends TableKey>(key: K, item: Collections[K]) {
   }
 }
 
-async function syncUpdate<K extends TableKey>(key: K, id: ID, fullItem: Collections[K]) {
+async function syncUpdate<K extends TableKey>(key: K, id: ID, fullItem: Collections[K], patch?: Partial<Collections[K]>, previous?: Collections[K]) {
+  if (key === 'orders') {
+    try { const { saveDesignOrder } = await import('@/lib/orders/api'); await saveDesignOrder(id, (patch ?? fullItem) as Partial<DesignOrder>, previous as DesignOrder); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Không lưu được Order'); await useStore.getState().reload(); }
+    return;
+  }
   const table = TABLE_FOR[key];
   const { id: _ignored, ...rest } = fullItem as any;
   const { error } = await (supabase as any)
@@ -1335,15 +1350,17 @@ export const useStore = create<State>((set, get) => ({
       return;
     }
     let updated: any = null;
+    let previous: any = null;
     set((s) => {
       const list = (s[key] as any[]).map((i) => {
         if (i.id !== id) return i;
+        previous = i;
         updated = { ...i, ...patch };
         return updated;
       });
       return { [key]: list } as any;
     });
-    if (updated) void syncUpdate(key as TableKey, id, updated);
+    if (updated) void syncUpdate(key as TableKey, id, updated, patch, previous);
   },
 
   remove: (key, id) => {
