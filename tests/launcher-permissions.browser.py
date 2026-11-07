@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 from playwright.async_api import async_playwright, expect
 
-HTML = '''<script>const orig=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('base-launcher')) console.log('PINWRITE',v,new Error().stack);return orig.call(this,k,v)}</script><div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/launcher.browser.tsx"></script>'''
+HTML = '''<div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/launcher.browser.tsx"></script>'''
 KEY = 'base-launcher-pins:launcher-fixture'
 PINS = ['/biz/crm', '/biz/3k', '/biz/approvals', '/leave']
 OUT = Path('/tmp/browser/launcher-permissions')
@@ -15,13 +15,13 @@ async def main():
         for width in [320, 390, 767]:
             page = await browser.new_page(viewport={'width': width, 'height': 1000})
             errors = []
-            page.on('console', lambda msg: print(msg.text) if msg.text.startswith('PINWRITE') else None)
             page.on('pageerror', lambda e: errors.append(str(e)))
             await page.route('http://localhost:8080/**', lambda r: r.fulfill(content_type='text/html', body=HTML) if r.request.resource_type == 'document' else r.continue_())
             await page.goto('http://localhost:8080/')
             await expect(page.get_by_role('button', name='Tùy chỉnh')).to_be_enabled()
             await page.evaluate('([key,pins]) => localStorage.setItem(key, JSON.stringify(pins))', [KEY, PINS])
-            await page.goto('http://localhost:8080/?pending=1')
+            await page.evaluate("localStorage.setItem('launcher-fixture-pending', 'true')")
+            await page.reload()
             quick = page.get_by_role('region', name='Truy cập nhanh')
             await expect(quick.get_by_role('link', name='Nghỉ phép & Đi sớm muộn')).to_be_visible()
             await expect(quick.get_by_role('link', name='CRM Khách Hàng')).to_have_count(0)
@@ -36,7 +36,9 @@ async def main():
                 assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) == PINS, 'refresh erased pins'
                 await page.evaluate('(event) => window.dispatchEvent(new CustomEvent(event, {detail:false}))', event)
                 await expect(quick.get_by_role('link', name=label, exact=True)).to_be_visible()
+            await page.evaluate("localStorage.removeItem('launcher-fixture-pending')")
             await page.reload()
+            await expect(quick.get_by_role('button', name='Tùy chỉnh')).to_be_enabled()
             await page.evaluate("window.dispatchEvent(new CustomEvent('fixture-access-pending', {detail:false}))")
             await expect(quick.get_by_role('link', name='CRM Khách Hàng')).to_be_visible()
             assert await quick.get_by_role('link').evaluate_all('(links) => links.map(l => l.getAttribute("href"))') == PINS

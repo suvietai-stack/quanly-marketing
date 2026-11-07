@@ -10,7 +10,7 @@ import '../src/styles.css';
 function Fixture() {
   const { pathname, search } = useRouterState({ select: s => s.location });
   const [revoked, setRevoked] = useState(false);
-  const [accessPending, setAccessPending] = useState(new URLSearchParams(window.location.search).has('pending'));
+  const [accessPending, setAccessPending] = useState(localStorage.getItem('launcher-fixture-pending') === 'true');
   const [approvalsPending, setApprovalsPending] = useState(false);
   const permissions = ['biz.crm_use','k3.use','leave.create','order.view','ot.view_own','finance.incoming.view','brand.view'];
   const groups = visibleNavigation({ can: p => permissions.includes(p) && !(revoked && p === 'k3.use') && !(accessPending && (p.startsWith('biz.') || p.startsWith('k3.'))), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: !accessPending && !approvalsPending, canApprove: false, pendingCount: 0 });
