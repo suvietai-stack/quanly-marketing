@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## HOTFIX ƯU TIÊN CÔNG VIỆC TÍN HIỆU — 07/11/2026
+- [ ] SF1. Hợp nhất Ưu tiên công việc và ưu tiên tiếp nhận; bảy thứ hạng đúng hạn diễn biến, mặc định ổn định.
+- [ ] SF2. Thứ hạng dữ liệu trước range, RLS/SELECT-only; cùng thứ tự Desktop/Mobile và chế độ khác độc lập.
+- [ ] SF3. Kiểm thử thứ tự 4+2, đủ bảy nhóm, phân trang, đếm, đổi trạng thái và hồi quy.
+- [ ] SF4. Nghiệm thu dữ liệu thật quản lý/Sale trên Desktop/Mobile; không ghi thử/Publish.
+
 ## ƯU TIÊN DANH SÁCH TÍN HIỆU — 07/11/2026
 - [x] SP1. Thứ tự tab chung Desktop/Mobile, Chờ phân công đúng quyền, đếm cùng tập lọc.
 - [x] SP2. 0261–0262 view security-invoker chỉ SELECT, sắp xếp trước range; thời gian phân công/chuyển trạng thái thật và fallback, hai nhóm chờ → đang xử lý → kết thúc, không sửa bản ghi/lịch sử.
