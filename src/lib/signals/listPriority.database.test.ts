@@ -1,0 +1,48 @@
+import { PGlite } from '@electric-sql/pglite';
+import { readFileSync } from 'node:fs';
+import { beforeAll, afterAll, expect, it } from 'vitest';
+const db = new PGlite();
+const uid='00000000-0000-0000-0000-000000000001';
+const id=(n:number)=>`00000000-0000-0000-0001-${String(n).padStart(12,'0')}`;
+const ordered = `select id::text from signal_list_priority order by list_priority,list_wait_since asc nulls last,list_activity_at desc,id`;
+beforeAll(async()=>{
+  await db.exec(`CREATE SCHEMA auth; CREATE ROLE authenticated; CREATE ROLE anon; CREATE ROLE service_role;
+    CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$;
+    GRANT USAGE ON SCHEMA auth TO authenticated;
+    CREATE TABLE opportunity_signals(id uuid primary key,assigned_to uuid,status text,cancelled_at timestamptz,assigned_at timestamptz,created_at timestamptz,updated_at timestamptz);
+    GRANT SELECT ON opportunity_signals TO authenticated,service_role;
+    ALTER TABLE opportunity_signals ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY scoped_read ON opportunity_signals TO authenticated USING(assigned_to=auth.uid());
+    CREATE TABLE opportunity_signal_events(id uuid DEFAULT gen_random_uuid(),signal_id uuid,kind text,detail jsonb,created_at timestamptz);
+    GRANT SELECT ON opportunity_signal_events TO authenticated,service_role;
+    ALTER TABLE opportunity_signal_events ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY event_read ON opportunity_signal_events TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));
+    CREATE TABLE opportunity_signal_notes(id uuid DEFAULT gen_random_uuid(),signal_id uuid,status_from text,status_to text,created_at timestamptz);
+    GRANT SELECT ON opportunity_signal_notes TO authenticated,service_role;
+    ALTER TABLE opportunity_signal_notes ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY note_read ON opportunity_signal_notes TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));`);
+  await db.exec(readFileSync('drizzle/migrations/0261_signal_list_intake_priority.sql','utf8'));
+  await db.exec(`INSERT INTO opportunity_signals SELECT ('00000000-0000-0000-0001-'||lpad(i::text,12,'0'))::uuid,'${uid}', 'consulting',NULL,NULL,'2026-11-01','2026-11-07' FROM generate_series(1,1100) i;`);
+  await db.query(`INSERT INTO opportunity_signals VALUES($1,$2,'waiting',NULL,'2026-11-02','2026-11-01','2026-11-07'),($3,$2,'waiting',NULL,'2026-11-03','2026-11-01','2026-11-07'),($4,NULL,NULL,NULL,NULL,'2026-10-01','2026-11-07'),($5,$2,'won',NULL,NULL,'2026-11-01','2026-11-08'),($6,'00000000-0000-0000-0000-000000000002','waiting',NULL,'2026-09-01','2026-09-01','2026-11-07')`,[id(1101),uid,id(1102),id(1103),id(1104),id(1105)]);
+},60000);
+afterAll(()=>db.close());
+it('sorts the complete set before limit/offset with closed records last',async()=>{
+  expect((await db.query<{id:string}>(ordered+' limit 3')).rows.map(r=>r.id)).toEqual([id(1103),id(1105),id(1101)]);
+  expect((await db.query<{id:string}>(ordered+' limit 1 offset 1104')).rows[0]?.id).toBe(id(1104));
+});
+it('uses latest unassignment and real waiting transition, not same-state notes or edits',async()=>{
+  await db.query(`INSERT INTO opportunity_signal_events(signal_id,kind,detail,created_at) VALUES($1,'assign','{"to":null}','2026-11-06')`,[id(1103)]);
+  await db.query(`INSERT INTO opportunity_signal_notes(signal_id,status_from,status_to,created_at) VALUES($1,'contacting','waiting','2026-11-05'),($1,'waiting','waiting','2026-11-07')`,[id(1101)]);
+  const rows=await db.query<{id:string,t:string}>(`select id::text,list_wait_since::text t from signal_list_priority where id in ($1,$2) order by id`,[id(1101),id(1103)]);
+  expect(rows.rows.map(r=>r.t.slice(0,10))).toEqual(['2026-11-05','2026-11-06']);
+  expect((await db.query<{id:string}>(ordered+' limit 4')).rows.map(r=>r.id)).toEqual([id(1103),id(1105),id(1102),id(1101)]);
+});
+it('enforces parent/history RLS before pages and grants only SELECT to authenticated',async()=>{
+  await db.query("select set_config('test.uid',$1,false)",[uid]);
+  await db.exec('SET ROLE authenticated');
+  const rows=(await db.query<{id:string}>(ordered+' limit 2')).rows.map(r=>r.id);
+  expect(rows).toEqual([id(1102),id(1101)]);
+  expect((await db.query('select * from signal_list_priority where id=$1',[id(1105)])).rows).toHaveLength(0);
+  expect((await db.query<{v:boolean}>("select has_table_privilege('authenticated','signal_list_priority','UPDATE') v")).rows[0]?.v).toBe(false);
+  await db.exec('RESET ROLE');
+});
