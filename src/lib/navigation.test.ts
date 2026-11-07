@@ -52,7 +52,7 @@ describe('Presentation-only navigation', () => {
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations).toHaveLength(31);
+    expect(destinations).toHaveLength(35);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
