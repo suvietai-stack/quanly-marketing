@@ -1,10 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## BIỂU MẪU THIẾT KẾ & TÀI LIỆU — 07/11/2026
-- [ ] DF1. Danh mục ID ổn định từng luồng, sản phẩm Ma-két nhiều lựa chọn/Khác, bảo toàn loại và thương hiệu cũ.
-- [ ] DF2. File/ảnh/link đầu vào riêng tư theo Order, giới hạn và kiểm tra hai phía; không đổi workflow/file kết quả.
-- [ ] DF3. Form tạo/sửa/mobile, Cài đặt danh mục và lọc/báo cáo không đếm trùng.
-- [ ] DF4. Kiểm thử quy tắc/quyền/hồi quy/browser; nghiệm thu phiên thật cần đúng tài khoản và hồ sơ được phép; chưa Publish.
+- [x] DF1. 30 danh mục ID ổn định (7/9/7 loại + 7 sản phẩm); nhiều lựa chọn/Khác; 83 Order giữ nguyên, không phân loại lại lịch sử.
+- [x] DF2. Private design-inputs, RLS theo Order, kiểm file thành công/đuôi/20MB/tổng 100MB/30 tài liệu hai phía; đầu vào tách file kết quả; gỡ liên kết giữ object tránh mất file khi hủy lưu.
+- [x] DF3. Form tạo/sửa bỏ Thương hiệu/Logo chữ, Cài đặt thêm/sửa/kích hoạt/sắp xếp nguyên tử/số Order theo scope; lọc/báo cáo loại và sản phẩm không đếm trùng tổng.
+- [x] DF4a. 55 unit/database/regression đạt; browser cách ly 390/1280 tạo ba luồng → file AI/ảnh/link → nhiều sản phẩm → lưu/đọc lại đạt; build OK, chưa Publish.
+- [ ] DF4b. Nghiệm thu phiên thật upload/mở file/quyền/Cài đặt và camera/bàn phím thiết bị: --self không khớp tài khoản; cần người dùng đăng nhập Preview và hồ sơ được phép.
 
 ## TÁI CẤU TRÚC THIẾT KẾ — 07/11/2026
 - [x] DS1. Rà soát Order/schema/quyền/workflow/Content/Video/KPI/thông báo và chốt phương án bảo toàn.
