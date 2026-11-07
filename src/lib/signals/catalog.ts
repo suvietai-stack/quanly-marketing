@@ -34,6 +34,10 @@ export const statusLabel = (s: string | null | undefined) => (s ? STATUS_LABEL[s
 export const isOpen = (s: string | null | undefined) => !!s && OPEN_STATUSES.includes(s as SignalStatus);
 
 export interface Signal {
+  /** Read-only list metadata; never sent to signal writers. */
+  list_priority?: number;
+  list_wait_since?: string | null;
+  list_activity_at?: string;
   potential?: 'high' | 'medium' | 'low' | 'unrated';
   potential_updated_by?: string | null;
   potential_updated_at?: string | null;

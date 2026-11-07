@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## ƯU TIÊN DANH SÁCH TÍN HIỆU — 07/11/2026
+- [ ] SP1. Thứ tự tab chung Desktop/Mobile, Chờ phân công đúng quyền, đếm cùng tập lọc.
+- [ ] SP2. Truy vấn chỉ đọc RLS sắp xếp trước range; Chờ phân công/Chờ nhận lâu nhất trước, đang xử lý rồi kết thúc, thời gian thật/khóa phụ ổn định.
+- [ ] SP3. Mặc định ưu tiên mới, giữ tùy chọn người dùng/bộ lọc/cập nhật cache/thẻ/báo cáo; unit/database/browser hồi quy.
+- [ ] SP4. Nghiệm thu phiên thật theo quyền, không ghi dữ liệu thử hoặc Publish.
+
 ## DANH SÁCH TÍN HIỆU MOBILE — 06/11/2026
 - [x] SM1. Một hàng tìm/thao tác, trạng thái cuộn ngang có đếm theo cùng tập RLS trừ trạng thái đang chọn; hạn trong Bộ lọc nháp áp dụng/xóa/số điều kiện, giữ phiên theo user.
 - [x] SM2. Thẻ gọn tên tối đa hai dòng/trạng thái/SĐT/nhu cầu thật/tiềm năng/người/hạn diễn biến, Gọi/Zalo sao chép số/chi tiết hiện có; tải thêm 30 thẻ từ cache chung; desktop/nghiệp vụ không đổi.

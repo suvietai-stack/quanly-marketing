@@ -1,5 +1,6 @@
 import { isOpen, todayKey, type Signal } from './catalog';
 import type { DeadlineRow } from './deadlines';
+import { compareIntakePriority } from './listPriority';
 export const POTENTIAL_LABEL = { high: '🔥 Cao', medium: 'Trung bình', low: 'Thấp', unrated: 'Chưa đánh giá' } as const;
 export type Potential = keyof typeof POTENTIAL_LABEL;
 export const potentialOf = (s: Pick<Signal, 'potential'>): Potential => s.potential ?? 'unrated';
@@ -7,7 +8,7 @@ export const STAGES = { intake: 'Tiếp nhận', advice: 'Tư vấn', closing: '
 export type Stage = keyof typeof STAGES;
 export const stageOf = (s: Signal): Stage => !s.status || ['waiting','contacting'].includes(s.status) ? 'intake' : ['consulting','quoted'].includes(s.status) ? 'advice' : s.status === 'lost' ? 'ended' : 'closing';
 export type WorkQuick = 'all' | 'high' | 'action' | 'overdue' | 'won';
-export type SignalSort = 'activity' | 'newest' | 'oldest' | 'soonest' | 'potential' | 'value' | 'work';
+export type SignalSort = 'priority' | 'activity' | 'newest' | 'oldest' | 'soonest' | 'potential' | 'value' | 'work';
 export interface SignalLabel { id: string; owner_id: string | null; name: string; active: boolean }
 export interface LabelLink { signal_id: string; label_id: string }
 export function workState(s: Signal, deadline?: DeadlineRow, today = todayKey()): 'overdue' | 'today' | 'other' {
@@ -25,6 +26,7 @@ export function sortSignals(rows: Signal[], sort: SignalSort, deadlines: Record<
   const date = (s: Signal) => s.next_contact_on ?? deadlines[s.id]?.due_on ?? '9999-12-31';
   const rank = (s: Signal) => { const state=workState(s,deadlines[s.id],today); return state==='overdue'?0:state==='today'?1:isOpen(s.status)&&!s.cancelled_at&&potentialOf(s)==='high'&&!s.next_contact_on?2:3; };
   return [...rows].sort((a,b) => {
+    if (sort === 'priority') return compareIntakePriority(a, b);
     let n=0;
     if(sort==='oldest') n=a.created_at.localeCompare(b.created_at);
     if(sort==='newest') n=b.created_at.localeCompare(a.created_at);
