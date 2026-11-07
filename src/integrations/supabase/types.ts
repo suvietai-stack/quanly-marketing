@@ -9062,6 +9062,10 @@ export type Database = {
         Args: { _action: string; _flow: string; _uid: string }
         Returns: boolean
       }
+      design_order_save: {
+        Args: { _expected?: Json; _id: string; _patch: Json }
+        Returns: Json
+      }
       fbl_can_manage: { Args: never; Returns: boolean }
       fbl_claim_event: { Args: { p_id: string }; Returns: Json }
       fbl_complete_event: {
