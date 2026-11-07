@@ -9092,6 +9092,10 @@ export type Database = {
         Args: { _action: string; _flow: string; _uid: string }
         Returns: boolean
       }
+      design_catalog_move: {
+        Args: { _direction: number; _id: string }
+        Returns: undefined
+      }
       design_catalog_save: {
         Args: {
           _active: boolean
