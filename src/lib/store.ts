@@ -807,6 +807,13 @@ export interface DesignOrder {
   recordUpdatedAt?: string;
   recordCreatedBy?: string;
   specialty?: Record<string, string>;
+  workCategoryId?: string;
+  workCategoryName?: string;
+  workOther?: string;
+  productIds?: string[];
+  productNames?: Record<string, string>;
+  otherProducts?: string[];
+  inputAttachments?: import('./orders/catalogs').DesignAttachment[];
   title: string;
   brandId: ID;
   type: OrderType;
