@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## BIỂU MẪU THIẾT KẾ & TÀI LIỆU — 07/11/2026
+- [x] DF1. 30 danh mục ID ổn định (7/9/7 loại + 7 sản phẩm); nhiều lựa chọn/Khác; 83 Order giữ nguyên, không phân loại lại lịch sử.
+- [x] DF2. Private design-inputs, RLS theo Order, kiểm file thành công/đuôi/20MB/tổng 100MB/30 tài liệu hai phía; đầu vào tách file kết quả; gỡ liên kết giữ object tránh mất file khi hủy lưu.
+- [x] DF3. Form tạo/sửa bỏ Thương hiệu/Logo chữ, Cài đặt thêm/sửa/kích hoạt/sắp xếp nguyên tử/số Order theo scope; lọc/báo cáo loại và sản phẩm không đếm trùng tổng.
+- [x] DF4a. 55 unit/database/regression đạt; browser cách ly 390/1280 tạo ba luồng → file AI/ảnh/link → nhiều sản phẩm → lưu/đọc lại đạt; build OK, chưa Publish.
+- [ ] DF4b. Nghiệm thu phiên thật upload/mở file/quyền/Cài đặt và camera/bàn phím thiết bị: --self không khớp tài khoản; cần người dùng đăng nhập Preview và hồ sơ được phép.
+
 ## TÁI CẤU TRÚC THIẾT KẾ — 07/11/2026
 - [x] DS1. Rà soát Order/schema/quyền/workflow/Content/Video/KPI/thông báo và chốt phương án bảo toàn.
 - [x] DS2. 0264–0269 phân luồng, đọc theo caller, ghi nguyên tử/audit/quyền file; đối soát 83 Order, 76 hoàn thành, 13 Marketing, 70 chưa phân loại, một completedAt; giữ URL cũ.

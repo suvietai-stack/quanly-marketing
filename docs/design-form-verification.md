@@ -1,0 +1,10 @@
+# Design form verification — 2026-11-07
+
+- Applied 0270–0272: dynamic stable-ID catalogs, Order form validation, private Storage rules, atomic catalog sorting.
+- Hosted reads: 7 photo types, 9 marketing types, 7 mockup types, 7 mockup products. 83 Orders; zero new workCategoryId assignments to historical records. No Order data changed, no notifications sent, no Publish.
+- New form removes brand selection/requirement and text logo. Historic brand/type/specialty values remain; old valid logo links render as links. Content/Video creation retains its original associations.
+- Request attachments support allowlisted design/document/image files and http(s) links. Private bucket, 20 MB/file, 100 MB/Order, maximum 30 attachments; trusted validation confirms object existence/access and actual stored size. No public URLs stored. Signed URLs last 60 seconds; an already-issued URL can remain usable until expiry.
+- Remove confirms and stages unlinking; object bytes are intentionally retained rather than physically deleted while a draft may be discarded. Replacing means adding the replacement then removing the old reference. No automatic orphan cleanup is included.
+- Catalog settings reuse settings.role/admin entitlement. Counts are caller-scoped, not organization-global. No hard delete controls.
+- Verification: 55 tests across 6 files. Browser fixture at 390/1280: each flow's correct category, no brand/logo input, mockup multi-product/Other, AI + image upload simulation + external link, save and read back. Fixture simulates Storage and never uploads fake files to the shared backend.
+- Not verified on a real session: hosted upload/download, role matrix, catalog writes, device camera and physical keyboard. auth-session --self has no matching account; do not choose a different account. Real end-to-end acceptance requires the requesting user to sign in and authorize suitable Order inputs.
