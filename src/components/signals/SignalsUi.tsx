@@ -144,13 +144,13 @@ export function SignalsPage() {
   const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
   const labels = useSignalLabels(p.userId);
   const [workQuick,setWorkQuick]=useState<WorkQuick>('all');
-  const [sort,setSort]=useState<SignalSort>('priority');
+  const [sort,setSort]=useState<SignalSort>('work');
   const [labelsOpen,setLabelsOpen]=useState(false);
   const [f, setF] = useState<ListFilter>(emptyFilter());
   const restored=useRef<string|null>(null);
   useEffect(()=>{
     if(!p.userId)return;
-    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort??'priority');setDeadlineFilter(saved.deadlineFilter??null);}}catch{}
+    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort==='priority'?'work':saved.sort??'work');setDeadlineFilter(saved.deadlineFilter??null);}}catch{}
     restored.current=p.userId;
   },[p.userId]);
   useEffect(()=>{if(p.userId&&restored.current===p.userId){try{sessionStorage.setItem(`sig:filters:${p.userId}`,JSON.stringify({f,workQuick,sort,deadlineFilter}));}catch{}}},[f,workQuick,sort,deadlineFilter,p.userId]);
