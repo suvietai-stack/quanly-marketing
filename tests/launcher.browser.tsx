@@ -24,7 +24,7 @@ function Fixture() {
   return <div className="flex min-h-screen"><aside className="hidden md:block w-72 bg-sidebar text-sidebar-foreground"><AppNavigation groups={groups} path={pathname} userId="launcher-fixture" /></aside><main className="w-full min-w-0 p-4"><Button onClick={() => setRevoked(v => !v)}>Thu hồi 3K</Button><div className="md:hidden max-w-xl mx-auto">{pathname === '/' ? <MobileLauncher groups={groups} userId="launcher-fixture" accessReady={!accessPending && !approvalsPending} area={(search as { area?: string }).area} /> : <><h1>Module hiện có</h1><p>{pathname}</p><Button asChild><a href="/">Trang chủ</a></Button></>}</div><p className="hidden md:block">Desktop giữ Sidebar</p></main></div>;
 }
 const rootRoute = createRootRoute({ component: Fixture });
-const home = createRoute({ getParentRoute: () => rootRoute, path: '/', validateSearch: (s: Record<string,unknown>) => ({ area: typeof s.area === 'string' ? s.area : undefined, view: s.view === 'dashboard' ? 'dashboard' : undefined }) });
+const home = createRoute({ getParentRoute: () => rootRoute, path: '/', validateSearch: (s: Record<string,unknown>) => ({ pending: s.pending === '1' ? '1' : undefined, area: typeof s.area === 'string' ? s.area : undefined, view: s.view === 'dashboard' ? 'dashboard' : undefined }) });
 const other = createRoute({ getParentRoute: () => rootRoute, path: '$' });
 const router = createRouter({ routeTree: rootRoute.addChildren([home,other]) });
 const root = document.getElementById('root');
