@@ -6501,6 +6501,7 @@ export type Database = {
           id: string
           is_demo: boolean
           updated_at: string
+          workflow_kind: string | null
         }
         Insert: {
           created_at?: string
@@ -6509,6 +6510,7 @@ export type Database = {
           id: string
           is_demo?: boolean
           updated_at?: string
+          workflow_kind?: string | null
         }
         Update: {
           created_at?: string
@@ -6517,6 +6519,7 @@ export type Database = {
           id?: string
           is_demo?: boolean
           updated_at?: string
+          workflow_kind?: string | null
         }
         Relationships: []
       }
@@ -9055,6 +9058,10 @@ export type Database = {
       crm_template_save: { Args: { _data: Json }; Returns: string }
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
+      design_can: {
+        Args: { _action: string; _flow: string; _uid: string }
+        Returns: boolean
+      }
       fbl_can_manage: { Args: never; Returns: boolean }
       fbl_claim_event: { Args: { p_id: string }; Returns: Json }
       fbl_complete_event: {
