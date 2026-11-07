@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## BIỂU MẪU THIẾT KẾ & TÀI LIỆU — 07/11/2026
+- [ ] DF1. Danh mục ID ổn định từng luồng, sản phẩm Ma-két nhiều lựa chọn/Khác, bảo toàn loại và thương hiệu cũ.
+- [ ] DF2. File/ảnh/link đầu vào riêng tư theo Order, giới hạn và kiểm tra hai phía; không đổi workflow/file kết quả.
+- [ ] DF3. Form tạo/sửa/mobile, Cài đặt danh mục và lọc/báo cáo không đếm trùng.
+- [ ] DF4. Kiểm thử quy tắc/quyền/hồi quy/browser; nghiệm thu phiên thật cần đúng tài khoản và hồ sơ được phép; chưa Publish.
+
 ## TÁI CẤU TRÚC THIẾT KẾ — 07/11/2026
 - [x] DS1. Rà soát Order/schema/quyền/workflow/Content/Video/KPI/thông báo và chốt phương án bảo toàn.
 - [x] DS2. 0264–0269 phân luồng, đọc theo caller, ghi nguyên tử/audit/quyền file; đối soát 83 Order, 76 hoàn thành, 13 Marketing, 70 chưa phân loại, một completedAt; giữ URL cũ.
