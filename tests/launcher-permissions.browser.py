@@ -18,7 +18,7 @@ async def main():
             page.on('pageerror', lambda e: errors.append(str(e)))
             await page.route('http://localhost:8080/**', lambda r: r.fulfill(content_type='text/html', body=HTML) if r.request.resource_type == 'document' else r.continue_())
             await page.goto('http://localhost:8080/')
-            await expect(page.get_by_test_id('mobile-launcher')).to_be_visible()
+            await expect(page.get_by_role('button', name='Tùy chỉnh')).to_be_enabled()
             await page.evaluate('([key,pins]) => localStorage.setItem(key, JSON.stringify(pins))', [KEY, PINS])
             await page.goto('http://localhost:8080/?pending=1')
             quick = page.get_by_role('region', name='Truy cập nhanh')
