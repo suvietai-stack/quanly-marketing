@@ -5763,6 +5763,13 @@ export type Database = {
             referencedRelation: "opportunity_signals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signal_list_priority"
+            referencedColumns: ["id"]
+          },
         ]
       }
       opportunity_signal_events: {
@@ -5796,6 +5803,13 @@ export type Database = {
             columns: ["signal_id"]
             isOneToOne: false
             referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_signal_events_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signal_list_priority"
             referencedColumns: ["id"]
           },
         ]
@@ -5861,6 +5875,13 @@ export type Database = {
             columns: ["signal_id"]
             isOneToOne: false
             referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_signal_notes_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signal_list_priority"
             referencedColumns: ["id"]
           },
         ]
@@ -7525,6 +7546,13 @@ export type Database = {
             referencedRelation: "opportunity_signals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "signal_enrichment_events_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signal_list_priority"
+            referencedColumns: ["id"]
+          },
         ]
       }
       signal_label_links: {
@@ -7559,6 +7587,13 @@ export type Database = {
             columns: ["signal_id"]
             isOneToOne: false
             referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_label_links_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signal_list_priority"
             referencedColumns: ["id"]
           },
         ]
@@ -7628,6 +7663,13 @@ export type Database = {
             columns: ["signal_id"]
             isOneToOne: false
             referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_progression_assignments_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signal_list_priority"
             referencedColumns: ["id"]
           },
         ]
@@ -8330,7 +8372,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      signal_list_priority: {
+        Row: {
+          address: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          closed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          customer_name: string | null
+          detected_on: string | null
+          id: string | null
+          list_activity_at: string | null
+          list_priority: number | null
+          list_wait_since: string | null
+          lost_reason: string | null
+          marketing_note: string | null
+          need_detail: string | null
+          need_group: string | null
+          need_groups: string[] | null
+          next_contact_at: string | null
+          next_contact_on: string | null
+          phone: string | null
+          potential: string | null
+          potential_updated_at: string | null
+          potential_updated_by: string | null
+          products: string[] | null
+          revenue: number | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       account_approve: {

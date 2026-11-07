@@ -1828,6 +1828,13 @@
       "when": 1793957126582,
       "tag": "0260_signal_assessment_save",
       "breakpoints": true
+    },
+    {
+      "idx": 261,
+      "version": "7",
+      "when": 1794017958447,
+      "tag": "0261_signal_list_intake_priority",
+      "breakpoints": true
     }
   ]
 }
