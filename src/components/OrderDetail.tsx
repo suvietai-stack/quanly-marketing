@@ -204,7 +204,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
     actions.push({
       label: "Khôi phục",
       onClick: () => transition(order.assignee ? "Chờ nhận việc" : "Chờ phân công", "Khôi phục order"),
-      show: allow("order.restore", false),
+      show: allow("order.restore", isRequester || designCan(can,order.workflowKind,'assign')),
     });
   }
 
@@ -305,7 +305,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   }
                   setField({ reviewer: v });
                 }}
-                disabled={!(isAdmin || can("order.edit_reviewer") || (isRequester && (order.status === "Chờ phân công" || order.status === "Chờ nhận việc")))}
+                disabled={!(isAdmin || designCan(can,order.workflowKind,'edit_reviewer') || (isRequester && (order.status === "Chờ phân công" || order.status === "Chờ nhận việc")))}
               />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
@@ -316,11 +316,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               <div><Label>Link tư liệu đầu vào</Label>
                 <Input value={o.refLink || ""} disabled={!canEdit} onChange={(e) => setField({ refLink: e.target.value })} /></div>
               <div><Label>Link file nháp</Label>
-                <Input value={o.draftLink || ""} disabled={!(isAdmin || can("order.update_draft") || isOwner)} onChange={(e) => setField({ draftLink: e.target.value })} /></div>
+                <Input value={o.draftLink || ""} disabled={!(isAdmin || designCan(can,order.workflowKind,'update_draft') || isOwner)} onChange={(e) => setField({ draftLink: e.target.value })} /></div>
               <div><Label>Link file bàn giao</Label>
-                <Input value={o.deliverLink || ""} disabled={!(isAdmin || can("order.deliver") || isOwner)} onChange={(e) => setField({ deliverLink: e.target.value })} /></div>
+                <Input value={o.deliverLink || ""} disabled={!(isAdmin || designCan(can,order.workflowKind,'deliver') || isOwner)} onChange={(e) => setField({ deliverLink: e.target.value })} /></div>
               <div><Label>Link file chỉnh sửa</Label>
-                <Input value={o.reviseLink || ""} disabled={!(isAdmin || can("order.update_draft") || isOwner)} onChange={(e) => setField({ reviseLink: e.target.value })} /></div>
+                <Input value={o.reviseLink || ""} disabled={!(isAdmin || designCan(can,order.workflowKind,'update_draft') || isOwner)} onChange={(e) => setField({ reviseLink: e.target.value })} /></div>
               <div><Label>Link sản phẩm đã dùng</Label>
                 <Input value={o.usedLink || ""} disabled={!canEdit} onChange={(e) => setField({ usedLink: e.target.value })} /></div>
               <div><Label>Link đối tượng liên quan</Label>

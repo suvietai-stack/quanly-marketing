@@ -15,7 +15,7 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
   const [id]=useState(uid); const [title,setTitle]=useState(''); const [brand,setBrand]=useState(store.brands[0]?.id || '');
   const [type,setType]=useState<DesignOrder['type']>('Khác'); const [brief,setBrief]=useState(''); const [deadline,setDeadline]=useState(''); const [ref,setRef]=useState('');
   const [specialty,setSpecialty]=useState<Record<string,string>>({}); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
-  const fields=kind==='photo' ? ['Produit ou objet','Loại hình chụp','Mục đích sử dụng','Concept','Địa điểm','Thời gian dự kiến'].map(x=>x==='Produit ou objet'?'Sản phẩm / Đối tượng':x) : kind==='order_mockup' ? ['Khách hàng / Đơn vị','Mã đơn hàng','Sản phẩm','Logo khách hàng','Nội dung in','Vị trí in / trang trí','Yêu cầu kỹ thuật'] : ['Mục đích sử dụng','Kênh sử dụng','Nội dung thiết kế','Kích thước / Định dạng'];
+  const fields=kind==='photo' ? ['Sản phẩm / Đối tượng','Loại hình chụp','Mục đích sử dụng','Concept','Địa điểm','Thời gian dự kiến'] : kind==='order_mockup' ? ['Khách hàng / Đơn vị','Mã đơn hàng','Sản phẩm','Logo khách hàng','Nội dung in','Vị trí in / trang trí','Yêu cầu kỹ thuật'] : ['Mục đích sử dụng','Kênh sử dụng','Nội dung thiết kế','Kích thước / Định dạng'];
   async function save(){
     if(!kind || !title.trim() || !brand){setError('Chọn luồng, nhập tên công việc và thương hiệu.');return;}
     if(busy)return;setBusy(true);setError('');
