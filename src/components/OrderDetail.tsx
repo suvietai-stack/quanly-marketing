@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan, designLabel, DESIGN_FLOWS } from '@/lib/orders/design';
+import {DesignClassification} from './DesignClassification';
+import {DesignAttachments} from './DesignAttachments';
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const s = useStore();
@@ -23,6 +25,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const [reviewNote, setReviewNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [uploading,setUploading]=useState(false);
 
   if (!found) return null;
   const order: DesignOrder = found;
@@ -238,16 +241,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               <div><Label>Luồng công việc</Label><Select value={o.workflowKind || 'unknown'} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} onValueChange={v=>setField({workflowKind:v as DesignOrder['workflowKind']})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{!o.workflowKind && <SelectItem value="unknown">Chưa phân loại luồng</SelectItem>}{DESIGN_FLOWS.filter(f=>isAdmin || designCan(can,f.key,'assign')).map(f=><SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}</SelectContent></Select></div>
               <div className="sm:col-span-2"><Label>Tên order</Label>
                 <Input value={o.title} disabled={!canEdit} onChange={(e) => setField({ title: e.target.value })} /></div>
-              <div><Label>Thương hiệu</Label>
-                <Select value={o.brandId} onValueChange={(v) => setField({ brandId: v })} disabled={!canEdit}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{s.brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
-                </Select></div>
-              <div><Label>Loại</Label>
-                <Select value={o.type} onValueChange={(v) => setField({ type: v as any })} disabled={!canEdit}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ORDER_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select></div>
+              {o.workflowKind ? <DesignClassification flow={o.workflowKind} value={o} onChange={setField} disabled={!canEdit}/> : <p className="text-sm">Loại lịch sử: {o.type}</p>}
               <div><Label>Nguồn yêu cầu</Label>
                 <Select value={o.source} onValueChange={(v) => setField({ source: v as any })} disabled={!canEdit}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -328,6 +322,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
               <div className="sm:col-span-2"><Label>Ghi chú nội bộ</Label>
                 <Textarea rows={2} value={o.notes || ""} disabled={!canEdit} onChange={(e) => setField({ notes: e.target.value })} /></div>
+              <DesignAttachments orderId={order.id} flow={o.workflowKind} value={o.inputAttachments || []} onChange={inputAttachments=>setField({inputAttachments})} disabled={!canEdit} onBusy={setUploading}/>
             </div>
 
             <div className="flex justify-between items-center pt-2">
@@ -338,7 +333,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 {order.deliveredAt && <>Bàn giao: {fmtDate(order.deliveredAt)} · </>}
                 {order.completedAt && <>Hoàn thành: {fmtDate(order.completedAt)}</>}
               </div>
-              <Button onClick={saveOnly} disabled={saving || (!canEdit && !designCan(can,order.workflowKind,'assign')) || Object.keys(draft).length === 0}>{saving?'Đang lưu…':'Lưu thay đổi'}</Button>
+              <Button onClick={saveOnly} disabled={saving || uploading || (!canEdit && !designCan(can,order.workflowKind,'assign')) || Object.keys(draft).length === 0}>{saving?'Đang lưu…':'Lưu thay đổi'}</Button>
             </div>
           </TabsContent>
 
