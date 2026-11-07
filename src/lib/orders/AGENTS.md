@@ -1,0 +1,3 @@
+# Design Order architecture
+- Keep one public.orders source with independent workflow_kind mirrored in data.workflowKind and shared flow views/report evaluator; preserve /orders deep links, product types and independent oq/ot modules — avoids duplicate Orders.
+- Restrictive caller-scoped reads and write/audit triggers cover legacy writers; atomic patch saves fence edited fields and server-generate audit identity/time — prevents client-only authorization and history rewriting.

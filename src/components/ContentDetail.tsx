@@ -5,6 +5,7 @@ import {
   CONTENT_STATUSES,
 } from "@/lib/store";
 import { useCurrentUser, type PermissionKey } from "@/lib/auth";
+import { designCan } from '@/lib/orders/design';
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -643,7 +644,7 @@ export function ContentDetail({
               <div className="rounded-md border bg-card px-3 py-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-sm font-medium">Order thiết kế</div>
-                  {can("order.create") && (
+                  {designCan(can,'marketing_design','create') && (
                     <Button size="sm" variant="outline" onClick={() => setOrderFormOpen(true)}>
                       <Palette className="h-4 w-4" />Tạo Order Thiết Kế
                     </Button>
@@ -674,7 +675,7 @@ export function ContentDetail({
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground">
-                    {can("order.create") ? "Chưa có order thiết kế nào liên kết." : "Chưa có order thiết kế và bạn không được cấp quyền tạo order."}
+                    {designCan(can,'marketing_design','create') ? "Chưa có order thiết kế nào liên kết." : "Chưa có order thiết kế và bạn không được cấp quyền tạo order."}
                   </div>
                 )}
               </div>
