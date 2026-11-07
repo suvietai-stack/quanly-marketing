@@ -41,7 +41,6 @@ async def main():
             assert await quick.get_by_role('link').evaluate_all('(links) => links.map(l => l.getAttribute("href"))') == PINS
             await page.get_by_role('button', name='Thu hồi 3K', exact=True).click()
             await expect(quick.get_by_role('link', name='Quản lý 3K', exact=True)).to_have_count(0)
-            await expect.poll if False else asyncio.sleep(0)
             assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) == ['/biz/crm', '/biz/approvals', '/leave']
             await page.screenshot(path=str(OUT / f'{width}-restored.png'))
             assert not errors, errors
