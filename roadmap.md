@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## HOTFIX ƯU TIÊN CÔNG VIỆC TÍN HIỆU — 07/11/2026
+- [x] SF1. Hợp nhất Ưu tiên công việc và ưu tiên tiếp nhận; bảy thứ hạng đúng hạn diễn biến, mặc định work và chuyển lựa chọn priority cũ.
+- [x] SF2. 0263 thêm list_work_priority/lịch diễn biến trước range, RLS/SELECT-only; cùng comparator Desktop/Mobile, kiểu khác độc lập; không ghi nghiệp vụ.
+- [x] SF3. 143 unit/database test đạt; browser quản lý/Sale 320/390/430/1280 đạt 579/4/2/306, sáu dòng chờ đầu, lọc/chọn work/newest/reload. Build OK; docs/signal-work-priority-verification.md.
+- [ ] SF4. Nghiệm thu dữ liệu thật quản lý/Sale trên Desktop/Mobile: mint --self không khớp, cần người dùng đăng nhập Preview; dữ liệu hiện tại 588 tổng/0 chưa phân công/3 chờ nhận không hủy, không còn ví dụ 4+2. Không ghi thử/Publish.
+
 ## ƯU TIÊN DANH SÁCH TÍN HIỆU — 07/11/2026
 - [x] SP1. Thứ tự tab chung Desktop/Mobile, Chờ phân công đúng quyền, đếm cùng tập lọc.
 - [x] SP2. 0261–0262 view security-invoker chỉ SELECT, sắp xếp trước range; thời gian phân công/chuyển trạng thái thật và fallback, hai nhóm chờ → đang xử lý → kết thúc, không sửa bản ghi/lịch sử.

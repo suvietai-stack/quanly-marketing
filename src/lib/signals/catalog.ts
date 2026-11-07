@@ -36,6 +36,8 @@ export const isOpen = (s: string | null | undefined) => !!s && OPEN_STATUSES.inc
 export interface Signal {
   /** Read-only list metadata; never sent to signal writers. */
   list_priority?: number;
+  list_work_priority?: number;
+  list_progression_due_on?: string | null;
   list_wait_since?: string | null;
   list_activity_at?: string;
   potential?: 'high' | 'medium' | 'low' | 'unrated';

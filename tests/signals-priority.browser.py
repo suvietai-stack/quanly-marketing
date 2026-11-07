@@ -16,14 +16,18 @@ async def main():
    for sale in [False,True]:
     page=await browser.new_page(viewport={'width':width,'height':1000 if width<768 else 1800})
     errors=[]; requests=[]; page.on('pageerror',lambda e:errors.append(str(e)))
-    rows=[row(i) for i in range(1,575)]+[row(600,'waiting',list_wait_since='2026-11-05T00:00:00Z'),row(601,'waiting',list_wait_since='2026-11-02T00:00:00Z'),row(602,None),row(603,'won'),row(604,'lost')]
-    rows[-3]['assigned_to']=None
+    rows=[row(i,list_work_priority=2 if i<=306 else 3 if i<=310 else 4 if i<=314 else 5) for i in range(1,572)]+[row(600,'waiting',list_wait_since='2026-11-05T00:00:00Z'),row(601,'waiting',list_wait_since='2026-11-02T00:00:00Z')]+[row(i,None) for i in range(602,606)]+[row(606,'won'),row(607,'lost')]
+    for s in rows:
+     if s['status'] is None:s['assigned_to']=None
+     s['list_work_priority']=0 if not s['assigned_to'] else 1 if s['status']=='waiting' else 6 if s['status'] in ['won','lost'] else s.get('list_work_priority',5)
     if sale: rows=[s for s in rows if s['assigned_to']==UID]
     async def backend(r):
      path=urlparse(r.request.url).path.split('/rest/v1/')[-1];data=[]
      if path=='signal_list_priority':
       requests.append(parse_qs(urlparse(r.request.url).query))
-      data=sorted(rows,key=lambda s:(0 if not s['assigned_to'] else 1 if s['status']=='waiting' else 3 if s['status'] in ['won','lost'] else 2,s.get('list_wait_since',''),s['id']))
+      data=sorted(rows,key=lambda s:(s['list_work_priority'],s.get('list_wait_since',''),s['id']))
+     elif path=='rpc/signal_progression_deadlines':
+      data=[dict(signal_id=s['id'],sale_id=UID,sequence=1,due_on='2026-11-07',deadline_state={2:'overdue',3:'today',4:'soon'}.get(s['list_work_priority'],'ok'),overdue_days=1,next_due_on='2026-11-14',calculated_at='2026-11-07T00:00:00Z') for s in rows if s['status'] not in [None,'waiting','won','lost']]
      elif path=='opportunity_signals':data=rows
      await r.fulfill(content_type='application/json',body=json.dumps(data))
     await page.route('**/*priority-fixture*',lambda r:r.fulfill(content_type='text/html',body=HTML))
@@ -34,7 +38,9 @@ async def main():
     names=page.get_by_role('button',name='Mở chi tiết tín hiệu:',exact=False)
     if width>=768:names=page.locator('table').get_by_role('button',name='Mở chi tiết tín hiệu:',exact=False)
     await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách '+('601' if sale else '602'))
-    await expect(names.nth(1 if sale else 2)).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 600')
+    await expect(names.nth(1 if sale else 5)).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 600')
+    expected=[601,600,1] if sale else [602,603,604,605,601,600,1]
+    assert [await names.nth(i).get_attribute('aria-label') for i in range(len(expected))]==[f'Mở chi tiết tín hiệu: Khách {i}' for i in expected]
     await page.screenshot(path=str(OUT/f'{width}-{sale}-default.png'))
     buttons=await quick.get_by_role('button').all_text_contents()
     assert buttons[0].startswith('Tất cả')
@@ -49,12 +55,19 @@ async def main():
     await search.fill('');await quick.get_by_role('button',name='Tất cả '+str(len(rows)),exact=True).click()
     if width<768:
      await page.get_by_role('button',name='Bộ lọc',exact=True).click()
-     dialog=page.get_by_role('dialog',name='Bộ lọc');await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('newest')
+     dialog=page.get_by_role('dialog',name='Bộ lọc');await expect(dialog).to_be_visible();await page.wait_for_timeout(300);await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('newest')
      await dialog.get_by_role('button',name='Áp dụng',exact=True).click()
     else:await page.get_by_label('Sắp xếp tín hiệu').select_option('newest')
     await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 1')
     await page.reload();await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 1')
-    assert requests and requests[0]['order'][0].startswith('list_priority.asc,list_wait_since.asc.nullslast')
+    if width<768:
+     await page.get_by_role('button',name='Bộ lọc',exact=True).click()
+     dialog=page.get_by_role('dialog',name='Bộ lọc');await expect(dialog).to_be_visible();await page.wait_for_timeout(300);await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('work')
+     await dialog.get_by_role('button',name='Áp dụng',exact=True).click()
+    else:await page.get_by_label('Sắp xếp tín hiệu').select_option('work')
+    await expect(names.first).to_have_attribute('aria-label',f'Mở chi tiết tín hiệu: Khách {expected[0]}')
+    await page.reload();await expect(names.first).to_have_attribute('aria-label',f'Mở chi tiết tín hiệu: Khách {expected[0]}')
+    assert requests and requests[0]['order'][0].startswith('list_work_priority.asc,list_wait_since.asc.nullslast,list_progression_due_on.asc.nullslast')
     assert not await page.evaluate('document.documentElement.scrollWidth>innerWidth')
     await page.screenshot(path=str(OUT/f'{width}-{sale}.png'))
     assert not errors,errors

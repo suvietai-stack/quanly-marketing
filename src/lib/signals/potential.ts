@@ -1,6 +1,6 @@
 import { isOpen, todayKey, type Signal } from './catalog';
 import type { DeadlineRow } from './deadlines';
-import { compareIntakePriority } from './listPriority';
+import { compareWorkPriority } from './listPriority';
 export const POTENTIAL_LABEL = { high: '🔥 Cao', medium: 'Trung bình', low: 'Thấp', unrated: 'Chưa đánh giá' } as const;
 export type Potential = keyof typeof POTENTIAL_LABEL;
 export const potentialOf = (s: Pick<Signal, 'potential'>): Potential => s.potential ?? 'unrated';
@@ -24,16 +24,14 @@ export function matchWork(s: Signal, quick: WorkQuick, deadline?: DeadlineRow, t
 export function sortSignals(rows: Signal[], sort: SignalSort, deadlines: Record<string,DeadlineRow> = {}, today = todayKey()) {
   const potentialRank = { high:0, medium:1, low:2, unrated:3 };
   const date = (s: Signal) => s.next_contact_on ?? deadlines[s.id]?.due_on ?? '9999-12-31';
-  const rank = (s: Signal) => { const state=workState(s,deadlines[s.id],today); return state==='overdue'?0:state==='today'?1:isOpen(s.status)&&!s.cancelled_at&&potentialOf(s)==='high'&&!s.next_contact_on?2:3; };
   return [...rows].sort((a,b) => {
-    if (sort === 'priority') return compareIntakePriority(a, b);
+    if (sort === 'priority' || sort === 'work') return compareWorkPriority(a, b, deadlines);
     let n=0;
     if(sort==='oldest') n=a.created_at.localeCompare(b.created_at);
     if(sort==='newest') n=b.created_at.localeCompare(a.created_at);
     if(sort==='soonest') n=date(a).localeCompare(date(b));
     if(sort==='potential') n=potentialRank[potentialOf(a)]-potentialRank[potentialOf(b)];
     if(sort==='value') n=(b.revenue??-1)-(a.revenue??-1);
-    if(sort==='work') n=rank(a)-rank(b)||date(a).localeCompare(date(b));
     return n || b.updated_at.localeCompare(a.updated_at) || a.id.localeCompare(b.id);
   });
 }

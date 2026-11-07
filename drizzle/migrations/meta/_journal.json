@@ -1842,6 +1842,13 @@
       "when": 1794018367417,
       "tag": "0262_signal_list_priority_read_only_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 263,
+      "version": "7",
+      "when": 1794019054766,
+      "tag": "0263_signal_list_work_priority",
+      "breakpoints": true
     }
   ]
 }

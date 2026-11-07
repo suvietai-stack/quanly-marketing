@@ -24,6 +24,11 @@ beforeAll(async()=>{
   await db.exec(readFileSync('drizzle/migrations/0261_signal_list_intake_priority.sql','utf8'));
   await db.exec('GRANT UPDATE, INSERT, DELETE ON signal_list_priority TO authenticated');
   await db.exec(readFileSync('drizzle/migrations/0262_signal_list_priority_read_only_grants.sql','utf8'));
+  await db.exec(`CREATE TABLE test_deadlines(signal_id uuid,deadline_state text,due_on date);
+    GRANT SELECT ON test_deadlines TO authenticated,service_role;
+    CREATE FUNCTION signal_progression_deadlines() RETURNS TABLE(signal_id uuid,deadline_state text,due_on date) LANGUAGE sql STABLE AS $$SELECT * FROM test_deadlines$$;
+    GRANT EXECUTE ON FUNCTION signal_progression_deadlines() TO authenticated,service_role;`);
+  await db.exec(readFileSync('drizzle/migrations/0263_signal_list_work_priority.sql','utf8'));
   await db.exec(`INSERT INTO opportunity_signals SELECT ('00000000-0000-0000-0001-'||lpad(i::text,12,'0'))::uuid,'${uid}', 'consulting',NULL,NULL,'2026-11-01','2026-11-07' FROM generate_series(1,1100) i;`);
   await db.query(`INSERT INTO opportunity_signals VALUES($1,$2,'waiting',NULL,'2026-11-02','2026-11-01','2026-11-07'),($3,$2,'waiting',NULL,'2026-11-03','2026-11-01','2026-11-07'),($4,NULL,NULL,NULL,NULL,'2026-10-01','2026-11-07'),($5,$2,'won',NULL,NULL,'2026-11-01','2026-11-08'),($6,'00000000-0000-0000-0000-000000000002','waiting',NULL,'2026-09-01','2026-09-01','2026-11-07')`,[id(1101),uid,id(1102),id(1103),id(1104),id(1105)]);
 },60000);
@@ -46,5 +51,17 @@ it('enforces parent/history RLS before pages and grants only SELECT to authentic
   expect(rows).toEqual([id(1102),id(1101)]);
   expect((await db.query('select * from signal_list_priority where id=$1',[id(1105)])).rows).toHaveLength(0);
   expect((await db.query<{v:boolean}>("select has_table_privilege('authenticated','signal_list_priority','UPDATE') v")).rows[0]?.v).toBe(false);
+  await db.exec('RESET ROLE');
+});
+it('work ranks all seven groups before LIMIT/OFFSET without altering legacy intake ranks',async()=>{
+  await db.exec(`INSERT INTO test_deadlines VALUES ('${id(1)}','overdue','2026-11-05'),('${id(2)}','today','2026-11-07'),('${id(3)}','soon','2026-11-08');`);
+  const work=`select id::text,list_work_priority as rank from signal_list_priority order by list_work_priority,list_wait_since asc nulls last,list_progression_due_on asc nulls last,list_activity_at desc,id`;
+  const rows=(await db.query<{id:string,rank:number}>(work+' limit 7')).rows;
+  expect(rows.map(r=>r.id)).toEqual([id(1103),id(1105),id(1102),id(1101),id(1),id(2),id(3)]);
+  expect(rows.map(r=>r.rank)).toEqual([0,1,1,1,2,3,4]);
+  expect((await db.query<{rank:number}>(work+' limit 1 offset 7')).rows[0]?.rank).toBe(5);
+  expect((await db.query<{rank:number}>(work+' limit 1 offset 1104')).rows[0]?.rank).toBe(6);
+  await db.query("select set_config('test.uid',$1,false)",[uid]);await db.exec('SET ROLE authenticated');
+  expect((await db.query<{id:string}>(work+' limit 3')).rows.map(r=>r.id)).toEqual([id(1102),id(1101),id(1)]);
   await db.exec('RESET ROLE');
 });

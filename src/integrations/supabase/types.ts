@@ -8388,7 +8388,9 @@ export type Database = {
           id: string | null
           list_activity_at: string | null
           list_priority: number | null
+          list_progression_due_on: string | null
           list_wait_since: string | null
+          list_work_priority: number | null
           lost_reason: string | null
           marketing_note: string | null
           need_detail: string | null
