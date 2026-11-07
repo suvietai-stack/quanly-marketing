@@ -30,7 +30,7 @@ async def main():
     await page.route('**/rest/v1/**',backend)
     await page.route('**/_serverFn/**',lambda r:r.fulfill(content_type='application/json',body='{}'))
     await page.goto('http://localhost:8080/'+('sale-priority-fixture' if sale else 'priority-fixture'))
-    quick=page.get_by_role('group',name='Trạng thái tín hiệu') if width<768 else page.locator('.hidden.md\\:block').filter(has=page.get_by_text('Nhóm nhu cầu',exact=True))
+    quick=page.get_by_role('group',name='Trạng thái tín hiệu') if width<768 else page.get_by_text('Trạng thái',exact=True).locator('..')
     names=page.get_by_role('button',name='Mở chi tiết tín hiệu:',exact=False)
     if width>=768:names=page.locator('table').get_by_role('button',name='Mở chi tiết tín hiệu:',exact=False)
     await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách '+('601' if sale else '602'))
