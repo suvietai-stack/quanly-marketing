@@ -1877,6 +1877,13 @@
       "when": 1794021918927,
       "tag": "0267_design_order_authoritative_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 268,
+      "version": "7",
+      "when": 1794022480574,
+      "tag": "0268_design_order_transition_timestamp_integrity",
+      "breakpoints": true
     }
   ]
 }
