@@ -24,9 +24,11 @@ export async function fetchAll<T>(build: (from: number, to: number) => any): Pro
   }
 }
 
-export async function listSignals(): Promise<Signal[]> {
+export async function listSignals(priority = false): Promise<Signal[]> {
   const [rows,links] = await Promise.all([
-    fetchAll<Signal>((a,b)=>db.from('opportunity_signals').select('*').order('detected_on',{ascending:false}).order('created_at',{ascending:false}).order('id').range(a,b)),
+    fetchAll<Signal>((a,b)=>priority
+      ? db.from('signal_list_priority').select('*').order('list_priority').order('list_wait_since',{ascending:true,nullsFirst:false}).order('list_activity_at',{ascending:false}).order('id').range(a,b)
+      : db.from('opportunity_signals').select('*').order('detected_on',{ascending:false}).order('created_at',{ascending:false}).order('id').range(a,b)),
     fetchAll<LabelLink>((a,b)=>db.from('signal_label_links').select('signal_id,label_id').order('signal_id').order('label_id').range(a,b)),
   ]);
   const labels: Record<string,string[]> = {};

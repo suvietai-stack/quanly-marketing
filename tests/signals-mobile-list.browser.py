@@ -13,7 +13,7 @@ async def main():
    original=copy.deepcopy(rows)
    async def backend(r):
     path=r.request.url.split('/rest/v1/')[-1].split('?')[0];data=[]
-    if path=='opportunity_signals':data=rows
+    if path in ('opportunity_signals','signal_list_priority'):data=rows
     elif path=='rpc/signal_progression_deadlines':data=[dict(signal_id=s['id'],deadline_state='overdue' if i<2 else 'today',due_on='2026-11-05',next_due_on='2026-11-12',sale_id=UID,sequence=1,overdue_days=1,calculated_at='2026-11-06T08:00:00Z') for i,s in enumerate(rows)]
     if r.request.method!='GET' and not path.startswith('rpc/signal_progression'):writes.append(path)
     await r.fulfill(content_type='application/json',body=json.dumps(data))

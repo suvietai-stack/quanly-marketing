@@ -1,5 +1,6 @@
 import { needGroupsOf, isDueToday, isOverdue, todayKey, type LastNote, type Signal, type SignalStatus } from "./catalog";
 import { potentialOf,stageOf,type Potential,type Stage } from './potential';
+import { matchesSignalStatus } from './listPriority';
 
 export type DateBasis = "created" | "closed";
 export interface ReportFilter {
@@ -159,7 +160,7 @@ export function reportInsights(args: {
 
 /* ---------- Bộ lọc trang danh sách ---------- */
 /** Lọc nhanh chỉ theo trạng thái (không còn lọc lịch hẹn). */
-export type Quick = "all" | SignalStatus;
+export type Quick = "all" | "unassigned" | SignalStatus;
 export type TimeRange = "" | "today" | "7d" | "month" | "custom";
 export interface ListFilter {
   potential?: Potential; labelId?: string; stage?: Stage; nextFrom?: string; nextTo?: string;
@@ -212,6 +213,6 @@ export function applyDetailFilter(list: Signal[], f: ListFilter, today = todayKe
 
 export function applyListFilter(list: Signal[], f: ListFilter, today = todayKey(), last: Record<string, LastNote> = {}): Signal[] {
   return applyDetailFilter(list, f, today)
-    .filter((s) => f.quick === "all" || s.status === f.quick)
-    .sort((a, b) => lastActivity(b, last[b.id]).localeCompare(lastActivity(a, last[a.id])));
+    .filter((s) => matchesSignalStatus(s, f.quick))
+    .sort((a, b) => lastActivity(b, last[b.id]).localeCompare(lastActivity(a, last[a.id])) || a.id.localeCompare(b.id));
 }

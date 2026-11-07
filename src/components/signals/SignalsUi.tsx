@@ -38,6 +38,7 @@ import { deadlineCounts, type DeadlineQuick } from '@/lib/signals/deadlineFilter
 import { DEADLINE_QUICK } from '@/lib/signals/deadlineFilters';
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
+import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
   return <Button asChild variant="link" className="h-auto min-h-11 md:min-h-0 justify-start whitespace-normal p-0 text-left font-semibold leading-tight select-text">
@@ -66,9 +67,9 @@ export function useSignalPerms() {
 /** Mọi khóa bộ nhớ tạm của module đều bắt đầu bằng "sig:" và gắn mã người dùng. */
 const SIG = "sig:";
 export const signalsKey = (uid: string | null) => [`${SIG}list`, uid] as const;
-export function useSignals(enabled = true) {
+export function useSignals(enabled = true, priority = false) {
   const { userId } = useSignalPerms();
-  return useQuery({ queryKey: signalsKey(userId), queryFn: listSignals, enabled: enabled && !!userId, refetchInterval: 10000, refetchIntervalInBackground: false, refetchOnWindowFocus: "always" });
+  return useQuery({ queryKey: [...signalsKey(userId), priority ? 'priority' : 'report'], queryFn: () => listSignals(priority), enabled: enabled && !!userId, refetchInterval: 10000, refetchIntervalInBackground: false, refetchOnWindowFocus: "always" });
 }
 export function useLastNotes(enabled = true) {
   const { userId } = useSignalPerms();
@@ -127,16 +128,12 @@ const fmtNext = (s: Pick<Signal, "next_contact_on" | "next_contact_at">) =>
   s.next_contact_at ? fmtTime(s.next_contact_at) : fmtDate(s.next_contact_on);
 const lastText = (n?: LastNote) => (n ? [n.event_type, n.note].filter(Boolean).join(" — ") || "Đã cập nhật" : null);
 
-const QUICK: { k: Quick; label: string }[] = [
-  { k: "all", label: "Tất cả" },
-  ...(Object.entries(STATUS_LABEL) as [SignalStatus, string][]).map(([k, label]) => ({ k, label })),
-];
 const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 
 export function SignalsPage() {
   const p = useSignalPerms();
   const name = useUserName();
-  const { data = [], isLoading, error } = useSignals();
+  const { data = [], isLoading, error } = useSignals(true, true);
   const { data: last = {} } = useLastNotes();
   const { data: careNotes = {} } = useQuery({ queryKey: [`${SIG}care`, p.userId], queryFn: listCareNotes, enabled: !!p.userId });
   const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchInterval: 10000, refetchOnWindowFocus: "always" });
@@ -147,20 +144,20 @@ export function SignalsPage() {
   const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
   const labels = useSignalLabels(p.userId);
   const [workQuick,setWorkQuick]=useState<WorkQuick>('all');
-  const [sort,setSort]=useState<SignalSort>('work');
+  const [sort,setSort]=useState<SignalSort>('priority');
   const [labelsOpen,setLabelsOpen]=useState(false);
   const [f, setF] = useState<ListFilter>(emptyFilter());
   const restored=useRef<string|null>(null);
   useEffect(()=>{
     if(!p.userId)return;
-    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort??'work');setDeadlineFilter(saved.deadlineFilter??null);}}catch{}
+    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort??'priority');setDeadlineFilter(saved.deadlineFilter??null);}}catch{}
     restored.current=p.userId;
   },[p.userId]);
   useEffect(()=>{if(p.userId&&restored.current===p.userId){try{sessionStorage.setItem(`sig:filters:${p.userId}`,JSON.stringify({f,workQuick,sort,deadlineFilter}));}catch{}}},[f,workQuick,sort,deadlineFilter,p.userId]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(MOBILE_SIGNAL_BATCH);
-  useEffect(() => { setVisibleCount(MOBILE_SIGNAL_BATCH); }, [f, workQuick, deadlineFilter]);
+  useEffect(() => { setVisibleCount(MOBILE_SIGNAL_BATCH); }, [f, workQuick, deadlineFilter, sort]);
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const id = sp.get("open");
@@ -180,6 +177,8 @@ export function SignalsPage() {
   const [reasonsOpen, setReasonsOpen] = useState(false);
   const today = todayKey();
   const saleOnly = p.sale && !p.viewAll && !p.create;
+  const canSeeUnassigned = p.assign || p.viewAll || p.create || data.some(s => !s.assigned_to && !s.status);
+  const quickTabs = signalStatusTabs(canSeeUnassigned);
 
   const mine = useMemo(() => data.filter((s) => s.assigned_to === p.userId), [data, p.userId]);
   const careAll = useMemo(() => {
@@ -191,7 +190,7 @@ export function SignalsPage() {
   const careScope = useMemo(() => (p.viewAll || p.assign || p.manage ? careAll : careAll.filter((x) => x.s.assigned_to === p.userId)), [careAll, p]);
   const careList = useMemo(() => careScope.filter((x) => (!care.sale || x.s.assigned_to === care.sale)
     && (!care.kind || (care.kind === "unaccepted" ? x.flag === "unaccepted" : x.flag !== "unaccepted")) && applyDetailFilter([x.s], f, today).length > 0
-    && (f.quick === 'all' || x.s.status === f.quick)), [careScope, care, f, today]);
+    && matchesSignalStatus(x.s, f.quick)), [careScope, care, f, today]);
   const list = useMemo(() => {
     const filtered=applyListFilter(data,f,today,last);
     const rows=filtered.filter(s=>(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)&&matchWork(s,workQuick,deadlines.data?.[s.id],today));
@@ -201,12 +200,12 @@ export function SignalsPage() {
   const deadlineBase = useMemo(() => applyListFilter(data,f,today,last).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)), [data,f,today,last,workQuick,deadlines.data]);
   const dueCounts = deadlineCounts(deadlineBase,deadlines.data??{});
   const pickDeadline = (value: DeadlineQuick|null) => {setCare({on:false});setDeadlineFilter(value);};
-  const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => s.status === k).length);
+  const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => matchesSignalStatus(s, k)).length);
   const needOpts = useOptions("signal_need_groups");
   // Đếm nhóm nhu cầu: áp dụng mọi điều kiện khác (kể cả trạng thái) trừ chính nhóm nhu cầu
   const needBase = useMemo(() => {
     const b = applyDetailFilter(data, { ...f, needGroup: undefined }, today);
-    return b.filter(s=>(f.quick==='all'||s.status===f.quick)&&matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter));
+    return b.filter(s=>matchesSignalStatus(s,f.quick)&&matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter));
   }, [data, f, today,workQuick,deadlines.data,deadlineFilter]);
   const needCount = (g?: string) => (g ? needBase.filter((s) => needGroupsOf(s).includes(g)).length : needBase.length);
   const open = data.find((s) => s.id === openId) || null;
@@ -246,7 +245,7 @@ export function SignalsPage() {
         </Button>
         {p.create&&<Button className="h-11 w-11 shrink-0 md:hidden" size="icon" aria-label="Thêm tín hiệu" onClick={()=>setCreating(true)}><Plus className="h-4 w-4"/></Button>}
       </div>
-      <div className="hidden md:flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{[['work','Ưu tiên công việc'],['newest','Mới nhất'],['oldest','Cũ nhất'],['soonest','Cần xử lý sớm'],['potential','Tiềm năng cao trước'],['value','Giá trị đã ghi nhận'],['activity','Cập nhật mới nhất']].map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{SIGNAL_SORT_OPTIONS.map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
       {careScope.length > 0 && !care.on && (
         <Button variant="outline" onClick={() => setCare({ on: true })} className="hidden md:block h-auto w-full text-left rounded-lg border-warning/40 bg-warning/10 px-3 py-2 text-sm font-medium">
           ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
@@ -254,14 +253,14 @@ export function SignalsPage() {
       )}
       <div className="md:hidden min-w-0 relative">
         <div className="signal-status-scroll flex gap-1.5 overflow-x-auto pb-1 pr-5" role="group" aria-label="Trạng thái tín hiệu">
-          {[QUICK[0], ...QUICK.filter(x => !['all','waiting'].includes(x.k)), ...QUICK.filter(x => x.k === 'waiting')].map(x => <Button key={x.k} size="sm" variant={f.quick === x.k && !care.on ? 'default' : 'outline'} aria-pressed={f.quick === x.k && !care.on} className="h-9 shrink-0 rounded-full px-3 text-xs gap-1.5" onClick={() => {setCare({on:false});setF(y=>({...y,quick:x.k}));}}>{x.label}<span className="tabular-nums opacity-75">{isLoading ? '…' : count(x.k)}</span></Button>)}
+          {quickTabs.map(x => <Button key={x.k} size="sm" variant={f.quick === x.k && !care.on ? 'default' : 'outline'} aria-pressed={f.quick === x.k && !care.on} className="h-9 shrink-0 rounded-full px-3 text-xs gap-1.5" onClick={() => {setCare({on:false});setF(y=>({...y,quick:x.k}));}}>{x.label}<span className="tabular-nums opacity-75">{isLoading ? '…' : count(x.k)}</span></Button>)}
         </div>
         <span className="pointer-events-none absolute right-0 top-0 grid h-9 w-4 place-items-center bg-background text-muted-foreground" aria-hidden="true">›</span>
       </div>
       <div className="hidden md:block rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
         <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
           active={f.needGroup ?? ""} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: k || undefined })); }} />
-        <ChipRow label="Trạng thái" items={QUICK.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
+        <ChipRow label="Trạng thái" max={quickTabs.length} items={quickTabs.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
           active={care.on ? "__care__" : f.quick} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, quick: k as Quick })); }}
           />
         <SignalDeadlineFilters value={deadlineFilter} counts={dueCounts} loading={deadlines.isPending} error={deadlines.error?errMsg(deadlines.error):undefined} onChange={pickDeadline}/>
@@ -332,7 +331,7 @@ export function SignalsPage() {
           </>
         )}
 
-      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} deadline={deadlineFilter} onDeadline={pickDeadline} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
+      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} canSeeUnassigned={canSeeUnassigned} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} deadline={deadlineFilter} onDeadline={pickDeadline} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
       <Sheet open={labelsOpen} onOpenChange={setLabelsOpen}><SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto sm:max-w-xl sm:mx-auto"><SheetHeader className="mb-4"><SheetTitle>Nhãn cá nhân</SheetTitle></SheetHeader><SignalLabelManager uid={p.userId} catalog={false} sale={p.sale} personalOnly/></SheetContent></Sheet>
       {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
@@ -361,8 +360,8 @@ export function SignalsPage() {
   );
 }
 
-function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, workQuick, sort, onOptions, deadline, onDeadline }: {
-  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void; deadline:DeadlineQuick|null; onDeadline:(v:DeadlineQuick|null)=>void;
+function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, canSeeUnassigned, workQuick, sort, onOptions, deadline, onDeadline }: {
+  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; canSeeUnassigned: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void; deadline:DeadlineQuick|null; onDeadline:(v:DeadlineQuick|null)=>void;
 }) {
   const name = useUserName();
   const prodOpts = useOptions("signal_products");
@@ -383,9 +382,9 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, wor
         <div className="min-h-0 overflow-y-auto px-4 grid grid-cols-2 gap-3 pb-4">
           <label className="col-span-2 space-y-1.5 text-sm font-medium">Hạn cập nhật diễn biến<select aria-label="Hạn cập nhật diễn biến" className="h-11 w-full min-w-0 rounded-md border bg-background px-2 text-sm" value={due??''} onChange={e=>setDue((e.target.value||null) as DeadlineQuick|null)}>{DEADLINE_QUICK.map(x=><option key={x.key??'all'} value={x.key??''}>{x.label}</option>)}</select></label>
           <Field label="Lọc nhanh"><Pick value={work} onChange={v=>setWork((v||'all') as WorkQuick)} opts={[["all","Tất cả"],["high","Tiềm năng cao"],["action","Cần xử lý"],["overdue","Quá hạn xử lý"],["won","Đã chốt"]]}/></Field>
-          <Field label="Sắp xếp"><Pick value={order} onChange={v=>setOrder((v||'work') as SignalSort)} opts={[["work","Ưu tiên công việc"],["newest","Mới nhất"],["oldest","Cũ nhất"],["soonest","Cần xử lý sớm"],["potential","Tiềm năng cao trước"],["value","Giá trị đã ghi nhận"],["activity","Cập nhật mới nhất"]]}/></Field>
+          <Field label="Sắp xếp"><Pick value={order} onChange={v=>setOrder((v||'priority') as SignalSort)} opts={SIGNAL_SORT_OPTIONS.map(([k,v])=>[k,v])}/></Field>
           <Field label="Giai đoạn"><Pick value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/></Field>
-          <Field label="Trạng thái"><Pick value={f.quick==='all'?'':f.quick} onChange={v=>setF(x=>({...x,quick:(v||'all') as Quick}))} opts={Object.entries(STATUS_LABEL)}/></Field>
+          <Field label="Trạng thái"><Pick value={f.quick==='all'?'':f.quick} onChange={v=>setF(x=>({...x,quick:(v||'all') as Quick}))} opts={signalStatusTabs(canSeeUnassigned).filter(x=>x.k!=='all').map(x=>[x.k,x.label])}/></Field>
           <Field label="Mức độ tiềm năng"><Pick value={f.potential} onChange={v=>set('potential',v)} opts={Object.entries(POTENTIAL_LABEL)}/></Field>
           <Field label="Nhãn"><Pick value={f.labelId} onChange={v=>set('labelId',v)} opts={(labels.data??[]).map(l=>[l.id,l.name])}/></Field>
           <Field label="Theo dõi từ"><Input type="date" value={f.nextFrom??''} onChange={e=>set('nextFrom',e.target.value)}/></Field>
@@ -464,7 +463,7 @@ function ActiveFilters({ f, name, onChange }: { f: ListFilter; name: (id: string
   if (f.potential) chips.push({key:'potential',label:`Tiềm năng: ${POTENTIAL_LABEL[f.potential]}`});
   if (f.stage) chips.push({key:'stage',label:`Giai đoạn: ${STAGES[f.stage]}`});
   if (f.labelId) chips.push({key:'labelId',label:'Nhãn đã chọn'});
-  if (f.quick!=='all') chips.push({key:'quick',label:STATUS_LABEL[f.quick]});
+  if (f.quick!=='all') chips.push({key:'quick',label:f.quick==='unassigned'?'Chờ phân công':STATUS_LABEL[f.quick]});
   if (f.nextFrom) chips.push({key:'nextFrom',label:`Theo dõi từ ${f.nextFrom}`});
   if (f.nextTo) chips.push({key:'nextTo',label:`Theo dõi đến ${f.nextTo}`});
   if (f.time) chips.push({ key: "time", label: `Thời gian: ${timeLabel[f.time] ?? f.time}${f.time === "custom" && (f.from || f.to) ? ` ${f.from ?? "…"}→${f.to ?? "…"}` : ""}` });

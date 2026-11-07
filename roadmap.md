@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## ƯU TIÊN DANH SÁCH TÍN HIỆU — 07/11/2026
+- [x] SP1. Thứ tự tab chung Desktop/Mobile, Chờ phân công đúng quyền, đếm cùng tập lọc.
+- [x] SP2. 0261–0262 view security-invoker chỉ SELECT, sắp xếp trước range; thời gian phân công/chuyển trạng thái thật và fallback, hai nhóm chờ → đang xử lý → kết thúc, không sửa bản ghi/lịch sử.
+- [x] SP3. Mặc định Ưu tiên tiếp nhận, giữ lựa chọn cũ/bộ lọc/cache invalidation/thẻ/báo cáo. 139 test đạt; browser Sale/quản lý 320/390/430/1280 thứ tự/đếm/lọc/tùy chọn/reload và hồi quy thẻ/đánh giá/hạn/báo cáo đạt; build OK. docs/signal-list-priority-verification.md.
+- [ ] SP4. Nghiệm thu phiên thật: mint --self không khớp tài khoản, cần người dùng đăng nhập Preview. Không tạo dữ liệu thử, không Publish; backend chung đã áp dụng bổ sung chỉ đọc.
+
 ## DANH SÁCH TÍN HIỆU MOBILE — 06/11/2026
 - [x] SM1. Một hàng tìm/thao tác, trạng thái cuộn ngang có đếm theo cùng tập RLS trừ trạng thái đang chọn; hạn trong Bộ lọc nháp áp dụng/xóa/số điều kiện, giữ phiên theo user.
 - [x] SM2. Thẻ gọn tên tối đa hai dòng/trạng thái/SĐT/nhu cầu thật/tiềm năng/người/hạn diễn biến, Gọi/Zalo sao chép số/chi tiết hiện có; tải thêm 30 thẻ từ cache chung; desktop/nghiệp vụ không đổi.

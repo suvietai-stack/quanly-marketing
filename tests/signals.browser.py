@@ -16,7 +16,7 @@ async def main():
    async def backend(route):
     nonlocal fail
     path=route.request.url.split('/rest/v1/')[-1].split('?')[0];result=[]
-    if path=='opportunity_signals':result=[signal]
+    if path in ('opportunity_signals','signal_list_priority'):result=[signal]
     elif path=='signal_labels':result=labels
     elif path=='signal_label_links':result=links
     elif path=='catalogs':result=None
