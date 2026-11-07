@@ -1,8 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { visibleNavigation } from './navigation';
-import { allowedPins, launcherApps, movePin, pinStorageKey, searchLauncher } from './launcher';
+import { allowedPins, launcherApps, movePin, pinStorageKey, reconcilePins, searchLauncher, storedPins } from './launcher';
 const groups = (perms: string[]) => visibleNavigation({ can: p => perms.includes(p), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0 });
 describe('Mobile launcher shares live navigation visibility', () => {
+  it('retains ordered CRM, 3K and approval pins while access is unresolved', () => {
+    const pins = ['/biz/crm', '/biz/3k', '/biz/approvals', '/leave'];
+    expect(reconcilePins(pins, groups(['leave.create']), false)).toEqual(pins);
+    expect(allowedPins(pins, groups(['leave.create']))).toEqual(['/leave']);
+  });
+  it('prunes a confirmed revocation only after access is resolved', () => {
+    expect(reconcilePins(['/biz/crm', '/biz/3k'], groups(['biz.crm_use']), true)).toEqual(['/biz/crm']);
+  });
+  it('reads stored preferences without consulting pending permissions', () => {
+    expect(storedPins(['/biz/crm', null, '/biz/crm', '', '/biz/approvals'])).toEqual(['/biz/crm', '/biz/approvals']);
+    expect(storedPins({ pins: ['/biz/crm'] })).toEqual([]);
+  });
   it('searches only allowed functions without department assumptions', () => {
     const visible = groups(['leave.create','k3.use']);
     expect(searchLauncher(visible, 'nghi phep').map(i => i.to)).toEqual(['/leave']);

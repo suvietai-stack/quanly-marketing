@@ -3,6 +3,12 @@ import type { NavGroup, NavItem } from './navigation';
 export function launcherApps(groups: NavGroup[]): NavItem[] {
   return groups.flatMap(g => g.items).filter(i => !i.comingSoon && !!i.to);
 }
+export function storedPins(value: unknown): string[] {
+  return Array.isArray(value) ? [...new Set(value.filter((p): p is string => typeof p === 'string' && p.length > 0))] : [];
+}
+export function reconcilePins(value: unknown, groups: NavGroup[], accessReady: boolean): string[] {
+  return accessReady ? allowedPins(value, groups) : storedPins(value);
+}
 export function allowedPins(value: unknown, groups: NavGroup[]): string[] {
   const allowed = new Set(launcherApps(groups).map(i => i.to));
   return Array.isArray(value) ? [...new Set(value.filter((p): p is string => typeof p === 'string' && allowed.has(p)))] : [];
