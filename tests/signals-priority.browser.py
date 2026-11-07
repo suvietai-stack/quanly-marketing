@@ -55,14 +55,14 @@ async def main():
     await search.fill('');await quick.get_by_role('button',name='Tất cả '+str(len(rows)),exact=True).click()
     if width<768:
      await page.get_by_role('button',name='Bộ lọc',exact=True).click()
-     dialog=page.get_by_role('dialog',name='Bộ lọc');await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('newest')
+     dialog=page.get_by_role('dialog',name='Bộ lọc');await expect(dialog).to_be_visible();await page.wait_for_timeout(300);await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('newest')
      await dialog.get_by_role('button',name='Áp dụng',exact=True).click()
     else:await page.get_by_label('Sắp xếp tín hiệu').select_option('newest')
     await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 1')
     await page.reload();await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 1')
     if width<768:
      await page.get_by_role('button',name='Bộ lọc',exact=True).click()
-     dialog=page.get_by_role('dialog',name='Bộ lọc');await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('work')
+     dialog=page.get_by_role('dialog',name='Bộ lọc');await expect(dialog).to_be_visible();await page.wait_for_timeout(300);await dialog.get_by_text('Sắp xếp',exact=True).locator('..').locator('select').select_option('work')
      await dialog.get_by_role('button',name='Áp dụng',exact=True).click()
     else:await page.get_by_label('Sắp xếp tín hiệu').select_option('work')
     await expect(names.first).to_have_attribute('aria-label',f'Mở chi tiết tín hiệu: Khách {expected[0]}')
