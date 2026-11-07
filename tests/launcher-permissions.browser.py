@@ -23,7 +23,6 @@ async def main():
             await page.evaluate("localStorage.setItem('launcher-fixture-pending', 'true')")
             await page.reload()
             quick = page.get_by_role('region', name='Truy cập nhanh')
-            print("STATE", await page.evaluate("localStorage.getItem('launcher-fixture-pending')"), await quick.get_by_role("button", name="Tùy chỉnh").is_disabled())
             await expect(quick.get_by_role('link', name='Nghỉ phép & Đi sớm muộn')).to_be_visible()
             await expect(quick.get_by_role('link', name='CRM Khách Hàng')).to_have_count(0)
             assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) == PINS, 'initial loading erased pins: ' + str(await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY))
