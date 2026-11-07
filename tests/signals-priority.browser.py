@@ -35,6 +35,7 @@ async def main():
     if width>=768:names=page.locator('table').get_by_role('button',name='Mở chi tiết tín hiệu:',exact=False)
     await expect(names.first).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách '+('601' if sale else '602'))
     await expect(names.nth(1 if sale else 2)).to_have_attribute('aria-label','Mở chi tiết tín hiệu: Khách 600')
+    await page.screenshot(path=str(OUT/f'{width}-{sale}-default.png'))
     buttons=await quick.get_by_role('button').all_text_contents()
     assert buttons[0].startswith('Tất cả')
     assert buttons[1].startswith('Chờ nhận' if sale else 'Chờ phân công')

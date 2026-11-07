@@ -69,7 +69,7 @@ const SIG = "sig:";
 export const signalsKey = (uid: string | null) => [`${SIG}list`, uid] as const;
 export function useSignals(enabled = true, priority = false) {
   const { userId } = useSignalPerms();
-  return useQuery({ queryKey: signalsKey(userId), queryFn: () => listSignals(priority), enabled: enabled && !!userId, refetchInterval: 10000, refetchIntervalInBackground: false, refetchOnWindowFocus: "always" });
+  return useQuery({ queryKey: [...signalsKey(userId), priority ? 'priority' : 'report'], queryFn: () => listSignals(priority), enabled: enabled && !!userId, refetchInterval: 10000, refetchIntervalInBackground: false, refetchOnWindowFocus: "always" });
 }
 export function useLastNotes(enabled = true) {
   const { userId } = useSignalPerms();

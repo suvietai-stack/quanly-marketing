@@ -22,6 +22,8 @@ beforeAll(async()=>{
     ALTER TABLE opportunity_signal_notes ENABLE ROW LEVEL SECURITY;
     CREATE POLICY note_read ON opportunity_signal_notes TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));`);
   await db.exec(readFileSync('drizzle/migrations/0261_signal_list_intake_priority.sql','utf8'));
+  await db.exec('GRANT UPDATE, INSERT, DELETE ON signal_list_priority TO authenticated');
+  await db.exec(readFileSync('drizzle/migrations/0262_signal_list_priority_read_only_grants.sql','utf8'));
   await db.exec(`INSERT INTO opportunity_signals SELECT ('00000000-0000-0000-0001-'||lpad(i::text,12,'0'))::uuid,'${uid}', 'consulting',NULL,NULL,'2026-11-01','2026-11-07' FROM generate_series(1,1100) i;`);
   await db.query(`INSERT INTO opportunity_signals VALUES($1,$2,'waiting',NULL,'2026-11-02','2026-11-01','2026-11-07'),($3,$2,'waiting',NULL,'2026-11-03','2026-11-01','2026-11-07'),($4,NULL,NULL,NULL,NULL,'2026-10-01','2026-11-07'),($5,$2,'won',NULL,NULL,'2026-11-01','2026-11-08'),($6,'00000000-0000-0000-0000-000000000002','waiting',NULL,'2026-09-01','2026-09-01','2026-11-07')`,[id(1101),uid,id(1102),id(1103),id(1104),id(1105)]);
 },60000);
