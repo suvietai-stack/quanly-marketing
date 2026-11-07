@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, type LucideIcon } from 'lucide-react';
 import type { PermissionKey } from '@/lib/auth';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean; badge?: string; perm?: PermissionKey; anyPerm?: PermissionKey[]; kpi?: boolean; adminOnly?: boolean; comingSoon?: boolean };
@@ -35,7 +35,11 @@ export const navigationGroups: NavGroup[] = [
     { to: "/reports-v2", label: "Báo cáo KPI", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
   ] },
   { label: "Thiết Kế", icon: Palette, items: [
-      { to: "/orders", label: "Order Thiết Kế", icon: Palette, perm: "order.view" },
+    { to: '/orders', label: 'Tất cả công việc', icon: ListChecks, anyPerm: ['order.view','order.photo.view','order.marketing_design.view','order.order_mockup.view'] },
+    { to: '/design/photo', label: 'Chụp ảnh', icon: Camera, anyPerm: ['order.view','order.photo.view'] },
+    { to: '/design/marketing', label: 'Ấn phẩm Marketing', icon: Palette, anyPerm: ['order.view','order.marketing_design.view'] },
+    { to: '/design/mockups', label: 'Ma-két đơn hàng', icon: FileText, anyPerm: ['order.view','order.order_mockup.view'] },
+    { to: '/design/reports', label: 'Báo cáo & Phân tích', icon: BarChart3, anyPerm: ['order.report_view','order.photo.report_view','order.marketing_design.report_view','order.order_mockup.report_view'] },
   ] },
   { label: "Mua Hàng & Giao Vận", icon: Truck, items: [
 { to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"] },
@@ -68,6 +72,8 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   const { can, isSuperAdmin, isKpiAdmin } = access;
   return navigationGroups.map(group => {
     const items = group.items.filter(it => !it.comingSoon &&
+      (!it.to.startsWith('/design/') || !['/design/photo','/design/marketing','/design/mockups'].includes(it.to) ||
+        (!['photo','marketing_design','order_mockup'].some(f=>can(`order.${f}.view`)) || can(`order.${it.to==='/design/photo'?'photo':it.to==='/design/marketing'?'marketing_design':'order_mockup'}.view`))) &&
       (!it.perm || can(it.perm)) &&
       (!it.anyPerm || (isSuperAdmin && it.to.startsWith('/biz')) ||
         (it.to === '/biz/approvals' && access.hasAssignedApprovals) ||

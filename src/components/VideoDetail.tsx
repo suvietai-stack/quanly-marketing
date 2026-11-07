@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
+import { saveDesignOrder } from '@/lib/orders/api';
+import { designCan } from '@/lib/orders/design';
 import { Send, Check, X, RotateCcw, CheckCheck, Play, Undo2, AlertTriangle, History as HistoryIcon, Camera, Scissors, Package, Palette } from "lucide-react";
 
 export function emptyVideo(brandId: string): Video {
@@ -185,20 +187,26 @@ export function VideoDetailDialog({
     toast.success("Đã lưu thay đổi");
   }
 
-  function createDesignOrderForThumbnail() {
+  async function createDesignOrderForThumbnail() {
+    if (!designCan(can,'marketing_design','create')) {toast.error('Không có quyền tạo Ấn phẩm Marketing');return;}
+    if (s.orders.some(o=>o.videoId===video.id && o.type==='Thumbnail video')) {toast.info('Video đã có yêu cầu Thumbnail');return;}
     const brand = s.brands.find((b) => b.id === video.brandId);
-    s.add("orders", {
-      id: uid(),
+    try { await saveDesignOrder(uid(), {
       title: `Thumbnail / ảnh cho video ${video.title}`,
       brandId: video.brandId,
       type: "Thumbnail video",
       source: "Video",
+      workflowKind: 'marketing_design',
+      videoId: video.id,
+      reviewer: userName,
       requester: userName,
       refLink: video.finalLink || video.editLink,
-      status: "Mới tạo",
+      status: "Chờ phân công",
+      history: [{at:new Date().toISOString(),byId:user?.id,byName:userName,action:'Tạo Order Thumbnail từ Video',toStatus:'Chờ phân công'}],
       brief: `Cần thumbnail / ảnh cho video "${video.title}"${brand ? ` của ${brand.name}` : ""}.`,
-    } as any);
+    }); await s.reload();
     toast.success("Đã tạo Order Thiết Kế cho video");
+    } catch(e) {toast.error(e instanceof Error?e.message:'Không tạo được Order');}
   }
 
   return (

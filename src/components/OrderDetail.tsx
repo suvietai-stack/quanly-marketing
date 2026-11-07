@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { saveDesignOrder } from '@/lib/orders/api';
+import { designCan, designLabel, DESIGN_FLOWS } from '@/lib/orders/design';
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const s = useStore();
@@ -19,6 +21,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const found = orderId ? s.orders.find((o) => o.id === orderId) : null;
   const [draft, setDraft] = useState<Partial<DesignOrder>>({});
   const [reviewNote, setReviewNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   if (!found) return null;
   const order: DesignOrder = found;
@@ -34,8 +38,9 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   const allow = (perm: PermissionKey, defaultRoleOk = false) => {
     if (isAdmin) return true;
-    if (can(perm)) return true;
-    return defaultRoleOk;
+    const action=perm.replace('order.','');
+    const scoped=designCan(can,order.workflowKind,action);
+    return scoped && defaultRoleOk;
   };
 
   function pushHistory(action: string, fromStatus?: OrderStatus, toStatus?: OrderStatus, note?: string, forced?: boolean) {
@@ -52,20 +57,25 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
     return [...(order.history || []), entry];
   }
 
-  function transition(toStatus: OrderStatus, action: string, extra: Partial<DesignOrder> = {}, note?: string, forced?: boolean) {
+  async function persist(patch: Partial<DesignOrder>) {
+    if(saving)return false;setSaving(true);setSaveError('');
+    try {await saveDesignOrder(order.id,patch,order);await s.reload();setDraft({});return true;}
+    catch(e){setSaveError(e instanceof Error?e.message:'Không lưu được Order');return false;}finally{setSaving(false);}
+  }
+  async function transition(toStatus: OrderStatus, action: string, extra: Partial<DesignOrder> = {}, note?: string, forced?: boolean) {
     const history = pushHistory(action, order.status, toStatus, note, forced);
-    s.update("orders", order.id, { ...draft, status: toStatus, history, ...extra });
+    if(!await persist({ ...draft, status: toStatus, history, ...extra }))return;
     setDraft({});
     setReviewNote("");
     toast.success(action);
   }
 
-  function saveOnly() {
+  async function saveOnly() {
     if (Object.keys(draft).length === 0) {
       toast.info("Không có thay đổi");
       return;
     }
-    s.update("orders", order.id, draft);
+    if(!await persist(draft))return;
     setDraft({});
     toast.success("Đã lưu");
   }
@@ -97,7 +107,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
         await s.reload();
         toast.success("Bạn đã nhận Job");
       },
-      show: !order.assignee && can("order.take"),
+      show: !order.assignee && designCan(can,order.workflowKind,'take'),
     });
     actions.push({
       label: "Gửi yêu cầu",
@@ -198,8 +208,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
     });
   }
 
-  const canEdit = isAdmin || can("order.edit") || isRequester || isOwner;
-  const canForce = isAdmin || can("order.force_status");
+  const canEdit = isAdmin || (designCan(can,order.workflowKind,'edit') && (isRequester || isOwner || designCan(can,order.workflowKind,'assign')));
+  const canForce = isAdmin || (designCan(can,order.workflowKind,'force_status') && designCan(can,order.workflowKind,'assign'));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -212,7 +222,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
             {order.revisions ? <span className="text-xs text-muted-foreground">Sửa: {order.revisions} lần</span> : null}
           </DialogTitle>
           <div className="text-xs text-muted-foreground">
-            {s.brands.find((b) => b.id === order.brandId)?.name} · {order.type} · Nguồn: {order.source}
+            {designLabel(order.workflowKind)} · {s.brands.find((b) => b.id === order.brandId)?.name} · {order.type} · Nguồn: {order.source}
           </div>
         </DialogHeader>
 
@@ -225,6 +235,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
           <TabsContent value="info" className="space-y-4 mt-4">
             <div className="grid sm:grid-cols-2 gap-3">
+              <div><Label>Luồng công việc</Label><Select value={o.workflowKind || 'unknown'} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} onValueChange={v=>setField({workflowKind:v as DesignOrder['workflowKind']})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{!o.workflowKind && <SelectItem value="unknown">Chưa phân loại luồng</SelectItem>}{DESIGN_FLOWS.filter(f=>isAdmin || designCan(can,f.key,'assign')).map(f=><SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}</SelectContent></Select></div>
               <div className="sm:col-span-2"><Label>Tên order</Label>
                 <Input value={o.title} disabled={!canEdit} onChange={(e) => setField({ title: e.target.value })} /></div>
               <div><Label>Thương hiệu</Label>
@@ -280,10 +291,10 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   const patch: Partial<DesignOrder> = { assignee: v, history };
                   if (v && order.assignee !== v) { patch.assignedBy = userName; patch.assignedAt = now; }
                   if (newStatus !== order.status) patch.status = newStatus;
-                  s.update("orders", order.id, patch);
+                  void persist(patch);
                 }
                 setField({ assignee: v });
-              }} disabled={!(isAdmin || can("order.assign"))} />
+              }} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} />
               <PersonSelect
                 label="Người duyệt"
                 value={o.reviewer || o.requester}
@@ -327,7 +338,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 {order.deliveredAt && <>Bàn giao: {fmtDate(order.deliveredAt)} · </>}
                 {order.completedAt && <>Hoàn thành: {fmtDate(order.completedAt)}</>}
               </div>
-              <Button onClick={saveOnly} disabled={!canEdit || Object.keys(draft).length === 0}>Lưu thay đổi</Button>
+              <Button onClick={saveOnly} disabled={saving || (!canEdit && !designCan(can,order.workflowKind,'assign')) || Object.keys(draft).length === 0}>{saving?'Đang lưu…':'Lưu thay đổi'}</Button>
             </div>
           </TabsContent>
 
@@ -356,7 +367,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
               <div className="flex flex-wrap gap-2">
                 {actions.filter((a) => a.show).map((a) => (
-                  <Button key={a.label} variant={a.variant || "default"} onClick={a.onClick}>{a.label}</Button>
+                  <Button key={a.label} disabled={saving} variant={a.variant || "default"} onClick={a.onClick}>{a.label}</Button>
                 ))}
                 {actions.filter((a) => a.show).length === 0 && (
                   <p className="text-sm text-muted-foreground">Không có hành động khả dụng cho trạng thái này (hoặc bạn không có quyền).</p>
@@ -401,6 +412,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
             </div>
           </TabsContent>
         </Tabs>
+        {Object.keys(o.specialty || {}).length>0 && <section className="border-t pt-3"><h3 className="text-sm font-semibold">Yêu cầu chuyên môn</h3>{Object.entries(o.specialty || {}).map(([key,value])=><p key={key} className="text-sm mt-2"><span className="text-muted-foreground">{key}: </span>{value || '—'}</p>)}</section>}
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
       </DialogContent>
     </Dialog>
   );
