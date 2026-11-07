@@ -2,10 +2,10 @@
 
 ## TÁI CẤU TRÚC THIẾT KẾ — 07/11/2026
 - [x] DS1. Rà soát Order/schema/quyền/workflow/Content/Video/KPI/thông báo và chốt phương án bảo toàn.
-- [x] DS2. 0264–0268 phân luồng, đọc theo caller, ghi nguyên tử/audit; đối soát 83 Order, 76 hoàn thành, 13 Marketing, 70 chưa phân loại, một completedAt; giữ URL cũ.
+- [x] DS2. 0264–0269 phân luồng, đọc theo caller, ghi nguyên tử/audit/quyền file; đối soát 83 Order, 76 hoàn thành, 13 Marketing, 70 chưa phân loại, một completedAt; giữ URL cũ.
 - [x] DS3. Năm mục menu, All-in-One/ba luồng, form chuyên môn, chi tiết và quyền luồng trong Role; gear tới cấu hình quyền hiện có.
 - [x] DS4. Ba báo cáo riêng và dashboard, kỳ VN/mẫu số/giây/lịch sử/drill-down; biểu đồ hiển thị ngay.
-- [x] DS5a. 76 unit/database/regression tests đạt; browser cách ly tạo/đọc/lọc/báo cáo tại 320/390/430/768/1280; build OK. Không tạo dữ liệu thật hay Publish.
+- [x] DS5a. 77 unit/database/regression tests đạt; browser cách ly tạo/đọc/lọc/báo cáo tại 320/390/430/768/1280; build OK. Không tạo dữ liệu thật hay Publish.
 - [ ] DS5b. Nghiệm thu phiên thật theo đúng tài khoản: --self không tìm được tài khoản khớp; chờ người dùng đăng nhập Preview hoặc chỉ định tài khoản cho phép kiểm tra. Chưa xác minh toàn chuỗi duyệt/lỗi thử lại, Content/Video thật và thông báo thật.
 
 ## HOTFIX ƯU TIÊN CÔNG VIỆC TÍN HIỆU — 07/11/2026

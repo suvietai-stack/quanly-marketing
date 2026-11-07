@@ -1,9 +1,9 @@
 # Design Order verification — 2026-11-07
 
 ## Verified
-- One Order source; additive workflow field and caller-scoped reads, atomic writes and append-only authoritative audit (0264–0268).
+- One Order source; additive workflow field and caller-scoped reads, atomic writes, file permission compatibility and append-only authoritative audit (0264–0269).
 - Hosted read-only counts: 83 total, 76 completed, 13 confirmed Content-linked Marketing, 70 unclassified; 1 existing completedAt field. No test Orders inserted.
-- 76 targeted unit/database/regression tests pass: scopes, edited-field conflicts, audit identities, unclassified creation rejection, immutable history, unrelated transition timestamps, VN periods, denominator and precise durations, navigation, launcher, KPI, quote/tracking logic.
+- 77 targeted unit/database/regression tests pass: scopes, edited-field conflicts, audit identities, unclassified creation rejection, immutable history, unrelated transition timestamps, file updates without generic edit, VN periods, denominator and precise durations, navigation, launcher, KPI, quote/tracking logic.
 - Isolated browser checks at 320/390/430/768/1280 cover form create/read-back, filters, default flow, reports and no overflow. Screenshots reviewed; charts render. Fixture data is browser-only and writes are intercepted.
 - Latest preview build OK; five Design routes have individual metadata.
 
