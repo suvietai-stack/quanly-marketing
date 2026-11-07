@@ -3097,6 +3097,36 @@ export type Database = {
           },
         ]
       }
+      design_catalogs: {
+        Row: {
+          active: boolean
+          id: string
+          is_other: boolean
+          kind: string
+          name: string
+          position: number
+          workflow_kind: string
+        }
+        Insert: {
+          active?: boolean
+          id?: string
+          is_other?: boolean
+          kind: string
+          name: string
+          position?: number
+          workflow_kind: string
+        }
+        Update: {
+          active?: boolean
+          id?: string
+          is_other?: boolean
+          kind?: string
+          name?: string
+          position?: number
+          workflow_kind?: string
+        }
+        Relationships: []
+      }
       employee_kpi_adjustments: {
         Row: {
           created_at: string
@@ -9060,6 +9090,28 @@ export type Database = {
       cw_uid: { Args: { _name: string }; Returns: string }
       design_can: {
         Args: { _action: string; _flow: string; _uid: string }
+        Returns: boolean
+      }
+      design_catalog_save: {
+        Args: {
+          _active: boolean
+          _flow: string
+          _id: string
+          _kind: string
+          _name: string
+          _position: number
+        }
+        Returns: string
+      }
+      design_catalog_usage: {
+        Args: never
+        Returns: {
+          catalog_id: string
+          orders_count: number
+        }[]
+      }
+      design_input_access: {
+        Args: { _name: string; _write?: boolean }
         Returns: boolean
       }
       design_order_save: {

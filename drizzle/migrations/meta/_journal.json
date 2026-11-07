@@ -1891,6 +1891,13 @@
       "when": 1794022567348,
       "tag": "0269_design_order_file_permission_compatibility",
       "breakpoints": true
+    },
+    {
+      "idx": 270,
+      "version": "7",
+      "when": 1794027071517,
+      "tag": "0270_design_form_catalogs_and_private_inputs",
+      "breakpoints": true
     }
   ]
 }
