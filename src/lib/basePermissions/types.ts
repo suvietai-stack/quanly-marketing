@@ -7,7 +7,7 @@ export type Binding = { id: string; bundle_id: string; user_id: string; active: 
 export type OrgConfig = { units: Unit[]; titles: Title[]; memberships: Membership[]; defaults: Bundle[]; bundles: Bundle[]; grants: Rule[]; bindings: Binding[] };
 export const emptyConfig = (): OrgConfig => ({ units: [], titles: [], memberships: [], defaults: [], bundles: [], grants: [], bindings: [] });
 export type EffectivePermission = { key: string; label: string; module: string; allowed: boolean; decision: string; tier: number; scope: string; supported: boolean; conflict: boolean; bypass?: boolean; sources: (Rule & { source_kind: string; source_name?: string })[]; legacy: { allowed: boolean; source: { kind: string; tier: number; names?: string[] } } };
-export type EffectiveAccess = { user_id: string; revision: number; server_now: string; permissions: EffectivePermission[] };
+export type EffectiveAccess = { user_id: string; revision: number; server_now: string; next_transition_at?: string | null; permissions: EffectivePermission[] };
 export type Impact = { user_id: string; name: string; changes: { key: string; label: string; before: EffectivePermission; after: EffectivePermission }[] };
-export type Preview = { id: string; revision: number; impact: Impact[]; expires_at: string };
+export type Preview = { id: string; revision: number; impact: Impact[]; expires_at: string; next_transition_at?: string | null; config_diff?: { section: string; before: unknown; after: unknown }[] };
 export type OrgRead = { revision: number; config: OrgConfig; staff: { id: string; name: string; status: string }[]; catalog: { key: string; label: string; module: string; supported: boolean }[]; events: { id: string; actor_id: string; action: string; created_at: string; before_revision: number; after_revision: number; impact: Impact[] }[] };
