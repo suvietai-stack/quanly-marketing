@@ -350,3 +350,11 @@ Nguyên tắc: ba chức năng riêng (Tạm Ứng / Thanh Toán / Tạm Ứng L
 - [x] FR5. Giao diện: danh sách/tạo/chờ tôi xử lý/báo cáo/cài đặt theo tab; mobile-first; menu bỏ "Sắp ra mắt" khi xong.
 - [x] FR6. Báo cáo riêng từng chức năng theo quyền; số liệu thật, không đếm trùng.
 - [ ] FR7 (còn: nghiệm thu phiên đăng nhập thật, upload file thật, xuất Excel). Kiểm thử đầy đủ theo mục 18 của spec; chưa Publish.
+
+## BẢNG KÊ CHI PHÍ ĐỀ NGHỊ THANH TOÁN — spec 626 dòng (2026-11-09)
+Nguyên tắc: một đề nghị nhiều khoản chi có cấu trúc; backend tự tính thành tiền/tổng tiền, không tin số client; Desktop bảng nhập nhanh, Mobile thẻ thu gọn + form ngắn; đề nghị cũ không tự chia dòng; không đổi quy trình duyệt/thông báo/phân quyền; chưa Publish.
+- [x] BL1. Migration 0288: fr_request_lines (cha–con, line_total backend tính), fr_line_catalog (8 mục mẫu, quản lý qua quyền Cài đặt Thanh Toán), fr_save/fr_submit/fr_report nâng cấp (chặn đề nghị mới thiếu khoản chi, giữ đường đi cũ cho đề nghị trước nâng cấp).
+- [x] BL2. Component dùng chung ExpenseLines (editor bảng Desktop / thẻ + Dialog Mobile, view chỉ đọc hai chế độ); form Thanh Toán bỏ ô Số tiền + Nội dung chi tiết, tổng tự tính; đính kèm thêm liên kết tài liệu.
+- [x] BL3. Chi tiết đề nghị hiển thị bảng kê chỉ đọc; báo cáo thêm "Theo khoản chi" không nhân trùng tổng; Cài đặt thêm quản lý danh mục khoản chi (thêm/đổi tên/ẩn).
+- [x] BL4. Kiểm thử: 23/23 (đơn vị + database PGlite: tính lại tổng, chống trùng dòng, chặn dòng rỗng/âm, đề nghị cũ vẫn gửi được, báo cáo không nhân dòng); typecheck/build OK.
+- [ ] BL5. Nghiệm thu phiên đăng nhập thật (tạo đề nghị nhiều khoản trên Mobile/Desktop, duyệt, chi, báo cáo); chưa Publish.

@@ -17,7 +17,9 @@ import {
   FR_KIND_LABEL, FR_STATUS_LABEL, FR_STATUS_VARIANT, FR_QUICK_FILTERS, quickFilterStatuses,
   vnd, parseAmount, fmtAmountInput, frEditable, frCancellable, frRemainingToPay,
   frAdvanceRemaining, frSalaryRemaining, frValidate, type FrKind, type FrStatus,
+  emptyLine, isBlankLine, linesTotal, validateLines, type FrLine,
 } from "@/lib/financeRequests/logic";
+import { ExpenseLinesEditor, ExpenseLinesView } from "@/components/finance/ExpenseLines";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
@@ -196,13 +198,16 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [supplierBank, setSupplierBank] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [salaryPeriod, setSalaryPeriod] = useState("");
-  const [attachments, setAttachments] = useState<{ name: string; path: string }[]>([]);
+  const [attachments, setAttachments] = useState<{ name: string; path?: string; url?: string }[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [lines, setLines] = useState<FrLine[]>([]);
+  const [linkUrl, setLinkUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
 
   const types = useQuery({ queryKey: ["fr", "types"], queryFn: frApi.paymentTypes, enabled: open && kind === "payment" });
   const settleOpts = useQuery({ queryKey: ["fr", "settle-opts"], queryFn: frApi.settleOptions, enabled: open && kind === "payment" });
+  const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog, enabled: open && kind === "payment" });
   const selectedType = (types.data ?? []).find((t) => t.id === typeId);
   const isSettle = selectedType?.name === SETTLE_TYPE;
   const isSupplier = selectedType?.name === "Thanh toán nhà cung cấp/đối tác";
@@ -219,25 +224,48 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       setSupplierName(editing.supplier_name ?? ""); setSupplierTax(editing.supplier_tax ?? "");
       setSupplierBank(editing.supplier_bank ?? ""); setInvoiceNo(editing.invoice_no ?? "");
       setSalaryPeriod(editing.salary_period ?? "");
-      setAttachments((editing.attachments as any[])?.filter((a) => a?.path) ?? []);
+      setAttachments((editing.attachments as any[])?.filter((a) => a?.path || a?.url) ?? []);
+      setLines([]);
     } else {
       setAmount(""); setTitle(""); setDetail(""); setDesiredDate(""); setPayeeName(""); setPayeeInfo("");
       setNote(""); setTypeId(""); setAdvanceId(""); setSupplierName(""); setSupplierTax(""); setSupplierBank("");
       setInvoiceNo(""); setSalaryPeriod(""); setAttachments([]);
+      setLines(kind === "payment" ? [emptyLine()] : []);
     }
+    setLinkUrl("");
   }, [open, editing]);
 
+  // Nạp bảng kê khi sửa đề nghị thanh toán đã có dòng khoản chi.
+  useEffect(() => {
+    if (!(open && kind === "payment" && editing)) return;
+    frApi.lines(editing.id)
+      .then((ls) => setLines(ls.length
+        ? ls.map((l) => ({ id: l.id, name: l.name, catalog_id: l.catalog_id, unit: l.unit ?? "", qty: Number(l.qty), unit_price: Number(l.unit_price) }))
+        : [emptyLine()]))
+      .catch(() => {});
+  }, [open, editing, kind]);
+
+  const effectiveAmount = kind === "payment" ? linesTotal(lines) : parseAmount(amount);
+
   const payload = () => ({
-    amount: parseAmount(amount), title, detail, desired_date: desiredDate || null,
+    amount: effectiveAmount, title, detail, desired_date: desiredDate || null,
     payee_name: payeeName, payee_info: payeeInfo, note,
     payment_type_id: typeId || null, advance_id: isSettle ? advanceId || null : null,
     supplier_name: supplierName, supplier_tax: supplierTax, supplier_bank: supplierBank,
     invoice_no: invoiceNo, salary_period: salaryPeriod, attachments,
+    // Backend tự tính lại thành tiền/tổng tiền từ bảng kê, không tin số client gửi.
+    ...(kind === "payment" ? { lines: lines.filter((l) => !isBlankLine(l)).map((l) => ({
+      name: l.name, catalog_id: l.catalog_id ?? null, unit: l.unit, qty: l.qty, unit_price: l.unit_price,
+    })) } : {}),
   });
 
   const save = async (submitAfter: boolean) => {
+    if (kind === "payment") {
+      const lineErr = validateLines(lines);
+      if (lineErr) return toast.error(lineErr);
+    }
     const err = frValidate(kind, {
-      amount: parseAmount(amount), title, paymentTypeId: typeId, payeeName,
+      amount: effectiveAmount, title, paymentTypeId: typeId, payeeName,
       advanceId, salaryPeriod, settleTypeName: selectedType?.name,
     });
     if (err) return toast.error(err);
@@ -270,16 +298,18 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${kind === "payment" ? "sm:max-w-3xl" : "max-w-lg"} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader><DialogTitle>{editing ? `Sửa ${FR_KIND_LABEL[kind]}` : `Tạo ${FR_KIND_LABEL[kind]}`}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <Field label={kind === "salary_advance" ? "Số tiền muốn tạm ứng *" : "Số tiền đề nghị *"}>
-            <Input inputMode="numeric" value={amount} onChange={(e) => setAmount(fmtAmountInput(e.target.value))} placeholder="VD: 5.000.000" />
-          </Field>
+          {kind !== "payment" && (
+            <Field label={kind === "salary_advance" ? "Số tiền muốn tạm ứng *" : "Số tiền đề nghị *"}>
+              <Input inputMode="numeric" value={amount} onChange={(e) => setAmount(fmtAmountInput(e.target.value))} placeholder="VD: 5.000.000" />
+            </Field>
+          )}
           <Field label={kind === "advance" ? "Mục đích tạm ứng *" : kind === "salary_advance" ? "Lý do *" : "Nội dung thanh toán *"}>
             <Input maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === "advance" ? "VD: Tạm ứng mua vật tư" : ""} />
           </Field>
-          {kind !== "salary_advance" && (
+          {kind === "advance" && (
             <Field label="Nội dung chi tiết">
               <Textarea rows={3} maxLength={3000} value={detail} onChange={(e) => setDetail(e.target.value)} />
             </Field>
@@ -332,6 +362,11 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
               <Input maxLength={300} value={payeeInfo} onChange={(e) => setPayeeInfo(e.target.value)} placeholder="Ngân hàng — STK — Chủ TK" />
             </Field>
           )}
+          {kind === "payment" && (
+            <Field label="Bảng kê khoản chi *">
+              <ExpenseLinesEditor lines={lines} onChange={setLines} catalog={catalog.data ?? []} />
+            </Field>
+          )}
           {kind === "salary_advance" && (
             <Field label="Kỳ lương dự kiến khấu trừ *">
               <Input type="month" value={salaryPeriod} onChange={(e) => setSalaryPeriod(e.target.value)} />
@@ -340,16 +375,27 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
           <Field label={kind === "payment" ? "Ngày đề nghị thanh toán" : "Ngày mong muốn nhận tiền"}>
             <Input type="date" value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} />
           </Field>
-          <Field label="File/ảnh chứng từ đính kèm">
+          <Field label="Chứng từ & tài liệu đính kèm">
             <div className="space-y-2">
               <Input type="file" multiple accept="image/*,application/pdf" onChange={(e) => setFiles(Array.from(e.target.files ?? []))} />
               {files.map((f, i) => <div key={i} className="text-sm text-muted-foreground flex items-center gap-1"><Paperclip className="h-3 w-3" />{f.name} (chưa tải lên)</div>)}
               {attachments.map((a, i) => (
-                <div key={a.path} className="text-sm flex items-center gap-2">
-                  <Paperclip className="h-3 w-3" /><span className="flex-1 truncate">{a.name}</span>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}><X className="h-3 w-3" /></Button>
+                <div key={a.path ?? a.url ?? i} className="text-sm flex items-center gap-2">
+                  <Paperclip className="h-3 w-3 shrink-0" />
+                  <span className="flex-1 truncate">{a.name}{a.url ? " (liên kết)" : ""}</span>
+                  <Button type="button" size="sm" variant="ghost" aria-label={`Xóa đính kèm ${a.name}`} onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}><X className="h-3 w-3" /></Button>
                 </div>
               ))}
+              <div className="flex gap-2">
+                <Input placeholder="Dán liên kết tài liệu (Google Drive…)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => {
+                  const u = linkUrl.trim();
+                  if (!u) return;
+                  if (!/^https?:\/\//i.test(u)) return toast.error("Liên kết phải bắt đầu bằng http:// hoặc https://");
+                  setAttachments([...attachments, { name: u.replace(/^https?:\/\//i, "").slice(0, 80), url: u }]);
+                  setLinkUrl("");
+                }}>Thêm liên kết</Button>
+              </div>
             </div>
           </Field>
           <Field label="Ghi chú">
@@ -374,6 +420,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const detail = useQuery({ queryKey: ["fr", "detail", id], queryFn: () => frApi.detail(id) });
   const steps = useQuery({ queryKey: ["fr", "steps", id], queryFn: () => frApi.steps(id) });
   const events = useQuery({ queryKey: ["fr", "events", id], queryFn: () => frApi.events(id) });
+  const reqLines = useQuery({ queryKey: ["fr", "lines", id], queryFn: () => frApi.lines(id), enabled: kind === "payment" });
   const [comment, setComment] = useState("");
   const [payOpen, setPayOpen] = useState(false);
   const [deductOpen, setDeductOpen] = useState(false);
@@ -397,8 +444,10 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const showPay = canPay && (r.status === "awaiting_payment" || (r.status === "paid" && r.paid_amount < r.amount));
   const showDeduct = canDeduct && r.status === "paid" && r.deducted_amount < r.paid_amount;
 
-  const openAttachment = async (path: string) => {
-    const { data, error } = await supabase.storage.from("fr-attachments").createSignedUrl(path, 120);
+  const openAttachment = async (a: { path?: string; url?: string }) => {
+    if (a.url) return window.open(a.url, "_blank", "noopener");
+    if (!a.path) return;
+    const { data, error } = await supabase.storage.from("fr-attachments").createSignedUrl(a.path, 120);
     if (error || !data?.signedUrl) return toast.error("Không mở được tệp đính kèm");
     window.open(data.signedUrl, "_blank", "noopener");
   };
@@ -429,15 +478,17 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
             </div>
             {(r.attachments as any[])?.length > 0 && (
               <div className="space-y-1 pt-1">
-                {(r.attachments as any[]).filter((a) => a?.path).map((a) => (
-                  <button key={a.path} onClick={() => openAttachment(a.path)} className="flex items-center gap-1 text-sm text-primary hover:underline">
-                    <Paperclip className="h-3 w-3" />{a.name}
+                {(r.attachments as any[]).filter((a) => a?.path || a?.url).map((a, i) => (
+                  <button key={a.path ?? a.url ?? i} onClick={() => openAttachment(a)} className="flex items-center gap-1 text-sm text-primary hover:underline">
+                    <Paperclip className="h-3 w-3" />{a.name}{a.url ? " (liên kết)" : ""}
                   </button>
                 ))}
               </div>
             )}
             {r.note && <p className="text-sm text-muted-foreground">Ghi chú: {r.note}</p>}
           </div>
+
+          {kind === "payment" && (reqLines.data ?? []).length > 0 && <ExpenseLinesView lines={reqLines.data!} />}
 
           {(r.paid_amount > 0 || r.status === "awaiting_payment") && (
             <div className="rounded-lg border p-3 space-y-1 text-sm">
@@ -657,6 +708,17 @@ function ReportTab({ kind }: { kind: FrKind }) {
           {(d.by_requester as any[]).length === 0 && <p className="text-sm text-muted-foreground">Chưa có dữ liệu.</p>}
         </div>
       </div>
+      {kind === "payment" && Array.isArray(d.by_line) && d.by_line.length > 0 && (
+        <div className="rounded-lg border p-3 space-y-1">
+          <div className="font-semibold text-sm">Theo khoản chi</div>
+          {(d.by_line as any[]).map((l) => (
+            <div key={l.name} className="flex justify-between text-sm gap-2">
+              <span className="truncate">{l.name}</span>
+              <span className="shrink-0"><b>{l.count}</b> khoản — {vnd(l.amount)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -747,6 +809,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
       )}
 
       {kind === "payment" && <PaymentTypesManager />}
+      {kind === "payment" && <LineCatalogManager />}
 
       <Button disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu cài đặt"}</Button>
     </div>
@@ -786,6 +849,64 @@ function PaymentTypesManager() {
       ))}
       <div className="flex gap-2">
         <Input placeholder="Tên loại mới" value={name} onChange={(e) => setName(e.target.value)} />
+        <Button variant="outline" disabled={busy} onClick={add}>Thêm</Button>
+      </div>
+    </div>
+  );
+}
+
+function LineCatalogManager() {
+  const qc = useQueryClient();
+  const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog });
+  const [name, setName] = useState("");
+  const [renaming, setRenaming] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const refresh = () => qc.invalidateQueries({ queryKey: ["fr", "line-catalog"] });
+  const add = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      await frApi.saveLineCatalog(null, name, true, (catalog.data ?? []).length + 1);
+      setName("");
+      refresh();
+      toast.success("Đã thêm khoản chi mẫu");
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  const toggle = async (c: { id: string; name: string; active: boolean; sort: number }) => {
+    try {
+      await frApi.saveLineCatalog(c.id, c.name, !c.active, c.sort);
+      refresh();
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const rename = async (c: { id: string; name: string; active: boolean; sort: number }) => {
+    const n = (renaming[c.id] ?? c.name).trim();
+    if (!n || n === c.name) return;
+    try {
+      await frApi.saveLineCatalog(c.id, n, c.active, c.sort);
+      setRenaming((m) => ({ ...m, [c.id]: "" }));
+      refresh();
+      toast.success("Đã đổi tên");
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  return (
+    <div className="rounded-lg border p-4 space-y-3">
+      <div className="font-semibold">Danh mục khoản chi thường dùng</div>
+      <p className="text-sm text-muted-foreground">Gợi ý chọn nhanh khi nhập bảng kê. Nhân viên vẫn tự nhập tên khác khi cần.</p>
+      {(catalog.data ?? []).map((c) => (
+        <div key={c.id} className="flex items-center gap-2 text-sm">
+          <Input
+            className={`h-9 flex-1 ${c.active ? "" : "line-through text-muted-foreground"}`}
+            value={renaming[c.id] ?? c.name}
+            onChange={(e) => setRenaming((m) => ({ ...m, [c.id]: e.target.value }))}
+          />
+          {(renaming[c.id] ?? c.name).trim() !== c.name && (
+            <Button size="sm" variant="outline" onClick={() => rename(c)}>Lưu</Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => toggle(c)}>{c.active ? "Ẩn" : "Hiện"}</Button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <Input placeholder="Tên khoản chi mới" value={name} onChange={(e) => setName(e.target.value)} />
         <Button variant="outline" disabled={busy} onClick={add}>Thêm</Button>
       </div>
     </div>
