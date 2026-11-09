@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-import { pgcrypto } from '@electric-sql/pglite/pgcrypto';
+// PGlite 0.5 không export subpath "./pgcrypto" — nạp trực tiếp từ dist/contrib.
+// @ts-expect-error đường dẫn nội bộ của gói
+import { pgcrypto } from '@electric-sql/pglite/dist/contrib/pgcrypto.js';
 import { beforeAll, afterAll, it, expect } from 'vitest';
 
 const db = new PGlite({ extensions: { pgcrypto } });
