@@ -55,6 +55,11 @@ export const frApi = {
   pendingSteps: () => sel<FrStep[]>(db.from("fr_steps").select("*").eq("status", "pending")),
   events: (id: string) => sel<FrEvent[]>(db.from("fr_events").select("*").eq("request_id", id).order("created_at", { ascending: false })),
   paymentTypes: () => sel<FrPaymentType[]>(db.from("fr_payment_types").select("*").order("sort").order("name")),
+  lines: (requestId: string) =>
+    sel<FrRequestLine[]>(db.from("fr_request_lines").select("*").eq("request_id", requestId).order("line_no")),
+  lineCatalog: () => sel<FrLineCatalog[]>(db.from("fr_line_catalog").select("*").order("sort").order("name")),
+  saveLineCatalog: (id: string | null, name: string, active: boolean, sort: number) =>
+    rpc<string>("fr_line_catalog_save", { _id: id, _name: name, _active: active, _sort: sort }),
   settings: () => sel<FrSettings[]>(db.from("fr_settings").select("*")),
   settleOptions: () => rpc<FrSettleOption[]>("fr_settle_options", {}),
   save: (id: string | null, kind: FrKind, payload: Record<string, unknown>, requestKey: string) =>
