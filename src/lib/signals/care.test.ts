@@ -5,10 +5,10 @@ const iso = (ms: number) => new Date(now - ms).toISOString();
 const S = (status: string, assignedAgo: number, extra: any = {}) => ({ status, assigned_to: "A", assigned_at: iso(assignedAgo), cancelled_at: null, ...extra });
 describe("care", () => {
   it("chờ nhận quá 24h", () => { expect(careFlag(S("waiting", 25 * H), [], now)).toBe("unaccepted"); expect(careFlag(S("waiting", 5 * H), [], now)).toBeNull(); });
-  it("đang tư vấn quá 3 ngày", () => expect(careFlag(S("consulting", 4 * D), [], now)).toBe("stale_contact"));
-  it("đã báo giá quá 3 ngày", () => expect(careFlag(S("quoted", 4 * D), [], now)).toBe("stale_quote"));
+  it("không nhắc note tư vấn theo kỳ 3 ngày", () => expect(careFlag(S("consulting", 4 * D), [], now)).toBeNull());
+  it("không nhắc note báo giá theo kỳ 3 ngày", () => expect(careFlag(S("quoted", 4 * D), [], now)).toBeNull());
   it("vừa cập nhật thì không nhắc", () => expect(careFlag(S("quoted", 10 * D), [{ author_id: "A", created_at: iso(H) }], now)).toBeNull());
-  it("nhật ký của Sale cũ không tính", () => expect(careFlag(S("quoted", 10 * D), [{ author_id: "B", created_at: iso(H) }], now)).toBe("stale_quote"));
+  it("không nhắc thiếu note khi bàn giao", () => expect(careFlag(S("quoted", 10 * D), [{ author_id: "B", created_at: iso(H) }], now)).toBeNull());
   it("không nhắc chốt/trượt/hủy/chưa phân công", () => {
     expect(careFlag(S("won", 10 * D), [], now)).toBeNull();
     expect(careFlag(S("lost", 10 * D), [], now)).toBeNull();
