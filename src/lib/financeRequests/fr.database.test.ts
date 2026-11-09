@@ -5,7 +5,7 @@ import { beforeAll, afterAll, it, expect } from 'vitest';
 const db = new PGlite();
 const ids = Array.from({ length: 6 }, (_, i) => `00000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}`);
 const [staff, approver, accountant, outsider, admin, staff2] = ids;
-let advanceId = '', paymentId = '', salaryId = '', settleTypeId = '';
+let advanceId = '', paymentId = '', salaryId = '', settleTypeId = '', advanceTypeId = '';
 
 async function actor(id: string) { await db.query("select set_config('test.uid',$1,false)", [id]); }
 async function scalar(sql: string, args: unknown[] = []) { return (await db.query<{ v: any }>(sql, args)).rows[0]?.v; }
@@ -25,15 +25,16 @@ CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,k
     ('${approver}','fr.advance.approve'),('${approver}','fr.payment.approve'),('${approver}','fr.salary.approve'),
     ('${accountant}','fr.advance.pay'),('${accountant}','fr.payment.pay'),('${accountant}','fr.salary.pay'),('${accountant}','fr.salary.deduct'),
     ('${admin}','fr.advance.settings'),('${admin}','fr.payment.settings'),('${admin}','fr.salary.settings')`);
-  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group'])
+  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group', '0290_fr_type_catalogs'])
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   settleTypeId = await scalar("select id v from fr_payment_types where name='Quyết toán/hoàn ứng tạm ứng'");
+  advanceTypeId = await scalar("select id v from fr_payment_types where kind='advance' and name='Tạm ứng mua vật tư'");
 }, 30000);
 afterAll(() => db.close());
 
 it('save is idempotent by request key and only the owner edits drafts', async () => {
   await actor(staff);
-  const p = payload({ amount: 2000000, title: 'Tạm ứng mua vật tư', desired_date: '2026-11-15' });
+  const p = payload({ amount: 2000000, title: 'Tạm ứng mua vật tư', desired_date: '2026-11-15', advance_type_id: advanceTypeId });
   advanceId = await scalar('select fr_save(null,$1,$2,$3) v', ['advance', p, 'rk-1']);
   expect(await scalar('select fr_save(null,$1,$2,$3) v', ['advance', p, 'rk-1'])).toBe(advanceId);
   expect(await scalar('select count(*)::int v from fr_requests')).toBe(1);
