@@ -224,7 +224,8 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       setSupplierName(editing.supplier_name ?? ""); setSupplierTax(editing.supplier_tax ?? "");
       setSupplierBank(editing.supplier_bank ?? ""); setInvoiceNo(editing.invoice_no ?? "");
       setSalaryPeriod(editing.salary_period ?? "");
-      setAttachments((editing.attachments as any[])?.filter((a) => a?.path) ?? []);
+      setAttachments((editing.attachments as any[])?.filter((a) => a?.path || a?.url) ?? []);
+      setLines([]);
     } else {
       setAmount(""); setTitle(""); setDetail(""); setDesiredDate(""); setPayeeName(""); setPayeeInfo("");
       setNote(""); setTypeId(""); setAdvanceId(""); setSupplierName(""); setSupplierTax(""); setSupplierBank("");
@@ -300,13 +301,15 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? `Sửa ${FR_KIND_LABEL[kind]}` : `Tạo ${FR_KIND_LABEL[kind]}`}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <Field label={kind === "salary_advance" ? "Số tiền muốn tạm ứng *" : "Số tiền đề nghị *"}>
-            <Input inputMode="numeric" value={amount} onChange={(e) => setAmount(fmtAmountInput(e.target.value))} placeholder="VD: 5.000.000" />
-          </Field>
+          {kind !== "payment" && (
+            <Field label={kind === "salary_advance" ? "Số tiền muốn tạm ứng *" : "Số tiền đề nghị *"}>
+              <Input inputMode="numeric" value={amount} onChange={(e) => setAmount(fmtAmountInput(e.target.value))} placeholder="VD: 5.000.000" />
+            </Field>
+          )}
           <Field label={kind === "advance" ? "Mục đích tạm ứng *" : kind === "salary_advance" ? "Lý do *" : "Nội dung thanh toán *"}>
             <Input maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={kind === "advance" ? "VD: Tạm ứng mua vật tư" : ""} />
           </Field>
-          {kind !== "salary_advance" && (
+          {kind === "advance" && (
             <Field label="Nội dung chi tiết">
               <Textarea rows={3} maxLength={3000} value={detail} onChange={(e) => setDetail(e.target.value)} />
             </Field>
