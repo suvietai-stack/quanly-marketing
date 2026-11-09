@@ -264,10 +264,10 @@ it('zalo group: events queue only for enabled toggles, drafts stay silent, dedup
   expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
   expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='submitted'", [id])).toBe(1);
   await actor(approver);
-  // rejected đã tắt trong cấu hình → không xếp hàng
-  await db.query("select fr_decide($1,'reject','Thiếu chứng từ')", [id]);
-  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='rejected'", [id])).toBe(0);
-  // Gửi lại sau khi sửa → sự kiện submitted lần hai có dedup_key mới, không đè tin cũ
+  // info đã tắt trong cấu hình → không xếp hàng
+  await db.query("select fr_decide($1,'info','Thiếu chứng từ')", [id]);
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='info'", [id])).toBe(0);
+  // Gửi lại sau khi bổ sung → sự kiện submitted lần hai có dedup_key mới, không đè tin cũ
   await actor(staff);
   expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
   expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='submitted'", [id])).toBe(2);

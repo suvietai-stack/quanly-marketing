@@ -23,7 +23,7 @@ describe("fr group messages", () => {
     expect(m).toContain("Đã chi: 1.000.000 đ (một phần)");
   });
   it("salary advance never leaks name, amount, reason or period", () => {
-    const d = { ...base, kind: "salary_advance" as const, title: "Ứng lương tháng 11", amount: 9000000, requester_name: "Lê Minh Ngọc" };
+    const d = { ...base, kind: "salary_advance" as const, code: "UL-0001", title: "Ứng lương tháng 11", amount: 9000000, requester_name: "Lê Minh Ngọc" };
     for (const ev of frZaloEventsForKind("salary_advance")) {
       const m = frGroupMessage(ev, d, "https://base.suviet.vn/finance/salary?open=x");
       expect(m).toContain("UL-0001");
