@@ -420,6 +420,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const detail = useQuery({ queryKey: ["fr", "detail", id], queryFn: () => frApi.detail(id) });
   const steps = useQuery({ queryKey: ["fr", "steps", id], queryFn: () => frApi.steps(id) });
   const events = useQuery({ queryKey: ["fr", "events", id], queryFn: () => frApi.events(id) });
+  const reqLines = useQuery({ queryKey: ["fr", "lines", id], queryFn: () => frApi.lines(id), enabled: kind === "payment" });
   const [comment, setComment] = useState("");
   const [payOpen, setPayOpen] = useState(false);
   const [deductOpen, setDeductOpen] = useState(false);
@@ -443,8 +444,10 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const showPay = canPay && (r.status === "awaiting_payment" || (r.status === "paid" && r.paid_amount < r.amount));
   const showDeduct = canDeduct && r.status === "paid" && r.deducted_amount < r.paid_amount;
 
-  const openAttachment = async (path: string) => {
-    const { data, error } = await supabase.storage.from("fr-attachments").createSignedUrl(path, 120);
+  const openAttachment = async (a: { path?: string; url?: string }) => {
+    if (a.url) return window.open(a.url, "_blank", "noopener");
+    if (!a.path) return;
+    const { data, error } = await supabase.storage.from("fr-attachments").createSignedUrl(a.path, 120);
     if (error || !data?.signedUrl) return toast.error("Không mở được tệp đính kèm");
     window.open(data.signedUrl, "_blank", "noopener");
   };
