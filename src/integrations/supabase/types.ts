@@ -9961,6 +9961,7 @@ export type Database = {
         Args: { _event: string; _marker: boolean; _note: string }
         Returns: boolean
       }
+      signal_note_report: { Args: { _filter?: Json }; Returns: Json }
       signal_note_save: {
         Args: { _id: string; _note: string; _request_id: string }
         Returns: string
