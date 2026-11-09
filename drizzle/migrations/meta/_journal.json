@@ -2052,6 +2052,13 @@
       "when": 1794217990290,
       "tag": "0292_base_org_permission_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 293,
+      "version": "7",
+      "when": 1794218047018,
+      "tag": "0293_base_org_permission_resolver",
+      "breakpoints": true
     }
   ]
 }

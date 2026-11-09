@@ -9215,6 +9215,12 @@ export type Database = {
           id: string
         }[]
       }
+      base_org_read: { Args: never; Returns: Json }
+      base_permission_catalog_sync: {
+        Args: { _catalog: Json }
+        Returns: undefined
+      }
+      base_permissions_effective: { Args: { _user?: string }; Returns: Json }
       biz_admin: { Args: { _actor: string }; Returns: boolean }
       biz_all_scope: { Args: { _actor: string }; Returns: boolean }
       biz_any_deadline_at: {
