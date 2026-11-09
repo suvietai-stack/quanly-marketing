@@ -14,7 +14,7 @@ export const Route = createFileRoute("/biz/sale-work")({
     ],
   }),
   component: () => (
-    <RequirePermission anyPerm={["sale_work.access", "sale_work.manage_settings", "sale_work.manage_credentials"]}>
+    <RequirePermission perm={["sale_work.access", "sale_work.manage_settings", "sale_work.manage_credentials"]}>
       <SaleWork />
     </RequirePermission>
   ),
