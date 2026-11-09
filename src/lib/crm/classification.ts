@@ -1,10 +1,10 @@
 import type { Catalog, Customer, ReportData } from './types';
 import { descendant, ratio } from './logic';
+import { scopeMatches } from './fields';
 
-export const FEATURE_KINDS: Record<string, string> = {channel:'Kênh bán hàng',cooperation:'Hình thức hợp tác',output:'Khách đầu ra',product:'Dòng sản phẩm',trait:'Đặc điểm kinh doanh',need:'Nhu cầu mua hàng'};
-export function featureInGroup(c: Catalog, group: string) {
-  const groups = c.config.group_ids;
-  return !Array.isArray(groups) || !groups.length || groups.includes(group);
+export const FEATURE_KINDS: Record<string, string> = {channel:'Kênh bán hàng',cooperation:'Hình thức hợp tác',output:'Khách đầu ra',product:'Dòng sản phẩm',trait:'Đặc điểm kinh doanh',need:'Nhu cầu mua hàng',occasion:'Dịp mua hàng'};
+export function featureInGroup(c: Catalog, group: string, segment='', catalogs:Catalog[]=[]) {
+  return scopeMatches(c,group,segment,catalogs);
 }
 export function segmentOptions(catalogs: Catalog[], group: string, selected = '', activeOnly = false) {
   return catalogs.filter(c => c.kind === 'segment' && !!group && descendant(c.id, group, catalogs) && (!activeOnly || c.active || c.id === selected));

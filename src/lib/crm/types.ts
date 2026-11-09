@@ -29,6 +29,7 @@ export interface Customer {
   source_id: string | null;
   related_ids: string[];
   details: Record<string, string>;
+  custom_values?: import('./fields').FieldValues;
   note: string;
   revision: number;
   archived_at: string | null;
@@ -142,6 +143,7 @@ export interface Template {
   active: boolean;
 }
 export interface ReportData {
+  catalogs?: Catalog[];
   customers: Customer[];
   schedules: Schedule[];
   interactions: Interaction[];
