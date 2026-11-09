@@ -1550,7 +1550,7 @@ export function useCurrentUser() {
   const can = (key: PermissionKey): boolean => {
     if (isSuperAdmin) return true;
     const effective = baseAccess?.user_id === u?.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
-    if (effective && effective.decision !== 'NOT_CONFIGURED') return u?.status === 'Đang hoạt động' && effective.allowed;
+    if (effective) return u?.status === 'Đang hoạt động' && effective.allowed;
     // New supported permissions fail closed while their authoritative read is unavailable.
     if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','biz.crm_archive','biz.crm_export'].includes(key) && baseAccess?.user_id !== u?.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
