@@ -9215,6 +9215,14 @@ export type Database = {
           id: string
         }[]
       }
+      base_org_apply: {
+        Args: { _confirmation: string; _preview: string }
+        Returns: number
+      }
+      base_org_preview: {
+        Args: { _config: Json; _revision: number }
+        Returns: Json
+      }
       base_org_read: { Args: never; Returns: Json }
       base_permission_catalog_sync: {
         Args: { _catalog: Json }

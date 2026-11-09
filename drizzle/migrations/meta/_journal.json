@@ -2059,6 +2059,13 @@
       "when": 1794218047018,
       "tag": "0293_base_org_permission_resolver",
       "breakpoints": true
+    },
+    {
+      "idx": 294,
+      "version": "7",
+      "when": 1794218097014,
+      "tag": "0294_base_org_permission_preview_apply",
+      "breakpoints": true
     }
   ]
 }
