@@ -1954,6 +1954,13 @@
       "when": 1794192152639,
       "tag": "0278_signal_priority_grouped_history",
       "breakpoints": true
+    },
+    {
+      "idx": 279,
+      "version": "7",
+      "when": 1794192284526,
+      "tag": "0279_signal_note_cycle_end_boundaries",
+      "breakpoints": true
     }
   ]
 }
