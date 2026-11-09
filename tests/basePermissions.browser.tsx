@@ -1,0 +1,26 @@
+// Isolated UI acceptance fixture. No real accounts, grants or network writes.
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createRootRoute, createRoute, createRouter, RouterProvider } from '@tanstack/react-router';
+import { BaseOrganization } from '../src/components/BaseOrganization';
+import { baseOrgApi } from '../src/lib/basePermissions/api';
+import { emptyConfig, type OrgRead, type EffectiveAccess } from '../src/lib/basePermissions/types';
+import { useAuth } from '../src/lib/auth';
+import '../src/styles.css';
+const me = '00000000-0000-0000-0000-000000000001';
+const staff = '00000000-0000-0000-0000-000000000002';
+let state: OrgRead = { revision: 0, config: emptyConfig(), staff: [{ id: me, name: 'Quản trị kiểm thử', status: 'Đang hoạt động' }, { id: staff, name: 'Nhân viên Marketing', status: 'Đang hoạt động' }], catalog: [{ key: 'biz.crm_use', label: 'Sử dụng CRM cá nhân', module: 'CRM Khách Hàng', supported: true }], events: [] };
+const permission = (allowed: boolean) => ({ key: 'biz.crm_use', label: 'Sử dụng CRM cá nhân', module: 'CRM Khách Hàng', allowed, decision: allowed ? 'ALLOW' : 'NOT_CONFIGURED', tier: allowed ? 1 : 2, scope: 'own', supported: true, conflict: false, sources: allowed ? [{ ...state.config.grants[0], source_kind: 'direct' }] : [], legacy: { allowed: false, source: { kind: 'business', tier: 2 } } });
+baseOrgApi.read = async () => structuredClone(state);
+baseOrgApi.catalog = async () => {};
+baseOrgApi.effective = async user => ({ user_id: user, revision: state.revision, server_now: new Date().toISOString(), permissions: [permission(state.config.grants.some(r => r.user_id === user && r.active))] } as EffectiveAccess);
+let next = emptyConfig();
+baseOrgApi.preview = async (revision, config) => { next = structuredClone(config); return { id: me, revision, expires_at: new Date(Date.now() + 600000).toISOString(), impact: [{ user_id: staff, name: 'Nhân viên Marketing', changes: [{ key: 'biz.crm_use', label: 'Sử dụng CRM cá nhân', before: permission(false), after: permission(true) }] }] }; };
+baseOrgApi.apply = async () => { state = { ...state, revision: state.revision + 1, config: next }; };
+useAuth.setState({ currentUserId: me, loaded: true, initialized: true, users: [{ id: me, fullName: 'Quản trị kiểm thử', username: 'fixture', roleId: 'role-super-admin', status: 'Đang hoạt động', createdAt: '', passwordHash: '', passwordSalt: '' }], reload: async () => {} });
+const rootRoute = createRootRoute({ component: () => <QueryClientProvider client={new QueryClient()}><main className="p-4"><BaseOrganization /></main></QueryClientProvider> });
+const home = createRoute({ getParentRoute: () => rootRoute, path: '/organization' });
+const router = createRouter({ routeTree: rootRoute.addChildren([home]) });
+const root = document.getElementById('root');
+if (root) createRoot(root).render(<RouterProvider router={router} />);
