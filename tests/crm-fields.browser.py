@@ -1,7 +1,7 @@
 import asyncio,json
 from pathlib import Path
 from playwright.async_api import async_playwright,expect
-OUT=Path(__file__).parent
+OUT=Path('/tmp/browser/crm-fields');OUT.mkdir(parents=True,exist_ok=True)
 HTML='<div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/crm.browser.tsx"></script>'
 UID='00000000-0000-0000-0000-000000000002'
 def cat(id,kind,name,config={},parent=None):return dict(id=id,kind=kind,name=name,config=config,parent_id=parent,active=True,sort_order=0,description='')

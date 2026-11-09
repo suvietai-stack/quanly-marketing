@@ -1,12 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## CRM SÁU NHÓM & THÔNG TIN TÙY CHỈNH — 09/11/2026
-- [ ] CX1. Kiểm kê nhóm/ID/số khách và source; chốt kế hoạch bảo toàn nhóm cũ chưa rõ.
-- [ ] CX2. Chuẩn hóa sáu nhóm/tệp động, phạm vi đặc điểm rõ ràng, kiểm tra tác động và không trùng.
-- [ ] CX3. Trường chuyên sâu chín kiểu, giá trị/lựa chọn ID ổn định, validation/quyền/lịch sử phía backend.
-- [ ] CX4. Cài đặt cây/phạm vi/xem trước; form mobile tối giản, giữ giá trị khi đổi nhóm/tệp.
-- [ ] CX5. Lọc/báo cáo động chung định nghĩa, khoảng số/tiền/ngày, không cộng trùng và scope lịch sử.
-- [ ] CX6. Kiểm thử danh mục/trường/quyền/đổi nhóm/báo cáo, đối soát trước-sau và nghiệm thu UI; chưa Publish.
+- [x] CX1. Kiểm kê năm nhóm cũ, 0 khách/liên hệ/lịch/tương tác; kế hoạch duyệt, giữ nhóm pha trộn cũ.
+- [x] CX2. Sáu nhóm đang dùng, tái dùng ID tương đương, thêm nhóm/tệp thiếu; legacy inactive/review, không chuyển khách/trùng.
+- [x] CX3. 0280–0282: chín kiểu, custom_values ID ổn định, option/type/required/scope guards, catalog versions; 39 trường khởi tạo.
+- [x] CX4. Cây tìm kiếm/phạm vi/xem trước, cài đặt tập trung; form thu gọn/giữ giá trị và tệp khi đổi nhóm quay lại.
+- [x] CX5. Dynamic read/report/filter/export dùng lịch sử và cùng định nghĩa, phân tích đặc điểm/custom, khoảng và chọn nhiều không trùng.
+- [x] CX6a. 49 test CRM, browser hồi quy chăm sóc/classification/custom tại 320/390/430/768/1280 theo từng suite đạt; build OK, số khách/liên hệ/lịch/tương tác giữ 0. docs/crm-custom-fields-verification.md.
+- [ ] CX6b. Nghiệm thu phiên thật Sale/quản lý/cài đặt/export/keyboard và concurrency: --self không khớp tài khoản; chờ người dùng đăng nhập Preview và hồ sơ được phép. Không khách giả, chưa Publish.
 
 ## DIỄN BIẾN TỰ NGUYỆN & HIỆU NĂNG TÍN HIỆU — 09/11/2026
 - [x] SN1a. Rà soát dependency/hiện trạng, kế hoạch duyệt; EXPLAIN truy vấn bỏ deadline 115.953→15.537ms sau grouped history, không tuyên bố toàn trang tăng tốc.

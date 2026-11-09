@@ -24,7 +24,7 @@ import { CrmStructureReport } from './CrmStructureReport';
 import { segmentOptions } from '@/lib/crm/classification';
 import { DynamicFilters } from './CrmFields';
 import { CrmFieldAnalysis } from './CrmFieldAnalysis';
-import { displayValue, type DynamicFilter } from '@/lib/crm/fields';
+import { displayValue, scopeMatches, type DynamicFilter } from '@/lib/crm/fields';
 const config = {
   count: { label: "Khách hàng", color: "var(--primary)" },
   connected: { label: "Đã kết nối", color: "var(--success)" },
@@ -148,7 +148,7 @@ export function CrmReports({
                     Nhóm: catalogs.find((x) => x.id === c.group_id)?.name || "",
                     Tệp: catalogs.find((x)=>x.id===c.segment_id)?.name || 'Chưa phân loại tệp',
                     Sale: people.data?.find((x) => x.id === c.owner_id)?.name || "",
-                    ...Object.fromEntries((exported.catalogs||catalogs).filter(x=>x.kind==='custom_field').map(x=>[x.name,displayValue(x,c.custom_values?.[x.id])])),
+                    ...Object.fromEntries((exported.catalogs||catalogs).filter(x=>x.kind==='custom_field' && scopeMatches(x,c.group_id||'',c.segment_id||'',exported.catalogs||catalogs)).map(x=>[x.name,displayValue(x,c.custom_values?.[x.id])])),
                   })),
                 );
                 const workbook = r.utils.book_new();
