@@ -1,5 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## CRM SÁU NHÓM & THÔNG TIN TÙY CHỈNH — 09/11/2026
+- [ ] CX1. Kiểm kê nhóm/ID/số khách và source; chốt kế hoạch bảo toàn nhóm cũ chưa rõ.
+- [ ] CX2. Chuẩn hóa sáu nhóm/tệp động, phạm vi đặc điểm rõ ràng, kiểm tra tác động và không trùng.
+- [ ] CX3. Trường chuyên sâu chín kiểu, giá trị/lựa chọn ID ổn định, validation/quyền/lịch sử phía backend.
+- [ ] CX4. Cài đặt cây/phạm vi/xem trước; form mobile tối giản, giữ giá trị khi đổi nhóm/tệp.
+- [ ] CX5. Lọc/báo cáo động chung định nghĩa, khoảng số/tiền/ngày, không cộng trùng và scope lịch sử.
+- [ ] CX6. Kiểm thử danh mục/trường/quyền/đổi nhóm/báo cáo, đối soát trước-sau và nghiệm thu UI; chưa Publish.
+
 ## DIỄN BIẾN TỰ NGUYỆN & HIỆU NĂNG TÍN HIỆU — 09/11/2026
 - [x] SN1a. Rà soát dependency/hiện trạng, kế hoạch duyệt; EXPLAIN truy vấn bỏ deadline 115.953→15.537ms sau grouped history, không tuyên bố toàn trang tăng tốc.
 - [x] SN2. 0273/0277/0278 ngừng kỳ/tick/cron, care chỉ còn nhận, note-only chống trùng và giữ lịch sử.
