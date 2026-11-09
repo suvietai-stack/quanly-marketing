@@ -1,5 +1,5 @@
 import { describe,it,expect } from 'vitest';
-import { composeProgression, progressionSuggestions, validProgression } from './progression';
+import { canSaveProgression, composeProgression, progressionSuggestions, validProgression } from './progression';
 describe('progression rules',()=>{
  it('multiple suggestions and note compose one editable payload',()=>expect(composeProgression(['Đã gửi báo giá','Khách đang cân nhắc'],'  Hẹn thứ Hai  ')).toBe('Đã gửi báo giá\nKhách đang cân nhắc\nHẹn thứ Hai'));
  it('maket only for gift group',()=>{expect(progressionSuggestions(['Sứ quà tặng']).flatMap(g=>g.items).filter(i=>i.includes('maket'))).toHaveLength(5);expect(progressionSuggestions(['Xuất khẩu']).flatMap(g=>g.items).some(i=>i.includes('maket'))).toBe(false);});

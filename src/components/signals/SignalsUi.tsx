@@ -26,7 +26,7 @@ import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type
 import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
 import { useServerFn } from "@tanstack/react-start";
 import { zaloCareCounts } from "@/lib/zalo.functions";
-import { composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
+import { canSaveProgression, composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
 import { SignalEnrichment, SignalLabelManager, PotentialPill, useSignalLabels } from './SignalEnrichment';
 import { POTENTIAL_LABEL, STAGES, matchWork, sortSignals, type WorkQuick, type SignalSort } from '@/lib/signals/potential';
