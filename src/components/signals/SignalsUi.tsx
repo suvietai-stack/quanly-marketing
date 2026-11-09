@@ -627,7 +627,6 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [noteOpen,setNoteOpen]=useState(false);
   const [showAll, setShowAll] = useState(false);
   const history=useInfiniteQuery({queryKey:[`${SIG}hist`,p.userId,s.id,s.updated_at],initialPageParam:0,queryFn:({pageParam})=>signalHistory(s.id,pageParam),getNextPageParam:(last,pages)=>last.hasMore?pages.length*30:undefined});
   const hist={...history,data:history.data?{notes:history.data.pages.flatMap(p=>p.notes),events:history.data.pages.flatMap(p=>p.events),noteCount:history.data.pages[0]?.noteCount??0}:undefined};
@@ -638,11 +637,21 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const canEditInfo = !closed && !cancelled && (p.edit || (p.create && s.created_by === p.userId && (!s.status || s.status === "waiting" || s.status === "consulting")));
   const canDelete = p.del && !closed && (hist.data ? hist.data.notes.length === 0 : false);
   const canConsult = !closed && !cancelled && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
-  const refresh = () => invalidateSig(qc);
+  const refresh = () => refreshSignals(qc);
+  const assignLock = useRef(false);
 
   const doAssign = async (uid: string) => {
-    try { await assignSignal(s.id, uid || null); await refresh(); toast.success(uid ? "Đã phân công" : "Đã bỏ phân công"); }
+    if (assignLock.current) return;
+    assignLock.current = true;
+    try {
+      await assignSignal(s.id, uid || null);
+      // Backend đã xác nhận: cập nhật tạm chi tiết đang mở theo đúng kết quả, rồi đồng bộ lại từ máy chủ.
+      qc.setQueryData([`${SIG}detail`, p.userId, s.id], (old: Signal | null | undefined) => old ? { ...old, assigned_to: uid || null, assigned_at: uid ? new Date().toISOString() : null, status: uid ? "waiting" : null } : old);
+      toast.success(uid ? "Đã phân công" : "Đã bỏ phân công");
+      await refresh();
+    }
     catch (e) { toast.error(errMsg(e)); }
+    finally { assignLock.current = false; }
   };
   const doReopen = async () => {
     const r = window.prompt("Lý do mở lại tín hiệu?");
