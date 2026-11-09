@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { Phone, Plus, Search, RotateCcw, MessageCircle, PencilLine, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import { deadlineCounts, type DeadlineQuick } from '@/lib/signals/deadlineFilter
 import { DEADLINE_QUICK } from '@/lib/signals/deadlineFilters';
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
+import { signalPage, signalCounts, signalById, listParams, saveNote, changeToken } from '@/lib/signals/paged';
 import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
@@ -69,7 +70,7 @@ const SIG = "sig:";
 export const signalsKey = (uid: string | null) => [`${SIG}list`, uid] as const;
 export function useSignals(enabled = true, priority = false) {
   const { userId } = useSignalPerms();
-  return useQuery({ queryKey: [...signalsKey(userId), priority ? 'priority' : 'report'], queryFn: () => listSignals(priority), enabled: enabled && !!userId, refetchInterval: 10000, refetchIntervalInBackground: false, refetchOnWindowFocus: "always" });
+  return useQuery({ queryKey: [...signalsKey(userId), priority ? 'priority' : 'report'], queryFn: () => listSignals(priority), enabled: enabled && !!userId, staleTime: 30000, refetchOnWindowFocus: true });
 }
 export function useLastNotes(enabled = true) {
   const { userId } = useSignalPerms();
@@ -133,14 +134,6 @@ const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 export function SignalsPage() {
   const p = useSignalPerms();
   const name = useUserName();
-  const { data = [], isLoading, error } = useSignals(true, true);
-  const { data: last = {} } = useLastNotes();
-  const { data: careNotes = {} } = useQuery({ queryKey: [`${SIG}care`, p.userId], queryFn: listCareNotes, enabled: !!p.userId });
-  const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchInterval: 10000, refetchOnWindowFocus: "always" });
-  const deadlines = useQuery({queryKey:[`${SIG}deadlines`,p.userId],queryFn:listDeadlines,enabled:!!p.userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
-  const [deadlineFilter,setDeadlineFilter]=useState<DeadlineQuick|null>(null);
-  const careFn = useServerFn(zaloCareCounts);
-  const { data: careCfg } = useQuery({ queryKey: [`${SIG}carecfg`], queryFn: () => careFn(), staleTime: 600000 });
   const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
   const labels = useSignalLabels(p.userId);
   const [workQuick,setWorkQuick]=useState<WorkQuick>('all');
@@ -150,23 +143,16 @@ export function SignalsPage() {
   const restored=useRef<string|null>(null);
   useEffect(()=>{
     if(!p.userId)return;
-    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort==='priority'?'work':saved.sort??'work');setDeadlineFilter(saved.deadlineFilter??null);}}catch{}
+    try {const saved=JSON.parse(sessionStorage.getItem(`sig:filters:${p.userId}`)||'null');if(saved){setF(saved.f??emptyFilter());setWorkQuick(saved.workQuick??'all');setSort(saved.sort==='priority'?'work':saved.sort??'work');}}catch{}
     restored.current=p.userId;
   },[p.userId]);
-  useEffect(()=>{if(p.userId&&restored.current===p.userId){try{sessionStorage.setItem(`sig:filters:${p.userId}`,JSON.stringify({f,workQuick,sort,deadlineFilter}));}catch{}}},[f,workQuick,sort,deadlineFilter,p.userId]);
+  useEffect(()=>{if(p.userId&&restored.current===p.userId){try{sessionStorage.setItem(`sig:filters:${p.userId}`,JSON.stringify({f,workQuick,sort}));}catch{}}},[f,workQuick,sort,p.userId]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(MOBILE_SIGNAL_BATCH);
-  useEffect(() => { setVisibleCount(MOBILE_SIGNAL_BATCH); }, [f, workQuick, deadlineFilter, sort]);
+
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     const id = sp.get("open");
-    const deadline=sp.get('deadline');
-    if(deadline==='today'||deadline==='soon'||deadline==='overdue') {
-      setDeadlineFilter(deadline);
-      const sale=sp.get('sale');
-      setF(x=>({...x,saleId:sale&&/^[0-9a-f-]{36}$/i.test(sale)?sale:undefined,needGroup:sp.get('group')||undefined,source:sp.get('source')||undefined}));
-    }
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setOpenId(id);
     if (sp.get("care") === "1") {
       const sale = sp.get("sale"); const kind = sp.get("kind");
@@ -177,40 +163,38 @@ export function SignalsPage() {
   const [reasonsOpen, setReasonsOpen] = useState(false);
   const today = todayKey();
   const saleOnly = p.sale && !p.viewAll && !p.create;
-  const canSeeUnassigned = p.assign || p.viewAll || p.create || data.some(s => !s.assigned_to && !s.status);
-  const quickTabs = signalStatusTabs(canSeeUnassigned);
-
-  const mine = useMemo(() => data.filter((s) => s.assigned_to === p.userId), [data, p.userId]);
-  const careAll = useMemo(() => {
-    const cfg = careCfg ?? DEFAULT_CARE; const now = Date.now();
-    return data.map((s) => ({ s, flag: careFlag(s, careNotes[s.id] ?? [], now, cfg) === "unaccepted" ? "unaccepted" : deadlines.data?.[s.id]?.deadline_state==='overdue' ? "stale_contact" : null, since: deadlines.data?.[s.id]?.overdue_days ?? daysSince(s.assigned_at ? Date.parse(s.assigned_at) : null, now) }))
-      .filter((x) => x.flag);
-  }, [data, careNotes, careCfg, deadlines.data]);
-  // Sale chỉ thấy tín hiệu đang giao cho chính mình; quản lý thấy trong phạm vi được xem
-  const careScope = useMemo(() => (p.viewAll || p.assign || p.manage ? careAll : careAll.filter((x) => x.s.assigned_to === p.userId)), [careAll, p]);
-  const careList = useMemo(() => careScope.filter((x) => (!care.sale || x.s.assigned_to === care.sale)
-    && (!care.kind || (care.kind === "unaccepted" ? x.flag === "unaccepted" : x.flag !== "unaccepted")) && applyDetailFilter([x.s], f, today).length > 0
-    && matchesSignalStatus(x.s, f.quick)), [careScope, care, f, today]);
-  const list = useMemo(() => {
-    const filtered=applyListFilter(data,f,today,last);
-    const rows=filtered.filter(s=>(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)&&matchWork(s,workQuick,deadlines.data?.[s.id],today));
-    return sort==='activity'?rows:sortSignals(rows,sort,deadlines.data??{},today);
-  }, [data, f, today, last,deadlineFilter,deadlines.data,workQuick,sort]);
-  const base = useMemo(() => applyDetailFilter(data, f, today).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter)), [data, f, today,workQuick,deadlines.data,deadlineFilter]);
-  const deadlineBase = useMemo(() => applyListFilter(data,f,today,last).filter(s=>matchWork(s,workQuick,deadlines.data?.[s.id],today)), [data,f,today,last,workQuick,deadlines.data]);
-  const dueCounts = deadlineCounts(deadlineBase,deadlines.data??{});
-  const pickDeadline = (value: DeadlineQuick|null) => {setCare({on:false});setDeadlineFilter(value);};
-  const count = (k: Quick) => (k === "all" ? base.length : base.filter((s) => matchesSignalStatus(s, k)).length);
-  const needOpts = useOptions("signal_need_groups");
-  // Đếm nhóm nhu cầu: áp dụng mọi điều kiện khác (kể cả trạng thái) trừ chính nhóm nhu cầu
-  const needBase = useMemo(() => {
-    const b = applyDetailFilter(data, { ...f, needGroup: undefined }, today);
-    return b.filter(s=>matchesSignalStatus(s,f.quick)&&matchWork(s,workQuick,deadlines.data?.[s.id],today)&&(!deadlineFilter||deadlines.data?.[s.id]?.deadline_state===deadlineFilter));
-  }, [data, f, today,workQuick,deadlines.data,deadlineFilter]);
-  const needCount = (g?: string) => (g ? needBase.filter((s) => needGroupsOf(s).includes(g)).length : needBase.length);
-  const open = data.find((s) => s.id === openId) || null;
-  const denied = !!openId && !isLoading && !open;
-  const extra = appliedSignalFilters(f, deadlineFilter, workQuick);
+  const [queryText,setQueryText]=useState('');
+  const [desktopPage,setDesktopPage]=useState(0);
+  const [mobile,setMobile]=useState(false);
+  useEffect(()=>{const m=window.matchMedia('(max-width: 767px)'); const sync=()=>setMobile(m.matches);sync();m.addEventListener('change',sync);return()=>m.removeEventListener('change',sync);},[]);
+  useEffect(()=>{const timer=setTimeout(()=>setQueryText(f.q??''),300);return()=>clearTimeout(timer);},[f.q]);
+  const params=useMemo(()=>listParams({...f,q:queryText},workQuick),[f,queryText,workQuick]);
+  const signature=JSON.stringify(params)+sort;
+  useEffect(()=>setDesktopPage(0),[signature]);
+  const counts=useQuery({queryKey:['sig:counts',p.userId,params],queryFn:()=>signalCounts(params),enabled:!!p.userId,staleTime:30000});
+  const pages=useInfiniteQuery({queryKey:['sig:page',p.userId,params,sort,mobile,desktopPage],initialPageParam:0,queryFn:({pageParam,signal})=>signalPage(params,sort,mobile?pageParam:desktopPage*40,mobile?30:40,signal),getNextPageParam:(last,all)=>last.rows.length===30?all.length*30:undefined,enabled:!!p.userId,staleTime:30000});
+  const token=useQuery({queryKey:['sig:token',p.userId],queryFn:changeToken,enabled:!!p.userId,refetchInterval:30000,refetchIntervalInBackground:false});
+  const previousToken=useRef<string|null|undefined>(undefined);
+  const qc=useQueryClient();
+  useEffect(()=>{if(previousToken.current!==undefined&&token.data!==previousToken.current){void qc.invalidateQueries({predicate:q=>String(q.queryKey[0]).startsWith('sig:')&&q.queryKey[0]!=='sig:token'});}if(token.data!==undefined)previousToken.current=token.data;},[token.data,qc]);
+  const data=pages.data?.pages.flatMap(page=>page.rows)??[];
+  const list=data;
+  const last=Object.fromEntries(data.filter(s=>s.last_note).map(s=>[s.id,s.last_note as LastNote]));
+  const isLoading=pages.isPending;
+  const error=pages.error||counts.error;
+  const total=counts.data?.total??0;
+  const canSeeUnassigned=p.assign||p.viewAll||p.create;
+  const quickTabs=signalStatusTabs(canSeeUnassigned);
+  const mine=counts.data?.mine;
+  const count=(k:Quick)=>counts.data?.status[k]??0;
+  const needOpts=useOptions('signal_need_groups');
+  const needCount=(g?:string)=>counts.data?.needs[g??'all']??0;
+  const selected=useQuery({queryKey:['sig:detail',p.userId,openId],queryFn:()=>openId?signalById(openId):null,enabled:!!openId&&!!p.userId});
+  const open=selected.data??null;
+  const denied=!!openId&&!selected.isPending&&!open;
+  const extra=appliedSignalFilters(f,null,workQuick);
+  const sentinel=useRef<HTMLDivElement>(null);
+  useEffect(()=>{const el=sentinel.current;if(!el||!mobile)return;const observer=new IntersectionObserver(entries=>{if(entries[0]?.isIntersecting&&pages.hasNextPage&&!pages.isFetchingNextPage)void pages.fetchNextPage();},{rootMargin:'250px'});observer.observe(el);return()=>observer.disconnect();},[mobile,pages.hasNextPage,pages.isFetchingNextPage,data.length]);
 
 
   return (
@@ -228,10 +212,10 @@ export function SignalsPage() {
 
       {p.sale && (
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <Stat label="Chờ nhận" v={mine.filter((s) => s.status === "waiting").length} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
-          <Stat label="Đang xử lý" v={mine.filter((s) => isOpen(s.status) && s.status !== "waiting").length} />
-          <Stat label="Đã báo giá" v={mine.filter((s) => s.status === "quoted").length} onClick={() => setF({ ...emptyFilter(), quick: "quoted" })} />
-          <Stat label="Đã chốt tháng này" v={mine.filter((s) => s.status === "won" && s.closed_at && todayKey(new Date(s.closed_at)).slice(0, 7) === today.slice(0, 7)).length} />
+          <Stat label="Chờ nhận" v={mine?.waiting??0} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
+          <Stat label="Đang xử lý" v={mine?.active??0} />
+          <Stat label="Đã báo giá" v={mine?.quoted??0} onClick={() => setF({ ...emptyFilter(), quick: "quoted" })} />
+          <Stat label="Đã chốt tháng này" v={mine?.won??0} />
         </div>
       )}
 
@@ -246,11 +230,6 @@ export function SignalsPage() {
         {p.create&&<Button className="h-11 w-11 shrink-0 md:hidden" size="icon" aria-label="Thêm tín hiệu" onClick={()=>setCreating(true)}><Plus className="h-4 w-4"/></Button>}
       </div>
       <div className="hidden md:flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{SIGNAL_SORT_OPTIONS.map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
-      {careScope.length > 0 && !care.on && (
-        <Button variant="outline" onClick={() => setCare({ on: true })} className="hidden md:block h-auto w-full text-left rounded-lg border-warning/40 bg-warning/10 px-3 py-2 text-sm font-medium">
-          ⚠️ CẦN KIỂM TRA: {careScope.length} <span className="font-normal text-muted-foreground">— bấm để xem</span>
-        </Button>
-      )}
       <div className="md:hidden min-w-0 relative">
         <div className="signal-status-scroll flex gap-1.5 overflow-x-auto pb-1 pr-5" role="group" aria-label="Trạng thái tín hiệu">
           {quickTabs.map(x => <Button key={x.k} size="sm" variant={f.quick === x.k && !care.on ? 'default' : 'outline'} aria-pressed={f.quick === x.k && !care.on} className="h-9 shrink-0 rounded-full px-3 text-xs gap-1.5" onClick={() => {setCare({on:false});setF(y=>({...y,quick:x.k}));}}>{x.label}<span className="tabular-nums opacity-75">{isLoading ? '…' : count(x.k)}</span></Button>)}
@@ -263,46 +242,17 @@ export function SignalsPage() {
         <ChipRow label="Trạng thái" max={quickTabs.length} items={quickTabs.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
           active={care.on ? "__care__" : f.quick} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, quick: k as Quick })); }}
           />
-        <SignalDeadlineFilters value={deadlineFilter} counts={dueCounts} loading={deadlines.isPending} error={deadlines.error?errMsg(deadlines.error):undefined} onChange={pickDeadline}/>
+
         <ActiveFilters f={f} name={name} onChange={setF} />
       </div>
-      {care.on && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">⚠️ Cần kiểm tra{care.kind === "unaccepted" ? " — Chưa tiếp nhận" : care.kind === "stale" ? " — Quá hạn cập nhật" : ""}{care.sale ? ` — ${name(care.sale)}` : ""}: {careList.length}</span>
-            <Button variant="ghost" size="sm" onClick={() => setCare({ on: false })}>Xem tất cả</Button>
-          </div>
-          {careList.length === 0 ? <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg bg-card">Không có tín hiệu cần kiểm tra.</p>
-            : careList.map(({ s, flag, since }) => (
-              <div key={s.id}>
-              <div className="md:hidden"><SignalMobileCard s={s} status={<StatusPill s={s}/>} owner={s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'} deadline={deadlines.data?.[s.id]} labels={labels.data??[]} onOpen={()=>setOpenId(s.id)}/></div>
-              <div onClick={signalSurfaceClick(() => setOpenId(s.id))} className="hidden md:block signal-card rounded-xl border bg-card p-3.5 space-y-1.5 cursor-pointer hover:bg-accent/50 transition-colors">
-                <div className="flex items-start justify-between gap-2">
-                  <SignalCustomerName name={s.customer_name} onOpen={() => setOpenId(s.id)} />
-                  <StatusPill s={s} />
-                </div>
-                <div className="text-sm"><span className="text-muted-foreground">Diễn biến gần nhất: </span>{lastText(last[s.id]) ?? "Chưa có"}</div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className={flag === "unaccepted" ? "text-destructive" : "text-amber-700 dark:text-amber-300"}>
-                    {flag === "unaccepted" ? `Chưa tiếp nhận: ${since} ngày` : `Quá hạn cập nhật: ${since} ngày`}{!saleOnly && s.assigned_to ? ` · ${name(s.assigned_to)}` : ""}
-                  </span>
-                  <Button size="sm" variant="outline" className="min-h-11 md:min-h-0" onClick={() => setOpenId(s.id)}>Xem tín hiệu</Button>
-                </div>
-              </div>
-              </div>
-            ))}
-        </div>
-      )}
-
-
-      {care.on ? null : isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
+      {isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
         : error ? <p className="text-sm text-destructive py-8 text-center">{errMsg(error)}</p>
         : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
           <>
             <div className="md:hidden space-y-2">
-              {list.slice(0, visibleCount).map(s => <SignalMobileCard key={s.id} s={s} status={<StatusPill s={s}/>} owner={s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'} deadline={deadlines.data?.[s.id]} labels={labels.data??[]} onOpen={()=>setOpenId(s.id)}/>)}
-              <div className="space-y-2 pt-2 text-center"><p className="text-xs text-muted-foreground">{Math.min(visibleCount,list.length)} / {list.length} tín hiệu</p>{visibleCount < list.length && <Button variant="outline" className="h-11 w-full" onClick={()=>setVisibleCount(n=>n+MOBILE_SIGNAL_BATCH)}>Tải thêm</Button>}</div>
+              {list.map(s => <SignalMobileCard key={s.id} s={s} status={<StatusPill s={s}/>} owner={s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'} labels={labels.data??[]} onOpen={()=>setOpenId(s.id)}/>)}
+              <div ref={sentinel} className="space-y-2 pt-2 text-center"><p className="text-xs text-muted-foreground">{list.length} / {total} tín hiệu</p>{pages.hasNextPage&&<Button variant="outline" className="h-11 w-full" disabled={pages.isFetchingNextPage} onClick={()=>void pages.fetchNextPage()}>{pages.isFetchingNextPage?'Đang tải…':'Tải thêm'}</Button>}</div>
             </div>
             <div className="hidden md:block rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <table className="w-full text-sm">
@@ -318,7 +268,7 @@ export function SignalsPage() {
                       <td className="px-4 py-2.5 whitespace-nowrap">{s.source}</td>
                       <td className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">{s.assigned_to ? name(s.assigned_to) : <span className="text-muted-foreground">Chưa phân công</span>}</td>
                       <td className="px-4 py-2.5"><StatusPill s={s} /><div className="mt-1"><PotentialPill s={s}/></div>{s.status === "won" && s.revenue ? <div className="text-xs mt-0.5">{fmtVnd(s.revenue)}</div> : null}</td>
-                      <td className="px-4 py-2.5 max-w-[240px]"><div className="line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</div>{progression.data && <ProgressionSummary s={s} row={progression.data[s.id]} deadline={deadlines.data?.[s.id]} compact />}</td>
+                      <td className="px-4 py-2.5 max-w-[240px]"><div className="line-clamp-2">{lastText(last[s.id]) ?? <span className="text-muted-foreground italic">Chưa có</span>}</div><p className="text-xs text-muted-foreground">{s.note_count} lần cập nhật</p></td>
                       <td className="px-4 py-2.5 max-w-[260px] min-w-[180px]">{s.need_detail?.trim()
                         ? <div className="line-clamp-2 whitespace-pre-line" title={s.need_detail}>{s.need_detail}</div>
                         : <span className="text-muted-foreground">—</span>}</td>
@@ -328,10 +278,11 @@ export function SignalsPage() {
                 </tbody>
               </table>
             </div>
+            <div className="hidden md:flex items-center justify-end gap-3"><span className="text-sm text-muted-foreground">Trang {desktopPage+1} · {total} tín hiệu</span><Button variant="outline" disabled={desktopPage===0} onClick={()=>setDesktopPage(x=>x-1)}>Trước</Button><Button variant="outline" disabled={(desktopPage+1)*40>=total} onClick={()=>setDesktopPage(x=>x+1)}>Sau</Button></div>
           </>
         )}
 
-      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} canSeeUnassigned={canSeeUnassigned} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} deadline={deadlineFilter} onDeadline={pickDeadline} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
+      <FilterSheet open={filterOpen} onOpenChange={setFilterOpen} value={f} onApply={setF} data={data} peopleIds={counts.data} canSeeUnassigned={canSeeUnassigned} showPeople={p.viewAll || p.assign} workQuick={workQuick} sort={sort} onOptions={(work,order)=>{setCare({on:false});setWorkQuick(work);setSort(order);}} />
       <Sheet open={labelsOpen} onOpenChange={setLabelsOpen}><SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto sm:max-w-xl sm:mx-auto"><SheetHeader className="mb-4"><SheetTitle>Nhãn cá nhân</SheetTitle></SheetHeader><SignalLabelManager uid={p.userId} catalog={false} sale={p.sale} personalOnly/></SheetContent></Sheet>
       {p.manage && <LostReasonsSheet open={reasonsOpen} onOpenChange={setReasonsOpen} />}
       <Sheet open={creating} onOpenChange={setCreating}>
@@ -360,8 +311,8 @@ export function SignalsPage() {
   );
 }
 
-function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, canSeeUnassigned, workQuick, sort, onOptions, deadline, onDeadline }: {
-  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; canSeeUnassigned: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void; deadline:DeadlineQuick|null; onDeadline:(v:DeadlineQuick|null)=>void;
+function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, canSeeUnassigned, workQuick, sort, onOptions, peopleIds }: {
+  open: boolean; onOpenChange: (o: boolean) => void; value: ListFilter; onApply: (f: ListFilter) => void; data: Signal[]; showPeople: boolean; canSeeUnassigned: boolean; workQuick:WorkQuick; sort:SignalSort; onOptions:(work:WorkQuick,sort:SignalSort)=>void; peopleIds?: {sales:string[];creators:string[]};
 }) {
   const name = useUserName();
   const prodOpts = useOptions("signal_products");
@@ -370,9 +321,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, can
   const lr = useLostReasons();
   const p=useSignalPerms();const labels=useSignalLabels(p.userId);
   const [work,setWork]=useState(workQuick);const [order,setOrder]=useState(sort);
-  const [due,setDue]=useState(deadline);
   const [f, setF] = useState<ListFilter>(value);
-  useEffect(() => { if (open) {setF(value);setWork(workQuick);setOrder(sort);setDue(deadline);} }, [open, value,workQuick,sort,deadline]);
+  useEffect(() => { if (open) {setF(value);setWork(workQuick);setOrder(sort);} }, [open, value,workQuick,sort]);
   const set = (k: keyof ListFilter, v: any) => setF((x) => ({ ...x, [k]: v || undefined }));
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => [id, name(id)] as [string, string]);
   return (
@@ -380,7 +330,7 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, can
       <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] flex flex-col overflow-hidden p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
         <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
         <div className="min-h-0 overflow-y-auto px-4 grid grid-cols-2 gap-3 pb-4">
-          <label className="col-span-2 space-y-1.5 text-sm font-medium">Hạn cập nhật diễn biến<select aria-label="Hạn cập nhật diễn biến" className="h-11 w-full min-w-0 rounded-md border bg-background px-2 text-sm" value={due??''} onChange={e=>setDue((e.target.value||null) as DeadlineQuick|null)}>{DEADLINE_QUICK.map(x=><option key={x.key??'all'} value={x.key??''}>{x.label}</option>)}</select></label>
+
           <Field label="Lọc nhanh"><Pick value={work} onChange={v=>setWork((v||'all') as WorkQuick)} opts={[["all","Tất cả"],["high","Tiềm năng cao"],["action","Cần xử lý"],["overdue","Quá hạn xử lý"],["won","Đã chốt"]]}/></Field>
           <Field label="Sắp xếp"><Pick value={order} onChange={v=>setOrder((v||'priority') as SignalSort)} opts={SIGNAL_SORT_OPTIONS.map(([k,v])=>[k,v])}/></Field>
           <Field label="Giai đoạn"><Pick value={f.stage} onChange={v=>set('stage',v)} opts={Object.entries(STAGES)}/></Field>
@@ -399,8 +349,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, can
           <Field label="Nhóm nhu cầu"><Pick value={f.needGroup} onChange={(v) => set("needGroup", v)} opts={needOpts.names.map((x) => [x, x])} /></Field>
           <Field label="Lý do trượt"><Pick value={f.lostReason} onChange={(v) => set("lostReason", v)} opts={lr.all.map((x) => [x, x])} /></Field>
           {showPeople && <>
-            <Field label="Sale phụ trách"><SearchPick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(data.map((s) => s.assigned_to))} placeholder="Tất cả Sale" /></Field>
-            <Field label="Người tạo"><SearchPick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(data.map((s) => s.created_by))} placeholder="Tất cả người tạo" /></Field>
+            <Field label="Sale phụ trách"><SearchPick value={f.saleId} onChange={(v) => set("saleId", v)} opts={people(peopleIds?.sales??data.map((s) => s.assigned_to))} placeholder="Tất cả Sale" /></Field>
+            <Field label="Người tạo"><SearchPick value={f.creatorId} onChange={(v) => set("creatorId", v)} opts={people(peopleIds?.creators??data.map((s) => s.created_by))} placeholder="Tất cả người tạo" /></Field>
             <label className="col-span-2 flex items-center gap-2 text-sm">
               <input type="checkbox" className="h-4 w-4" checked={!!f.unassigned} onChange={(e) => set("unassigned", e.target.checked)} />
               Chỉ tín hiệu chưa phân công
@@ -412,8 +362,8 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, can
           </>}
         </div>
         <div className="shrink-0 bg-background border-t p-3 pb-[max(12px,env(safe-area-inset-bottom))] grid grid-cols-2 gap-2">
-          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOptions("all",sort); onDeadline(null); onOpenChange(false); }}>Xóa bộ lọc</Button>
-          <Button size="lg" onClick={() => { onApply(f); onOptions(work,order); onDeadline(due); onOpenChange(false); }}>Áp dụng</Button>
+          <Button variant="outline" size="lg" onClick={() => { onApply({ ...emptyFilter(), q: value.q }); onOptions("all",sort); onOpenChange(false); }}>Xóa bộ lọc</Button>
+          <Button size="lg" onClick={() => { onApply(f); onOptions(work,order); onOpenChange(false); }}>Áp dụng</Button>
         </div>
       </SheetContent>
     </Sheet>
@@ -670,11 +620,9 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [noteOpen,setNoteOpen]=useState(false);
   const [showAll, setShowAll] = useState(false);
   const hist = useQuery({ queryKey: [`${SIG}hist`, p.userId, s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
-  const progression = useQuery({ queryKey: [`${SIG}progression`, p.userId], queryFn: () => listProgression(), enabled: !!p.userId, refetchOnWindowFocus: "always" });
-  const deadlines=useQuery({queryKey:[`${SIG}deadlines`,p.userId],queryFn:listDeadlines,enabled:!!p.userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
-  const periods=useQuery({queryKey:[`${SIG}periods`,p.userId,s.id,s.updated_at],queryFn:()=>deadlineHistory(s.id),enabled:!!p.userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
   const [showProgression, setShowProgression] = useState(false);
   const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
@@ -785,9 +733,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       <div className="p-4 space-y-5 flex-1">
         <SignalEnrichment key={s.id} s={s} uid={p.userId} canEdit={!cancelled&&((p.sale&&s.assigned_to===p.userId)||p.manage)} catalog={p.catalog} sale={p.sale} onSaved={()=>void refresh()}/>
         {s.next_contact_on&&<p className="text-sm">Lịch theo dõi: <b>{fmtNext(s)}</b></p>}
-        {progression.error || deadlines.error ? <p className="text-sm text-destructive">Không tải được diễn biến: {errMsg(progression.error||deadlines.error)}</p> : progression.isPending ? <p className="text-sm text-muted-foreground">Đang tải diễn biến…</p> : <ProgressionSummary s={s} row={progression.data?.[s.id]} deadline={deadlines.data?.[s.id]} onUpdate={canConsult?()=>setUpdating(true):undefined} />}
-        {!!periods.data?.length && <Section title="Lịch sử kỳ cập nhật"><ol className="space-y-3 border-l pl-4">{periods.data.slice(0,showProgression?undefined:3).map(r=><li key={`${r.assignment_id}:${r.sequence}`} className="text-sm"><p className="font-medium">Kỳ {r.sequence} · {name(r.sale_id)}</p><p className="text-xs text-muted-foreground">Hạn {r.due_on.split('-').reverse().join('/')} · {({pending:'Chưa đến hạn',on_time:'Đúng hạn',missed:'Trễ hạn',exempt:'Miễn — kết thúc trách nhiệm trước hạn'})[r.outcome]}</p></li>)}</ol></Section>}
-        {periods.error && <p className="text-xs text-destructive">Không tải được lịch sử kỳ: {errMsg(periods.error)}</p>}
+        <Section title={`Diễn biến tín hiệu — ${(hist.data?.notes??[]).filter(validProgression).length} lần cập nhật`}><Button onClick={()=>setNoteOpen(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
+        <Sheet open={noteOpen} onOpenChange={setNoteOpen}><SheetContent side="bottom" className="signal-mobile-sheet sm:max-w-xl sm:mx-auto"><SheetHeader><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader><VoluntaryNoteForm id={s.id} onSaved={()=>{setNoteOpen(false);void refresh();}}/></SheetContent></Sheet>
         <Section title="Lịch sử diễn biến">
           {hist.error ? <p className="text-sm text-destructive">{errMsg(hist.error)}</p> : <>
             <ol className="space-y-3 border-l pl-4">
@@ -1019,4 +966,10 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
       )}
     </div>
   );
+}
+
+function VoluntaryNoteForm({id,onSaved}:{id:string;onSaved:()=>void}) {
+ const [note,setNote]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const lock=useRef(false);const request=useRef<{id:string;note:string}|null>(null);
+ const save=async()=>{if(lock.current||!note.trim())return;lock.current=true;setBusy(true);setError('');if(request.current?.note!==note.trim())request.current={id:crypto.randomUUID(),note:note.trim()};try{await saveNote(id,request.current.id,note);onSaved();}catch(e){setError(errMsg(e));}finally{lock.current=false;setBusy(false);}};
+ return <div className="space-y-4 pt-4"><Label htmlFor="voluntary-note">Nội dung diễn biến</Label><Textarea id="voluntary-note" rows={5} maxLength={3000} value={note} onChange={e=>setNote(e.target.value)}/>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<Button className="w-full min-h-11" disabled={busy||!note.trim()} onClick={()=>void save()}>{busy?'Đang lưu…':'Lưu'}</Button></div>;
 }
