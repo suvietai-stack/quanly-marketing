@@ -2066,6 +2066,34 @@
       "when": 1794218097014,
       "tag": "0294_base_org_permission_preview_apply",
       "breakpoints": true
+    },
+    {
+      "idx": 295,
+      "version": "7",
+      "when": 1794218449558,
+      "tag": "0295_base_org_permission_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 296,
+      "version": "7",
+      "when": 1794218562759,
+      "tag": "0296_base_org_inheritance_alias_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 297,
+      "version": "7",
+      "when": 1794218707295,
+      "tag": "0297_base_org_permission_activation_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 298,
+      "version": "7",
+      "when": 1794218789809,
+      "tag": "0298_base_org_permission_history_safe_validation",
+      "breakpoints": true
     }
   ]
 }

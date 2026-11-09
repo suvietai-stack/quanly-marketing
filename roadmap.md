@@ -2,11 +2,13 @@
 
 ## PHÂN QUYỀN TOÀN BASE — 09/11/2026
 - [x] BP1. Đọc yêu cầu, rà soát nguồn quyền/frontend/schema hiện hành; chưa có cơ cấu tổ chức toàn Base, chỉ có cơ cấu Kinh doanh.
-- [ ] BP2. Chốt kế hoạch tương thích trước khi thay đổi điểm kiểm tra quyền; không khôi phục biz.*/k3.* qua Role cũ.
-- [ ] BP3. Cơ cấu toàn Base liên kết nhân sự hiện có + cấu hình mặc định/trực tiếp/bộ quyền, thời hạn, phạm vi hỗ trợ, RPC/audit.
-- [ ] BP4. Bộ quyết định ba nấc theo tài nguyên, nguồn quyền và bộ chuyển tiếp từng module; chế độ đối soát không đổi quyền trước kích hoạt.
-- [ ] BP5. UI quản trị, ba tab nhân sự, xem trước/xác nhận ảnh hưởng và lịch sử; mẫu nháp không gán tự động.
-- [ ] BP6. Kiểm thử 25 kịch bản, đối soát trước/sau và nghiệm thu phiên thật; không dữ liệu giả/Publish.
+- [x] BP2. Kế hoạch duyệt; giữ evaluator legacy và không phục hồi biz.*/k3.* qua Role cũ.
+- [x] BP3a. 0292–0298 nền tảng cấu hình tổ chức có phiên bản, mặc định/trực tiếp/bộ quyền, thời hạn, RPC/audit/xem trước/xác nhận; không gán nhân sự thật.
+- [x] BP4a. Nấc 1 chỉ kích hoạt năm quyền Sale Work + CRM cá nhân đã có ownership guard; các quyền khác server chặn active. Role/quyền riêng/gán Role fingerprint không đổi.
+- [x] BP5a. Ba tab, đơn vị/chức danh, bộ quyền, preview/confirm/history; Mobile390/Desktop1280 cách ly lưu–đọc đạt.
+- [x] BP6a. 82/82 tests, build OK; docs/base-permissions-verification.md ghi rõ phần chưa tích hợp.
+- [ ] BP3b/BP4b/BP5b. Chưa hoàn tất ánh xạ Kinh doanh, adapters toàn module, mẫu nháp, gán nhiều người, mô phỏng tương lai và điều chuyển chuyên biệt; quyền chưa tích hợp chỉ nháp.
+- [ ] BP6b. Nghiệm thu phiên thật bị chặn: --self không có tài khoản khớp, /organization→/login; cần người dùng đăng nhập Preview. Chưa Publish.
 
 ## HỢP NHẤT DIỄN BIẾN & ĐỒNG BỘ PHÂN CÔNG — 09/11/2026
 - [x] HB1. Rà soát hai luồng ghi diễn biến, mẫu chọn nhanh, RPC note/status và luồng phân công + cache invalidation.
