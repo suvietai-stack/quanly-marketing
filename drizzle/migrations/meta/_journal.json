@@ -2038,6 +2038,13 @@
       "when": 1794213083623,
       "tag": "0290_fr_type_catalogs",
       "breakpoints": true
+    },
+    {
+      "idx": 291,
+      "version": "7",
+      "when": 1794214019522,
+      "tag": "0291_sale_work_zalo",
+      "breakpoints": true
     }
   ]
 }

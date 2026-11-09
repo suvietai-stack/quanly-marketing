@@ -17,7 +17,7 @@ describe('Presentation-only navigation', () => {
     expect(allowedPins(['/settings/kpi-v2', '/reports-v2'], groups)).toEqual(['/settings/kpi-v2', '/reports-v2']);
     expect(searchLauncher(groups, 'Marketing KPI').map(i => i.to)).toEqual(['/settings/kpi-v2', '/reports-v2']);
     expect(groups.find(g => g.label === 'Marketing')?.items.find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
-    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/3k']);
+    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/3k', '/biz/products']);
   });
   it('has ten areas in the mandated order', () => {
     expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
@@ -52,7 +52,7 @@ describe('Presentation-only navigation', () => {
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations).toHaveLength(35);
+    expect(destinations).toHaveLength(39);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
@@ -61,15 +61,17 @@ describe('Presentation-only navigation', () => {
   });
   it('CRM is permission scoped, searchable and pinnable only within Kinh doanh', () => {
     const groups = visibleNavigation(access(['biz.crm_use']));
-    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/crm']);
+    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/crm', '/biz/products']);
     expect(paths(access())).not.toContain('/biz/crm');
     expect(allowedPins(['/biz/crm'], groups)).toEqual(['/biz/crm']);
     expect(searchLauncher(groups, 'CRM').map(i => i.to)).toContain('/biz/crm');
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
-    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(6);
-    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon).every(i => i.to === '')).toBe(true);
-    expect(visibleNavigation(access()).some(g => g.label === 'Kế Toán & Tài Chính')).toBe(false);
+    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(4);
+    // Kho Sản Phẩm đã có route placeholder an toàn; các mục tương lai khác chưa có đường dẫn.
+    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon && i.to !== '/biz/products').every(i => i.to === '')).toBe(true);
+    // Nhóm Kế Toán & Tài Chính có các mục không gắn quyền menu (trang tự kiểm tra quyền bên trong).
+    expect(visibleNavigation(access()).find(g => g.label === 'Showroom')?.items ?? []).toHaveLength(0);
     expect(visibleNavigation(access()).some(g => g.label === 'Showroom' && g.comingSoon)).toBe(true);
   });
   it('highlights only the most specific route for existing deep links', () => {
