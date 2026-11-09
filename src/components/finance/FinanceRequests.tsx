@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { frApi, type FrRequest, type FrStep, type FrPaymentType, type FrSettleOption } from "@/lib/financeRequests/api";
+import { frApi, type FrRequest, type FrStep, type FrPaymentType, type FrTypeWithUsage, type FrSettleOption } from "@/lib/financeRequests/api";
 import {
   FR_KIND_LABEL, FR_STATUS_LABEL, FR_STATUS_VARIANT, FR_QUICK_FILTERS, quickFilterStatuses,
   vnd, parseAmount, fmtAmountInput, frEditable, frCancellable, frRemainingToPay,
@@ -25,8 +25,6 @@ import { FinanceZaloSettings } from "@/components/finance/FinanceZaloSettings";
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
 const fmtDateTime = (s: string | null | undefined) => (s ? new Date(s).toLocaleString("vi-VN") : "—");
-
-const SETTLE_TYPE = "Quyết toán/hoàn ứng tạm ứng";
 
 const chip = (on: boolean) =>
   `shrink-0 h-9 px-3 rounded-full border text-sm whitespace-nowrap transition-colors ${on ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-accent"}`;
@@ -205,6 +203,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [supplierBank, setSupplierBank] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [salaryPeriod, setSalaryPeriod] = useState("");
+  const [otherLabel, setOtherLabel] = useState("");
   const [attachments, setAttachments] = useState<{ name: string; path?: string; url?: string }[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [lines, setLines] = useState<FrLine[]>([]);
@@ -212,12 +211,16 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [busy, setBusy] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
 
-  const types = useQuery({ queryKey: ["fr", "types"], queryFn: frApi.paymentTypes, enabled: open && kind === "payment" });
+  const typeKind = kind === "advance" ? "advance" : "payment";
+  const types = useQuery({ queryKey: ["fr", "types", typeKind], queryFn: () => frApi.paymentTypes(typeKind), enabled: open && kind !== "salary_advance" });
   const settleOpts = useQuery({ queryKey: ["fr", "settle-opts"], queryFn: frApi.settleOptions, enabled: open && kind === "payment" });
   const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog, enabled: open && kind === "payment" });
   const selectedType = (types.data ?? []).find((t) => t.id === typeId);
-  const isSettle = selectedType?.name === SETTLE_TYPE;
-  const isSupplier = selectedType?.name === "Thanh toán nhà cung cấp/đối tác";
+  // Nghiệp vụ đặc biệt nhận diện qua mã hệ thống ổn định — đổi tên danh mục không ảnh hưởng xử lý.
+  const isSettle = selectedType?.sys_code === "settle";
+  const isSupplier = selectedType?.sys_code === "supplier";
+  const isOther = selectedType?.sys_code === "other";
+  const typeOptions = (types.data ?? []).filter((t) => t.active || t.id === typeId);
 
   useEffect(() => {
     if (!open) return;
@@ -227,7 +230,8 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       setAmount(fmtAmountInput(String(editing.amount)));
       setTitle(editing.title); setDetail(editing.detail ?? ""); setDesiredDate(editing.desired_date ?? "");
       setPayeeName(editing.payee_name ?? ""); setPayeeInfo(editing.payee_info ?? ""); setNote(editing.note ?? "");
-      setTypeId(editing.payment_type_id ?? ""); setAdvanceId(editing.advance_id ?? "");
+      setTypeId((kind === "advance" ? editing.advance_type_id : editing.payment_type_id) ?? ""); setAdvanceId(editing.advance_id ?? "");
+      setOtherLabel(editing.other_label ?? "");
       setSupplierName(editing.supplier_name ?? ""); setSupplierTax(editing.supplier_tax ?? "");
       setSupplierBank(editing.supplier_bank ?? ""); setInvoiceNo(editing.invoice_no ?? "");
       setSalaryPeriod(editing.salary_period ?? "");
@@ -236,7 +240,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
     } else {
       setAmount(""); setTitle(""); setDetail(""); setDesiredDate(""); setPayeeName(""); setPayeeInfo("");
       setNote(""); setTypeId(""); setAdvanceId(""); setSupplierName(""); setSupplierTax(""); setSupplierBank("");
-      setInvoiceNo(""); setSalaryPeriod(""); setAttachments([]);
+      setInvoiceNo(""); setSalaryPeriod(""); setOtherLabel(""); setAttachments([]);
       setLines(kind === "payment" ? [emptyLine()] : []);
     }
     setLinkUrl("");
@@ -257,7 +261,10 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const payload = () => ({
     amount: effectiveAmount, title, detail, desired_date: desiredDate || null,
     payee_name: payeeName, payee_info: payeeInfo, note,
-    payment_type_id: typeId || null, advance_id: isSettle ? advanceId || null : null,
+    payment_type_id: kind === "payment" ? typeId || null : null,
+    advance_type_id: kind === "advance" ? typeId || null : null,
+    other_label: isOther ? otherLabel.trim() : null,
+    advance_id: isSettle ? advanceId || null : null,
     supplier_name: supplierName, supplier_tax: supplierTax, supplier_bank: supplierBank,
     invoice_no: invoiceNo, salary_period: salaryPeriod, attachments,
     // Backend tự tính lại thành tiền/tổng tiền từ bảng kê, không tin số client gửi.
@@ -273,7 +280,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
     }
     const err = frValidate(kind, {
       amount: effectiveAmount, title, paymentTypeId: typeId, payeeName,
-      advanceId, salaryPeriod, settleTypeName: selectedType?.name,
+      advanceId, salaryPeriod, isSettle, isOther, otherLabel,
     });
     if (err) return toast.error(err);
     setBusy(true);
