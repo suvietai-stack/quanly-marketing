@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseAmount, fmtAmountInput, vnd, frValidate, quickFilterStatuses,
   frEditable, frCancellable, frRemainingToPay, frAdvanceRemaining, frSalaryRemaining, frStatusesForKind,
+  emptyLine, isBlankLine, isValidLine, lineTotal, linesTotal, validateLines,
 } from "./logic";
 
 describe("finance request rules", () => {
@@ -46,5 +47,32 @@ describe("finance request rules", () => {
     expect(frStatusesForKind("advance")).toContain("settling");
     expect(frStatusesForKind("payment")).not.toContain("settling");
     expect(frStatusesForKind("salary_advance")).not.toContain("settling");
+  });
+});
+
+describe("expense lines (bảng kê khoản chi)", () => {
+  const line = (over: Partial<ReturnType<typeof emptyLine>> = {}) => ({ ...emptyLine(), ...over });
+  it("computes line total and request total exactly", () => {
+    expect(lineTotal({ qty: 100, unit_price: 15000 })).toBe(1500000);
+    expect(lineTotal({ qty: 2.5, unit_price: 80000 })).toBe(200000);
+    expect(linesTotal([
+      line({ name: "In catalogue", qty: 100, unit_price: 15000 }),
+      line({ name: "Vận chuyển", qty: 1, unit_price: 300000 }),
+    ])).toBe(1800000);
+  });
+  it("blank rows are skipped, named rows must have price", () => {
+    expect(isBlankLine(emptyLine())).toBe(true);
+    expect(isBlankLine(line({ name: "Vận chuyển" }))).toBe(false);
+    expect(isValidLine(line({ name: "Vận chuyển" }))).toBe(false);
+    expect(isValidLine(line({ name: "Vận chuyển", unit_price: 300000 }))).toBe(true);
+    expect(validateLines([emptyLine()])).toMatch(/ít nhất một khoản chi/);
+    expect(validateLines([line({ name: "Vận chuyển" })])).toMatch(/Đơn giá/);
+    expect(validateLines([line({ name: "Vận chuyển", qty: 0, unit_price: 5 })])).toMatch(/Số lượng/);
+    expect(validateLines([line({ name: "Vận chuyển", unit_price: 300000 })])).toBeNull();
+  });
+  it("default line has qty 1 and empty unit", () => {
+    const l = emptyLine();
+    expect(l.qty).toBe(1);
+    expect(l.unit).toBe("");
   });
 });
