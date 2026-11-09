@@ -89,6 +89,7 @@ it('settlement payment updates the linked advance exactly once', async () => {
   await actor(staff);
   paymentId = await scalar('select fr_save(null,$1,$2,$3) v', ['payment', payload({
     amount: 1800000, title: 'Quyết toán vật tư', payment_type_id: settleTypeId, payee_name: 'Kho', advance_id: advanceId,
+    lines: [{ name: 'Quyết toán vật tư', qty: 1, unit_price: 1800000 }],
   }), 'rk-2']);
   expect(await scalar('select fr_submit($1) v', [paymentId])).toBe('pending');
   await actor(approver);
@@ -102,6 +103,7 @@ it('settlement payment updates the linked advance exactly once', async () => {
   await actor(staff);
   const p2 = await scalar('select fr_save(null,$1,$2,$3) v', ['payment', payload({
     amount: 200000, title: 'Quyết toán nốt', payment_type_id: settleTypeId, payee_name: 'Kho', advance_id: advanceId,
+    lines: [{ name: 'Quyết toán nốt', qty: 1, unit_price: 200000 }],
   }), 'rk-3']);
   await db.query("select fr_submit($1)", [p2]);
   await actor(approver);
