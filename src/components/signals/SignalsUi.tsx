@@ -738,10 +738,9 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
           Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}
           {s.status === "won" && s.revenue ? ` · Doanh số ${fmtVnd(s.revenue)}` : ""}{s.lost_reason ? ` · ${s.lost_reason}` : ""}
         </div>
-        <div className="grid grid-cols-3 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2 pt-1">
           <Button asChild size="lg" className="h-12 px-2"><a href={zaloLink(s.phone)} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4 mr-1" />Zalo</a></Button>
           <Button asChild size="lg" variant="outline" className="h-12 px-2"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1" />Gọi</a></Button>
-          <Button size="lg" variant="secondary" className="h-12 px-2" disabled={!canConsult} onClick={() => setUpdating(true)}><PencilLine className="h-4 w-4 mr-1" />Cập nhật</Button>
         </div>
         <p className="text-[11px] text-muted-foreground">Nút Zalo mở trang Zalo theo số điện thoại; tùy thiết lập của khách, có thể không mở thẳng được cuộc trò chuyện.</p>
         {canConsult && s.status === "waiting" && <Button size="lg" className="w-full" onClick={accept}>Tiếp nhận tín hiệu</Button>}
@@ -750,8 +749,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       <div className="p-4 space-y-5 flex-1">
         <SignalEnrichment key={s.id} s={s} uid={p.userId} canEdit={!cancelled&&((p.sale&&s.assigned_to===p.userId)||p.manage)} catalog={p.catalog} sale={p.sale} onSaved={()=>void refresh()}/>
         {s.next_contact_on&&<p className="text-sm">Lịch theo dõi: <b>{fmtNext(s)}</b></p>}
-        <Section title={`Diễn biến tín hiệu — ${hist.data?.noteCount??0} lần cập nhật`}><Button onClick={()=>setNoteOpen(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
-        <Sheet open={noteOpen} onOpenChange={setNoteOpen}><SheetContent side="bottom" className="signal-mobile-sheet sm:max-w-xl sm:mx-auto"><SheetHeader><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader><VoluntaryNoteForm id={s.id} onSaved={()=>{setNoteOpen(false);void refresh();}}/></SheetContent></Sheet>
+        <Section title={`Diễn biến tín hiệu — ${hist.data?.noteCount??0} lần cập nhật`}><Button onClick={()=>setUpdating(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
         <Section title="Lịch sử diễn biến">
           {hist.error ? <p className="text-sm text-destructive">{errMsg(hist.error)}</p> : <>
             <ol className="space-y-3 border-l pl-4">
