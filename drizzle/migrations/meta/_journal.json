@@ -2045,6 +2045,13 @@
       "when": 1794214019522,
       "tag": "0291_sale_work_zalo",
       "breakpoints": true
+    },
+    {
+      "idx": 292,
+      "version": "7",
+      "when": 1794217990290,
+      "tag": "0292_base_org_permission_storage",
+      "breakpoints": true
     }
   ]
 }

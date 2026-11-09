@@ -530,6 +530,117 @@ export type Database = {
           },
         ]
       }
+      base_org_state: {
+        Row: {
+          config: Json
+          id: boolean
+          revision: number
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          id?: boolean
+          revision?: number
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          id?: boolean
+          revision?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      base_permission_catalog: {
+        Row: {
+          dependencies: string[]
+          key: string
+          label: string
+          module: string
+        }
+        Insert: {
+          dependencies?: string[]
+          key: string
+          label: string
+          module: string
+        }
+        Update: {
+          dependencies?: string[]
+          key?: string
+          label?: string
+          module?: string
+        }
+        Relationships: []
+      }
+      base_permission_events: {
+        Row: {
+          action: string
+          actor_id: string
+          after_data: Json
+          after_revision: number
+          before_data: Json
+          before_revision: number
+          created_at: string
+          id: string
+          impact: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_data: Json
+          after_revision: number
+          before_data: Json
+          before_revision: number
+          created_at?: string
+          id?: string
+          impact: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_data?: Json
+          after_revision?: number
+          before_data?: Json
+          before_revision?: number
+          created_at?: string
+          id?: string
+          impact?: Json
+        }
+        Relationships: []
+      }
+      base_permission_previews: {
+        Row: {
+          actor_id: string
+          applied_at: string | null
+          baseline: string
+          config: Json
+          expires_at: string
+          id: string
+          impact: Json
+          revision: number
+        }
+        Insert: {
+          actor_id: string
+          applied_at?: string | null
+          baseline: string
+          config: Json
+          expires_at?: string
+          id?: string
+          impact: Json
+          revision: number
+        }
+        Update: {
+          actor_id?: string
+          applied_at?: string | null
+          baseline?: string
+          config?: Json
+          expires_at?: string
+          id?: string
+          impact?: Json
+          revision?: number
+        }
+        Relationships: []
+      }
       biz_access_exceptions: {
         Row: {
           created_at: string
