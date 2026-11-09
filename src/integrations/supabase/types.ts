@@ -10034,6 +10034,7 @@ export type Database = {
         Args: { _id: string; _reason: string }
         Returns: undefined
       }
+      signal_report_summary: { Args: { _ids: string[] }; Returns: Json }
       signal_sale_update: {
         Args: {
           _channel?: string
@@ -10055,6 +10056,7 @@ export type Database = {
           id: string
         }[]
       }
+      signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
       wf_can_manage: { Args: never; Returns: boolean }
       wf_claim_event: { Args: { p_id: string }; Returns: Json }
       wf_complete_event: {
