@@ -14,7 +14,7 @@ beforeAll(async()=>{
  ALTER TABLE opportunity_signals ENABLE ROW LEVEL SECURITY;CREATE POLICY scoped ON opportunity_signals TO authenticated USING(assigned_to=auth.uid());
  ALTER TABLE opportunity_signal_notes ENABLE ROW LEVEL SECURITY;CREATE POLICY scoped ON opportunity_signal_notes TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));
  ALTER TABLE opportunity_signal_events ENABLE ROW LEVEL SECURITY;CREATE POLICY scoped ON opportunity_signal_events TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));`);
- for(const file of ['0273_signal_voluntary_notes_retire_periods','0274_signal_paged_filtered_reads','0275_signal_note_activity_report','0276_signal_sales_aggregate_report','0278_signal_priority_grouped_history'])await db.exec(readFileSync(`drizzle/migrations/${file}.sql`,'utf8'));
+ for(const file of ['0273_signal_voluntary_notes_retire_periods','0274_signal_paged_filtered_reads','0275_signal_note_activity_report','0276_signal_sales_aggregate_report','0278_signal_priority_grouped_history','0279_signal_note_cycle_end_boundaries'])await db.exec(readFileSync(`drizzle/migrations/${file}.sql`,'utf8'));
  await db.exec(`SELECT set_config('test.uid','${A}',false);INSERT INTO opportunity_signals(id,assigned_to,status,assigned_at) VALUES('${id(1)}','${A}','consulting','2026-11-01'),('${id(2)}','${B}','waiting','2026-11-01');`);
 },60000);
 afterAll(()=>db.close());
@@ -42,4 +42,12 @@ it('handover first note belongs to actual author after acceptance, before next a
 });
 it('four rank ordering before page boundaries scales at 600, 3000 and 5000 isolated rows',async()=>{
  for(const n of [600,3000,5000]){await db.exec(`INSERT INTO opportunity_signals(id,assigned_to,status) SELECT ('00000000-0000-0000-0002-'||lpad(i::text,12,'0'))::uuid,'${A}','consulting' FROM generate_series(1,${n}) i ON CONFLICT DO NOTHING;`);const start=performance.now();const result=(await db.query<{r:any}>(`select signal_list_page('{}','work',0,30) r`)).rows[0]?.r;console.log('isolated page',n,'rows',Math.round(performance.now()-start),'ms',JSON.stringify(result).length,'bytes');expect(result.rows).toHaveLength(30);expect(result.rows[0].id).toBe(id(2));}
+});
+it('closing and reopening the same Sale cannot take notes from a later responsibility',async()=>{
+ await db.exec(`INSERT INTO opportunity_signals(id,assigned_to,status) VALUES('${id(5)}','${A}','consulting');
+ INSERT INTO opportunity_signal_events(signal_id,kind,detail,created_at) VALUES('${id(5)}','assign','{"to":"${A}"}','2026-11-01 01:00Z'),('${id(5)}','reopen','{}','2026-11-04 01:00Z');
+ INSERT INTO opportunity_signal_notes(signal_id,author_id,note,status_from,status_to,created_at,is_progression) VALUES('${id(5)}','${A}',NULL,'waiting','contacting','2026-11-01 02:00Z',false),('${id(5)}','${A}',NULL,'consulting','lost','2026-11-02 02:00Z',false),('${id(5)}','${A}','after reopen','consulting','consulting','2026-11-04 03:00Z',true);`);
+ const r=(await db.query<{r:any}>(`select signal_note_report('{"from":"2026-11-01","to":"2026-11-07"}') r`)).rows[0]?.r;
+ expect(r.firsts.filter((f:any)=>f.signal_id===id(5))).toHaveLength(1);
+ expect(r.firsts.find((f:any)=>f.signal_id===id(5)).first_note).toBeNull();
 });

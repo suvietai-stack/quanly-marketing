@@ -7,8 +7,8 @@
 - [x] SN4a. 0275/0276 báo cáo note phân bố/tác giả/tệp/lượt nhận, sales aggregates giữ tỷ lệ chốt; businessMinutes dùng chung.
 - [x] SN5a. 152 test đạt; tải cách ly600/3000/5000; browser390/1280 lưu-đọc/page/report đạt, build OK; docs/signal-voluntary-notes-verification.md. Không dữ liệu test thật/Publish.
 - [ ] SN1b/SN5b. Đo network/latency/memory trước-sau và nghiệm thu phiên thật/concurrency: --self không khớp tài khoản, chờ đăng nhập Preview và hồ sơ được phép.
-- [ ] SN4b. Bộ lọc Hệ/Phòng/Nhóm và kiểm chứng phạm vi bổ nhiệm so với RLS signal cũ; cần hoàn thiện tích hợp, chưa triển khai.
-- [ ] SN4c. Ranh giới kết thúc/mở lại cùng Sale cho first-note cycle cần bổ sung và kiểm thử; hiện dùng mốc bàn giao kế tiếp, chưa nghiệm thu trường hợp này.
+- [ ] SN4b. Bộ lọc Hệ/Phòng/Nhóm và phạm vi bổ nhiệm chưa nối: cần xác nhận cách áp dụng với scope Role Tín hiệu hiện hành để không đổi quyền ngoài yêu cầu.
+- [x] SN4c. 0279 ranh giới kết thúc/mở lại/bàn giao giới hạn first-note đúng trách nhiệm, không gán note lần sau cho lần nhận cũ.
 
 ## BIỂU MẪU THIẾT KẾ & TÀI LIỆU — 07/11/2026
 - [x] DF1. 30 danh mục ID ổn định (7/9/7 loại + 7 sản phẩm); nhiều lựa chọn/Khác; 83 Order giữ nguyên, không phân loại lại lịch sử.

@@ -21,6 +21,6 @@
 ## Chưa xác minh / còn giới hạn
 - Phiên thật Sale/quản lý, role matrix tổ chức, upload integrations/notification delivery, network bytes/time/memory trước-sau và đồng thời nhiều người chưa nghiệm thu; cần đăng nhập Preview và hồ sơ thao tác được phép, không tự chọn tài khoản hoặc tạo note thử thật.
 - Bộ lọc báo cáo Hệ/Phòng/Nhóm chưa nối; báo cáo mới hiện dùng RLS signal hiện hành, không xây scope bổ nhiệm riêng hay mở quyền. Chưa xác minh yêu cầu phạm vi tổ chức khớp toàn bộ Role-scope signal cũ.
-- First-note cycle hiện giới hạn bằng bàn giao kế tiếp; cần bổ sung/kiểm thử lịch sử kết thúc rồi mở lại cùng Sale như một ranh giới trách nhiệm độc lập. Không đoán mốc cho trường hợp thiếu event/acceptance.
+- 0279 giới hạn first-note bằng bàn giao, hủy, mở lại và note chuyển Chốt/Trượt thật; không gán note lần sau cho lượt nhận cũ. Mở lại không có tiếp nhận mới không tự tạo mốc giả.
 - First-note time samples được truyền dưới dạng timestamp tối thiểu để tái sử dụng businessMinutes phía trình duyệt; không truyền nội dung notes. Chưa thay thành aggregate phút ở nguồn nhằm tránh có công thức giờ thứ hai.
 - Kiểm thử browser cũ nhắm deadline/full-list không phản ánh UI mới; test mới là luồng nghiệm thu hiện hành. Không Publish; các guard/RPC retirement đã áp dụng backend dùng chung.
