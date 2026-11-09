@@ -1,10 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## P0 TÍN HIỆU LOAD MÃI — 09/11/2026
-- [ ] SL1. Xác minh RPC/grants/RLS và chi phí danh sách/bộ đếm/history trên backend chung; không dữ liệu giả.
-- [ ] SL2. Khôi phục truy vấn an toàn, giữ bộ lọc/ưu tiên toàn tập/quyền/lịch sử.
-- [ ] SL3. Timeout/hủy request, không retry liên tục; bộ đếm — và lỗi/thử lại độc lập danh sách.
-- [ ] SL4. Hồi quy/database/browser và nghiệm thu Publish Sale/quản lý bằng phiên thật; cần đăng nhập/chỉ định tài khoản, không tự ghi note thử.
+- [x] SL1a. RPC/grants tồn tại; pg_stat_statements page 2 calls mean7127.57/max7629.52ms, token14 mean3685.63ms; EXPLAIN quản trị view17ms không phải nghiệm thu authenticated. Không lock wait thấy trong mẫu.
+- [x] SL2. 0283 bộ đếm không đọc history, SELECT permission initplans giữ nguyên điều kiện/RLS, index latest-note; không sửa dữ liệu hoặc sort.
+- [x] SL3. Chờ tối đa15s/hủy request, retry=false; bộ đếm — và lỗi/thử lại độc lập, chặn tải thêm tự động sau lỗi; token chỉ sau list/count thành công.
+- [x] SL4a. 157 tests; browser390/1280: page/count error, timeout, retry tay và luồng page/search/note cách ly đạt. docs/signal-load-hotfix-verification.md.
+- [ ] SL1b/SL4b. Nghiệm thu Publish Sale/quản lý và đo authenticated sau sửa: --self không khớp, Publish→/login; cần đăng nhập/chỉ định tài khoản. Không ghi note thử thật hoặc tự Publish.
 
 ## CRM SÁU NHÓM & THÔNG TIN TÙY CHỈNH — 09/11/2026
 - [x] CX1. Kiểm kê năm nhóm cũ, 0 khách/liên hệ/lịch/tương tác; kế hoạch duyệt, giữ nhóm pha trộn cũ.
