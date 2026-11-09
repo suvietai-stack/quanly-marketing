@@ -1,33 +1,29 @@
-import asyncio,json
+import asyncio,json,sys
 from pathlib import Path
 from playwright.async_api import async_playwright,expect
+sys.path.insert(0,str(Path(__file__).parent))
+from signals_mock import make_backend,UID
 HTML='''<div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/signals.browser.tsx"></script>'''
 OUT=Path('/tmp/browser/signals');OUT.mkdir(parents=True,exist_ok=True)
-UID='00000000-0000-0000-0000-000000000001';CID='00000000-0000-0000-0000-000000000004'
+CID='00000000-0000-0000-0000-000000000004'
 async def main():
  async with async_playwright() as p:
   browser=await p.chromium.launch(headless=True)
   for width,height in [(320,740),(360,800),(390,844),(430,932),(1280,1800)]:
-   page=await browser.new_page(viewport={'width':width,'height':height});errors=[];writes=[];fail=True
+   page=await browser.new_page(viewport={'width':width,'height':height});errors=[];writes=[];fail=[True]
    page.on('pageerror',lambda e:errors.append(str(e)))
    signal={'id':CID,'customer_name':'Khách cách ly','phone':'0901234567','detected_on':'2026-11-06','products':['Ấm chén'],'need_group':'Sứ quà tặng','need_groups':['Sứ quà tặng'],'source':'Website','status':'consulting','potential':'unrated','assigned_to':UID,'created_by':UID,'created_at':'2026-11-06T02:00:00Z','updated_at':'2026-11-06T02:00:00Z','next_contact_on':'2026-11-12','next_contact_at':'2026-11-12T02:00:00Z','revenue':None,'closed_at':None,'cancelled_at':None}
    labels=[{'id':'00000000-0000-0000-0000-000000000008','owner_id':None,'name':'Khách trọng điểm','active':True},{'id':'00000000-0000-0000-0000-000000000009','owner_id':None,'name':'Cần gửi mẫu','active':True}];links=[]
+   def rpc(path,payload):
+    if path=='rpc/signal_assessment_save':
+     writes.append(payload)
+     if fail[0]:
+      fail[0]=False;return (400,{'message':'Chưa lưu được, thử lại'})
+     signal['potential']=payload['_potential'];signal['updated_at']='2026-11-06T08:00:00Z';links[:]=[{'signal_id':CID,'label_id':x} for x in payload['_labels']];return 'event'
+    if path=='rpc/signal_progression_report':return {'total':{'on_time':0,'due':0,'rate':None,'retro_on_time':0,'retro_due':0,'tracking':0,'overdue':0,'today':0,'soon':0},'sales':[],'activated_at':None,'calculated_at':'2026-11-06T08:00:00Z'}
+    return []
    await page.route('**/signals-fixture*',lambda r:r.fulfill(content_type='text/html',body=HTML))
-   async def backend(route):
-    nonlocal fail
-    path=route.request.url.split('/rest/v1/')[-1].split('?')[0];result=[]
-    if path in ('opportunity_signals','signal_list_priority'):result=[signal]
-    elif path=='signal_labels':result=labels
-    elif path=='signal_label_links':result=links
-    elif path=='catalogs':result=None
-    elif path=='rpc/signal_assessment_save':
-     args=route.request.post_data_json;writes.append(args)
-     if fail:
-      fail=False;await route.fulfill(status=400,content_type='application/json',body=json.dumps({'message':'Chưa lưu được, thử lại'}));return
-     signal['potential']=args['_potential'];signal['updated_at']='2026-11-06T08:00:00Z';links[:]=[{'signal_id':CID,'label_id':x} for x in args['_labels']];result='event'
-    elif path=='rpc/signal_progression_report':result={'total':{'on_time':0,'due':0,'rate':None,'retro_on_time':0,'retro_due':0,'tracking':0,'overdue':0,'today':0,'soon':0},'sales':[],'activated_at':None,'calculated_at':'2026-11-06T08:00:00Z'}
-    await route.fulfill(content_type='application/json',body=json.dumps(result))
-   await page.route('**/rest/v1/**',backend)
+   await page.route('**/rest/v1/**',make_backend([signal],notes=[],labels=labels,links=links,rpc=rpc))
    await page.route('**/_serverFn/**',lambda r:r.fulfill(content_type='application/json',body='{}'))
    await page.goto('http://localhost:8080/signals-fixture')
    await page.get_by_role('button',name='Mở chi tiết tín hiệu: Khách cách ly',exact=True).first.click()
