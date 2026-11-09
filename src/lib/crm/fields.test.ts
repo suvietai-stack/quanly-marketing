@@ -1,14 +1,138 @@
-import { it,expect } from 'vitest';
-import { applicableFields,scopeMatches,dynamicAnalysis,displayValue,FIELD_TYPES } from './fields';
-import type { Catalog,Customer } from './types';
-const g={id:'g',kind:'group',config:{}} as Catalog,s={id:'s',kind:'segment',parent_id:'g',config:{}} as Catalog;
-const f:Catalog={id:'f',kind:'custom_field',name:'Kênh bán hàng',parent_id:null,description:'',sort_order:0,active:true,config:{scope_mode:'groups',group_ids:['g'],field_type:'multiselect',options:[{id:'fb',name:'Facebook',active:true},{id:'sh',name:'Shopee',active:true}]}};
-const base:Customer={id:'',code:'',owner_id:'',name:'',profile_kind:'organization',phone:'',email:'',website:'',tax_code:'',legal_name:'',province_code:null,ward_code:null,address:'',group_id:'g',segment_id:null,priority_id:null,relationship_id:null,source_id:null,related_ids:[],details:{},note:'',revision:1,archived_at:null,created_at:'',updated_at:''};
-it('all nine configured types are supported',()=>expect(Object.keys(FIELD_TYPES)).toEqual(['text','textarea','number','money','date','boolean','select','multiselect','url']));
-it('group and segment inheritance yields one stable field',()=>{const x={...f,config:{...f.config,scope_mode:'segments',segment_ids:['s']}};expect(applicableFields([g,s,x],'g','s').map(c=>c.id)).toEqual(['f']);expect(scopeMatches(x,'g','', [g,s,x])).toBe(false);});
-it('no selected group and empty scope never show custom fields',()=>{expect(applicableFields([f],'')).toEqual([]);expect(applicableFields([{...f,config:{scope_mode:'groups',group_ids:[]}}],'g')).toEqual([]);});
-it('multiselect distinguishes unique customers and selection counts',()=>{const a={...base,id:'a',custom_values:{f:['fb','sh','fb']}},b={...base,id:'b',custom_values:{f:['fb']}};const r=dynamicAnalysis([a,a,b,{...b,id:'out',group_id:'h'}],f,[f,g]);expect(r.total).toBe(2);expect(r.filled).toBe(2);expect(r.selections).toBe(3);expect(r.rows.find(x=>x.id==='fb')?.count).toBe(2);});
-it('number sums include zero and exclude values outside scope',()=>{const n={...f,config:{scope_mode:'groups',group_ids:['g'],field_type:'number'}};const r=dynamicAnalysis([{...base,id:'a',custom_values:{f:0}},{...base,id:'b',custom_values:{f:12}},{...base,id:'c',group_id:'h',custom_values:{f:100}}],n,[n]);expect(r.filled).toBe(2);expect(r.sum).toBe(12);expect(r.average).toBe(6);});
-it('false boolean and retired selection labels remain readable',()=>{expect(displayValue(f,false)).toBe('Không');expect(displayValue({...f,config:{...f.config,field_type:'select'}},'fb')).toBe('Facebook');});
-it('numeric analysis interval includes boundaries and excludes outside customers',()=>{const n={...f,config:{field_type:'number',scope_mode:'shared'}};const r=dynamicAnalysis([{...base,id:'a',custom_values:{f:10}},{...base,id:'b',custom_values:{f:20}},{...base,id:'c',custom_values:{f:21}}],n,[n],{min:'10',max:'20'});expect(r.filled).toBe(2);expect(r.sum).toBe(30);});
-it('trait analysis counts unique matching customers in scope only',()=>{const t={...f,kind:'trait'};const r=dynamicAnalysis([{...base,id:'a',related_ids:['f']},{...base,id:'a',related_ids:['f']},{...base,id:'b',related_ids:[]}],t,[t]);expect(r.total).toBe(2);expect(r.filled).toBe(1);});
+import { it, expect } from "vitest";
+import {
+  applicableFields,
+  scopeMatches,
+  dynamicAnalysis,
+  displayValue,
+  FIELD_TYPES,
+} from "./fields";
+import type { Catalog, Customer } from "./types";
+const g = { id: "g", kind: "group", config: {} } as Catalog,
+  s = { id: "s", kind: "segment", parent_id: "g", config: {} } as Catalog;
+const f: Catalog = {
+  id: "f",
+  kind: "custom_field",
+  name: "Kênh bán hàng",
+  parent_id: null,
+  description: "",
+  sort_order: 0,
+  active: true,
+  config: {
+    scope_mode: "groups",
+    group_ids: ["g"],
+    field_type: "multiselect",
+    options: [
+      { id: "fb", name: "Facebook", active: true },
+      { id: "sh", name: "Shopee", active: true },
+    ],
+  },
+};
+const base: Customer = {
+  id: "",
+  code: "",
+  owner_id: "",
+  name: "",
+  profile_kind: "organization",
+  phone: "",
+  email: "",
+  website: "",
+  tax_code: "",
+  legal_name: "",
+  province_code: null,
+  ward_code: null,
+  address: "",
+  group_id: "g",
+  segment_id: null,
+  priority_id: null,
+  relationship_id: null,
+  source_id: null,
+  related_ids: [],
+  details: {},
+  note: "",
+  revision: 1,
+  archived_at: null,
+  created_at: "",
+  updated_at: "",
+};
+it("all nine configured types are supported", () =>
+  expect(Object.keys(FIELD_TYPES)).toEqual([
+    "text",
+    "textarea",
+    "number",
+    "money",
+    "date",
+    "boolean",
+    "select",
+    "multiselect",
+    "url",
+  ]));
+it("group and segment inheritance yields one stable field", () => {
+  const x = { ...f, config: { ...f.config, scope_mode: "segments", segment_ids: ["s"] } };
+  expect(applicableFields([g, s, x], "g", "s").map((c) => c.id)).toEqual(["f"]);
+  expect(scopeMatches(x, "g", "", [g, s, x])).toBe(false);
+});
+it("no selected group and empty scope never show custom fields", () => {
+  expect(applicableFields([f], "")).toEqual([]);
+  expect(
+    applicableFields([{ ...f, config: { scope_mode: "groups", group_ids: [] } }], "g"),
+  ).toEqual([]);
+});
+it("multiselect distinguishes unique customers and selection counts", () => {
+  const a = { ...base, id: "a", custom_values: { f: ["fb", "sh", "fb"] } },
+    b = { ...base, id: "b", custom_values: { f: ["fb"] } };
+  const r = dynamicAnalysis([a, a, b, { ...b, id: "out", group_id: "h" }], f, [f, g]);
+  expect(r.total).toBe(2);
+  expect(r.filled).toBe(2);
+  expect(r.selections).toBe(3);
+  expect(r.rows.find((x) => x.id === "fb")?.count).toBe(2);
+});
+it("number sums include zero and exclude values outside scope", () => {
+  const n = { ...f, config: { scope_mode: "groups", group_ids: ["g"], field_type: "number" } };
+  const r = dynamicAnalysis(
+    [
+      { ...base, id: "a", custom_values: { f: 0 } },
+      { ...base, id: "b", custom_values: { f: 12 } },
+      { ...base, id: "c", group_id: "h", custom_values: { f: 100 } },
+    ],
+    n,
+    [n],
+  );
+  expect(r.filled).toBe(2);
+  expect(r.sum).toBe(12);
+  expect(r.average).toBe(6);
+});
+it("false boolean and retired selection labels remain readable", () => {
+  expect(displayValue(f, false)).toBe("Không");
+  expect(displayValue({ ...f, config: { ...f.config, field_type: "select" } }, "fb")).toBe(
+    "Facebook",
+  );
+});
+it("numeric analysis interval includes boundaries and excludes outside customers", () => {
+  const n = { ...f, config: { field_type: "number", scope_mode: "shared" } };
+  const r = dynamicAnalysis(
+    [
+      { ...base, id: "a", custom_values: { f: 10 } },
+      { ...base, id: "b", custom_values: { f: 20 } },
+      { ...base, id: "c", custom_values: { f: 21 } },
+    ],
+    n,
+    [n],
+    { min: "10", max: "20" },
+  );
+  expect(r.filled).toBe(2);
+  expect(r.sum).toBe(30);
+});
+it("trait analysis counts unique matching customers in scope only", () => {
+  const t = { ...f, kind: "trait" };
+  const r = dynamicAnalysis(
+    [
+      { ...base, id: "a", related_ids: ["f"] },
+      { ...base, id: "a", related_ids: ["f"] },
+      { ...base, id: "b", related_ids: [] },
+    ],
+    t,
+    [t],
+  );
+  expect(r.total).toBe(2);
+  expect(r.filled).toBe(1);
+});

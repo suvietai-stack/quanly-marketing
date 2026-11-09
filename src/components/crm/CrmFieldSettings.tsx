@@ -1,23 +1,252 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import type { Catalog } from '@/lib/crm/types';
-import { FIELD_TYPES, fieldOptions, type FieldValues } from '@/lib/crm/fields';
-import { segmentOptions } from '@/lib/crm/classification';
-import { crmRpc, useCrmMutation } from '@/lib/crm/queries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Pencil } from 'lucide-react';
-import { Field, Pick, SearchPick } from './CrmControls';
-import { CrmModal } from './CrmForms';
-import { ScopeEditor, CustomFields } from './CrmFields';
-export function CrmFieldSettings({uid,catalogs}:{uid:string;catalogs:Catalog[]}) {
-  const [edit,setEdit]=useState<Catalog|null>(null),[error,setError]=useState(''),[search,setSearch]=useState(''),[group,setGroup]=useState(''),[segment,setSegment]=useState('');
-  const save=useCrmMutation('crm_catalog_save');
-  const [preview,setPreview]=useState<FieldValues>({});
-  const counts=useQuery({queryKey:['crm_catalog_counts',uid],queryFn:()=>crmRpc<Record<string,number>>('crm_catalog_counts')});
-  const patch=(v:Partial<Catalog>)=>{if(edit)setEdit({...edit,...v});};
-  const cfg=(v:Record<string,unknown>)=>patch({config:v});
-  return <div className="space-y-4"><div className="flex gap-2"><Input aria-label="Tìm trường chuyên sâu" placeholder="Tìm trường…" value={search} onChange={e=>setSearch(e.target.value)}/><Button onClick={()=>{setError('');setEdit({id:'',kind:'custom_field',name:'',parent_id:null,description:'',sort_order:catalogs.filter(c=>c.kind==='custom_field').length,active:true,config:{field_type:'text',required:false}});}}><Plus className="h-4 w-4"/>Thêm trường</Button></div><div className="divide-y border-y">{catalogs.filter(c=>c.kind==='custom_field'&&c.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(c=><div className="flex items-center justify-between gap-3 py-3" key={c.id}><div className="min-w-0"><strong className="text-sm">{c.name}</strong><p className="text-xs text-muted-foreground">{FIELD_TYPES[String(c.config.field_type)]} · {c.active?'Đang sử dụng':'Đã ngừng'} · {counts.data?.[c.id]||0} hồ sơ · Thứ tự {c.sort_order}</p></div><Button variant="ghost" size="icon" aria-label={`Sửa trường ${c.name}`} onClick={()=>{setError('');setEdit(c);}}><Pencil className="h-4 w-4"/></Button></div>)}</div><details><summary className="cursor-pointer text-sm font-semibold">Xem trước biểu mẫu</summary><div className="grid gap-4 pt-4"><SearchPick label="Nhóm xem trước" value={group} onChange={v=>{setGroup(v);setSegment('');}} options={catalogs.filter(c=>c.kind==='group').map(c=>({code:c.id,name:c.name}))}/><SearchPick label="Tệp xem trước" value={segment} onChange={setSegment} options={segmentOptions(catalogs,group).map(c=>({code:c.id,name:c.name}))}/><CustomFields catalogs={catalogs} group={group} segment={segment} values={preview} onChange={setPreview}/></div></details>{edit&&<CrmModal title={edit.id?'Sửa trường chuyên sâu':'Thêm trường chuyên sâu'} onClose={()=>setEdit(null)} dirty busy={save.isPending}><form className="space-y-4" onSubmit={async e=>{e.preventDefault();setError('');try{await save.mutateAsync({...edit,id:edit.id||null});setEdit(null);}catch(e){setError(e instanceof Error?e.message:'Chưa lưu được trường.');}}}><Field label="Tên trường"><Input aria-label="Tên trường" required value={edit.name} onChange={e=>patch({name:e.target.value})}/></Field><Field label="Mô tả / Hướng dẫn"><Textarea value={edit.description} onChange={e=>patch({description:e.target.value})}/></Field><Pick label="Kiểu trường" value={String(edit.config.field_type)} onChange={v=>cfg({...edit.config,field_type:v,options:['select','multiselect'].includes(v)?fieldOptions(edit):undefined})} options={Object.entries(FIELD_TYPES).map(([id,name])=>({id,name}))}/><ScopeEditor config={edit.config} catalogs={catalogs} onChange={cfg}/>{['select','multiselect'].includes(String(edit.config.field_type))&&<div className="space-y-3"><h3 className="text-sm font-semibold">Lựa chọn</h3>{fieldOptions(edit).map((o,i)=><div className="flex items-center gap-2" key={o.id}><Input aria-label={`Tên lựa chọn ${i+1}`} value={o.name} onChange={e=>cfg({...edit.config,options:fieldOptions(edit).map(x=>x.id===o.id?{...x,name:e.target.value}:x)})}/><label className="flex items-center gap-2 text-xs"><Checkbox checked={o.active} onCheckedChange={yes=>cfg({...edit.config,options:fieldOptions(edit).map(x=>x.id===o.id?{...x,active:yes===true}:x)})}/>Dùng</label></div>)}<Button type="button" variant="outline" onClick={()=>cfg({...edit.config,options:[...fieldOptions(edit),{id:crypto.randomUUID(),name:'',active:true}]})}>Thêm lựa chọn</Button></div>}<Field label="Thứ tự"><Input type="number" value={edit.sort_order} onChange={e=>patch({sort_order:Number(e.target.value)})}/></Field><label className="flex items-center gap-2 text-sm"><Checkbox checked={edit.config.required===true} onCheckedChange={v=>cfg({...edit.config,required:v===true})}/>Bắt buộc</label><label className="flex items-center gap-2 text-sm"><Checkbox checked={edit.active} onCheckedChange={v=>patch({active:v===true})}/>Đang sử dụng</label>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<div className="crm-form-footer"><Button type="submit" className="w-full" disabled={save.isPending}>Lưu trường</Button></div></form></CrmModal>}</div>;
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { Catalog } from "@/lib/crm/types";
+import { FIELD_TYPES, fieldOptions, type FieldValues } from "@/lib/crm/fields";
+import { segmentOptions } from "@/lib/crm/classification";
+import { crmRpc, useCrmMutation } from "@/lib/crm/queries";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Pencil } from "lucide-react";
+import { Field, Pick, SearchPick } from "./CrmControls";
+import { CrmModal } from "./CrmForms";
+import { ScopeEditor, CustomFields } from "./CrmFields";
+export function CrmFieldSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[] }) {
+  const [edit, setEdit] = useState<Catalog | null>(null),
+    [error, setError] = useState(""),
+    [search, setSearch] = useState(""),
+    [group, setGroup] = useState(""),
+    [segment, setSegment] = useState("");
+  const save = useCrmMutation("crm_catalog_save");
+  const [preview, setPreview] = useState<FieldValues>({});
+  const counts = useQuery({
+    queryKey: ["crm_catalog_counts", uid],
+    queryFn: () => crmRpc<Record<string, number>>("crm_catalog_counts"),
+  });
+  const patch = (v: Partial<Catalog>) => {
+    if (edit) setEdit({ ...edit, ...v });
+  };
+  const cfg = (v: Record<string, unknown>) => patch({ config: v });
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Input
+          aria-label="Tìm trường chuyên sâu"
+          placeholder="Tìm trường…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Button
+          onClick={() => {
+            setError("");
+            setEdit({
+              id: "",
+              kind: "custom_field",
+              name: "",
+              parent_id: null,
+              description: "",
+              sort_order: catalogs.filter((c) => c.kind === "custom_field").length,
+              active: true,
+              config: { field_type: "text", required: false },
+            });
+          }}
+        >
+          <Plus className="h-4 w-4" />
+          Thêm trường
+        </Button>
+      </div>
+      <div className="divide-y border-y">
+        {catalogs
+          .filter(
+            (c) =>
+              c.kind === "custom_field" &&
+              c.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+          )
+          .map((c) => (
+            <div className="flex items-center justify-between gap-3 py-3" key={c.id}>
+              <div className="min-w-0">
+                <strong className="text-sm">{c.name}</strong>
+                <p className="text-xs text-muted-foreground">
+                  {FIELD_TYPES[String(c.config.field_type)]} ·{" "}
+                  {c.active ? "Đang sử dụng" : "Đã ngừng"} · {counts.data?.[c.id] || 0} hồ sơ · Thứ
+                  tự {c.sort_order}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Sửa trường ${c.name}`}
+                onClick={() => {
+                  setError("");
+                  setEdit(c);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+      </div>
+      <details>
+        <summary className="cursor-pointer text-sm font-semibold">Xem trước biểu mẫu</summary>
+        <div className="grid gap-4 pt-4">
+          <SearchPick
+            label="Nhóm xem trước"
+            value={group}
+            onChange={(v) => {
+              setGroup(v);
+              setSegment("");
+            }}
+            options={catalogs
+              .filter((c) => c.kind === "group")
+              .map((c) => ({ code: c.id, name: c.name }))}
+          />
+          <SearchPick
+            label="Tệp xem trước"
+            value={segment}
+            onChange={setSegment}
+            options={segmentOptions(catalogs, group).map((c) => ({ code: c.id, name: c.name }))}
+          />
+          <CustomFields
+            catalogs={catalogs}
+            group={group}
+            segment={segment}
+            values={preview}
+            onChange={setPreview}
+          />
+        </div>
+      </details>
+      {edit && (
+        <CrmModal
+          title={edit.id ? "Sửa trường chuyên sâu" : "Thêm trường chuyên sâu"}
+          onClose={() => setEdit(null)}
+          dirty
+          busy={save.isPending}
+        >
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError("");
+              try {
+                await save.mutateAsync({ ...edit, id: edit.id || null });
+                setEdit(null);
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Chưa lưu được trường.");
+              }
+            }}
+          >
+            <Field label="Tên trường">
+              <Input
+                aria-label="Tên trường"
+                required
+                value={edit.name}
+                onChange={(e) => patch({ name: e.target.value })}
+              />
+            </Field>
+            <Field label="Mô tả / Hướng dẫn">
+              <Textarea
+                value={edit.description}
+                onChange={(e) => patch({ description: e.target.value })}
+              />
+            </Field>
+            <Pick
+              label="Kiểu trường"
+              value={String(edit.config.field_type)}
+              onChange={(v) =>
+                cfg({
+                  ...edit.config,
+                  field_type: v,
+                  options: ["select", "multiselect"].includes(v) ? fieldOptions(edit) : undefined,
+                })
+              }
+              options={Object.entries(FIELD_TYPES).map(([id, name]) => ({ id, name }))}
+            />
+            <ScopeEditor config={edit.config} catalogs={catalogs} onChange={cfg} />
+            {["select", "multiselect"].includes(String(edit.config.field_type)) && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Lựa chọn</h3>
+                {fieldOptions(edit).map((o, i) => (
+                  <div className="flex items-center gap-2" key={o.id}>
+                    <Input
+                      aria-label={`Tên lựa chọn ${i + 1}`}
+                      value={o.name}
+                      onChange={(e) =>
+                        cfg({
+                          ...edit.config,
+                          options: fieldOptions(edit).map((x) =>
+                            x.id === o.id ? { ...x, name: e.target.value } : x,
+                          ),
+                        })
+                      }
+                    />
+                    <label className="flex items-center gap-2 text-xs">
+                      <Checkbox
+                        checked={o.active}
+                        onCheckedChange={(yes) =>
+                          cfg({
+                            ...edit.config,
+                            options: fieldOptions(edit).map((x) =>
+                              x.id === o.id ? { ...x, active: yes === true } : x,
+                            ),
+                          })
+                        }
+                      />
+                      Dùng
+                    </label>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    cfg({
+                      ...edit.config,
+                      options: [
+                        ...fieldOptions(edit),
+                        { id: crypto.randomUUID(), name: "", active: true },
+                      ],
+                    })
+                  }
+                >
+                  Thêm lựa chọn
+                </Button>
+              </div>
+            )}
+            <Field label="Thứ tự">
+              <Input
+                type="number"
+                value={edit.sort_order}
+                onChange={(e) => patch({ sort_order: Number(e.target.value) })}
+              />
+            </Field>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={edit.config.required === true}
+                onCheckedChange={(v) => cfg({ ...edit.config, required: v === true })}
+              />
+              Bắt buộc
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={edit.active}
+                onCheckedChange={(v) => patch({ active: v === true })}
+              />
+              Đang sử dụng
+            </label>
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="crm-form-footer">
+              <Button type="submit" className="w-full" disabled={save.isPending}>
+                Lưu trường
+              </Button>
+            </div>
+          </form>
+        </CrmModal>
+      )}
+    </div>
+  );
 }
