@@ -1989,6 +1989,13 @@
       "when": 1794194265275,
       "tag": "0283_signal_load_read_hotfix",
       "breakpoints": true
+    },
+    {
+      "idx": 284,
+      "version": "7",
+      "when": 1794209958892,
+      "tag": "0284_finance_requests_schema",
+      "breakpoints": true
     }
   ]
 }
