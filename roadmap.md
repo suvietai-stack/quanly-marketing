@@ -361,7 +361,8 @@ Nguyên tắc: một đề nghị nhiều khoản chi có cấu trúc; backend t
 
 ## THÔNG BÁO ZALO NHÓM CHO 3 CHỨC NĂNG TÀI CHÍNH — spec 627 dòng (2026-11-09)
 Nguyên tắc: một kết nối OA chung, ba cấu hình độc lập theo kind; tái dùng hạ tầng GMF (postGroup) và mẫu outbox của Đơn từ; lưu nháp không gửi; chống trùng dedup_key + claim; lỗi Zalo không ảnh hưởng nghiệp vụ; Tạm Ứng Lương mặc định tắt và mẫu tin che tên/số tiền/lý do; không động vào tích hợp Zalo hiện có; chưa Publish.
-- [ ] ZG1. Migration 0289: fr_zalo_group_config (theo kind, 8 sự kiện, lời dẫn), fr_zalo_group_events (outbox + dedup), trigger từ fr_events + chuyển trạng thái done, RPC lưu cấu hình theo quyền fr.*.settings; kèm sửa RLS fr_payment_types/fr_line_catalog (finding bảo mật).
-- [ ] ZG2. Server: zaloGroup.server.ts (xử lý hàng đợi, gửi thử, gửi lại) + zaloGroupMessage.ts (mẫu tin, lương che dữ liệu) + functions layer theo quyền; nối vào dispatch-cron và đánh thức sau RPC ghi.
-- [ ] ZG3. Giao diện Cài đặt → Thông báo Zalo trong từng chức năng: trạng thái OA, chọn nhóm (API hoặc nhập ID), bật/tắt sự kiện, xem trước mẫu, gửi thử [TIN NHẮN KIỂM TRA], lịch sử gửi + gửi lại; mở đề nghị qua ?open=.
-- [ ] ZG4. Kiểm thử: database (queue/dedup/quyền/lương che), đơn vị mẫu tin, build; chưa nghiệm thu gửi nhóm thật; chưa Publish.
+- [x] ZG1. Migration 0289: fr_zalo_group_config (theo kind, 8 sự kiện, lời dẫn), fr_zalo_group_events (outbox + dedup), trigger từ fr_events + chuyển trạng thái done, RPC lưu cấu hình theo quyền fr.*.settings; kèm sửa RLS fr_payment_types/fr_line_catalog (finding bảo mật đã đóng).
+- [x] ZG2. Server: zaloGroup.server.ts (xử lý hàng đợi, gửi thử, gửi lại) + zaloGroupMessage.ts (mẫu tin, lương che dữ liệu) + functions layer theo quyền; nối vào dispatch-cron và đánh thức sau RPC ghi.
+- [x] ZG3. Giao diện Cài đặt → Thông báo Zalo trong từng chức năng: trạng thái OA, chọn nhóm (API hoặc nhập ID), bật/tắt sự kiện, xem trước mẫu, gửi thử [TIN NHẮN KIỂM TRA], lịch sử gửi + gửi lại; mở đề nghị qua ?open=.
+- [x] ZG4. Kiểm thử: 32/32 (database queue/dedup/quyền/lương che, đơn vị mẫu tin), typecheck/build OK, 3 trang tải không lỗi.
+- [ ] ZG5. Nghiệm thu gửi nhóm thật (cần OA đã cấp quyền GMF + nhóm thật) và phiên đăng nhập; chưa Publish.
