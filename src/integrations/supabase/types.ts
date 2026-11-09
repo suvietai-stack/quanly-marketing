@@ -9882,6 +9882,7 @@ export type Database = {
         Args: { _name: string; _scope: string }
         Returns: number
       }
+      signal_change_token: { Args: never; Returns: string }
       signal_enrichment_save: {
         Args: {
           _id: string
@@ -9893,6 +9894,50 @@ export type Database = {
         }
         Returns: string
       }
+      signal_filtered: {
+        Args: { _filter?: Json }
+        Returns: {
+          address: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          closed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          customer_name: string | null
+          detected_on: string | null
+          id: string | null
+          list_activity_at: string | null
+          list_priority: number | null
+          list_progression_due_on: string | null
+          list_wait_since: string | null
+          list_work_priority: number | null
+          lost_reason: string | null
+          marketing_note: string | null
+          need_detail: string | null
+          need_group: string | null
+          need_groups: string[] | null
+          next_contact_at: string | null
+          next_contact_on: string | null
+          phone: string | null
+          potential: string | null
+          potential_updated_at: string | null
+          potential_updated_by: string | null
+          products: string[] | null
+          revenue: number | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "signal_list_priority"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       signal_label_save: {
         Args: {
           _active?: boolean
@@ -9902,9 +9947,24 @@ export type Database = {
         }
         Returns: string
       }
+      signal_list_counts: { Args: { _filter?: Json }; Returns: Json }
+      signal_list_page: {
+        Args: {
+          _filter?: Json
+          _limit?: number
+          _offset?: number
+          _sort?: string
+        }
+        Returns: Json
+      }
       signal_note_is_progression: {
         Args: { _event: string; _marker: boolean; _note: string }
         Returns: boolean
+      }
+      signal_note_report: { Args: { _filter?: Json }; Returns: Json }
+      signal_note_save: {
+        Args: { _id: string; _note: string; _request_id: string }
+        Returns: string
       }
       signal_progression_activate: {
         Args: { _confirm: boolean }
@@ -9974,6 +10034,7 @@ export type Database = {
         Args: { _id: string; _reason: string }
         Returns: undefined
       }
+      signal_report_summary: { Args: { _ids: string[] }; Returns: Json }
       signal_sale_update: {
         Args: {
           _channel?: string
@@ -9995,6 +10056,7 @@ export type Database = {
           id: string
         }[]
       }
+      signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
       wf_can_manage: { Args: never; Returns: boolean }
       wf_claim_event: { Args: { p_id: string }; Returns: Json }
       wf_complete_event: {

@@ -27,10 +27,6 @@ export function careFlag(s: CareSignal, notes: CareNote[], now = Date.now(), cfg
   const last = lastCareActivity(s, notes);
   if (last == null) return null;
   if (s.status === "waiting") return now - new Date(s.assigned_at).getTime() > cfg.waitHours * H ? "unaccepted" : null;
-  const stale = now - last > cfg.staleDays * 24 * H;
-  if (!stale) return null;
-  if (s.status === "contacting" || s.status === "consulting") return "stale_contact";
-  if (s.status === "quoted" || s.status === "deposit") return "stale_quote";
   return null;
 }
 
@@ -46,7 +42,6 @@ export function countCare(flags: CareFlag[]): CareCount {
 export function careMessage(name: string, c: CareCount): string {
   return [
     "NHẮC CHĂM SÓC TÍN HIỆU", "", `Chào ${name}!`, "", `Bạn có ${c.total} tín hiệu cần kiểm tra:`, "",
-    `🔴 Chưa tiếp nhận: ${c.unaccepted}`, `🟠 Lâu chưa cập nhật: ${c.stale_contact + c.stale_quote}`, "",
-    "Trong đó:", `• Đang liên hệ / tư vấn: ${c.stale_contact}`, `• Đã báo giá / Chờ cọc: ${c.stale_quote}`,
+    `🔴 Chưa tiếp nhận: ${c.unaccepted}`,
   ].join("\n");
 }

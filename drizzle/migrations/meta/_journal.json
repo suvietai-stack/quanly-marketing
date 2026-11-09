@@ -1912,6 +1912,34 @@
       "when": 1794027428755,
       "tag": "0272_design_catalog_atomic_reorder",
       "breakpoints": true
+    },
+    {
+      "idx": 273,
+      "version": "7",
+      "when": 1794191624186,
+      "tag": "0273_signal_voluntary_notes_retire_periods",
+      "breakpoints": true
+    },
+    {
+      "idx": 274,
+      "version": "7",
+      "when": 1794191680124,
+      "tag": "0274_signal_paged_filtered_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 275,
+      "version": "7",
+      "when": 1794191800218,
+      "tag": "0275_signal_note_activity_report",
+      "breakpoints": true
+    },
+    {
+      "idx": 276,
+      "version": "7",
+      "when": 1794191836547,
+      "tag": "0276_signal_sales_aggregate_report",
+      "breakpoints": true
     }
   ]
 }

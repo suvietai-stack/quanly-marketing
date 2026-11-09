@@ -40,7 +40,6 @@ export function SignalMobileCard({ s, status, owner, deadline, labels, onOpen }:
     </div>}
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
       <span className="inline-flex min-w-0 items-center gap-1"><UserRound className="h-3 w-3 shrink-0"/>{owner}</span>
-      <span className={cn('inline-flex items-center gap-1', deadline?.deadline_state === 'overdue' && 'text-destructive')}><CalendarClock className="h-3 w-3 shrink-0"/>{deadline ? `Hạn cập nhật ${deadline.due_on.split('-').slice(1).reverse().join('/')}` : s.status === 'won' || s.status === 'lost' ? 'Đã kết thúc' : 'Chưa có hạn cập nhật'}</span>
     </div>
     <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] gap-1.5 border-t pt-2" data-signal-interactive>
       {contact ? <Button asChild variant="outline" className="h-11 px-2 gap-1"><a href={contact.tel}><Phone className="h-3.5 w-3.5"/>Gọi</a></Button> : <Button variant="outline" disabled title="Không có số điện thoại hợp lệ" className="h-11 px-2 gap-1"><Phone className="h-3.5 w-3.5"/>Gọi</Button>}

@@ -1,37 +1,22 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDownUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { deadlineReport, errMsg } from '@/lib/signals/api';
-import { deadlineLink, type DeadlineMetrics } from '@/lib/signals/deadlines';
+import { Bar,BarChart,XAxis,YAxis,CartesianGrid } from 'recharts';
+import { ChartContainer,ChartTooltip,ChartTooltipContent } from '@/components/ui/chart';
+import { getNoteReport,firstNoteStat } from '@/lib/signals/noteReport';
+import { fmtMinutes } from '@/lib/signals/acceptTime';
+import { errMsg } from '@/lib/signals/api';
 import type { ReportFilter } from '@/lib/signals/report';
 import type { Signal } from '@/lib/signals/catalog';
-
-const columns: {key:keyof DeadlineMetrics;label:string;hint:string}[]=[
-  {key:'rate',label:'Tỷ lệ đúng hạn',hint:'Kỳ có note đúng hạn / kỳ đã đến hạn trong khoảng báo cáo. Loại kỳ được miễn; note muộn không sửa lịch sử trễ. Kỳ trước ngày áp dụng quy định chỉ là tham khảo, không tính KR.'},
-  {key:'overdue',label:'Tín hiệu đang quá hạn',hint:'Khách đang mở còn tồn đọng cập nhật hiện tại; mỗi khách chỉ tính một lần.'},
-  {key:'today',label:'Cần cập nhật hôm nay',hint:'Kỳ chưa có note, hôm nay là ngày hạn cuối theo giờ Việt Nam.'},
-  {key:'tracking',label:'Tín hiệu đang theo dõi',hint:'Khách đang mở có Sale và đã bắt đầu chu kỳ theo dõi.'},
-];
-const value=(m:DeadlineMetrics,key:keyof DeadlineMetrics)=>key==='rate' ? m.rate==null ? 'Chưa có dữ liệu' : `${m.rate.toLocaleString('vi-VN',{maximumFractionDigits:1})}%` : m[key];
-export function ProgressionReport({ f,userId,name }: {data:Signal[];f:ReportFilter;userId:string|null;name:(id:string|null)=>string;onSale:(id:string)=>void}) {
-  const query=useQuery({queryKey:['sig:deadline-report',userId,f.from,f.to,f.saleId,f.needGroup,f.source],queryFn:()=>deadlineReport(f.from,f.to,f.saleId,f.needGroup,f.source),enabled:!!userId,refetchInterval:10000,refetchOnWindowFocus:'always'});
-  const [sort,setSort]=useState<'rate'|'overdue'>('overdue');
-  const [desc,setDesc]=useState(true);
-  const open=(state:string,sale?:string)=>{window.location.href=deadlineLink(state,sale,f.needGroup,f.source);};
-  const sorted=[...(query.data?.sales??[])].sort((a,b)=>((a[sort]??-1)-(b[sort]??-1))*(desc?-1:1));
-  return <section className="space-y-4 pb-40 md:pb-0" aria-label="Hiệu suất ghi nhận diễn biến Sale">
-    <h2 className="text-sm font-semibold uppercase">Hiệu suất ghi nhận diễn biến Sale</h2>
-    {query.error ? <p className="text-sm text-destructive">{errMsg(query.error)}</p> : !query.data ? <p className="text-sm text-muted-foreground">Đang tải…</p> : <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{columns.map(c=><article key={c.key} className="min-w-0 border rounded-lg bg-card p-3 space-y-2" title={c.hint}><p className="text-xs text-muted-foreground">{c.label}</p>{c.key==='overdue'||c.key==='today' ? <Button variant="link" className="p-0 h-auto text-2xl" onClick={()=>open(c.key,f.saleId)}>{value(query.data.total,c.key)}</Button> : <p className={c.key==='rate'&&query.data.total.rate==null?'text-sm font-semibold':'text-2xl font-semibold'}>{value(query.data.total,c.key)}</p>}</article>)}</div>
-      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground"><span>Kỳ đúng hạn / đến hạn: {query.data.total.on_time} / {query.data.total.due}</span><span>Kỳ trễ: {query.data.total.due-query.data.total.on_time}</span><span>Sắp đến hạn: {query.data.total.soon}</span></div>
-      <p className="text-sm">KR tham chiếu ≥90% · {query.data.total.rate==null?'Chưa có dữ liệu':`${query.data.total.rate>=90?'Đạt':'Chưa đạt'} · Mức đạt ${(query.data.total.rate/90*100).toLocaleString('vi-VN',{maximumFractionDigits:1})}%`}</p>
-      {query.data.total.retro_due>0 && <p className="text-xs text-muted-foreground">Kỳ trước ngày áp dụng quy định (dữ liệu hồi cứu, chỉ tham khảo, không tính KR): {query.data.total.retro_on_time} đúng hạn / {query.data.total.retro_due} đến hạn.</p>}
-      <p className="text-xs text-muted-foreground">Lịch sử lọc theo ngày đến hạn. Khách cần cập nhật là tình trạng hiện tại, không lọc theo ngày tạo. Áp dụng Sale, nhóm nhu cầu và nguồn đang chọn.</p>
-      <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-muted-foreground">Sắp xếp</span><Button variant={sort==='rate'?'secondary':'outline'} onClick={()=>setSort('rate')}>Tỷ lệ đúng hạn</Button><Button variant={sort==='overdue'?'secondary':'outline'} onClick={()=>setSort('overdue')}>Khách quá hạn</Button><Button variant="outline" size="icon" aria-label="Đảo chiều sắp xếp" onClick={()=>setDesc(x=>!x)}><ArrowDownUp/></Button></div>
-      <div className="hidden md:block overflow-x-auto border rounded-lg"><table className="w-full text-sm"><thead className="bg-muted"><tr>{['Sale','Đang theo dõi','Đúng hạn / đến hạn','Tỷ lệ đúng hạn','Quá hạn hiện tại','Hôm nay'].map(x=><th key={x} className="p-3 text-left">{x}</th>)}</tr></thead><tbody>{sorted.map(r=><tr key={r.sale_id} className="border-t"><td className="p-3">{name(r.sale_id)}</td><td className="p-3">{r.tracking}</td><td className="p-3">{r.on_time} / {r.due}</td><td className="p-3">{value(r,'rate')}</td><td className="p-3"><Button variant="link" onClick={()=>open('overdue',r.sale_id)}>{r.overdue}</Button></td><td className="p-3"><Button variant="link" onClick={()=>open('today',r.sale_id)}>{r.today}</Button></td></tr>)}</tbody></table></div>
-      <div className="md:hidden space-y-3">{sorted.map(r=><article key={r.sale_id} className="border rounded-lg bg-card p-3"><h3 className="font-semibold">{name(r.sale_id)}</h3><p className="text-sm mt-2">Đúng hạn / đến hạn: {r.on_time} / {r.due} · {value(r,'rate')}</p><div className="grid grid-cols-2 gap-2 mt-2"><p className="text-sm">Đang theo dõi: {r.tracking}</p><Button variant="link" onClick={()=>open('overdue',r.sale_id)}>Quá hạn: {r.overdue}</Button><Button variant="link" onClick={()=>open('today',r.sale_id)}>Hôm nay: {r.today}</Button></div></article>)}</div>
-      {!sorted.length && <p className="text-sm text-muted-foreground">Chưa có kỳ theo dõi trong phạm vi báo cáo.</p>}
-    </>}
-  </section>;
+export function ProgressionReport({f,userId,name}:{data?:Signal[];f:ReportFilter;userId:string|null;name:(id:string|null)=>string;onSale?:(id:string)=>void}) {
+ const q=useQuery({queryKey:['sig:note-report',userId,f],queryFn:()=>getNoteReport(f),enabled:!!userId,staleTime:30000});
+ const r=q.data;const stat=firstNoteStat(r?.firsts??[]);const chart={signals:{label:'Tín hiệu',color:'var(--primary)'},notes:{label:'Lượt note',color:'var(--success)'}};
+ if(q.error)return <p role="alert" className="text-destructive">{errMsg(q.error)}</p>;
+ if(!r)return <p className="text-muted-foreground">Đang tải diễn biến…</p>;
+ const ids=[...new Set([...r.portfolio.map(p=>p.sale),...r.activity.map(a=>a.sale),...r.firsts.map(a=>a.sale)])];
+ return <section className="space-y-4 min-w-0" aria-label="Thống kê cập nhật diễn biến"><h2 className="font-semibold">Thống kê cập nhật diễn biến</h2><p className="text-xs text-muted-foreground">Tệp tích lũy theo ngày tạo / kết thúc đang chọn; hoạt động note theo thời điểm ghi trong kỳ; tốc độ theo lượt tiếp nhận trong kỳ.</p>
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">{[['Tổng tín hiệu',r.total],['Chưa có diễn biến',r.zero],['Có diễn biến',r.noted],['Tỷ lệ có diễn biến',r.total?`${(r.noted/r.total*100).toFixed(1)}%`:'—'],['Tổng lượt note',r.notes],['TB trên tín hiệu đã note',r.noted?(r.notes/r.noted).toFixed(2):'—'],['Thời gian TB từ tiếp nhận đến note đầu tiên',fmtMinutes(stat.avg)],['Mẫu thời gian hợp lệ / lượt nhận',`${stat.valid} / ${stat.cycles}`]].map(([label,value])=><article key={label} className="rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 font-semibold text-lg break-words">{value}</p></article>)}</div>
+ <p className="text-xs text-muted-foreground">Chưa có note đầu tiên: {stat.missing} lượt tiếp nhận. Chỉ tính giờ làm việc theo quy tắc tiếp nhận; mẫu 0 phút không vào trung bình.</p>
+ <ChartContainer config={chart} className="h-64 w-full"><BarChart data={r.distribution}><CartesianGrid vertical={false}/><XAxis dataKey="n"/><YAxis allowDecimals={false}/><ChartTooltip content={<ChartTooltipContent/>}/><Bar dataKey="signals" fill="var(--color-signals)" radius={4}/></BarChart></ChartContainer>
+ <details><summary className="text-sm cursor-pointer">Phân bố chính xác từng mức note</summary><div className="flex flex-wrap gap-4 pt-3 text-sm">{r.distribution.map(d=><span key={d.n}>{d.n} lần: <b>{d.signals}</b> tín hiệu</span>)}</div></details>
+ <h3 className="font-medium text-sm">Hoạt động note phát sinh trong kỳ</h3><ChartContainer config={chart} className="h-52 w-full"><BarChart data={r.trend}><XAxis dataKey="date_key" minTickGap={30}/><YAxis allowDecimals={false}/><ChartTooltip content={<ChartTooltipContent/>}/><Bar dataKey="notes" fill="var(--color-notes)" radius={4}/></BarChart></ChartContainer>
+ <div className="overflow-x-auto border rounded-lg"><table className="w-full text-sm"><thead className="bg-muted"><tr>{['Sale','Tệp hiện tại','Chưa note','Đã note','Note tích lũy trong tệp','Note do Sale ghi trong kỳ','TB note đầu tiên','Mẫu / lượt nhận','Phân bố tệp'].map(h=><th key={h} className="p-3 text-left whitespace-nowrap">{h}</th>)}</tr></thead><tbody>{ids.map(id=>{const p=r.portfolio.find(p=>p.sale===id);const a=r.activity.find(a=>a.sale===id);const t=firstNoteStat(r.firsts.filter(s=>s.sale===id));const dist=new Map<number,number>();Object.values(p?.signal_counts??{}).forEach(n=>dist.set(n,(dist.get(n)??0)+1));return <tr key={id??'unassigned'} className="border-t"><td className="p-3 whitespace-nowrap">{id?name(id):'Chưa phân công'}</td>{[p?.total??0,p?.zero??0,p?.noted??0,p?.notes??0,a?.notes??0,fmtMinutes(t.avg),`${t.valid} / ${t.cycles}`,[...dist].sort((a,b)=>a[0]-b[0]).map(([n,c])=>`${n} lần: ${c}`).join(' · ')].map((v,i)=><td key={i} className="p-3 whitespace-nowrap">{v}</td>)}</tr>;})}</tbody></table></div></section>;
 }

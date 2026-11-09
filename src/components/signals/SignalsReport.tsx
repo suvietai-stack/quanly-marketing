@@ -18,10 +18,10 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { SIGNAL_LOST_REASONS, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import {
   filterSignals, groupBy, lostReasons, reportInsights, summarize, eventTrendSeries,
-  type ReportFilter, type Summary, type TrendGranularity,
+  weekStart, type ReportFilter, type Summary, type TrendGranularity,
 } from "@/lib/signals/report";
 import { errMsg, listAcceptNotes, listAssignEvents, listCareNotes } from "@/lib/signals/api";
-import { acceptStat, fmtMinutes, type AcceptNoteRow, type AssignEventRow } from "@/lib/signals/acceptTime";
+import { acceptStat, fmtMinutes, businessMinutes, type AcceptNoteRow, type AssignEventRow } from "@/lib/signals/acceptTime";
 import type { Signal, SignalStatus } from "@/lib/signals/catalog";
 import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
 import { needGroupsOf } from "@/lib/signals/catalog";
@@ -30,6 +30,7 @@ import { ProgressionReport } from './ProgressionReport';
 import { useSignalLabels } from './SignalEnrichment';
 import { SignalPotentialReport } from './SignalPotentialReport';
 import { POTENTIAL_LABEL, STAGES } from '@/lib/signals/potential';
+import { getSalesReport } from '@/lib/signals/noteReport';
 import { listDeadlines } from '@/lib/signals/api';
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
@@ -54,10 +55,8 @@ const SOURCE_CONFIG: ChartConfig = { v: { label: "Giá trị", color: C.brand } 
 export function SignalsReport() {
   const p = useSignalPerms();
   const name = useUserName();
-  const { data = [], isLoading, error } = useSignals();
-  const { data: last = {} } = useLastNotes();
+  const data: Signal[] = [];
   const labels=useSignalLabels(p.userId);
-  const deadlines=useQuery({queryKey:['sig:deadlines',p.userId],queryFn:listDeadlines,enabled:!!p.userId});
   const t = todayKey();
   const [f, setF] = useState<ReportFilter>({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
   const [filterOpen, setFilterOpen] = useState(false);
@@ -68,49 +67,28 @@ export function SignalsReport() {
   const set = (k: keyof ReportFilter, v: string) => setF((x) => ({ ...x, [k]: v || undefined }));
   const reset = () => setF({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
 
-  const list = useMemo(() => filterSignals(data, f), [data, f]);
-  const sum = summarize(list, t, last);
-  // All KPI and Sale rates use exactly the same filtered population.
-  const kpiList = list;
-  const kpi = useMemo(() => summarize(kpiList, t), [kpiList, t]);
-  // Sale rate denominator is its full filtered signal population.
-  const rateBySale = useMemo(() => new Map(groupBy(kpiList, (s) => s.assigned_to).map((r) => [r.key, r.s])), [kpiList]);
-  const signalsBySale = useMemo(() => {
-    const m = new Map<string, Signal[]>();
-    for (const s of list) if (s.assigned_to) (m.get(s.assigned_to) ?? m.set(s.assigned_to, []).get(s.assigned_to)!).push(s);
-    return m;
-  }, [list]);
-  // Cache only source timestamps, never calculated KPI; refresh at the same cadence as signals.
-  const historyRefresh = {
-    enabled: !!p.userId && p.report,
-    staleTime: 0,
-    refetchOnMount: "always" as const,
-    refetchOnWindowFocus: "always" as const,
-    refetchInterval: 10000,
-    refetchIntervalInBackground: false,
-  };
-  const assignments = useQuery({ ...historyRefresh, queryKey: ["sig:assignEvents", p.userId], queryFn: listAssignEvents });
-  const acceptances = useQuery({ ...historyRefresh, queryKey: ["sig:acceptNotes", p.userId], queryFn: listAcceptNotes });
-  const assignEvents = assignments.data ?? [];
-  const acceptNotes = acceptances.data ?? [];
-
-  const bySource = groupBy(list, (s) => s.source);
+  const report=useQuery({queryKey:['sig:sales-report',p.userId,f],queryFn:()=>getSalesReport(f),enabled:!!p.userId&&p.report,staleTime:30000});
+  const isLoading=report.isPending;const error=report.error;
+  const list:Signal[]=[];
+  const empty:Summary={total:0,unassigned:0,accepted:0,waiting:0,contacting:0,consulting:0,quoted:0,deposit:0,won:0,lost:0,closeRate:null,revenue:0,overdue:0,dueToday:0,noNote:0};
+  const sum=report.data?.summary??empty;const kpi=sum;
+  const grouping=(kind:string)=>(report.data?.groups??[]).filter(g=>g.kind===kind).sort((a,b)=>b.s.total-a.s.total);
+  const bySource=grouping('source');const byProduct=grouping('product');const byNeed=grouping('need');const bySale=grouping('sale');
+  const rateBySale=new Map(bySale.map(r=>[r.key,r.s]));
+  const samples=report.data?.accepts??[];
+  const signalsBySale=new Map<string,Signal[]>();
+  const assignEvents:AssignEventRow[]=[];const acceptNotes:AcceptNoteRow[]=[];
+  for(const r of samples){const signal={id:r.id,assigned_to:r.assigned_to} as Signal;const group=signalsBySale.get(r.assigned_to)??[];group.push(signal);signalsBySale.set(r.assigned_to,group);if(r.starts)assignEvents.push({signal_id:r.id,kind:'assign',detail:{to:r.assigned_to},created_at:r.starts});if(r.accepted)acceptNotes.push({signal_id:r.id,author_id:r.assigned_to,status_from:'waiting',created_at:r.accepted});}
+  const assignments={error:null,isPending:isLoading};const acceptances=assignments;
   const prodOpts = useOptions("signal_products");
   const needOpts = useOptions("signal_need_groups");
   const srcOpts = useOptions("signal_sources");
-  const multi = (get: (s: (typeof list)[number]) => string[]) => {
-    const keys = [...new Set(list.flatMap((s) => get(s).map((k) => (k.startsWith("Khác") ? "Khác" : k))))];
-    return keys.map((k) => ({ key: k, s: summarize(list.filter((s) => get(s).some((x) => (x.startsWith("Khác") ? "Khác" : x) === k))) })).sort((a, b) => b.s.total - a.s.total);
-  };
-  const byProduct = multi((s) => s.products);
-  const byNeed = multi(needGroupsOf);
-  const bySale = groupBy(list, (s) => s.assigned_to);
-  const lost = lostReasons(list);
+  const lost=report.data?.lost??[];
   const people = (ids: (string | null)[]) => [...new Set(ids.filter(Boolean) as string[])].map((id) => ({ id, n: name(id) }));
 
   /* ---- Dữ liệu cho các khu vực mới (tất cả đều theo bộ lọc chung) ---- */
   const insights = useMemo(() => reportInsights({ sum, bySource, byNeed }), [sum, bySource, byNeed]);
-  const trend = useMemo(() => eventTrendSeries(filterSignals(data,{...f,from:undefined,to:undefined}),gran,f.from,f.to), [data,f,gran]);
+  const trend = useMemo(() => (() => {const m=new Map<string,{key:string;label:string;created:number;won:number}>();for(const r of report.data?.trend??[]){const key=gran==='month'?r.date_key.slice(0,7):gran==='week'?weekStart(r.date_key):r.date_key;const v=m.get(key)??{key,label:key,created:0,won:0};v.created+=r.created;v.won+=r.won;m.set(key,v);}return [...m.values()];})(), [report.data,f,gran]);
   const statusDist = useMemo(() => {
     const rows: { key: string; label: string; n: number; fill: string }[] = [];
     if (sum.unassigned) rows.push({ key: "unassigned", label: "Chưa phân công", n: sum.unassigned, fill: C.muted });
@@ -129,8 +107,8 @@ export function SignalsReport() {
     v: srcMetric === "total" ? r.s.total : srcMetric === "won" ? r.s.won : Math.round((r.s.closeRate ?? 0) * 10) / 10,
   })).sort((a, b) => b.v - a.v), [bySource, srcMetric]);
   const acceptAll = useMemo(
-    () => acceptStat(kpiList.filter((s) => s.assigned_to), assignEvents, acceptNotes),
-    [kpiList, assignEvents, acceptNotes],
+    () => acceptStat(samples.map(r=>({id:r.id,assigned_to:r.assigned_to})), assignEvents, acceptNotes),
+    [report.data],
   );
   const processing = sum.contacting + sum.consulting + sum.quoted + sum.deposit;
   const activeCount = [f.source, f.product, f.needGroup, f.saleId, f.creatorId, f.status, f.lostReason,f.potential,f.labelId,f.stage].filter(Boolean).length;
@@ -143,7 +121,7 @@ export function SignalsReport() {
       labels={(labels.data??[]).map(l=>[l.id,l.name])}
       sources={[...new Set([...srcOpts.names, ...data.map((x) => x.source)])]}
       products={prodOpts.names} needs={needOpts.names}
-      sales={people(data.map((s) => s.assigned_to))} creators={people(data.map((s) => s.created_by))}
+      sales={people(report.data?.sales??[])} creators={people(report.data?.creators??[])}
     />
   );
 
@@ -171,7 +149,7 @@ export function SignalsReport() {
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="bottom" className="signal-mobile-sheet max-h-[85dvh] overflow-y-auto p-0 sm:max-w-xl sm:mx-auto sm:rounded-t-xl">
           <SheetHeader className="p-4 pb-2"><SheetTitle>Bộ lọc báo cáo</SheetTitle></SheetHeader>
-          <div className="px-4 grid grid-cols-2 gap-3 pb-4 text-sm"><ReportFilterFields f={draft} set={(k,v)=>setDraft(x=>({...x,[k]:v||undefined}))} setF={setDraft} sources={srcOpts.names} products={prodOpts.names} needs={needOpts.names} sales={people(data.map(s=>s.assigned_to))} creators={people(data.map(s=>s.created_by))} labels={(labels.data??[]).map(l=>[l.id,l.name])}/></div>
+          <div className="px-4 grid grid-cols-2 gap-3 pb-4 text-sm"><ReportFilterFields f={draft} set={(k,v)=>setDraft(x=>({...x,[k]:v||undefined}))} setF={setDraft} sources={srcOpts.names} products={prodOpts.names} needs={needOpts.names} sales={people(report.data?.sales??[])} creators={people(report.data?.creators??[])} labels={(labels.data??[]).map(l=>[l.id,l.name])}/></div>
           <div className="sticky bottom-0 bg-background border-t p-3 grid grid-cols-2 gap-2">
             <Button variant="outline" size="lg" onClick={() => { setDraft({basis:"created",from:`${t.slice(0,7)}-01`,to:t}); }}>Xóa bộ lọc</Button>
             <Button size="lg" onClick={() => {setF(draft);setFilterOpen(false);}}>Áp dụng</Button>
@@ -215,7 +193,7 @@ export function SignalsReport() {
           </section>
 
           {/* 4. Xu hướng theo thời gian */}
-          {deadlines.error?<p className="text-sm text-destructive">Không tải được hạn theo dõi: {errMsg(deadlines.error)}</p>:<SignalPotentialReport list={list} deadlines={deadlines.data??{}}/>}
+          <SignalPotentialReport groups={grouping('potential')} stages={report.data?.stages??[]}/>
           <section className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <H>Xu hướng tín hiệu</H>

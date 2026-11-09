@@ -317,12 +317,7 @@ export async function runCareDigest() {
   const ccfg = { waitHours: cfg?.care_wait_hours ?? 24, staleDays: cfg?.care_stale_days ?? 3 };
   const { data: sigs } = await db.from("opportunity_signals").select("id,status,assigned_to,assigned_at,cancelled_at")
     .not("assigned_to", "is", null).is("cancelled_at", null).in("status", ["waiting", "contacting", "consulting", "quoted", "deposit"]).limit(5000);
-  const ids = (sigs ?? []).map((s: any) => s.id);
   const notesBy: Record<string, any[]> = {};
-  for (let i = 0; i < ids.length; i += 200) {
-    const { data: ns } = await db.from("opportunity_signal_notes").select("signal_id,author_id,created_at").in("signal_id", ids.slice(i, i + 200));
-    for (const n of ns ?? []) (notesBy[n.signal_id] ??= []).push(n);
-  }
   const flagsBy: Record<string, any[]> = {};
   for (const s of sigs ?? []) { const f = careFlag(s, notesBy[s.id] ?? [], Date.now(), ccfg); if (f) (flagsBy[s.assigned_to] ??= []).push(f); }
   let created = 0, sent = 0;
