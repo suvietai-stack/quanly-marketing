@@ -47,6 +47,7 @@ export const frApi = {
   },
   detail: (id: string) => sel<FrRequest | null>(db.from("fr_requests").select("*").eq("id", id).maybeSingle()),
   steps: (id: string) => sel<FrStep[]>(db.from("fr_steps").select("*").eq("request_id", id).order("step_no")),
+  pendingSteps: () => sel<FrStep[]>(db.from("fr_steps").select("*").eq("status", "pending")),
   events: (id: string) => sel<FrEvent[]>(db.from("fr_events").select("*").eq("request_id", id).order("created_at", { ascending: false })),
   paymentTypes: () => sel<FrPaymentType[]>(db.from("fr_payment_types").select("*").order("sort").order("name")),
   settings: () => sel<FrSettings[]>(db.from("fr_settings").select("*")),

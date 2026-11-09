@@ -72,10 +72,7 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
   // Chờ tôi xử lý: các bước đang chờ mà tôi là người duyệt (trực tiếp hoặc theo quyền).
   const pendingSteps = useQuery({
     queryKey: ["fr", kind, "todo", uid],
-    queryFn: async () => {
-      const steps = await (frApi as any).pendingSteps?.() ?? [];
-      return steps as FrStep[];
-    },
+    queryFn: () => frApi.pendingSteps(),
     enabled: tab === "todo" && !!uid,
   });
   const todoIds = useMemo(() => {
