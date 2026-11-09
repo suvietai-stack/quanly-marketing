@@ -2080,6 +2080,13 @@
       "when": 1794218562759,
       "tag": "0296_base_org_inheritance_alias_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 297,
+      "version": "7",
+      "when": 1794218707295,
+      "tag": "0297_base_org_permission_activation_fences",
+      "breakpoints": true
     }
   ]
 }
