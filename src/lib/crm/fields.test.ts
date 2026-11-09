@@ -1,0 +1,11 @@
+import { it,expect } from 'vitest';
+import { applicableFields,scopeMatches,dynamicAnalysis,displayValue,FIELD_TYPES } from './fields';
+import type { Catalog,Customer } from './types';
+const g={id:'g',kind:'group',config:{}} as Catalog,s={id:'s',kind:'segment',parent_id:'g',config:{}} as Catalog;
+const f={id:'f',kind:'custom_field',name:'Kênh bán hàng',active:true,config:{scope_mode:'groups',group_ids:['g'],field_type:'multiselect',options:[{id:'fb',name:'Facebook',active:true},{id:'sh',name:'Shopee',active:true}]}} as Catalog;
+it('all nine configured types are supported',()=>expect(Object.keys(FIELD_TYPES)).toEqual(['text','textarea','number','money','date','boolean','select','multiselect','url']));
+it('group and segment inheritance yields one stable field',()=>{const x={...f,config:{...f.config,scope_mode:'segments',segment_ids:['s']}};expect(applicableFields([g,s,x],'g','s').map(c=>c.id)).toEqual(['f']);expect(scopeMatches(x,'g','', [g,s,x])).toBe(false);});
+it('no selected group and empty scope never show custom fields',()=>{expect(applicableFields([f],'')).toEqual([]);expect(applicableFields([{...f,config:{scope_mode:'groups',group_ids:[]}}],'g')).toEqual([]);});
+it('multiselect distinguishes unique customers and selection counts',()=>{const a={id:'a',group_id:'g',custom_values:{f:['fb','sh','fb']}} as Customer,b={id:'b',group_id:'g',custom_values:{f:['fb']}} as Customer;const r=dynamicAnalysis([a,a,b,{...b,id:'out',group_id:'h'}],f,[f,g]);expect(r.total).toBe(2);expect(r.filled).toBe(2);expect(r.selections).toBe(3);expect(r.rows.find(x=>x.id==='fb')?.count).toBe(2);});
+it('number sums include zero and exclude values outside scope',()=>{const n={...f,config:{scope_mode:'groups',group_ids:['g'],field_type:'number'}};const r=dynamicAnalysis([{id:'a',group_id:'g',custom_values:{f:0}},{id:'b',group_id:'g',custom_values:{f:12}},{id:'c',group_id:'h',custom_values:{f:100}}] as Customer[],n,[n]);expect(r.filled).toBe(2);expect(r.sum).toBe(12);expect(r.average).toBe(6);});
+it('false boolean and retired selection labels remain readable',()=>{expect(displayValue(f,false)).toBe('Không');expect(displayValue({...f,config:{...f.config,field_type:'select'}},'fb')).toBe('Facebook');});

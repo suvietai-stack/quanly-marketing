@@ -24,6 +24,8 @@ import { CrmModal, CustomerForm, InteractionForm } from "./CrmForms";
 import { CrmDetail } from "./CrmDetail";
 import { CrmReports } from "./CrmReports";
 import { CrmSettings } from "./CrmSettings";
+import { DynamicFilters } from './CrmFields';
+import type { DynamicFilter } from '@/lib/crm/fields';
 export function Crm() {
   const { user: u, can } = useCurrentUser();
   const uid = u?.id || "";
@@ -34,6 +36,7 @@ export function Crm() {
   const [filter, setFilter] = useState("all");
   const [group, setGroup] = useState("");
   const [segment,setSegment]=useState('');
+  const [dynamic,setDynamic]=useState<DynamicFilter[]>([]);
   const [priority, setPriority] = useState("");
   const [archived, setArchived] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -43,7 +46,7 @@ export function Crm() {
   const catalogs = useQuery(catalogsQuery(uid));
   const people = useQuery(crmPeopleQuery(uid));
   const read = useQuery(
-    crmReadQuery(uid, area === "mine", area === "manage" ? owner : "", search, archived),
+    crmReadQuery(uid, area === "mine", area === "manage" ? owner : "", search, archived,group,segment,priority,dynamic),
   );
   const cats = catalogs.data || [];
   const data = read.data;
@@ -355,6 +358,7 @@ export function Crm() {
             ]}
           />
           <div className="crm-form-footer flex gap-2">
+            <DynamicFilters catalogs={cats} group={group} segment={segment} filters={dynamic} onChange={setDynamic}/>
             <Button
               variant="outline"
               onClick={() => {
@@ -362,6 +366,7 @@ export function Crm() {
                 setSegment('');
                 setPriority("");
                 setArchived(false);
+                setDynamic([]);
               }}
             >
               Xóa bộ lọc

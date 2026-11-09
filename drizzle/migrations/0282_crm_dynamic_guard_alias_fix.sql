@@ -1,0 +1,1 @@
+DO $$ DECLARE d text; BEGIN SELECT pg_get_functiondef('private.crm_dynamic_guard()'::regprocedure) INTO d; d:=replace(d,'SELECT c.id FROM crm_catalogs c JOIN subtree s ON c.parent_id=s.id','SELECT cat_child.id FROM crm_catalogs cat_child JOIN subtree s ON cat_child.parent_id=s.id'); EXECUTE d; END $$;

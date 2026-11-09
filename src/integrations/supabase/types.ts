@@ -9083,6 +9083,19 @@ export type Database = {
         }
         Returns: Json
       }
+      crm_read_dynamic: {
+        Args: {
+          _archived?: boolean
+          _filters?: Json
+          _group?: string
+          _mine?: boolean
+          _owner?: string
+          _priority?: string
+          _search?: string
+          _segment?: string
+        }
+        Returns: Json
+      }
       crm_remind: { Args: never; Returns: number }
       crm_report: {
         Args: {
@@ -9092,6 +9105,25 @@ export type Database = {
           _mine?: boolean
           _owner?: string
           _province?: string
+          _start: string
+          _system?: string
+          _team?: string
+        }
+        Returns: Json
+      }
+      crm_report_dynamic: {
+        Args: {
+          _department?: string
+          _end: string
+          _export?: boolean
+          _filters?: Json
+          _group?: string
+          _mine?: boolean
+          _owner?: string
+          _priority?: string
+          _province?: string
+          _relationship?: string
+          _segment?: string
           _start: string
           _system?: string
           _team?: string
