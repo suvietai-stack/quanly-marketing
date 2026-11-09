@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-// PGlite 0.5 không export subpath "./pgcrypto" — nạp trực tiếp từ dist/contrib.
-// @ts-expect-error đường dẫn nội bộ của gói
-import { pgcrypto } from '@electric-sql/pglite/dist/contrib/pgcrypto.js';
 import { beforeAll, afterAll, it, expect } from 'vitest';
 
-const db = new PGlite({ extensions: { pgcrypto } });
+// PGlite 0.5 không nạp được pgcrypto — kiểm thử dùng hàm giả lập cùng chữ ký;
+// mã hóa thật (pgp_sym_encrypt) do pgcrypto trên database production đảm nhiệm.
+const db = new PGlite();
 const ids = Array.from({ length: 4 }, (_, i) => `00000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}`);
 const [saleA, saleB, manager, outsider] = ids;
 
@@ -25,7 +24,11 @@ CREATE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql SECU
     ('${saleA}','sale_work.access'),('${saleA}','sale_work.view_own'),
     ('${saleB}','sale_work.access'),('${saleB}','sale_work.view_own'),
     ('${manager}','sale_work.access'),('${manager}','sale_work.manage_settings'),('${manager}','sale_work.manage_credentials'),('${manager}','sale_work.view_audit')`);
-  await db.exec(readFileSync('drizzle/migrations/0291_sale_work_zalo.sql', 'utf8'));
+  await db.exec(`CREATE FUNCTION pgp_sym_encrypt(text, text) RETURNS bytea LANGUAGE sql AS $$ SELECT convert_to('enc:' || $1, 'UTF8') $$;
+CREATE FUNCTION pgp_sym_decrypt(bytea, text) RETURNS text LANGUAGE sql AS $$ SELECT substring(convert_from($1, 'UTF8') from 5) $$;`);
+  const sql = readFileSync('drizzle/migrations/0291_sale_work_zalo.sql', 'utf8')
+    .replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/, '');
+  await db.exec(sql);
 }, 30000);
 afterAll(() => db.close());
 
