@@ -3755,6 +3755,33 @@ export type Database = {
           },
         ]
       }
+      fr_line_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          sort?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          sort?: number
+        }
+        Relationships: []
+      }
       fr_payment_types: {
         Row: {
           active: boolean
@@ -3781,6 +3808,60 @@ export type Database = {
           sort?: number
         }
         Relationships: []
+      }
+      fr_request_lines: {
+        Row: {
+          catalog_id: string | null
+          created_at: string
+          id: string
+          line_no: number
+          line_total: number
+          name: string
+          qty: number
+          request_id: string
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          catalog_id?: string | null
+          created_at?: string
+          id?: string
+          line_no: number
+          line_total: number
+          name: string
+          qty?: number
+          request_id: string
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          catalog_id?: string | null
+          created_at?: string
+          id?: string
+          line_no?: number
+          line_total?: number
+          name?: string
+          qty?: number
+          request_id?: string
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fr_request_lines_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "fr_line_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fr_request_lines_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "fr_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fr_requests: {
         Row: {
@@ -9598,6 +9679,14 @@ export type Database = {
       }
       fr_deduct: {
         Args: { _amount: number; _id: string; _note: string }
+        Returns: undefined
+      }
+      fr_line_catalog_save: {
+        Args: { _active: boolean; _id: string; _name: string; _sort: number }
+        Returns: string
+      }
+      fr_lines_replace: {
+        Args: { _lines: Json; _request_id: string }
         Returns: undefined
       }
       fr_pay: {
