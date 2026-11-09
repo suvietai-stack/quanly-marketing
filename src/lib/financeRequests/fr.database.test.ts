@@ -296,3 +296,56 @@ it('zalo group: disabled config stays silent', async () => {
   expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
   expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1", [id])).toBe(0);
 });
+
+it('type catalog: per-function settings permission, no duplicate names, delete protection', async () => {
+  await actor(outsider);
+  await expect(db.query("select fr_type_save(null,'payment','X',null,true,9)")).rejects.toThrow('quyền');
+  await expect(db.query("select fr_types_with_usage('payment')")).rejects.toThrow('quyền');
+  await actor(admin);
+  await expect(db.query("select fr_type_save(null,'payment','Khác',null,true,9)")).rejects.toThrow('trùng tên');
+  const tid = await scalar("select fr_type_save(null,'payment','Chi phí dịch vụ','DV',true,9) v");
+  expect(tid).toBeTruthy();
+  // Hai chức năng độc lập: cùng tên ở danh mục tạm ứng vẫn thêm được
+  const aid = await scalar("select fr_type_save(null,'advance','Chi phí dịch vụ',null,true,9) v");
+  expect(aid).toBeTruthy();
+  const usage = await scalar("select fr_types_with_usage('payment') v");
+  expect((usage as any[]).find((t) => t.id === settleTypeId).sys_code).toBe('settle');
+  // Xóa loại chưa dùng được; loại gắn nghiệp vụ hệ thống hoặc đã có đề nghị thì không
+  await db.query('select fr_type_delete($1)', [aid]);
+  await expect(db.query('select fr_type_delete($1)', [settleTypeId])).rejects.toThrow('hệ thống');
+  const usedId = await scalar("select id v from fr_payment_types where name='Chi phí hoạt động công ty'");
+  await expect(db.query('select fr_type_delete($1)', [usedId])).rejects.toThrow('ngừng sử dụng');
+  // Ngừng dùng → không tạo đề nghị mới với loại đó
+  await db.query("select fr_type_save($1,'payment','Chi phí dịch vụ','DV',false,9)", [tid]);
+  await actor(staff);
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    amount: 100, title: 'Chi dịch vụ', payment_type_id: tid, payee_name: 'X',
+    lines: [{ name: 'Dịch vụ', qty: 1, unit_price: 100 }],
+  })])).rejects.toThrow('ngừng sử dụng');
+});
+
+it('other type requires free-text label; rename does not break settle detection', async () => {
+  const otherId = await scalar("select id v from fr_payment_types where kind='payment' and sys_code='other'");
+  await actor(admin);
+  await db.query("select fr_type_save($1,'payment','Quyết toán tạm ứng (đổi tên)',null,true,4)", [settleTypeId]);
+  await actor(staff);
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    amount: 100, title: 'Chi khác', payment_type_id: otherId, payee_name: 'X',
+    lines: [{ name: 'Khoản khác', qty: 1, unit_price: 100 }],
+  })])).rejects.toThrow('loại cụ thể');
+  // Đổi tên xong loại quyết toán vẫn bắt buộc chọn khoản tạm ứng
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    amount: 100, title: 'QT', payment_type_id: settleTypeId, payee_name: 'X',
+    lines: [{ name: 'QT', qty: 1, unit_price: 100 }],
+  })])).rejects.toThrow('quyết toán');
+  // Tạm ứng mới bắt buộc chọn loại
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['advance', payload({ amount: 100, title: 'TU thiếu loại' })])).rejects.toThrow('loại tạm ứng');
+});
+
+it('report groups by dynamic type including usage counts', async () => {
+  await actor(admin);
+  const r = await scalar("select fr_report('advance',null,null) v");
+  const row = (r.by_type as any[]).find((t) => t.name === 'Tạm ứng mua vật tư');
+  expect(Number(row.count)).toBe(1);
+  expect(Number(row.paid)).toBe(2000000);
+});
