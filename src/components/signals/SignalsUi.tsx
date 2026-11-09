@@ -156,7 +156,7 @@ export function SignalsPage() {
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setOpenId(id);
     if (sp.get("care") === "1") {
       const sale = sp.get("sale"); const kind = sp.get("kind");
-      setCare({ on: true, sale: sale && /^[0-9a-f-]{36}$/i.test(sale) ? sale : undefined, kind: kind === "unaccepted" || kind === "stale" ? kind : undefined });
+      if(kind!=="stale")setF(x=>({...x,quick:"waiting",saleId:sale&&/^[0-9a-f-]{36}$/i.test(sale)?sale:undefined}));
     }
   }, []);
   const [creating, setCreating] = useState(false);
@@ -166,13 +166,14 @@ export function SignalsPage() {
   const [queryText,setQueryText]=useState('');
   const [desktopPage,setDesktopPage]=useState(0);
   const [mobile,setMobile]=useState(false);
-  useEffect(()=>{const m=window.matchMedia('(max-width: 767px)'); const sync=()=>setMobile(m.matches);sync();m.addEventListener('change',sync);return()=>m.removeEventListener('change',sync);},[]);
+  const [viewportReady,setViewportReady]=useState(false);
+  useEffect(()=>{const m=window.matchMedia('(max-width: 767px)'); const sync=()=>{setMobile(m.matches);setViewportReady(true);};sync();m.addEventListener('change',sync);return()=>m.removeEventListener('change',sync);},[]);
   useEffect(()=>{const timer=setTimeout(()=>setQueryText(f.q??''),300);return()=>clearTimeout(timer);},[f.q]);
-  const params=useMemo(()=>listParams({...f,q:queryText},workQuick),[f,queryText,workQuick]);
+  const params=useMemo(()=>listParams({...f,q:queryText},workQuick),[JSON.stringify({...f,q:queryText}),workQuick]);
   const signature=JSON.stringify(params)+sort;
   useEffect(()=>setDesktopPage(0),[signature]);
   const counts=useQuery({queryKey:['sig:counts',p.userId,params],queryFn:()=>signalCounts(params),enabled:!!p.userId,staleTime:30000});
-  const pages=useInfiniteQuery({queryKey:['sig:page',p.userId,params,sort,mobile,desktopPage],initialPageParam:0,queryFn:({pageParam,signal})=>signalPage(params,sort,mobile?pageParam:desktopPage*40,mobile?30:40,signal),getNextPageParam:(last,all)=>last.rows.length===30?all.length*30:undefined,enabled:!!p.userId,staleTime:30000});
+  const pages=useInfiniteQuery({queryKey:['sig:page',p.userId,params,sort,mobile,desktopPage],initialPageParam:0,queryFn:({pageParam,signal})=>signalPage(params,sort,mobile?pageParam:desktopPage*40,mobile?30:40,signal),getNextPageParam:(last,all)=>last.rows.length===30?all.length*30:undefined,enabled:!!p.userId&&viewportReady,staleTime:30000});
   const token=useQuery({queryKey:['sig:token',p.userId],queryFn:changeToken,enabled:!!p.userId,refetchInterval:30000,refetchIntervalInBackground:false});
   const previousToken=useRef<string|null|undefined>(undefined);
   const qc=useQueryClient();
@@ -622,7 +623,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const [updating, setUpdating] = useState(false);
   const [noteOpen,setNoteOpen]=useState(false);
   const [showAll, setShowAll] = useState(false);
-  const hist = useQuery({ queryKey: [`${SIG}hist`, p.userId, s.id, s.updated_at], queryFn: () => signalHistory(s.id) });
+  const history=useInfiniteQuery({queryKey:[`${SIG}hist`,p.userId,s.id,s.updated_at],initialPageParam:0,queryFn:({pageParam})=>signalHistory(s.id,pageParam),getNextPageParam:(last,pages)=>last.hasMore?pages.length*30:undefined});
+  const hist={...history,data:history.data?{notes:history.data.pages.flatMap(p=>p.notes),events:history.data.pages.flatMap(p=>p.events),noteCount:history.data.pages[0]?.noteCount??0}:undefined};
   const [showProgression, setShowProgression] = useState(false);
   const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
@@ -733,7 +735,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       <div className="p-4 space-y-5 flex-1">
         <SignalEnrichment key={s.id} s={s} uid={p.userId} canEdit={!cancelled&&((p.sale&&s.assigned_to===p.userId)||p.manage)} catalog={p.catalog} sale={p.sale} onSaved={()=>void refresh()}/>
         {s.next_contact_on&&<p className="text-sm">Lịch theo dõi: <b>{fmtNext(s)}</b></p>}
-        <Section title={`Diễn biến tín hiệu — ${(hist.data?.notes??[]).filter(validProgression).length} lần cập nhật`}><Button onClick={()=>setNoteOpen(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
+        <Section title={`Diễn biến tín hiệu — ${hist.data?.noteCount??0} lần cập nhật`}><Button onClick={()=>setNoteOpen(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
         <Sheet open={noteOpen} onOpenChange={setNoteOpen}><SheetContent side="bottom" className="signal-mobile-sheet sm:max-w-xl sm:mx-auto"><SheetHeader><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader><VoluntaryNoteForm id={s.id} onSaved={()=>{setNoteOpen(false);void refresh();}}/></SheetContent></Sheet>
         <Section title="Lịch sử diễn biến">
           {hist.error ? <p className="text-sm text-destructive">{errMsg(hist.error)}</p> : <>
@@ -755,6 +757,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
           )}
         </Section>
 
+        {history.hasNextPage&&<Button variant="outline" disabled={history.isFetchingNextPage} onClick={()=>void history.fetchNextPage()}>Tải thêm nhật ký</Button>}
         <Section title="Thông tin khách hàng">
           <div className="rounded-lg border bg-muted/20 p-3 text-sm space-y-1.5">
             <Row k="Địa chỉ">{s.address || "—"}</Row>
