@@ -298,7 +298,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${kind === "payment" ? "sm:max-w-3xl" : "max-w-lg"} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader><DialogTitle>{editing ? `Sửa ${FR_KIND_LABEL[kind]}` : `Tạo ${FR_KIND_LABEL[kind]}`}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {kind !== "payment" && (
@@ -360,6 +360,11 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
           {kind === "payment" && (
             <Field label="Thông tin tài khoản nhận tiền (nếu cần)">
               <Input maxLength={300} value={payeeInfo} onChange={(e) => setPayeeInfo(e.target.value)} placeholder="Ngân hàng — STK — Chủ TK" />
+            </Field>
+          )}
+          {kind === "payment" && (
+            <Field label="Bảng kê khoản chi *">
+              <ExpenseLinesEditor lines={lines} onChange={setLines} catalog={catalog.data ?? []} />
             </Field>
           )}
           {kind === "salary_advance" && (
