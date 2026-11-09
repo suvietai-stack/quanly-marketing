@@ -8349,6 +8349,90 @@ export type Database = {
         }
         Relationships: []
       }
+      sw_credentials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          password_enc: string
+          status: string
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          password_enc: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          password_enc?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      sw_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      sw_settings: {
+        Row: {
+          description: string | null
+          display_name: string
+          enabled: boolean
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+          url: string | null
+        }
+        Insert: {
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Update: {
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
@@ -10725,6 +10809,30 @@ export type Database = {
         }[]
       }
       signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
+      sw_audit: { Args: { _limit?: number }; Returns: Json }
+      sw_config: { Args: never; Returns: Json }
+      sw_config_save: {
+        Args: {
+          _description: string
+          _display_name: string
+          _enabled: boolean
+          _url: string
+        }
+        Returns: undefined
+      }
+      sw_credential_revoke: { Args: { _user_id: string }; Returns: undefined }
+      sw_credential_save: {
+        Args: {
+          _password: string
+          _status: string
+          _user_id: string
+          _username: string
+        }
+        Returns: undefined
+      }
+      sw_my_credential: { Args: never; Returns: Json }
+      sw_reveal_password: { Args: never; Returns: string }
+      sw_staff_list: { Args: { _q?: string }; Returns: Json }
       wf_can_manage: { Args: never; Returns: boolean }
       wf_claim_event: { Args: { p_id: string }; Returns: Json }
       wf_complete_event: {
