@@ -515,6 +515,24 @@ export const PERMISSIONS: PermissionDef[] = [
   P("finance.incoming.gmf_config", "Cài đặt thông báo Zalo GMF", "Tài Chính Kế Toán", "Tiền Về — Quản trị"),
   P("finance.incoming.remind", "Nhắc xác nhận thủ công", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
 
+  // ===== Đề Nghị Tài Chính (Tạm Ứng / Thanh Toán / Tạm Ứng Lương) =====
+  P("fr.advance.view_scope", "Xem đề nghị tạm ứng thuộc phạm vi", "Tài Chính Kế Toán", "Đề Nghị Tạm Ứng"),
+  P("fr.advance.approve", "Phê duyệt đề nghị tạm ứng", "Tài Chính Kế Toán", "Đề Nghị Tạm Ứng"),
+  P("fr.advance.pay", "Xác nhận chi tiền tạm ứng", "Tài Chính Kế Toán", "Đề Nghị Tạm Ứng"),
+  P("fr.advance.report", "Xem báo cáo tạm ứng", "Tài Chính Kế Toán", "Đề Nghị Tạm Ứng"),
+  P("fr.advance.settings", "Cài đặt quy trình tạm ứng", "Tài Chính Kế Toán", "Đề Nghị Tạm Ứng"),
+  P("fr.payment.view_scope", "Xem đề nghị thanh toán thuộc phạm vi", "Tài Chính Kế Toán", "Đề Nghị Thanh Toán"),
+  P("fr.payment.approve", "Phê duyệt đề nghị thanh toán", "Tài Chính Kế Toán", "Đề Nghị Thanh Toán"),
+  P("fr.payment.pay", "Xác nhận chi tiền thanh toán", "Tài Chính Kế Toán", "Đề Nghị Thanh Toán"),
+  P("fr.payment.report", "Xem báo cáo thanh toán", "Tài Chính Kế Toán", "Đề Nghị Thanh Toán"),
+  P("fr.payment.settings", "Cài đặt quy trình thanh toán", "Tài Chính Kế Toán", "Đề Nghị Thanh Toán"),
+  P("fr.salary.view_scope", "Xem tạm ứng lương thuộc phạm vi", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
+  P("fr.salary.approve", "Phê duyệt tạm ứng lương", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
+  P("fr.salary.pay", "Xác nhận chi tạm ứng lương", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
+  P("fr.salary.deduct", "Xác nhận khấu trừ/hoàn trả", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
+  P("fr.salary.report", "Xem báo cáo tạm ứng lương", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
+  P("fr.salary.settings", "Cài đặt quy trình tạm ứng lương", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
+
   // ===== Tích hợp Marketing =====
   P("integration.facebook_leads", "Quản lý Facebook Lead Ads (kết nối Page, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Facebook Lead Ads"),
   P("integration.website_forms", "Quản lý Website Forms (thêm Website, cấp/thu hồi khóa, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Website Forms"),
