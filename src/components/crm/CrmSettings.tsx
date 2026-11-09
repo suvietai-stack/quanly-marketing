@@ -17,6 +17,8 @@ import { ScopeEditor } from './CrmFields';
 import { CrmFieldSettings } from './CrmFieldSettings';
 export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[] }) {
   const [kind, setKind] = useState("trait");
+  const [section,setSection]=useState('groups');
+  const [catalogSearch,setCatalogSearch]=useState('');
   const [edit, setEdit] = useState<Record<string, unknown> | null>(null);
   const [template, setTemplate] = useState<Partial<Template> | null>(null);
   const [grant, setGrant] = useState<Record<string, unknown> | null>(null);
@@ -27,6 +29,7 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
   const saveGrant = useCrmMutation("crm_access_save");
   const people = useQuery(crmPeopleQuery(uid));
   const templates = useQuery(crmTemplatesQuery(uid));
+  const counts=useQuery({queryKey:['crm_catalog_counts',uid],queryFn:()=>crmRpc<Record<string,number>>('crm_catalog_counts')});
   const grants = useQuery({
     queryKey: ["crm_access", uid],
     enabled: can("biz.crm_access"),
@@ -44,11 +47,12 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
   });
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="groups">
+      <Tabs value={section} onValueChange={v=>{setSection(v);setKind(v==='catalogs'?'trait':'priority');setCatalogSearch('');}}>
         <TabsList className="h-auto w-full justify-start overflow-x-auto">
           <TabsTrigger value="groups">Nhóm & Tệp khách</TabsTrigger>
-          <TabsTrigger value="catalogs">Đặc điểm & Danh mục</TabsTrigger>
+          <TabsTrigger value="catalogs">Đặc điểm kinh doanh</TabsTrigger>
           <TabsTrigger value="fields">Trường chuyên sâu</TabsTrigger>
+          <TabsTrigger value="other">Danh mục CRM khác</TabsTrigger>
           <TabsTrigger value="templates">Mẫu chăm sóc</TabsTrigger>
           {can("biz.crm_access") && <TabsTrigger value="access">Quyền CRM</TabsTrigger>}
         </TabsList>
@@ -56,14 +60,15 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
           <CrmCatalogTree uid={uid} catalogs={catalogs} onEdit={(c)=>{setError('');setEdit(c);}} />
         </TabsContent>
         <TabsContent value="fields"><CrmFieldSettings uid={uid} catalogs={catalogs}/></TabsContent>
-        <TabsContent value="catalogs" className="space-y-4">
-          <h3 className="border-t pt-5 font-semibold">Đặc điểm & Danh mục khác</h3>
+        <TabsContent value={section==='other'?'other':'catalogs'} className="space-y-4">
+          <h3 className="border-t pt-5 font-semibold">{section==='other'?'Danh mục CRM khác':'Đặc điểm kinh doanh'}</h3>
+          <Input aria-label="Tìm danh mục CRM" placeholder="Tìm danh mục…" value={catalogSearch} onChange={e=>setCatalogSearch(e.target.value)}/>
           <div className="flex gap-2">
             <Pick
               label="Loại danh mục"
               value={kind}
               onChange={setKind}
-              options={Object.entries(KINDS).filter(([id])=>!['group','segment','custom_field'].includes(id)).map(([id, name]) => ({ id, name }))}
+              options={Object.entries(KINDS).filter(([id])=>!['group','segment','custom_field'].includes(id) && (section==='other'?!Object.hasOwn(FEATURE_KINDS,id):Object.hasOwn(FEATURE_KINDS,id))).map(([id, name]) => ({ id, name }))}
             />
             <Button
               onClick={() => {
@@ -77,7 +82,7 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
           </div>
           <div className="divide-y border-y">
             {catalogs
-              .filter((c) => c.kind === kind)
+              .filter((c) => c.kind === kind && c.name.toLocaleLowerCase().includes(catalogSearch.toLocaleLowerCase()))
               .map((c) => (
                 <div key={c.id} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
@@ -87,6 +92,7 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
                         ? catalogs.find((x) => x.id === c.parent_id)?.name
                         : "Danh mục gốc"}{" "}
                       · {c.active ? "Đang sử dụng" : "Đã ngừng"} · Thứ tự {c.sort_order}
+                      {' · '}{counts.data?.[c.id]||0} hồ sơ{Object.hasOwn(FEATURE_KINDS,c.kind)&&!c.config.scope_mode&&(!Array.isArray(c.config.group_ids)||!c.config.group_ids.length)?' · Cần cấu hình phạm vi':''}
                     </p>
                   </div>
                   <Button

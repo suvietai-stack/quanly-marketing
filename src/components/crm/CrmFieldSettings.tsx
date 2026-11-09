@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Catalog } from '@/lib/crm/types';
-import { FIELD_TYPES, fieldOptions } from '@/lib/crm/fields';
+import { FIELD_TYPES, fieldOptions, type FieldValues } from '@/lib/crm/fields';
+import { segmentOptions } from '@/lib/crm/classification';
 import { crmRpc, useCrmMutation } from '@/lib/crm/queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { ScopeEditor, CustomFields } from './CrmFields';
 export function CrmFieldSettings({uid,catalogs}:{uid:string;catalogs:Catalog[]}) {
   const [edit,setEdit]=useState<Catalog|null>(null),[error,setError]=useState(''),[search,setSearch]=useState(''),[group,setGroup]=useState(''),[segment,setSegment]=useState('');
   const save=useCrmMutation('crm_catalog_save');
+  const [preview,setPreview]=useState<FieldValues>({});
   const counts=useQuery({queryKey:['crm_catalog_counts',uid],queryFn:()=>crmRpc<Record<string,number>>('crm_catalog_counts')});
   const patch=(v:Partial<Catalog>)=>{if(edit)setEdit({...edit,...v});};
   const cfg=(v:Record<string,unknown>)=>patch({config:v});
