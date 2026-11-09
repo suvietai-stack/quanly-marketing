@@ -26,7 +26,7 @@ import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type
 import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
 import { useServerFn } from "@tanstack/react-start";
 import { zaloCareCounts } from "@/lib/zalo.functions";
-import { composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
+import { canSaveProgression, composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
 import { SignalEnrichment, SignalLabelManager, PotentialPill, useSignalLabels } from './SignalEnrichment';
 import { POTENTIAL_LABEL, STAGES, matchWork, sortSignals, type WorkQuick, type SignalSort } from '@/lib/signals/potential';
@@ -34,7 +34,7 @@ import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
-import { signalPage, signalCounts, signalById, listParams, saveNote, changeToken } from '@/lib/signals/paged';
+import { signalPage, signalCounts, signalById, listParams, changeToken } from '@/lib/signals/paged';
 import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
@@ -89,6 +89,14 @@ export function useOptions(scope: OptionScope) {
 }
 const invalidateSig = (qc: ReturnType<typeof useQueryClient>) =>
   qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith(SIG) });
+
+/** Làm mới mọi cache tín hiệu sau khi backend xác nhận; báo lỗi + thử lại nếu có request làm mới thất bại. */
+const refreshSignals = async (qc: ReturnType<typeof useQueryClient>) => {
+  const erroredBefore = new Set(qc.getQueryCache().findAll().filter((q) => q.state.status === "error").map((q) => q.queryHash));
+  await invalidateSig(qc);
+  const failed = qc.getQueryCache().findAll().some((q) => q.isActive() && String(q.queryKey[0]).startsWith(SIG) && q.state.status === "error" && !erroredBefore.has(q.queryHash));
+  if (failed) toast.error("Đã lưu nhưng chưa làm mới được danh sách.", { action: { label: "Thử lại", onClick: () => void refreshSignals(qc) } });
+};
 
 /** Xóa dữ liệu tín hiệu khi đăng xuất hoặc đổi tài khoản (không cần tải lại trang). */
 export function SignalCacheGuard() {
@@ -619,7 +627,6 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [noteOpen,setNoteOpen]=useState(false);
   const [showAll, setShowAll] = useState(false);
   const history=useInfiniteQuery({queryKey:[`${SIG}hist`,p.userId,s.id,s.updated_at],initialPageParam:0,queryFn:({pageParam})=>signalHistory(s.id,pageParam),getNextPageParam:(last,pages)=>last.hasMore?pages.length*30:undefined});
   const hist={...history,data:history.data?{notes:history.data.pages.flatMap(p=>p.notes),events:history.data.pages.flatMap(p=>p.events),noteCount:history.data.pages[0]?.noteCount??0}:undefined};
@@ -630,11 +637,21 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const canEditInfo = !closed && !cancelled && (p.edit || (p.create && s.created_by === p.userId && (!s.status || s.status === "waiting" || s.status === "consulting")));
   const canDelete = p.del && !closed && (hist.data ? hist.data.notes.length === 0 : false);
   const canConsult = !closed && !cancelled && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
-  const refresh = () => invalidateSig(qc);
+  const refresh = () => refreshSignals(qc);
+  const assignLock = useRef(false);
 
   const doAssign = async (uid: string) => {
-    try { await assignSignal(s.id, uid || null); await refresh(); toast.success(uid ? "Đã phân công" : "Đã bỏ phân công"); }
+    if (assignLock.current) return;
+    assignLock.current = true;
+    try {
+      await assignSignal(s.id, uid || null);
+      // Backend đã xác nhận: cập nhật tạm chi tiết đang mở theo đúng kết quả, rồi đồng bộ lại từ máy chủ.
+      qc.setQueryData([`${SIG}detail`, p.userId, s.id], (old: Signal | null | undefined) => old ? { ...old, assigned_to: uid || null, assigned_at: uid ? new Date().toISOString() : null, status: uid ? "waiting" : null } : old);
+      toast.success(uid ? "Đã phân công" : "Đã bỏ phân công");
+      await refresh();
+    }
     catch (e) { toast.error(errMsg(e)); }
+    finally { assignLock.current = false; }
   };
   const doReopen = async () => {
     const r = window.prompt("Lý do mở lại tín hiệu?");
@@ -721,10 +738,9 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
           Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}
           {s.status === "won" && s.revenue ? ` · Doanh số ${fmtVnd(s.revenue)}` : ""}{s.lost_reason ? ` · ${s.lost_reason}` : ""}
         </div>
-        <div className="grid grid-cols-3 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2 pt-1">
           <Button asChild size="lg" className="h-12 px-2"><a href={zaloLink(s.phone)} target="_blank" rel="noopener noreferrer"><MessageCircle className="h-4 w-4 mr-1" />Zalo</a></Button>
           <Button asChild size="lg" variant="outline" className="h-12 px-2"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1" />Gọi</a></Button>
-          <Button size="lg" variant="secondary" className="h-12 px-2" disabled={!canConsult} onClick={() => setUpdating(true)}><PencilLine className="h-4 w-4 mr-1" />Cập nhật</Button>
         </div>
         <p className="text-[11px] text-muted-foreground">Nút Zalo mở trang Zalo theo số điện thoại; tùy thiết lập của khách, có thể không mở thẳng được cuộc trò chuyện.</p>
         {canConsult && s.status === "waiting" && <Button size="lg" className="w-full" onClick={accept}>Tiếp nhận tín hiệu</Button>}
@@ -733,8 +749,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
       <div className="p-4 space-y-5 flex-1">
         <SignalEnrichment key={s.id} s={s} uid={p.userId} canEdit={!cancelled&&((p.sale&&s.assigned_to===p.userId)||p.manage)} catalog={p.catalog} sale={p.sale} onSaved={()=>void refresh()}/>
         {s.next_contact_on&&<p className="text-sm">Lịch theo dõi: <b>{fmtNext(s)}</b></p>}
-        <Section title={`Diễn biến tín hiệu — ${hist.data?.noteCount??0} lần cập nhật`}><Button onClick={()=>setNoteOpen(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
-        <Sheet open={noteOpen} onOpenChange={setNoteOpen}><SheetContent side="bottom" className="signal-mobile-sheet sm:max-w-xl sm:mx-auto"><SheetHeader><SheetTitle>Cập nhật diễn biến</SheetTitle></SheetHeader><VoluntaryNoteForm id={s.id} onSaved={()=>{setNoteOpen(false);void refresh();}}/></SheetContent></Sheet>
+        <Section title={`Diễn biến tín hiệu — ${hist.data?.noteCount??0} lần cập nhật`}><Button onClick={()=>setUpdating(true)} disabled={!canConsult}><Plus className="h-4 w-4"/>Cập nhật diễn biến</Button></Section>
         <Section title="Lịch sử diễn biến">
           {hist.error ? <p className="text-sm text-destructive">{errMsg(hist.error)}</p> : <>
             <ol className="space-y-3 border-l pl-4">
@@ -802,37 +817,36 @@ const vnLocalToIso = (v: string) => new Date(`${v}:00+07:00`).toISOString();
 function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [extra, setExtra] = useState("");
-  const [preview, setPreview] = useState(false);
   const saving = useRef(false);
   const request = useRef<{ id: string; payload: string } | null>(null);
-  const [note, setNote] = useState("");
-
+  const [changeStatus, setChangeStatus] = useState(false);
   const [status, setStatus] = useState<SignalStatus>(s.status as SignalStatus);
   const [revenue, setRevenue] = useState("");
   const [reason, setReason] = useState("");
   const lr = useLostReasons();
   const [reasonOther, setReasonOther] = useState("");
   const [busy, setBusy] = useState(false);
-  const compose = (items: string[], text: string) => { setNote(composeProgression(items,text)); setPreview(false); };
   const suggested=suggestedProgressionStatus(s.status,selected);
   const [dismissed,setDismissed]=useState<string|null>(null);
-  const closing = status === "won" || status === "lost";
+  const targetStatus = changeStatus ? status : (s.status as SignalStatus);
+  const closing = targetStatus === "won" || targetStatus === "lost";
 
   const save = async () => {
     if (saving.current) return;
-    const rev = status === "won" ? Number(revenue.replace(/[^\d]/g, "")) : null;
-    if (status === "won" && (!rev || rev <= 0)) return toast.error("Chốt bắt buộc nhập doanh số");
-    const lost = status === "lost" ? (reason === "Khác" ? (reasonOther.trim() ? `Khác: ${reasonOther.trim()}` : "") : reason) : null;
-    if (status === "lost" && !lost) return toast.error(reason === "Khác" ? "Nhập lý do trượt cụ thể" : "Trượt bắt buộc chọn lý do");
-    if (status === s.status && !note.trim()) return toast.error("Chọn diễn biến hoặc nhập nội dung");
+    const note = composeProgression(selected, extra);
+    const rev = targetStatus === "won" ? Number(revenue.replace(/[^\d]/g, "")) : null;
+    if (targetStatus === "won" && (!rev || rev <= 0)) return toast.error("Chốt bắt buộc nhập doanh số");
+    const lost = targetStatus === "lost" ? (reason === "Khác" ? (reasonOther.trim() ? `Khác: ${reasonOther.trim()}` : "") : reason) : null;
+    if (targetStatus === "lost" && !lost) return toast.error(reason === "Khác" ? "Nhập lý do trượt cụ thể" : "Trượt bắt buộc chọn lý do");
+    if (!canSaveProgression(note, targetStatus !== s.status)) return toast.error("Chọn diễn biến hoặc nhập ghi chú");
     saving.current = true;
     setBusy(true);
     try {
-      const payload = JSON.stringify([s.id,status,note,rev,lost]);
+      const payload = JSON.stringify([s.id,targetStatus,note,rev,lost]);
       if (request.current?.payload !== payload) request.current = { id: crypto.randomUUID(), payload };
       // Không còn lịch hẹn trên giao diện; giữ nguyên giá trị cũ trong dữ liệu.
       await saveProgression(s.id, request.current.id, {
-        status, note, event: null, channel: "Zalo",
+        status: targetStatus, note, event: null, channel: "Zalo",
         next: closing ? null : s.next_contact_on, nextAt: closing ? null : s.next_contact_at ?? null,
         revenue: rev, lostReason: lost,
       });
@@ -845,30 +859,36 @@ function UpdateForm({ s, onSaved }: { s: Signal; onSaved: () => void }) {
   return (
     <div>
       <div className="px-4 space-y-4 pb-4">
-        <details open className="space-y-3">
-          <summary className="cursor-pointer text-sm font-medium">Gợi ý diễn biến</summary>
-          {progressionSuggestions(needGroupsOf(s)).map(group => <div key={group.label} className="space-y-1.5"><div className="text-xs font-semibold text-muted-foreground">{group.label}</div><div className="flex flex-wrap gap-2">{group.items.map(item => <Button key={item} type="button" variant={selected.includes(item) ? "default" : "outline"} size="sm" className="h-auto min-h-10 whitespace-normal rounded-full px-3 py-2 text-left" aria-pressed={selected.includes(item)} onClick={() => { const next=selected.includes(item) ? selected.filter(x=>x!==item) : [...selected,item]; setSelected(next); compose(next,extra); }}>{item}</Button>)}</div></div>)}
-        </details>
-        <Field label="Ghi chú bổ sung"><Textarea rows={3} maxLength={3000} value={extra} onChange={e => {setExtra(e.target.value); compose(selected,e.target.value);}} placeholder="Diễn biến thực tế của khách…" /></Field>
-        <div className="flex items-center justify-between"><Label>Nội dung sẽ lưu</Label><Button variant="ghost" size="sm" onClick={() => setPreview(v=>!v)}>{preview ? 'Chỉnh sửa' : 'Xem trước'}</Button></div>
-        {preview ? <p className="min-h-24 whitespace-pre-wrap rounded-md border p-3 text-sm">{note || 'Chưa có nội dung'}</p> : <Textarea aria-label="Nội dung sẽ lưu" rows={4} maxLength={3000} value={note} onChange={e=>setNote(e.target.value)} />}
-        {suggested && status===s.status && dismissed!==suggested && <div className="border-l-2 border-primary pl-3 space-y-2"><p className="text-sm">Diễn biến đã chọn phù hợp với “{STATUS_LABEL[suggested]}”. Bạn có muốn chuyển trạng thái không?</p><div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={()=>setStatus(suggested)}>Chuyển sang {STATUS_LABEL[suggested]}</Button><Button variant="outline" onClick={()=>setDismissed(suggested)}>Giữ nguyên</Button></div></div>}
-        {selected.includes('Khách đồng ý đặt hàng') && status!=='won' && <p className="text-sm text-muted-foreground">Khách đồng ý đặt hàng — xem xét chuyển Chốt theo quy trình và nhập doanh số.</p>}
-        <Field label="Trạng thái (mặc định giữ nguyên)">
-          <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as SignalStatus)}>
-            {[...OPEN_STATUSES, "won", "lost"].map((o) => <option key={o} value={o}>{STATUS_LABEL[o as SignalStatus]}{o === s.status ? " (hiện tại)" : ""}</option>)}
-          </select>
-        </Field>
-        {status === "won" && <Field label="Doanh số chốt (VNĐ) *"><Input inputMode="numeric" value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, "."))} placeholder="VD: 15.000.000" /></Field>}
-        {status === "lost" && <>
-          <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={lr.all} /></Field>
-          {reason === "Khác" && <Field label="Lý do cụ thể *"><Input maxLength={300} value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} /></Field>}
-          <p className="text-xs text-muted-foreground">Khách chưa phản hồi chưa phải Trượt — có thể giữ "Đang liên hệ".</p>
-        </>}
-        {closing && <p className="text-xs text-muted-foreground">Sau khi Chốt/Trượt, tín hiệu khóa lại. Chỉ Quản lý mới mở lại được. Doanh số là số Sale khai báo, chưa phải doanh thu kế toán.</p>}
+        <div className="space-y-3">
+          <Label>Chọn nhanh diễn biến</Label>
+          {progressionSuggestions(needGroupsOf(s)).map(group => <div key={group.label} className="space-y-1.5"><div className="text-xs font-semibold text-muted-foreground">{group.label}</div><div className="flex flex-wrap gap-2">{group.items.map(item => <Button key={item} type="button" variant={selected.includes(item) ? "default" : "outline"} size="sm" className="h-auto min-h-10 whitespace-normal rounded-full px-3 py-2 text-left" aria-pressed={selected.includes(item)} onClick={() => setSelected(selected.includes(item) ? selected.filter(x=>x!==item) : [...selected,item])}>{item}</Button>)}</div></div>)}
+        </div>
+        <Field label="Ghi chú thêm (không bắt buộc)"><Textarea rows={3} maxLength={3000} value={extra} onChange={e => setExtra(e.target.value)} placeholder="VD: Khách muốn tham khảo thêm mẫu màu xanh…" /></Field>
+        {suggested && (!changeStatus || status===s.status) && dismissed!==suggested && <div className="border-l-2 border-primary pl-3 space-y-2"><p className="text-sm">Diễn biến đã chọn phù hợp với “{STATUS_LABEL[suggested]}”. Bạn có muốn chuyển trạng thái không?</p><div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={()=>{setChangeStatus(true);setStatus(suggested);}}>Chuyển sang {STATUS_LABEL[suggested]}</Button><Button variant="outline" onClick={()=>setDismissed(suggested)}>Giữ nguyên</Button></div></div>}
+        {selected.includes('Khách đồng ý đặt hàng') && targetStatus!=='won' && <p className="text-sm text-muted-foreground">Khách đồng ý đặt hàng — xem xét chuyển Chốt theo quy trình và nhập doanh số.</p>}
+        <div className="rounded-md border p-3 space-y-3">
+          <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+            <input type="checkbox" className="h-4 w-4" checked={changeStatus} onChange={(e) => { setChangeStatus(e.target.checked); if (!e.target.checked) setStatus(s.status as SignalStatus); }} />
+            Thay đổi trạng thái tín hiệu (tùy chọn)
+          </label>
+          {changeStatus && <>
+            <Field label="Trạng thái mới">
+              <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as SignalStatus)}>
+                {[...OPEN_STATUSES, "won", "lost"].map((o) => <option key={o} value={o}>{STATUS_LABEL[o as SignalStatus]}{o === s.status ? " (hiện tại)" : ""}</option>)}
+              </select>
+            </Field>
+            {status === "won" && <Field label="Doanh số chốt (VNĐ) *"><Input inputMode="numeric" value={revenue} onChange={(e) => setRevenue(e.target.value.replace(/[^\d]/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, "."))} placeholder="VD: 15.000.000" /></Field>}
+            {status === "lost" && <>
+              <Field label="Lý do trượt *"><Select value={reason} onChange={setReason} opts={lr.all} /></Field>
+              {reason === "Khác" && <Field label="Lý do cụ thể *"><Input maxLength={300} value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} /></Field>}
+              <p className="text-xs text-muted-foreground">Khách chưa phản hồi chưa phải Trượt — có thể giữ "Đang liên hệ".</p>
+            </>}
+            {closing && <p className="text-xs text-muted-foreground">Sau khi Chốt/Trượt, tín hiệu khóa lại. Chỉ Quản lý mới mở lại được. Doanh số là số Sale khai báo, chưa phải doanh thu kế toán.</p>}
+          </>}
+        </div>
       </div>
       <div className="sticky bottom-0 bg-background border-t p-3">
-        <Button size="lg" className="w-full h-12 text-base" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu cập nhật"}</Button>
+        <Button size="lg" className="w-full h-12 text-base" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu diễn biến"}</Button>
       </div>
     </div>
   );
@@ -969,8 +989,4 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
   );
 }
 
-function VoluntaryNoteForm({id,onSaved}:{id:string;onSaved:()=>void}) {
- const [note,setNote]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const lock=useRef(false);const request=useRef<{id:string;note:string}|null>(null);
- const save=async()=>{if(lock.current||!note.trim())return;lock.current=true;setBusy(true);setError('');if(request.current?.note!==note.trim())request.current={id:crypto.randomUUID(),note:note.trim()};try{await saveNote(id,request.current.id,note);onSaved();}catch(e){setError(errMsg(e));}finally{lock.current=false;setBusy(false);}};
- return <div className="space-y-4 pt-4"><Label htmlFor="voluntary-note">Nội dung diễn biến</Label><Textarea id="voluntary-note" rows={5} maxLength={3000} value={note} onChange={e=>setNote(e.target.value)}/>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<Button className="w-full min-h-11" disabled={busy||!note.trim()} onClick={()=>void save()}>{busy?'Đang lưu…':'Lưu'}</Button></div>;
-}
+

@@ -15,3 +15,5 @@ export const QUICK_PROGRESS = [
 const GIFT_PROGRESS = { label: 'Sứ quà tặng', items: ['Đang thiết kế maket', 'Đã gửi maket cho khách', 'Khách yêu cầu chỉnh sửa maket', 'Đang chờ khách duyệt maket', 'Khách đã duyệt maket', 'Đang tư vấn mẫu và bao bì', 'Đang tư vấn in logo'] };
 export const progressionSuggestions = (groups: string[]) => groups.some(g => normName(g) === normName('Sứ quà tặng')) ? [...QUICK_PROGRESS, GIFT_PROGRESS] : QUICK_PROGRESS;
 export const composeProgression = (selected: string[], extra: string) => [...selected, extra.trim()].filter(Boolean).join('\n');
+/** Lưu hợp lệ khi có nội dung diễn biến hoặc đổi trạng thái; đổi trạng thái đơn thuần không tính một lượt note (is_progression=false phía máy chủ). */
+export const canSaveProgression = (note: string, statusChanged: boolean) => statusChanged || note.trim().length > 0;
