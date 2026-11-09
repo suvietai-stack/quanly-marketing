@@ -742,6 +742,22 @@ function ReportTab({ kind }: { kind: FrKind }) {
           {(d.by_requester as any[]).length === 0 && <p className="text-sm text-muted-foreground">Chưa có dữ liệu.</p>}
         </div>
       </div>
+      {kind !== "salary_advance" && Array.isArray(d.by_type) && d.by_type.length > 0 && (
+        <div className="rounded-lg border p-3 space-y-2">
+          <div className="font-semibold text-sm">Theo loại</div>
+          {(d.by_type as any[]).map((t) => (
+            <div key={t.name} className="text-sm space-y-0.5">
+              <div className="flex justify-between gap-2">
+                <span className="truncate">{t.name}</span>
+                <span className="shrink-0"><b>{t.count}</b> đề nghị — {vnd(t.amount)} ({Number(d.amount) > 0 ? Math.round((Number(t.amount) / Number(d.amount)) * 100) : 0}%)</span>
+              </div>
+              <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                <span>Đã duyệt {vnd(t.approved)}</span><span>Đã chi {vnd(t.paid)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {kind === "payment" && Array.isArray(d.by_line) && d.by_line.length > 0 && (
         <div className="rounded-lg border p-3 space-y-1">
           <div className="font-semibold text-sm">Theo khoản chi</div>
@@ -852,42 +868,99 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
   );
 }
 
-function PaymentTypesManager() {
+function TypeCatalogManager({ kind }: { kind: "payment" | "advance" }) {
   const qc = useQueryClient();
-  const types = useQuery({ queryKey: ["fr", "types"], queryFn: frApi.paymentTypes });
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
-  const add = async () => {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      await frApi.savePaymentType(null, name, true, (types.data ?? []).length + 1);
-      setName("");
-      qc.invalidateQueries({ queryKey: ["fr", "types"] });
-      toast.success("Đã thêm loại thanh toán");
-    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  const types = useQuery({ queryKey: ["fr", "types-usage", kind], queryFn: () => frApi.typesWithUsage(kind) });
+  const [editing, setEditing] = useState<FrTypeWithUsage | "new" | null>(null);
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["fr", "types-usage", kind] });
+    qc.invalidateQueries({ queryKey: ["fr", "types"] });
   };
-  const toggle = async (t: FrPaymentType) => {
+  const label = kind === "advance" ? "loại tạm ứng" : "loại thanh toán";
+  const move = async (t: FrTypeWithUsage, dir: -1 | 1) => {
+    const list = types.data ?? [];
+    const i = list.findIndex((x) => x.id === t.id);
+    const j = i + dir;
+    if (j < 0 || j >= list.length) return;
     try {
-      await frApi.savePaymentType(t.id, t.name, !t.active, t.sort);
-      qc.invalidateQueries({ queryKey: ["fr", "types"] });
+      await frApi.saveType(t.id, kind, t.name, t.description ?? "", t.active, list[j].sort);
+      await frApi.saveType(list[j].id, kind, list[j].name, list[j].description ?? "", list[j].active, t.sort);
+      refresh();
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const toggle = async (t: FrTypeWithUsage) => {
+    try {
+      await frApi.saveType(t.id, kind, t.name, t.description ?? "", !t.active, t.sort);
+      refresh();
+      toast.success(t.active ? "Đã ngừng sử dụng" : "Đã kích hoạt lại");
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const remove = async (t: FrTypeWithUsage) => {
+    if (!window.confirm(`Xóa ${label} "${t.name}"?`)) return;
+    try {
+      await frApi.deleteType(t.id);
+      refresh();
+      toast.success("Đã xóa loại");
     } catch (e) { toast.error(errMsg(e)); }
   };
   return (
     <div className="rounded-lg border p-4 space-y-3">
-      <div className="font-semibold">Danh mục loại thanh toán</div>
-      {(types.data ?? []).map((t) => (
-        <div key={t.id} className="flex items-center gap-2 text-sm">
-          <FileText className="h-4 w-4 text-muted-foreground" />
-          <span className={`flex-1 ${t.active ? "" : "line-through text-muted-foreground"}`}>{t.name}</span>
-          <Button size="sm" variant="outline" onClick={() => toggle(t)}>{t.active ? "Ẩn" : "Hiện"}</Button>
+      <div className="font-semibold">Danh mục {label}</div>
+      <p className="text-sm text-muted-foreground">Danh mục động — thêm/sửa xong biểu mẫu và báo cáo tự nhận, không cần sửa hệ thống.</p>
+      {(types.data ?? []).map((t, i) => (
+        <div key={t.id} className="flex flex-wrap items-center gap-2 text-sm rounded-md border p-2">
+          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="flex-1 min-w-32">
+            <div className={t.active ? "" : "line-through text-muted-foreground"}>{t.name}</div>
+            {t.description && <div className="text-xs text-muted-foreground truncate">{t.description}</div>}
+          </div>
+          <span className="text-xs text-muted-foreground shrink-0">{t.usage} đề nghị</span>
+          {!t.active && <Badge variant="secondary" className="shrink-0">Ngừng dùng</Badge>}
+          <div className="flex gap-1 shrink-0">
+            <Button size="icon" variant="ghost" aria-label="Lên" disabled={i === 0} onClick={() => move(t, -1)}><ArrowUp className="h-4 w-4" /></Button>
+            <Button size="icon" variant="ghost" aria-label="Xuống" disabled={i === (types.data ?? []).length - 1} onClick={() => move(t, 1)}><ArrowDown className="h-4 w-4" /></Button>
+            <Button size="sm" variant="outline" onClick={() => setEditing(t)}>Sửa</Button>
+            <Button size="sm" variant="outline" onClick={() => toggle(t)}>{t.active ? "Ngừng" : "Dùng lại"}</Button>
+            <Button size="sm" variant="outline" disabled={t.usage > 0 || !!t.sys_code}
+              title={t.sys_code ? "Loại gắn nghiệp vụ hệ thống — chỉ ngừng sử dụng" : t.usage > 0 ? "Đã có đề nghị sử dụng — chỉ ngừng sử dụng" : "Xóa loại"}
+              onClick={() => remove(t)}>Xóa</Button>
+          </div>
         </div>
       ))}
-      <div className="flex gap-2">
-        <Input placeholder="Tên loại mới" value={name} onChange={(e) => setName(e.target.value)} />
-        <Button variant="outline" disabled={busy} onClick={add}>Thêm</Button>
-      </div>
+      <Button variant="outline" size="sm" onClick={() => setEditing("new")}><Plus className="h-4 w-4 mr-1" />Thêm loại</Button>
+      {editing && <TypeEditDialog kind={kind} editing={editing === "new" ? null : editing} count={(types.data ?? []).length}
+        onClose={() => setEditing(null)} onSaved={() => { setEditing(null); refresh(); }} />}
     </div>
+  );
+}
+
+function TypeEditDialog({ kind, editing, count, onClose, onSaved }: {
+  kind: "payment" | "advance"; editing: FrTypeWithUsage | null; count: number;
+  onClose: () => void; onSaved: () => void;
+}) {
+  const [name, setName] = useState(editing?.name ?? "");
+  const [description, setDescription] = useState(editing?.description ?? "");
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (!name.trim()) return toast.error("Vui lòng nhập tên loại");
+    setBusy(true);
+    try {
+      await frApi.saveType(editing?.id ?? null, kind, name.trim(), description.trim(), editing?.active ?? true, editing?.sort ?? count + 1);
+      toast.success(editing ? "Đã cập nhật loại" : "Đã thêm loại");
+      onSaved();
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{editing ? "Sửa" : "Thêm"} {kind === "advance" ? "loại tạm ứng" : "loại thanh toán"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <Field label="Tên loại *"><Input maxLength={200} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="Mô tả (nếu cần)"><Input maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
+          <Button className="w-full" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
