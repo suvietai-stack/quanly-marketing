@@ -49,9 +49,9 @@ export const navigationGroups: NavGroup[] = [
   ] },
   { label: "Kế Toán & Tài Chính", icon: BanknoteArrowDown, items: [
 { to: "/finance/incoming", label: "Tiền Về", icon: BanknoteArrowDown, perm: "finance.incoming.view" },
-{ to: "", label: "Đề Nghị Tạm Ứng", icon: Wallet, comingSoon: true },
-{ to: "", label: "Đề Nghị Thanh Toán", icon: FileText, comingSoon: true },
-{ to: "", label: "Tạm Ứng Lương", icon: BanknoteArrowDown, comingSoon: true },
+{ to: "/finance/advance", label: "Đề Nghị Tạm Ứng", icon: Wallet },
+{ to: "/finance/payment", label: "Đề Nghị Thanh Toán", icon: FileText },
+{ to: "/finance/salary", label: "Tạm Ứng Lương", icon: BanknoteArrowDown },
   ] },
   { label: "Hành Chính & Nhân Sự", icon: Users, items: [
 { to: "/leave", label: "Nghỉ phép & Đi sớm muộn", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
