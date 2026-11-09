@@ -37,7 +37,8 @@ export type PermissionGroup =
   | "Sao Sứ Việt"
   | "Quản trị Kinh doanh"
   | "Quản lý 3K"
-  | "CRM Khách Hàng";
+  | "CRM Khách Hàng"
+  | "Sale Work Zalo";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -533,6 +534,13 @@ export const PERMISSIONS: PermissionDef[] = [
   P("fr.salary.report", "Xem báo cáo tạm ứng lương", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
   P("fr.salary.settings", "Cài đặt quy trình tạm ứng lương", "Tài Chính Kế Toán", "Tạm Ứng Lương"),
 
+  // ===== Sale Work Zalo (liên kết phần mềm ngoài + kho tài khoản riêng) =====
+  P("sale_work.access", "Truy cập Sale Work Zalo", "Sale Work Zalo", "Sử dụng"),
+  P("sale_work.view_own", "Xem/sao chép thông tin đăng nhập của chính mình", "Sale Work Zalo", "Sử dụng"),
+  P("sale_work.manage_settings", "Cấu hình URL và hiển thị Sale Work", "Sale Work Zalo", "Quản trị"),
+  P("sale_work.manage_credentials", "Cấp/sửa/thu hồi tài khoản Sale Work của nhân sự", "Sale Work Zalo", "Quản trị"),
+  P("sale_work.view_audit", "Xem nhật ký quản trị Sale Work (không gồm mật khẩu)", "Sale Work Zalo", "Quản trị"),
+
   // ===== Tích hợp Marketing =====
   P("integration.facebook_leads", "Quản lý Facebook Lead Ads (kết nối Page, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Facebook Lead Ads"),
   P("integration.website_forms", "Quản lý Website Forms (thêm Website, cấp/thu hồi khóa, cấu hình Form, xem lỗi, thử lại)", "Tích hợp Marketing", "Website Forms"),
@@ -577,6 +585,9 @@ export const PERMISSION_BY_KEY: Record<string, PermissionDef> = Object.fromEntri
  */
 export const PERMISSION_DEPENDS: Record<string, PermissionKey[]> = (() => {
   const m: Record<string, PermissionKey[]> = {};
+  // ------- Sale Work Zalo -------
+  m["sale_work.view_own"] = ["sale_work.access"];
+
   // ------- Dự Án Web -------
   // Most web.* sub-permissions require web.view (module access)
   const webViewKey = "web.view";
