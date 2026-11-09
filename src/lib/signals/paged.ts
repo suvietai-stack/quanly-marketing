@@ -24,8 +24,12 @@ export async function signalCounts(filter: Record<string,unknown>,signal?:AbortS
   return data as unknown as ListCounts;
 }
 export async function signalById(id:string): Promise<Signal|null> {
-  const {data,error}=await supabase.from('opportunity_signals').select('*').eq('id',id).maybeSingle();
-  if(error)throw error;return data as Signal|null;
+  const [{data,error},{data:links,error:linkError}]=await Promise.all([
+    supabase.from('opportunity_signals').select('*').eq('id',id).maybeSingle(),
+    supabase.from('signal_label_links').select('label_id').eq('signal_id',id),
+  ]);
+  if(error)throw error;if(linkError)throw linkError;
+  return data?{...data,label_ids:(links??[]).map(l=>l.label_id)} as Signal:null;
 }
 export async function saveNote(id:string,requestId:string,note:string) {
   const {data,error}=await supabase.rpc('signal_note_save',{_id:id,_request_id:requestId,_note:note});

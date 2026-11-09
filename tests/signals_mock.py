@@ -91,7 +91,8 @@ def make_backend(rows, notes=None, labels=None, links=None, rpc=None, table=None
         elif path == 'signal_labels':
             data = labels or []
         elif path == 'signal_label_links':
-            data = links or []
+            wanted = (parse_qs(urlparse(url).query).get('signal_id') or [''])[0].replace('eq.', '')
+            data = [l for l in (links or []) if not wanted or l.get('signal_id') == wanted]
         elif path == 'catalogs':
             data = None
         elif rpc and path.startswith('rpc/'):
