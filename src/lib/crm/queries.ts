@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import type { Catalog, ReadData, DetailData, Person, ReportData, Template } from "./types";
+import type { DynamicFilter } from './fields';
 export async function crmRpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn as never, args as never);
   if (error) throw new Error(error.message);
@@ -20,11 +21,12 @@ export const catalogsQuery = (uid: string) =>
       return data as Catalog[];
     },
   });
-export const crmReadQuery = (uid: string, mine = true, owner = "", search = "", archived = false) =>
+export const crmReadQuery = (uid: string, mine = true, owner = "", search = "", archived = false, group='',segment='',priority='',filters:DynamicFilter[]=[]) =>
   queryOptions({
-    queryKey: ["crm_read", uid, mine, owner, search, archived],
+    queryKey: ["crm_read", uid, mine, owner, search, archived,group,segment,priority,filters],
     queryFn: () =>
-      crmRpc<ReadData>("crm_read", {
+      crmRpc<ReadData>("crm_read_dynamic", {
+        _group:group||null,_segment:segment||null,_priority:priority||null,_filters:filters.filter(f=>f.id),
         _mine: mine,
         _owner: owner || null,
         _search: search,
@@ -55,11 +57,13 @@ export const crmReportQuery = (
   end: string,
   mine: boolean,
   filters: Record<string, string>,
+  dynamic:DynamicFilter[]=[],
 ) =>
   queryOptions({
-    queryKey: ["crm_report", uid, start, end, mine, filters],
+    queryKey: ["crm_report", uid, start, end, mine, filters,dynamic],
     queryFn: () =>
-      crmRpc<ReportData>("crm_report_filtered", {
+      crmRpc<ReportData>("crm_report_dynamic", {
+        _filters:dynamic.filter(f=>f.id),
         _start: start,
         _end: end,
         _mine: mine,

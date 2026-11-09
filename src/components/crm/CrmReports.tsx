@@ -22,6 +22,9 @@ import { Field, Pick, SearchPick } from "./CrmControls";
 import locations from "@/lib/crm/locations.json";
 import { CrmStructureReport } from './CrmStructureReport';
 import { segmentOptions } from '@/lib/crm/classification';
+import { DynamicFilters } from './CrmFields';
+import { CrmFieldAnalysis } from './CrmFieldAnalysis';
+import { displayValue, type DynamicFilter } from '@/lib/crm/fields';
 const config = {
   count: { label: "Khách hàng", color: "var(--primary)" },
   connected: { label: "Đã kết nối", color: "var(--success)" },
@@ -44,14 +47,15 @@ export function CrmReports({
   const [customStart,setCustomStart]=useState(vnDay());
   const [customEnd,setCustomEnd]=useState(vnDay());
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [dynamic,setDynamic]=useState<DynamicFilter[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [detail, setDetail] = useState("");
   const [dimension, setDimension] = useState("group_id");
   const people = useQuery(crmPeopleQuery(uid));
   const [start, end] = period==='custom'?[customStart,customEnd]:periodRange(period, date);
-  const q = useQuery(crmReportQuery(uid, start, end, mine, filters));
+  const q = useQuery(crmReportQuery(uid, start, end, mine, filters,dynamic));
   const [ps, pe] = previousRange(start, end);
-  const previous = useQuery(crmReportQuery(uid, ps, pe, mine, filters));
+  const previous = useQuery(crmReportQuery(uid, ps, pe, mine, filters,dynamic));
   const data = q.data;
   const ratios = data ? reportRatios(data.totals) : null;
   const filter = (k: string, v: string) => setFilters((f) => ({ ...f, [k]: v, ...(k==='group'?{segment:''}:{}) }));
@@ -119,7 +123,8 @@ export function CrmReports({
             onClick={async () => {
               if (!data) return;
               try {
-                const exported = await crmRpc<ReportData>("crm_report_filtered", {
+                const exported = await crmRpc<ReportData>("crm_report_dynamic", {
+                  _filters:dynamic.filter(f=>f.id),
                   _start: start,
                   _end: end,
                   _mine: mine,
@@ -143,6 +148,7 @@ export function CrmReports({
                     Nhóm: catalogs.find((x) => x.id === c.group_id)?.name || "",
                     Tệp: catalogs.find((x)=>x.id===c.segment_id)?.name || 'Chưa phân loại tệp',
                     Sale: people.data?.find((x) => x.id === c.owner_id)?.name || "",
+                    ...Object.fromEntries((exported.catalogs||catalogs).filter(x=>x.kind==='custom_field').map(x=>[x.name,displayValue(x,c.custom_values?.[x.id])])),
                   })),
                 );
                 const workbook = r.utils.book_new();
@@ -321,6 +327,7 @@ export function CrmReports({
             </section>
           )}
           <Insights data={data} previous={previous.data} catalogs={catalogs} onDetail={setDetail} />
+          <CrmFieldAnalysis customers={data.customers} catalogs={data.catalogs||catalogs} group={filters.group||''} segment={filters.segment||''} onOpen={onOpen}/>
         </>
       )}
       {filterOpen && (
@@ -381,8 +388,9 @@ export function CrmReports({
               options={locations.provinces}
             />
           </Field>
+          <DynamicFilters catalogs={data?.catalogs||catalogs} group={filters.group||''} segment={filters.segment||''} filters={dynamic} onChange={setDynamic}/>
           <div className="crm-form-footer flex gap-2">
-            <Button variant="outline" onClick={() => setFilters({})}>
+            <Button variant="outline" onClick={() => {setFilters({});setDynamic([]);}}>
               Xóa bộ lọc
             </Button>
             <Button onClick={() => setFilterOpen(false)}>Xem báo cáo</Button>
