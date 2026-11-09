@@ -1552,7 +1552,7 @@ export function useCurrentUser() {
     const effective = baseAccess?.user_id === u?.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
     if (effective) return u?.status === 'Đang hoạt động' && effective.allowed;
     // New supported permissions fail closed while their authoritative read is unavailable.
-    if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','biz.crm_archive','biz.crm_export'].includes(key) && baseAccess?.user_id !== u?.id) return false;
+    if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use'].includes(key) && baseAccess?.user_id !== u?.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
     if (key.startsWith('biz.') || key.startsWith('k3.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
     const resolved = resolvePermKey(key);

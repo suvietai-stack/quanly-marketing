@@ -28,7 +28,7 @@ create function public.crm_can(_actor uuid,_permission text) returns boolean lan
 create function public.crm_owner_visible(_owner uuid,_department uuid default null,_at timestamptz default now()) returns boolean language sql as $$select true$$;
 insert into profiles values('${admin}','Admin','Đang hoạt động'),('${employee}','Marketing','Đang hoạt động'),('${other}','Khác','Đang hoạt động');
 insert into app_roles values('old','Role cũ',ARRAY['sale_work.access','task.view','biz.view_all']);insert into user_roles values('${employee}','old');`);
-  for (const f of ['0292_base_org_permission_storage','0293_base_org_permission_resolver','0294_base_org_permission_preview_apply','0295_base_org_permission_hardening','0296_base_org_inheritance_alias_fix']) await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
+  for (const f of ['0292_base_org_permission_storage','0293_base_org_permission_resolver','0294_base_org_permission_preview_apply','0295_base_org_permission_hardening','0296_base_org_inheritance_alias_fix','0297_base_org_permission_activation_fences']) await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   await actor(admin);
   await db.query('select base_permission_catalog_sync($1)', [[{ key: 'sale_work.access', label: 'Sale Work', module: 'SW' }, { key: 'biz.crm_use', label: 'CRM', module: 'CRM' }, { key: 'biz.view_all', label: 'Biz', module: 'Biz' }, { key: 'task.view', label: 'Task', module: 'Task' }]]);
 }, 30000);
