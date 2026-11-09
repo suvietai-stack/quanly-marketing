@@ -2087,6 +2087,13 @@
       "when": 1794218707295,
       "tag": "0297_base_org_permission_activation_fences",
       "breakpoints": true
+    },
+    {
+      "idx": 298,
+      "version": "7",
+      "when": 1794218789809,
+      "tag": "0298_base_org_permission_history_safe_validation",
+      "breakpoints": true
     }
   ]
 }
