@@ -5,7 +5,7 @@ import { beforeAll, afterAll, it, expect } from 'vitest';
 const db = new PGlite();
 const ids = Array.from({ length: 6 }, (_, i) => `00000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}`);
 const [staff, approver, accountant, outsider, admin, staff2] = ids;
-let advanceId = '', paymentId = '', salaryId = '', settleTypeId = '';
+let advanceId = '', paymentId = '', salaryId = '', settleTypeId = '', advanceTypeId = '';
 
 async function actor(id: string) { await db.query("select set_config('test.uid',$1,false)", [id]); }
 async function scalar(sql: string, args: unknown[] = []) { return (await db.query<{ v: any }>(sql, args)).rows[0]?.v; }
@@ -25,15 +25,16 @@ CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,k
     ('${approver}','fr.advance.approve'),('${approver}','fr.payment.approve'),('${approver}','fr.salary.approve'),
     ('${accountant}','fr.advance.pay'),('${accountant}','fr.payment.pay'),('${accountant}','fr.salary.pay'),('${accountant}','fr.salary.deduct'),
     ('${admin}','fr.advance.settings'),('${admin}','fr.payment.settings'),('${admin}','fr.salary.settings')`);
-  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group'])
+  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group', '0290_fr_type_catalogs'])
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   settleTypeId = await scalar("select id v from fr_payment_types where name='Quyết toán/hoàn ứng tạm ứng'");
+  advanceTypeId = await scalar("select id v from fr_payment_types where kind='advance' and name='Tạm ứng mua vật tư'");
 }, 30000);
 afterAll(() => db.close());
 
 it('save is idempotent by request key and only the owner edits drafts', async () => {
   await actor(staff);
-  const p = payload({ amount: 2000000, title: 'Tạm ứng mua vật tư', desired_date: '2026-11-15' });
+  const p = payload({ amount: 2000000, title: 'Tạm ứng mua vật tư', desired_date: '2026-11-15', advance_type_id: advanceTypeId });
   advanceId = await scalar('select fr_save(null,$1,$2,$3) v', ['advance', p, 'rk-1']);
   expect(await scalar('select fr_save(null,$1,$2,$3) v', ['advance', p, 'rk-1'])).toBe(advanceId);
   expect(await scalar('select count(*)::int v from fr_requests')).toBe(1);
@@ -294,4 +295,57 @@ it('zalo group: disabled config stays silent', async () => {
   await actor(staff2);
   expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
   expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1", [id])).toBe(0);
+});
+
+it('type catalog: per-function settings permission, no duplicate names, delete protection', async () => {
+  await actor(outsider);
+  await expect(db.query("select fr_type_save(null,'payment','X',null,true,9)")).rejects.toThrow('quyền');
+  await expect(db.query("select fr_types_with_usage('payment')")).rejects.toThrow('quyền');
+  await actor(admin);
+  await expect(db.query("select fr_type_save(null,'payment','Khác',null,true,9)")).rejects.toThrow('trùng tên');
+  const tid = await scalar("select fr_type_save(null,'payment','Chi phí dịch vụ','DV',true,9) v");
+  expect(tid).toBeTruthy();
+  // Hai chức năng độc lập: cùng tên ở danh mục tạm ứng vẫn thêm được
+  const aid = await scalar("select fr_type_save(null,'advance','Chi phí dịch vụ',null,true,9) v");
+  expect(aid).toBeTruthy();
+  const usage = await scalar("select fr_types_with_usage('payment') v");
+  expect((usage as any[]).find((t) => t.id === settleTypeId).sys_code).toBe('settle');
+  // Xóa loại chưa dùng được; loại gắn nghiệp vụ hệ thống hoặc đã có đề nghị thì không
+  await db.query('select fr_type_delete($1)', [aid]);
+  await expect(db.query('select fr_type_delete($1)', [settleTypeId])).rejects.toThrow('hệ thống');
+  const usedId = await scalar("select id v from fr_payment_types where name='Chi phí hoạt động công ty'");
+  await expect(db.query('select fr_type_delete($1)', [usedId])).rejects.toThrow('ngừng sử dụng');
+  // Ngừng dùng → không tạo đề nghị mới với loại đó
+  await db.query("select fr_type_save($1,'payment','Chi phí dịch vụ','DV',false,9)", [tid]);
+  await actor(staff);
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    amount: 100, title: 'Chi dịch vụ', payment_type_id: tid, payee_name: 'X',
+    lines: [{ name: 'Dịch vụ', qty: 1, unit_price: 100 }],
+  })])).rejects.toThrow('ngừng sử dụng');
+});
+
+it('other type requires free-text label; rename does not break settle detection', async () => {
+  const otherId = await scalar("select id v from fr_payment_types where kind='payment' and sys_code='other'");
+  await actor(admin);
+  await db.query("select fr_type_save($1,'payment','Quyết toán tạm ứng (đổi tên)',null,true,4)", [settleTypeId]);
+  await actor(staff);
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    amount: 100, title: 'Chi khác', payment_type_id: otherId, payee_name: 'X',
+    lines: [{ name: 'Khoản khác', qty: 1, unit_price: 100 }],
+  })])).rejects.toThrow('loại cụ thể');
+  // Đổi tên xong loại quyết toán vẫn bắt buộc chọn khoản tạm ứng
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    amount: 100, title: 'QT', payment_type_id: settleTypeId, payee_name: 'X',
+    lines: [{ name: 'QT', qty: 1, unit_price: 100 }],
+  })])).rejects.toThrow('quyết toán');
+  // Tạm ứng mới bắt buộc chọn loại
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['advance', payload({ amount: 100, title: 'TU thiếu loại' })])).rejects.toThrow('loại tạm ứng');
+});
+
+it('report groups by dynamic type including usage counts', async () => {
+  await actor(admin);
+  const r = await scalar("select fr_report('advance',null,null) v");
+  const row = (r.by_type as any[]).find((t) => t.name === 'Tạm ứng mua vật tư');
+  expect(Number(row.count)).toBe(1);
+  expect(Number(row.paid)).toBe(2000000);
 });

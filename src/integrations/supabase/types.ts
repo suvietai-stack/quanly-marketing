@@ -3787,25 +3787,34 @@ export type Database = {
           active: boolean
           created_at: string
           created_by: string | null
+          description: string | null
           id: string
+          kind: string
           name: string
           sort: number
+          sys_code: string | null
         }
         Insert: {
           active?: boolean
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
+          kind?: string
           name: string
           sort?: number
+          sys_code?: string | null
         }
         Update: {
           active?: boolean
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
+          kind?: string
           name?: string
           sort?: number
+          sys_code?: string | null
         }
         Relationships: []
       }
@@ -3866,6 +3875,7 @@ export type Database = {
       fr_requests: {
         Row: {
           advance_id: string | null
+          advance_type_id: string | null
           amount: number
           approved_at: string | null
           attachments: Json
@@ -3880,6 +3890,7 @@ export type Database = {
           invoice_no: string | null
           kind: string
           note: string | null
+          other_label: string | null
           paid_amount: number
           paid_at: string | null
           paid_by: string | null
@@ -3902,6 +3913,7 @@ export type Database = {
         }
         Insert: {
           advance_id?: string | null
+          advance_type_id?: string | null
           amount: number
           approved_at?: string | null
           attachments?: Json
@@ -3916,6 +3928,7 @@ export type Database = {
           invoice_no?: string | null
           kind: string
           note?: string | null
+          other_label?: string | null
           paid_amount?: number
           paid_at?: string | null
           paid_by?: string | null
@@ -3938,6 +3951,7 @@ export type Database = {
         }
         Update: {
           advance_id?: string | null
+          advance_type_id?: string | null
           amount?: number
           approved_at?: string | null
           attachments?: Json
@@ -3952,6 +3966,7 @@ export type Database = {
           invoice_no?: string | null
           kind?: string
           note?: string | null
+          other_label?: string | null
           paid_amount?: number
           paid_at?: string | null
           paid_by?: string | null
@@ -3978,6 +3993,13 @@ export type Database = {
             columns: ["advance_id"]
             isOneToOne: false
             referencedRelation: "fr_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fr_requests_advance_type_id_fkey"
+            columns: ["advance_type_id"]
+            isOneToOne: false
+            referencedRelation: "fr_payment_types"
             referencedColumns: ["id"]
           },
           {
@@ -9839,6 +9861,19 @@ export type Database = {
         }[]
       }
       fr_submit: { Args: { _id: string }; Returns: string }
+      fr_type_delete: { Args: { _id: string }; Returns: undefined }
+      fr_type_save: {
+        Args: {
+          _active: boolean
+          _description: string
+          _id: string
+          _kind: string
+          _name: string
+          _sort: number
+        }
+        Returns: string
+      }
+      fr_types_with_usage: { Args: { _kind: string }; Returns: Json }
       fr_zalo_can_manage: { Args: { _kind: string }; Returns: boolean }
       fr_zalo_group_save: {
         Args: {

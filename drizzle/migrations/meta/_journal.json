@@ -2031,6 +2031,13 @@
       "when": 1794212631765,
       "tag": "0289_fr_zalo_group",
       "breakpoints": true
+    },
+    {
+      "idx": 290,
+      "version": "7",
+      "when": 1794213083623,
+      "tag": "0290_fr_type_catalogs",
+      "breakpoints": true
     }
   ]
 }

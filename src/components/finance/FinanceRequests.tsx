@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { frApi, type FrRequest, type FrStep, type FrPaymentType, type FrSettleOption } from "@/lib/financeRequests/api";
+import { frApi, type FrRequest, type FrStep, type FrTypeWithUsage, type FrSettleOption } from "@/lib/financeRequests/api";
 import {
   FR_KIND_LABEL, FR_STATUS_LABEL, FR_STATUS_VARIANT, FR_QUICK_FILTERS, quickFilterStatuses,
   vnd, parseAmount, fmtAmountInput, frEditable, frCancellable, frRemainingToPay,
@@ -25,8 +25,6 @@ import { FinanceZaloSettings } from "@/components/finance/FinanceZaloSettings";
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
 const fmtDateTime = (s: string | null | undefined) => (s ? new Date(s).toLocaleString("vi-VN") : "—");
-
-const SETTLE_TYPE = "Quyết toán/hoàn ứng tạm ứng";
 
 const chip = (on: boolean) =>
   `shrink-0 h-9 px-3 rounded-full border text-sm whitespace-nowrap transition-colors ${on ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-accent"}`;
@@ -205,6 +203,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [supplierBank, setSupplierBank] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [salaryPeriod, setSalaryPeriod] = useState("");
+  const [otherLabel, setOtherLabel] = useState("");
   const [attachments, setAttachments] = useState<{ name: string; path?: string; url?: string }[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [lines, setLines] = useState<FrLine[]>([]);
@@ -212,12 +211,16 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [busy, setBusy] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
 
-  const types = useQuery({ queryKey: ["fr", "types"], queryFn: frApi.paymentTypes, enabled: open && kind === "payment" });
+  const typeKind = kind === "advance" ? "advance" : "payment";
+  const types = useQuery({ queryKey: ["fr", "types", typeKind], queryFn: () => frApi.paymentTypes(typeKind), enabled: open && kind !== "salary_advance" });
   const settleOpts = useQuery({ queryKey: ["fr", "settle-opts"], queryFn: frApi.settleOptions, enabled: open && kind === "payment" });
   const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog, enabled: open && kind === "payment" });
   const selectedType = (types.data ?? []).find((t) => t.id === typeId);
-  const isSettle = selectedType?.name === SETTLE_TYPE;
-  const isSupplier = selectedType?.name === "Thanh toán nhà cung cấp/đối tác";
+  // Nghiệp vụ đặc biệt nhận diện qua mã hệ thống ổn định — đổi tên danh mục không ảnh hưởng xử lý.
+  const isSettle = selectedType?.sys_code === "settle";
+  const isSupplier = selectedType?.sys_code === "supplier";
+  const isOther = selectedType?.sys_code === "other";
+  const typeOptions = (types.data ?? []).filter((t) => t.active || t.id === typeId);
 
   useEffect(() => {
     if (!open) return;
@@ -227,7 +230,8 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       setAmount(fmtAmountInput(String(editing.amount)));
       setTitle(editing.title); setDetail(editing.detail ?? ""); setDesiredDate(editing.desired_date ?? "");
       setPayeeName(editing.payee_name ?? ""); setPayeeInfo(editing.payee_info ?? ""); setNote(editing.note ?? "");
-      setTypeId(editing.payment_type_id ?? ""); setAdvanceId(editing.advance_id ?? "");
+      setTypeId((kind === "advance" ? editing.advance_type_id : editing.payment_type_id) ?? ""); setAdvanceId(editing.advance_id ?? "");
+      setOtherLabel(editing.other_label ?? "");
       setSupplierName(editing.supplier_name ?? ""); setSupplierTax(editing.supplier_tax ?? "");
       setSupplierBank(editing.supplier_bank ?? ""); setInvoiceNo(editing.invoice_no ?? "");
       setSalaryPeriod(editing.salary_period ?? "");
@@ -236,7 +240,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
     } else {
       setAmount(""); setTitle(""); setDetail(""); setDesiredDate(""); setPayeeName(""); setPayeeInfo("");
       setNote(""); setTypeId(""); setAdvanceId(""); setSupplierName(""); setSupplierTax(""); setSupplierBank("");
-      setInvoiceNo(""); setSalaryPeriod(""); setAttachments([]);
+      setInvoiceNo(""); setSalaryPeriod(""); setOtherLabel(""); setAttachments([]);
       setLines(kind === "payment" ? [emptyLine()] : []);
     }
     setLinkUrl("");
@@ -257,7 +261,10 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const payload = () => ({
     amount: effectiveAmount, title, detail, desired_date: desiredDate || null,
     payee_name: payeeName, payee_info: payeeInfo, note,
-    payment_type_id: typeId || null, advance_id: isSettle ? advanceId || null : null,
+    payment_type_id: kind === "payment" ? typeId || null : null,
+    advance_type_id: kind === "advance" ? typeId || null : null,
+    other_label: isOther ? otherLabel.trim() : null,
+    advance_id: isSettle ? advanceId || null : null,
     supplier_name: supplierName, supplier_tax: supplierTax, supplier_bank: supplierBank,
     invoice_no: invoiceNo, salary_period: salaryPeriod, attachments,
     // Backend tự tính lại thành tiền/tổng tiền từ bảng kê, không tin số client gửi.
@@ -273,7 +280,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
     }
     const err = frValidate(kind, {
       amount: effectiveAmount, title, paymentTypeId: typeId, payeeName,
-      advanceId, salaryPeriod, settleTypeName: selectedType?.name,
+      advanceId, salaryPeriod, isSettle, isOther, otherLabel,
     });
     if (err) return toast.error(err);
     setBusy(true);
@@ -326,9 +333,14 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
               <Field label="Loại thanh toán *">
                 <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
                   <option value="">— Chọn loại —</option>
-                  {(types.data ?? []).filter((t) => t.active).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {typeOptions.map((t) => <option key={t.id} value={t.id}>{t.name}{t.active ? "" : " (đã ngừng)"}</option>)}
                 </select>
               </Field>
+              {isOther && (
+                <Field label="Nhập loại cụ thể *">
+                  <Input maxLength={200} value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} placeholder="VD: Chi phí thuê thiết bị" />
+                </Field>
+              )}
               {isSettle && (
                 <Field label="Khoản tạm ứng cần quyết toán *">
                   <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={advanceId} onChange={(e) => setAdvanceId(e.target.value)}>
@@ -356,6 +368,17 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
           )}
           {kind === "advance" && (
             <>
+              <Field label="Loại tạm ứng *">
+                <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+                  <option value="">— Chọn loại —</option>
+                  {typeOptions.map((t) => <option key={t.id} value={t.id}>{t.name}{t.active ? "" : " (đã ngừng)"}</option>)}
+                </select>
+              </Field>
+              {isOther && (
+                <Field label="Nhập loại cụ thể *">
+                  <Input maxLength={200} value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} placeholder="VD: Tạm ứng phục vụ khai trương showroom" />
+                </Field>
+              )}
               <Field label="Người/đơn vị nhận tiền (nếu khác người đề nghị)">
                 <Input maxLength={200} value={payeeName} onChange={(e) => setPayeeName(e.target.value)} />
               </Field>
@@ -428,6 +451,8 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const steps = useQuery({ queryKey: ["fr", "steps", id], queryFn: () => frApi.steps(id) });
   const events = useQuery({ queryKey: ["fr", "events", id], queryFn: () => frApi.events(id) });
   const reqLines = useQuery({ queryKey: ["fr", "lines", id], queryFn: () => frApi.lines(id), enabled: kind === "payment" });
+  const detailTypeKind = kind === "advance" ? "advance" : "payment";
+  const types = useQuery({ queryKey: ["fr", "types", detailTypeKind], queryFn: () => frApi.paymentTypes(detailTypeKind), enabled: kind !== "salary_advance" });
   const [comment, setComment] = useState("");
   const [payOpen, setPayOpen] = useState(false);
   const [deductOpen, setDeductOpen] = useState(false);
@@ -444,6 +469,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   if (!r) return <Sheet open onOpenChange={(o) => !o && onClose()}><SheetContent className="w-full sm:max-w-xl overflow-y-auto"><p className="p-4 text-sm text-muted-foreground">Đang tải…</p></SheetContent></Sheet>;
 
   const isOwner = r.requester_id === uid;
+  const typeName = (types.data ?? []).find((t) => t.id === (kind === "advance" ? r.advance_type_id : r.payment_type_id))?.name;
   const currentStep = (steps.data ?? []).find((s) => s.step_no === r.current_step);
   const canDecide = r.status === "pending" && !!currentStep &&
     (currentStep.approver_id === uid || (currentStep.perm ? canDecidePerm(currentStep.perm) : false)) &&
@@ -475,6 +501,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
             {r.detail && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.detail}</p>}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <span className="text-muted-foreground">Ngày tạo</span><span>{fmtDateTime(r.created_at)}</span>
+              {typeName && <><span className="text-muted-foreground">{kind === "advance" ? "Loại tạm ứng" : "Loại thanh toán"}</span><span>{typeName}{r.other_label ? ` — ${r.other_label}` : ""}</span></>}
               {r.desired_date && <><span className="text-muted-foreground">Ngày mong muốn</span><span>{fmtDate(r.desired_date)}</span></>}
               {r.payee_name && <><span className="text-muted-foreground">Người nhận tiền</span><span>{r.payee_name}</span></>}
               {r.payee_info && <><span className="text-muted-foreground">Thông tin nhận</span><span>{r.payee_info}</span></>}
@@ -715,6 +742,22 @@ function ReportTab({ kind }: { kind: FrKind }) {
           {(d.by_requester as any[]).length === 0 && <p className="text-sm text-muted-foreground">Chưa có dữ liệu.</p>}
         </div>
       </div>
+      {kind !== "salary_advance" && Array.isArray(d.by_type) && d.by_type.length > 0 && (
+        <div className="rounded-lg border p-3 space-y-2">
+          <div className="font-semibold text-sm">Theo loại</div>
+          {(d.by_type as any[]).map((t) => (
+            <div key={t.name} className="text-sm space-y-0.5">
+              <div className="flex justify-between gap-2">
+                <span className="truncate">{t.name}</span>
+                <span className="shrink-0"><b>{t.count}</b> đề nghị — {vnd(t.amount)} ({Number(d.amount) > 0 ? Math.round((Number(t.amount) / Number(d.amount)) * 100) : 0}%)</span>
+              </div>
+              <div className="flex justify-between gap-2 text-xs text-muted-foreground">
+                <span>Đã duyệt {vnd(t.approved)}</span><span>Đã chi {vnd(t.paid)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {kind === "payment" && Array.isArray(d.by_line) && d.by_line.length > 0 && (
         <div className="rounded-lg border p-3 space-y-1">
           <div className="font-semibold text-sm">Theo khoản chi</div>
@@ -815,7 +858,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
         </div>
       )}
 
-      {kind === "payment" && <PaymentTypesManager />}
+      {kind !== "salary_advance" && <TypeCatalogManager kind={kind === "advance" ? "advance" : "payment"} />}
       {kind === "payment" && <LineCatalogManager />}
 
       <FinanceZaloSettings kind={kind} />
@@ -825,42 +868,99 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
   );
 }
 
-function PaymentTypesManager() {
+function TypeCatalogManager({ kind }: { kind: "payment" | "advance" }) {
   const qc = useQueryClient();
-  const types = useQuery({ queryKey: ["fr", "types"], queryFn: frApi.paymentTypes });
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
-  const add = async () => {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      await frApi.savePaymentType(null, name, true, (types.data ?? []).length + 1);
-      setName("");
-      qc.invalidateQueries({ queryKey: ["fr", "types"] });
-      toast.success("Đã thêm loại thanh toán");
-    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  const types = useQuery({ queryKey: ["fr", "types-usage", kind], queryFn: () => frApi.typesWithUsage(kind) });
+  const [editing, setEditing] = useState<FrTypeWithUsage | "new" | null>(null);
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["fr", "types-usage", kind] });
+    qc.invalidateQueries({ queryKey: ["fr", "types"] });
   };
-  const toggle = async (t: FrPaymentType) => {
+  const label = kind === "advance" ? "loại tạm ứng" : "loại thanh toán";
+  const move = async (t: FrTypeWithUsage, dir: -1 | 1) => {
+    const list = types.data ?? [];
+    const i = list.findIndex((x) => x.id === t.id);
+    const j = i + dir;
+    if (j < 0 || j >= list.length) return;
     try {
-      await frApi.savePaymentType(t.id, t.name, !t.active, t.sort);
-      qc.invalidateQueries({ queryKey: ["fr", "types"] });
+      await frApi.saveType(t.id, kind, t.name, t.description ?? "", t.active, list[j].sort);
+      await frApi.saveType(list[j].id, kind, list[j].name, list[j].description ?? "", list[j].active, t.sort);
+      refresh();
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const toggle = async (t: FrTypeWithUsage) => {
+    try {
+      await frApi.saveType(t.id, kind, t.name, t.description ?? "", !t.active, t.sort);
+      refresh();
+      toast.success(t.active ? "Đã ngừng sử dụng" : "Đã kích hoạt lại");
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const remove = async (t: FrTypeWithUsage) => {
+    if (!window.confirm(`Xóa ${label} "${t.name}"?`)) return;
+    try {
+      await frApi.deleteType(t.id);
+      refresh();
+      toast.success("Đã xóa loại");
     } catch (e) { toast.error(errMsg(e)); }
   };
   return (
     <div className="rounded-lg border p-4 space-y-3">
-      <div className="font-semibold">Danh mục loại thanh toán</div>
-      {(types.data ?? []).map((t) => (
-        <div key={t.id} className="flex items-center gap-2 text-sm">
-          <FileText className="h-4 w-4 text-muted-foreground" />
-          <span className={`flex-1 ${t.active ? "" : "line-through text-muted-foreground"}`}>{t.name}</span>
-          <Button size="sm" variant="outline" onClick={() => toggle(t)}>{t.active ? "Ẩn" : "Hiện"}</Button>
+      <div className="font-semibold">Danh mục {label}</div>
+      <p className="text-sm text-muted-foreground">Danh mục động — thêm/sửa xong biểu mẫu và báo cáo tự nhận, không cần sửa hệ thống.</p>
+      {(types.data ?? []).map((t, i) => (
+        <div key={t.id} className="flex flex-wrap items-center gap-2 text-sm rounded-md border p-2">
+          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="flex-1 min-w-32">
+            <div className={t.active ? "" : "line-through text-muted-foreground"}>{t.name}</div>
+            {t.description && <div className="text-xs text-muted-foreground truncate">{t.description}</div>}
+          </div>
+          <span className="text-xs text-muted-foreground shrink-0">{t.usage} đề nghị</span>
+          {!t.active && <Badge variant="secondary" className="shrink-0">Ngừng dùng</Badge>}
+          <div className="flex gap-1 shrink-0">
+            <Button size="icon" variant="ghost" aria-label="Lên" disabled={i === 0} onClick={() => move(t, -1)}><ArrowUp className="h-4 w-4" /></Button>
+            <Button size="icon" variant="ghost" aria-label="Xuống" disabled={i === (types.data ?? []).length - 1} onClick={() => move(t, 1)}><ArrowDown className="h-4 w-4" /></Button>
+            <Button size="sm" variant="outline" onClick={() => setEditing(t)}>Sửa</Button>
+            <Button size="sm" variant="outline" onClick={() => toggle(t)}>{t.active ? "Ngừng" : "Dùng lại"}</Button>
+            <Button size="sm" variant="outline" disabled={t.usage > 0 || !!t.sys_code}
+              title={t.sys_code ? "Loại gắn nghiệp vụ hệ thống — chỉ ngừng sử dụng" : t.usage > 0 ? "Đã có đề nghị sử dụng — chỉ ngừng sử dụng" : "Xóa loại"}
+              onClick={() => remove(t)}>Xóa</Button>
+          </div>
         </div>
       ))}
-      <div className="flex gap-2">
-        <Input placeholder="Tên loại mới" value={name} onChange={(e) => setName(e.target.value)} />
-        <Button variant="outline" disabled={busy} onClick={add}>Thêm</Button>
-      </div>
+      <Button variant="outline" size="sm" onClick={() => setEditing("new")}><Plus className="h-4 w-4 mr-1" />Thêm loại</Button>
+      {editing && <TypeEditDialog kind={kind} editing={editing === "new" ? null : editing} count={(types.data ?? []).length}
+        onClose={() => setEditing(null)} onSaved={() => { setEditing(null); refresh(); }} />}
     </div>
+  );
+}
+
+function TypeEditDialog({ kind, editing, count, onClose, onSaved }: {
+  kind: "payment" | "advance"; editing: FrTypeWithUsage | null; count: number;
+  onClose: () => void; onSaved: () => void;
+}) {
+  const [name, setName] = useState(editing?.name ?? "");
+  const [description, setDescription] = useState(editing?.description ?? "");
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (!name.trim()) return toast.error("Vui lòng nhập tên loại");
+    setBusy(true);
+    try {
+      await frApi.saveType(editing?.id ?? null, kind, name.trim(), description.trim(), editing?.active ?? true, editing?.sort ?? count + 1);
+      toast.success(editing ? "Đã cập nhật loại" : "Đã thêm loại");
+      onSaved();
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{editing ? "Sửa" : "Thêm"} {kind === "advance" ? "loại tạm ứng" : "loại thanh toán"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <Field label="Tên loại *"><Input maxLength={200} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="Mô tả (nếu cần)"><Input maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
+          <Button className="w-full" disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
