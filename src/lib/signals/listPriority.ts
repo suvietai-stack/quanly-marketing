@@ -32,14 +32,9 @@ export function compareIntakePriority(a: Signal, b: Signal): number {
   return (b.list_activity_at ?? b.updated_at).localeCompare(a.list_activity_at ?? a.updated_at) || a.id.localeCompare(b.id);
 }
 
-/** Work and legacy intake selections share one ordering; progression dates are authoritative. */
+/** Voluntary notes have no deadline rank; legacy selection stays compatible. */
 export function workPriority(s: Signal, deadline?: DeadlineRow): number {
-  const intake = intakePriority(s);
-  if (intake === 3) return 6;
-  if (intake < 2) return intake;
-  // A refreshed deadline response can update the ordering before the list refetch completes.
-  if (deadline) return deadline.deadline_state === 'overdue' ? 2 : deadline.deadline_state === 'today' ? 3 : deadline.deadline_state === 'soon' ? 4 : 5;
-  return s.list_work_priority ?? 5;
+  return intakePriority(s);
 }
 
 export function compareWorkPriority(a: Signal, b: Signal, deadlines: Record<string, DeadlineRow> = {}): number {
@@ -47,7 +42,5 @@ export function compareWorkPriority(a: Signal, b: Signal, deadlines: Record<stri
   const difference = rank - workPriority(b, deadlines[b.id]);
   if (difference) return difference;
   if (rank < 2) return waitingSince(a).localeCompare(waitingSince(b)) || a.id.localeCompare(b.id);
-  const due = (s: Signal) => deadlines[s.id]?.due_on ?? s.list_progression_due_on ?? '9999-12-31';
-  return due(a).localeCompare(due(b))
-    || (b.list_activity_at ?? b.updated_at).localeCompare(a.list_activity_at ?? a.updated_at) || a.id.localeCompare(b.id);
+  return (b.list_activity_at ?? b.updated_at).localeCompare(a.list_activity_at ?? a.updated_at) || a.id.localeCompare(b.id);
 }
