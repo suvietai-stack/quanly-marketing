@@ -34,6 +34,11 @@ export type FrStep = {
 
 export type FrEvent = { id: string; request_id: string; actor_id: string | null; action: string; payload: any; created_at: string };
 export type FrPaymentType = { id: string; name: string; active: boolean; sort: number };
+export type FrLineCatalog = { id: string; name: string; active: boolean; sort: number };
+export type FrRequestLine = {
+  id: string; request_id: string; line_no: number; name: string; catalog_id: string | null;
+  unit: string | null; qty: number; unit_price: number; line_total: number;
+};
 export type FrSettings = { kind: FrKind; flow: { label: string; perm?: string; user_id?: string }[]; limits: Record<string, any> };
 export type FrSettleOption = { id: string; code: string; title: string; paid_amount: number; settled_amount: number; remaining: number };
 

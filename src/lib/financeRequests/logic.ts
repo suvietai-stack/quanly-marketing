@@ -95,6 +95,43 @@ export const frStatusesForKind = (kind: FrKind): FrStatus[] => {
   return ["draft", "needs_config", "pending", "info_requested", "rejected", "awaiting_payment", "paid", "done", "cancelled"];
 };
 
+// ===== Bảng kê khoản chi (Đề Nghị Thanh Toán; component dùng chung, có thể tái dùng cho Tạm Ứng) =====
+
+export type FrLine = {
+  id?: string;
+  name: string;
+  catalog_id?: string | null;
+  unit: string;
+  qty: number;
+  unit_price: number;
+};
+
+export const emptyLine = (): FrLine => ({ name: "", catalog_id: null, unit: "", qty: 1, unit_price: 0 });
+
+/** Thành tiền một dòng = SL × Đơn giá (làm tròn đồng). */
+export const lineTotal = (l: Pick<FrLine, "qty" | "unit_price">) => Math.round((l.qty || 0) * (l.unit_price || 0));
+
+/** Dòng hoàn toàn trống (chưa nhập gì) — bỏ qua khi lưu. */
+export const isBlankLine = (l: FrLine) => !l.name.trim() && !(l.unit_price > 0);
+
+/** Dòng hợp lệ: có tên, SL > 0, đơn giá > 0. */
+export const isValidLine = (l: FrLine) => !!l.name.trim() && l.qty > 0 && l.unit_price > 0;
+
+/** Tổng tiền đề nghị = tổng thành tiền các dòng hợp lệ. */
+export const linesTotal = (ls: FrLine[]) => ls.filter(isValidLine).reduce((s, l) => s + lineTotal(l), 0);
+
+/** Kiểm tra bảng kê trước khi lưu (client-side, backend vẫn kiểm lại và tự tính tổng). */
+export function validateLines(ls: FrLine[]): string | null {
+  const filled = ls.filter((l) => !isBlankLine(l));
+  if (!filled.length) return "Vui lòng nhập ít nhất một khoản chi hợp lệ.";
+  for (const l of filled) {
+    if (!l.name.trim()) return "Mỗi khoản chi cần có tên.";
+    if (!(l.qty > 0)) return `Số lượng của "${l.name}" phải lớn hơn 0.`;
+    if (!(l.unit_price > 0)) return `Đơn giá của "${l.name}" phải lớn hơn 0.`;
+  }
+  return null;
+}
+
 /** Kiểm tra hợp lệ trước khi lưu (client-side, backend vẫn kiểm lại). */
 export function frValidate(kind: FrKind, v: {
   amount: number; title: string; paymentTypeId?: string; payeeName?: string;
