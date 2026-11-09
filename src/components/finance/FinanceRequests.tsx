@@ -708,6 +708,17 @@ function ReportTab({ kind }: { kind: FrKind }) {
           {(d.by_requester as any[]).length === 0 && <p className="text-sm text-muted-foreground">Chưa có dữ liệu.</p>}
         </div>
       </div>
+      {kind === "payment" && Array.isArray(d.by_line) && d.by_line.length > 0 && (
+        <div className="rounded-lg border p-3 space-y-1">
+          <div className="font-semibold text-sm">Theo khoản chi</div>
+          {(d.by_line as any[]).map((l) => (
+            <div key={l.name} className="flex justify-between text-sm gap-2">
+              <span className="truncate">{l.name}</span>
+              <span className="shrink-0"><b>{l.count}</b> khoản — {vnd(l.amount)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -798,6 +809,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
       )}
 
       {kind === "payment" && <PaymentTypesManager />}
+      {kind === "payment" && <LineCatalogManager />}
 
       <Button disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu cài đặt"}</Button>
     </div>
