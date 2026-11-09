@@ -17,7 +17,9 @@ export const Route = createFileRoute("/api/public/zalo/dispatch-cron")({
           const r = await s.processPending(30);
           const g = await import("@/lib/leave/zaloGroup.server");
           const lg = await g.processLeaveGroup(10).catch(() => ({ processed: 0 }));
-          return Response.json({ ...r, leaveGroup: lg });
+          const f = await import("@/lib/financeRequests/zaloGroup.server");
+          const fg = await f.processFrGroup(10).catch(() => ({ processed: 0 }));
+          return Response.json({ ...r, leaveGroup: lg, frGroup: fg });
         }
         catch { return Response.json({ ok: false }, { status: 500 }); }
       },
