@@ -357,8 +357,8 @@ export function Crm() {
               { id: "archived", name: "Đã lưu trữ" },
             ]}
           />
+          <DynamicFilters catalogs={cats} group={group} segment={segment} filters={dynamic} onChange={setDynamic}/>
           <div className="crm-form-footer flex gap-2">
-            <DynamicFilters catalogs={cats} group={group} segment={segment} filters={dynamic} onChange={setDynamic}/>
             <Button
               variant="outline"
               onClick={() => {

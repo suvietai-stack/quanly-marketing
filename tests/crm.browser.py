@@ -18,7 +18,7 @@ async def main():
    async def rpc(route):
     nonlocal fail
     name=route.request.url.split('/')[-1];args=route.request.post_data_json or {};result=[]
-    if name=='crm_read':result={'customers':customers,'schedules':[],'contacts':[],'server_now':'2026-11-06T07:00:00Z'}
+    if name in ['crm_read','crm_read_dynamic']:result={'customers':customers,'schedules':[],'contacts':[],'server_now':'2026-11-06T07:00:00Z'}
     elif name=='crm_people':result=[{'id':UID,'name':'Sale kiểm tra cách ly'}]
     elif name=='crm_customer_save':
      writes.append(args['_data'])
@@ -27,7 +27,7 @@ async def main():
      d=args['_data'];customers.append({'id':CID,'code':'CRM-TEST','owner_id':UID,'name':d['name'],'phone':d.get('phone',''),'profile_kind':d['profile_kind'],'related_ids':[],'details':{},'revision':1,'created_at':'2026-11-06T07:00:00Z','updated_at':'2026-11-06T07:00:00Z','archived_at':None});result=CID
     elif name=='crm_detail':result={'customer':customers[0],'contacts':[],'locations':[],'schedules':[],'interactions':interactions,'events':[],'can_edit':True}
     elif name=='crm_interaction_save':interactions.append({'id':'i','customer_id':CID,'channel':'phone','outcome_id':'o','content':args['_data']['content'],'connected':True,'completed':True,'happened_at':'2026-11-06T07:00:00Z','actor_id':UID,'owner_id':UID});result='i'
-    elif name in ['crm_report','crm_export','crm_report_filtered']:result={'customers':customers,'schedules':[],'interactions':interactions,'totals':{'customers':len(customers),'new_customers':len(customers),'priority_customers':0,'scheduled_customers':0,'due':0,'processed':0,'on_time':0,'overdue':0,'overdue_customers':0,'priority_overdue':0,'attempts':len(interactions),'connected':len(interactions)},'start':'2026-11-01','end':'2026-11-30','as_of':'2026-11-06T07:00:00Z','server_now':'2026-11-06T07:00:00Z'}
+    elif name in ['crm_report','crm_export','crm_report_filtered','crm_report_dynamic']:result={'customers':customers,'schedules':[],'interactions':interactions,'totals':{'customers':len(customers),'new_customers':len(customers),'priority_customers':0,'scheduled_customers':0,'due':0,'processed':0,'on_time':0,'overdue':0,'overdue_customers':0,'priority_overdue':0,'attempts':len(interactions),'connected':len(interactions)},'start':'2026-11-01','end':'2026-11-30','as_of':'2026-11-06T07:00:00Z','server_now':'2026-11-06T07:00:00Z'}
     await route.fulfill(content_type='application/json',body=json.dumps(result))
    await page.route('**/rest/v1/rpc/**',rpc)
    await page.goto('http://localhost:8080/crm-fixture')
