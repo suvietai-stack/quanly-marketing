@@ -17,7 +17,9 @@ import {
   FR_KIND_LABEL, FR_STATUS_LABEL, FR_STATUS_VARIANT, FR_QUICK_FILTERS, quickFilterStatuses,
   vnd, parseAmount, fmtAmountInput, frEditable, frCancellable, frRemainingToPay,
   frAdvanceRemaining, frSalaryRemaining, frValidate, type FrKind, type FrStatus,
+  emptyLine, isBlankLine, linesTotal, validateLines, type FrLine,
 } from "@/lib/financeRequests/logic";
+import { ExpenseLinesEditor, ExpenseLinesView } from "@/components/finance/ExpenseLines";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
@@ -196,13 +198,16 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [supplierBank, setSupplierBank] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [salaryPeriod, setSalaryPeriod] = useState("");
-  const [attachments, setAttachments] = useState<{ name: string; path: string }[]>([]);
+  const [attachments, setAttachments] = useState<{ name: string; path?: string; url?: string }[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [lines, setLines] = useState<FrLine[]>([]);
+  const [linkUrl, setLinkUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
 
   const types = useQuery({ queryKey: ["fr", "types"], queryFn: frApi.paymentTypes, enabled: open && kind === "payment" });
   const settleOpts = useQuery({ queryKey: ["fr", "settle-opts"], queryFn: frApi.settleOptions, enabled: open && kind === "payment" });
+  const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog, enabled: open && kind === "payment" });
   const selectedType = (types.data ?? []).find((t) => t.id === typeId);
   const isSettle = selectedType?.name === SETTLE_TYPE;
   const isSupplier = selectedType?.name === "Thanh toán nhà cung cấp/đối tác";
