@@ -478,15 +478,17 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
             </div>
             {(r.attachments as any[])?.length > 0 && (
               <div className="space-y-1 pt-1">
-                {(r.attachments as any[]).filter((a) => a?.path).map((a) => (
-                  <button key={a.path} onClick={() => openAttachment(a.path)} className="flex items-center gap-1 text-sm text-primary hover:underline">
-                    <Paperclip className="h-3 w-3" />{a.name}
+                {(r.attachments as any[]).filter((a) => a?.path || a?.url).map((a, i) => (
+                  <button key={a.path ?? a.url ?? i} onClick={() => openAttachment(a)} className="flex items-center gap-1 text-sm text-primary hover:underline">
+                    <Paperclip className="h-3 w-3" />{a.name}{a.url ? " (liên kết)" : ""}
                   </button>
                 ))}
               </div>
             )}
             {r.note && <p className="text-sm text-muted-foreground">Ghi chú: {r.note}</p>}
           </div>
+
+          {kind === "payment" && (reqLines.data ?? []).length > 0 && <ExpenseLinesView lines={reqLines.data!} />}
 
           {(r.paid_amount > 0 || r.status === "awaiting_payment") && (
             <div className="rounded-lg border p-3 space-y-1 text-sm">
