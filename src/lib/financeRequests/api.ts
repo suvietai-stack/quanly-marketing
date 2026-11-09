@@ -22,6 +22,7 @@ export type FrRequest = {
   amount: number; title: string; detail: string | null; desired_date: string | null;
   payee_name: string | null; payee_info: string | null; attachments: any[]; note: string | null;
   payment_type_id: string | null; advance_id: string | null;
+  advance_type_id: string | null; other_label: string | null;
   supplier_name: string | null; supplier_tax: string | null; supplier_bank: string | null; invoice_no: string | null;
   salary_period: string | null; status: FrStatus; current_step: number;
   approved_at: string | null; paid_amount: number; paid_at: string | null; paid_by: string | null;
@@ -37,7 +38,9 @@ export type FrStep = {
 };
 
 export type FrEvent = { id: string; request_id: string; actor_id: string | null; action: string; payload: any; created_at: string };
-export type FrPaymentType = { id: string; name: string; active: boolean; sort: number };
+export type FrTypeKind = "payment" | "advance";
+export type FrPaymentType = { id: string; name: string; active: boolean; sort: number; kind?: FrTypeKind; sys_code?: string | null; description?: string | null };
+export type FrTypeWithUsage = FrPaymentType & { usage: number };
 export type FrLineCatalog = { id: string; name: string; active: boolean; sort: number };
 export type FrRequestLine = {
   id: string; request_id: string; line_no: number; name: string; catalog_id: string | null;
@@ -58,7 +61,12 @@ export const frApi = {
   steps: (id: string) => sel<FrStep[]>(db.from("fr_steps").select("*").eq("request_id", id).order("step_no")),
   pendingSteps: () => sel<FrStep[]>(db.from("fr_steps").select("*").eq("status", "pending")),
   events: (id: string) => sel<FrEvent[]>(db.from("fr_events").select("*").eq("request_id", id).order("created_at", { ascending: false })),
-  paymentTypes: () => sel<FrPaymentType[]>(db.from("fr_payment_types").select("*").order("sort").order("name")),
+  paymentTypes: (kind: FrTypeKind = "payment") =>
+    sel<FrPaymentType[]>(db.from("fr_payment_types").select("*").eq("kind", kind).order("sort").order("name")),
+  typesWithUsage: (kind: FrTypeKind) => rpc<FrTypeWithUsage[]>("fr_types_with_usage", { _kind: kind }),
+  saveType: (id: string | null, kind: FrTypeKind, name: string, description: string, active: boolean, sort: number) =>
+    rpc<string>("fr_type_save", { _id: id, _kind: kind, _name: name, _description: description, _active: active, _sort: sort }),
+  deleteType: (id: string) => rpc("fr_type_delete", { _id: id }),
   lines: (requestId: string) =>
     sel<FrRequestLine[]>(db.from("fr_request_lines").select("*").eq("request_id", requestId).order("line_no")),
   lineCatalog: () => sel<FrLineCatalog[]>(db.from("fr_line_catalog").select("*").order("sort").order("name")),
