@@ -37,12 +37,12 @@ it('work puts all four unassigned and two waiting records before 573 active reco
   expect(sortSignals(rows,'work').slice(0,6).map(s=>s.id)).toEqual(['unassigned-0','unassigned-1','unassigned-2','unassigned-3','waiting-old','waiting-new']);
   expect(sortSignals(rows,'priority').map(s=>s.id)).toEqual(sortSignals(rows,'work').map(s=>s.id));
 });
-it('work enforces all seven groups and ignores potential and contact dates',()=>{
+it('work retires deadline ranks and retains four groups',()=>{
   const rows=[row('closed',{status:'won',list_work_priority:2}),row('other',{potential:'high',next_contact_on:'2026-01-01'}),row('soon',{list_work_priority:4}),row('today',{list_work_priority:3}),row('overdue',{list_work_priority:2}),row('waiting',{status:'waiting',list_work_priority:2}),row('unassigned',{status:null,assigned_to:null,list_work_priority:2})];
-  expect(sortSignals(rows,'work').map(s=>s.id)).toEqual(['unassigned','waiting','overdue','today','soon','other','closed']);
+  expect(sortSignals(rows,'work').map(s=>s.id)).toEqual(['unassigned','waiting','other','overdue','soon','today','closed']);
 });
-it('Sale waiting leads and refreshed progression state reorders the full set',()=>{
+it('Sale waiting leads and old deadlines cannot reorder active signals',()=>{
   const rows=[row('a',{list_work_priority:2}),row('b',{list_work_priority:5}),row('waiting',{status:'waiting'})];
   const deadline=(signal_id:string,deadline_state:DeadlineRow['deadline_state']):DeadlineRow=>({signal_id,deadline_state,sale_id:'sale',sequence:1,due_on:'2026-11-07',next_due_on:'2026-11-14',calculated_at:'2026-11-07T00:00:00Z',overdue_days:0});
-  expect(sortSignals(rows,'work',{a:deadline('a','updated'),b:deadline('b','overdue')}).map(s=>s.id)).toEqual(['waiting','b','a']);
+  expect(sortSignals(rows,'work',{a:deadline('a','updated'),b:deadline('b','overdue')}).map(s=>s.id)).toEqual(['waiting','a','b']);
 });

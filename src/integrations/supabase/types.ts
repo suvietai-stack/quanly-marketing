@@ -9957,6 +9957,7 @@ export type Database = {
         }
         Returns: Json
       }
+      signal_note_count: { Args: { _id: string }; Returns: number }
       signal_note_is_progression: {
         Args: { _event: string; _marker: boolean; _note: string }
         Returns: boolean

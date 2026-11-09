@@ -1,11 +1,14 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## DIỄN BIẾN TỰ NGUYỆN & HIỆU NĂNG TÍN HIỆU — 09/11/2026
-- [ ] SN1. Rà soát dependency, đo hiện trạng và chốt phương án bảo toàn lịch sử/quyền/tiếp nhận.
-- [ ] SN2. Ngừng kỳ/hạn/nhắc note riêng; lưu note tự nguyện chống trùng, giữ mọi note cũ.
-- [ ] SN3. Phân trang/lọc/sort/đếm backend, bỏ deadline rank/polling nặng; cache và cập nhật có kiểm soát.
-- [ ] SN4. Báo cáo note tích lũy/hoạt động/tốc độ note đầu tiên đúng lượt nhận, tác giả và scope hiện hành.
-- [ ] SN5. Kiểm thử nghiệp vụ/quyền/tải cách ly 600/3000/5000, đo trước/sau, nghiệm thu phiên thật; không Publish.
+- [x] SN1a. Rà soát dependency/hiện trạng, kế hoạch duyệt; EXPLAIN truy vấn bỏ deadline 115.953→15.537ms sau grouped history, không tuyên bố toàn trang tăng tốc.
+- [x] SN2. 0273/0277/0278 ngừng kỳ/tick/cron, care chỉ còn nhận, note-only chống trùng và giữ lịch sử.
+- [x] SN3. 0274 Mobile30/Desktop40, lọc/sort/đếm backend, bỏ deadline/polling10s, change-token30s, note history paged và detail-by-ID.
+- [x] SN4a. 0275/0276 báo cáo note phân bố/tác giả/tệp/lượt nhận, sales aggregates giữ tỷ lệ chốt; businessMinutes dùng chung.
+- [x] SN5a. 152 test đạt; tải cách ly600/3000/5000; browser390/1280 lưu-đọc/page/report đạt, build OK; docs/signal-voluntary-notes-verification.md. Không dữ liệu test thật/Publish.
+- [ ] SN1b/SN5b. Đo network/latency/memory trước-sau và nghiệm thu phiên thật/concurrency: --self không khớp tài khoản, chờ đăng nhập Preview và hồ sơ được phép.
+- [ ] SN4b. Bộ lọc Hệ/Phòng/Nhóm và phạm vi bổ nhiệm chưa nối: cần xác nhận cách áp dụng với scope Role Tín hiệu hiện hành để không đổi quyền ngoài yêu cầu.
+- [x] SN4c. 0279 ranh giới kết thúc/mở lại/bàn giao giới hạn first-note đúng trách nhiệm, không gán note lần sau cho lần nhận cũ.
 
 ## BIỂU MẪU THIẾT KẾ & TÀI LIỆU — 07/11/2026
 - [x] DF1. 30 danh mục ID ổn định (7/9/7 loại + 7 sản phẩm); nhiều lựa chọn/Khác; 83 Order giữ nguyên, không phân loại lại lịch sử.

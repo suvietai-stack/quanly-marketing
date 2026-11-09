@@ -107,14 +107,16 @@ export interface SignalNote {
 }
 export interface SignalEvent { id: string; actor_id: string | null; kind: string; detail: any; created_at: string }
 
-export async function signalHistory(id: string): Promise<{ notes: SignalNote[]; events: SignalEvent[] }> {
+export async function signalHistory(id: string, offset = 0): Promise<{ notes: SignalNote[]; events: SignalEvent[]; hasMore:boolean; noteCount:number }> {
   const [n, e] = await Promise.all([
-    db.from("opportunity_signal_notes").select("*").eq("signal_id", id).order("created_at", { ascending: false }),
-    db.from("opportunity_signal_events").select("*").eq("signal_id", id).order("created_at", { ascending: false }),
+    db.from("opportunity_signal_notes").select("id,author_id,note,status_from,status_to,next_contact_on,next_contact_at,revenue,lost_reason,event_type,channel,created_at,is_progression").eq("signal_id", id).order("created_at", { ascending: false }).order('id').range(offset,offset+29),
+    db.from("opportunity_signal_events").select("id,actor_id,kind,detail,created_at").eq("signal_id", id).order("created_at", { ascending: false }).order('id').range(offset,offset+29),
   ]);
   if (n.error) throw n.error;
   if (e.error) throw e.error;
-  return { notes: n.data, events: e.data };
+  const {data:count,error}=await db.rpc('signal_note_count',{_id:id});
+  if(error)throw error;
+  return { notes: n.data, events: e.data, hasMore:n.data.length===30||e.data.length===30,noteCount:Number(count) };
 }
 
 export async function salesList(): Promise<{ id: string; full_name: string }[]> {
