@@ -4060,6 +4060,113 @@ export type Database = {
           },
         ]
       }
+      fr_zalo_group_config: {
+        Row: {
+          enabled: boolean
+          group_id: string | null
+          group_name: string | null
+          intro: string | null
+          kind: string
+          on_approved: boolean
+          on_deducted: boolean
+          on_done: boolean
+          on_info: boolean
+          on_paid: boolean
+          on_rejected: boolean
+          on_settled: boolean
+          on_submitted: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          group_id?: string | null
+          group_name?: string | null
+          intro?: string | null
+          kind: string
+          on_approved?: boolean
+          on_deducted?: boolean
+          on_done?: boolean
+          on_info?: boolean
+          on_paid?: boolean
+          on_rejected?: boolean
+          on_settled?: boolean
+          on_submitted?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          group_id?: string | null
+          group_name?: string | null
+          intro?: string | null
+          kind?: string
+          on_approved?: boolean
+          on_deducted?: boolean
+          on_done?: boolean
+          on_info?: boolean
+          on_paid?: boolean
+          on_rejected?: boolean
+          on_settled?: boolean
+          on_submitted?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      fr_zalo_group_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          dedup_key: string
+          error: string | null
+          event: string
+          group_id: string | null
+          id: string
+          kind: string
+          request_id: string
+          sent_at: string | null
+          status: string
+          summary: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          dedup_key: string
+          error?: string | null
+          event: string
+          group_id?: string | null
+          id?: string
+          kind: string
+          request_id: string
+          sent_at?: string | null
+          status?: string
+          summary?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          dedup_key?: string
+          error?: string | null
+          event?: string
+          group_id?: string | null
+          id?: string
+          kind?: string
+          request_id?: string
+          sent_at?: string | null
+          status?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fr_zalo_group_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "fr_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_krs: {
         Row: {
           brand_id: string | null
@@ -9732,6 +9839,18 @@ export type Database = {
         }[]
       }
       fr_submit: { Args: { _id: string }; Returns: string }
+      fr_zalo_can_manage: { Args: { _kind: string }; Returns: boolean }
+      fr_zalo_group_save: {
+        Args: {
+          _enabled: boolean
+          _group_id: string
+          _group_name: string
+          _intro: string
+          _kind: string
+          _toggles: Json
+        }
+        Returns: undefined
+      }
       get_profiles_directory: {
         Args: never
         Returns: {
