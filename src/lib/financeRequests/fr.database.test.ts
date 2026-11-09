@@ -103,8 +103,8 @@ it('settlement payment updates the linked advance exactly once', async () => {
   const p2 = await scalar('select fr_save(null,$1,$2,$3) v', ['payment', payload({
     amount: 200000, title: 'Quyết toán nốt', payment_type_id: settleTypeId, payee_name: 'Kho', advance_id: advanceId,
   }), 'rk-3']);
-  await actor(approver);
   await db.query("select fr_submit($1)", [p2]);
+  await actor(approver);
   await db.query("select fr_decide($1,'approve',null)", [p2]);
   await actor(accountant);
   await db.query("select fr_pay($1,200000,null,null,null)", [p2]);
