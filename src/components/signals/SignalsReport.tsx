@@ -1,6 +1,5 @@
 import { useEffect,useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import {
   Bar, BarChart, CartesianGrid, ComposedChart, Line, XAxis, YAxis,
 } from "recharts";
@@ -8,8 +7,6 @@ import {
   Banknote, CheckCircle2, ClipboardList, Flame, Lightbulb, Loader2, Percent,
   RotateCcw, Signal as SignalIcon, SlidersHorizontal, Timer, UserX, XCircle,
 } from "lucide-react";
-import { careFlag, DEFAULT_CARE } from "@/lib/signals/care";
-import { zaloCareCounts } from "@/lib/zalo.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -17,13 +14,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { SIGNAL_LOST_REASONS, STATUS_LABEL, fmtVnd, todayKey } from "@/lib/signals/catalog";
 import {
-  filterSignals, groupBy, lostReasons, reportInsights, summarize, eventTrendSeries,
+  reportInsights,
   weekStart, type ReportFilter, type Summary, type TrendGranularity,
 } from "@/lib/signals/report";
-import { errMsg, listAcceptNotes, listAssignEvents, listCareNotes } from "@/lib/signals/api";
-import { acceptStat, fmtMinutes, businessMinutes, type AcceptNoteRow, type AssignEventRow } from "@/lib/signals/acceptTime";
+import { errMsg } from "@/lib/signals/api";
+import { acceptStat, fmtMinutes, type AcceptNoteRow, type AssignEventRow } from "@/lib/signals/acceptTime";
 import type { Signal, SignalStatus } from "@/lib/signals/catalog";
-import { useLastNotes, useOptions, useSignalPerms, useSignals, useUserName } from "./SignalsUi";
+import { useOptions, useSignalPerms, useUserName } from "./SignalsUi";
 import { needGroupsOf } from "@/lib/signals/catalog";
 import { cn } from "@/lib/utils";
 import { ProgressionReport } from './ProgressionReport';
@@ -31,7 +28,6 @@ import { useSignalLabels } from './SignalEnrichment';
 import { SignalPotentialReport } from './SignalPotentialReport';
 import { POTENTIAL_LABEL, STAGES } from '@/lib/signals/potential';
 import { getSalesReport } from '@/lib/signals/noteReport';
-import { listDeadlines } from '@/lib/signals/api';
 
 const pct = (s: Summary) => (s.closeRate == null ? "Chưa có dữ liệu" : `${s.closeRate.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}%`);
 
@@ -55,7 +51,6 @@ const SOURCE_CONFIG: ChartConfig = { v: { label: "Giá trị", color: C.brand } 
 export function SignalsReport() {
   const p = useSignalPerms();
   const name = useUserName();
-  const data: Signal[] = [];
   const labels=useSignalLabels(p.userId);
   const t = todayKey();
   const [f, setF] = useState<ReportFilter>({ basis: "created", from: `${t.slice(0, 7)}-01`, to: t });
@@ -69,7 +64,6 @@ export function SignalsReport() {
 
   const report=useQuery({queryKey:['sig:sales-report',p.userId,f],queryFn:()=>getSalesReport(f),enabled:!!p.userId&&p.report,staleTime:30000});
   const isLoading=report.isPending;const error=report.error;
-  const list:Signal[]=[];
   const empty:Summary={total:0,unassigned:0,accepted:0,waiting:0,contacting:0,consulting:0,quoted:0,deposit:0,won:0,lost:0,closeRate:null,revenue:0,overdue:0,dueToday:0,noNote:0};
   const sum=report.data?.summary??empty;const kpi=sum;
   const grouping=(kind:string)=>(report.data?.groups??[]).filter(g=>g.kind===kind).sort((a,b)=>b.s.total-a.s.total);
@@ -119,7 +113,7 @@ export function SignalsReport() {
     <ReportFilterFields
       f={f} set={set} setF={setF}
       labels={(labels.data??[]).map(l=>[l.id,l.name])}
-      sources={[...new Set([...srcOpts.names, ...data.map((x) => x.source)])]}
+      sources={[...new Set([...srcOpts.names,...bySource.map(g=>g.key)])]}
       products={prodOpts.names} needs={needOpts.names}
       sales={people(report.data?.sales??[])} creators={people(report.data?.creators??[])}
     />
@@ -291,7 +285,7 @@ export function SignalsReport() {
             ) : (
               <SaleTable rows={bySale} name={name} rates={rateBySale} signalsBySale={signalsBySale} events={assignEvents} notes={acceptNotes} />
             )}
-            <ProgressionReport data={data} f={f} name={name} userId={p.userId} onSale={id => setF(x => ({...x,saleId:id}))} />
+            <ProgressionReport f={f} name={name} userId={p.userId} onSale={id => setF(x => ({...x,saleId:id}))} />
           </section>
 
           {/* 8. Phân tích chi tiết khác */}
@@ -490,34 +484,3 @@ function SaleTable({ rows, name, rates, signalsBySale, events, notes }: {
   );
 }
 
-/** Theo dõi chăm sóc — tình trạng hiện tại (không theo bộ lọc thời gian), trong phạm vi dữ liệu được xem. */
-function CareTable({ data, name, userId, all }: { data: any[]; name: (id: string | null) => string; userId: string | null; all: boolean }) {
-  const { data: notes = {} } = useQuery({ queryKey: ["sig:care", userId], queryFn: listCareNotes, enabled: !!userId });
-  const careFn = useServerFn(zaloCareCounts);
-  const { data: cfg } = useQuery({ queryKey: ["sig:carecfg"], queryFn: () => careFn(), staleTime: 600000 });
-  const rows = useMemo(() => {
-    const m: Record<string, { u: number; s: number }> = {}; const now = Date.now();
-    for (const s of data) {
-      if (!all && s.assigned_to !== userId) continue;
-      const f = careFlag(s, notes[s.id] ?? [], now, cfg ?? DEFAULT_CARE);
-      if (!f) continue;
-      const r = (m[s.assigned_to] ??= { u: 0, s: 0 });
-      if (f === "unaccepted") r.u++; else r.s++;
-    }
-    return Object.entries(m).sort((a, b) => b[1].u + b[1].s - a[1].u - a[1].s);
-  }, [data, notes, cfg, all, userId]);
-  const link = (id: string, kind: string, n: number) => n ? <a className="text-primary underline" href={`/signals?care=1&sale=${id}&kind=${kind}`}>{n}</a> : <span className="text-muted-foreground">0</span>;
-  return (
-    <div className="rounded-2xl border bg-card overflow-x-auto shadow-sm">
-      <div className="px-4 py-2.5 text-sm font-medium border-b">Theo dõi chăm sóc <span className="text-xs font-normal text-muted-foreground">— tình trạng hiện tại, chỉ để nhắc việc</span></div>
-      {rows.length === 0 ? <p className="p-3 text-sm text-muted-foreground">Không có tín hiệu cần kiểm tra.</p> : (
-        <table className="hidden md:table w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs text-muted-foreground"><tr><th className="px-4 py-2">Nhân viên</th><th className="px-4 py-2">Chưa tiếp nhận</th><th className="px-4 py-2">Lâu chưa cập nhật</th></tr></thead>
-          <tbody>{rows.map(([id, r]) => (
-            <tr key={id} className="border-t"><td className="px-4 py-2">{name(id)}</td><td className="px-4 py-2">{link(id, "unaccepted", r.u)}</td><td className="px-4 py-2">{link(id, "stale", r.s)}</td></tr>
-          ))}</tbody>
-        </table>
-      )}
-    </div>
-  );
-}

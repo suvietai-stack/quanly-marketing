@@ -20,22 +20,18 @@ import {
 import {
   assignSignal, createSignal, errMsg, findSamePhone, listLastNotes, listSignals, reopenSignal, saleUpdate, salesList,
   signalHistory, updateSignalInfo, deleteSignal, cancelSignal, getCustomLostReasons, setCustomLostReasons, getOptions, saveOptions, renameOptionEverywhere, type SignalInput,
-  listCareNotes, listProgression, saveProgression, listDeadlines, deadlineHistory,
+  saveProgression,
 } from "@/lib/signals/api";
 import { applyDetailFilter, applyListFilter, lastActivity, type ListFilter, type Quick } from "@/lib/signals/report";
 import { careFlag, daysSince, lastCareActivity, DEFAULT_CARE } from "@/lib/signals/care";
 import { useServerFn } from "@tanstack/react-start";
 import { zaloCareCounts } from "@/lib/zalo.functions";
-import { ProgressionSummary } from "./ProgressionSummary";
 import { composeProgression, progressionSuggestions, validProgression } from "@/lib/signals/progression";
 import { signalSurfaceClick, signalNameClick, signalNameKeyDown } from "@/lib/signals/detailInteraction";
 import { SignalEnrichment, SignalLabelManager, PotentialPill, useSignalLabels } from './SignalEnrichment';
 import { POTENTIAL_LABEL, STAGES, matchWork, sortSignals, type WorkQuick, type SignalSort } from '@/lib/signals/potential';
 import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 
-import { SignalDeadlineFilters } from './SignalDeadlineFilters';
-import { deadlineCounts, type DeadlineQuick } from '@/lib/signals/deadlineFilters';
-import { DEADLINE_QUICK } from '@/lib/signals/deadlineFilters';
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
 import { signalPage, signalCounts, signalById, listParams, saveNote, changeToken } from '@/lib/signals/paged';
@@ -134,7 +130,7 @@ const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 export function SignalsPage() {
   const p = useSignalPerms();
   const name = useUserName();
-  const [care, setCare] = useState<{ on: boolean; kind?: "unaccepted" | "stale"; sale?: string }>({ on: false });
+  const care={on:false};const setCare=(_value:unknown)=>{};
   const labels = useSignalLabels(p.userId);
   const [workQuick,setWorkQuick]=useState<WorkQuick>('all');
   const [sort,setSort]=useState<SignalSort>('work');
@@ -718,7 +714,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
         {cancelled && <div className="rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2">Đã hủy {fmtTime(s.cancelled_at ?? s.updated_at)}: {s.cancel_reason}. Không tính vào báo cáo.</div>}
         <a href={`tel:${s.phone}`} className="block font-mono text-base text-primary">{s.phone}</a>
         <div className="text-sm">{[s.products.join(", "), needGroupsOf(s).join(", ")].filter(Boolean).join(" · ") || "—"}</div>
-        <div className="text-sm text-muted-foreground">Gần nhất: {lastText(last) ?? "Chưa có diễn biến"}</div>
+        <div className="text-sm text-muted-foreground">Gần nhất: {lastText((hist.data?.notes??[]).find(validProgression) ? {...(hist.data?.notes??[]).find(validProgression),signal_id:s.id} as LastNote : last) ?? 'Chưa có diễn biến'}</div>
         <div className="text-sm text-muted-foreground">
           Sale: {s.assigned_to ? name(s.assigned_to) : "Chưa phân công"}
           {s.status === "won" && s.revenue ? ` · Doanh số ${fmtVnd(s.revenue)}` : ""}{s.lost_reason ? ` · ${s.lost_reason}` : ""}
