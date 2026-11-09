@@ -333,9 +333,14 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
               <Field label="Loại thanh toán *">
                 <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
                   <option value="">— Chọn loại —</option>
-                  {(types.data ?? []).filter((t) => t.active).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {typeOptions.map((t) => <option key={t.id} value={t.id}>{t.name}{t.active ? "" : " (đã ngừng)"}</option>)}
                 </select>
               </Field>
+              {isOther && (
+                <Field label="Nhập loại cụ thể *">
+                  <Input maxLength={200} value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} placeholder="VD: Chi phí thuê thiết bị" />
+                </Field>
+              )}
               {isSettle && (
                 <Field label="Khoản tạm ứng cần quyết toán *">
                   <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={advanceId} onChange={(e) => setAdvanceId(e.target.value)}>
@@ -363,6 +368,17 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
           )}
           {kind === "advance" && (
             <>
+              <Field label="Loại tạm ứng *">
+                <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+                  <option value="">— Chọn loại —</option>
+                  {typeOptions.map((t) => <option key={t.id} value={t.id}>{t.name}{t.active ? "" : " (đã ngừng)"}</option>)}
+                </select>
+              </Field>
+              {isOther && (
+                <Field label="Nhập loại cụ thể *">
+                  <Input maxLength={200} value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} placeholder="VD: Tạm ứng phục vụ khai trương showroom" />
+                </Field>
+              )}
               <Field label="Người/đơn vị nhận tiền (nếu khác người đề nghị)">
                 <Input maxLength={200} value={payeeName} onChange={(e) => setPayeeName(e.target.value)} />
               </Field>
