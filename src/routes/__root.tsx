@@ -15,6 +15,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { AppShell } from "@/components/AppShell";
 import { AuthGate } from "@/components/AuthGate";
+import { BasePermissionRefresh } from '@/components/BasePermissionRefresh';
 import { BrandingSync } from "@/lib/branding";
 
 const PUBLIC_PATHS = ["/login", "/register", "/pending", "/chinh-sach-bao-mat", "/reset-password"];
@@ -124,6 +125,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SignalCacheGuard />
+      <BasePermissionRefresh />
       <BrandingSync />
       <AuthGate>
         {isPublic ? <Outlet /> : <AppShell><Outlet /></AppShell>}

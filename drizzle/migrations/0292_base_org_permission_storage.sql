@@ -1,0 +1,18 @@
+CREATE TABLE public.base_org_state (id boolean PRIMARY KEY DEFAULT true CHECK(id),revision bigint NOT NULL DEFAULT 0,config jsonb NOT NULL DEFAULT '{"units":[],"titles":[],"memberships":[],"defaults":[],"bundles":[],"grants":[],"bindings":[]}',updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.base_org_state TO authenticated;GRANT ALL ON public.base_org_state TO service_role;
+ALTER TABLE public.base_org_state ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.base_permission_catalog (key text PRIMARY KEY,label text NOT NULL,module text NOT NULL,dependencies text[] NOT NULL DEFAULT '{}');
+GRANT SELECT ON public.base_permission_catalog TO authenticated;GRANT ALL ON public.base_permission_catalog TO service_role;
+ALTER TABLE public.base_permission_catalog ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.base_permission_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_id uuid NOT NULL,action text NOT NULL,before_revision bigint NOT NULL,after_revision bigint NOT NULL,before_data jsonb NOT NULL,after_data jsonb NOT NULL,impact jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.base_permission_events TO authenticated;GRANT ALL ON public.base_permission_events TO service_role;
+ALTER TABLE public.base_permission_events ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.base_permission_previews (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_id uuid NOT NULL,revision bigint NOT NULL,config jsonb NOT NULL,baseline text NOT NULL,impact jsonb NOT NULL,expires_at timestamptz NOT NULL DEFAULT now()+interval '10 minutes',applied_at timestamptz);
+GRANT SELECT ON public.base_permission_previews TO authenticated;GRANT ALL ON public.base_permission_previews TO service_role;
+ALTER TABLE public.base_permission_previews ENABLE ROW LEVEL SECURITY;
+CREATE OR REPLACE FUNCTION private.base_org_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT auth.uid() IS NOT NULL AND private.is_active(auth.uid()) AND private.is_super_admin(auth.uid()) $$;
+CREATE POLICY base_org_admin_read ON public.base_org_state FOR SELECT TO authenticated USING(private.base_org_admin());
+CREATE POLICY base_catalog_read ON public.base_permission_catalog FOR SELECT TO authenticated USING(private.is_active(auth.uid()));
+CREATE POLICY base_event_admin_read ON public.base_permission_events FOR SELECT TO authenticated USING(private.base_org_admin());
+CREATE POLICY base_preview_admin_read ON public.base_permission_previews FOR SELECT TO authenticated USING(private.base_org_admin() AND actor_id=auth.uid());
+REVOKE ALL ON FUNCTION private.base_org_admin() FROM PUBLIC,anon;GRANT EXECUTE ON FUNCTION private.base_org_admin() TO authenticated;

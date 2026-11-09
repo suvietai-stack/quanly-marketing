@@ -56,6 +56,7 @@ export const navigationGroups: NavGroup[] = [
 { to: "/finance/salary", label: "Tạm Ứng Lương", icon: BanknoteArrowDown },
   ] },
   { label: "Hành Chính & Nhân Sự", icon: Users, items: [
+{ to: "/organization", label: "Cơ cấu tổ chức", icon: Building2, adminOnly: true },
 { to: "/leave", label: "Nghỉ phép & Đi sớm muộn", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
 { to: "/attendance", label: "Giải trình chấm công", icon: Fingerprint, anyPerm: ["att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"] },
   ] },
@@ -80,7 +81,7 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
       (!it.anyPerm || (isSuperAdmin && it.to.startsWith('/biz')) ||
         (it.to === '/biz/approvals' && access.hasAssignedApprovals) ||
         (isKpiAdmin && it.kpi) || it.anyPerm.some(can)) &&
-      (!it.kpi || access.kpiEnabled) && (!it.adminOnly || isKpiAdmin))
+      (!it.kpi || access.kpiEnabled) && (!it.adminOnly || (it.to === '/organization' ? isSuperAdmin : isKpiAdmin)))
       .map(it => it.to === '/settings/kpi-v2' && !access.isKpiManager ? { ...it, label: 'KPI của tôi' } : it)
       .map(it => it.to === '/settings' && access.canApprove && access.pendingCount > 0 ? { ...it, badge: `${access.pendingCount} chờ duyệt` } : it);
     return { ...group, items: items.length ? [...items, ...group.items.filter(it => it.comingSoon)] : [] };
