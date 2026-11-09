@@ -49,7 +49,8 @@ export function SignalEnrichment({s,uid,canEdit,catalog,sale,onSaved}:{s:Signal;
   const [search,setSearch]=useState('');
   const [busy,setBusy]=useState(false);const [error,setError]=useState('');const lock=useRef(false);const request=useRef<{payload:string;id:string}|null>(null);
   const [manage,setManage]=useState(false);
-  useEffect(()=>{if(open){setPotential(potentialOf(s));setIds(s.label_ids??[]);setSearch('');setManage(false);setError('');}},[open,s.id]);
+  const labelKey=JSON.stringify(s.label_ids??[]);
+  useEffect(()=>{if(open){setPotential(potentialOf(s));setIds(s.label_ids??[]);setSearch('');setManage(false);setError('');}},[open,s.id,labelKey]);
   const save=async()=>{
     if(lock.current||q.isPending||q.error)return;
     const payload=JSON.stringify([s.id,potential,[...ids].sort()]);
