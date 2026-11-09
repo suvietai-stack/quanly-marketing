@@ -451,6 +451,8 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const steps = useQuery({ queryKey: ["fr", "steps", id], queryFn: () => frApi.steps(id) });
   const events = useQuery({ queryKey: ["fr", "events", id], queryFn: () => frApi.events(id) });
   const reqLines = useQuery({ queryKey: ["fr", "lines", id], queryFn: () => frApi.lines(id), enabled: kind === "payment" });
+  const detailTypeKind = kind === "advance" ? "advance" : "payment";
+  const types = useQuery({ queryKey: ["fr", "types", detailTypeKind], queryFn: () => frApi.paymentTypes(detailTypeKind), enabled: kind !== "salary_advance" });
   const [comment, setComment] = useState("");
   const [payOpen, setPayOpen] = useState(false);
   const [deductOpen, setDeductOpen] = useState(false);
@@ -467,6 +469,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   if (!r) return <Sheet open onOpenChange={(o) => !o && onClose()}><SheetContent className="w-full sm:max-w-xl overflow-y-auto"><p className="p-4 text-sm text-muted-foreground">Đang tải…</p></SheetContent></Sheet>;
 
   const isOwner = r.requester_id === uid;
+  const typeName = (types.data ?? []).find((t) => t.id === (kind === "advance" ? r.advance_type_id : r.payment_type_id))?.name;
   const currentStep = (steps.data ?? []).find((s) => s.step_no === r.current_step);
   const canDecide = r.status === "pending" && !!currentStep &&
     (currentStep.approver_id === uid || (currentStep.perm ? canDecidePerm(currentStep.perm) : false)) &&
@@ -498,6 +501,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
             {r.detail && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.detail}</p>}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <span className="text-muted-foreground">Ngày tạo</span><span>{fmtDateTime(r.created_at)}</span>
+              {typeName && <><span className="text-muted-foreground">{kind === "advance" ? "Loại tạm ứng" : "Loại thanh toán"}</span><span>{typeName}{r.other_label ? ` — ${r.other_label}` : ""}</span></>}
               {r.desired_date && <><span className="text-muted-foreground">Ngày mong muốn</span><span>{fmtDate(r.desired_date)}</span></>}
               {r.payee_name && <><span className="text-muted-foreground">Người nhận tiền</span><span>{r.payee_name}</span></>}
               {r.payee_info && <><span className="text-muted-foreground">Thông tin nhận</span><span>{r.payee_info}</span></>}
@@ -838,7 +842,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
         </div>
       )}
 
-      {kind === "payment" && <PaymentTypesManager />}
+      {kind !== "salary_advance" && <TypeCatalogManager kind={kind === "advance" ? "advance" : "payment"} />}
       {kind === "payment" && <LineCatalogManager />}
 
       <FinanceZaloSettings kind={kind} />
