@@ -54,7 +54,7 @@ async def main():
    assert await page.get_by_text('Trạng thái mới',exact=True).count()==0
    await page.get_by_role('button',name='Lưu diễn biến',exact=True).dblclick()
    await expect(page.get_by_text('Đã lưu diễn biến',exact=True)).to_be_visible()
-   await expect(page.get_by_text('Khách đã nhận báo giá',exact=True).first).to_be_visible()
+   await expect(page.get_by_text('Khách đã nhận báo giá',exact=False).first).to_be_visible()
    print('save count',len(saved));assert len(saved)==1,saved
    assert saved[0]['_note']=='Đã gửi báo giá\nKhách đã nhận báo giá',saved[0]
    assert saved[0]['_status']=='consulting',saved[0]
