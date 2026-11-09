@@ -168,9 +168,9 @@ export function SignalsPage() {
   const params=useMemo(()=>listParams({...f,q:queryText},workQuick),[JSON.stringify({...f,q:queryText}),workQuick]);
   const signature=JSON.stringify(params)+sort;
   useEffect(()=>setDesktopPage(0),[signature]);
-  const counts=useQuery({queryKey:['sig:counts',p.userId,params],queryFn:()=>signalCounts(params),enabled:!!p.userId,staleTime:30000});
-  const pages=useInfiniteQuery({queryKey:['sig:page',p.userId,params,sort,mobile,desktopPage],initialPageParam:0,queryFn:({pageParam,signal})=>signalPage(params,sort,mobile?pageParam:desktopPage*40,mobile?30:40,signal),getNextPageParam:(last,all)=>last.rows.length===30?all.length*30:undefined,enabled:!!p.userId&&viewportReady,staleTime:30000});
-  const token=useQuery({queryKey:['sig:token',p.userId],queryFn:changeToken,enabled:!!p.userId,refetchInterval:30000,refetchIntervalInBackground:false});
+  const counts=useQuery({queryKey:['sig:counts',p.userId,params],queryFn:({signal})=>signalCounts(params,signal),enabled:!!p.userId,staleTime:30000,retry:false,refetchOnWindowFocus:false});
+  const pages=useInfiniteQuery({queryKey:['sig:page',p.userId,params,sort,mobile,desktopPage],initialPageParam:0,queryFn:({pageParam,signal})=>signalPage(params,sort,mobile?pageParam:desktopPage*40,mobile?30:40,signal),getNextPageParam:(last,all)=>last.rows.length===30?all.length*30:undefined,enabled:!!p.userId&&viewportReady,staleTime:30000,retry:false,refetchOnWindowFocus:false});
+  const token=useQuery({queryKey:['sig:token',p.userId],queryFn:({signal})=>changeToken(signal),enabled:!!p.userId&&pages.isSuccess&&counts.isSuccess&&!pages.isFetching&&!counts.isFetching,refetchInterval:q=>q.state.status==='error'?false:30000,refetchIntervalInBackground:false,retry:false,refetchOnWindowFocus:false});
   const previousToken=useRef<string|null|undefined>(undefined);
   const qc=useQueryClient();
   useEffect(()=>{if(previousToken.current!==undefined&&token.data!==previousToken.current){void qc.invalidateQueries({predicate:q=>String(q.queryKey[0]).startsWith('sig:')&&q.queryKey[0]!=='sig:token'});}if(token.data!==undefined)previousToken.current=token.data;},[token.data,qc]);
@@ -178,20 +178,20 @@ export function SignalsPage() {
   const list=data;
   const last=Object.fromEntries(data.filter(s=>s.last_note).map(s=>[s.id,s.last_note as LastNote]));
   const isLoading=pages.isPending;
-  const error=pages.error||counts.error;
-  const total=counts.data?.total??0;
+  const error=pages.error;
+  const total=counts.data?.total;
   const canSeeUnassigned=p.assign||p.viewAll||p.create;
   const quickTabs=signalStatusTabs(canSeeUnassigned);
   const mine=counts.data?.mine;
-  const count=(k:Quick)=>counts.data?.status[k]??0;
+  const count=(k:Quick):number|'—'=>counts.data?counts.data.status[k]??0:'—';
   const needOpts=useOptions('signal_need_groups');
-  const needCount=(g?:string)=>counts.data?.needs[g??'all']??0;
+  const needCount=(g?:string):number|'—'=>counts.data?counts.data.needs[g??'all']??0:'—';
   const selected=useQuery({queryKey:['sig:detail',p.userId,openId],queryFn:()=>openId?signalById(openId):null,enabled:!!openId&&!!p.userId});
   const open=selected.data??null;
   const denied=!!openId&&!selected.isPending&&!open;
   const extra=appliedSignalFilters(f,null,workQuick);
   const sentinel=useRef<HTMLDivElement>(null);
-  useEffect(()=>{const el=sentinel.current;if(!el||!mobile)return;const observer=new IntersectionObserver(entries=>{if(entries[0]?.isIntersecting&&pages.hasNextPage&&!pages.isFetchingNextPage)void pages.fetchNextPage();},{rootMargin:'250px'});observer.observe(el);return()=>observer.disconnect();},[mobile,pages.hasNextPage,pages.isFetchingNextPage,data.length]);
+  useEffect(()=>{const el=sentinel.current;if(!el||!mobile||pages.isFetchNextPageError)return;const observer=new IntersectionObserver(entries=>{if(entries[0]?.isIntersecting&&pages.hasNextPage&&!pages.isFetchingNextPage)void pages.fetchNextPage();},{rootMargin:'250px'});observer.observe(el);return()=>observer.disconnect();},[mobile,pages.hasNextPage,pages.isFetchingNextPage,pages.isFetchNextPageError,data.length]);
 
 
   return (
@@ -209,10 +209,10 @@ export function SignalsPage() {
 
       {p.sale && (
         <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <Stat label="Chờ nhận" v={mine?.waiting??0} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
-          <Stat label="Đang xử lý" v={mine?.active??0} />
-          <Stat label="Đã báo giá" v={mine?.quoted??0} onClick={() => setF({ ...emptyFilter(), quick: "quoted" })} />
-          <Stat label="Đã chốt tháng này" v={mine?.won??0} />
+          <Stat label="Chờ nhận" v={mine?.waiting??'—'} onClick={() => setF({ ...emptyFilter(), quick: "waiting" })} />
+          <Stat label="Đang xử lý" v={mine?.active??'—'} />
+          <Stat label="Đã báo giá" v={mine?.quoted??'—'} onClick={() => setF({ ...emptyFilter(), quick: "quoted" })} />
+          <Stat label="Đã chốt tháng này" v={mine?.won??'—'} />
         </div>
       )}
 
@@ -229,12 +229,12 @@ export function SignalsPage() {
       <div className="hidden md:flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Sắp xếp</span><select aria-label="Sắp xếp tín hiệu" className="h-11 max-w-52 rounded-md border bg-background px-2 text-sm" value={sort} onChange={e=>setSort(e.target.value as SignalSort)}>{SIGNAL_SORT_OPTIONS.map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>{p.sale&&<Button variant="ghost" size="sm" className="min-h-11" onClick={()=>setLabelsOpen(true)}>Nhãn cá nhân</Button>}</div>
       <div className="md:hidden min-w-0 relative">
         <div className="signal-status-scroll flex gap-1.5 overflow-x-auto pb-1 pr-5" role="group" aria-label="Trạng thái tín hiệu">
-          {quickTabs.map(x => <Button key={x.k} size="sm" variant={f.quick === x.k && !care.on ? 'default' : 'outline'} aria-pressed={f.quick === x.k && !care.on} className="h-9 shrink-0 rounded-full px-3 text-xs gap-1.5" onClick={() => {setCare({on:false});setF(y=>({...y,quick:x.k}));}}>{x.label}<span className="tabular-nums opacity-75">{isLoading ? '…' : count(x.k)}</span></Button>)}
+          {quickTabs.map(x => <Button key={x.k} size="sm" variant={f.quick === x.k && !care.on ? 'default' : 'outline'} aria-pressed={f.quick === x.k && !care.on} className="h-9 shrink-0 rounded-full px-3 text-xs gap-1.5" onClick={() => {setCare({on:false});setF(y=>({...y,quick:x.k}));}}>{x.label}<span className="tabular-nums opacity-75">{count(x.k)}</span></Button>)}
         </div>
         <span className="pointer-events-none absolute right-0 top-0 grid h-9 w-4 place-items-center bg-background text-muted-foreground" aria-hidden="true">›</span>
       </div>
       <div className="hidden md:block rounded-2xl border bg-card p-3 shadow-sm space-y-2.5">
-        <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || needCount(n) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
+        <ChipRow label="Nhóm nhu cầu" items={[{ k: "", label: "Tất cả", n: needCount(undefined) }, ...needOpts.names.filter((n) => n === f.needGroup || !counts.data || Number(needCount(n)) > 0).map((n) => ({ k: n, label: n, n: needCount(n) }))]}
           active={f.needGroup ?? ""} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, needGroup: k || undefined })); }} />
         <ChipRow label="Trạng thái" max={quickTabs.length} items={quickTabs.map((x) => ({ k: x.k, label: x.label, n: count(x.k) }))}
           active={care.on ? "__care__" : f.quick} onPick={(k) => { setCare({ on: false }); setF((y) => ({ ...y, quick: k as Quick })); }}
@@ -242,14 +242,16 @@ export function SignalsPage() {
 
         <ActiveFilters f={f} name={name} onChange={setF} />
       </div>
+      {counts.isError && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive"><span>Không tải được số liệu thống kê: {errMsg(counts.error)}</span><Button variant="outline" disabled={counts.isFetching} onClick={()=>void counts.refetch()}>Thử tải lại số liệu</Button></div>}
+      {error && list.length > 0 && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive"><span>Không tải được danh sách tiếp theo: {errMsg(error)}</span><Button variant="outline" disabled={pages.isFetching} onClick={()=>pages.isFetchNextPageError?void pages.fetchNextPage():void pages.refetch()}>Thử tải lại</Button></div>}
       {isLoading ? <p className="text-sm text-muted-foreground py-8 text-center">Đang tải…</p>
-        : error ? <p className="text-sm text-destructive py-8 text-center">{errMsg(error)}</p>
+        : error && list.length === 0 ? <div role="alert" className="py-8 text-center space-y-3"><p className="text-sm text-destructive">Không tải được danh sách Tín hiệu: {errMsg(error)}</p><Button variant="outline" disabled={pages.isFetching} onClick={()=>void pages.refetch()}>Thử tải lại</Button></div>
         : list.length === 0 ? <p className="text-sm text-muted-foreground py-12 text-center border rounded-lg bg-card">Không có tín hiệu phù hợp.</p>
         : (
           <>
             <div className="md:hidden space-y-2">
               {list.map(s => <SignalMobileCard key={s.id} s={s} status={<StatusPill s={s}/>} owner={s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'} labels={labels.data??[]} onOpen={()=>setOpenId(s.id)}/>)}
-              <div ref={sentinel} className="space-y-2 pt-2 text-center"><p className="text-xs text-muted-foreground">{list.length} / {total} tín hiệu</p>{pages.hasNextPage&&<Button variant="outline" className="h-11 w-full" disabled={pages.isFetchingNextPage} onClick={()=>void pages.fetchNextPage()}>{pages.isFetchingNextPage?'Đang tải…':'Tải thêm'}</Button>}</div>
+              <div ref={sentinel} className="space-y-2 pt-2 text-center"><p className="text-xs text-muted-foreground">{list.length} / {total??'—'} tín hiệu</p>{pages.hasNextPage&&<Button variant="outline" className="h-11 w-full" disabled={pages.isFetchingNextPage} onClick={()=>void pages.fetchNextPage()}>{pages.isFetchingNextPage?'Đang tải…':'Tải thêm'}</Button>}</div>
             </div>
             <div className="hidden md:block rounded-2xl border bg-card overflow-x-auto shadow-sm">
               <table className="w-full text-sm">
@@ -275,7 +277,7 @@ export function SignalsPage() {
                 </tbody>
               </table>
             </div>
-            <div className="hidden md:flex items-center justify-end gap-3"><span className="text-sm text-muted-foreground">Trang {desktopPage+1} · {total} tín hiệu</span><Button variant="outline" disabled={desktopPage===0} onClick={()=>setDesktopPage(x=>x-1)}>Trước</Button><Button variant="outline" disabled={(desktopPage+1)*40>=total} onClick={()=>setDesktopPage(x=>x+1)}>Sau</Button></div>
+            <div className="hidden md:flex items-center justify-end gap-3"><span className="text-sm text-muted-foreground">Trang {desktopPage+1} · {total??'—'} tín hiệu</span><Button variant="outline" disabled={desktopPage===0} onClick={()=>setDesktopPage(x=>x-1)}>Trước</Button><Button variant="outline" disabled={pages.isFetching||(total!==undefined?(desktopPage+1)*40>=total:list.length<40)} onClick={()=>setDesktopPage(x=>x+1)}>Sau</Button></div>
           </>
         )}
 
@@ -367,9 +369,9 @@ function FilterSheet({ open, onOpenChange, value, onApply, data, showPeople, can
   );
 }
 
-function Stat({ label, v, onClick, tone }: { label: string; v: number; onClick?: () => void; tone?: "warn" }) {
+function Stat({ label, v, onClick, tone }: { label: string; v: number | '—'; onClick?: () => void; tone?: "warn" }) {
   return (
-    <button onClick={onClick} className={cn("rounded-xl border bg-card p-3 text-left", tone === "warn" && v > 0 && "border-amber-500/50")}>
+    <button onClick={onClick} className={cn("rounded-xl border bg-card p-3 text-left", tone === "warn" && typeof v === "number" && v > 0 && "border-amber-500/50")}>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-2xl font-semibold mt-0.5">{v}</div>
     </button>
@@ -378,7 +380,7 @@ function Stat({ label, v, onClick, tone }: { label: string; v: number; onClick?:
 
 /** Hàng chip lọc nhanh có nhãn; quá nhiều lựa chọn thì gọn lại sau "Xem thêm". */
 function ChipRow({ label, items, active, onPick, extra, max = 6 }: {
-  label: string; items: { k: string; label: string; n: number }[]; active: string; onPick: (k: string) => void; extra?: React.ReactNode; max?: number;
+  label: string; items: { k: string; label: string; n: number | '—' }[]; active: string; onPick: (k: string) => void; extra?: React.ReactNode; max?: number;
 }) {
   const [more, setMore] = useState(false);
   const shown = more ? items : items.slice(0, max);

@@ -9934,6 +9934,45 @@ export type Database = {
         Args: { _id: string; _user: string }
         Returns: undefined
       }
+      signal_base_filtered: {
+        Args: { _filter?: Json }
+        Returns: {
+          address: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          closed_at: string | null
+          created_at: string
+          created_by: string
+          customer_name: string
+          detected_on: string
+          id: string
+          lost_reason: string | null
+          marketing_note: string | null
+          need_detail: string | null
+          need_group: string | null
+          need_groups: string[]
+          next_contact_at: string | null
+          next_contact_on: string | null
+          phone: string
+          potential: string
+          potential_updated_at: string | null
+          potential_updated_by: string | null
+          products: string[]
+          revenue: number | null
+          source: string
+          status: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "opportunity_signals"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       signal_cancel: {
         Args: { _id: string; _reason: string; _undo?: boolean }
         Returns: undefined
