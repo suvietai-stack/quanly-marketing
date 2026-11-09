@@ -42,7 +42,8 @@ async def main():
    search=page.get_by_label('Tìm tín hiệu');before=requests.count('rpc/signal_list_page');await search.fill('Khách');await search.fill('Khách 2');await page.wait_for_timeout(500);assert requests.count('rpc/signal_list_page')-before<=2
    # Một luồng diễn biến duy nhất: mẫu nhanh + ghi chú + trạng thái tùy chọn
    await page.get_by_role('button',name='Mở chi tiết tín hiệu: Khách 2',exact=True).first.click()
-   assert await page.get_by_role('button',name='Cập nhật diễn biến',exact=True).count()==1
+   await expect(page.get_by_role('button',name='Cập nhật diễn biến',exact=True)).to_be_visible()
+   await expect(page.get_by_role('button',name='Cập nhật diễn biến',exact=True)).to_have_count(1)
    assert await page.get_by_role('button',name='Cập nhật',exact=True).count()==0
    await page.get_by_role('button',name='Cập nhật diễn biến',exact=True).click()
    await expect(page.get_by_text('Chọn nhanh diễn biến',exact=True)).to_be_visible()
