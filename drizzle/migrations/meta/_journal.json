@@ -1996,6 +1996,13 @@
       "when": 1794209958892,
       "tag": "0284_finance_requests_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 285,
+      "version": "7",
+      "when": 1794210110060,
+      "tag": "0285_finance_requests_rpcs",
+      "breakpoints": true
     }
   ]
 }

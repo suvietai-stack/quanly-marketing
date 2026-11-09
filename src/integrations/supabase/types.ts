@@ -9591,6 +9591,58 @@ export type Database = {
       }
       fin_reset_execute: { Args: { _confirm: string }; Returns: Json }
       fin_reset_preview: { Args: never; Returns: Json }
+      fr_cancel: { Args: { _id: string }; Returns: undefined }
+      fr_decide: {
+        Args: { _action: string; _comment: string; _id: string }
+        Returns: undefined
+      }
+      fr_deduct: {
+        Args: { _amount: number; _id: string; _note: string }
+        Returns: undefined
+      }
+      fr_pay: {
+        Args: {
+          _amount: number
+          _id: string
+          _method: string
+          _note: string
+          _ref: string
+        }
+        Returns: undefined
+      }
+      fr_payment_type_save: {
+        Args: { _active: boolean; _id: string; _name: string; _sort: number }
+        Returns: string
+      }
+      fr_report: {
+        Args: { _from: string; _kind: string; _to: string }
+        Returns: Json
+      }
+      fr_save: {
+        Args: {
+          _id: string
+          _kind: string
+          _payload: Json
+          _request_key: string
+        }
+        Returns: string
+      }
+      fr_settings_save: {
+        Args: { _flow: Json; _kind: string; _limits: Json }
+        Returns: undefined
+      }
+      fr_settle_options: {
+        Args: never
+        Returns: {
+          code: string
+          id: string
+          paid_amount: number
+          remaining: number
+          settled_amount: number
+          title: string
+        }[]
+      }
+      fr_submit: { Args: { _id: string }; Returns: string }
       get_profiles_directory: {
         Args: never
         Returns: {
