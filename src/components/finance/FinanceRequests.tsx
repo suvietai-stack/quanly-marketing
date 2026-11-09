@@ -375,16 +375,27 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
           <Field label={kind === "payment" ? "Ngày đề nghị thanh toán" : "Ngày mong muốn nhận tiền"}>
             <Input type="date" value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} />
           </Field>
-          <Field label="File/ảnh chứng từ đính kèm">
+          <Field label="Chứng từ & tài liệu đính kèm">
             <div className="space-y-2">
               <Input type="file" multiple accept="image/*,application/pdf" onChange={(e) => setFiles(Array.from(e.target.files ?? []))} />
               {files.map((f, i) => <div key={i} className="text-sm text-muted-foreground flex items-center gap-1"><Paperclip className="h-3 w-3" />{f.name} (chưa tải lên)</div>)}
               {attachments.map((a, i) => (
-                <div key={a.path} className="text-sm flex items-center gap-2">
-                  <Paperclip className="h-3 w-3" /><span className="flex-1 truncate">{a.name}</span>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}><X className="h-3 w-3" /></Button>
+                <div key={a.path ?? a.url ?? i} className="text-sm flex items-center gap-2">
+                  <Paperclip className="h-3 w-3 shrink-0" />
+                  <span className="flex-1 truncate">{a.name}{a.url ? " (liên kết)" : ""}</span>
+                  <Button type="button" size="sm" variant="ghost" aria-label={`Xóa đính kèm ${a.name}`} onClick={() => setAttachments(attachments.filter((_, j) => j !== i))}><X className="h-3 w-3" /></Button>
                 </div>
               ))}
+              <div className="flex gap-2">
+                <Input placeholder="Dán liên kết tài liệu (Google Drive…)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => {
+                  const u = linkUrl.trim();
+                  if (!u) return;
+                  if (!/^https?:\/\//i.test(u)) return toast.error("Liên kết phải bắt đầu bằng http:// hoặc https://");
+                  setAttachments([...attachments, { name: u.replace(/^https?:\/\//i, "").slice(0, 80), url: u }]);
+                  setLinkUrl("");
+                }}>Thêm liên kết</Button>
+              </div>
             </div>
           </Field>
           <Field label="Ghi chú">
