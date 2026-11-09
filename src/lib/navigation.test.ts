@@ -70,7 +70,8 @@ describe('Presentation-only navigation', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(4);
     // Kho Sản Phẩm đã có route placeholder an toàn; các mục tương lai khác chưa có đường dẫn.
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon && i.to !== '/biz/products').every(i => i.to === '')).toBe(true);
-    expect(visibleNavigation(access()).some(g => g.label === 'Kế Toán & Tài Chính')).toBe(false);
+    // Nhóm Kế Toán & Tài Chính có các mục không gắn quyền menu (trang tự kiểm tra quyền bên trong).
+    expect(visibleNavigation(access()).find(g => g.label === 'Showroom')?.items ?? []).toHaveLength(0);
     expect(visibleNavigation(access()).some(g => g.label === 'Showroom' && g.comingSoon)).toBe(true);
   });
   it('highlights only the most specific route for existing deep links', () => {
