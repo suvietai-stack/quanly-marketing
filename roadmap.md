@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## P0 TÍN HIỆU LOAD MÃI — 09/11/2026
+- [ ] SL1. Xác minh RPC/grants/RLS và chi phí danh sách/bộ đếm/history trên backend chung; không dữ liệu giả.
+- [ ] SL2. Khôi phục truy vấn an toàn, giữ bộ lọc/ưu tiên toàn tập/quyền/lịch sử.
+- [ ] SL3. Timeout/hủy request, không retry liên tục; bộ đếm — và lỗi/thử lại độc lập danh sách.
+- [ ] SL4. Hồi quy/database/browser và nghiệm thu Publish Sale/quản lý bằng phiên thật; cần đăng nhập/chỉ định tài khoản, không tự ghi note thử.
+
 ## CRM SÁU NHÓM & THÔNG TIN TÙY CHỈNH — 09/11/2026
 - [x] CX1. Kiểm kê năm nhóm cũ, 0 khách/liên hệ/lịch/tương tác; kế hoạch duyệt, giữ nhóm pha trộn cũ.
 - [x] CX2. Sáu nhóm đang dùng, tái dùng ID tương đương, thêm nhóm/tệp thiếu; legacy inactive/review, không chuyển khách/trùng.
