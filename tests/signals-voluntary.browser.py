@@ -49,7 +49,8 @@ async def main():
    assert await page.get_by_label('Nội dung diễn biến').count()==0
    await page.get_by_role('button',name='Đã gửi báo giá',exact=True).click()
    await page.get_by_placeholder('VD: Khách muốn tham khảo thêm mẫu màu xanh…').fill('Khách đã nhận báo giá')
-   assert await page.get_by_role('combobox').count()==0 or not await page.locator('text=Trạng thái mới').count()
+   await expect(page.get_by_text('Thay đổi trạng thái tín hiệu (tùy chọn)',exact=True)).to_be_visible()
+   assert await page.get_by_text('Trạng thái mới',exact=True).count()==0
    await page.get_by_role('button',name='Lưu diễn biến',exact=True).dblclick()
    await expect(page.get_by_text('Đã lưu diễn biến',exact=True)).to_be_visible()
    await expect(page.get_by_text('Khách đã nhận báo giá',exact=True).first).to_be_visible()
