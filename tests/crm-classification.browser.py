@@ -2,7 +2,7 @@ import asyncio,json
 from pathlib import Path
 from playwright.async_api import async_playwright,expect
 HTML='<div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/crm.browser.tsx"></script>'
-OUT=Path('/tmp/browser/crm-classification');UID='00000000-0000-0000-0000-000000000002'
+OUT=Path('/tmp/browser/crm-classification');OUT.mkdir(parents=True,exist_ok=True);UID='00000000-0000-0000-0000-000000000002'
 def cat(id,kind,name,parent=None):return dict(id=id,kind=kind,name=name,parent_id=parent,description='',active=True,sort_order=0,config={})
 async def main():
  async with async_playwright() as p:
@@ -17,7 +17,7 @@ async def main():
     n=r.request.url.split('/')[-1];a=r.request.post_data_json or {};result=[]
     if n=='crm_people':result=[{'id':UID,'name':'Sale cách ly'}]
     elif n=='crm_catalog_counts':result={'g':1,'h':0,'s':1,'t':0}
-    elif n=='crm_read':result={'customers':customers,'schedules':[],'contacts':[],'server_now':'2026-11-06T07:00:00Z'}
+    elif n in ['crm_read','crm_read_dynamic']:result={'customers':customers,'schedules':[],'contacts':[],'server_now':'2026-11-06T07:00:00Z'}
     elif n=='crm_catalog_save':
      d=a['_data'];found=next((c for c in cats if c['id']==d.get('id')),None)
      if found:found.update(d);result=found['id']
@@ -25,7 +25,7 @@ async def main():
     elif n=='crm_customer_save':
      d=a['_data'];writes.append(d);c=dict(d,id='c',code='CRM-C',owner_id=UID,revision=len(writes),created_at='2026-11-02T07:00:00Z',updated_at='2026-11-06T07:00:00Z',archived_at=None);customers[:]=[c];result='c'
     elif n=='crm_detail':result={'customer':customers[0],'contacts':[],'locations':[],'schedules':[],'interactions':[],'events':[],'can_edit':True}
-    elif n=='crm_report_filtered':
+    elif n in ['crm_report_filtered','crm_report_dynamic']:
      own=[c for c in customers if not a.get('_group') or c.get('group_id')==a['_group']];result={'customers':own,'schedules':[],'interactions':[],'totals':{'customers':len(own),'new_customers':len(own),'priority_customers':0,'scheduled_customers':0,'due':0,'processed':0,'on_time':0,'overdue':0,'overdue_customers':0,'priority_overdue':0,'attempts':0,'connected':0},'start':'2026-11-01','end':'2026-11-30','as_of':'2026-11-06T07:00:00Z','server_now':'2026-11-06T07:00:00Z'}
     await r.fulfill(content_type='application/json',body=json.dumps(result))
    await page.route('**/rest/v1/rpc/**',rpc)
