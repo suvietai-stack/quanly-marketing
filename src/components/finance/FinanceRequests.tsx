@@ -229,20 +229,42 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       setAmount(""); setTitle(""); setDetail(""); setDesiredDate(""); setPayeeName(""); setPayeeInfo("");
       setNote(""); setTypeId(""); setAdvanceId(""); setSupplierName(""); setSupplierTax(""); setSupplierBank("");
       setInvoiceNo(""); setSalaryPeriod(""); setAttachments([]);
+      setLines(kind === "payment" ? [emptyLine()] : []);
     }
+    setLinkUrl("");
   }, [open, editing]);
 
+  // Nạp bảng kê khi sửa đề nghị thanh toán đã có dòng khoản chi.
+  useEffect(() => {
+    if (!(open && kind === "payment" && editing)) return;
+    frApi.lines(editing.id)
+      .then((ls) => setLines(ls.length
+        ? ls.map((l) => ({ id: l.id, name: l.name, catalog_id: l.catalog_id, unit: l.unit ?? "", qty: Number(l.qty), unit_price: Number(l.unit_price) }))
+        : [emptyLine()]))
+      .catch(() => {});
+  }, [open, editing, kind]);
+
+  const effectiveAmount = kind === "payment" ? linesTotal(lines) : parseAmount(amount);
+
   const payload = () => ({
-    amount: parseAmount(amount), title, detail, desired_date: desiredDate || null,
+    amount: effectiveAmount, title, detail, desired_date: desiredDate || null,
     payee_name: payeeName, payee_info: payeeInfo, note,
     payment_type_id: typeId || null, advance_id: isSettle ? advanceId || null : null,
     supplier_name: supplierName, supplier_tax: supplierTax, supplier_bank: supplierBank,
     invoice_no: invoiceNo, salary_period: salaryPeriod, attachments,
+    // Backend tự tính lại thành tiền/tổng tiền từ bảng kê, không tin số client gửi.
+    ...(kind === "payment" ? { lines: lines.filter((l) => !isBlankLine(l)).map((l) => ({
+      name: l.name, catalog_id: l.catalog_id ?? null, unit: l.unit, qty: l.qty, unit_price: l.unit_price,
+    })) } : {}),
   });
 
   const save = async (submitAfter: boolean) => {
+    if (kind === "payment") {
+      const lineErr = validateLines(lines);
+      if (lineErr) return toast.error(lineErr);
+    }
     const err = frValidate(kind, {
-      amount: parseAmount(amount), title, paymentTypeId: typeId, payeeName,
+      amount: effectiveAmount, title, paymentTypeId: typeId, payeeName,
       advanceId, salaryPeriod, settleTypeName: selectedType?.name,
     });
     if (err) return toast.error(err);
