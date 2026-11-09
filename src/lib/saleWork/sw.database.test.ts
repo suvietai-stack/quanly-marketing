@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
+import { pgcrypto } from '@electric-sql/pglite/pgcrypto';
 import { beforeAll, afterAll, it, expect } from 'vitest';
 
-const db = new PGlite();
+const db = new PGlite({ extensions: { pgcrypto } });
 const ids = Array.from({ length: 4 }, (_, i) => `00000000-0000-0000-0000-${String(i + 1).padStart(12, '0')}`);
 const [saleA, saleB, manager, outsider] = ids;
 
