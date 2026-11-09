@@ -25,7 +25,7 @@ CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,k
     ('${approver}','fr.advance.approve'),('${approver}','fr.payment.approve'),('${approver}','fr.salary.approve'),
     ('${accountant}','fr.advance.pay'),('${accountant}','fr.payment.pay'),('${accountant}','fr.salary.pay'),('${accountant}','fr.salary.deduct'),
     ('${admin}','fr.advance.settings'),('${admin}','fr.payment.settings'),('${admin}','fr.salary.settings')`);
-  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines'])
+  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group'])
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   settleTypeId = await scalar("select id v from fr_payment_types where name='Quyết toán/hoàn ứng tạm ứng'");
 }, 30000);
