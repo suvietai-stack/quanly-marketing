@@ -24,7 +24,7 @@ create function private.is_super_admin(u uuid) returns boolean language sql as $
 create function public.biz_admin(u uuid) returns boolean language sql as $$select u='${admin}'::uuid$$;
 create function public.biz_can(uuid,text) returns boolean language sql as $$select false$$;
 create function public.k3_can(uuid,text) returns boolean language sql as $$select false$$;
-create function public.crm_can(u uuid,p text) returns boolean language sql as $$select u='${admin}'::uuid$$;
+create function public.crm_can(_actor uuid,_permission text) returns boolean language sql as $$select _actor='${admin}'::uuid$$;
 insert into profiles values('${admin}','Admin','Đang hoạt động'),('${employee}','Marketing','Đang hoạt động'),('${other}','Khác','Đang hoạt động');
 insert into app_roles values('old','Role cũ',ARRAY['sale_work.access','task.view','biz.view_all']);insert into user_roles values('${employee}','old');`);
   for (const f of ['0292_base_org_permission_storage','0293_base_org_permission_resolver','0294_base_org_permission_preview_apply']) await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));

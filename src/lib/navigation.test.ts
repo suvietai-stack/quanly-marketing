@@ -52,7 +52,7 @@ describe('Presentation-only navigation', () => {
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations).toHaveLength(39);
+    expect(destinations).toHaveLength(40);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
@@ -65,6 +65,11 @@ describe('Presentation-only navigation', () => {
     expect(paths(access())).not.toContain('/biz/crm');
     expect(allowedPins(['/biz/crm'], groups)).toEqual(['/biz/crm']);
     expect(searchLauncher(groups, 'CRM').map(i => i.to)).toContain('/biz/crm');
+  });
+  it('Base organization administration is not granted by KPI admin or business scope', () => {
+    expect(paths(access([], { isSuperAdmin: true }))).toContain('/organization');
+    expect(paths(access([], { isKpiAdmin: true }))).not.toContain('/organization');
+    expect(paths(access(['biz.org_manage', 'settings.role']))).not.toContain('/organization');
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(4);
