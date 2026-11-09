@@ -33,7 +33,9 @@ import { Route as BizApprovalsRouteImport } from './routes/biz.approvals'
 import { Route as BizCrmRouteImport } from './routes/biz.crm'
 import { Route as BizGoalsRouteImport } from './routes/biz.goals'
 import { Route as BizPlansRouteImport } from './routes/biz.plans'
+import { Route as BizProductsRouteImport } from './routes/biz.products'
 import { Route as BizReportsRouteImport } from './routes/biz.reports'
+import { Route as BizSaleWorkRouteImport } from './routes/biz.sale-work'
 import { Route as BizSettingsRouteImport } from './routes/biz.settings'
 import { Route as BrandsIndexRouteImport } from './routes/brands.index'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
@@ -201,9 +203,19 @@ const BizPlansRoute = BizPlansRouteImport.update({
   path: '/biz/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BizProductsRoute = BizProductsRouteImport.update({
+  id: '/biz/products',
+  path: '/biz/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BizReportsRoute = BizReportsRouteImport.update({
   id: '/biz/reports',
   path: '/biz/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BizSaleWorkRoute = BizSaleWorkRouteImport.update({
+  id: '/biz/sale-work',
+  path: '/biz/sale-work',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BizSettingsRoute = BizSettingsRouteImport.update({
@@ -467,7 +479,9 @@ export interface FileRoutesByFullPath {
   '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
+  '/biz/products': typeof BizProductsRoute
   '/biz/reports': typeof BizReportsRoute
+  '/biz/sale-work': typeof BizSaleWorkRoute
   '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/design/marketing': typeof DesignMarketingRoute
@@ -540,7 +554,9 @@ export interface FileRoutesByTo {
   '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
+  '/biz/products': typeof BizProductsRoute
   '/biz/reports': typeof BizReportsRoute
+  '/biz/sale-work': typeof BizSaleWorkRoute
   '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/design/marketing': typeof DesignMarketingRoute
@@ -614,7 +630,9 @@ export interface FileRoutesById {
   '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
   '/biz/plans': typeof BizPlansRoute
+  '/biz/products': typeof BizProductsRoute
   '/biz/reports': typeof BizReportsRoute
+  '/biz/sale-work': typeof BizSaleWorkRoute
   '/biz/settings': typeof BizSettingsRoute
   '/brands/$id': typeof BrandsIdRoute
   '/design/marketing': typeof DesignMarketingRoute
@@ -689,7 +707,9 @@ export interface FileRouteTypes {
     | '/biz/crm'
     | '/biz/goals'
     | '/biz/plans'
+    | '/biz/products'
     | '/biz/reports'
+    | '/biz/sale-work'
     | '/biz/settings'
     | '/brands/$id'
     | '/design/marketing'
@@ -762,7 +782,9 @@ export interface FileRouteTypes {
     | '/biz/crm'
     | '/biz/goals'
     | '/biz/plans'
+    | '/biz/products'
     | '/biz/reports'
+    | '/biz/sale-work'
     | '/biz/settings'
     | '/brands/$id'
     | '/design/marketing'
@@ -835,7 +857,9 @@ export interface FileRouteTypes {
     | '/biz/crm'
     | '/biz/goals'
     | '/biz/plans'
+    | '/biz/products'
     | '/biz/reports'
+    | '/biz/sale-work'
     | '/biz/settings'
     | '/brands/$id'
     | '/design/marketing'
@@ -909,7 +933,9 @@ export interface RootRouteChildren {
   BizCrmRoute: typeof BizCrmRoute
   BizGoalsRoute: typeof BizGoalsRoute
   BizPlansRoute: typeof BizPlansRoute
+  BizProductsRoute: typeof BizProductsRoute
   BizReportsRoute: typeof BizReportsRoute
+  BizSaleWorkRoute: typeof BizSaleWorkRoute
   BizSettingsRoute: typeof BizSettingsRoute
   BrandsIdRoute: typeof BrandsIdRoute
   DesignMarketingRoute: typeof DesignMarketingRoute
@@ -1129,11 +1155,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BizPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/biz/products': {
+      id: '/biz/products'
+      path: '/biz/products'
+      fullPath: '/biz/products'
+      preLoaderRoute: typeof BizProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/biz/reports': {
       id: '/biz/reports'
       path: '/biz/reports'
       fullPath: '/biz/reports'
       preLoaderRoute: typeof BizReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/sale-work': {
+      id: '/biz/sale-work'
+      path: '/biz/sale-work'
+      fullPath: '/biz/sale-work'
+      preLoaderRoute: typeof BizSaleWorkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/biz/settings': {
@@ -1485,7 +1525,9 @@ const rootRouteChildren: RootRouteChildren = {
   BizCrmRoute: BizCrmRoute,
   BizGoalsRoute: BizGoalsRoute,
   BizPlansRoute: BizPlansRoute,
+  BizProductsRoute: BizProductsRoute,
   BizReportsRoute: BizReportsRoute,
+  BizSaleWorkRoute: BizSaleWorkRoute,
   BizSettingsRoute: BizSettingsRoute,
   BrandsIdRoute: BrandsIdRoute,
   DesignMarketingRoute: DesignMarketingRoute,
