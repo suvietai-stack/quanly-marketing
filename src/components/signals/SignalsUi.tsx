@@ -34,7 +34,7 @@ import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
-import { signalPage, signalCounts, signalById, listParams, saveNote, changeToken } from '@/lib/signals/paged';
+import { signalPage, signalCounts, signalById, listParams, changeToken } from '@/lib/signals/paged';
 import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
@@ -89,6 +89,14 @@ export function useOptions(scope: OptionScope) {
 }
 const invalidateSig = (qc: ReturnType<typeof useQueryClient>) =>
   qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith(SIG) });
+
+/** Làm mới mọi cache tín hiệu sau khi backend xác nhận; báo lỗi + thử lại nếu có request làm mới thất bại. */
+const refreshSignals = async (qc: ReturnType<typeof useQueryClient>) => {
+  const erroredBefore = new Set(qc.getQueryCache().findAll().filter((q) => q.state.status === "error").map((q) => q.queryHash));
+  await invalidateSig(qc);
+  const failed = qc.getQueryCache().findAll().some((q) => q.isActive() && String(q.queryKey[0]).startsWith(SIG) && q.state.status === "error" && !erroredBefore.has(q.queryHash));
+  if (failed) toast.error("Đã lưu nhưng chưa làm mới được danh sách.", { action: { label: "Thử lại", onClick: () => void refreshSignals(qc) } });
+};
 
 /** Xóa dữ liệu tín hiệu khi đăng xuất hoặc đổi tài khoản (không cần tải lại trang). */
 export function SignalCacheGuard() {
