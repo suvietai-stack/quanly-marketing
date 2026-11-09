@@ -61,6 +61,7 @@ async def main():
    await page.screenshot(path=str(OUT/f'{width}-note.png'))
    await page.keyboard.press('Escape')
    # Đồng bộ sau phân công: chỉ báo thành công sau backend, chi tiết/danh sách tự làm mới
+   await search.fill('');await page.wait_for_timeout(500)
    await page.get_by_role('button',name='Mở chi tiết tín hiệu: Khách 3',exact=True).first.click()
    await expect(page.get_by_text('Sale: Chưa phân công',exact=False)).to_be_visible()
    pageb=requests.count('rpc/signal_list_page')
