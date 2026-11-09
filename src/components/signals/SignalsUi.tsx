@@ -989,8 +989,4 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
   );
 }
 
-function VoluntaryNoteForm({id,onSaved}:{id:string;onSaved:()=>void}) {
- const [note,setNote]=useState('');const [busy,setBusy]=useState(false);const [error,setError]=useState('');const lock=useRef(false);const request=useRef<{id:string;note:string}|null>(null);
- const save=async()=>{if(lock.current||!note.trim())return;lock.current=true;setBusy(true);setError('');if(request.current?.note!==note.trim())request.current={id:crypto.randomUUID(),note:note.trim()};try{await saveNote(id,request.current.id,note);onSaved();}catch(e){setError(errMsg(e));}finally{lock.current=false;setBusy(false);}};
- return <div className="space-y-4 pt-4"><Label htmlFor="voluntary-note">Nội dung diễn biến</Label><Textarea id="voluntary-note" rows={5} maxLength={3000} value={note} onChange={e=>setNote(e.target.value)}/>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<Button className="w-full min-h-11" disabled={busy||!note.trim()} onClick={()=>void save()}>{busy?'Đang lưu…':'Lưu'}</Button></div>;
-}
+
