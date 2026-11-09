@@ -1,10 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
+import { frGroupDispatch } from "./zaloGroup.functions";
 import type { FrKind, FrStatus } from "./logic";
 
 const db = supabase as any;
-async function rpc<T = any>(fn: string, args: Record<string, unknown>): Promise<T> {
+// Sau khi nghiệp vụ ghi thành công: đánh thức bộ gửi nhóm Zalo (lỗi không ảnh hưởng thao tác chính).
+const wakeZaloGroup = () => { frGroupDispatch().catch(() => {}); };
+async function rpc<T = any>(fn: string, args: Record<string, unknown>, wake = false): Promise<T> {
   const { data, error } = await db.rpc(fn, args);
   if (error) throw new Error(error.message);
+  if (wake) wakeZaloGroup();
   return data as T;
 }
 async function sel<T>(q: any): Promise<T> {
@@ -64,13 +68,13 @@ export const frApi = {
   settleOptions: () => rpc<FrSettleOption[]>("fr_settle_options", {}),
   save: (id: string | null, kind: FrKind, payload: Record<string, unknown>, requestKey: string) =>
     rpc<string>("fr_save", { _id: id, _kind: kind, _payload: payload, _request_key: requestKey }),
-  submit: (id: string) => rpc<string>("fr_submit", { _id: id }),
+  submit: (id: string) => rpc<string>("fr_submit", { _id: id }, true),
   decide: (id: string, action: "approve" | "reject" | "info", comment: string) =>
-    rpc("fr_decide", { _id: id, _action: action, _comment: comment }),
+    rpc("fr_decide", { _id: id, _action: action, _comment: comment }, true),
   cancel: (id: string) => rpc("fr_cancel", { _id: id }),
   pay: (id: string, amount: number, method: string, ref: string, note: string) =>
-    rpc("fr_pay", { _id: id, _amount: amount, _method: method, _ref: ref, _note: note }),
-  deduct: (id: string, amount: number, note: string) => rpc("fr_deduct", { _id: id, _amount: amount, _note: note }),
+    rpc("fr_pay", { _id: id, _amount: amount, _method: method, _ref: ref, _note: note }, true),
+  deduct: (id: string, amount: number, note: string) => rpc("fr_deduct", { _id: id, _amount: amount, _note: note }, true),
   saveSettings: (kind: FrKind, flow: any[], limits: Record<string, any>) =>
     rpc("fr_settings_save", { _kind: kind, _flow: flow, _limits: limits }),
   savePaymentType: (id: string | null, name: string, active: boolean, sort: number) =>
