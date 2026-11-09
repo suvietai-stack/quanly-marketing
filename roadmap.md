@@ -1,5 +1,13 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## PHÂN QUYỀN TOÀN BASE — 09/11/2026
+- [x] BP1. Đọc yêu cầu, rà soát nguồn quyền/frontend/schema hiện hành; chưa có cơ cấu tổ chức toàn Base, chỉ có cơ cấu Kinh doanh.
+- [ ] BP2. Chốt kế hoạch tương thích trước khi thay đổi điểm kiểm tra quyền; không khôi phục biz.*/k3.* qua Role cũ.
+- [ ] BP3. Cơ cấu toàn Base liên kết nhân sự hiện có + cấu hình mặc định/trực tiếp/bộ quyền, thời hạn, phạm vi hỗ trợ, RPC/audit.
+- [ ] BP4. Bộ quyết định ba nấc theo tài nguyên, nguồn quyền và bộ chuyển tiếp từng module; chế độ đối soát không đổi quyền trước kích hoạt.
+- [ ] BP5. UI quản trị, ba tab nhân sự, xem trước/xác nhận ảnh hưởng và lịch sử; mẫu nháp không gán tự động.
+- [ ] BP6. Kiểm thử 25 kịch bản, đối soát trước/sau và nghiệm thu phiên thật; không dữ liệu giả/Publish.
+
 ## HỢP NHẤT DIỄN BIẾN & ĐỒNG BỘ PHÂN CÔNG — 09/11/2026
 - [x] HB1. Rà soát hai luồng ghi diễn biến, mẫu chọn nhanh, RPC note/status và luồng phân công + cache invalidation.
 - [x] HB2. Một form "Cập nhật diễn biến": mẫu nhiều chọn + ghi chú tùy chọn + trạng thái tùy chọn; một note/lần lưu, chống trùng, không note tự động từ đổi trạng thái.
