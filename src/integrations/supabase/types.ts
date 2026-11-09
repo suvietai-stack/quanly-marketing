@@ -3720,6 +3720,265 @@ export type Database = {
           },
         ]
       }
+      fr_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          payload: Json | null
+          request_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          request_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fr_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "fr_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fr_payment_types: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          sort?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          sort?: number
+        }
+        Relationships: []
+      }
+      fr_requests: {
+        Row: {
+          advance_id: string | null
+          amount: number
+          approved_at: string | null
+          attachments: Json
+          code: string
+          created_at: string
+          current_step: number
+          deducted_amount: number
+          department_id: string | null
+          desired_date: string | null
+          detail: string | null
+          id: string
+          invoice_no: string | null
+          kind: string
+          note: string | null
+          paid_amount: number
+          paid_at: string | null
+          paid_by: string | null
+          pay_method: string | null
+          pay_ref: string | null
+          payee_info: string | null
+          payee_name: string | null
+          payment_type_id: string | null
+          request_key: string | null
+          requester_id: string
+          salary_period: string | null
+          settled_amount: number
+          status: string
+          submitted_at: string | null
+          supplier_bank: string | null
+          supplier_name: string | null
+          supplier_tax: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          advance_id?: string | null
+          amount: number
+          approved_at?: string | null
+          attachments?: Json
+          code: string
+          created_at?: string
+          current_step?: number
+          deducted_amount?: number
+          department_id?: string | null
+          desired_date?: string | null
+          detail?: string | null
+          id?: string
+          invoice_no?: string | null
+          kind: string
+          note?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          paid_by?: string | null
+          pay_method?: string | null
+          pay_ref?: string | null
+          payee_info?: string | null
+          payee_name?: string | null
+          payment_type_id?: string | null
+          request_key?: string | null
+          requester_id: string
+          salary_period?: string | null
+          settled_amount?: number
+          status?: string
+          submitted_at?: string | null
+          supplier_bank?: string | null
+          supplier_name?: string | null
+          supplier_tax?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          advance_id?: string | null
+          amount?: number
+          approved_at?: string | null
+          attachments?: Json
+          code?: string
+          created_at?: string
+          current_step?: number
+          deducted_amount?: number
+          department_id?: string | null
+          desired_date?: string | null
+          detail?: string | null
+          id?: string
+          invoice_no?: string | null
+          kind?: string
+          note?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          paid_by?: string | null
+          pay_method?: string | null
+          pay_ref?: string | null
+          payee_info?: string | null
+          payee_name?: string | null
+          payment_type_id?: string | null
+          request_key?: string | null
+          requester_id?: string
+          salary_period?: string | null
+          settled_amount?: number
+          status?: string
+          submitted_at?: string | null
+          supplier_bank?: string | null
+          supplier_name?: string | null
+          supplier_tax?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fr_requests_advance_id_fkey"
+            columns: ["advance_id"]
+            isOneToOne: false
+            referencedRelation: "fr_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fr_requests_payment_type_id_fkey"
+            columns: ["payment_type_id"]
+            isOneToOne: false
+            referencedRelation: "fr_payment_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fr_settings: {
+        Row: {
+          flow: Json
+          kind: string
+          limits: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          flow?: Json
+          kind: string
+          limits?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          flow?: Json
+          kind?: string
+          limits?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      fr_steps: {
+        Row: {
+          approver_id: string | null
+          comment: string | null
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          label: string
+          perm: string | null
+          request_id: string
+          status: string
+          step_no: number
+        }
+        Insert: {
+          approver_id?: string | null
+          comment?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          label: string
+          perm?: string | null
+          request_id: string
+          status?: string
+          step_no: number
+        }
+        Update: {
+          approver_id?: string | null
+          comment?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          label?: string
+          perm?: string | null
+          request_id?: string
+          status?: string
+          step_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fr_steps_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "fr_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_krs: {
         Row: {
           brand_id: string | null
@@ -5705,6 +5964,7 @@ export type Database = {
           content_id: string | null
           created_at: string
           dedup_key: string
+          fr_request_id: string | null
           id: string
           kind: string
           leave_request_id: string | null
@@ -5728,6 +5988,7 @@ export type Database = {
           content_id?: string | null
           created_at?: string
           dedup_key: string
+          fr_request_id?: string | null
           id?: string
           kind: string
           leave_request_id?: string | null
@@ -5751,6 +6012,7 @@ export type Database = {
           content_id?: string | null
           created_at?: string
           dedup_key?: string
+          fr_request_id?: string | null
           id?: string
           kind?: string
           leave_request_id?: string | null
@@ -5788,6 +6050,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "web_contents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_fr_request_id_fkey"
+            columns: ["fr_request_id"]
+            isOneToOne: false
+            referencedRelation: "fr_requests"
             referencedColumns: ["id"]
           },
           {
@@ -9322,6 +9591,58 @@ export type Database = {
       }
       fin_reset_execute: { Args: { _confirm: string }; Returns: Json }
       fin_reset_preview: { Args: never; Returns: Json }
+      fr_cancel: { Args: { _id: string }; Returns: undefined }
+      fr_decide: {
+        Args: { _action: string; _comment: string; _id: string }
+        Returns: undefined
+      }
+      fr_deduct: {
+        Args: { _amount: number; _id: string; _note: string }
+        Returns: undefined
+      }
+      fr_pay: {
+        Args: {
+          _amount: number
+          _id: string
+          _method: string
+          _note: string
+          _ref: string
+        }
+        Returns: undefined
+      }
+      fr_payment_type_save: {
+        Args: { _active: boolean; _id: string; _name: string; _sort: number }
+        Returns: string
+      }
+      fr_report: {
+        Args: { _from: string; _kind: string; _to: string }
+        Returns: Json
+      }
+      fr_save: {
+        Args: {
+          _id: string
+          _kind: string
+          _payload: Json
+          _request_key: string
+        }
+        Returns: string
+      }
+      fr_settings_save: {
+        Args: { _flow: Json; _kind: string; _limits: Json }
+        Returns: undefined
+      }
+      fr_settle_options: {
+        Args: never
+        Returns: {
+          code: string
+          id: string
+          paid_amount: number
+          remaining: number
+          settled_amount: number
+          title: string
+        }[]
+      }
+      fr_submit: { Args: { _id: string }; Returns: string }
       get_profiles_directory: {
         Args: never
         Returns: {

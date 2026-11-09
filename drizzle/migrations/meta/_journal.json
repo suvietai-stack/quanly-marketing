@@ -1989,6 +1989,34 @@
       "when": 1794194265275,
       "tag": "0283_signal_load_read_hotfix",
       "breakpoints": true
+    },
+    {
+      "idx": 284,
+      "version": "7",
+      "when": 1794209958892,
+      "tag": "0284_finance_requests_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 285,
+      "version": "7",
+      "when": 1794210110060,
+      "tag": "0285_finance_requests_rpcs",
+      "breakpoints": true
+    },
+    {
+      "idx": 286,
+      "version": "7",
+      "when": 1794210263090,
+      "tag": "0286_finance_requests_attachments_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 287,
+      "version": "7",
+      "when": 1794210711708,
+      "tag": "0287_finance_requests_decide_null_safe",
+      "breakpoints": true
     }
   ]
 }

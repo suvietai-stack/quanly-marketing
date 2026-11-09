@@ -340,3 +340,13 @@ Nguyên tắc: Tạo công việc = tạo KG; một KG một/nhiều KF kèm KPI
 - [ ] Deadline KG/KF tới giờ/phút (VN)
 - [ ] KPI đa phương thức đo; tự tính tiến độ/trạng thái
 - [ ] Lộ trình KF theo ngày/giờ/định kỳ; tự hiển thị vào 3K Của Tôi
+
+## 3 CHỨC NĂNG ĐỀ NGHỊ TÀI CHÍNH — spec 621 dòng (2026-11-09)
+Nguyên tắc: ba chức năng riêng (Tạm Ứng / Thanh Toán / Tạm Ứng Lương) dùng chung nền tảng phê duyệt; tái dùng tài khoản/nhân sự/tổ chức/quyền/thông báo hiện có; người tạo chỉ xem đề nghị của mình; Tạm Ứng Lương phân quyền riêng chặt; không tự chuyển khoản/khấu trừ lương; không ảnh hưởng Tiền Về và module khác; bỏ "Sắp ra mắt" chỉ khi hoạt động + kiểm thử; chưa Publish.
+- [x] FR1. Khảo sát hạ tầng: quyền, thông báo, tổ chức/bổ nhiệm, mẫu module ot_.
+- [x] FR2. Migration dữ liệu: bảng fr_* (đề nghị, bước duyệt, sự kiện, cài đặt, danh mục loại thanh toán), RLS, quyền fr.*.
+- [x] FR3. RPC: tạo/nháp/gửi/duyệt/từ chối/bổ sung/hủy/chi tiền/quyết toán/khấu trừ, chống chi trùng, lịch sử bất biến.
+- [x] FR4. Thông báo đúng người có quyền, liên kết đúng đề nghị; không gửi lương vào nhóm chung.
+- [x] FR5. Giao diện: danh sách/tạo/chờ tôi xử lý/báo cáo/cài đặt theo tab; mobile-first; menu bỏ "Sắp ra mắt" khi xong.
+- [x] FR6. Báo cáo riêng từng chức năng theo quyền; số liệu thật, không đếm trùng.
+- [ ] FR7 (còn: nghiệm thu phiên đăng nhập thật, upload file thật, xuất Excel). Kiểm thử đầy đủ theo mục 18 của spec; chưa Publish.

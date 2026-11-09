@@ -41,6 +41,9 @@ import { Route as DesignMarketingRouteImport } from './routes/design.marketing'
 import { Route as DesignMockupsRouteImport } from './routes/design.mockups'
 import { Route as DesignPhotoRouteImport } from './routes/design.photo'
 import { Route as DesignReportsRouteImport } from './routes/design.reports'
+import { Route as FinanceAdvanceRouteImport } from './routes/finance.advance'
+import { Route as FinancePaymentRouteImport } from './routes/finance.payment'
+import { Route as FinanceSalaryRouteImport } from './routes/finance.salary'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
 import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
@@ -236,6 +239,21 @@ const DesignPhotoRoute = DesignPhotoRouteImport.update({
 const DesignReportsRoute = DesignReportsRouteImport.update({
   id: '/design/reports',
   path: '/design/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceAdvanceRoute = FinanceAdvanceRouteImport.update({
+  id: '/finance/advance',
+  path: '/finance/advance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinancePaymentRoute = FinancePaymentRouteImport.update({
+  id: '/finance/payment',
+  path: '/finance/payment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceSalaryRoute = FinanceSalaryRouteImport.update({
+  id: '/finance/salary',
+  path: '/finance/salary',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocalIndexRoute = LocalIndexRouteImport.update({
@@ -456,6 +474,9 @@ export interface FileRoutesByFullPath {
   '/design/mockups': typeof DesignMockupsRoute
   '/design/photo': typeof DesignPhotoRoute
   '/design/reports': typeof DesignReportsRoute
+  '/finance/advance': typeof FinanceAdvanceRoute
+  '/finance/payment': typeof FinancePaymentRoute
+  '/finance/salary': typeof FinanceSalaryRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -526,6 +547,9 @@ export interface FileRoutesByTo {
   '/design/mockups': typeof DesignMockupsRoute
   '/design/photo': typeof DesignPhotoRoute
   '/design/reports': typeof DesignReportsRoute
+  '/finance/advance': typeof FinanceAdvanceRoute
+  '/finance/payment': typeof FinancePaymentRoute
+  '/finance/salary': typeof FinanceSalaryRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -597,6 +621,9 @@ export interface FileRoutesById {
   '/design/mockups': typeof DesignMockupsRoute
   '/design/photo': typeof DesignPhotoRoute
   '/design/reports': typeof DesignReportsRoute
+  '/finance/advance': typeof FinanceAdvanceRoute
+  '/finance/payment': typeof FinancePaymentRoute
+  '/finance/salary': typeof FinanceSalaryRoute
   '/local/$id': typeof LocalIdRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
@@ -669,6 +696,9 @@ export interface FileRouteTypes {
     | '/design/mockups'
     | '/design/photo'
     | '/design/reports'
+    | '/finance/advance'
+    | '/finance/payment'
+    | '/finance/salary'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -739,6 +769,9 @@ export interface FileRouteTypes {
     | '/design/mockups'
     | '/design/photo'
     | '/design/reports'
+    | '/finance/advance'
+    | '/finance/payment'
+    | '/finance/salary'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -809,6 +842,9 @@ export interface FileRouteTypes {
     | '/design/mockups'
     | '/design/photo'
     | '/design/reports'
+    | '/finance/advance'
+    | '/finance/payment'
+    | '/finance/salary'
     | '/local/$id'
     | '/order-quotes/$id'
     | '/order-quotes/new'
@@ -880,6 +916,9 @@ export interface RootRouteChildren {
   DesignMockupsRoute: typeof DesignMockupsRoute
   DesignPhotoRoute: typeof DesignPhotoRoute
   DesignReportsRoute: typeof DesignReportsRoute
+  FinanceAdvanceRoute: typeof FinanceAdvanceRoute
+  FinancePaymentRoute: typeof FinancePaymentRoute
+  FinanceSalaryRoute: typeof FinanceSalaryRoute
   LocalIdRoute: typeof LocalIdRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
@@ -1144,6 +1183,27 @@ declare module '@tanstack/react-router' {
       path: '/design/reports'
       fullPath: '/design/reports'
       preLoaderRoute: typeof DesignReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/advance': {
+      id: '/finance/advance'
+      path: '/finance/advance'
+      fullPath: '/finance/advance'
+      preLoaderRoute: typeof FinanceAdvanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/payment': {
+      id: '/finance/payment'
+      path: '/finance/payment'
+      fullPath: '/finance/payment'
+      preLoaderRoute: typeof FinancePaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/salary': {
+      id: '/finance/salary'
+      path: '/finance/salary'
+      fullPath: '/finance/salary'
+      preLoaderRoute: typeof FinanceSalaryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/local/': {
@@ -1432,6 +1492,9 @@ const rootRouteChildren: RootRouteChildren = {
   DesignMockupsRoute: DesignMockupsRoute,
   DesignPhotoRoute: DesignPhotoRoute,
   DesignReportsRoute: DesignReportsRoute,
+  FinanceAdvanceRoute: FinanceAdvanceRoute,
+  FinancePaymentRoute: FinancePaymentRoute,
+  FinanceSalaryRoute: FinanceSalaryRoute,
   LocalIdRoute: LocalIdRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
