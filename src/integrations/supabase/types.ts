@@ -2507,6 +2507,35 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_catalog_versions: {
+        Row: {
+          catalog_id: string
+          id: string
+          recorded_at: string
+          snapshot: Json
+        }
+        Insert: {
+          catalog_id: string
+          id?: string
+          recorded_at?: string
+          snapshot: Json
+        }
+        Update: {
+          catalog_id?: string
+          id?: string
+          recorded_at?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_catalog_versions_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "crm_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_catalogs: {
         Row: {
           active: boolean
@@ -2617,6 +2646,7 @@ export type Database = {
           code: string
           created_at: string
           created_by: string
+          custom_values: Json
           details: Json
           email: string
           group_id: string | null
@@ -2646,6 +2676,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by: string
+          custom_values?: Json
           details?: Json
           email?: string
           group_id?: string | null
@@ -2675,6 +2706,7 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string
+          custom_values?: Json
           details?: Json
           email?: string
           group_id?: string | null

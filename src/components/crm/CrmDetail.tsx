@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Field, Pick } from "./CrmControls";
+import { displayValue, scopeMatches } from '@/lib/crm/fields';
 import {
   CrmModal,
   CustomerForm,
@@ -440,6 +441,7 @@ export function CrmDetail({
         </TabsContent>
         <TabsContent value="more" className="space-y-4">
           <dl className="space-y-2 text-sm">
+            {catalogs.filter(x=>x.kind==='custom_field' && c.custom_values?.[x.id]!==undefined).map(x=><div key={x.id}><dt className="text-muted-foreground">{x.name}{!x.active || !scopeMatches(x,c.group_id||'',c.segment_id||'',catalogs)?' (Thông tin đã lưu)':''}</dt><dd>{displayValue(x,c.custom_values?.[x.id])}</dd></div>)}
             {[
               ["Tên pháp lý", c.legal_name],
               ["Mã số thuế", c.tax_code],
