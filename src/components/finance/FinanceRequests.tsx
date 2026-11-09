@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { frApi, type FrRequest, type FrStep, type FrPaymentType, type FrTypeWithUsage, type FrSettleOption } from "@/lib/financeRequests/api";
+import { frApi, type FrRequest, type FrStep, type FrTypeWithUsage, type FrSettleOption } from "@/lib/financeRequests/api";
 import {
   FR_KIND_LABEL, FR_STATUS_LABEL, FR_STATUS_VARIANT, FR_QUICK_FILTERS, quickFilterStatuses,
   vnd, parseAmount, fmtAmountInput, frEditable, frCancellable, frRemainingToPay,

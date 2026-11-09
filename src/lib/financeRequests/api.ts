@@ -85,8 +85,6 @@ export const frApi = {
   deduct: (id: string, amount: number, note: string) => rpc("fr_deduct", { _id: id, _amount: amount, _note: note }, true),
   saveSettings: (kind: FrKind, flow: any[], limits: Record<string, any>) =>
     rpc("fr_settings_save", { _kind: kind, _flow: flow, _limits: limits }),
-  savePaymentType: (id: string | null, name: string, active: boolean, sort: number) =>
-    rpc<string>("fr_payment_type_save", { _id: id, _name: name, _active: active, _sort: sort }),
   report: (kind: FrKind, from: string | null, to: string | null) =>
     rpc<any>("fr_report", { _kind: kind, _from: from, _to: to }),
   profiles: (ids: string[]) =>
