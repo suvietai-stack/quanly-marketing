@@ -36,3 +36,4 @@
 - Facebook discovery merges user/business Pages; encrypted sessions keep tokens out of UI, verify identity/lead access before saving — discovery is not eligibility.
 - Subdirectories may have their own AGENTS.md (e.g. src/components/biz) — read it before changing files there.
 - Read src/components/biz/AGENTS.md before biz changes; it defines business and canonical 3K task/summary/scope rules.
+- Đề nghị Tài chính (fr_*): ba loại advance/payment/salary_advance dùng chung bảng fr_requests + fr_steps + fr_events; client SELECT-only, ghi qua fr_* SECURITY DEFINER RPC (fr_save/submit/decide/cancel/pay/deduct) với khóa dòng và request_key chống trùng; quy trình duyệt cấu hình theo quyền trong fr_settings.flow, thiếu cấu hình → needs_config; quyết toán tạm ứng chỉ cập nhật khoản gốc khi đề nghị thanh toán liên kết chi xong; thông báo in-app only (zalo ineligible, push none); chứng từ trong bucket riêng tư fr-attachments theo thư mục người tạo/đề nghị.
