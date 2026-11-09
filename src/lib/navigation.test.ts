@@ -67,7 +67,7 @@ describe('Presentation-only navigation', () => {
     expect(searchLauncher(groups, 'CRM').map(i => i.to)).toContain('/biz/crm');
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
-    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(7);
+    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(4);
     // Kho Sản Phẩm đã có route placeholder an toàn; các mục tương lai khác chưa có đường dẫn.
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon && i.to !== '/biz/products').every(i => i.to === '')).toBe(true);
     expect(visibleNavigation(access()).some(g => g.label === 'Kế Toán & Tài Chính')).toBe(false);
