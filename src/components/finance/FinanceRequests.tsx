@@ -20,6 +20,7 @@ import {
   emptyLine, isBlankLine, linesTotal, validateLines, type FrLine,
 } from "@/lib/financeRequests/logic";
 import { ExpenseLinesEditor, ExpenseLinesView } from "@/components/finance/ExpenseLines";
+import { FinanceZaloSettings } from "@/components/finance/FinanceZaloSettings";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
@@ -57,6 +58,12 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<FrRequest | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+
+  // Mở đúng đề nghị từ liên kết trong thông báo Zalo (?open=<id>) — quyền xem vẫn do backend kiểm tra.
+  useEffect(() => {
+    const open = new URLSearchParams(window.location.search).get("open");
+    if (open) setDetailId(open);
+  }, []);
 
   const invalidate = () => qc.invalidateQueries({ predicate: (qr) => String(qr.queryKey[0]) === "fr" });
 
@@ -810,6 +817,8 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
 
       {kind === "payment" && <PaymentTypesManager />}
       {kind === "payment" && <LineCatalogManager />}
+
+      <FinanceZaloSettings kind={kind} />
 
       <Button disabled={busy} onClick={save}>{busy ? "Đang lưu…" : "Lưu cài đặt"}</Button>
     </div>
