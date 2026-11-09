@@ -1,12 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
 ## HỢP NHẤT DIỄN BIẾN & ĐỒNG BỘ PHÂN CÔNG — 09/11/2026
-- [ ] HB1. Rà soát hai luồng ghi diễn biến, mẫu chọn nhanh, RPC note/status và luồng phân công + cache invalidation.
-- [ ] HB2. Một form "Cập nhật diễn biến": mẫu nhiều chọn + ghi chú tùy chọn + trạng thái tùy chọn; một note/lần lưu, chống trùng, không note tự động từ đổi trạng thái.
-- [ ] HB3. Mobile ưu tiên: chip nhóm, bàn phím không che Lưu, lịch sử cập nhật ngay; Desktop cùng logic.
-- [ ] HB4. Chi tiết: "DIỄN BIẾN TÍN HIỆU – X LẦN CẬP NHẬT", tách nhật ký hệ thống khỏi lượt note; giữ báo cáo note/tỷ lệ chốt.
-- [ ] HB5. Phân công: chỉ báo thành công sau backend xác nhận; invalidate đúng key list/count/detail theo user/quyền/lọc/trang; không request trùng/vòng lặp; giữ ưu tiên công việc.
-- [ ] HB6. Kiểm thử unit/database/browser; không đổi dữ liệu thật, không Publish.
+- [x] HB1. Rà soát hai luồng ghi diễn biến, mẫu chọn nhanh, RPC note/status và luồng phân công + cache invalidation.
+- [x] HB2. Một form "Cập nhật diễn biến": mẫu nhiều chọn + ghi chú tùy chọn + trạng thái tùy chọn; một note/lần lưu, chống trùng, không note tự động từ đổi trạng thái.
+- [x] HB3. Mobile ưu tiên: chip nhóm, bàn phím không che Lưu, lịch sử cập nhật ngay; Desktop cùng logic.
+- [x] HB4. Chi tiết: "DIỄN BIẾN TÍN HIỆU – X LẦN CẬP NHẬT", tách nhật ký hệ thống khỏi lượt note; giữ báo cáo note/tỷ lệ chốt.
+- [x] HB5. Phân công: chỉ báo thành công sau backend xác nhận; invalidate đúng key list/count/detail theo user/quyền/lọc/trang; không request trùng/vòng lặp; giữ ưu tiên công việc.
+- [x] HB6. 158 unit + 5 suite browser (390/1280) đạt; sửa lỗi thật: chi tiết tín hiệu thiếu label_ids và form đánh giá không nạp lại nhãn; không đổi dữ liệu thật, không Publish.
 
 ## P0 TÍN HIỆU LOAD MÃI — 09/11/2026
 - [x] SL1a. RPC/grants tồn tại; pg_stat_statements page 2 calls mean7127.57/max7629.52ms, token14 mean3685.63ms; EXPLAIN quản trị view17ms không phải nghiệm thu authenticated. Không lock wait thấy trong mẫu.
