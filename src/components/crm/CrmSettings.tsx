@@ -44,7 +44,7 @@ export function CrmSettings({ uid, catalogs }: { uid: string; catalogs: Catalog[
   });
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="catalogs">
+      <Tabs defaultValue="groups">
         <TabsList className="h-auto w-full justify-start overflow-x-auto">
           <TabsTrigger value="groups">Nhóm & Tệp khách</TabsTrigger>
           <TabsTrigger value="catalogs">Đặc điểm & Danh mục</TabsTrigger>

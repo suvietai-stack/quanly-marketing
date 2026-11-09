@@ -30,7 +30,7 @@ import {
 } from "@/lib/crm/types";
 import locations from "@/lib/crm/locations.json";
 import { CustomFields } from './CrmFields';
-import { scopeMatches, type FieldValues } from '@/lib/crm/fields';
+import { type FieldValues } from '@/lib/crm/fields';
 export function CrmModal({
   title,
   onClose,
@@ -113,6 +113,7 @@ export function CustomerForm({
   const [discard, setDiscard] = useState(false);
   const key = useRef(crypto.randomUUID());
   const [pendingGroup, setPendingGroup] = useState<string | null>(null);
+  const segmentsByGroup=useRef<Record<string,string>>({[customer?.group_id||'']:customer?.segment_id||''});
   const lock = useRef(false);
   const save = useCrmMutation("crm_customer_save");
   const value = (k: string) => String(data[k] ?? "");
@@ -214,7 +215,7 @@ export function CustomerForm({
           <SearchPick
             label="Chọn tệp khách"
             value={value("segment_id")}
-            onChange={(v) => set("segment_id", v)}
+            onChange={(v) => {segmentsByGroup.current[value('group_id')]=v;set("segment_id", v);}}
             options={segmentOptions(catalogs,value('group_id'),value('segment_id'),true).map(c=>({code:c.id,name:c.name+(c.active?'':' (Đã ngừng)')}))}
           />
         </Field>
@@ -357,7 +358,7 @@ export function CustomerForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={pendingGroup!==null} onOpenChange={open=>{if(!open)setPendingGroup(null);}}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Đổi Nhóm khách?</AlertDialogTitle><AlertDialogDescription>Tệp khách hiện tại không thuộc nhóm mới và sẽ được bỏ chọn. Các thông tin khác được giữ nguyên.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Giữ nhóm hiện tại</AlertDialogCancel><AlertDialogAction onClick={()=>{if(pendingGroup===null)return;set('group_id',pendingGroup);set('segment_id','');setPendingGroup(null);}}>Đổi nhóm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={pendingGroup!==null} onOpenChange={open=>{if(!open)setPendingGroup(null);}}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Đổi Nhóm khách?</AlertDialogTitle><AlertDialogDescription>Tệp được cập nhật theo nhóm mới. Đặc điểm và thông tin chuyên sâu cũ được giữ lại, chỉ hiển thị khi phù hợp với nhóm đang chọn.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Giữ nhóm hiện tại</AlertDialogCancel><AlertDialogAction onClick={()=>{if(pendingGroup===null)return;segmentsByGroup.current[value('group_id')]=value('segment_id');set('group_id',pendingGroup);set('segment_id',segmentsByGroup.current[pendingGroup]||'');setPendingGroup(null);}}>Đổi nhóm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </CrmModal>
   );
 }
