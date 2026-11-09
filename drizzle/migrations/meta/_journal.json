@@ -1912,6 +1912,13 @@
       "when": 1794027428755,
       "tag": "0272_design_catalog_atomic_reorder",
       "breakpoints": true
+    },
+    {
+      "idx": 273,
+      "version": "7",
+      "when": 1794191624186,
+      "tag": "0273_signal_voluntary_notes_retire_periods",
+      "breakpoints": true
     }
   ]
 }

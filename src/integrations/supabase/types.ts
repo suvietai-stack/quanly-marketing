@@ -9906,6 +9906,10 @@ export type Database = {
         Args: { _event: string; _marker: boolean; _note: string }
         Returns: boolean
       }
+      signal_note_save: {
+        Args: { _id: string; _note: string; _request_id: string }
+        Returns: string
+      }
       signal_progression_activate: {
         Args: { _confirm: boolean }
         Returns: string
