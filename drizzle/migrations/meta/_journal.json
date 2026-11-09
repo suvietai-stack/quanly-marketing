@@ -1982,6 +1982,13 @@
       "when": 1794193156360,
       "tag": "0282_crm_dynamic_guard_alias_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 283,
+      "version": "7",
+      "when": 1794194265275,
+      "tag": "0283_signal_load_read_hotfix",
+      "breakpoints": true
     }
   ]
 }
