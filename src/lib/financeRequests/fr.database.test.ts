@@ -25,7 +25,7 @@ CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,k
     ('${approver}','fr.advance.approve'),('${approver}','fr.payment.approve'),('${approver}','fr.salary.approve'),
     ('${accountant}','fr.advance.pay'),('${accountant}','fr.payment.pay'),('${accountant}','fr.salary.pay'),('${accountant}','fr.salary.deduct'),
     ('${admin}','fr.advance.settings'),('${admin}','fr.payment.settings'),('${admin}','fr.salary.settings')`);
-  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines'])
+  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group'])
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   settleTypeId = await scalar("select id v from fr_payment_types where name='Quyết toán/hoàn ứng tạm ứng'");
 }, 30000);
@@ -239,4 +239,59 @@ it('report aggregates lines by name without inflating request totals', async () 
   // Tổng tiền đề nghị đếm theo đề nghị, không nhân theo số dòng
   const expected = await scalar("select coalesce(sum(amount),0) v from fr_requests where kind='payment'");
   expect(Number(r.amount)).toBe(Number(expected));
+});
+
+it('zalo group: config save needs settings permission and enabled requires a group', async () => {
+  await actor(outsider);
+  await expect(db.query("select fr_zalo_group_save('payment','g1','Nhóm',true,null,null)")).rejects.toThrow('quyền');
+  await actor(admin);
+  await expect(db.query("select fr_zalo_group_save('payment',null,null,true,null,null)")).rejects.toThrow('Chọn nhóm');
+  await db.query("select fr_zalo_group_save('payment','grp-kt','Nhóm Kế toán',true,$1,null)",
+    [payload({ submitted: true, approved: true, rejected: false, info: false, paid: true, done: true })]);
+  const c = await scalar("select jsonb_build_object('en',enabled,'g',group_id,'rej',on_rejected,'info',on_info) v from fr_zalo_group_config where kind='payment'");
+  expect(c).toMatchObject({ en: true, g: 'grp-kt', rej: false, info: false });
+});
+
+it('zalo group: events queue only for enabled toggles, drafts stay silent, dedup blocks repeats', async () => {
+  await actor(staff);
+  const typeId = await scalar("select id v from fr_payment_types where name='Chi phí hoạt động công ty'");
+  const id = await scalar('select fr_save(null,$1,$2,$3) v', ['payment', payload({
+    amount: 0, title: 'Chi văn phòng', payment_type_id: typeId, payee_name: 'X',
+    lines: [{ name: 'Vận chuyển', qty: 1, unit_price: 300000 }],
+  }), 'rk-20']);
+  // Lưu nháp không tạo sự kiện nhóm
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1", [id])).toBe(0);
+  expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='submitted'", [id])).toBe(1);
+  await actor(approver);
+  // info đã tắt trong cấu hình → không xếp hàng
+  await db.query("select fr_decide($1,'info','Thiếu chứng từ')", [id]);
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='info'", [id])).toBe(0);
+  // Gửi lại sau khi bổ sung → sự kiện submitted lần hai có dedup_key mới, không đè tin cũ
+  await actor(staff);
+  expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='submitted'", [id])).toBe(2);
+  await actor(approver);
+  await db.query("select fr_decide($1,'approve',null)", [id]);
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='approved'", [id])).toBe(1);
+  await actor(accountant);
+  await db.query("select fr_pay($1,300000,'Tiền mặt',null,null)", [id]);
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='paid'", [id])).toBe(1);
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1 and event='done'", [id])).toBe(1);
+});
+
+it('zalo group: disabled config stays silent', async () => {
+  await actor(staff2);
+  const typeId = await scalar("select id v from fr_payment_types where name='Chi phí hoạt động công ty'");
+  const id = await scalar('select fr_save(null,$1,$2,$3) v', ['payment', payload({
+    amount: 0, title: 'Chi khi tắt thông báo', payment_type_id: typeId, payee_name: 'X',
+    lines: [{ name: 'In ấn', qty: 1, unit_price: 100000 }],
+  }), 'rk-21']);
+  // advance chưa bật cấu hình → không xếp hàng
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where kind='advance'")).toBe(0);
+  await actor(admin);
+  await db.query("select fr_zalo_group_save('payment','grp-kt','Nhóm Kế toán',false,null,null)");
+  await actor(staff2);
+  expect(await scalar('select fr_submit($1) v', [id])).toBe('pending');
+  expect(await scalar("select count(*)::int v from fr_zalo_group_events where request_id=$1", [id])).toBe(0);
 });
