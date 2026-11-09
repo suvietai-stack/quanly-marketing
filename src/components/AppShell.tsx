@@ -38,7 +38,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, role, can, isSuperAdmin } = useCurrentUser();
   const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id });
   const bizAccess = useAuth(s => s.bizAccess);
-  const launcherAccessReady = !!user && (isSuperAdmin || bizAccess?.user_id === user.id) && approvals.isSuccess && !!approvals.data;
+  const baseAccess = useAuth(s => s.baseAccess);
+  const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data;
   const logout = useAuth((s) => s.logout);
   const brand = useBranding();
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
