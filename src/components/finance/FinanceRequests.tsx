@@ -854,3 +854,61 @@ function PaymentTypesManager() {
     </div>
   );
 }
+
+function LineCatalogManager() {
+  const qc = useQueryClient();
+  const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog });
+  const [name, setName] = useState("");
+  const [renaming, setRenaming] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const refresh = () => qc.invalidateQueries({ queryKey: ["fr", "line-catalog"] });
+  const add = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      await frApi.saveLineCatalog(null, name, true, (catalog.data ?? []).length + 1);
+      setName("");
+      refresh();
+      toast.success("Đã thêm khoản chi mẫu");
+    } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
+  };
+  const toggle = async (c: { id: string; name: string; active: boolean; sort: number }) => {
+    try {
+      await frApi.saveLineCatalog(c.id, c.name, !c.active, c.sort);
+      refresh();
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  const rename = async (c: { id: string; name: string; active: boolean; sort: number }) => {
+    const n = (renaming[c.id] ?? c.name).trim();
+    if (!n || n === c.name) return;
+    try {
+      await frApi.saveLineCatalog(c.id, n, c.active, c.sort);
+      setRenaming((m) => ({ ...m, [c.id]: "" }));
+      refresh();
+      toast.success("Đã đổi tên");
+    } catch (e) { toast.error(errMsg(e)); }
+  };
+  return (
+    <div className="rounded-lg border p-4 space-y-3">
+      <div className="font-semibold">Danh mục khoản chi thường dùng</div>
+      <p className="text-sm text-muted-foreground">Gợi ý chọn nhanh khi nhập bảng kê. Nhân viên vẫn tự nhập tên khác khi cần.</p>
+      {(catalog.data ?? []).map((c) => (
+        <div key={c.id} className="flex items-center gap-2 text-sm">
+          <Input
+            className={`h-9 flex-1 ${c.active ? "" : "line-through text-muted-foreground"}`}
+            value={renaming[c.id] ?? c.name}
+            onChange={(e) => setRenaming((m) => ({ ...m, [c.id]: e.target.value }))}
+          />
+          {(renaming[c.id] ?? c.name).trim() !== c.name && (
+            <Button size="sm" variant="outline" onClick={() => rename(c)}>Lưu</Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => toggle(c)}>{c.active ? "Ẩn" : "Hiện"}</Button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <Input placeholder="Tên khoản chi mới" value={name} onChange={(e) => setName(e.target.value)} />
+        <Button variant="outline" disabled={busy} onClick={add}>Thêm</Button>
+      </div>
+    </div>
+  );
+}
