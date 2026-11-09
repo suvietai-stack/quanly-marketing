@@ -1961,6 +1961,13 @@
       "when": 1794192284526,
       "tag": "0279_signal_note_cycle_end_boundaries",
       "breakpoints": true
+    },
+    {
+      "idx": 280,
+      "version": "7",
+      "when": 1794192858258,
+      "tag": "0280_crm_typed_fields_and_explicit_scopes",
+      "breakpoints": true
     }
   ]
 }
