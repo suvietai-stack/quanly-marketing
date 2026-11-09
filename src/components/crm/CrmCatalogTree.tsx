@@ -6,11 +6,13 @@ import { useCurrentUser } from '@/lib/auth';
 import { crmRpc, useCrmMutation } from '@/lib/crm/queries';
 import type { Catalog } from '@/lib/crm/types';
 import { descendant } from '@/lib/crm/logic';
+import { Input } from '@/components/ui/input';
 
 export function CrmCatalogTree({uid,catalogs,onEdit}:{uid:string;catalogs:Catalog[];onEdit:(c:Record<string,unknown>)=>void}) {
  const {can}=useCurrentUser(); const save=useCrmMutation('crm_catalog_reorder'); const [error,setError]=useState('');
  const counts=useQuery({queryKey:['crm_catalog_counts',uid],queryFn:()=>crmRpc<Record<string,number>>('crm_catalog_counts')});
- const groups=catalogs.filter(c=>c.kind==='group');
+ const [search,setSearch]=useState('');
+ const groups=catalogs.filter(c=>c.kind==='group' && (!search || c.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()) || catalogs.some(t=>descendant(t.id,c.id,catalogs)&&t.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()))));
  async function move(c:Catalog,dir:number){try{setError('');const siblings=catalogs.filter(x=>x.kind===c.kind && x.parent_id===c.parent_id);const target=siblings[siblings.findIndex(x=>x.id===c.id)+dir];if(!target)return;await save.mutateAsync({id:c.id,other_id:target.id,direction:dir});}catch(e){setError(e instanceof Error?e.message:'Chưa sắp xếp được.');}}
  const actions=(c:Catalog)=> <div className="flex shrink-0 gap-1"><Button variant="ghost" size="icon" title="Đưa lên" aria-label={`Đưa ${c.name} lên`} disabled={save.isPending} onClick={()=>move(c,-1)}><ArrowUp className="h-4 w-4"/></Button><Button variant="ghost" size="icon" title="Đưa xuống" aria-label={`Đưa ${c.name} xuống`} disabled={save.isPending} onClick={()=>move(c,1)}><ArrowDown className="h-4 w-4"/></Button><Button variant="ghost" size="icon" aria-label={`Sửa ${c.name}`} onClick={()=>onEdit({...c})}><Pencil className="h-4 w-4"/></Button></div>;
  if(!can('biz.crm_settings'))return null;
