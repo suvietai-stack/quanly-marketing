@@ -1,5 +1,12 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## DIỄN BIẾN TỰ NGUYỆN & HIỆU NĂNG TÍN HIỆU — 09/11/2026
+- [ ] SN1. Rà soát dependency, đo hiện trạng và chốt phương án bảo toàn lịch sử/quyền/tiếp nhận.
+- [ ] SN2. Ngừng kỳ/hạn/nhắc note riêng; lưu note tự nguyện chống trùng, giữ mọi note cũ.
+- [ ] SN3. Phân trang/lọc/sort/đếm backend, bỏ deadline rank/polling nặng; cache và cập nhật có kiểm soát.
+- [ ] SN4. Báo cáo note tích lũy/hoạt động/tốc độ note đầu tiên đúng lượt nhận, tác giả và scope hiện hành.
+- [ ] SN5. Kiểm thử nghiệp vụ/quyền/tải cách ly 600/3000/5000, đo trước/sau, nghiệm thu phiên thật; không Publish.
+
 ## BIỂU MẪU THIẾT KẾ & TÀI LIỆU — 07/11/2026
 - [x] DF1. 30 danh mục ID ổn định (7/9/7 loại + 7 sản phẩm); nhiều lựa chọn/Khác; 83 Order giữ nguyên, không phân loại lại lịch sử.
 - [x] DF2. Private design-inputs, RLS theo Order, kiểm file thành công/đuôi/20MB/tổng 100MB/30 tài liệu hai phía; đầu vào tách file kết quả; gỡ liên kết giữ object tránh mất file khi hủy lưu.
