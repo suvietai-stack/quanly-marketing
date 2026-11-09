@@ -29,6 +29,8 @@ import {
   type Schedule,
 } from "@/lib/crm/types";
 import locations from "@/lib/crm/locations.json";
+import { CustomFields } from './CrmFields';
+import { scopeMatches, type FieldValues } from '@/lib/crm/fields';
 export function CrmModal({
   title,
   onClose,
@@ -102,6 +104,7 @@ export function CustomerForm({
     name: customer?.name || "",
     related_ids: customer?.related_ids || [],
     details: customer?.details || {},
+    custom_values: customer?.custom_values || {},
   }));
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState("");
@@ -200,7 +203,7 @@ export function CustomerForm({
             label="Chọn nhóm khách"
             value={value("group_id")}
             onChange={(v) => {
-              if (customer && value('segment_id') && !descendant(value('segment_id'),v,catalogs)) {setPendingGroup(v);return;}
+              if (v!==value('group_id') && (value('segment_id') || Object.keys(data.custom_values as FieldValues).length || (data.related_ids as string[]).length)) {setPendingGroup(v);return;}
               set("group_id", v);
               if(value('segment_id') && !descendant(value('segment_id'),v,catalogs)) set("segment_id", "");
             }}
@@ -215,7 +218,8 @@ export function CustomerForm({
             options={segmentOptions(catalogs,value('group_id'),value('segment_id'),true).map(c=>({code:c.id,name:c.name+(c.active?'':' (Đã ngừng)')}))}
           />
         </Field>
-        {Object.entries(FEATURE_KINDS).map(([kind,label])=>{const selected=data.related_ids as string[];const options=catalogs.filter(c=>c.kind===kind && ((c.active && featureInGroup(c,value('group_id'))) || selected.includes(c.id)));return options.length?<MultiCatalog key={kind} label={label} items={options} value={selected.filter(id=>options.some(c=>c.id===id))} onChange={ids=>set('related_ids',[...selected.filter(id=>!options.some(c=>c.id===id)),...ids])}/>:null;})}
+        {value('group_id') && <details><summary className="cursor-pointer text-sm font-medium">Đặc điểm kinh doanh</summary><div className="grid gap-4 pt-4">{Object.entries(FEATURE_KINDS).map(([kind,label])=>{const selected=data.related_ids as string[];const options=catalogs.filter(c=>c.kind===kind && featureInGroup(c,value('group_id'),value('segment_id'),catalogs) && (c.active || selected.includes(c.id)));return options.length?<MultiCatalog key={kind} label={label} items={options} value={selected.filter(id=>options.some(c=>c.id===id))} onChange={ids=>set('related_ids',[...selected.filter(id=>!options.some(c=>c.id===id)),...ids])}/>:null;})}</div></details>}
+        <CustomFields catalogs={catalogs} group={value('group_id')} segment={value('segment_id')} values={data.custom_values as FieldValues} onChange={v=>set('custom_values',v)}/>
         <Field label="Tỉnh / Thành phố">
           <SearchPick
             label="Chọn tỉnh / thành phố"
@@ -271,23 +275,14 @@ export function CustomerForm({
                 />
               </Field>
             ))}
-            <MultiCatalog label="Mảng liên quan / Dịp mua hàng" items={catalogs.filter(c=>['group','occasion'].includes(c.kind) && (c.active || (data.related_ids as string[]).includes(c.id)))} value={(data.related_ids as string[]).filter(id=>catalogs.some(c=>c.id===id && ['group','occasion'].includes(c.kind)))} onChange={ids=>set('related_ids',[...(data.related_ids as string[]).filter(id=>!catalogs.some(c=>c.id===id && ['group','occasion'].includes(c.kind))),...ids])}/>
-            {value("group_id") && (
+            <MultiCatalog label="Mảng liên quan" items={catalogs.filter(c=>c.kind==='group' && (c.active || (data.related_ids as string[]).includes(c.id)))} value={(data.related_ids as string[]).filter(id=>catalogs.some(c=>c.id===id && c.kind==='group'))} onChange={ids=>set('related_ids',[...(data.related_ids as string[]).filter(id=>!catalogs.some(c=>c.id===id && c.kind==='group')),...ids])}/>
+            {Object.keys(data.details as Record<string,string>).length>0 && (
               <details>
                 <summary className="cursor-pointer text-sm font-medium">
-                  Thông tin kinh doanh
+                  Thông tin kinh doanh đã lưu trước đây
                 </summary>
                 <div className="grid gap-4 pt-4">
-                  {[
-                    "Mục tiêu quan hệ dài hạn",
-                    "Quy mô nhập hàng",
-                    "Ngân sách dự kiến",
-                    "Giá trị hợp tác tiềm năng",
-                    "Phân khúc giá",
-                    "Chu kỳ nhập hàng",
-                    "Quy mô cửa hàng / Kho",
-                    "Nhu cầu dự án",
-                  ].map((k) => (
+                  {Object.keys(data.details as Record<string,string>).map((k) => (
                     <Field key={k} label={k}>
                       <Input
                         value={String((data.details as Record<string, string>)[k] || "")}
