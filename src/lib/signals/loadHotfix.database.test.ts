@@ -17,7 +17,7 @@ beforeAll(async()=>{
  for(const file of ['0273_signal_voluntary_notes_retire_periods','0274_signal_paged_filtered_reads','0275_signal_note_activity_report','0276_signal_sales_aggregate_report','0278_signal_priority_grouped_history','0279_signal_note_cycle_end_boundaries'])await db.exec(readFileSync(`drizzle/migrations/${file}.sql`,'utf8'));
  await db.exec(`SELECT set_config('test.uid','${A}',false);INSERT INTO opportunity_signals(id,assigned_to,status,assigned_at) VALUES('${id(1)}','${A}','consulting','2026-11-01'),('${id(2)}','${B}','waiting','2026-11-01');`);
  await db.exec(`CREATE POLICY account_active_guard ON opportunity_signals AS RESTRICTIVE TO authenticated USING(private.is_active(auth.uid()));CREATE POLICY account_active_guard ON opportunity_signal_notes AS RESTRICTIVE TO authenticated USING(private.is_active(auth.uid()));CREATE POLICY account_active_guard ON opportunity_signal_events AS RESTRICTIVE TO authenticated USING(private.is_active(auth.uid()));`);
- await db.exec(readFileSync('/tmp/signal-hotfix/counts.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0283_signal_load_read_hotfix.sql','utf8'));
 },60000);
 afterAll(()=>db.close());
 

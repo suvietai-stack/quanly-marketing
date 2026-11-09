@@ -183,9 +183,9 @@ export function SignalsPage() {
   const canSeeUnassigned=p.assign||p.viewAll||p.create;
   const quickTabs=signalStatusTabs(canSeeUnassigned);
   const mine=counts.data?.mine;
-  const count=(k:Quick)=>counts.data?counts.data.status[k]??0:'—';
+  const count=(k:Quick):number|'—'=>counts.data?counts.data.status[k]??0:'—';
   const needOpts=useOptions('signal_need_groups');
-  const needCount=(g?:string)=>counts.data?counts.data.needs[g??'all']??0:'—';
+  const needCount=(g?:string):number|'—'=>counts.data?counts.data.needs[g??'all']??0:'—';
   const selected=useQuery({queryKey:['sig:detail',p.userId,openId],queryFn:()=>openId?signalById(openId):null,enabled:!!openId&&!!p.userId});
   const open=selected.data??null;
   const denied=!!openId&&!selected.isPending&&!open;
