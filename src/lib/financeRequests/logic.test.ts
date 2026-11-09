@@ -16,11 +16,14 @@ describe("finance request rules", () => {
   it("validates required fields per kind", () => {
     expect(frValidate("advance", { amount: 0, title: "" })).toMatch(/Số tiền/);
     expect(frValidate("advance", { amount: 100, title: "" })).toMatch(/mục đích/);
-    expect(frValidate("advance", { amount: 100, title: "Mua vật tư" })).toBeNull();
+    expect(frValidate("advance", { amount: 100, title: "Mua vật tư" })).toMatch(/loại tạm ứng/);
+    expect(frValidate("advance", { amount: 100, title: "Mua vật tư", paymentTypeId: "t" })).toBeNull();
     expect(frValidate("payment", { amount: 100, title: "Chi" })).toMatch(/loại thanh toán/);
     expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t" })).toMatch(/nhận tiền/);
-    expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t", payeeName: "NCC", settleTypeName: "Quyết toán/hoàn ứng tạm ứng" })).toMatch(/tạm ứng/);
-    expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t", payeeName: "NCC", settleTypeName: "Quyết toán/hoàn ứng tạm ứng", advanceId: "a" })).toBeNull();
+    expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t", payeeName: "NCC", isSettle: true })).toMatch(/tạm ứng/);
+    expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t", payeeName: "NCC", isSettle: true, advanceId: "a" })).toBeNull();
+    expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t", payeeName: "NCC", isOther: true })).toMatch(/loại cụ thể/);
+    expect(frValidate("payment", { amount: 100, title: "Chi", paymentTypeId: "t", payeeName: "NCC", isOther: true, otherLabel: "Thuê thiết bị" })).toBeNull();
     expect(frValidate("salary_advance", { amount: 100, title: "Ứng lương" })).toMatch(/kỳ lương/);
     expect(frValidate("salary_advance", { amount: 100, title: "Ứng lương", salaryPeriod: "2026-11" })).toBeNull();
   });
