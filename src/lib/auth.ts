@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
+import type { EffectiveAccess } from '@/lib/basePermissions/types';
 import {
   adminResetPassword,
   adminDeleteUser,
@@ -1016,6 +1017,8 @@ export interface User {
 
 // ============ Store ============
 interface AuthState {
+  baseAccess: EffectiveAccess | null;
+  refreshBaseAccess: () => Promise<void>;
   bizAccess: EffectiveBizAccess | null;
   refreshBizAccess: () => Promise<void>;
   users: User[];
@@ -1090,6 +1093,14 @@ function mapProfileToUser(
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
+  baseAccess: null,
+  refreshBaseAccess: async () => {
+    const uid = get().currentUserId;
+    if (!uid) { set({ baseAccess: null }); return; }
+    const { data, error } = await supabase.rpc('base_permissions_effective');
+    if (get().currentUserId !== uid) return;
+    set({ baseAccess: error ? null : data as unknown as EffectiveAccess });
+  },
   bizAccess: null,
   refreshBizAccess: async () => {
     const uid = get().currentUserId;
@@ -1111,7 +1122,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
       const nextId = session?.user?.id ?? null;
       if (nextId !== get().currentUserId) set({ users: [], roles: [], loaded: false });
-      set({ currentUserId: nextId, bizAccess: null });
+      set({ currentUserId: nextId, bizAccess: null, baseAccess: null });
       if (session) {
         // Do not make Auth calls inside the SDK's locked callback.
         setTimeout(() => void get().reload(), 0);
@@ -1155,7 +1166,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       system: !!r.is_system,
     }));
     set({ users, roles, loaded: true });
-    await get().refreshBizAccess();
+    await Promise.all([get().refreshBizAccess(), get().refreshBaseAccess()]);
 
 
     // Auto-bootstrap: nếu Super Admin / tài khoản hệ thống đăng nhập mà các role
@@ -1526,6 +1537,7 @@ export function useCurrentUser() {
   const u = useAuth((s) => s.users.find((x) => x.id === s.currentUserId) || null);
   const roles = useAuth((s) => s.roles);
   const bizAccess = useAuth((s) => s.bizAccess);
+  const baseAccess = useAuth((s) => s.baseAccess);
   const perms = getUserPermissions(u, roles);
   // Only Super Admin (and the system-marked Admin account) bypasses permission checks.
   // Role "Admin" is just a default permission bundle — it must still grant perms explicitly.
@@ -1537,6 +1549,10 @@ export function useCurrentUser() {
     perms.has(key) || perms.has(resolvePermKey(key));
   const can = (key: PermissionKey): boolean => {
     if (isSuperAdmin) return true;
+    const effective = baseAccess?.user_id === u?.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
+    if (effective && effective.decision !== 'NOT_CONFIGURED') return u?.status === 'Đang hoạt động' && effective.allowed;
+    // New supported permissions fail closed while their authoritative read is unavailable.
+    if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','biz.crm_archive','biz.crm_export'].includes(key) && baseAccess?.user_id !== u?.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
     if (key.startsWith('biz.') || key.startsWith('k3.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
     const resolved = resolvePermKey(key);
