@@ -27,6 +27,7 @@ beforeAll(async () => {
  await db.exec(readFileSync('drizzle/migrations/0318_appointment_role_verified_capabilities.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0319_appointment_role_dispatch_name_resolution.sql','utf8'));
  await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
+ await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
 }, 60000);
 afterAll(()=>db.close());
@@ -70,15 +71,16 @@ it('full transaction previews Role sources, confirms and grants only after appoi
 });
 it('full transaction removes appointment rights and preserves original direct source',async()=>{
  const id=await scalar("select id v from org_assignments where title_id='verified-title' and user_id=$1",[outsider]);
- const p=await preview([{action:'end',data:{id,ends_at:new Date(Date.now()+10).toISOString()}}]);
+ const p=await preview([{action:'end',data:{id,ends_at:new Date().toISOString()}}]);
  expect(p.impact.some((i:any)=>i.user_id===outsider)).toBe(true);
  await apply(p);expect(await scalar("select private.has_permission($1,'order.view') v",[outsider])).toBe(false);
  expect(await scalar('select role_id v from user_roles where user_id=$1',[outsider])).toBe('staff');
 });
 it('authenticated RPC and RLS reject unprivileged linking and hide configuration rows',async()=>{
+ const revision=await scalar('select revision v from private.org_control where id');
  await actor(outsider);await db.exec('SET ROLE authenticated');
  try { expect(await scalar('select count(*)::int v from base_title_role_links')).toBe(0);
- await expect(preview([{action:'roles',data:{id:'verified-title',roles:[]}}])).rejects.toThrow('Super Admin');
+ await expect(db.query("select org_change('preview',$1,$2)",[revision,[{action:'roles',data:{id:'verified-title',roles:[]}}]])).rejects.toThrow('Super Admin');
  await expect(db.query("update base_title_role_links set enabled_permissions=ARRAY['settings.role']")).rejects.toThrow();
  }finally{await db.exec('RESET ROLE');await actor(admin);}
 });
