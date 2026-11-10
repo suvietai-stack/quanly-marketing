@@ -20,12 +20,6 @@ beforeAll(async () => {
   create function private.base_config() returns jsonb language sql as $$ select '{}'::jsonb $$;
   create function private.org_role_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
   create function private.mkt_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
-  create function private.has_permission(_user_id uuid, _permission text) returns boolean language sql security definer set search_path = public as $$
-    select private.is_active(_user_id) and (private.is_super_admin(_user_id) or case
-      when private.base_tier1(_user_id, _permission) = 'DENY' then false
-      when private.base_tier1(_user_id, _permission) = 'ALLOW' then true
-      when exists(select 1 from user_permission_overrides where user_id = _user_id and use_custom = true) then exists(select 1 from user_permission_overrides where user_id = _user_id and _permission = any(permissions))
-      else exists(select 1 from user_roles ur join app_roles r on r.id = ur.role_id where ur.user_id = _user_id and _permission = any(r.permissions)) end) $$;
   create table profiles(id uuid primary key, full_name text, status text);
   create table app_roles(id text primary key, name text, permissions text[]);
   create table user_roles(user_id uuid, role_id text, unique(user_id, role_id));
@@ -34,6 +28,12 @@ beforeAll(async () => {
   create table org_units(id text primary key, name text);
   create table org_titles(id text primary key, name text);
   create table org_assignments(user_id uuid, unit_id text, title_id text, category text, starts_at timestamptz, ends_at timestamptz, status text);
+  create function private.has_permission(_user_id uuid, _permission text) returns boolean language sql security definer set search_path = public as $$
+    select private.is_active(_user_id) and (private.is_super_admin(_user_id) or case
+      when private.base_tier1(_user_id, _permission) = 'DENY' then false
+      when private.base_tier1(_user_id, _permission) = 'ALLOW' then true
+      when exists(select 1 from user_permission_overrides where user_id = _user_id and use_custom = true) then exists(select 1 from user_permission_overrides where user_id = _user_id and _permission = any(permissions))
+      else exists(select 1 from user_roles ur join app_roles r on r.id = ur.role_id where ur.user_id = _user_id and _permission = any(r.permissions)) end) $$;
   insert into profiles values
     ('${SA}','Admin','Đang hoạt động'),('${BIZU}','Kinh Doanh','Đang hoạt động'),
     ('${MKT}','Marketing','Đang hoạt động'),('${CUSTOM}','Tùy Chỉnh','Đang hoạt động');
