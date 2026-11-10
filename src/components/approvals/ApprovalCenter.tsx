@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { useCurrentUser } from '@/lib/auth';
 import {
   approvalCenterQuery, filterItems, sortTodo, sourceGroup, waitingText, vnd, dateText,
-  GROUP_LABELS, type ApprovalGroup, type ApprovalItem,
+  parseApprovalUrl, GROUP_LABELS, type ApprovalGroup, type ApprovalItem,
 } from '@/lib/approvals/api';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,30 @@ import { cn } from '@/lib/utils';
 type Tab = 'todo' | 'mine' | 'done';
 
 const TAB_LABELS: Record<Tab, string> = { todo: 'Chờ tôi', mine: 'Đang trình', done: 'Đã xử lý' };
+
+/** Nút mở hồ sơ: điều hướng nội bộ TanStack Router, không tải lại ứng dụng. */
+function OpenButton({ item, tab, full }: { item: ApprovalItem; tab: Tab; full?: boolean }) {
+  const navigate = useNavigate();
+  const label = tab === 'done' ? 'Xem chi tiết' : 'Xem & xử lý';
+  const parsed = parseApprovalUrl(item.url);
+  if (!parsed) {
+    return (
+      <Button size="sm" variant={tab === 'todo' ? 'default' : 'outline'} className={full ? 'w-full sm:w-auto' : undefined} asChild>
+        <a href={item.url}>{label}</a>
+      </Button>
+    );
+  }
+  return (
+    <Button
+      size="sm"
+      variant={tab === 'todo' ? 'default' : 'outline'}
+      className={full ? 'w-full sm:w-auto' : undefined}
+      onClick={() => navigate({ to: parsed.to as '/', search: parsed.search as never })}
+    >
+      {label}
+    </Button>
+  );
+}
 
 function ItemCard({ item, now, tab }: { item: ApprovalItem; now: string; tab: Tab }) {
   return (
@@ -35,9 +60,7 @@ function ItemCard({ item, now, tab }: { item: ApprovalItem; now: string; tab: Ta
           <>{item.step_label && <span>{item.step_label}</span>}{item.waiting_since && <span>Chờ {waitingText(item.waiting_since, now)}</span>}</>
         )}
       </div>
-      <Button size="sm" variant={tab === 'todo' ? 'default' : 'outline'} className="w-full sm:w-auto" asChild>
-        <a href={item.url}>Xem & xử lý</a>
-      </Button>
+      <OpenButton item={item} tab={tab} full />
     </div>
   );
 }
@@ -68,7 +91,7 @@ function ItemRow({ item, now, tab }: { item: ApprovalItem; now: string; tab: Tab
         {item.overdue && tab === 'todo' ? <Badge variant="destructive">Quá hạn</Badge> : tab === 'todo' ? <Badge variant="secondary">Chờ duyệt</Badge> : null}
       </td>
       <td className="py-3 align-top text-right">
-        <Button size="sm" variant={tab === 'todo' ? 'default' : 'outline'} asChild><a href={item.url}>Xem & xử lý</a></Button>
+        <OpenButton item={item} tab={tab} />
       </td>
     </tr>
   );

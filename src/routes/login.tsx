@@ -5,7 +5,9 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { readRememberChoice } from "@/lib/remember-session";
 import { Card, CardContent } from "@/components/ui/card";
 import { LogIn, LockKeyhole, UserRound, LoaderCircle, MailQuestion } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -117,6 +119,7 @@ function LoginPage() {
 
   const [username, setU] = useState("");
   const [password, setP] = useState("");
+  const [remember, setRemember] = useState(readRememberChoice);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
@@ -131,7 +134,7 @@ function LoginPage() {
     if (loading) return;
     setErr("");
     setLoading(true);
-    const res = await login(username.trim(), password);
+    const res = await login(username.trim(), password, remember);
     setLoading(false);
     if (!res.ok) {
       setErr(res.error || "Lỗi đăng nhập");
@@ -166,6 +169,17 @@ function LoginPage() {
                   <LockKeyhole aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 z-10 size-[18px] -translate-y-1/2 text-muted-foreground" />
                   <PasswordInput id="login-password" className="login-input h-12 rounded-xl pl-11" value={password} onChange={(e) => setP(e.target.value)} required />
                 </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Checkbox
+                  id="login-remember"
+                  checked={remember}
+                  onCheckedChange={(v) => setRemember(v === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="login-remember" className="text-xs sm:text-sm font-normal leading-snug text-muted-foreground cursor-pointer">
+                  Ghi nhớ đăng nhập trên thiết bị này (tối đa 90 ngày)
+                </Label>
               </div>
               {err && <div role="alert" className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm leading-relaxed text-destructive">{err}</div>}
               <Button type="submit" className="login-submit h-12 w-full rounded-xl text-sm font-semibold" disabled={loading}>

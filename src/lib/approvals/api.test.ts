@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortTodo, filterItems, waitingText, badgeText, sourceGroup, vnd, type ApprovalItem } from './api';
+import { sortTodo, filterItems, waitingText, badgeText, sourceGroup, vnd, parseApprovalUrl, type ApprovalItem } from './api';
 
 const item = (patch: Partial<ApprovalItem> = {}): ApprovalItem => ({
   source: 'finance', id: '1', title: 'Đề nghị thanh toán', requester: 'Nguyễn Văn A', url: '/finance/payment?open=1', ...patch,
@@ -72,5 +72,23 @@ describe('vnd', () => {
   it('formats Vietnamese currency and rejects invalid numbers', () => {
     expect(vnd(5000000)).toBe('5.000.000đ');
     expect(vnd('abc')).toBe('');
+  });
+});
+
+describe('parseApprovalUrl', () => {
+  it('splits internal path and query for router navigation', () => {
+    expect(parseApprovalUrl('/leave?open=abc-123')).toEqual({ to: '/leave', search: { open: 'abc-123' } });
+    expect(parseApprovalUrl('/finance/payment?open=x1')).toEqual({ to: '/finance/payment', search: { open: 'x1' } });
+    expect(parseApprovalUrl('/biz/approvals?open=run-9')).toEqual({ to: '/biz/approvals', search: { open: 'run-9' } });
+  });
+
+  it('handles paths without query', () => {
+    expect(parseApprovalUrl('/order-tracking/ot-1')).toEqual({ to: '/order-tracking/ot-1', search: {} });
+  });
+
+  it('rejects external or protocol-relative URLs', () => {
+    expect(parseApprovalUrl('https://evil.example/x')).toBeNull();
+    expect(parseApprovalUrl('//evil.example/x')).toBeNull();
+    expect(parseApprovalUrl('')).toBeNull();
   });
 });

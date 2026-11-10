@@ -102,3 +102,15 @@ export const dateText = (v?: string) => {
   if (!t) return '';
   return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(t));
 };
+
+/**
+ * Tách URL nội bộ thành { to, search } cho điều hướng TanStack Router
+ * (không tải lại ứng dụng). Trả null với URL ngoài/không hợp lệ.
+ */
+export function parseApprovalUrl(url: string): { to: string; search: Record<string, string> } | null {
+  if (!url.startsWith('/') || url.startsWith('//')) return null;
+  const q = url.indexOf('?');
+  const to = q === -1 ? url : url.slice(0, q);
+  const search = q === -1 ? {} : Object.fromEntries(new URLSearchParams(url.slice(q + 1)));
+  return { to, search };
+}

@@ -9,6 +9,10 @@ import {
 } from "@/lib/accounts.functions";
 import { passwordIssues, isFakeEmail } from '@/lib/password';
 import { authErrorMessage, accountAccess } from '@/lib/auth-errors';
+import {
+  REMEMBER_KEY, REMEMBER_SINCE_KEY, TAB_ALIVE_KEY,
+  sessionPolicy, writeRememberChoice,
+} from '@/lib/remember-session';
 import '@/lib/recovery-session';
 
 export type ID = string;
@@ -1030,7 +1034,7 @@ interface AuthState {
   init: () => Promise<void>;
   reload: () => Promise<void>;
 
-  login: (usernameOrEmail: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (usernameOrEmail: string, password: string, remember?: boolean) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   register: (input: {
     username: string; fullName: string; email?: string; phone?: string;
@@ -1063,6 +1067,9 @@ interface AuthState {
 function genRoleId() {
   return "role-" + Math.random().toString(36).slice(2, 10);
 }
+
+// Chặn gọi init() trùng trong khi lần chạy đầu còn đang khôi phục phiên.
+let initStarted = false;
 
 function mapProfileToUser(
   p: any,
@@ -1116,8 +1123,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   initialized: false,
 
   init: async () => {
-    if (get().initialized) return;
-    set({ initialized: true });
+    if (get().initialized || initStarted) return;
+    initStarted = true;
     supabase.auth.onAuthStateChange((event, session) => {
       if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
       const nextId = session?.user?.id ?? null;
@@ -1130,9 +1137,34 @@ export const useAuth = create<AuthState>((set, get) => ({
         set({ users: [], roles: [], loaded: false });
       }
     });
-    const { data: { user } } = await supabase.auth.getUser();
-    set({ currentUserId: user?.id ?? null });
-    if (user) await get().reload();
+    // Ghi nhớ đăng nhập: hủy phiên đã lưu nếu người dùng không chọn ghi nhớ
+    // và trình duyệt đã đóng hẳn, hoặc phiên ghi nhớ đã quá 90 ngày.
+    try {
+      if (typeof window !== 'undefined') {
+        const tabAlive = !!sessionStorage.getItem(TAB_ALIVE_KEY);
+        const policy = sessionPolicy({
+          tabAlive,
+          remember: localStorage.getItem(REMEMBER_KEY),
+          since: Number(localStorage.getItem(REMEMBER_SINCE_KEY) || 0),
+          now: Date.now(),
+        });
+        sessionStorage.setItem(TAB_ALIVE_KEY, '1');
+        if (policy === 'drop') {
+          localStorage.removeItem(REMEMBER_KEY);
+          localStorage.removeItem(REMEMBER_SINCE_KEY);
+          await supabase.auth.signOut({ scope: 'local' });
+        }
+      }
+    } catch { /* bộ nhớ bị chặn: giữ hành vi mặc định của SDK */ }
+    // Chỉ đánh dấu initialized sau khi việc khôi phục/xác minh phiên kết thúc,
+    // để AuthGate không chuyển về /login giữa chừng.
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      set({ currentUserId: user?.id ?? null });
+      if (user) await get().reload();
+    } finally {
+      set({ initialized: true });
+    }
   },
 
   reload: async () => {
@@ -1202,7 +1234,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
 
-  login: async (usernameOrEmail, password) => {
+  login: async (usernameOrEmail, password, remember = true) => {
     try {
     const input = usernameOrEmail.trim();
     const result = input.includes('@')
@@ -1237,6 +1269,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       return { ok: false, error: msg };
     }
     await get().reload();
+    writeRememberChoice(remember);
     return { ok: true };
     } catch { return { ok: false, error: authErrorMessage(null) }; }
   },
