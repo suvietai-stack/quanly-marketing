@@ -15,7 +15,7 @@ beforeAll(async () => {
   create function private.is_active(u uuid) returns boolean language sql as $$ select u is not null $$;
   create function private.is_super_admin(u uuid) returns boolean language sql as $$ select u = '${SA}'::uuid $$;
   create function private.org_role_permission_ready(p text) returns boolean language sql immutable as $$ select false $$;
-  create function private.mkt_specialty_permission_ready(p text) returns boolean language sql immutable as $$ select false $$;
+  create function private.mkt_specialty_permission_ready(p text) returns boolean language sql immutable as $$ select p = 'video.create' $$;
   create function private.base_tier1(u uuid, p text) returns text language sql as $$ select case when p = any(string_to_array(current_setting('test.allow',true),',')) then 'ALLOW' else 'NOT_CONFIGURED' end $$;
   create function private.base_config() returns jsonb language sql as $$ select '{}'::jsonb $$;
   create function private.org_role_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
