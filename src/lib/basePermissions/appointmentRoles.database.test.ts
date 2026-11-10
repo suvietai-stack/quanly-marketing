@@ -26,7 +26,7 @@ beforeAll(async()=>{
  CREATE FUNCTION private.org_commands(jsonb) RETURNS jsonb LANGUAGE sql AS $$SELECT '[]'::jsonb$$;
  CREATE FUNCTION private.org_effect_signature(c jsonb,changes_ jsonb) RETURNS jsonb LANGUAGE sql AS $$SELECT jsonb_build_object('permissions',jsonb_build_object('grants',c->'grants'))$$;
  CREATE FUNCTION private.base_effective(uuid,jsonb) RETURNS jsonb LANGUAGE sql AS $$SELECT '[]'::jsonb$$;
- CREATE FUNCTION public.org_change(_phase text,_revision bigint DEFAULT NULL,_change jsonb DEFAULT NULL,_preview uuid DEFAULT NULL,_confirmation text DEFAULT NULL,_reason text DEFAULT NULL) RETURNS jsonb LANGUAGE sql AS $$SELECT jsonb_build_object('impact','[]'::jsonb)$$;`);
+ CREATE FUNCTION public.org_change(_phase text,_revision bigint DEFAULT NULL,_change jsonb DEFAULT NULL,_preview uuid DEFAULT NULL,_confirmation text DEFAULT NULL,_reason text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql AS $$DECLARE before_ jsonb:='{}';after_ jsonb:='{}';BEGIN RETURN jsonb_build_object('impact','[]'::jsonb);END$$;`);
  await db.exec(readFileSync('drizzle/migrations/0307_base_title_role_scope_drafts.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0318_appointment_role_verified_capabilities.sql','utf8'));
  signature=await val("select md5(permissions::text) v from app_roles where id='designer'");

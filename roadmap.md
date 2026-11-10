@@ -1,6 +1,7 @@
 # Lộ trình hiện tại
 
 ## Bước 1 — Role chuẩn theo chức vụ (yêu cầu hiện tại)
+- Kiểm thử quản trị bằng Super Admin hệ thống hiện có; Admin/quản lý/nhân viên dùng dữ liệu cô lập, không đăng nhập hay đổi mật khẩu nhân sự thật.
 - [ ] Dùng duy nhất app_roles gốc; đối chiếu quyền từng Role và vị trí áp dụng, không tạo Role mới
 - [ ] Cấp/thu hồi nguồn bổ nhiệm theo hiệu lực, giữ nguồn trực tiếp và Kinh doanh; chỉ bật permission đã kiểm chứng
 - [ ] Liên kết qua xem trước/xác nhận chung; giao diện chức năng/vị trí áp dụng và tùy chỉnh quyền
