@@ -43,7 +43,8 @@ export type PermissionGroup =
   | "Quản trị Kinh doanh"
   | "Quản lý 3K"
   | "CRM Khách Hàng"
-  | "Sale Work Zalo";
+  | "Sale Work Zalo"
+  | "Cơ cấu tổ chức";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -565,6 +566,14 @@ export const PERMISSIONS: PermissionDef[] = [
   P("settings.user_custom_perm", "Tùy chỉnh quyền riêng theo user", "Tài khoản", "Role"),
   P("settings.login_history", "Xem lịch sử đăng nhập", "Tài khoản", "Audit"),
   P("settings.activity_log", "Xem log thao tác", "Tài khoản", "Audit"),
+
+  // ===== Cơ cấu tổ chức (quản trị tại Hành chính & Nhân sự → Cơ cấu tổ chức) =====
+  P("org.view", "Xem sơ đồ cơ cấu tổ chức", "Cơ cấu tổ chức", "Cơ cấu"),
+  P("org.manage_structure", "Tạo/sửa đơn vị và chức danh", "Cơ cấu tổ chức", "Cơ cấu"),
+  P("org.assign_staff", "Thêm, bỏ gán và điều chuyển nhân sự", "Cơ cấu tổ chức", "Nhân sự"),
+  P("org.appoint_manager", "Bổ nhiệm/miễn nhiệm vị trí quản lý", "Cơ cấu tổ chức", "Nhân sự"),
+  P("org.view_history", "Xem lịch sử phân công và bổ nhiệm", "Cơ cấu tổ chức", "Nhân sự"),
+  P("org.manage_permissions", "Quản lý quy tắc phân quyền tổ chức", "Cơ cấu tổ chức", "Phân quyền"),
 ];
 
 export const ALL_PERMS = PERMISSIONS.map((p) => p.key);
@@ -781,7 +790,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
   "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
-  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Quản trị Kinh doanh", "Quản lý 3K", "Cài Đặt", "Tài khoản",
+  "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Quản trị Kinh doanh", "Quản lý 3K", "Cài Đặt", "Tài khoản", "Cơ cấu tổ chức",
 ];
 
 // ============ Default permissions per role ============
@@ -1585,7 +1594,7 @@ export function useCurrentUser() {
     const effective = baseAccess?.user_id === u?.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
     if (effective) return u?.status === 'Đang hoạt động' && effective.allowed;
     // New supported permissions fail closed while their authoritative read is unavailable.
-    if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use'].includes(key) && baseAccess?.user_id !== u?.id) return false;
+    if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','org.view','org.assign_staff','org.appoint_manager','org.view_history'].includes(key) && baseAccess?.user_id !== u?.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
     if (key.startsWith('biz.') || key.startsWith('k3.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
     const resolved = resolvePermKey(key);
