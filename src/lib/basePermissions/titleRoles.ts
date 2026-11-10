@@ -28,7 +28,6 @@ export const titleRolesApi = {
     return data as unknown as TitleRoleRead;
   },
   async save(source: 'base' | 'biz', title: string, roles: Pick<TitleRoleLink, 'role_id' | 'is_primary' | 'scope_kind'>[], expected: TitleRoleLink[], reason: string) {
-    const { error } = await supabase.rpc('base_title_roles_save', { _source: source, _title: title, _roles: roles as unknown as Json, _expected: roleDraftSnapshot(expected) as unknown as Json, _reason: reason });
-    if (error) throw new Error(error.message);
+    throw new Error('Thiết lập Role đang chờ hoàn thiện xem trước tác động và xác nhận chung; quyền hiện tại giữ nguyên.');
   },
 };

@@ -116,12 +116,13 @@ export function missingDefaultStructure(config: OrgConfig): boolean {
 
 /** Chức danh đang hoạt động gắn với một bộ phận (chức danh chung không có unit_id không thuộc ô nào). */
 export function unitTitles(config: OrgConfig, unitId: string): Title[] {
-  return config.titles.filter(t => t.active && t.unit_id === unitId);
+  const unit = config.units.find(u => u.id === unitId);
+  return config.titles.filter(t => t.active && (t.unit_id === unitId || (!t.unit_id && t.source === 'biz_positions' && (t.unit_kind === unit?.kind || (t.unit_kind === 'individual' && ['department','team'].includes(unit?.kind ?? ''))))));
 }
 
 /** Người đang giữ một ô chức danh trong bộ phận. */
 export function slotHolders(config: OrgConfig, unitId: string, titleId: string): Membership[] {
-  return config.memberships.filter(m => m.active && m.unit_id === unitId && m.title_id === titleId);
+  return config.memberships.filter(m => membershipEffective(m) && m.unit_id === unitId && m.title_id === titleId);
 }
 
 /** Toàn bộ lịch sử gán của một ô chức danh, mới nhất trước. */
@@ -133,9 +134,10 @@ export function slotHistory(config: OrgConfig, unitId: string, titleId: string):
 
 /** Số nhân sự đang giữ một chức danh (mọi đơn vị) — dùng để báo người bị ảnh hưởng khi chỉnh quyền mặc định. */
 export function titleHolders(config: OrgConfig, titleId: string): Membership[] {
-  return config.memberships.filter(m => m.active && m.title_id === titleId);
+  return config.memberships.filter(m => membershipEffective(m) && m.title_id === titleId);
 }
 
+export const membershipEffective = (m: Membership, now = new Date().toISOString()): boolean => m.active && m.status !== 'cancelled' && (!m.starts_at || m.starts_at <= now) && (!m.ends_at || m.ends_at > now);
 const nowIso = () => new Date().toISOString();
 
 /**
@@ -147,10 +149,10 @@ export function assignSlot(config: OrgConfig, unitId: string, titleId: string, u
   const title = config.titles.find(t => t.id === titleId);
   const single = title ? slotCapacity(title) === 1 : true;
   const now = nowIso();
-  const already = config.memberships.some(m => m.active && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId);
+  const already = config.memberships.some(m => membershipEffective(m) && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId);
   if (already) return config;
   const memberships = single
-    ? config.memberships.map(m => m.active && m.unit_id === unitId && m.title_id === titleId ? { ...m, active: false, ends_at: now } : m)
+    ? config.memberships.map(m => membershipEffective(m) && m.unit_id === unitId && m.title_id === titleId ? { ...m, active: false, ends_at: now } : m)
     : [...config.memberships];
   memberships.push({ id: crypto.randomUUID(), user_id: userId, unit_id: unitId, title_id: titleId, active: true, starts_at: now });
   return { ...config, memberships };
@@ -162,7 +164,7 @@ export function unassignSlot(config: OrgConfig, unitId: string, titleId: string,
   return {
     ...config,
     memberships: config.memberships.map(m =>
-      m.active && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId ? { ...m, active: false, ends_at: now } : m),
+      membershipEffective(m) && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId ? { ...m, active: false, ends_at: now } : m),
   };
 }
 
@@ -208,7 +210,7 @@ export function assignMany(config: OrgConfig, unitId: string, titleId: string, u
   const skipped: { userId: string; reason: string }[] = [];
   const now = nowIso();
   for (const userId of [...new Set(userIds)]) {
-    const already = next.memberships.some(m => m.active && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId);
+    const already = next.memberships.some(m => membershipEffective(m) && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId);
     if (already) { skipped.push({ userId, reason: 'Đã có phân công này' }); continue; }
     if (single && slotHolders(next, unitId, titleId).length > 0) { skipped.push({ userId, reason: 'Vị trí một người đang có người giữ' }); continue; }
     next = { ...next, memberships: [...next.memberships, { id: crypto.randomUUID(), user_id: userId, unit_id: unitId, title_id: titleId, active: true, starts_at: now, kind }] };
@@ -232,14 +234,14 @@ export function transferMembers(config: OrgConfig, userIds: string[], toUnitId: 
   const endedManagers: { userId: string; unitId: string; titleId: string }[] = [];
   const now = nowIso();
   for (const userId of [...new Set(userIds)]) {
-    if (next.memberships.some(m => m.active && m.unit_id === toUnitId && m.title_id === toTitleId && m.user_id === userId)) {
+    if (next.memberships.some(m => membershipEffective(m) && m.unit_id === toUnitId && m.title_id === toTitleId && m.user_id === userId)) {
       skipped.push({ userId, reason: 'Đã có phân công này tại đơn vị đích' });
       continue;
     }
-    const ending = next.memberships.filter(m => m.active && m.user_id === userId && membershipKind(m) === 'primary' && (!scope || scope.has(m.unit_id)));
+    const ending = next.memberships.filter(m => membershipEffective(m) && m.user_id === userId && membershipKind(m) === 'primary' && (!scope || scope.has(m.unit_id)));
     for (const m of ending) {
       const t = next.titles.find(x => x.id === m.title_id);
-      if (t && slotCapacity(t) === 1) endedManagers.push({ userId, unitId: m.unit_id, titleId: m.title_id! });
+      if (t && slotCapacity(t) === 1) endedManagers.push({ userId, unitId: m.unit_id, titleId: m.title_id ?? '' });
     }
     next = {
       ...next,
@@ -262,7 +264,7 @@ export function endMembership(config: OrgConfig, membershipId: string): OrgConfi
 /** Xem trước kết quả điều chuyển (không thay đổi cấu hình) để giao diện hiển thị cảnh báo trước khi áp dụng. */
 export function transferPreview(config: OrgConfig, userIds: string[], fromUnitIds?: string[]): { ending: Membership[]; endedManagers: Membership[] } {
   const scope = fromUnitIds ? new Set(fromUnitIds) : null;
-  const ending = config.memberships.filter(m => m.active && userIds.includes(m.user_id) && membershipKind(m) === 'primary' && (!scope || scope.has(m.unit_id)));
+  const ending = config.memberships.filter(m => membershipEffective(m) && userIds.includes(m.user_id) && membershipKind(m) === 'primary' && (!scope || scope.has(m.unit_id)));
   const endedManagers = ending.filter(m => { const t = config.titles.find(x => x.id === m.title_id); return t ? slotCapacity(t) === 1 : false; });
   return { ending, endedManagers };
 }

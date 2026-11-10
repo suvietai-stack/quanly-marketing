@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Membership, OrgActor, OrgConfig } from '@/lib/basePermissions/types';
-import { assignMany, assignSlot, endMembership, membershipKind, slotCapacity, slotHolders, titleKind, titleLevel, transferMembers, transferPreview, unitDescendants, unitPath, unitTitles } from '@/lib/orgStructure';
+import { assignMany, assignSlot, endMembership, membershipEffective, membershipKind, slotCapacity, slotHolders, titleKind, titleLevel, transferMembers, transferPreview, unitDescendants, unitPath, unitTitles } from '@/lib/orgStructure';
 
 interface Staff { id: string; name: string; status: string }
 
@@ -29,11 +29,11 @@ const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleString('vi-VN') : '�
 /** Quyền của người xem trên đơn vị đang mở (bao phủ cả đơn vị con). */
 function unitRights(config: OrgConfig, unitId: string, actor: OrgActor) {
   const tree = unitDescendants(config, unitId);
-  const covers = (all: boolean, units: string[]) => all || units.some(u => unitDescendants(config, u).some(x => tree.includes(x)));
+  const covers = (all: boolean, units: string[]) => all || units.includes(unitId);
   return {
     assign: actor.super || covers(actor.assign_all, actor.assign_units),
     appoint: actor.super || covers(actor.appoint_all, actor.appoint_units),
-    structure: actor.super,
+    structure: actor.super || !!actor.structure_units?.includes(unitId),
   };
 }
 
@@ -43,7 +43,7 @@ function StaffMultiPicker({ config, staff, unitId, selected, onChange }: {
 }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
-  const activeUnitsOf = (id: string) => config.memberships.filter(m => m.active && m.user_id === id).map(m => m.unit_id);
+  const activeUnitsOf = (id: string) => config.memberships.filter(m => membershipEffective(m) && m.user_id === id).map(m => m.unit_id);
   const rows = staff.filter(s => s.status === 'Đang hoạt động').filter(s => {
     if (query && !s.name.toLocaleLowerCase('vi').includes(query.toLocaleLowerCase('vi'))) return false;
     const units = activeUnitsOf(s.id);
@@ -108,13 +108,15 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
   const [form, setForm] = useState<'primary' | 'concurrent'>('primary');
   const [report, setReport] = useState<{ added: string[]; skipped: { userId: string; reason: string }[] } | null>(null);
   const [moveTitle, setMoveTitle] = useState('');
+  const [sourceIds, setSourceIds] = useState<string[]>([]);
+  const [effectiveAt, setEffectiveAt] = useState('');
   const [confirmManagerEnd, setConfirmManagerEnd] = useState(false);
   const [appointing, setAppointing] = useState<string>(''); // title id của ô quản lý
   const [appointUser, setAppointUser] = useState('');
 
   const rights = useMemo(() => unitRights(config, unitId, actor), [config, unitId, actor]);
   const titles = useMemo(() => unitTitles(config, unitId), [config, unitId]);
-  const memberships = useMemo(() => config.memberships.filter(m => m.active && m.unit_id === unitId), [config, unitId]);
+  const memberships = useMemo(() => config.memberships.filter(m => membershipEffective(m) && m.unit_id === unitId), [config, unitId]);
   const history = useMemo(
     () => config.memberships.filter(m => m.unit_id === unitId).sort((a, b) => Date.parse(b.starts_at ?? '') - Date.parse(a.starts_at ?? '')),
     [config, unitId],
@@ -135,9 +137,11 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
     onEdit(() => r.config);
     setReport(r);
   };
-  const preview = transferPreview(config, [...picked]);
+  const selectedConfig = { ...config, memberships: config.memberships.filter(m => sourceIds.includes(m.id)) };
+  const preview = transferPreview(selectedConfig, [...picked]);
   const doTransfer = () => {
-    const r = transferMembers(config, [...picked], unitId, moveTitle);
+    const r = transferMembers(selectedConfig, [...picked], unitId, moveTitle);
+    r.config = { ...r.config, units: config.units, titles: config.titles, memberships: [...config.memberships.filter(m => !sourceIds.includes(m.id)), ...r.config.memberships] };
     onEdit(() => r.config);
     setReport({ added: r.moved, skipped: r.skipped });
   };
@@ -148,16 +152,16 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
         <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
           {nameOf(m.user_id)}
           {membershipKind(m) === 'concurrent' && <Badge variant="outline" className="text-[10px] font-normal">Kiêm nhiệm</Badge>}
-          {m.title_id && slotCapacity(titleOf(m.title_id)!) === 1 && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
+          {m.title_id && (titleOf(m.title_id)?.capacity ?? 0) === 1 && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
         </p>
         <p className="text-xs text-muted-foreground">
           {titleOf(m.title_id)?.name ?? 'Chưa có chức danh'}
-          {m.title_id && ` · Cấp ${titleLevel(titleOf(m.title_id)!)}`}
+          {m.title_id && ` · Cấp ${(titleOf(m.title_id)?.level ?? 0)}`}
           {m.duties ? ` · ${m.duties}` : ''}
         </p>
       </div>
-      {canAssign && (
-        <Button size="sm" variant="ghost" aria-label={`Kết thúc phân công ${nameOf(m.user_id)}`} onClick={() => onEdit(c => endMembership(c, m.id))}>
+      {(canAssign || canAppoint) && (
+        <Button size="sm" variant="ghost" aria-label={`Kết thúc phân công ${nameOf(m.user_id)}`} onClick={() => onEdit(c => m.starts_at && m.starts_at > new Date().toISOString() ? { ...c, memberships: c.memberships.map(x=>x.id===m.id?{...x,status:'cancelled',active:false}:x) } : endMembership(c, m.id))}>
           <X className="h-4 w-4" />
         </Button>
       )}
@@ -207,7 +211,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
             {canAssign && (
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" onClick={() => { resetPick(); setAdding(true); }}><Plus className="mr-1.5 h-4 w-4" />Thêm nhân sự</Button>
-                <Button size="sm" variant="outline" onClick={() => { resetPick(); setMoveTitle(''); setConfirmManagerEnd(false); setMoving(true); }}><ArrowRightLeft className="mr-1.5 h-4 w-4" />Điều chuyển nhân sự</Button>
+                <Button size="sm" variant="outline" onClick={() => { resetPick(); setMoveTitle(''); setConfirmManagerEnd(false); setSourceIds([]); setMoving(true); }}><ArrowRightLeft className="mr-1.5 h-4 w-4" />Điều chuyển nhân sự</Button>
               </div>
             )}
             <div>
@@ -353,6 +357,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                     <SelectContent>{titles.map(t => <SelectItem key={t.id} value={t.id}>{t.name} · Cấp {titleLevel(t)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                <Label>Phân công nguồn cần kết thúc</Label><div className="max-h-48 overflow-y-auto">{config.memberships.filter(m=>membershipEffective(m)&&picked.has(m.user_id)&&m.unit_id!==unitId).map(m=><label key={m.id} className="flex gap-2 py-2 text-sm"><Checkbox checked={sourceIds.includes(m.id)} onCheckedChange={v=>setSourceIds(ids=>v===true?[...ids,m.id]:ids.filter(id=>id!==m.id))} />{nameOf(m.user_id)} · {config.units.find(u=>u.id===m.unit_id)?.name} · {titleOf(m.title_id)?.name ?? m.category}</label>)}</div>
                 {preview.ending.length > 0 && (
                   <div className="rounded-lg border p-3 text-sm">
                     <p className="font-medium">Phân công sẽ kết thúc:</p>
@@ -371,7 +376,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                 )}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setStep('pick')}>Quay lại</Button>
-                  <Button disabled={!moveTitle || (preview.endedManagers.length > 0 && !confirmManagerEnd)} onClick={doTransfer}>Đưa vào thay đổi</Button>
+                  <Button disabled={!sourceIds.length || !moveTitle || (preview.endedManagers.length > 0 && !confirmManagerEnd)} onClick={doTransfer}>Đưa vào thay đổi</Button>
                 </div>
               </div>
             )}
@@ -397,7 +402,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                       <SelectContent>{staff.filter(s => s.status === 'Đang hoạt động').map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <Button disabled={!appointUser} onClick={() => { onEdit(c => assignSlot(c, unitId, appointing, appointUser)); setAppointing(''); }}>Đưa vào thay đổi</Button>
+                  <Label>Ngày hiệu lực</Label><Input aria-label="Ngày hiệu lực bổ nhiệm" type="datetime-local" value={effectiveAt} onChange={e=>setEffectiveAt(e.target.value)} /><Button disabled={!appointUser} onClick={() => { onEdit(c => { const next = assignSlot(c, unitId, appointing, appointUser); if (!effectiveAt) return next; const at = new Date(effectiveAt).toISOString(); return { ...next, memberships: next.memberships.map(m => c.memberships.some(old=>old.id===m.id&&old.ends_at!==m.ends_at) ? { ...m, ends_at:at, active:true } : !c.memberships.some(old=>old.id===m.id) ? { ...m, starts_at:at } : m) }; }); setAppointing(''); }}>Đưa vào thay đổi</Button>
                 </div>
               );
             })()}
@@ -409,5 +414,5 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
 }
 
 function titleHoldersCount(config: OrgConfig, titleId: string): number {
-  return new Set(config.memberships.filter(m => m.active && m.title_id === titleId).map(m => m.user_id)).size;
+  return new Set(config.memberships.filter(m => membershipEffective(m) && m.title_id === titleId).map(m => m.user_id)).size;
 }

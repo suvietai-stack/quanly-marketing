@@ -6,9 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import type { OrgConfig } from '@/lib/basePermissions/types';
-import type { OrgData } from '@/lib/biz/organization';
-import type { PositionsData } from '@/lib/biz/positions';
-import { blockTone, buildBaseBlocks, buildBizBlock, countPeople, executiveSlots, nodeMatches, type ChartNode, type ChartPerson, type ChartSlot } from '@/lib/orgChart';
+import { blockTone, buildOrganizationTree, countPeople, nodeMatches, type ChartNode, type ChartPerson, type ChartSlot } from '@/lib/orgChart';
 
 const toneClass: Record<string, string> = {
   biz: 'bg-chart-biz text-chart-biz-foreground',
@@ -68,52 +66,18 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {actions.onAssign && (
-              <DropdownMenuItem onClick={() => actions.onAssign!(ref)}>
+              <DropdownMenuItem onClick={() => actions.onAssign?.(ref)}>
                 <UserPlus className="h-4 w-4 mr-2" />{slot.manager && slot.holders.length ? 'Đổi người' : 'Gán người'}
               </DropdownMenuItem>
             )}
             {actions.onUnassign && slot.holders.map(p => (
-              <DropdownMenuItem key={p.id} onClick={() => actions.onUnassign!(ref, p)}>
+              <DropdownMenuItem key={p.id} onClick={() => actions.onUnassign?.(ref, p)}>
                 <UserMinus className="h-4 w-4 mr-2" />Bỏ gán {p.name}
               </DropdownMenuItem>
             ))}
             {actions.onSlotHistory && (
-              <DropdownMenuItem onClick={() => actions.onSlotHistory!(ref)}>
+              <DropdownMenuItem onClick={() => actions.onSlotHistory?.(ref)}>
                 <History className="h-4 w-4 mr-2" />Xem lịch sử
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
-  );
-}
-
-/** Dòng người phụ trách của đơn vị Kinh doanh — hiện cả khi trống, bổ nhiệm/miễn nhiệm ngay trên sơ đồ. */
-function LeaderLine({ node, actions, onOpen }: { node: ChartNode; actions: ChartActions; onOpen: (p: ChartPerson) => void }) {
-  if (!node.leaderLabel) return null;
-  return (
-    <div className="flex items-start gap-1 px-2 py-1">
-      <p className="min-w-0 flex-1 text-xs text-muted-foreground">
-        {node.leaderLabel}:{' '}
-        {node.leader
-          ? <Button variant="link" className="h-auto p-0 text-xs whitespace-normal" onClick={() => onOpen(node.leader!)}>{node.leader.name}</Button>
-          : <span className="text-warning">Chưa phân công</span>}
-      </p>
-      {actions.canManage && (actions.onBizAppoint || actions.onBizHistory) && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label={`Thao tác ${node.leaderLabel} ${node.name}`}><MoreVertical className="h-4 w-4" /></Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {actions.onBizAppoint && (
-              <DropdownMenuItem onClick={() => actions.onBizAppoint!(node)}>
-                <UserPlus className="h-4 w-4 mr-2" />{node.leader ? 'Thay đổi người đảm nhiệm' : 'Bổ nhiệm'}
-              </DropdownMenuItem>
-            )}
-            {actions.onBizHistory && (
-              <DropdownMenuItem onClick={() => actions.onBizHistory!(node)}>
-                <History className="h-4 w-4 mr-2" />Lịch sử & miễn nhiệm
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -141,15 +105,14 @@ function Branch({ node, depth, query, actions, onOpen }: { node: ChartNode; dept
             {count > 0 && <span className="ml-1 text-xs font-normal text-muted-foreground">· {count} nhân sự</span>}
           </p>
         </div>
-        {actions.canManage && actions.onManageUnit && !node.biz && (
-          <Button variant="outline" size="sm" className="mt-0.5 h-7 shrink-0" aria-label={`Quản lý ${node.name}`} onClick={() => actions.onManageUnit!(node)}>
+        {actions.canManage && actions.onManageUnit && (
+          <Button variant="outline" size="sm" className="mt-0.5 h-7 shrink-0" aria-label={`Quản lý ${node.name}`} onClick={() => actions.onManageUnit?.(node)}>
             <Settings2 className="h-3.5 w-3.5 mr-1" />Quản lý
           </Button>
         )}
       </div>
       {open && (
         <div className="ml-4 space-y-0.5 pt-1">
-          <LeaderLine node={node} actions={actions} onOpen={onOpen} />
           {(node.slots ?? []).map(s => <SlotRow key={s.id} unitId={node.id} unitName={node.name} slot={s} query={query} actions={actions} onOpen={onOpen} />)}
           {people.map(p => <PersonButton key={p.id} person={p} onOpen={onOpen} />)}
           {children.map(c => <Branch key={c.id} node={c} depth={depth + 1} query={query} actions={actions} onOpen={onOpen} />)}
@@ -186,87 +149,18 @@ function BlockCard({ node, query, actions, onOpen }: { node: ChartNode; query: s
   );
 }
 
-export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onBizAppointExecutive, onManageUnit }: {
-  config: OrgConfig;
-  staff: { id: string; name: string }[];
-  biz?: OrgData;
-  positions?: PositionsData;
-  bizUnavailable?: boolean;
-  onBizAppointExecutive?: (code: string) => void;
+export function OrgChart({ config, staff, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onManageUnit, serverNow }: {
+  config: OrgConfig; staff: { id: string; name: string }[]; serverNow?: string;
 } & ChartActions) {
-  const [query, setQuery] = useState('');
-  const [person, setPerson] = useState<ChartPerson | null>(null);
-  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onManageUnit };
-  const nameOf = useMemo(() => {
-    const map = new Map(staff.map(s => [s.id, s.name]));
-    return (id: string) => map.get(id) ?? 'Nhân sự';
-  }, [staff]);
-  const executives = useMemo(() => executiveSlots(positions, nameOf), [positions, nameOf]);
-  const blocks = useMemo(() => {
-    const result: ChartNode[] = [];
-    if (biz) result.push(buildBizBlock(biz, positions, nameOf));
-    result.push(...buildBaseBlocks(config, staff).filter(b => blockTone(b.name) !== 'biz' || !biz));
-    return result;
-  }, [biz, positions, config, staff, nameOf]);
-  const openPerson = (p: ChartPerson) => setPerson(p);
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <Input aria-label="Tìm nhân sự hoặc đơn vị" placeholder="Tìm nhân sự, đơn vị, chức danh…" value={query} onChange={e => setQuery(e.target.value)} className="sm:max-w-xs" />
-      </div>
-      <div className="mx-auto max-w-md rounded-xl border bg-chart-company px-4 py-3 text-center text-chart-company-foreground shadow-card">
-        <p className="flex items-center justify-center gap-2 font-bold tracking-wide"><Building2 className="h-5 w-5" />CÔNG TY CỔ PHẦN SỨ VIỆT</p>
-      </div>
-      <div className="mx-auto h-5 w-px bg-border" />
-      {executives.length > 0 && (
-        <div className="mx-auto max-w-md space-y-2">
-          {executives.map((slot, i) => (
-            <div key={slot.code || slot.name}>
-              <button
-                type="button"
-                disabled={!slot.holder}
-                onClick={() => slot.holder && openPerson(slot.holder)}
-                className={`w-full rounded-xl border px-4 py-3 text-left shadow-card ${i === 0 ? 'bg-chart-executive text-chart-executive-foreground' : 'bg-chart-deputy text-chart-deputy-foreground'} ${slot.holder ? 'cursor-pointer' : 'opacity-80'}`}
-              >
-                <p className="flex items-center gap-2 font-semibold"><Crown className="h-4 w-4 shrink-0" />{slot.name}<Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge></p>
-                <p className="mt-0.5 text-sm opacity-90">{slot.holder ? slot.holder.name : 'Chưa bổ nhiệm'}</p>
-              </button>
-              {canManage && onBizAppointExecutive && (
-                <div className="flex justify-end pt-1">
-                  <Button variant="outline" size="sm" onClick={() => onBizAppointExecutive(slot.code)}>
-                    <UserPlus className="h-4 w-4 mr-2" />{slot.holder ? 'Thay đổi' : 'Bổ nhiệm'}
-                  </Button>
-                </div>
-              )}
-              {i < executives.length - 1 && <div className="mx-auto h-3 w-px bg-border" />}
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="mx-auto h-5 w-px bg-border" />
-      {blocks.length > 1 && <div className="mx-auto hidden h-px w-2/3 bg-border md:block" />}
-      {bizUnavailable && !biz && (
-        <p className="rounded-lg border border-dashed px-3 py-2 text-center text-xs text-muted-foreground">
-          Tài khoản của bạn chưa có quyền xem dữ liệu Khối Kinh doanh — sơ đồ chỉ hiển thị các khối cấu hình tại Cài đặt.
-        </p>
-      )}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {blocks.map(b => <BlockCard key={b.id} node={b} query={query} actions={actions} onOpen={openPerson} />)}
-      </div>
-      {!blocks.length && <p className="py-10 text-center text-sm text-muted-foreground">Chưa có cơ cấu nào — thêm Khối/Phòng/Nhóm tại Cài đặt.</p>}
-      <Dialog open={!!person} onOpenChange={v => !v && setPerson(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{person?.name}</DialogTitle></DialogHeader>
-          <div className="space-y-2 text-sm">
-            <p><span className="text-muted-foreground">Chức danh: </span>{person?.title ?? 'Chưa có chức danh'}</p>
-            <p><span className="text-muted-foreground">Nhiệm vụ: </span>{person?.duties || 'Chưa có nhiệm vụ'}</p>
-            {person && onOpenStaff && (
-              <Button className="mt-2" onClick={() => { onOpenStaff(person.id); setPerson(null); }}>Xem quyền & phân công</Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+  const [query,setQuery] = useState('');
+  const [person,setPerson] = useState<ChartPerson | null>(null);
+  const actions: ChartActions = { canManage,onOpenStaff,onAssign,onUnassign,onSlotHistory,onManageUnit };
+  const roots = useMemo(() => buildOrganizationTree(config,staff,serverNow),[config,staff,serverNow]);
+  return <div className="space-y-4">
+    <div className="flex items-center gap-2"><Search className="h-4 w-4 text-muted-foreground" /><Input aria-label="Tìm nhân sự hoặc đơn vị" placeholder="Tìm nhân sự, đơn vị, chức danh…" value={query} onChange={e=>setQuery(e.target.value)} className="sm:max-w-sm" /></div>
+    <div className="space-y-4">{roots.map(node=><Branch key={node.id} node={node} depth={0} query={query} actions={actions} onOpen={setPerson} />)}</div>
+    {config.units.some(u=>u.kind==='department'&&!u.parent_id) && <p className="text-sm text-warning">Chưa xác định đơn vị cha</p>}
+    {!roots.length && <p className="text-muted-foreground">Chưa có cơ cấu tổ chức.</p>}
+    <Dialog open={!!person} onOpenChange={v=>!v&&setPerson(null)}><DialogContent className="max-w-sm"><DialogHeader><DialogTitle>{person?.name}</DialogTitle></DialogHeader><p>{person?.title??'Chưa có chức danh'}</p><p className="text-sm text-muted-foreground">{person?.duties}</p>{person&&onOpenStaff&&<Button onClick={()=>{onOpenStaff(person.id);setPerson(null);}}>Xem quyền & phân công</Button>}</DialogContent></Dialog>
+  </div>;
 }

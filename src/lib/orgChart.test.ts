@@ -1,52 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { buildBizBlock } from '@/lib/orgChart';
-import type { OrgData } from '@/lib/biz/organization';
-import type { PositionsData } from '@/lib/biz/positions';
-
-const org: OrgData = {
-  systems: [{ id: 'sys1', name: 'Kinh doanh 1', active: true }],
-  departments: [
-    { id: 'dep1', system_id: 'sys1', name: 'Kinh doanh 1', active: true },
-    { id: 'dep2', system_id: null, name: 'Phòng cũ', active: true },
-  ],
-  teams: [{ id: 'team1', department_id: 'dep1', name: 'Nhóm A', active: true }],
-  members: [],
-  team_members: [],
-  managers: [],
-  events: [],
-} as unknown as OrgData;
-
-const positions = { server_now: new Date().toISOString(), positions: [], appointments: [] } as unknown as PositionsData;
-const nameOf = (id: string) => id;
-
-describe('buildBizBlock — ngữ cảnh bổ nhiệm trên sơ đồ tổng', () => {
-  const block = buildBizBlock(org, positions, nameOf);
-  const sys = block.children.find(c => c.id === 'sys1')!;
-  const dep = sys.children.find(c => c.id === 'dep1')!;
-  const team = dep.children.find(c => c.id === 'team1')!;
-  const legacyDep = block.children.find(c => c.id === 'dep2')!;
-
-  it('giữ nguyên cấu trúc Hệ → Phòng → Nhóm và phòng chưa ánh xạ', () => {
-    expect(block.name).toBe('Khối Kinh doanh');
-    expect(sys.kind).toBe('system');
-    expect(dep.kind).toBe('department');
-    expect(team.kind).toBe('team');
-    expect(legacyDep.name).toBe('Phòng cũ');
-  });
-
-  it('mỗi cấp mang đúng mã chức vụ quản lý', () => {
-    expect(sys.leaderCode).toBe('director');
-    expect(dep.leaderCode).toBe('department_head');
-    expect(team.leaderCode).toBe('team_lead');
-  });
-
-  it('mỗi nút mang đủ định danh đơn vị để mở form bổ nhiệm đúng phạm vi', () => {
-    expect(sys.biz).toEqual({ systemId: 'sys1' });
-    expect(dep.biz).toEqual({ systemId: 'sys1', departmentId: 'dep1' });
-    expect(team.biz).toEqual({ systemId: 'sys1', departmentId: 'dep1', teamId: 'team1' });
-  });
-
-  it('phòng chưa ánh xạ Hệ vẫn bổ nhiệm được theo phòng, không gán Hệ sai', () => {
-    expect(legacyDep.biz).toEqual({ systemId: undefined, departmentId: 'dep2' });
-  });
+import { buildOrganizationTree, countPeople, nodeMatches } from './orgChart';
+import { emptyConfig, type OrgConfig } from './basePermissions/types';
+const config: OrgConfig = { ...emptyConfig(), units: [
+  { id: 'company', name: 'Công ty', kind: 'company', active: true },
+  { id: 'marketing', name: 'Marketing', kind: 'block', active: true },
+  { id: 's', parent_id: 'marketing', name: 'Hệ A', kind: 'system', active: true },
+  { id: 'd', parent_id: 's', name: 'Phòng A', kind: 'department', active: true },
+  { id: 't', parent_id: 'd', name: 'Nhóm A', kind: 'team', active: true },
+  { id: 'unmapped', name: 'Chưa ánh xạ', kind: 'department', active: true },
+], titles: [{ id: 'director', name: 'Giám đốc Hệ', unit_id: 's', active: true, level: 3, kind: 'manager', capacity: 1 }], memberships: [
+  { id: 'a', user_id: 'u', unit_id: 's', title_id: 'director', active: true, starts_at: '2026-01-01' },
+  { id: 'b', user_id: 'u', unit_id: 't', active: true, starts_at: '2026-01-01' },
+  { id: 'future', user_id: 'v', unit_id: 'd', active: true, starts_at: '2027-01-01' },
+] };
+describe('unified organization tree', () => {
+  const tree = buildOrganizationTree(config, [{ id: 'u', name: 'Nhân sự A' }], '2026-11-10');
+  const block = tree.find(x => x.id === 'marketing');
+  it('allows systems and teams outside business', () => expect(block?.children[0]?.children[0]?.children[0]?.kind).toBe('team'));
+  it('retains an unmapped department at root', () => expect(tree.find(x => x.id === 'unmapped')?.name).toBe('Chưa ánh xạ'));
+  it('counts unique people, excluding future assignments', () => { if (!block) throw new Error('missing'); expect(countPeople(block)).toBe(1); });
+  it('searches recursively through people and titles', () => { if (!block) throw new Error('missing'); expect(nodeMatches(block, 'nhân sự a')).toBe(true); expect(nodeMatches(block, 'Giám đốc')).toBe(true); expect(nodeMatches(block, 'absent')).toBe(false); });
+  it('preserves empty title slots', () => { const c = { ...config, memberships: [] }; expect(buildOrganizationTree(c, [])[1]?.children[0]?.slots?.[0]?.holders).toEqual([]); });
 });
