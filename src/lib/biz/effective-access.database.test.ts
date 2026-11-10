@@ -113,7 +113,7 @@ it('level 5 executive and level 4 deputy hold block scope without a system assig
  expect(await scalar('select biz_resolve_position($1,$2,$3,$4) v',[executive,sys,dep,team])).toBe(outsider);
  expect(await scalar('select biz_resolve_position($1,$2,$3,$4) v',[deputy,sys,dep,team])).toBe(head);
  expect(await scalar("select biz_can($1,'biz.intervene') v",[outsider])).toBe(true);
- expect(await scalar("select biz_can($1,'biz.intervene') v",[head])).toBe(false);
+ expect(await scalar("select biz_can($1,'biz.intervene') v",[head])).toBe(true);
  expect(await scalar("select biz_can($1,'biz.org_manage') v",[head])).toBe(false);
  await expect(appoint({position_id:deputy,user_id:director,scope_kind:'system'})).rejects.toThrow('mâu thuẫn');
 });
@@ -137,7 +137,7 @@ it('replacement retires old rights atomically and permits a different holder',as
  expect(await scalar('select biz_manager($1) v',[sale])).toBe(true);
  expect(await scalar('select count(*)::int v from biz_appointments where id=$1',[old])).toBe(1);
 });
-it('deputy cannot approve the mandatory executive step or self-approve',async()=>{
+it('director-level steps accept either executive or deputy, never the submitter',async()=>{
  await actor(admin);
  const executive=await scalar("select id v from biz_positions where code='executive_director'");
  const deputy=await scalar("select id v from biz_positions where code='deputy_executive_director'");
@@ -145,11 +145,11 @@ it('deputy cannot approve the mandatory executive step or self-approve',async()=
  await scalar('select biz_deadline_save($1) v',[JSON.stringify({report_month:{open:{day:1,offset:0,hour:0},due:{day:2,offset:0,hour:0},late_close:{day:28,offset:1,hour:23}}})]);
  await actor(sale);const request=await scalar("select biz_late_request_create('report','month',2026,10,'Công tác') v");
  expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
- await actor(outsider);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
+ await actor(outsider);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
  await actor(head);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
  await db.query('select biz_late_request_decide($1,true,null)',[request]);
- expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
- await expect(db.query('select biz_late_request_decide($1,true,null)',[request])).rejects.toThrow();
+ await actor(head);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
+ await actor(sale);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(false);
  await actor(outsider);expect(await scalar('select biz_late_can_act($1) v',[request])).toBe(true);
  await db.query('select biz_late_request_decide($1,true,null)',[request]);
  expect(await scalar('select status v from biz_late_requests where id=$1',[request])).toBe('approved');
