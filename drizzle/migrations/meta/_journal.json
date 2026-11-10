@@ -2234,6 +2234,13 @@
       "when": 1794303049796,
       "tag": "0318_appointment_role_verified_capabilities",
       "breakpoints": true
+    },
+    {
+      "idx": 319,
+      "version": "7",
+      "when": 1794303925015,
+      "tag": "0319_appointment_role_dispatch_name_resolution",
+      "breakpoints": true
     }
   ]
 }

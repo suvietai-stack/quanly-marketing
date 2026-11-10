@@ -1,0 +1,1 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('private.org_commands_v2(jsonb)'::regprocedure) INTO d;d:=replace(d,'DECLARE x jsonb;v jsonb;r jsonb;',E'#variable_conflict use_column\n DECLARE x jsonb;v jsonb;r jsonb;');IF d NOT LIKE '%#variable_conflict use_column%' THEN RAISE EXCEPTION 'Cannot patch command resolution';END IF;EXECUTE d;END $$;
