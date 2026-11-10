@@ -1,5 +1,11 @@
 # Lộ trình hiện tại
 
+## Chuyên môn Marketing & Role tập trung
+- [x] Danh mục 7 chuyên môn, nhiều-nhiều, nguồn/thời điểm, lịch sử; đồng bộ idempotent từ Role (không ghi đè chỉnh tay); 4 nhân sự được điền sẵn
+- [x] Checkbox theo nhân sự + chuyên môn chính; chỉnh hàng loạt có xem trước; tab Role & Phân quyền chuyển về Cơ cấu tổ chức, gỡ khỏi Tài khoản
+- [ ] Dùng danh sách chuyên môn khi giao job từng module Marketing (đã có hàm lấy ứng viên, chưa nối vào màn giao việc)
+- [ ] Nhận diện từ phân công job/đơn vị, mục "Cần xác nhận"; liên kết chuyên môn→Role tự cấp
+
 ## Refactor tận gốc Cơ cấu tổ chức toàn Base
 - [x] Kế hoạch được duyệt; đã khởi chạy triển khai trong bản thử riêng “Hợp nhất cơ cấu toàn Base”, chưa chuyển đổi backend chung
 - [x] Đọc yêu cầu; rà soát màn hình và số liệu app đã ghi trước đó (không phải dữ liệu bản nháp): 3 Hệ, 4 Phòng, 0 Nhóm, 12 nhân sự Kinh doanh duy nhất, 39 bổ nhiệm (16 hiệu lực), 6 chức vụ Biz, 11 chức vụ Base, 26 tài khoản có Role
