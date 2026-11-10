@@ -48,11 +48,11 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
   return (
     <div className="flex items-start gap-1 rounded-lg px-2 py-1.5">
       <div className="min-w-0 flex-1">
-        <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium break-words">
+        <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium break-words">
           {slot.title}
           <Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge>
           {slot.manager && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
-        </p>
+        </div>
         {holders.length > 0
           ? holders.map(p => (
             <Button key={p.id} variant="link" className="h-auto p-0 text-sm whitespace-normal" onClick={() => onOpen(p)}>{p.name}</Button>
@@ -100,10 +100,10 @@ function Branch({ node, depth, query, actions, onOpen }: { node: ChartNode; dept
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </Button>
         <div className="min-w-0 flex-1 pt-0.5">
-          <p className="text-sm font-semibold break-words">
+          <div className="text-sm font-semibold break-words">
             {node.name} {node.inactive && <Badge variant="secondary">Ngừng</Badge>}
             {count > 0 && <span className="ml-1 text-xs font-normal text-muted-foreground">· {count} nhân sự</span>}
-          </p>
+          </div>
         </div>
         {actions.canManage && actions.onManageUnit && (
           <Button variant="outline" size="sm" className="mt-0.5 h-7 shrink-0" aria-label={`Quản lý ${node.name}`} onClick={() => actions.onManageUnit?.(node)}>
