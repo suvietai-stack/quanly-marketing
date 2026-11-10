@@ -129,7 +129,7 @@ it('execute từ chối tài khoản Cần xử lý/Được bảo vệ và hủ
       .rejects.toThrow(/Không có tài khoản nào đủ điều kiện/);
   });
   // Không dòng nào bị xóa
-  expect((await db.query('select count(*)::int c from user_roles')).rows[0].c).toBe(5);
+  expect((await db.query<{ c: number }>('select count(*)::int c from user_roles')).rows[0].c).toBe(5);
 });
 
 it('execute chỉ gỡ tài khoản Sẵn sàng và lưu bản sao khôi phục', async () => {
