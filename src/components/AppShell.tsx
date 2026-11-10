@@ -2,11 +2,12 @@ import { useBranding, BrandMark } from "@/lib/branding";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  LogOut, User as UserIcon, PanelLeftClose, PanelLeftOpen,
+  LogOut, User as UserIcon, PanelLeftClose, PanelLeftOpen, ClipboardCheck,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from '@tanstack/react-query';
 import { approvalsQuery } from '@/lib/biz/organizationQueries';
+import { approvalCenterQuery, badgeText } from '@/lib/approvals/api';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AppNavigation } from "@/components/AppNavigation";
@@ -37,6 +38,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
   const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id });
+  const approvalCenter = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id });
+  const approvalsEligible = !!approvalCenter.data?.eligible;
+  const approvalBadge = badgeText(approvalCenter.data?.todo.length ?? 0);
   const bizAccess = useAuth(s => s.bizAccess);
   const baseAccess = useAuth(s => s.baseAccess);
   const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data;
@@ -49,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const visibleGroups = visibleNavigation({ can, isSuperAdmin, isKpiAdmin, isKpiManager,
     kpiEnabled: isKpiV2Enabled(), hasAssignedApprovals: !!approvals.data?.has_assigned,
-    canApprove, pendingCount });
+    canApprove, pendingCount, approvalsEligible });
 
   const onLogout = () => { logout(); navigate({ to: "/login" }); };
 
@@ -96,7 +100,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <AppNavigation groups={visibleGroups} path={path} userId={user?.id} collapsed={mini} onNavigate={() => setOpen(false)} />
       <div className="px-2 py-2 border-t border-sidebar-border flex items-center gap-1">
-        {!mini && <><div className="flex-1 min-w-0">{UserMenu}</div><div className="hidden md:block"><NotificationBell /></div></>}
+        {!mini && <><div className="flex-1 min-w-0">{UserMenu}</div>{approvalsEligible && (
+          <Button variant="ghost" size="icon" className="hidden md:inline-flex relative shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
+            <Link to="/approvals" aria-label={`Phê duyệt${approvalBadge ? ` (${approvalBadge} chờ)` : ''}`} title="Trung tâm Phê duyệt">
+              <ClipboardCheck className="h-5 w-5" />
+              {approvalBadge && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">{approvalBadge}</span>}
+            </Link>
+          </Button>
+        )}<div className="hidden md:block"><NotificationBell /></div></>}
         <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => setCollapsed(v => !v)} title={mini ? 'Mở rộng menu' : 'Thu gọn menu'} aria-label={mini ? 'Mở rộng menu' : 'Thu gọn menu'}>{mini ? <PanelLeftOpen /> : <PanelLeftClose />}</Button>
       </div>
     </aside>
@@ -114,7 +125,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={<NotificationBell />} onMenu={() => setOpen(true)} />
+        <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={<NotificationBell />} approvals={approvalsEligible ? { count: approvalCenter.data?.todo.length ?? 0 } : undefined} onMenu={() => setOpen(true)} />
         <main className="base-app-content flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
           {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
           {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} area={search.area} accessReady={launcherAccessReady} /> : children}
