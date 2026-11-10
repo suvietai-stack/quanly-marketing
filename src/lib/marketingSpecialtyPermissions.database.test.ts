@@ -30,7 +30,10 @@ beforeAll(async () => {
   insert into app_roles values
     ('role-seo','SEO',array['web.keyword_view','task.view_mine','web.outline_approve','web.report_view']),
     ('role-social','Social',array['social.post_create','social.post_delete','social.post_view_mine']),
-    ('role-video','Video',array['video.create','video.approve','video.view_mine']);
+    ('role-video','Video',array['video.create','video.approve','video.view_mine']),
+    ('role-content-web','Content Web',array['web.content_view_mine','web.publish']),
+    ('role-local-seo','Local SEO',array['local.view_mine','local.report']),
+    ('role-designer','Designer / Chụp ảnh',array['order.take','order.delete']);
   insert into org_units values ('unit-mkt','Phòng Marketing');
   insert into org_titles values ('title-nv','Nhân viên Marketing');
   insert into org_assignments values ('a1','unit-mkt','title-nv','${u1}','primary',now(),null,'active');`);
