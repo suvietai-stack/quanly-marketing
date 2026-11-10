@@ -2,10 +2,12 @@
 
 ## Bước 1 — Role chuẩn theo chức vụ (yêu cầu hiện tại)
 - Kiểm thử quản trị bằng Super Admin hệ thống hiện có; Admin/quản lý/nhân viên dùng dữ liệu cô lập, không đăng nhập hay đổi mật khẩu nhân sự thật.
-- [ ] Dùng duy nhất app_roles gốc; đối chiếu quyền từng Role và vị trí áp dụng, không tạo Role mới
-- [ ] Cấp/thu hồi nguồn bổ nhiệm theo hiệu lực, giữ nguồn trực tiếp và Kinh doanh; chỉ bật permission đã kiểm chứng
-- [ ] Liên kết qua xem trước/xác nhận chung; giao diện chức năng/vị trí áp dụng và tùy chỉnh quyền
-- [ ] Kiểm thử vòng đời, đa nguồn, phạm vi, chống nâng quyền và nghiệm thu Preview; báo phần chưa an toàn
+- [x] Dùng duy nhất 18 app_roles gốc; 9 liên kết chức vụ, không tạo/sửa Role hay quyền trực tiếp
+- [x] Cấp/thu hồi nguồn bổ nhiệm theo hiệu lực, giữ nguồn trực tiếp và Kinh doanh; 16 permission cá nhân đã kiểm chứng có thể chọn, chưa cấp cho nhân sự thật
+- [x] Liên kết qua xem trước/xác nhận chung; giao diện chức năng/vị trí áp dụng và tùy chỉnh quyền; Super Admin hệ thống đã áp dụng liên kết và đọc lại
+- [x] 151 kiểm thử đạt; Preview desktop/mobile không lỗi JS/tràn; hash Role/quyền trực tiếp/bổ nhiệm giữ nguyên; báo cáo docs/appointment-role-step1-report.md
+- [ ] Quyền quản lý theo Khối/Phòng chưa bật: phạm vi Marketing/Task/Video/Content/Social chưa đủ hàng rào backend; không cấp rộng để thay thế
+- [ ] Nghiệm thu frontend Admin/quản lý/nhân viên bằng tài khoản kiểm thử được chỉ định; hiện chỉ kiểm thử RPC/RLS cô lập, không dùng tài khoản nhân sự thật
 - Không reset quyền cũ, không tạo bản thử, không Publish; bước 2/3 chưa thực hiện trong lượt này
 
 ## Chuẩn hóa toàn bộ cơ cấu, Role, phân quyền (yêu cầu 912 dòng)
