@@ -117,7 +117,10 @@ export function missingDefaultStructure(config: OrgConfig): boolean {
 /** Chức danh đang hoạt động gắn với một bộ phận (chức danh chung không có unit_id không thuộc ô nào). */
 export function unitTitles(config: OrgConfig, unitId: string): Title[] {
   const unit = config.units.find(u => u.id === unitId);
-  return config.titles.filter(t => t.active && (t.unit_id === unitId || (!t.unit_id && t.source === 'biz_positions' && (t.unit_kind === unit?.kind || (t.unit_kind === 'individual' && ['department','team'].includes(unit?.kind ?? ''))))));
+  // Chức danh Kinh doanh không gắn đơn vị chỉ hiển thị trong các đơn vị thuộc Khối Kinh doanh.
+  const rootName = (() => { let cur = unit; const seen = new Set<string>(); while (cur?.parent_id && !seen.has(cur.id)) { seen.add(cur.id); cur = config.units.find(x => x.id === cur!.parent_id); } return (cur?.name ?? '').toLocaleLowerCase('vi'); })();
+  const inBizBlock = rootName.includes('kinh doanh');
+  return config.titles.filter(t => t.active && (t.unit_id === unitId || (!t.unit_id && t.source === 'biz_positions' && inBizBlock && (t.unit_kind === unit?.kind || (t.unit_kind === 'individual' && ['department','team'].includes(unit?.kind ?? ''))))));
 }
 
 /** Người đang giữ một ô chức danh trong bộ phận. */
