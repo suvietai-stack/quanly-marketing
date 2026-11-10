@@ -142,8 +142,8 @@ it('execute chỉ gỡ tài khoản Sẵn sàng và lưu bản sao khôi phục'
   const remaining = await db.query('select user_id, role_id from user_roles order by user_id');
   expect(remaining.rows).toEqual([
     { user_id: CUSTOM, role_id: 'role-video' },
-    { user_id: BIZM, role_id: 'role-video' },
     { user_id: BIZU, role_id: 'role-biz' },
+    { user_id: BIZM, role_id: 'role-video' },
     { user_id: SA, role_id: 'role-super-admin' },
   ]);
   expect((await db.query<{ removed: unknown[] }>('select removed from base_perm_cleanup_runs')).rows[0].removed).toHaveLength(1);
