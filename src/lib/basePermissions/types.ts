@@ -1,6 +1,6 @@
 export type Rule = { id: string; permission: string; effect: 'ALLOW' | 'DENY'; scope: 'own' | 'native'; active: boolean; starts_at?: string; ends_at?: string; user_id?: string };
 export type Unit = { id: string; name: string; kind: 'block' | 'department' | 'team'; parent_id?: string; active: boolean };
-export type Title = { id: string; name: string; active: boolean };
+export type Title = { id: string; name: string; active: boolean; unit_id?: string };
 export type Membership = { id: string; user_id: string; unit_id: string; title_id?: string; duties?: string; active: boolean; starts_at?: string; ends_at?: string };
 export type Bundle = { id: string; name: string; active: boolean; rules: Rule[]; unit_id?: string; title_id?: string };
 export type Binding = { id: string; bundle_id: string; user_id: string; active: boolean; starts_at?: string; ends_at?: string };
