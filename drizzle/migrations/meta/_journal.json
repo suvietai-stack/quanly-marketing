@@ -2108,6 +2108,13 @@
       "when": 1794278718949,
       "tag": "0300_biz_executive_deputy_parity",
       "breakpoints": true
+    },
+    {
+      "idx": 301,
+      "version": "7",
+      "when": 1794279773909,
+      "tag": "0301_approval_center_read",
+      "breakpoints": true
     }
   ]
 }
