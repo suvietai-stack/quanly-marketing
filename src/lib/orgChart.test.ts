@@ -56,6 +56,10 @@ describe('buildBizBlock', () => {
     const dep = he.children[0];
     expect(dep.name).toBe('Kinh doanh 1');
     expect(dep.leader?.name).toBe('Chi');
+    expect(he.leaderLabel).toBe('Giám đốc Hệ');
+    expect(dep.leaderLabel).toBe('Trưởng phòng');
+    expect(dep.children[0].leaderLabel).toBe('Trưởng nhóm');
+    expect(he.leader).toBeUndefined();
     expect(dep.children[0].name).toBe('Nhóm A');
     expect(dep.children[0].people.map(p => p.name)).toEqual(['Em']);
     expect(dep.people.map(p => p.name)).toEqual(['Chi', 'Dũng']);
@@ -87,6 +91,41 @@ describe('buildBaseBlocks', () => {
     expect(dep.people[0]).toMatchObject({ name: 'An', title: 'Trưởng bộ phận', duties: 'Phụ trách Marketing' });
     expect(blocks[0].children[0].children[0].people[0].name).toBe('Bình');
     expect(countPeople(blocks[0])).toBe(2);
+  });
+  it('chức danh gắn bộ phận thành ô riêng, hiện cả khi trống và không tính trùng', () => {
+    const config = emptyConfig();
+    config.units = [
+      { id: 'b1', name: 'Khối Marketing', kind: 'block', active: true },
+      { id: 'dp1', name: 'Bộ phận Marketing', kind: 'department', parent_id: 'b1', active: true },
+    ];
+    config.titles = [
+      { id: 'tt1', name: 'Trưởng bộ phận Marketing', active: true, unit_id: 'dp1' },
+      { id: 'tt2', name: 'Nhân viên Marketing', active: true, unit_id: 'dp1' },
+    ];
+    config.memberships = [
+      { id: 'mb1', user_id: 'u1', unit_id: 'dp1', title_id: 'tt1', active: true },
+      { id: 'mb2', user_id: 'u2', unit_id: 'dp1', title_id: 'tt2', active: true },
+      { id: 'mb3', user_id: 'u2', unit_id: 'dp1', title_id: 'tt2', active: true },
+    ];
+    const dep = buildBaseBlocks(config, [{ id: 'u1', name: 'An' }, { id: 'u2', name: 'Bình' }])[0].children[0];
+    expect(dep.slots).toHaveLength(2);
+    expect(dep.slots![0]).toMatchObject({ title: 'Trưởng bộ phận Marketing', manager: true });
+    expect(dep.slots![0].holders.map(h => h.name)).toEqual(['An']);
+    expect(dep.slots![1].holders.map(h => h.name)).toEqual(['Bình', 'Bình']);
+    expect(dep.people).toHaveLength(0);
+    expect(countPeople(dep)).toBe(2);
+  });
+  it('ô chức danh trống vẫn xuất hiện và khớp tìm kiếm theo tên chức danh', () => {
+    const config = emptyConfig();
+    config.units = [
+      { id: 'b1', name: 'Khối Vận hành', kind: 'block', active: true },
+      { id: 'dp1', name: 'Bộ phận Kế toán', kind: 'department', parent_id: 'b1', active: true },
+    ];
+    config.titles = [{ id: 'tt1', name: 'Kế toán trưởng', active: true, unit_id: 'dp1' }];
+    const block = buildBaseBlocks(config, [])[0];
+    const dep = block.children[0];
+    expect(dep.slots![0].holders).toHaveLength(0);
+    expect(nodeMatches(block, 'kế toán trưởng')).toBe(true);
   });
 });
 

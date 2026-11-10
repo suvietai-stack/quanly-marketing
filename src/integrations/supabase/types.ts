@@ -9220,6 +9220,7 @@ export type Database = {
         Args: { _confirmation: string; _preview: string }
         Returns: number
       }
+      base_org_chart_read: { Args: never; Returns: Json }
       base_org_preview: {
         Args: { _config: Json; _revision: number }
         Returns: Json

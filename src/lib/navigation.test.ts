@@ -66,10 +66,10 @@ describe('Presentation-only navigation', () => {
     expect(allowedPins(['/biz/crm'], groups)).toEqual(['/biz/crm']);
     expect(searchLauncher(groups, 'CRM').map(i => i.to)).toContain('/biz/crm');
   });
-  it('Base organization administration is not granted by KPI admin or business scope', () => {
+  it('Organization chart is visible to every signed-in staff; administration stays inside the page', () => {
     expect(paths(access([], { isSuperAdmin: true }))).toContain('/organization');
-    expect(paths(access([], { isKpiAdmin: true }))).not.toContain('/organization');
-    expect(paths(access(['biz.org_manage', 'settings.role']))).not.toContain('/organization');
+    expect(paths(access([]))).toContain('/organization');
+    expect(paths(access(['biz.org_manage', 'settings.role']))).toContain('/organization');
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(3);
