@@ -48,7 +48,11 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
   return (
     <div className="flex items-start gap-1 rounded-lg px-2 py-1.5">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium break-words">{slot.title}</p>
+        <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium break-words">
+          {slot.title}
+          <Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge>
+          {slot.manager && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
+        </p>
         {holders.length > 0
           ? holders.map(p => (
             <Button key={p.id} variant="link" className="h-auto p-0 text-sm whitespace-normal" onClick={() => onOpen(p)}>{p.name}</Button>
@@ -208,7 +212,7 @@ export function OrgChart({ config, staff, biz, positions, bizUnavailable, canMan
                 onClick={() => slot.holder && openPerson(slot.holder)}
                 className={`w-full rounded-xl border px-4 py-3 text-left shadow-card ${i === 0 ? 'bg-chart-executive text-chart-executive-foreground' : 'bg-chart-deputy text-chart-deputy-foreground'} ${slot.holder ? 'cursor-pointer' : 'opacity-80'}`}
               >
-                <p className="flex items-center gap-2 font-semibold"><Crown className="h-4 w-4 shrink-0" />{slot.name}</p>
+                <p className="flex items-center gap-2 font-semibold"><Crown className="h-4 w-4 shrink-0" />{slot.name}<Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge></p>
                 <p className="mt-0.5 text-sm opacity-90">{slot.holder ? slot.holder.name : 'Chưa bổ nhiệm'}</p>
               </button>
               {i < executives.length - 1 && <div className="mx-auto h-3 w-px bg-border" />}
