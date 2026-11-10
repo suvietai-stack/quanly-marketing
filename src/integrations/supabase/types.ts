@@ -9221,6 +9221,10 @@ export type Database = {
         Returns: number
       }
       base_org_chart_read: { Args: never; Returns: Json }
+      base_org_membership_apply: {
+        Args: { _memberships: Json; _reason: string; _revision: number }
+        Returns: number
+      }
       base_org_preview: {
         Args: { _config: Json; _revision: number }
         Returns: Json
