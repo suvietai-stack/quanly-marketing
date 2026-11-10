@@ -1,0 +1,7 @@
+CREATE OR REPLACE FUNCTION public.mkt_specialty_can_read(_user uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, private AS $$ SELECT auth.uid() IS NOT NULL AND private.is_active(auth.uid()) AND (_user = auth.uid() OR private.is_super_admin(auth.uid()) OR public.account_caller_can('settings.user_view') OR public.account_caller_can('settings.role') OR public.account_caller_can('settings.permission')); $$;
+REVOKE ALL ON FUNCTION public.mkt_specialty_can_read(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.mkt_specialty_can_read(uuid) TO authenticated, service_role;
+ALTER POLICY mkt_staff_spec_read ON public.mkt_staff_specialties USING (public.mkt_specialty_can_read(user_id));
+CREATE OR REPLACE FUNCTION public.mkt_specialty_candidates(_specialty text) RETURNS TABLE(user_id uuid, name text, is_primary boolean) LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT p.id,p.full_name,m.is_primary FROM public.mkt_staff_specialties m JOIN public.profiles p ON p.id=m.user_id JOIN public.mkt_specialties s ON s.id=m.specialty_id WHERE public.mkt_specialty_can_read(m.user_id) AND s.active AND m.specialty_id=_specialty AND m.state='active' AND p.status='Đang hoạt động' ORDER BY m.is_primary DESC,p.full_name; $$;
+REVOKE ALL ON FUNCTION public.mkt_specialty_candidates(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.mkt_specialty_candidates(text) TO authenticated, service_role;

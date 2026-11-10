@@ -2213,6 +2213,13 @@
       "when": 1794298085455,
       "tag": "0315_marketing_specialties",
       "breakpoints": true
+    },
+    {
+      "idx": 316,
+      "version": "7",
+      "when": 1794299581155,
+      "tag": "0316_marketing_specialty_scoped_reads",
+      "breakpoints": true
     }
   ]
 }
