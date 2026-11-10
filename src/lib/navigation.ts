@@ -56,7 +56,7 @@ export const navigationGroups: NavGroup[] = [
 { to: "/finance/salary", label: "Tạm Ứng Lương", icon: BanknoteArrowDown },
   ] },
   { label: "Hành Chính & Nhân Sự", icon: Users, items: [
-{ to: "/organization", label: "Cơ cấu tổ chức", icon: Building2, adminOnly: true },
+{ to: "/organization", label: "Cơ cấu tổ chức", icon: Building2 },
 { to: "/leave", label: "Nghỉ phép & Đi sớm muộn", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
 { to: "/attendance", label: "Giải trình chấm công", icon: Fingerprint, anyPerm: ["att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"] },
   ] },
