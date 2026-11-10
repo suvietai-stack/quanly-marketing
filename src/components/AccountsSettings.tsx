@@ -419,8 +419,8 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
             <div className="flex items-center gap-3 p-3 rounded border bg-muted/30">
               <Checkbox checked={form.useCustom} onCheckedChange={(c) => setForm({ ...form, useCustom: !!c })} id="use-custom" />
               <label htmlFor="use-custom" className="text-sm cursor-pointer flex-1">
-                <div className="font-medium">Tùy chỉnh quyền riêng</div>
-                <div className="text-xs text-muted-foreground">Quyền riêng sẽ ghi đè quyền mặc định của role.</div>
+                <div className="font-medium">Quyền bổ sung cá nhân</div>
+                <div className="text-xs text-muted-foreground">Cộng thêm vào quyền của role, chạy song song — không thay thế hay ghi đè quyền role.</div>
               </label>
             </div>
             {form.useCustom && (

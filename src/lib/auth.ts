@@ -1472,10 +1472,11 @@ export const useAuth = create<AuthState>((set, get) => ({
 // ============ Helpers ============
 export function getUserPermissions(user: User | null | undefined, roles: Role[]): Set<PermissionKey> {
   if (!user) return new Set();
-  if (user.useCustom && user.customPermissions) return new Set(user.customPermissions);
+  // Quyền bổ sung cá nhân chạy song song: cộng thêm vào quyền Role, không thay thế.
   const role = roles.find((r) => r.id === user.roleId);
-  if (!role) return new Set();
-  return new Set(role.permissions);
+  const perms = new Set<PermissionKey>(role ? role.permissions : []);
+  if (user.useCustom && user.customPermissions) for (const p of user.customPermissions) perms.add(p);
+  return perms;
 }
 
 /** Returns true if a record is "owned" by the user — used for *.view_mine scoping. */
