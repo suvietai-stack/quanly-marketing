@@ -382,3 +382,10 @@ Nguyên tắc: một kết nối OA chung, ba cấu hình độc lập theo kind
 - [x] ZG3. Giao diện Cài đặt → Thông báo Zalo trong từng chức năng: trạng thái OA, chọn nhóm (API hoặc nhập ID), bật/tắt sự kiện, xem trước mẫu, gửi thử [TIN NHẮN KIỂM TRA], lịch sử gửi + gửi lại; mở đề nghị qua ?open=.
 - [x] ZG4. Kiểm thử: 32/32 (database queue/dedup/quyền/lương che, đơn vị mẫu tin), typecheck/build OK, 3 trang tải không lỗi.
 - [ ] ZG5. Nghiệm thu gửi nhóm thật (cần OA đã cấp quyền GMF + nhóm thật) và phiên đăng nhập; chưa Publish.
+
+## SƠ ĐỒ TỔ CHỨC TOÀN BASE & CHUẨN HÓA QUYỀN GIÁM ĐỐC — spec (2026-11-10)
+Nguyên tắc: không xây lại phân quyền, giữ hai mã chức vụ executive_director/deputy_executive_director, kế thừa dữ liệu Kinh doanh thật, không đổi quyền các cấp khác, chưa Publish.
+- [x] OC1. Migration 0300: biz_executive_holder; biz.intervene cho cả Phó Giám đốc; bước duyệt cấp Giám đốc (position step) GĐ/P.GĐ đều xử lý, một người đủ, vẫn chặn tự duyệt/chưa tới bước; thông báo gửi cả hai.
+- [x] OC2. Sơ đồ tổ chức mặc định tại /organization: Công ty → GĐĐH → P.GĐĐH → các Khối (Kinh doanh từ dữ liệu biz thật, Marketing/Vận hành từ cấu hình base), mở rộng/thu gọn, tìm kiếm, chạm nhân sự xem chức danh/nhiệm vụ/quyền.
+- [x] OC3. Kiểm thử: orgChart unit tests + executive-parity PGlite (intervene, holder, assigned, notify patch).
+- [ ] OC4. Nghiệm thu phiên đăng nhập thật (sơ đồ Mobile/Desktop, duyệt bước Giám đốc bằng tài khoản Phó Giám đốc); chưa Publish.
