@@ -1,5 +1,12 @@
 # Lộ trình hiện tại
 
+## Liên kết Role hiện có với chức vụ toàn Base
+- [ ] Rà soát Role, nguồn cấp quyền, phạm vi và đường ghi hiện tại
+- [ ] Liên kết Role gốc với chức vụ, đối chiếu và xác nhận trước khi cấp cho nhân sự cũ
+- [ ] Cấp/thu hồi theo nguồn bổ nhiệm; giữ Role trực tiếp, ngoại lệ và phạm vi nghiệp vụ
+- [ ] Giao diện thiết lập Role và quyền truy cập nhân sự, xem trước có nhật ký
+- [ ] Kiểm thử bảo toàn quyền và nghiệm thu; không Publish
+
 ## Hoàn thiện Cơ cấu tổ chức toàn Base (xong phần code)
 - [x] Backend: quyền org.* có phạm vi đơn vị, RPC áp dụng phân công nguyên tử có kiểm tra phạm vi (migration 0306); org.manage_structure/org.manage_permissions còn bản nháp
 - [x] Drawer quản lý đơn vị 5 tab: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị
