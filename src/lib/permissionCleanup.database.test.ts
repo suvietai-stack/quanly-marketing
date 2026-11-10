@@ -45,6 +45,7 @@ beforeAll(async () => {
   insert into biz_appointments values ('${BIZU}','active',null);
   insert into user_permission_overrides values ('${CUSTOM}',true,array['video.create']);`);
   await db.exec(readFileSync('drizzle/migrations/0324_permission_cleanup_preview_execute.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0325_permission_cleanup_preview_variable_shadowing.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
