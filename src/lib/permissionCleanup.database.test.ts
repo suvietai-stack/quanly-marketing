@@ -77,7 +77,9 @@ it('quyền được nguồn mới thay thế thì không tính là mất', asyn
   expect(mkt.lost).toEqual(['video.approve']);
   await db.query("select set_config('test.allow', 'video.create,video.approve', false)");
   const p2 = await preview();
-  expect(p2.accounts.find(a => a.user_id === MKT)!.status).toBe('ready');
+  // video.approve chưa được kiểm chứng: nguồn tự động không thay thế được => vẫn tính là mất, cần xem lại.
+  expect(p2.accounts.find(a => a.user_id === MKT)!.lost).toEqual(['video.approve']);
+  expect(p2.accounts.find(a => a.user_id === MKT)!.status).toBe('review');
   await db.query("select set_config('test.allow', '', false)");
 });
 
