@@ -37,3 +37,4 @@
 - Facebook discovery merges user/business Pages; encrypted sessions keep tokens out of UI, verify identity/lead access before saving — discovery is not eligibility.
 - Subdirectories may have their own AGENTS.md (e.g. src/components/biz) — read it before changing files there.
 - Read src/components/biz/AGENTS.md before biz changes; it defines business and canonical 3K task/summary/scope rules.
+- Approval Center (/approvals) is a read-only aggregation layer: single RPC approval_center_read unions todo/mine/done from biz_approvals_read, fr_steps, leave_requests, leave_request_events, attendance_explanations, orders, ot_reschedules, profiles — each branch mirrors its source decide RPC's eligibility exactly; no new approval tables, statuses, or duplicate workflow logic. Badge = todo length only; navigation/mobile button gated by the RPC's eligible flag.
