@@ -26,6 +26,7 @@ beforeAll(async () => {
  await db.exec(readFileSync('drizzle/migrations/0317_org_fingerprint_stable_profiles.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0318_appointment_role_verified_capabilities.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0319_appointment_role_dispatch_name_resolution.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0320_appointment_preview_effective_clock.sql','utf8'));
  await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
  await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
