@@ -1,5 +1,10 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## MONITORING HOTFIX — 10/11/2026
+- [ ] MF1. Verify and repair Sale Work pgcrypto resolution without changing credentials, permissions or audit rules.
+- [ ] MF2. Reproduce legacy Order status concurrency mismatch; compare only known aliases while preserving real conflict detection, workflow guards and history.
+- [ ] MF3. Run focused database regressions, verify deployed function definitions and report signed-in acceptance limitations; no Publish or live business test writes.
+
 ## PHÂN QUYỀN TOÀN BASE — 09/11/2026
 - [x] BP1. Đọc yêu cầu, rà soát nguồn quyền/frontend/schema hiện hành; chưa có cơ cấu tổ chức toàn Base, chỉ có cơ cấu Kinh doanh.
 - [x] BP2. Kế hoạch duyệt; giữ evaluator legacy và không phục hồi biz.*/k3.* qua Role cũ.
