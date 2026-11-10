@@ -69,6 +69,18 @@
 
 :root {
   --radius: 0.75rem;
+  --chart-company: oklch(0.32 0.09 258);
+  --chart-company-foreground: oklch(0.97 0.01 258);
+  --chart-executive: oklch(0.42 0.14 295);
+  --chart-executive-foreground: oklch(0.97 0.01 295);
+  --chart-deputy: oklch(0.78 0.09 295);
+  --chart-deputy-foreground: oklch(0.32 0.1 295);
+  --chart-biz: oklch(0.52 0.13 245);
+  --chart-biz-foreground: oklch(0.97 0.01 245);
+  --chart-marketing: oklch(0.52 0.15 310);
+  --chart-marketing-foreground: oklch(0.97 0.01 310);
+  --chart-ops: oklch(0.62 0.15 55);
+  --chart-ops-foreground: oklch(0.98 0.01 55);
   --background: oklch(0.978 0.006 262); /* #F6F8FC */
   --foreground: oklch(0.279 0.041 260); /* #1E293B */
   --card: oklch(1 0 0);
