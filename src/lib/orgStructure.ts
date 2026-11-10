@@ -8,7 +8,7 @@ import type { Membership, OrgConfig, Title, Unit } from '@/lib/basePermissions/t
 const uid = (n: number) => `b5e00000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
 interface DefaultUnit { n: number; name: string; kind: Unit['kind']; parent?: number }
-interface DefaultTitle { n: number; name: string; dep: number }
+interface DefaultTitle { n: number; name: string; dep: number; code: string; level: number; kind: 'manager' | 'staff'; capacity: number }
 
 export const DEFAULT_UNITS: DefaultUnit[] = [
   { n: 1, name: 'Khối Marketing', kind: 'block' },
@@ -20,39 +20,57 @@ export const DEFAULT_UNITS: DefaultUnit[] = [
   { n: 23, name: 'Bộ phận Mua hàng & Giao vận', kind: 'department', parent: 2 },
 ];
 
+/** Chức danh mặc định: mã ổn định, cấp bậc theo mô hình 5→0, quản lý một người, nhân viên không giới hạn. */
 export const DEFAULT_TITLES: DefaultTitle[] = [
-  { n: 101, name: 'Trưởng bộ phận Marketing', dep: 11 },
-  { n: 102, name: 'Nhân viên Marketing', dep: 11 },
-  { n: 103, name: 'Trưởng bộ phận Thiết kế', dep: 12 },
-  { n: 104, name: 'Nhân viên Thiết kế', dep: 12 },
-  { n: 105, name: 'Trưởng bộ phận Hành chính & Nhân sự', dep: 21 },
-  { n: 106, name: 'Nhân viên Hành chính & Nhân sự', dep: 21 },
-  { n: 107, name: 'Kế toán trưởng', dep: 22 },
-  { n: 108, name: 'Kế toán kho', dep: 22 },
-  { n: 109, name: 'Trưởng bộ phận Mua hàng & Giao vận', dep: 23 },
-  { n: 110, name: 'Nhân viên Thu mua', dep: 23 },
-  { n: 111, name: 'Nhân viên Đóng hàng', dep: 23 },
+  { n: 101, name: 'Trưởng bộ phận Marketing', dep: 11, code: 'mkt-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 102, name: 'Nhân viên Marketing', dep: 11, code: 'mkt-staff', level: 0, kind: 'staff', capacity: 0 },
+  { n: 103, name: 'Trưởng bộ phận Thiết kế', dep: 12, code: 'design-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 104, name: 'Nhân viên Thiết kế', dep: 12, code: 'design-staff', level: 0, kind: 'staff', capacity: 0 },
+  { n: 105, name: 'Trưởng bộ phận Hành chính & Nhân sự', dep: 21, code: 'hr-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 106, name: 'Nhân viên Hành chính & Nhân sự', dep: 21, code: 'hr-staff', level: 0, kind: 'staff', capacity: 0 },
+  { n: 107, name: 'Kế toán trưởng', dep: 22, code: 'acc-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 108, name: 'Kế toán kho', dep: 22, code: 'acc-stock', level: 0, kind: 'staff', capacity: 0 },
+  { n: 109, name: 'Trưởng bộ phận Mua hàng & Giao vận', dep: 23, code: 'proc-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 110, name: 'Nhân viên Thu mua', dep: 23, code: 'proc-buyer', level: 0, kind: 'staff', capacity: 0 },
+  { n: 111, name: 'Nhân viên Đóng hàng', dep: 23, code: 'proc-packer', level: 0, kind: 'staff', capacity: 0 },
 ];
 
 const norm = (s: string) => s.trim().toLocaleLowerCase('vi');
 
-/** Chức danh quản lý chỉ một người giữ tại một thời điểm; chức danh nhân viên cho nhiều người. */
+/** Dự phòng cho chức danh cũ chưa có loại vị trí — chức danh mới luôn khai báo kind rõ ràng. */
 export function isManagerTitle(name: string): boolean {
   const n = norm(name);
   return n.includes('trưởng') || n.includes('giám đốc');
 }
 
-export interface SeedResult { config: OrgConfig; addedUnits: string[]; addedTitles: string[] }
+/** Loại vị trí của chức danh: ưu tiên khai báo rõ, chỉ đoán theo tên với dữ liệu cũ chưa chuẩn hóa. */
+export function titleKind(t: Pick<Title, 'name' | 'kind'>): 'manager' | 'staff' {
+  return t.kind ?? (isManagerTitle(t.name) ? 'manager' : 'staff');
+}
+
+/** Cấp bậc hiển thị: ưu tiên khai báo; dữ liệu cũ suy ra từ loại vị trí. */
+export function titleLevel(t: Pick<Title, 'name' | 'kind' | 'level'>): number {
+  return t.level ?? (titleKind(t) === 'manager' ? 2 : 0);
+}
+
+/** Số người tối đa của ô chức danh: 1 với quản lý, 0 nghĩa là không giới hạn. */
+export function slotCapacity(t: Pick<Title, 'name' | 'kind' | 'capacity'>): number {
+  return t.capacity ?? (titleKind(t) === 'manager' ? 1 : 0);
+}
+
+export interface SeedResult { config: OrgConfig; addedUnits: string[]; addedTitles: string[]; updatedTitles: string[] }
 
 /**
  * Bổ sung đơn vị/chức danh mặc định còn thiếu vào bản nháp cấu hình.
- * Không sửa, không xóa dữ liệu hiện có; khớp theo tên + cấp (và bộ phận với chức danh) để không trùng khi chạy lại.
+ * Không sửa tên, không xóa dữ liệu hiện có; khớp theo tên + cấp (và bộ phận với chức danh) để không trùng khi chạy lại.
+ * Chức danh đã có nhưng thiếu mã/cấp bậc/loại vị trí được bổ sung thông tin chuẩn (không đổi tên, không đổi quyền).
  */
 export function ensureDefaultStructure(config: OrgConfig): SeedResult {
   const units = [...config.units];
   const titles = [...config.titles];
   const addedUnits: string[] = [];
   const addedTitles: string[] = [];
+  const updatedTitles: string[] = [];
   const unitId = new Map<number, string>();
 
   for (const d of DEFAULT_UNITS) {
@@ -69,18 +87,31 @@ export function ensureDefaultStructure(config: OrgConfig): SeedResult {
     const depId = unitId.get(t.dep);
     if (!depId) continue;
     const existing = titles.find(x => norm(x.name) === norm(t.name) && (x.unit_id ?? '') === depId);
-    if (existing) continue;
-    titles.push({ id: uid(t.n), name: t.name, active: true, unit_id: depId });
+    if (existing) {
+      if (existing.code === undefined || existing.level === undefined || existing.kind === undefined || existing.capacity === undefined) {
+        const i = titles.indexOf(existing);
+        titles[i] = {
+          ...existing,
+          code: existing.code ?? t.code,
+          level: existing.level ?? t.level,
+          kind: existing.kind ?? t.kind,
+          capacity: existing.capacity ?? t.capacity,
+        };
+        updatedTitles.push(t.name);
+      }
+      continue;
+    }
+    titles.push({ id: uid(t.n), name: t.name, active: true, unit_id: depId, code: t.code, level: t.level, kind: t.kind, capacity: t.capacity });
     addedTitles.push(t.name);
   }
 
-  return { config: { ...config, units, titles }, addedUnits, addedTitles };
+  return { config: { ...config, units, titles }, addedUnits, addedTitles, updatedTitles };
 }
 
-/** Phần cơ cấu mặc định còn thiếu — để hiện nút khởi tạo. */
+/** Phần cơ cấu mặc định còn thiếu hoặc chưa chuẩn hóa cấp bậc — để hiện nút khởi tạo. */
 export function missingDefaultStructure(config: OrgConfig): boolean {
   const r = ensureDefaultStructure(config);
-  return r.addedUnits.length > 0 || r.addedTitles.length > 0;
+  return r.addedUnits.length > 0 || r.addedTitles.length > 0 || r.updatedTitles.length > 0;
 }
 
 /** Chức danh đang hoạt động gắn với một bộ phận (chức danh chung không có unit_id không thuộc ô nào). */
@@ -100,16 +131,21 @@ export function slotHistory(config: OrgConfig, unitId: string, titleId: string):
     .sort((a, b) => Date.parse(b.starts_at ?? '') - Date.parse(a.starts_at ?? ''));
 }
 
+/** Số nhân sự đang giữ một chức danh (mọi đơn vị) — dùng để báo người bị ảnh hưởng khi chỉnh quyền mặc định. */
+export function titleHolders(config: OrgConfig, titleId: string): Membership[] {
+  return config.memberships.filter(m => m.active && m.title_id === titleId);
+}
+
 const nowIso = () => new Date().toISOString();
 
 /**
  * Gán người vào ô chức danh trong bản nháp cấu hình.
- * Ô quản lý (một người): kết thúc người đang giữ rồi gán người mới — tương đương Đổi người.
- * Ô nhân viên (nhiều người): thêm người mới, người đang giữ nguyên; đã giữ thì không thêm trùng.
+ * Ô một người (quản lý hoặc capacity = 1): kết thúc người đang giữ rồi gán người mới — tương đương Đổi người.
+ * Ô nhiều người: thêm người mới, người đang giữ nguyên; đã giữ thì không thêm trùng.
  */
 export function assignSlot(config: OrgConfig, unitId: string, titleId: string, userId: string): OrgConfig {
   const title = config.titles.find(t => t.id === titleId);
-  const single = title ? isManagerTitle(title.name) : true;
+  const single = title ? slotCapacity(title) === 1 : true;
   const now = nowIso();
   const already = config.memberships.some(m => m.active && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId);
   if (already) return config;
@@ -128,4 +164,48 @@ export function unassignSlot(config: OrgConfig, unitId: string, titleId: string,
     memberships: config.memberships.map(m =>
       m.active && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId ? { ...m, active: false, ends_at: now } : m),
   };
+}
+
+const kindLabel = (k: 'manager' | 'staff') => (k === 'manager' ? 'Quản lý' : 'Nhân viên');
+
+/**
+ * Tóm tắt thay đổi tổ chức giữa hai phiên bản cấu hình — phục vụ Nhật ký.
+ * Chỉ mô tả đơn vị/chức danh/phân công; thay đổi quyền đã có phần tác động riêng.
+ */
+export function orgConfigDiff(before: OrgConfig | undefined, after: OrgConfig | undefined, nameOf: (id: string) => string): string[] {
+  if (!before || !after) return [];
+  const out: string[] = [];
+  const unitName = (c: OrgConfig, id?: string) => c.units.find(u => u.id === id)?.name ?? '';
+  const titleName = (c: OrgConfig, id?: string) => c.titles.find(t => t.id === id)?.name ?? '';
+
+  for (const u of after.units) {
+    const b = before.units.find(x => x.id === u.id);
+    if (!b) { out.push(`Thêm đơn vị ${u.name}`); continue; }
+    if (b.name !== u.name) out.push(`Đổi tên đơn vị ${b.name} → ${u.name}`);
+    if (b.active !== u.active) out.push(`${u.active ? 'Kích hoạt' : 'Ngừng'} đơn vị ${u.name}`);
+    if ((b.parent_id ?? '') !== (u.parent_id ?? '')) out.push(`Chuyển đơn vị ${u.name} sang ${unitName(after, u.parent_id) || 'cấp gốc'}`);
+  }
+  for (const u of before.units) if (!after.units.some(x => x.id === u.id)) out.push(`Xóa đơn vị ${u.name}`);
+
+  for (const t of after.titles) {
+    const b = before.titles.find(x => x.id === t.id);
+    if (!b) { out.push(`Thêm chức danh ${t.name} (cấp ${titleLevel(t)}, ${kindLabel(titleKind(t))})`); continue; }
+    if (b.name !== t.name) out.push(`Đổi tên chức danh ${b.name} → ${t.name}`);
+    if (titleLevel(b) !== titleLevel(t)) out.push(`Đổi cấp bậc ${t.name}: ${titleLevel(b)} → ${titleLevel(t)}`);
+    if (titleKind(b) !== titleKind(t)) out.push(`Đổi loại vị trí ${t.name}: ${kindLabel(titleKind(b))} → ${kindLabel(titleKind(t))}`);
+    if ((b.unit_id ?? '') !== (t.unit_id ?? '')) out.push(`Chuyển chức danh ${t.name} sang ${unitName(after, t.unit_id) || 'chức danh chung'}`);
+    if (b.active !== t.active) out.push(`${t.active ? 'Kích hoạt' : 'Ngừng'} chức danh ${t.name}`);
+  }
+  for (const t of before.titles) if (!after.titles.some(x => x.id === t.id)) out.push(`Xóa chức danh ${t.name}`);
+
+  for (const m of after.memberships) {
+    const b = before.memberships.find(x => x.id === m.id);
+    const where = `${titleName(after, m.title_id) || 'Chưa có chức danh'} · ${unitName(after, m.unit_id)}`;
+    if (!b) { if (m.active) out.push(`Gán ${nameOf(m.user_id)} vào ${where}`); continue; }
+    if (b.active && !m.active) out.push(`Bỏ gán ${nameOf(m.user_id)} khỏi ${where}`);
+    if (!b.active && m.active) out.push(`Gán lại ${nameOf(m.user_id)} vào ${where}`);
+    if ((b.duties ?? '') !== (m.duties ?? '')) out.push(`Đổi nhiệm vụ của ${nameOf(m.user_id)} tại ${where}`);
+  }
+
+  return out;
 }

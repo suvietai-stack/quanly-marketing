@@ -1,8 +1,15 @@
-# Lộ trình: Hoàn thiện Trung tâm Phê duyệt toàn Base
+# Lộ trình hiện tại
 
-- [x] Rà soát toàn bộ luồng duyệt còn thiếu (Video, Content Web, Social, Task, Local Map, Tối ưu Web, Sao, 3K, Hỏi giá)
-- [x] Mở rộng `approval_center_read`: 7 nguồn mới + cô lập lỗi từng nguồn (migration 0304_approval_center_all_modules)
-- [x] Deep link mở đúng hồ sơ: /videos?open=, /tasks?open=, /social/$id?post=, /websites/$id?open_opt= (web-contents đã có)
-- [x] Nhóm bộ lọc: thêm Marketing/Công việc/Sao Sứ Việt, nhóm lạ tự hiện tên gốc
-- [x] Kiểm thử: 35/35 test đạt, build OK, RPC chạy thật không lỗi nhánh
-- [ ] Nghiệm thu sau đăng nhập trên Preview (badge, mở hồ sơ từng loại, mobile) — chờ người dùng đăng nhập
+## Trung tâm Phê duyệt toàn Base (xong phần code)
+- [x] Mở rộng `approval_center_read` 15 nguồn, deep link, nhóm lọc, cô lập lỗi
+- [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng đăng nhập
+
+## Chuẩn hóa Cơ cấu tổ chức, Chức vụ, Cấp bậc toàn Base (xong phần code)
+- [x] Chức danh chuẩn: mã ổn định, cấp bậc 0–5, loại Quản lý/Nhân viên, số người tối đa; seed 11 chức danh có cấp bậc, backfill chức danh cũ không đổi tên/quyền
+- [x] Không đoán quản lý theo tên với dữ liệu mới (kind rõ ràng; name-inference chỉ fallback dữ liệu cũ)
+- [x] Sơ đồ: nhãn Cấp N + Quản lý, ô quản lý/cấp cao xếp trước, "Chưa phân công" giữ nguyên
+- [x] Cài đặt 3 nhóm: Đơn vị tổ chức / Chức vụ & Cấp bậc (sửa đơn vị, cấp, loại, số người, mô tả + Chỉnh quyền mặc định kèm số người ảnh hưởng) / Bộ quyền bổ sung
+- [x] Nhật ký hiển thị thay đổi tổ chức (gán/bỏ gán/đổi cấp/đổi tên) + thay đổi quyền (migration 0305 trả before/after config)
+- [x] Giữ nguyên: Role cũ, backend Kinh doanh, fence 6 quyền kích hoạt, quy trình Xem trước → ÁP DỤNG PHÂN QUYỀN
+- [x] 17/17 test orgStructure, 25/25 basePermissions, typecheck/build OK, không lỗi JS
+- [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng (không mint được session: tài khoản chưa có trong auth)

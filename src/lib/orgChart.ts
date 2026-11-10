@@ -1,11 +1,11 @@
 import type { OrgConfig, Unit } from '@/lib/basePermissions/types';
 import type { OrgData } from '@/lib/biz/organization';
 import { appointmentCurrent, type PositionsData } from '@/lib/biz/positions';
-import { isManagerTitle, unitTitles } from '@/lib/orgStructure';
+import { slotCapacity, titleKind, titleLevel, unitTitles } from '@/lib/orgStructure';
 
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
-export interface ChartSlot { id: string; title: string; manager: boolean; holders: ChartPerson[] }
+export interface ChartSlot { id: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
 export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
@@ -76,13 +76,17 @@ export function buildBizBlock(org: OrgData, positions: PositionsData | undefined
 export function buildBaseBlocks(config: OrgConfig, staff: { id: string; name: string }[]): ChartNode[] {
   const nameOf: NameOf = id => staff.find(s => s.id === id)?.name ?? 'Nhân sự';
   const personOf = (m: { user_id: string; title_id?: string; duties?: string }): ChartPerson => ({ id: m.user_id, name: nameOf(m.user_id), title: config.titles.find(t => t.id === m.title_id)?.name, duties: m.duties });
-  /** Ô chức danh của bộ phận: mọi chức danh gắn bộ phận đều hiện, kể cả khi trống. */
-  const slotsOf = (unitId: string): ChartSlot[] => unitTitles(config, unitId).map(t => ({
-    id: t.id,
-    title: t.name,
-    manager: isManagerTitle(t.name),
-    holders: config.memberships.filter(m => m.active && m.unit_id === unitId && m.title_id === t.id).map(personOf),
-  }));
+  /** Ô chức danh của bộ phận: mọi chức danh gắn bộ phận đều hiện, kể cả khi trống; quản lý/cấp cao đứng trước. */
+  const slotsOf = (unitId: string): ChartSlot[] => unitTitles(config, unitId)
+    .map(t => ({
+      id: t.id,
+      title: t.name,
+      manager: titleKind(t) === 'manager',
+      level: titleLevel(t),
+      capacity: slotCapacity(t),
+      holders: config.memberships.filter(m => m.active && m.unit_id === unitId && m.title_id === t.id).map(personOf),
+    }))
+    .sort((a, b) => b.level - a.level || Number(b.manager) - Number(a.manager) || a.title.localeCompare(b.title, 'vi'));
   /** Nhân sự của đơn vị chưa nằm trong ô chức danh nào (không chức danh hoặc chức danh chung). */
   const peopleOf = (unitId: string): ChartPerson[] => {
     const slotted = new Set(unitTitles(config, unitId).map(t => t.id));
