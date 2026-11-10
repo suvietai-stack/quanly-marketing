@@ -112,3 +112,16 @@
 - [x] UI 3 trạng thái (Sẵn sàng/Cần xử lý/Được bảo vệ), lý do tiếng Việt, checkbox chỉ cho Sẵn sàng
 - [x] 8/8 test DB mới + hồi quy 131/131, typecheck/build đạt; kiểm kê thật: 15 bảo vệ, 8 cần xử lý, 0 sẵn sàng
 - [ ] Admin bổ nhiệm chức vụ rồi tự xác nhận chuyển đổi — chờ người dùng; KHÔNG tự thực thi, KHÔNG Publish
+
+## Chuẩn hóa cơ cấu & phân quyền theo hướng đơn giản (đang triển khai)
+- [x] 0330: Role nền "Nhân sự mới" (6 quyền cơ bản), duyệt tài khoản không chọn Role thì mặc định gán Role nền
+- [x] 0330: quyền bổ sung cá nhân chạy song song (cộng thêm, không ghi đè Role) — backend + frontend + công cụ chuyển đổi đồng bộ
+- [x] Sơ đồ tổ chức dạng box trực quan: thẻ đơn vị, đường nối cha-con, thu gọn nhánh, "Chưa bổ nhiệm", thao tác Bổ nhiệm/Miễn nhiệm/Lịch sử ngay trên sơ đồ
+- [x] Chức danh Kinh doanh chung chỉ hiện trong đơn vị thuộc Khối Kinh doanh; các Khối xếp dưới Công ty (hiển thị, không ghi dữ liệu)
+- [x] Test: 4 test Role nền/quyền bổ sung + 2 test sơ đồ mới; hồi quy 1400 đạt (2 lỗi date-dependent đã biết ở biz/my-work)
+- [ ] Gom module Cơ cấu tổ chức còn 3 nhóm chính (Sơ đồ / Chức vụ & Nhiệm vụ / Role & Phân quyền)
+- [ ] Ma trận quyền checkbox chỉnh trực tiếp (hiện chỉ đọc)
+- [ ] Tự cấp Role mặc định theo chức vụ khi bổ nhiệm (hiện mới cấp quyền cá nhân đã kiểm chứng qua kênh appointment)
+- [ ] Tự gán nhân sự hiện tại vào vị trí phù hợp (có xem trước, không gán bừa vị trí quản lý)
+- [ ] Role tối thiểu cho Nhân viên Đóng hàng
+- [ ] Không Publish
