@@ -17,6 +17,8 @@ beforeAll(async () => {
  for (const id of [sale,lead,head,director,outsider]) await db.query("insert into user_roles values($1,'staff')",[id]);
  await db.exec("INSERT INTO biz_positions(code,name,level,unit_kind,sort_order) VALUES ('director','Giám Đốc',3,'system',0),('department_head','Trưởng Phòng',2,'department',1),('team_lead','Trưởng Nhóm',1,'team',2),('employee','Nhân viên Kinh doanh',0,'individual',3)");
  await actor(admin); sys = await org('system',{name:'Hệ thử tách biệt'}); dep = await org('department',{name:'Phòng thử',system_id:sys}); team = await org('team',{name:'Nhóm thử',department_id:dep}); await org('member',{user_id:sale,department_id:dep,team_id:team});
+ // Lùi mốc hiệu lực về đầu năm để các kỳ 2026 trong kiểm thử luôn thuộc phòng, bất kể ngày chạy.
+ await db.exec("update biz_department_members set started_at='2026-01-01T00:00:00Z' where user_id='"+sale+"';update biz_team_members set started_at='2026-01-01T00:00:00Z' where user_id='"+sale+"';update biz_department_system_history set started_at='2026-01-01T00:00:00Z' where department_id='"+dep+"';");
   for (let n=118;n<=148;n++) { const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_')); if(file) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8')); }
  await db.exec(readFileSync('drizzle/migrations/0300_biz_executive_deputy_parity.sql','utf8'));
 }, 60000);
