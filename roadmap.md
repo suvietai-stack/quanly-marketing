@@ -1,7 +1,8 @@
 # Lộ trình hiện tại
 
 ## Liên kết Role hiện có với chức vụ toàn Base
-- [ ] Rà soát Role, nguồn cấp quyền, phạm vi và đường ghi hiện tại
+- [x] Rà soát Role, nguồn cấp quyền, phạm vi và đường ghi hiện tại (18 Role, không có phân công Base trong dữ liệu đọc)
+- [ ] Hoàn thiện kiểm tra phạm vi từng phân hệ trước khi bật đồng bộ Role (theo lựa chọn người dùng)
 - [ ] Liên kết Role gốc với chức vụ, đối chiếu và xác nhận trước khi cấp cho nhân sự cũ
 - [ ] Cấp/thu hồi theo nguồn bổ nhiệm; giữ Role trực tiếp, ngoại lệ và phạm vi nghiệp vụ
 - [ ] Giao diện thiết lập Role và quyền truy cập nhân sự, xem trước có nhật ký
