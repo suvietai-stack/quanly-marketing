@@ -1,8 +1,8 @@
-# Trung tâm Phê duyệt toàn Base
+# Lộ trình: Hoàn thiện Trung tâm Phê duyệt toàn Base
 
-- [x] Migration 0301+0302: RPC `approval_center_read()` tổng hợp Chờ tôi / Đang trình / Đã xử lý từ 8 nguồn (biz, fr, leave, hủy đơn, chấm công, thiết kế, đổi lịch OT, duyệt tài khoản) — chỉ đọc, không bảng mới. Đã xác minh trên DB thật (Super Admin: eligible/done=12; Trung Hiếu: todo=2 đơn nghỉ phép đúng deep link).
-- [x] Client lib `src/lib/approvals/api.ts`: query 30s, kiểu dữ liệu, nhãn, helpers sắp xếp/lọc (pure, testable).
-- [x] Trang `/approvals`: 3 tab, tìm kiếm, chip lọc nguồn, card mobile + bảng desktop, nút Xem & xử lý deep link.
-- [x] Điều hướng: mục Phê duyệt (Điều hành), icon + badge cạnh chuông thông báo desktop, nút Phê duyệt giữa thanh dưới mobile theo quyền.
-- [x] Tests: navigation.test.ts cập nhật + api.test.ts mới; 26/26 đạt; typecheck + build OK; /approvals signed-out chuyển /login không lỗi JS.
-- [ ] Nghiệm thu UI sau đăng nhập (không mint được phiên tự động — cần user đăng nhập preview): kiểm tra badge, 3 tab, nút mobile, deep link. Chưa Publish.
+- [x] Rà soát toàn bộ luồng duyệt còn thiếu (Video, Content Web, Social, Task, Local Map, Tối ưu Web, Sao, 3K, Hỏi giá)
+- [x] Mở rộng `approval_center_read`: 7 nguồn mới + cô lập lỗi từng nguồn (migration 0304_approval_center_all_modules)
+- [x] Deep link mở đúng hồ sơ: /videos?open=, /tasks?open=, /social/$id?post=, /websites/$id?open_opt= (web-contents đã có)
+- [x] Nhóm bộ lọc: thêm Marketing/Công việc/Sao Sứ Việt, nhóm lạ tự hiện tên gốc
+- [x] Kiểm thử: 35/35 test đạt, build OK, RPC chạy thật không lỗi nhánh
+- [ ] Nghiệm thu sau đăng nhập trên Preview (badge, mở hồ sơ từng loại, mobile) — chờ người dùng đăng nhập

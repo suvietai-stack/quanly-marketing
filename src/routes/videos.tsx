@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, fmtDate, type Video, type VideoStatus, VIDEO_STATUSES } from "@/lib/store";
+import { readOpenParam, syncOpenParam } from "@/lib/deep-link";
 import { useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
@@ -39,7 +40,10 @@ function VideosPage() {
   const [fOwner, setFOwner] = useState("all");
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Video | null>(null);
-  const [opened, setOpened] = useState<Video | null>(null);
+  // Deep link ?open=<id> (Trung tâm Phê duyệt): giữ id trên URL, lấy bản ghi mới nhất từ store.
+  const [openId, setOpenId] = useState<string | null>(() => readOpenParam('open'));
+  const setOpened = (v: Video | null) => { setOpenId(v?.id ?? null); syncOpenParam('open', v?.id ?? null); };
+  const opened = openId ? s.videos.find((v) => v.id === openId) ?? null : null;
 
   const scopedVideos = useMemo(
     () => scopeList(s.videos, "video.view_all", "video.view_mine", (v) =>

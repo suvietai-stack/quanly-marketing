@@ -1,7 +1,10 @@
 import { queryOptions } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type ApprovalSource = 'biz' | 'finance' | 'leave' | 'leave_cancel' | 'attendance' | 'design' | 'order_tracking' | 'account';
+export type ApprovalSource =
+  | 'biz' | 'finance' | 'leave' | 'leave_cancel' | 'attendance' | 'design' | 'order_tracking' | 'account'
+  | 'video' | 'web_content' | 'social_post' | 'task' | 'local_map'
+  | (string & {});
 
 export interface ApprovalItem {
   source: ApprovalSource;
@@ -26,6 +29,8 @@ export interface ApprovalCenterData {
   todo: ApprovalItem[];
   mine: ApprovalItem[];
   done: ApprovalItem[];
+  /** Nguồn tải lỗi (được cô lập phía máy chủ) — không coi như đã kiểm tra đầy đủ. */
+  errors?: { source: string; message: string }[];
 }
 
 export const approvalCenterQuery = (uid: string) => queryOptions({
@@ -39,21 +44,29 @@ export const approvalCenterQuery = (uid: string) => queryOptions({
   },
 });
 
-export type ApprovalGroup = 'finance' | 'hr' | 'biz' | 'design' | 'order';
+export type ApprovalGroup = 'finance' | 'hr' | 'biz' | 'design' | 'order' | 'marketing' | 'task' | (string & {});
 
-export const GROUP_LABELS: Record<ApprovalGroup, string> = {
+export const GROUP_LABELS: Record<string, string> = {
   finance: 'Tài chính',
   hr: 'Nhân sự',
   biz: 'Kinh doanh',
   design: 'Thiết kế',
   order: 'Đơn hàng',
+  marketing: 'Marketing',
+  task: 'Công việc',
+  sao: 'Sao Sứ Việt',
 };
+
+export const groupLabel = (group: string) => GROUP_LABELS[group] ?? group;
 
 export const sourceGroup = (source: ApprovalSource): ApprovalGroup =>
   source === 'finance' ? 'finance'
     : source === 'leave' || source === 'leave_cancel' || source === 'attendance' || source === 'account' ? 'hr'
-      : source === 'biz' ? 'biz'
-        : source === 'design' ? 'design' : 'order';
+      : source === 'biz' || source === 'k3' ? 'biz'
+        : source === 'design' ? 'design'
+          : source === 'video' || source === 'web_content' || source === 'social_post' || source === 'local_map' ? 'marketing'
+            : source === 'task' ? 'task'
+              : source === 'sao' ? 'sao' : 'order';
 
 const time = (v?: string) => {
   if (!v) return undefined;

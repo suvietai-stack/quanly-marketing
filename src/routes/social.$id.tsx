@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PostFormDialog, PostDetailDialog } from "@/components/SocialPostDetail";
+import { readOpenParam, syncOpenParam } from "@/lib/deep-link";
 
 export const Route = createFileRoute("/social/$id")({
   head: () => ({ meta: [{"title": "Workspace kênh social — Base Sứ Việt"}, {"name": "description", "content": "Workspace kênh social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Workspace kênh social — Base Sứ Việt"}, {"property": "og:description", "content": "Workspace kênh social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -32,7 +33,10 @@ function ChannelWorkspace() {
   const c = s.socials.find((x) => x.id === id);
   const [adding, setAdding] = useState(false);
   const [editPost, setEditPost] = useState<SocialPost | null>(null);
-  const [openPost, setOpenPost] = useState<SocialPost | null>(null);
+  // Deep link ?post=<id> (Trung tâm Phê duyệt): giữ id trên URL, lấy bản ghi mới nhất từ store.
+  const [openPostId, setOpenPostId] = useState<string | null>(() => readOpenParam('post'));
+  const setOpenPost = (p: SocialPost | null) => { setOpenPostId(p?.id ?? null); syncOpenParam('post', p?.id ?? null); };
+  const openPost = openPostId ? s.socialPosts.find((x) => x.id === openPostId) ?? null : null;
 
   if (!c) {
     return (
