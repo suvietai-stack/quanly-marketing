@@ -15,6 +15,7 @@ import {
 import { DialogFooter } from "@/components/ui/dialog";
 import { ExternalLink, Plus } from "lucide-react";
 import { TopicDialog } from "@/components/KeywordResearchTab";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { useCurrentUser } from "@/lib/auth";
 
 export function ContentForm({
@@ -133,7 +134,7 @@ export function ContentForm({
 
         <div className="sm:col-span-2 mt-1 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Phân công</div>
         <div><Label>Người giao việc</Label>{ps(c.assigner, (v) => set({ assigner: v }))}</div>
-        <div><Label>Người viết</Label>{ps(c.writer, (v) => set({ writer: v }))}</div>
+        <div><Label>Người viết</Label><SpecialtyStaffPicker specialty={isOptimize ? "seo" : "content_web"} value={c.writer} onChange={(v) => set({ writer: v })} people={people} /></div>
         <div><Label>Người duyệt outline</Label>{ps(c.outlineReviewer, (v) => set({ outlineReviewer: v }))}</div>
         <div><Label>Người duyệt bài</Label>{ps(c.draftReviewer, (v) => set({ draftReviewer: v }))}</div>
         <div><Label>Người đăng web</Label>{ps(c.publisher, (v) => set({ publisher: v }))}</div>

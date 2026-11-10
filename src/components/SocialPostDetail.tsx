@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { toast } from "sonner";
 import { Send, Check, X, RotateCcw, CheckCheck, Play, Undo2, AlertTriangle, History as HistoryIcon } from "lucide-react";
 
@@ -47,10 +48,7 @@ function InfoFields({ value, onChange }: { value: SocialPost; onChange: (p: Soci
           <SelectContent><SelectItem value="_">—</SelectItem>{plans.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
         </Select></div>
       <div><Label>Người viết</Label>
-        <Select value={value.writer || "_"} onValueChange={(v) => set({ writer: v === "_" ? undefined : v })}>
-          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-          <SelectContent><SelectItem value="_">—</SelectItem>{people.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
-        </Select></div>
+        <SpecialtyStaffPicker specialty="social" value={value.writer} onChange={(v) => set({ writer: v })} people={people} /></div>
       <div><Label>Người duyệt</Label>
         <Select value={value.reviewer || "_"} onValueChange={(v) => set({ reviewer: v === "_" ? undefined : v })}>
           <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -62,10 +60,7 @@ function InfoFields({ value, onChange }: { value: SocialPost; onChange: (p: Soci
           <SelectContent><SelectItem value="_">—</SelectItem>{people.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
         </Select></div>
       <div><Label>Thiết kế / Video</Label>
-        <Select value={value.designer || "_"} onValueChange={(v) => set({ designer: v === "_" ? undefined : v })}>
-          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-          <SelectContent><SelectItem value="_">—</SelectItem>{people.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
-        </Select></div>
+        <SpecialtyStaffPicker specialty="design" value={value.designer} onChange={(v) => set({ designer: v })} people={people} /></div>
       <div><Label>Ngày dự kiến đăng</Label>
         <Input type="date" value={value.scheduledDate || ""} onChange={(e) => set({ scheduledDate: e.target.value })} /></div>
       <div><Label>Ngày đăng thực tế</Label>

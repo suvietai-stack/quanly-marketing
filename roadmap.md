@@ -92,3 +92,10 @@
 - [x] Giữ nguyên backend quyền: biz_can/biz_scope_ok/biz_appointments không đổi; không cấp quyền rộng hơn; bảng biz_* vẫn là kho vận hành
 - [x] 21/21 test orgChart+orgStructure, 56/56 hồi quy biz organization/positions + basePermissions, typecheck/build OK
 - [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng
+
+## Giai đoạn 2: Nhiệm vụ Marketing, Role tự động, giao việc theo chuyên môn
+- [ ] Migration: nguồn quyền marketing_specialty (chỉ quyền cá nhân đã kiểm chứng), candidates có đơn vị/chức vụ, preview quyền tự nhận
+- [ ] Component chọn nhân sự dùng chung theo chuyên môn + tích hợp ContentForm/VideoDetail/SocialPostDetail/DesignOrderForm
+- [ ] Mục "Quyền tự nhận theo nhiệm vụ" trong màn hình chuyên môn
+- [ ] Kiểm thử 20 tình huống (DB + unit + UI preview)
+- [ ] Báo cáo bàn giao; KHÔNG reset quyền cũ, KHÔNG Publish

@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan } from '@/lib/orders/design';
 
@@ -263,15 +264,7 @@ export function DesignOrderFormFromContent({
                   Người phụ trách thiết kế {canAssign ? "" : "(cần quyền order.assign)"}
                 </Label>
                 {canAssign ? (
-                  <Select value={assignee || "__none__"} onValueChange={(v) => setAssignee(v === "__none__" ? "" : v)}>
-                    <SelectTrigger><SelectValue placeholder="Chưa phân công" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">— Chưa phân công —</SelectItem>
-                      {activePeople.map((p) => (
-                        <SelectItem key={p.id} value={p.name}>{p.name}{p.role ? ` · ${p.role}` : ""}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SpecialtyStaffPicker specialty="design" value={assignee || undefined} onChange={(v) => setAssignee(v ?? "")} people={activePeople} placeholder="— Chưa phân công —" />
                 ) : (
                   <Input value="Sẽ ở trạng thái Chờ phân công" disabled />
                 )}

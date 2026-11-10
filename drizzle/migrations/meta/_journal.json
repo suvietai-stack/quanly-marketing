@@ -2262,6 +2262,13 @@
       "when": 1794304652643,
       "tag": "0322_appointment_permission_read_single_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 323,
+      "version": "7",
+      "when": 1794305835336,
+      "tag": "0323_marketing_specialty_verified_permissions",
+      "breakpoints": true
     }
   ]
 }

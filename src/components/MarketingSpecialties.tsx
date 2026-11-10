@@ -6,7 +6,7 @@ import { useCurrentUser } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { applySpecialtyDiff, type StaffSpecialty } from '@/lib/marketingSpecialties';
+import { applySpecialtyDiff, type StaffSpecialty, type SpecialtyPermissionPreview } from '@/lib/marketingSpecialties';
 
 type Spec = { id: string; name: string; active: boolean; sort: number };
 
@@ -25,6 +25,32 @@ function useSpecialties() {
 async function save(users: string[], add: string[], remove: string[], primary?: string | null) {
   const { error } = await supabase.rpc('mkt_specialty_save', { _users: users, _add: add, _remove: remove, _primary: primary ?? undefined });
   if (error) throw error;
+}
+
+function usePermissionPreview() {
+  return useQuery({ queryKey: ['mkt-permission-preview'], queryFn: async () => {
+    const { data, error } = await supabase.rpc('mkt_specialty_permission_preview');
+    if (error) throw error;
+    return (Array.isArray(data) ? data : []) as SpecialtyPermissionPreview[];
+  }, staleTime: 60_000 });
+}
+
+/** Read-only: which permissions each specialty auto-grants (verified) and which stay inactive. */
+function SpecialtyPermissionNotes({ selected }: { selected: Set<string> }) {
+  const q = usePermissionPreview();
+  if (q.isPending || q.error || !q.data) return null;
+  const rows = q.data.filter(p => selected.has(p.id));
+  if (!rows.length) return null;
+  return <div className="space-y-1 rounded-lg border bg-muted/40 p-3 text-xs">
+    <p className="font-medium">Quyền tự nhận theo nhiệm vụ</p>
+    {rows.map(p => (
+      <p key={p.id} className="text-muted-foreground">
+        <span className="text-foreground font-medium">{p.name}</span>
+        {p.role_name ? <> (Role {p.role_name})</> : <> (chưa liên kết Role)</>}: tự cấp {p.granted.length} chức năng đã kiểm chứng
+        {p.blocked.length > 0 && <>; <span className="text-amber-600 dark:text-amber-400">{p.blocked.length} quyền chưa kích hoạt</span> (chưa kiểm chứng phạm vi)</>}
+      </p>
+    ))}
+  </div>;
 }
 
 export function StaffSpecialties({ userId }: { userId: string }) {
@@ -55,6 +81,7 @@ export function StaffSpecialties({ userId }: { userId: string }) {
         {o && <Badge variant="outline" className="text-[10px]">{o.state === 'removed' ? 'Đã bỏ' : o.origin === 'auto' ? 'Tự nhận diện từ Role' : 'Admin chỉnh'}</Badge>}
         {sel.has(s.id) && isSuperAdmin && <Button size="sm" variant={prim === s.id ? 'secondary' : 'ghost'} onClick={() => setPrimary(prim === s.id ? '' : s.id)}>{prim === s.id ? 'Chuyên môn chính' : 'Đặt chính'}</Button>}
       </div>); })}
+    <SpecialtyPermissionNotes selected={sel} />
     {isSuperAdmin ? <Button disabled={busy || (!draft && primary === null)} onClick={onSave}>Lưu chuyên môn</Button> : <p className="text-xs text-muted-foreground">Chỉ Super Admin được sửa chuyên môn.</p>}
   </div>;
 }

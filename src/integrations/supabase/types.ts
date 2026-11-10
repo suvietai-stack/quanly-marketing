@@ -10906,9 +10906,12 @@ export type Database = {
         Returns: {
           is_primary: boolean
           name: string
+          title_name: string
+          unit_name: string
           user_id: string
         }[]
       }
+      mkt_specialty_permission_preview: { Args: never; Returns: Json }
       mkt_specialty_save: {
         Args: {
           _add: string[]
