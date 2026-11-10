@@ -7,7 +7,7 @@ export const navigationGroups: NavGroup[] = [
   { label: "Điều hành", icon: LayoutDashboard, items: [
 { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true, perm: "overview.view" },
       { to: "/tasks", label: "Task To-do List", icon: ListChecks, perm: "task.view" },
-{ to: "", label: "Trung tâm phê duyệt", icon: ClipboardCheck, comingSoon: true },
+{ to: "/approvals", label: "Phê duyệt", icon: ClipboardCheck },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
     { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
@@ -70,11 +70,12 @@ export const navigationGroups: NavGroup[] = [
 { to: "/settings", label: "Cài Đặt", icon: Settings, perm: "settings.view" },
   ] },
 ];
-export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number };
+export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
 export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   const { can, isSuperAdmin, isKpiAdmin } = access;
   return navigationGroups.map(group => {
     const items = group.items.filter(it => !it.comingSoon &&
+      (it.to !== '/approvals' || !!access.approvalsEligible) &&
       (!it.to.startsWith('/design/') || !['/design/photo','/design/marketing','/design/mockups'].includes(it.to) ||
         (!['photo','marketing_design','order_mockup'].some(f=>can(`order.${f}.view`)) || can(`order.${it.to==='/design/photo'?'photo':it.to==='/design/marketing'?'marketing_design':'order_mockup'}.view`))) &&
       (!it.perm || can(it.perm)) &&
