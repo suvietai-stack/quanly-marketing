@@ -1,4 +1,5 @@
 # Architecture rules
+- SW crypto uses extensions; Order locks equate known status aliases only, preserving guards.
 - Signal reads use invoker pages, history-free counts, statement permission initplans and four ranks before pagination; bounded cancellation and independent errors prevent retry storms; legacy sorts/RLS/history remain intact.
 - Mobile Launcher filters displayed pins by live navigation but reconciles/persists them only after user-matched business access and successful approval reads; unresolved/error reads cannot delete preferences — prevents transient permission gaps from becoming permanent pin loss.
 - Signal enrichment uses RPC-only writes and stable-ID shared/personal labels; assessment saves use the field-limited signal_assessment_save RPC, never follow-up or progression fields. Label reads/links enforce owner plus signal RLS, and private audit payloads never enter shared history — preserves concurrent schedules, scope and independent progression workflows.
