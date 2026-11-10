@@ -1,5 +1,14 @@
 # Lộ trình hiện tại
 
+## Hoàn thiện Cơ cấu tổ chức toàn Base (đang làm)
+- [ ] Backend: quyền org.* có phạm vi đơn vị, RPC áp dụng phân công nguyên tử có kiểm tra phạm vi (migration 0306)
+- [ ] Drawer quản lý đơn vị 5 tab: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị
+- [ ] Gán nhiều nhân sự bằng checkbox (tìm kiếm, lọc chưa phân công/đơn vị khác, chọn tất cả, báo lỗi từng người)
+- [ ] Điều chuyển + kiêm nhiệm toàn Base (kết thúc phân công cũ có xác nhận khi đụng vị trí quản lý)
+- [ ] Xem trước dễ đọc (không JSON thô); chỉ bắt nhập ÁP DỤNG PHÂN QUYỀN khi thật sự sửa quyền
+- [ ] Lọc chức danh theo đơn vị ở tab Nhân sự
+- [ ] Test các tình huống bắt buộc + typecheck/build
+
 ## Trung tâm Phê duyệt toàn Base (xong phần code)
 - [x] Mở rộng `approval_center_read` 15 nguồn, deep link, nhóm lọc, cô lập lỗi
 - [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng đăng nhập
