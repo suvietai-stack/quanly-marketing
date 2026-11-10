@@ -56,6 +56,10 @@ describe('buildBizBlock', () => {
     const dep = he.children[0];
     expect(dep.name).toBe('Kinh doanh 1');
     expect(dep.leader?.name).toBe('Chi');
+    expect(he.leaderLabel).toBe('Giám đốc Hệ');
+    expect(dep.leaderLabel).toBe('Trưởng phòng');
+    expect(dep.children[0].leaderLabel).toBe('Trưởng nhóm');
+    expect(he.leader).toBeUndefined();
     expect(dep.children[0].name).toBe('Nhóm A');
     expect(dep.children[0].people.map(p => p.name)).toEqual(['Em']);
     expect(dep.people.map(p => p.name)).toEqual(['Chi', 'Dũng']);
