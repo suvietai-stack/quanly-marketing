@@ -58,7 +58,7 @@ describe('buildBizBlock', () => {
     expect(dep.leader?.name).toBe('Chi');
     expect(dep.children[0].name).toBe('Nhóm A');
     expect(dep.children[0].people.map(p => p.name)).toEqual(['Em']);
-    expect(dep.people.map(p => p.name)).toEqual(['Dũng']);
+    expect(dep.people.map(p => p.name)).toEqual(['Chi', 'Dũng']);
   });
   it('không tính trùng nhân sự trong tổng nhánh', () => {
     const block = buildBizBlock(bizOrg, positions, nameOf);
