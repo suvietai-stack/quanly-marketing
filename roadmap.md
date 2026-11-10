@@ -1,5 +1,13 @@
 # Lộ trình hiện tại
 
+## Tổng dọn dẹp toàn Base — yêu cầu mới
+- [ ] Gom Cài đặt thành Đơn vị / Chức vụ & Chức năng / Role & Phân quyền; công cụ kỹ thuật vào Nâng cao
+- [ ] Mở khu vực Role theo settings.role/settings.permission độc lập quyền sửa cơ cấu; nhóm Role gốc không đổi ID/quyền
+- [ ] Chặn ngay thao tác quyền bổ sung chưa có đường lưu; báo rõ giới hạn Role tự động
+- [ ] Giới hạn đọc chuyên môn: người quản lý có quyền hoặc chính nhân sự; kiểm tra API và hồi quy
+- [ ] Nối chuyên môn với workflow; hoàn thiện cấp/thu hồi đa Role theo nguồn và quyền bổ sung giao dịch chung
+- [ ] Kiểm chứng sau đăng nhập, đối chiếu dữ liệu và bàn giao báo cáo; chưa Publish
+
 ## Chuyên môn Marketing & Role tập trung
 - [x] Danh mục 7 chuyên môn, nhiều-nhiều, nguồn/thời điểm, lịch sử; đồng bộ idempotent từ Role (không ghi đè chỉnh tay); 4 nhân sự được điền sẵn
 - [x] Checkbox theo nhân sự + chuyên môn chính; chỉnh hàng loạt có xem trước; tab Role & Phân quyền chuyển về Cơ cấu tổ chức, gỡ khỏi Tài khoản
