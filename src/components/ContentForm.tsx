@@ -15,6 +15,7 @@ import {
 import { DialogFooter } from "@/components/ui/dialog";
 import { ExternalLink, Plus } from "lucide-react";
 import { TopicDialog } from "@/components/KeywordResearchTab";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { useCurrentUser } from "@/lib/auth";
 
 export function ContentForm({
