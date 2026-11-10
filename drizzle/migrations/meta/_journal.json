@@ -2276,6 +2276,13 @@
       "when": 1794321299579,
       "tag": "0324_permission_cleanup_preview_execute",
       "breakpoints": true
+    },
+    {
+      "idx": 325,
+      "version": "7",
+      "when": 1794321499563,
+      "tag": "0325_permission_cleanup_preview_variable_shadowing",
+      "breakpoints": true
     }
   ]
 }
