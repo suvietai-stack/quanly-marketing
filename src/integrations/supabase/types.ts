@@ -10894,6 +10894,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      mkt_specialty_can_read: { Args: { _user: string }; Returns: boolean }
       mkt_specialty_candidates: {
         Args: { _specialty: string }
         Returns: {
