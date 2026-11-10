@@ -63,9 +63,10 @@ export function PermissionCleanup() {
   const restore = async (runId: string) => {
     setBusy(true);
     try {
-      const { error } = await supabase.rpc('base_perm_cleanup_restore', { _run: runId });
+      const { data, error } = await supabase.rpc('base_perm_cleanup_restore', { _run: runId });
       if (error) throw error;
-      toast.success('Đã khôi phục các Role đã gỡ.'); refresh();
+      const r = data as { restored_rows: number; conflicts: unknown[] };
+      toast.success(`Đã khôi phục ${r.restored_rows} Role đã gỡ.${r.conflicts.length ? ` Lưu ý: ${r.conflicts.length} quyền mới phát sinh sau chuyển đổi được giữ nguyên, cần đối chiếu thủ công.` : ''}`); refresh();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
 
