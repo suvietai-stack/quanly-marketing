@@ -187,3 +187,147 @@ describe('nhật ký thay đổi tổ chức', () => {
     expect(orgConfigDiff(undefined, c, nameOf)).toEqual([]);
   });
 });
+
+describe('gán nhiều nhân sự bằng checkbox', () => {
+  const seeded = () => ensureDefaultStructure(emptyConfig()).config;
+  const mktDep = (c: ReturnType<typeof seeded>) => c.units.find(u => u.name === 'Bộ phận Marketing')!.id;
+  const staffTitle = (c: ReturnType<typeof seeded>) => unitTitles(c, mktDep(c)).find(t => t.name === 'Nhân viên Marketing')!;
+
+  it('gán 5 nhân viên cùng lúc vào Marketing', () => {
+    const c = seeded();
+    const r = assignMany(c, mktDep(c), staffTitle(c).id, ['u1', 'u2', 'u3', 'u4', 'u5']);
+    expect(r.added).toHaveLength(5);
+    expect(r.skipped).toHaveLength(0);
+    expect(slotHolders(r.config, mktDep(c), staffTitle(c).id)).toHaveLength(5);
+  });
+
+  it('người đã có phân công tại đơn vị đích được báo lỗi riêng, không thêm trùng', () => {
+    const c = assignSlot(seeded(), mktDep(seeded()), staffTitle(seeded()).id, 'u1');
+    const r = assignMany(c, mktDep(c), staffTitle(c).id, ['u1', 'u2']);
+    expect(r.added).toEqual(['u2']);
+    expect(r.skipped).toEqual([{ userId: 'u1', reason: 'Đã có phân công này' }]);
+    expect(slotHolders(r.config, mktDep(c), staffTitle(c).id).filter(m => m.user_id === 'u1')).toHaveLength(1);
+  });
+
+  it('ô một người từ chối gán hàng loạt khi đang có người giữ', () => {
+    const c = seeded();
+    const dep = mktDep(c);
+    const head = unitTitles(c, dep).find(t => t.name === 'Trưởng bộ phận Marketing')!;
+    const withHead = assignSlot(c, dep, head.id, 'u1');
+    const r = assignMany(withHead, dep, head.id, ['u2', 'u3']);
+    expect(r.added).toHaveLength(0);
+    expect(r.skipped).toHaveLength(2);
+    expect(slotHolders(r.config, dep, head.id).map(m => m.user_id)).toEqual(['u1']);
+  });
+
+  it('gán kiêm nhiệm giữ nguyên phân công chính hiện có', () => {
+    const c = assignSlot(seeded(), mktDep(seeded()), staffTitle(seeded()).id, 'u1');
+    const designDep = c.units.find(u => u.name === 'Bộ phận Thiết kế')!.id;
+    const designStaff = unitTitles(c, designDep).find(t => t.name === 'Nhân viên Thiết kế')!;
+    const r = assignMany(c, designDep, designStaff.id, ['u1'], 'concurrent');
+    const mine = r.config.memberships.filter(m => m.active && m.user_id === 'u1');
+    expect(mine).toHaveLength(2);
+    expect(membershipKind(mine.find(m => m.unit_id === designDep)!)).toBe('concurrent');
+    expect(membershipKind(mine.find(m => m.unit_id === mktDep(c))!)).toBe('primary');
+  });
+});
+
+describe('điều chuyển và kết thúc kiêm nhiệm', () => {
+  const seeded = () => ensureDefaultStructure(emptyConfig()).config;
+  const depId = (c: ReturnType<typeof seeded>, name: string) => c.units.find(u => u.name === name)!.id;
+
+  it('điều chuyển kết thúc phân công chính cũ, tạo phân công mới và giữ lịch sử', () => {
+    let c = seeded();
+    const mkt = depId(c, 'Bộ phận Marketing');
+    const design = depId(c, 'Bộ phận Thiết kế');
+    const mktStaff = unitTitles(c, mkt).find(t => t.name === 'Nhân viên Marketing')!;
+    const designStaff = unitTitles(c, design).find(t => t.name === 'Nhân viên Thiết kế')!;
+    c = assignSlot(c, mkt, mktStaff.id, 'u1');
+    const r = transferMembers(c, ['u1'], design, designStaff.id);
+    expect(r.moved).toEqual(['u1']);
+    const old = r.config.memberships.find(m => m.user_id === 'u1' && m.unit_id === mkt)!;
+    expect(old.active).toBe(false);
+    expect(old.ends_at).toBeTruthy();
+    const now = r.config.memberships.filter(m => m.active && m.user_id === 'u1');
+    expect(now).toHaveLength(1);
+    expect(now[0].unit_id).toBe(design);
+  });
+
+  it('điều chuyển giữ nguyên kiêm nhiệm ở đơn vị khác', () => {
+    let c = seeded();
+    const mkt = depId(c, 'Bộ phận Marketing');
+    const design = depId(c, 'Bộ phận Thiết kế');
+    const acc = depId(c, 'Bộ phận Kế toán');
+    const mktStaff = unitTitles(c, mkt).find(t => t.name === 'Nhân viên Marketing')!;
+    const designStaff = unitTitles(c, design).find(t => t.name === 'Nhân viên Thiết kế')!;
+    const accStaff = unitTitles(c, acc).find(t => t.name === 'Kế toán kho')!;
+    c = assignSlot(c, mkt, mktStaff.id, 'u1');
+    c = assignMany(c, design, designStaff.id, ['u1'], 'concurrent').config;
+    const r = transferMembers(c, ['u1'], acc, accStaff.id);
+    const active = r.config.memberships.filter(m => m.active && m.user_id === 'u1');
+    expect(active.some(m => m.unit_id === design && membershipKind(m) === 'concurrent')).toBe(true);
+    expect(active.some(m => m.unit_id === mkt)).toBe(false);
+    expect(active.some(m => m.unit_id === acc)).toBe(true);
+  });
+
+  it('xem trước điều chuyển cảnh báo vị trí quản lý sẽ kết thúc', () => {
+    let c = seeded();
+    const mkt = depId(c, 'Bộ phận Marketing');
+    const design = depId(c, 'Bộ phận Thiết kế');
+    const head = unitTitles(c, mkt).find(t => t.name === 'Trưởng bộ phận Marketing')!;
+    const designStaff = unitTitles(c, design).find(t => t.name === 'Nhân viên Thiết kế')!;
+    c = assignSlot(c, mkt, head.id, 'u1');
+    const p = transferPreview(c, ['u1']);
+    expect(p.endedManagers).toHaveLength(1);
+    const r = transferMembers(c, ['u1'], design, designStaff.id);
+    expect(r.endedManagers).toHaveLength(1);
+    expect(slotHolders(r.config, mkt, head.id)).toHaveLength(0);
+    expect(slotHistory(r.config, mkt, head.id)).toHaveLength(1);
+  });
+
+  it('kết thúc một kiêm nhiệm không ảnh hưởng phân công chính', () => {
+    let c = seeded();
+    const mkt = depId(c, 'Bộ phận Marketing');
+    const design = depId(c, 'Bộ phận Thiết kế');
+    const mktStaff = unitTitles(c, mkt).find(t => t.name === 'Nhân viên Marketing')!;
+    const designStaff = unitTitles(c, design).find(t => t.name === 'Nhân viên Thiết kế')!;
+    c = assignSlot(c, mkt, mktStaff.id, 'u1');
+    c = assignMany(c, design, designStaff.id, ['u1'], 'concurrent').config;
+    const concurrent = c.memberships.find(m => m.active && m.user_id === 'u1' && m.unit_id === design)!;
+    const next = endMembership(c, concurrent.id);
+    const active = next.memberships.filter(m => m.active && m.user_id === 'u1');
+    expect(active).toHaveLength(1);
+    expect(active[0].unit_id).toBe(mkt);
+    expect(next.memberships.find(m => m.id === concurrent.id)?.ends_at).toBeTruthy();
+  });
+
+  it('điều chuyển người đã ở đơn vị đích báo lỗi, không tạo trùng', () => {
+    let c = seeded();
+    const mkt = depId(c, 'Bộ phận Marketing');
+    const mktStaff = unitTitles(c, mkt).find(t => t.name === 'Nhân viên Marketing')!;
+    c = assignSlot(c, mkt, mktStaff.id, 'u1');
+    const r = transferMembers(c, ['u1'], mkt, mktStaff.id);
+    expect(r.moved).toHaveLength(0);
+    expect(r.skipped).toEqual([{ userId: 'u1', reason: 'Đã có phân công này tại đơn vị đích' }]);
+  });
+});
+
+describe('đường dẫn và cây đơn vị', () => {
+  it('unitDescendants gồm chính đơn vị và con cháu', () => {
+    const c = ensureDefaultStructure(emptyConfig()).config;
+    const mkt = c.units.find(u => u.name === 'Khối Marketing')!.id;
+    const tree = unitDescendants(c, mkt);
+    expect(tree).toHaveLength(3);
+    expect(tree).toContain(depIdOf(c, 'Bộ phận Marketing'));
+    expect(tree).toContain(depIdOf(c, 'Bộ phận Thiết kế'));
+  });
+
+  it('unitPath hiển thị Khối / Bộ phận', () => {
+    const c = ensureDefaultStructure(emptyConfig()).config;
+    expect(unitPath(c, depIdOf(c, 'Bộ phận Kế toán'))).toBe('Khối Vận hành / Bộ phận Kế toán');
+  });
+});
+
+function depIdOf(c: ReturnType<typeof ensureDefaultStructure>['config'], name: string) {
+  return c.units.find(u => u.name === name)!.id;
+}
