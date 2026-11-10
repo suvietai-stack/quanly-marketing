@@ -46,6 +46,18 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-chipi-orange: var(--chipi-orange);
   --color-chipi-soft: var(--chipi-soft);
+  --color-chart-company: var(--chart-company);
+  --color-chart-company-foreground: var(--chart-company-foreground);
+  --color-chart-executive: var(--chart-executive);
+  --color-chart-executive-foreground: var(--chart-executive-foreground);
+  --color-chart-deputy: var(--chart-deputy);
+  --color-chart-deputy-foreground: var(--chart-deputy-foreground);
+  --color-chart-biz: var(--chart-biz);
+  --color-chart-biz-foreground: var(--chart-biz-foreground);
+  --color-chart-marketing: var(--chart-marketing);
+  --color-chart-marketing-foreground: var(--chart-marketing-foreground);
+  --color-chart-ops: var(--chart-ops);
+  --color-chart-ops-foreground: var(--chart-ops-foreground);
   --shadow-chipi: 0 8px 26px -8px oklch(0.35 0.08 55 / .18);
   --shadow-soft: 0 1px 2px 0 oklch(0.29 0.08 260 / 0.04), 0 1px 3px 0 oklch(0.29 0.08 260 / 0.05);
   --shadow: 0 1px 2px 0 oklch(0.29 0.08 260 / 0.04), 0 2px 8px -2px oklch(0.29 0.08 260 / 0.06);
