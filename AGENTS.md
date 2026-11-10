@@ -37,4 +37,3 @@
 - Facebook discovery merges user/business Pages; encrypted sessions keep tokens out of UI, verify identity/lead access before saving — discovery is not eligibility.
 - Subdirectories may have their own AGENTS.md (e.g. src/components/biz) — read it before changing files there.
 - Read src/components/biz/AGENTS.md before biz changes; it defines business and canonical 3K task/summary/scope rules.
-- Marketing specialties live in mkt_specialties/mkt_staff_specialties (many-to-many, independent of Roles); writes only via Super-Admin mkt_specialty_save, mkt_specialty_sync only inserts missing auto rows so manual/removed decisions are never overwritten.
