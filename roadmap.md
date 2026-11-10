@@ -99,3 +99,10 @@
 - [x] Mục "Quyền tự nhận theo nhiệm vụ" trong màn hình chuyên môn
 - [x] Kiểm thử (11 DB + 4 unit + UI preview đăng nhập thật)
 - [x] Báo cáo bàn giao (docs/marketing-specialty-phase2-report.md); KHÔNG reset quyền cũ, KHÔNG Publish
+
+## Giai đoạn 3: Làm sạch quyền cũ, chuyển sang Role chuẩn (xong phần code)
+- [x] Kiểm chứng lại cơ chế giai đoạn 1-2 (hồi quy 147/147)
+- [x] Migration 0324-0326: kiểm kê + xem trước (set-based, nhanh) + thực thi có vân tay + khôi phục
+- [x] UI "Chuyển đổi quyền cũ" trong Nâng cao: phân nhóm A-D, lọc, chi tiết, xác nhận gõ chữ, lịch sử + khôi phục
+- [x] 7/7 test DB mới; xem trước dữ liệu thật trên Preview (23 tài khoản: 15 bảo vệ, 1 cần xác nhận, 7 cần xem lại, 0 sẵn sàng)
+- [ ] Admin bổ nhiệm chức vụ cho nhân sự ngoài KD rồi xác nhận chuyển đổi trên màn hình — chờ người dùng; KHÔNG tự thực thi, KHÔNG Publish
