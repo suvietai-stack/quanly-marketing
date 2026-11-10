@@ -51,7 +51,7 @@ beforeAll(async () => {
   insert into biz_appointments values ('${BIZU}','active',null);
   insert into biz_department_members values ('${BIZM}',null);
   insert into user_permission_overrides values ('${CUSTOM}',true,array['video.create']);`);
-  for (const f of ['0324_permission_cleanup_preview_execute', '0325_permission_cleanup_preview_variable_shadowing', '0326_permission_cleanup_preview_set_based', '0327_permission_cleanup_hardening']) {
+  for (const f of ['0324_permission_cleanup_preview_execute', '0325_permission_cleanup_preview_variable_shadowing', '0326_permission_cleanup_preview_set_based', '0327_permission_cleanup_hardening', '0328_permission_cleanup_eval_reasons_array_fix']) {
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   }
 }, 30000);
