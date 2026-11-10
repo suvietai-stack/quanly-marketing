@@ -180,16 +180,17 @@ function BlockCard({ node, query, actions, onOpen }: { node: ChartNode; query: s
   );
 }
 
-export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, bizManageUrl }: {
+export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onBizAppointExecutive }: {
   config: OrgConfig;
   staff: { id: string; name: string }[];
   biz?: OrgData;
   positions?: PositionsData;
   bizUnavailable?: boolean;
+  onBizAppointExecutive?: (code: string) => void;
 } & ChartActions) {
   const [query, setQuery] = useState('');
   const [person, setPerson] = useState<ChartPerson | null>(null);
-  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, bizManageUrl };
+  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory };
   const nameOf = useMemo(() => {
     const map = new Map(staff.map(s => [s.id, s.name]));
     return (id: string) => map.get(id) ?? 'Nhân sự';
@@ -225,6 +226,13 @@ export function OrgChart({ config, staff, biz, positions, bizUnavailable, canMan
                 <p className="flex items-center gap-2 font-semibold"><Crown className="h-4 w-4 shrink-0" />{slot.name}<Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge></p>
                 <p className="mt-0.5 text-sm opacity-90">{slot.holder ? slot.holder.name : 'Chưa bổ nhiệm'}</p>
               </button>
+              {canManage && onBizAppointExecutive && (
+                <div className="flex justify-end pt-1">
+                  <Button variant="outline" size="sm" onClick={() => onBizAppointExecutive(slot.code)}>
+                    <UserPlus className="h-4 w-4 mr-2" />{slot.holder ? 'Thay đổi' : 'Bổ nhiệm'}
+                  </Button>
+                </div>
+              )}
               {i < executives.length - 1 && <div className="mx-auto h-3 w-px bg-border" />}
             </div>
           ))}
