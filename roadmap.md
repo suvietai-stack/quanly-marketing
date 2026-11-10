@@ -389,3 +389,5 @@ Nguyên tắc: không xây lại phân quyền, giữ hai mã chức vụ execut
 - [x] OC2. Sơ đồ tổ chức mặc định tại /organization: Công ty → GĐĐH → P.GĐĐH → các Khối (Kinh doanh từ dữ liệu biz thật, Marketing/Vận hành từ cấu hình base), mở rộng/thu gọn, tìm kiếm, chạm nhân sự xem chức danh/nhiệm vụ/quyền.
 - [x] OC3. Kiểm thử: orgChart unit tests + executive-parity PGlite (intervene, holder, assigned, notify patch).
 - [ ] OC4. Nghiệm thu phiên đăng nhập thật (sơ đồ Mobile/Desktop, duyệt bước Giám đốc bằng tài khoản Phó Giám đốc); chưa Publish.
+- Kết quả OC3: 11/11 kiểm thử mới (orgChart + executive-parity PGlite); effective-access 40/40 sau khi nạp 0300 và lùi mốc hiệu lực dữ liệu mẫu (khắc phục luôn 2 lỗi phụ thuộc ngày có sẵn); hồi quy biz+basePermissions 548/550 — 2 lỗi còn lại thuộc my-work phụ thuộc ngày, có sẵn trước thay đổi, không liên quan 0300. Typecheck/build OK; /organization tải sạch (chuyển /login khi chưa đăng nhập).
+- OC4 vẫn chờ: không mint được phiên (nhiều tài khoản, email người yêu cầu không khớp) — cần người dùng đăng nhập preview để nghiệm thu sơ đồ và duyệt bước Giám đốc bằng tài khoản Phó Giám đốc.
