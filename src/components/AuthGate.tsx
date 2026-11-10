@@ -89,7 +89,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, [currentUserId, isPublic, isPending, navigate, initialized, loaded, currentUser?.status]);
 
   if (isPublic) return <>{children}</>;
-  if (!initialized) return null;
+  // Phiên đang được khôi phục/xác minh — chưa kết luận chưa đăng nhập.
+  if (!initialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Đang khôi phục phiên đăng nhập…
+      </div>
+    );
+  }
   if (!currentUserId) return null;
   if (!loaded) {
     return (
