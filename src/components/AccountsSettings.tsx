@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+import { titleRolesApi } from '@/lib/basePermissions/titleRoles';
 import { useState, useMemo, useRef } from "react";
 import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
 import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/SignalScopeEditor";
@@ -529,6 +531,8 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
   const [editing, setEditing] = useState<Role | null>(null);
   const [adding, setAdding] = useState(false);
   const [functionGroup, setFunctionGroup] = useState("all");
+  const linksQuery = useQuery({queryKey:["title-role-links",s.currentUserId],queryFn:titleRolesApi.read,retry:false});
+  const positions = (roleId:string) => (linksQuery.data?.links??[]).filter(l=>l.role_id===roleId).map(l=>linksQuery.data?.titles.find(t=>t.id===l.title_id)?.name??"Chức vụ").join(", ") || "Chưa liên kết chức vụ";
   const me = s.users.find((u) => u.id === s.currentUserId) || null;
   const isSuperAdmin = !!me?.system || s.roles.find((r) => r.id === me?.roleId)?.name === "Super Admin";
 
@@ -536,26 +540,15 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
     <Select value={functionGroup} onValueChange={setFunctionGroup}><SelectTrigger aria-label="Nhóm chức năng Role" className="w-full sm:w-64 mb-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhóm chức năng</SelectItem>{ROLE_FUNCTION_GROUPS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select>
     {canManage && (
       <div className="flex justify-end mb-3 gap-2">
-        {isSuperAdmin && (
-          <Button size="sm" variant="outline" onClick={async () => {
-            if (!confirm("Khôi phục quyền mặc định cho 10 role hệ thống?\n\n• Ghi đè permissions của các role mặc định về đúng bản gốc.\n• Không xóa user, không xóa dữ liệu, không ảnh hưởng quyền riêng theo user.")) return;
-            try {
-              const res = await s.restoreDefaultRoles();
-              toast.success(`Đã khôi phục ${res.count} role mặc định.`);
-            } catch (e: any) {
-              toast.error(e?.message || "Khôi phục thất bại");
-            }
-          }}><Shield className="h-4 w-4 mr-1.5" />Khôi phục quyền mặc định</Button>
-        )}
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm role</Button>
       </div>
     )}
-    <div className="divide-y border-y md:hidden">{s.roles.filter(r => functionGroup === 'all' || roleFunctionGroup(r.name) === functionGroup).map(r => <div key={r.id} className="py-4 space-y-2"><div className="flex items-start justify-between gap-3"><h3 className="font-medium">{r.name}</h3>{canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Chi tiết quyền</Button>}</div><p className="text-xs text-muted-foreground">{roleFunctionGroup(r.name)} · {s.users.filter(u => u.roleId === r.id).length} tài khoản</p><p className="text-sm text-muted-foreground">{r.description}</p><p className="text-xs text-muted-foreground">{r.id === SUPER_ADMIN_ID ? 'Toàn quyền' : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(', ') || 'Chưa có chức năng'}</p></div>)}</div>
+    <div className="divide-y border-y md:hidden">{s.roles.filter(r => functionGroup === 'all' || roleFunctionGroup(r.name) === functionGroup).map(r => <div key={r.id} className="py-4 space-y-2"><div className="flex items-start justify-between gap-3"><h3 className="font-medium">{r.name}</h3>{canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Tùy chỉnh quyền</Button>}</div><p className="text-xs text-muted-foreground">{roleFunctionGroup(r.name)} · {s.users.filter(u => u.roleId === r.id).length} tài khoản</p><p className="text-sm text-muted-foreground">{positions(r.id)}</p><p className="text-xs text-muted-foreground">{r.id === SUPER_ADMIN_ID ? 'Toàn quyền' : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(', ') || 'Chưa có chức năng'}</p></div>)}</div>
     <Card className="hidden md:block"><CardContent className="p-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground bg-muted/40"><tr>
           <th className="text-left font-medium px-4 py-2.5">Tên role</th>
-          <th className="text-left font-medium px-4 py-2.5">Mô tả</th>
+          <th className="text-left font-medium px-4 py-2.5">Vị trí áp dụng</th>
           <th className="text-left font-medium px-4 py-2.5">Số tài khoản</th>
           <th className="text-left font-medium px-4 py-2.5">Quyền</th>
           <th className="text-right font-medium px-4 py-2.5"></th>
@@ -568,11 +561,11 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
                 <td className="px-4 py-2.5 font-medium">
                   <div className="flex items-center gap-2">{r.name}{r.system && <Badge variant="secondary" className="gap-1"><Shield className="h-3 w-3" />Hệ thống</Badge>}</div>
                 </td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[420px]">{roleFunctionGroup(r.name)}<div className="mt-1">{r.description || "—"}</div></td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[420px]">{roleFunctionGroup(r.name)}<div className="mt-1">{positions(r.id)}</div></td>
                 <td className="px-4 py-2.5">{count}</td>
                 <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.id === SUPER_ADMIN_ID ? "Toàn quyền" : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(", ") || "Chưa có chức năng"}</td>
                 <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                  {canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Chi tiết quyền</Button>}
+                  {canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Tùy chỉnh quyền</Button>}
                   {canManage && !r.system && (
                     <Button size="icon" variant="ghost" className="ml-1" onClick={() => {
                       if (count > 0) return toast.error("Role đang có người dùng, không thể xóa.");
