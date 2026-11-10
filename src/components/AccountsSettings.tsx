@@ -55,11 +55,11 @@ export function AccountsSettings() {
   const defaultTab =
     pending.length > 0 && canApprove ? "pending"
     : canViewUsers ? "all"
-    : canManageRoles ? "roles"
-    : canManageMatrix ? "matrix"
     : "me";
 
   return (
+    <div className="space-y-3">
+    {(canManageRoles || canManageMatrix) && <p className="text-sm text-muted-foreground">Danh sách Role, ma trận phân quyền và debug quyền đã chuyển về Hành chính &amp; Nhân sự → Cơ cấu tổ chức → Cài đặt → Role &amp; Phân quyền.</p>}
     <Tabs defaultValue={defaultTab}>
       <TabsList className="flex-wrap h-auto">
         {canViewUsers && <TabsTrigger value="all">Tất cả tài khoản ({s.users.length})</TabsTrigger>}
@@ -68,9 +68,6 @@ export function AccountsSettings() {
             Chờ duyệt {pending.length > 0 && <Badge className="ml-1.5 bg-amber-500 text-white hover:bg-amber-500">{pending.length}</Badge>}
           </TabsTrigger>
         )}
-        {canManageRoles && <TabsTrigger value="roles">Role</TabsTrigger>}
-        {canManageMatrix && <TabsTrigger value="matrix">Ma trận phân quyền</TabsTrigger>}
-        {isSuperAdmin && <TabsTrigger value="debug">Debug quyền</TabsTrigger>}
         {me && <TabsTrigger value="me">Đổi mật khẩu</TabsTrigger>}
       </TabsList>
 
@@ -86,35 +83,18 @@ export function AccountsSettings() {
         </TabsContent>
       )}
 
-      {canManageRoles && (
-        <TabsContent value="roles" className="mt-4">
-          <RolesTab canManage={canManageRoles} />
-        </TabsContent>
-      )}
-
-      {canManageMatrix && (
-        <TabsContent value="matrix" className="mt-4">
-          <MatrixTab canManage={canManageMatrix} />
-        </TabsContent>
-      )}
-
-      {isSuperAdmin && (
-        <TabsContent value="debug" className="mt-4">
-          <PermissionDebugTab />
-        </TabsContent>
-      )}
-
       {me && (
         <TabsContent value="me" className="mt-4">
           <ChangePasswordTab />
         </TabsContent>
       )}
     </Tabs>
+    </div>
   );
 }
 
 // --------- Permission Debug (Super Admin only) ---------
-function PermissionDebugTab() {
+export function PermissionDebugTab() {
   const s = useAuth();
   const [uid, setUid] = useState<string>("");
   const [testKey, setTestKey] = useState<string>("");
@@ -543,7 +523,7 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
 }
 
 // --------- Roles ---------
-function RolesTab({ canManage }: { canManage: boolean }) {
+export function RolesTab({ canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [editing, setEditing] = useState<Role | null>(null);
   const [adding, setAdding] = useState(false);
@@ -650,7 +630,7 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
 }
 
 // --------- Matrix (read-only overview by role) ---------
-function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
+export function MatrixTab({ canManage: _canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [group, setGroup] = useState<string>("ALL");
   const [q, setQ] = useState("");
