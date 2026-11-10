@@ -6,7 +6,7 @@ import { slotCapacity, titleKind, titleLevel, unitTitles } from '@/lib/orgStruct
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
 export interface ChartSlot { id: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
-export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
+export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
 type NameOf = (id: string) => string;
@@ -52,11 +52,15 @@ export function buildBizBlock(org: OrgData, positions: PositionsData | undefined
     id: d.id, name: d.name, kind: 'department', inactive: !d.active,
     leader: managerOf('department_head', x => x.department_id === d.id),
     leaderLabel: 'Trưởng phòng',
+    leaderCode: 'department_head',
+    biz: { systemId: d.system_id ?? undefined, departmentId: d.id },
     people: membersOf(d.id),
     children: org.teams.filter(t => t.department_id === d.id).map(t => ({
       id: t.id, name: t.name, kind: 'team' as const, inactive: !t.active,
       leader: managerOf('team_lead', x => x.team_id === t.id),
       leaderLabel: 'Trưởng nhóm',
+      leaderCode: 'team_lead',
+      biz: { systemId: d.system_id ?? undefined, departmentId: d.id, teamId: t.id },
       people: membersOf(d.id, t.id),
       children: [],
     })),
@@ -65,6 +69,8 @@ export function buildBizBlock(org: OrgData, positions: PositionsData | undefined
     id: s.id, name: `Hệ ${s.name}`, kind: 'system' as const, inactive: !s.active,
     leader: managerOf('director', x => x.system_id === s.id),
     leaderLabel: 'Giám đốc Hệ',
+    leaderCode: 'director',
+    biz: { systemId: s.id },
     people: [] as ChartPerson[],
     children: org.departments.filter(d => d.system_id === s.id).map(depNode),
   }));

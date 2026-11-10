@@ -25,7 +25,8 @@ interface ChartActions {
   onAssign?: (ref: SlotRef) => void;
   onUnassign?: (ref: SlotRef, person: ChartPerson) => void;
   onSlotHistory?: (ref: SlotRef) => void;
-  bizManageUrl?: string;
+  onBizAppoint?: (node: ChartNode) => void;
+  onBizHistory?: (node: ChartNode) => void;
 }
 
 function PersonButton({ person, onOpen }: { person: ChartPerson; onOpen: (p: ChartPerson) => void }) {
@@ -87,7 +88,7 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
   );
 }
 
-/** Dòng người phụ trách của đơn vị Kinh doanh — hiện cả khi trống, quản lý qua màn hình bổ nhiệm Kinh doanh. */
+/** Dòng người phụ trách của đơn vị Kinh doanh — hiện cả khi trống, bổ nhiệm/miễn nhiệm ngay trên sơ đồ. */
 function LeaderLine({ node, actions, onOpen }: { node: ChartNode; actions: ChartActions; onOpen: (p: ChartPerson) => void }) {
   if (!node.leaderLabel) return null;
   return (
@@ -98,13 +99,22 @@ function LeaderLine({ node, actions, onOpen }: { node: ChartNode; actions: Chart
           ? <Button variant="link" className="h-auto p-0 text-xs whitespace-normal" onClick={() => onOpen(node.leader!)}>{node.leader.name}</Button>
           : <span className="text-warning">Chưa phân công</span>}
       </p>
-      {actions.canManage && actions.bizManageUrl && (
+      {actions.canManage && (actions.onBizAppoint || actions.onBizHistory) && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label={`Thao tác ${node.leaderLabel} ${node.name}`}><MoreVertical className="h-4 w-4" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild><a href={actions.bizManageUrl}><Users className="h-4 w-4 mr-2" />Quản lý tại Cơ cấu Kinh doanh</a></DropdownMenuItem>
+            {actions.onBizAppoint && (
+              <DropdownMenuItem onClick={() => actions.onBizAppoint!(node)}>
+                <UserPlus className="h-4 w-4 mr-2" />{node.leader ? 'Thay đổi người đảm nhiệm' : 'Bổ nhiệm'}
+              </DropdownMenuItem>
+            )}
+            {actions.onBizHistory && (
+              <DropdownMenuItem onClick={() => actions.onBizHistory!(node)}>
+                <History className="h-4 w-4 mr-2" />Lịch sử & miễn nhiệm
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -170,16 +180,17 @@ function BlockCard({ node, query, actions, onOpen }: { node: ChartNode; query: s
   );
 }
 
-export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, bizManageUrl }: {
+export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onBizAppointExecutive }: {
   config: OrgConfig;
   staff: { id: string; name: string }[];
   biz?: OrgData;
   positions?: PositionsData;
   bizUnavailable?: boolean;
+  onBizAppointExecutive?: (code: string) => void;
 } & ChartActions) {
   const [query, setQuery] = useState('');
   const [person, setPerson] = useState<ChartPerson | null>(null);
-  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, bizManageUrl };
+  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory };
   const nameOf = useMemo(() => {
     const map = new Map(staff.map(s => [s.id, s.name]));
     return (id: string) => map.get(id) ?? 'Nhân sự';
@@ -215,6 +226,13 @@ export function OrgChart({ config, staff, biz, positions, bizUnavailable, canMan
                 <p className="flex items-center gap-2 font-semibold"><Crown className="h-4 w-4 shrink-0" />{slot.name}<Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge></p>
                 <p className="mt-0.5 text-sm opacity-90">{slot.holder ? slot.holder.name : 'Chưa bổ nhiệm'}</p>
               </button>
+              {canManage && onBizAppointExecutive && (
+                <div className="flex justify-end pt-1">
+                  <Button variant="outline" size="sm" onClick={() => onBizAppointExecutive(slot.code)}>
+                    <UserPlus className="h-4 w-4 mr-2" />{slot.holder ? 'Thay đổi' : 'Bổ nhiệm'}
+                  </Button>
+                </div>
+              )}
               {i < executives.length - 1 && <div className="mx-auto h-3 w-px bg-border" />}
             </div>
           ))}
