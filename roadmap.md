@@ -3,10 +3,13 @@
 ## Liên kết Role hiện có với chức vụ toàn Base
 - [x] Rà soát Role, nguồn cấp quyền, phạm vi và đường ghi hiện tại (18 Role, không có phân công Base trong dữ liệu đọc)
 - [ ] Hoàn thiện kiểm tra phạm vi từng phân hệ trước khi bật đồng bộ Role (theo lựa chọn người dùng)
-- [ ] Liên kết Role gốc với chức vụ, đối chiếu và xác nhận trước khi cấp cho nhân sự cũ
+- [x] Liên kết Role gốc dạng chưa kích hoạt cho chức vụ Base/Biz; xem quyền Role, đề xuất bảo thủ, lưu nguyên tử có lý do/nhật ký/chống ghi đè (0307)
+- [ ] Đối chiếu có tác động quyền và xác nhận trước khi cấp cho nhân sự cũ — chưa triển khai, phụ thuộc hoàn thiện kiểm tra phạm vi
 - [ ] Cấp/thu hồi theo nguồn bổ nhiệm; giữ Role trực tiếp, ngoại lệ và phạm vi nghiệp vụ
-- [ ] Giao diện thiết lập Role và quyền truy cập nhân sự, xem trước có nhật ký
-- [ ] Kiểm thử bảo toàn quyền và nghiệm thu; không Publish
+- [x] Giao diện thiết lập Role chính/bổ sung và phạm vi đề xuất; nhân sự xem Role trực tiếp/Role chức vụ chưa cấp quyền
+- [ ] Xem trước quyền thực tế và cấp/thu hồi nguồn hiệu lực — chưa triển khai, phụ thuộc hoàn thiện kiểm tra phạm vi
+- [x] 69/69 kiểm thử đạt; build OK; không sửa quyền nhân sự thật, không Publish
+- [ ] Nghiệm thu màn hình sau đăng nhập — không tạo được phiên cho người yêu cầu; cần đăng nhập Preview
 
 ## Hoàn thiện Cơ cấu tổ chức toàn Base (xong phần code)
 - [x] Backend: quyền org.* có phạm vi đơn vị, RPC áp dụng phân công nguyên tử có kiểm tra phạm vi (migration 0306); org.manage_structure/org.manage_permissions còn bản nháp
