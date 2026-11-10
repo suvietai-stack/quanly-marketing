@@ -2,12 +2,14 @@ export type CleanupAccount = {
   user_id: string;
   name: string;
   group: 'A' | 'B' | 'C' | 'D';
-  status: 'protected_super' | 'protected' | 'needs_confirm' | 'ready' | 'review';
+  status: 'protected' | 'ready' | 'review';
   unit: string | null;
   title: string | null;
   roles: { role_id: string; name: string; protected: boolean }[];
   removable: string[];
   lost: string[];
+  reasons: string[];
+  pending_work: number;
   appointment_sources: number;
   specialty_sources: number;
   has_custom_override: boolean;
@@ -17,7 +19,7 @@ export type CleanupPreview = {
   fingerprint: string;
   server_now: string;
   accounts: CleanupAccount[];
-  totals: { accounts: number; ready: number; review: number; needs_confirm: number; protected: number; removable_roles: number };
+  totals: { accounts: number; ready: number; review: number; protected: number; removable_roles: number };
 };
 
 export type CleanupRun = {
@@ -32,10 +34,8 @@ export type CleanupRun = {
 
 export const CLEANUP_STATUS_LABELS: Record<CleanupAccount['status'], string> = {
   ready: 'Sẵn sàng',
-  review: 'Cần xem lại',
-  needs_confirm: 'Cần xác nhận',
+  review: 'Cần xử lý',
   protected: 'Được bảo vệ',
-  protected_super: 'Super Admin',
 };
 
 export const CLEANUP_GROUP_LABELS: Record<CleanupAccount['group'], string> = {
@@ -45,13 +45,13 @@ export const CLEANUP_GROUP_LABELS: Record<CleanupAccount['group'], string> = {
   D: 'Kiêm nhiệm',
 };
 
-/** Accounts the admin may select for execution: only ready or review, never protected/needs_confirm. */
+/** Chỉ tài khoản "Sẵn sàng" mới được chọn chuyển đổi; backend cũng từ chối mọi trạng thái khác. */
 export function selectableAccounts(accounts: CleanupAccount[]) {
-  return accounts.filter(a => a.status === 'ready' || a.status === 'review');
+  return accounts.filter(a => a.status === 'ready');
 }
 
 export function cleanupStatusTone(status: CleanupAccount['status']): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (status === 'ready') return 'default';
-  if (status === 'review' || status === 'needs_confirm') return 'destructive';
+  if (status === 'review') return 'destructive';
   return 'secondary';
 }
