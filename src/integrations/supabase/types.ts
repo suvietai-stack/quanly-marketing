@@ -641,6 +641,104 @@ export type Database = {
         }
         Relationships: []
       }
+      base_title_role_events: {
+        Row: {
+          actor_id: string
+          after_data: Json
+          before_data: Json
+          created_at: string
+          id: string
+          reason: string
+          title_id: string
+          title_source: string
+        }
+        Insert: {
+          actor_id: string
+          after_data: Json
+          before_data: Json
+          created_at?: string
+          id?: string
+          reason: string
+          title_id: string
+          title_source: string
+        }
+        Update: {
+          actor_id?: string
+          after_data?: Json
+          before_data?: Json
+          created_at?: string
+          id?: string
+          reason?: string
+          title_id?: string
+          title_source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "base_title_role_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      base_title_role_links: {
+        Row: {
+          active: boolean
+          id: string
+          is_primary: boolean
+          reason: string
+          revision: number
+          role_id: string
+          scope_kind: string
+          title_id: string
+          title_source: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          active?: boolean
+          id?: string
+          is_primary?: boolean
+          reason: string
+          revision?: number
+          role_id: string
+          scope_kind?: string
+          title_id: string
+          title_source: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          active?: boolean
+          id?: string
+          is_primary?: boolean
+          reason?: string
+          revision?: number
+          role_id?: string
+          scope_kind?: string
+          title_id?: string
+          title_source?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "base_title_role_links_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "base_title_role_links_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biz_access_exceptions: {
         Row: {
           created_at: string
@@ -9235,6 +9333,17 @@ export type Database = {
         Returns: undefined
       }
       base_permissions_effective: { Args: { _user?: string }; Returns: Json }
+      base_title_roles_read: { Args: never; Returns: Json }
+      base_title_roles_save: {
+        Args: {
+          _expected: Json
+          _reason: string
+          _roles: Json
+          _source: string
+          _title: string
+        }
+        Returns: Json
+      }
       biz_admin: { Args: { _actor: string }; Returns: boolean }
       biz_all_scope: { Args: { _actor: string }; Returns: boolean }
       biz_any_deadline_at: {
