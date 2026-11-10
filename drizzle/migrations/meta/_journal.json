@@ -2248,6 +2248,13 @@
       "when": 1794304142813,
       "tag": "0320_appointment_preview_effective_clock",
       "breakpoints": true
+    },
+    {
+      "idx": 321,
+      "version": "7",
+      "when": 1794304412364,
+      "tag": "0321_appointment_impact_skip_unchanged_sources",
+      "breakpoints": true
     }
   ]
 }
