@@ -551,6 +551,39 @@ export type Database = {
         }
         Relationships: []
       }
+      base_perm_cleanup_runs: {
+        Row: {
+          actor: string
+          created_at: string
+          fingerprint: string
+          id: string
+          removed: Json
+          restored: boolean
+          restored_at: string | null
+          restored_by: string | null
+        }
+        Insert: {
+          actor: string
+          created_at?: string
+          fingerprint: string
+          id?: string
+          removed: Json
+          restored?: boolean
+          restored_at?: string | null
+          restored_by?: string | null
+        }
+        Update: {
+          actor?: string
+          created_at?: string
+          fingerprint?: string
+          id?: string
+          removed?: Json
+          restored?: boolean
+          restored_at?: string | null
+          restored_by?: string | null
+        }
+        Relationships: []
+      }
       base_permission_catalog: {
         Row: {
           dependencies: string[]
@@ -9687,6 +9720,12 @@ export type Database = {
         Returns: Json
       }
       base_org_read: { Args: never; Returns: Json }
+      base_perm_cleanup_execute: {
+        Args: { _fingerprint: string; _users: string[] }
+        Returns: Json
+      }
+      base_perm_cleanup_preview: { Args: never; Returns: Json }
+      base_perm_cleanup_restore: { Args: { _run: string }; Returns: Json }
       base_permission_catalog_sync: {
         Args: { _catalog: Json }
         Returns: undefined
