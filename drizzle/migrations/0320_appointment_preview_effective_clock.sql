@@ -1,0 +1,1 @@
+DO $$ DECLARE d text;BEGIN SELECT pg_get_functiondef('public.org_change(text,bigint,jsonb,uuid,text,text)'::regprocedure) INTO d;d:=replace(d,$s$jsonb_build_object('starts_at',clock_timestamp())$s$,$s$jsonb_build_object('starts_at',now())$s$);d:=replace(d,$s$jsonb_build_object('ends_at',clock_timestamp())$s$,$s$jsonb_build_object('ends_at',now())$s$);EXECUTE d;END $$;
