@@ -53,11 +53,12 @@ it('duyệt tài khoản có chỉ định Role => gán đúng Role đó', async
 it('quyền bổ sung cá nhân cộng thêm song song, không thay thế quyền Role', async () => {
   await db.query('insert into user_roles values ($1, $2)', [NEW2, 'role-nhan-su-moi']);
   await db.query('insert into user_permission_overrides values ($1, true, $2)', [NEW2, ['task.view_all']]);
+  const has = async (p: string) => (await db.query<{ h: boolean }>('select private.has_permission($1, $2) h', [NEW2, p])).rows[0].h;
   // Quyền từ Role vẫn còn
-  expect((await db.query('select private.has_permission($1, $2) h', [NEW2, 'video.create'])).rows[0].h).toBe(true);
-  expect((await db.query('select private.has_permission($1, $2) h', [NEW2, 'task.view_mine'])).rows[0].h).toBe(true);
+  expect(await has('video.create')).toBe(true);
+  expect(await has('task.view_mine')).toBe(true);
   // Quyền bổ sung được cộng thêm
-  expect((await db.query('select private.has_permission($1, $2) h', [NEW2, 'task.view_all'])).rows[0].h).toBe(true);
+  expect(await has('task.view_all')).toBe(true);
   // Quyền không thuộc nguồn nào vẫn bị từ chối
-  expect((await db.query('select private.has_permission($1, $2) h', [NEW2, 'settings.role'])).rows[0].h).toBe(false);
+  expect(await has('settings.role')).toBe(false);
 });
