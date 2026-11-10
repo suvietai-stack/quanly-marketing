@@ -52,7 +52,7 @@ describe('Presentation-only navigation', () => {
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations).toHaveLength(40);
+    expect(destinations).toHaveLength(41);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
@@ -72,12 +72,17 @@ describe('Presentation-only navigation', () => {
     expect(paths(access(['biz.org_manage', 'settings.role']))).not.toContain('/organization');
   });
   it('future items cannot navigate or reveal a forbidden parent', () => {
-    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(4);
+    expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon)).toHaveLength(3);
     // Kho Sản Phẩm đã có route placeholder an toàn; các mục tương lai khác chưa có đường dẫn.
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon && i.to !== '/biz/products').every(i => i.to === '')).toBe(true);
     // Nhóm Kế Toán & Tài Chính có các mục không gắn quyền menu (trang tự kiểm tra quyền bên trong).
     expect(visibleNavigation(access()).find(g => g.label === 'Showroom')?.items ?? []).toHaveLength(0);
     expect(visibleNavigation(access()).some(g => g.label === 'Showroom' && g.comingSoon)).toBe(true);
+  });
+  it('shows the Approval Center entry only when the user has approval capability', () => {
+    expect(paths(access())).not.toContain('/approvals');
+    const groups = visibleNavigation(access([], { approvalsEligible: true }));
+    expect(groups.find(g => g.label === 'Điều hành')?.items.map(i => i.to)).toContain('/approvals');
   });
   it('highlights only the most specific route for existing deep links', () => {
     expect(activeNavigationPath(navigationGroups, '/signals/report')).toBe('/signals/report');
