@@ -150,6 +150,7 @@ it('execute chỉ gỡ tài khoản Sẵn sàng và lưu bản sao khôi phục'
 });
 
 it('vân tay phát hiện thay đổi permission của Role, bổ nhiệm, nhiệm vụ Marketing và trạng thái tài khoản', async () => {
+  await resetMkt();
   const fp = (await preview()).fingerprint;
   const expectStale = async () => {
     await asSuper(async () => {
@@ -169,19 +170,7 @@ it('vân tay phát hiện thay đổi permission của Role, bổ nhiệm, nhi�
   await expectStale();
   await db.query("update profiles set status = 'Đang hoạt động' where id = $1", [CUSTOM]);
   // Sau khi hoàn tác mọi thay đổi, vân tay trở lại như cũ
-  const after = (await preview()).fingerprint;
-  if (after !== fp) {
-    const parts = (await db.query(`select x from (
-      select 'ur:' || ur.user_id::text || ':' || ur.role_id as x from user_roles ur
-      union all select 'role:' || r.id || ':' || md5(coalesce(r.permissions, '{}')::text) from app_roles r
-      union all select 'ovr:' || o.user_id::text || ':' || o.use_custom::text || ':' || md5(coalesce(o.permissions, '{}')::text) from user_permission_overrides o
-      union all select 'org:' || oa.id::text || ':' || oa.status || ':' || oa.starts_at::text from org_assignments oa
-      union all select 'trl:' || l.id::text from base_title_role_links l
-      union all select 'mkt:' || s.user_id::text || ':' || s.specialty_id::text || ':' || s.state from mkt_staff_specialties s
-      union all select 'pf:' || p.id::text || ':' || p.status from profiles p) s order by 1`)).rows.map(r => (r as { x: string }).x);
-    console.log('FP PARTS', JSON.stringify(parts));
-  }
-  expect(after).toBe(fp);
+  expect((await preview()).fingerprint).toBe(fp);
 });
 
 it('khôi phục trả lại Role đã gỡ, không ghi đè quyền mới phát sinh và báo xung đột', async () => {
