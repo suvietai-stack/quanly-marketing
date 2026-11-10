@@ -156,7 +156,7 @@ it('vân tay phát hiện thay đổi permission của Role, bổ nhiệm, nhi�
       await expect(db.query('select public.base_perm_cleanup_execute($1::uuid[], $2)', [[MKT], fp])).rejects.toThrow(/xem trước lại/);
     });
   };
-  await db.query("update app_roles set permissions = permissions || 'video.delete' where id = 'role-video'");
+  await db.query("update app_roles set permissions = array_append(permissions, 'video.delete') where id = 'role-video'");
   await expectStale();
   await db.query("update app_roles set permissions = array['video.create','video.approve'] where id = 'role-video'");
   await db.query("insert into org_assignments(user_id, status, starts_at) values ($1, 'active', now())", [MKT]);
