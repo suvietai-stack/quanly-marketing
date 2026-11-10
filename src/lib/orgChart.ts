@@ -21,9 +21,10 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
     return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
   };
   const roots = config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id));
-  // Hiển thị: nếu có đúng một Công ty gốc, các Khối chưa gắn cha được xếp ảo dưới Công ty (không ghi dữ liệu).
+  // Hiển thị: nếu có đúng một Công ty gốc và mọi gốc còn lại đều là Khối chưa gắn cha,
+  // các Khối được xếp ảo dưới Công ty (thuần hiển thị, không ghi dữ liệu).
   const companies = roots.filter(u => u.kind === 'company');
-  if (companies.length === 1 && roots.length > 1) {
+  if (companies.length === 1 && roots.length > 1 && roots.every(u => u.kind === 'company' || u.kind === 'block')) {
     const company = companies[0];
     const virtual: Unit = { ...company };
     const node = make(virtual, new Set());
