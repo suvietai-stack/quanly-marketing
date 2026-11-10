@@ -6376,6 +6376,121 @@ export type Database = {
         }
         Relationships: []
       }
+      mkt_specialties: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          role_id: string | null
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id: string
+          name: string
+          role_id?: string | null
+          sort?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          role_id?: string | null
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mkt_specialties_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mkt_specialty_events: {
+        Row: {
+          action: string
+          actor: string | null
+          after_state: string | null
+          at: string
+          before_state: string | null
+          id: number
+          note: string | null
+          specialty_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          after_state?: string | null
+          at?: string
+          before_state?: string | null
+          id?: number
+          note?: string | null
+          specialty_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          after_state?: string | null
+          at?: string
+          before_state?: string | null
+          id?: number
+          note?: string | null
+          specialty_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mkt_staff_specialties: {
+        Row: {
+          is_primary: boolean
+          origin: string
+          source: Json
+          specialty_id: string
+          state: string
+          synced_at: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          is_primary?: boolean
+          origin: string
+          source?: Json
+          specialty_id: string
+          state: string
+          synced_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          is_primary?: boolean
+          origin?: string
+          source?: Json
+          specialty_id?: string
+          state?: string
+          synced_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mkt_staff_specialties_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "mkt_specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           attendance_id: string | null
@@ -10779,6 +10894,24 @@ export type Database = {
         }
         Returns: undefined
       }
+      mkt_specialty_candidates: {
+        Args: { _specialty: string }
+        Returns: {
+          is_primary: boolean
+          name: string
+          user_id: string
+        }[]
+      }
+      mkt_specialty_save: {
+        Args: {
+          _add: string[]
+          _primary?: string
+          _remove: string[]
+          _users: string[]
+        }
+        Returns: Json
+      }
+      mkt_specialty_sync: { Args: never; Returns: Json }
       oq_accept: { Args: { _flow: string }; Returns: undefined }
       oq_answer_info: {
         Args: { _answer: string; _flow: string }
