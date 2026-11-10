@@ -1,8 +1,15 @@
-# Lộ trình: Hoàn thiện Trung tâm Phê duyệt toàn Base
+# Lộ trình hiện tại
 
-- [x] Rà soát toàn bộ luồng duyệt còn thiếu (Video, Content Web, Social, Task, Local Map, Tối ưu Web, Sao, 3K, Hỏi giá)
-- [x] Mở rộng `approval_center_read`: 7 nguồn mới + cô lập lỗi từng nguồn (migration 0304_approval_center_all_modules)
-- [x] Deep link mở đúng hồ sơ: /videos?open=, /tasks?open=, /social/$id?post=, /websites/$id?open_opt= (web-contents đã có)
-- [x] Nhóm bộ lọc: thêm Marketing/Công việc/Sao Sứ Việt, nhóm lạ tự hiện tên gốc
-- [x] Kiểm thử: 35/35 test đạt, build OK, RPC chạy thật không lỗi nhánh
-- [ ] Nghiệm thu sau đăng nhập trên Preview (badge, mở hồ sơ từng loại, mobile) — chờ người dùng đăng nhập
+## Trung tâm Phê duyệt toàn Base (xong phần code)
+- [x] Mở rộng `approval_center_read` 15 nguồn, deep link, nhóm lọc, cô lập lỗi
+- [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng đăng nhập
+
+## Chuẩn hóa Cơ cấu tổ chức, Chức vụ, Cấp bậc toàn Base (spec mới)
+- [ ] Rà soát code hiện tại (BaseOrganization, OrgChart, basePermissions, Biz) — đang chạy
+- [ ] Chuẩn hóa cơ cấu mặc định: GĐĐH cấp 5 → Phó GĐĐH cấp 4 → 3 khối (Kinh doanh dùng Biz thật; Marketing: Marketing+Thiết kế; Vận hành: HCNS, Kế toán, Mua hàng & Giao vận), chức danh cấp 2/0, vị trí trống hiện "Chưa phân công"
+- [ ] Chức danh có mã ổn định, cấp bậc, loại Quản lý/Nhân viên, số người đảm nhiệm — không đoán quản lý theo chữ "Trưởng"
+- [ ] Giao diện 4 khu vực: Sơ đồ (mở/thu, tìm, gán/đổi/bỏ gán), Nhân sự, Cài đặt (Đơn vị / Chức vụ & Cấp bậc / Bộ quyền bổ sung), Nhật ký
+- [ ] Gán người đơn giản từ sơ đồ; vị trí quản lý 1 người thay thế an toàn; Kinh doanh vẫn dùng bổ nhiệm Biz hiện có
+- [ ] Chỉnh quyền mặc định theo chức danh (quyền thật backend hỗ trợ, xem trước số người ảnh hưởng); quyền bổ sung cá nhân không ảnh hưởng người khác
+- [ ] Giữ nguyên Role cũ + quyền Kinh doanh; không migration phân quyền hàng loạt; không tự cấp quyền khi gán
+- [ ] Mobile/Desktop theo spec; kiểm thử + build; chưa Publish
