@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { toast } from "sonner";
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan } from '@/lib/orders/design';
@@ -67,7 +68,7 @@ function VideoFormFields({ value, onChange }: { value: Video; onChange: (v: Vide
         <Textarea rows={2} value={value.description || ""} onChange={(e) => set({ description: e.target.value })} /></div>
 
       <div><Label>Người giao việc</Label>{personSelect(value.assigner, (v) => set({ assigner: v }))}</div>
-      <div><Label>Người phụ trách</Label>{personSelect(value.owner, (v) => set({ owner: v }))}</div>
+      <div><Label>Người phụ trách</Label><SpecialtyStaffPicker specialty="video" value={value.owner} onChange={(v) => set({ owner: v })} people={people} /></div>
       <div><Label>Người duyệt</Label>{personSelect(value.reviewer, (v) => set({ reviewer: v }))}</div>
       <div><Label>Deadline kịch bản</Label>
         <Input type="date" value={value.scriptDeadline || ""} onChange={(e) => set({ scriptDeadline: e.target.value })} /></div>
