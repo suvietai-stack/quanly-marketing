@@ -27,6 +27,7 @@ interface ChartActions {
   onSlotHistory?: (ref: SlotRef) => void;
   onBizAppoint?: (node: ChartNode) => void;
   onBizHistory?: (node: ChartNode) => void;
+  onManageUnit?: (node: ChartNode) => void;
 }
 
 function PersonButton({ person, onOpen }: { person: ChartPerson; onOpen: (p: ChartPerson) => void }) {

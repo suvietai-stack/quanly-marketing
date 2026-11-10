@@ -107,7 +107,6 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
   const [titleId, setTitleId] = useState('');
   const [form, setForm] = useState<'primary' | 'concurrent'>('primary');
   const [report, setReport] = useState<{ added: string[]; skipped: { userId: string; reason: string }[] } | null>(null);
-  const [moveTarget, setMoveTarget] = useState('');
   const [moveTitle, setMoveTitle] = useState('');
   const [confirmManagerEnd, setConfirmManagerEnd] = useState(false);
   const [appointing, setAppointing] = useState<string>(''); // title id của ô quản lý
@@ -138,7 +137,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
   };
   const preview = transferPreview(config, [...picked]);
   const doTransfer = () => {
-    const r = transferMembers(config, [...picked], moveTarget, moveTitle);
+    const r = transferMembers(config, [...picked], unitId, moveTitle);
     onEdit(() => r.config);
     setReport(r);
   };
@@ -208,7 +207,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
             {canAssign && (
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" onClick={() => { resetPick(); setAdding(true); }}><Plus className="mr-1.5 h-4 w-4" />Thêm nhân sự</Button>
-                <Button size="sm" variant="outline" onClick={() => { resetPick(); setMoveTarget(''); setMoveTitle(''); setConfirmManagerEnd(false); setMoving(true); }}><ArrowRightLeft className="mr-1.5 h-4 w-4" />Điều chuyển nhân sự</Button>
+                <Button size="sm" variant="outline" onClick={() => { resetPick(); setMoveTitle(''); setConfirmManagerEnd(false); setMoving(true); }}><ArrowRightLeft className="mr-1.5 h-4 w-4" />Điều chuyển nhân sự</Button>
               </div>
             )}
             <div>
