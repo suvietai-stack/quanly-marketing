@@ -79,7 +79,7 @@ export function PermissionCleanup() {
       <p className="text-sm text-muted-foreground">
         Kiểm kê Role trực tiếp cũ ngoài Kinh doanh và chuyển sang quyền tự động theo chức vụ/nhiệm vụ.
         Chỉ tài khoản <strong>Sẵn sàng</strong> (mọi quyền cũ đã có nguồn thay thế đã kiểm chứng) mới chuyển đổi được.
-        Toàn bộ nhân sự Kinh doanh, Super Admin và tài khoản có quyền tùy chỉnh luôn được bảo vệ. Không gì thay đổi cho tới khi bạn xác nhận.
+        Toàn bộ nhân sự Kinh doanh, Super Admin và tài khoản có quyền bổ sung luôn được bảo vệ. Không gì thay đổi cho tới khi bạn xác nhận.
       </p>
       <div className="flex flex-wrap gap-2">
         {([['all', `Tất cả · ${t.accounts}`], ['ready', `Sẵn sàng · ${t.ready}`], ['review', `Cần xử lý · ${t.review}`], ['protected', `Được bảo vệ · ${t.protected}`]] as [Filter, string][]).map(([f, label]) => (
@@ -157,7 +157,7 @@ export function PermissionCleanup() {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Xác nhận chuyển đổi quyền</DialogTitle></DialogHeader>
           <div className="space-y-3 text-sm">
-            <p>Bạn sắp gỡ Role trực tiếp cũ của <strong>{picked.size} tài khoản</strong> đã đạt trạng thái Sẵn sàng. Quyền Kinh doanh, Super Admin và quyền tùy chỉnh được giữ nguyên. Hệ thống sẽ kiểm tra lại từng tài khoản ngay trước khi gỡ; nếu có thay đổi so với bản xem trước, thao tác bị hủy. Thao tác có nhật ký và có thể khôi phục.</p>
+            <p>Bạn sắp gỡ Role trực tiếp cũ của <strong>{picked.size} tài khoản</strong> đã đạt trạng thái Sẵn sàng. Quyền Kinh doanh, Super Admin và quyền bổ sung được giữ nguyên. Hệ thống sẽ kiểm tra lại từng tài khoản ngay trước khi gỡ; nếu có thay đổi so với bản xem trước, thao tác bị hủy. Thao tác có nhật ký và có thể khôi phục.</p>
             <p>Nhập <strong>{CONFIRM_TEXT}</strong> để xác nhận:</p>
             <Input aria-label="Xác nhận chuyển đổi" value={confirmText} onChange={e => setConfirmText(e.target.value)} />
           </div>

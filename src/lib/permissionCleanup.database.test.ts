@@ -94,7 +94,7 @@ it('ba trạng thái: Super Admin và toàn bộ nhân sự Kinh doanh được 
   expect(byId[BIZM].status).toBe('protected');
   expect(byId[BIZM].group).toBe('D');
   expect(byId[CUSTOM].status).toBe('review');
-  expect(byId[CUSTOM].reasons.join(' ')).toMatch(/quyền tùy chỉnh/);
+  expect(byId[CUSTOM].reasons.join(' ')).toMatch(/quyền bổ sung/);
   expect(byId[MKT].status).toBe('review');
   expect(byId[MKT].lost).toEqual(['video.approve', 'video.create']);
   expect(byId[MKT].reasons.join(' ')).toMatch(/Chưa được bổ nhiệm/);
@@ -138,7 +138,7 @@ it('execute chỉ gỡ tài khoản Sẵn sàng và lưu bản sao khôi phục'
   const r = await execute([MKT, CUSTOM], p.fingerprint);
   expect(r.removed.map(x => x.role_id)).toEqual(['role-video']);
   expect(r.skipped).toHaveLength(1);
-  expect(r.skipped[0].reason).toMatch(/quyền tùy chỉnh/);
+  expect(r.skipped[0].reason).toMatch(/quyền bổ sung/);
   const remaining = await db.query('select user_id, role_id from user_roles order by user_id');
   expect(remaining.rows).toEqual([
     { user_id: CUSTOM, role_id: 'role-video' },
