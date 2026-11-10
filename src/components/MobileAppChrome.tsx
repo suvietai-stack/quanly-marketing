@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useRouter, useRouterState } from '@tanstack/react-router';
-import { ArrowLeft, Bell, Home, ListChecks, Menu, User } from 'lucide-react';
+import { ArrowLeft, Bell, ClipboardCheck, Home, ListChecks, Menu, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { mobilePage, safeMobilePrevious } from '@/lib/mobileShell';
+import { badgeText } from '@/lib/approvals/api';
 import type { NavGroup } from '@/lib/navigation';
 
-export function MobileAppChrome({ groups, userId, name, brandName, logo, notifications, onMenu }: {
-  groups: NavGroup[]; userId?: string; name?: string; brandName: string; logo: ReactNode; notifications: ReactNode; onMenu: () => void;
+export function MobileAppChrome({ groups, userId, name, brandName, logo, notifications, approvals, onMenu }: {
+  groups: NavGroup[]; userId?: string; name?: string; brandName: string; logo: ReactNode; notifications: ReactNode; approvals?: { count: number }; onMenu: () => void;
 }) {
   const router = useRouter();
   const location = useRouterState({ select: s => s.location });
@@ -68,6 +69,7 @@ export function MobileAppChrome({ groups, userId, name, brandName, logo, notific
     <nav ref={footer} aria-label="Điều hướng mobile" className={cn('mobile-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t bg-card px-2 pt-2', keyboard && 'mobile-keyboard-open')}>
       <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', home && 'text-primary bg-accent')}><Link to="/" search={{}} aria-current={home ? 'page' : undefined}><Home className="h-5 w-5" />Trang chủ</Link></Button>
       {tasks && <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', location.pathname.startsWith('/tasks') && 'text-primary bg-accent')}><Link to="/tasks" aria-current={location.pathname.startsWith('/tasks') ? 'page' : undefined}><ListChecks className="h-5 w-5" />Công việc</Link></Button>}
+      {approvals && <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', location.pathname === '/approvals' && 'text-primary bg-accent')}><Link to="/approvals" aria-current={location.pathname === '/approvals' ? 'page' : undefined} aria-label={`Phê duyệt${approvals.count > 0 ? ` (${badgeText(approvals.count)} chờ)` : ''}`}><span className="relative"><ClipboardCheck className="h-5 w-5" />{approvals.count > 0 && <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-semibold flex items-center justify-center">{badgeText(approvals.count)}</span>}</span>Phê duyệt</Link></Button>}
       <Button variant="ghost" className="mobile-notifications-tab h-14 flex-col gap-1 text-[10px]" onClick={() => header.current?.querySelector<HTMLButtonElement>('[aria-label="Thông báo"]')?.click()}><Bell className="h-5 w-5" />Thông báo</Button>
       <Button asChild variant="ghost" className={cn('h-14 flex-col gap-1 text-[10px]', location.pathname === '/profile' && 'text-primary bg-accent')}><Link to="/profile" aria-current={location.pathname === '/profile' ? 'page' : undefined}><User className="h-5 w-5" />Cá nhân</Link></Button>
     </nav>
