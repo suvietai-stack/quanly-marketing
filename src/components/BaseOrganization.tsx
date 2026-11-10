@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, ShieldCheck, Eye, Copy, Save, X, Users, Settings2, Network } from 'lucide-react';
 import { PageHeader } from '@/components/AppShell';
 import { OrgChart, type SlotRef } from '@/components/OrgChart';
+import { OrgUnitDrawer } from '@/components/OrgUnitDrawer';
 import { assignSlot, ensureDefaultStructure, missingDefaultStructure, orgConfigDiff, slotCapacity, slotHistory, titleHolders, titleKind, titleLevel, unassignSlot } from '@/lib/orgStructure';
 import { orgQuery } from '@/lib/biz/organizationQueries';
 import { positionsQuery } from '@/lib/biz/positionQueries';
@@ -20,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { baseOrgApi } from '@/lib/basePermissions/api';
-import { emptyConfig, type Bundle, type OrgConfig, type Preview, type Rule, type EffectivePermission } from '@/lib/basePermissions/types';
+import { emptyConfig, type Bundle, type OrgActor, type OrgConfig, type Preview, type Rule, type EffectivePermission } from '@/lib/basePermissions/types';
 import { useAuth, useCurrentUser } from '@/lib/auth';
 
 const id = () => crypto.randomUUID();
@@ -70,6 +71,10 @@ export function BaseOrganization() {
   const [titleUnit, setTitleUnit] = useState('');
   const [titleLevelNew, setTitleLevelNew] = useState('0');
   const [titleKindNew, setTitleKindNew] = useState('staff');
+  const [manageUnit, setManageUnit] = useState<ChartNode | null>(null);
+  const [membershipMode, setMembershipMode] = useState(false);
+  const [reason, setReason] = useState('');
+  const [ruleUnit, setRuleUnit] = useState('');
   const effective = useQuery({ queryKey: ['base-effective', user?.id, staffId], queryFn: () => baseOrgApi.effective(staffId), enabled: !!staffId, retry: false });
   const bizOrg = useQuery({ ...orgQuery(user?.id ?? ''), enabled: !!user?.id, retry: false });
   const bizPositions = useQuery({ ...positionsQuery(user?.id ?? ''), enabled: !!user?.id, retry: false });
@@ -80,8 +85,34 @@ export function BaseOrganization() {
   const catalog = data.data?.catalog ?? [];
   const bundle = config.bundles.find(b => b.id === selectedBundle);
   const run = async (fn: () => Promise<void>) => { setBusy(true); setError(''); try { await fn(); } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); } };
-  const showPreview = () => run(async () => { await baseOrgApi.catalog(); setPreview(await baseOrgApi.preview(data.data?.revision ?? 0, config)); setConfirmation(''); });
-  const apply = () => run(async () => { if (!preview) return; await baseOrgApi.apply(preview.id, confirmation); setPreview(null); setDirty(false); await qc.invalidateQueries({ queryKey: ['base-org'] }); await qc.invalidateQueries({ queryKey: ['base-effective'] }); await useAuth.getState().reload(); });
+  const actor: OrgActor = data.data?.actor ?? { super: true, assign_all: true, assign_units: [], appoint_all: true, appoint_units: [], view_history: true };
+  const canEditStructure = actor.super;
+  const canAssignAnywhere = actor.super || actor.assign_all || actor.assign_units.length > 0 || actor.appoint_all || actor.appoint_units.length > 0;
+  const original = data.data?.config;
+  const sectionChanged = (k: keyof OrgConfig) => !!original && JSON.stringify(original[k]) !== JSON.stringify(config[k]);
+  const permissionChanged = sectionChanged('defaults') || sectionChanged('bundles') || sectionChanged('grants') || sectionChanged('bindings');
+  const membershipOnly = dirty && !permissionChanged && !sectionChanged('units') && !sectionChanged('titles');
+  const showPreview = () => run(async () => {
+    setConfirmation(''); setReason('');
+    if (membershipOnly) {
+      // Thay đổi thuần phân công: xem trước cục bộ dễ đọc, áp dụng qua đường riêng có kiểm tra phạm vi.
+      setMembershipMode(true);
+      setPreview({ id: '', revision: data.data?.revision ?? 0, impact: [], expires_at: '' });
+      return;
+    }
+    setMembershipMode(false);
+    await baseOrgApi.catalog();
+    setPreview(await baseOrgApi.preview(data.data?.revision ?? 0, config));
+  });
+  const apply = () => run(async () => {
+    if (!preview) return;
+    if (membershipMode) await baseOrgApi.applyMemberships(data.data?.revision ?? 0, config.memberships, reason);
+    else await baseOrgApi.apply(preview.id, confirmation);
+    setPreview(null); setDirty(false);
+    await qc.invalidateQueries({ queryKey: ['base-org'] });
+    await qc.invalidateQueries({ queryKey: ['base-effective'] });
+    await useAuth.getState().reload();
+  });
   const saveRule = () => {
     if (!editing || !permission) return;
     const r: Rule = { id: id(), permission, effect: effect as Rule['effect'], scope: permission.startsWith('biz.crm_') ? 'own' : 'native', active, ...(end ? { ends_at: new Date(end).toISOString() } : {}) };
