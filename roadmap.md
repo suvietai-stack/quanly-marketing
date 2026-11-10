@@ -1,5 +1,15 @@
 # Lộ trình hiện tại
 
+## Hoàn thiện Cơ cấu tổ chức toàn Base (xong phần code)
+- [x] Backend: quyền org.* có phạm vi đơn vị, RPC áp dụng phân công nguyên tử có kiểm tra phạm vi (migration 0306); org.manage_structure/org.manage_permissions còn bản nháp
+- [x] Drawer quản lý đơn vị 5 tab: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị
+- [x] Gán nhiều nhân sự bằng checkbox (tìm kiếm, lọc chưa phân công/đơn vị khác, chọn tất cả, báo lỗi từng người)
+- [x] Điều chuyển + kiêm nhiệm toàn Base (kết thúc phân công cũ có xác nhận khi đụng vị trí quản lý)
+- [x] Xem trước dễ đọc (không JSON thô); chỉ bắt nhập ÁP DỤNG PHÂN QUYỀN khi thật sự sửa quyền
+- [x] Lọc chức danh theo đơn vị ở tab Nhân sự
+- [x] 28/28 test orgStructure, 53/53 gồm basePermissions, typecheck/build OK, cổng RPC xác thực đúng
+- [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng
+
 ## Trung tâm Phê duyệt toàn Base (xong phần code)
 - [x] Mở rộng `approval_center_read` 15 nguồn, deep link, nhóm lọc, cô lập lỗi
 - [ ] Nghiệm thu sau đăng nhập trên Preview — chờ người dùng đăng nhập

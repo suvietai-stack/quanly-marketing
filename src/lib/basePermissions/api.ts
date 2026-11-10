@@ -3,7 +3,8 @@ import { PERMISSIONS, PERMISSION_DEPENDS } from '@/lib/auth';
 import type { Json } from '@/integrations/supabase/types';
 import type { EffectiveAccess, OrgConfig, OrgRead, Preview } from './types';
 export const baseOrgApi = {
-  async read(): Promise<OrgRead> { await baseOrgApi.catalog(); const { data, error } = await supabase.rpc('base_org_read'); if (error) throw new Error(error.message); return data as unknown as OrgRead; },
+  async read(): Promise<OrgRead> { const { data, error } = await supabase.rpc('base_org_read'); if (error) throw new Error(error.message); const read = data as unknown as OrgRead; if (read.actor?.super !== false) await baseOrgApi.catalog(); return read; },
+  async applyMemberships(revision: number, memberships: OrgConfig['memberships'], reason: string): Promise<void> { const { error } = await supabase.rpc('base_org_membership_apply', { _revision: revision, _memberships: memberships as unknown as Json, _reason: reason }); if (error) throw new Error(error.message); },
   async effective(user: string): Promise<EffectiveAccess> { const { data, error } = await supabase.rpc('base_permissions_effective', { _user: user }); if (error) throw new Error(error.message); return data as unknown as EffectiveAccess; },
   async catalog(): Promise<void> { const { error } = await supabase.rpc('base_permission_catalog_sync', { _catalog: PERMISSIONS.map(p => ({ key: p.key, label: p.label, module: p.group, dependencies: PERMISSION_DEPENDS[p.key] ?? [] })) as Json }); if (error) throw new Error(error.message); },
   async preview(revision: number, config: OrgConfig): Promise<Preview> { const { data, error } = await supabase.rpc('base_org_preview', { _revision: revision, _config: config as unknown as Json }); if (error) throw new Error(error.message); return data as unknown as Preview; },

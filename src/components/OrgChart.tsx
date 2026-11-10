@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Building2, ChevronDown, ChevronRight, Crown, History, MoreVertical, Search, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, Crown, History, MoreVertical, Search, Settings2, UserMinus, UserPlus, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -27,6 +27,7 @@ interface ChartActions {
   onSlotHistory?: (ref: SlotRef) => void;
   onBizAppoint?: (node: ChartNode) => void;
   onBizHistory?: (node: ChartNode) => void;
+  onManageUnit?: (node: ChartNode) => void;
 }
 
 function PersonButton({ person, onOpen }: { person: ChartPerson; onOpen: (p: ChartPerson) => void }) {
@@ -140,6 +141,11 @@ function Branch({ node, depth, query, actions, onOpen }: { node: ChartNode; dept
             {count > 0 && <span className="ml-1 text-xs font-normal text-muted-foreground">· {count} nhân sự</span>}
           </p>
         </div>
+        {actions.canManage && actions.onManageUnit && !node.biz && (
+          <Button variant="outline" size="sm" className="mt-0.5 h-7 shrink-0" aria-label={`Quản lý ${node.name}`} onClick={() => actions.onManageUnit!(node)}>
+            <Settings2 className="h-3.5 w-3.5 mr-1" />Quản lý
+          </Button>
+        )}
       </div>
       {open && (
         <div className="ml-4 space-y-0.5 pt-1">
@@ -180,7 +186,7 @@ function BlockCard({ node, query, actions, onOpen }: { node: ChartNode; query: s
   );
 }
 
-export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onBizAppointExecutive }: {
+export function OrgChart({ config, staff, biz, positions, bizUnavailable, canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onBizAppointExecutive, onManageUnit }: {
   config: OrgConfig;
   staff: { id: string; name: string }[];
   biz?: OrgData;
@@ -190,7 +196,7 @@ export function OrgChart({ config, staff, biz, positions, bizUnavailable, canMan
 } & ChartActions) {
   const [query, setQuery] = useState('');
   const [person, setPerson] = useState<ChartPerson | null>(null);
-  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory };
+  const actions: ChartActions = { canManage, onOpenStaff, onAssign, onUnassign, onSlotHistory, onBizAppoint, onBizHistory, onManageUnit };
   const nameOf = useMemo(() => {
     const map = new Map(staff.map(s => [s.id, s.name]));
     return (id: string) => map.get(id) ?? 'Nhân sự';

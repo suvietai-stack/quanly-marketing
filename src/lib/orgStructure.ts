@@ -166,6 +166,107 @@ export function unassignSlot(config: OrgConfig, unitId: string, titleId: string,
   };
 }
 
+/** Hình thức phân công: mặc định là chính; kiêm nhiệm phải khai báo rõ. */
+export function membershipKind(m: Pick<Membership, 'kind'>): 'primary' | 'concurrent' {
+  return m.kind ?? 'primary';
+}
+
+/** Đơn vị + toàn bộ đơn vị con cháu trong cây cấu hình. */
+export function unitDescendants(config: OrgConfig, unitId: string): string[] {
+  const out = [unitId];
+  for (let i = 0; i < out.length; i++) {
+    for (const u of config.units) if (u.parent_id === out[i] && !out.includes(u.id)) out.push(u.id);
+  }
+  return out;
+}
+
+/** Đường dẫn đơn vị trong cây, ví dụ "Khối Marketing / Bộ phận Marketing". */
+export function unitPath(config: OrgConfig, unitId: string): string {
+  const parts: string[] = [];
+  let cur = config.units.find(u => u.id === unitId);
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    parts.unshift(cur.name);
+    cur = config.units.find(u => u.id === cur?.parent_id);
+  }
+  return parts.join(' / ');
+}
+
+export interface BatchResult { config: OrgConfig; added: string[]; skipped: { userId: string; reason: string }[] }
+
+/**
+ * Gán nhiều nhân sự vào một ô chức danh bằng checkbox.
+ * Ô một người: chỉ nhận khi đang trống, ngược lại báo lỗi từng người (dùng Đổi người để thay thế).
+ * Ô nhiều người: người đã giữ được giữ nguyên và báo "đã có", không thêm trùng — không áp dụng một phần âm thầm.
+ */
+export function assignMany(config: OrgConfig, unitId: string, titleId: string, userIds: string[], kind: 'primary' | 'concurrent' = 'primary'): BatchResult {
+  const title = config.titles.find(t => t.id === titleId);
+  const single = title ? slotCapacity(title) === 1 : true;
+  let next = config;
+  const added: string[] = [];
+  const skipped: { userId: string; reason: string }[] = [];
+  const now = nowIso();
+  for (const userId of [...new Set(userIds)]) {
+    const already = next.memberships.some(m => m.active && m.unit_id === unitId && m.title_id === titleId && m.user_id === userId);
+    if (already) { skipped.push({ userId, reason: 'Đã có phân công này' }); continue; }
+    if (single && slotHolders(next, unitId, titleId).length > 0) { skipped.push({ userId, reason: 'Vị trí một người đang có người giữ' }); continue; }
+    next = { ...next, memberships: [...next.memberships, { id: crypto.randomUUID(), user_id: userId, unit_id: unitId, title_id: titleId, active: true, starts_at: now, kind }] };
+    added.push(userId);
+  }
+  return { config: next, added, skipped };
+}
+
+export interface TransferResult { config: OrgConfig; moved: string[]; skipped: { userId: string; reason: string }[]; endedManagers: { userId: string; unitId: string; titleId: string }[] }
+
+/**
+ * Điều chuyển nhân sự sang đơn vị mới: kết thúc phân công chính hiện tại (trong phạm vi đơn vị nguồn
+ * được chọn, mặc định toàn bộ), tạo phân công chính mới, giữ nguyên kiêm nhiệm ngoài phạm vi và lịch sử.
+ * endedManagers liệt kê vị trí quản lý sẽ kết thúc — giao diện phải yêu cầu xác nhận riêng trước khi gọi.
+ */
+export function transferMembers(config: OrgConfig, userIds: string[], toUnitId: string, toTitleId: string, fromUnitIds?: string[]): TransferResult {
+  const scope = fromUnitIds ? new Set(fromUnitIds) : null;
+  let next = config;
+  const moved: string[] = [];
+  const skipped: { userId: string; reason: string }[] = [];
+  const endedManagers: { userId: string; unitId: string; titleId: string }[] = [];
+  const now = nowIso();
+  for (const userId of [...new Set(userIds)]) {
+    if (next.memberships.some(m => m.active && m.unit_id === toUnitId && m.title_id === toTitleId && m.user_id === userId)) {
+      skipped.push({ userId, reason: 'Đã có phân công này tại đơn vị đích' });
+      continue;
+    }
+    const ending = next.memberships.filter(m => m.active && m.user_id === userId && membershipKind(m) === 'primary' && (!scope || scope.has(m.unit_id)));
+    for (const m of ending) {
+      const t = next.titles.find(x => x.id === m.title_id);
+      if (t && slotCapacity(t) === 1) endedManagers.push({ userId, unitId: m.unit_id, titleId: m.title_id! });
+    }
+    next = {
+      ...next,
+      memberships: [
+        ...next.memberships.map(m => ending.some(e => e.id === m.id) ? { ...m, active: false, ends_at: now } : m),
+        { id: crypto.randomUUID(), user_id: userId, unit_id: toUnitId, title_id: toTitleId, active: true, starts_at: now, kind: 'primary' as const },
+      ],
+    };
+    moved.push(userId);
+  }
+  return { config: next, moved, skipped, endedManagers };
+}
+
+/** Kết thúc một phân công theo ID — dùng để kết thúc riêng từng kiêm nhiệm, giữ lịch sử. */
+export function endMembership(config: OrgConfig, membershipId: string): OrgConfig {
+  const now = nowIso();
+  return { ...config, memberships: config.memberships.map(m => m.id === membershipId && m.active ? { ...m, active: false, ends_at: now } : m) };
+}
+
+/** Xem trước kết quả điều chuyển (không thay đổi cấu hình) để giao diện hiển thị cảnh báo trước khi áp dụng. */
+export function transferPreview(config: OrgConfig, userIds: string[], fromUnitIds?: string[]): { ending: Membership[]; endedManagers: Membership[] } {
+  const scope = fromUnitIds ? new Set(fromUnitIds) : null;
+  const ending = config.memberships.filter(m => m.active && userIds.includes(m.user_id) && membershipKind(m) === 'primary' && (!scope || scope.has(m.unit_id)));
+  const endedManagers = ending.filter(m => { const t = config.titles.find(x => x.id === m.title_id); return t ? slotCapacity(t) === 1 : false; });
+  return { ending, endedManagers };
+}
+
 const kindLabel = (k: 'manager' | 'staff') => (k === 'manager' ? 'Quản lý' : 'Nhân viên');
 
 /**
