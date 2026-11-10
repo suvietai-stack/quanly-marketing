@@ -91,6 +91,22 @@ export function BaseOrganization() {
     setEditing(null);
   };
   const openRule = (v: typeof editing) => { setPermission(''); setEffect('ALLOW'); setEnd(''); setActive(false); setEditing(v); };
+  /** Bổ nhiệm/thay đổi người phụ trách đơn vị Kinh doanh ngay trên sơ đồ — ghi qua đường bổ nhiệm Kinh doanh hiện có, giữ nguyên quyền và lịch sử. */
+  const appointBiz = (code: string, scope?: { systemId?: string; departmentId?: string; teamId?: string }) => {
+    const now = bizPositions.data?.server_now ?? new Date().toISOString();
+    const match = (a: { system_id: string | null; department_id: string | null; team_id: string | null }) =>
+      (!!scope?.systemId && a.system_id === scope.systemId) || (!!scope?.departmentId && a.department_id === scope.departmentId) || (!!scope?.teamId && a.team_id === scope.teamId);
+    const anyScope = scope?.systemId || scope?.departmentId || scope?.teamId;
+    const holder = bizPositions.data?.appointments.find(a => a.position_snapshot.code === code && appointmentCurrent(a, now) && (!anyScope || match(a)))
+      ?? bizOrg.data?.managers.find(m => m.position === code && appointmentCurrent({ ...m, status: 'active' }, now) && (!anyScope || match(m)));
+    setBizAppt({
+      positionCode: code,
+      systemId: scope?.systemId, departmentId: scope?.departmentId, teamId: scope?.teamId,
+      replacesId: holder && 'position_id' in holder ? holder.id : undefined,
+      legacyReplacesId: holder && !('position_id' in holder) ? holder.id : undefined,
+    });
+  };
+  const appointBizNode = (node: ChartNode) => node.leaderCode && appointBiz(node.leaderCode, node.biz);
   if (data.isPending) return <p className="p-6 text-muted-foreground">Đang tải cơ cấu tổ chức…</p>;
   if (data.error) return <div className="space-y-3"><p className="text-destructive">{data.error.message}</p><Button variant="outline" onClick={() => data.refetch()}>Thử lại</Button></div>;
   const groupPermissions = (rows: EffectivePermission[]) => [...new Set(rows.map(p => p.module))].map(module => <details key={module} open className="border-b"><summary className="py-3 font-semibold text-sm cursor-pointer">{module}</summary>{rows.filter(p => p.module === module && `${p.label} ${p.key}`.toLocaleLowerCase('vi').includes(permissionSearch.toLocaleLowerCase('vi'))).map(p => <PermissionRow key={p.key} p={p} />)}</details>);
