@@ -2290,6 +2290,27 @@
       "when": 1794321822987,
       "tag": "0326_permission_cleanup_preview_set_based",
       "breakpoints": true
+    },
+    {
+      "idx": 327,
+      "version": "7",
+      "when": 1794322713983,
+      "tag": "0327_permission_cleanup_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 328,
+      "version": "7",
+      "when": 1794322877878,
+      "tag": "0328_permission_cleanup_eval_reasons_array_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 329,
+      "version": "7",
+      "when": 1794322966374,
+      "tag": "0329_permission_cleanup_preview_concat_fix",
+      "breakpoints": true
     }
   ]
 }

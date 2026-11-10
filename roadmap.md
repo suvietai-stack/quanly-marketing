@@ -106,3 +106,9 @@
 - [x] UI "Chuyển đổi quyền cũ" trong Nâng cao: phân nhóm A-D, lọc, chi tiết, xác nhận gõ chữ, lịch sử + khôi phục
 - [x] 7/7 test DB mới; xem trước dữ liệu thật trên Preview (23 tài khoản: 15 bảo vệ, 1 cần xác nhận, 7 cần xem lại, 0 sẵn sàng)
 - [ ] Admin bổ nhiệm chức vụ cho nhân sự ngoài KD rồi xác nhận chuyển đổi trên màn hình — chờ người dùng; KHÔNG tự thực thi, KHÔNG Publish
+
+## Vá Giai đoạn 3: an toàn chuyển đổi quyền (xong)
+- [x] 0327-0329: execute chỉ gỡ tài khoản "Sẵn sàng" (đánh giá chung preview/execute), bảo vệ KD theo dữ liệu tổ chức, vân tay v2 (Role+permission/bổ nhiệm/nhiệm vụ/trạng thái), công việc đang chờ chặn sẵn sàng, khôi phục không ghi đè + báo xung đột
+- [x] UI 3 trạng thái (Sẵn sàng/Cần xử lý/Được bảo vệ), lý do tiếng Việt, checkbox chỉ cho Sẵn sàng
+- [x] 8/8 test DB mới + hồi quy 131/131, typecheck/build đạt; kiểm kê thật: 15 bảo vệ, 8 cần xử lý, 0 sẵn sàng
+- [ ] Admin bổ nhiệm chức vụ rồi tự xác nhận chuyển đổi — chờ người dùng; KHÔNG tự thực thi, KHÔNG Publish

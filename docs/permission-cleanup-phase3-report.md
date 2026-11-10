@@ -1,39 +1,44 @@
-# Giai đoạn 3 — Làm sạch quyền cũ, chuyển sang Role chuẩn
+# Giai đoạn 3 + Vá an toàn — Làm sạch quyền cũ, chuyển sang Role chuẩn
 
-Ngày: 2026-11-10. Trạng thái: công cụ đã triển khai và kiểm chứng trên Preview; **chưa thực thi chuyển đổi dữ liệu thật** — chờ Admin xác nhận trên màn hình xem trước. Chưa Publish.
+Cập nhật: 2026-11-10 (đợt vá). Trạng thái: công cụ đã vá và kiểm chứng trên Preview; **chưa thực thi chuyển đổi dữ liệu thật** — chờ Admin xác nhận trên màn hình xem trước. Chưa Publish.
 
-## Đã triển khai
+## Ba lỗi an toàn đã sửa (migrations 0327, 0328, 0329)
 
-### Backend (migrations 0324, 0325, 0326)
-- `base_perm_cleanup_runs`: nhật ký + bản sao khôi phục từng lần chạy (ai, khi nào, gỡ Role nào, trạng thái khôi phục).
-- `private.cleanup_role_protected`: bảo vệ Role quản trị (role-admin/super-admin), Role chứa quyền biz.*/k3.*, Role chứa quyền quản trị tài khoản.
-- `private.cleanup_fingerprint`: vân tay toàn bộ user_roles + overrides — đổi bất kỳ dòng nào thì bắt buộc xem trước lại.
-- `public.base_perm_cleanup_preview`: kiểm kê toàn bộ tài khoản đang hoạt động có nguồn quyền trực tiếp; phân nhóm A (Quản trị) / B (Kinh doanh) / C (Ngoài Kinh doanh) / D (Kiêm nhiệm); tính quyền trước/sau theo tập hợp với một cấu hình dùng chung (nhanh, cùng ngữ nghĩa DENY > ALLOW > override > Role trực tiếp); trạng thái ready / review / needs_confirm / protected.
-- `public.base_perm_cleanup_execute`: chỉ Super Admin; khóa vân tay; bỏ qua tài khoản quản trị và tài khoản có quyền tùy chỉnh; chỉ gỡ Role không được bảo vệ; lưu bản sao khôi phục nguyên tử cùng transaction.
-- `public.base_perm_cleanup_restore`: trả lại đúng các dòng đã gỡ của một lần chạy, chặn khôi phục lặp.
+1. **Chặn reset khi chưa có quyền thay thế**: trước đây tài khoản "Cần xem lại" vẫn chọn được và backend không bắt buộc trạng thái sẵn sàng. Nay preview và execute dùng chung một hàm đánh giá `private.cleanup_account_eval` — execute đánh giá lại từng tài khoản tại thời điểm chạy và CHỈ gỡ khi đạt "Sẵn sàng"; nếu không có tài khoản nào đủ điều kiện, toàn bộ thao tác bị hủy. Giao diện chỉ còn 3 trạng thái: Sẵn sàng / Cần xử lý / Được bảo vệ; checkbox chỉ mở cho Sẵn sàng; lý do hiển thị bằng tiếng Việt.
+2. **Bảo vệ toàn bộ nhân sự Kinh doanh theo dữ liệu tổ chức**: `private.cleanup_is_biz_staff` kiểm tra membership phòng KD, bổ nhiệm KD còn hiệu lực, phân công quản lý và kiêm nhiệm — không dựa vào tên Role. Nhân sự KD (kể cả kiêm nhiệm Marketing) được đánh dấu Được bảo vệ, không chọn được, không gỡ Role ngoài KD của họ trong đợt này.
+3. **Chống chuyển đổi theo bản xem trước đã cũ**: vân tay v2 bao phủ Role trực tiếp, permission của từng Role, quyền cá nhân, bổ nhiệm chức vụ, liên kết chức vụ–Role, nhiệm vụ chuyên môn Marketing và trạng thái tài khoản. Đổi bất kỳ phần nào → execute từ chối và yêu cầu xem trước lại.
 
-### Giao diện
-- Cơ cấu tổ chức → Cài đặt → Role & Phân quyền → Nâng cao → **Chuyển đổi quyền cũ** (`src/components/PermissionCleanup.tsx`, `src/lib/permissionCleanup.ts`).
-- Tổng quan theo nhóm trạng thái, bảng lọc được, chi tiết từng tài khoản (Role giữ/gỡ, nguồn quyền tự động thay thế, danh sách quyền sẽ mất, cảnh báo quyền tùy chỉnh).
-- Xác nhận bằng gõ `CHUYỂN ĐỔI QUYỀN`; nút "Xem trước lại"; lịch sử chạy kèm nút Khôi phục.
+## Hoàn thiện khác
 
-## Kiểm kê dữ liệu thật (xem trước, chưa thực thi)
-- 23 tài khoản có nguồn quyền trực tiếp.
-- Được bảo vệ: 15 (2 Super Admin; 13 nhân sự Kinh doanh/kiêm nhiệm với Role Kinh doanh hoặc Viewer Ban Giám Đốc).
-- Cần xác nhận: 1 (tài khoản có 69 quyền tùy chỉnh riêng — hệ thống không tự gỡ).
-- Cần xem lại: 7 — vì nhân sự chưa được bổ nhiệm vào chức vụ trong Cơ cấu tổ chức nên quyền thay thế từ chức vụ chưa có; số quyền sẽ mất: Kế Toán 13, Hành Chính Nhân Sự 41, Cung Ứng 14, Content Web 32, Designer 28 (×2), Leader Marketing 288.
-- Sẵn sàng: 0 — đúng kỳ vọng: chưa thể làm sạch an toàn tới khi bổ nhiệm chức vụ cấp quyền thay thế.
+- **Kiểm tra quyền thay thế**: chỉ Sẵn sàng khi mọi quyền từ Role cũ đã có nguồn thay thế đã kiểm chứng (kênh tự động chỉ áp dụng quyền trong danh sách đã xác minh), có bổ nhiệm chức vụ hoặc nhiệm vụ chuyên môn còn hiệu lực, không có quyền tùy chỉnh riêng.
+- **Bảo toàn công việc đang chạy**: `private.cleanup_pending_work` đếm đơn nghỉ phép đang chờ (xin hoặc duyệt), việc 3K đang làm, yêu cầu tài chính chưa kết thúc — có thì tài khoản về Cần xử lý kèm lý do.
+- **Khôi phục an toàn**: chỉ trả lại đúng dòng đã gỡ (không bao giờ xóa/ghi đè quyền mới phát sinh); quyền mới sau reset được báo là xung đột để đối chiếu thủ công; chống khôi phục lặp; mọi thao tác trong một transaction.
 
-## Kiểm thử
-- 7/7 test DB (PGlite, migration thật 0324–0326): phân nhóm, quyền được thay thế không tính mất, quyền chưa kiểm chứng vẫn tính mất, thực thi chỉ gỡ Role không bảo vệ + lưu backup, vân tay đổi bắt xem trước lại, khôi phục đúng và chống lặp, non-Super-Admin bị chặn cả ba RPC, chạy lại không xóa thêm.
-- Hồi quy 147/147; typecheck sạch; build OK; xác minh giao diện trên Preview bằng tài khoản Super Admin thật (chỉ đọc).
+## File/RPC thay đổi
 
-## Trạng thái theo yêu cầu bàn giao
-- Đã triển khai code: có. Đã kiểm thử: có. Đã xem trước dữ liệu thật: có.
-- Đã được Admin xác nhận: CHƯA. Đã thực hiện chuyển đổi dữ liệu thật: CHƯA.
+- Migrations: 0327 (hardening chính), 0328 (vá nối mảng lý do), 0329 (vá thứ tự nối JSON trong preview).
+- RPC: `base_perm_cleanup_preview`, `base_perm_cleanup_execute`, `base_perm_cleanup_restore` (thay thế); private: `cleanup_account_eval`, `cleanup_is_biz_staff`, `cleanup_pending_work`, `cleanup_fingerprint` v2.
+- Giao diện: `src/components/PermissionCleanup.tsx`, `src/lib/permissionCleanup.ts` (3 trạng thái, lý do, checkbox khóa).
+- Test: `src/lib/permissionCleanup.database.test.ts` (viết lại, 8 tình huống).
 
-## Việc cần làm trước khi chuyển đổi thật
-1. Bổ nhiệm nhân sự ngoài Kinh doanh vào chức vụ trong Cơ cấu tổ chức (hiện hầu hết "Chưa phân công vị trí").
-2. Kiểm chứng thêm quyền quản lý theo phạm vi để giảm danh sách "quyền sẽ mất" (đặc biệt Leader Marketing 288 quyền, HCNS 41, Content Web 32).
-3. Xử lý riêng tài khoản có quyền tùy chỉnh (69 quyền) — đối chiếu thủ công với Role Video chuẩn.
-4. Role riêng cho Nhân viên Đóng hàng (chưa có Role phù hợp).
+## Kiểm thử (môi trường cô lập PGlite, migration thật 0324–0329)
+
+8/8 đạt: phân loại 3 trạng thái; bảo vệ Super Admin / KD / kiêm nhiệm KD; đủ nguồn thay thế ⇒ Sẵn sàng; công việc đang chờ chặn Sẵn sàng; execute từ chối tài khoản Cần xử lý và hủy khi không có tài khoản Sẵn sàng; execute chỉ gỡ tài khoản Sẵn sàng + lưu bản sao; vân tay phát hiện đổi permission Role / bổ nhiệm / nhiệm vụ Marketing / trạng thái tài khoản và trở về giá trị cũ khi hoàn tác; khôi phục đúng, không ghi đè quyền mới, báo xung đột, chống lặp; non-Super-Admin bị chặn cả ba RPC. Hồi quy phân quyền/bổ nhiệm/chuyên môn: 131/131 đạt; typecheck sạch; build OK.
+
+## Kiểm kê database thật (chỉ đọc, chưa thực thi)
+
+23 tài khoản có nguồn quyền trực tiếp: **Được bảo vệ 15** (2 Super Admin; 13 nhân sự KD/kiêm nhiệm theo dữ liệu tổ chức), **Cần xử lý 8** (7 thiếu quyền thay thế — Kế Toán 13, HCNS 41, Cung Ứng 14, Content Web 32, Designer 28 ×2, Leader Marketing 288; 1 có 69 quyền tùy chỉnh riêng), **Sẵn sàng 0**.
+
+## Rủi ro còn tồn tại
+
+- Nhân sự ngoài KD chưa được bổ nhiệm chức vụ nên chưa thể chuyển đổi an toàn.
+- Quyền quản lý theo phạm vi (toàn Khối/Phòng/Base) chưa được kiểm chứng nên chưa tự kế thừa — Leader Marketing mất tới 288 quyền nếu gỡ ngay.
+- Tài khoản có quyền tùy chỉnh cần đối chiếu thủ công với Role chuẩn.
+
+## Hướng dẫn Admin chuyển đổi an toàn sau này
+
+1. Bổ nhiệm nhân sự vào chức vụ tại Cơ cấu tổ chức (hoặc giao nhiệm vụ chuyên môn Marketing).
+2. Mở Cơ cấu tổ chức → Cài đặt → Role & Phân quyền → Nâng cao → Chuyển đổi quyền cũ.
+3. Xử lý các tài khoản Cần xử lý theo lý do hiển thị (thiếu bổ nhiệm, quyền chưa có thay thế, công việc đang chờ).
+4. Khi tài khoản đạt Sẵn sàng: chọn → Xem trước lại → nhập `CHUYỂN ĐỔI QUYỀN` → thực hiện.
+5. Nếu dữ liệu đổi giữa chừng, hệ thống tự hủy và yêu cầu xem trước lại. Sai sót có thể Khôi phục từ lịch sử chuyển đổi.

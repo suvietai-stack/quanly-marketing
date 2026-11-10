@@ -63,9 +63,10 @@ export function PermissionCleanup() {
   const restore = async (runId: string) => {
     setBusy(true);
     try {
-      const { error } = await supabase.rpc('base_perm_cleanup_restore', { _run: runId });
+      const { data, error } = await supabase.rpc('base_perm_cleanup_restore', { _run: runId });
       if (error) throw error;
-      toast.success('Đã khôi phục các Role đã gỡ.'); refresh();
+      const r = data as { restored_rows: number; conflicts: unknown[] };
+      toast.success(`Đã khôi phục ${r.restored_rows} Role đã gỡ.${r.conflicts.length ? ` Lưu ý: ${r.conflicts.length} quyền mới phát sinh sau chuyển đổi được giữ nguyên, cần đối chiếu thủ công.` : ''}`); refresh();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
 
@@ -77,10 +78,11 @@ export function PermissionCleanup() {
     <div className="space-y-4 py-3">
       <p className="text-sm text-muted-foreground">
         Kiểm kê Role trực tiếp cũ ngoài Kinh doanh và chuyển sang quyền tự động theo chức vụ/nhiệm vụ.
-        Kinh doanh, Super Admin và tài khoản có quyền tùy chỉnh luôn được bảo vệ. Không gì thay đổi cho tới khi bạn xác nhận.
+        Chỉ tài khoản <strong>Sẵn sàng</strong> (mọi quyền cũ đã có nguồn thay thế đã kiểm chứng) mới chuyển đổi được.
+        Toàn bộ nhân sự Kinh doanh, Super Admin và tài khoản có quyền tùy chỉnh luôn được bảo vệ. Không gì thay đổi cho tới khi bạn xác nhận.
       </p>
       <div className="flex flex-wrap gap-2">
-        {([['all', `Tất cả · ${t.accounts}`], ['ready', `Sẵn sàng · ${t.ready}`], ['review', `Cần xem lại · ${t.review}`], ['needs_confirm', `Cần xác nhận · ${t.needs_confirm}`], ['protected', `Được bảo vệ · ${t.protected}`]] as [Filter, string][]).map(([f, label]) => (
+        {([['all', `Tất cả · ${t.accounts}`], ['ready', `Sẵn sàng · ${t.ready}`], ['review', `Cần xử lý · ${t.review}`], ['protected', `Được bảo vệ · ${t.protected}`]] as [Filter, string][]).map(([f, label]) => (
           <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>{label}</Button>
         ))}
       </div>
@@ -93,7 +95,7 @@ export function PermissionCleanup() {
           </tr></thead>
           <tbody>
             {shown.map(a => {
-              const canPick = a.status === 'ready' || a.status === 'review';
+              const canPick = a.status === 'ready';
               return (
                 <tr key={a.user_id} className="border-b align-top">
                   <td className="px-2 py-2">{canPick && <Checkbox aria-label={`Chọn ${a.name}`} checked={picked.has(a.user_id)} onCheckedChange={v => { const n = new Set(picked); if (v) n.add(a.user_id); else n.delete(a.user_id); setPicked(n); }} />}</td>
@@ -103,7 +105,10 @@ export function PermissionCleanup() {
                   <td className="px-2 py-2">{a.roles.map(r => <div key={r.role_id} className={r.protected ? 'text-muted-foreground' : ''}>{r.name}{r.protected ? ' (giữ)' : ''}</div>)}</td>
                   <td className="px-2 py-2">{a.removable.length}</td>
                   <td className="px-2 py-2">{a.lost.length > 0 ? <span className="text-destructive">{a.lost.length}</span> : 0}</td>
-                  <td className="px-2 py-2"><Badge variant={cleanupStatusTone(a.status)}>{CLEANUP_STATUS_LABELS[a.status]}</Badge></td>
+                  <td className="px-2 py-2">
+                    <Badge variant={cleanupStatusTone(a.status)}>{CLEANUP_STATUS_LABELS[a.status]}</Badge>
+                    {a.status !== 'ready' && a.reasons.length > 0 && <p className="mt-1 max-w-xs text-xs text-muted-foreground">{a.reasons[0]}</p>}
+                  </td>
                 </tr>
               );
             })}
@@ -136,10 +141,13 @@ export function PermissionCleanup() {
           {detail && (
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">{[detail.unit, detail.title].filter(Boolean).join(' · ') || 'Chưa phân công vị trí'} · Nhóm {CLEANUP_GROUP_LABELS[detail.group]}</p>
+              <div><p className="font-medium">Trạng thái: <Badge variant={cleanupStatusTone(detail.status)}>{CLEANUP_STATUS_LABELS[detail.status]}</Badge></p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">{detail.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
+              </div>
               <div><p className="font-medium">Role trực tiếp</p>{detail.roles.map(r => <p key={r.role_id}>{r.name} — {r.protected ? 'giữ nguyên (được bảo vệ)' : 'sẽ gỡ'}</p>)}</div>
               <div><p className="font-medium">Nguồn quyền tự động sau chuyển đổi</p><p className="text-muted-foreground">{detail.appointment_sources} quyền từ chức vụ · {detail.specialty_sources} quyền từ nhiệm vụ Marketing</p></div>
               {detail.lost.length > 0 && <div><p className="font-medium text-destructive">Quyền sẽ mất ({detail.lost.length})</p><p className="text-xs text-muted-foreground break-words">{detail.lost.join(', ')}</p></div>}
-              {detail.has_custom_override && <p className="text-destructive">Tài khoản có quyền tùy chỉnh riêng — cần Admin xử lý thủ công, hệ thống không tự gỡ.</p>}
+              {detail.pending_work > 0 && <p className="text-destructive">Có {detail.pending_work} công việc đang chờ xử lý phụ thuộc quyền hiện tại — cần hoàn tất hoặc chuyển giao trước.</p>}
             </div>
           )}
         </DialogContent>
@@ -149,10 +157,7 @@ export function PermissionCleanup() {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Xác nhận chuyển đổi quyền</DialogTitle></DialogHeader>
           <div className="space-y-3 text-sm">
-            <p>Bạn sắp gỡ Role trực tiếp cũ của <strong>{picked.size} tài khoản</strong>. Quyền Kinh doanh, Super Admin và quyền tùy chỉnh được giữ nguyên. Thao tác có nhật ký và có thể khôi phục.</p>
-            {[...picked].map(id => accounts.find(a => a.user_id === id)).filter((a): a is CleanupAccount => !!a && a.lost.length > 0).length > 0 && (
-              <p className="text-destructive">Cảnh báo: có tài khoản sẽ mất một số quyền chưa được nguồn mới thay thế — hãy kiểm tra chi tiết trước khi xác nhận.</p>
-            )}
+            <p>Bạn sắp gỡ Role trực tiếp cũ của <strong>{picked.size} tài khoản</strong> đã đạt trạng thái Sẵn sàng. Quyền Kinh doanh, Super Admin và quyền tùy chỉnh được giữ nguyên. Hệ thống sẽ kiểm tra lại từng tài khoản ngay trước khi gỡ; nếu có thay đổi so với bản xem trước, thao tác bị hủy. Thao tác có nhật ký và có thể khôi phục.</p>
             <p>Nhập <strong>{CONFIRM_TEXT}</strong> để xác nhận:</p>
             <Input aria-label="Xác nhận chuyển đổi" value={confirmText} onChange={e => setConfirmText(e.target.value)} />
           </div>
