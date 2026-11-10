@@ -1,6 +1,6 @@
 export type Rule = { id: string; permission: string; effect: 'ALLOW' | 'DENY'; scope: 'own' | 'native'; active: boolean; starts_at?: string; ends_at?: string; user_id?: string };
 export type Unit = { id: string; name: string; kind: 'block' | 'department' | 'team'; parent_id?: string; active: boolean };
-export type Title = { id: string; name: string; active: boolean; unit_id?: string };
+export type Title = { id: string; name: string; active: boolean; unit_id?: string; code?: string; level?: number; kind?: 'manager' | 'staff'; capacity?: number; description?: string };
 export type Membership = { id: string; user_id: string; unit_id: string; title_id?: string; duties?: string; active: boolean; starts_at?: string; ends_at?: string };
 export type Bundle = { id: string; name: string; active: boolean; rules: Rule[]; unit_id?: string; title_id?: string };
 export type Binding = { id: string; bundle_id: string; user_id: string; active: boolean; starts_at?: string; ends_at?: string };
@@ -10,4 +10,4 @@ export type EffectivePermission = { key: string; label: string; module: string; 
 export type EffectiveAccess = { user_id: string; revision: number; server_now: string; next_transition_at?: string | null; permissions: EffectivePermission[] };
 export type Impact = { user_id: string; name: string; changes: { key: string; label: string; before: EffectivePermission; after: EffectivePermission }[] };
 export type Preview = { id: string; revision: number; impact: Impact[]; expires_at: string; next_transition_at?: string | null; config_diff?: { section: string; before: unknown; after: unknown }[] };
-export type OrgRead = { revision: number; config: OrgConfig; staff: { id: string; name: string; status: string }[]; catalog: { key: string; label: string; module: string; supported: boolean }[]; events: { id: string; actor_id: string; action: string; created_at: string; before_revision: number; after_revision: number; impact: Impact[] }[] };
+export type OrgRead = { revision: number; config: OrgConfig; staff: { id: string; name: string; status: string }[]; catalog: { key: string; label: string; module: string; supported: boolean }[]; events: { id: string; actor_id: string; action: string; created_at: string; before_revision: number; after_revision: number; impact: Impact[]; before_data?: OrgConfig; after_data?: OrgConfig }[] };
