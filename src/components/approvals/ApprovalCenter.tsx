@@ -5,7 +5,7 @@ import { AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { useCurrentUser } from '@/lib/auth';
 import {
   approvalCenterQuery, filterItems, sortTodo, sourceGroup, waitingText, vnd, dateText,
-  parseApprovalUrl, GROUP_LABELS, type ApprovalGroup, type ApprovalItem,
+  parseApprovalUrl, groupLabel, type ApprovalGroup, type ApprovalItem,
 } from '@/lib/approvals/api';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -70,7 +70,7 @@ function ItemRow({ item, now, tab }: { item: ApprovalItem; now: string; tab: Tab
     <tr className="border-b last:border-0">
       <td className="py-3 pr-4 align-top">
         <p className="font-medium whitespace-nowrap">{item.title}</p>
-        <p className="text-xs text-muted-foreground">{GROUP_LABELS[sourceGroup(item.source)]}</p>
+        <p className="text-xs text-muted-foreground">{groupLabel(sourceGroup(item.source))}</p>
       </td>
       <td className="py-3 pr-4 align-top">
         <p className="break-words">{item.requester}</p>
@@ -150,11 +150,18 @@ export function ApprovalCenter() {
         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
           <Button size="sm" variant={group === 'all' ? 'default' : 'outline'} className="shrink-0" onClick={() => setGroup('all')}>Tất cả</Button>
           {groups.map((g) => (
-            <Button key={g} size="sm" variant={group === g ? 'default' : 'outline'} className="shrink-0" onClick={() => setGroup(g)}>{GROUP_LABELS[g]}</Button>
+            <Button key={g} size="sm" variant={group === g ? 'default' : 'outline'} className="shrink-0" onClick={() => setGroup(g)}>{groupLabel(g)}</Button>
           ))}
         </div>
       </div>
 
+      {!!data?.errors?.length && (
+        <p role="alert" className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Một số nguồn chưa tải được ({data.errors.map((e) => groupLabel(sourceGroup(e.source))).filter((v, i, a) => a.indexOf(v) === i).join(', ')}).
+          Danh sách bên dưới có thể chưa đầy đủ — bấm nút làm mới để thử lại.
+        </p>
+      )}
       {query.isPending && <p className="text-muted-foreground py-10 text-center">Đang tải hồ sơ…</p>}
       {query.error && (
         <p role="alert" className="flex items-center gap-2 text-destructive py-6">

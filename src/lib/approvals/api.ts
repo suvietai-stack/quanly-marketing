@@ -29,6 +29,8 @@ export interface ApprovalCenterData {
   todo: ApprovalItem[];
   mine: ApprovalItem[];
   done: ApprovalItem[];
+  /** Nguồn tải lỗi (được cô lập phía máy chủ) — không coi như đã kiểm tra đầy đủ. */
+  errors?: { source: string; message: string }[];
 }
 
 export const approvalCenterQuery = (uid: string) => queryOptions({
