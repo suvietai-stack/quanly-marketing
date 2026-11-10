@@ -9173,6 +9173,7 @@ export type Database = {
         Args: { _username: string }
         Returns: string
       }
+      approval_center_read: { Args: never; Returns: Json }
       att_note: { Args: { _id: string; _note: string }; Returns: undefined }
       att_recall: { Args: { _id: string }; Returns: undefined }
       att_reconcile: {

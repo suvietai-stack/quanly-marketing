@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
 import { Route as GoalsV2RouteImport } from './routes/goals-v2'
@@ -87,6 +88,11 @@ import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/za
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovalsRoute = ApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AttendanceRoute = AttendanceRouteImport.update({
@@ -463,6 +469,7 @@ const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/approvals': typeof ApprovalsRoute
   '/attendance': typeof AttendanceRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/goals-v2': typeof GoalsV2Route
@@ -539,6 +546,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/approvals': typeof ApprovalsRoute
   '/attendance': typeof AttendanceRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/goals-v2': typeof GoalsV2Route
@@ -616,6 +624,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/approvals': typeof ApprovalsRoute
   '/attendance': typeof AttendanceRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/goals-v2': typeof GoalsV2Route
@@ -694,6 +703,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/approvals'
     | '/attendance'
     | '/chinh-sach-bao-mat'
     | '/goals-v2'
@@ -770,6 +780,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/approvals'
     | '/attendance'
     | '/chinh-sach-bao-mat'
     | '/goals-v2'
@@ -846,6 +857,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/approvals'
     | '/attendance'
     | '/chinh-sach-bao-mat'
     | '/goals-v2'
@@ -923,6 +935,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApprovalsRoute: typeof ApprovalsRoute
   AttendanceRoute: typeof AttendanceRoute
   ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
   GoalsV2Route: typeof GoalsV2Route
@@ -1005,6 +1018,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approvals': {
+      id: '/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof ApprovalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/attendance': {
@@ -1523,6 +1543,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApprovalsRoute: ApprovalsRoute,
   AttendanceRoute: AttendanceRoute,
   ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
   GoalsV2Route: GoalsV2Route,
