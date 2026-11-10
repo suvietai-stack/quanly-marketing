@@ -1,5 +1,12 @@
 # Lộ trình hiện tại
 
+## Bước 1 — Role chuẩn theo chức vụ (yêu cầu hiện tại)
+- [ ] Dùng duy nhất app_roles gốc; đối chiếu quyền từng Role và vị trí áp dụng, không tạo Role mới
+- [ ] Cấp/thu hồi nguồn bổ nhiệm theo hiệu lực, giữ nguồn trực tiếp và Kinh doanh; chỉ bật permission đã kiểm chứng
+- [ ] Liên kết qua xem trước/xác nhận chung; giao diện chức năng/vị trí áp dụng và tùy chỉnh quyền
+- [ ] Kiểm thử vòng đời, đa nguồn, phạm vi, chống nâng quyền và nghiệm thu Preview; báo phần chưa an toàn
+- Không reset quyền cũ, không tạo bản thử, không Publish; bước 2/3 chưa thực hiện trong lượt này
+
 ## Chuẩn hóa toàn bộ cơ cấu, Role, phân quyền (yêu cầu 912 dòng)
 - [x] Sửa lỗi nền: vân tay org_change băm cả profiles.last_seen_at tự đổi mỗi request -> mọi thao tác ÁP DỤNG CƠ CẤU luôn thất bại; migration 0317 loại cột biến động, giữ băm danh tính/trạng thái/Role
 - [x] Chuẩn hóa danh mục qua đúng hợp đồng org_change (Super Admin, xem trước + xác nhận, revision 1→3): Bộ phận→Phòng (Marketing/Thiết kế/Kế toán/Mua hàng & Giao vận), HC&NS giữ tên riêng; Trưởng bộ phận→Trưởng phòng (quản lý, 1 người); Kế toán trưởng thành quản lý đơn nhiệm; thêm Giám đốc Marketing cấp Khối (chưa bổ nhiệm); ngừng Trưởng bộ phận HC&NS thừa; 7 bản chức danh tạo trùng do sai mã đã ngừng và đánh dấu rõ

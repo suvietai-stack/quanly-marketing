@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
 import type { EffectiveAccess } from '@/lib/basePermissions/types';
+import { VERIFIED_APPOINTMENT_PERMISSIONS } from '@/lib/basePermissions/titleRoles';
 import {
   adminResetPassword,
   adminDeleteUser,
@@ -1594,7 +1595,7 @@ export function useCurrentUser() {
     const effective = baseAccess?.user_id === u?.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
     if (effective) return u?.status === 'Đang hoạt động' && effective.allowed;
     // New supported permissions fail closed while their authoritative read is unavailable.
-    if (['sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','org.view','org.assign_staff','org.appoint_manager','org.view_history'].includes(key) && baseAccess?.user_id !== u?.id) return false;
+    if ([...VERIFIED_APPOINTMENT_PERMISSIONS,'sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','org.view','org.assign_staff','org.appoint_manager','org.view_history'].includes(key) && baseAccess?.user_id !== u?.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
     if (key.startsWith('biz.') || key.startsWith('k3.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
     const resolved = resolvePermKey(key);

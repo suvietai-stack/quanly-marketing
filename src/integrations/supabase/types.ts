@@ -685,8 +685,10 @@ export type Database = {
       base_title_role_links: {
         Row: {
           active: boolean
+          enabled_permissions: string[]
           id: string
           is_primary: boolean
+          permission_signature: string | null
           reason: string
           revision: number
           role_id: string
@@ -698,8 +700,10 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          enabled_permissions?: string[]
           id?: string
           is_primary?: boolean
+          permission_signature?: string | null
           reason: string
           revision?: number
           role_id: string
@@ -711,8 +715,10 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          enabled_permissions?: string[]
           id?: string
           is_primary?: boolean
+          permission_signature?: string | null
           reason?: string
           revision?: number
           role_id?: string
