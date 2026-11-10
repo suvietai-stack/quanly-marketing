@@ -1120,8 +1120,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   initialized: false,
 
   init: async () => {
-    if (get().initialized) return;
-    set({ initialized: true });
+    if (get().initialized || initStarted) return;
+    initStarted = true;
     supabase.auth.onAuthStateChange((event, session) => {
       if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
       const nextId = session?.user?.id ?? null;
@@ -1134,9 +1134,34 @@ export const useAuth = create<AuthState>((set, get) => ({
         set({ users: [], roles: [], loaded: false });
       }
     });
-    const { data: { user } } = await supabase.auth.getUser();
-    set({ currentUserId: user?.id ?? null });
-    if (user) await get().reload();
+    // Ghi nhớ đăng nhập: hủy phiên đã lưu nếu người dùng không chọn ghi nhớ
+    // và trình duyệt đã đóng hẳn, hoặc phiên ghi nhớ đã quá 90 ngày.
+    try {
+      if (typeof window !== 'undefined') {
+        const tabAlive = !!sessionStorage.getItem(TAB_ALIVE_KEY);
+        const policy = sessionPolicy({
+          tabAlive,
+          remember: localStorage.getItem(REMEMBER_KEY),
+          since: Number(localStorage.getItem(REMEMBER_SINCE_KEY) || 0),
+          now: Date.now(),
+        });
+        sessionStorage.setItem(TAB_ALIVE_KEY, '1');
+        if (policy === 'drop') {
+          localStorage.removeItem(REMEMBER_KEY);
+          localStorage.removeItem(REMEMBER_SINCE_KEY);
+          await supabase.auth.signOut({ scope: 'local' });
+        }
+      }
+    } catch { /* bộ nhớ bị chặn: giữ hành vi mặc định của SDK */ }
+    // Chỉ đánh dấu initialized sau khi việc khôi phục/xác minh phiên kết thúc,
+    // để AuthGate không chuyển về /login giữa chừng.
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      set({ currentUserId: user?.id ?? null });
+      if (user) await get().reload();
+    } finally {
+      set({ initialized: true });
+    }
   },
 
   reload: async () => {
