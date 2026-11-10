@@ -40,7 +40,7 @@ it('duyệt tài khoản không chỉ định Role => mặc định gán "Nhân 
   await db.query('select public.account_approve($1)', [NEW]);
   const roles = await db.query('select role_id from user_roles where user_id = $1', [NEW]);
   expect(roles.rows).toEqual([{ role_id: 'role-nhan-su-moi' }]);
-  expect((await db.query('select status from profiles where id = $1', [NEW])).rows[0].status).toBe('Đang hoạt động');
+  expect((await db.query<{ status: string }>('select status from profiles where id = $1', [NEW])).rows[0].status).toBe('Đang hoạt động');
 });
 
 it('duyệt tài khoản có chỉ định Role => gán đúng Role đó', async () => {
