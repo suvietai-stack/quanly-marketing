@@ -9,6 +9,10 @@ import {
 } from "@/lib/accounts.functions";
 import { passwordIssues, isFakeEmail } from '@/lib/password';
 import { authErrorMessage, accountAccess } from '@/lib/auth-errors';
+import {
+  REMEMBER_KEY, REMEMBER_SINCE_KEY, TAB_ALIVE_KEY,
+  sessionPolicy, writeRememberChoice,
+} from '@/lib/remember-session';
 import '@/lib/recovery-session';
 
 export type ID = string;
@@ -1030,7 +1034,7 @@ interface AuthState {
   init: () => Promise<void>;
   reload: () => Promise<void>;
 
-  login: (usernameOrEmail: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (usernameOrEmail: string, password: string, remember?: boolean) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   register: (input: {
     username: string; fullName: string; email?: string; phone?: string;
