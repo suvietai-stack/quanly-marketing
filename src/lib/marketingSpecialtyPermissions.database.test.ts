@@ -18,7 +18,11 @@ beforeAll(async () => {
   create function private.org_role_permission_ready(p text) returns boolean language sql immutable as $$ select false $$;
   create function private.base_supported(p text) returns boolean language sql immutable as $$ select false $$;
   create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
-  create function private.base_tier1(u uuid, p text) returns text language sql as $$ select nullif(current_setting('test.tier1',true),'') $$;
+  create function private.base_tier1(u uuid, p text) returns text language sql as $$
+    select case when nullif(current_setting('test.tier1',true),'') is not null then current_setting('test.tier1',true)
+    when exists(select 1 from jsonb_array_elements(private.base_rules(u,'{}'::jsonb)) r where r->>'permission'=p and r->>'effect'='DENY') then 'DENY'
+    when exists(select 1 from jsonb_array_elements(private.base_rules(u,'{}'::jsonb)) r where r->>'permission'=p and r->>'effect'='ALLOW') then 'ALLOW'
+    else 'NOT_CONFIGURED' end $$;
   create table profiles(id uuid primary key, full_name text, status text);
   create table app_roles(id text primary key, name text, permissions text[]);
   create table user_roles(user_id uuid, role_id text);
