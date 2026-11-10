@@ -1,9 +1,12 @@
 import type { OrgConfig, Unit } from '@/lib/basePermissions/types';
 import type { OrgData } from '@/lib/biz/organization';
 import { appointmentCurrent, type PositionsData } from '@/lib/biz/positions';
+import { isManagerTitle, unitTitles } from '@/lib/orgStructure';
 
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
-export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; people: ChartPerson[]; children: ChartNode[]; inactive?: boolean }
+/** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
+export interface ChartSlot { id: string; title: string; manager: boolean; holders: ChartPerson[] }
+export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
 type NameOf = (id: string) => string;
