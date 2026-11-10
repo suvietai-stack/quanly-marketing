@@ -18,6 +18,7 @@ beforeAll(async () => {
   create function private.is_super_admin(u uuid) returns boolean language sql as $$ select u = '${SA}'::uuid $$;
   create function private.org_role_permission_ready(p text) returns boolean language sql immutable as $$ select false $$;
   create function private.mkt_specialty_permission_ready(p text) returns boolean language sql immutable as $$ select p = 'video.create' $$;
+  create function private.base_tier1(u uuid, p text) returns text language sql as $$ select 'NOT_CONFIGURED' $$;
   create function private.base_config() returns jsonb language sql as $$ select '{}'::jsonb $$;
   create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select coalesce(nullif(current_setting('test.rules',true),''),'[]')::jsonb $$;
   create function private.org_role_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
