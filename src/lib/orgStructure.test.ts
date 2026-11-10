@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assignSlot, ensureDefaultStructure, isManagerTitle, missingDefaultStructure, orgConfigDiff, slotCapacity, slotHistory, slotHolders, titleHolders, titleKind, titleLevel, unassignSlot, unitTitles, DEFAULT_TITLES, DEFAULT_UNITS } from './orgStructure';
+import { assignMany, assignSlot, endMembership, ensureDefaultStructure, isManagerTitle, membershipKind, missingDefaultStructure, orgConfigDiff, slotCapacity, slotHistory, slotHolders, titleHolders, titleKind, titleLevel, transferMembers, transferPreview, unassignSlot, unitDescendants, unitPath, unitTitles, DEFAULT_TITLES, DEFAULT_UNITS } from './orgStructure';
 import { emptyConfig } from './basePermissions/types';
 
 describe('ensureDefaultStructure', () => {
