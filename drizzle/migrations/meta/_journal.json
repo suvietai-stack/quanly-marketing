@@ -2157,6 +2157,55 @@
       "when": 1794293939270,
       "tag": "0307_base_title_role_scope_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 308,
+      "version": "7",
+      "when": 1794296070559,
+      "tag": "0308_canonical_org_relations",
+      "breakpoints": true
+    },
+    {
+      "idx": 309,
+      "version": "7",
+      "when": 1794296166544,
+      "tag": "0309_canonical_org_scoped_read_contract",
+      "breakpoints": true
+    },
+    {
+      "idx": 310,
+      "version": "7",
+      "when": 1794296265587,
+      "tag": "0310_canonical_org_transaction_contract",
+      "breakpoints": true
+    },
+    {
+      "idx": 311,
+      "version": "7",
+      "when": 1794296312414,
+      "tag": "0311_canonical_org_projection_fences",
+      "breakpoints": true
+    },
+    {
+      "idx": 312,
+      "version": "7",
+      "when": 1794296375665,
+      "tag": "0312_canonical_org_preview_determinism",
+      "breakpoints": true
+    },
+    {
+      "idx": 313,
+      "version": "7",
+      "when": 1794296654894,
+      "tag": "0313_canonical_org_safe_batch_dispatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 314,
+      "version": "7",
+      "when": 1794296813403,
+      "tag": "0314_canonical_org_preview_scope_redaction",
+      "breakpoints": true
     }
   ]
 }

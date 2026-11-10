@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       account_auth_requests: {
@@ -7273,6 +7268,244 @@ export type Database = {
         }
         Relationships: []
       }
+      org_assignments: {
+        Row: {
+          category: string
+          data: Json
+          ends_at: string | null
+          id: string
+          revision: number
+          source: string
+          source_id: string
+          starts_at: string | null
+          status: string
+          title_id: string | null
+          unit_id: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          data?: Json
+          ends_at?: string | null
+          id: string
+          revision?: number
+          source: string
+          source_id: string
+          starts_at?: string | null
+          status?: string
+          title_id?: string | null
+          unit_id: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          data?: Json
+          ends_at?: string | null
+          id?: string
+          revision?: number
+          source?: string
+          source_id?: string
+          starts_at?: string | null
+          status?: string
+          title_id?: string | null
+          unit_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_assignments_title_id_fkey"
+            columns: ["title_id"]
+            isOneToOne: false
+            referencedRelation: "org_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_assignments_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_events: {
+        Row: {
+          actor_id: string
+          after_data: Json
+          after_revision: number
+          before_data: Json
+          before_revision: number
+          created_at: string
+          id: string
+          reason: string
+          unit_ids: Json
+        }
+        Insert: {
+          actor_id: string
+          after_data: Json
+          after_revision: number
+          before_data: Json
+          before_revision: number
+          created_at?: string
+          id?: string
+          reason: string
+          unit_ids: Json
+        }
+        Update: {
+          actor_id?: string
+          after_data?: Json
+          after_revision?: number
+          before_data?: Json
+          before_revision?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          unit_ids?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_parent_history: {
+        Row: {
+          data: Json
+          ends_at: string | null
+          id: string
+          parent_id: string | null
+          source: string
+          starts_at: string | null
+          unit_id: string
+        }
+        Insert: {
+          data?: Json
+          ends_at?: string | null
+          id: string
+          parent_id?: string | null
+          source: string
+          starts_at?: string | null
+          unit_id: string
+        }
+        Update: {
+          data?: Json
+          ends_at?: string | null
+          id?: string
+          parent_id?: string | null
+          source?: string
+          starts_at?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_parent_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_titles: {
+        Row: {
+          active: boolean
+          capacity: number
+          code: string | null
+          data: Json
+          id: string
+          kind: string
+          level: number
+          name: string
+          revision: number
+          source: string
+          source_id: string
+          unit_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          capacity?: number
+          code?: string | null
+          data?: Json
+          id: string
+          kind: string
+          level?: number
+          name: string
+          revision?: number
+          source: string
+          source_id: string
+          unit_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          capacity?: number
+          code?: string | null
+          data?: Json
+          id?: string
+          kind?: string
+          level?: number
+          name?: string
+          revision?: number
+          source?: string
+          source_id?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_titles_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_units: {
+        Row: {
+          active: boolean
+          data: Json
+          id: string
+          kind: string
+          name: string
+          parent_id: string | null
+          revision: number
+          source: string
+          source_id: string
+        }
+        Insert: {
+          active?: boolean
+          data?: Json
+          id: string
+          kind: string
+          name: string
+          parent_id?: string | null
+          revision?: number
+          source: string
+          source_id: string
+        }
+        Update: {
+          active?: boolean
+          data?: Json
+          id?: string
+          kind?: string
+          name?: string
+          parent_id?: string | null
+          revision?: number
+          source?: string
+          source_id?: string
+        }
+        Relationships: []
+      }
       ot_logs: {
         Row: {
           action: string
@@ -10678,6 +10911,18 @@ export type Database = {
       oq_submit: { Args: { _id: string }; Returns: string }
       order_remind_run: { Args: never; Returns: number }
       order_take_job: { Args: { _id: string }; Returns: undefined }
+      org_change: {
+        Args: {
+          _change?: Json
+          _confirmation?: string
+          _phase: string
+          _preview?: string
+          _reason?: string
+          _revision?: number
+        }
+        Returns: Json
+      }
+      org_workspace_read: { Args: never; Returns: Json }
       ot_accept: { Args: { _id: string }; Returns: undefined }
       ot_cancel: { Args: { _id: string; _reason: string }; Returns: undefined }
       ot_create: { Args: { _data: Json }; Returns: string }
@@ -11246,3 +11491,4 @@ export const Constants = {
     },
   },
 } as const
+

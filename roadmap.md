@@ -1,15 +1,21 @@
 # Lộ trình hiện tại
 
 ## Refactor tận gốc Cơ cấu tổ chức toàn Base
-- [x] Đọc yêu cầu; rà soát màn hình và số liệu nguồn hiện tại: 3 Hệ, 4 Phòng, 0 Nhóm, 12 nhân sự Kinh doanh duy nhất, 39 bổ nhiệm (16 hiệu lực), 6 chức vụ Biz, 11 chức vụ Base, 26 tài khoản có Role
 - [x] Kế hoạch được duyệt; đã khởi chạy triển khai trong bản thử riêng “Hợp nhất cơ cấu toàn Base”, chưa chuyển đổi backend chung
+- [x] Đọc yêu cầu; rà soát màn hình và số liệu app đã ghi trước đó (không phải dữ liệu bản nháp): 3 Hệ, 4 Phòng, 0 Nhóm, 12 nhân sự Kinh doanh duy nhất, 39 bổ nhiệm (16 hiệu lực), 6 chức vụ Biz, 11 chức vụ Base, 26 tài khoản có Role
+- [x] Đọc yêu cầu đầy đủ và kiểm tra nguồn trong bản nháp: 2 Hệ, 2 Phòng, 2 phân công Phòng, 0 bổ nhiệm, 0 chức vụ Biz, 0 cấu hình Base, 2 tài khoản có Role; đây là dữ liệu ví dụ riêng, không phải baseline của app
 - [ ] Hoàn tất bản đồ phụ thuộc và mô hình nguồn tổ chức có thẩm quyền; lưu đối chiếu ID, lịch sử, quyền và quan hệ chưa ánh xạ
-- [ ] Migration bổ sung + lớp tương thích backend; khóa các đường quản trị độc lập, bảo toàn nghiệp vụ đang dùng ID cũ
-- [ ] Một cây, một drawer, một danh sách chức vụ, một quy trình xem trước/xác nhận/áp dụng cho mọi khối
+- [x] 0308–0314 bổ sung nguồn quan hệ, bản sao phục hồi, đọc theo phạm vi, xem trước rollback, áp dụng nguyên tử và khóa đường ghi quản trị cũ/direct DML
+- [x] Một cây đệ quy, drawer chung, danh sách chức vụ chung; không nhúng giao diện Biz cũ
+- [ ] Hoàn thiện quyền bổ sung qua giao dịch chung (hiện chưa hỗ trợ); Role cần xem trước tác động hiển thị và xác nhận chung thay vì tự preview/apply trong nút lưu
+- [ ] Hoàn thiện chiếu nghĩa vụ cá nhân khi điều chuyển xuyên khối, hủy quyết định lên lịch và phục hồi lịch sử cha theo thời gian; không coi scaffolding là hoàn tất
 - [ ] Quyền org.* có phạm vi, vòng đời phân công chính/kiêm nhiệm, bổ nhiệm/miễn nhiệm và lịch sử thống nhất
 - [ ] Liên kết Role gốc: chỉ kích hoạt nguồn đã kiểm chứng an toàn; giữ chặn và lý do cho Role chưa đạt; không sửa Role trực tiếp hiện có
 - [ ] Gỡ giao diện BizOrganization/BizPositions/BizAppointments cũ sau khi chức năng được thay thế đầy đủ
 - [ ] Kiểm thử 22 tình huống, hồi quy CRM/Tín hiệu/KR/KPI/Báo cáo/Phê duyệt, đối chiếu trước–sau, nghiệm thu đăng nhập desktop/mobile; chưa Publish
+- [x] 22 kiểm thử hợp đồng mới + 33 cây/phân công đạt; hồi quy 612/614, build OK; không thay đổi MD5 nguồn Biz hoặc Role trực tiếp
+- [x] Đăng nhập tài khoản ví dụ: cây hiển thị desktop/mobile, không lỗi JS/tràn ngang; chưa phải nghiệm thu UI quản trị
+- [ ] Chưa có blocker bên ngoài để giải thích các phần code thiếu: phải tiếp tục hoàn thiện các mục trên, không tuyên bố hoàn tất
 
 ## Liên kết Role hiện có với chức vụ toàn Base
 - [x] Rà soát Role, nguồn cấp quyền, phạm vi và đường ghi hiện tại (18 Role, không có phân công Base trong dữ liệu đọc)
