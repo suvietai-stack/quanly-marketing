@@ -139,7 +139,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
   const doTransfer = () => {
     const r = transferMembers(config, [...picked], unitId, moveTitle);
     onEdit(() => r.config);
-    setReport(r);
+    setReport({ added: r.moved, skipped: r.skipped });
   };
 
   const personLine = (m: Membership) => (
