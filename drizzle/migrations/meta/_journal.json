@@ -2150,6 +2150,13 @@
       "when": 1794285438333,
       "tag": "0306_base_org_scoped_membership",
       "breakpoints": true
+    },
+    {
+      "idx": 307,
+      "version": "7",
+      "when": 1794293939270,
+      "tag": "0307_base_title_role_scope_drafts",
+      "breakpoints": true
     }
   ]
 }
