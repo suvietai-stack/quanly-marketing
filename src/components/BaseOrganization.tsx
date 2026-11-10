@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, ShieldCheck, Eye, Copy, Save, X, Users, Settings2 } from 'lucide-react';
+import { Plus, Search, ShieldCheck, Eye, Copy, Save, X, Users, Settings2, Network } from 'lucide-react';
 import { PageHeader } from '@/components/AppShell';
+import { OrgChart } from '@/components/OrgChart';
+import { orgQuery } from '@/lib/biz/organizationQueries';
+import { positionsQuery } from '@/lib/biz/positionQueries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,7 +35,7 @@ export function BaseOrganization() {
   const [staffId, setStaffId] = useState('');
   const [search, setSearch] = useState('');
   const [permissionSearch, setPermissionSearch] = useState('');
-  const [section, setSection] = useState('staff');
+  const [section, setSection] = useState('chart');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
