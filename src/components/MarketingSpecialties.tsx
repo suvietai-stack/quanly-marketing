@@ -81,6 +81,7 @@ export function StaffSpecialties({ userId }: { userId: string }) {
         {o && <Badge variant="outline" className="text-[10px]">{o.state === 'removed' ? 'Đã bỏ' : o.origin === 'auto' ? 'Tự nhận diện từ Role' : 'Admin chỉnh'}</Badge>}
         {sel.has(s.id) && isSuperAdmin && <Button size="sm" variant={prim === s.id ? 'secondary' : 'ghost'} onClick={() => setPrimary(prim === s.id ? '' : s.id)}>{prim === s.id ? 'Chuyên môn chính' : 'Đặt chính'}</Button>}
       </div>); })}
+    <SpecialtyPermissionNotes selected={sel} />
     {isSuperAdmin ? <Button disabled={busy || (!draft && primary === null)} onClick={onSave}>Lưu chuyên môn</Button> : <p className="text-xs text-muted-foreground">Chỉ Super Admin được sửa chuyên môn.</p>}
   </div>;
 }
