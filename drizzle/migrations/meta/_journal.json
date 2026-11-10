@@ -2122,6 +2122,13 @@
       "when": 1794279993348,
       "tag": "0302_approval_center_read_record_alias_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 303,
+      "version": "7",
+      "when": 1794280512342,
+      "tag": "0303_base_org_chart_read",
+      "breakpoints": true
     }
   ]
 }
