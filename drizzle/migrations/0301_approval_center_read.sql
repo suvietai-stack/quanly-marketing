@@ -47,9 +47,9 @@ BEGIN
         'waiting_since',_run->>'submitted_at',
         'url','/biz/approvals'));
     END IF;
-    SELECT e INTO _ev FROM jsonb_array_elements(coalesce(_run->'events','[]'::jsonb)) e
-      WHERE e->>'actor_id' = _uid::text AND e->>'action' IN ('step_approved','approved','returned','override')
-      ORDER BY e->>'created_at' DESC LIMIT 1;
+    SELECT e.value INTO _ev FROM jsonb_array_elements(coalesce(_run->'events','[]'::jsonb)) e
+      WHERE e.value->>'actor_id' = _uid::text AND e.value->>'action' IN ('step_approved','approved','returned','override')
+      ORDER BY e.value->>'created_at' DESC LIMIT 1;
     IF _ev IS NOT NULL THEN
       _done := _done || jsonb_build_array(jsonb_build_object(
         'source','biz','id',_run->>'id',
@@ -322,9 +322,9 @@ BEGIN
   RETURN jsonb_build_object(
     'server_now',now(),
     'eligible',_eligible,
-    'todo',(SELECT coalesce(jsonb_agg(v ORDER BY v->>'waiting_since'),'[]') FROM jsonb_array_elements(_todo) v),
-    'mine',(SELECT coalesce(jsonb_agg(v ORDER BY v->>'waiting_since' DESC),'[]') FROM jsonb_array_elements(_mine) v),
-    'done',(SELECT coalesce(jsonb_agg(v ORDER BY v->>'acted_at' DESC),'[]') FROM (SELECT value FROM jsonb_array_elements(_done) ORDER BY value->>'acted_at' DESC LIMIT 50) v));
+    'todo',(SELECT coalesce(jsonb_agg(v.value ORDER BY v.value->>'waiting_since'),'[]') FROM jsonb_array_elements(_todo) v),
+    'mine',(SELECT coalesce(jsonb_agg(v.value ORDER BY v.value->>'waiting_since' DESC),'[]') FROM jsonb_array_elements(_mine) v),
+    'done',(SELECT coalesce(jsonb_agg(v.value ORDER BY v.value->>'acted_at' DESC),'[]') FROM (SELECT value FROM jsonb_array_elements(_done) ORDER BY value->>'acted_at' DESC LIMIT 50) v));
 END $$;
 REVOKE ALL ON FUNCTION public.approval_center_read() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.approval_center_read() TO authenticated;
