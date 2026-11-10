@@ -14,12 +14,15 @@ INSERT INTO test_perms SELECT '${A}',unnest(ARRAY['order.view','order.create','o
 INSERT INTO orders(id,created_by,data) VALUES('a','${A}','{"title":"A","status":"Chờ phân công","requester":"Sale A","reviewer":"Sale A","history":[]}'),('b','${B}','{"title":"B","status":"Chờ phân công","requester":"Sale B","reviewer":"Sale B","history":[]}');`);
 await db.exec(readFileSync('drizzle/migrations/0264_design_order_workflows_and_scoped_access.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0265_design_order_guard_and_atomic_save.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0267_design_order_authoritative_audit.sql','utf8'));await db.exec('GRANT USAGE ON SCHEMA auth,private TO authenticated;');},60000);
 beforeAll(async()=>{await db.exec(readFileSync('drizzle/migrations/0268_design_order_transition_timestamp_integrity.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0269_design_order_file_permission_compatibility.sql','utf8'));});
+beforeAll(async()=>{const sql=readFileSync('drizzle/migrations/0299_monitoring_sw_crypto_and_design_legacy_status.sql','utf8');await db.exec(sql.slice(sql.indexOf('-- Only the two documented legacy aliases')));});
 afterAll(()=>db.close());
 it.each([
   ['Mới tạo', 'Chờ phân công', 'Chờ nhận việc', A],
   ['Đang làm', 'Đang thực hiện', 'Chờ duyệt', D],
 ])('legacy status %s accepts the displayed expected value and preserves old history',async(raw,displayed,next,uid)=>{
   await db.exec("RESET ROLE;select set_config('test.uid','',false)");
+  await db.exec('BEGIN');
+  try {
   const id=`legacy-${raw}`;
   const history=[{at:'2026-01-01T00:00:00Z',action:'Legacy creation',byId:A}];
   await db.query(`INSERT INTO orders(id,created_by,data) VALUES($1,$2,$3)`,[id,A,JSON.stringify({title:'Legacy',status:raw,requester:'Sale A',reviewer:'Sale A',assignee:'Designer',history})]);
@@ -29,12 +32,16 @@ it.each([
   expect(result.rows[0]?.v.status).toBe(next);
   expect(result.rows[0]?.v.history[0]).toEqual(history[0]);
   await expect(db.query(`SELECT design_order_save($1,$2,$3)`,[id,JSON.stringify({status:'Đã hủy'}),JSON.stringify({status:displayed})])).rejects.toThrow('đã được cập nhật');
+  } finally { await db.exec('ROLLBACK'); }
 });
 it('unknown legacy status is not silently treated as an equivalent expected status',async()=>{
   await db.exec("RESET ROLE;select set_config('test.uid','',false)");
+  await db.exec('BEGIN');
+  try {
   await db.query(`INSERT INTO orders(id,created_by,data) VALUES('unknown-status',$1,'{"status":"Unrecognized","requester":"Sale A","history":[]}')`,[A]);
   await as(A);
   await expect(db.query(`SELECT design_order_save('unknown-status','{"status":"Đã hủy"}','{"status":"Chờ phân công"}')`)).rejects.toThrow('đã được cập nhật');
+  } finally { await db.exec('ROLLBACK'); }
 });
 async function as(uid:string){await db.exec('RESET ROLE');await db.query("select set_config('test.uid',$1,false)",[uid]);await db.exec('SET ROLE authenticated');}
 it('Sale A cannot read Sale B even with permissive legacy policies',async()=>{await as(A);expect((await db.query<{id:string}>('select id from orders order by id')).rows.map(r=>r.id)).toEqual(['a']);});

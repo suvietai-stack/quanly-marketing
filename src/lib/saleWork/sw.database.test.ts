@@ -31,6 +31,7 @@ CREATE FUNCTION extensions.pgp_sym_decrypt(bytea, text) RETURNS text LANGUAGE sq
   const sql = readFileSync('drizzle/migrations/0291_sale_work_zalo.sql', 'utf8')
     .replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/, '');
   await db.exec(sql);
+  await db.exec(readFileSync('drizzle/migrations/0299_monitoring_sw_crypto_and_design_legacy_status.sql', 'utf8').split('-- Only the two documented legacy aliases')[0]);
 }, 30000);
 afterAll(() => db.close());
 
