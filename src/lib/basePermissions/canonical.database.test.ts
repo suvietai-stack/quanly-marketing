@@ -23,6 +23,14 @@ beforeAll(async () => {
  await db.exec(`CREATE FUNCTION private.is_active(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM profiles WHERE id=u AND status='Đang hoạt động')$$; CREATE FUNCTION private.is_super_admin(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT u='${admin}'::uuid$$; CREATE TABLE crm_access_grants(id uuid); CREATE FUNCTION crm_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$; CREATE FUNCTION crm_owner_visible(_owner uuid,_department uuid DEFAULT null,_at timestamptz DEFAULT now()) RETURNS boolean LANGUAGE sql AS $$SELECT false$$; CREATE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;`);
  await db.exec(`CREATE FUNCTION sw_credential_save(uuid,text,text,text) RETURNS uuid LANGUAGE sql AS $$SELECT gen_random_uuid()$$; CREATE FUNCTION sw_reveal_password() RETURNS text LANGUAGE sql AS $$SELECT ''$$;`);
  for (let n=292;n<=314;n++) {const file=readdirSync('drizzle/migrations').find(f=>f.startsWith(String(n).padStart(4,'0')+'_'));if(file && n!==299 && n!==300 && n!==301 && n!==302 && n!==304) await db.exec(readFileSync('drizzle/migrations/'+file,'utf8'));}
+ await db.exec(readFileSync('drizzle/migrations/0317_org_fingerprint_stable_profiles.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0318_appointment_role_verified_capabilities.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0319_appointment_role_dispatch_name_resolution.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0320_appointment_preview_effective_clock.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0321_appointment_impact_skip_unchanged_sources.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0322_appointment_permission_read_single_snapshot.sql','utf8'));
+ await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
+ await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
 }, 60000);
 afterAll(()=>db.close());
@@ -51,3 +59,31 @@ it('preserves raw historical start timestamps during backfill',async()=>{expect(
 it('cannot grant an inherited administrative Role',async()=>{const id=await scalar("select id v from org_titles limit 1");await expect(preview([{action:'roles',data:{id,roles:[{role_id:'role-super-admin',is_primary:true}]}}])).rejects.toThrow();});
 it('cannot activate an unverified inherited Role',async()=>{const id=await scalar("select id v from org_titles limit 1");await expect(preview([{action:'roles',data:{id,roles:[{role_id:'staff',is_primary:true,active:true}]}}])).rejects.toThrow();});
 it('unused direct sources are not revoked when no assignment exists',async()=>{await actor(outsider);expect(await scalar('select count(*)::int v from user_roles where user_id=$1',[outsider])).toBe(1);await actor(admin);});
+async function applyRoles(p:any){return scalar("select org_change('apply',null,null,$1,'ÁP DỤNG CƠ CẤU','ÁP DỤNG PHÂN QUYỀN:Kiểm thử tách biệt') v",[p.id]);}
+it('full transaction previews Role sources, confirms and grants only after appointment',async()=>{
+ await actor(admin);
+ await apply(await preview([{action:'title',data:{id:'verified-title',unit_id:'gd',name:'Designer',code:'TEST_DESIGNER',level:0,kind:'staff',capacity:0,active:true}}]));
+ const p=await preview([{action:'roles',data:{id:'verified-title',roles:[{role_id:'verified-designer',is_primary:true,scope_kind:'own',enabled_permissions:['order.view','order.view_mine','order.submit']}]}}]);
+ expect(await scalar("select count(*)::int v from base_title_role_links where title_id='verified-title'")).toBe(0);
+ await expect(apply(p)).rejects.toThrow('PHÂN QUYỀN');await applyRoles(p);
+ expect(await scalar("select private.has_permission($1,'order.view') v",[outsider])).toBe(false);
+ const a=await preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:outsider,kind:'concurrent'}}]);
+ expect(a.impact.some((i:any)=>i.user_id===outsider&&i.changes.some((c:any)=>c.key==='order.view'&&!c.before.allowed&&c.after.allowed))).toBe(true);
+ expect(await scalar("select private.has_permission($1,'order.view') v",[outsider])).toBe(false);
+ await apply(a);expect(await scalar("select private.has_permission($1,'order.view') v",[outsider])).toBe(true);
+});
+it('full transaction removes appointment rights and preserves original direct source',async()=>{
+ const id=await scalar("select id v from org_assignments where title_id='verified-title' and user_id=$1",[outsider]);
+ const p=await preview([{action:'end',data:{id,ends_at:new Date().toISOString()}}]);
+ expect(p.impact.some((i:any)=>i.user_id===outsider)).toBe(true);
+ await apply(p);expect(await scalar("select private.has_permission($1,'order.view') v",[outsider])).toBe(false);
+ expect(await scalar('select role_id v from user_roles where user_id=$1',[outsider])).toBe('staff');
+});
+it('authenticated RPC and RLS reject unprivileged linking and hide configuration rows',async()=>{
+ const revision=await scalar('select revision v from private.org_control where id');
+ await actor(outsider);await db.exec('SET ROLE authenticated');
+ try { expect(await scalar('select count(*)::int v from base_title_role_links')).toBe(0);
+ await expect(db.query("select org_change('preview',$1,$2)",[revision,[{action:'roles',data:{id:'verified-title',roles:[]}}]])).rejects.toThrow('Super Admin');
+ await expect(db.query("update base_title_role_links set enabled_permissions=ARRAY['settings.role']")).rejects.toThrow();
+ }finally{await db.exec('RESET ROLE');await actor(admin);}
+});
