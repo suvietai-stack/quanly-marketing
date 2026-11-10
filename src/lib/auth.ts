@@ -1269,6 +1269,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       return { ok: false, error: msg };
     }
     await get().reload();
+    writeRememberChoice(remember);
     return { ok: true };
     } catch { return { ok: false, error: authErrorMessage(null) }; }
   },
