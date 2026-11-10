@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan } from '@/lib/orders/design';
 

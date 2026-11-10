@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { toast } from "sonner";
 import { Send, Check, X, RotateCcw, CheckCheck, Play, Undo2, AlertTriangle, History as HistoryIcon } from "lucide-react";
 
