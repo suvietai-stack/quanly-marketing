@@ -550,7 +550,8 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm role</Button>
       </div>
     )}
-    <Card><CardContent className="p-0 overflow-x-auto">
+    <div className="divide-y border-y md:hidden">{s.roles.filter(r => functionGroup === 'all' || roleFunctionGroup(r.name) === functionGroup).map(r => <div key={r.id} className="py-4 space-y-2"><div className="flex items-start justify-between gap-3"><h3 className="font-medium">{r.name}</h3>{canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Chi tiết quyền</Button>}</div><p className="text-xs text-muted-foreground">{roleFunctionGroup(r.name)} · {s.users.filter(u => u.roleId === r.id).length} tài khoản</p><p className="text-sm text-muted-foreground">{r.description}</p><p className="text-xs text-muted-foreground">{r.id === SUPER_ADMIN_ID ? 'Toàn quyền' : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(', ') || 'Chưa có chức năng'}</p></div>)}</div>
+    <Card className="hidden md:block"><CardContent className="p-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground bg-muted/40"><tr>
           <th className="text-left font-medium px-4 py-2.5">Tên role</th>
