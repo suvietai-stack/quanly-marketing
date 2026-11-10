@@ -18,6 +18,7 @@ beforeAll(async () => {
   create function private.mkt_specialty_permission_ready(p text) returns boolean language sql immutable as $$ select p = 'video.create' $$;
   create function private.base_tier1(u uuid, p text) returns text language sql as $$ select case when p = any(string_to_array(current_setting('test.allow',true),',')) then 'ALLOW' else 'NOT_CONFIGURED' end $$;
   create function private.base_config() returns jsonb language sql as $$ select '{}'::jsonb $$;
+  create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select coalesce(nullif(current_setting('test.rules',true),''),'[]')::jsonb $$;
   create function private.org_role_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
   create function private.mkt_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
   create table profiles(id uuid primary key, full_name text, status text);
@@ -46,6 +47,7 @@ beforeAll(async () => {
   insert into user_permission_overrides values ('${CUSTOM}',true,array['video.create']);`);
   await db.exec(readFileSync('drizzle/migrations/0324_permission_cleanup_preview_execute.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0325_permission_cleanup_preview_variable_shadowing.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0326_permission_cleanup_preview_set_based.sql', 'utf8'));
 }, 30000);
 afterAll(() => db.close());
 
@@ -71,16 +73,21 @@ it('phân nhóm đúng: Super Admin bảo vệ, Kinh doanh bảo vệ, tùy ch�
 });
 
 it('quyền được nguồn mới thay thế thì không tính là mất', async () => {
-  await db.query("select set_config('test.allow', 'video.create', false)");
+  await db.query("select set_config('test.rules', '[{\"permission\":\"video.create\",\"effect\":\"ALLOW\"}]', false)");
   const p = await preview();
   const mkt = p.accounts.find(a => a.user_id === MKT)!;
   expect(mkt.lost).toEqual(['video.approve']);
-  await db.query("select set_config('test.allow', 'video.create,video.approve', false)");
+  // video.approve chưa được kiểm chứng: kể cả khi có nguồn ALLOW, kênh tự động không áp dụng => vẫn tính là mất.
+  await db.query("select set_config('test.rules', '[{\"permission\":\"video.create\",\"effect\":\"ALLOW\"},{\"permission\":\"video.approve\",\"effect\":\"ALLOW\"}]', false)");
   const p2 = await preview();
-  // video.approve chưa được kiểm chứng: nguồn tự động không thay thế được => vẫn tính là mất, cần xem lại.
   expect(p2.accounts.find(a => a.user_id === MKT)!.lost).toEqual(['video.approve']);
   expect(p2.accounts.find(a => a.user_id === MKT)!.status).toBe('review');
-  await db.query("select set_config('test.allow', '', false)");
+  // Khi mọi quyền mất đều được nguồn hợp lệ thay thế => sẵn sàng
+  await db.query("select set_config('test.rules', '[{\"permission\":\"video.create\",\"effect\":\"ALLOW\"},{\"permission\":\"video.approve\",\"effect\":\"ALLOW\"}]', false)");
+  await db.query("create or replace function private.mkt_specialty_permission_ready(p text) returns boolean language sql immutable as $$ select p in ('video.create','video.approve') $$");
+  const p3 = await preview();
+  expect(p3.accounts.find(a => a.user_id === MKT)!.status).toBe('ready');
+  await db.query("select set_config('test.rules', '', false)");
 });
 
 it('thực thi chỉ gỡ Role không được bảo vệ và lưu bản sao khôi phục', async () => {
