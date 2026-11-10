@@ -19,5 +19,11 @@ export function organizationCommands(before: OrgConfig, after: OrgConfig): OrgCo
   for (const section of ['units', 'titles', 'memberships'] as const) {
     if (before[section].some(x => !after[section].some(y => y.id === x.id))) throw new Error('Không xóa lịch sử; hãy ngừng hoặc kết thúc phân công.');
   }
+  const titleIds = new Set([...(before.role_links ?? []), ...(after.role_links ?? [])].map(l => l.title_id));
+  for (const id of titleIds) {
+    const old = (before.role_links ?? []).filter(l => l.title_id === id);
+    const links = (after.role_links ?? []).filter(l => l.title_id === id);
+    if (JSON.stringify(old) !== JSON.stringify(links)) commands.push({action:'roles',data:{id,roles:links.map(({role_id,is_primary,scope_kind,enabled_permissions})=>({role_id,is_primary,scope_kind,enabled_permissions:enabled_permissions??[]}))}});
+  }
   return commands;
 }

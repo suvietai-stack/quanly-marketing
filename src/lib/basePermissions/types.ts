@@ -4,7 +4,7 @@ export type Title = { id: string; name: string; active: boolean; unit_id?: strin
 export type Membership = { id: string; user_id: string; unit_id: string; title_id?: string; duties?: string; active: boolean; starts_at?: string; ends_at?: string; kind?: 'primary' | 'concurrent'; source?: string; category?: string; status?: string };
 export type Bundle = { id: string; name: string; active: boolean; rules: Rule[]; unit_id?: string; title_id?: string };
 export type Binding = { id: string; bundle_id: string; user_id: string; active: boolean; starts_at?: string; ends_at?: string };
-export type OrgConfig = { units: Unit[]; titles: Title[]; memberships: Membership[]; defaults: Bundle[]; bundles: Bundle[]; grants: Rule[]; bindings: Binding[] };
+export type OrgConfig = { units: Unit[]; titles: Title[]; memberships: Membership[]; defaults: Bundle[]; bundles: Bundle[]; grants: Rule[]; bindings: Binding[]; role_links?: import('./titleRoles').TitleRoleLink[] };
 export const emptyConfig = (): OrgConfig => ({ units: [], titles: [], memberships: [], defaults: [], bundles: [], grants: [], bindings: [] });
 export type EffectivePermission = { key: string; label: string; module: string; allowed: boolean; decision: string; tier: number; scope: string; supported: boolean; conflict: boolean; bypass?: boolean; sources: (Rule & { source_kind: string; source_name?: string })[]; legacy: { allowed: boolean; source: { kind: string; tier: number; names?: string[] } } };
 export type EffectiveAccess = { user_id: string; revision: number; server_now: string; next_transition_at?: string | null; permissions: EffectivePermission[] };
