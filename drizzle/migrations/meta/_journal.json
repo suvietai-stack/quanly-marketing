@@ -2311,6 +2311,13 @@
       "when": 1794322966374,
       "tag": "0329_permission_cleanup_preview_concat_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 330,
+      "version": "7",
+      "when": 1794323926335,
+      "tag": "0330_new_staff_role_default_and_additive_overrides",
+      "breakpoints": true
     }
   ]
 }

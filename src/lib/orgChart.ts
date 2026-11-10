@@ -20,7 +20,18 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
     const people = [...new Map(current.filter(m => m.unit_id === u.id && (!m.title_id || !slotted.has(m.title_id))).map(m => [m.user_id, personOf(m)])).values()];
     return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
   };
-  return config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id)).map(u => make(u,new Set()));
+  const roots = config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id));
+  // Hiển thị: nếu có đúng một Công ty gốc và mọi gốc còn lại đều là Khối chưa gắn cha,
+  // các Khối được xếp ảo dưới Công ty (thuần hiển thị, không ghi dữ liệu).
+  const companies = roots.filter(u => u.kind === 'company');
+  if (companies.length === 1 && roots.length > 1 && roots.every(u => u.kind === 'company' || u.kind === 'block')) {
+    const company = companies[0];
+    const virtual: Unit = { ...company };
+    const node = make(virtual, new Set());
+    node.children = [...node.children, ...roots.filter(u => u.id !== company.id).map(u => make(u, new Set([company.id])))];
+    return [node];
+  }
+  return roots.map(u => make(u, new Set()));
 }
 
 /** Tổng nhân sự của một nhánh, không tính trùng người xuất hiện ở nhiều cấp. */

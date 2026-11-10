@@ -24,7 +24,7 @@ beforeAll(async () => {
   create function private.org_role_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
   create function private.mkt_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
   create table profiles(id uuid primary key, full_name text, status text);
-  create table app_roles(id text primary key, name text, permissions text[]);
+  create table app_roles(id text primary key, name text, description text, permissions text[], is_system boolean, biz_scope text, biz_detail_exception boolean, biz_settings_disabled boolean, signal_scope text[], signal_scope_all boolean);
   create table user_roles(user_id uuid, role_id text, unique(user_id, role_id));
   create table user_permission_overrides(user_id uuid, use_custom boolean, permissions text[]);
   create table biz_appointments(user_id uuid, status text, ended_at timestamptz);
@@ -43,7 +43,7 @@ beforeAll(async () => {
     ('${SA}','Admin','Đang hoạt động'),('${BIZU}','Kinh Doanh','Đang hoạt động'),
     ('${BIZM}','Kiêm Nhiệm','Đang hoạt động'),
     ('${MKT}','Marketing','Đang hoạt động'),('${CUSTOM}','Tùy Chỉnh','Đang hoạt động');
-  insert into app_roles values
+  insert into app_roles(id, name, permissions) values
     ('role-super-admin','Super Admin',array['settings.role']),
     ('role-biz','Kinh doanh',array['biz.plan_view','k3.view']),
     ('role-video','Video',array['video.create','video.approve']);
@@ -51,7 +51,7 @@ beforeAll(async () => {
   insert into biz_appointments values ('${BIZU}','active',null);
   insert into biz_department_members values ('${BIZM}',null);
   insert into user_permission_overrides values ('${CUSTOM}',true,array['video.create']);`);
-  for (const f of ['0324_permission_cleanup_preview_execute', '0325_permission_cleanup_preview_variable_shadowing', '0326_permission_cleanup_preview_set_based', '0327_permission_cleanup_hardening', '0328_permission_cleanup_eval_reasons_array_fix', '0329_permission_cleanup_preview_concat_fix']) {
+  for (const f of ['0324_permission_cleanup_preview_execute', '0325_permission_cleanup_preview_variable_shadowing', '0326_permission_cleanup_preview_set_based', '0327_permission_cleanup_hardening', '0328_permission_cleanup_eval_reasons_array_fix', '0329_permission_cleanup_preview_concat_fix', '0330_new_staff_role_default_and_additive_overrides']) {
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   }
 }, 30000);
@@ -94,7 +94,7 @@ it('ba trạng thái: Super Admin và toàn bộ nhân sự Kinh doanh được 
   expect(byId[BIZM].status).toBe('protected');
   expect(byId[BIZM].group).toBe('D');
   expect(byId[CUSTOM].status).toBe('review');
-  expect(byId[CUSTOM].reasons.join(' ')).toMatch(/quyền tùy chỉnh/);
+  expect(byId[CUSTOM].reasons.join(' ')).toMatch(/quyền bổ sung/);
   expect(byId[MKT].status).toBe('review');
   expect(byId[MKT].lost).toEqual(['video.approve', 'video.create']);
   expect(byId[MKT].reasons.join(' ')).toMatch(/Chưa được bổ nhiệm/);
@@ -138,7 +138,7 @@ it('execute chỉ gỡ tài khoản Sẵn sàng và lưu bản sao khôi phục'
   const r = await execute([MKT, CUSTOM], p.fingerprint);
   expect(r.removed.map(x => x.role_id)).toEqual(['role-video']);
   expect(r.skipped).toHaveLength(1);
-  expect(r.skipped[0].reason).toMatch(/quyền tùy chỉnh/);
+  expect(r.skipped[0].reason).toMatch(/quyền bổ sung/);
   const remaining = await db.query('select user_id, role_id from user_roles order by user_id');
   expect(remaining.rows).toEqual([
     { user_id: CUSTOM, role_id: 'role-video' },
