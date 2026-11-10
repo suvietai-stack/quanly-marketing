@@ -2255,6 +2255,13 @@
       "when": 1794304412364,
       "tag": "0321_appointment_impact_skip_unchanged_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 322,
+      "version": "7",
+      "when": 1794304652643,
+      "tag": "0322_appointment_permission_read_single_snapshot",
+      "breakpoints": true
     }
   ]
 }
