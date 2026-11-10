@@ -667,7 +667,10 @@ function TasksPage() {
   const [view, setView] = useState<"table" | "kanban">("table");
   const [editing, setEditing] = useState<Task | null>(null);
   const [adding, setAdding] = useState(false);
-  const [detail, setDetail] = useState<Task | null>(null);
+  // Deep link ?open=<id> (Trung tâm Phê duyệt): giữ id trên URL, lấy bản ghi mới nhất từ store.
+  const [detailId, setDetailId] = useState<string | null>(() => readOpenParam('open'));
+  const setDetail = (t: Task | null) => { setDetailId(t?.id ?? null); syncOpenParam('open', t?.id ?? null); };
+  const detail = detailId ? tasks.find((t) => t.id === detailId) ?? null : null;
 
   const ME = user?.fullName || user?.username || "";
 

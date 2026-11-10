@@ -32,7 +32,10 @@ function ChannelWorkspace() {
   const c = s.socials.find((x) => x.id === id);
   const [adding, setAdding] = useState(false);
   const [editPost, setEditPost] = useState<SocialPost | null>(null);
-  const [openPost, setOpenPost] = useState<SocialPost | null>(null);
+  // Deep link ?post=<id> (Trung tâm Phê duyệt): giữ id trên URL, lấy bản ghi mới nhất từ store.
+  const [openPostId, setOpenPostId] = useState<string | null>(() => readOpenParam('post'));
+  const setOpenPost = (p: SocialPost | null) => { setOpenPostId(p?.id ?? null); syncOpenParam('post', p?.id ?? null); };
+  const openPost = openPostId ? s.socialPosts.find((x) => x.id === openPostId) ?? null : null;
 
   if (!c) {
     return (

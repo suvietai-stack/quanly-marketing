@@ -67,7 +67,10 @@ function WebsiteDetail() {
   const [adding, setAdding] = useState(false);
   const [tab, setTab] = useState("info");
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
-  const [openOptimizeContent, setOpenOptimizeContent] = useState<WebContent | null>(null);
+  // Deep link ?open_opt=<id> (Trung tâm Phê duyệt): giữ id trên URL, lấy bản ghi mới nhất từ store.
+  const [openOptId, setOpenOptId] = useState<string | null>(() => readOpenParam('open_opt'));
+  const setOpenOptimizeContent = (c: WebContent | null) => { setOpenOptId(c?.id ?? null); syncOpenParam('open_opt', c?.id ?? null); };
+  const openOptimizeContent = openOptId ? s.webContents.find((x) => x.id === openOptId) ?? null : null;
   const [openOptimize, setOpenOptimize] = useState(false);
   const [fStatus, setFStatus] = useState("all");
   const [fWriter, setFWriter] = useState("all");

@@ -54,6 +54,7 @@ export const GROUP_LABELS: Record<string, string> = {
   order: 'Đơn hàng',
   marketing: 'Marketing',
   task: 'Công việc',
+  sao: 'Sao Sứ Việt',
 };
 
 export const groupLabel = (group: string) => GROUP_LABELS[group] ?? group;
@@ -61,10 +62,11 @@ export const groupLabel = (group: string) => GROUP_LABELS[group] ?? group;
 export const sourceGroup = (source: ApprovalSource): ApprovalGroup =>
   source === 'finance' ? 'finance'
     : source === 'leave' || source === 'leave_cancel' || source === 'attendance' || source === 'account' ? 'hr'
-      : source === 'biz' ? 'biz'
+      : source === 'biz' || source === 'k3' ? 'biz'
         : source === 'design' ? 'design'
           : source === 'video' || source === 'web_content' || source === 'social_post' || source === 'local_map' ? 'marketing'
-            : source === 'task' ? 'task' : 'order';
+            : source === 'task' ? 'task'
+              : source === 'sao' ? 'sao' : 'order';
 
 const time = (v?: string) => {
   if (!v) return undefined;
