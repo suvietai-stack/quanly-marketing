@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Pencil, Plus, Target, Timer } from "lucide-react";
+import { Network, Pencil, Plus, Target, Timer } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth";
-import { BizAutomaticPermissions } from './BizAutomaticPermissions';
+import { BizAccessExceptions } from './BizAccessExceptions';
 import { BizDeadlineEditor } from "./BizDeadlineEditor";
-import { BizOrganization } from './BizOrganization';
 import { BizWorkflows } from './BizWorkflows';
-import { BizPositions } from './BizPositions';
 import { BizReset } from './BizReset';
 import {
   bizDepartmentsQuery, bizKrMetricsQuery,
@@ -26,37 +25,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-/** Trang Cài đặt trong module Quản trị Kinh doanh — mỗi tab kiểm tra quyền riêng, backend kiểm tra lại khi lưu.
- *  Phòng/Nhóm/nhân sự/Trưởng Phòng quản lý thống nhất tại tab Cơ cấu tổ chức (không còn tab Phòng ban riêng). */
+/** Trang Cài đặt trong module Quản trị Kinh doanh — chỉ còn cài đặt nghiệp vụ.
+ *  Cơ cấu tổ chức, chức vụ & cấp bậc, bổ nhiệm và phân quyền quản lý tập trung tại
+ *  Hành chính & Nhân sự → Cơ cấu tổ chức (một nguồn quản lý duy nhất toàn Base). */
 export function BizSettings() {
   const { can, isSuperAdmin } = useCurrentUser();
-  const canOrg = isSuperAdmin || can('biz.org_manage');
   const canWorkflow = isSuperAdmin || can('biz.workflow_manage');
   const canKr = isSuperAdmin || can("biz.kr_manage");
   const canDeadline = isSuperAdmin || can("biz.deadline_manage");
-  const canRole = isSuperAdmin || can("biz.access_manage") || canOrg;
-  const firstTab = canOrg ? 'org' : canWorkflow ? 'workflow' : canKr ? "kr" : canDeadline ? "deadline" : "perm";
+  const hasTab = canWorkflow || canKr || canDeadline || isSuperAdmin;
+  const firstTab = canWorkflow ? 'workflow' : canKr ? "kr" : canDeadline ? "deadline" : "advanced";
+
+  if (!hasTab) {
+    return (
+      <div className="rounded-xl border bg-card p-5 space-y-3 max-w-xl">
+        <p className="flex items-center gap-2 font-semibold"><Network className="h-5 w-5 text-primary" />Quản lý cơ cấu đã chuyển</p>
+        <p className="text-sm text-muted-foreground">Cơ cấu tổ chức, chức vụ & cấp bậc, bổ nhiệm và phân quyền của toàn Base — gồm Khối Kinh doanh — nay quản lý tập trung tại một nơi duy nhất.</p>
+        <Button asChild variant="outline" size="sm"><Link to="/organization">Mở Cơ cấu tổ chức toàn Base</Link></Button>
+      </div>
+    );
+  }
 
   return (
     <Tabs defaultValue={firstTab}>
       <TabsList className="flex-wrap h-auto">
-        {canOrg && <TabsTrigger value="org">Cơ cấu tổ chức</TabsTrigger>}
-        {canOrg && <TabsTrigger value="positions">Chức vụ &amp; Cấp bậc</TabsTrigger>}
         {canWorkflow && <TabsTrigger value="workflow">Quy trình phê duyệt</TabsTrigger>}
         {canKr && <TabsTrigger value="kr"><Target className="h-4 w-4 mr-1.5" />Chỉ số KR</TabsTrigger>}
         {canDeadline && <TabsTrigger value="deadline"><Timer className="h-4 w-4 mr-1.5" />Deadline</TabsTrigger>}
-        {canRole && <TabsTrigger value="perm">Phân quyền</TabsTrigger>}
         {isSuperAdmin && <TabsTrigger value="advanced">Quản trị nâng cao</TabsTrigger>}
       </TabsList>
-      {canOrg && <TabsContent value="org" className="mt-4"><BizOrganization /></TabsContent>}
-      {canOrg && <TabsContent value="positions" className="mt-4"><BizPositions /></TabsContent>}
       {canWorkflow && <TabsContent value="workflow" className="mt-4"><BizWorkflows /></TabsContent>}
       {canKr && <TabsContent value="kr" className="mt-4"><KrTab canEdit={canKr} /></TabsContent>}
       {canDeadline && <TabsContent value="deadline" className="mt-4"><BizDeadlineEditor /></TabsContent>}
-      {canRole && <TabsContent value="perm" className="mt-4">
-        <BizAutomaticPermissions />
-      </TabsContent>}
-      {isSuperAdmin && <TabsContent value="advanced" className="mt-4"><BizReset /></TabsContent>}
+      {isSuperAdmin && <TabsContent value="advanced" className="mt-4"><div className="space-y-8"><BizReset /><details className="border-t pt-4"><summary className="cursor-pointer font-semibold text-sm">Quyền ngoại lệ Kinh doanh (có kiểm toán)</summary><div className="pt-4"><BizAccessExceptions /></div></details></div></TabsContent>}
     </Tabs>
   );
 }
