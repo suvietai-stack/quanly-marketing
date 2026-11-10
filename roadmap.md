@@ -1,5 +1,14 @@
 # Lộ trình hiện tại
 
+## Chuẩn hóa toàn bộ cơ cấu, Role, phân quyền (yêu cầu 912 dòng)
+- [x] Sửa lỗi nền: vân tay org_change băm cả profiles.last_seen_at tự đổi mỗi request -> mọi thao tác ÁP DỤNG CƠ CẤU luôn thất bại; migration 0317 loại cột biến động, giữ băm danh tính/trạng thái/Role
+- [x] Chuẩn hóa danh mục qua đúng hợp đồng org_change (Super Admin, xem trước + xác nhận, revision 1→3): Bộ phận→Phòng (Marketing/Thiết kế/Kế toán/Mua hàng & Giao vận), HC&NS giữ tên riêng; Trưởng bộ phận→Trưởng phòng (quản lý, 1 người); Kế toán trưởng thành quản lý đơn nhiệm; thêm Giám đốc Marketing cấp Khối (chưa bổ nhiệm); ngừng Trưởng bộ phận HC&NS thừa; 7 bản chức danh tạo trùng do sai mã đã ngừng và đánh dấu rõ
+- [ ] Một bộ Role chuẩn + Role mặc định theo chức vụ hoạt động thật ở backend (cấp/thu hồi theo nguồn bổ nhiệm) — phụ thuộc kiểm chứng phạm vi từng phân hệ
+- [ ] Marketing: tích nhiệm vụ → tự nhận Role tương ứng, thu hồi đúng nguồn — phụ thuộc mục trên
+- [ ] Reset quyền cũ ngoài Kinh doanh theo quy trình 6 bước có đối chiếu/xác nhận — chỉ sau khi cơ chế Role mới an toàn
+- [ ] Nối danh sách chuyên môn vào màn giao job Marketing
+- [ ] Nghiệm thu sau đăng nhập; chưa Publish
+
 ## Tổng dọn dẹp toàn Base — yêu cầu mới
 - [x] Gom Cài đặt thành Đơn vị / Chức vụ & Chức năng / Role & Phân quyền; công cụ kỹ thuật vào Nâng cao
 - [x] Mở khu vực Role theo settings.role/settings.permission độc lập quyền sửa cơ cấu; nhóm Role gốc không đổi ID/quyền
