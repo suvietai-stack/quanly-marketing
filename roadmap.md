@@ -1,5 +1,11 @@
 # Roadmap — Báo cáo Kinh doanh theo Ngày/Tuần/Tháng/Quý
 
+## MONITORING HOTFIX — 10/11/2026
+- [x] MF1. Confirmed deployed pgcrypto exists only in extensions; 0299 schema-qualifies grant/reset/reveal calls, preserving search paths, ACLs and credentials. Hosted synthetic crypto roundtrip true.
+- [x] MF2. Reproduced both legacy aliases; 0299 fixes comparison only, leaving unknown statuses/exact field conflicts, locks, guards and history intact. Hosted currently has no legacy-status rows; no historical rewrite.
+- [x] MF3a. 43/43 focused regressions pass; deployed function repairs/ACL/search paths verified, build OK; no Publish or live business test writes.
+- [ ] MF3b. Signed-in UI acceptance blocked: --self finds no matching account and preview is signed out; needs user's preview sign-in and authorized business inputs, not fabricated rows/password resets.
+
 ## PHÂN QUYỀN TOÀN BASE — 09/11/2026
 - [x] BP1. Đọc yêu cầu, rà soát nguồn quyền/frontend/schema hiện hành; chưa có cơ cấu tổ chức toàn Base, chỉ có cơ cấu Kinh doanh.
 - [x] BP2. Kế hoạch duyệt; giữ evaluator legacy và không phục hồi biz.*/k3.* qua Role cũ.

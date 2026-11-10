@@ -2094,6 +2094,13 @@
       "when": 1794218789809,
       "tag": "0298_base_org_permission_history_safe_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 299,
+      "version": "7",
+      "when": 1794276896113,
+      "tag": "0299_monitoring_sw_crypto_and_design_legacy_status",
+      "breakpoints": true
     }
   ]
 }

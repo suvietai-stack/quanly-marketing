@@ -24,12 +24,14 @@ CREATE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql SECU
     ('${saleA}','sale_work.access'),('${saleA}','sale_work.view_own'),
     ('${saleB}','sale_work.access'),('${saleB}','sale_work.view_own'),
     ('${manager}','sale_work.access'),('${manager}','sale_work.manage_settings'),('${manager}','sale_work.manage_credentials'),('${manager}','sale_work.view_audit')`);
-  await db.exec(`CREATE FUNCTION gen_random_bytes(int) RETURNS bytea LANGUAGE sql AS $$ SELECT decode(repeat('ab', $1), 'hex') $$;
-CREATE FUNCTION pgp_sym_encrypt(text, text) RETURNS bytea LANGUAGE sql AS $$ SELECT convert_to('enc:' || reverse($1), 'UTF8') $$;
-CREATE FUNCTION pgp_sym_decrypt(bytea, text) RETURNS text LANGUAGE sql AS $$ SELECT reverse(substring(convert_from($1, 'UTF8') from 5)) $$;`);
+  await db.exec(`CREATE SCHEMA extensions;
+CREATE FUNCTION gen_random_bytes(int) RETURNS bytea LANGUAGE sql AS $$ SELECT decode(repeat('ab', $1), 'hex') $$;
+CREATE FUNCTION extensions.pgp_sym_encrypt(text, text) RETURNS bytea LANGUAGE sql AS $$ SELECT convert_to('enc:' || reverse($1), 'UTF8') $$;
+CREATE FUNCTION extensions.pgp_sym_decrypt(bytea, text) RETURNS text LANGUAGE sql AS $$ SELECT reverse(substring(convert_from($1, 'UTF8') from 5)) $$;`);
   const sql = readFileSync('drizzle/migrations/0291_sale_work_zalo.sql', 'utf8')
     .replace(/CREATE EXTENSION IF NOT EXISTS pgcrypto;/, '');
   await db.exec(sql);
+  await db.exec(readFileSync('drizzle/migrations/0299_monitoring_sw_crypto_and_design_legacy_status.sql', 'utf8').split('-- Only the two documented legacy aliases')[0]);
 }, 30000);
 afterAll(() => db.close());
 
