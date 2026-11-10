@@ -9442,6 +9442,7 @@ export type Database = {
         Returns: boolean
       }
       biz_exception_save: { Args: { _data: Json }; Returns: string }
+      biz_executive_holder: { Args: { _actor: string }; Returns: boolean }
       biz_goal_can_read: { Args: { _goal_id: string }; Returns: boolean }
       biz_goal_can_review: {
         Args: { _department_id: string; _user_id: string }

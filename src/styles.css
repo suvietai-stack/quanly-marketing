@@ -46,6 +46,18 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-chipi-orange: var(--chipi-orange);
   --color-chipi-soft: var(--chipi-soft);
+  --color-chart-company: var(--chart-company);
+  --color-chart-company-foreground: var(--chart-company-foreground);
+  --color-chart-executive: var(--chart-executive);
+  --color-chart-executive-foreground: var(--chart-executive-foreground);
+  --color-chart-deputy: var(--chart-deputy);
+  --color-chart-deputy-foreground: var(--chart-deputy-foreground);
+  --color-chart-biz: var(--chart-biz);
+  --color-chart-biz-foreground: var(--chart-biz-foreground);
+  --color-chart-marketing: var(--chart-marketing);
+  --color-chart-marketing-foreground: var(--chart-marketing-foreground);
+  --color-chart-ops: var(--chart-ops);
+  --color-chart-ops-foreground: var(--chart-ops-foreground);
   --shadow-chipi: 0 8px 26px -8px oklch(0.35 0.08 55 / .18);
   --shadow-soft: 0 1px 2px 0 oklch(0.29 0.08 260 / 0.04), 0 1px 3px 0 oklch(0.29 0.08 260 / 0.05);
   --shadow: 0 1px 2px 0 oklch(0.29 0.08 260 / 0.04), 0 2px 8px -2px oklch(0.29 0.08 260 / 0.06);
@@ -57,6 +69,18 @@
 
 :root {
   --radius: 0.75rem;
+  --chart-company: oklch(0.32 0.09 258);
+  --chart-company-foreground: oklch(0.97 0.01 258);
+  --chart-executive: oklch(0.42 0.14 295);
+  --chart-executive-foreground: oklch(0.97 0.01 295);
+  --chart-deputy: oklch(0.78 0.09 295);
+  --chart-deputy-foreground: oklch(0.32 0.1 295);
+  --chart-biz: oklch(0.52 0.13 245);
+  --chart-biz-foreground: oklch(0.97 0.01 245);
+  --chart-marketing: oklch(0.52 0.15 310);
+  --chart-marketing-foreground: oklch(0.97 0.01 310);
+  --chart-ops: oklch(0.62 0.15 55);
+  --chart-ops-foreground: oklch(0.98 0.01 55);
   --background: oklch(0.978 0.006 262); /* #F6F8FC */
   --foreground: oklch(0.279 0.041 260); /* #1E293B */
   --card: oklch(1 0 0);

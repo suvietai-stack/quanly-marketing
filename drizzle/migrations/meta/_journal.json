@@ -2101,6 +2101,13 @@
       "when": 1794276896113,
       "tag": "0299_monitoring_sw_crypto_and_design_legacy_status",
       "breakpoints": true
+    },
+    {
+      "idx": 300,
+      "version": "7",
+      "when": 1794278718949,
+      "tag": "0300_biz_executive_deputy_parity",
+      "breakpoints": true
     }
   ]
 }
