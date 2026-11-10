@@ -240,7 +240,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
           <TabsContent value="perm" className="space-y-3 pt-3">
             <p className="text-sm text-muted-foreground">Quyền mặc định áp cho mọi nhân sự của đơn vị (và đơn vị con). Quyền chưa được nghiệp vụ hỗ trợ chỉ lưu ở dạng bản nháp.</p>
             {actor.super ? (
-              <Button variant="outline" onClick={() => onEditDefaults(unitId)}><ShieldCheck className="mr-2 h-4 w-4" />Chỉnh quyền mặc định của đơn vị</Button>
+              <Button disabled title="Chưa hỗ trợ áp dụng quyền tùy chỉnh nguyên tử" variant="outline" onClick={() => onEditDefaults(unitId)}><ShieldCheck className="mr-2 h-4 w-4" />Chỉnh quyền mặc định của đơn vị</Button>
             ) : (
               <p className="rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground">Chỉ Super Admin được chỉnh quyền mặc định. Bạn vẫn có thể xem quyền thực tế của từng nhân sự ở mục Nhân sự toàn Base.</p>
             )}

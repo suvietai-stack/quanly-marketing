@@ -11,7 +11,8 @@ import { applySpecialtyDiff, type StaffSpecialty } from '@/lib/marketingSpecialt
 type Spec = { id: string; name: string; active: boolean; sort: number };
 
 function useSpecialties() {
-  return useQuery({ queryKey: ['mkt-specialties'], queryFn: async () => {
+  const { user } = useCurrentUser();
+  return useQuery({ queryKey: ['mkt-specialties', user?.id], queryFn: async () => {
     const [s, a] = await Promise.all([
       supabase.from('mkt_specialties').select('id,name,active,sort').order('sort'),
       supabase.from('mkt_staff_specialties').select('user_id,specialty_id,state,origin,is_primary,source'),
@@ -39,7 +40,7 @@ export function StaffSpecialties({ userId }: { userId: string }) {
   const prim = primary ?? curPrimary;
   if (q.isPending) return <p className="py-4 text-sm text-muted-foreground">Đang tải chuyên môn…</p>;
   if (q.error) return <p className="py-4 text-sm text-destructive">Không tải được chuyên môn.</p>;
-  const origin = (id: string) => q.data!.rows.find(r => r.user_id === userId && r.specialty_id === id);
+  const origin = (id: string) => q.data?.rows.find(r => r.user_id === userId && r.specialty_id === id);
   const onSave = async () => {
     const { add, remove } = applySpecialtyDiff(current, sel);
     setBusy(true);
@@ -47,7 +48,7 @@ export function StaffSpecialties({ userId }: { userId: string }) {
     catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
   return <div className="space-y-2 py-4">
-    {q.data!.specs.filter(s => s.active).map(s => { const o = origin(s.id); return (
+    {q.data?.specs.filter(s => s.active).map(s => { const o = origin(s.id); return (
       <div key={s.id} className="flex items-center gap-3 border-b py-2">
         <Checkbox id={`sp-${s.id}`} checked={sel.has(s.id)} disabled={!isSuperAdmin} onCheckedChange={v => { const n = new Set(sel); if (v) n.add(s.id); else n.delete(s.id); setDraft(n); }} />
         <label htmlFor={`sp-${s.id}`} className="flex-1 text-sm">{s.name}</label>

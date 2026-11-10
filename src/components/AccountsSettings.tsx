@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef } from "react";
+import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
 import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/SignalScopeEditor";
 import {
   useAuth, useCurrentUser, type Role, type User, type AccountStatus,
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
   ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS, isBizOrgPerm,
-  SUPER_ADMIN_ID, PERMISSION_DEPENDS, allDependencies, allDependents,
+  SUPER_ADMIN_ID, allDependencies, allDependents,
   auditDependencies, explainPermission,
 } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -527,10 +528,12 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [editing, setEditing] = useState<Role | null>(null);
   const [adding, setAdding] = useState(false);
+  const [functionGroup, setFunctionGroup] = useState("all");
   const me = s.users.find((u) => u.id === s.currentUserId) || null;
   const isSuperAdmin = !!me?.system || s.roles.find((r) => r.id === me?.roleId)?.name === "Super Admin";
 
   return <>
+    <Select value={functionGroup} onValueChange={setFunctionGroup}><SelectTrigger aria-label="Nhóm chức năng Role" className="w-full sm:w-64 mb-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhóm chức năng</SelectItem>{ROLE_FUNCTION_GROUPS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select>
     {canManage && (
       <div className="flex justify-end mb-3 gap-2">
         {isSuperAdmin && (
@@ -557,18 +560,18 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
           <th className="text-right font-medium px-4 py-2.5"></th>
         </tr></thead>
         <tbody className="divide-y">
-          {s.roles.map((r) => {
+          {s.roles.filter(r => functionGroup === "all" || roleFunctionGroup(r.name) === functionGroup).map((r) => {
             const count = s.users.filter((u) => u.roleId === r.id).length;
             return (
               <tr key={r.id}>
                 <td className="px-4 py-2.5 font-medium">
                   <div className="flex items-center gap-2">{r.name}{r.system && <Badge variant="secondary" className="gap-1"><Shield className="h-3 w-3" />Hệ thống</Badge>}</div>
                 </td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[420px]">{r.description || "—"}</td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[420px]">{roleFunctionGroup(r.name)}<div className="mt-1">{r.description || "—"}</div></td>
                 <td className="px-4 py-2.5">{count}</td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.permissions.length === ALL_PERMS.length ? "Toàn quyền" : `${r.permissions.length} quyền`}</td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.id === SUPER_ADMIN_ID ? "Toàn quyền" : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(", ") || "Chưa có chức năng"}</td>
                 <td className="px-4 py-2.5 text-right whitespace-nowrap">
-                  {canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Chỉnh quyền</Button>}
+                  {canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Chi tiết quyền</Button>}
                   {canManage && !r.system && (
                     <Button size="icon" variant="ghost" className="ml-1" onClick={() => {
                       if (count > 0) return toast.error("Role đang có người dùng, không thể xóa.");
@@ -596,18 +599,23 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
   const isSuper = role?.id === SUPER_ADMIN_ID;
 
   const scopeRef = useRef<SignalScopeHandle>(null);
+  const [savingRole, setSavingRole] = useState(false);
   const save = async () => {
+    if (savingRole) return;
     if (!name.trim()) return toast.error("Nhập tên role");
+    setSavingRole(true);
+    try {
     if (role) {
-      s.updateRole(role.id, { name: isSystem ? role.name : name.trim(), description: desc.trim() || undefined, permissions: isSuper ? ALL_PERMS : perms });
+      await s.updateRole(role.id, { name: isSystem ? role.name : name.trim(), description: desc.trim() || undefined, permissions: isSuper ? ALL_PERMS : perms });
       if (!isSuper) {
         try { await scopeRef.current?.save(); } catch (e: any) { return toast.error(e?.message || "Không lưu được phạm vi tín hiệu"); }
       }
     } else {
-      s.addRole({ name: name.trim(), description: desc.trim() || undefined, permissions: perms });
+      await s.addRole({ name: name.trim(), description: desc.trim() || undefined, permissions: perms });
     }
     toast.success("Đã lưu");
     onClose();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Không lưu được Role."); } finally { setSavingRole(false); }
   };
 
   return (
@@ -623,7 +631,7 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
           {isSuper ? <div className="text-sm p-3 rounded border bg-muted/30">Super Admin có toàn bộ quyền và không thể giảm quyền.</div>
             : <PermissionMatrix value={perms} onChange={setPerms} signalScope={<SignalScopeEditor ref={scopeRef} roleId={role?.id} />} />}
         </div>
-        <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Huỷ</Button><Button onClick={save}>Lưu</Button></DialogFooter>
+        <DialogFooter className="mt-4"><Button variant="ghost" onClick={onClose}>Huỷ</Button><Button disabled={savingRole} onClick={save}>{savingRole ? "Đang lưu…" : "Lưu"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
