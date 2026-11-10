@@ -1068,6 +1068,9 @@ function genRoleId() {
   return "role-" + Math.random().toString(36).slice(2, 10);
 }
 
+// Chặn gọi init() trùng trong khi lần chạy đầu còn đang khôi phục phiên.
+let initStarted = false;
+
 function mapProfileToUser(
   p: any,
   userRoles: { user_id: string; role_id: string }[],
@@ -1231,7 +1234,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
 
-  login: async (usernameOrEmail, password) => {
+  login: async (usernameOrEmail, password, remember = true) => {
     try {
     const input = usernameOrEmail.trim();
     const result = input.includes('@')
