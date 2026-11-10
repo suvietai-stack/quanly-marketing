@@ -7,6 +7,7 @@ import {
   type OptimizeRecurringPeriod, type OptimizeScheduleTrackStatus,
 } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
+import { readOpenParam, syncOpenParam } from "@/lib/deep-link";
 import { RequirePermission } from "@/components/PermissionGate";
 
 import { StatusBadge } from "@/components/StatusBadge";

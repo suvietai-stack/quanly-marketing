@@ -4,6 +4,7 @@ import {
   type Task, type TaskStatus, type TaskPriority, type TaskHistoryEntry,
 } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
+import { readOpenParam, syncOpenParam } from "@/lib/deep-link";
 import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
