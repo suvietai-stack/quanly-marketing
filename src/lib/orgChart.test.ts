@@ -22,3 +22,27 @@ describe('unified organization tree', () => {
   it('searches recursively through people and titles', () => { if (!block) throw new Error('missing'); expect(nodeMatches(block, 'nhân sự a')).toBe(true); expect(nodeMatches(block, 'Giám đốc')).toBe(true); expect(nodeMatches(block, 'absent')).toBe(false); });
   it('preserves empty title slots', () => { const c = { ...config, memberships: [] }; expect(buildOrganizationTree(c, [])[1]?.children[0]?.slots?.[0]?.holders).toEqual([]); });
 });
+describe('visual root nesting and biz title scoping', () => {
+  const cfg: OrgConfig = { ...emptyConfig(), units: [
+    { id: 'co', name: 'Công ty cổ phần Sứ Việt', kind: 'company', active: true },
+    { id: 'biz', name: 'Khối Kinh doanh', kind: 'block', active: true },
+    { id: 'mkt', name: 'Khối Marketing', kind: 'block', active: true },
+    { id: 'kd1', parent_id: 'biz', name: 'Kinh doanh Phân Phối 1', kind: 'department', active: true },
+    { id: 'pm', parent_id: 'mkt', name: 'Phòng Marketing', kind: 'department', active: true },
+  ], titles: [
+    { id: 'nvkd', name: 'Nhân viên Kinh doanh', active: true, level: 0, kind: 'staff', capacity: 0, source: 'biz_positions', unit_kind: 'department' },
+  ], memberships: [] };
+  it('xếp các Khối chưa gắn cha dưới Công ty khi mọi gốc đều là Khối', () => {
+    const tree = buildOrganizationTree(cfg, []);
+    expect(tree).toHaveLength(1);
+    expect(tree[0].id).toBe('co');
+    expect(tree[0].children.map(c => c.id).sort()).toEqual(['biz', 'mkt']);
+  });
+  it('chức danh Kinh doanh chung chỉ hiện trong đơn vị thuộc Khối Kinh doanh', () => {
+    const tree = buildOrganizationTree(cfg, []);
+    const biz = tree[0].children.find(c => c.id === 'biz')!;
+    const mkt = tree[0].children.find(c => c.id === 'mkt')!;
+    expect(biz.children[0].slots?.map(s => s.title)).toContain('Nhân viên Kinh doanh');
+    expect(mkt.children[0].slots ?? []).toEqual([]);
+  });
+});
