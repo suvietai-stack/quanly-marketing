@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PostFormDialog, PostDetailDialog } from "@/components/SocialPostDetail";
+import { readOpenParam, syncOpenParam } from "@/lib/deep-link";
 
 export const Route = createFileRoute("/social/$id")({
   head: () => ({ meta: [{"title": "Workspace kênh social — Base Sứ Việt"}, {"name": "description", "content": "Workspace kênh social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:title", "content": "Workspace kênh social — Base Sứ Việt"}, {"property": "og:description", "content": "Workspace kênh social: quản lý và theo dõi dữ liệu công việc tại Base Sứ Việt."}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),

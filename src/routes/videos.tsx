@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore, fmtDate, type Video, type VideoStatus, VIDEO_STATUSES } from "@/lib/store";
+import { readOpenParam, syncOpenParam } from "@/lib/deep-link";
 import { useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
