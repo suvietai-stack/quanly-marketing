@@ -4,9 +4,7 @@ import { afterAll, beforeAll, expect, it } from 'vitest';
 
 // Giai đoạn 3: kiểm kê/xem trước/thực thi/khôi phục làm sạch Role trực tiếp cũ (migration 0324).
 const db = new PGlite();
-const sa = '00000000-0000-0000-0000-0000000000s1'.replace('s', 'f');
 const SA = '00000000-0000-0000-0000-0000000000f1';
-const BIZ = '00000000-0000-0000-0000-0000000000b1'.replace('b', 'e');
 const BIZU = '00000000-0000-0000-0000-0000000000e1';
 const MKT = '00000000-0000-0000-0000-0000000000c1';
 const CUSTOM = '00000000-0000-0000-0000-0000000000d1';
