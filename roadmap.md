@@ -2,6 +2,7 @@
 
 ## Refactor tận gốc Cơ cấu tổ chức toàn Base
 - [x] Đọc yêu cầu; rà soát màn hình và số liệu nguồn hiện tại: 3 Hệ, 4 Phòng, 0 Nhóm, 12 nhân sự Kinh doanh duy nhất, 39 bổ nhiệm (16 hiệu lực), 6 chức vụ Biz, 11 chức vụ Base, 26 tài khoản có Role
+- [x] Kế hoạch được duyệt; đã khởi chạy triển khai trong bản thử riêng “Hợp nhất cơ cấu toàn Base”, chưa chuyển đổi backend chung
 - [ ] Hoàn tất bản đồ phụ thuộc và mô hình nguồn tổ chức có thẩm quyền; lưu đối chiếu ID, lịch sử, quyền và quan hệ chưa ánh xạ
 - [ ] Migration bổ sung + lớp tương thích backend; khóa các đường quản trị độc lập, bảo toàn nghiệp vụ đang dùng ID cũ
 - [ ] Một cây, một drawer, một danh sách chức vụ, một quy trình xem trước/xác nhận/áp dụng cho mọi khối
