@@ -1,5 +1,15 @@
 # Lộ trình hiện tại
 
+## Refactor tận gốc Cơ cấu tổ chức toàn Base
+- [x] Đọc yêu cầu; rà soát màn hình và số liệu nguồn hiện tại: 3 Hệ, 4 Phòng, 0 Nhóm, 12 nhân sự Kinh doanh duy nhất, 39 bổ nhiệm (16 hiệu lực), 6 chức vụ Biz, 11 chức vụ Base, 26 tài khoản có Role
+- [ ] Hoàn tất bản đồ phụ thuộc và mô hình nguồn tổ chức có thẩm quyền; lưu đối chiếu ID, lịch sử, quyền và quan hệ chưa ánh xạ
+- [ ] Migration bổ sung + lớp tương thích backend; khóa các đường quản trị độc lập, bảo toàn nghiệp vụ đang dùng ID cũ
+- [ ] Một cây, một drawer, một danh sách chức vụ, một quy trình xem trước/xác nhận/áp dụng cho mọi khối
+- [ ] Quyền org.* có phạm vi, vòng đời phân công chính/kiêm nhiệm, bổ nhiệm/miễn nhiệm và lịch sử thống nhất
+- [ ] Liên kết Role gốc: chỉ kích hoạt nguồn đã kiểm chứng an toàn; giữ chặn và lý do cho Role chưa đạt; không sửa Role trực tiếp hiện có
+- [ ] Gỡ giao diện BizOrganization/BizPositions/BizAppointments cũ sau khi chức năng được thay thế đầy đủ
+- [ ] Kiểm thử 22 tình huống, hồi quy CRM/Tín hiệu/KR/KPI/Báo cáo/Phê duyệt, đối chiếu trước–sau, nghiệm thu đăng nhập desktop/mobile; chưa Publish
+
 ## Liên kết Role hiện có với chức vụ toàn Base
 - [x] Rà soát Role, nguồn cấp quyền, phạm vi và đường ghi hiện tại (18 Role, không có phân công Base trong dữ liệu đọc)
 - [ ] Hoàn thiện kiểm tra phạm vi từng phân hệ trước khi bật đồng bộ Role (theo lựa chọn người dùng)
