@@ -6,7 +6,7 @@ import { slotCapacity, titleKind, titleLevel, unitTitles } from '@/lib/orgStruct
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
 export interface ChartSlot { id: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
-export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
+export interface ChartNode { id: string; name: string; kind: 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
 type NameOf = (id: string) => string;
