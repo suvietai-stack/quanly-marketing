@@ -11102,6 +11102,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      marketing_task_eligibility: {
+        Args: { _target: string }
+        Returns: boolean
+      }
       mkt_specialty_can_read: { Args: { _user: string }; Returns: boolean }
       mkt_specialty_candidates: {
         Args: { _specialty: string }
@@ -11272,6 +11276,7 @@ export type Database = {
         }
         Returns: Json
       }
+      org_slot_snapshots_read: { Args: never; Returns: Json }
       org_workspace_read: { Args: never; Returns: Json }
       ot_accept: { Args: { _id: string }; Returns: undefined }
       ot_cancel: { Args: { _id: string; _reason: string }; Returns: undefined }

@@ -2521,6 +2521,13 @@
       "when": 1794384324417,
       "tag": "0359_role_catalog_position_slots_and_audited_preview",
       "breakpoints": true
+    },
+    {
+      "idx": 360,
+      "version": "7",
+      "when": 1794384548081,
+      "tag": "0360_role_position_snapshot_restore_and_scope_contract",
+      "breakpoints": true
     }
   ]
 }
