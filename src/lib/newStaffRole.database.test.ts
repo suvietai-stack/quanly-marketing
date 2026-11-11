@@ -30,7 +30,7 @@ beforeAll(async () => {
   create table auth.users(id uuid primary key, email_confirmed_at timestamptz, encrypted_password text, banned_until timestamptz);
   insert into profiles values ('${ADMIN}','Admin','Đang hoạt động'),('${NEW}','Mới 1','Chờ duyệt'),('${NEW2}','Mới 2','Chờ duyệt'),('${OLD}','Cũ','Đang hoạt động'),('513712ca-d679-41aa-9c68-97c3bb6cd9df','Admin Hệ Thống','Đang hoạt động');
   insert into app_roles values ('role-video','Video',null,array['video.create','video.approve'],false,'assigned',false,false,'{}',false);
-  insert into org_titles values ('00000000-0000-0000-0000-0000000000t1','Nhân viên Đóng hàng');
+  insert into org_titles values ('00000000-0000-0000-0000-0000000000d1','Nhân viên Đóng hàng');
   insert into auth.users values ('${NEW}',now(),'x',null),('${NEW2}',now(),'x',null);`);
   await db.exec(readFileSync('drizzle/migrations/0330_new_staff_role_default_and_additive_overrides.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0331_override_mode_legacy_default.sql', 'utf8'));
