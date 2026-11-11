@@ -31,4 +31,17 @@ describe('orderBySpecialty', () => {
     expect(matched).toEqual([]);
     expect(rest).toHaveLength(4);
   });
+  it('two people sharing a display name are matched and deduped by ID, not name', () => {
+    const dup = [
+      { id: 'a1', name: 'Ngọc' },
+      { id: 'a2', name: 'Ngọc' },
+      { id: 'b1', name: 'Hòa' },
+    ];
+    const { matched, rest } = orderBySpecialty(dup, [
+      // Chỉ Ngọc thứ hai (a2) có chuyên môn — Ngọc thứ nhất không được khớp theo tên.
+      { user_id: 'a2', name: 'Ngọc', is_primary: true, unit_name: 'Phòng Marketing', title_name: null },
+    ]);
+    expect(matched.map(p => p.id)).toEqual(['a2']);
+    expect(rest.map(p => p.id)).toEqual(['a1', 'b1']);
+  });
 });
