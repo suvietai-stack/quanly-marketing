@@ -631,9 +631,6 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
               <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[260px] truncate">{u.notes || "—"}</td>
               <td className="px-4 py-2.5 text-right whitespace-nowrap">
                 {canApprove ? <>
-                  <Button size="sm" variant="outline" onClick={() => { setAssignFor(u); setRoleId(""); }}>
-                    Gán role rồi duyệt
-                  </Button>
                   <Button size="sm" variant="ghost" disabled={busy} className="ml-1 text-emerald-700" onClick={() => void approve(u.id)}>
                     <Check className="h-4 w-4 mr-1" />Duyệt
                   </Button>
