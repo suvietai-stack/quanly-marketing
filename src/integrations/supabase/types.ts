@@ -555,32 +555,41 @@ export type Database = {
         Row: {
           actor: string
           created_at: string
+          final_transition: boolean
           fingerprint: string
           id: string
           removed: Json
           restored: boolean
           restored_at: string | null
           restored_by: string | null
+          result: Json | null
+          snapshot: Json | null
         }
         Insert: {
           actor: string
           created_at?: string
+          final_transition?: boolean
           fingerprint: string
           id?: string
           removed: Json
           restored?: boolean
           restored_at?: string | null
           restored_by?: string | null
+          result?: Json | null
+          snapshot?: Json | null
         }
         Update: {
           actor?: string
           created_at?: string
+          final_transition?: boolean
           fingerprint?: string
           id?: string
           removed?: Json
           restored?: boolean
           restored_at?: string | null
           restored_by?: string | null
+          result?: Json | null
+          snapshot?: Json | null
         }
         Relationships: []
       }
@@ -9065,6 +9074,7 @@ export type Database = {
         Row: {
           mode: string
           permissions: string[]
+          source_kind: string
           updated_at: string
           use_custom: boolean
           user_id: string
@@ -9072,6 +9082,7 @@ export type Database = {
         Insert: {
           mode?: string
           permissions?: string[]
+          source_kind?: string
           updated_at?: string
           use_custom?: boolean
           user_id: string
@@ -9079,6 +9090,7 @@ export type Database = {
         Update: {
           mode?: string
           permissions?: string[]
+          source_kind?: string
           updated_at?: string
           use_custom?: boolean
           user_id?: string
@@ -9089,16 +9101,19 @@ export type Database = {
         Row: {
           created_at: string
           role_id: string
+          source_kind: string
           user_id: string
         }
         Insert: {
           created_at?: string
           role_id: string
+          source_kind?: string
           user_id: string
         }
         Update: {
           created_at?: string
           role_id?: string
+          source_kind?: string
           user_id?: string
         }
         Relationships: [
@@ -9734,6 +9749,12 @@ export type Database = {
       }
       base_perm_cleanup_preview: { Args: never; Returns: Json }
       base_perm_cleanup_restore: { Args: { _run: string }; Returns: Json }
+      base_perm_final_execute: {
+        Args: { _confirmation: string; _fingerprint: string; _users: string[] }
+        Returns: Json
+      }
+      base_perm_final_preview: { Args: never; Returns: Json }
+      base_perm_final_restore: { Args: { _run: string }; Returns: Json }
       base_permission_catalog_sync: {
         Args: { _catalog: Json }
         Returns: undefined
