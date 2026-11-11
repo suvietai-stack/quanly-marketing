@@ -2500,6 +2500,13 @@
       "when": 1794377802770,
       "tag": "0356_biz_title_links_verified_module_perms",
       "breakpoints": true
+    },
+    {
+      "idx": 357,
+      "version": "7",
+      "when": 1794377909762,
+      "tag": "0357_sales_head_role_scope_fallback_tighten",
+      "breakpoints": true
     }
   ]
 }
