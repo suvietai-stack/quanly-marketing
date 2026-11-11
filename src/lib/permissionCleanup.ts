@@ -23,6 +23,7 @@ export type CleanupPreview = {
 };
 
 export type CleanupRun = {
+  result?: { standard_only_reset?: boolean; accounts?: number; protected_accounts?: number } | null;
   final_transition?: boolean;
   id: string;
   actor: string;
