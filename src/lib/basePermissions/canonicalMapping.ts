@@ -3,18 +3,18 @@ import type { RoleCatalog, UnmappedAssignment } from './roleCatalog';
 
 // Exact audited title IDs, never title-name/legacy-Role inference.
 const titleRoles: Record<string, string> = {
-  'b5e00000-0000-4000-8000-000000000120': 'mkt-director',
-  'b5e00000-0000-4000-8000-000000000101': 'mkt-head',
-  'b5e00000-0000-4000-8000-000000000103': 'design-head',
-  'b5e00000-0000-4000-8000-000000000102': 'mkt-staff',
-  'b5e00000-0000-4000-8000-000000000104': 'design-staff',
-  'b5e00000-0000-4000-8000-000000000106': 'hr',
-  'b5e00000-0000-4000-8000-000000000107': 'account-chief',
-  'b5e00000-0000-4000-8000-000000000108': 'account-stock',
-  'b5e00000-0000-4000-8000-000000000109': 'proc-head',
-  'b5e00000-0000-4000-8000-000000000110': 'buyer',
-  'ea700d9c-35a7-4ceb-b1cd-bfb9080b4d08': 'executive',
-  '6faa90f6-1f3f-4974-bf4e-d4e21d529f6c': 'deputy-executive',
+  'b5e00000-0000-4000-8000-000000000120': 'role-v2-mkt-director',
+  'b5e00000-0000-4000-8000-000000000101': 'role-v2-mkt-head',
+  'b5e00000-0000-4000-8000-000000000103': 'role-v2-design-head',
+  'b5e00000-0000-4000-8000-000000000102': 'role-v2-mkt-staff',
+  'b5e00000-0000-4000-8000-000000000104': 'role-v2-design-staff',
+  'b5e00000-0000-4000-8000-000000000106': 'role-v2-hr',
+  'b5e00000-0000-4000-8000-000000000107': 'role-v2-account-chief',
+  'b5e00000-0000-4000-8000-000000000108': 'role-v2-account-stock',
+  'b5e00000-0000-4000-8000-000000000109': 'role-v2-proc-head',
+  'b5e00000-0000-4000-8000-000000000110': 'role-v2-purchasing',
+  'ea700d9c-35a7-4ceb-b1cd-bfb9080b4d08': 'role-v2-executive',
+  '6faa90f6-1f3f-4974-bf4e-d4e21d529f6c': 'role-v2-deputy-exec',
 };
 export type CanonicalMapping = { assignment: UnmappedAssignment; roleId?: string; exception?: string; appliedSlot?: string };
 export function canonicalMapping(catalog: RoleCatalog): CanonicalMapping[] {
