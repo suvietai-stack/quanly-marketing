@@ -5,7 +5,7 @@ import { MKT_READY } from './marketingReady';
 import roles from './fixtures/marketingTaskRoles.snapshot.json';
 import { permissionPresets } from './permissionEditor';
 
-// Chạy luật SQL thật trong docs/pending/0371 trên Postgres (PGlite) với bản chụp Role nhiệm vụ live; không động dữ liệu thật.
+// Chạy luật SQL thật trong docs/pending/0372 trên Postgres (PGlite) với bản chụp Role nhiệm vụ live; không động dữ liệu thật.
 const db = new PGlite();
 const NGOC = '00000000-0000-0000-0000-00000000c001'; // fixture "Lê Minh Ngọc"
 const PEER = '00000000-0000-0000-0000-00000000c002';
@@ -40,7 +40,7 @@ beforeAll(async () => {
   create function private.mkt_prev_rules(u uuid, c jsonb) returns jsonb language sql as $$ select coalesce(jsonb_agg(jsonb_build_object('permission',permission,'effect','ALLOW','source_kind','personal')),'[]') from personal where user_id=u $$;
   create function private.slot_previous_source_rows(c jsonb) returns table(user_id uuid) language sql as $f$ select m.user_id from mkt_staff_specialties m join mkt_specialties s on s.id=m.specialty_id join app_roles r on r.id=s.role_id where (r.role_kind<>'marketing_task' OR NOT m.eligibility_enforced OR private.org_marketing_eligible(m.user_id,c)) $f$;`);
   // Bộ lọc mkt_specialty_rules gọi trước phase3a; tạo phase3a/reset sau khi nạp file pending.
-  const pending = readFileSync('docs/pending/0371_marketing_task_role_is_source.sql', 'utf8');
+  const pending = readFileSync('docs/pending/0372_marketing_task_role_is_source.sql', 'utf8');
   await db.exec(`create function private.phase3a_previous_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.org_assignment_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.reset_previous_base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select private.phase3a_previous_rules(u,c)||private.org_assignment_specialty_rules(u,c) $$;
@@ -104,7 +104,7 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
   });
   it('sửa ma trận Role (áp bộ gợi ý Content Web) có hiệu lực ngay cho mọi người giữ Role', async () => {
     const before = (await db.query<{ p: string[] }>("select permissions p from app_roles where id='role-content-web'")).rows[0].p;
-    const preset = permissionPresets.find(x => x.id === 'content')!.keys;
+    const preset = permissionPresets.find(x => x.id === 'content')?.keys ?? [];
     await db.query("update app_roles set permissions=$1 where id='role-content-web'", [preset]);
     expect(await has(NGOC, 'social.post_create')).toBe(true); // vẫn có vì Role Video (Admin đã chọn) cũng cấp — hợp quyền đúng nguồn
     expect(await has(PEER, 'social.post_create')).toBe(false);
