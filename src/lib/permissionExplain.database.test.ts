@@ -107,8 +107,17 @@ it('chế độ additive: quyền Role và quyền bổ sung được tổng h�
   expect(e.effective).toContain('video.approve');
 });
 
+it('quyền đã kiểm chứng cấp trực tiếp qua Role (không rule nguồn) vẫn hiệu lực và Debug khớp backend', async () => {
+  // has_permission: ot.task_view là quyền đã kiểm chứng, tier1 NOT_CONFIGURED → rơi về Role trực tiếp.
+  const hp = (await db.query<{ has_permission: boolean }>("select private.has_permission($1, 'ot.task_view')", [VERIFIED_ROLE])).rows[0];
+  expect(hp.has_permission).toBe(true);
+  const e = await explain(ADMIN, VERIFIED_ROLE);
+  expect(e.effective).toContain('ot.task_view');
+  expect(e.effective).toContain('ot.task_update');
+});
+
 it('effective khớp tuyệt đối private.has_permission cho mọi quyền ứng viên', async () => {
-  for (const target of [MULTI, REPLACE, ADDITIVE]) {
+  for (const target of [MULTI, REPLACE, ADDITIVE, VERIFIED_ROLE, DENIED]) {
     const e = await explain(ADMIN, target);
     const keys = (await db.query<{ key: string }>('select key from base_permission_catalog')).rows.map((r) => r.key);
     for (const k of keys) {
