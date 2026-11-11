@@ -2563,6 +2563,13 @@
       "when": 1794385947895,
       "tag": "0365_slot_source_resolver_and_task_eligibility",
       "breakpoints": true
+    },
+    {
+      "idx": 366,
+      "version": "7",
+      "when": 1794386265799,
+      "tag": "0366_canonical_slot_config_and_preview_guards",
+      "breakpoints": true
     }
   ]
 }
