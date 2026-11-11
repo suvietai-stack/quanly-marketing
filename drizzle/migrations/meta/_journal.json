@@ -2346,6 +2346,13 @@
       "when": 1794363888186,
       "tag": "0334_account_permission_explain",
       "breakpoints": true
+    },
+    {
+      "idx": 335,
+      "version": "7",
+      "when": 1794363958411,
+      "tag": "0335_ot_packing_verified_permissions",
+      "breakpoints": true
     }
   ]
 }
