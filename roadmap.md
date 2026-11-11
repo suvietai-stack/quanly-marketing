@@ -4,7 +4,9 @@
 - [x] Dừng tạo ô theo người trên giao diện; rà 25 ô → 16 vị trí, 0 xung đột Role, 24 người.
 - [x] Kế hoạch + dry-run + rollback: docs/position-model-2026-11-11/.
 - [x] 15:35: tách vị trí công việc/chức vụ quản lý, cây KD động; SQL pending + 9 PGlite tests.
-- [ ] Áp SQL + nối nguồn quyền/org_change/UI cây: chờ chủ duyệt.
+- [x] 16:10: áp mô hình vị trí (bảng gắn Role theo đơn vị+chức danh, 16 vị trí, parity 0 mất/0 thêm), nguồn quyền nhận bổ nhiệm không cần ô, lệnh org_change position_role có audit, giao diện danh sách vị trí. Rollback docs/rollback/2026-11-11-position-roles.sql.
+- [ ] biz_can nhận quyền từ Role theo phạm vi đơn vị: chưa làm — cần nối từng RPC Kinh doanh với phạm vi đơn vị, rủi ro mở rộng sai.
+- [ ] Bỏ ràng buộc một người/ô, tháo 17 liên kết cũ, xóa Role cũ: chưa làm.
 - [ ] Sau xác minh: bỏ ràng buộc một người/ô, tháo liên kết cũ, xóa Role cũ.
 
 ## Chấp nhận mất quyền legacy — 15:05 UTC
