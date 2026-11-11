@@ -45,7 +45,7 @@ beforeAll(async () => {
   create function private.base_config() returns jsonb language sql as $$ select c from cfg $$;
   create function private.has_permission(_user_id uuid,_permission text) returns boolean language sql as $$ select exists(select 1 from user_roles ur join app_roles r on r.id=ur.role_id where ur.user_id=_user_id AND _permission=ANY(r.permissions)) $$;`);
   // Bộ lọc mkt_specialty_rules gọi trước phase3a; tạo phase3a/reset sau khi nạp file pending.
-  const pending = readFileSync('docs/pending/0372_marketing_task_role_is_source.sql', 'utf8');
+  const pending = readFileSync('src/lib/basePermissions/fixtures/supersededMarketingSource.sql', 'utf8');
   await db.exec(`create function private.phase3a_previous_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.org_assignment_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.reset_previous_base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select private.phase3a_previous_rules(u,c)||private.org_assignment_specialty_rules(u,c) $$;
@@ -175,7 +175,7 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
     await db.exec(readFileSync('docs/backup/role-review-2026-11-11/has-permission.sql','utf8'));
     // NGOC has no direct Role. Restored legacy-reset fence blocks his task rights.
     expect(await has(NGOC,'web.content_view')).toBe(false);
-    await db.exec(readFileSync('docs/pending/0372_marketing_task_role_is_source.sql','utf8'));
+    await db.exec(readFileSync('src/lib/basePermissions/fixtures/supersededMarketingSource.sql','utf8'));
     expect(await has(NGOC,'web.content_view')).toBe(true);
     expect(await has(NGOC,'web.outline_start')).toBe(true);
     expect((await db.query('select id,permissions from app_roles order by id')).rows).toEqual(before);
