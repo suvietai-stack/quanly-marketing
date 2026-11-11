@@ -9,17 +9,10 @@ export function BasePermissionRefresh() {
     if (!Number.isFinite(delay)) return;
     const timer = window.setTimeout(() => {
       useAuth.setState({ baseAccess: null });
-      void useAuth.getState().refreshBaseAccess();
+      void useAuth.getState().refreshBaseAccess(true);
     }, Math.min(2_147_000_000, Math.max(0, delay)));
     return () => clearTimeout(timer);
   }, [uid, access]);
-  useEffect(() => {
-    if (!uid) return;
-    const refresh = () => { if (document.visibilityState === 'visible') void useAuth.getState().refreshBaseAccess(); };
-    const timer = window.setInterval(refresh, 30_000);
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    return () => { clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
-  }, [uid]);
+  // Làm mới định kỳ/khi quay lại tab do AppShell đảm nhiệm (có giãn cách) — không gọi trùng ở đây.
   return null;
 }
