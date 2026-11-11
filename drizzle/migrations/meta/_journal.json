@@ -2619,6 +2619,13 @@
       "when": 1794404402383,
       "tag": "0373_role_v2_generation_column",
       "breakpoints": true
+    },
+    {
+      "idx": 374,
+      "version": "7",
+      "when": 1794404471480,
+      "tag": "0374_role_v2_canonical_writer_and_task_source",
+      "breakpoints": true
     }
   ]
 }
