@@ -9063,18 +9063,21 @@ export type Database = {
       }
       user_permission_overrides: {
         Row: {
+          mode: string
           permissions: string[]
           updated_at: string
           use_custom: boolean
           user_id: string
         }
         Insert: {
+          mode?: string
           permissions?: string[]
           updated_at?: string
           use_custom?: boolean
           user_id: string
         }
         Update: {
+          mode?: string
           permissions?: string[]
           updated_at?: string
           use_custom?: boolean
@@ -9659,6 +9662,10 @@ export type Database = {
         Returns: string
       }
       account_caller_can: { Args: { _permission: string }; Returns: boolean }
+      account_override_mode_set: {
+        Args: { _mode: string; _target: string }
+        Returns: Json
+      }
       account_username_identity: {
         Args: { _username: string }
         Returns: string

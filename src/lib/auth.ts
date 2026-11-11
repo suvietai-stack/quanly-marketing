@@ -1022,6 +1022,8 @@ export interface User {
   roleId?: ID;
   customPermissions?: PermissionKey[];
   useCustom?: boolean;
+  /** 'replace' (legacy, mặc định): quyền riêng thay thế Role. 'additive': cộng thêm vào Role (chỉ sau khi Admin xác nhận). */
+  overrideMode?: "replace" | "additive";
   status: AccountStatus;
   createdAt: string;
   system?: boolean;
@@ -1084,7 +1086,7 @@ let initStarted = false;
 function mapProfileToUser(
   p: any,
   userRoles: { user_id: string; role_id: string }[],
-  overrides: { user_id: string; use_custom: boolean; permissions: string[] }[],
+  overrides: { user_id: string; use_custom: boolean; permissions: string[]; mode?: string }[],
 ): User {
   const ur = userRoles.find((x) => x.user_id === p.id);
   const ov = overrides.find((x) => x.user_id === p.id);
@@ -1101,6 +1103,7 @@ function mapProfileToUser(
     roleId: ur?.role_id,
     useCustom: ov?.use_custom ?? false,
     customPermissions: ov?.permissions ?? [],
+    overrideMode: ov?.mode === "additive" ? "additive" : "replace",
     status: p.status,
     createdAt: p.created_at,
     system: !!p.is_system_admin,
@@ -1198,7 +1201,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       .map((d) => fullById.get(d.id) ?? d)
       .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     const userRoles = (urRes.data ?? []) as { user_id: string; role_id: string }[];
-    const overrides = (ovRes.data ?? []) as { user_id: string; use_custom: boolean; permissions: string[] }[];
+    const overrides = (ovRes.data ?? []) as { user_id: string; use_custom: boolean; permissions: string[]; mode?: string }[];
     const users = merged.map((p) => mapProfileToUser(p, userRoles, overrides));
     const roles: Role[] = (rolesRes.data ?? []).map((r: any) => ({
       id: r.id,
@@ -1472,7 +1475,11 @@ export const useAuth = create<AuthState>((set, get) => ({
 // ============ Helpers ============
 export function getUserPermissions(user: User | null | undefined, roles: Role[]): Set<PermissionKey> {
   if (!user) return new Set();
-  // Quyền bổ sung cá nhân chạy song song: cộng thêm vào quyền Role, không thay thế.
+  // Chế độ quyền riêng: 'replace' (legacy, mặc định) thay thế Role; 'additive' cộng thêm vào Role.
+  // Phải khớp private.has_permission trong backend.
+  if (user.useCustom && user.overrideMode !== "additive") {
+    return new Set<PermissionKey>(user.customPermissions ?? []);
+  }
   const role = roles.find((r) => r.id === user.roleId);
   const perms = new Set<PermissionKey>(role ? role.permissions : []);
   if (user.useCustom && user.customPermissions) for (const p of user.customPermissions) perms.add(p);
@@ -1524,16 +1531,17 @@ export function explainPermission(
   }
   const resolved = resolvePermKey(key);
   const role = roles.find((r) => r.id === user.roleId);
-  const source: "role" | "custom" = user.useCustom ? "custom" : "role";
-  const granted = user.useCustom
-    ? new Set(user.customPermissions ?? [])
-    : new Set(role?.permissions ?? []);
+  const additive = user.useCustom && user.overrideMode === "additive";
+  const granted = getUserPermissions(user, roles);
+  const inRole = !!role && role.permissions.includes(resolved);
+  const inCustom = !!user.useCustom && (user.customPermissions ?? []).includes(resolved);
+  const source: "role" | "custom" = inCustom && !inRole ? "custom" : "role";
   if (!granted.has(resolved)) {
     return {
       ok: false,
-      reason: source === "custom"
-        ? `Không có trong quyền riêng của user`
-        : `Không có trong role "${role?.name ?? "(chưa gán)"}"`,
+      reason: user.useCustom && !additive
+        ? `Không có trong quyền riêng của user (chế độ thay thế Role)`
+        : `Không có trong role "${role?.name ?? "(chưa gán)"}"${additive ? " hoặc quyền bổ sung" : ""}`,
       source: "missing",
       roleName: role?.name,
     };
@@ -1555,7 +1563,9 @@ export function explainPermission(
   return {
     ok: true,
     reason: source === "custom"
-      ? "Cấp qua quyền riêng (ghi đè role)"
+      ? additive
+        ? "Cấp qua quyền bổ sung cá nhân (cộng thêm vào Role)"
+        : "Cấp qua quyền riêng (thay thế Role)"
       : `Cấp qua role "${role?.name ?? ""}"`,
     source,
     roleName: role?.name,

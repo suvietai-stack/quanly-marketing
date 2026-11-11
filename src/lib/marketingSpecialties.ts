@@ -11,19 +11,20 @@ export type PersonLite = { id: string; name: string };
 /**
  * Order people for an assignment picker: matching-specialty candidates first
  * (primary specialty first, then name), then everyone else alphabetically.
- * Dedupes by name so a person never appears twice; never auto-selects anyone.
+ * Matches and dedupes by stable user ID so two people sharing a display name
+ * are both listed and ranked correctly; never auto-selects anyone.
  */
 export function orderBySpecialty(people: PersonLite[], candidates: SpecialtyCandidate[]) {
-  const candByName = new Map(candidates.map(c => [c.name, c]));
+  const candById = new Map(candidates.map(c => [c.user_id, c]));
   const matched: PersonLite[] = [];
   const rest: PersonLite[] = [];
   const seen = new Set<string>();
   for (const p of people) {
-    if (seen.has(p.name)) continue;
-    seen.add(p.name);
-    (candByName.has(p.name) ? matched : rest).push(p);
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    (candById.has(p.id) ? matched : rest).push(p);
   }
-  const rank = (p: PersonLite) => (candByName.get(p.name)?.is_primary ? 0 : 1);
+  const rank = (p: PersonLite) => (candById.get(p.id)?.is_primary ? 0 : 1);
   matched.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'vi'));
   rest.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
   return { matched, rest };
