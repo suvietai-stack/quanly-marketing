@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { titleRolesApi } from '@/lib/basePermissions/titleRoles';
 import { useState, useMemo, useRef } from "react";
 import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
@@ -205,18 +206,48 @@ export function PermissionDebugTab() {
 
       {target && (
         <div className="space-y-3">
-          <div className="text-sm">
-            <span className="text-muted-foreground">Nguồn quyền: </span>
-            <span className="font-medium">{source}</span>
-          </div>
-          <div className="text-sm">
-            <span className="text-muted-foreground">Trạng thái: </span>
-            <StatusBadge value={target.status} />
-          </div>
-          {testKey && explained && (
-            <div className={`text-sm font-medium ${testResult ? "text-emerald-600" : "text-rose-600"}`}>
-              can("{testKey}") = {testResult ? "TRUE — được phép" : "FALSE — bị chặn"}
-              <div className="text-xs text-muted-foreground font-normal mt-0.5">Lý do: {explained.reason}</div>
+          {explainQ.isPending && <div className="text-sm text-muted-foreground">Đang đọc kết quả từ máy chủ…</div>}
+          {explainQ.error && <div className="text-sm text-rose-600">Không đọc được giải thích quyền: {explainQ.error instanceof Error ? explainQ.error.message : "lỗi"}</div>}
+          {info && (
+            <>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Nguồn quyền: </span>
+                <span className="font-medium">
+                  {info.is_super_admin
+                    ? "Super Admin / Tài khoản hệ thống — toàn quyền"
+                    : info.use_custom
+                      ? info.override_mode === "additive"
+                        ? "Role + quyền bổ sung cá nhân (cộng thêm)"
+                        : "Quyền riêng (thay thế Role)"
+                      : info.direct_roles.length > 0
+                        ? `Theo role: ${info.direct_roles.map((r) => r.name).join(", ")}`
+                        : "Chưa gán Role"}
+                </span>
+              </div>
+              {info.direct_roles.length > 1 && (
+                <div className="text-xs text-muted-foreground">
+                  Tài khoản có {info.direct_roles.length} Role trực tiếp — quyền hiệu lực là tổng hợp đã loại trùng.
+                </div>
+              )}
+              {info.rules.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Nguồn theo chức vụ/nhiệm vụ: </span>
+                  <span className="font-medium">
+                    {[...new Set(info.rules.map((r) => `${SOURCE_KIND_LABEL[r.source_kind] ?? r.source_kind}${r.source_name ? ` (${r.source_name})` : ""}`))].join(" · ")}
+                  </span>
+                </div>
+              )}
+              <div className="text-sm">
+                <span className="text-muted-foreground">Trạng thái: </span>
+                <StatusBadge value={target.status} />
+                {info.status !== "Đang hoạt động" && <span className="ml-2 text-xs text-rose-600">Tài khoản không hoạt động — mọi quyền vô hiệu.</span>}
+              </div>
+            </>
+          )}
+          {testKey && testResult && (
+            <div className={`text-sm font-medium ${testResult.ok ? "text-emerald-600" : "text-rose-600"}`}>
+              can("{testKey}") = {testResult.ok ? "TRUE — được phép" : "FALSE — bị chặn"}
+              <div className="text-xs text-muted-foreground font-normal mt-0.5">Lý do: {testResult.reason}</div>
             </div>
           )}
           <div>
