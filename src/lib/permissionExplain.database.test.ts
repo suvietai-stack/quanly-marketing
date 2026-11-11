@@ -13,6 +13,7 @@ const MULTI = '00000000-0000-0000-0000-0000000000b1';
 const REPLACE = '00000000-0000-0000-0000-0000000000b2';
 const ADDITIVE = '00000000-0000-0000-0000-0000000000b3';
 const DENIED = '00000000-0000-0000-0000-0000000000b4';
+const VERIFIED_ROLE = '00000000-0000-0000-0000-0000000000b5';
 
 beforeAll(async () => {
   await db.exec(`create schema auth; create schema private; create role anon; create role authenticated; create role service_role;
@@ -24,7 +25,7 @@ beforeAll(async () => {
   create function private.mkt_specialty_permission_ready(p text) returns boolean immutable language sql as $$ select false $$;
   create function private.base_tier1(u uuid, p text) returns text language sql as $$ select case when p = 'ot.view_own' and u = '${DENIED}'::uuid then 'DENY' else 'NOT_CONFIGURED' end $$;
   create function private.base_config() returns jsonb language sql as $$ select '{}'::jsonb $$;
-  create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
+  create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select case when u = '${DENIED}'::uuid then '[{"permission":"ot.view_own","effect":"DENY"}]'::jsonb else '[]'::jsonb end $$;
   create table profiles(id uuid primary key, full_name text, status text);
   create table app_roles(id text primary key, name text, description text, permissions text[], is_system boolean, biz_scope text, biz_detail_exception boolean, biz_settings_disabled boolean, signal_scope text[], signal_scope_all boolean);
   create table user_roles(user_id uuid, role_id text, unique(user_id, role_id));
@@ -39,6 +40,7 @@ beforeAll(async () => {
     ('${ADMIN}','Admin','Đang hoạt động'),('${VIEWER}','Xem quyền','Đang hoạt động'),('${NOBODY}','Thường','Đang hoạt động'),
     ('${MULTI}','Hai Role','Đang hoạt động'),('${REPLACE}','Replace','Đang hoạt động'),
     ('${ADDITIVE}','Additive','Đang hoạt động'),('${DENIED}','Bị chặn','Đang hoạt động'),
+    ('${VERIFIED_ROLE}','Role quyền đã kiểm chứng','Đang hoạt động'),
     ('513712ca-d679-41aa-9c68-97c3bb6cd9df','Admin Hệ Thống','Đang hoạt động');
   insert into app_roles values
     ('role-video','Video',null,array['video.create','video.approve'],false,'assigned',false,false,'{}',false),
@@ -55,13 +57,18 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0330_new_staff_role_default_and_additive_overrides.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0331_override_mode_legacy_default.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0332_packing_staff_role.sql', 'utf8'));
-  await db.exec(readFileSync('drizzle/migrations/0334_account_permission_explain.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0335_ot_packing_verified_permissions.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0351_account_permission_explain_set_based.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0353_unified_permission_resolver_parity.sql', 'utf8'));
   // Dữ liệu quyền riêng sau khi migration 0331 thêm cột mode.
   await db.query(`insert into user_permission_overrides(user_id, use_custom, permissions, mode) values
     ('${REPLACE}', true, array['web.content_view'], 'replace'),
     ('${ADDITIVE}', true, array['web.content_view'], 'additive')`);
   await db.query(`insert into user_roles values ('${REPLACE}','role-video'),('${ADDITIVE}','role-video')`);
+  // Role cấp trực tiếp quyền ot.* đã kiểm chứng nhưng KHÔNG có rule nguồn nào:
+  // has_permission phải rơi về Role trực tiếp (fallthrough), Debug phải khớp y hệt.
+  await db.query(`insert into app_roles values ('role-dong-hang-truc-tiep','ĐH trực tiếp',null,array['ot.task_view','ot.task_update'],false,'assigned',false,false,'{}',false)`);
+  await db.query(`insert into user_roles values ('${VERIFIED_ROLE}','role-dong-hang-truc-tiep')`);
 }, 30000);
 afterAll(() => db.close());
 
@@ -100,8 +107,17 @@ it('chế độ additive: quyền Role và quyền bổ sung được tổng h�
   expect(e.effective).toContain('video.approve');
 });
 
+it('quyền đã kiểm chứng cấp trực tiếp qua Role (không rule nguồn) vẫn hiệu lực và Debug khớp backend', async () => {
+  // has_permission: ot.task_view là quyền đã kiểm chứng, tier1 NOT_CONFIGURED → rơi về Role trực tiếp.
+  const hp = (await db.query<{ has_permission: boolean }>("select private.has_permission($1, 'ot.task_view')", [VERIFIED_ROLE])).rows[0];
+  expect(hp.has_permission).toBe(true);
+  const e = await explain(ADMIN, VERIFIED_ROLE);
+  expect(e.effective).toContain('ot.task_view');
+  expect(e.effective).toContain('ot.task_update');
+});
+
 it('effective khớp tuyệt đối private.has_permission cho mọi quyền ứng viên', async () => {
-  for (const target of [MULTI, REPLACE, ADDITIVE]) {
+  for (const target of [MULTI, REPLACE, ADDITIVE, VERIFIED_ROLE, DENIED]) {
     const e = await explain(ADMIN, target);
     const keys = (await db.query<{ key: string }>('select key from base_permission_catalog')).rows.map((r) => r.key);
     for (const k of keys) {
