@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { titleRolesApi } from '@/lib/basePermissions/titleRoles';
+import { StaffPermissionEditor } from '@/components/StaffPermissionEditor';
 import { useState, useMemo, useRef } from "react";
 import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
 import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/SignalScopeEditor";
@@ -23,7 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check, Search,
+  Plus, Pencil, Trash2, Lock, Unlock, KeyRound, Shield, ShieldCheck, X, Check, Search, Network,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
@@ -380,19 +382,124 @@ function AllAccountsTab({ users, canLock }: { users: User[]; canLock: boolean })
   );
 }
 
+// --------- Phân công từ Cơ cấu tổ chức (chỉ đọc) ---------
+// Trang tài khoản không cấp Role hay chức vụ; mọi phân công đọc trực tiếp từ Cơ cấu tổ chức.
+type OrgSummary = {
+  assignments: { unit_id: string; unit_name: string; title_id: string | null; title_name: string | null; category: string; starts_at: string | null }[];
+  specialties: { id: string; name: string; is_primary: boolean }[];
+  roles: { id: string; name: string }[];
+};
+
+function AccountOrgPanel({ userId }: { userId: string }) {
+  const q = useQuery({
+    queryKey: ["account-org-summary", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("account_org_summary", { _target: userId });
+      if (error) throw error;
+      return data as unknown as OrgSummary;
+    },
+    retry: false,
+  });
+  if (q.isPending) return <p className="text-sm text-muted-foreground">Đang tải phân công từ Cơ cấu tổ chức…</p>;
+  if (q.error) return <p className="text-sm text-muted-foreground">Không đọc được phân công: {q.error instanceof Error ? q.error.message : "lỗi"}</p>;
+  const d = q.data;
+  if (!d) return null;
+  const primary = d.assignments.filter((a) => a.category !== "concurrent");
+  const concurrent = d.assignments.filter((a) => a.category === "concurrent");
+  const line = (a: OrgSummary["assignments"][number]) => `${a.unit_name} · ${a.title_name ?? "Thành viên"}`;
+  return (
+    <div className="sm:col-span-2 rounded-lg border bg-muted/20 p-3 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Label className="text-sm font-semibold">Phân công theo Cơ cấu tổ chức</Label>
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/organization"><Network className="h-3.5 w-3.5 mr-1.5" />Đến Cơ cấu tổ chức</Link>
+        </Button>
+      </div>
+      {d.assignments.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic">Chưa phân công — bổ nhiệm tại Cơ cấu tổ chức để tài khoản nhận Role theo chức vụ.</p>
+      ) : (
+        <div className="space-y-1 text-sm">
+          {primary.map((a, i) => <p key={`p${i}`}><span className="text-muted-foreground">Đơn vị công tác: </span>{line(a)}</p>)}
+          {concurrent.length > 0 && <p><span className="text-muted-foreground">Kiêm nhiệm: </span>{concurrent.map(line).join(" · ")}</p>}
+        </div>
+      )}
+      {d.specialties.length > 0 && (
+        <p className="text-sm"><span className="text-muted-foreground">Nhiệm vụ Marketing: </span>{d.specialties.map((sp) => sp.name).join(", ")}</p>
+      )}
+      <p className="text-sm">
+        <span className="text-muted-foreground">Role hiệu lực: </span>
+        {d.roles.length > 0 ? d.roles.map((r) => r.name).join(", ") : <span className="italic text-muted-foreground">Chưa gán</span>}
+      </p>
+    </div>
+  );
+}
+
+// --------- Quyền thực nhận (chỉ đọc, từ resolver backend) ---------
+function AccountPermsView({ userId }: { userId: string }) {
+  const q = useQuery({
+    queryKey: ["perm-explain", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("account_permission_explain", { _target: userId });
+      if (error) throw error;
+      return data as unknown as PermissionExplainRpc;
+    },
+    retry: false,
+  });
+  if (q.isPending) return <p className="text-sm text-muted-foreground">Đang đọc quyền thực nhận…</p>;
+  if (q.error) return <p className="text-sm text-muted-foreground">Không đọc được quyền: {q.error instanceof Error ? q.error.message : "lỗi"}</p>;
+  const info = q.data;
+  if (!info) return null;
+  const effective = new Set(info.effective);
+  const sourceNames = [...new Set(info.rules.map((r) => `${SOURCE_KIND_LABEL[r.source_kind] ?? r.source_kind}${r.source_name ? `: ${r.source_name}` : ""}`))];
+  return (
+    <div className="space-y-3">
+      <p className="text-sm">
+        <span className="text-muted-foreground">Nguồn quyền: </span>
+        <span className="font-medium">
+          {info.is_super_admin
+            ? "Super Admin / Tài khoản hệ thống — toàn quyền"
+            : [
+                info.direct_roles.length > 0 ? `Role: ${info.direct_roles.map((r) => r.name).join(", ")}` : null,
+                sourceNames.length > 0 ? sourceNames.join(" · ") : null,
+                info.use_custom ? (info.override_mode === "additive" ? "Quyền bổ sung cá nhân" : "Quyền riêng (thay thế Role)") : null,
+              ].filter(Boolean).join(" · ") || "Chưa có nguồn quyền"}
+        </span>
+      </p>
+      <div>
+        <Label className="text-xs">Quyền thực nhận ({effective.size})</Label>
+        <div className="mt-2 max-h-72 overflow-y-auto border rounded p-2 space-y-2">
+          {PERMISSION_GROUPS.filter((g) => !BIZ_ORG_GROUPS.includes(g)).map((g) => {
+            const granted = ROLE_PERMISSIONS.filter((p) => p.group === g && effective.has(p.key));
+            if (!granted.length) return null;
+            return (
+              <div key={g}>
+                <div className="text-xs font-semibold text-muted-foreground mb-1">{g} ({granted.length})</div>
+                <div className="flex flex-wrap gap-1">
+                  {granted.map((p) => (
+                    <span key={p.key} title={p.label} className="text-[11px] px-1.5 py-0.5 rounded border bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800">{p.label}</span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {effective.size === 0 && <p className="text-sm text-muted-foreground py-3 text-center">Chưa có quyền nghiệp vụ — bổ nhiệm chức vụ tại Cơ cấu tổ chức.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --------- User Edit ---------
 function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) {
   const s = useAuth();
   const { isSuperAdmin, can } = useCurrentUser();
   const canReset = isSuperAdmin || can("settings.user_reset_password");
+  const canCustomPerm = isSuperAdmin || can("settings.user_custom_perm");
   const [tab, setTab] = useState("info");
   const [form, setForm] = useState({
     fullName: user.fullName, email: user.email || "", phone: user.phone || "",
-    desiredPosition: user.desiredPosition || "", notes: user.notes || "",
-    roleId: user.roleId || "", status: user.status,
-    useCustom: !!user.useCustom,
+    notes: user.notes || "", status: user.status,
   });
-  const [perms, setPerms] = useState<PermissionKey[]>(user.customPermissions || []);
   const [newPwd, setNewPwd] = useState("");
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -403,20 +510,13 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
     setSaving(true);
     try {
     await s.updateUser(user.id, {
-      fullName: form.fullName, phone: form.phone || undefined,
-      desiredPosition: form.desiredPosition || undefined, notes: form.notes || undefined,
+      fullName: form.fullName, phone: form.phone || undefined, notes: form.notes || undefined,
     });
-    if (!isSystem) {
-      const approving = user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động';
-      if (!approving && form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
-      if (form.status !== user.status) {
-        if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
-          const result = await s.approve(user.id, form.roleId !== user.roleId ? form.roleId || undefined : undefined);
-          if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
-        } else await s.setStatus(user.id, form.status);
-      }
-      await s.setUseCustom(user.id, form.useCustom);
-      if (form.useCustom) await s.setCustomPerms(user.id, perms);
+    if (!isSystem && form.status !== user.status) {
+      if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
+        const result = await s.approve(user.id);
+        if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
+      } else await s.setStatus(user.id, form.status);
     }
     toast.success("Đã lưu");
     onClose();
@@ -453,16 +553,6 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
             <div><Label>Họ tên *</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
             <div><Label>Email đăng nhập</Label><Input value={form.email} readOnly /><p className="mt-1 text-xs text-muted-foreground">Email do hệ thống xác thực quản lý.</p></div>
             <div><Label>SĐT</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-            <div><Label>Vị trí</Label><Input value={form.desiredPosition} onChange={(e) => setForm({ ...form, desiredPosition: e.target.value })} /></div>
-            <div>
-              <Label>Role</Label>
-              <Select value={form.roleId} onValueChange={(v) => setForm({ ...form, roleId: v })} disabled={isSystem}>
-                <SelectTrigger><SelectValue placeholder="Chọn role" /></SelectTrigger>
-                <SelectContent>
-                  {s.roles.filter(r=>r.catalogState!=='compatibility').map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
             <div>
               <Label>Trạng thái</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as AccountStatus })} disabled={isSystem}>
@@ -471,25 +561,16 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
               </Select>
             </div>
             <div className="sm:col-span-2"><Label>Ghi chú</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            {!isSystem && <AccountOrgPanel userId={user.id} />}
           </TabsContent>
 
           <TabsContent value="perms" className="mt-4 space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded border bg-muted/30">
-              <Checkbox checked={!form.useCustom} onCheckedChange={(c) => setForm({ ...form, useCustom: !c })} id="use-role" />
-              <label htmlFor="use-role" className="text-sm cursor-pointer flex-1">
-                <div className="font-medium">Dùng quyền theo role</div>
-                <div className="text-xs text-muted-foreground">Tài khoản nhận toàn bộ quyền từ role đã chọn.</div>
-              </label>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded border bg-muted/30">
-              <Checkbox checked={form.useCustom} onCheckedChange={(c) => setForm({ ...form, useCustom: !!c })} id="use-custom" />
-              <label htmlFor="use-custom" className="text-sm cursor-pointer flex-1">
-                <div className="font-medium">Quyền bổ sung cá nhân</div>
-                <div className="text-xs text-muted-foreground">Cộng thêm vào quyền của role, chạy song song — không thay thế hay ghi đè quyền role.</div>
-              </label>
-            </div>
-            {form.useCustom && (
-              <PermissionMatrix value={perms} onChange={setPerms} />
+            <AccountPermsView userId={user.id} />
+            {canCustomPerm && (
+              <div className="border-t pt-4">
+                <Label className="text-sm font-semibold">Tùy chỉnh quyền</Label>
+                <StaffPermissionEditor key={user.id} userId={user.id} />
+              </div>
             )}
           </TabsContent>
 
@@ -515,14 +596,12 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
 // --------- Pending ---------
 function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean }) {
   const s = useAuth();
-  const [assignFor, setAssignFor] = useState<User | null>(null);
-  const [roleId, setRoleId] = useState("");
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState<User | null>(null);
-  const approve = async (id: string, role?: string) => {
+  const approve = async (id: string) => {
     if (busy) return;
     setBusy(true);
-    try { const result = await s.approve(id, role); toast.success(result.ready ? 'Đã duyệt. Tài khoản có thể đăng nhập.' : 'Đã duyệt hồ sơ. Nhân viên cần xác nhận email trước khi đăng nhập.'); setAssignFor(null); }
+    try { const result = await s.approve(id); toast.success(result.ready ? 'Đã duyệt. Tài khoản có thể đăng nhập.' : 'Đã duyệt hồ sơ. Nhân viên cần xác nhận email trước khi đăng nhập.'); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Không duyệt được tài khoản.'); }
     finally { setBusy(false); }
   };
@@ -552,9 +631,6 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
               <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[260px] truncate">{u.notes || "—"}</td>
               <td className="px-4 py-2.5 text-right whitespace-nowrap">
                 {canApprove ? <>
-                  <Button size="sm" variant="outline" onClick={() => { setAssignFor(u); setRoleId(""); }}>
-                    Gán role rồi duyệt
-                  </Button>
                   <Button size="sm" variant="ghost" disabled={busy} className="ml-1 text-emerald-700" onClick={() => void approve(u.id)}>
                     <Check className="h-4 w-4 mr-1" />Duyệt
                   </Button>
@@ -570,21 +646,6 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
         </tbody>
       </table>
     </CardContent></Card>
-    <Dialog open={!!assignFor} onOpenChange={(o) => !o && setAssignFor(null)}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Gán role cho {assignFor?.fullName}</DialogTitle></DialogHeader>
-        <Select value={roleId} onValueChange={setRoleId}>
-          <SelectTrigger><SelectValue placeholder="Chọn role" /></SelectTrigger>
-          <SelectContent>{s.roles.filter(r=>r.catalogState!=='compatibility').map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-        </Select>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setAssignFor(null)}>Huỷ</Button>
-          <Button disabled={!roleId || busy} onClick={() => {
-            if (assignFor && roleId) void approve(assignFor.id, roleId);
-          }}>Duyệt</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
     <Dialog open={!!checking} onOpenChange={open => !open && setChecking(null)}><DialogContent><DialogHeader><DialogTitle>Trạng thái xác thực — {checking?.fullName}</DialogTitle></DialogHeader>{checking && <AccountAuthPanel userId={checking.id} email={checking.email} />}</DialogContent></Dialog>
     </>
   );

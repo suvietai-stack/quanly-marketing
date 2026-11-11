@@ -50,3 +50,12 @@
 
 Mở (chờ Admin): bổ nhiệm nhân sự thủ công và đối chiếu ngoại lệ Bích Ngọc (69 quyền riêng chứa quyền Tín hiệu) / Viewer chưa rõ nguồn. Quyền quản lý theo đơn vị chưa hỗ trợ ở nhiều phân hệ nên không tự cấp; không giả lập đã hoàn thiện. Không cấp Role nền hàng loạt vì Task legacy chưa có rào máy chủ đầy đủ; Admin chọn khi phù hợp. Báo cáo chi tiết: docs/final-permission-transition-report.md.
 Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã thực hiện; chỉ hai Super Admin giữ nguyên. Admin bổ nhiệm thủ công, không Publish. Các mục lịch sử phía trên không phải chính sách hiện hành.
+
+## Hoàn thiện dứt điểm Cơ cấu (bản 63)
+
+- [x] Chi tiết tài khoản: bỏ ô "Vị trí" tự nhập và chọn Role; thêm bảng chỉ đọc phân công chức vụ (kiêm nhiệm), nhiệm vụ Marketing, Role hiệu lực, nút "Đến Cơ cấu tổ chức" — RPC mới `account_org_summary` (0350), chỉ Super Admin/settings.user_view/settings.user_custom_perm.
+- [x] Tab Quyền: hiển thị quyền thực nhận + nguồn (account_permission_explain), chỉnh sửa chỉ qua "Tùy chỉnh quyền" thống nhất (account_supplement_read/save); gỡ ma trận quyền riêng và chọn Role cũ.
+- [x] Duyệt tài khoản: không chọn Role thủ công; account_approve tự gán Role nền "Nhân sự mới" khi không truyền Role.
+- [x] Sửa timeout account_permission_explain: tính theo tập hợp thay vì gọi has_permission từng quyền (0351), ngữ nghĩa giữ nguyên.
+- [x] Sơ đồ khử trùng nhân sự theo user ID (đã có ở orgChart.ts); 121 test basePermissions + 5 test mới đạt, typecheck/build đạt, Preview xác nhận cả ba tab.
+- [ ] Chờ Admin: bổ nhiệm người thật tại Cơ cấu tổ chức; kiểm chứng bộ quyền quản lý/kế toán/cung ứng trước khi kích hoạt thêm liên kết Role. Chưa Publish.

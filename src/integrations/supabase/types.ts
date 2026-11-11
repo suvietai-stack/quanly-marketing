@@ -9716,6 +9716,7 @@ export type Database = {
         Returns: string
       }
       account_caller_can: { Args: { _permission: string }; Returns: boolean }
+      account_org_summary: { Args: { _target: string }; Returns: Json }
       account_override_mode_set: {
         Args: { _mode: string; _target: string }
         Returns: Json
