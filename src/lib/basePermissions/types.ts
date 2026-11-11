@@ -1,5 +1,5 @@
 export type Rule = { id: string; permission: string; effect: 'ALLOW' | 'DENY'; scope: 'own' | 'native'; active: boolean; starts_at?: string; ends_at?: string; user_id?: string; unit_id?: string };
-export type Unit = { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; parent_id?: string; active: boolean; source?: string };
+export type Unit = { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; parent_id?: string; active: boolean; source?: string; code?: string };
 export type Title = { id: string; name: string; active: boolean; unit_id?: string; code?: string; level?: number; kind?: 'manager' | 'staff'; capacity?: number; description?: string; source?: string; unit_kind?: 'system' | 'department' | 'team' | 'individual'; business_policy?: string; all_business?: boolean };
 export type Membership = { id: string; user_id: string; unit_id: string; title_id?: string; slot_id?: string; specialty_ids?: string[]; specialty_signatures?: Record<string,string>; duties?: string; active: boolean; starts_at?: string; ends_at?: string; kind?: 'primary' | 'concurrent'; source?: string; category?: string; status?: string };
 export type Bundle = { id: string; name: string; active: boolean; rules: Rule[]; unit_id?: string; title_id?: string };

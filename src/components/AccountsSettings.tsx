@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { titleRolesApi } from '@/lib/basePermissions/titleRoles';
 import { StaffPermissionEditor } from '@/components/StaffPermissionEditor';
+import { RoleActualSources } from '@/components/RoleActualSources';
 import { useState, useMemo, useRef } from "react";
 import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
 import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/SignalScopeEditor";
@@ -430,6 +431,7 @@ function AccountOrgPanel({ userId }: { userId: string }) {
         <span className="text-muted-foreground">Role hiệu lực: </span>
         {d.roles.length > 0 ? d.roles.map((r) => r.name).join(", ") : <span className="italic text-muted-foreground">Chưa gán</span>}
       </p>
+      <RoleActualSources userId={userId}/>
     </div>
   );
 }

@@ -2556,6 +2556,34 @@
       "when": 1794385169062,
       "tag": "0364_role_catalog_set_based_receiver_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 365,
+      "version": "7",
+      "when": 1794385947895,
+      "tag": "0365_slot_source_resolver_and_task_eligibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 366,
+      "version": "7",
+      "when": 1794386265799,
+      "tag": "0366_canonical_slot_config_and_preview_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 367,
+      "version": "7",
+      "when": 1794386444472,
+      "tag": "0367_audited_slot_role_replacement_and_task_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 368,
+      "version": "7",
+      "when": 1794386490709,
+      "tag": "0368_slot_interval_exclusion_concurrent_safety",
+      "breakpoints": true
     }
   ]
 }

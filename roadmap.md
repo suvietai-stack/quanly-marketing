@@ -1,5 +1,17 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Fix tận gốc trên code hiện tại — 11/11/2026
+- [x] Sửa resolver ô lấy slot.role_id trực tiếp; virtual snapshot dùng trong preview; permission/phạm vi cùng nguồn. Nguồn chưa mapping giữ nguyên.
+- [x] Mapping hiển thị 85 bản ghi (82 status active nhưng chỉ 36 hiệu lực theo thời gian), lịch sử/tương lai, chọn Role/ô rõ ràng, tách ô và thêm ô trống. Preview thật được mở, không apply.
+- [x] Code thay Role ô bằng phiên bản ô mới + khoảng bổ nhiệm kế tiếp; không sửa Role lịch sử, chặn bổ nhiệm tương lai. Chưa nghiệm thu apply/restore cô lập cho branch mới, không mở cutover.
+- [x] Marketing dùng ID/mã/cây, nhiệm vụ mới enforced lúc đọc và ghi, nhiều nhiệm vụ; giữ 7 chuyên môn cũ và Thiết kế/Chụp ảnh.
+- [x] Role & Quyền thực tế theo nguồn; receiver distinct và nguồn; Role mới permissions=[] enforced backend + UI, mã unique; giữ HCNS/Đóng hàng/Super Admin.
+- [x] 129/129 kiểm thử chọn lọc đạt (19 mới); Preview mapping và nguồn thực tế có phiên thật; harness typecheck/build OK.
+- [ ] Chuyển 82 status-active và 3 lịch sử: CHỜ xác nhận Super Admin; 0 ô thật, chưa mapping bất kỳ người thật nào.
+- [ ] Cutover fallback user_roles/override/biz_appointments và nhiệm vụ lịch sử: CHỜ xác nhận, hợp đồng native CRM/3K/duyệt/báo cáo chưa đủ để thay toàn bộ.
+- [ ] Role Trưởng nhóm KD mới: thiếu trong catalog nhưng chưa có Nhóm KD thật; CHỜ chọn mô hình dùng Role Trưởng phòng hiện hữu hay tạo Role rỗng qua kho, không tự tạo/gán.
+- [ ] Apply/restore branch thay Role và giao dịch hai kết nối: chưa nghiệm thu; constraint chống overlap đã xác nhận có ở DB, không coi kiểm thử trigger là kiểm thử concurrency thực.
+
 ## Yêu cầu mới: Một kho Role → ô vị trí → bổ nhiệm → quyền
 - [x] Đọc tệp yêu cầu; audit chỉ đọc database/code/lịch sử đến 0358; Preview đăng nhập mở được Role & Phân quyền, không lỗi runtime.
 - [x] Kiểm kê trực tiếp, kho Role có preview/audit và chuyển ô có snapshot/khôi phục riêng tư; không reset tự động. Preview Role và chuyển ô đã mở trên phiên thật.
