@@ -2591,6 +2591,13 @@
       "when": 1794387394566,
       "tag": "0369_permission_editor_drafts_and_additive_preview",
       "breakpoints": true
+    },
+    {
+      "idx": 370,
+      "version": "7",
+      "when": 1794387627448,
+      "tag": "0370_permission_editor_source_capabilities",
+      "breakpoints": true
     }
   ]
 }
