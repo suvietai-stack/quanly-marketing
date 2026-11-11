@@ -45,12 +45,12 @@ export function PermissionChecklist({ value, onChange, policy, disabled = false,
             const safe = lookup.get(p.key); const checked = value.includes(p.key); const held = baseline.includes(p.key);
             return <label key={p.key} className="flex min-w-0 items-start gap-3 rounded-md px-2 py-3 hover:bg-muted/40">
               <Checkbox className="mt-0.5 shrink-0" aria-label={p.label} checked={checked} disabled={disabled || (!safe && !held && !checked)} onCheckedChange={v => toggle(p.key, v === true)}/>
-              <span className="min-w-0 text-sm"><span className="block break-words font-medium">{p.label}</span><span className="mt-1 block text-xs text-muted-foreground">{safe ? scopeLabels[safe.scope] : held ? 'Đang giữ · cần đối chiếu phạm vi' : p.group === BIZ_GROUP ? bizSourceNote : 'Cần cấu hình / Chưa an toàn'}</span>{permissionRisk(p.key) && <span className="mt-1 block text-xs text-warning">{permissionRisk(p.key)}</span>}{!safe && <ShieldAlert className="mt-1 size-3 text-muted-foreground"/>}</span>
+              <span className="min-w-0 text-sm"><span className="block break-words font-medium">{p.label}</span><span className="mt-1 block text-xs text-muted-foreground">{safe ? scopeLabels[safe.scope] : held ? 'Đang giữ · cần đối chiếu phạm vi' : p.group === BIZ_GROUP ? 'Theo bổ nhiệm Kinh doanh · chưa nhận từ Role' : 'Cần cấu hình / Chưa an toàn'}</span>{permissionRisk(p.key) && <span className="mt-1 block text-xs text-warning">{permissionRisk(p.key)}</span>}{!safe && <ShieldAlert className="mt-1 size-3 text-muted-foreground"/>}</span>
             </label>;
           })}</div>;
           return sub.name ? <details key={sub.name} open className="border-l pl-3"><summary className="cursor-pointer py-2 text-sm font-medium">{sub.name}<span className="ml-2 font-normal text-muted-foreground">{items.filter(p => value.includes(p.key)).length}/{items.length}</span></summary>{grid}</details> : <div key="all">{grid}</div>;
           })}
-          {group === BIZ_GROUP && <p className="mt-2 text-xs text-muted-foreground">{bizViewNote}</p>}
+          {group === BIZ_GROUP && <p className="mt-2 text-xs text-muted-foreground">{bizSourceNote} {bizViewNote}</p>}
         </div>
       </details>;
     })}</div>
