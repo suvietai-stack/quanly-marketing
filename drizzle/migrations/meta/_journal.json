@@ -2507,6 +2507,13 @@
       "when": 1794377909762,
       "tag": "0357_sales_head_role_scope_fallback_tighten",
       "breakpoints": true
+    },
+    {
+      "idx": 358,
+      "version": "7",
+      "when": 1794379454726,
+      "tag": "0358_unit_scope_leave_finance_orders_retire_role_designer",
+      "breakpoints": true
     }
   ]
 }
