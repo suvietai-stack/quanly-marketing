@@ -1541,10 +1541,13 @@ export function explainPermission(
     return { ok: true, reason: "Super Admin / Tài khoản hệ thống — bypass mọi check quyền", source: "super_admin" };
   }
   const resolved = resolvePermKey(key);
-  const role = roles.find((r) => r.id === user.roleId);
+  const ids = user.roleIds && user.roleIds.length > 0 ? user.roleIds : user.roleId ? [user.roleId] : [];
+  const userRoles = [...new Set(ids)].map((id) => roles.find((r) => r.id === id)).filter((r): r is Role => !!r);
+  const grantingRole = userRoles.find((r) => r.permissions.includes(resolved));
+  const roleNames = userRoles.map((r) => r.name).join(", ") || "(chưa gán)";
   const additive = user.useCustom && user.overrideMode === "additive";
   const granted = getUserPermissions(user, roles);
-  const inRole = !!role && role.permissions.includes(resolved);
+  const inRole = !!grantingRole;
   const inCustom = !!user.useCustom && (user.customPermissions ?? []).includes(resolved);
   const source: "role" | "custom" = inCustom && !inRole ? "custom" : "role";
   if (!granted.has(resolved)) {
@@ -1552,9 +1555,9 @@ export function explainPermission(
       ok: false,
       reason: user.useCustom && !additive
         ? `Không có trong quyền riêng của user (chế độ thay thế Role)`
-        : `Không có trong role "${role?.name ?? "(chưa gán)"}"${additive ? " hoặc quyền bổ sung" : ""}`,
+        : `Không có trong role "${roleNames}"${additive ? " hoặc quyền bổ sung" : ""}`,
       source: "missing",
-      roleName: role?.name,
+      roleName: grantingRole?.name ?? userRoles[0]?.name,
     };
   }
   // Check deps
