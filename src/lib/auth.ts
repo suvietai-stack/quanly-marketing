@@ -1622,24 +1622,23 @@ export function useCurrentUser() {
   const hasRaw = (key: PermissionKey) =>
     perms.has(key) || perms.has(resolvePermKey(key));
   const can = (key: PermissionKey): boolean => {
+    // Khớp private.has_permission: tài khoản không hoạt động không có quyền nào, kể cả Super Admin.
+    if (!u || u.status !== 'Đang hoạt động') return false;
     if (isSuperAdmin) return true;
-    const effective = baseAccess?.user_id === u?.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
-    if (effective) return u?.status === 'Đang hoạt động' && effective.allowed;
+    const effective = baseAccess?.user_id === u.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
+    if (effective) return effective.allowed;
     // New supported permissions fail closed while their authoritative read is unavailable.
-    if ([...VERIFIED_APPOINTMENT_PERMISSIONS,'sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','org.view','org.assign_staff','org.appoint_manager','org.view_history'].includes(key) && baseAccess?.user_id !== u?.id) return false;
+    if ([...VERIFIED_APPOINTMENT_PERMISSIONS,'sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','org.view','org.assign_staff','org.appoint_manager','org.view_history'].includes(key) && baseAccess?.user_id !== u.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
-    if (key.startsWith('biz.') || key.startsWith('k3.')) return u?.status === 'Đang hoạt động' && bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
-    const resolved = resolvePermKey(key);
-    if (!hasRaw(resolved)) return false;
-    // Dependency check — every parent must also be granted.
-    for (const parent of PERMISSION_DEPENDS[resolved] ?? []) {
-      if (!hasRaw(parent)) return false;
-    }
-    return true;
+    if (key.startsWith('biz.') || key.startsWith('k3.')) return bizAccess?.user_id === u.id && bizAccess.permissions.includes(key) || false;
+    // Backend không bắt buộc quyền cha khi thực thi — frontend cũng không chặn để hai bên nhất quán.
+    // (PERMISSION_DEPENDS chỉ còn là gợi ý khi soạn Role qua auditDependencies.)
+    return hasRaw(resolvePermKey(key));
   };
   const canAny = (...keys: PermissionKey[]) => keys.some(can);
   const canAll = (...keys: PermissionKey[]) => keys.every(can);
   const canSee = (record: any, viewAllKey: PermissionKey, viewMineKey: PermissionKey) => {
+    if (!u || u.status !== 'Đang hoạt động') return false;
     if (isSuperAdmin) return true;
     if (can(viewAllKey)) return true;
     if (can(viewMineKey)) return isOwnRecord(record, u?.id);
