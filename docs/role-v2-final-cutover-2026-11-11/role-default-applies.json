@@ -1,0 +1,2453 @@
+[
+  {
+    "id": "role-v2-task-content-web",
+    "preview": {
+      "id": "9f656d62-1248-40a2-86f9-5d31eb7499f0",
+      "added": [],
+      "after": {
+        "name": "Content Web",
+        "role_kind": "marketing_task",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-content-web; chỉnh được qua ma trận.",
+        "permissions": [
+          "task.view",
+          "task.view_mine",
+          "task.accept",
+          "task.start",
+          "task.update_result",
+          "task.submit_completion",
+          "task.resubmit_completion",
+          "task.view_history",
+          "task.add_note",
+          "web.view",
+          "web.content_view",
+          "web.content_view_mine",
+          "web.content_history",
+          "web.content_note",
+          "web.open_detail",
+          "web.outline_start",
+          "web.outline_submit",
+          "web.outline_resubmit",
+          "web.post_write_start",
+          "web.post_submit",
+          "web.post_resubmit",
+          "web.view_web_draft_url",
+          "web.start_web_draft_layout",
+          "web.submit_web_draft_review",
+          "web.resubmit_web_draft_review",
+          "web.edit_web_draft_url",
+          "web.view_web_draft_revision_note"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-task-content-web",
+        "name": "Content Web",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-task-content-web",
+        "role_kind": "marketing_task",
+        "created_at": "2026-11-11T14:19:18.376533+00:00",
+        "updated_at": "2026-11-11T14:56:54.954394+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-content-web; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "task.resubmit_completion",
+          "leave.recall",
+          "task.submit_completion",
+          "web.post_submit",
+          "web.post_write_start",
+          "web.view_web_draft_revision_note",
+          "web.outline_start",
+          "web.keyword_view",
+          "web.index_view",
+          "web.resubmit_web_draft_review",
+          "web.edit_web_draft_url",
+          "overview.alerts",
+          "web.content_note",
+          "web.start_web_draft_layout",
+          "att.view_own",
+          "task.view",
+          "web.outline_resubmit",
+          "web.content_view",
+          "brand.view",
+          "leave.create",
+          "task.update_result",
+          "web.open_detail",
+          "web.content_view_mine",
+          "overview.own_only",
+          "web.outline_submit",
+          "att.create",
+          "task.view_mine",
+          "web.open_published_url",
+          "overview.view",
+          "web.view_web_draft_url",
+          "web.submit_web_draft_review",
+          "web.view",
+          "task.accept",
+          "task.update_status",
+          "task.start",
+          "web.content_history",
+          "task.add_note",
+          "web.post_resubmit",
+          "task.view_history",
+          "web.keyword_open_sheet"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "leave.recall",
+        "web.keyword_view",
+        "web.index_view",
+        "overview.alerts",
+        "att.view_own",
+        "brand.view",
+        "leave.create",
+        "overview.own_only",
+        "att.create",
+        "web.open_published_url",
+        "overview.view",
+        "task.update_status",
+        "web.keyword_open_sheet"
+      ],
+      "role_id": "role-v2-task-content-web",
+      "expires_at": "2026-11-11T15:17:12.777612+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": [
+          {
+            "id": "content_web",
+            "name": "Content Web"
+          }
+        ]
+      },
+      "affected_users": [
+        "3ecff748-acaf-454f-b29c-5bf3ab1d8469",
+        "dc42e189-e2de-4a60-a00a-d5277819ea13"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-task-content-web"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-packing",
+    "preview": {
+      "id": "f8049bb8-cf90-49ad-81cd-6d08a2dfb707",
+      "added": [
+        "leave.recall"
+      ],
+      "after": {
+        "name": "Đóng hàng",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-dong-hang; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "ot.view_own",
+          "ot.task_view",
+          "ot.accept",
+          "ot.task_update",
+          "ot.stage_update",
+          "ot.reschedule_reply"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Vận hành",
+        "signal_scope_all": false
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-packing",
+        "name": "Đóng hàng",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-packing",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:59.868042+00:00",
+        "updated_at": "2026-11-11T14:18:59.868042+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-dong-hang; chỉnh được qua ma trận.",
+        "permissions": [
+          "ot.stage_update",
+          "leave.view_own",
+          "att.view_own",
+          "leave.create",
+          "ot.reschedule_reply",
+          "att.create",
+          "ot.task_view",
+          "ot.accept",
+          "ot.view_own",
+          "ot.task_update"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Vận hành",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": false,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [],
+      "role_id": "role-v2-packing",
+      "expires_at": "2026-11-11T15:17:15.858003+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-packing"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-executive",
+    "preview": {
+      "id": "6ab0e519-cf48-4db4-8100-73fe511237a9",
+      "added": [
+        "att.view_own",
+        "leave.recall"
+      ],
+      "after": {
+        "name": "Giám đốc Điều hành",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-viewer, role-standard-mkt-director; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Quản trị & Điều hành",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-executive",
+        "name": "Giám đốc Điều hành",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-executive",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:15.486942+00:00",
+        "updated_at": "2026-11-11T14:19:15.486942+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-viewer, role-standard-mkt-director; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "leave.view_own",
+          "leave.create",
+          "att.create",
+          "overview.view",
+          "settings.view"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Quản trị & Điều hành",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "overview.view",
+        "settings.view"
+      ],
+      "role_id": "role-v2-executive",
+      "expires_at": "2026-11-11T15:17:17.860564+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-executive"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-sales-director",
+    "preview": {
+      "id": "c94d7f4f-19cc-4df1-a76b-9796b34172d2",
+      "added": [
+        "att.create",
+        "att.view_own",
+        "leave.recall",
+        "leave.view_unit",
+        "ot.view_unit"
+      ],
+      "after": {
+        "name": "Giám đốc Kinh doanh",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-xwbmhg3b; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "leave.view_unit",
+          "ot.view_unit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Kinh doanh",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-sales-director",
+        "name": "Giám đốc Kinh doanh",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-sales-director",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:37.491589+00:00",
+        "updated_at": "2026-11-11T14:22:46.014403+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-xwbmhg3b; chỉnh được qua ma trận.",
+        "permissions": [
+          "leave.view_own",
+          "leave.create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Kinh doanh",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [],
+      "role_id": "role-v2-sales-director",
+      "expires_at": "2026-11-11T15:17:20.060038+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "2e73a60b-4859-4292-9cf9-0a14fd93e434",
+            "name": "Giám Đốc · Phân Phối · 513712ca",
+            "unit_id": "3df93c75-8a46-4c2f-bc09-7583aa672b52"
+          },
+          {
+            "id": "c3f977f6-7ae2-447e-b88c-37872fbc20d9",
+            "name": "Giám Đốc · Kinh Doanh Đơn Hàng · 2892b35d",
+            "unit_id": "624e6e56-eeab-42d5-85af-6af284e72f34"
+          }
+        ],
+        "specialties": []
+      },
+      "affected_users": [
+        "2892b35d-b99e-4cd4-96fd-f20802b55ab7",
+        "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-sales-director"
+    },
+    "error": null,
+    "unavailable": [
+      "biz.crm_use",
+      "signal.sale",
+      "oq.create",
+      "oq.view_own",
+      "oq.accept",
+      "oq.report_own",
+      "ot.view_own",
+      "biz.crm_view_scope"
+    ]
+  },
+  {
+    "id": "role-v2-mkt-director",
+    "preview": {
+      "id": "2def659d-80a6-4b68-942e-52f67418319c",
+      "added": [
+        "att.view_own",
+        "leave.view_unit"
+      ],
+      "after": {
+        "name": "Giám đốc Marketing",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-director; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "leave.view_unit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-mkt-director",
+        "name": "Giám đốc Marketing",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-mkt-director",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:52.290623+00:00",
+        "updated_at": "2026-11-11T14:18:52.290623+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-director; chỉnh được qua ma trận.",
+        "permissions": [
+          "order.marketing_design.take",
+          "order.marketing_design.assign",
+          "order.open_delivery",
+          "order.marketing_design.complete",
+          "order.marketing_design.deliver",
+          "leave.recall",
+          "order.marketing_design.submit",
+          "order.marketing_design.approve",
+          "order.marketing_design.update_draft",
+          "order.marketing_design.view_all",
+          "order.marketing_design.edit",
+          "order.create",
+          "order.marketing_design.edit_reviewer",
+          "leave.view_own",
+          "order.update_draft",
+          "order.marketing_design.request_changes",
+          "order.take",
+          "order.marketing_design.send_request",
+          "order.marketing_design.view",
+          "order.marketing_design.create",
+          "order.view_mine",
+          "order.history",
+          "order.deliver",
+          "leave.create",
+          "order.marketing_design.report_view",
+          "order.resubmit",
+          "order.marketing_design.cancel",
+          "att.create",
+          "order.view",
+          "order.marketing_design.resubmit",
+          "order.submit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "order.marketing_design.take",
+        "order.marketing_design.assign",
+        "order.open_delivery",
+        "order.marketing_design.complete",
+        "order.marketing_design.deliver",
+        "order.marketing_design.submit",
+        "order.marketing_design.approve",
+        "order.marketing_design.update_draft",
+        "order.marketing_design.view_all",
+        "order.marketing_design.edit",
+        "order.create",
+        "order.marketing_design.edit_reviewer",
+        "order.update_draft",
+        "order.marketing_design.request_changes",
+        "order.take",
+        "order.marketing_design.send_request",
+        "order.marketing_design.view",
+        "order.marketing_design.create",
+        "order.view_mine",
+        "order.history",
+        "order.deliver",
+        "order.marketing_design.report_view",
+        "order.resubmit",
+        "order.marketing_design.cancel",
+        "order.view",
+        "order.marketing_design.resubmit",
+        "order.submit"
+      ],
+      "role_id": "role-v2-mkt-director",
+      "expires_at": "2026-11-11T15:17:22.143343+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "7d0ab0a5-0569-43f3-9b0f-35e1b35b4980",
+            "name": "Giám đốc Marketing · Khối Marketing · 513712ca",
+            "unit_id": "b5e00000-0000-4000-8000-000000000001"
+          }
+        ],
+        "specialties": []
+      },
+      "affected_users": [
+        "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-mkt-director"
+    },
+    "error": null,
+    "unavailable": [
+      "task.view",
+      "task.view_mine",
+      "task.accept",
+      "task.start",
+      "task.update_result",
+      "task.submit_completion",
+      "task.resubmit_completion",
+      "task.view_history",
+      "task.add_note"
+    ]
+  },
+  {
+    "id": "role-v2-delivery",
+    "preview": {
+      "id": "d7bc5917-967f-41f7-b4e1-4ea1f0986738",
+      "added": [
+        "leave.recall"
+      ],
+      "after": {
+        "name": "Giao vận",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-dong-hang; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "ot.view_own",
+          "ot.task_view",
+          "ot.accept",
+          "ot.task_update",
+          "ot.stage_update",
+          "ot.reschedule_reply"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Vận hành",
+        "signal_scope_all": false
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-delivery",
+        "name": "Giao vận",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-delivery",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:02.258358+00:00",
+        "updated_at": "2026-11-11T14:19:02.258358+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-dong-hang; chỉnh được qua ma trận.",
+        "permissions": [
+          "ot.stage_update",
+          "leave.view_own",
+          "att.view_own",
+          "leave.create",
+          "ot.reschedule_reply",
+          "att.create",
+          "ot.task_view",
+          "ot.accept",
+          "ot.view_own",
+          "ot.task_update"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Vận hành",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": false,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [],
+      "role_id": "role-v2-delivery",
+      "expires_at": "2026-11-11T15:17:24.209228+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-delivery"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-hr",
+    "preview": {
+      "id": "b8bec770-8c1a-4fe3-bd27-c8956e2b0495",
+      "added": [],
+      "after": {
+        "name": "Hành chính Nhân sự",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-wupj68a6; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "leave.view_assigned",
+          "leave.approve",
+          "leave.report",
+          "att.view_all",
+          "att.report",
+          "att.reconcile"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Hành chính & Nhân sự",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-hr",
+        "name": "Hành chính Nhân sự",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-hr",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:58.027995+00:00",
+        "updated_at": "2026-11-11T14:22:49.737375+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-wupj68a6; chỉnh được qua ma trận.",
+        "permissions": [
+          "leave.approve",
+          "kpi.view_own",
+          "leave.cancel_handle",
+          "leave.recall",
+          "leave.reassign",
+          "leave.settings",
+          "att.manage",
+          "leave.edit_own",
+          "att.view_all",
+          "leave.view_all",
+          "leave.edit_others",
+          "leave.view_own",
+          "leave.report",
+          "leave.view_assigned",
+          "leave.create_for",
+          "att.view_own",
+          "att.edit_own",
+          "att.reconcile",
+          "leave.create",
+          "overview.own_only",
+          "att.witness",
+          "att.create",
+          "overview.view",
+          "leave.exception",
+          "att.report",
+          "att.settings",
+          "settings.view"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Hành chính & Nhân sự",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "leave.cancel_handle",
+        "leave.reassign",
+        "leave.settings",
+        "att.manage",
+        "leave.edit_own",
+        "leave.view_all",
+        "leave.edit_others",
+        "leave.create_for",
+        "att.edit_own",
+        "overview.own_only",
+        "att.witness",
+        "overview.view",
+        "leave.exception",
+        "att.settings",
+        "settings.view"
+      ],
+      "role_id": "role-v2-hr",
+      "expires_at": "2026-11-11T15:17:26.548327+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-hr"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-accountant",
+    "preview": {
+      "id": "7c559565-77da-4452-a87c-a205589a1c46",
+      "added": [
+        "att.view_own",
+        "leave.view_own",
+        "leave.recall"
+      ],
+      "after": {
+        "name": "Kế toán",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-0k2hmw8r; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "finance.incoming.view",
+          "finance.incoming.manual_view",
+          "finance.incoming.manual_create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Tài chính",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-accountant",
+        "name": "Kế toán",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-accountant",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:10.049803+00:00",
+        "updated_at": "2026-11-11T14:22:55.026147+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-0k2hmw8r; chỉnh được qua ma trận.",
+        "permissions": [
+          "finance.incoming.view",
+          "finance.incoming.manage",
+          "finance.incoming.claim",
+          "finance.incoming.manual_view",
+          "leave.create",
+          "att.create",
+          "finance.incoming.remind",
+          "finance.incoming.reconcile",
+          "finance.incoming.manual_manage",
+          "finance.incoming.manual_create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Tài chính",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "finance.incoming.manage",
+        "finance.incoming.claim",
+        "finance.incoming.remind",
+        "finance.incoming.reconcile",
+        "finance.incoming.manual_manage"
+      ],
+      "role_id": "role-v2-accountant",
+      "expires_at": "2026-11-11T15:17:29.720824+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-accountant"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-account-stock",
+    "preview": {
+      "id": "6ad0061b-1e29-4b63-ae59-dc6c5de82908",
+      "added": [],
+      "after": {
+        "name": "Kế toán kho",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-account-stock; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "finance.incoming.view",
+          "finance.incoming.manual_view"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Tài chính",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-account-stock",
+        "name": "Kế toán kho",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-account-stock",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:13.658629+00:00",
+        "updated_at": "2026-11-11T14:19:13.658629+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-account-stock; chỉnh được qua ma trận.",
+        "permissions": [
+          "finance.incoming.view",
+          "leave.recall",
+          "finance.incoming.claim",
+          "finance.incoming.manual_view",
+          "leave.view_own",
+          "att.view_own",
+          "leave.create",
+          "att.witness",
+          "att.create",
+          "finance.incoming.manual_create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Tài chính",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "finance.incoming.claim",
+        "att.witness",
+        "finance.incoming.manual_create"
+      ],
+      "role_id": "role-v2-account-stock",
+      "expires_at": "2026-11-11T15:17:32.125364+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-account-stock"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-account-chief",
+    "preview": {
+      "id": "b99cf54e-8a36-4558-b956-0d7ecf918579",
+      "added": [],
+      "after": {
+        "name": "Kế toán trưởng",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-account-chief; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "finance.incoming.view",
+          "finance.incoming.manual_view",
+          "finance.incoming.view_totals",
+          "finance.incoming.manual_create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Tài chính",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-account-chief",
+        "name": "Kế toán trưởng",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-account-chief",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:11.825728+00:00",
+        "updated_at": "2026-11-11T14:19:11.825728+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-account-chief; chỉnh được qua ma trận.",
+        "permissions": [
+          "finance.incoming.view",
+          "finance.incoming.manage",
+          "leave.recall",
+          "finance.incoming.view_totals",
+          "finance.incoming.claim",
+          "finance.incoming.manual_view",
+          "leave.view_own",
+          "att.view_own",
+          "leave.create",
+          "att.witness",
+          "att.create",
+          "finance.incoming.remind",
+          "finance.incoming.reconcile",
+          "finance.incoming.manual_manage",
+          "finance.incoming.manual_create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Tài chính",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "finance.incoming.manage",
+        "finance.incoming.claim",
+        "att.witness",
+        "finance.incoming.remind",
+        "finance.incoming.reconcile",
+        "finance.incoming.manual_manage"
+      ],
+      "role_id": "role-v2-account-chief",
+      "expires_at": "2026-11-11T15:17:34.491783+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "7aba4611-f2b4-4d2e-ace3-20df226111b9",
+            "name": "Kế toán trưởng · Phòng Kế toán · f8fb38be",
+            "unit_id": "b5e00000-0000-4000-8000-000000000022"
+          }
+        ],
+        "specialties": []
+      },
+      "affected_users": [
+        "f8fb38be-55ec-4117-9c99-0c4a05b8a5a6"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-account-chief"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-task-local-seo",
+    "preview": {
+      "id": "451805e9-4e63-4b5d-9efc-1f6aa4f7d0bf",
+      "added": [],
+      "after": {
+        "name": "Local SEO",
+        "role_kind": "marketing_task",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-local-seo; chỉnh được qua ma trận.",
+        "permissions": [
+          "task.view",
+          "task.view_mine",
+          "task.start",
+          "task.update_result",
+          "task.submit_completion",
+          "task.resubmit_completion",
+          "task.view_history",
+          "task.add_note",
+          "local.view",
+          "local.view_mine",
+          "local.post_create",
+          "local.post_edit",
+          "local.photo",
+          "local.products",
+          "local.review",
+          "local.review_reply"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-task-local-seo",
+        "name": "Local SEO",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-task-local-seo",
+        "role_kind": "marketing_task",
+        "created_at": "2026-11-11T14:19:21.965727+00:00",
+        "updated_at": "2026-11-11T14:56:59.359074+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-local-seo; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "local.growth_edit",
+          "task.resubmit_completion",
+          "task.submit_completion",
+          "local.growth_create",
+          "local.photo",
+          "overview.alerts",
+          "local.edit",
+          "local.post_edit",
+          "local.growth_view",
+          "local.review",
+          "local.products",
+          "local.review_status",
+          "task.view",
+          "brand.view",
+          "leave.create",
+          "local.review_reply",
+          "task.update_result",
+          "overview.own_only",
+          "local.post_create",
+          "local.view",
+          "att.create",
+          "task.view_mine",
+          "overview.view",
+          "task.start",
+          "task.add_note",
+          "local.create",
+          "task.view_history",
+          "local.view_mine"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "local.growth_edit",
+        "local.growth_create",
+        "overview.alerts",
+        "local.edit",
+        "local.growth_view",
+        "local.review_status",
+        "brand.view",
+        "leave.create",
+        "overview.own_only",
+        "att.create",
+        "overview.view",
+        "local.create"
+      ],
+      "role_id": "role-v2-task-local-seo",
+      "expires_at": "2026-11-11T15:17:36.574243+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": [
+          {
+            "id": "local_seo",
+            "name": "Local SEO"
+          }
+        ]
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-task-local-seo"
+    },
+    "error": null,
+    "unavailable": [
+      "task.accept"
+    ]
+  },
+  {
+    "id": "role-v2-supply-chain",
+    "preview": {
+      "id": "bb0192a7-3eb7-4719-90b6-5891ed53737b",
+      "added": [
+        "att.view_own",
+        "leave.view_own",
+        "leave.recall"
+      ],
+      "after": {
+        "name": "Nhân viên Cung ứng",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-xim870m3; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "oq.accept",
+          "oq.reply_price",
+          "oq.reply_progress",
+          "oq.report_own"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Cung ứng",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-supply-chain",
+        "name": "Nhân viên Cung ứng",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-supply-chain",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:06.564755+00:00",
+        "updated_at": "2026-11-11T14:22:52.128448+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-xim870m3; chỉnh được qua ma trận.",
+        "permissions": [
+          "oq.accept",
+          "oq.reply_progress",
+          "leave.create",
+          "att.create",
+          "oq.reply_price",
+          "oq.create",
+          "oq.manage",
+          "oq.report_own"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Cung ứng",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "oq.create",
+        "oq.manage"
+      ],
+      "role_id": "role-v2-supply-chain",
+      "expires_at": "2026-11-11T15:17:39.258093+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-supply-chain"
+    },
+    "error": null,
+    "unavailable": [
+      "oq.view_own",
+      "ot.view_own",
+      "ot.task_view",
+      "ot.task_update",
+      "ot.reschedule_reply"
+    ]
+  },
+  {
+    "id": "role-v2-sales-staff",
+    "blocked": "Còn trách nhiệm duyệt đơn chưa xử lý; dừng giảm quyền Role."
+  },
+  {
+    "id": "role-v2-mkt-staff",
+    "preview": {
+      "id": "a4446bce-b014-4312-b598-c4f774921e75",
+      "added": [],
+      "after": {
+        "name": "Nhân viên Marketing",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-staff, role-content-web; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "kpi.view_own",
+          "overview.view",
+          "overview.own_only"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Marketing",
+        "signal_scope_all": false
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-mkt-staff",
+        "name": "Nhân viên Marketing",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-mkt-staff",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:56.31575+00:00",
+        "updated_at": "2026-11-11T14:56:52.814145+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-staff, role-content-web; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "order.open_delivery",
+          "leave.recall",
+          "order.create",
+          "leave.view_own",
+          "att.view_own",
+          "order.view_mine",
+          "order.history",
+          "leave.create",
+          "overview.own_only",
+          "att.witness",
+          "att.create",
+          "order.send_request",
+          "overview.view",
+          "order.view"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": false,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "order.open_delivery",
+        "order.create",
+        "order.view_mine",
+        "order.history",
+        "att.witness",
+        "order.send_request",
+        "order.view"
+      ],
+      "role_id": "role-v2-mkt-staff",
+      "expires_at": "2026-11-11T15:17:43.712339+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "965dd41c-5b65-43ce-89ff-0484d6ff0c12",
+            "name": "Nhân viên Marketing · Phòng Marketing · 3ecff748",
+            "unit_id": "b5e00000-0000-4000-8000-000000000011"
+          },
+          {
+            "id": "bdf388a2-1404-4491-8e01-038984551298",
+            "name": "Nhân viên Marketing · Phòng Marketing · 91046d4c",
+            "unit_id": "b5e00000-0000-4000-8000-000000000011"
+          },
+          {
+            "id": "6ada139d-8f01-4efd-ad7b-d9cbc382cbb4",
+            "name": "Nhân viên Marketing · Phòng Marketing · dd01b165",
+            "unit_id": "b5e00000-0000-4000-8000-000000000011"
+          },
+          {
+            "id": "575ed5fd-decc-483c-88dd-c066d68948c9",
+            "name": "Nhân viên Marketing · Phòng Marketing · dc42e189",
+            "unit_id": "b5e00000-0000-4000-8000-000000000011"
+          }
+        ],
+        "specialties": []
+      },
+      "affected_users": [
+        "3ecff748-acaf-454f-b29c-5bf3ab1d8469",
+        "91046d4c-1799-4aa5-81c5-4e5174bea7b6",
+        "dd01b165-8889-4f46-ac77-8dfe84c0c75f"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-mkt-staff"
+    },
+    "error": null,
+    "unavailable": [
+      "task.view",
+      "task.view_mine",
+      "task.accept",
+      "task.start",
+      "task.update_result",
+      "task.submit_completion",
+      "task.resubmit_completion",
+      "task.view_history",
+      "task.add_note"
+    ]
+  },
+  {
+    "id": "role-v2-design-staff",
+    "preview": {
+      "id": "790d8278-9e2f-4db9-85cb-74a950a664ed",
+      "added": [
+        "att.view_own"
+      ],
+      "after": {
+        "name": "Nhân viên Thiết kế",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-design-staff; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "order.view",
+          "order.view_mine",
+          "order.take",
+          "order.update_draft",
+          "order.submit",
+          "order.resubmit",
+          "order.deliver",
+          "order.history",
+          "order.open_delivery"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Thiết kế",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-design-staff",
+        "name": "Nhân viên Thiết kế",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-design-staff",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:49.918643+00:00",
+        "updated_at": "2026-11-11T14:18:49.918643+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-design-staff; chỉnh được qua ma trận.",
+        "permissions": [
+          "order.open_delivery",
+          "leave.recall",
+          "order.create",
+          "leave.view_own",
+          "order.update_draft",
+          "order.take",
+          "order.view_mine",
+          "order.history",
+          "order.deliver",
+          "leave.create",
+          "order.resubmit",
+          "att.witness",
+          "att.create",
+          "order.view",
+          "order.submit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Thiết kế",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "order.create",
+        "att.witness"
+      ],
+      "role_id": "role-v2-design-staff",
+      "expires_at": "2026-11-11T15:17:50.468413+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "8d1a6eb7-4e2e-4640-a0c0-eae4b1b4fb84",
+            "name": "Nhân viên Thiết kế · Phòng Thiết kế · 160258ce",
+            "unit_id": "b5e00000-0000-4000-8000-000000000012"
+          }
+        ],
+        "specialties": [
+          {
+            "id": "design",
+            "name": "Thiết kế"
+          },
+          {
+            "id": "photography",
+            "name": "Chụp ảnh"
+          }
+        ]
+      },
+      "affected_users": [
+        "160258ce-d6d3-4780-80e1-e9ead132465f",
+        "5b6906b8-3022-48fd-8551-458efdd198a5"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-design-staff"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-deputy-exec",
+    "preview": {
+      "id": "97518548-0c98-4f1e-8998-d331d0be455d",
+      "added": [
+        "att.view_own",
+        "leave.recall"
+      ],
+      "after": {
+        "name": "Phó Giám đốc Điều hành",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-viewer, role-standard-mkt-director; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Quản trị & Điều hành",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-deputy-exec",
+        "name": "Phó Giám đốc Điều hành",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-deputy-exec",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:16.618454+00:00",
+        "updated_at": "2026-11-11T14:19:16.618454+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-viewer, role-standard-mkt-director; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "leave.view_own",
+          "leave.create",
+          "att.create",
+          "overview.view",
+          "settings.view"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Quản trị & Điều hành",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "overview.view",
+        "settings.view"
+      ],
+      "role_id": "role-v2-deputy-exec",
+      "expires_at": "2026-11-11T15:17:59.728319+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "590b336a-a094-4b11-aa3c-daeeee3b8041",
+            "name": "Phó Giám Đốc Điều hành · Công ty cổ phần Sứ Việt · 513712ca",
+            "unit_id": "org-company"
+          }
+        ],
+        "specialties": []
+      },
+      "affected_users": [
+        "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-deputy-exec"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-proc-head",
+    "preview": {
+      "id": "b8bd4e77-6085-4a00-9063-278c20cf53a3",
+      "added": [
+        "ot.view_unit"
+      ],
+      "after": {
+        "name": "Quản lý Mua hàng & Giao vận",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-proc-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "oq.view_own",
+          "oq.accept",
+          "oq.reply_price",
+          "oq.reply_progress",
+          "oq.report_own",
+          "ot.view_own",
+          "ot.task_view",
+          "ot.task_update",
+          "ot.reschedule_reply",
+          "leave.view_unit",
+          "ot.view_unit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Cung ứng",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-proc-head",
+        "name": "Quản lý Mua hàng & Giao vận",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-proc-head",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:08.310195+00:00",
+        "updated_at": "2026-11-11T14:22:53.24227+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-proc-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "oq.report_all",
+          "leave.view_unit",
+          "ot.view_all",
+          "leave.recall",
+          "oq.accept",
+          "ot.create",
+          "oq.view_all",
+          "oq.view_own",
+          "leave.view_own",
+          "oq.reply_progress",
+          "att.view_own",
+          "ot.report",
+          "leave.create",
+          "ot.reschedule_reply",
+          "att.witness",
+          "att.create",
+          "ot.supplier",
+          "oq.reply_price",
+          "ot.task_view",
+          "oq.create",
+          "ot.manage",
+          "ot.view_own",
+          "ot.assign",
+          "oq.manage",
+          "oq.report_own",
+          "ot.task_update"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Cung ứng",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "oq.report_all",
+        "ot.view_all",
+        "ot.create",
+        "oq.view_all",
+        "ot.report",
+        "att.witness",
+        "ot.supplier",
+        "oq.create",
+        "ot.manage",
+        "ot.assign",
+        "oq.manage"
+      ],
+      "role_id": "role-v2-proc-head",
+      "expires_at": "2026-11-11T15:18:02.590111+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-proc-head"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-task-seo",
+    "preview": {
+      "id": "26fe22ba-4693-4760-9f52-9a47b8634ad7",
+      "added": [],
+      "after": {
+        "name": "SEO",
+        "role_kind": "marketing_task",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-seo; chỉnh được qua ma trận.",
+        "permissions": [
+          "task.view",
+          "task.view_mine",
+          "task.start",
+          "task.update_result",
+          "task.submit_completion",
+          "task.resubmit_completion",
+          "task.view_history",
+          "task.add_note",
+          "web.view",
+          "web.keyword_view",
+          "web.keyword_open_sheet",
+          "web.index_view",
+          "web.open_detail",
+          "web.open_published_url"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-task-seo",
+        "name": "SEO",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-task-seo",
+        "role_kind": "marketing_task",
+        "created_at": "2026-11-11T14:19:20.818719+00:00",
+        "updated_at": "2026-11-11T14:56:57.269717+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-seo; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "task.resubmit_completion",
+          "task.submit_completion",
+          "web.view_web_draft_revision_note",
+          "web.keyword_view",
+          "web.index_view",
+          "overview.alerts",
+          "task.view_created_by_me",
+          "task.view",
+          "web.content_view",
+          "task.create",
+          "brand.view",
+          "leave.create",
+          "task.update_result",
+          "web.open_detail",
+          "overview.own_only",
+          "att.create",
+          "task.view_mine",
+          "web.open_published_url",
+          "overview.view",
+          "web.view_web_draft_url",
+          "web.view",
+          "task.start",
+          "web.content_history",
+          "task.add_note",
+          "task.view_history",
+          "web.keyword_open_sheet"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "web.view_web_draft_revision_note",
+        "overview.alerts",
+        "task.view_created_by_me",
+        "web.content_view",
+        "task.create",
+        "brand.view",
+        "leave.create",
+        "overview.own_only",
+        "att.create",
+        "overview.view",
+        "web.view_web_draft_url",
+        "web.content_history"
+      ],
+      "role_id": "role-v2-task-seo",
+      "expires_at": "2026-11-11T15:18:05.452616+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": [
+          {
+            "id": "seo",
+            "name": "SEO"
+          }
+        ]
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-task-seo"
+    },
+    "error": null,
+    "unavailable": [
+      "task.accept"
+    ]
+  },
+  {
+    "id": "role-v2-task-social",
+    "preview": {
+      "id": "0de8b1ee-a4b2-4d9e-9686-5e4d15299cc7",
+      "added": [],
+      "after": {
+        "name": "Social",
+        "role_kind": "marketing_task",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-social; chỉnh được qua ma trận.",
+        "permissions": [
+          "task.view",
+          "task.view_mine",
+          "task.start",
+          "task.update_result",
+          "task.submit_completion",
+          "task.resubmit_completion",
+          "task.view_history",
+          "task.add_note",
+          "social.view",
+          "social.post_view",
+          "social.post_view_mine",
+          "social.post_create",
+          "social.post_edit",
+          "social.post_start",
+          "social.post_submit",
+          "social.post_resubmit",
+          "social.post_history"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-task-social",
+        "name": "Social",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-task-social",
+        "role_kind": "marketing_task",
+        "created_at": "2026-11-11T14:19:23.731543+00:00",
+        "updated_at": "2026-11-11T14:57:01.337355+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-social; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "social.post_start",
+          "task.resubmit_completion",
+          "social.post_resubmit",
+          "task.submit_completion",
+          "social.post_view",
+          "social.growth_create",
+          "overview.alerts",
+          "social.post_submit",
+          "social.growth_edit",
+          "social.view",
+          "task.view",
+          "social.post_view_mine",
+          "brand.view",
+          "leave.create",
+          "social.growth_view",
+          "task.update_result",
+          "overview.own_only",
+          "att.create",
+          "task.view_mine",
+          "social.post_edit",
+          "overview.view",
+          "task.start",
+          "social.post_history",
+          "task.add_note",
+          "task.view_history",
+          "social.view_mine",
+          "social.growth_open",
+          "social.post_create"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "social.growth_create",
+        "overview.alerts",
+        "social.growth_edit",
+        "brand.view",
+        "leave.create",
+        "social.growth_view",
+        "overview.own_only",
+        "att.create",
+        "overview.view",
+        "social.view_mine",
+        "social.growth_open"
+      ],
+      "role_id": "role-v2-task-social",
+      "expires_at": "2026-11-11T15:18:08.293044+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": [
+          {
+            "id": "social",
+            "name": "Social"
+          }
+        ]
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-task-social"
+    },
+    "error": null,
+    "unavailable": [
+      "task.accept"
+    ]
+  },
+  {
+    "id": "role-v2-purchasing",
+    "preview": {
+      "id": "281a3acd-3e15-47e8-987f-71d75a2aeea9",
+      "added": [],
+      "after": {
+        "name": "Thu mua",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-buyer; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "oq.view_own",
+          "oq.accept",
+          "oq.reply_price",
+          "oq.reply_progress",
+          "oq.report_own",
+          "ot.view_own",
+          "ot.task_view",
+          "ot.task_update",
+          "ot.reschedule_reply",
+          "ot.reschedule_propose"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Cung ứng",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-purchasing",
+        "name": "Thu mua",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-purchasing",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:19:04.762955+00:00",
+        "updated_at": "2026-11-11T14:19:04.762955+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-buyer; chỉnh được qua ma trận.",
+        "permissions": [
+          "leave.recall",
+          "oq.accept",
+          "oq.view_own",
+          "leave.view_own",
+          "oq.reply_progress",
+          "att.view_own",
+          "leave.create",
+          "ot.reschedule_reply",
+          "ot.reschedule_propose",
+          "att.witness",
+          "att.create",
+          "oq.reply_price",
+          "ot.task_view",
+          "oq.create",
+          "ot.view_own",
+          "oq.report_own",
+          "ot.task_update"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Cung ứng",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "att.witness",
+        "oq.create"
+      ],
+      "role_id": "role-v2-purchasing",
+      "expires_at": "2026-11-11T15:18:12.080002+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [
+          {
+            "id": "f4a08a91-35b9-4904-94c4-599133206618",
+            "name": "Nhân viên Thu mua · Phòng Mua hàng & Giao vận · 1ed4740b",
+            "unit_id": "b5e00000-0000-4000-8000-000000000023"
+          }
+        ],
+        "specialties": []
+      },
+      "affected_users": [
+        "1ed4740b-fcaf-44fb-97a3-1c308eb48d8d"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-purchasing"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-sales-team",
+    "preview": {
+      "id": "85e9cfd0-7236-47c3-ba21-bc85ead61845",
+      "added": [],
+      "after": {
+        "name": "Trưởng nhóm Kinh doanh",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-sales-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "biz.crm_use",
+          "signal.sale",
+          "oq.create",
+          "oq.view_own",
+          "oq.accept",
+          "oq.report_own",
+          "biz.crm_view_scope",
+          "leave.view_unit",
+          "ot.view_unit"
+        ],
+        "signal_scope": [
+          "Sứ quà tặng",
+          "Sản xuất theo yêu cầu",
+          "Nhập sỉ",
+          "Xuất khẩu",
+          "Bát đĩa nhà hàng",
+          "Khác"
+        ],
+        "catalog_group": "Kinh doanh",
+        "signal_scope_all": false
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-sales-team",
+        "name": "Trưởng nhóm Kinh doanh",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-sales-team",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:42.40168+00:00",
+        "updated_at": "2026-11-11T14:22:48.432381+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-sales-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "kpi.view_own",
+          "oq.report_all",
+          "finance.incoming.view",
+          "finance.incoming.view_unit",
+          "leave.view_unit",
+          "leave.recall",
+          "finance.incoming.view_totals",
+          "oq.accept",
+          "signal.report",
+          "ot.view_unit",
+          "finance.incoming.claim",
+          "finance.incoming.manual_view",
+          "oq.view_own",
+          "leave.view_own",
+          "oq.reply_progress",
+          "att.view_own",
+          "biz.crm_view_scope",
+          "leave.create",
+          "biz.crm_edit_other",
+          "signal.reassign",
+          "att.witness",
+          "att.create",
+          "overview.view",
+          "oq.reply_price",
+          "oq.create",
+          "biz.crm_use",
+          "signal.sale",
+          "signal.assign",
+          "settings.view",
+          "oq.manage",
+          "oq.report_own"
+        ],
+        "signal_scope": [
+          "Sứ quà tặng",
+          "Sản xuất theo yêu cầu",
+          "Nhập sỉ",
+          "Xuất khẩu",
+          "Bát đĩa nhà hàng",
+          "Khác"
+        ],
+        "catalog_group": "Kinh doanh",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": false,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "oq.report_all",
+        "finance.incoming.view",
+        "finance.incoming.view_unit",
+        "finance.incoming.view_totals",
+        "signal.report",
+        "finance.incoming.claim",
+        "finance.incoming.manual_view",
+        "oq.reply_progress",
+        "biz.crm_edit_other",
+        "signal.reassign",
+        "att.witness",
+        "overview.view",
+        "oq.reply_price",
+        "signal.assign",
+        "settings.view",
+        "oq.manage"
+      ],
+      "role_id": "role-v2-sales-team",
+      "expires_at": "2026-11-11T15:18:14.789234+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-sales-team"
+    },
+    "error": null,
+    "unavailable": [
+      "ot.view_own"
+    ]
+  },
+  {
+    "id": "role-v2-sales-head",
+    "blocked": "Còn trách nhiệm duyệt đơn chưa xử lý; dừng giảm quyền Role."
+  },
+  {
+    "id": "role-v2-mkt-head",
+    "preview": {
+      "id": "59bb3ee8-dab9-4abd-902b-77121a0b766a",
+      "added": [
+        "att.view_own"
+      ],
+      "after": {
+        "name": "Trưởng phòng Marketing",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "leave.view_unit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-mkt-head",
+        "name": "Trưởng phòng Marketing",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-mkt-head",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:54.606992+00:00",
+        "updated_at": "2026-11-11T14:18:54.606992+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "order.marketing_design.take",
+          "leave.view_unit",
+          "order.marketing_design.assign",
+          "order.open_delivery",
+          "order.marketing_design.complete",
+          "order.marketing_design.deliver",
+          "leave.recall",
+          "order.marketing_design.submit",
+          "order.marketing_design.approve",
+          "order.marketing_design.update_draft",
+          "order.marketing_design.view_all",
+          "order.marketing_design.edit",
+          "order.create",
+          "order.marketing_design.edit_reviewer",
+          "leave.view_own",
+          "order.update_draft",
+          "order.marketing_design.request_changes",
+          "order.take",
+          "order.marketing_design.send_request",
+          "order.marketing_design.view",
+          "order.marketing_design.create",
+          "order.view_mine",
+          "order.history",
+          "order.deliver",
+          "leave.create",
+          "order.marketing_design.report_view",
+          "order.resubmit",
+          "order.marketing_design.cancel",
+          "att.create",
+          "order.view",
+          "order.marketing_design.resubmit",
+          "order.submit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "order.marketing_design.take",
+        "order.marketing_design.assign",
+        "order.open_delivery",
+        "order.marketing_design.complete",
+        "order.marketing_design.deliver",
+        "order.marketing_design.submit",
+        "order.marketing_design.approve",
+        "order.marketing_design.update_draft",
+        "order.marketing_design.view_all",
+        "order.marketing_design.edit",
+        "order.create",
+        "order.marketing_design.edit_reviewer",
+        "order.update_draft",
+        "order.marketing_design.request_changes",
+        "order.take",
+        "order.marketing_design.send_request",
+        "order.marketing_design.view",
+        "order.marketing_design.create",
+        "order.view_mine",
+        "order.history",
+        "order.deliver",
+        "order.marketing_design.report_view",
+        "order.resubmit",
+        "order.marketing_design.cancel",
+        "order.view",
+        "order.marketing_design.resubmit",
+        "order.submit"
+      ],
+      "role_id": "role-v2-mkt-head",
+      "expires_at": "2026-11-11T15:18:18.819639+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-mkt-head"
+    },
+    "error": null,
+    "unavailable": [
+      "task.view",
+      "task.view_mine",
+      "task.accept",
+      "task.start",
+      "task.update_result",
+      "task.submit_completion",
+      "task.resubmit_completion",
+      "task.view_history",
+      "task.add_note"
+    ]
+  },
+  {
+    "id": "role-v2-design-head",
+    "preview": {
+      "id": "11760a58-8dbf-4f2c-a9b1-5ab701ff7fbf",
+      "added": [
+        "att.view_own"
+      ],
+      "after": {
+        "name": "Trưởng phòng Thiết kế",
+        "role_kind": "position",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-design-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "att.create",
+          "att.view_own",
+          "leave.create",
+          "leave.view_own",
+          "leave.recall",
+          "order.view",
+          "order.view_mine",
+          "order.take",
+          "order.update_draft",
+          "order.submit",
+          "order.resubmit",
+          "order.deliver",
+          "order.history",
+          "order.open_delivery",
+          "leave.view_unit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Thiết kế",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-design-head",
+        "name": "Trưởng phòng Thiết kế",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-design-head",
+        "role_kind": "position",
+        "created_at": "2026-11-11T14:18:47.431917+00:00",
+        "updated_at": "2026-11-11T14:18:47.431917+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-design-head; chỉnh được qua ma trận.",
+        "permissions": [
+          "order.request_changes",
+          "leave.view_unit",
+          "order.open_delivery",
+          "order.edit_reviewer",
+          "leave.recall",
+          "order.create",
+          "order.cancel",
+          "leave.view_own",
+          "order.update_draft",
+          "order.take",
+          "order.complete",
+          "order.view_mine",
+          "order.history",
+          "order.deliver",
+          "leave.create",
+          "order.approve",
+          "order.view_all",
+          "order.resubmit",
+          "att.witness",
+          "att.create",
+          "order.view",
+          "order.assign",
+          "order.edit",
+          "order.report_view",
+          "order.submit"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Thiết kế",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "order.request_changes",
+        "order.edit_reviewer",
+        "order.create",
+        "order.cancel",
+        "order.complete",
+        "order.approve",
+        "order.view_all",
+        "att.witness",
+        "order.assign",
+        "order.edit",
+        "order.report_view"
+      ],
+      "role_id": "role-v2-design-head",
+      "expires_at": "2026-11-11T15:18:20.947357+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": []
+      },
+      "affected_users": []
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-design-head"
+    },
+    "error": null,
+    "unavailable": []
+  },
+  {
+    "id": "role-v2-task-video",
+    "preview": {
+      "id": "eaa463ba-efd6-4088-966a-d1b525595a96",
+      "added": [],
+      "after": {
+        "name": "Video",
+        "role_kind": "marketing_task",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-video; chỉnh được qua ma trận.",
+        "permissions": [
+          "task.view",
+          "task.view_mine",
+          "task.accept",
+          "task.start",
+          "task.update_result",
+          "task.submit_completion",
+          "task.resubmit_completion",
+          "task.view_history",
+          "task.add_note",
+          "video.view",
+          "video.view_mine",
+          "video.create",
+          "video.script_start",
+          "video.script_submit",
+          "video.script_resubmit",
+          "video.move_shooting",
+          "video.footage",
+          "video.move_editing",
+          "video.edit_cut",
+          "video.submit",
+          "video.resubmit",
+          "video.deliver",
+          "video.history"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "signal_scope_all": true
+      },
+      "action": "edit",
+      "before": {
+        "id": "role-v2-task-video",
+        "name": "Video",
+        "biz_scope": "assigned",
+        "is_system": false,
+        "role_code": "role-v2-task-video",
+        "role_kind": "marketing_task",
+        "created_at": "2026-11-11T14:19:26.112539+00:00",
+        "updated_at": "2026-11-11T14:57:03.392517+00:00",
+        "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-video; chỉnh được qua ma trận.",
+        "permissions": [
+          "video.deliver",
+          "kpi.view_own",
+          "video.script_resubmit",
+          "video.submit",
+          "task.resubmit_completion",
+          "video.edit_cut",
+          "leave.recall",
+          "video.script_start",
+          "video.move_shooting",
+          "task.submit_completion",
+          "video.view",
+          "video.create_design_order",
+          "overview.alerts",
+          "video.footage",
+          "att.view_own",
+          "video.history",
+          "task.view",
+          "brand.view",
+          "leave.create",
+          "video.resubmit",
+          "task.update_result",
+          "video.view_mine",
+          "overview.own_only",
+          "video.create",
+          "att.create",
+          "att.witness",
+          "task.view_mine",
+          "overview.view",
+          "video.script_submit",
+          "task.accept",
+          "task.update_status",
+          "task.start",
+          "video.move_editing",
+          "task.add_note",
+          "task.view_history"
+        ],
+        "signal_scope": [],
+        "catalog_group": "Nhiệm vụ Marketing",
+        "catalog_state": "standard",
+        "catalog_pending": [],
+        "signal_scope_all": true,
+        "catalog_generation": 2,
+        "biz_detail_exception": false,
+        "biz_settings_disabled": false
+      },
+      "removed": [
+        "kpi.view_own",
+        "leave.recall",
+        "video.create_design_order",
+        "overview.alerts",
+        "att.view_own",
+        "brand.view",
+        "leave.create",
+        "overview.own_only",
+        "att.create",
+        "att.witness",
+        "overview.view",
+        "task.update_status"
+      ],
+      "role_id": "role-v2-task-video",
+      "expires_at": "2026-11-11T15:18:23.151475+00:00",
+      "references": {
+        "direct": 0,
+        "titles": [],
+        "positions": [],
+        "specialties": [
+          {
+            "id": "video",
+            "name": "Video"
+          }
+        ]
+      },
+      "affected_users": [
+        "91046d4c-1799-4aa5-81c5-4e5174bea7b6"
+      ]
+    },
+    "applied": {
+      "action": "edit",
+      "role_id": "role-v2-task-video"
+    },
+    "error": null,
+    "unavailable": []
+  }
+]
