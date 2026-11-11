@@ -29,6 +29,7 @@ beforeAll(async () => {
  await db.exec(readFileSync('drizzle/migrations/0320_appointment_preview_effective_clock.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0321_appointment_impact_skip_unchanged_sources.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0322_appointment_permission_read_single_snapshot.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0336_phase3a_native_role_audit.sql','utf8'));
  await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
  await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
@@ -86,4 +87,26 @@ it('authenticated RPC and RLS reject unprivileged linking and hide configuration
  await expect(db.query("select org_change('preview',$1,$2)",[revision,[{action:'roles',data:{id:'verified-title',roles:[]}}]])).rejects.toThrow('Super Admin');
  await expect(db.query("update base_title_role_links set enabled_permissions=ARRAY['settings.role']")).rejects.toThrow();
  }finally{await db.exec('RESET ROLE');await actor(admin);}
+});
+
+it('3A: an end command cannot postpone non-business scheduled revocation',async()=>{
+ await actor(admin);
+ const p=await preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:outsider,kind:'concurrent',ends_at:'2090-01-01T00:00:00Z'}}]);await apply(p);
+ const id=await scalar("select id v from org_assignments where title_id='verified-title' and user_id=$1 and ends_at='2090-01-01'",[outsider]);
+ await expect(preview([{action:'end',data:{id,ends_at:'2091-01-01T00:00:00Z'}}])).rejects.toThrow('Không gia hạn');
+ expect(await scalar('select ends_at::text v from org_assignments where id=$1',[id])).toContain('2090-01-01');
+});
+it('3A: even an authorized staff assigner cannot self-grant a title capability',async()=>{
+ await db.exec('BEGIN');try{
+ await db.exec('ALTER TABLE base_org_state DISABLE TRIGGER org_canonical_fence');
+ await db.exec(`update base_org_state set config=config||jsonb_build_object('grants',jsonb_build_array(jsonb_build_object('id','self-assign-test','user_id','${head}','permission','org.assign_staff','effect','ALLOW','active',true,'scope','native','unit_id','gd')))`);
+ await actor(head);await expect(preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:head,kind:'concurrent'}}])).rejects.toThrow('Không tự phân công');
+ }finally{await db.exec('ROLLBACK');await actor(admin);}
+});
+it('3A: audit reports actual activated and blocked keys, not a full Role grant',async()=>{
+ await actor(admin);const r=await scalar('select base_title_roles_read() v');const a=r.link_audits.find((x:any)=>x.title_id==='verified-title');
+ expect(a.enabled.sort()).toEqual(['order.submit','order.view','order.view_mine']);expect(a.signature_valid).toBe(true);
+ expect(await scalar("select private.org_role_permission_ready('oq.report_own') v")).toBe(true);
+ expect(await scalar("select private.org_role_permission_ready('oq.report_all') v")).toBe(false);
+ expect(await scalar("select private.org_role_permission_ready('finance.incoming.manage') v")).toBe(false);
 });
