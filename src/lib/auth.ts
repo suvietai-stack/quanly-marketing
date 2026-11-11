@@ -1,3 +1,4 @@
+import { createCoalescer } from "./singleFlight";
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
@@ -862,6 +863,8 @@ export interface User {
 interface AuthState {
   baseAccess: EffectiveAccess | null;
   refreshBaseAccess: () => Promise<void>;
+  _loadBase: () => Promise<void>;
+  _load: () => Promise<void>;
   bizAccess: EffectiveBizAccess | null;
   refreshBizAccess: () => Promise<void>;
   users: User[];
@@ -902,6 +905,8 @@ interface AuthState {
 
 // Chặn gọi init() trùng trong khi lần chạy đầu còn đang khôi phục phiên.
 let initStarted = false;
+const authLoads = createCoalescer<string>(async () => { await useAuth.getState()._load(); });
+const baseLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBase(); });
 
 function mapProfileToUser(
   p: any,
@@ -939,6 +944,11 @@ export const useAuth = create<AuthState>((set, get) => ({
   refreshBaseAccess: async () => {
     const uid = get().currentUserId;
     if (!uid) { set({ baseAccess: null }); return; }
+    return baseLoads.join(uid);
+  },
+  _loadBase: async () => {
+    const uid = get().currentUserId;
+    if (!uid) { set({ baseAccess: null }); return; }
     const { data, error } = await supabase.rpc('base_permissions_effective');
     if (get().currentUserId !== uid) return;
     set({ baseAccess: error ? null : data as unknown as EffectiveAccess });
@@ -963,11 +973,13 @@ export const useAuth = create<AuthState>((set, get) => ({
     supabase.auth.onAuthStateChange((event, session) => {
       if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
       const nextId = session?.user?.id ?? null;
-      if (nextId !== get().currentUserId) set({ users: [], roles: [], loaded: false });
-      set({ currentUserId: nextId, bizAccess: null, baseAccess: null });
+      const changed = nextId !== get().currentUserId;
+      if (changed) set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null });
+      set({ currentUserId: nextId });
       if (session) {
         // Do not make Auth calls inside the SDK's locked callback.
-        setTimeout(() => void get().reload(), 0);
+        // Cùng người dùng: gộp với lần tải đang chạy, không tải lại lần hai.
+        setTimeout(() => { if (event === 'USER_UPDATED') void get().reload(); else if (nextId) void authLoads.join(nextId); }, 0);
       } else {
         set({ users: [], roles: [], loaded: false });
       }
@@ -996,13 +1008,18 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       const { data: { user } } = await supabase.auth.getUser();
       set({ currentUserId: user?.id ?? null });
-      if (user) await get().reload();
+      if (user) await authLoads.join(user.id);
     } finally {
       set({ initialized: true });
     }
   },
 
   reload: async () => {
+    const uid = get().currentUserId;
+    if (uid) await authLoads.refresh(uid);
+  },
+
+  _load: async () => {
     const requestedUser = get().currentUserId;
     if (!requestedUser) return;
     const [dirRes, fullProfRes, rolesRes, urRes, ovRes] = await Promise.all([

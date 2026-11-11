@@ -46,11 +46,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
     const refresh = () => { if (document.visibilityState === 'visible') void useAuth.getState().refreshBaseAccess(); };
-    const timer = setInterval(refresh, 30000);
+    // Máy chủ vẫn kiểm tra quyền mỗi thao tác; làm mới định kỳ chỉ để menu cập nhật, nên giãn 2 phút + khi quay lại tab.
+    const timer = setInterval(refresh, 120000);
+    document.addEventListener("visibilitychange", refresh);
     window.addEventListener('focus', refresh);
     const boundary = baseAccess?.next_transition_at ? Math.max(0, new Date(baseAccess.next_transition_at).getTime() - Date.now() + 100) : null;
     const transition = boundary !== null && boundary < 2147483647 ? setTimeout(refresh, boundary) : null;
-    return () => { clearInterval(timer); if (transition !== null) clearTimeout(transition); window.removeEventListener('focus', refresh); };
+    return () => { clearInterval(timer); if (transition !== null) clearTimeout(transition); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
   }, [user?.id, baseAccess?.next_transition_at]);
   const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data;
   const logout = useAuth((s) => s.logout);
