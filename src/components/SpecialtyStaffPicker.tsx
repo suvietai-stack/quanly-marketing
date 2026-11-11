@@ -33,7 +33,8 @@ export function SpecialtyStaffPicker({
   });
   const candidates = q.data ?? [];
   const { matched, rest } = orderBySpecialty(people, candidates);
-  const candInfo = (name: string) => candidates.find(c => c.name === name);
+  // Đối chiếu theo ID ổn định — hai người trùng tên vẫn hiển thị và lọc chính xác.
+  const candInfo = (id: string) => candidates.find(c => c.user_id === id);
   return (
     <div className="space-y-1">
       <Select value={value || '_'} onValueChange={(v) => onChange(v === '_' ? undefined : v)}>
@@ -44,14 +45,18 @@ export function SpecialtyStaffPicker({
             <div className="px-2 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Chuyên môn phù hợp</div>
           )}
           {matched.map((p) => {
-            const info = candInfo(p.name);
+            const info = candInfo(p.id);
             const ctx = [info?.unit_name, info?.title_name].filter(Boolean).join(' · ');
             return <SelectItem key={p.id} value={p.name}>{p.name}{ctx ? ` (${ctx})` : ''}</SelectItem>;
           })}
           {matched.length > 0 && rest.length > 0 && (
             <div className="px-2 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nhân sự khác</div>
           )}
-          {rest.map((p) => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+          {rest.map((p) => {
+            const info = candInfo(p.id);
+            const ctx = [info?.unit_name, info?.title_name].filter(Boolean).join(' · ');
+            return <SelectItem key={p.id} value={p.name}>{p.name}{ctx ? ` (${ctx})` : ''}</SelectItem>;
+          })}
         </SelectContent>
       </Select>
       {!q.isPending && !q.error && matched.length === 0 && (
