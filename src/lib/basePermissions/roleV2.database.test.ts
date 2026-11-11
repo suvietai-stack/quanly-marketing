@@ -29,9 +29,14 @@ beforeAll(async () => {
   create table private.role_catalog_previews(id uuid primary key default gen_random_uuid(),actor_id uuid,action text,role_id text,proposed jsonb,before_data jsonb,baseline text,expires_at timestamptz default now()+interval '10 minutes',applied_at timestamptz);
   create function private.is_active(u uuid) returns boolean language sql as $$select u is not null$$;
   create function private.is_super_admin(u uuid) returns boolean language sql as $$select u='${admin}'::uuid$$;
-  create function private.role_catalog_fingerprint() returns text language sql as $$select 'stable'$$;
+  create function private.role_catalog_fingerprint() returns text language sql as $$select md5(coalesce(string_agg(to_jsonb(r)::text,'|' order by id),'')) from app_roles r$$;
   create function private.base_config() returns jsonb language sql as $$select '{}'::jsonb$$;
-  create function private.role_source_rows(c jsonb) returns table(user_id uuid,role_id text) language sql as $$select null::uuid,null::text where false$$;
+  create table test_sources(user_id uuid,role_id text);
+  create table leave_requests(id uuid primary key default gen_random_uuid(),approver_id uuid,status text,cancel_state text);
+  create table test_role_audit(role_id text,before_permissions text[],after_permissions text[]);
+  create function test_record_role() returns trigger language plpgsql as $$begin insert into test_role_audit values(new.id,old.permissions,new.permissions);return new;end$$;
+  create trigger test_role_audit after update on app_roles for each row execute function test_record_role();
+  create function private.role_source_rows(c jsonb) returns table(user_id uuid,role_id text) language sql as $$select user_id,role_id from test_sources$$;
   create function private.role_references(r text) returns jsonb language sql as $$select '{}'::jsonb$$;
   create function private.org_role_permission_ready(p text) returns boolean language sql as $$select p like 'leave.%' or p like 'order.%' or p like 'signal.%'$$;
   create function private.mkt_specialty_permission_ready(p text) returns boolean language sql as $$select p like 'web.%' or p like 'social.%'$$;
@@ -52,6 +57,7 @@ beforeAll(async () => {
   create function public.app_role_delete_guard() returns trigger language plpgsql as $$begin if old.is_system or private.role_in_use(old.id) then raise exception 'Role còn nguồn sử dụng'; end if; return old; end$$;
   create trigger app_role_delete_guard before delete on app_roles for each row execute function public.app_role_delete_guard();`);
   await db.exec(forward);
+  await db.exec(readFileSync('docs/pending/role_v2_reduction_guard.sql', 'utf8'));
   await db.exec(`create trigger role_new_empty_guard before insert on app_roles for each row execute function private.role_new_empty_guard();`);
   await as(admin);
 }, 30000);
@@ -124,6 +130,48 @@ it('legacy Role cannot be deleted while referenced; deletes once unreferenced; s
   await db.exec("delete from app_roles where id='role-old-hr'");
   expect(await v("select count(*)::int v from app_roles where id='role-old-hr'")).toBe(0);
   await expect(db.exec("delete from app_roles where id='role-super-admin'")).rejects.toThrow('nguồn sử dụng');
+});
+
+it('unresolved approver responsibility blocks any reduction without mutating a Role', async () => {
+  await db.exec(`insert into test_sources values('${ngoc}','role-v2-task-content-web');insert into leave_requests(approver_id,status) values('${ngoc}','pending');`);
+  const body = { name: 'Content Web', role_kind: 'marketing_task', permissions: [], signal_scope: [], signal_scope_all: true };
+  await expect(db.query("select role_catalog_change('preview','edit','role-v2-task-content-web',$1)", [body])).rejects.toThrow('trách nhiệm duyệt');
+  expect(await v("select permissions v from app_roles where id='role-v2-task-content-web'")).toEqual(['web.view']);
+  await db.exec("update leave_requests set status='approved'");
+});
+
+it('apply rechecks newly pending responsibility after preview; no partial Role write', async () => {
+  const body = { name: 'Content Web', role_kind: 'marketing_task', permissions: [], signal_scope: [], signal_scope_all: true };
+  const p = await v("select role_catalog_change('preview','edit','role-v2-task-content-web',$1) v", [body]) as {id:string};
+  await db.exec("update leave_requests set status='pending'");
+  await expect(apply(p.id)).rejects.toThrow('trách nhiệm duyệt');
+  expect(await v("select permissions v from app_roles where id='role-v2-task-content-web'")).toEqual(['web.view']);
+  await db.exec("update leave_requests set status='approved'");
+});
+
+it('audited reduction removes unsafe task rights, preserves Content and supports exact audited restore', async () => {
+  await db.exec("update app_roles set permissions='{web.view,social.post_create,order.approve}' where id='role-v2-task-content-web'");
+  const body = { name: 'Content Web', role_kind: 'marketing_task', permissions: ['web.view'], signal_scope: [], signal_scope_all: true };
+  const p = await v("select role_catalog_change('preview','edit','role-v2-task-content-web',$1) v", [body]) as {id:string;affected_users:string[]};
+  expect(p.affected_users).toEqual([ngoc]);
+  await apply(p.id);
+  const m = { id: 'a1', user_id: ngoc, title_id: 'mkt-staff', unit_id: 'mkt-dept', status: 'active', starts_at: '2026-01-01', specialty_ids: ['content_web'] };
+  expect(await perms(ngoc, [m])).toEqual(['web.view']);
+  expect(await perms(sale, [m])).toEqual([]);
+  expect(await v("select after_permissions v from test_role_audit where role_id='role-v2-task-content-web' order by ctid desc limit 1")).toEqual(['web.view']);
+  // Existing snapshot rights need a separately reviewed restore policy, never raw UPDATE in live.
+  const restore = { ...body, permissions: ['web.view', 'web.content_view'] };
+  const q = await v("select role_catalog_change('preview','edit','role-v2-task-content-web',$1) v", [restore]) as {id:string};
+  await apply(q.id);
+  expect(await perms(ngoc, [m])).toEqual(['web.content_view', 'web.view']);
+});
+
+it('stale baseline and system reductions fail closed', async () => {
+  const body = { name: 'Content Web', role_kind: 'marketing_task', permissions: ['web.view'], signal_scope: [], signal_scope_all: true };
+  const p = await v("select role_catalog_change('preview','edit','role-v2-task-content-web',$1) v", [body]) as {id:string};
+  await db.exec("update app_roles set description='concurrent change' where id='role-v2-sales-staff'");
+  await expect(apply(p.id)).rejects.toThrow('nguồn đã thay đổi');
+  await expect(db.query("select role_catalog_change('preview','edit','role-super-admin',$1)", [{name:'Super Admin',role_kind:'system',permissions:[]}])).rejects.toThrow('hệ thống');
 });
 
 it('rollback restores the exact previous writer: canonical IDs are ignored again', async () => {
