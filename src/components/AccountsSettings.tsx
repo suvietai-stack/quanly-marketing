@@ -9,7 +9,7 @@ import {
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
   ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS, isBizOrgPerm,
   SUPER_ADMIN_ID, allDependencies, allDependents,
-  auditDependencies, explainPermission,
+  auditDependencies,
 } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
