@@ -900,10 +900,6 @@ interface AuthState {
   touchPresence: () => Promise<void>;
 }
 
-function genRoleId() {
-  return "role-" + Math.random().toString(36).slice(2, 10);
-}
-
 // Chặn gọi init() trùng trong khi lần chạy đầu còn đang khôi phục phiên.
 let initStarted = false;
 

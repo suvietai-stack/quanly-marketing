@@ -655,7 +655,6 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
 export function RolesTab({ canManage }: { canManage: boolean }) {
   const s = useAuth();
   const [editing, setEditing] = useState<Role | null>(null);
-  const [adding, setAdding] = useState(false);
   const [functionGroup, setFunctionGroup] = useState("all");
   const linksQuery = useQuery({queryKey:["title-role-links",s.currentUserId],queryFn:titleRolesApi.read,retry:false});
   const positions = (roleId:string) => (linksQuery.data?.links??[]).filter(l=>l.role_id===roleId).map(l=>linksQuery.data?.titles.find(t=>t.id===l.title_id)?.name??"Chức vụ").join(", ") || "Chưa liên kết chức vụ";
