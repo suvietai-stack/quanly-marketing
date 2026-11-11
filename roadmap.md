@@ -1,11 +1,11 @@
 # Roadmap — Giai đoạn 3A: Role chuẩn trước chuyển đổi quyền cũ
 
-- [ ] Kiểm chứng từng quyền của chín liên kết chức vụ còn chờ, gồm đọc/ghi/báo cáo/xuất/workflow.
-- [ ] Chỉ kích hoạt tập quyền có rào backend an toàn; ghi rõ chức năng quản lý còn chờ.
-- [ ] Kiểm tra cấp/thu hồi theo nguồn, kiêm nhiệm, thời gian hiệu lực, ngoài phạm vi và chống tự nâng quyền.
-- [ ] Hiển thị quyền tự nhận và lý do chặn trong quy trình phân công hiện có; không thêm quản trị trùng.
-- [ ] Cập nhật báo cáo Chuyển đổi quyền cũ và bàn giao kết quả, không thực thi reset.
-- [ ] Kiểm thử cô lập và Preview; không bổ nhiệm thật, không thay Kinh doanh, chưa Publish.
+- [x] Kiểm chứng từng quyền của chín liên kết chức vụ còn chờ, gồm đọc/ghi/báo cáo/xuất/workflow.
+- [x] Chỉ kích hoạt tập quyền có rào backend an toàn; ghi rõ chức năng quản lý còn chờ.
+- [x] Kiểm tra cấp/thu hồi theo nguồn, kiêm nhiệm, thời gian hiệu lực, ngoài phạm vi và chống tự nâng quyền.
+- [x] Hiển thị quyền tự nhận và lý do chặn trong quy trình phân công hiện có; không thêm quản trị trùng.
+- [x] Cập nhật báo cáo Chuyển đổi quyền cũ và bàn giao kết quả, không thực thi reset.
+- [x] Kiểm thử cô lập và Preview; không bổ nhiệm thật, không thay Kinh doanh, chưa Publish.
 
 ## Giai đoạn 2.5 đã hoàn thành
 
@@ -18,6 +18,5 @@
 - [x] 7. Kiểm thử: 21 test mới đạt; hồi quy 1426/1443 (2 lỗi date-dependent đã biết); typecheck/build đạt.
 - [x] 8. Báo cáo bàn giao docs/phase25-report.md.
 
-Mở (chờ): xác minh Debug trên preview bằng tài khoản Super Admin thật (cần người dùng đăng nhập preview);
-9 liên kết Role theo chức vụ còn lại chờ resolver scope quản lý; reset quyền cũ chờ giai đoạn cuối.
+Mở (chờ): quyền quản lý thiết yếu của 9 chức vụ còn chặn — backend nhiều phân hệ chưa có rào đơn vị và workflow đầy đủ; cần triển khai hợp đồng phạm vi riêng từng phân hệ trước khi kích hoạt. Không reset; 8 tài khoản chưa đủ quyền thay thế. Báo cáo: docs/phase3a-role-activation-report.md.
 Nguyên tắc: không reset quyền, không Publish, Kinh doanh giữ nguyên.
