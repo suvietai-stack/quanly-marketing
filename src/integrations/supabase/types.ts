@@ -9666,6 +9666,7 @@ export type Database = {
         Args: { _mode: string; _target: string }
         Returns: Json
       }
+      account_permission_explain: { Args: { _target: string }; Returns: Json }
       account_username_identity: {
         Args: { _username: string }
         Returns: string

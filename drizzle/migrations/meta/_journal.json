@@ -2339,6 +2339,13 @@
       "when": 1794362389562,
       "tag": "0333_cleanup_eval_replace_mode_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 334,
+      "version": "7",
+      "when": 1794363888186,
+      "tag": "0334_account_permission_explain",
+      "breakpoints": true
     }
   ]
 }
