@@ -1,5 +1,12 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Nghiệm thu tối giản V2 — 14:34 UTC 11/11/2026
+- [ ] Audit 25 Role live, nguồn quyền thừa, số người/nguồn tác động và 23 ô; phân biệt 25 bổ nhiệm có chức danh hiện hành với 86 lịch sử.
+- [ ] Sửa 25 preset và ma trận trên draft; không union legacy, không chặn resolver khi Admin chọn thêm quyền đã kiểm chứng.
+- [ ] Chuẩn bị SQL guarded preview/apply PENDING, baseline/backup/rollback, chặn giảm quyền khi người nhận còn trách nhiệm duyệt chưa giải quyết.
+- [ ] Test SQL/PGlite, own/unit/all, nhiệm vụ Marketing nhiều nguồn, additive isolation; Preview desktop/iPad và smoke.
+- [ ] Giảm quyền live/cutover/xóa legacy/Publish: chờ impact đầy đủ và quyết định Đức, Quỳnh Anh, Ngọc; không thực hiện trong lượt này.
+
 ## Đính chính 13:08 UTC — Role mới, không sửa Role cũ
 - [x] Thay draft giảm quyền Role cũ bằng bộ canonical mới theo ID/key; Legacy riêng, dropdown gán mới loại legacy.
 - [x] Mapping draft title + unit: 18/86 nguồn đề xuất, 68 ngoại lệ; slot-per-person qua preview, không viết live/cutover.
