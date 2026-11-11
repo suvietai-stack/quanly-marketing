@@ -23,6 +23,7 @@ export type CleanupPreview = {
 };
 
 export type CleanupRun = {
+  final_transition?: boolean;
   id: string;
   actor: string;
   fingerprint: string;
