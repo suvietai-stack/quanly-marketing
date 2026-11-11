@@ -2360,6 +2360,13 @@
       "when": 1794365295770,
       "tag": "0336_phase3a_native_role_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 337,
+      "version": "7",
+      "when": 1794365505121,
+      "tag": "0337_phase3a_assignment_specialty_sources",
+      "breakpoints": true
     }
   ]
 }
