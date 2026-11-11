@@ -1525,7 +1525,7 @@ export function isOwnRecord(record: any, userId: string | null | undefined): boo
 export type PermissionExplain = {
   ok: boolean;
   reason: string;
-  source: "super_admin" | "system" | "role" | "custom" | "missing" | "dep_missing" | "inactive";
+  source: "super_admin" | "system" | "role" | "custom" | "missing" | "inactive";
   missingDeps?: PermissionKey[];
   roleName?: string;
 };
@@ -1566,20 +1566,8 @@ export function explainPermission(
       roleName: grantingRole?.name ?? userRoles[0]?.name,
     };
   }
-  // Check deps
-  const missing: PermissionKey[] = [];
-  for (const parent of PERMISSION_DEPENDS[resolved] ?? []) {
-    if (!granted.has(parent)) missing.push(parent);
-  }
-  if (missing.length > 0) {
-    return {
-      ok: false,
-      reason: `Thiếu quyền cha: ${missing.join(", ")}`,
-      source: "dep_missing",
-      missingDeps: missing,
-      roleName: grantingRole?.name ?? userRoles[0]?.name,
-    };
-  }
+  // Backend (private.has_permission) không bắt buộc quyền cha khi thực thi — giải thích phải khớp backend.
+  // Kiểm tra quyền cha chỉ còn là gợi ý soạn Role qua auditDependencies.
   return {
     ok: true,
     reason: source === "custom"
@@ -1657,6 +1645,7 @@ export function useCurrentUser() {
     viewMineKey: PermissionKey,
     matchOwn?: (item: T) => boolean,
   ): T[] => {
+    if (!u || u.status !== 'Đang hoạt động') return [];
     if (isSuperAdmin || can(viewAllKey)) return list;
     if (!can(viewMineKey)) return [];
     return list.filter((it) => isOwnRecord(it as any, u?.id) || (matchOwn ? matchOwn(it) : false));
