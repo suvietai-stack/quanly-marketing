@@ -64,7 +64,13 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "2892b35d-b99e-4cd4-96fd-f20802b55ab7",
+      "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+    ],
+    "preview_id": "e325090b-9cb7-4ba7-885b-3e66a3210282",
+    "preview_expires_at": "2026-11-11T14:55:57.229588+00:00"
   },
   {
     "id": "role-v2-sales-head",
@@ -204,7 +210,13 @@
         "Bát đĩa nhà hàng",
         "Khác"
       ]
-    }
+    },
+    "affected_users": [
+      "2892b35d-b99e-4cd4-96fd-f20802b55ab7",
+      "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+    ],
+    "preview_id": "1286ceba-cd6d-4501-b53c-d0877286a175",
+    "preview_expires_at": "2026-11-11T14:55:57.796472+00:00"
   },
   {
     "id": "role-v2-sales-team",
@@ -338,7 +350,10 @@
         "Bát đĩa nhà hàng",
         "Khác"
       ]
-    }
+    },
+    "affected_users": [],
+    "preview_id": "e01473f6-6fc8-4775-b25c-9a01df850f57",
+    "preview_expires_at": "2026-11-11T14:55:58.332072+00:00"
   },
   {
     "id": "role-v2-sales-staff",
@@ -454,7 +469,21 @@
         "Bát đĩa nhà hàng",
         "Khác"
       ]
-    }
+    },
+    "affected_users": [
+      "0c39aa34-8bf3-4826-8d3c-f477f9ae2833",
+      "2892b35d-b99e-4cd4-96fd-f20802b55ab7",
+      "36f8dac8-b00a-45c0-9095-50faf082cba3",
+      "4a03d311-1e80-4c9f-8ec9-e8fad8f710e8",
+      "84de68f6-ab0d-4f99-b0de-a28956fcfa00",
+      "85a81154-d205-4e51-b2a9-88ee221a4b9b",
+      "9ecab0f1-cbf4-4613-9845-10c64b59794c",
+      "ce2da30e-8064-4088-a0a4-52217aa03fde",
+      "d4d24d49-8351-4b89-8df8-bbff70e917bc",
+      "e5f24c7d-a614-4f13-9138-8736f12e2053"
+    ],
+    "preview_id": "70534a32-ba8a-4529-b21e-6c4935088869",
+    "preview_expires_at": "2026-11-11T14:55:58.868933+00:00"
   },
   {
     "id": "role-v2-design-head",
@@ -570,7 +599,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "57772907-b053-4cdf-84c9-11d3af2a8036",
+    "preview_expires_at": "2026-11-11T14:55:59.358247+00:00"
   },
   {
     "id": "role-v2-design-staff",
@@ -665,7 +697,12 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "160258ce-d6d3-4780-80e1-e9ead132465f"
+    ],
+    "preview_id": "e24bc261-1b93-4a67-9afc-b3e4956a9074",
+    "preview_expires_at": "2026-11-11T14:55:59.958781+00:00"
   },
   {
     "id": "role-v2-mkt-director",
@@ -792,7 +829,12 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+    ],
+    "preview_id": "f1a4ae8a-7af8-48d8-b055-ba4e5931ac29",
+    "preview_expires_at": "2026-11-11T14:56:00.477361+00:00"
   },
   {
     "id": "role-v2-mkt-head",
@@ -914,7 +956,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "5bd17447-0324-4d47-b169-546443efc0aa",
+    "preview_expires_at": "2026-11-11T14:56:00.983096+00:00"
   },
   {
     "id": "role-v2-mkt-staff",
@@ -1024,7 +1069,15 @@
       ],
       "signal_scope_all": false,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "3ecff748-acaf-454f-b29c-5bf3ab1d8469",
+      "91046d4c-1799-4aa5-81c5-4e5174bea7b6",
+      "dc42e189-e2de-4a60-a00a-d5277819ea13",
+      "dd01b165-8889-4f46-ac77-8dfe84c0c75f"
+    ],
+    "preview_id": "91f29572-55c9-41f6-94bc-dcaff85d466e",
+    "preview_expires_at": "2026-11-11T14:56:01.489339+00:00"
   },
   {
     "id": "role-v2-hr",
@@ -1141,7 +1194,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "95c6bac0-3eeb-4987-a7ae-23e0409e8248",
+    "preview_expires_at": "2026-11-11T14:56:01.948665+00:00"
   },
   {
     "id": "role-v2-packing",
@@ -1213,7 +1269,10 @@
       ],
       "signal_scope_all": false,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "ca8c123e-f9fc-4bee-8ea6-cc6bf45374fd",
+    "preview_expires_at": "2026-11-11T14:56:02.441012+00:00"
   },
   {
     "id": "role-v2-delivery",
@@ -1285,7 +1344,10 @@
       ],
       "signal_scope_all": false,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "ff5d0181-3aa8-435e-bb4c-6c089c2f4b27",
+    "preview_expires_at": "2026-11-11T14:56:02.882904+00:00"
   },
   {
     "id": "role-v2-purchasing",
@@ -1384,7 +1446,12 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "1ed4740b-fcaf-44fb-97a3-1c308eb48d8d"
+    ],
+    "preview_id": "0ea5224a-281b-474e-ba86-8b44242e6a86",
+    "preview_expires_at": "2026-11-11T14:56:03.327924+00:00"
   },
   {
     "id": "role-v2-supply-chain",
@@ -1459,7 +1526,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "999ea6cd-f45f-4bf7-9dd5-1223d35cc56a",
+    "preview_expires_at": "2026-11-11T14:56:03.747788+00:00"
   },
   {
     "id": "role-v2-proc-head",
@@ -1581,7 +1651,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "b28c9916-da94-454b-b666-a8c904876abc",
+    "preview_expires_at": "2026-11-11T14:56:04.210814+00:00"
   },
   {
     "id": "role-v2-accountant",
@@ -1654,7 +1727,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "f84f5cd6-0741-4c3c-ba00-36912530c0cc",
+    "preview_expires_at": "2026-11-11T14:56:04.723409+00:00"
   },
   {
     "id": "role-v2-account-chief",
@@ -1741,7 +1817,12 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "f8fb38be-55ec-4117-9c99-0c4a05b8a5a6"
+    ],
+    "preview_id": "5ec39ece-a0bb-4024-8e6a-529da771522f",
+    "preview_expires_at": "2026-11-11T14:56:05.206829+00:00"
   },
   {
     "id": "role-v2-account-stock",
@@ -1804,7 +1885,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "a8e9aa1c-6477-4fef-98d7-f271881de80d",
+    "preview_expires_at": "2026-11-11T14:56:05.702042+00:00"
   },
   {
     "id": "role-v2-executive",
@@ -1860,7 +1944,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "6ccec630-13c3-4814-accf-267ac6a7894f",
+    "preview_expires_at": "2026-11-11T14:56:06.123034+00:00"
   },
   {
     "id": "role-v2-deputy-exec",
@@ -1922,7 +2009,12 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "513712ca-d679-41aa-9c68-97c3bb6cd9df"
+    ],
+    "preview_id": "457c2221-3b4f-4783-b9b8-950d9a653fdd",
+    "preview_expires_at": "2026-11-11T14:56:06.599768+00:00"
   },
   {
     "id": "role-v2-task-content-web",
@@ -2135,7 +2227,13 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "3ecff748-acaf-454f-b29c-5bf3ab1d8469",
+      "dc42e189-e2de-4a60-a00a-d5277819ea13"
+    ],
+    "preview_id": "42b24eca-6e16-4bb5-b280-5c70b4890dd0",
+    "preview_expires_at": "2026-11-11T14:56:07.038202+00:00"
   },
   {
     "id": "role-v2-task-seo",
@@ -2254,7 +2352,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "80a11336-3908-4a54-b053-0420b4de6151",
+    "preview_expires_at": "2026-11-11T14:56:07.526267+00:00"
   },
   {
     "id": "role-v2-task-local-seo",
@@ -2385,7 +2486,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "d47c323c-2274-43a2-9b08-78ea92439952",
+    "preview_expires_at": "2026-11-11T14:56:07.982297+00:00"
   },
   {
     "id": "role-v2-task-social",
@@ -2522,7 +2626,10 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [],
+    "preview_id": "a739d7ee-a07d-405c-bc26-bd6f10678245",
+    "preview_expires_at": "2026-11-11T14:56:08.412931+00:00"
   },
   {
     "id": "role-v2-task-video",
@@ -2713,6 +2820,11 @@
       ],
       "signal_scope_all": true,
       "signal_scope": []
-    }
+    },
+    "affected_users": [
+      "91046d4c-1799-4aa5-81c5-4e5174bea7b6"
+    ],
+    "preview_id": "7d20d0e8-bb65-43b4-8cf0-7b0c42f3479e",
+    "preview_expires_at": "2026-11-11T14:56:08.887976+00:00"
   }
 ]
