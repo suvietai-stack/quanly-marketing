@@ -4,7 +4,7 @@
 - Personal writes require actor-bound expiring preview, unchanged direct Roles and additive-only save; active replace stays blocked and per-user audit preserves old state without a fourth source.
 - Slotted rules use the supplied snapshot's slot Role and its own assignment unit; unmapped rules alone retain title compatibility, preventing title fallback and cross-unit source mixing.
 - New/reactivated Marketing task rows carry eligibility_enforced; historical rows remain compatible until confirmed cutover, preserving live rights and independent Design specialties.
-- Slot Role replacement uses org_change to create a new slot and adjacent audited assignment intervals; old Role/history stays immutable and GiST exclusion protects concurrent holders.
+- Positions are (unit,title)→one Role with many concurrent holders; per-person slots are frozen legacy kept for history (plan docs/position-model-2026-11-11) — avoids hard-coded headcount.
 - role_source_rows feeds staff provenance and distinct catalog counts; native CRM/3K/workflow gates remain authoritative until their separate source-scope cutover is verified.
 - Title Role links reference original app_roles; full-Role active remains fenced, explicit enabled_permissions may activate audited personal capabilities through live assignment intervals. Unverified management scope stays draft; direct user_roles and business appointment evaluators stay unchanged.
 - Assignment specialty IDs and server-reviewed Role signatures live on canonical assignment data; only org_change may add them, and ending the assignment removes only marketing_appointment rules — manual specialty decisions stay unchanged.
