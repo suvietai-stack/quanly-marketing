@@ -2388,6 +2388,13 @@
       "when": 1794366556402,
       "tag": "0340_supplemental_permissions_atomic",
       "breakpoints": true
+    },
+    {
+      "idx": 341,
+      "version": "7",
+      "when": 1794366770251,
+      "tag": "0341_final_snapshot_set_based",
+      "breakpoints": true
     }
   ]
 }
