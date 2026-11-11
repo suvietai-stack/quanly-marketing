@@ -1,0 +1,47 @@
+{
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "hash": "9358a8bcb7ae0f0af0fdb8ce7d220865",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "boolean",
+      "definer": true,
+      "arguments": "_uid uuid, _groups text[]",
+      "signature": "private.sig_scope_ok(uuid,text[])",
+      "definition": "CREATE OR REPLACE FUNCTION private.sig_scope_ok(_uid uuid, _groups text[])\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT _uid IS NOT NULL AND (EXISTS(SELECT 1 FROM private.role_source_rows(private.base_config()) source JOIN app_roles role ON role.id=source.role_id WHERE source.user_id=_uid AND source.source_kind='slot' AND EXISTS(SELECT 1 FROM unnest(source.permissions) p WHERE p LIKE 'signal.%') AND (role.signal_scope_all OR EXISTS(SELECT 1 FROM unnest(coalesce(_groups,'{}')) g WHERE g=ANY(role.signal_scope) OR (g LIKE 'Kh\u00e1c:%' AND 'Kh\u00e1c'=ANY(role.signal_scope))))) OR \n    private.is_super_admin(_uid) OR private.is_admin(_uid)\n    OR (NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = _uid)\n        AND NOT EXISTS (SELECT 1 FROM public.org_assignments a\n                          JOIN public.base_title_role_links l ON l.title_id = a.title_id AND a.slot_id IS NULL\n                        WHERE a.user_id = _uid AND a.status = 'active'\n                          AND a.starts_at <= now() AND (a.ends_at IS NULL OR a.ends_at > now())))\n    OR EXISTS (SELECT 1 FROM public.user_roles ur JOIN public.app_roles r ON r.id = ur.role_id\n               WHERE ur.user_id = _uid AND r.signal_scope_all)\n    OR EXISTS (\n      SELECT 1 FROM public.user_roles ur JOIN public.app_roles r ON r.id = ur.role_id,\n        unnest(coalesce(_groups,'{}')) g\n      WHERE ur.user_id = _uid\n        AND (g = ANY(r.signal_scope) OR (g LIKE 'Kh\u00e1c:%' AND 'Kh\u00e1c' = ANY(r.signal_scope))))\n    OR EXISTS (\n      SELECT 1 FROM public.org_assignments a\n        JOIN public.base_title_role_links l ON l.title_id = a.title_id AND a.slot_id IS NULL\n        JOIN public.app_roles r ON r.id = l.role_id\n      WHERE a.user_id = _uid AND a.status = 'active'\n        AND a.starts_at <= now() AND (a.ends_at IS NULL OR a.ends_at > now())\n        AND l.permission_signature = md5(coalesce(r.permissions,'{}')::text)\n        AND r.signal_scope_all)\n    OR EXISTS (\n      SELECT 1 FROM public.org_assignments a\n        JOIN public.base_title_role_links l ON l.title_id = a.title_id AND a.slot_id IS NULL\n        JOIN public.app_roles r ON r.id = l.role_id,\n        unnest(coalesce(_groups,'{}')) g\n      WHERE a.user_id = _uid AND a.status = 'active'\n        AND a.starts_at <= now() AND (a.ends_at IS NULL OR a.ends_at > now())\n        AND l.permission_signature = md5(coalesce(r.permissions,'{}')::text)\n        AND (g = ANY(r.signal_scope) OR (g LIKE 'Kh\u00e1c:%' AND 'Kh\u00e1c' = ANY(r.signal_scope))))\n  );\n$function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "hash": "507118545984ead00ef9ec4d3999030e",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "jsonb",
+      "definer": false,
+      "arguments": "_filter jsonb DEFAULT '{}'::jsonb",
+      "signature": "signal_list_counts(jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION public.signal_list_counts(_filter jsonb DEFAULT '{}'::jsonb)\n RETURNS jsonb\n LANGUAGE sql\n STABLE\n SET search_path TO 'public'\nAS $function$ WITH base AS MATERIALIZED(SELECT * FROM signal_base_filtered(_filter-'quick'-'status')),needs AS MATERIALIZED(SELECT * FROM signal_base_filtered(_filter-'needGroup')),st AS(SELECT coalesce(status,'unassigned') key,count(*) n FROM base GROUP BY status),ng AS(SELECT g key,count(DISTINCT s.id) n FROM needs s CROSS JOIN LATERAL unnest(CASE WHEN cardinality(s.need_groups)>0 THEN s.need_groups ELSE array_remove(ARRAY[s.need_group],NULL) END) g GROUP BY g),mine AS(SELECT * FROM opportunity_signals WHERE assigned_to=auth.uid() AND cancelled_at IS NULL) SELECT jsonb_build_object('total',(SELECT count(*) FROM signal_base_filtered(_filter)),'status',coalesce((SELECT jsonb_object_agg(key,n) FROM st),'{}')||jsonb_build_object('all',(SELECT count(*) FROM base)),'needs',coalesce((SELECT jsonb_object_agg(key,n) FROM ng),'{}')||jsonb_build_object('all',(SELECT count(*) FROM needs)),'sales',coalesce((SELECT jsonb_agg(DISTINCT assigned_to) FILTER(WHERE assigned_to IS NOT NULL) FROM opportunity_signals),'[]'),'creators',coalesce((SELECT jsonb_agg(DISTINCT created_by) FROM opportunity_signals),'[]'),'mine',jsonb_build_object('waiting',(SELECT count(*) FROM mine WHERE status='waiting'),'active',(SELECT count(*) FROM mine WHERE status IN ('contacting','consulting','quoted','deposit')),'quoted',(SELECT count(*) FROM mine WHERE status='quoted'),'won',(SELECT count(*) FROM mine WHERE status='won' AND date_trunc('month',closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')=date_trunc('month',now() AT TIME ZONE 'Asia/Ho_Chi_Minh')))) $function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "hash": "37431d8bafb3d2427fc5edf479b6d0ce",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "result": "jsonb",
+      "definer": false,
+      "arguments": "_filter jsonb DEFAULT '{}'::jsonb, _sort text DEFAULT 'work'::text, _offset integer DEFAULT 0, _limit integer DEFAULT 40",
+      "signature": "signal_list_page(jsonb,text,integer,integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.signal_list_page(_filter jsonb DEFAULT '{}'::jsonb, _sort text DEFAULT 'work'::text, _offset integer DEFAULT 0, _limit integer DEFAULT 40)\n RETURNS jsonb\n LANGUAGE sql\n STABLE\n SET search_path TO 'public'\nAS $function$ WITH page AS MATERIALIZED (SELECT s.*,row_number() OVER(ORDER BY CASE WHEN _sort IN ('work','priority') THEN s.list_work_priority END,CASE WHEN _sort IN ('work','priority') THEN s.list_wait_since END ASC NULLS LAST,CASE WHEN _sort='oldest' THEN s.created_at END ASC,CASE WHEN _sort='newest' THEN s.created_at END DESC,CASE WHEN _sort='soonest' THEN s.next_contact_on END ASC NULLS LAST,CASE WHEN _sort='potential' THEN CASE s.potential WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END END,CASE WHEN _sort='value' THEN s.revenue END DESC NULLS LAST,s.list_activity_at DESC,s.id) ord FROM signal_filtered(_filter) s ORDER BY ord LIMIT greatest(1,least(_limit,50)) OFFSET greatest(_offset,0)), enriched AS (SELECT p.ord,(to_jsonb(p)-'ord'-'address'-'marketing_note'-'potential_updated_by'-'potential_updated_at'-'cancel_reason')||jsonb_build_object('label_ids',coalesce((SELECT jsonb_agg(l.label_id ORDER BY l.label_id) FROM signal_label_links l WHERE l.signal_id=p.id),'[]'),'note_count',(SELECT count(*) FROM opportunity_signal_notes n WHERE n.signal_id=p.id AND signal_note_is_progression(n.note,n.event_type,n.is_progression)),'last_note',(SELECT jsonb_build_object('signal_id',n.signal_id,'created_at',n.created_at,'note',n.note,'event_type',n.event_type) FROM opportunity_signal_notes n WHERE n.signal_id=p.id AND signal_note_is_progression(n.note,n.event_type,n.is_progression) ORDER BY n.created_at DESC,n.id DESC LIMIT 1)) row FROM page p) SELECT jsonb_build_object('rows',coalesce((SELECT jsonb_agg(row ORDER BY ord) FROM enriched),'[]')) $function$\n",
+      "volatility": "s"
+    }
+  ],
+  "rollback_sha256": "f2e465b633b792057d59b9f3744b9d91ead92052540652c8ea8fc7769f8cc9ff"
+}
