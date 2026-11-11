@@ -25,7 +25,7 @@ export function PermissionChecklist({ value, onChange, policy, disabled = false,
   const toggle = (key: string, checked: boolean) => onChange(checked ? [...new Set([...value, key])] : value.filter(k => k !== key));
   return <div className="min-w-0 space-y-3">
     <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-background py-3">
-      <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><Input className="pl-9" aria-label={personal ? 'Tìm quyền bổ sung' : 'Tìm quyền trong ma trận'} placeholder="Tìm chức năng, quyền…" value={search} onChange={e => setSearch(e.target.value)}/></div>
+      <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><Input className="pl-9" aria-label={personal ? 'Tìm quyền bổ sung' : 'Tìm quyền trong ma trận'} placeholder="Tìm chức năng, quyền…" value={search} onChange={e => setSearch(e.target.value)}/></div>
       <Select value={filter} onValueChange={setFilter}><SelectTrigger className="w-36" aria-label="Lọc quyền đã chọn"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tất cả</SelectItem><SelectItem value="selected">Đã chọn</SelectItem><SelectItem value="unselected">Chưa chọn</SelectItem></SelectContent></Select>
       <Badge variant="secondary">{value.length} quyền đã tích</Badge>
     </div>
@@ -39,7 +39,7 @@ export function PermissionChecklist({ value, onChange, policy, disabled = false,
           <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">{rows.filter(p => p.group === group).map(p => {
             const safe = lookup.get(p.key); const checked = value.includes(p.key); const held = baseline.includes(p.key);
             return <label key={p.key} className="flex min-w-0 items-start gap-3 rounded-md px-2 py-3 hover:bg-muted/40">
-              <Checkbox className="mt-0.5 shrink-0" aria-label={p.label} checked={checked} disabled={disabled || (!safe && !held)} onCheckedChange={v => toggle(p.key, v === true)}/>
+              <Checkbox className="mt-0.5 shrink-0" aria-label={p.label} checked={checked} disabled={disabled || (!safe && !held && !checked)} onCheckedChange={v => toggle(p.key, v === true)}/>
               <span className="min-w-0 text-sm"><span className="block break-words font-medium">{p.label}</span><span className="mt-1 block text-xs text-muted-foreground">{safe ? scopeLabels[safe.scope] : held ? 'Đang giữ · cần đối chiếu phạm vi' : 'Cần cấu hình / Chưa an toàn'}</span>{!safe && <ShieldAlert className="mt-1 size-3 text-muted-foreground"/>}</span>
             </label>;
           })}</div>

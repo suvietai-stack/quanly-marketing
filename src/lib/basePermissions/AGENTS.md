@@ -1,4 +1,6 @@
 # Base organization permissions
+- RoleCatalog is the sole Role editor; shared checklists use explicit server policy keys and dependency hints, never CRUD inference or global bulk grants, preserving native scope gates.
+- Personal writes require actor-bound expiring preview, unchanged direct Roles and additive-only save; active replace stays blocked and per-user audit preserves old state without a fourth source.
 - Slotted rules use the supplied snapshot's slot Role and its own assignment unit; unmapped rules alone retain title compatibility, preventing title fallback and cross-unit source mixing.
 - New/reactivated Marketing task rows carry eligibility_enforced; historical rows remain compatible until confirmed cutover, preserving live rights and independent Design specialties.
 - Slot Role replacement uses org_change to create a new slot and adjacent audited assignment intervals; old Role/history stays immutable and GiST exclusion protects concurrent holders.
