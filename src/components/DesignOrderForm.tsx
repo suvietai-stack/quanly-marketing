@@ -56,6 +56,7 @@ export function DesignOrderFormFromContent({
   );
   const [requester, setRequester] = useState(defaultCreator);
   const [assignee, setAssignee] = useState<string>("");
+  const [assigneeId, setAssigneeId] = useState<string>("");
   const [reviewer, setReviewer] = useState<string>(defaultReviewer);
   const [brief, setBrief] = useState(
     `Thiết kế/chọn ảnh minh họa phục vụ bài content web "${content.title}".\n` +
@@ -104,6 +105,7 @@ export function DesignOrderFormFromContent({
       refLinkObject: content.title,
       requester: defaultCreator,
       assignee: finalAssignee,
+      assigneeId: finalAssignee && assigneeId ? assigneeId : undefined,
       reviewer: reviewer || requester || defaultCreator || undefined,
       deadline: deadline || undefined,
       priority,
@@ -264,7 +266,7 @@ export function DesignOrderFormFromContent({
                   Người phụ trách thiết kế {canAssign ? "" : "(cần quyền order.assign)"}
                 </Label>
                 {canAssign ? (
-                  <SpecialtyStaffPicker specialty="design" value={assignee || undefined} onChange={(v) => setAssignee(v ?? "")} people={activePeople} placeholder="— Chưa phân công —" />
+                  <SpecialtyStaffPicker specialty="design" value={assignee || undefined} valueId={assigneeId || undefined} onChange={(v, id) => { setAssignee(v ?? ""); setAssigneeId(id ?? ""); }} people={activePeople} placeholder="— Chưa phân công —" />
                 ) : (
                   <Input value="Sẽ ở trạng thái Chờ phân công" disabled />
                 )}
