@@ -1,4 +1,13 @@
-# Roadmap — Giai đoạn 2.5: Phân quyền, Role theo chức vụ, định danh nhân sự
+# Roadmap — Giai đoạn 3A: Role chuẩn trước chuyển đổi quyền cũ
+
+- [ ] Kiểm chứng từng quyền của chín liên kết chức vụ còn chờ, gồm đọc/ghi/báo cáo/xuất/workflow.
+- [ ] Chỉ kích hoạt tập quyền có rào backend an toàn; ghi rõ chức năng quản lý còn chờ.
+- [ ] Kiểm tra cấp/thu hồi theo nguồn, kiêm nhiệm, thời gian hiệu lực, ngoài phạm vi và chống tự nâng quyền.
+- [ ] Hiển thị quyền tự nhận và lý do chặn trong quy trình phân công hiện có; không thêm quản trị trùng.
+- [ ] Cập nhật báo cáo Chuyển đổi quyền cũ và bàn giao kết quả, không thực thi reset.
+- [ ] Kiểm thử cô lập và Preview; không bổ nhiệm thật, không thay Kinh doanh, chưa Publish.
+
+## Giai đoạn 2.5 đã hoàn thành
 
 - [x] 1. RPC backend `account_permission_explain` (0334) — một nguồn giải thích quyền.
 - [x] 2. Debug tab đọc từ RPC backend, bỏ thuật toán tính riêng.
