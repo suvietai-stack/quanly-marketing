@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { AppointmentPermissionSummary } from '@/components/AppointmentPermissionSummary';
 import { ArrowRightLeft, Check, History, Plus, Search, ShieldCheck, UserPlus, Users, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -322,6 +323,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                     </SelectContent>
                   </Select>
                 </div>
+                <AppointmentPermissionSummary titleId={titleId} config={config} />
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setStep('pick')}>Quay lại</Button>
                   <Button disabled={!titleId} onClick={doAssign}>Đưa vào thay đổi</Button>
@@ -402,6 +404,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                       <SelectContent>{staff.filter(s => s.status === 'Đang hoạt động').map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
+                  <AppointmentPermissionSummary titleId={appointing} config={config} />
                   <Label>Ngày hiệu lực</Label><Input aria-label="Ngày hiệu lực bổ nhiệm" type="datetime-local" value={effectiveAt} onChange={e=>setEffectiveAt(e.target.value)} /><Button disabled={!appointUser} onClick={() => { onEdit(c => { const next = assignSlot(c, unitId, appointing, appointUser); if (!effectiveAt) return next; const at = new Date(effectiveAt).toISOString(); return { ...next, memberships: next.memberships.map(m => c.memberships.some(old=>old.id===m.id&&old.ends_at!==m.ends_at) ? { ...m, ends_at:at, active:true } : !c.memberships.some(old=>old.id===m.id) ? { ...m, starts_at:at } : m) }; }); setAppointing(''); }}>Đưa vào thay đổi</Button>
                 </div>
               );

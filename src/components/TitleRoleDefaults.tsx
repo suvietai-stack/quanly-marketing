@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PERMISSIONS, useCurrentUser } from '@/lib/auth';
-import { suggestedRole, titleRolesApi, type OriginalRole, type TitleRoleLink } from '@/lib/basePermissions/titleRoles';
+import { auditReasonLabel, suggestedRole, titleRolesApi, type OriginalRole, type TitleRoleLink } from '@/lib/basePermissions/titleRoles';
 
-const checkLabel = (reason: string) => reason === 'appointment_only' ? 'Theo bổ nhiệm nghiệp vụ, không kế thừa từ Role tổng' : reason === 'global_configuration' ? 'Cấu hình toàn hệ thống — cần kiểm tra quyền nhạy cảm' : 'Chưa hoàn tất kiểm tra phạm vi';
+const checkLabel = auditReasonLabel;
 export function TitleRoleDefaults({ source, titleId, titleName, disabled, stagedLinks, onStage }: { source: 'base' | 'biz'; titleId: string; titleName: string; disabled?: boolean; stagedLinks?: TitleRoleLink[]; onStage?: (links:TitleRoleLink[])=>void }) {
   const { user } = useCurrentUser();
   const qc = useQueryClient();
@@ -37,7 +37,7 @@ export function TitleRoleDefaults({ source, titleId, titleName, disabled, staged
     } catch (e) { setError(e instanceof Error ? e.message : 'Không lưu được liên kết Role.'); }
     finally { setBusy(false); }
   };
-  return <><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={disabled || source==='biz' || query.isPending || !!query.error} onClick={start}>Liên kết Role</Button><span className="text-xs text-muted-foreground">{links.length ? links.map(l => roles.find(r => r.id === l.role_id)?.name ?? l.role_id).join(' + ') : 'Chưa thiết lập Role'}</span>{links.length > 0 && <Badge variant="outline">{links.some(l=>l.enabled_permissions?.length)?'Chức năng đã chọn':'Chưa cấp quyền'}</Badge>}{query.error && <span role="alert" className="text-xs text-destructive">{query.error.message}</span>}</div>
+  return <><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={disabled || source==='biz' || query.isPending || !!query.error} onClick={start}>Liên kết Role</Button><span className="text-xs text-muted-foreground">{links.length ? links.map(l => roles.find(r => r.id === l.role_id)?.name ?? l.role_id).join(' + ') : 'Chưa thiết lập Role'}</span>{links.length > 0 && <Badge variant="outline">{links.some(l=>l.enabled_permissions?.length)?'Đã bật quyền cá nhân — quản lý còn chờ':'Chưa cấp quyền'}</Badge>}{query.error && <span role="alert" className="text-xs text-destructive">{query.error.message}</span>}</div>
     <Dialog open={open} onOpenChange={v => !busy && setOpen(v)}><DialogContent className="max-w-xl max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Role theo chức vụ — {titleName}</DialogTitle></DialogHeader><Badge variant="outline">Chờ xem trước và xác nhận</Badge>
       {suggestion && !primary && <div className="flex items-center justify-between gap-2 text-sm"><span>Role đề xuất: {suggestion.name}</span><Button size="sm" variant="outline" onClick={() => setPrimary(suggestion.id)}>Chọn đề xuất</Button></div>}
       <Label>Role chính</Label><Select value={primary || '_none'} onValueChange={v => { setPrimary(v === '_none' ? '' : v); setExtra(xs => xs.filter(x => x !== v)); }}><SelectTrigger aria-label="Role chính"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="_none">Chưa thiết lập Role</SelectItem>{roles.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
