@@ -1,10 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Quyết định mới: ngừng toàn bộ quyền legacy
-- [ ] Kiểm kê và snapshot nguồn quyền, bảo vệ quản trị khôi phục/dịch vụ thiết yếu.
-- [ ] Ngừng nguồn legacy gồm Kinh doanh, chống cấp lại, phục hồi và kiểm kê trước/sau.
-- [ ] Sửa sơ đồ trùng nhân sự theo ID, giữ kiêm nhiệm và lịch sử.
-- [ ] Kiểm thử, xác nhận Preview, bàn giao số liệu và giới hạn; chưa Publish.
+- [x] Snapshot 26 tài khoản/84 bản ghi tổ chức; giữ hai Super Admin theo xác nhận.
+- [x] Reset 24 nhân sự/15 Role/1 override; nguồn legacy còn hiệu lực 0, chống cấp lại; phục hồi kiểm chứng cô lập, mã 0e42f305-c0a8-4a1a-8e5c-e16361c7da56.
+- [x] Sửa sơ đồ trùng theo ID, giữ kiêm nhiệm và lịch sử; desktop/mobile và 13 test đạt.
+- [x] 39 kiểm thử đạt, Preview đọc lại lịch sử/khôi phục và quyền Kinh doanh nhân sự thường 0; báo cáo cập nhật; chưa Publish.
+- [ ] Cấp quyền Kinh doanh theo bổ nhiệm chuẩn mới: chưa có hợp đồng Role/phạm vi được kiểm chứng, hiện bị chặn an toàn; không tự phục hồi bổ nhiệm legacy.
 
 ## Hoàn thiện theo yêu cầu bản 62
 - [x] Xem trước Marketing trên Preview không lỗi; sửa mốc tức thời máy chủ, lưu/refresh/miễn nhiệm đã kiểm chứng bằng nhân sự cô lập.
@@ -48,4 +49,4 @@
 - [x] 8. Báo cáo bàn giao docs/phase25-report.md.
 
 Mở (chờ Admin): bổ nhiệm nhân sự thủ công và đối chiếu ngoại lệ Bích Ngọc (69 quyền riêng chứa quyền Tín hiệu) / Viewer chưa rõ nguồn. Quyền quản lý theo đơn vị chưa hỗ trợ ở nhiều phân hệ nên không tự cấp; không giả lập đã hoàn thiện. Không cấp Role nền hàng loạt vì Task legacy chưa có rào máy chủ đầy đủ; Admin chọn khi phù hợp. Báo cáo chi tiết: docs/final-permission-transition-report.md.
-Quyết định mới: được chuyển đổi nguồn cũ ngoài Kinh doanh có thể xác định chính xác, có snapshot/khôi phục; không bổ nhiệm tự động, không Publish, Kinh doanh giữ nguyên.
+Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã thực hiện; chỉ hai Super Admin giữ nguyên. Admin bổ nhiệm thủ công, không Publish. Các mục lịch sử phía trên không phải chính sách hiện hành.

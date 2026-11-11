@@ -1,0 +1,1 @@
+ALTER FUNCTION public.base_perm_standard_reset_execute(text,text) SET statement_timeout='120s';

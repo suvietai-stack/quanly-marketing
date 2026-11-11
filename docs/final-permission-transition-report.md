@@ -1,5 +1,18 @@
 # Bàn giao chuyển đổi quyền cuối — Base Sứ Việt
 
+## Quyết định mới: reset gồm Kinh doanh, 11/11/2026
+
+- Đã thực hiện trên backend dùng chung: 24/26 nhân sự thuộc diện reset; giữ đúng hai Super Admin (Admin Hệ Thống và Trung Hiếu).
+- 15 liên kết Role legacy đã ngừng; quyền riêng legacy đang bật 1 → 0. Còn 2 liên kết Super Admin; không tự bổ nhiệm bất kỳ người nào.
+- Mã khôi phục: `0e42f305-c0a8-4a1a-8e5c-e16361c7da56`. Snapshot riêng tư gồm nguồn Role, override, catalog, cơ cấu, bổ nhiệm, chuyên môn, quyền hiệu lực và quyền Kinh doanh trước reset.
+- 26 tài khoản và 84 bản ghi tổ chức giữ nguyên. Timestamp và dữ liệu nghiệp vụ không chỉnh sửa. Sơ đồ loại trùng bằng user ID trong cùng đơn vị/chức vụ, giữ kiêm nhiệm và người khác ID trùng tên.
+- Chặn ghi lại Role/override nguồn legacy; nguồn chức vụ/chuyên môn chỉ tiếp tục khi thuộc Role chuẩn đã kiểm chứng. Bổ nhiệm Kinh doanh cũ vẫn là dữ liệu tổ chức nhưng không còn cấp quyền.
+- Giới hạn quan trọng: quyền Kinh doanh từ bổ nhiệm chuẩn mới và quyền quản lý theo đơn vị chưa được kích hoạt an toàn. Không tuyên bố luồng bổ nhiệm Kinh doanh hoàn chỉnh; không mở toàn Base để thay thế. Marketing/Thiết kế/Vận hành tiếp tục tập quyền cá nhân chuẩn đã kiểm chứng.
+- Quyền bổ sung mới của nhân sự đã reset có thể cấu hình qua màn hình hiện có, chỉ Role chuẩn không chứa quyền quản trị/Kinh doanh chưa hỗ trợ. Khôi phục giữ quyền bổ sung mới.
+- Lần gọi đầu timeout và rollback; lần thành công chỉ tạo một snapshot. Chưa Publish; quyền thật đã thay đổi ngay.
+
+Phần dưới là báo cáo lịch sử của lần chuyển đổi trước, không phải trạng thái hiện tại.
+
 ## Kết quả thực tế
 
 - Giao dịch thành công lúc 10:13:44 ngày 11/11/2026 (giờ Việt Nam).

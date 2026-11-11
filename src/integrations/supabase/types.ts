@@ -9805,6 +9805,15 @@ export type Database = {
       }
       base_perm_final_preview: { Args: never; Returns: Json }
       base_perm_final_restore: { Args: { _run: string }; Returns: Json }
+      base_perm_standard_reset_execute: {
+        Args: { _confirmation: string; _fingerprint: string }
+        Returns: Json
+      }
+      base_perm_standard_reset_preview: { Args: never; Returns: Json }
+      base_perm_standard_reset_restore: {
+        Args: { _run: string }
+        Returns: Json
+      }
       base_permission_catalog_sync: {
         Args: { _catalog: Json }
         Returns: undefined

@@ -39,7 +39,7 @@ export function PermissionCleanup() {
   const runs = useQuery({
     queryKey: ['perm-cleanup-runs', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('base_perm_cleanup_runs').select('id,actor,fingerprint,removed,restored,created_at,restored_at,final_transition').order('created_at', { ascending: false }).limit(10);
+      const { data, error } = await supabase.from('base_perm_cleanup_runs').select('id,actor,fingerprint,removed,restored,created_at,restored_at,final_transition,result').order('created_at', { ascending: false }).limit(10);
       if (error) throw error;
       return (data ?? []) as unknown as CleanupRun[];
     },
@@ -64,11 +64,11 @@ export function PermissionCleanup() {
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
 
-  const restore = async (runId: string, finalTransition?: boolean) => {
+  const restore = async (runId: string, finalTransition?: boolean, standardReset?: boolean) => {
     if (!window.confirm('Khôi phục nguồn Role cũ đã ngừng hiệu lực? Quyền bổ sung mới sẽ được giữ nguyên.')) return;
     setBusy(true);
     try {
-      const { data, error } = await supabase.rpc(finalTransition ? 'base_perm_final_restore' : 'base_perm_cleanup_restore', { _run: runId });
+      const { data, error } = await supabase.rpc(standardReset ? 'base_perm_standard_reset_restore' : finalTransition ? 'base_perm_final_restore' : 'base_perm_cleanup_restore', { _run: runId });
       if (error) throw error;
       const r = data as { restored_rows: number; conflicts: unknown[] };
       toast.success(`Đã khôi phục ${r.restored_rows} Role đã gỡ.${r.conflicts.length ? ` Lưu ý: ${r.conflicts.length} quyền mới phát sinh sau chuyển đổi được giữ nguyên, cần đối chiếu thủ công.` : ''}`); refresh(); await qc.invalidateQueries(); await useAuth.getState().reload();
@@ -83,9 +83,9 @@ export function PermissionCleanup() {
   return (
     <div className="space-y-4 py-3">
       <p className="text-sm text-muted-foreground">
-        Kiểm kê Role trực tiếp cũ ngoài Kinh doanh và chuyển sang quyền tự động theo chức vụ/nhiệm vụ.
-        Nguồn cũ ngoài Kinh doanh đã phân loại được có thể chuyển đổi, kể cả chưa có chức vụ thay thế.
-        Kinh doanh, quản trị và nguồn chưa rõ được giữ nguyên. Nhân sự chưa bổ nhiệm sẽ mất quyền nghiệp vụ cũ; công việc và người duyệt không đổi. Mỗi lần chuyển đổi có bản sao phục hồi.
+        Đã ngừng nguồn quyền legacy của toàn bộ nhân sự thông thường, bao gồm Kinh doanh. Hai Super Admin được bảo vệ.
+        Bổ nhiệm và lịch sử được giữ nguyên; chỉ nguồn Role chuẩn đã kiểm chứng tiếp tục cấp quyền.
+        Quyền Kinh doanh theo bổ nhiệm mới và phạm vi quản lý còn chờ hỗ trợ an toàn. Các lần chuyển đổi cũ bên dưới chỉ để đối chiếu và khôi phục.
       </p>
       <details className="border-b pb-3"><summary className="cursor-pointer font-medium text-sm">Role theo chức vụ — kiểm chứng Giai đoạn 3A</summary>{audits.error && <p role="alert" className="text-destructive text-sm">{audits.error.message}</p>}{audits.data?.link_audits?.map(a => <div key={`${a.title_id}-${a.role_id}`} className="border-t py-3 text-sm"><p className="font-medium">{a.title_name} · {a.role_name}</p><p className="text-muted-foreground">{a.enabled.length} quyền đã bật · {a.eligible.length - a.enabled.length} quyền an toàn chưa bật · {a.blocked.length} quyền còn chờ</p>{!a.signature_valid && <p className="text-destructive">Role đã thay đổi; quyền theo liên kết tạm ngừng.</p>}<details><summary className="cursor-pointer">Quyền còn chờ</summary>{a.blocked.map(p => <p key={p.key} className="py-1 text-xs">{p.key} — {auditReasonLabel(p.reason)}</p>)}</details></div>)}</details>
       <div className="flex flex-wrap gap-2">
@@ -136,8 +136,9 @@ export function PermissionCleanup() {
             <div key={run.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-2 text-sm">
               <span className="text-muted-foreground">{new Date(run.created_at).toLocaleString('vi-VN')}</span>
               <span>Đã gỡ {run.removed.length} Role</span>
+              {run.result?.standard_only_reset && <span>{run.result.accounts} nhân sự · {run.result.protected_accounts} Super Admin giữ nguyên · legacy đã ngừng</span>}
               <span className="text-xs break-all">Mã phục hồi: {run.id}</span>
-              {run.restored ? <Badge variant="secondary">Đã khôi phục</Badge> : <Button size="sm" variant="outline" disabled={busy} onClick={() => restore(run.id, run.final_transition)}>Khôi phục</Button>}
+              {run.restored ? <Badge variant="secondary">Đã khôi phục</Badge> : <Button size="sm" variant="outline" disabled={busy} onClick={() => restore(run.id, run.final_transition, run.result?.standard_only_reset)}>Khôi phục</Button>}
             </div>
           ))}
         </div>
