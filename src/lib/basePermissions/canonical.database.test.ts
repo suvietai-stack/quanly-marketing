@@ -32,6 +32,7 @@ beforeAll(async () => {
  await db.exec(readFileSync('drizzle/migrations/0336_phase3a_native_role_audit.sql','utf8'));
  await db.exec(`CREATE TABLE mkt_specialties(id text primary key,name text,role_id text,active boolean);INSERT INTO mkt_specialties VALUES('test-design','Thiết kế thử','verified-designer',true);`);
  await db.exec(readFileSync('drizzle/migrations/0337_phase3a_assignment_specialty_sources.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0338_phase3a_specialty_alias_fix.sql','utf8'));
  await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
  await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
