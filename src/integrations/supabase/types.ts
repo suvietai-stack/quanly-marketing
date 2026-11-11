@@ -7646,6 +7646,55 @@ export type Database = {
           },
         ]
       }
+      org_position_roles: {
+        Row: {
+          revision: number
+          role_id: string
+          title_id: string
+          unit_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          revision?: number
+          role_id: string
+          title_id: string
+          unit_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          revision?: number
+          role_id?: string
+          title_id?: string
+          unit_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_position_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_position_roles_title_id_fkey"
+            columns: ["title_id"]
+            isOneToOne: false
+            referencedRelation: "org_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_position_roles_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_position_slots: {
         Row: {
           active: boolean
