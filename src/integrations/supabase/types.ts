@@ -11378,6 +11378,27 @@ export type Database = {
         Returns: Json
       }
       role_catalog_read: { Args: never; Returns: Json }
+      role_catalog_restore: {
+        Args: {
+          _audit?: string
+          _confirmation?: string
+          _phase: string
+          _preview?: string
+          _reason?: string
+        }
+        Returns: Json
+      }
+      role_specialty_rebind: {
+        Args: {
+          _confirmation?: string
+          _phase: string
+          _preview?: string
+          _reason?: string
+          _role?: string
+          _specialty?: string
+        }
+        Returns: Json
+      }
       sao_active: { Args: never; Returns: boolean }
       sao_can_manage_shop: { Args: never; Returns: boolean }
       sao_celebration_claim: { Args: never; Returns: Json }

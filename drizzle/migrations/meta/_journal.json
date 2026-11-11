@@ -2633,6 +2633,27 @@
       "when": 1794407211983,
       "tag": "0375_org_effect_signature_stable_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 376,
+      "version": "7",
+      "when": 1794408775494,
+      "tag": "0376_role_v2_audited_snapshot_restore_and_reduction_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 377,
+      "version": "7",
+      "when": 1794408952446,
+      "tag": "0377_role_v2_task_edit_avoids_legacy_assignment_resign",
+      "breakpoints": true
+    },
+    {
+      "idx": 378,
+      "version": "7",
+      "when": 1794409094223,
+      "tag": "0378_role_v2_equal_rights_design_specialty_rebind",
+      "breakpoints": true
     }
   ]
 }

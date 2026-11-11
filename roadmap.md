@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Cutover an toàn được yêu cầu 14:49 UTC
+- [x] Live snapshot/fingerprint + guarded serial RPC; giữ 0371. Phát hiện Ngọc miễn nhiệm ngoài lượt này lúc 14:50:39 UTC; không tự khôi phục.
+- [x] 0376 exact audit restore + approver guard; NV Marketing bỏ 7 quyền nhạy cảm, 5 task Roles bỏ cross-domain excess (Content 20, SEO 3, Local 5, Social 6, Video 19) qua audited RPC. Full defaults chưa apply.
+- [x] Hai preview slot riêng: Đức mất 16 quyền, Quỳnh Anh mất leave.export → dừng riêng hai nguồn; 12 membership không title giữ nguyên.
+- [x] 0377 sửa task-edit signature sync chạm canonical assignments; 0378 equal-rights Design/Photography chuyển V2, effective 26 người không đổi. Xóa 2 legacy zero-ref (design-team/mkt-team), còn 31 legacy.
+- [x] 140 regression tests + 6 cutover tests lượt cuối; rollback writer/signature và exact audit restore test, Preview 4 trang không alert; snapshot compact <10 MB. Báo docs/role-v2-cutover-2026-11-11/report.md. Không Publish.
+- [ ] Full defaults/legacy-links/delete remaining: blocked by Đức/Quỳnh Anh decisions, Ngọc's concurrent dismissal, verified native CRM/Task scope and complete source replacement. Scoped employee live E2E not available this turn.
+
 ## Nghiệm thu tối giản V2 — 14:34 UTC 11/11/2026
 - [x] Audit 25 Role live và 23 ô: 37 nguồn hiệu lực, 25 titled, 23 bound; 22 Role giảm đề xuất ảnh hưởng 18 người distinct. Chi tiết docs/role-v2-acceptance-2026-11-11/report.md.
 - [x] Sửa 25 preset và ma trận trên draft; không union legacy, giữ desired rights đã admitted, policy-gate chỉ additions. Sensitive filter + system group + UI khóa reduction apply.

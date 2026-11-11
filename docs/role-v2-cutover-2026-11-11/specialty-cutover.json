@@ -1,0 +1,56 @@
+[
+  {
+    "specialty": "design",
+    "result": {
+      "preview": {
+        "id": "ba2ca10f-0399-446b-a1d5-04b52cb12470",
+        "after": {
+          "old": "role-standard-design-staff",
+          "role": "role-v2-design-staff",
+          "specialty": "design"
+        },
+        "before": {
+          "id": "design",
+          "name": "Thiết kế",
+          "sort": 6,
+          "active": true,
+          "role_id": "role-standard-design-staff",
+          "created_at": "2026-11-10T08:08:08.518519+00:00"
+        },
+        "expires_at": "2026-11-11T15:09:53.150815+00:00"
+      },
+      "applied": {
+        "role_id": "role-v2-design-staff",
+        "specialty": "design"
+      },
+      "error": null
+    }
+  },
+  {
+    "specialty": "photography",
+    "result": {
+      "preview": {
+        "id": "32c23b56-90f6-4518-8b56-10193409ee29",
+        "after": {
+          "old": "role-standard-design-staff",
+          "role": "role-v2-design-staff",
+          "specialty": "photography"
+        },
+        "before": {
+          "id": "photography",
+          "name": "Chụp ảnh",
+          "sort": 7,
+          "active": true,
+          "role_id": "role-standard-design-staff",
+          "created_at": "2026-11-10T08:08:08.518519+00:00"
+        },
+        "expires_at": "2026-11-11T15:09:54.046601+00:00"
+      },
+      "applied": {
+        "role_id": "role-v2-design-staff",
+        "specialty": "photography"
+      },
+      "error": null
+    }
+  }
+]

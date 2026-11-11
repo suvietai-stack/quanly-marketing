@@ -18,3 +18,4 @@
 
 - Marketing task rights = configured app_roles.permissions ∩ backend-ready keys ∩ active source ∩ Marketing eligibility (legacy rows included); never module whitelists inside resolvers — Role stays the single customizable source, trimming happens via audited role_catalog_change.
 - Default suggestions use responsibilities, never legacy unions; retain desired existing rights and policy-gate additions. Risk labels are editor-only; pending reduction guard rechecks unresolved approver responsibility at preview and apply.
+- V2 specialty Roles are read directly, so Role edits must not rewrite canonical appointment signatures; audit-based restore accepts only exact before/after rows, and Design specialty rebinding requires equal effective keys.
