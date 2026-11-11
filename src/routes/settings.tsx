@@ -120,7 +120,6 @@ function PersonEditDialog({ edit, onClose }: { edit: PersonEdit; onClose: () => 
     await auth.updateUser(edit.id, {
       fullName: form.fullName,
       phone: form.phone || undefined,
-      desiredPosition: form.position || undefined,
       notes: form.notes || undefined,
     });
     if (!isSystem && form.status !== edit.status) {
@@ -136,7 +135,7 @@ function PersonEditDialog({ edit, onClose }: { edit: PersonEdit; onClose: () => 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2"><Label>Họ tên</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
           <div><Label>SĐT</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-          <div><Label>Vị trí / bộ phận</Label><Input value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} /></div>
+          <div><Label>Vị trí mong muốn (khi đăng ký)</Label><Input value={form.position || "—"} readOnly disabled /></div>
           <div className="sm:col-span-2">
             <Label>Trạng thái làm việc</Label>
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as PersonEdit["status"] })} disabled={isSystem}>
