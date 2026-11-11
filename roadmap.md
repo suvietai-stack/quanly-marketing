@@ -1,5 +1,12 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Cutover an toàn được yêu cầu 14:49 UTC
+- [ ] Recheck live/snapshot và fingerprint; không cạnh tranh writer, giữ 0371.
+- [ ] Hoàn thiện restore exact audited snapshot và guard; giảm riêng quyền thừa đã xác minh qua RPC, không mất workflow/trách nhiệm.
+- [ ] Kiểm tra 2 slot ngoại lệ qua preview, không apply nếu mất quyền nghiệp vụ; giữ 12 membership không title.
+- [ ] Chuyển Design/Photography nếu không mất quyền; dọn legacy links chỉ khi thay thế hoàn chỉnh; xóa non-system zero-ref/code-dependency qua audited RPC.
+- [ ] Test/rollback/cache/Preview và read-back live từng giai đoạn; không Publish.
+
 ## Nghiệm thu tối giản V2 — 14:34 UTC 11/11/2026
 - [x] Audit 25 Role live và 23 ô: 37 nguồn hiệu lực, 25 titled, 23 bound; 22 Role giảm đề xuất ảnh hưởng 18 người distinct. Chi tiết docs/role-v2-acceptance-2026-11-11/report.md.
 - [x] Sửa 25 preset và ma trận trên draft; không union legacy, giữ desired rights đã admitted, policy-gate chỉ additions. Sensitive filter + system group + UI khóa reduction apply.
