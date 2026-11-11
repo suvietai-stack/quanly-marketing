@@ -1,0 +1,547 @@
+{
+  "results": [
+    {
+      "origin": "https://base.suviet.vn",
+      "width": 1280,
+      "url": "https://base.suviet.vn/signals",
+      "navigation": 200,
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 805,
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1292,
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "scripts": [
+        "https://base.suviet.vn/__l5e/events.270c78a44fc53e7b.js",
+        "https://base.suviet.vn/assets/index-BR7Rm5IA.js"
+      ]
+    },
+    {
+      "origin": "https://base.suviet.vn",
+      "width": 1024,
+      "url": "https://base.suviet.vn/signals",
+      "navigation": 200,
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 834,
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1247,
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "scripts": [
+        "https://base.suviet.vn/__l5e/events.270c78a44fc53e7b.js",
+        "https://base.suviet.vn/assets/index-BR7Rm5IA.js"
+      ]
+    },
+    {
+      "origin": "https://base.suviet.vn",
+      "width": 1280,
+      "url": "https://base.suviet.vn/signals",
+      "navigation": 200,
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 860,
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1264,
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "scripts": [
+        "https://base.suviet.vn/__l5e/events.270c78a44fc53e7b.js",
+        "https://base.suviet.vn/assets/index-BR7Rm5IA.js"
+      ]
+    },
+    {
+      "origin": "https://quanly-suviet.lovable.app",
+      "width": 1280,
+      "url": "https://base.suviet.vn/signals",
+      "navigation": 200,
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 864,
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1264,
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "scripts": [
+        "https://base.suviet.vn/__l5e/events.270c78a44fc53e7b.js",
+        "https://base.suviet.vn/assets/index-BR7Rm5IA.js"
+      ]
+    },
+    {
+      "origin": "https://quanly-suviet.lovable.app",
+      "width": 1024,
+      "url": "https://base.suviet.vn/signals",
+      "navigation": 200,
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 821,
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1291,
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "scripts": [
+        "https://base.suviet.vn/__l5e/events.270c78a44fc53e7b.js",
+        "https://base.suviet.vn/assets/index-BR7Rm5IA.js"
+      ]
+    },
+    {
+      "origin": "https://quanly-suviet.lovable.app",
+      "width": 1280,
+      "url": "https://base.suviet.vn/signals",
+      "navigation": 200,
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 785,
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1290,
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "scripts": [
+        "https://base.suviet.vn/__l5e/events.270c78a44fc53e7b.js",
+        "https://base.suviet.vn/assets/index-BR7Rm5IA.js"
+      ]
+    }
+  ],
+  "console_errors": [],
+  "preview_before": [
+    {
+      "width": 1280,
+      "url": "http://localhost:8080/signals",
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 500,
+          "ms": 8473,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            }
+          },
+          "total": null,
+          "rows": 0,
+          "code": "57014"
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 500,
+          "ms": 8502,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            },
+            "_sort": "work",
+            "_offset": 0,
+            "_limit": 40
+          },
+          "total": null,
+          "rows": 0,
+          "code": "57014"
+        }
+      ],
+      "error": true
+    },
+    {
+      "width": 1024,
+      "url": "http://localhost:8080/signals",
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 500,
+          "ms": 8792,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            }
+          },
+          "total": null,
+          "rows": 0,
+          "code": "57014"
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 500,
+          "ms": 9028,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            },
+            "_sort": "work",
+            "_offset": 0,
+            "_limit": 40
+          },
+          "total": null,
+          "rows": 0,
+          "code": "57014"
+        }
+      ],
+      "error": true
+    },
+    {
+      "width": 1280,
+      "url": "http://localhost:8080/signals",
+      "calls": [
+        {
+          "rpc": "signal_list_page",
+          "status": 500,
+          "ms": 8489,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            },
+            "_sort": "work",
+            "_offset": 0,
+            "_limit": 40
+          },
+          "total": null,
+          "rows": 0,
+          "code": "57014"
+        },
+        {
+          "rpc": "signal_list_counts",
+          "status": 500,
+          "ms": 8965,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            }
+          },
+          "total": null,
+          "rows": 0,
+          "code": "57014"
+        }
+      ],
+      "error": true
+    }
+  ],
+  "preview_after": [
+    {
+      "width": 1280,
+      "url": "http://localhost:8080/signals",
+      "calls": [
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 2018,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            },
+            "_sort": "work",
+            "_offset": 0,
+            "_limit": 40
+          },
+          "total": null,
+          "rows": 40,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 2189,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            }
+          },
+          "total": 649,
+          "rows": 0,
+          "code": null
+        }
+      ],
+      "error": false
+    },
+    {
+      "width": 1024,
+      "url": "http://localhost:8080/signals",
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 900,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            }
+          },
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 1584,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            },
+            "_sort": "work",
+            "_offset": 0,
+            "_limit": 40
+          },
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "error": false
+    },
+    {
+      "width": 1280,
+      "url": "http://localhost:8080/signals",
+      "calls": [
+        {
+          "rpc": "signal_list_counts",
+          "status": 200,
+          "ms": 1197,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            }
+          },
+          "total": 649,
+          "rows": 0,
+          "code": null
+        },
+        {
+          "rpc": "signal_list_page",
+          "status": 200,
+          "ms": 2492,
+          "args": {
+            "_filter": {
+              "quick": "all",
+              "time": "",
+              "q": "",
+              "work": "all"
+            },
+            "_sort": "work",
+            "_offset": 0,
+            "_limit": 40
+          },
+          "total": null,
+          "rows": 40,
+          "code": null
+        }
+      ],
+      "error": false
+    }
+  ],
+  "filter_checks": {
+    "authorized_visible": 659,
+    "active": 649,
+    "results": [
+      {
+        "filter": {},
+        "total": 649,
+        "counts_ms": 689,
+        "page_ms": 1253
+      },
+      {
+        "filter": {
+          "quick": "contacting"
+        },
+        "total": 401,
+        "counts_ms": 611,
+        "page_ms": 1094
+      },
+      {
+        "filter": {
+          "quick": "unassigned"
+        },
+        "total": 4,
+        "counts_ms": 634,
+        "page_ms": 1043
+      },
+      {
+        "filter": {
+          "needGroup": "S\u1ee9 qu\u00e0 t\u1eb7ng"
+        },
+        "total": 345,
+        "counts_ms": 654,
+        "page_ms": 1132
+      },
+      {
+        "filter": {
+          "quick": "contacting",
+          "needGroup": "S\u1ee9 qu\u00e0 t\u1eb7ng"
+        },
+        "total": 147,
+        "counts_ms": 636,
+        "page_ms": 1054
+      },
+      {
+        "filter": {
+          "cancelled": true
+        },
+        "total": 10,
+        "counts_ms": 637,
+        "page_ms": 985
+      },
+      {
+        "filter": {
+          "q": "__no_matching_customer__"
+        },
+        "total": 0,
+        "counts_ms": 661,
+        "page_ms": 626
+      },
+      {
+        "sort": "work",
+        "page1_ms": 1263,
+        "page2_ms": 1074
+      },
+      {
+        "sort": "priority",
+        "page1_ms": 1074,
+        "page2_ms": 1058
+      },
+      {
+        "sort": "activity",
+        "page1_ms": 1123,
+        "page2_ms": 1109
+      },
+      {
+        "sort": "newest",
+        "page1_ms": 1068,
+        "page2_ms": 1128
+      },
+      {
+        "sort": "oldest",
+        "page1_ms": 1096,
+        "page2_ms": 1143
+      },
+      {
+        "sort": "soonest",
+        "page1_ms": 1318,
+        "page2_ms": 3594
+      },
+      {
+        "sort": "potential",
+        "page1_ms": 1802,
+        "page2_ms": 1593
+      },
+      {
+        "sort": "value",
+        "page1_ms": 1923,
+        "page2_ms": 2285
+      }
+    ],
+    "smoke": [
+      {
+        "path": "/biz/crm",
+        "url": "http://localhost:8080/biz/crm",
+        "denied": false
+      },
+      {
+        "path": "/biz/3k",
+        "url": "http://localhost:8080/biz/3k",
+        "denied": false
+      },
+      {
+        "path": "/organization",
+        "url": "http://localhost:8080/organization",
+        "denied": false
+      }
+    ]
+  }
+}
