@@ -891,10 +891,7 @@ interface AuthState {
   changeOwnPassword: (oldPwd: string, newPwd: string) => Promise<{ ok: boolean; error?: string }>;
   removeUser: (id: ID) => Promise<void>;
 
-  addRole: (r: Omit<Role, "id">) => Promise<void>;
   updateRole: (id: ID, patch: Partial<Role>) => Promise<void>;
-  removeRole: (id: ID) => Promise<void>;
-  restoreDefaultRoles: () => Promise<{ ok: boolean; count: number }>;
 
   // Compatibility no-op (used by existing code paths)
   ensureSeed: () => Promise<void>;
@@ -1044,22 +1041,6 @@ export const useAuth = create<AuthState>((set, get) => ({
     }));
     set({ users, roles, loaded: true });
     await Promise.all([get().refreshBizAccess(), get().refreshBaseAccess()]);
-
-
-    // Auto-bootstrap: nếu Super Admin / tài khoản hệ thống đăng nhập mà các role
-    // mặc định chưa có permissions → tự nạp một lần.
-    const me = users.find((u) => u.id === get().currentUserId);
-    const iAmSuper = me?.system || me?.roleId === SUPER_ADMIN_ID;
-    const needsSeed = roles.some(
-      (r) => DEFAULT_ROLES_META.some((d) => d.id === r.id) && r.permissions.length === 0,
-    );
-    if (iAmSuper && needsSeed) {
-      try {
-        await get().restoreDefaultRoles();
-      } catch (e) {
-        console.warn("Auto bootstrap roles failed:", e);
-      }
-    }
   },
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
@@ -1263,18 +1244,6 @@ export const useAuth = create<AuthState>((set, get) => ({
     await get().reload();
   },
 
-  addRole: async (r) => {
-    const { error } = await supabase.from("app_roles").insert({
-      id: genRoleId(),
-      name: r.name,
-      description: r.description ?? null,
-      permissions: r.permissions ?? [],
-      is_system: false,
-    });
-    if (error) throw new Error(error.message);
-    await get().reload();
-  },
-
   updateRole: async (id, patch) => {
     const dbPatch: {
       name?: string;
@@ -1290,18 +1259,6 @@ export const useAuth = create<AuthState>((set, get) => ({
     await get().reload();
   },
 
-  removeRole: async (id) => {
-    const { error } = await supabase.from("app_roles").delete().eq("id", id);
-    if (error) throw new Error(error.message);
-    await get().reload();
-  },
-
-  restoreDefaultRoles: async () => {
-    const { restoreDefaultRoles: callRestore } = await import("@/lib/roles.functions");
-    const res = await callRestore({ data: { roles: buildDefaultRolesPayload() } });
-    await get().reload();
-    return res;
-  },
 }));
 
 // ============ Helpers ============
