@@ -106,7 +106,7 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
     const before = (await db.query<{ p: string[] }>("select permissions p from app_roles where id='role-content-web'")).rows[0].p;
     const preset = permissionPresets.find(x => x.id === 'content')!.keys;
     await db.query("update app_roles set permissions=$1 where id='role-content-web'", [preset]);
-    expect(await has(NGOC, 'social.post_create')).toBe(false);
+    expect(await has(NGOC, 'social.post_create')).toBe(true); // vẫn có vì Role Video (Admin đã chọn) cũng cấp — hợp quyền đúng nguồn
     expect(await has(PEER, 'social.post_create')).toBe(false);
     expect(await has(PEER, 'web.outline_start')).toBe(true);
     await db.query("update app_roles set permissions=$1 where id='role-content-web'", [before]);
