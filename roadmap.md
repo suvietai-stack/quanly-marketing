@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Bản 69: Hoàn thiện phân quyền nghiệp vụ sau 0353
+- [x] Kiểm chứng trên dữ liệu thật: 10 liên kết Chức vụ → Role chuẩn ĐÃ trực tiếp cấp quyền (org_role_rules không phụ thuộc cờ active; chữ ký hợp lệ); 5 nhân sự đang bổ nhiệm (Kế toán trưởng, HCNS, Thu mua, Thiết kế, GĐ Marketing) nhận quyền chuẩn qua bổ nhiệm.
+- [x] Migration 0354 — hợp đồng Kinh doanh chuẩn sau reset: tài khoản reset chỉ dùng biz.*/k3.*/CRM khi có bổ nhiệm Kinh doanh chuẩn tạo SAU reset (qua org_change); bổ nhiệm/thành viên legacy giữ làm lịch sử, không tự phục hồi; miễn nhiệm thu hồi toàn bộ; phạm vi lọc theo mốc reset ở mọi resolver trung tâm (participant/manager/all_scope/scope_ok/appointment_scope/can/executive_holder/department_access).
+- [x] 6 kiểm thử nghiệp vụ mới (bizStandardContract): chặn legacy, mở bằng bổ nhiệm mới, đúng phạm vi phòng, không phục hồi legacy, miễn nhiệm thu hồi, Super Admin không đổi. Hồi quy 1514/1516 (2 lỗi date-dependent đã biết); typecheck/build đạt; xác nhận database thật chạy định nghĩa mới, 0 tài khoản reset có bổ nhiệm mới → chưa ai bị thay đổi quyền.
+- [x] Báo cáo bàn giao docs/business-permission-completion-report.md kèm bảng Chức vụ → Role → Quyền → Phạm vi → Kết quả.
+- [ ] Tín hiệu theo bổ nhiệm: CHƯA kích hoạt — chức vụ Kinh doanh thuộc nguồn biz_positions (org_role_rules loại trừ đúng thiết kế) và phạm vi nhóm Tín hiệu đang theo Role trực tiếp; quyền signal.* có sẵn trong Role chuẩn trực tiếp (Kinh doanh Đơn Hàng, Lead Kinh Doanh ĐH...) cấp qua Tùy chỉnh quyền. Cần hợp đồng phạm vi nhóm theo bổ nhiệm nếu muốn tự cấp.
+- [ ] Chờ Admin: bổ nhiệm lại nhân sự Kinh doanh qua Cơ cấu tổ chức để kích hoạt quyền theo hợp đồng 0354. Chưa Publish.
+
 ## Bản 68: Thống nhất một cơ chế xác định quyền
 - [x] Rà soát toàn bộ resolver: phát hiện 5 điểm backend/frontend/Debug cho kết quả khác nhau (Debug bỏ quyền Role trực tiếp của quyền đã kiểm chứng; Debug bỏ qua chế độ replace; base_legacy bỏ qua chế độ additive; frontend chặn quyền cha mà backend không; frontend bypass Super Admin trước khi kiểm tra trạng thái).
 - [x] Migration 0353: viết lại `account_permission_explain` khớp y hệt `private.has_permission` (fallthrough quyền đã kiểm chứng + replace/additive); vá `private.base_legacy` tôn trọng chế độ additive — frontend `base_permissions_effective` khớp backend.
