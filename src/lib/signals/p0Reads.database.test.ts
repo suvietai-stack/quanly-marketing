@@ -23,6 +23,22 @@ beforeAll(async()=>{
  await db.exec(readFileSync('docs/pending/signals_p0_page_filtered_history.sql','utf8'));
 },60000);
 
+it('exact live count/page backups restore definition, security metadata and results then roll forward',async()=>{
+ await db.exec('RESET ROLE');
+ const manifest=JSON.parse(readFileSync('docs/rollback/2026-11-11-signals-p0-manifest.json','utf8'));
+ const functions=manifest.functions.filter((f:{signature:string})=>!f.signature.startsWith('private.'));
+ const before=(await db.query("select signal_list_counts('{}') counts,signal_list_page('{}','work',0,40) page")).rows;
+ for(const f of functions)await db.exec(f.definition);
+ for(const f of functions){
+ const p=(await db.query<{hash:string;definer:boolean;volatility:string;config:string[]}>(`select md5(pg_get_functiondef(oid)) hash,prosecdef definer,provolatile volatility,proconfig config from pg_proc where oid=$1::regprocedure`,[f.signature])).rows[0];
+ expect(p?.hash).toBe(f.hash);expect(p?.definer).toBe(f.definer);expect(p?.volatility).toBe(f.volatility);expect(p?.config).toEqual(f.config);
+ }
+ expect((await db.query("select signal_list_counts('{}') counts,signal_list_page('{}','work',0,40) page")).rows).toEqual(before);
+ await db.exec(readFileSync('docs/pending/signals_p0_counts_single_scan.sql','utf8'));
+ await db.exec(readFileSync('docs/pending/signals_p0_page_filtered_history.sql','utf8'));
+ expect((await db.query("select signal_list_counts('{}') counts,signal_list_page('{}','work',0,40) page")).rows).toEqual(before);
+});
+
 it('pending invoker counts/page benchmark at 658 isolated records without changing results',async()=>{
  await db.exec(`INSERT INTO opportunity_signals(id,assigned_to,status,created_at,updated_at)
  SELECT ('00000000-0000-0000-0002-'||lpad(i::text,12,'0'))::uuid,'${A}','consulting','2026-11-01','2026-11-09' FROM generate_series(1,658) i;

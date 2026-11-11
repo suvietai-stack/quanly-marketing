@@ -5,7 +5,7 @@
 - [x] Sửa token invalidation tối thiểu; chuẩn bị 3 SQL PENDING, không thay quyền/dữ liệu/restart/publish.
 - [x] Test SQL/phân trang/filter/phạm vi; 187 hồi quy đạt và 12 test mới sau benchmark; 3 lần load desktop/iPad vẫn timeout, tab không refetch Tín hiệu; smoke CRM/3K/tổ chức OK trong cửa sổ quan sát.
 - [x] Báo docs/signals-p0-2026-11-11.md, không tuyên bố live fixed.
-- [ ] Nghiệm thu zero timeout/end-to-end SQL mới: CHỜ xác nhận vá database riêng + snapshot/rollback/staging; Preview dùng chung live, không thể apply riêng.
+- [ ] Đã duyệt 12:25 UTC: sao lưu/checksum/rollback thực ba hàm, áp dụng atomically, nghiệm thu authenticated desktop/iPad và Publish có điều kiện; không đổi Role/dữ liệu.
 
 ## Chuẩn hóa toàn kho Role — yêu cầu chốt 11/11/2026
 - [ ] Audit 33 Role, phụ thuộc code/SQL/lịch sử và nguồn quyền; không ghi live.
