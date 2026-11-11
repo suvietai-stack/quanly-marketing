@@ -1,6 +1,6 @@
 import type { OrgConfig } from './types';
 
-export type OrgCommand = { action: 'unit' | 'title' | 'assign' | 'end' | 'cancel' | 'roles' | 'slot' | 'bind_slot' | 'restore_slots' | 'replace_slot_role'; data: Record<string, unknown> };
+export type OrgCommand = { action: 'unit' | 'title' | 'assign' | 'end' | 'cancel' | 'roles' | 'slot' | 'bind_slot' | 'restore_slots' | 'replace_slot_role' | 'position_role'; data: Record<string, unknown> };
 
 /** A scoped edit submits only selected deltas, never replaces all personnel history. */
 export function organizationCommands(before: OrgConfig, after: OrgConfig): OrgCommand[] {
