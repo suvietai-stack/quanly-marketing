@@ -2542,6 +2542,13 @@
       "when": 1794384899265,
       "tag": "0362_role_slot_mapping_and_task_write_fences",
       "breakpoints": true
+    },
+    {
+      "idx": 363,
+      "version": "7",
+      "when": 1794384971188,
+      "tag": "0363_role_slot_preview_signature_and_command_validation",
+      "breakpoints": true
     }
   ]
 }
