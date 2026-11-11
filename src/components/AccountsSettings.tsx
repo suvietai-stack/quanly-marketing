@@ -646,21 +646,6 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
         </tbody>
       </table>
     </CardContent></Card>
-    <Dialog open={!!assignFor} onOpenChange={(o) => !o && setAssignFor(null)}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Gán role cho {assignFor?.fullName}</DialogTitle></DialogHeader>
-        <Select value={roleId} onValueChange={setRoleId}>
-          <SelectTrigger><SelectValue placeholder="Chọn role" /></SelectTrigger>
-          <SelectContent>{s.roles.filter(r=>r.catalogState!=='compatibility').map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-        </Select>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setAssignFor(null)}>Huỷ</Button>
-          <Button disabled={!roleId || busy} onClick={() => {
-            if (assignFor && roleId) void approve(assignFor.id, roleId);
-          }}>Duyệt</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
     <Dialog open={!!checking} onOpenChange={open => !open && setChecking(null)}><DialogContent><DialogHeader><DialogTitle>Trạng thái xác thực — {checking?.fullName}</DialogTitle></DialogHeader>{checking && <AccountAuthPanel userId={checking.id} email={checking.email} />}</DialogContent></Dialog>
     </>
   );
