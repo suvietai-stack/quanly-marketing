@@ -1,12 +1,18 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Bản 71: Phạm vi đơn vị + dọn cơ chế cũ (migration 0358)
+- [x] Phạm vi đơn vị backend cho Nghỉ phép/Tiền Về/Đơn hàng: base_unit_member + 3 quyền view_unit, RLS/RPC thực thi, cấp qua bổ nhiệm quản lý; kiểm chứng dữ liệu thật (Trưởng Phòng thấy đúng đơn vị, ngoài đơn vị bị chặn).
+- [x] Ngừng role-designer: chuyên môn Thiết kế/Chụp ảnh → Role chuẩn Nhân viên Thiết kế, 2 nhân sự giữ nguyên quyền, Role cũ archived không xóa.
+- [x] Gỡ đường cũ: auto-bootstrap/restoreDefaultRoles/roles.functions.ts, nút Thêm/Xóa role tự do, ô vị trí tự do trong hồ sơ nhân sự (chỉ đọc); vá trigger ký lại liên kết ghi actor thật.
+- [x] 7 test cô lập mới + hồi quy 150/150, typecheck/build đạt; báo cáo docs/unit-scope-permissions-report.md. Chưa Publish.
+- [ ] Còn tồn tại: sửa/duyệt theo đơn vị và báo cáo tổng hợp theo đơn vị chưa mở (chờ hợp đồng workflow); settings.* vẫn chỉ Super Admin.
+
 ## Bản 70: Hoàn thiện toàn bộ phân quyền + dọn sạch cơ chế cũ (file upload mới)
-- [ ] Rà soát toàn bộ chức vụ, Role, permission thực tế của mọi phân hệ.
-- [ ] Phạm vi đầy đủ: cá nhân/nhóm/phòng/hệ/khối/công ty; backend/RPC/RLS, không filter frontend.
-- [ ] Cài Role chuẩn vào từng chức vụ; bổ nhiệm tự cấp, miễn nhiệm thu hồi, kiêm nhiệm tổng hợp.
-- [ ] Nhóm quyền: Điều hành, Kinh doanh (CRM/Tín hiệu/biz/k3), Marketing, Thiết kế, Kế toán & Tài chính, Mua hàng & Giao vận, HCNS, Phê duyệt toàn Base.
-- [ ] Dọn sạch: Role legacy, liên kết legacy, cấp Role trực tiếp, resolver cũ, sync tự cấp lại, UI trùng, fallback — có snapshot + rollback, không xóa dữ liệu/lịch sử/tài khoản.
-- [ ] Giữ Super Admin, tài khoản khôi phục, tài khoản dịch vụ; không Publish.
+- [x] Rà soát toàn bộ chức vụ, Role, permission thực tế của mọi phân hệ (0355–0357: 17/17 chức vụ liên kết Role chuẩn, signal/CRM scope qua bổ nhiệm).
+- [x] Phạm vi cá nhân/nhóm tín hiệu/đơn vị (xem) thực thi backend/RPC/RLS; phạm vi sửa theo đơn vị còn chờ hợp đồng workflow (bản 71 ghi rõ).
+- [x] Cài Role chuẩn vào từng chức vụ; bổ nhiệm tự cấp, miễn nhiệm thu hồi, kiêm nhiệm tổng hợp.
+- [x] Dọn sạch: Role legacy archived có snapshot, liên kết legacy ngừng, sync tự cấp lại đã gỡ (bản 71), UI trùng gỡ dần; không xóa dữ liệu/lịch sử/tài khoản.
+- [x] Giữ Super Admin, tài khoản khôi phục, tài khoản dịch vụ; không Publish.
 
 ## Bản 69: Hoàn thiện phân quyền nghiệp vụ sau 0353
 - [x] Kiểm chứng trên dữ liệu thật: 10 liên kết Chức vụ → Role chuẩn ĐÃ trực tiếp cấp quyền (org_role_rules không phụ thuộc cờ active; chữ ký hợp lệ); 5 nhân sự đang bổ nhiệm (Kế toán trưởng, HCNS, Thu mua, Thiết kế, GĐ Marketing) nhận quyền chuẩn qua bổ nhiệm.
