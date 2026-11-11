@@ -459,7 +459,7 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
               <Select value={form.roleId} onValueChange={(v) => setForm({ ...form, roleId: v })} disabled={isSystem}>
                 <SelectTrigger><SelectValue placeholder="Chọn role" /></SelectTrigger>
                 <SelectContent>
-                  {s.roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  {s.roles.filter(r=>r.catalogState!=='compatibility').map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -575,7 +575,7 @@ function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean 
         <DialogHeader><DialogTitle>Gán role cho {assignFor?.fullName}</DialogTitle></DialogHeader>
         <Select value={roleId} onValueChange={setRoleId}>
           <SelectTrigger><SelectValue placeholder="Chọn role" /></SelectTrigger>
-          <SelectContent>{s.roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+          <SelectContent>{s.roles.filter(r=>r.catalogState!=='compatibility').map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
         </Select>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setAssignFor(null)}>Huỷ</Button>
@@ -608,7 +608,7 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm role</Button>
       </div>
     )}
-    <div className="divide-y border-y md:hidden">{s.roles.filter(r => functionGroup === 'all' || roleFunctionGroup(r.name) === functionGroup).map(r => <div key={r.id} className="py-4 space-y-2"><div className="flex items-start justify-between gap-3"><h3 className="font-medium">{r.name}</h3>{canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Tùy chỉnh quyền</Button>}</div><p className="text-xs text-muted-foreground">{roleFunctionGroup(r.name)} · {s.users.filter(u => u.roleId === r.id).length} tài khoản</p><p className="text-sm text-muted-foreground">{positions(r.id)}</p><p className="text-xs text-muted-foreground">{r.id === SUPER_ADMIN_ID ? 'Toàn quyền' : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(', ') || 'Chưa có chức năng'}</p></div>)}</div>
+    <div className="divide-y border-y md:hidden">{s.roles.filter(r => r.catalogState !== 'compatibility' && (functionGroup === 'all' || (r.catalogGroup ?? roleFunctionGroup(r.name)) === functionGroup)).map(r => <div key={r.id} className="py-4 space-y-2"><div className="flex items-start justify-between gap-3"><h3 className="font-medium">{r.name}</h3>{canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Tùy chỉnh quyền</Button>}</div><p className="text-xs text-muted-foreground">{r.catalogGroup ?? roleFunctionGroup(r.name)} · {s.users.filter(u => u.roleId === r.id).length} tài khoản</p><p className="text-sm text-muted-foreground">{positions(r.id)}</p><p className="text-xs text-muted-foreground">{r.id === SUPER_ADMIN_ID ? 'Toàn quyền' : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(', ') || 'Chưa có chức năng'}</p></div>)}</div>
     <Card className="hidden md:block"><CardContent className="p-0 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-xs text-muted-foreground bg-muted/40"><tr>
@@ -619,14 +619,14 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
           <th className="text-right font-medium px-4 py-2.5"></th>
         </tr></thead>
         <tbody className="divide-y">
-          {s.roles.filter(r => functionGroup === "all" || roleFunctionGroup(r.name) === functionGroup).map((r) => {
-            const count = s.users.filter((u) => u.roleId === r.id).length;
+          {s.roles.filter(r => r.catalogState !== 'compatibility' && (functionGroup === 'all' || (r.catalogGroup ?? roleFunctionGroup(r.name)) === functionGroup)).map((r) => {
+            const count = s.users.filter((u) => u.roleIds?.includes(r.id) || u.roleId === r.id).length;
             return (
               <tr key={r.id}>
                 <td className="px-4 py-2.5 font-medium">
                   <div className="flex items-center gap-2">{r.name}{r.system && <Badge variant="secondary" className="gap-1"><Shield className="h-3 w-3" />Hệ thống</Badge>}</div>
                 </td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[420px]">{roleFunctionGroup(r.name)}<div className="mt-1">{positions(r.id)}</div></td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[420px]">{r.catalogGroup ?? roleFunctionGroup(r.name)}<div className="mt-1">{positions(r.id)}</div>{!!r.catalogPending?.length && <p className="mt-1 text-destructive">{r.catalogPending.length} quyền chưa tự cấp: phạm vi/quy trình chưa được hỗ trợ.</p>}</td>
                 <td className="px-4 py-2.5">{count}</td>
                 <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.id === SUPER_ADMIN_ID ? "Toàn quyền" : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(", ") || "Chưa có chức năng"}</td>
                 <td className="px-4 py-2.5 text-right whitespace-nowrap">

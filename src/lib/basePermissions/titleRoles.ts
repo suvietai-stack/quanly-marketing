@@ -8,7 +8,7 @@ export function auditReasonLabel(reason: string) {
   return labels[reason] ?? 'Chưa hoàn tất kiểm tra phạm vi';
 }
 export interface RoleCheck { key: string; ready: boolean; reason: string }
-export interface OriginalRole { id: string; name: string; restricted: boolean; permissions: string[]; checks: RoleCheck[] }
+export interface OriginalRole { id: string; name: string; catalog_state?: string; restricted: boolean; permissions: string[]; checks: RoleCheck[] }
 export interface TitleRoleLink { title_source: 'base' | 'biz'; title_id: string; role_id: string; is_primary: boolean; scope_kind: 'unit' | 'own'; revision: number; active: boolean; enabled_permissions?: string[]; permission_signature?: string }
 export interface TitleRoleRead { link_audits?: TitleLinkAudit[]; roles: OriginalRole[]; links: TitleRoleLink[]; titles: {id:string;name:string;active:boolean;source:string}[]; sources: {user_id:string;rules:{source_id:string;source_name:string;role_id:string;permission:string}[]}[]; direct_roles: { user_id: string; role_id: string }[]; activation_ready: boolean; events: { id: string; title_source: string; title_id: string; reason: string; created_at: string }[] }
 export function titleRoleCommand(title: string, roles: Pick<TitleRoleLink, 'role_id'|'is_primary'|'scope_kind'|'enabled_permissions'>[], reason: string): OrgCommand { return {action:'roles',data:{id:title,roles,reason}}; }
