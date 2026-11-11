@@ -34,4 +34,4 @@ Trưởng nhóm Marketing và Trưởng nhóm Thiết kế có Role riêng, **ch
 ## Kiểm chứng dữ liệu thật
 - Không có bổ nhiệm canonical mới (`0`); fingerprint `biz_appointments` trước/sau đều `b43bc4ce99de48c1abbe8fbb358ac0dc`.
 - Đăng ký catalog báo `changed_accounts=0`, `business_unchanged=true`; giữ nguồn quyền hiện tại.
-- Kiểm thử nguồn quyền/thu hồi/kiêm nhiệm/DENY/ngoài phạm vi/chống tự nâng quyền: 89 kiểm thử đạt. Kiểm thử catalog bổ sung xác minh đăng ký idempotent, không bổ nhiệm, không thay quyền cũ và snapshot riêng tư.
+- Kiểm thử nguồn quyền/thu hồi/kiêm nhiệm/DENY/ngoài phạm vi/chống tự nâng quyền: 89 kiểm thử đạt; 4 kiểm thử catalog đạt, tổng **93**. Catalog xác minh đăng ký idempotent, không bổ nhiệm, không thay quyền cũ và snapshot riêng tư. Preview build OK.

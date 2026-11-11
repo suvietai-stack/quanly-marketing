@@ -1,9 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
-- [ ] Sửa bổ nhiệm từ sơ đồ: nhân sự hợp lệ theo ID, nhiều người, xem trước/xác nhận/lưu tại chỗ.
-- [ ] Chuẩn hóa Role, liên kết chức vụ/nhiệm vụ, ẩn legacy có snapshot; giữ nguồn hiện tại và Kinh doanh.
-- [ ] Kiểm thử cô lập cấp/thu hồi, phạm vi, chống tự nâng quyền và lưu/đọc lại.
-- [ ] Báo cáo kết quả và phần còn chờ; không reset, tự bổ nhiệm thật hay Publish.
+- [x] Sửa bổ nhiệm từ sơ đồ: nhân sự hợp lệ theo ID, nhiều người, xem trước/xác nhận/lưu tại chỗ; lưu và tải lại nhân viên giả lập không Role đã kiểm chứng trong môi trường cô lập.
+- [x] Đăng ký 10 Role riêng, liên kết 8 chức vụ với tập cá nhân đã kiểm chứng, giữ HCNS/Đóng hàng; ẩn legacy có snapshot, giữ nguồn hiện tại và Kinh doanh. Đây chưa phải bộ quyền quản lý hoàn chỉnh.
+- [x] 93 kiểm thử cô lập nguồn cấp/thu hồi, phạm vi, chống tự nâng quyền và catalog đạt; kiểm tra desktop/mobile, không lỗi JavaScript.
+- [x] Báo cáo docs/standard-role-catalog-report.md ghi rõ danh sách quyền đã bật và còn chờ; không reset, tự bổ nhiệm thật hay Publish.
+- [ ] Quyền quản lý, kế toán và cung ứng đầy đủ: chờ hợp đồng phạm vi nghiệp vụ an toàn; hiện không đủ điều kiện chuyển đổi tiếp.
+- [ ] Chức vụ trưởng nhóm Marketing/Thiết kế: chờ Admin xác định đơn vị và vị trí cần tạo; Role riêng đã có nhưng chưa liên kết/bổ nhiệm.
 
 ## Chuyển đổi quyền cuối cùng trước đó
 
