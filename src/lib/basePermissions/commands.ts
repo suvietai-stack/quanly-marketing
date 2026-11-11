@@ -9,13 +9,13 @@ export function organizationCommands(before: OrgConfig, after: OrgConfig): OrgCo
     const old = before.memberships.find(x => x.id === m.id);
     if (old && JSON.stringify(old) !== JSON.stringify(m)) {
       if (m.status === 'cancelled') commands.push({ action: 'cancel', data: { id: m.id } });
-      else if (m.ends_at !== old.ends_at) commands.push({ action: 'end', data: { id: m.id, ends_at: m.ends_at } });
+      else if (m.ends_at !== old.ends_at) commands.push({ action: 'end', data: { id: m.id, ends_at: m.ends_at, immediate: m.ends_at ? Date.parse(m.ends_at)<=Date.now()+1000 && Date.parse(m.ends_at)>Date.now()-10000 : true } });
       else throw new Error('Phân công đã lưu không thể sửa trực tiếp; kết thúc rồi tạo phân công mới.');
     }
   }
   for (const u of after.units) if (JSON.stringify(u) !== JSON.stringify(before.units.find(x => x.id === u.id))) commands.push({ action: 'unit', data: { ...u } });
   for (const t of after.titles) if (JSON.stringify(t) !== JSON.stringify(before.titles.find(x => x.id === t.id))) commands.push({ action: 'title', data: { ...t, level: t.level ?? 0, kind: t.kind ?? 'staff', capacity: t.capacity ?? 0 } });
-  for (const m of after.memberships) if (!before.memberships.some(x => x.id === m.id)) commands.push({ action: 'assign', data: { ...m } });
+  for (const m of after.memberships) if (!before.memberships.some(x => x.id === m.id)) commands.push({ action: 'assign', data: { ...m, immediate: m.starts_at ? Date.parse(m.starts_at)<=Date.now()+1000 && Date.parse(m.starts_at)>Date.now()-10000 : true } });
   for (const section of ['units', 'titles', 'memberships'] as const) {
     if (before[section].some(x => !after[section].some(y => y.id === x.id))) throw new Error('Không xóa lịch sử; hãy ngừng hoặc kết thúc phân công.');
   }

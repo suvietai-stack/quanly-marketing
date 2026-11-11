@@ -11561,6 +11561,7 @@ export type Database = {
         }[]
       }
       signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
+      standard_role_catalog_consolidate: { Args: never; Returns: Json }
       standard_role_catalog_setup: { Args: never; Returns: Json }
       sw_audit: { Args: { _limit?: number }; Returns: Json }
       sw_config: { Args: never; Returns: Json }

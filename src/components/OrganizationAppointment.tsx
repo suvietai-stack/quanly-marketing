@@ -11,7 +11,7 @@ import { appointmentDraft, appointmentEligible, marketingUnit } from '@/lib/base
 import type { OrgConfig, Preview } from '@/lib/basePermissions/types';
 import { membershipEffective, unitTitles, orgConfigDiff } from '@/lib/orgStructure';
 
-export interface AppointmentTarget { unitId: string; titleId?: string }
+export interface AppointmentTarget { unitId: string; titleId?: string; mode?: 'primary' | 'concurrent' | 'transfer' }
 export function OrganizationAppointment({ target, config, staff, onClose, onPreview, onApply }: {
   target: AppointmentTarget; config: OrgConfig; staff: {id: string; name: string; status: string}[];
   onClose: () => void; onPreview: (next: OrgConfig) => Promise<Preview>; onApply: (p: Preview, reason: string) => Promise<void>;
@@ -19,7 +19,7 @@ export function OrganizationAppointment({ target, config, staff, onClose, onPrev
   const [titleId, setTitleId] = useState(target.titleId ?? '');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
-  const [mode, setMode] = useState<'primary' | 'concurrent' | 'transfer'>('primary');
+  const [mode, setMode] = useState<'primary' | 'concurrent' | 'transfer'>(target.mode ?? 'primary');
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState('');
@@ -45,7 +45,7 @@ export function OrganizationAppointment({ target, config, staff, onClose, onPrev
       <p className="text-sm">Đã chọn {picked.length} người{single ? ' · Vị trí một người' : ''}</p>
       {existing.length > 0 && <><Label>Phân công hiện có</Label><Select value={mode} onValueChange={v => setMode(v as typeof mode)}><SelectTrigger aria-label="Hình thức bổ nhiệm"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Chọn hình thức</SelectItem><SelectItem value="concurrent">Kiêm nhiệm — giữ phân công hiện có</SelectItem><SelectItem value="transfer">Điều chuyển — kết thúc phân công chính</SelectItem></SelectContent></Select>{mode==='transfer' && existing.filter(m=>m.kind!=='concurrent').map(m=><p key={m.id} className="text-sm text-destructive">Kết thúc: {nameOf(m.user_id)} · {config.units.find(u=>u.id===m.unit_id)?.name} · {config.titles.find(t=>t.id===m.title_id)?.name}</p>)}</>}
       <AppointmentPermissionSummary titleId={titleId} config={config} />{marketingUnit(config,target.unitId) && title?.source!=='biz_positions' && <AssignmentSpecialties selected={specialties} onChange={setSpecialties} />}
-      <Button disabled={busy || !titleId || !picked.length || (existing.some(m=>m.kind!=='concurrent') && mode==='primary')} onClick={() => run(async () => {setPreview(await onPreview(appointmentDraft(config,target.unitId,titleId,picked,mode,specialties)));})}>{busy ? 'Đang xem trước…' : 'Xem trước'}</Button>
+      <Button disabled={busy || !titleId || !picked.length || (existing.some(m=>m.kind!=='concurrent') && mode==='primary')} onClick={() => run(async () => {setPreview(await onPreview(appointmentDraft(config,target.unitId,titleId,picked,mode,specialties,new Date(Date.now()-2000).toISOString())));})}>{busy ? 'Đang xem trước…' : 'Xem trước'}</Button>
     </div>}{error && <p role="alert" className="text-sm text-destructive">{error} Vui lòng xem trước lại.</p>}
   </DialogContent></Dialog>;
 }

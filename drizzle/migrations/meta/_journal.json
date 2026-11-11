@@ -2409,6 +2409,27 @@
       "when": 1794368305794,
       "tag": "0343_standard_role_catalog_source_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 344,
+      "version": "7",
+      "when": 1794369407986,
+      "tag": "0344_org_immediate_appointment_clock",
+      "breakpoints": true
+    },
+    {
+      "idx": 345,
+      "version": "7",
+      "when": 1794369629710,
+      "tag": "0345_standard_role_shared_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 346,
+      "version": "7",
+      "when": 1794369725349,
+      "tag": "0346_shared_role_preserve_live_appointments",
+      "breakpoints": true
     }
   ]
 }

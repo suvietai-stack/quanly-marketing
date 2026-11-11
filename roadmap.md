@@ -1,11 +1,18 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Hoàn thiện theo yêu cầu bản 62
+- [x] Xem trước Marketing trên Preview không lỗi; sửa mốc tức thời máy chủ, lưu/refresh/miễn nhiệm đã kiểm chứng bằng nhân sự cô lập.
+- [x] Gộp Cơ cấu & Nhân sự / Role & Phân quyền; chức vụ về drawer đơn vị, gỡ ba dialog cũ và form phân công riêng.
+- [x] Gộp hai Role trưởng nhóm trùng chức năng; giữ ID/snapshot và mọi quyền Kinh doanh, không reset.
+- [x] Miễn nhiệm tại chỗ, điều chuyển/kiêm nhiệm dùng form chung, sửa nhiệm vụ Marketing theo nguồn bằng end/recreate.
+- [x] 68 kiểm thử trọng yếu đạt, báo cáo cập nhật; chưa Publish, không bổ nhiệm người thật.
+
 - [x] Sửa bổ nhiệm từ sơ đồ: nhân sự hợp lệ theo ID, nhiều người, xem trước/xác nhận/lưu tại chỗ; lưu và tải lại nhân viên giả lập không Role đã kiểm chứng trong môi trường cô lập.
 - [x] Đăng ký 10 Role riêng, liên kết 8 chức vụ với tập cá nhân đã kiểm chứng, giữ HCNS/Đóng hàng; ẩn legacy có snapshot, giữ nguồn hiện tại và Kinh doanh. Đây chưa phải bộ quyền quản lý hoàn chỉnh.
 - [x] 93 kiểm thử cô lập nguồn cấp/thu hồi, phạm vi, chống tự nâng quyền và catalog đạt; kiểm tra desktop/mobile, không lỗi JavaScript.
 - [x] Báo cáo docs/standard-role-catalog-report.md ghi rõ danh sách quyền đã bật và còn chờ; không reset, tự bổ nhiệm thật hay Publish.
 - [ ] Quyền quản lý, kế toán và cung ứng đầy đủ: chờ hợp đồng phạm vi nghiệp vụ an toàn; hiện không đủ điều kiện chuyển đổi tiếp.
-- [ ] Chức vụ trưởng nhóm Marketing/Thiết kế: chờ Admin xác định đơn vị và vị trí cần tạo; Role riêng đã có nhưng chưa liên kết/bổ nhiệm.
+- [ ] Chức vụ trưởng nhóm Marketing/Thiết kế: chỉ tạo khi Admin có Nhóm thực tế; dùng Role quản lý chung đã gộp, không tự tạo vị trí.
 
 ## Chuyển đổi quyền cuối cùng trước đó
 
