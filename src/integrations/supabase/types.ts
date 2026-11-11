@@ -166,6 +166,9 @@ export type Database = {
           biz_detail_exception: boolean
           biz_scope: string
           biz_settings_disabled: boolean
+          catalog_group: string | null
+          catalog_pending: string[]
+          catalog_state: string
           created_at: string
           description: string | null
           id: string
@@ -180,6 +183,9 @@ export type Database = {
           biz_detail_exception?: boolean
           biz_scope?: string
           biz_settings_disabled?: boolean
+          catalog_group?: string | null
+          catalog_pending?: string[]
+          catalog_state?: string
           created_at?: string
           description?: string | null
           id: string
@@ -194,6 +200,9 @@ export type Database = {
           biz_detail_exception?: boolean
           biz_scope?: string
           biz_settings_disabled?: boolean
+          catalog_group?: string | null
+          catalog_pending?: string[]
+          catalog_state?: string
           created_at?: string
           description?: string | null
           id?: string
@@ -11552,6 +11561,7 @@ export type Database = {
         }[]
       }
       signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
+      standard_role_catalog_setup: { Args: never; Returns: Json }
       sw_audit: { Args: { _limit?: number }; Returns: Json }
       sw_config: { Args: never; Returns: Json }
       sw_config_save: {
