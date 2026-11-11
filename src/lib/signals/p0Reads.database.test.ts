@@ -22,6 +22,20 @@ beforeAll(async()=>{
  await db.exec(readFileSync('docs/pending/signals_p0_counts_single_scan.sql','utf8'));
  await db.exec(readFileSync('docs/pending/signals_p0_page_filtered_history.sql','utf8'));
 },60000);
+
+it('multi-group counts are distinct and page offsets never leak another owner',async()=>{
+ await db.exec(`INSERT INTO opportunity_signals(id,assigned_to,status,need_groups,created_at) VALUES
+ ('${id(3)}','${A}','waiting',array['Quà','Kho'],'2026-11-01'),
+ ('${id(4)}','${A}','quoted',array['Quà'],'2026-11-02'),
+ ('${id(5)}','${B}','waiting',array['Quà'],'2026-11-03');
+ SELECT set_config('test.uid','${A}',false);SET ROLE authenticated;`);
+ const counts=(await db.query<{v:{total:number;needs:Record<string,number>}}>('select signal_list_counts($1) v',[{needGroup:'Quà'}])).rows[0]?.v;
+ expect(counts?.total).toBe(2);expect(counts?.needs.Quà).toBe(2);expect(counts?.needs.Kho).toBe(1);
+ const first=(await db.query<{v:{rows:{id:string;assigned_to:string}[]}}>("select signal_list_page('{}','work',0,1) v")).rows[0]?.v.rows;
+ const second=(await db.query<{v:{rows:{id:string;assigned_to:string}[]}}>("select signal_list_page('{}','work',1,1) v")).rows[0]?.v.rows;
+ expect(first?.[0]?.id).toBe(id(3));expect(second?.[0]?.id).toBe(id(1));expect(first?.[0]?.assigned_to).toBe(A);
+ await db.exec('RESET ROLE');
+});
 afterAll(()=>db.close());
 
 it('base filters match the original priority filters under each caller',async()=>{

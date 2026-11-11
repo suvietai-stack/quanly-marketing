@@ -1,0 +1,1 @@
+- Change-token invalidation requires two defined, different observations for the same user; missing tokens never reload lists, preventing error-driven request storms.
