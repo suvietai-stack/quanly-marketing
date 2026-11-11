@@ -8,4 +8,4 @@ export async function previewWorkflow(data: Record<string, unknown>) { const res
 export function usePositionAction() { const qc = useQueryClient(); return useMutation({ mutationFn: async (a: { kind: 'position' | 'appointment'; data: Record<string, unknown> } | { kind: 'role'; role: string; scope: string }) => {
  const result = a.kind === 'role' ? await supabase.rpc('biz_role_scope_save', { _role: a.role, _scope: a.scope }) : a.kind === 'position' ? await supabase.rpc('biz_position_save', { _data: a.data as never }) : await supabase.rpc('biz_appointment_save', { _data: a.data as never });
  if (result.error) throw result.error; return result.data;
- }, onSuccess: async () => { await useAuth.getState().refreshBizAccess(); await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') }); } }); }
+ }, onSuccess: async () => { await useAuth.getState().refreshBizAccess(true); await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') }); } }); }
