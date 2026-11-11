@@ -1,3 +1,4 @@
+import { createCoalescer } from "./singleFlight";
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1209,6 +1210,9 @@ const emptyCollections = (): { [K in CollectionKey]: Collections[K][] } => ({
   backlinks: [], growth: [], webTopics: [],
 });
 
+let storeUser: string | null = null;
+const storeLoads = createCoalescer<string>((uid) => useStore.getState()._load(uid));
+
 async function loadAllFromSupabase() {
   const results = await Promise.all(
     COLLECTION_KEYS.map(async (key) => {
@@ -1316,10 +1320,13 @@ export const useStore = create<State>((set, get) => ({
   init: async () => {
     if (get().initialized) return;
     set({ initialized: true });
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        get().reload();
+    supabase.auth.onAuthStateChange((event, session) => {
+      const uid = session?.user?.id ?? null;
+      if (session && uid) {
+        // Làm mới token hằng giờ không cần tải lại 18 bảng; chỉ tải khi đổi người dùng.
+        if (uid !== storeUser || event === 'USER_UPDATED') { storeUser = uid; setTimeout(() => void storeLoads.join(uid), 0); }
       } else {
+        storeUser = null;
         set({ ...emptyCollections(), plans: [], topics: [], loaded: false });
       }
     });
@@ -1327,12 +1334,18 @@ export const useStore = create<State>((set, get) => ({
     useAuth.subscribe(() => recomputePeople());
     recomputePeople();
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) await get().reload();
+    if (session?.user) { storeUser = session.user.id; await storeLoads.join(session.user.id); }
   },
 
   reload: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) await storeLoads.refresh(session.user.id);
+  },
+
+  _load: async (uid: string) => {
     try {
       const next = await loadAllFromSupabase();
+      if (storeUser !== uid) return;
       set({ ...next, loaded: true });
       recomputePeople();
     } catch (e: any) {
