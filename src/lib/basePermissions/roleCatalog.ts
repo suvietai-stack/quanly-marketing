@@ -14,7 +14,6 @@ export const roleCatalogApi={
  async apply(id:string,reason:string){const {error}=await supabase.rpc('role_catalog_change',{_phase:'apply',_preview:id,_confirmation:'ÁP DỤNG ROLE',_reason:reason});if(error)throw new Error(error.message);},
 };
 export function slotConversionCommands(catalog:RoleCatalog,ids:string[]):OrgCommand[]{return [...new Set(ids)].flatMap(id=>{
- const a=catalog.unmapped.find(x=>x.id===id);const m=catalog.mapping.find(x=>x.title_id===a?.title_id);const role=m?.roles.length===1?catalog.roles.find(r=>r.id===m.roles[0]):undefined;
- if(!a?.title_id||!role||role.role_kind!=='position'||role.catalog_state!=='standard')throw new Error('Phân công chưa có đúng một Role vị trí chuẩn.');
- const slotId=crypto.randomUUID();return [{action:'slot' as const,data:{id:slotId,title_id:a.title_id,unit_id:a.unit_id,role_id:role.id,name:`${a.title_name??'Vị trí'} · ${a.user_name}`}},{action:'bind_slot' as const,data:{id:a.id,slot_id:slotId,reviewed_role:role.id}}];
+ void catalog; void id;
+ throw new Error('Không tự chuyển từ liên kết chức danh legacy. Chọn Role chuẩn mới và xem trước từng nguồn trong Mapping ô.');
 });}
