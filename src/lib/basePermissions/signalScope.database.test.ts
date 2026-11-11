@@ -24,6 +24,12 @@ create function private.is_super_admin(u uuid) returns boolean language sql as $
 create function private.is_admin(u uuid) returns boolean language sql as $$ select u = '${admin}'::uuid $$;
 insert into profiles values ('${admin}'),('${sales}'),('${legacyUser}'),('${exec}'),('${ended}');`);
   await db.exec(readFileSync('drizzle/migrations/0357_sales_head_role_scope_fallback_tighten.sql', 'utf8'));
+  // Executive viewer role (from 0355 links) and the signed title links under test.
+  await db.query(`insert into app_roles values
+    ('role-viewer','Viewer / Ban Giám Đốc','x',false,array['signal.view_all'],true,'{}','standard','Quản trị & Điều hành')`);
+  await db.query(`insert into base_title_role_links values
+    ('11111111-1111-1111-1111-111111111111','biz','e5fe2a3f-dfff-4ee0-beaa-a6434b2388e0','role-standard-sales-staff',true,'own',false,1,'test',null,now(),'{}',md5((select permissions::text from app_roles where id='role-standard-sales-staff'))),
+    ('22222222-2222-2222-2222-222222222222','biz','60dc2983-c41c-42dc-bcf6-14010beaa3dd','role-viewer',true,'own',false,1,'test',null,now(),'{}',md5((select permissions::text from app_roles where id='role-viewer')))`);
   // Sales staff: active appointment → role-standard-sales-staff (scope: 6 groups, not all).
   await db.query(`insert into org_assignments values
     ('a1','u1','e5fe2a3f-dfff-4ee0-beaa-a6434b2388e0','${sales}','appointment',now(),null,'active','biz_appointments','x','{}',1),
