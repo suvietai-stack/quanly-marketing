@@ -2,12 +2,14 @@
 
 ## Yêu cầu mới: Một kho Role → ô vị trí → bổ nhiệm → quyền
 - [x] Đọc tệp yêu cầu; audit chỉ đọc database/code/lịch sử đến 0358; Preview đăng nhập mở được Role & Phân quyền, không lỗi runtime.
-- [ ] Kiểm kê trực tiếp và snapshot riêng tư; xem trước chuyển đổi/khôi phục, không reset tự động.
-- [ ] Chuẩn hóa kho 14 Role vị trí + 5 nhiệm vụ, giữ ID đang tham chiếu; thống nhất quản trị tạo/sửa/ngừng/xóa có kiểm toán.
-- [ ] Tách chức danh dùng chung khỏi ô vị trí; một Role/một người mỗi ô, chống chồng khoảng và đồng thời; chuyển đổi có xác nhận.
-- [ ] Gắn permission với chính nguồn/phạm vi cấp; kiểm chứng mọi đường RPC/RLS, CRM/3K/Tín hiệu/Tiền Về/Đơn hàng/phê duyệt.
-- [ ] Role nhiệm vụ Marketing chỉ sinh quyền khi còn bổ nhiệm Marketing, giữ lịch sử và chống đường cấp vòng.
-- [ ] Kiểm thử 15 tình huống yêu cầu, hồi quy và Preview; bàn giao danh sách mapping/xung đột/nguồn chưa chuyển được; chưa Publish.
+- [x] Kiểm kê trực tiếp, kho Role có preview/audit và chuyển ô có snapshot/khôi phục riêng tư; không reset tự động. Preview Role và chuyển ô đã mở trên phiên thật.
+- [x] Quản trị tạo/sửa/ngừng/xóa Role chung có kiểm toán; phân loại đủ 5 nhiệm vụ, giữ ID đang dùng.
+- [x] Mô hình ô vật lý bổ sung, một Role/một người, khóa/kiểm tra khoảng; form chọn ô và sơ đồ hiển thị ô; 121 kiểm thử chọn lọc đạt, build đạt, mobile không tràn ngang.
+- [ ] Mapping Trưởng nhóm Kinh doanh và tạo ô trống/đổi Role ô có người: chưa hoàn thiện; không tự mapping/bổ nhiệm thật.
+- [ ] Chuyển 36 phân công thật sang ô: chờ Super Admin xác nhận trong giao diện; chưa áp dụng nên 0 ô/0 snapshot thật.
+- [ ] Hợp đồng mọi permission–nguồn–phạm vi: đã chuyển 3 quyền xem đơn vị; CRM/3K/Tín hiệu/duyệt/báo cáo/xuất còn cần kiểm chứng.
+- [ ] Nhiệm vụ: cấp mới có điều kiện Marketing và chặn gán trực tiếp; quyền chuyên môn lịch sử chưa tắt khi rời Marketing, chờ đối chiếu/xác nhận nguồn thay thế.
+- [ ] Nghiệm thu đủ 15 tình huống và giao dịch đồng thời/áp dụng/khôi phục end-to-end chưa hoàn tất; chưa reset legacy, chưa Publish. Báo cáo docs/role-position-rebuild-audit.md.
 
 Các mục lịch sử bên dưới mô tả các lần triển khai trước, không phải tiêu chí hoàn thành yêu cầu mới.
 
