@@ -33,9 +33,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   // Presence heartbeat: ping every 60s while signed-in; also on focus/visibility.
   useEffect(() => {
     if (!currentUserId || currentUser?.status !== 'Đang hoạt động') return;
-    touchPresence();
-    const iv = setInterval(() => touchPresence(), 60_000);
-    const onVis = () => { if (!document.hidden) touchPresence(); };
+    let last = 0; // focus + visibilitychange cùng lúc: chỉ ghi nhận hiện diện tối đa 1 lần/30s
+    const touch = () => { const now = Date.now(); if (now - last < 30_000) return; last = now; touchPresence(); };
+    touch();
+    const iv = setInterval(() => { last = 0; touch(); }, 60_000);
+    const onVis = () => { if (!document.hidden) touch(); };
     window.addEventListener("focus", onVis);
     document.addEventListener("visibilitychange", onVis);
     return () => {

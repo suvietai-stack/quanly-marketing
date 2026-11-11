@@ -28,8 +28,10 @@ export function RewardPopup({ userId }: { userId: string }) {
     };
     const timer = window.setInterval(check, 15000);
     const initial = window.setTimeout(check, 1800);
-    document.addEventListener('visibilitychange', check);
-    return () => { live = false; clearInterval(timer); clearTimeout(initial); document.removeEventListener('visibilitychange', check); };
+    let lastVisible = 0; // quay lại tab liên tục: kiểm tra Sao tối đa 1 lần/15s
+    const onVisible = () => { const now = Date.now(); if (now - lastVisible < 15000) return; lastVisible = now; void check(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { live = false; clearInterval(timer); clearTimeout(initial); document.removeEventListener('visibilitychange', onVisible); };
   }, [userId, queryClient]);
   return <Dialog open={Boolean(reward)} onOpenChange={(open) => { if (!open) setReward(null); }}>
     <DialogContent className="sao-reward-popup w-[calc(100%-32px)] max-w-md rounded-2xl bg-card text-center max-h-[calc(100dvh-32px)] overflow-y-auto gap-3 p-6">
