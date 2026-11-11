@@ -2430,6 +2430,13 @@
       "when": 1794369725349,
       "tag": "0346_shared_role_preserve_live_appointments",
       "breakpoints": true
+    },
+    {
+      "idx": 347,
+      "version": "7",
+      "when": 1794371299742,
+      "tag": "0347_legacy_reset_standard_only_contract",
+      "breakpoints": true
     }
   ]
 }
