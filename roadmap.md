@@ -1,4 +1,11 @@
-# Roadmap — Chuyển đổi quyền cuối cùng
+# Roadmap — Role chuẩn và bổ nhiệm
+
+- [ ] Sửa bổ nhiệm từ sơ đồ: nhân sự hợp lệ theo ID, nhiều người, xem trước/xác nhận/lưu tại chỗ.
+- [ ] Chuẩn hóa Role, liên kết chức vụ/nhiệm vụ, ẩn legacy có snapshot; giữ nguồn hiện tại và Kinh doanh.
+- [ ] Kiểm thử cô lập cấp/thu hồi, phạm vi, chống tự nâng quyền và lưu/đọc lại.
+- [ ] Báo cáo kết quả và phần còn chờ; không reset, tự bổ nhiệm thật hay Publish.
+
+## Chuyển đổi quyền cuối cùng trước đó
 
 - [x] Snapshot đầy đủ và chuyển đổi thật 9 tài khoản/9 nguồn Role cũ, giữ ngoại lệ và quản trị; mã phục hồi 90717bc1-ae8e-4bed-a162-9ab8c8e61bec.
 - [x] Mở thao tác chuyển đổi/khôi phục có xác nhận, giữ nguyên nguồn bổ nhiệm và tập quyền đã kiểm chứng.
