@@ -23,6 +23,8 @@ beforeAll(async()=>{
  create function private.cleanup_is_biz_staff(u uuid) returns boolean language sql as $$select exists(select 1 from biz_department_members where user_id=u)$$;
  create function private.org_fingerprint() returns text language sql as $$select 'stable'$$;
  create function private.base_config() returns jsonb language sql as $$select '{}'::jsonb$$;
+ create function public.biz_effective_access(u uuid) returns jsonb language sql as $$select jsonb_build_object('user_id',u,'permissions','[]'::jsonb)$$;
+ create function public.biz_participant(_actor uuid) returns boolean language sql as $$select exists(select 1 from biz_department_members where user_id=_actor)$$;
  create function private.base_rules(u uuid,c jsonb) returns jsonb language sql as $$select '[]'::jsonb$$;
  create function private.org_role_permission_ready(p text) returns boolean language sql as $$select false$$;
  create function private.mkt_specialty_permission_ready(p text) returns boolean language sql as $$select false$$;
@@ -48,6 +50,7 @@ it('reset includes Business and replace overrides, protects Super Admin, preserv
  resetRun=r.run_id;expect(r.accounts).toBe(3);expect(r.removed_roles).toBe(3);
  expect((await db.query('select * from user_roles where user_id=$1',[SA])).rows).toHaveLength(1);
  expect((await db.query('select * from biz_department_members')).rows).toHaveLength(1);
+ expect((await db.query<{allowed:boolean}>('select biz_participant($1) allowed',[BIZ])).rows[0].allowed).toBe(false);
  expect((await db.query<{use_custom:boolean}>('select use_custom from user_permission_overrides where user_id=$1',[CUSTOM])).rows[0].use_custom).toBe(false);
  expect((await db.query<{snapshot:{user_roles:unknown[],overrides:unknown[]}}>('select snapshot from base_perm_cleanup_runs where id=$1',[resetRun])).rows[0].snapshot.user_roles).toHaveLength(4);
 });
