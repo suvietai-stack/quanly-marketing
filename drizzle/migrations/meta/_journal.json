@@ -2570,6 +2570,13 @@
       "when": 1794386265799,
       "tag": "0366_canonical_slot_config_and_preview_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 367,
+      "version": "7",
+      "when": 1794386444472,
+      "tag": "0367_audited_slot_role_replacement_and_task_sources",
+      "breakpoints": true
     }
   ]
 }
