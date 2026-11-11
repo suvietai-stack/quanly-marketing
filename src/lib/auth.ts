@@ -1022,6 +1022,8 @@ export interface User {
   roleId?: ID;
   customPermissions?: PermissionKey[];
   useCustom?: boolean;
+  /** 'replace' (legacy, mặc định): quyền riêng thay thế Role. 'additive': cộng thêm vào Role (chỉ sau khi Admin xác nhận). */
+  overrideMode?: "replace" | "additive";
   status: AccountStatus;
   createdAt: string;
   system?: boolean;
@@ -1084,7 +1086,7 @@ let initStarted = false;
 function mapProfileToUser(
   p: any,
   userRoles: { user_id: string; role_id: string }[],
-  overrides: { user_id: string; use_custom: boolean; permissions: string[] }[],
+  overrides: { user_id: string; use_custom: boolean; permissions: string[]; mode?: string }[],
 ): User {
   const ur = userRoles.find((x) => x.user_id === p.id);
   const ov = overrides.find((x) => x.user_id === p.id);
