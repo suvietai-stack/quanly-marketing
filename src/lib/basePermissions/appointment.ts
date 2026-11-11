@@ -33,7 +33,7 @@ export function appointmentDraft(config: OrgConfig, unitId: string, titleId: str
   const now = effectiveAt;
   if (mode === 'transfer') next.memberships = next.memberships.map(m => primaryElsewhere.some(p => p.id === m.id) ? {...m, active: false, ends_at: now} : m);
   for (const userId of ids) {
-    if (next.memberships.some(m => membershipEffective(m) && m.user_id === userId && m.unit_id === unitId && m.title_id === titleId)) throw new Error('Nhân sự đã có phân công này.');
+    if (next.memberships.some(m => membershipEffective(m,effectiveAt) && m.user_id === userId && m.unit_id === unitId && m.title_id === titleId && (!slotId || m.slot_id===slotId))) throw new Error('Nhân sự đã có phân công này.');
     const beforeIds = new Set(next.memberships.map(m => m.id));
     if(slot){next.memberships.push({id:crypto.randomUUID(),user_id:userId,unit_id:unitId,title_id:titleId,slot_id:slotId,active:true,starts_at:now});}
     else next = assignSlot(next, unitId, titleId, userId);
