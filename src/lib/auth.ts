@@ -1019,7 +1019,10 @@ export interface User {
   // Legacy fields kept for type compatibility (no longer used — Supabase Auth manages passwords)
   passwordHash: string;
   passwordSalt: string;
+  /** Role chính hiển thị trên hồ sơ (tương thích legacy). Không dùng để suy ra toàn bộ quyền. */
   roleId?: ID;
+  /** Toàn bộ Role trực tiếp đang hiệu lực (một tài khoản có thể có nhiều Role). */
+  roleIds?: ID[];
   customPermissions?: PermissionKey[];
   useCustom?: boolean;
   /** 'replace' (legacy, mặc định): quyền riêng thay thế Role. 'additive': cộng thêm vào Role (chỉ sau khi Admin xác nhận). */
@@ -1089,6 +1092,7 @@ function mapProfileToUser(
   overrides: { user_id: string; use_custom: boolean; permissions: string[]; mode?: string }[],
 ): User {
   const ur = userRoles.find((x) => x.user_id === p.id);
+  const urAll = userRoles.filter((x) => x.user_id === p.id).map((x) => x.role_id);
   const ov = overrides.find((x) => x.user_id === p.id);
   return {
     id: p.id,
@@ -1101,6 +1105,7 @@ function mapProfileToUser(
     passwordHash: "",
     passwordSalt: "",
     roleId: ur?.role_id,
+    roleIds: urAll.length > 0 ? urAll : undefined,
     useCustom: ov?.use_custom ?? false,
     customPermissions: ov?.permissions ?? [],
     overrideMode: ov?.mode === "additive" ? "additive" : "replace",
@@ -1480,8 +1485,14 @@ export function getUserPermissions(user: User | null | undefined, roles: Role[])
   if (user.useCustom && user.overrideMode !== "additive") {
     return new Set<PermissionKey>(user.customPermissions ?? []);
   }
-  const role = roles.find((r) => r.id === user.roleId);
-  const perms = new Set<PermissionKey>(role ? role.permissions : []);
+  // Tổng hợp quyền từ TẤT CẢ Role trực tiếp đang hiệu lực (loại trùng theo ID),
+  // không chỉ Role chính hiển thị trên hồ sơ.
+  const ids = user.roleIds && user.roleIds.length > 0 ? user.roleIds : user.roleId ? [user.roleId] : [];
+  const perms = new Set<PermissionKey>();
+  for (const id of new Set(ids)) {
+    const role = roles.find((r) => r.id === id);
+    if (role) for (const p of role.permissions) perms.add(p);
+  }
   if (user.useCustom && user.customPermissions) for (const p of user.customPermissions) perms.add(p);
   return perms;
 }
