@@ -1,5 +1,10 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Bản 66: Chốt cơ cấu, cấp bậc và Role chuẩn
+- [ ] Migration: Giám đốc Marketing Cấp 3; Role nền "Nhân sự mới" thành chuẩn tối thiểu; mở rộng quyền đã kiểm chứng (leave/att/finance/oq/ot/order) theo rào máy chủ; đồng bộ liên kết chức vụ; duyệt tài khoản không xóa Role; rào xóa Role còn tham chiếu.
+- [ ] Frontend: tên/cấp chức vụ chính thức trong orgStructure.ts (bỏ "Trưởng bộ phận"); gợi ý Role chuẩn trong titleRoles.ts; đồng bộ danh sách quyền đã kiểm chứng trong auth.ts.
+- [ ] Kiểm thử cô lập + hồi quy + build; cập nhật báo cáo bàn giao. Không reset, không bổ nhiệm thật, chưa Publish.
+
 ## Quyết định mới: ngừng toàn bộ quyền legacy
 - [x] Snapshot 26 tài khoản/84 bản ghi tổ chức; giữ hai Super Admin theo xác nhận.
 - [x] Reset 24 nhân sự/15 Role/1 override; nguồn legacy còn hiệu lực 0, chống cấp lại; phục hồi kiểm chứng cô lập, mã 0e42f305-c0a8-4a1a-8e5c-e16361c7da56.
