@@ -26,7 +26,8 @@ insert into profiles values ('${admin}'),('${sales}'),('${legacyUser}'),('${exec
   await db.exec(readFileSync('drizzle/migrations/0357_sales_head_role_scope_fallback_tighten.sql', 'utf8'));
   // Executive viewer role (from 0355 links) and the signed title links under test.
   await db.query(`insert into app_roles values
-    ('role-viewer','Viewer / Ban Giám Đốc','x',false,array['signal.view_all'],true,'{}','standard','Quản trị & Điều hành')`);
+    ('role-viewer','Viewer / Ban Giám Đốc','x',false,array['signal.view_all'],true,'{}','standard','Quản trị & Điều hành'),
+    ('role-standard-sales-staff','Nhân viên Kinh doanh','x',false,array['signal.sale'],false,array['Sứ quà tặng','Sản xuất theo yêu cầu','Nhập sỉ','Xuất khẩu','Bát đĩa nhà hàng','Khác'],'standard','Kinh doanh')`);
   await db.query(`insert into base_title_role_links values
     ('11111111-1111-1111-1111-111111111111','biz','e5fe2a3f-dfff-4ee0-beaa-a6434b2388e0','role-standard-sales-staff',true,'own',false,1,'test',null,now(),'{}',md5((select permissions::text from app_roles where id='role-standard-sales-staff'))),
     ('22222222-2222-2222-2222-222222222222','biz','60dc2983-c41c-42dc-bcf6-14010beaa3dd','role-viewer',true,'own',false,1,'test',null,now(),'{}',md5((select permissions::text from app_roles where id='role-viewer')))`);
