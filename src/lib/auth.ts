@@ -1571,7 +1571,7 @@ export function explainPermission(
       reason: `Thiếu quyền cha: ${missing.join(", ")}`,
       source: "dep_missing",
       missingDeps: missing,
-      roleName: role?.name,
+      roleName: grantingRole?.name ?? userRoles[0]?.name,
     };
   }
   return {
