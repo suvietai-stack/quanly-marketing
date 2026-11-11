@@ -1,11 +1,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import type { OrgCommand } from './commands';
-export const VERIFIED_APPOINTMENT_PERMISSIONS = ['leave.create','leave.view_own','leave.edit_own','leave.recall','att.create','att.view_own','att.edit_own','att.witness','order.view','order.view_mine','order.update_draft','order.submit','order.resubmit','order.deliver','order.history','order.open_delivery','ot.view_own','ot.task_view','ot.task_update','ot.stage_update'];
+export const VERIFIED_APPOINTMENT_PERMISSIONS = ['leave.create','leave.view_own','leave.edit_own','leave.recall','att.create','att.view_own','att.edit_own','att.witness','order.view','order.view_mine','order.update_draft','order.submit','order.resubmit','order.deliver','order.history','order.open_delivery','ot.view_own','ot.task_view','ot.task_update','ot.stage_update','order.create','order.take','oq.create','oq.accept','oq.reply_price','oq.reply_progress','oq.report_own'];
+export interface TitleLinkAudit { title_id: string; title_name: string; role_id: string; role_name: string; scope_kind: string; signature_valid: boolean; enabled: string[]; eligible: string[]; blocked: {key:string;reason:string}[] }
+export function auditReasonLabel(reason: string) {
+  const labels: Record<string,string> = { native_personal_verified: 'Đã kiểm chứng điều kiện cá nhân/nghiệp vụ', appointment_only: 'Giữ nguyên nguồn bổ nhiệm Kinh doanh', finance_unit_scope_missing: 'Tài chính chưa giới hạn theo đơn vị bổ nhiệm', hr_unit_scope_missing: 'Nhân sự chưa giới hạn quản lý/báo cáo/xuất theo đơn vị', order_unit_scope_missing: 'Đơn hàng chưa giới hạn quản lý/xuất theo đơn vị', global_configuration: 'Quyền quản trị toàn hệ thống — không tự cấp theo chức vụ', backend_scope_workflow_missing: 'Chưa có rào phạm vi hoặc quy trình đầy đủ tại máy chủ' };
+  return labels[reason] ?? 'Chưa hoàn tất kiểm tra phạm vi';
+}
 export interface RoleCheck { key: string; ready: boolean; reason: string }
 export interface OriginalRole { id: string; name: string; restricted: boolean; permissions: string[]; checks: RoleCheck[] }
 export interface TitleRoleLink { title_source: 'base' | 'biz'; title_id: string; role_id: string; is_primary: boolean; scope_kind: 'unit' | 'own'; revision: number; active: boolean; enabled_permissions?: string[]; permission_signature?: string }
-export interface TitleRoleRead { roles: OriginalRole[]; links: TitleRoleLink[]; titles: {id:string;name:string;active:boolean;source:string}[]; sources: {user_id:string;rules:{source_id:string;source_name:string;role_id:string;permission:string}[]}[]; direct_roles: { user_id: string; role_id: string }[]; activation_ready: boolean; events: { id: string; title_source: string; title_id: string; reason: string; created_at: string }[] }
+export interface TitleRoleRead { link_audits?: TitleLinkAudit[]; roles: OriginalRole[]; links: TitleRoleLink[]; titles: {id:string;name:string;active:boolean;source:string}[]; sources: {user_id:string;rules:{source_id:string;source_name:string;role_id:string;permission:string}[]}[]; direct_roles: { user_id: string; role_id: string }[]; activation_ready: boolean; events: { id: string; title_source: string; title_id: string; reason: string; created_at: string }[] }
 export function titleRoleCommand(title: string, roles: Pick<TitleRoleLink, 'role_id'|'is_primary'|'scope_kind'|'enabled_permissions'>[], reason: string): OrgCommand { return {action:'roles',data:{id:title,roles,reason}}; }
 export function roleDraftSnapshot(links: TitleRoleLink[]) {
   return [...links].sort((a, b) => a.role_id.localeCompare(b.role_id)).map(({ role_id, is_primary, scope_kind, revision }) => ({ role_id, is_primary, scope_kind, revision }));

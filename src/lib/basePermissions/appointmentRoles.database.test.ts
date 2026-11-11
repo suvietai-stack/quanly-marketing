@@ -56,3 +56,10 @@ it('ordinary user cannot elevate through links',async()=>{await db.query("select
 it('linking rejects unverified management scope',async()=>{await expect(db.query('select private.org_commands_v2($1)',[command('designer',['order.view'],'unit')])).rejects.toThrow('quản lý');});
 it('linking rejects sensitive capabilities and Admin',async()=>{await expect(db.query('select private.org_commands_v2($1)',[command('designer',['settings.role'])])).rejects.toThrow('kiểm chứng');await expect(db.query('select private.org_commands_v2($1)',[command('role-admin')])).rejects.toThrow('quản trị');});
 it('safe source links audit without modifying direct Role',async()=>{await db.query('select private.org_commands_v2($1)',[command()]);expect(await val('select count(*)::int v from base_title_role_events')).toBe(1);expect(await val('select count(*)::int v from user_roles')).toBe(0);});
+it('cyclic tree terminates but disconnected and inactive paths never grant',async()=>{
+ const c=config();c.units[0].parent_id='d';await set(c);expect(await can()).toBe(true);
+ c.memberships[0].unit_id='detached';c.units.push({id:'detached',parent_id:'missing',active:true});await set(c);expect(await can()).toBe(false);
+});
+it('unit-scoped forged title link never produces a global capability',async()=>{
+ const c=config();c.role_links[0].scope_kind='unit';await set(c);expect(await can()).toBe(false);
+});

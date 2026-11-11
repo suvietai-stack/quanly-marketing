@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useCurrentUser } from '@/lib/auth';
+import { titleRolesApi, auditReasonLabel } from '@/lib/basePermissions/titleRoles';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +19,8 @@ type Filter = 'all' | CleanupAccount['status'];
 
 export function PermissionCleanup() {
   const qc = useQueryClient();
+  const { user } = useCurrentUser();
+  const audits = useQuery({ queryKey: ['title-role-links', user?.id], queryFn: titleRolesApi.read, retry: false });
   const [filter, setFilter] = useState<Filter>('all');
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<CleanupAccount | null>(null);
@@ -25,7 +29,7 @@ export function PermissionCleanup() {
   const [busy, setBusy] = useState(false);
 
   const preview = useQuery({
-    queryKey: ['perm-cleanup-preview'],
+    queryKey: ['perm-cleanup-preview', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('base_perm_cleanup_preview');
       if (error) throw error;
@@ -33,7 +37,7 @@ export function PermissionCleanup() {
     },
   });
   const runs = useQuery({
-    queryKey: ['perm-cleanup-runs'],
+    queryKey: ['perm-cleanup-runs', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from('base_perm_cleanup_runs').select('*').order('created_at', { ascending: false }).limit(10);
       if (error) throw error;
@@ -44,7 +48,7 @@ export function PermissionCleanup() {
   const accounts = useMemo(() => preview.data?.accounts ?? [], [preview.data]);
   const shown = useMemo(() => (filter === 'all' ? accounts : accounts.filter(a => a.status === filter)), [accounts, filter]);
   const selectable = useMemo(() => selectableAccounts(accounts), [accounts]);
-  const refresh = () => { setPicked(new Set()); qc.invalidateQueries({ queryKey: ['perm-cleanup-preview'] }); qc.invalidateQueries({ queryKey: ['perm-cleanup-runs'] }); };
+  const refresh = () => { setPicked(new Set()); qc.invalidateQueries({ queryKey: ['perm-cleanup-preview', user?.id] }); qc.invalidateQueries({ queryKey: ['perm-cleanup-runs', user?.id] }); };
 
   const execute = async () => {
     if (!preview.data || confirmText !== CONFIRM_TEXT) return;
@@ -72,7 +76,8 @@ export function PermissionCleanup() {
 
   if (preview.isPending) return <p className="py-4 text-sm text-muted-foreground">Đang kiểm kê quyền…</p>;
   if (preview.error) return <p className="py-4 text-sm text-destructive">{(preview.error as Error).message}</p>;
-  const t = preview.data!.totals;
+  if (!preview.data) return null;
+  const t = preview.data.totals;
 
   return (
     <div className="space-y-4 py-3">
@@ -81,6 +86,7 @@ export function PermissionCleanup() {
         Chỉ tài khoản <strong>Sẵn sàng</strong> (mọi quyền cũ đã có nguồn thay thế đã kiểm chứng) mới chuyển đổi được.
         Toàn bộ nhân sự Kinh doanh, Super Admin và tài khoản có quyền bổ sung luôn được bảo vệ. Không gì thay đổi cho tới khi bạn xác nhận.
       </p>
+      <details className="border-b pb-3"><summary className="cursor-pointer font-medium text-sm">Role theo chức vụ — kiểm chứng Giai đoạn 3A</summary>{audits.error && <p role="alert" className="text-destructive text-sm">{audits.error.message}</p>}{audits.data?.link_audits?.map(a => <div key={`${a.title_id}-${a.role_id}`} className="border-t py-3 text-sm"><p className="font-medium">{a.title_name} · {a.role_name}</p><p className="text-muted-foreground">{a.enabled.length} quyền đã bật · {a.eligible.length - a.enabled.length} quyền an toàn chưa bật · {a.blocked.length} quyền còn chờ</p>{!a.signature_valid && <p className="text-destructive">Role đã thay đổi; quyền theo liên kết tạm ngừng.</p>}<details><summary className="cursor-pointer">Quyền còn chờ</summary>{a.blocked.map(p => <p key={p.key} className="py-1 text-xs">{p.key} — {auditReasonLabel(p.reason)}</p>)}</details></div>)}</details>
       <div className="flex flex-wrap gap-2">
         {([['all', `Tất cả · ${t.accounts}`], ['ready', `Sẵn sàng · ${t.ready}`], ['review', `Cần xử lý · ${t.review}`], ['protected', `Được bảo vệ · ${t.protected}`]] as [Filter, string][]).map(([f, label]) => (
           <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>{label}</Button>
@@ -117,7 +123,7 @@ export function PermissionCleanup() {
         </table>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button disabled={!picked.size} onClick={() => setConfirming(true)}>Chuyển đổi {picked.size} tài khoản đã chọn</Button>
+        <Button disabled title="Giai đoạn 3A chỉ đối chiếu, chưa chuyển đổi quyền" onClick={() => setConfirming(true)}>Chuyển đổi {picked.size} tài khoản đã chọn</Button>
         <Button variant="outline" onClick={refresh}>Xem trước lại</Button>
         {selectable.length > 0 && <Button variant="ghost" size="sm" onClick={() => setPicked(new Set(selectable.map(a => a.user_id)))}>Chọn tất cả ({selectable.length})</Button>}
       </div>
