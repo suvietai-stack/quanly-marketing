@@ -17,8 +17,8 @@ BEGIN
    'role-canonical-v1-design-head','role-canonical-v1-design-team','role-canonical-v1-design-staff',
    'role-canonical-v1-account-chief','role-canonical-v1-account-stock','role-canonical-v1-buyer','role-canonical-v1-proc-head','role-canonical-v1-hr',
    'role-canonical-v1-task-content','role-canonical-v1-task-seo','role-canonical-v1-task-local','role-canonical-v1-task-social','role-canonical-v1-task-video')
-   OR (_proposed->>'role_kind') IS DISTINCT FROM CASE WHEN _proposed->>'canonical_id' IN
-    ('role-canonical-v1-task-content','role-canonical-v1-task-seo','role-canonical-v1-task-local','role-canonical-v1-task-social','role-canonical-v1-task-video') THEN 'marketing_task' ELSE 'position' END
+   OR (_proposed->>'role_kind') IS DISTINCT FROM (CASE WHEN _proposed->>'canonical_id' IN
+    ('role-canonical-v1-task-content','role-canonical-v1-task-seo','role-canonical-v1-task-local','role-canonical-v1-task-social','role-canonical-v1-task-video') THEN 'marketing_task' ELSE 'position' END)
   THEN RAISE EXCEPTION 'Canonical ID/kind not audited'; END IF;
   id_:=_proposed->>'canonical_id';
   IF EXISTS(SELECT 1 FROM app_roles WHERE id=id_ OR role_code=id_) THEN RAISE EXCEPTION 'Canonical Role already exists; edit it, do not seed again'; END IF;
