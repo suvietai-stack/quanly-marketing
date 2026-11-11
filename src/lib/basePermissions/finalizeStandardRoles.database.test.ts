@@ -92,8 +92,9 @@ it('duyệt tài khoản chưa có Role thì nhận Role nền chuẩn', async (
 });
 
 it('duyệt tài khoản từ chối gán Role legacy', async () => {
-  await db.exec(`SELECT set_config('test.uid','${admin}',false)`);
+  await db.exec(`SELECT set_config('test.uid','${admin}',false);UPDATE profiles SET status='Chờ duyệt' WHERE id='${newcomer}'`);
   await expect(db.query(`SELECT public.account_approve('${newcomer}','role-legacy-mkt')`)).rejects.toThrow(/danh mục chuẩn/);
+  expect(await val(`SELECT count(*)::int v FROM user_roles WHERE user_id='${newcomer}' AND role_id='role-legacy-mkt'`)).toBe(0);
 });
 
 it('không xóa Role còn tham chiếu, xóa được Role tự do', async () => {
