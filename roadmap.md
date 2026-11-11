@@ -3,7 +3,8 @@
 ## Mô hình vị trí nhiều người — 15:32 UTC (THAY THẾ cutover theo ô)
 - [x] Dừng tạo ô theo người trên giao diện; rà 25 ô → 16 vị trí, 0 xung đột Role, 24 người.
 - [x] Kế hoạch + dry-run + rollback: docs/position-model-2026-11-11/.
-- [ ] Migration org_position_roles + resolver fallback: chờ chủ xác nhận.
+- [x] 15:35: tách vị trí công việc/chức vụ quản lý, cây KD động; SQL pending + 9 PGlite tests.
+- [ ] Áp SQL + nối nguồn quyền/org_change/UI cây: chờ chủ duyệt.
 - [ ] Sau xác minh: bỏ ràng buộc một người/ô, tháo liên kết cũ, xóa Role cũ.
 
 ## Chấp nhận mất quyền legacy — 15:05 UTC

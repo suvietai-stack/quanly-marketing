@@ -30,3 +30,21 @@ Bước 1–3 là bổ sung: rollback = tắt nhánh resolver mới (fallback sl
 ## Cần chủ xác nhận
 - Gắn Role theo (đơn vị, chức danh) như trên; muốn cùng chức danh ở mọi phòng dùng chung Role thì chỉ cần chọn Role giống nhau, không cần tầng toàn hệ thống.
 - Vị trí quản lý mặc định không giới hạn người (đúng lời chủ); có muốn đặt giới hạn riêng cho GĐ Điều hành / Trưởng phòng không?
+
+## Bổ sung 15:35 — vị trí công việc vs chức vụ quản lý, cây Kinh doanh động
+- Vị trí công việc (`org_titles.kind='staff'`): N người, không bao giờ giới hạn.
+- Chức vụ quản lý (`kind='manager'`): chỉ giới hạn khi `capacity` được đặt rõ; trigger `org_manager_capacity_guard` chặn chồng thời gian, thay người = kết thúc người cũ rồi bổ nhiệm mới.
+- Cây Kinh doanh: Khối → N Phòng → M Nhóm (tùy chọn). Phòng/nhóm mới chỉ cần thêm dòng `org_position_roles(unit, title, role)` dùng lại `role-v2-sales-staff / sales-team / sales-head`.
+- Phạm vi: quyền và đơn vị luôn lấy từ CÙNG một bổ nhiệm (`private.position_can`), Trưởng nhóm thấy nhóm mình, Trưởng phòng thấy cả phòng (gồm các nhóm), không xem toàn công ty.
+
+```text
+Khối Kinh doanh
+ └─ Phòng KD Sứ Quà Tặng 1 ── Trưởng Phòng [sales-head]
+     ├─ Nhóm KD 1 ── Trưởng nhóm [sales-team] · Nhân viên KD [sales-staff] → A, B, C…
+     └─ Nhóm KD 2 ── Nhân viên KD [sales-staff] → D, E…
+ └─ Phòng KD Phân Phối 2 (mới) ── Nhân viên KD [sales-staff] → …
+```
+
+SQL chờ duyệt: `docs/pending/position_roles_model.sql` (chỉ thêm mới, có backfill 16 vị trí). Kiểm thử: `src/lib/basePermissions/positionRoles.database.test.ts` — 9/9 đạt.
+
+Còn phải làm sau khi duyệt: nối `position_can` vào nguồn quyền chính (base_rules / account_permission_explain / biz_can / Marketing eligibility), org_change thêm lệnh gắn Role cho vị trí, giao diện cây gắn Role theo vị trí thay vì ô, rồi preview chứng minh quyền 26 người không đổi trước khi tắt nguồn ô.
