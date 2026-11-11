@@ -1,0 +1,6 @@
+DO $patch$ DECLARE d text; old_ text; new_ text; BEGIN
+ SELECT pg_get_functiondef('public.role_catalog_read()'::regprocedure) INTO d;
+ old_:='SELECT count(*) FROM profiles p WHERE EXISTS(SELECT 1 FROM jsonb_array_elements(private.base_rules(p.id,c)) rule WHERE rule->>''role_id''=r.id AND rule->>''effect''=''ALLOW'' AND private.has_permission(p.id,rule->>''permission''))';
+ new_:=$sql$SELECT count(DISTINCT a.user_id) FROM org_assignments a JOIN org_titles t ON t.id=a.title_id JOIN base_title_role_links l ON l.title_id=t.id AND l.role_id=r.id AND l.title_source=CASE WHEN t.source='biz_positions' THEN 'biz' ELSE 'base' END JOIN profiles p ON p.id=a.user_id WHERE a.status='active' AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now()) AND t.active AND p.status='Đang hoạt động' AND l.permission_signature=md5(coalesce(r.permissions,'{}')::text) AND EXISTS(SELECT 1 FROM unnest(l.enabled_permissions) perm WHERE perm=ANY(r.permissions) AND private.org_role_permission_ready(perm))$sql$;
+ IF strpos(d,old_)=0 THEN RAISE EXCEPTION 'Receiver count contract changed.'; END IF;EXECUTE replace(d,old_,new_);
+ END $patch$;

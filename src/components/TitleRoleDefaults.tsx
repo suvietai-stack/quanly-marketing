@@ -17,7 +17,6 @@ export function TitleRoleDefaults({ source, titleId, titleName, disabled, staged
   const query = useQuery({ queryKey: ['title-role-links', user?.id], queryFn: titleRolesApi.read, retry: false });
   const [open, setOpen] = useState(false);
   const [primary, setPrimary] = useState('');
-  const [extra, setExtra] = useState<string[]>([]);
   const [scope, setScope] = useState<'own' | 'unit'>('unit');
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
@@ -25,14 +24,14 @@ export function TitleRoleDefaults({ source, titleId, titleName, disabled, staged
   const [inspected, setInspected] = useState<OriginalRole | null>(null);
   const [enabled, setEnabled] = useState<Record<string,string[]>>({});
   const links = (stagedLinks ?? query.data?.links ?? []).filter(l => l.title_source === source && l.title_id === titleId);
-  const roles = query.data?.roles.filter(r => !r.restricted && r.catalog_state !== 'compatibility') ?? [];
+  const roles = query.data?.roles.filter(r => !r.restricted && r.catalog_state === 'standard' && !['role-content-web','role-seo','role-local-seo','role-social','role-video'].includes(r.id)) ?? [];
   const suggestion = suggestedRole(titleName, roles);
-  const start = () => { setPrimary(links.find(l => l.is_primary)?.role_id ?? ''); setExtra(links.filter(l => !l.is_primary).map(l => l.role_id)); setScope(links[0]?.scope_kind ?? 'own'); setEnabled(Object.fromEntries(links.map(l=>[l.role_id,l.enabled_permissions??[]]))); setReason(''); setError(''); setOpen(true); };
+  const start = () => { setPrimary(links.find(l => l.is_primary)?.role_id ?? ''); setScope(links[0]?.scope_kind ?? 'own'); setEnabled(Object.fromEntries(links.map(l=>[l.role_id,l.enabled_permissions??[]]))); setReason(''); setError(''); setOpen(true); };
   const save = async () => {
     setBusy(true); setError('');
     try {
       if (!onStage || source === 'biz') throw new Error('Giữ nguyên quyền Kinh doanh.');
-      const selected = primary ? [primary,...extra.filter(r=>r!==primary)].map(role_id=>({title_source:source,title_id:titleId,role_id,is_primary:role_id===primary,scope_kind:scope,revision:links.find(l=>l.role_id===role_id)?.revision??1,active:false,enabled_permissions:scope==='own'?(enabled[role_id]??[]):[]})) : [];
+      const selected = primary ? [primary].map(role_id=>({title_source:source,title_id:titleId,role_id,is_primary:role_id===primary,scope_kind:scope,revision:links.find(l=>l.role_id===role_id)?.revision??1,active:false,enabled_permissions:scope==='own'?(enabled[role_id]??[]):[]})) : [];
       onStage(selected); setOpen(false);
     } catch (e) { setError(e instanceof Error ? e.message : 'Không lưu được liên kết Role.'); }
     finally { setBusy(false); }
@@ -40,11 +39,10 @@ export function TitleRoleDefaults({ source, titleId, titleName, disabled, staged
   return <><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={disabled || source==='biz' || query.isPending || !!query.error} onClick={start}>Liên kết Role</Button><span className="text-xs text-muted-foreground">{links.length ? links.map(l => roles.find(r => r.id === l.role_id)?.name ?? l.role_id).join(' + ') : 'Chưa thiết lập Role'}</span>{links.length > 0 && <Badge variant="outline">{links.some(l=>l.enabled_permissions?.length)?`Đã bật ${links.reduce((n,l)=>n+(l.enabled_permissions?.length??0),0)} chức năng tự cấp`:'Chưa cấp quyền'}</Badge>}{query.error && <span role="alert" className="text-xs text-destructive">{query.error.message}</span>}</div>
     <Dialog open={open} onOpenChange={v => !busy && setOpen(v)}><DialogContent className="max-w-xl max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Role theo chức vụ — {titleName}</DialogTitle></DialogHeader><Badge variant="outline">Chờ xem trước và xác nhận</Badge>
       {suggestion && !primary && <div className="flex items-center justify-between gap-2 text-sm"><span>Role đề xuất: {suggestion.name}</span><Button size="sm" variant="outline" onClick={() => setPrimary(suggestion.id)}>Chọn đề xuất</Button></div>}
-      <Label>Role chính</Label><Select value={primary || '_none'} onValueChange={v => { setPrimary(v === '_none' ? '' : v); setExtra(xs => xs.filter(x => x !== v)); }}><SelectTrigger aria-label="Role chính"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="_none">Chưa thiết lập Role</SelectItem>{roles.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
-      <Label>Role bổ sung</Label><div className="max-h-52 overflow-y-auto border rounded-lg">{roles.filter(r => r.id !== primary).map(r => <div key={r.id} className="flex items-center gap-3 border-b p-2"><Checkbox aria-label={`Role bổ sung ${r.name}`} disabled={!primary} checked={extra.includes(r.id)} onCheckedChange={v => setExtra(xs => v === true ? [...xs, r.id] : xs.filter(x => x !== r.id))} /><span className="flex-1 text-sm">{r.name}</span><Button variant="ghost" size="sm" onClick={() => setInspected(r)}>Xem quyền</Button></div>)}</div>
+      <Label>Role chính</Label><Select value={primary || '_none'} onValueChange={v => { setPrimary(v === '_none' ? '' : v); }}><SelectTrigger aria-label="Role chính"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="_none">Chưa thiết lập Role</SelectItem>{roles.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent></Select>
       {primary && <Button variant="outline" onClick={() => setInspected(roles.find(r => r.id === primary) ?? null)}>Xem quyền của Role chính</Button>}
       <Label>Phạm vi đề xuất</Label><Select value={scope} onValueChange={v => setScope(v === 'own' ? 'own' : 'unit')}><SelectTrigger aria-label="Phạm vi Role"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="own">Cá nhân</SelectItem><SelectItem value="unit">Đơn vị bổ nhiệm và đơn vị con</SelectItem></SelectContent></Select>
-      {[primary,...extra].filter(Boolean).map(roleId=>{const role=roles.find(r=>r.id===roleId);return <div key={roleId} className="border-t pt-3 space-y-2"><Label>{role?.name} — chức năng tự cấp</Label>{role?.checks.filter(c=>c.ready).map(c=><label key={c.key} className="flex gap-2 items-center text-sm"><Checkbox disabled={scope!=='own'} checked={(enabled[roleId]??[]).includes(c.key)} onCheckedChange={v=>setEnabled(prev=>({...prev,[roleId]:v===true?[...(prev[roleId]??[]),c.key]:(prev[roleId]??[]).filter(p=>p!==c.key)}))}/>{PERMISSIONS.find(p=>p.key===c.key)?.label??c.key}</label>)}<p className="text-xs text-muted-foreground">{role?.checks.filter(c=>!c.ready).length??0} chức năng chưa thể tự cấp an toàn.</p></div>;})}
+      {[primary].filter(Boolean).map(roleId=>{const role=roles.find(r=>r.id===roleId);return <div key={roleId} className="border-t pt-3 space-y-2"><Label>{role?.name} — chức năng tự cấp</Label>{role?.checks.filter(c=>c.ready).map(c=><label key={c.key} className="flex gap-2 items-center text-sm"><Checkbox disabled={scope!=='own'} checked={(enabled[roleId]??[]).includes(c.key)} onCheckedChange={v=>setEnabled(prev=>({...prev,[roleId]:v===true?[...(prev[roleId]??[]),c.key]:(prev[roleId]??[]).filter(p=>p!==c.key)}))}/>{PERMISSIONS.find(p=>p.key===c.key)?.label??c.key}</label>)}<p className="text-xs text-muted-foreground">{role?.checks.filter(c=>!c.ready).length??0} chức năng chưa thể tự cấp an toàn.</p></div>;})}
       <p className="text-sm text-muted-foreground">Chỉ chức năng đã kiểm chứng rào máy chủ được tự cấp theo chức vụ; chức năng chưa an toàn hiển thị rõ lý do. Quyền trực tiếp và Kinh doanh giữ nguyên.</p>
       <Label htmlFor={`role-reason-${titleId}`}>Lý do thay đổi</Label><Input id={`role-reason-${titleId}`} value={reason} onChange={e => setReason(e.target.value)} />
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button disabled={busy || !reason.trim()} onClick={save}>{busy ? 'Đang lưu…' : 'Đưa vào thay đổi'}</Button>

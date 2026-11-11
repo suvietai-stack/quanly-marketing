@@ -17,9 +17,12 @@ export function marketingUnit(config: OrgConfig, unitId: string): boolean {
 }
 
 /** Build selected deltas only; an explicit transfer never touches concurrent sources. */
-export function appointmentDraft(config: OrgConfig, unitId: string, titleId: string, users: string[], mode: 'primary' | 'concurrent' | 'transfer', specialtyIds: string[], effectiveAt = new Date().toISOString()): OrgConfig {
+export function appointmentDraft(config: OrgConfig, unitId: string, titleId: string, users: string[], mode: 'primary' | 'concurrent' | 'transfer', specialtyIds: string[], effectiveAt = new Date().toISOString(), slotId?: string): OrgConfig {
   const title = config.titles.find(t => t.id === titleId && t.active);
   if (!title || (title.unit_id && title.unit_id !== unitId)) throw new Error('Chức vụ không thuộc đơn vị này.');
+  const slot=slotId?(config.position_slots??[]).find(s=>s.id===slotId&&s.title_id===titleId&&s.unit_id===unitId&&s.active):undefined;
+  if(slotId&&!slot)throw new Error('Ô vị trí không hợp lệ.');
+  if(slot&&(users.length!==1||config.memberships.some(m=>m.slot_id===slotId&&membershipEffective(m,effectiveAt))))throw new Error('Ô vị trí chỉ nhận một người và phải đang trống.');
   const ids = [...new Set(users)];
   if (!ids.length) throw new Error('Chọn nhân sự để bổ nhiệm.');
   if ((title.kind === 'manager' || title.capacity === 1) && ids.length > 1) throw new Error('Vị trí quản lý chỉ có một người.');
@@ -30,9 +33,10 @@ export function appointmentDraft(config: OrgConfig, unitId: string, titleId: str
   const now = effectiveAt;
   if (mode === 'transfer') next.memberships = next.memberships.map(m => primaryElsewhere.some(p => p.id === m.id) ? {...m, active: false, ends_at: now} : m);
   for (const userId of ids) {
-    if (next.memberships.some(m => membershipEffective(m) && m.user_id === userId && m.unit_id === unitId && m.title_id === titleId)) throw new Error('Nhân sự đã có phân công này.');
+    if (next.memberships.some(m => membershipEffective(m,effectiveAt) && m.user_id === userId && m.unit_id === unitId && m.title_id === titleId && (!slotId || m.slot_id===slotId))) throw new Error('Nhân sự đã có phân công này.');
     const beforeIds = new Set(next.memberships.map(m => m.id));
-    next = assignSlot(next, unitId, titleId, userId);
+    if(slot){next.memberships.push({id:crypto.randomUUID(),user_id:userId,unit_id:unitId,title_id:titleId,slot_id:slotId,active:true,starts_at:now});}
+    else next = assignSlot(next, unitId, titleId, userId);
     next.memberships = next.memberships.map(m => beforeIds.has(m.id) ? {...m,...(m.ends_at !== config.memberships.find(x=>x.id===m.id)?.ends_at ? {ends_at:now}: {})} : {...m, starts_at:now, kind: mode === 'concurrent' ? 'concurrent' : 'primary', specialty_ids: specialtyIds});
   }
   return next;
