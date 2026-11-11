@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean }
+export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean }
 export const permissionEditorApi = {
   async read(): Promise<EditorPolicy[]> {
     const { data, error } = await supabase.rpc('permission_editor_read');
@@ -18,8 +18,8 @@ export const permissionPresets = [
   { id: 'social', name: 'Social', kind: 'marketing_task', keys: ['social.view','social.post_view','social.post_view_mine','social.post_create','social.post_edit','social.post_start','social.post_submit'], note: 'Làm và gửi bài; giữ đúng người phụ trách và trạng thái.' },
   { id: 'video', name: 'Video', kind: 'marketing_task', keys: ['video.view','video.view_mine','video.create','video.script_start','video.script_submit','video.submit'], note: 'Làm và gửi video; không duyệt hoặc can thiệp trạng thái.' },
 ] as const;
-export function presetPermissions(keys: readonly string[], policy: EditorPolicy[]): string[] {
-  const allowed = new Set(policy.map(p => p.key));
+export function presetPermissions(keys: readonly string[], policy: EditorPolicy[], kind: string): string[] {
+  const allowed = new Set(policy.filter(p => kind === 'marketing_task' ? p.task_ready : p.position_ready).map(p => p.key));
   return [...new Set(keys.filter(k => allowed.has(k)))];
 }
 export function permissionDelta(before: string[], after: string[]) {
