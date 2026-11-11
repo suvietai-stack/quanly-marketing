@@ -1,0 +1,1 @@
+- UI access cache (accessCache.ts) is per-tab memory, per-user: passive refresh throttled, mutations force; transient errors keep last verified access ≤10 min and never past next_transition — server stays authoritative.
