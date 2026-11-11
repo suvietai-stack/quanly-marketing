@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { applySpecialtyDiff, type StaffSpecialty, type SpecialtyPermissionPreview } from '@/lib/marketingSpecialties';
 
 type Spec = { id: string; name: string; active: boolean; sort: number; role_id: string | null };
-const taskRoles = new Set(['role-content-web', 'role-seo', 'role-local-seo', 'role-social', 'role-video']);
+const taskRoles = new Set(['role-v2-task-content-web', 'role-v2-task-seo', 'role-v2-task-local-seo', 'role-v2-task-social', 'role-v2-task-video']);
 
 function useSpecialties() {
   const { user } = useCurrentUser();

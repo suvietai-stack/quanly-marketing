@@ -86,3 +86,10 @@ AS $function$ BEGIN IF NOT NEW.is_system THEN PERFORM private.role_editor_valida
 ;
 GRANT EXECUTE ON FUNCTION public.standard_role_catalog_setup() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.standard_role_catalog_consolidate() TO authenticated;
+
+-- 0375: restore previous org_effect_signature (MD5 ed1b359144b5e1265695479dacd83f74)
+CREATE OR REPLACE FUNCTION private.org_effect_signature(c jsonb, changes_ jsonb)
+ RETURNS jsonb
+ LANGUAGE sql
+ IMMUTABLE
+AS $function$ SELECT jsonb_build_object('position_slots',coalesce(c->'position_slots','[]'),'units',c->'units','titles',c->'titles','assignments',(SELECT coalesce(jsonb_agg(x ORDER BY x::text),'[]') FROM (SELECT jsonb_build_object('id',m->>'id','slot_id',m->>'slot_id','unit_id',m->>'unit_id','title_id',m->>'title_id','user_id',m->>'user_id','category',m->>'category','starts_at',m->>'starts_at','ends_at',m->>'ends_at','status',m->>'status') x FROM jsonb_array_elements(c->'memberships')m)s),'role_links',(SELECT coalesce(jsonb_agg(x ORDER BY x::text),'[]') FROM (SELECT jsonb_build_object('title_source',l->>'title_source','title_id',l->>'title_id','role_id',l->>'role_id','is_primary',l->>'is_primary','scope_kind',l->>'scope_kind','enabled_permissions',l->>'enabled_permissions','permission_signature',l->>'permission_signature') x FROM jsonb_array_elements(coalesce(c->'role_links','[]')) l)s),'permissions',jsonb_build_object('defaults',c->'defaults','bundles',c->'bundles','grants',c->'grants','bindings',c->'bindings')) $function$;

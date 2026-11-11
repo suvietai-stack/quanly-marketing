@@ -154,3 +154,18 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 - [x] Sửa timeout account_permission_explain: tính theo tập hợp thay vì gọi has_permission từng quyền (0351), ngữ nghĩa giữ nguyên.
 - [x] Sơ đồ khử trùng nhân sự theo user ID (đã có ở orgChart.ts); 121 test basePermissions + 5 test mới đạt, typecheck/build đạt, Preview xác nhận cả ba tab.
 - [ ] Chờ Admin: bổ nhiệm người thật tại Cơ cấu tổ chức; kiểm chứng bộ quyền quản lý/kế toán/cung ứng trước khi kích hoạt thêm liên kết Role. Chưa Publish.
+
+## Role v2 — bộ Role chuẩn mới (đang làm 11/11)
+
+- [x] A. Snapshot 33 Role cũ + liên kết + quyền hiệu lực 26 người (docs/backup/role-v2-2026-11-11/, SHA256SUMS).
+- [x] B1. Migration 0373/0374: cột catalog_generation, writer role_catalog_change hỗ trợ role-v2-*, nguồn nhiệm vụ Marketing, rollback docs/rollback/2026-11-11-role-v2.sql; 10 test PGlite đạt. (0372 là placeholder rỗng do gửi nhầm, vô hại.)
+- [ ] B2. Tạo 22 Role chuẩn (role-v2-*) qua RPC có kiểm toán; mkt-staff gồm order.assign/complete/cancel/edit/approve theo bằng chứng luồng Order.
+- [ ] C. Gắn mkt_specialties → 5 Role nhiệm vụ v2; kiểm thử Ngọc nhận web.content_view thật.
+- [ ] D. Tạo ô vị trí + gắn 27 bổ nhiệm đang hiệu lực qua org_change; ngoại lệ flag, không đoán.
+- [ ] E. Quyền riêng additive cho Ngọc (leave.approve) nếu preview xác nhận.
+- [ ] F. Đối chiếu effective before/after 26 người; chỉ xóa Role cũ khi 0 phụ thuộc; chưa Publish.
+- [x] B2. 25 Role chuẩn role-v2-* đã tạo live qua RPC có kiểm toán; 7 Role đã tối giản thêm (bỏ export rộng/phê duyệt ngoại module).
+- [x] C. 5 nhiệm vụ Marketing đã gắn Role v2; Ngọc có web.content_view/outline_start thật (nguồn marketing_appointment).
+- [x] D. 23/25 bổ nhiệm đang hiệu lực đã gắn ô vị trí (23 slots); sửa lỗi chữ ký tác động org_change (0375).
+- [ ] Ngoại lệ chờ chủ dự án: Vũ Văn Đức (GĐ ĐH, 16 quyền rộng từ link Viewer cũ), Nguyễn Quỳnh Anh (leave.export), Ngọc (leave.approve/view_assigned/report — 2 đơn chờ duyệt).
+- [ ] Xóa 33 Role cũ: chỉ sau khi chủ chốt 3 ngoại lệ + kiểm tra 0 phụ thuộc. Chưa Publish.

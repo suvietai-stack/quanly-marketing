@@ -11,7 +11,7 @@ it('legacy standard sales Role is not canonical',()=>expect(isCanonicalRole({id:
 it('generic leader never inherits staff Role or Viewer',()=>{
  const row=canonicalMapping(catalog)[0];expect(row.roleId).toBeUndefined();expect(row.exception).toBeTruthy();
 });
-it('audited Marketing head receives head draft, not Design or staff',()=>expect(canonicalMapping(catalog)[1].roleId).toBe('role-canonical-v1-mkt-head'));
+it('audited Marketing head receives head draft, not Design or staff',()=>expect(canonicalMapping(catalog)[1].roleId).toBe('role-v2-mkt-head'));
 it('25 new drafts never claim stored Roles/slots when there are none',()=>{
  const drafts=canonicalRoleDrafts(catalog,[]);expect(drafts).toHaveLength(25);expect(drafts.every(d=>!d.stored&&d.permissions.length===0)).toBe(true);
 });
