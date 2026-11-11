@@ -48,7 +48,7 @@ function InfoFields({ value, onChange }: { value: SocialPost; onChange: (p: Soci
           <SelectContent><SelectItem value="_">—</SelectItem>{plans.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
         </Select></div>
       <div><Label>Người viết</Label>
-        <SpecialtyStaffPicker specialty="social" value={value.writer} onChange={(v) => set({ writer: v })} people={people} /></div>
+        <SpecialtyStaffPicker specialty="social" value={value.writer} valueId={value.writerId} onChange={(v, id) => set({ writer: v, writerId: id })} people={people} /></div>
       <div><Label>Người duyệt</Label>
         <Select value={value.reviewer || "_"} onValueChange={(v) => set({ reviewer: v === "_" ? undefined : v })}>
           <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
@@ -60,7 +60,7 @@ function InfoFields({ value, onChange }: { value: SocialPost; onChange: (p: Soci
           <SelectContent><SelectItem value="_">—</SelectItem>{people.map((x) => <SelectItem key={x.id} value={x.name}>{x.name}</SelectItem>)}</SelectContent>
         </Select></div>
       <div><Label>Thiết kế / Video</Label>
-        <SpecialtyStaffPicker specialty="design" value={value.designer} onChange={(v) => set({ designer: v })} people={people} /></div>
+        <SpecialtyStaffPicker specialty="design" value={value.designer} valueId={value.designerId} onChange={(v, id) => set({ designer: v, designerId: id })} people={people} /></div>
       <div><Label>Ngày dự kiến đăng</Label>
         <Input type="date" value={value.scheduledDate || ""} onChange={(e) => set({ scheduledDate: e.target.value })} /></div>
       <div><Label>Ngày đăng thực tế</Label>
