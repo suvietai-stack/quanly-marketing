@@ -23,7 +23,7 @@ beforeAll(async () => {
   create table profiles(id uuid primary key, full_name text, status text);
   create table app_roles(id text primary key, name text, description text, permissions text[], is_system boolean, biz_scope text, biz_detail_exception boolean, biz_settings_disabled boolean, signal_scope text[], signal_scope_all boolean);
   create table user_roles(user_id uuid, role_id text, unique(user_id, role_id));
-  create table user_permission_overrides(user_id uuid, use_custom boolean, permissions text[]);
+  create table user_permission_overrides(user_id uuid, use_custom boolean, permissions text[], updated_at timestamptz default now());
   create table account_security_logs(actor_id uuid, target_id uuid, action text);
   create table org_titles(id uuid primary key, name text);
   create table base_title_role_links(title_source text, title_id uuid, role_id text, is_primary boolean, scope_kind text, active boolean, reason text, updated_by uuid, enabled_permissions text[], permission_signature text);
