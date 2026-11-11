@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { orderBySpecialty, type PersonLite, type SpecialtyCandidate } from '@/lib/marketingSpecialties';
+import { orderBySpecialty, resolvePickerSelection, type PersonLite, type SpecialtyCandidate } from '@/lib/marketingSpecialties';
 
 /**
  * Shared assignment picker: lists staff with the matching specialty first
@@ -43,14 +43,7 @@ export function SpecialtyStaffPicker({
   const candInfo = (id: string) => candidates.find(c => c.user_id === id);
 
   const byId = new Map(people.map((p) => [p.id, p]));
-  const nameMatches = value ? people.filter((p) => p.name === value) : [];
-  const selectedId =
-    valueId && byId.has(valueId)
-      ? valueId
-      : !valueId && value && nameMatches.length === 1
-        ? nameMatches[0].id
-        : undefined;
-  const legacyUnknown = !!value && !selectedId;
+  const { selectedId, legacyUnknown } = resolvePickerSelection(people, value, valueId);
 
   return (
     <div className="space-y-1">
