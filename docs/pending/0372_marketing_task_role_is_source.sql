@@ -3,6 +3,8 @@
 -- Nguyên tắc: Role nhiệm vụ Marketing là nguồn chuẩn — quyền có hiệu lực = app_roles.permissions đã cấu hình
 --   ∩ quyền backend đã kiểm chứng (mkt_specialty_permission_ready / org_role_permission_ready)
 --   ∩ nguồn đang hiệu lực ∩ còn thuộc hệ Marketing. KHÔNG có danh sách module cứng trong resolver.
+-- 0372 chưa được đăng ký migration. 0371 Tín hiệu đã áp dụng và không được sửa.
+-- Chạy preflight riêng trước file này; mọi câu lệnh phải nằm trong cùng giao dịch.
 
 -- B1. Nhiệm vụ Marketing luôn yêu cầu thuộc hệ Marketing, kể cả dòng cũ eligibility_enforced=false.
 --     Chuyên môn khác (Thiết kế/Chụp ảnh, role_kind<>'marketing_task') giữ nguyên ràng buộc riêng, không xóa dòng nào.
@@ -34,7 +36,8 @@ AS $function$
  WITH all_rules AS (SELECT r FROM jsonb_array_elements(private.reset_previous_base_rules(u,c)) r),
  appt AS (SELECT DISTINCT r->>'role_id' role_id, r->>'permission' p FROM all_rules WHERE r->>'source_kind'='marketing_appointment')
  SELECT coalesce(jsonb_agg(r),'[]') FROM all_rules
- WHERE NOT (r->>'source_kind'='marketing_specialty' AND EXISTS(SELECT 1 FROM appt WHERE appt.role_id=r->>'role_id' AND appt.p=r->>'permission'))
+ WHERE (r->>'effect'='DENY' OR NOT EXISTS(SELECT 1 FROM app_roles ar WHERE ar.id=r->>'role_id' AND ar.role_kind='marketing_task') OR private.org_marketing_eligible(u,c))
+   AND NOT (r->>'source_kind'='marketing_specialty' AND EXISTS(SELECT 1 FROM appt WHERE appt.role_id=r->>'role_id' AND appt.p=r->>'permission'))
    AND (NOT private.legacy_reset_applies(u) OR r->>'effect'='DENY'
      OR (r->>'source_kind' IN ('appointment_role','marketing_appointment') AND EXISTS(SELECT 1 FROM app_roles ar WHERE ar.id=r->>'role_id' AND ar.catalog_state='standard'))
      OR (r->>'source_kind'='marketing_specialty' AND EXISTS(SELECT 1 FROM app_roles ar WHERE ar.id=r->>'role_id' AND ar.catalog_state='standard' AND ar.role_kind='marketing_task')))
@@ -45,4 +48,20 @@ DO $patch$ DECLARE d text; o text := $o$(r.role_kind<>'marketing_task' OR NOT m.
  SELECT pg_get_functiondef('private.slot_previous_source_rows(jsonb)'::regprocedure) INTO d;
  IF position(o IN d)=0 THEN RAISE EXCEPTION 'role source pattern not found; stop'; END IF;
  EXECUTE replace(d,o,$n$(r.role_kind<>'marketing_task' OR private.org_marketing_eligible(m.user_id,c))$n$);
+END $patch$;
+
+-- Provenance: appointment tasks use the same eligibility; don't count a manual task twice.
+DO $patch$ DECLARE d text; old_ text := $o$m->'specialty_signatures'->>s.id=md5(coalesce(r.permissions,'{}')::text)$o$; BEGIN
+ SELECT pg_get_functiondef('private.role_source_rows(jsonb)'::regprocedure) INTO d;
+ IF strpos(d,old_)=0 THEN RAISE EXCEPTION 'assignment task source contract changed; stop'; END IF;
+ EXECUTE replace(d,old_,old_||$n$ AND (r.role_kind<>'marketing_task' OR private.org_marketing_eligible((m->>'user_id')::uuid,c))
+ AND NOT EXISTS(SELECT 1 FROM private.slot_previous_source_rows(c) prior WHERE prior.user_id=(m->>'user_id')::uuid AND prior.role_id=r.id AND prior.source_kind='task')$n$);
+END $patch$;
+
+-- Historical direct Role fallback must not escape Marketing eligibility/backend gates.
+-- Existing writes already prohibit direct task assignment; keep legacy reads safe too.
+DO $patch$ DECLARE d text; old_ text := $o$ur.user_id=_user_id AND _permission=ANY(r.permissions)$o$; BEGIN
+ SELECT pg_get_functiondef('private.has_permission(uuid,text)'::regprocedure) INTO d;
+ IF strpos(d,old_)=0 THEN RAISE EXCEPTION 'direct permission fallback contract changed; stop'; END IF;
+ EXECUTE replace(d,old_,old_||$n$ AND (r.role_kind<>'marketing_task' OR (private.org_marketing_eligible(_user_id,private.base_config()) AND private.mkt_specialty_permission_ready(_permission)))$n$);
 END $patch$;

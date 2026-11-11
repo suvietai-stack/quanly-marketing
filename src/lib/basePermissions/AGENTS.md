@@ -1,5 +1,6 @@
 # Base organization permissions
 - RoleCatalog is the sole Role editor; shared checklists use explicit server policy keys and dependency hints, never CRUD inference or global bulk grants, preserving native scope gates.
+- Default Role suggestions are stable-ID, explicit draft inputs intersected with the server editor policy; protected positions retain their stored permissions and presets never participate in resolution or automatic writes, preventing customization loss.
 - Personal writes require actor-bound expiring preview, unchanged direct Roles and additive-only save; active replace stays blocked and per-user audit preserves old state without a fourth source.
 - Slotted rules use the supplied snapshot's slot Role and its own assignment unit; unmapped rules alone retain title compatibility, preventing title fallback and cross-unit source mixing.
 - New/reactivated Marketing task rows carry eligibility_enforced; historical rows remain compatible until confirmed cutover, preserving live rights and independent Design specialties.
