@@ -1,5 +1,12 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Hoàn thiện theo yêu cầu bản 62
+- [ ] Tái hiện lỗi thêm người trên Preview; sửa lưu/xem trước và kiểm chứng bằng nhân sự cô lập.
+- [ ] Gộp quản trị thành Cơ cấu & Nhân sự / Role & Phân quyền; chuyển chức vụ về đúng drawer đơn vị, gỡ form trùng.
+- [ ] Chuẩn hóa Role quản lý dùng chung, giữ ID/lịch sử/quyền Kinh doanh, không reset.
+- [ ] Thống nhất miễn nhiệm/điều chuyển/kiêm nhiệm và sửa nhiệm vụ Marketing theo nguồn.
+- [ ] Kiểm thử trọng yếu, báo cáo phần còn thiếu; chưa Publish, không bổ nhiệm người thật.
+
 - [x] Sửa bổ nhiệm từ sơ đồ: nhân sự hợp lệ theo ID, nhiều người, xem trước/xác nhận/lưu tại chỗ; lưu và tải lại nhân viên giả lập không Role đã kiểm chứng trong môi trường cô lập.
 - [x] Đăng ký 10 Role riêng, liên kết 8 chức vụ với tập cá nhân đã kiểm chứng, giữ HCNS/Đóng hàng; ẩn legacy có snapshot, giữ nguồn hiện tại và Kinh doanh. Đây chưa phải bộ quyền quản lý hoàn chỉnh.
 - [x] 93 kiểm thử cô lập nguồn cấp/thu hồi, phạm vi, chống tự nâng quyền và catalog đạt; kiểm tra desktop/mobile, không lỗi JavaScript.
