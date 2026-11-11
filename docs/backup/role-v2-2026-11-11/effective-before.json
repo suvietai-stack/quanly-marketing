@@ -1,0 +1,2783 @@
+{
+ "dc42e189-e2de-4a60-a00a-d5277819ea13": {
+  "settings.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-mkt-staff"
+  ],
+  "leave.approve": [
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.report": [
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.view_assigned": [
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "order.approve": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.assign": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.cancel": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.complete": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.create": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.edit": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.history": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.open_delivery": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.request_changes": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.send_request": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.view": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.view_mine": [
+   "marketing_appointment:role-content-web"
+  ],
+  "overview.own_only": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ]
+ },
+ "2892b35d-b99e-4cd4-96fd-f20802b55ab7": {
+  "report.attention": [],
+  "report.attention_all": [],
+  "report.by_brand": [],
+  "report.by_module": [],
+  "report.by_staff": [],
+  "report.export": [],
+  "report.growth": [],
+  "report.view": [],
+  "settings.brand_types": [],
+  "settings.catalog": [],
+  "settings.design_types": [],
+  "settings.people": [],
+  "settings.plan_topic": [],
+  "settings.priority": [],
+  "settings.social_types": [],
+  "settings.system_edit": [],
+  "settings.system_view": [],
+  "settings.task_types": [],
+  "settings.template": [],
+  "settings.video_types": [],
+  "settings.view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "settings.view_presence": [],
+  "settings.web_types": [],
+  "system.branding": [],
+  "org.appoint_manager": [],
+  "org.assign_staff": [],
+  "org.manage_permissions": [],
+  "org.manage_structure": [],
+  "org.view": [],
+  "org.view_history": [],
+  "biz.crm_access": [],
+  "biz.crm_archive": [],
+  "biz.crm_edit_other": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_export": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_settings": [],
+  "biz.crm_transfer": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_view_scope": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.delete_cancelled": [],
+  "oq.manage": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_all": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer"
+  ],
+  "oq.report_export": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_all": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.edit_own": [],
+  "att.manage": [],
+  "att.reconcile": [],
+  "att.report": [],
+  "att.settings": [],
+  "att.view_all": [],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.approve": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.cancel_handle": [],
+  "leave.create": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create_for": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.edit_others": [],
+  "leave.edit_own": [],
+  "leave.exception": [],
+  "leave.export": [],
+  "leave.reassign": [],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.report": [],
+  "leave.settings": [],
+  "leave.view_all": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.view_assigned": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_unit": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "create_content_optimization": [],
+  "create_scheduled_content_optimization": [],
+  "pause_content_optimization_schedule": [],
+  "set_content_optimization_schedule": [],
+  "web.approve_web_draft": [],
+  "web.assign_content": [],
+  "web.assign_seo": [],
+  "web.assign_tech": [],
+  "web.backlink_cost": [],
+  "web.backlink_create": [],
+  "web.backlink_delete": [],
+  "web.backlink_edit": [],
+  "web.backlink_open": [],
+  "web.backlink_status": [],
+  "web.backlink_view": [],
+  "web.checktop_filter_topic": [],
+  "web.checktop_kw_create": [],
+  "web.checktop_kw_delete": [],
+  "web.checktop_kw_edit": [],
+  "web.checktop_open_url": [],
+  "web.checktop_primary": [],
+  "web.checktop_secondary": [],
+  "web.checktop_view": [],
+  "web.complete": [],
+  "web.content_assign": [],
+  "web.content_cancel": [],
+  "web.content_create": [],
+  "web.content_delete": [],
+  "web.content_edit": [],
+  "web.content_edit_article_reviewer": [],
+  "web.content_edit_brief": [],
+  "web.content_edit_deadline": [],
+  "web.content_edit_outline_reviewer": [],
+  "web.content_edit_publisher": [],
+  "web.content_edit_writer": [],
+  "web.content_history": [],
+  "web.content_note": [],
+  "web.content_restore": [],
+  "web.content_view": [],
+  "web.content_view_all": [],
+  "web.content_view_mine": [],
+  "web.create": [],
+  "web.delete": [],
+  "web.edit": [],
+  "web.edit_published_url": [],
+  "web.edit_web_draft_note": [],
+  "web.edit_web_draft_url": [],
+  "web.entity_create": [],
+  "web.entity_delete": [],
+  "web.entity_edit": [],
+  "web.entity_open_link": [],
+  "web.entity_reveal_password": [],
+  "web.entity_view": [],
+  "web.entity_view_account": [],
+  "web.force_change_web_draft_status": [],
+  "web.force_status": [],
+  "web.growth_create": [],
+  "web.growth_delete": [],
+  "web.growth_edit": [],
+  "web.growth_open": [],
+  "web.growth_view": [],
+  "web.index_view": [],
+  "web.keyword_manage_sheet": [],
+  "web.keyword_open_sheet": [],
+  "web.keyword_topic_create": [],
+  "web.keyword_topic_delete": [],
+  "web.keyword_topic_edit": [],
+  "web.keyword_view": [],
+  "web.manage_info": [],
+  "web.move_pending_publish": [],
+  "web.open_detail": [],
+  "web.open_published_url": [],
+  "web.outline_approve": [],
+  "web.outline_reject": [],
+  "web.outline_resubmit": [],
+  "web.outline_start": [],
+  "web.outline_submit": [],
+  "web.post_approve": [],
+  "web.post_reject": [],
+  "web.post_resubmit": [],
+  "web.post_submit": [],
+  "web.post_write_start": [],
+  "web.publish": [],
+  "web.reopt_assign": [],
+  "web.reopt_complete": [],
+  "web.reopt_create": [],
+  "web.reopt_delete": [],
+  "web.reopt_edit": [],
+  "web.reopt_status": [],
+  "web.reopt_view": [],
+  "web.report_action": [],
+  "web.report_alerts": [],
+  "web.report_alerts_all": [],
+  "web.report_by_staff": [],
+  "web.report_by_topic": [],
+  "web.report_view": [],
+  "web.request_web_draft_revision": [],
+  "web.resubmit_web_draft_review": [],
+  "web.select_shared_entity": [],
+  "web.start_web_draft_layout": [],
+  "web.submit_web_draft_review": [],
+  "web.tech_check": [],
+  "web.tech_edit_desc": [],
+  "web.tech_reset": [],
+  "web.tech_template": [],
+  "web.tech_view": [],
+  "web.update_index": [],
+  "web.update_share": [],
+  "web.update_share_date": [],
+  "web.view": [],
+  "web.view_all": [],
+  "web.view_mine": [],
+  "web.view_web_draft_revision_note": [],
+  "web.view_web_draft_url": [],
+  "kpi.goal_archive": [],
+  "kpi.goal_create": [],
+  "kpi.goal_delete": [],
+  "kpi.goal_edit": [],
+  "kpi.kr_adjust": [],
+  "kpi.kr_assign": [],
+  "kpi.period_manage": [],
+  "kpi.report": [],
+  "kpi.report_export": [],
+  "kpi.view_all": [],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "local.assign_owner": [],
+  "local.create": [],
+  "local.delete": [],
+  "local.edit": [],
+  "local.growth_create": [],
+  "local.growth_delete": [],
+  "local.growth_edit": [],
+  "local.growth_view": [],
+  "local.photo": [],
+  "local.post_create": [],
+  "local.post_delete": [],
+  "local.post_edit": [],
+  "local.products": [],
+  "local.report": [],
+  "local.review": [],
+  "local.review_create": [],
+  "local.review_reply": [],
+  "local.review_status": [],
+  "local.view": [],
+  "local.view_all": [],
+  "local.view_mine": [],
+  "k3.comment": [],
+  "k3.settings": [],
+  "k3.use": [],
+  "k3.view_scope": [],
+  "biz.approval_view": [],
+  "biz.dashboard_public": [],
+  "biz.deadline_manage": [],
+  "biz.dept_manage": [],
+  "biz.goal_approve": [],
+  "biz.goal_submit": [],
+  "biz.kr_manage": [],
+  "biz.org_manage": [],
+  "biz.plan_approve": [],
+  "biz.plan_request_revision": [],
+  "biz.plan_submit": [],
+  "biz.report_approve": [],
+  "biz.report_submit": [],
+  "biz.view_all": [],
+  "biz.view_dept": [],
+  "biz.view_own": [],
+  "biz.workflow_manage": [],
+  "sale_work.access": [],
+  "sale_work.manage_credentials": [],
+  "sale_work.manage_settings": [],
+  "sale_work.view_audit": [],
+  "sale_work.view_own": [],
+  "sao.manual_grant": [],
+  "sao.program_manage": [],
+  "sao.shop_manage": [],
+  "social.assign_owner": [],
+  "social.create": [],
+  "social.delete": [],
+  "social.edit": [],
+  "social.growth_create": [],
+  "social.growth_delete": [],
+  "social.growth_edit": [],
+  "social.growth_open": [],
+  "social.growth_update": [],
+  "social.growth_view": [],
+  "social.manage_info": [],
+  "social.post_approve": [],
+  "social.post_assign": [],
+  "social.post_cancel": [],
+  "social.post_complete": [],
+  "social.post_confirm_published": [],
+  "social.post_create": [],
+  "social.post_delete": [],
+  "social.post_edit": [],
+  "social.post_force_status": [],
+  "social.post_history": [],
+  "social.post_move_pending_publish": [],
+  "social.post_request_changes": [],
+  "social.post_restore": [],
+  "social.post_resubmit": [],
+  "social.post_start": [],
+  "social.post_submit": [],
+  "social.post_view": [],
+  "social.post_view_all": [],
+  "social.post_view_mine": [],
+  "social.report": [],
+  "social.view": [],
+  "social.view_all": [],
+  "social.view_mine": [],
+  "finance.incoming.bank_config": [],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.gmf_config": [],
+  "finance.incoming.manage": [],
+  "finance.incoming.manual_create": [],
+  "finance.incoming.manual_manage": [],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.reconcile": [
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.remind": [
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view_totals": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view_unit": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "fr.advance.approve": [],
+  "fr.advance.pay": [],
+  "fr.advance.report": [],
+  "fr.advance.settings": [],
+  "fr.advance.view_scope": [],
+  "fr.payment.approve": [],
+  "fr.payment.pay": [],
+  "fr.payment.report": [],
+  "fr.payment.settings": [],
+  "fr.payment.view_scope": [],
+  "fr.salary.approve": [],
+  "fr.salary.deduct": [],
+  "fr.salary.pay": [],
+  "fr.salary.report": [],
+  "fr.salary.settings": [],
+  "fr.salary.view_scope": [],
+  "settings.account_approve": [],
+  "settings.account_lock": [],
+  "settings.account_reject": [],
+  "settings.activity_log": [],
+  "settings.assign_role": [],
+  "settings.login_history": [],
+  "settings.permission": [],
+  "settings.role": [],
+  "settings.user_create": [],
+  "settings.user_custom_perm": [],
+  "settings.user_delete": [],
+  "settings.user_edit": [],
+  "settings.user_reset_password": [],
+  "settings.user_view": [],
+  "task.accept": [],
+  "task.add_note": [],
+  "task.approve_completion": [],
+  "task.assign": [],
+  "task.cancel": [],
+  "task.complete": [],
+  "task.create": [],
+  "task.delete": [],
+  "task.edit": [],
+  "task.edit_assignee": [],
+  "task.edit_deadline": [],
+  "task.edit_priority": [],
+  "task.force_change_status": [],
+  "task.force_status": [],
+  "task.reopen_completed": [],
+  "task.request_revision": [],
+  "task.restore": [],
+  "task.resubmit_completion": [],
+  "task.start": [],
+  "task.submit_completion": [],
+  "task.update_result": [],
+  "task.update_status": [],
+  "task.view": [],
+  "task.view_all": [],
+  "task.view_created_by_me": [],
+  "task.view_history": [],
+  "task.view_mine": [],
+  "ot.accept": [],
+  "ot.assign": [],
+  "ot.create": [],
+  "ot.manage": [],
+  "ot.report": [],
+  "ot.report_export": [],
+  "ot.reschedule_propose": [],
+  "ot.reschedule_reply": [],
+  "ot.settings": [],
+  "ot.stage_update": [],
+  "ot.supplier": [],
+  "ot.task_update": [],
+  "ot.task_view": [],
+  "ot.view_all": [],
+  "ot.view_own": [],
+  "ot.view_unit": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "order.approve": [],
+  "order.assign": [],
+  "order.cancel": [],
+  "order.complete": [],
+  "order.create": [],
+  "order.delete": [],
+  "order.deliver": [],
+  "order.edit": [],
+  "order.edit_reviewer": [],
+  "order.force_status": [],
+  "order.history": [],
+  "order.marketing_design.approve": [],
+  "order.marketing_design.assign": [],
+  "order.marketing_design.cancel": [],
+  "order.marketing_design.complete": [],
+  "order.marketing_design.create": [],
+  "order.marketing_design.delete": [],
+  "order.marketing_design.deliver": [],
+  "order.marketing_design.edit": [],
+  "order.marketing_design.edit_reviewer": [],
+  "order.marketing_design.force_status": [],
+  "order.marketing_design.report_view": [],
+  "order.marketing_design.request_changes": [],
+  "order.marketing_design.restore": [],
+  "order.marketing_design.resubmit": [],
+  "order.marketing_design.send_request": [],
+  "order.marketing_design.submit": [],
+  "order.marketing_design.take": [],
+  "order.marketing_design.update_draft": [],
+  "order.marketing_design.view": [],
+  "order.marketing_design.view_all": [],
+  "order.open_delivery": [],
+  "order.order_mockup.approve": [],
+  "order.order_mockup.assign": [],
+  "order.order_mockup.cancel": [],
+  "order.order_mockup.complete": [],
+  "order.order_mockup.create": [],
+  "order.order_mockup.delete": [],
+  "order.order_mockup.deliver": [],
+  "order.order_mockup.edit": [],
+  "order.order_mockup.edit_reviewer": [],
+  "order.order_mockup.force_status": [],
+  "order.order_mockup.report_view": [],
+  "order.order_mockup.request_changes": [],
+  "order.order_mockup.restore": [],
+  "order.order_mockup.resubmit": [],
+  "order.order_mockup.send_request": [],
+  "order.order_mockup.submit": [],
+  "order.order_mockup.take": [],
+  "order.order_mockup.update_draft": [],
+  "order.order_mockup.view": [],
+  "order.order_mockup.view_all": [],
+  "order.photo.approve": [],
+  "order.photo.assign": [],
+  "order.photo.cancel": [],
+  "order.photo.complete": [],
+  "order.photo.create": [],
+  "order.photo.delete": [],
+  "order.photo.deliver": [],
+  "order.photo.edit": [],
+  "order.photo.edit_reviewer": [],
+  "order.photo.force_status": [],
+  "order.photo.report_view": [],
+  "order.photo.request_changes": [],
+  "order.photo.restore": [],
+  "order.photo.resubmit": [],
+  "order.photo.send_request": [],
+  "order.photo.submit": [],
+  "order.photo.take": [],
+  "order.photo.update_draft": [],
+  "order.photo.view": [],
+  "order.photo.view_all": [],
+  "order.report_view": [
+   "appointment_role:role-viewer"
+  ],
+  "order.request_changes": [],
+  "order.restore": [],
+  "order.resubmit": [],
+  "order.send_request": [],
+  "order.submit": [],
+  "order.take": [],
+  "order.update_draft": [],
+  "order.view": [
+   "appointment_role:role-viewer"
+  ],
+  "order.view_all": [
+   "appointment_role:role-viewer"
+  ],
+  "order.view_mine": [],
+  "brand.contact": [],
+  "brand.create": [],
+  "brand.delete": [],
+  "brand.docs": [],
+  "brand.edit": [],
+  "brand.identity": [],
+  "brand.notes": [],
+  "brand.profile": [],
+  "brand.staff": [],
+  "brand.view": [],
+  "brand.view_all": [],
+  "brand.view_channels": [],
+  "integration.facebook_leads": [],
+  "integration.website_forms": [],
+  "signal.assign": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "signal.catalog": [],
+  "signal.create": [],
+  "signal.delete": [],
+  "signal.edit": [],
+  "signal.manage": [],
+  "signal.reassign": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.view_all": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer"
+  ],
+  "overview.alerts": [],
+  "overview.all_dept": [],
+  "overview.brand_summary": [],
+  "overview.module_summary": [],
+  "overview.own_only": [],
+  "overview.staff_summary": [],
+  "overview.view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "video.approve": [],
+  "video.assign": [],
+  "video.cancel": [],
+  "video.complete": [],
+  "video.confirm_published": [],
+  "video.create": [],
+  "video.create_design_order": [],
+  "video.delete": [],
+  "video.deliver": [],
+  "video.edit": [],
+  "video.edit_cut": [],
+  "video.footage": [],
+  "video.force_status": [],
+  "video.history": [],
+  "video.move_editing": [],
+  "video.move_shooting": [],
+  "video.reject": [],
+  "video.restore": [],
+  "video.resubmit": [],
+  "video.script_approve": [],
+  "video.script_reject": [],
+  "video.script_resubmit": [],
+  "video.script_start": [],
+  "video.script_submit": [],
+  "video.submit": [],
+  "video.view": [],
+  "video.view_all": [],
+  "video.view_mine": []
+ },
+ "85a81154-d205-4e51-b2a9-88ee221a4b9b": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "91046d4c-1799-4aa5-81c5-4e5174bea7b6": {
+  "settings.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-video"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-video"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-video"
+  ],
+  "leave.approve": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "leave.create_for": [
+   "marketing_appointment:role-seo"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-video"
+  ],
+  "leave.report": [
+   "marketing_appointment:role-video"
+  ],
+  "leave.view_assigned": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-video"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.approve": [
+   "marketing_appointment:role-seo"
+  ],
+  "order.assign": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.cancel": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.complete": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.create": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.history": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.request_changes": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.send_request": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.view": [
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "order.view_all": [
+   "marketing_appointment:role-seo"
+  ],
+  "order.view_mine": [
+   "marketing_appointment:role-video"
+  ],
+  "overview.own_only": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-video"
+  ]
+ },
+ "84de68f6-ab0d-4f99-b0de-a28956fcfa00": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "ce2da30e-8064-4088-a0a4-52217aa03fde": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "160258ce-d6d3-4780-80e1-e9ead132465f": {
+  "att.create": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.create": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.deliver": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.history": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.open_delivery": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.resubmit": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.submit": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.take": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.update_draft": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.view": [
+   "appointment_role:role-standard-design-staff"
+  ],
+  "order.view_mine": [
+   "appointment_role:role-standard-design-staff"
+  ]
+ },
+ "cce8680c-529a-4fff-ae7c-8d14fa266d4c": {},
+ "5b6906b8-3022-48fd-8551-458efdd198a5": {},
+ "36f8dac8-b00a-45c0-9095-50faf082cba3": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "1ed4740b-fcaf-44fb-97a3-1c308eb48d8d": {
+  "oq.accept": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "ot.reschedule_propose": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "ot.reschedule_reply": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "ot.task_update": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "ot.task_view": [
+   "appointment_role:role-standard-buyer"
+  ],
+  "ot.view_own": [
+   "appointment_role:role-standard-buyer"
+  ]
+ },
+ "18d0a7d0-a948-496b-b4d3-75990a762cef": {},
+ "5fb4e585-b43f-4fa3-a063-5fac363ec1cc": {
+  "settings.view": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.create": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.edit_own": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.manage": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.reconcile": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.report": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.settings": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.view_all": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.view_own": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "att.witness": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.approve": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.cancel_handle": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.create": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.create_for": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.edit_others": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.edit_own": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.exception": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.export": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.reassign": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.recall": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.report": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.settings": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.view_all": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.view_assigned": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "overview.own_only": [
+   "appointment_role:role-wupj68a6"
+  ],
+  "overview.view": [
+   "appointment_role:role-wupj68a6"
+  ]
+ },
+ "e5f24c7d-a614-4f13-9138-8736f12e2053": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "f8fb38be-55ec-4117-9c99-0c4a05b8a5a6": {
+  "att.create": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.manage": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.manual_create": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.manual_manage": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.reconcile": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.remind": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-account-chief"
+  ],
+  "finance.incoming.view_totals": [
+   "appointment_role:role-standard-account-chief"
+  ]
+ },
+ "f2ad667f-af07-4bad-be3c-6da39bc2e8f0": {
+  "settings.view": [
+   "appointment_role:role-viewer"
+  ],
+  "oq.report_all": [
+   "appointment_role:role-viewer"
+  ],
+  "oq.view_all": [
+   "appointment_role:role-viewer"
+  ],
+  "att.create": [
+   "appointment_role:role-viewer"
+  ],
+  "att.witness": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.approve": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.create": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.create_for": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.view_all": [
+   "appointment_role:role-viewer"
+  ],
+  "leave.view_assigned": [
+   "appointment_role:role-viewer"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.reconcile": [
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.remind": [
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view_totals": [
+   "appointment_role:role-viewer"
+  ],
+  "order.report_view": [
+   "appointment_role:role-viewer"
+  ],
+  "order.view": [
+   "appointment_role:role-viewer"
+  ],
+  "order.view_all": [
+   "appointment_role:role-viewer"
+  ],
+  "signal.report": [
+   "appointment_role:role-viewer"
+  ],
+  "signal.view_all": [
+   "appointment_role:role-viewer"
+  ],
+  "overview.view": [
+   "appointment_role:role-viewer"
+  ]
+ },
+ "4a03d311-1e80-4c9f-8ec9-e8fad8f710e8": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "97e3f6de-be8e-4f58-9d39-5b2e3e208cb0": {},
+ "9ecab0f1-cbf4-4613-9845-10c64b59794c": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "k3.use": [],
+  "biz.dashboard_public": [],
+  "biz.goal_submit": [],
+  "biz.plan_submit": [],
+  "biz.report_submit": [],
+  "biz.view_own": [],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "69eade19-c831-450f-a2ff-8b1ae92f0382": {},
+ "0c39aa34-8bf3-4826-8d3c-f477f9ae2833": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "80414606-deaa-489a-81f4-52135bf6f24b": {},
+ "3ecff748-acaf-454f-b29c-5bf3ab1d8469": {
+  "settings.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-mkt-staff"
+  ],
+  "leave.approve": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "leave.create_for": [
+   "marketing_appointment:role-social"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.report": [
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.view_assigned": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.approve": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.assign": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.cancel": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.complete": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.create": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.edit": [
+   "marketing_appointment:role-content-web"
+  ],
+  "order.history": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.open_delivery": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.request_changes": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.send_request": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.view": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "order.view_mine": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "overview.own_only": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ]
+ },
+ "d4d24d49-8351-4b89-8df8-bbff70e917bc": {
+  "settings.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-staff"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-sales-staff"
+  ]
+ },
+ "dd01b165-8889-4f46-ac77-8dfe84c0c75f": {
+  "settings.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "att.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-mkt-staff"
+  ],
+  "leave.approve": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "leave.create": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "leave.create_for": [
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "leave.recall": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.report": [
+   "marketing_appointment:role-content-web"
+  ],
+  "leave.view_assigned": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web"
+  ],
+  "kpi.view_own": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.approve": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.assign": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.cancel": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.complete": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.create": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.edit": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo"
+  ],
+  "order.history": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.open_delivery": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.request_changes": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.send_request": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.view": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.view_all": [
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo"
+  ],
+  "order.view_mine": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-social"
+  ],
+  "overview.own_only": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "overview.view": [
+   "appointment_role:role-standard-mkt-staff",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ]
+ },
+ "513712ca-d679-41aa-9c68-97c3bb6cd9df": {
+  "report.attention": [],
+  "report.attention_all": [],
+  "report.by_brand": [],
+  "report.by_module": [],
+  "report.by_staff": [],
+  "report.export": [],
+  "report.growth": [],
+  "report.view": [],
+  "settings.brand_types": [],
+  "settings.catalog": [],
+  "settings.design_types": [],
+  "settings.people": [],
+  "settings.plan_topic": [],
+  "settings.priority": [],
+  "settings.social_types": [],
+  "settings.system_edit": [],
+  "settings.system_view": [],
+  "settings.task_types": [],
+  "settings.template": [],
+  "settings.video_types": [],
+  "settings.view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "settings.view_presence": [],
+  "settings.web_types": [],
+  "system.branding": [],
+  "org.appoint_manager": [],
+  "org.assign_staff": [],
+  "org.manage_permissions": [],
+  "org.manage_structure": [],
+  "org.view": [],
+  "org.view_history": [],
+  "biz.crm_access": [],
+  "biz.crm_archive": [],
+  "biz.crm_edit_other": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_export": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_settings": [],
+  "biz.crm_transfer": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_use": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "biz.crm_view_scope": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.accept": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.create": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.delete_cancelled": [],
+  "oq.manage": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.reply_price": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.reply_progress": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.report_all": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "oq.report_export": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.report_own": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "oq.view_all": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "oq.view_own": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "att.create": [
+   "appointment_role:role-standard-mkt-director",
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "att.edit_own": [],
+  "att.manage": [],
+  "att.reconcile": [],
+  "att.report": [],
+  "att.settings": [],
+  "att.view_all": [],
+  "att.view_own": [
+   "appointment_role:role-standard-sales-head",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-video"
+  ],
+  "att.witness": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-video"
+  ],
+  "leave.approve": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "leave.cancel_handle": [],
+  "leave.create": [
+   "appointment_role:role-standard-mkt-director",
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "leave.create_for": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "leave.edit_others": [],
+  "leave.edit_own": [],
+  "leave.exception": [],
+  "leave.export": [],
+  "leave.reassign": [],
+  "leave.recall": [
+   "appointment_role:role-standard-mkt-director",
+   "appointment_role:role-standard-sales-head",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-video"
+  ],
+  "leave.report": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-video"
+  ],
+  "leave.settings": [],
+  "leave.view_all": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "leave.view_assigned": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "leave.view_own": [
+   "appointment_role:role-standard-mkt-director",
+   "appointment_role:role-standard-sales-head",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-video"
+  ],
+  "leave.view_unit": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "create_content_optimization": [],
+  "create_scheduled_content_optimization": [],
+  "pause_content_optimization_schedule": [],
+  "set_content_optimization_schedule": [],
+  "web.approve_web_draft": [],
+  "web.assign_content": [],
+  "web.assign_seo": [],
+  "web.assign_tech": [],
+  "web.backlink_cost": [],
+  "web.backlink_create": [],
+  "web.backlink_delete": [],
+  "web.backlink_edit": [],
+  "web.backlink_open": [],
+  "web.backlink_status": [],
+  "web.backlink_view": [],
+  "web.checktop_filter_topic": [],
+  "web.checktop_kw_create": [],
+  "web.checktop_kw_delete": [],
+  "web.checktop_kw_edit": [],
+  "web.checktop_open_url": [],
+  "web.checktop_primary": [],
+  "web.checktop_secondary": [],
+  "web.checktop_view": [],
+  "web.complete": [],
+  "web.content_assign": [],
+  "web.content_cancel": [],
+  "web.content_create": [],
+  "web.content_delete": [],
+  "web.content_edit": [],
+  "web.content_edit_article_reviewer": [],
+  "web.content_edit_brief": [],
+  "web.content_edit_deadline": [],
+  "web.content_edit_outline_reviewer": [],
+  "web.content_edit_publisher": [],
+  "web.content_edit_writer": [],
+  "web.content_history": [],
+  "web.content_note": [],
+  "web.content_restore": [],
+  "web.content_view": [],
+  "web.content_view_all": [],
+  "web.content_view_mine": [],
+  "web.create": [],
+  "web.delete": [],
+  "web.edit": [],
+  "web.edit_published_url": [],
+  "web.edit_web_draft_note": [],
+  "web.edit_web_draft_url": [],
+  "web.entity_create": [],
+  "web.entity_delete": [],
+  "web.entity_edit": [],
+  "web.entity_open_link": [],
+  "web.entity_reveal_password": [],
+  "web.entity_view": [],
+  "web.entity_view_account": [],
+  "web.force_change_web_draft_status": [],
+  "web.force_status": [],
+  "web.growth_create": [],
+  "web.growth_delete": [],
+  "web.growth_edit": [],
+  "web.growth_open": [],
+  "web.growth_view": [],
+  "web.index_view": [],
+  "web.keyword_manage_sheet": [],
+  "web.keyword_open_sheet": [],
+  "web.keyword_topic_create": [],
+  "web.keyword_topic_delete": [],
+  "web.keyword_topic_edit": [],
+  "web.keyword_view": [],
+  "web.manage_info": [],
+  "web.move_pending_publish": [],
+  "web.open_detail": [],
+  "web.open_published_url": [],
+  "web.outline_approve": [],
+  "web.outline_reject": [],
+  "web.outline_resubmit": [],
+  "web.outline_start": [],
+  "web.outline_submit": [],
+  "web.post_approve": [],
+  "web.post_reject": [],
+  "web.post_resubmit": [],
+  "web.post_submit": [],
+  "web.post_write_start": [],
+  "web.publish": [],
+  "web.reopt_assign": [],
+  "web.reopt_complete": [],
+  "web.reopt_create": [],
+  "web.reopt_delete": [],
+  "web.reopt_edit": [],
+  "web.reopt_status": [],
+  "web.reopt_view": [],
+  "web.report_action": [],
+  "web.report_alerts": [],
+  "web.report_alerts_all": [],
+  "web.report_by_staff": [],
+  "web.report_by_topic": [],
+  "web.report_view": [],
+  "web.request_web_draft_revision": [],
+  "web.resubmit_web_draft_review": [],
+  "web.select_shared_entity": [],
+  "web.start_web_draft_layout": [],
+  "web.submit_web_draft_review": [],
+  "web.tech_check": [],
+  "web.tech_edit_desc": [],
+  "web.tech_reset": [],
+  "web.tech_template": [],
+  "web.tech_view": [],
+  "web.update_index": [],
+  "web.update_share": [],
+  "web.update_share_date": [],
+  "web.view": [],
+  "web.view_all": [],
+  "web.view_mine": [],
+  "web.view_web_draft_revision_note": [],
+  "web.view_web_draft_url": [],
+  "kpi.goal_archive": [],
+  "kpi.goal_create": [],
+  "kpi.goal_delete": [],
+  "kpi.goal_edit": [],
+  "kpi.kr_adjust": [],
+  "kpi.kr_assign": [],
+  "kpi.period_manage": [],
+  "kpi.report": [],
+  "kpi.report_export": [],
+  "kpi.view_all": [],
+  "kpi.view_own": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "local.assign_owner": [],
+  "local.create": [],
+  "local.delete": [],
+  "local.edit": [],
+  "local.growth_create": [],
+  "local.growth_delete": [],
+  "local.growth_edit": [],
+  "local.growth_view": [],
+  "local.photo": [],
+  "local.post_create": [],
+  "local.post_delete": [],
+  "local.post_edit": [],
+  "local.products": [],
+  "local.report": [],
+  "local.review": [],
+  "local.review_create": [],
+  "local.review_reply": [],
+  "local.review_status": [],
+  "local.view": [],
+  "local.view_all": [],
+  "local.view_mine": [],
+  "k3.comment": [],
+  "k3.settings": [],
+  "k3.use": [],
+  "k3.view_scope": [],
+  "biz.approval_view": [],
+  "biz.dashboard_public": [],
+  "biz.deadline_manage": [],
+  "biz.dept_manage": [],
+  "biz.goal_approve": [],
+  "biz.goal_submit": [],
+  "biz.kr_manage": [],
+  "biz.org_manage": [],
+  "biz.plan_approve": [],
+  "biz.plan_request_revision": [],
+  "biz.plan_submit": [],
+  "biz.report_approve": [],
+  "biz.report_submit": [],
+  "biz.view_all": [],
+  "biz.view_dept": [],
+  "biz.view_own": [],
+  "biz.workflow_manage": [],
+  "sale_work.access": [],
+  "sale_work.manage_credentials": [],
+  "sale_work.manage_settings": [],
+  "sale_work.view_audit": [],
+  "sale_work.view_own": [],
+  "sao.manual_grant": [],
+  "sao.program_manage": [],
+  "sao.shop_manage": [],
+  "social.assign_owner": [],
+  "social.create": [],
+  "social.delete": [],
+  "social.edit": [],
+  "social.growth_create": [],
+  "social.growth_delete": [],
+  "social.growth_edit": [],
+  "social.growth_open": [],
+  "social.growth_update": [],
+  "social.growth_view": [],
+  "social.manage_info": [],
+  "social.post_approve": [],
+  "social.post_assign": [],
+  "social.post_cancel": [],
+  "social.post_complete": [],
+  "social.post_confirm_published": [],
+  "social.post_create": [],
+  "social.post_delete": [],
+  "social.post_edit": [],
+  "social.post_force_status": [],
+  "social.post_history": [],
+  "social.post_move_pending_publish": [],
+  "social.post_request_changes": [],
+  "social.post_restore": [],
+  "social.post_resubmit": [],
+  "social.post_start": [],
+  "social.post_submit": [],
+  "social.post_view": [],
+  "social.post_view_all": [],
+  "social.post_view_mine": [],
+  "social.report": [],
+  "social.view": [],
+  "social.view_all": [],
+  "social.view_mine": [],
+  "finance.incoming.bank_config": [],
+  "finance.incoming.claim": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "finance.incoming.gmf_config": [],
+  "finance.incoming.manage": [],
+  "finance.incoming.manual_create": [],
+  "finance.incoming.manual_manage": [],
+  "finance.incoming.manual_view": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "finance.incoming.reconcile": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.remind": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view_totals": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "finance.incoming.view_unit": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "fr.advance.approve": [],
+  "fr.advance.pay": [],
+  "fr.advance.report": [],
+  "fr.advance.settings": [],
+  "fr.advance.view_scope": [],
+  "fr.payment.approve": [],
+  "fr.payment.pay": [],
+  "fr.payment.report": [],
+  "fr.payment.settings": [],
+  "fr.payment.view_scope": [],
+  "fr.salary.approve": [],
+  "fr.salary.deduct": [],
+  "fr.salary.pay": [],
+  "fr.salary.report": [],
+  "fr.salary.settings": [],
+  "fr.salary.view_scope": [],
+  "settings.account_approve": [],
+  "settings.account_lock": [],
+  "settings.account_reject": [],
+  "settings.activity_log": [],
+  "settings.assign_role": [],
+  "settings.login_history": [],
+  "settings.permission": [],
+  "settings.role": [],
+  "settings.user_create": [],
+  "settings.user_custom_perm": [],
+  "settings.user_delete": [],
+  "settings.user_edit": [],
+  "settings.user_reset_password": [],
+  "settings.user_view": [],
+  "task.accept": [],
+  "task.add_note": [],
+  "task.approve_completion": [],
+  "task.assign": [],
+  "task.cancel": [],
+  "task.complete": [],
+  "task.create": [],
+  "task.delete": [],
+  "task.edit": [],
+  "task.edit_assignee": [],
+  "task.edit_deadline": [],
+  "task.edit_priority": [],
+  "task.force_change_status": [],
+  "task.force_status": [],
+  "task.reopen_completed": [],
+  "task.request_revision": [],
+  "task.restore": [],
+  "task.resubmit_completion": [],
+  "task.start": [],
+  "task.submit_completion": [],
+  "task.update_result": [],
+  "task.update_status": [],
+  "task.view": [],
+  "task.view_all": [],
+  "task.view_created_by_me": [],
+  "task.view_history": [],
+  "task.view_mine": [],
+  "ot.accept": [],
+  "ot.assign": [],
+  "ot.create": [],
+  "ot.manage": [],
+  "ot.report": [],
+  "ot.report_export": [],
+  "ot.reschedule_propose": [],
+  "ot.reschedule_reply": [],
+  "ot.settings": [],
+  "ot.stage_update": [],
+  "ot.supplier": [],
+  "ot.task_update": [],
+  "ot.task_view": [],
+  "ot.view_all": [],
+  "ot.view_own": [],
+  "ot.view_unit": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "order.approve": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.assign": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.cancel": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.complete": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.create": [
+   "appointment_role:role-standard-mkt-director",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.delete": [],
+  "order.deliver": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.edit": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo"
+  ],
+  "order.edit_reviewer": [],
+  "order.force_status": [],
+  "order.history": [
+   "appointment_role:role-standard-mkt-director",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.marketing_design.approve": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.assign": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.cancel": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.complete": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.create": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.delete": [],
+  "order.marketing_design.deliver": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.edit": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.edit_reviewer": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.force_status": [],
+  "order.marketing_design.report_view": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.request_changes": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.restore": [],
+  "order.marketing_design.resubmit": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.send_request": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.submit": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.take": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.update_draft": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.view": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.marketing_design.view_all": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.open_delivery": [
+   "appointment_role:role-standard-mkt-director",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-social"
+  ],
+  "order.order_mockup.approve": [],
+  "order.order_mockup.assign": [],
+  "order.order_mockup.cancel": [],
+  "order.order_mockup.complete": [],
+  "order.order_mockup.create": [],
+  "order.order_mockup.delete": [],
+  "order.order_mockup.deliver": [],
+  "order.order_mockup.edit": [],
+  "order.order_mockup.edit_reviewer": [],
+  "order.order_mockup.force_status": [],
+  "order.order_mockup.report_view": [],
+  "order.order_mockup.request_changes": [],
+  "order.order_mockup.restore": [],
+  "order.order_mockup.resubmit": [],
+  "order.order_mockup.send_request": [],
+  "order.order_mockup.submit": [],
+  "order.order_mockup.take": [],
+  "order.order_mockup.update_draft": [],
+  "order.order_mockup.view": [],
+  "order.order_mockup.view_all": [],
+  "order.photo.approve": [],
+  "order.photo.assign": [],
+  "order.photo.cancel": [],
+  "order.photo.complete": [],
+  "order.photo.create": [],
+  "order.photo.delete": [],
+  "order.photo.deliver": [],
+  "order.photo.edit": [],
+  "order.photo.edit_reviewer": [],
+  "order.photo.force_status": [],
+  "order.photo.report_view": [],
+  "order.photo.request_changes": [],
+  "order.photo.restore": [],
+  "order.photo.resubmit": [],
+  "order.photo.send_request": [],
+  "order.photo.submit": [],
+  "order.photo.take": [],
+  "order.photo.update_draft": [],
+  "order.photo.view": [],
+  "order.photo.view_all": [],
+  "order.report_view": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "order.request_changes": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.restore": [],
+  "order.resubmit": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.send_request": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.submit": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.take": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.update_draft": [
+   "appointment_role:role-standard-mkt-director"
+  ],
+  "order.view": [
+   "appointment_role:role-standard-mkt-director",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "order.view_all": [
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo"
+  ],
+  "order.view_mine": [
+   "appointment_role:role-standard-mkt-director",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "brand.contact": [],
+  "brand.create": [],
+  "brand.delete": [],
+  "brand.docs": [],
+  "brand.edit": [],
+  "brand.identity": [],
+  "brand.notes": [],
+  "brand.profile": [],
+  "brand.staff": [],
+  "brand.view": [],
+  "brand.view_all": [],
+  "brand.view_channels": [],
+  "integration.facebook_leads": [],
+  "integration.website_forms": [],
+  "signal.assign": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "signal.catalog": [],
+  "signal.create": [],
+  "signal.delete": [],
+  "signal.edit": [],
+  "signal.manage": [],
+  "signal.reassign": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "signal.report": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "signal.sale": [
+   "appointment_role:role-standard-sales-head"
+  ],
+  "signal.view_all": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer"
+  ],
+  "overview.alerts": [],
+  "overview.all_dept": [],
+  "overview.brand_summary": [],
+  "overview.module_summary": [],
+  "overview.own_only": [
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "overview.staff_summary": [],
+  "overview.view": [
+   "appointment_role:role-standard-sales-head",
+   "appointment_role:role-viewer",
+   "appointment_role:role-viewer",
+   "marketing_appointment:role-content-web",
+   "marketing_appointment:role-local-seo",
+   "marketing_appointment:role-seo",
+   "marketing_appointment:role-social",
+   "marketing_appointment:role-video"
+  ],
+  "video.approve": [],
+  "video.assign": [],
+  "video.cancel": [],
+  "video.complete": [],
+  "video.confirm_published": [],
+  "video.create": [],
+  "video.create_design_order": [],
+  "video.delete": [],
+  "video.deliver": [],
+  "video.edit": [],
+  "video.edit_cut": [],
+  "video.footage": [],
+  "video.force_status": [],
+  "video.history": [],
+  "video.move_editing": [],
+  "video.move_shooting": [],
+  "video.reject": [],
+  "video.restore": [],
+  "video.resubmit": [],
+  "video.script_approve": [],
+  "video.script_reject": [],
+  "video.script_resubmit": [],
+  "video.script_start": [],
+  "video.script_submit": [],
+  "video.submit": [],
+  "video.view": [],
+  "video.view_all": [],
+  "video.view_mine": []
+ }
+}
