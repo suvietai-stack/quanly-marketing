@@ -91,17 +91,15 @@ it('order tracking: manager sees orders owned by unit members only', async () =>
   expect(await scalar(`select private.ot_can_view($1,'bbbbbbbb-0000-0000-0000-000000000002') v`, [mgr])).toBe(false);
 });
 it('role-designer retired: specialties point to the standard design role, old role archived', async () => {
-  expect(await scalar(`select role_id from mkt_specialties where id='design' v`, [])).toBeUndefined;
   const rows = (await db.query<{ id: string; role_id: string }>(`select id, role_id from mkt_specialties where id in ('design','photography')`)).rows;
   expect(rows.every((r) => r.role_id === 'role-standard-design-staff')).toBe(true);
-  expect(await scalar(`select catalog_state from app_roles where id='role-designer' v`, [])).toBeUndefined;
   expect((await db.query<{ catalog_state: string }>(`select catalog_state from app_roles where id='role-designer'`)).rows[0].catalog_state).toBe('archived');
 });
 it('manager roles gained unit permissions and links were re-signed with a real audit actor', async () => {
   const perms = (await db.query<{ permissions: string[] }>(`select permissions from app_roles where id='role-standard-sales-head'`)).rows[0].permissions;
   expect(perms).toEqual(expect.arrayContaining(['ot.view_unit', 'finance.incoming.view_unit', 'leave.view_unit']));
   const link = (await db.query<{ permission_signature: string }>(`select permission_signature from base_title_role_links where role_id='role-standard-sales-head'`)).rows[0];
-  const sig = await scalar(`select md5(coalesce(permissions,'{}'::text[])::text) from app_roles where id='role-standard-sales-head' v`, []);
+  const sig = await scalar(`select md5(coalesce(permissions,'{}'::text[])::text) v from app_roles where id='role-standard-sales-head'`, []);
   expect(link.permission_signature).toBe(sig);
   const ev = (await db.query<{ actor_id: string }>(`select actor_id from base_title_role_events order by created_at desc limit 1`)).rows[0];
   expect(ev.actor_id).toBe(admin);
