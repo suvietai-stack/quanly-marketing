@@ -2514,6 +2514,13 @@
       "when": 1794379454726,
       "tag": "0358_unit_scope_leave_finance_orders_retire_role_designer",
       "breakpoints": true
+    },
+    {
+      "idx": 359,
+      "version": "7",
+      "when": 1794384324417,
+      "tag": "0359_role_catalog_position_slots_and_audited_preview",
+      "breakpoints": true
     }
   ]
 }

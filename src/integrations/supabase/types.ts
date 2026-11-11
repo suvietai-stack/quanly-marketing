@@ -175,6 +175,8 @@ export type Database = {
           is_system: boolean
           name: string
           permissions: string[]
+          role_code: string | null
+          role_kind: string
           signal_scope: string[]
           signal_scope_all: boolean
           updated_at: string
@@ -192,6 +194,8 @@ export type Database = {
           is_system?: boolean
           name: string
           permissions?: string[]
+          role_code?: string | null
+          role_kind?: string
           signal_scope?: string[]
           signal_scope_all?: boolean
           updated_at?: string
@@ -209,6 +213,8 @@ export type Database = {
           is_system?: boolean
           name?: string
           permissions?: string[]
+          role_code?: string | null
+          role_kind?: string
           signal_scope?: string[]
           signal_scope_all?: boolean
           updated_at?: string
@@ -7482,6 +7488,7 @@ export type Database = {
           ends_at: string | null
           id: string
           revision: number
+          slot_id: string | null
           source: string
           source_id: string
           starts_at: string | null
@@ -7496,6 +7503,7 @@ export type Database = {
           ends_at?: string | null
           id: string
           revision?: number
+          slot_id?: string | null
           source: string
           source_id: string
           starts_at?: string | null
@@ -7510,6 +7518,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           revision?: number
+          slot_id?: string | null
           source?: string
           source_id?: string
           starts_at?: string | null
@@ -7519,6 +7528,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "org_assignments_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "org_position_slots"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "org_assignments_title_id_fkey"
             columns: ["title_id"]
@@ -7617,6 +7633,64 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "org_parent_history_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_position_slots: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          revision: number
+          role_id: string
+          title_id: string
+          unit_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          id: string
+          name: string
+          revision?: number
+          role_id: string
+          title_id: string
+          unit_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          revision?: number
+          role_id?: string
+          title_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_position_slots_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_position_slots_title_id_fkey"
+            columns: ["title_id"]
+            isOneToOne: false
+            referencedRelation: "org_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_position_slots_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "org_units"
@@ -11274,6 +11348,19 @@ export type Database = {
         Args: { _endpoint: string; _id: string }
         Returns: undefined
       }
+      role_catalog_change: {
+        Args: {
+          _action?: string
+          _confirmation?: string
+          _phase: string
+          _preview?: string
+          _proposed?: Json
+          _reason?: string
+          _role_id?: string
+        }
+        Returns: Json
+      }
+      role_catalog_read: { Args: never; Returns: Json }
       sao_active: { Args: never; Returns: boolean }
       sao_can_manage_shop: { Args: never; Returns: boolean }
       sao_celebration_claim: { Args: never; Returns: Json }
