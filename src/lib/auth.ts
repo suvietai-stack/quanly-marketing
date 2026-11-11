@@ -1,5 +1,5 @@
 import { createCoalescer } from "./singleFlight";
-import { mergeAccess, shouldRefresh } from "./accessCache";
+import { mergeAccess, shouldRefresh, authEventAction } from './accessCache';
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
@@ -989,18 +989,15 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (get().initialized || initStarted) return;
     initStarted = true;
     supabase.auth.onAuthStateChange((event, session) => {
-      if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
       const nextId = session?.user?.id ?? null;
-      const changed = nextId !== get().currentUserId;
-      if (changed) { accessAt.base = null; accessAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false }); }
+      const prevId = get().currentUserId;
+      const action = authEventAction(event, prevId, nextId, get().initialized && get().loaded);
+      if (action === 'ignore') return; // sự kiện phát lại cùng người: không tải lại quyền
+      if (nextId !== prevId) { accessAt.base = null; accessAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false }); }
       set({ currentUserId: nextId });
-      if (session) {
-        // Do not make Auth calls inside the SDK's locked callback.
-        // Cùng người dùng: gộp với lần tải đang chạy, không tải lại lần hai.
-        setTimeout(() => { if (event === 'USER_UPDATED') void get().reload(); else if (nextId) void authLoads.join(nextId); }, 0);
-      } else {
-        set({ users: [], roles: [], loaded: false });
-      }
+      if (action === 'clear') { set({ users: [], roles: [], loaded: false }); return; }
+      // Do not make Auth calls inside the SDK's locked callback.
+      setTimeout(() => { if (action === 'reload') void get().reload(); else if (nextId) void authLoads.join(nextId); }, 0);
     });
     // Ghi nhớ đăng nhập: hủy phiên đã lưu nếu người dùng không chọn ghi nhớ
     // và trình duyệt đã đóng hẳn, hoặc phiên ghi nhớ đã quá 90 ngày.
