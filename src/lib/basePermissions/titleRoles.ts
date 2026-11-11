@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import type { OrgCommand } from './commands';
-export const VERIFIED_APPOINTMENT_PERMISSIONS = ['leave.create','leave.view_own','leave.edit_own','leave.recall','att.create','att.view_own','att.edit_own','att.witness','order.view','order.view_mine','order.update_draft','order.submit','order.resubmit','order.deliver','order.history','order.open_delivery'];
+export const VERIFIED_APPOINTMENT_PERMISSIONS = ['leave.create','leave.view_own','leave.edit_own','leave.recall','att.create','att.view_own','att.edit_own','att.witness','order.view','order.view_mine','order.update_draft','order.submit','order.resubmit','order.deliver','order.history','order.open_delivery','ot.view_own','ot.task_view','ot.task_update','ot.stage_update'];
 export interface RoleCheck { key: string; ready: boolean; reason: string }
 export interface OriginalRole { id: string; name: string; restricted: boolean; permissions: string[]; checks: RoleCheck[] }
 export interface TitleRoleLink { title_source: 'base' | 'biz'; title_id: string; role_id: string; is_primary: boolean; scope_kind: 'unit' | 'own'; revision: number; active: boolean; enabled_permissions?: string[]; permission_signature?: string }

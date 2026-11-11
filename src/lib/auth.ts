@@ -1580,9 +1580,9 @@ export function explainPermission(
       ? additive
         ? "Cấp qua quyền bổ sung cá nhân (cộng thêm vào Role)"
         : "Cấp qua quyền riêng (thay thế Role)"
-      : `Cấp qua role "${role?.name ?? ""}"`,
+      : `Cấp qua role "${grantingRole?.name ?? ""}"`,
     source,
-    roleName: role?.name,
+    roleName: grantingRole?.name,
   };
 }
 
