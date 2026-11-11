@@ -14,7 +14,7 @@ it('Content task default keeps only verified Content workflow actions and leaves
   const stored = role('role-v2-task-content-web', ['web.view', 'web.content_view', 'social.post_create', 'settings.role']);
   const impact = defaultRoleImpact(stored, policy);
   expect(impact?.after).toEqual(defaultRolePresets.find(p => p.roleId === 'role-v2-task-content-web')?.keys);
-  expect(impact?.removed).toEqual(['settings.role']);
+  expect(impact?.removed).toEqual(['social.post_create', 'settings.role']);
   expect(stored.permissions).toEqual(['web.view', 'web.content_view', 'social.post_create', 'settings.role']);
 });
 it('both protected system positions retain their exact permissions', () => {
@@ -36,6 +36,37 @@ it('no default proposes admin, delete, wide export or all-scope signal actions; 
     if (!financeRoles.has(p.roleId)) expect(p.keys.filter(k => /finance\.incoming\.(manage|reconcile)/.test(k))).toEqual([]);
   }
 });
-it('task defaults are the verified live sets', () => {
-  expect(defaultRolePresets.filter(p => p.kind === 'marketing_task').map(p => p.keys.length)).toEqual([61, 30, 34, 35, 54]);
+it('Marketing staff has no default Order management or settings rights', () => {
+  const p = defaultRolePresets.find(p => p.roleId === 'role-v2-mkt-staff');
+  expect(p?.keys).not.toContain('order.approve');
+  expect(p?.keys).not.toContain('order.cancel');
+  expect(p?.keys).not.toContain('order.assign');
+  expect(p?.keys).not.toContain('order.edit');
+  expect(p?.keys).not.toContain('settings.view');
+});
+it('Content defaults exclude Social, Orders and settings while retaining Web and own Tasks', () => {
+  const p = defaultRolePresets.find(p => p.roleId === 'role-v2-task-content-web');
+  expect(p?.keys.filter(k => /^(social|order|settings)\./.test(k))).toEqual([]);
+  expect(p?.keys).toContain('web.outline_start');
+  expect(p?.keys).toContain('task.view_mine');
+});
+it('all sales levels propose basic CRM, assigned leads and own quotes', () => {
+  for (const id of ['director', 'head', 'team', 'staff']) {
+    const p = defaultRolePresets.find(p => p.roleId === `role-v2-sales-${id}`);
+    expect(p?.keys).toContain('biz.crm_use');
+    expect(p?.keys).toContain('signal.sale');
+    expect(p?.keys).toContain('oq.view_own');
+  }
+});
+it('retains working business rights absent from new-right policy; does not grant unavailable new ones', () => {
+  const stored = role('role-v2-sales-staff', ['biz.crm_use', 'signal.sale', 'oq.view_own']);
+  const d = defaultRoleImpact(stored, []);
+  expect(d?.after).toEqual(['biz.crm_use', 'signal.sale', 'oq.view_own']);
+  expect(d?.added).toEqual([]);
+  expect(d?.unavailable).toContain('ot.view_own');
+});
+it('responsible HR draft retains assigned leave approval but never finance approval or configuration', () => {
+  const p = defaultRolePresets.find(p => p.roleId === 'role-v2-hr');
+  expect(p?.keys).toContain('leave.approve');
+  expect(p?.keys.filter(k => /settings|export|finance|delete/.test(k))).toEqual([]);
 });
