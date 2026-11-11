@@ -2318,6 +2318,13 @@
       "when": 1794323926335,
       "tag": "0330_new_staff_role_default_and_additive_overrides",
       "breakpoints": true
+    },
+    {
+      "idx": 331,
+      "version": "7",
+      "when": 1794362102323,
+      "tag": "0331_override_mode_legacy_default",
+      "breakpoints": true
     }
   ]
 }
