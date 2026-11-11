@@ -1,5 +1,12 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Chuẩn hóa toàn kho Role — yêu cầu chốt 11/11/2026
+- [ ] Audit 33 Role, phụ thuộc code/SQL/lịch sử và nguồn quyền; không ghi live.
+- [ ] Bộ gợi ý tối giản đủ 20 vị trí + 5 nhiệm vụ; bảo vệ 6 archived + 2 system và vị trí is_system.
+- [ ] Diff trước/sau, quyền giữ/bỏ/chưa cấu hình và số người/nguồn ảnh hưởng; UX dùng kho/ma trận hiện có.
+- [ ] Chuẩn bị quy trình pending snapshot/preview/apply/restore với signature đồng bộ; không apply.
+- [ ] Kiểm thử core SQL/ma trận/cache/phân hệ, benchmark và Preview desktop/mobile; bàn giao quyết định còn chờ.
+
 ## UX Role & ma trận quyền — 11/11/2026
 - [x] Ma trận nhóm quyền dùng chung, kho Role một đường chỉnh, 9 preset nháp lọc theo nguồn backend; không áp production.
 - [x] 0369–0370: tạo Role có quyền an toàn; cá nhân chỉ additive, preview có audit và bảo vệ replace đang bật.
