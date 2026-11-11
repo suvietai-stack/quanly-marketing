@@ -30,6 +30,26 @@ export function orderBySpecialty(people: PersonLite[], candidates: SpecialtyCand
   return { matched, rest };
 }
 
+/**
+ * Resolve the current selection of an assignment picker by stable ID.
+ * - A valid valueId always wins.
+ * - A legacy name-only value resolves only when exactly one person has that
+ *   name (duplicate names stay unresolved so an admin can re-pick by ID).
+ * Returns { selectedId, legacyUnknown } — legacyUnknown means the record keeps
+ * its legacy name state and must not be auto-reassigned.
+ */
+export function resolvePickerSelection(people: PersonLite[], value?: string, valueId?: string) {
+  const byId = new Map(people.map((p) => [p.id, p]));
+  const nameMatches = value ? people.filter((p) => p.name === value) : [];
+  const selectedId =
+    valueId && byId.has(valueId)
+      ? valueId
+      : !valueId && value && nameMatches.length === 1
+        ? nameMatches[0].id
+        : undefined;
+  return { selectedId, legacyUnknown: !!value && !selectedId };
+}
+
 /** Preview of auto-granted permissions per specialty (catalog info, no personal data). */
 export type SpecialtyPermissionPreview = {
   id: string;

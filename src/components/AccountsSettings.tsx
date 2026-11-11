@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { titleRolesApi } from '@/lib/basePermissions/titleRoles';
 import { useState, useMemo, useRef } from "react";
 import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
@@ -8,7 +9,7 @@ import {
   type PermissionKey, PERMISSIONS, PERMISSION_GROUPS, ALL_PERMS,
   ROLE_PERMISSIONS, ROLE_ALL_PERMS, BIZ_ORG_GROUPS, isBizOrgPerm,
   SUPER_ADMIN_ID, allDependencies, allDependents,
-  auditDependencies, explainPermission,
+  auditDependencies,
 } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,31 +98,65 @@ export function AccountsSettings() {
 }
 
 // --------- Permission Debug (Super Admin only) ---------
+// Debug đọc kết quả giải thích quyền từ backend (account_permission_explain) —
+// không tự duy trì thuật toán tính quyền riêng, đảm bảo luôn khớp resolver máy chủ.
+type PermissionExplainRpc = {
+  user_id: string;
+  status: string;
+  is_super_admin: boolean;
+  use_custom: boolean;
+  override_mode: "replace" | "additive";
+  custom_permissions: string[];
+  direct_roles: { role_id: string; name: string; permissions: string[] }[];
+  rules: { permission: string; effect: string; source_kind: string; source_name: string | null; scope: string | null }[];
+  effective: string[];
+};
+
+const SOURCE_KIND_LABEL: Record<string, string> = {
+  appointment_role: "Chức vụ",
+  marketing_specialty: "Nhiệm vụ Marketing",
+  default: "Quyền mặc định",
+  direct: "Quyền bổ sung trực tiếp",
+  bundle: "Bộ quyền",
+};
+
 export function PermissionDebugTab() {
   const s = useAuth();
   const [uid, setUid] = useState<string>("");
   const [testKey, setTestKey] = useState<string>("");
   const target = useMemo(() => s.users.find((u) => u.id === uid), [s.users, uid]);
-  const role = target ? s.roles.find((r) => r.id === target.roleId) : undefined;
 
-  const effective = useMemo<Set<string>>(() => {
-    if (!target) return new Set();
-    if (target.system || target.roleId === SUPER_ADMIN_ID) return new Set(ALL_PERMS);
-    if (target.useCustom) return new Set(target.customPermissions ?? []);
-    return new Set(role?.permissions ?? []);
-  }, [target, role]);
+  const explainQ = useQuery({
+    queryKey: ["perm-explain", uid],
+    enabled: !!uid,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("account_permission_explain", { _target: uid });
+      if (error) throw error;
+      return data as unknown as PermissionExplainRpc;
+    },
+    staleTime: 15_000,
+  });
+  const info = explainQ.data;
+  const effective = useMemo<Set<string>>(() => new Set(info?.effective ?? []), [info]);
 
-  const source: string = !target ? "—"
-    : target.system ? "Tài khoản hệ thống — toàn quyền"
-    : target.roleId === SUPER_ADMIN_ID ? "Super Admin — toàn quyền"
-    : target.useCustom ? "Quyền riêng (ghi đè role)"
-    : `Theo role: ${role?.name ?? "(chưa gán)"}`;
-
-  const explained = useMemo(() => {
-    if (!target || !testKey) return null;
-    return explainPermission(target, s.roles, testKey);
-  }, [target, testKey, s.roles]);
-  const testResult = explained?.ok ?? null;
+  const testResult = useMemo(() => {
+    if (!info || !testKey) return null;
+    const ok = info.is_super_admin || effective.has(testKey);
+    const sources: string[] = [];
+    for (const r of info.direct_roles) if (r.permissions.includes(testKey)) sources.push(`Role "${r.name}"`);
+    if (info.use_custom && info.custom_permissions.includes(testKey))
+      sources.push(info.override_mode === "additive" ? "Quyền bổ sung cá nhân (cộng thêm)" : "Quyền riêng (thay thế Role)");
+    for (const rule of info.rules.filter((x) => x.permission === testKey))
+      sources.push(`${SOURCE_KIND_LABEL[rule.source_kind] ?? rule.source_kind}${rule.source_name ? `: ${rule.source_name}` : ""} (${rule.effect === "DENY" ? "CHẶN" : "cho phép"})`);
+    const reason = info.is_super_admin
+      ? "Super Admin — toàn quyền"
+      : ok
+        ? sources.length > 0 ? `Cấp qua: ${sources.join(" · ")}` : "Được cấp theo resolver backend"
+        : sources.length > 0 && info.rules.some((x) => x.permission === testKey && x.effect === "DENY")
+          ? `Bị chặn bởi: ${sources.join(" · ")}`
+          : "Không có nguồn cấp nào cho quyền này";
+    return { ok, reason };
+  }, [info, testKey, effective]);
 
   // Audit across roles + users with custom perms
   const audit = useMemo(() => {
@@ -171,18 +206,48 @@ export function PermissionDebugTab() {
 
       {target && (
         <div className="space-y-3">
-          <div className="text-sm">
-            <span className="text-muted-foreground">Nguồn quyền: </span>
-            <span className="font-medium">{source}</span>
-          </div>
-          <div className="text-sm">
-            <span className="text-muted-foreground">Trạng thái: </span>
-            <StatusBadge value={target.status} />
-          </div>
-          {testKey && explained && (
-            <div className={`text-sm font-medium ${testResult ? "text-emerald-600" : "text-rose-600"}`}>
-              can("{testKey}") = {testResult ? "TRUE — được phép" : "FALSE — bị chặn"}
-              <div className="text-xs text-muted-foreground font-normal mt-0.5">Lý do: {explained.reason}</div>
+          {explainQ.isPending && <div className="text-sm text-muted-foreground">Đang đọc kết quả từ máy chủ…</div>}
+          {explainQ.error && <div className="text-sm text-rose-600">Không đọc được giải thích quyền: {explainQ.error instanceof Error ? explainQ.error.message : "lỗi"}</div>}
+          {info && (
+            <>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Nguồn quyền: </span>
+                <span className="font-medium">
+                  {info.is_super_admin
+                    ? "Super Admin / Tài khoản hệ thống — toàn quyền"
+                    : info.use_custom
+                      ? info.override_mode === "additive"
+                        ? "Role + quyền bổ sung cá nhân (cộng thêm)"
+                        : "Quyền riêng (thay thế Role)"
+                      : info.direct_roles.length > 0
+                        ? `Theo role: ${info.direct_roles.map((r) => r.name).join(", ")}`
+                        : "Chưa gán Role"}
+                </span>
+              </div>
+              {info.direct_roles.length > 1 && (
+                <div className="text-xs text-muted-foreground">
+                  Tài khoản có {info.direct_roles.length} Role trực tiếp — quyền hiệu lực là tổng hợp đã loại trùng.
+                </div>
+              )}
+              {info.rules.length > 0 && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Nguồn theo chức vụ/nhiệm vụ: </span>
+                  <span className="font-medium">
+                    {[...new Set(info.rules.map((r) => `${SOURCE_KIND_LABEL[r.source_kind] ?? r.source_kind}${r.source_name ? ` (${r.source_name})` : ""}`))].join(" · ")}
+                  </span>
+                </div>
+              )}
+              <div className="text-sm">
+                <span className="text-muted-foreground">Trạng thái: </span>
+                <StatusBadge value={target.status} />
+                {info.status !== "Đang hoạt động" && <span className="ml-2 text-xs text-rose-600">Tài khoản không hoạt động — mọi quyền vô hiệu.</span>}
+              </div>
+            </>
+          )}
+          {testKey && testResult && (
+            <div className={`text-sm font-medium ${testResult.ok ? "text-emerald-600" : "text-rose-600"}`}>
+              can("{testKey}") = {testResult.ok ? "TRUE — được phép" : "FALSE — bị chặn"}
+              <div className="text-xs text-muted-foreground font-normal mt-0.5">Lý do: {testResult.reason}</div>
             </div>
           )}
           <div>

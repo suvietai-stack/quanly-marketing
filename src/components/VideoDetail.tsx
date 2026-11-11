@@ -68,7 +68,7 @@ function VideoFormFields({ value, onChange }: { value: Video; onChange: (v: Vide
         <Textarea rows={2} value={value.description || ""} onChange={(e) => set({ description: e.target.value })} /></div>
 
       <div><Label>Người giao việc</Label>{personSelect(value.assigner, (v) => set({ assigner: v }))}</div>
-      <div><Label>Người phụ trách</Label><SpecialtyStaffPicker specialty="video" value={value.owner} onChange={(v) => set({ owner: v })} people={people} /></div>
+      <div><Label>Người phụ trách</Label><SpecialtyStaffPicker specialty="video" value={value.owner} valueId={value.ownerId} onChange={(v, id) => set({ owner: v, ownerId: id })} people={people} /></div>
       <div><Label>Người duyệt</Label>{personSelect(value.reviewer, (v) => set({ reviewer: v }))}</div>
       <div><Label>Deadline kịch bản</Label>
         <Input type="date" value={value.scriptDeadline || ""} onChange={(e) => set({ scriptDeadline: e.target.value })} /></div>
@@ -158,7 +158,7 @@ export function VideoDetailDialog({
   const [forceReason, setForceReason] = useState("");
 
   const userName = user?.fullName || user?.username || "Hệ thống";
-  const isOwner = !!user && video.owner === userName;
+  const isOwner = !!user && (video.ownerId === user.id || video.owner === userName);
   const canAct = (perm: PermissionKey, byOwner = false) =>
     isAdmin || can(perm) || (byOwner && isOwner);
 

@@ -1019,7 +1019,10 @@ export interface User {
   // Legacy fields kept for type compatibility (no longer used — Supabase Auth manages passwords)
   passwordHash: string;
   passwordSalt: string;
+  /** Role chính hiển thị trên hồ sơ (tương thích legacy). Không dùng để suy ra toàn bộ quyền. */
   roleId?: ID;
+  /** Toàn bộ Role trực tiếp đang hiệu lực (một tài khoản có thể có nhiều Role). */
+  roleIds?: ID[];
   customPermissions?: PermissionKey[];
   useCustom?: boolean;
   /** 'replace' (legacy, mặc định): quyền riêng thay thế Role. 'additive': cộng thêm vào Role (chỉ sau khi Admin xác nhận). */
@@ -1089,6 +1092,7 @@ function mapProfileToUser(
   overrides: { user_id: string; use_custom: boolean; permissions: string[]; mode?: string }[],
 ): User {
   const ur = userRoles.find((x) => x.user_id === p.id);
+  const urAll = userRoles.filter((x) => x.user_id === p.id).map((x) => x.role_id);
   const ov = overrides.find((x) => x.user_id === p.id);
   return {
     id: p.id,
@@ -1101,6 +1105,7 @@ function mapProfileToUser(
     passwordHash: "",
     passwordSalt: "",
     roleId: ur?.role_id,
+    roleIds: urAll.length > 0 ? urAll : undefined,
     useCustom: ov?.use_custom ?? false,
     customPermissions: ov?.permissions ?? [],
     overrideMode: ov?.mode === "additive" ? "additive" : "replace",
@@ -1480,8 +1485,14 @@ export function getUserPermissions(user: User | null | undefined, roles: Role[])
   if (user.useCustom && user.overrideMode !== "additive") {
     return new Set<PermissionKey>(user.customPermissions ?? []);
   }
-  const role = roles.find((r) => r.id === user.roleId);
-  const perms = new Set<PermissionKey>(role ? role.permissions : []);
+  // Tổng hợp quyền từ TẤT CẢ Role trực tiếp đang hiệu lực (loại trùng theo ID),
+  // không chỉ Role chính hiển thị trên hồ sơ.
+  const ids = user.roleIds && user.roleIds.length > 0 ? user.roleIds : user.roleId ? [user.roleId] : [];
+  const perms = new Set<PermissionKey>();
+  for (const id of new Set(ids)) {
+    const role = roles.find((r) => r.id === id);
+    if (role) for (const p of role.permissions) perms.add(p);
+  }
   if (user.useCustom && user.customPermissions) for (const p of user.customPermissions) perms.add(p);
   return perms;
 }
@@ -1530,10 +1541,13 @@ export function explainPermission(
     return { ok: true, reason: "Super Admin / Tài khoản hệ thống — bypass mọi check quyền", source: "super_admin" };
   }
   const resolved = resolvePermKey(key);
-  const role = roles.find((r) => r.id === user.roleId);
+  const ids = user.roleIds && user.roleIds.length > 0 ? user.roleIds : user.roleId ? [user.roleId] : [];
+  const userRoles = [...new Set(ids)].map((id) => roles.find((r) => r.id === id)).filter((r): r is Role => !!r);
+  const grantingRole = userRoles.find((r) => r.permissions.includes(resolved));
+  const roleNames = userRoles.map((r) => r.name).join(", ") || "(chưa gán)";
   const additive = user.useCustom && user.overrideMode === "additive";
   const granted = getUserPermissions(user, roles);
-  const inRole = !!role && role.permissions.includes(resolved);
+  const inRole = !!grantingRole;
   const inCustom = !!user.useCustom && (user.customPermissions ?? []).includes(resolved);
   const source: "role" | "custom" = inCustom && !inRole ? "custom" : "role";
   if (!granted.has(resolved)) {
@@ -1541,9 +1555,9 @@ export function explainPermission(
       ok: false,
       reason: user.useCustom && !additive
         ? `Không có trong quyền riêng của user (chế độ thay thế Role)`
-        : `Không có trong role "${role?.name ?? "(chưa gán)"}"${additive ? " hoặc quyền bổ sung" : ""}`,
+        : `Không có trong role "${roleNames}"${additive ? " hoặc quyền bổ sung" : ""}`,
       source: "missing",
-      roleName: role?.name,
+      roleName: grantingRole?.name ?? userRoles[0]?.name,
     };
   }
   // Check deps
@@ -1557,7 +1571,7 @@ export function explainPermission(
       reason: `Thiếu quyền cha: ${missing.join(", ")}`,
       source: "dep_missing",
       missingDeps: missing,
-      roleName: role?.name,
+      roleName: grantingRole?.name ?? userRoles[0]?.name,
     };
   }
   return {
@@ -1566,9 +1580,9 @@ export function explainPermission(
       ? additive
         ? "Cấp qua quyền bổ sung cá nhân (cộng thêm vào Role)"
         : "Cấp qua quyền riêng (thay thế Role)"
-      : `Cấp qua role "${role?.name ?? ""}"`,
+      : `Cấp qua role "${grantingRole?.name ?? ""}"`,
     source,
-    roleName: role?.name,
+    roleName: grantingRole?.name,
   };
 }
 
