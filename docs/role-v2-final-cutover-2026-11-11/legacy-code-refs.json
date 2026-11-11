@@ -1,0 +1,255 @@
+[
+  {
+    "id": "role-standard-design-staff",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/unitScope.database.test.ts",
+      "src/lib/basePermissions/fixtures/marketingTaskRoles.snapshot.json"
+    ]
+  },
+  {
+    "id": "role-standard-account-stock",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-super-admin",
+    "is_system": true,
+    "code_refs": [
+      "src/lib/permissionCleanup.database.test.ts",
+      "src/lib/zalo.functions.ts",
+      "src/routes/settings.tsx",
+      "src/components/kpi/KpiV2.tsx",
+      "src/lib/accounts.functions.ts",
+      "src/lib/accounts.database.test.ts",
+      "src/lib/accounts.functions.test.ts",
+      "src/lib/basePermissions/unitScope.database.test.ts",
+      "src/lib/kpi/useKpiActor.ts",
+      "src/lib/basePermissions/titleRoles.database.test.ts",
+      "src/lib/basePermissions/roleV2.database.test.ts",
+      "src/lib/auth.ts",
+      "src/lib/basePermissions/fixtures/supersededMarketingSource.sql",
+      "src/lib/basePermissions/canonical.database.test.ts",
+      "src/lib/basePermissions/finalizeStandardRoles.database.test.ts",
+      "src/lib/basePermissions/fixtures/roleV2/rollback.sql",
+      "src/lib/basePermissions/fixtures/roleV2/forward.sql"
+    ]
+  },
+  {
+    "id": "role-admin",
+    "is_system": true,
+    "code_refs": [
+      "src/routes/settings.tsx",
+      "src/routes/index.tsx",
+      "src/lib/zalo.functions.ts",
+      "src/lib/accounts.functions.test.ts",
+      "src/lib/accounts.database.test.ts",
+      "src/lib/biz/effective-access.database.test.ts",
+      "src/components/AppShell.tsx",
+      "src/lib/kpi/useKpiActor.ts",
+      "src/lib/basePermissions/fixtures/supersededMarketingSource.sql",
+      "src/lib/basePermissions/fixtures/roleV2/rollback.sql",
+      "src/lib/basePermissions/fixtures/roleV2/forward.sql",
+      "src/components/kpi/KpiV2.tsx",
+      "src/lib/auth.ts",
+      "src/lib/basePermissions/titleRoles.database.test.ts",
+      "src/lib/basePermissions/appointmentRoles.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-g8qc3q2s",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-xwbmhg3b",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-standard-sales-staff",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/signalScope.database.test.ts",
+      "src/lib/basePermissions/canonicalMapping.test.ts"
+    ]
+  },
+  {
+    "id": "role-leader-marketing",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/standardCatalog.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-standard-mkt-staff",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-wupj68a6",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-nhan-su-moi",
+    "is_system": true,
+    "code_refs": [
+      "src/lib/newStaffRole.database.test.ts",
+      "src/lib/basePermissions/accountOrgSummary.database.test.ts",
+      "src/lib/basePermissions/defaultRolePresets.test.ts",
+      "src/lib/basePermissions/finalizeStandardRoles.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-dong-hang",
+    "is_system": true,
+    "code_refs": [
+      "src/lib/permissionExplain.database.test.ts",
+      "src/lib/basePermissions/defaultRolePresets.test.ts",
+      "src/lib/newStaffRole.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-9h328b84",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-u0fzsvsp",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-standard-design-head",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-xim870m3",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/standardCatalog.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-0k2hmw8r",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/standardCatalog.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-video",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/standardOnlyReset.database.test.ts",
+      "src/lib/multiRole.test.ts",
+      "src/lib/marketingSpecialtyPermissions.database.test.ts",
+      "src/lib/newStaffRole.database.test.ts",
+      "src/lib/permissionExplain.database.test.ts",
+      "src/lib/permissionCleanup.database.test.ts",
+      "src/lib/basePermissions/fixtures/marketingTaskRoles.snapshot.json",
+      "src/lib/basePermissions/marketingTaskSource.database.test.ts",
+      "src/lib/finalPermissionTransition.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-social",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/fixtures/marketingTaskRoles.snapshot.json",
+      "src/lib/basePermissions/marketingTaskSource.database.test.ts",
+      "src/lib/marketingSpecialtyPermissions.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-content-web",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/marketingSpecialtyPermissions.database.test.ts",
+      "src/lib/basePermissions/marketingTaskSource.database.test.ts",
+      "src/lib/basePermissions/fixtures/marketingTaskRoles.snapshot.json"
+    ]
+  },
+  {
+    "id": "role-standard-mkt-director",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-standard-account-chief",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/finalizeStandardRoles.database.test.ts",
+      "src/lib/basePermissions/standardCatalog.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-standard-buyer",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-viewer",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/signalScope.database.test.ts",
+      "src/lib/permissionExplain.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-standard-proc-head",
+    "is_system": false,
+    "code_refs": []
+  },
+  {
+    "id": "role-standard-mkt-head",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/standardCatalog.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-designer",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/unitScope.database.test.ts",
+      "src/lib/marketingSpecialtyPermissions.database.test.ts",
+      "src/lib/basePermissions/standardCatalog.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-kinh-doanh",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/standardOnlyReset.database.test.ts",
+      "src/lib/finalPermissionTransition.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-standard-sales-head",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/basePermissions/unitScope.database.test.ts"
+    ]
+  },
+  {
+    "id": "role-local-seo",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/marketingSpecialtyPermissions.database.test.ts",
+      "src/lib/basePermissions/fixtures/marketingTaskRoles.snapshot.json"
+    ]
+  },
+  {
+    "id": "role-seo",
+    "is_system": false,
+    "code_refs": [
+      "src/lib/marketingSpecialtyPermissions.database.test.ts",
+      "src/lib/basePermissions/accountOrgSummary.database.test.ts",
+      "src/lib/basePermissions/fixtures/marketingTaskRoles.snapshot.json",
+      "src/lib/basePermissions/roleCatalog.database.test.ts"
+    ]
+  }
+]

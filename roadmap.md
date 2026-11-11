@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Chấp nhận mất quyền legacy — 15:05 UTC
+- [ ] Fresh snapshot, pending approver check, policy/diff; apply 25 verified V2 defaults qua audited RPC.
+- [ ] Bind Đức/Quỳnh Anh sang V2, chấp nhận legacy loss; giữ mọi membership/title/history và không tự bổ nhiệm lại Ngọc.
+- [ ] Retire 17 title links qua org_change audit, delete zero-ref non-system legacy sau kiểm tra code/RPC; protected onboarding stays if needed.
+- [ ] Test/read-back scoped sessions, cache, rollback/UI and publish only after full real E2E pass.
+
 ## Cutover an toàn được yêu cầu 14:49 UTC
 - [x] Live snapshot/fingerprint + guarded serial RPC; giữ 0371. Phát hiện Ngọc miễn nhiệm ngoài lượt này lúc 14:50:39 UTC; không tự khôi phục.
 - [x] 0376 exact audit restore + approver guard; NV Marketing bỏ 7 quyền nhạy cảm, 5 task Roles bỏ cross-domain excess (Content 20, SEO 3, Local 5, Social 6, Video 19) qua audited RPC. Full defaults chưa apply.
