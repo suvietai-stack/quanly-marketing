@@ -33,6 +33,7 @@ beforeAll(async () => {
  await db.exec(`CREATE TABLE mkt_specialties(id text primary key,name text,role_id text,active boolean);INSERT INTO mkt_specialties VALUES('test-design','Thiết kế thử','verified-designer',true);`);
  await db.exec(readFileSync('drizzle/migrations/0337_phase3a_assignment_specialty_sources.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0338_phase3a_specialty_alias_fix.sql','utf8'));
+ await db.exec(readFileSync('drizzle/migrations/0344_org_immediate_appointment_clock.sql','utf8'));
  await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
  await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
@@ -127,4 +128,13 @@ it('3A: assignment specialties grant only after apply and revoke with that assig
 it('3A: unknown Marketing specialty is rejected atomically',async()=>{
  await expect(preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:director,kind:'concurrent',specialty_ids:['fake']}}])).rejects.toThrow('không hợp lệ');
  expect(await scalar("select count(*)::int v from org_assignments where unit_id='gd' and user_id=$1",[director])).toBe(0);
+});
+it('immediate appointments ignore client clock skew, grant in preview and persist exact server time',async()=>{
+ await actor(admin);
+ const p=await preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:director,kind:'concurrent',immediate:true,starts_at:'2099-01-01',specialty_ids:['test-design']}}]);
+ expect(p.impact.some((x:any)=>x.user_id===director)).toBe(true);
+ const assignment=p.after.memberships.find((m:any)=>m.user_id===director&&m.specialty_ids?.includes('test-design'));
+ expect(Date.parse(assignment.starts_at)).toBeLessThan(Date.parse('2099-01-01'));
+ await apply(p);
+ expect(await scalar('select starts_at=$2::timestamptz v from org_assignments where id=$1',[assignment.id,assignment.starts_at])).toBe(true);
 });
