@@ -2472,6 +2472,13 @@
       "when": 1794374201465,
       "tag": "0352_finalize_org_levels_standard_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 353,
+      "version": "7",
+      "when": 1794376021763,
+      "tag": "0353_unified_permission_resolver_parity",
+      "breakpoints": true
     }
   ]
 }
