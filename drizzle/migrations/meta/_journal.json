@@ -2353,6 +2353,13 @@
       "when": 1794363958411,
       "tag": "0335_ot_packing_verified_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 336,
+      "version": "7",
+      "when": 1794365295770,
+      "tag": "0336_phase3a_native_role_audit",
+      "breakpoints": true
     }
   ]
 }
