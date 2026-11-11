@@ -1,18 +1,10 @@
 [
   {
     "role_id": "role-v2-mkt-staff",
-    "removed": [
-      "order.request_changes",
-      "order.cancel",
-      "order.complete",
-      "order.approve",
-      "order.assign",
-      "order.edit",
-      "settings.view"
-    ],
+    "removed": [],
     "result": {
       "preview": {
-        "id": "c0c336a6-e691-404e-b143-e93d72861fa9",
+        "id": "658f6e9e-c1fb-4125-b6ed-cb0930c8f2fa",
         "added": [],
         "after": {
           "name": "Nhân viên Marketing",
@@ -29,8 +21,8 @@
             "order.history",
             "leave.create",
             "overview.own_only",
-            "att.witness",
             "att.create",
+            "att.witness",
             "order.send_request",
             "overview.view",
             "order.view"
@@ -48,31 +40,24 @@
           "role_code": "role-v2-mkt-staff",
           "role_kind": "position",
           "created_at": "2026-11-11T14:18:56.31575+00:00",
-          "updated_at": "2026-11-11T14:18:56.31575+00:00",
+          "updated_at": "2026-11-11T14:54:18.104296+00:00",
           "description": "Bộ Role chuẩn mặc định 2026; đối chiếu từ Role cũ role-standard-mkt-staff, role-content-web; chỉnh được qua ma trận.",
           "permissions": [
             "kpi.view_own",
-            "order.request_changes",
             "order.open_delivery",
             "leave.recall",
             "order.create",
-            "order.cancel",
             "leave.view_own",
-            "order.complete",
             "att.view_own",
             "order.view_mine",
             "order.history",
             "leave.create",
-            "order.approve",
             "overview.own_only",
-            "att.witness",
             "att.create",
+            "att.witness",
             "order.send_request",
             "overview.view",
-            "order.view",
-            "order.assign",
-            "order.edit",
-            "settings.view"
+            "order.view"
           ],
           "signal_scope": [],
           "catalog_group": "Marketing",
@@ -83,17 +68,9 @@
           "biz_detail_exception": false,
           "biz_settings_disabled": false
         },
-        "removed": [
-          "order.request_changes",
-          "order.cancel",
-          "order.complete",
-          "order.approve",
-          "order.assign",
-          "order.edit",
-          "settings.view"
-        ],
+        "removed": [],
         "role_id": "role-v2-mkt-staff",
-        "expires_at": "2026-11-11T15:04:17.489066+00:00",
+        "expires_at": "2026-11-11T15:06:52.243733+00:00",
         "references": {
           "direct": 0,
           "titles": [],
@@ -160,7 +137,7 @@
     ],
     "result": {
       "preview": {
-        "id": "bd418344-fe30-42f2-bab0-04b66eac27ec",
+        "id": "0e8a7f74-fca9-4153-b586-a8d98e9c17d9",
         "added": [],
         "after": {
           "name": "Content Web",
@@ -319,7 +296,7 @@
           "social.growth_open"
         ],
         "role_id": "role-v2-task-content-web",
-        "expires_at": "2026-11-11T15:04:19.773692+00:00",
+        "expires_at": "2026-11-11T15:06:54.408733+00:00",
         "references": {
           "direct": 0,
           "titles": [],
@@ -336,13 +313,11 @@
           "dc42e189-e2de-4a60-a00a-d5277819ea13"
         ]
       },
-      "applied": null,
-      "error": {
-        "code": "P0001",
-        "details": null,
-        "hint": null,
-        "message": "Thay đổi cơ cấu phải qua xem trước và xác nhận."
-      }
+      "applied": {
+        "action": "edit",
+        "role_id": "role-v2-task-content-web"
+      },
+      "error": null
     }
   },
   {
@@ -354,7 +329,7 @@
     ],
     "result": {
       "preview": {
-        "id": "cd0185dd-a08b-4e28-a1ce-11f0dd889a97",
+        "id": "6842440c-d373-4bd9-a707-73f2420b5596",
         "added": [],
         "after": {
           "name": "SEO",
@@ -451,7 +426,7 @@
           "order.view"
         ],
         "role_id": "role-v2-task-seo",
-        "expires_at": "2026-11-11T15:04:22.076845+00:00",
+        "expires_at": "2026-11-11T15:06:56.595477+00:00",
         "references": {
           "direct": 0,
           "titles": [],
@@ -465,13 +440,11 @@
         },
         "affected_users": []
       },
-      "applied": null,
-      "error": {
-        "code": "P0001",
-        "details": null,
-        "hint": null,
-        "message": "Thay đổi cơ cấu phải qua xem trước và xác nhận."
-      }
+      "applied": {
+        "action": "edit",
+        "role_id": "role-v2-task-seo"
+      },
+      "error": null
     }
   },
   {
@@ -485,7 +458,7 @@
     ],
     "result": {
       "preview": {
-        "id": "d865869b-3802-4e27-ae77-a4bececa8d23",
+        "id": "2ff838b4-581e-4e97-b08f-55562f50d890",
         "added": [],
         "after": {
           "name": "Local SEO",
@@ -590,7 +563,7 @@
           "order.view"
         ],
         "role_id": "role-v2-task-local-seo",
-        "expires_at": "2026-11-11T15:04:24.258252+00:00",
+        "expires_at": "2026-11-11T15:06:58.912977+00:00",
         "references": {
           "direct": 0,
           "titles": [],
@@ -604,13 +577,11 @@
         },
         "affected_users": []
       },
-      "applied": null,
-      "error": {
-        "code": "P0001",
-        "details": null,
-        "hint": null,
-        "message": "Thay đổi cơ cấu phải qua xem trước và xác nhận."
-      }
+      "applied": {
+        "action": "edit",
+        "role_id": "role-v2-task-local-seo"
+      },
+      "error": null
     }
   },
   {
@@ -625,7 +596,7 @@
     ],
     "result": {
       "preview": {
-        "id": "fc3ff64a-f18a-4d18-8dd2-bfc61e24c34b",
+        "id": "cfc642d8-ba46-440c-9cea-a30b05aa2f24",
         "added": [],
         "after": {
           "name": "Social",
@@ -732,7 +703,7 @@
           "settings.view"
         ],
         "role_id": "role-v2-task-social",
-        "expires_at": "2026-11-11T15:04:26.287873+00:00",
+        "expires_at": "2026-11-11T15:07:00.886879+00:00",
         "references": {
           "direct": 0,
           "titles": [],
@@ -746,13 +717,11 @@
         },
         "affected_users": []
       },
-      "applied": null,
-      "error": {
-        "code": "P0001",
-        "details": null,
-        "hint": null,
-        "message": "Thay đổi cơ cấu phải qua xem trước và xác nhận."
-      }
+      "applied": {
+        "action": "edit",
+        "role_id": "role-v2-task-social"
+      },
+      "error": null
     }
   },
   {
@@ -780,7 +749,7 @@
     ],
     "result": {
       "preview": {
-        "id": "e3f8012e-7ee7-44e6-b1ee-f0dcc888dea6",
+        "id": "fce8cfd7-ff18-4a58-bd18-cafc899780be",
         "added": [],
         "after": {
           "name": "Video",
@@ -925,7 +894,7 @@
           "social.growth_open"
         ],
         "role_id": "role-v2-task-video",
-        "expires_at": "2026-11-11T15:04:28.333323+00:00",
+        "expires_at": "2026-11-11T15:07:02.948689+00:00",
         "references": {
           "direct": 0,
           "titles": [],
@@ -941,13 +910,11 @@
           "91046d4c-1799-4aa5-81c5-4e5174bea7b6"
         ]
       },
-      "applied": null,
-      "error": {
-        "code": "P0001",
-        "details": null,
-        "hint": null,
-        "message": "Thay đổi cơ cấu phải qua xem trước và xác nhận."
-      }
+      "applied": {
+        "action": "edit",
+        "role_id": "role-v2-task-video"
+      },
+      "error": null
     }
   }
 ]
