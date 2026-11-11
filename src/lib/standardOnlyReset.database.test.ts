@@ -40,7 +40,7 @@ beforeAll(async()=>{
 afterAll(()=>db.close());
 async function preview(){return (await db.query<{p:{fingerprint:string;accounts:{user_id:string;status:string}[]}}>('select base_perm_final_preview() p')).rows[0].p;}
 
-beforeAll(async()=>{await db.exec(readFileSync('drizzle/migrations/0347_legacy_reset_standard_only_contract.sql','utf8'));});
+beforeAll(async()=>{await db.exec(readFileSync('drizzle/migrations/0347_legacy_reset_standard_only_contract.sql','utf8'));await db.exec(readFileSync('drizzle/migrations/0349_standard_reset_supplement_catalog.sql','utf8'));});
 let resetRun:string;
 it('reset includes Business and replace overrides, protects Super Admin, preserves organization and snapshots',async()=>{
  const p=(await db.query<{p:{fingerprint:string,pending_count:number,protected_count:number}}>('select base_perm_standard_reset_preview() p')).rows[0].p;
@@ -59,6 +59,11 @@ it('legacy regrant is blocked and repeated reset is idempotent',async()=>{
  await expect(db.query('update user_permission_overrides set use_custom=true where user_id=$1',[CUSTOM])).rejects.toThrow(/legacy/);
  const r=(await db.query<{r:{already_applied:boolean}}>("select base_perm_standard_reset_execute('stale','RESET QUYỀN LEGACY') r")).rows[0].r;expect(r.already_applied).toBe(true);
  expect((await db.query('select * from base_perm_cleanup_runs')).rows).toHaveLength(1);
+});
+it('Business staff after reset may configure safe standard supplements without legacy roles',async()=>{
+ const r=(await db.query<{r:{roles:{id:string,catalog_state:string}[]}}>('select account_supplement_read($1) r',[BIZ])).rows[0].r;
+ expect(r.roles.every(role=>role.catalog_state==='standard')).toBe(true);
+ expect(r.roles.map(role=>role.id)).toContain('safe-extra');
 });
 it('restore retains newer supplemental grants and original timestamps',async()=>{
  await db.query("insert into user_roles(user_id,role_id,source_kind) values($1,'safe-extra','supplemental')",[MKT]);
