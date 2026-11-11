@@ -664,11 +664,7 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
 
   return <>
     <Select value={functionGroup} onValueChange={setFunctionGroup}><SelectTrigger aria-label="Nhóm chức năng Role" className="w-full sm:w-64 mb-3"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả nhóm chức năng</SelectItem>{ROLE_FUNCTION_GROUPS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent></Select>
-    {canManage && (
-      <div className="flex justify-end mb-3 gap-2">
-        <Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4 mr-1.5" />Thêm role</Button>
-      </div>
-    )}
+
     <div className="divide-y border-y md:hidden">{s.roles.filter(r => r.catalogState === 'standard' && (functionGroup === 'all' || (r.catalogGroup ?? roleFunctionGroup(r.name)) === functionGroup)).map(r => <div key={r.id} className="py-4 space-y-2"><div className="flex items-start justify-between gap-3"><h3 className="font-medium">{r.name}</h3>{canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Tùy chỉnh quyền</Button>}</div><p className="text-xs text-muted-foreground">{r.catalogGroup ?? roleFunctionGroup(r.name)} · {s.users.filter(u => u.roleIds?.includes(r.id) || u.roleId === r.id).length} tài khoản</p><p className="text-sm text-muted-foreground">{positions(r.id)}</p>{!!r.catalogPending?.length&&<p className="text-xs text-destructive">{r.catalogPending.length} quyền chưa tự cấp: phạm vi/quy trình chưa được hỗ trợ.</p>}<p className="text-xs text-muted-foreground">{r.id === SUPER_ADMIN_ID ? 'Toàn quyền' : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(', ') || 'Chưa có chức năng'}</p></div>)}</div>
     <Card className="hidden md:block"><CardContent className="p-0 overflow-x-auto">
       <table className="w-full text-sm">
@@ -692,12 +688,6 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
                 <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.id === SUPER_ADMIN_ID ? "Toàn quyền" : [...new Set(ROLE_PERMISSIONS.filter(p => r.permissions.includes(p.key)).map(p => p.group))].join(", ") || "Chưa có chức năng"}</td>
                 <td className="px-4 py-2.5 text-right whitespace-nowrap">
                   {canManage && <Button size="sm" variant="outline" onClick={() => setEditing(r)}>Tùy chỉnh quyền</Button>}
-                  {canManage && !r.system && (
-                    <Button size="icon" variant="ghost" className="ml-1" onClick={() => {
-                      if (count > 0) return toast.error("Role đang có người dùng, không thể xóa.");
-                      if (confirm("Xóa role này?")) s.removeRole(r.id);
-                    }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                  )}
                 </td>
               </tr>
             );
@@ -706,7 +696,6 @@ export function RolesTab({ canManage }: { canManage: boolean }) {
       </table>
     </CardContent></Card>
     {editing && <RoleEditDialog role={editing} onClose={() => setEditing(null)} />}
-    {adding && <RoleEditDialog onClose={() => setAdding(false)} />}
     </>;
 }
 
@@ -730,8 +719,6 @@ function RoleEditDialog({ role, onClose }: { role?: Role; onClose: () => void })
       if (!isSuper) {
         try { await scopeRef.current?.save(); } catch (e: any) { return toast.error(e?.message || "Không lưu được phạm vi tín hiệu"); }
       }
-    } else {
-      await s.addRole({ name: name.trim(), description: desc.trim() || undefined, permissions: perms });
     }
     toast.success("Đã lưu");
     onClose();
