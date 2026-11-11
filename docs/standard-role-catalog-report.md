@@ -1,5 +1,48 @@
 # Role chuẩn và bổ nhiệm — bàn giao
 
+## Chốt cơ cấu, cấp bậc và Role chuẩn (bản 66) — 11/11/2026
+
+### Cấp bậc đã chuẩn hóa
+- Giám đốc Marketing: Cấp 1 → **Cấp 3** (Giám đốc Khối). GĐ Điều hành 5, PGĐ 4, Trưởng phòng/Kế toán trưởng 2, Trưởng nhóm 1, Nhân viên 0 — đã đúng, giữ nguyên. Không sửa lịch sử bổ nhiệm.
+- Cấu hình khởi tạo (`orgStructure.ts`) dùng tên chính thức (Phòng …, Hành chính & Nhân sự), bỏ khả năng sinh lại chức danh "Trưởng bộ phận"; bổ sung Giám đốc Marketing Cấp 3.
+
+### Bảng chức vụ → cấp bậc → Role chuẩn → quyền tự cấp đã kiểm chứng
+| Chức vụ | Cấp | Role chuẩn | Quyền tự cấp |
+|---|---:|---|---:|
+| Giám đốc Marketing | 3 | Giám đốc Marketing | 31 (đơn thiết kế cá nhân + quản lý luồng Ấn phẩm Marketing) |
+| Trưởng phòng Marketing | 2 | Quản lý Marketing | 31 (như trên) |
+| Trưởng phòng Thiết kế | 2 | Quản lý Thiết kế | 24 (cá nhân + duyệt/phân công/sửa/hoàn thành/hủy đơn thiết kế) |
+| Nhân viên Thiết kế | 0 | Nhân viên Thiết kế | 15 (luồng đơn cá nhân) |
+| Kế toán trưởng | 2 | Kế toán trưởng | 15 (Tiền Về: xem/tổng/xác nhận/đối chiếu/thủ công/quản lý/nhắc) |
+| Kế toán kho | 0 | Kế toán kho | 10 (Tiền Về: xem/xác nhận/thủ công xem+thêm) |
+| Hành chính Nhân sự | 0 | Hành Chính Nhân Sự | 28 (nghỉ phép/giải trình: duyệt, xem tất cả, báo cáo, xuất, cài đặt) |
+| Trưởng phòng Mua hàng & Giao vận | 2 | Quản lý Mua hàng & Giao vận | 27 (Hỏi giá toàn bộ + quản lý/báo cáo/xuất, theo dõi đơn: giao/quản lý/NCC) |
+| Nhân viên Thu mua | 0 | Thu mua | 17 (Hỏi giá cá nhân + theo dõi đơn cá nhân/đề xuất dời) |
+| Nhân viên Đóng hàng | 0 | Nhân viên Đóng hàng | 10 (theo dõi đơn cá nhân + tiếp nhận/phản hồi dời lịch) |
+
+Căn cứ kiểm chứng: leave/att qua RPC SECURITY DEFINER + RLS `sig_can`; Tiền Về qua `fin_*` RPC + `fin_can_see`; Hỏi giá/theo dõi đơn qua `oq_*`/`ot_*` RPC; đơn thiết kế qua trigger `orders` → `design_can` → `has_permission`. Mỗi phân hệ một phòng duy nhất nên phạm vi toàn công ty của phòng đó là đúng thẩm quyền.
+
+### Quyền vẫn chưa kích hoạt (hiển thị lý do trong màn hình liên kết Role)
+- `*.force_status`, `*.delete`, `*.restore`, `oq.delete_cancelled`: can thiệp đặc biệt, chưa có quy trình kiểm chứng.
+- `finance.incoming.bank_config`, `finance.incoming.gmf_config`: cấu hình hệ thống, không tự cấp theo chức vụ.
+- `settings.*` (trừ `settings.view`): quản trị toàn hệ thống — Admin tùy chỉnh bằng cơ chế hợp lệ khi cần.
+- `biz.*`/`k3.*`: giữ nguồn bổ nhiệm Kinh doanh riêng; chức vụ Kinh doanh chưa liên kết Role tự cấp.
+- `task.*` legacy (Task tổng quan): chưa có rào máy chủ đầy đủ.
+
+### Role nền và duyệt tài khoản
+- "Nhân sự mới" chuyển vào danh mục chuẩn, chỉ 4 quyền cá nhân đã kiểm chứng (`leave.create`, `leave.view_own`, `att.create`, `att.view_own`); bỏ `task.*` chưa kiểm chứng (hiện không có tài khoản nào đang giữ Role này).
+- `account_approve` không còn xóa Role hiện có của tài khoản; chỉ thêm Role nền khi tài khoản chưa có Role nào; từ chối gán Role ngoài danh mục chuẩn — tương thích hàng rào chặn cấp lại Role legacy.
+
+### Role legacy
+- Giữ trạng thái compatibility, ẩn khỏi mọi bộ chọn cấp quyền; gợi ý theo chức vụ (`titleRoles.ts`) chỉ trỏ Role chuẩn.
+- Rào mới: không xóa được Role còn liên kết chức vụ, nhiệm vụ Marketing, nguồn quyền hoặc lịch sử tham chiếu — ngừng sử dụng thay vì xóa.
+- Nhiệm vụ "Thiết kế"/"Chụp ảnh" vẫn tham chiếu Role legacy Designer/Chụp ảnh vì Role chuẩn thay thế chưa bao phủ tập quyền chuyên môn tương đương; giữ nguyên để không thu hồi quyền người đang có.
+
+### Kiểm chứng
+- 8 kiểm thử cô lập mới (cấp bậc, Role nền, danh sách kiểm chứng, đồng bộ liên kết, duyệt tài khoản, rào xóa Role); hồi quy 171/171 đạt; typecheck/build đạt.
+- Dữ liệu thật sau migration: 10/10 liên kết có chữ ký hợp lệ; Giám đốc Marketing Cấp 3; Role nền chuẩn.
+- Không reset quyền, không bổ nhiệm người thật, không thay đổi Kinh doanh, chưa Publish.
+
 ## Đã thực hiện
 - Đăng ký 10 Role riêng cho Marketing, Thiết kế, Kế toán và Mua hàng; giữ ID/quyền của Role cũ, không thay nguồn trực tiếp hoặc bổ nhiệm nhân sự.
 - Role tương thích ẩn khỏi bộ chọn thông thường, vẫn tồn tại cho lịch sử và phục hồi. Bản sao trước/sau riêng tư: `ee3460a9-12ab-49cc-bcca-f2dfe32e314f`.
