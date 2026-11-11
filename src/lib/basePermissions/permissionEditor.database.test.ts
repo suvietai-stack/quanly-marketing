@@ -36,13 +36,15 @@ beforeAll(async()=>{
  const f='drizzle/migrations/0369_permission_editor_drafts_and_additive_preview.sql';
  for(const name of ['private.permission_editor_policy','private.role_editor_validate','private.role_new_empty_guard','private.staff_permission_validate','public.account_supplement_preview','public.account_supplement_save'])await db.exec(deployed(f,name));
  await db.exec(deployed('drizzle/migrations/0365_slot_source_resolver_and_task_eligibility.sql','private.org_slot_rules'));
+ await db.exec(`create function private.base_tier1(u uuid,p text) returns text language sql as $$select case when exists(select 1 from jsonb_array_elements(private.org_slot_rules(u,private.base_config())) r where r->>'permission'=p) then 'ALLOW' else 'NOT_CONFIGURED' end$$;`);
+ const source=readFileSync('drizzle/migrations/0331_override_mode_legacy_default.sql','utf8');const start=source.indexOf('CREATE OR REPLACE FUNCTION private.has_permission(');await db.exec(source.slice(start,source.indexOf('$$;',start)+3));
  const config={titles:[{id:'t',active:true}],position_slots:[{id:'s1',title_id:'t',unit_id:'u1',role_id:'A',active:true},{id:'s2',title_id:'t',unit_id:'u2',role_id:'A',active:true},{id:'s3',title_id:'t',unit_id:'u3',role_id:'C',active:true}],memberships:[{id:'a1',user_id:a,title_id:'t',unit_id:'u1',slot_id:'s1',active:true},{id:'b1',user_id:b,title_id:'t',unit_id:'u2',slot_id:'s2',active:true},{id:'c1',user_id:c,title_id:'t',unit_id:'u3',slot_id:'s3',active:true}]};
  await db.query('insert into fixture values($1)',[config]);
  await db.exec(`create trigger new_role before insert on app_roles for each row execute function private.role_new_empty_guard();`);
 },30000);
 afterAll(()=>db.close());
 const roleRules=async(u:string)=>await value('select private.org_slot_rules($1,private.base_config()) v',[u]) as {permission:string;unit_id:string}[];
-const perms=async(u:string)=>[...new Set([...(await roleRules(u)).map(r=>r.permission),...((await value("select permissions v from user_permission_overrides where user_id=$1 and use_custom and mode='additive'",[u])) as string[]??[])])];
+const perms=async(u:string)=> (await db.query<{key:string}>('select key from base_permission_catalog where private.has_permission($1,key) order by key',[u])).rows.map(r=>r.key);
 async function save(u:string,permissions:string[]){const p=await value('select account_supplement_preview($1,$2) v',[u,permissions]) as {fingerprint:string};return value('select account_supplement_save($1,$2,$3,$4,$5) v',[u,[],permissions,p.fingerprint,'test isolated']);}
 it('Role A change updates both holders and leaves different Role C untouched',async()=>{await db.exec("update app_roles set permissions=array['leave.view_own','leave.create','leave.view_unit'] where id='A'");expect(await perms(a)).toContain('leave.create');expect(await perms(b)).toContain('leave.create');expect(await perms(c)).toEqual(['att.view_own']);});
 it('shared Role still keeps separate source unit scopes',async()=>{expect((await roleRules(a)).find(r=>r.permission==='leave.view_unit')?.unit_id).toBe('u1');expect((await roleRules(b)).find(r=>r.permission==='leave.view_unit')?.unit_id).toBe('u2');});
