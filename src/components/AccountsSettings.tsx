@@ -596,14 +596,12 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
 // --------- Pending ---------
 function PendingTab({ users, canApprove }: { users: User[]; canApprove: boolean }) {
   const s = useAuth();
-  const [assignFor, setAssignFor] = useState<User | null>(null);
-  const [roleId, setRoleId] = useState("");
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState<User | null>(null);
-  const approve = async (id: string, role?: string) => {
+  const approve = async (id: string) => {
     if (busy) return;
     setBusy(true);
-    try { const result = await s.approve(id, role); toast.success(result.ready ? 'Đã duyệt. Tài khoản có thể đăng nhập.' : 'Đã duyệt hồ sơ. Nhân viên cần xác nhận email trước khi đăng nhập.'); setAssignFor(null); }
+    try { const result = await s.approve(id); toast.success(result.ready ? 'Đã duyệt. Tài khoản có thể đăng nhập.' : 'Đã duyệt hồ sơ. Nhân viên cần xác nhận email trước khi đăng nhập.'); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Không duyệt được tài khoản.'); }
     finally { setBusy(false); }
   };
