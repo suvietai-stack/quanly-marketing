@@ -2451,6 +2451,13 @@
       "when": 1794371509628,
       "tag": "0349_standard_reset_supplement_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 350,
+      "version": "7",
+      "when": 1794372561918,
+      "tag": "0350_account_org_summary",
+      "breakpoints": true
     }
   ]
 }
