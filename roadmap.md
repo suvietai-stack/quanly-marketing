@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Mô hình vị trí nhiều người — 15:32 UTC (THAY THẾ cutover theo ô)
+- [x] Dừng tạo ô theo người trên giao diện; rà 25 ô → 16 vị trí, 0 xung đột Role, 24 người.
+- [x] Kế hoạch + dry-run + rollback: docs/position-model-2026-11-11/.
+- [ ] Migration org_position_roles + resolver fallback: chờ chủ xác nhận.
+- [ ] Sau xác minh: bỏ ràng buộc một người/ô, tháo liên kết cũ, xóa Role cũ.
+
 ## Chấp nhận mất quyền legacy — 15:05 UTC
 - [ ] Fresh snapshot, pending approver check, policy/diff; apply 25 verified V2 defaults qua audited RPC.
 - [ ] Bind Đức/Quỳnh Anh sang V2, chấp nhận legacy loss; giữ mọi membership/title/history và không tự bổ nhiệm lại Ngọc.
