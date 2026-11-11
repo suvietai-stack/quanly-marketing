@@ -37,4 +37,4 @@
 - Facebook discovery merges user/business Pages; encrypted sessions keep tokens out of UI, verify identity/lead access before saving — discovery is not eligibility.
 - Subdirectories may have their own AGENTS.md (e.g. src/components/biz) — read it before changing files there.
 - Read src/components/biz/AGENTS.md before biz changes; it defines business and canonical 3K task/summary/scope rules.
-- Auth/store loads go through createCoalescer (src/lib/singleFlight.ts): auth events join the in-flight per-user load, explicit reload() queues one trailing refresh, token refresh never reloads the store — prevents duplicate startup loads that overloaded the database.
+- Auth/store loads use createCoalescer: events join in-flight per-user load, reload() queues one trailing run — avoids duplicate DB load.
