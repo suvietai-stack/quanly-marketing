@@ -7646,6 +7646,39 @@ export type Database = {
           },
         ]
       }
+      org_position_role_events: {
+        Row: {
+          actor_id: string | null
+          after_role: string | null
+          before_role: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          title_id: string
+          unit_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          after_role?: string | null
+          before_role?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          title_id: string
+          unit_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          after_role?: string | null
+          before_role?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          title_id?: string
+          unit_id?: string
+        }
+        Relationships: []
+      }
       org_position_roles: {
         Row: {
           revision: number
