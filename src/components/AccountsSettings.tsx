@@ -382,19 +382,124 @@ function AllAccountsTab({ users, canLock }: { users: User[]; canLock: boolean })
   );
 }
 
+// --------- Phân công từ Cơ cấu tổ chức (chỉ đọc) ---------
+// Trang tài khoản không cấp Role hay chức vụ; mọi phân công đọc trực tiếp từ Cơ cấu tổ chức.
+type OrgSummary = {
+  assignments: { unit_id: string; unit_name: string; title_id: string | null; title_name: string | null; category: string; starts_at: string | null }[];
+  specialties: { id: string; name: string; is_primary: boolean }[];
+  roles: { id: string; name: string }[];
+};
+
+function AccountOrgPanel({ userId }: { userId: string }) {
+  const q = useQuery({
+    queryKey: ["account-org-summary", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("account_org_summary", { _target: userId });
+      if (error) throw error;
+      return data as unknown as OrgSummary;
+    },
+    retry: false,
+  });
+  if (q.isPending) return <p className="text-sm text-muted-foreground">Đang tải phân công từ Cơ cấu tổ chức…</p>;
+  if (q.error) return <p className="text-sm text-muted-foreground">Không đọc được phân công: {q.error instanceof Error ? q.error.message : "lỗi"}</p>;
+  const d = q.data;
+  if (!d) return null;
+  const primary = d.assignments.filter((a) => a.category !== "concurrent");
+  const concurrent = d.assignments.filter((a) => a.category === "concurrent");
+  const line = (a: OrgSummary["assignments"][number]) => `${a.unit_name} · ${a.title_name ?? "Thành viên"}`;
+  return (
+    <div className="sm:col-span-2 rounded-lg border bg-muted/20 p-3 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Label className="text-sm font-semibold">Phân công theo Cơ cấu tổ chức</Label>
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/organization"><Network className="h-3.5 w-3.5 mr-1.5" />Đến Cơ cấu tổ chức</Link>
+        </Button>
+      </div>
+      {d.assignments.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic">Chưa phân công — bổ nhiệm tại Cơ cấu tổ chức để tài khoản nhận Role theo chức vụ.</p>
+      ) : (
+        <div className="space-y-1 text-sm">
+          {primary.map((a, i) => <p key={`p${i}`}><span className="text-muted-foreground">Đơn vị công tác: </span>{line(a)}</p>)}
+          {concurrent.length > 0 && <p><span className="text-muted-foreground">Kiêm nhiệm: </span>{concurrent.map(line).join(" · ")}</p>}
+        </div>
+      )}
+      {d.specialties.length > 0 && (
+        <p className="text-sm"><span className="text-muted-foreground">Nhiệm vụ Marketing: </span>{d.specialties.map((sp) => sp.name).join(", ")}</p>
+      )}
+      <p className="text-sm">
+        <span className="text-muted-foreground">Role hiệu lực: </span>
+        {d.roles.length > 0 ? d.roles.map((r) => r.name).join(", ") : <span className="italic text-muted-foreground">Chưa gán</span>}
+      </p>
+    </div>
+  );
+}
+
+// --------- Quyền thực nhận (chỉ đọc, từ resolver backend) ---------
+function AccountPermsView({ userId }: { userId: string }) {
+  const q = useQuery({
+    queryKey: ["perm-explain", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("account_permission_explain", { _target: userId });
+      if (error) throw error;
+      return data as unknown as PermissionExplainRpc;
+    },
+    retry: false,
+  });
+  if (q.isPending) return <p className="text-sm text-muted-foreground">Đang đọc quyền thực nhận…</p>;
+  if (q.error) return <p className="text-sm text-muted-foreground">Không đọc được quyền: {q.error instanceof Error ? q.error.message : "lỗi"}</p>;
+  const info = q.data;
+  if (!info) return null;
+  const effective = new Set(info.effective);
+  const sourceNames = [...new Set(info.rules.map((r) => `${SOURCE_KIND_LABEL[r.source_kind] ?? r.source_kind}${r.source_name ? `: ${r.source_name}` : ""}`))];
+  return (
+    <div className="space-y-3">
+      <p className="text-sm">
+        <span className="text-muted-foreground">Nguồn quyền: </span>
+        <span className="font-medium">
+          {info.is_super_admin
+            ? "Super Admin / Tài khoản hệ thống — toàn quyền"
+            : [
+                info.direct_roles.length > 0 ? `Role: ${info.direct_roles.map((r) => r.name).join(", ")}` : null,
+                sourceNames.length > 0 ? sourceNames.join(" · ") : null,
+                info.use_custom ? (info.override_mode === "additive" ? "Quyền bổ sung cá nhân" : "Quyền riêng (thay thế Role)") : null,
+              ].filter(Boolean).join(" · ") || "Chưa có nguồn quyền"}
+        </span>
+      </p>
+      <div>
+        <Label className="text-xs">Quyền thực nhận ({effective.size})</Label>
+        <div className="mt-2 max-h-72 overflow-y-auto border rounded p-2 space-y-2">
+          {PERMISSION_GROUPS.filter((g) => !BIZ_ORG_GROUPS.includes(g)).map((g) => {
+            const granted = ROLE_PERMISSIONS.filter((p) => p.group === g && effective.has(p.key));
+            if (!granted.length) return null;
+            return (
+              <div key={g}>
+                <div className="text-xs font-semibold text-muted-foreground mb-1">{g} ({granted.length})</div>
+                <div className="flex flex-wrap gap-1">
+                  {granted.map((p) => (
+                    <span key={p.key} title={p.label} className="text-[11px] px-1.5 py-0.5 rounded border bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800">{p.label}</span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {effective.size === 0 && <p className="text-sm text-muted-foreground py-3 text-center">Chưa có quyền nghiệp vụ — bổ nhiệm chức vụ tại Cơ cấu tổ chức.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --------- User Edit ---------
 function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) {
   const s = useAuth();
   const { isSuperAdmin, can } = useCurrentUser();
   const canReset = isSuperAdmin || can("settings.user_reset_password");
+  const canCustomPerm = isSuperAdmin || can("settings.user_custom_perm");
   const [tab, setTab] = useState("info");
   const [form, setForm] = useState({
     fullName: user.fullName, email: user.email || "", phone: user.phone || "",
-    desiredPosition: user.desiredPosition || "", notes: user.notes || "",
-    roleId: user.roleId || "", status: user.status,
-    useCustom: !!user.useCustom,
+    notes: user.notes || "", status: user.status,
   });
-  const [perms, setPerms] = useState<PermissionKey[]>(user.customPermissions || []);
   const [newPwd, setNewPwd] = useState("");
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -405,20 +510,13 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
     setSaving(true);
     try {
     await s.updateUser(user.id, {
-      fullName: form.fullName, phone: form.phone || undefined,
-      desiredPosition: form.desiredPosition || undefined, notes: form.notes || undefined,
+      fullName: form.fullName, phone: form.phone || undefined, notes: form.notes || undefined,
     });
-    if (!isSystem) {
-      const approving = user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động';
-      if (!approving && form.roleId && form.roleId !== user.roleId) await s.setRole(user.id, form.roleId);
-      if (form.status !== user.status) {
-        if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
-          const result = await s.approve(user.id, form.roleId !== user.roleId ? form.roleId || undefined : undefined);
-          if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
-        } else await s.setStatus(user.id, form.status);
-      }
-      await s.setUseCustom(user.id, form.useCustom);
-      if (form.useCustom) await s.setCustomPerms(user.id, perms);
+    if (!isSystem && form.status !== user.status) {
+      if (user.status === 'Chờ duyệt' && form.status === 'Đang hoạt động') {
+        const result = await s.approve(user.id);
+        if (!result.emailConfirmed) toast.info('Đã duyệt hồ sơ; nhân viên vẫn cần xác nhận email trước khi đăng nhập.');
+      } else await s.setStatus(user.id, form.status);
     }
     toast.success("Đã lưu");
     onClose();
