@@ -125,3 +125,14 @@
 - [ ] Tự gán nhân sự hiện tại vào vị trí phù hợp (có xem trước, không gán bừa vị trí quản lý)
 - [ ] Role tối thiểu cho Nhân viên Đóng hàng
 - [ ] Không Publish
+
+## Giai đoạn tiếp theo — sửa lỗi phân quyền, chuẩn hóa Role (yêu cầu mới nhất)
+- [x] Vá 0330: quyền riêng cá nhân có chế độ replace (legacy, mặc định) / additive (sau xác nhận Admin) — migration 0331; tài khoản Bích Ngọc về đúng 69 quyền riêng, không còn +29 quyền Role tự cộng
+- [x] RPC account_override_mode_set: chỉ Super Admin/settings.user_custom_perm, ghi account_security_logs, trả diff trước/sau, phục hồi bằng chuyển lại replace
+- [x] Thống nhất resolver: backend has_permission, frontend getUserPermissions/explainPermission, cleanup eval (0333 vá điều kiện replace) cùng quy tắc
+- [x] SpecialtyStaffPicker lọc/loại trùng theo ID, hiển thị đơn vị/chức vụ để phân biệt người trùng tên; giá trị lưu vẫn là tên (tương thích bản ghi cũ)
+- [x] Role "Nhân viên Đóng hàng" tối thiểu (ot.view_own/task_view/task_update/stage_update) + liên kết chức vụ chưa kích hoạt — migration 0332
+- [x] Cài đặt cơ cấu: 3 nhóm (Đơn vị theo cây / Chức vụ & Nhiệm vụ / Role & Phân quyền), bỏ nút Quyền mặc định rải rác, Nâng cao giữ ma trận/Debug/chuyển đổi
+- [ ] Bích Ngọc: đối chiếu 69 quyền riêng vs Role Video với Admin, chỉ sau xác nhận mới chuyển additive
+- [ ] Ma trận quyền chỉnh trực tiếp (hiện chỉ đọc); tự cấp trọn Role theo chức vụ (chờ kiểm chứng phạm vi từng phân hệ)
+- [ ] Reset quyền cũ ngoài Kinh doanh — chờ lệnh riêng; chưa Publish
