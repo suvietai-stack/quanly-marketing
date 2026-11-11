@@ -1,4 +1,11 @@
-# Roadmap — Giai đoạn 3A: Role chuẩn trước chuyển đổi quyền cũ
+# Roadmap — Chuyển đổi quyền cuối cùng
+
+- [x] Snapshot đầy đủ và chuyển đổi thật 9 tài khoản/9 nguồn Role cũ, giữ ngoại lệ và quản trị; mã phục hồi 90717bc1-ae8e-4bed-a162-9ab8c8e61bec.
+- [x] Mở thao tác chuyển đổi/khôi phục có xác nhận, giữ nguyên nguồn bổ nhiệm và tập quyền đã kiểm chứng.
+- [x] Quyền bổ sung thật tại Nhân sự, dùng Role/permission chung và kiểm tra máy chủ; không giả lập giới hạn đơn vị chưa hỗ trợ.
+- [x] 90 kiểm thử cô lập đạt, Preview chuyển đổi thành công và đọc lại; báo cáo docs/final-permission-transition-report.md; không Publish.
+
+## Giai đoạn 3A trước đó
 
 - [x] Kiểm chứng từng quyền của chín liên kết chức vụ còn chờ, gồm đọc/ghi/báo cáo/xuất/workflow.
 - [x] Chỉ kích hoạt tập quyền có rào backend an toàn; ghi rõ chức năng quản lý còn chờ.
@@ -18,5 +25,5 @@
 - [x] 7. Kiểm thử: 21 test mới đạt; hồi quy 1426/1443 (2 lỗi date-dependent đã biết); typecheck/build đạt.
 - [x] 8. Báo cáo bàn giao docs/phase25-report.md.
 
-Mở (chờ): quyền quản lý thiết yếu của 9 chức vụ còn chặn — backend nhiều phân hệ chưa có rào đơn vị và workflow đầy đủ; cần triển khai hợp đồng phạm vi riêng từng phân hệ trước khi kích hoạt. Không reset; 8 tài khoản chưa đủ quyền thay thế. Báo cáo: docs/phase3a-role-activation-report.md.
-Nguyên tắc: không reset quyền, không Publish, Kinh doanh giữ nguyên.
+Mở (chờ Admin): bổ nhiệm nhân sự thủ công và đối chiếu ngoại lệ Bích Ngọc (69 quyền riêng chứa quyền Tín hiệu) / Viewer chưa rõ nguồn. Quyền quản lý theo đơn vị chưa hỗ trợ ở nhiều phân hệ nên không tự cấp; không giả lập đã hoàn thiện. Không cấp Role nền hàng loạt vì Task legacy chưa có rào máy chủ đầy đủ; Admin chọn khi phù hợp. Báo cáo chi tiết: docs/final-permission-transition-report.md.
+Quyết định mới: được chuyển đổi nguồn cũ ngoài Kinh doanh có thể xác định chính xác, có snapshot/khôi phục; không bổ nhiệm tự động, không Publish, Kinh doanh giữ nguyên.
