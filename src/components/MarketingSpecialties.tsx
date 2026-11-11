@@ -8,13 +8,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { applySpecialtyDiff, type StaffSpecialty, type SpecialtyPermissionPreview } from '@/lib/marketingSpecialties';
 
-type Spec = { id: string; name: string; active: boolean; sort: number };
+type Spec = { id: string; name: string; active: boolean; sort: number; role_id: string | null };
+const taskRoles = new Set(['role-content-web', 'role-seo', 'role-local-seo', 'role-social', 'role-video']);
 
 function useSpecialties() {
   const { user } = useCurrentUser();
   return useQuery({ queryKey: ['mkt-specialties', user?.id], queryFn: async () => {
     const [s, a] = await Promise.all([
-      supabase.from('mkt_specialties').select('id,name,active,sort').order('sort'),
+      supabase.from('mkt_specialties').select('id,name,active,sort,role_id').order('sort'),
       supabase.from('mkt_staff_specialties').select('user_id,specialty_id,state,origin,is_primary,source'),
     ]);
     if (s.error) throw s.error; if (a.error) throw a.error;
@@ -78,7 +79,7 @@ export function StaffSpecialties({ userId }: { userId: string }) {
     {eligible.data===false&&<p className="text-sm text-muted-foreground">Không có bổ nhiệm Marketing hiệu lực; không thể cấp nhiệm vụ mới.</p>}
     {q.data?.specs.filter(s => s.active).map(s => { const o = origin(s.id); return (
       <div key={s.id} className="flex items-center gap-3 border-b py-2">
-        <Checkbox id={`sp-${s.id}`} checked={sel.has(s.id)} disabled={!isSuperAdmin || (!sel.has(s.id) && eligible.data!==true)} onCheckedChange={v => { const n = new Set(sel); if (v) n.add(s.id); else n.delete(s.id); setDraft(n); }} />
+        <Checkbox id={`sp-${s.id}`} checked={sel.has(s.id)} disabled={!isSuperAdmin || (!sel.has(s.id) && taskRoles.has(s.role_id ?? '') && eligible.data!==true)} onCheckedChange={v => { const n = new Set(sel); if (v) n.add(s.id); else n.delete(s.id); setDraft(n); }} />
         <label htmlFor={`sp-${s.id}`} className="flex-1 text-sm">{s.name}</label>
         {o && <Badge variant="outline" className="text-[10px]">{o.state === 'removed' ? 'Đã bỏ' : o.origin === 'auto' ? 'Tự nhận diện từ Role' : 'Admin chỉnh'}</Badge>}
         {sel.has(s.id) && isSuperAdmin && <Button size="sm" variant={prim === s.id ? 'secondary' : 'ghost'} onClick={() => setPrimary(prim === s.id ? '' : s.id)}>{prim === s.id ? 'Chuyên môn chính' : 'Đặt chính'}</Button>}

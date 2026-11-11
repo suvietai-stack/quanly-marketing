@@ -1,5 +1,32 @@
 # Kiểm kê ban đầu: Kho Role và ô vị trí
 
+## Cập nhật fix trực tiếp 11/11/2026 — 0365–0368
+
+### Đã sửa code và áp dụng
+- **0365**: slotted rules lấy Role của ô trong snapshot truyền vào, không còn join bắt buộc với title-role link. Fallback cũ chỉ nhận membership chưa slot. Nhiệm vụ mới/tái kích hoạt có `eligibility_enforced`; mỗi lần đọc phải còn Marketing theo root ID ổn định hoặc code, kể cả kiêm nhiệm. Đổi user/specialty trên row không bypass guard. Bảy row chuyên môn hiện hữu giữ nguyên compatibility, không sửa nhân sự thật.
+- **0366**: sửa snapshot `base_config` sau phát hiện lỗi key JSON trên Preview; preview tạo Role vị trí từ chối permission có sẵn, insert guard cùng kiểm tra. Role hiện hành không bị blank. Preview sửa Role đếm người từ toàn bộ nguồn thay vì title-only.
+- **0367**: thay Role ô có lịch sử qua `replace_slot_role`: ô phiên bản mới, kết thúc đúng holder và tạo khoảng kế tiếp trong một preview/apply/audit; ô cũ giữ Role gốc. Bổ nhiệm tương lai chặn để đối chiếu riêng. Scope Tín hiệu ô dùng slot Role; title scope chỉ dùng un-slotted. Source model thêm nhiệm vụ gắn bổ nhiệm.
+- **0368**: exclusion GiST `[starts_at,ends_at)` chặn hai holder chồng thời gian trên cùng slot trong DB, cả giao dịch đồng thời; cancelled history không xóa. Constraint đã đọc lại ở DB.
+- UI mapping chọn Role rõ ràng, tách nhiều người thành ô riêng, tái dùng ô tương thích, thêm ô trống; preview người/Role/đơn vị/ngày/tác động quyền, chỉ Super Admin apply. Lọc current/history/all không giấu các record active nhưng hết hạn.
+- Staff và tài khoản có **Role & Quyền thực tế**: source ID, đơn vị, Role, quyền từ nguồn, cảnh báo compatibility. Catalog distinct-person counts theo slot/task/direct/title legacy; không cộng trùng tổng. HCNS/Đóng hàng giữ ID hiện hữu, Super Admin được bảo vệ, không tạo Role trùng.
+
+### Dữ liệu thật không chuyển
+- 33 Role; 85 bổ nhiệm: 82 `status=active`, trong đó **36** còn hiệu lực theo thời gian, không phải 82 cùng hiệu lực; 3 ended. Giao diện All gồm đủ 85.
+- 0 ô vật lý; 0 bổ nhiệm mapped; 7 chuyên môn cũ; 0 chuyên môn có enforced flag. Không reset, không update hàng loạt Role/quyền/người thật, không Publish. Chỉ preview thao tác thật, không apply.
+
+### Kiểm thử đã chạy
+- 129/129: 19 mới (15 PGlite cùng SQL deployed + 4 mapping), appointment 12, catalog PGlite 9, source scope PGlite 8; CRM 28, standard Biz 6, 3K PGlite 10, order tracking 7, finance 19, approvals 11.
+- Test mới: Role ô không cần title link; cross-unit fail-closed; cùng Role hai source; thu hồi một giữ source kia; task không gắn slot; Role mới rỗng; root đổi tên vẫn Marketing; nhiều task; rời hết ngừng quyền mới giữ history; chuyển user trái phép; Thiết kế ngoài Marketing giữ quyền; nhiệm vụ lịch sử không bị tự cắt.
+- Preview phiên thật: kho tải; current 36; xem trước một mapping người thật giữ dates; mở thêm ô trống và Role mới; nguồn thực tế đọc được. Không pageerror. Không bấm confirm. Harness typecheck/build gần nhất OK; không chạy build/typecheck thủ công.
+- **Chưa test thực**: hai connection concurrent INSERT, apply/restore branch thay Role mới, full migration chain PGlite, toàn bộ native CRM/3K/workflow cutover. Test trigger cũ không thay thế các kiểm thử này.
+
+### Chưa hoàn thành / cần xác nhận trước cutover
+- `user_roles`, override replace/additive, `biz_appointments`/CRM/3K/native workflow vẫn dùng hợp đồng hiện hành. Không tuyên bố toàn hệ đã một canonical authorization path, không tự bỏ fallback.
+- Nhiệm vụ mới tự mất quyền khi rời Marketing. **Nhiệm vụ/chuyên môn lịch sử và assignment-specialty source còn compatibility**, cần đối chiếu và xác nhận chuyển nguồn trước khi bật enforced/cắt fallback. Không làm mất Thiết kế/Chụp ảnh.
+- Tín hiệu chức năng+nhóm cùng source ở mọi RPC còn cần action-specific contract; một helper scope chung chưa đủ chứng minh mọi action không cross-role. Không tuyên bố đã giải quyết toàn bộ các workflow.
+- Trưởng nhóm KD chưa có Role riêng; DB có chức danh dùng chung nhưng hiện không có Nhóm KD thật. Không tự tạo Role với quyền phỏng đoán: Admin có thể tạo Role rỗng trong kho khi chốt cần dùng, giữ Role Trưởng phòng đang chạy.
+- Mapping thực, cập nhật Role ô người thật, retirement legacy và enforcement lịch sử đều chờ người dùng xác nhận. Chưa đủ điều kiện báo hoàn thành toàn bộ hay cutover.
+
 Kiểm tra chỉ đọc ngày 11/11/2026. Chưa chuyển dữ liệu, chưa reset, chưa Publish.
 
 ## Xác minh
