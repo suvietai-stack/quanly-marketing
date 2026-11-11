@@ -2486,6 +2486,13 @@
       "when": 1794376948942,
       "tag": "0354_biz_standard_appointment_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 355,
+      "version": "7",
+      "when": 1794377698797,
+      "tag": "0355_complete_title_roles_signal_crm_scope",
+      "breakpoints": true
     }
   ]
 }
