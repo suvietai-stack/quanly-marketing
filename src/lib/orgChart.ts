@@ -21,7 +21,7 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
     slots.push(...physical.map(s => { const t = config.titles.find(t => t.id === s.title_id); return {id:s.id,titleId:s.title_id,title:s.name,manager:t ? titleKind(t)==='manager' : false,level:t ? titleLevel(t):0,capacity:1,holders:current.filter(m=>m.slot_id===s.id).map(personOf)}; }));
     const slotted = new Set(titles.map(t => t.id));
     const holderIds = new Set(slots.flatMap(slot => slot.holders.map(person => person.id)));
-    const people = [...new Map(current.filter(m => m.unit_id === u.id && !holderIds.has(m.user_id) && (!m.title_id || !slotted.has(m.title_id))).map(m => [m.user_id, personOf(m)])).values()];
+    const people = [...new Map(current.filter(m => m.unit_id === u.id && !holderIds.has(m.user_id) && (!m.title_id || !slotted.has(m.title_id) || (physicalTitleIds.has(m.title_id) && !m.slot_id))).map(m => [m.user_id, personOf(m)])).values()];
     return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
   };
   const roots = config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id));
