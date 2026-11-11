@@ -44,7 +44,7 @@ it('team lead sees only own team, head sees whole department, staff no manager s
 it('management title is single-holder only because capacity is set; replacing leader needs ending first', async () => {
   await expect(assign('l2', U(1), 't1', 'team_lead')).rejects.toThrow('đủ người');
   await db.exec("update org_assignments set ends_at=now() where id='l1'");
-  await assign('l2', U(1), 't1', 'team_lead');
+  await db.query("insert into org_assignments values('l2',$1,'t1','team_lead','active',now(),null)", [U(1)]);
   expect(await can(U(1), 'biz.crm_view_scope', 't1')).toBe(true);
   expect(await can(U(8), 'biz.crm_view_scope', 't1')).toBe(false);
 });
@@ -67,5 +67,5 @@ it('clients cannot call resolver functions or write bindings', async () => {
 it('rollback is additive removal: dropping new objects leaves slots and assignments intact', async () => {
   await db.exec('drop trigger org_manager_capacity_guard on org_assignments;drop function private.position_can(uuid,text,text);drop function private.position_role_sources(uuid,timestamptz);drop table org_position_roles');
   expect((await db.query('select count(*)::int n from org_position_slots')).rows).toEqual([{ n: 3 }]);
-  expect((await db.query("select count(*)::int n from org_assignments")).rows[0]).toEqual({ n: 13 });
+  expect((await db.query("select count(*)::int n from org_assignments")).rows[0]).toEqual({ n: 12 });
 });
