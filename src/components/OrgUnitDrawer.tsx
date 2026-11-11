@@ -42,6 +42,8 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
   const unit = config.units.find(u => u.id === unitId);
   const [titleName,setTitleName]=useState('');
   const [titleKindNew,setTitleKindNew]=useState<'staff'|'manager'>('staff');
+  const [childName,setChildName]=useState('');
+  const [childKind,setChildKind]=useState<'system'|'department'|'team'>('department');
   const rights = useMemo(() => unitRights(config, unitId, actor), [config, unitId, actor]);
   const titles = useMemo(() => unitTitles(config, unitId), [config, unitId]);
   const memberships = useMemo(() => config.memberships.filter(m => membershipEffective(m) && m.unit_id === unitId), [config, unitId]);
@@ -136,12 +138,13 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
             {rights.structure && <div className="space-y-2 border-b pb-3"><Label>Chức vụ mới tại {unit.name}</Label><Input aria-label="Tên chức vụ mới" value={titleName} onChange={e=>setTitleName(e.target.value)} /><Select value={titleKindNew} onValueChange={v=>setTitleKindNew(v as 'staff'|'manager')}><SelectTrigger aria-label="Loại chức vụ mới"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="staff">Nhân viên</SelectItem><SelectItem value="manager">Quản lý</SelectItem></SelectContent></Select><Button disabled={!titleName.trim()} onClick={()=>{onEdit(c=>({...c,titles:[...c.titles,{id:crypto.randomUUID(),unit_id:unitId,name:titleName.trim(),kind:titleKindNew,capacity:titleKindNew==='manager'?1:0,level:titleKindNew==='manager'?(unit.kind==='team'?1:2):0,active:true}]}));setTitleName('');}}><Plus className="mr-2 h-4 w-4" />Thêm chức vụ</Button></div>}
             {titles.map(t => (
               <div key={t.id} className="rounded-xl border p-3">
-                <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
+                <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
                   {rights.structure ? <Input aria-label={`Tên chức vụ ${t.name}`} value={t.name} onChange={e=>onEdit(c=>({...c,titles:c.titles.map(x=>x.id===t.id?{...x,name:e.target.value}:x)}))} /> : t.name}
                   <Badge variant="outline" className="text-[10px] font-normal">Cấp {titleLevel(t)}</Badge>
                   <Badge variant="secondary" className="text-[10px] font-normal">{titleKind(t) === 'manager' ? 'Quản lý' : 'Nhân viên'}</Badge>
                   <Badge variant="outline" className="text-[10px] font-normal">{slotCapacity(t) === 1 ? 'Một người' : slotCapacity(t) > 1 ? `Tối đa ${slotCapacity(t)}` : 'Nhiều người'}</Badge>
-                </p>
+                </div>
+                {rights.structure && <div className="grid grid-cols-2 gap-2 mt-2"><div><Label>Cấp bậc</Label><Input type="number" min={0} max={5} aria-label={`Cấp bậc ${t.name}`} value={t.level??0} onChange={e=>onEdit(c=>({...c,titles:c.titles.map(x=>x.id===t.id?{...x,level:Math.min(5,Math.max(0,Number(e.target.value)))}:x)}))} /></div><div><Label>Số người tối đa</Label><Input type="number" min={t.kind==='manager'?1:0} aria-label={`Số người ${t.name}`} value={t.capacity??0} disabled={t.kind==='manager'} onChange={e=>onEdit(c=>({...c,titles:c.titles.map(x=>x.id===t.id?{...x,capacity:Math.max(0,Number(e.target.value))}:x)}))} /></div></div>}
                 {actor.super && <details className="mt-2"><summary className="text-xs cursor-pointer">Liên kết Role</summary><TitleRoleDefaults disabled={!t.active} source={t.source==='biz_positions'?'biz':'base'} titleId={t.id} titleName={t.name} stagedLinks={config.role_links??[]} onStage={links=>onEdit(c=>({...c,role_links:[...(c.role_links??[]).filter(l=>l.title_id!==t.id),...links]}))} /></details>}{rights.structure && <Button size="sm" variant="ghost" onClick={()=>onEdit(c=>({...c,titles:c.titles.map(x=>x.id===t.id?{...x,active:!x.active}:x)}))}>{t.active?'Ngừng chức vụ':'Kích hoạt'}</Button>}
                 {t.description && <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>}
                 <p className="mt-1 text-xs text-muted-foreground">Đang giữ: {titleHoldersCount(config, t.id)} người</p>{(canAssign || canAppoint) && <Button size="sm" variant="outline" className="mt-2" onClick={()=>onAppoint(t.id)}>Bổ nhiệm / Thêm nhân sự</Button>}
@@ -182,6 +185,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
                   </Select>
                 </div>
                 <Button variant="outline" onClick={() => onEdit(c => ({ ...c, units: c.units.map(x => x.id === unitId ? { ...x, active: !x.active } : x) }))}>{unit.active ? 'Ngừng đơn vị' : 'Kích hoạt đơn vị'}</Button>
+                <div className="space-y-2 border-t pt-3"><Label>Đơn vị con</Label><Input aria-label="Tên đơn vị con" value={childName} onChange={e=>setChildName(e.target.value)} /><Select value={childKind} onValueChange={v=>setChildKind(v as typeof childKind)}><SelectTrigger aria-label="Loại đơn vị con"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="system">Hệ</SelectItem><SelectItem value="department">Phòng</SelectItem><SelectItem value="team">Nhóm</SelectItem></SelectContent></Select><Button disabled={!childName.trim()} onClick={()=>{onEdit(c=>({...c,units:[...c.units,{id:crypto.randomUUID(),parent_id:unitId,name:childName.trim(),kind:childKind,active:true}]}));setChildName('');}}><Plus className="mr-2 h-4 w-4" />Thêm đơn vị con</Button></div>
                 <p className="text-xs text-muted-foreground">Ngừng đơn vị không xóa nhân sự hay lịch sử.</p>
               </>
             ) : (
