@@ -2640,6 +2640,13 @@
       "when": 1794408775494,
       "tag": "0376_role_v2_audited_snapshot_restore_and_reduction_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 377,
+      "version": "7",
+      "when": 1794408952446,
+      "tag": "0377_role_v2_task_edit_avoids_legacy_assignment_resign",
+      "breakpoints": true
     }
   ]
 }
