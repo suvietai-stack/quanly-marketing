@@ -40,6 +40,7 @@ beforeAll(async () => {
     ('${ADMIN}','Admin','Đang hoạt động'),('${VIEWER}','Xem quyền','Đang hoạt động'),('${NOBODY}','Thường','Đang hoạt động'),
     ('${MULTI}','Hai Role','Đang hoạt động'),('${REPLACE}','Replace','Đang hoạt động'),
     ('${ADDITIVE}','Additive','Đang hoạt động'),('${DENIED}','Bị chặn','Đang hoạt động'),
+    ('${VERIFIED_ROLE}','Role quyền đã kiểm chứng','Đang hoạt động'),
     ('513712ca-d679-41aa-9c68-97c3bb6cd9df','Admin Hệ Thống','Đang hoạt động');
   insert into app_roles values
     ('role-video','Video',null,array['video.create','video.approve'],false,'assigned',false,false,'{}',false),
@@ -64,6 +65,10 @@ beforeAll(async () => {
     ('${REPLACE}', true, array['web.content_view'], 'replace'),
     ('${ADDITIVE}', true, array['web.content_view'], 'additive')`);
   await db.query(`insert into user_roles values ('${REPLACE}','role-video'),('${ADDITIVE}','role-video')`);
+  // Role cấp trực tiếp quyền ot.* đã kiểm chứng nhưng KHÔNG có rule nguồn nào:
+  // has_permission phải rơi về Role trực tiếp (fallthrough), Debug phải khớp y hệt.
+  await db.query(`insert into app_roles values ('role-dong-hang-truc-tiep','ĐH trực tiếp',null,array['ot.task_view','ot.task_update'],false,'assigned',false,false,'{}',false)`);
+  await db.query(`insert into user_roles values ('${VERIFIED_ROLE}','role-dong-hang-truc-tiep')`);
 }, 30000);
 afterAll(() => db.close());
 
