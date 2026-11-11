@@ -24,6 +24,7 @@ beforeAll(async () => {
   create table mkt_staff_specialties(user_id uuid, specialty_id text, state text, eligibility_enforced boolean);
   create table private.legacy_reset_accounts(user_id uuid, active boolean);
   create table personal(user_id uuid, permission text);
+  create table user_roles(user_id uuid, role_id text);
   create table cfg(c jsonb);
   insert into app_roles values ${roleRows}, ('role-photo','Chụp ảnh','specialty','standard',array['order.take','order.view_mine']);
   insert into mkt_specialties values ('content','Content Web','role-content-web',true),('social','Social','role-social',true),('video','Video','role-video',true),('photo','Chụp ảnh','role-photo',true);
@@ -38,7 +39,10 @@ beforeAll(async () => {
   create function private.org_role_permission_ready(p text) returns boolean language sql immutable as $$ select private.mkt_specialty_permission_ready(p) $$;
   create function private.org_marketing_eligible(u uuid, c jsonb) returns boolean language sql as $$ SELECT private.is_active(u) AND EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m JOIN LATERAL jsonb_array_elements(coalesce(c->'titles','[]')) t ON t->>'id'=m->>'title_id' WHERE m->>'user_id'=u::text AND private.base_valid_at(m) AND coalesce(m->>'status','active')='active' AND coalesce((t->>'active')::boolean,false) AND EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(c->'units','[]')) b WHERE b->>'kind'='block' AND (b->>'code'='marketing') AND coalesce((b->>'active')::boolean,true) AND private.base_role_unit_contains(c,b->>'id',m->>'unit_id'))) $$;
   create function private.mkt_prev_rules(u uuid, c jsonb) returns jsonb language sql as $$ select coalesce(jsonb_agg(jsonb_build_object('permission',permission,'effect','ALLOW','source_kind','personal')),'[]') from personal where user_id=u $$;
-  create function private.slot_previous_source_rows(c jsonb) returns table(user_id uuid) language sql as $f$ select m.user_id from mkt_staff_specialties m join mkt_specialties s on s.id=m.specialty_id join app_roles r on r.id=s.role_id where (r.role_kind<>'marketing_task' OR NOT m.eligibility_enforced OR private.org_marketing_eligible(m.user_id,c)) $f$;`);
+  create function private.slot_previous_source_rows(c jsonb) returns table(user_id uuid,role_id text,source_kind text) language sql as $f$ select m.user_id,r.id,'task'::text from mkt_staff_specialties m join mkt_specialties s on s.id=m.specialty_id join app_roles r on r.id=s.role_id where (r.role_kind<>'marketing_task' OR NOT m.eligibility_enforced OR private.org_marketing_eligible(m.user_id,c)) $f$;
+  create function private.role_source_rows(c jsonb) returns table(user_id uuid,role_id text,source_kind text) language sql as $f$ select * from private.slot_previous_source_rows(c) union all select (m->>'user_id')::uuid,r.id,'task'::text from jsonb_array_elements(c->'memberships') m cross join lateral jsonb_array_elements_text(coalesce(m->'specialty_ids','[]')) sid join mkt_specialties s on s.id=sid join app_roles r on r.id=s.role_id where m->'specialty_signatures'->>s.id=md5(coalesce(r.permissions,'{}')::text) $f$;
+  create function private.base_config() returns jsonb language sql as $$ select c from cfg $$;
+  create function private.has_permission(_user_id uuid,_permission text) returns boolean language sql as $$ select exists(select 1 from user_roles ur join app_roles r on r.id=ur.role_id where ur.user_id=_user_id AND _permission=ANY(r.permissions)) $$;`);
   // Bộ lọc mkt_specialty_rules gọi trước phase3a; tạo phase3a/reset sau khi nạp file pending.
   const pending = readFileSync('docs/pending/0372_marketing_task_role_is_source.sql', 'utf8');
   await db.exec(`create function private.phase3a_previous_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
@@ -124,5 +128,25 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
     await db.query('update cfg set c=$1', [JSON.stringify(c)]);
     expect(await sources(PEER, 'web.view')).toEqual(['marketing_appointment']);
     expect(await has(SALE, 'web.view')).toBe(false); // bổ nhiệm ngoài Marketing không còn mở Role nhiệm vụ
+  });
+  it('historical direct task cannot bypass eligibility or backend readiness', async () => {
+    await db.exec(`insert into user_roles values ('${SALE}','role-content-web'),('${PEER}','role-content-web')`);
+    const direct = async (u:string,p:string) => (await db.query<{ok:boolean}>('select private.has_permission($1,$2) ok',[u,p])).rows[0].ok;
+    expect(await direct(SALE,'web.content_view')).toBe(false);
+    expect(await direct(PEER,'web.content_view')).toBe(true);
+    expect(await direct(PEER,'web.publish')).toBe(false);
+  });
+  it('source display is eligible and deduplicated for dual task paths', async () => {
+    const rows = (await db.query<{user_id:string;role_id:string}>('select * from cfg, lateral private.role_source_rows(cfg.c)')).rows;
+    expect(rows.filter(r=>r.user_id===PEER&&r.role_id==='role-content-web')).toHaveLength(1);
+    expect(rows.filter(r=>r.user_id===SALE&&r.role_id==='role-content-web')).toHaveLength(0);
+  });
+  it('minimal Content role gives Ngọc exactly configured task rights, not the old 90-permission Role', async () => {
+    await setMemberships([['m1',NGOC,'mkt-content'],['m2',PEER,'mkt-content']]);
+    await db.exec("update app_roles set permissions=array['web.view','web.content_view','web.content_view_mine','web.outline_start','web.outline_submit','web.post_write_start','web.post_submit'] where id='role-content-web';update mkt_staff_specialties set state='ended' where specialty_id='video'");
+    expect(await has(NGOC,'web.content_view')).toBe(true);
+    expect(await has(NGOC,'web.outline_start')).toBe(true);
+    expect(await has(NGOC,'social.post_create')).toBe(false);
+    expect(await has(PEER,'social.post_create')).toBe(false);
   });
 });
