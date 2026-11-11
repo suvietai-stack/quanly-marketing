@@ -40,4 +40,11 @@ it('pending canonical create uses a new audited ID and leaves legacy Role untouc
  expect(await value("select s.role_id v from org_assignments a join org_position_slots s on s.id=a.slot_id where a.id='canonical-person'")).toBe('role-canonical-v1-sales-staff');
  await expect(db.query("select role_catalog_change('preview','create',null,$1)",[{canonical_id:'role-canonical-v1-sales-staff',role_kind:'position'}])).rejects.toThrow('already exists');
  await expect(db.query("select role_catalog_change('preview','create',null,$1)",[{canonical_id:'role-canonical-v1-mkt-team',role_kind:'marketing_task'}])).rejects.toThrow('ID/kind');
+ const oldDefinition=readFileSync('drizzle/migrations/0359_role_catalog_position_slots_and_audited_preview.sql','utf8');
+ const start=oldDefinition.indexOf('CREATE OR REPLACE FUNCTION public.role_catalog_change(');
+ const end=oldDefinition.indexOf('$$;',start);
+ await db.exec(oldDefinition.slice(start,end+3));
+ const oldPreview=await value("select role_catalog_change('preview','create',null,$1) v",[{canonical_id:'role-canonical-v1-sales-team',name:'Rollback isolated',role_kind:'position',permissions:[]}]) as {role_id:string};
+ expect(oldPreview.role_id.startsWith('role-custom-')).toBe(true);
+ await db.exec(readFileSync('docs/pending/0373_canonical_role_creation.sql','utf8'));
 });

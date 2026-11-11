@@ -20,7 +20,8 @@ export type CanonicalMapping = { assignment: UnmappedAssignment; roleId?: string
 export function canonicalMapping(catalog: RoleCatalog): CanonicalMapping[] {
   return catalog.unmapped.map(assignment => {
     const suffix = assignment.title_id ? titleRoles[assignment.title_id] : undefined;
-    const roleId = suffix ? `role-canonical-v1-${suffix}` : undefined;
+    const auditedUnit=catalog.mapping.find(m=>m.title_id===assignment.title_id)?.unit_id;
+    const roleId = suffix && auditedUnit === assignment.unit_id ? `role-canonical-v1-${suffix}` : undefined;
     return { assignment, roleId, exception: roleId ? undefined : assignment.title_id ? 'Cần đối chiếu chức danh và đơn vị/cấp; không dùng liên kết Role cũ.' : 'Thiếu chức danh; Admin cần chọn nguồn và vị trí.' };
   });
 }
