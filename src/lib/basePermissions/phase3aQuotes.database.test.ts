@@ -1,0 +1,38 @@
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+const db=new PGlite();
+const A='00000000-0000-0000-0000-000000000001',B='00000000-0000-0000-0000-000000000002',S='00000000-0000-0000-0000-000000000003';
+const R='00000000-0000-0000-0000-000000000011',Q='00000000-0000-0000-0000-000000000012',F='00000000-0000-0000-0000-000000000021',G='00000000-0000-0000-0000-000000000022';
+const fn=(sql:string,name:string)=>{const start=sql.indexOf(`CREATE OR REPLACE FUNCTION ${name}(`);if(start<0)throw Error(name);const end=sql.indexOf('$$;',sql.indexOf('AS $$',start))+3;return sql.slice(start,end);};
+beforeAll(async()=>{
+ await db.exec(`CREATE SCHEMA auth;CREATE SCHEMA private;CREATE ROLE anon;CREATE ROLE authenticated;CREATE ROLE service_role;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT nullif(current_setting('test.uid',true),'')::uuid$$;
+ CREATE TABLE profiles(id uuid,full_name text,status text);INSERT INTO profiles VALUES('${A}','Assigned A','Đang hoạt động'),('${B}','Assigned B','Đang hoạt động'),('${S}','Sale','Đang hoạt động');
+ CREATE TABLE test_permissions(uid uuid,key text);INSERT INTO test_permissions SELECT u,p FROM unnest(ARRAY['${A}'::uuid,'${B}'::uuid])u CROSS JOIN unnest(ARRAY['oq.create','oq.accept','oq.reply_price','oq.reply_progress','oq.report_own'])p;
+ CREATE FUNCTION private.is_active(u uuid) RETURNS boolean LANGUAGE sql AS $$SELECT EXISTS(SELECT 1 FROM profiles WHERE id=u AND status='Đang hoạt động')$$;
+ CREATE FUNCTION private.sig_can(u uuid,p text) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$SELECT private.is_active(u) AND EXISTS(SELECT 1 FROM test_permissions WHERE uid=u AND key=p)$$;
+ CREATE FUNCTION private.oq_log(uuid,uuid,uuid,int,text,text,text,jsonb) RETURNS void LANGUAGE sql AS $$SELECT$$;
+ CREATE FUNCTION private.oq_notify(uuid,text,uuid,jsonb,text) RETURNS void LANGUAGE sql AS $$SELECT$$;`);
+ const base=readFileSync('drizzle/migrations/0028_order_quotes_module.sql','utf8');
+ await db.exec(base.slice(0,base.indexOf('CREATE POLICY oq_obj_sel')));
+ await db.exec(fn(base,'private.oq_flow_for_handler'));
+ const fix=readFileSync('drizzle/migrations/0029_order_quotes_fixes.sql','utf8');
+ await db.exec(fn(fix,'private.oq_valid_assignee'));await db.exec(fn(fix,'public.oq_accept'));
+ await db.exec('GRANT EXECUTE ON FUNCTION public.oq_accept(uuid) TO authenticated;');
+ await db.exec(readFileSync('drizzle/migrations/0030_order_quotes_report.sql','utf8'));
+ await db.exec(fn(readFileSync('drizzle/migrations/0039_oq_cancelled_exclusion_delete.sql','utf8'),'public.oq_report_rows'));
+ await db.exec(`INSERT INTO oq_requests(id,title,creator_id,status,submitted_at) VALUES('${R}','A request','${S}','submitted','2026-01-01'),('${Q}','B request','${S}','submitted','2026-01-02');
+ INSERT INTO oq_flows(id,request_id,kind,code,assignee_id,assigned_at) VALUES('${F}','${R}','price','A-G','${A}','2026-01-01'),('${G}','${Q}','price','B-G','${B}','2026-01-02');
+ INSERT INTO oq_rounds(flow_id,no,assignee_id,created_by,items_snapshot) VALUES('${F}',1,'${A}','${S}','[]'),('${G}',1,'${B}','${S}','[]');
+ GRANT USAGE ON SCHEMA auth,private TO authenticated;`);
+},30000);
+afterAll(()=>db.close());
+async function actor(u:string){await db.exec('RESET ROLE');await db.query("select set_config('test.uid',$1,false)",[u]);await db.exec('SET ROLE authenticated');}
+it('assigned scope RLS reads only related request, not another purchaser request',async()=>{await actor(A);expect((await db.query<{id:string}>('select id from oq_requests')).rows.map(r=>r.id)).toEqual([R]);});
+it('same title capabilities do not authorize accepting another assigned flow',async()=>{await actor(A);await expect(db.query('select oq_accept($1)',[G])).rejects.toThrow('được giao đúng luồng');});
+it('assigned handler accepts once, workflow rejects repeat acceptance',async()=>{await actor(A);await db.query('select oq_accept($1)',[F]);expect((await db.query<{status:string}>('select status from oq_flows where id=$1',[F])).rows[0]?.status).toBe('processing');await expect(db.query('select oq_accept($1)',[F])).rejects.toThrow('Chờ xác nhận');});
+it('reply helper rejects out-of-scope flow even with both reply permissions',async()=>{await actor(A);await expect(db.query('select private.oq_flow_for_handler($1)',[G])).rejects.toThrow('người phụ trách');});
+it('own report excludes other assignee, dedicated export remains denied',async()=>{await actor(A);const r=await db.query<{request_id:string;scope:string}>("select * from oq_report_rows('2026-01-01','2026-12-31','sent',false)");expect(r.rows.map(x=>x.request_id)).toEqual([R]);expect(r.rows[0]?.scope).toBe('own');await expect(db.query("select * from oq_report_rows('2026-01-01','2026-12-31','sent',true)")).rejects.toThrow('xuất báo cáo');});
+it('direct table write cannot bypass RPC-only workflow',async()=>{await actor(A);await expect(db.query("update oq_flows set assignee_id=$1 where id=$2",[A,G])).rejects.toThrow('permission denied');});
+it('inactive account cannot accept or read report with previously granted capabilities',async()=>{await db.exec('RESET ROLE');await db.query("update profiles set status='Tạm khóa' where id=$1",[B]);await actor(B);expect((await db.query('select id from oq_requests')).rows).toEqual([]);await expect(db.query('select oq_accept($1)',[G])).rejects.toThrow('được giao đúng luồng');await expect(db.query("select * from oq_report_rows('2026-01-01','2026-12-31','sent',false)")).rejects.toThrow('quyền xem báo cáo');});
