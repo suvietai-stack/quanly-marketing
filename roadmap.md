@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Bản 68: Thống nhất một cơ chế xác định quyền
+- [x] Rà soát toàn bộ resolver: phát hiện 5 điểm backend/frontend/Debug cho kết quả khác nhau (Debug bỏ quyền Role trực tiếp của quyền đã kiểm chứng; Debug bỏ qua chế độ replace; base_legacy bỏ qua chế độ additive; frontend chặn quyền cha mà backend không; frontend bypass Super Admin trước khi kiểm tra trạng thái).
+- [x] Migration 0353: viết lại `account_permission_explain` khớp y hệt `private.has_permission` (fallthrough quyền đã kiểm chứng + replace/additive); vá `private.base_legacy` tôn trọng chế độ additive — frontend `base_permissions_effective` khớp backend.
+- [x] Frontend auth.ts: `can`/`canSee`/`scopeList` kiểm tra tài khoản hoạt động trước cả Super Admin; bỏ chặn quyền cha ở đường thực thi (PERMISSION_DEPENDS chỉ còn là gợi ý soạn Role qua auditDependencies); `explainPermission` khớp backend.
+- [x] Kiểm thử: 44/44 resolver (thêm parity tuyệt đối explain↔has_permission cho 5 dạng tài khoản, quyền đã kiểm chứng cấp trực tiếp qua Role, base_legacy replace/additive); hồi quy 1508/1510 (2 lỗi date-dependent đã biết ở biz/my-work, không liên quan); typecheck/build đạt; xác nhận database thật đang chạy định nghĩa mới.
+- [x] Báo cáo bàn giao: docs/unified-permission-resolver-report.md. Không reset, không bổ nhiệm thật, không đổi dữ liệu, chưa Publish.
+- [ ] Còn tồn tại đã ghi trong báo cáo: phạm vi nhóm Tín hiệu vẫn theo Role trực tiếp (signal_scope), chưa suy ra từ bổ nhiệm — giữ cơ chế an toàn hiện hành, không tự mở rộng; quyền quản lý/kế toán/cung ứng và biz.*/k3.* vẫn chặn an toàn chờ hợp đồng phạm vi.
+
 ## Bản 66: Chốt cơ cấu, cấp bậc và Role chuẩn
 - [x] Migration 0352: Giám đốc Marketing Cấp 3; Role nền "Nhân sự mới" thành chuẩn tối thiểu; mở rộng quyền đã kiểm chứng (leave/att/finance/oq/ot/order) theo rào máy chủ; đồng bộ 10 liên kết chức vụ (chữ ký hợp lệ); duyệt tài khoản không xóa Role; rào xóa Role còn tham chiếu.
 - [x] Frontend: tên/cấp chức vụ chính thức trong orgStructure.ts (bỏ "Trưởng bộ phận"); gợi ý Role chuẩn trong titleRoles.ts; đồng bộ danh sách quyền đã kiểm chứng trong auth.ts.
