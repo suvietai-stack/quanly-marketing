@@ -74,7 +74,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
         </p>
       </div>
       {(canAssign || canAppoint) && (
-        <Button size="sm" variant="ghost" aria-label={`Kết thúc phân công ${nameOf(m.user_id)}`} onClick={() => onEnd(m.id)}}>
+        <Button size="sm" variant="ghost" aria-label={`Kết thúc phân công ${nameOf(m.user_id)}`} onClick={() => onEnd(m.id)}>
           <X className="h-4 w-4" />
         </Button>
       )}
