@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { titleRolesApi } from '@/lib/basePermissions/titleRoles';
+import { StaffPermissionEditor } from '@/components/StaffPermissionEditor';
 import { useState, useMemo, useRef } from "react";
 import { ROLE_FUNCTION_GROUPS, roleFunctionGroup } from "@/lib/rolePresentation";
 import { SignalScopeEditor, type SignalScopeHandle } from "@/components/signals/SignalScopeEditor";
