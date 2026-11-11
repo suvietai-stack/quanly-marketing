@@ -28,13 +28,14 @@ it('multi-group counts are distinct and page offsets never leak another owner',a
  ('${id(3)}','${A}','waiting',array['Quà','Kho'],'2026-11-01'),
  ('${id(4)}','${A}','quoted',array['Quà'],'2026-11-02'),
  ('${id(5)}','${B}','waiting',array['Quà'],'2026-11-03');
+ UPDATE opportunity_signals SET updated_at='2026-11-09' WHERE id IN ('${id(1)}','${id(3)}','${id(4)}');
  SELECT set_config('test.uid','${A}',false);SET ROLE authenticated;`);
  const counts=(await db.query<{v:{total:number;needs:Record<string,number>}}>('select signal_list_counts($1) v',[{needGroup:'Quà'}])).rows[0]?.v;
  expect(counts?.total).toBe(2);expect(counts?.needs.Quà).toBe(2);expect(counts?.needs.Kho).toBe(1);
  const first=(await db.query<{v:{rows:{id:string;assigned_to:string}[]}}>("select signal_list_page('{}','work',0,1) v")).rows[0]?.v.rows;
  const second=(await db.query<{v:{rows:{id:string;assigned_to:string}[]}}>("select signal_list_page('{}','work',1,1) v")).rows[0]?.v.rows;
  expect(first?.[0]?.id).toBe(id(3));expect(second?.[0]?.id).toBe(id(1));expect(first?.[0]?.assigned_to).toBe(A);
- await db.exec('RESET ROLE');
+ await db.exec(`RESET ROLE;DELETE FROM opportunity_signals WHERE id IN ('${id(3)}','${id(4)}','${id(5)}');`);
 });
 afterAll(()=>db.close());
 
