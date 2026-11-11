@@ -1,5 +1,6 @@
 # Base organization permissions
 - Title Role links reference original app_roles; full-Role active remains fenced, explicit enabled_permissions may activate audited personal capabilities through live assignment intervals. Unverified management scope stays draft; direct user_roles and business appointment evaluators stay unchanged.
+- Assignment specialty IDs and server-reviewed Role signatures live on canonical assignment data; only org_change may add them, and ending the assignment removes only marketing_appointment rules — manual specialty decisions stay unchanged.
 - Canonical org_units/org_titles/org_assignments retain typed source facts and stable IDs; org_change uses actor-bound expiring preview/apply, rollback preview and atomic projection/audit. Base JSON is compatibility state, not an independent organizational writer.
 - Only audited supported keys may activate; unsupported rules remain drafts. Preserve specialized business/CRM and legacy role evaluators without restoring retired business-role grants.
 - Permission reads are user-matched and invalidated at server transitions; native scope/workflow restrictions remain authoritative and own CRM grants pass the shared ownership boundary.
