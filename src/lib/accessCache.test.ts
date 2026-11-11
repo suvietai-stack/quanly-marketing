@@ -8,7 +8,7 @@ describe('access cache', () => {
     expect(shouldRefresh(null, 0)).toBe(true);
   });
   it('identical server result keeps the same object (menu does not re-render)', () => {
-    const r = mergeAccess(A, 0, 'a', { data: { ...A, permissions: ['web.view'] }, error: null }, 5);
+    const r = mergeAccess(A, 0, 'a', { data: { ...A, permissions: ['web.view'], server_now: 'later' } as typeof A, error: null }, 5);
     expect(r.value).toBe(A);
   });
   it('a revoked permission from the server replaces the cache immediately', () => {
