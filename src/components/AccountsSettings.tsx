@@ -97,31 +97,65 @@ export function AccountsSettings() {
 }
 
 // --------- Permission Debug (Super Admin only) ---------
+// Debug đọc kết quả giải thích quyền từ backend (account_permission_explain) —
+// không tự duy trì thuật toán tính quyền riêng, đảm bảo luôn khớp resolver máy chủ.
+type PermissionExplainRpc = {
+  user_id: string;
+  status: string;
+  is_super_admin: boolean;
+  use_custom: boolean;
+  override_mode: "replace" | "additive";
+  custom_permissions: string[];
+  direct_roles: { role_id: string; name: string; permissions: string[] }[];
+  rules: { permission: string; effect: string; source_kind: string; source_name: string | null; scope: string | null }[];
+  effective: string[];
+};
+
+const SOURCE_KIND_LABEL: Record<string, string> = {
+  appointment_role: "Chức vụ",
+  marketing_specialty: "Nhiệm vụ Marketing",
+  default: "Quyền mặc định",
+  direct: "Quyền bổ sung trực tiếp",
+  bundle: "Bộ quyền",
+};
+
 export function PermissionDebugTab() {
   const s = useAuth();
   const [uid, setUid] = useState<string>("");
   const [testKey, setTestKey] = useState<string>("");
   const target = useMemo(() => s.users.find((u) => u.id === uid), [s.users, uid]);
-  const role = target ? s.roles.find((r) => r.id === target.roleId) : undefined;
 
-  const effective = useMemo<Set<string>>(() => {
-    if (!target) return new Set();
-    if (target.system || target.roleId === SUPER_ADMIN_ID) return new Set(ALL_PERMS);
-    if (target.useCustom) return new Set(target.customPermissions ?? []);
-    return new Set(role?.permissions ?? []);
-  }, [target, role]);
+  const explainQ = useQuery({
+    queryKey: ["perm-explain", uid],
+    enabled: !!uid,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("account_permission_explain", { _target: uid });
+      if (error) throw error;
+      return data as unknown as PermissionExplainRpc;
+    },
+    staleTime: 15_000,
+  });
+  const info = explainQ.data;
+  const effective = useMemo<Set<string>>(() => new Set(info?.effective ?? []), [info]);
 
-  const source: string = !target ? "—"
-    : target.system ? "Tài khoản hệ thống — toàn quyền"
-    : target.roleId === SUPER_ADMIN_ID ? "Super Admin — toàn quyền"
-    : target.useCustom ? "Quyền riêng (ghi đè role)"
-    : `Theo role: ${role?.name ?? "(chưa gán)"}`;
-
-  const explained = useMemo(() => {
-    if (!target || !testKey) return null;
-    return explainPermission(target, s.roles, testKey);
-  }, [target, testKey, s.roles]);
-  const testResult = explained?.ok ?? null;
+  const testResult = useMemo(() => {
+    if (!info || !testKey) return null;
+    const ok = info.is_super_admin || effective.has(testKey);
+    const sources: string[] = [];
+    for (const r of info.direct_roles) if (r.permissions.includes(testKey)) sources.push(`Role "${r.name}"`);
+    if (info.use_custom && info.custom_permissions.includes(testKey))
+      sources.push(info.override_mode === "additive" ? "Quyền bổ sung cá nhân (cộng thêm)" : "Quyền riêng (thay thế Role)");
+    for (const rule of info.rules.filter((x) => x.permission === testKey))
+      sources.push(`${SOURCE_KIND_LABEL[rule.source_kind] ?? rule.source_kind}${rule.source_name ? `: ${rule.source_name}` : ""} (${rule.effect === "DENY" ? "CHẶN" : "cho phép"})`);
+    const reason = info.is_super_admin
+      ? "Super Admin — toàn quyền"
+      : ok
+        ? sources.length > 0 ? `Cấp qua: ${sources.join(" · ")}` : "Được cấp theo resolver backend"
+        : sources.length > 0 && info.rules.some((x) => x.permission === testKey && x.effect === "DENY")
+          ? `Bị chặn bởi: ${sources.join(" · ")}`
+          : "Không có nguồn cấp nào cho quyền này";
+    return { ok, reason };
+  }, [info, testKey, effective]);
 
   // Audit across roles + users with custom perms
   const audit = useMemo(() => {
