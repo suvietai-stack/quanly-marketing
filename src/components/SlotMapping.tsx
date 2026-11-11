@@ -13,6 +13,8 @@ import type { OrgCommand } from '@/lib/basePermissions/commands';
 import type { OrgRead, Preview } from '@/lib/basePermissions/types';
 import { useAuth } from '@/lib/auth';
 import { SlotRoleReplacement } from '@/components/SlotRoleReplacement';
+import { isCanonicalRole } from '@/lib/basePermissions/defaultRolePresets';
+import { canonicalMapping } from '@/lib/basePermissions/canonicalMapping';
 
 export function SlotMapping({ catalog }: { catalog: RoleCatalog }) {
   const qc = useQueryClient();
@@ -31,10 +33,11 @@ export function SlotMapping({ catalog }: { catalog: RoleCatalog }) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const roles = catalog.roles.filter(r => r.role_kind === 'position' && r.catalog_state === 'standard' && !r.is_system);
+  const roles = catalog.roles.filter(r => isCanonicalRole(r) && r.role_kind === 'position' && r.catalog_state === 'standard' && !r.is_system);
   const isCurrent = (a: RoleCatalog['unmapped'][number]) => a.status === 'active' && a.starts_at <= catalog.server_now && (!a.ends_at || a.ends_at > catalog.server_now);
   const rows = catalog.unmapped.filter(a => (filter === 'all' || (filter === 'current' ? isCurrent(a) : !isCurrent(a))) && `${a.user_name} ${a.title_name} ${a.unit_name}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')));
-  const chosenRole = (a: RoleCatalog['unmapped'][number]) => roleChoices[a.id] ?? (catalog.mapping.find(m => m.title_id === a.title_id)?.roles.length === 1 ? catalog.mapping.find(m => m.title_id === a.title_id)?.roles[0] : '') ?? '';
+  const mapping = canonicalMapping(catalog);
+  const chosenRole = (a: RoleCatalog['unmapped'][number]) => roleChoices[a.id] ?? (roles.some(r=>r.id===mapping.find(m=>m.assignment.id===a.id)?.roleId) ? mapping.find(m=>m.assignment.id===a.id)?.roleId : '') ?? '';
   const run = async (fn: () => Promise<void>) => { setBusy(true); setError(''); try { await fn(); } catch (e) { setError(e instanceof Error ? e.message : 'Không thực hiện được.'); } finally { setBusy(false); } };
   const show = async (commands: OrgCommand[]) => { const live = await baseOrgApi.read(); setReason(''); setPreview(await baseOrgApi.preview(live.revision, live.config, live.config, commands)); };
   return <div className="space-y-3"><SlotRoleReplacement catalog={catalog}/>

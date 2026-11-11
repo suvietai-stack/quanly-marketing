@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Đính chính 13:08 UTC — Role mới, không sửa Role cũ
+- [x] Thay draft giảm quyền Role cũ bằng bộ canonical mới theo ID/key; Legacy riêng, dropdown gán mới loại legacy.
+- [x] Mapping draft title + unit: 18/86 nguồn đề xuất, 68 ngoại lệ; slot-per-person qua preview, không viết live/cutover.
+- [ ] Pending canonical creation và Marketing binding không sửa specialty/Role cũ; impact/rollback, end-to-end tests và Preview.
+- [x] Bàn giao canonical Role → slot → người tại canonical-mapping.md; 0 gắn live. Giữ 0371 Tín hiệu.
+- [ ] Canonical Marketing binding mới chưa code/kiểm chứng; 0372 cũ fail-closed. Chưa đủ preview source/signature/rollback để ghi shared database.
+- [ ] Cutover/gắn live: chờ Admin chọn ngoại lệ title/unit/nguồn trùng và complete permission/source impact; không đổi quyền làm việc cũ.
+
 ## P0 Tín hiệu production timeout — ưu tiên trước Role, 11/11/2026
 - [x] Tái hiện Preview/published với phiên được ủy quyền; counts/page timeout 8,4–9,1s, read id-only toàn tập cũng timeout; health/locks chỉ đọc.
 - [x] Sửa token invalidation tối thiểu; chuẩn bị 3 SQL PENDING, không thay quyền/dữ liệu/restart/publish.

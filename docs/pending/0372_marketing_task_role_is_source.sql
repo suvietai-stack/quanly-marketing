@@ -5,6 +5,8 @@
 --   ∩ nguồn đang hiệu lực ∩ còn thuộc hệ Marketing. KHÔNG có danh sách module cứng trong resolver.
 -- 0372 chưa được đăng ký migration. 0371 Tín hiệu đã áp dụng và không được sửa.
 -- Chạy preflight riêng trước file này; mọi câu lệnh phải nằm trong cùng giao dịch.
+-- SUPERSEDED 13:08 UTC: preserve old Marketing Roles and their live rights.
+DO $stop$ BEGIN RAISE EXCEPTION 'Old Role cutover proposal superseded. Do not execute; canonical specialty binding pending.'; END $stop$;
 
 -- B1. Nhiệm vụ Marketing luôn yêu cầu thuộc hệ Marketing, kể cả dòng cũ eligibility_enforced=false.
 --     Chuyên môn khác (Thiết kế/Chụp ảnh, role_kind<>'marketing_task') giữ nguyên ràng buộc riêng, không xóa dòng nào.

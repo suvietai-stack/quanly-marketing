@@ -1,5 +1,7 @@
 -- PENDING. Run inside the SAME transaction as the forward patch, only after approved Role previews.
 -- No data mutation, no settings changes, no migration 0371 edits.
+-- SUPERSEDED: this old proposal reduced existing task Roles. Owner requires NEW canonical Roles.
+DO $stop$ BEGIN RAISE EXCEPTION 'Superseded 0372: do not change old Marketing Roles. Canonical specialty mapping/impact still required.'; END $stop$;
 DO $guard$
 DECLARE item record;
 BEGIN

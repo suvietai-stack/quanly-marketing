@@ -30,3 +30,21 @@ it('Role creation preview does not create data and requires explicit confirmatio
 it('Role referenced by a position cannot be deleted',async()=>{await expect(db.query("select role_catalog_change('preview','delete','r')")).rejects.toThrow('còn liên kết');});
 it('ordinary account cannot create a Role or position',async()=>{await db.query("select set_config('test.actor',$1,false)",[person]);await expect(db.query("select role_catalog_change('preview','create',null,'{}')")).rejects.toThrow('Super Admin');await expect(db.exec(`insert into org_position_slots(id,title_id,unit_id,role_id,name,created_by) values('ordinary','t','a','r','Bad','${person}')`)).rejects.toThrow('Super Admin');await db.query("select set_config('test.actor',$1,false)",[admin]);});
 it('conversion binds a slot without rewriting historical dates',async()=>{await db.exec(`insert into org_assignments(id,title_id,unit_id,user_id,starts_at,ends_at) values('legacy','t','a','${person}','2020-01-01','2021-01-01');insert into org_position_slots(id,title_id,unit_id,role_id,name,created_by) values('historic','t','a','r','History','${admin}')`);await db.query('select private.org_commands($1)',[[{action:'bind_slot',data:{id:'legacy',slot_id:'historic'}}]]);expect(await value("select starts_at='2020-01-01'::timestamptz and ends_at='2021-01-01'::timestamptz v from org_assignments where id='legacy'")).toBe(true);});
+it('pending canonical create uses a new audited ID and leaves legacy Role untouched',async()=>{
+ await db.exec(readFileSync('docs/pending/0373_canonical_role_creation.sql','utf8'));
+ const p=await value("select role_catalog_change('preview','create',null,$1) v",[{canonical_id:'role-canonical-v1-sales-staff',name:'Nhân viên Kinh doanh · Chuẩn v1',description:'',role_kind:'position',permissions:[],catalog_group:'Kinh doanh'}]) as {id:string;role_id:string};
+ expect(p.role_id).toBe('role-canonical-v1-sales-staff');
+ await db.query("select role_catalog_change('apply',null,null,null,$1,'ÁP DỤNG ROLE','canonical isolated test')",[p.id]);
+ expect(await value("select permissions v from app_roles where id='r'")).toEqual(['leave.view_own']);
+ await db.exec(`insert into org_position_slots(id,title_id,unit_id,role_id,name,created_by) values('canonical-slot','t','a','role-canonical-v1-sales-staff','New Staff','${admin}');insert into org_assignments(id,title_id,unit_id,user_id,starts_at,slot_id) values('canonical-person','t','a','${person}','2026-01-01','canonical-slot')`);
+ expect(await value("select s.role_id v from org_assignments a join org_position_slots s on s.id=a.slot_id where a.id='canonical-person'")).toBe('role-canonical-v1-sales-staff');
+ await expect(db.query("select role_catalog_change('preview','create',null,$1)",[{canonical_id:'role-canonical-v1-sales-staff',role_kind:'position'}])).rejects.toThrow('already exists');
+ await expect(db.query("select role_catalog_change('preview','create',null,$1)",[{canonical_id:'role-canonical-v1-mkt-team',role_kind:'marketing_task'}])).rejects.toThrow('ID/kind');
+ const oldDefinition=readFileSync('drizzle/migrations/0359_role_catalog_position_slots_and_audited_preview.sql','utf8');
+ const start=oldDefinition.indexOf('CREATE OR REPLACE FUNCTION public.role_catalog_change(');
+ const end=oldDefinition.indexOf('$$;',start);
+ await db.exec(oldDefinition.slice(start,end+3));
+ const oldPreview=await value("select role_catalog_change('preview','create',null,$1) v",[{canonical_id:'role-canonical-v1-sales-team',name:'Rollback isolated',role_kind:'position',permissions:[]}]) as {role_id:string};
+ expect(oldPreview.role_id.startsWith('role-custom-')).toBe(true);
+ await db.exec(readFileSync('docs/pending/0373_canonical_role_creation.sql','utf8'));
+});
