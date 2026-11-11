@@ -2535,6 +2535,13 @@
       "when": 1794384634332,
       "tag": "0361_role_catalog_restore_guards_and_slot_independent_capacity",
       "breakpoints": true
+    },
+    {
+      "idx": 362,
+      "version": "7",
+      "when": 1794384899265,
+      "tag": "0362_role_slot_mapping_and_task_write_fences",
+      "breakpoints": true
     }
   ]
 }
