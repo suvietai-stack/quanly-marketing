@@ -14,7 +14,7 @@ it('Content task default keeps only verified Content workflow actions and leaves
   const stored = role('role-v2-task-content-web', ['web.view', 'web.content_view', 'social.post_create', 'settings.role']);
   const impact = defaultRoleImpact(stored, policy);
   expect(impact?.after).toEqual(defaultRolePresets.find(p => p.roleId === 'role-v2-task-content-web')?.keys);
-  expect(impact?.removed).toEqual(['social.post_create', 'settings.role']);
+  expect(impact?.removed).toEqual(['settings.role']);
   expect(stored.permissions).toEqual(['web.view', 'web.content_view', 'social.post_create', 'settings.role']);
 });
 it('both protected system positions retain their exact permissions', () => {
@@ -29,9 +29,11 @@ it('missing backend capability is excluded, never assumed', () => {
   expect(defaultRoleImpact(role('role-v2-task-content-web', []), without)?.after).not.toContain('web.outline_start');
   expect(defaultRoleImpact(role('role-v2-task-content-web', []), without)?.unavailable).toEqual(['web.outline_start']);
 });
-it('no default proposes admin, delete, finance approval, wide export or all-scope signal actions', () => {
+it('no default proposes admin, delete, wide export or all-scope signal actions; finance management stays with finance Roles only', () => {
+  const financeRoles = new Set(['role-v2-accountant', 'role-v2-account-chief', 'role-v2-account-stock']);
   for (const p of defaultRolePresets) {
-    expect(p.keys.filter(k => /settings\.(role|user)|delete|finance\.incoming\.(manage|reconcile)|export|signal\.view_all|force_status/.test(k))).toEqual([]);
+    expect(p.keys.filter(k => /settings\.(role|user)|delete|export|signal\.view_all|force_status/.test(k))).toEqual([]);
+    if (!financeRoles.has(p.roleId)) expect(p.keys.filter(k => /finance\.incoming\.(manage|reconcile)/.test(k))).toEqual([]);
   }
 });
 it('task defaults are the verified live sets', () => {
