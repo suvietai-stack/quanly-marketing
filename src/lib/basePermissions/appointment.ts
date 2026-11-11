@@ -10,7 +10,7 @@ export function marketingUnit(config: OrgConfig, unitId: string): boolean {
   let unit = config.units.find(u => u.id === unitId);
   while (unit && !seen.has(unit.id)) {
     seen.add(unit.id);
-    if (unit.kind === 'block') return unit.name === 'Khối Marketing';
+    if (unit.kind === 'block') return unit.id === 'b5e00000-0000-4000-8000-000000000001' || unit.code === 'marketing';
     unit = config.units.find(u => u.id === unit?.parent_id);
   }
   return false;
