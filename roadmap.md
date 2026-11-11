@@ -1,11 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Nghiệm thu tối giản V2 — 14:34 UTC 11/11/2026
-- [ ] Audit 25 Role live, nguồn quyền thừa, số người/nguồn tác động và 23 ô; phân biệt 25 bổ nhiệm có chức danh hiện hành với 86 lịch sử.
-- [ ] Sửa 25 preset và ma trận trên draft; không union legacy, không chặn resolver khi Admin chọn thêm quyền đã kiểm chứng.
-- [ ] Chuẩn bị SQL guarded preview/apply PENDING, baseline/backup/rollback, chặn giảm quyền khi người nhận còn trách nhiệm duyệt chưa giải quyết.
-- [ ] Test SQL/PGlite, own/unit/all, nhiệm vụ Marketing nhiều nguồn, additive isolation; Preview desktop/iPad và smoke.
-- [ ] Giảm quyền live/cutover/xóa legacy/Publish: chờ impact đầy đủ và quyết định Đức, Quỳnh Anh, Ngọc; không thực hiện trong lượt này.
+- [x] Audit 25 Role live và 23 ô: 37 nguồn hiệu lực, 25 titled, 23 bound; 22 Role giảm đề xuất ảnh hưởng 18 người distinct. Chi tiết docs/role-v2-acceptance-2026-11-11/report.md.
+- [x] Sửa 25 preset và ma trận trên draft; không union legacy, giữ desired rights đã admitted, policy-gate chỉ additions. Sensitive filter + system group + UI khóa reduction apply.
+- [x] SQL guarded preview/apply PENDING, baseline/backup/hash/rollback proposals; test chặn pending approver ở preview lẫn apply. Không apply SQL hoặc quyền live.
+- [x] 200 tests/18 files đạt; 25 authenticated edit previews, desktop/iPad zero overflow; CRM/3K/organization smoke không alert/pageerror. Build OK.
+- [ ] Giảm live/cutover/xóa legacy/Publish: chờ quyết định Đức/Quỳnh Anh/Ngọc, restore exact sensitive snapshot được kiểm chứng và native scopes/policy cho CRM/Task. Fixture không thay employee live E2E; không thực hiện trong lượt này.
+
+Các checklist cũ dưới đây là lịch sử, không phải chỉ thị mở hiện tại; trạng thái nghiệm thu mới phía trên thay thế số liệu/cách giải thích cũ.
 
 ## Đính chính 13:08 UTC — Role mới, không sửa Role cũ
 - [x] Thay draft giảm quyền Role cũ bằng bộ canonical mới theo ID/key; Legacy riêng, dropdown gán mới loại legacy.
@@ -166,10 +168,8 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 
 - [x] A. Snapshot 33 Role cũ + liên kết + quyền hiệu lực 26 người (docs/backup/role-v2-2026-11-11/, SHA256SUMS).
 - [x] B1. Migration 0373/0374: cột catalog_generation, writer role_catalog_change hỗ trợ role-v2-*, nguồn nhiệm vụ Marketing, rollback docs/rollback/2026-11-11-role-v2.sql; 10 test PGlite đạt. (0372 là placeholder rỗng do gửi nhầm, vô hại.)
-- [ ] B2. Tạo 22 Role chuẩn (role-v2-*) qua RPC có kiểm toán; mkt-staff gồm order.assign/complete/cancel/edit/approve theo bằng chứng luồng Order.
-- [ ] C. Gắn mkt_specialties → 5 Role nhiệm vụ v2; kiểm thử Ngọc nhận web.content_view thật.
-- [ ] D. Tạo ô vị trí + gắn 27 bổ nhiệm đang hiệu lực qua org_change; ngoại lệ flag, không đoán.
-- [ ] E. Quyền riêng additive cho Ngọc (leave.approve) nếu preview xác nhận.
+- [x] B2/C/D lịch sử: đã tạo 25 V2, 5 Marketing bindings và 23/25 titled appointments; mặc định union legacy có quyền thừa, thay bằng draft nghiệm thu phía trên.
+- [ ] E. Ngọc: không tự cấp leave.approve; chủ quyết trách nhiệm. Đọc 14:42 UTC không còn pending, không tự kết luận ai xử lý.
 - [ ] F. Đối chiếu effective before/after 26 người; chỉ xóa Role cũ khi 0 phụ thuộc; chưa Publish.
 - [x] B2. 25 Role chuẩn role-v2-* đã tạo live qua RPC có kiểm toán; 7 Role đã tối giản thêm (bỏ export rộng/phê duyệt ngoại module).
 - [x] C. 5 nhiệm vụ Marketing đã gắn Role v2; Ngọc có web.content_view/outline_start thật (nguồn marketing_appointment).

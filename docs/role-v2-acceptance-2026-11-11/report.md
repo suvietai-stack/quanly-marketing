@@ -259,6 +259,8 @@ Ngọc live: web.content_view=True, order.approve=True, order.cancel=True, socia
 - Backend editor policy chỉ 42 key: task.* cá nhân chưa có trong policy; Giám đốc KD vẫn chưa thêm được CRM/lead/own quote. Preset liệt kê trách nhiệm cần có nhưng đánh dấu chờ; không giả vờ đã hoạt động. Cần kiểm chứng native CRM/3K/Signal source scopes và đưa vào policy qua bản cập nhật riêng, không regrant legacy.
 
 ## Kiểm thử
-- 138/138 tests, 12 files: SQL guarded preview/apply stale baseline, pending trách nhiệm trước/sau preview, audited reduction/restore quyền an toàn, system guards; Marketing eligibility, multiple-source, own/unit/isolation, additive cá nhân; leave/finance/order quotes/Signals 0371 regression.
+- 200/200 tests, 18 files: SQL guarded preview/apply stale baseline, pending trách nhiệm trước/sau preview, audited reduction/restore quyền an toàn, system guards; Marketing eligibility, multiple-source, own/unit/isolation, additive cá nhân; leave/finance/order quotes/Signals 0371, CRM/3K/catalog/mapping regression.
 - 25/25 authenticated server edit previews thành công. Desktop và iPad 820px: ma trận và confirm rõ bỏ/thêm/4 người; giảm quyền disabled, không tràn ngang. Build harness OK.
 - Chưa nghiệm thu employee own/team/all live sau giảm vì KHÔNG apply; fixture không thay nghiệm thu đó. Chưa Publish/xóa legacy/cutover.
+- CRM/3K/Organization smoke authenticated Preview: đúng đường dẫn, không alert/pageerror trong cửa sổ 10 giây mỗi trang; CRM tài khoản kiểm thử không có lịch chăm sóc. Đây không phải nghiệm thu nghiệp vụ nhân viên sau giảm quyền.
+- Read-back cuối 14:48 UTC: 58 Role, 25 V2, 23 ô, 23 titled bound, 86 lịch sử; latest_role_write vẫn 14:22:55 UTC (trước lượt này). Không có thay đổi quyền/Role/bổ nhiệm live trong lượt nghiệm thu.
