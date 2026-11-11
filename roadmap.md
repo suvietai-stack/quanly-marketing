@@ -5,7 +5,8 @@
 - [x] Kế hoạch + dry-run + rollback: docs/position-model-2026-11-11/.
 - [x] 15:35: tách vị trí công việc/chức vụ quản lý, cây KD động; SQL pending + 9 PGlite tests.
 - [x] 16:10: áp mô hình vị trí (bảng gắn Role theo đơn vị+chức danh, 16 vị trí, parity 0 mất/0 thêm), nguồn quyền nhận bổ nhiệm không cần ô, lệnh org_change position_role có audit, giao diện danh sách vị trí. Rollback docs/rollback/2026-11-11-position-roles.sql.
-- [ ] biz_can nhận quyền từ Role theo phạm vi đơn vị: chưa làm — cần nối từng RPC Kinh doanh với phạm vi đơn vị, rủi ro mở rộng sai.
+- [x] 16:20: kiểm thử lệnh gắn Role (5 PGlite), khóa tạo ô mới ở máy chủ (0382), gỡ giao diện tạo ô.
+- [ ] biz_can nhận quyền từ Role theo phạm vi đơn vị: chưa làm, cần ánh xạ đơn vị org↔biz trước (docs/pending/biz_role_source.md) — cần nối từng RPC Kinh doanh với phạm vi đơn vị, rủi ro mở rộng sai.
 - [ ] Bỏ ràng buộc một người/ô, tháo 17 liên kết cũ, xóa Role cũ: chưa làm.
 - [ ] Sau xác minh: bỏ ràng buộc một người/ô, tháo liên kết cũ, xóa Role cũ.
 
