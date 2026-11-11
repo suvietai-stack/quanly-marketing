@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { appointmentDraft, appointmentEligible, marketingUnit } from '@/lib/basePermissions/appointment';
 import type { OrgConfig, Preview } from '@/lib/basePermissions/types';
 import { membershipEffective, unitTitles, orgConfigDiff } from '@/lib/orgStructure';
-import { PERMISSIONS } from '@/lib/auth';
 
 export interface AppointmentTarget { unitId: string; titleId?: string }
 export function OrganizationAppointment({ target, config, staff, onClose, onPreview, onApply }: {
