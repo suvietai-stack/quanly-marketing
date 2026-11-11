@@ -172,7 +172,7 @@ function AccessSyncNotice() {
   if (!failed) return null;
   return (
     <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-md">
-      <span>Chưa đồng bộ được quyền, đang dùng quyền đã kiểm tra gần nhất</span>
+      <span>Chưa đồng bộ được quyền mới nhất</span>
       <button type="button" disabled={busy} className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
         onClick={async () => { setBusy(true); try { await Promise.all([useAuth.getState().refreshBaseAccess(true), useAuth.getState().refreshBizAccess(true)]); } finally { setBusy(false); } }}>
         {busy ? 'Đang đồng bộ…' : 'Thử lại'}
