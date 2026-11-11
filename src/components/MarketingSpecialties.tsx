@@ -57,6 +57,7 @@ export function StaffSpecialties({ userId }: { userId: string }) {
   const { isSuperAdmin } = useCurrentUser();
   const qc = useQueryClient();
   const q = useSpecialties();
+  const eligible=useQuery({queryKey:['marketing-task-eligible',userId],queryFn:async()=>{const {data,error}=await supabase.rpc('marketing_task_eligibility',{_target:userId});if(error)throw error;return data===true;},retry:false});
   const current = useMemo(() => new Set((q.data?.rows ?? []).filter(r => r.user_id === userId && r.state === 'active').map(r => r.specialty_id)), [q.data, userId]);
   const curPrimary = q.data?.rows.find(r => r.user_id === userId && r.is_primary)?.specialty_id ?? '';
   const [draft, setDraft] = useState<Set<string> | null>(null);
@@ -70,13 +71,14 @@ export function StaffSpecialties({ userId }: { userId: string }) {
   const onSave = async () => {
     const { add, remove } = applySpecialtyDiff(current, sel);
     setBusy(true);
-    try { await save([userId], add, remove, prim || null); toast.success('Đã lưu chuyên môn'); setDraft(null); setPrimary(null); await qc.invalidateQueries({ queryKey: ['mkt-specialties'] }); }
+    try { await save([userId], add, remove, prim || null); toast.success('Đã lưu chuyên môn'); setDraft(null); setPrimary(null); await qc.invalidateQueries({ queryKey: ['mkt-specialties'] }); await qc.invalidateQueries({queryKey:['base-effective']}); }
     catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
   return <div className="space-y-2 py-4">
+    {eligible.data===false&&<p className="text-sm text-muted-foreground">Không có bổ nhiệm Marketing hiệu lực; không thể cấp nhiệm vụ mới.</p>}
     {q.data?.specs.filter(s => s.active).map(s => { const o = origin(s.id); return (
       <div key={s.id} className="flex items-center gap-3 border-b py-2">
-        <Checkbox id={`sp-${s.id}`} checked={sel.has(s.id)} disabled={!isSuperAdmin} onCheckedChange={v => { const n = new Set(sel); if (v) n.add(s.id); else n.delete(s.id); setDraft(n); }} />
+        <Checkbox id={`sp-${s.id}`} checked={sel.has(s.id)} disabled={!isSuperAdmin || (!sel.has(s.id) && eligible.data!==true)} onCheckedChange={v => { const n = new Set(sel); if (v) n.add(s.id); else n.delete(s.id); setDraft(n); }} />
         <label htmlFor={`sp-${s.id}`} className="flex-1 text-sm">{s.name}</label>
         {o && <Badge variant="outline" className="text-[10px]">{o.state === 'removed' ? 'Đã bỏ' : o.origin === 'auto' ? 'Tự nhận diện từ Role' : 'Admin chỉnh'}</Badge>}
         {sel.has(s.id) && isSuperAdmin && <Button size="sm" variant={prim === s.id ? 'secondary' : 'ghost'} onClick={() => setPrimary(prim === s.id ? '' : s.id)}>{prim === s.id ? 'Chuyên môn chính' : 'Đặt chính'}</Button>}

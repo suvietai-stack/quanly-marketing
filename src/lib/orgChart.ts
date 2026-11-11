@@ -3,7 +3,7 @@ import { slotCapacity, titleKind, titleLevel, unitTitles } from '@/lib/orgStruct
 
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
-export interface ChartSlot { id: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
+export interface ChartSlot { id: string; titleId?: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
 export interface ChartNode { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
@@ -15,7 +15,10 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
   const make = (u: Unit, path: Set<string>): ChartNode => {
     const next = new Set([...path, u.id]);
     const titles = unitTitles(config, u.id);
-    const slots = titles.map(t => ({ id: t.id, title: t.name, manager: titleKind(t) === 'manager', level: titleLevel(t), capacity: slotCapacity(t), holders: [...new Map(current.filter(m => m.unit_id === u.id && m.title_id === t.id).map(m => [m.user_id, personOf(m)])).values()] })).sort((a,b) => b.level-a.level || Number(b.manager)-Number(a.manager));
+    const physical = (config.position_slots ?? []).filter(s => s.unit_id === u.id && s.active);
+    const physicalTitleIds = new Set(physical.map(s => s.title_id));
+    const slots = titles.filter(t => !physicalTitleIds.has(t.id)).map(t => ({ id: t.id, titleId: t.id, title: t.name, manager: titleKind(t) === 'manager', level: titleLevel(t), capacity: slotCapacity(t), holders: [...new Map(current.filter(m => m.unit_id === u.id && m.title_id === t.id).map(m => [m.user_id, personOf(m)])).values()] })).sort((a,b) => b.level-a.level || Number(b.manager)-Number(a.manager));
+    slots.push(...physical.map(s => { const t = config.titles.find(t => t.id === s.title_id); return {id:s.id,titleId:s.title_id,title:s.name,manager:t ? titleKind(t)==='manager' : false,level:t ? titleLevel(t):0,capacity:1,holders:current.filter(m=>m.slot_id===s.id).map(personOf)}; }));
     const slotted = new Set(titles.map(t => t.id));
     const holderIds = new Set(slots.flatMap(slot => slot.holders.map(person => person.id)));
     const people = [...new Map(current.filter(m => m.unit_id === u.id && !holderIds.has(m.user_id) && (!m.title_id || !slotted.has(m.title_id))).map(m => [m.user_id, personOf(m)])).values()];

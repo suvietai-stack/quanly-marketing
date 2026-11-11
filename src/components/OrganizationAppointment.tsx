@@ -11,12 +11,13 @@ import { appointmentDraft, appointmentEligible, marketingUnit } from '@/lib/base
 import type { OrgConfig, Preview } from '@/lib/basePermissions/types';
 import { membershipEffective, unitTitles, orgConfigDiff } from '@/lib/orgStructure';
 
-export interface AppointmentTarget { unitId: string; titleId?: string; mode?: 'primary' | 'concurrent' | 'transfer' }
+export interface AppointmentTarget { unitId: string; titleId?: string; slotId?: string; mode?: 'primary' | 'concurrent' | 'transfer' }
 export function OrganizationAppointment({ target, config, staff, onClose, onPreview, onApply }: {
   target: AppointmentTarget; config: OrgConfig; staff: {id: string; name: string; status: string}[];
   onClose: () => void; onPreview: (next: OrgConfig) => Promise<Preview>; onApply: (p: Preview, reason: string) => Promise<void>;
 }) {
   const [titleId, setTitleId] = useState(target.titleId ?? '');
+  const [slotId,setSlotId]=useState(target.slotId??'');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [mode, setMode] = useState<'primary' | 'concurrent' | 'transfer'>(target.mode ?? 'primary');
@@ -26,7 +27,8 @@ export function OrganizationAppointment({ target, config, staff, onClose, onPrev
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const title = config.titles.find(t => t.id === titleId);
-  const single = title?.kind === 'manager' || title?.capacity === 1;
+  const slots=(config.position_slots??[]).filter(s=>s.title_id===titleId&&s.unit_id===target.unitId&&s.active);
+  const single = slots.length>0 || title?.kind === 'manager' || title?.capacity === 1;
   const unitName = config.units.find(u => u.id === target.unitId)?.name ?? '';
   const nameOf = (id: string) => staff.find(s => s.id === id)?.name ?? id;
   const existing = config.memberships.filter(m => membershipEffective(m) && picked.includes(m.user_id) && m.unit_id !== target.unitId);
@@ -40,12 +42,13 @@ export function OrganizationAppointment({ target, config, staff, onClose, onPrev
       <div className="flex gap-2"><Button disabled={busy} variant="outline" onClick={() => setPreview(null)}><ArrowLeft className="mr-2 h-4 w-4" />Quay lại</Button><Button disabled={busy} onClick={() => run(async () => {await onApply(preview, `Bổ nhiệm ${picked.map(nameOf).join(', ')} tại ${unitName} — ${title?.name}`);setSaved(true);})}>{busy ? 'Đang lưu…' : 'Xác nhận bổ nhiệm'}</Button></div>
     </div> : <div className="space-y-3">
       <Label>Chức vụ tại {unitName}</Label><Select value={titleId} disabled={!!target.titleId} onValueChange={v => {setTitleId(v);setPicked([]);}}><SelectTrigger aria-label="Chức vụ bổ nhiệm"><SelectValue placeholder="Chọn chức vụ" /></SelectTrigger><SelectContent>{unitTitles(config,target.unitId).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
+      {slots.length>0&&<><Label>Ô vị trí</Label><Select value={slotId} onValueChange={setSlotId}><SelectTrigger aria-label="Ô vị trí bổ nhiệm"><SelectValue placeholder="Chọn ô trống"/></SelectTrigger><SelectContent>{slots.map(s=><SelectItem key={s.id} value={s.id} disabled={config.memberships.some(m=>m.slot_id===s.id&&membershipEffective(m))}>{s.name}</SelectItem>)}</SelectContent></Select></>}
       <div className="flex gap-2 items-center"><Search className="h-4 w-4 text-muted-foreground" /><Input aria-label="Tìm nhân sự bổ nhiệm" placeholder="Tìm theo tên" value={query} onChange={e => setQuery(e.target.value)} /></div>
       <div className="max-h-60 overflow-y-auto border rounded-md">{rows.map(s => {const assignments=config.memberships.filter(m => m.user_id===s.id && membershipEffective(m));const eligible=appointmentEligible(s.status);return <label key={s.id} className="flex gap-3 items-start border-b px-3 py-2 text-sm"><Checkbox aria-label={`Chọn ${s.name} ${s.id.slice(-6)}`} disabled={!eligible || !titleId} checked={picked.includes(s.id)} onCheckedChange={v => setPicked(ids => v===true ? single ? [s.id] : [...ids,s.id] : ids.filter(id => id!==s.id))} /><span className="min-w-0"><span className="block font-medium">{s.name} <span className="text-xs text-muted-foreground">· {s.id.slice(-6)}</span></span><span className="block text-xs text-muted-foreground">{eligible ? assignments.map(m => config.units.find(u => u.id===m.unit_id)?.name).join(', ') || 'Chưa phân công' : `Không thể bổ nhiệm: ${s.status}`}</span></span></label>;})}{!rows.length && <p className="p-3 text-sm text-muted-foreground">Không có nhân sự phù hợp.</p>}</div>
       <p className="text-sm">Đã chọn {picked.length} người{single ? ' · Vị trí một người' : ''}</p>
       {existing.length > 0 && <><Label>Phân công hiện có</Label><Select value={mode} onValueChange={v => setMode(v as typeof mode)}><SelectTrigger aria-label="Hình thức bổ nhiệm"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Chọn hình thức</SelectItem><SelectItem value="concurrent">Kiêm nhiệm — giữ phân công hiện có</SelectItem><SelectItem value="transfer">Điều chuyển — kết thúc phân công chính</SelectItem></SelectContent></Select>{mode==='transfer' && existing.filter(m=>m.kind!=='concurrent').map(m=><p key={m.id} className="text-sm text-destructive">Kết thúc: {nameOf(m.user_id)} · {config.units.find(u=>u.id===m.unit_id)?.name} · {config.titles.find(t=>t.id===m.title_id)?.name}</p>)}</>}
       <AppointmentPermissionSummary titleId={titleId} config={config} />{marketingUnit(config,target.unitId) && title?.source!=='biz_positions' && <AssignmentSpecialties selected={specialties} onChange={setSpecialties} />}
-      <Button disabled={busy || !titleId || !picked.length || (existing.some(m=>m.kind!=='concurrent') && mode==='primary')} onClick={() => run(async () => {setPreview(await onPreview(appointmentDraft(config,target.unitId,titleId,picked,mode,specialties,new Date(Date.now()-2000).toISOString())));})}>{busy ? 'Đang xem trước…' : 'Xem trước'}</Button>
+      <Button disabled={busy || !titleId || !picked.length || (slots.length>0&&!slotId) || (existing.some(m=>m.kind!=='concurrent') && mode==='primary')} onClick={() => run(async () => {setPreview(await onPreview(appointmentDraft(config,target.unitId,titleId,picked,mode,specialties,new Date(Date.now()-2000).toISOString(),slotId||undefined)));})}>{busy ? 'Đang xem trước…' : 'Xem trước'}</Button>
     </div>}{error && <p role="alert" className="text-sm text-destructive">{error} Vui lòng xem trước lại.</p>}
   </DialogContent></Dialog>;
 }
