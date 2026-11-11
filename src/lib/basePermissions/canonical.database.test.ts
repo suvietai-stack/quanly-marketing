@@ -143,7 +143,7 @@ it('stock accounting, purchasing and packing grant their own reviewed sets only'
  const sets=[{id:'stock',name:'Kế toán kho',permissions:['leave.create','att.create']},{id:'buyer',name:'Thu mua',permissions:['oq.create','oq.accept','oq.reply_price','oq.reply_progress','oq.report_own']},{id:'packing',name:'Đóng hàng',permissions:['ot.view_own','ot.task_view','ot.task_update','ot.stage_update']}];
  for(const r of sets){
   await db.query('insert into app_roles(id,name,permissions) values($1,$2,$3)',[r.id,r.name,r.permissions]);
-  await apply(await preview([{action:'title',data:{id:r.id,unit_id:'gd',name:r.name,kind:'staff',capacity:0,active:true}}]));
+  await apply(await preview([{action:'title',data:{id:r.id,unit_id:'gd',name:r.name,level:0,kind:'staff',capacity:0,active:true}}]));
   await applyRoles(await preview([{action:'roles',data:{id:r.id,roles:[{role_id:r.id,is_primary:true,scope_kind:'own',enabled_permissions:r.permissions}]}}]));
   await db.query('insert into profiles values($1,$2,$3)',[`00000000-0000-0000-0000-${r.id==='stock'?'000000000007':r.id==='buyer'?'000000000008':'000000000009'}`,r.name,'Đang hoạt động']);
   const uid=`00000000-0000-0000-0000-${r.id==='stock'?'000000000007':r.id==='buyer'?'000000000008':'000000000009'}`;
@@ -162,7 +162,7 @@ it('multiple roleless Marketing staff receive SEO + Social + Video sources and r
   await db.query('insert into app_roles(id,name,permissions) values($1,$1,$2)',[id,[key]]);
   await db.query('insert into mkt_specialties values($1,$1,$1,true)',[id]);
  }
- await apply(await preview([{action:'title',data:{id:'mkt-staff-test',unit_id:'gd',name:'Nhân viên Marketing',kind:'staff',capacity:0,active:true}}]));
+ await apply(await preview([{action:'title',data:{id:'mkt-staff-test',unit_id:'gd',name:'Nhân viên Marketing',level:0,kind:'staff',capacity:0,active:true}}]));
  await apply(await preview([uid,other].map(user_id=>({action:'assign',data:{unit_id:'gd',title_id:'mkt-staff-test',user_id,immediate:true,specialty_ids:['seo','social','video']}}))));
  for(const user of [uid,other]){
   expect((await scalar('select private.org_assignment_specialty_rules($1,private.org_config()) v',[user])).map((x:any)=>x.role_id).sort()).toEqual(['seo','social','video']);
