@@ -9799,6 +9799,10 @@ export type Database = {
         Returns: Json
       }
       account_permission_explain: { Args: { _target: string }; Returns: Json }
+      account_supplement_preview: {
+        Args: { _permissions: string[]; _target: string }
+        Returns: Json
+      }
       account_supplement_read: { Args: { _target: string }; Returns: Json }
       account_supplement_save: {
         Args: {
@@ -11343,6 +11347,7 @@ export type Database = {
         Args: { _data: Json; _id: string }
         Returns: undefined
       }
+      permission_editor_read: { Args: never; Returns: Json }
       push_subscribe: {
         Args: {
           _auth: string
