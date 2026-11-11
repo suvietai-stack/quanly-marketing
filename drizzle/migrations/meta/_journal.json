@@ -2633,6 +2633,13 @@
       "when": 1794407211983,
       "tag": "0375_org_effect_signature_stable_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 376,
+      "version": "7",
+      "when": 1794408775494,
+      "tag": "0376_role_v2_audited_snapshot_restore_and_reduction_guard",
+      "breakpoints": true
     }
   ]
 }
