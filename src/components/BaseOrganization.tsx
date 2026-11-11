@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, ShieldCheck, Eye, Copy, Save, X, Users, Settings2, Network } from 'lucide-react';
+import { Search, ShieldCheck, Eye, Users, Settings2, Network } from 'lucide-react';
 import { PageHeader } from '@/components/AppShell';
 import { OrgChart, type SlotRef } from '@/components/OrgChart';
 import { marketingUnit } from '@/lib/basePermissions/appointment';
@@ -20,25 +20,17 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { baseOrgApi } from '@/lib/basePermissions/api';
-import { emptyConfig, type Bundle, type OrgActor, type OrgConfig, type Preview, type Rule, type EffectivePermission } from '@/lib/basePermissions/types';
+import { emptyConfig, type OrgActor, type OrgConfig, type Preview, type EffectivePermission } from '@/lib/basePermissions/types';
 import { useAuth, useCurrentUser } from '@/lib/auth';
 import { organizationSettingsAccess } from '@/lib/rolePresentation';
 
-const id = () => crypto.randomUUID();
 const sourceLabel: Record<string, string> = { default: 'Mặc định', direct: 'Trực tiếp', bundle: 'Bộ quyền', role: 'Role cũ', custom: 'Quyền riêng cũ', business: 'Kinh doanh', appointment_role: 'Role theo bổ nhiệm', marketing_appointment: 'Nhiệm vụ theo bổ nhiệm', marketing_specialty: 'Chuyên môn Marketing' };
-const field = 'space-y-1.5';
-function Picker({ label, value, onChange, items }: { label: string; value: string; onChange: (v: string) => void; items: { id: string; name: string }[] }) {
-  return <div className={field}><Label>{label}</Label><Select value={value || '_none'} onValueChange={v => onChange(v === '_none' ? '' : v)}><SelectTrigger aria-label={label} className="min-w-0 [&>span]:truncate"><SelectValue /></SelectTrigger><SelectContent className="max-w-[calc(100vw-3rem)]"><SelectItem value="_none">Chưa chọn</SelectItem>{items.map(x => <SelectItem className="whitespace-normal" key={x.id} value={x.id}>{x.name}</SelectItem>)}</SelectContent></Select></div>;
-}
 function PermissionRow({ p }: { p: EffectivePermission }) {
   return <div className="border-b py-3 space-y-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-sm">{p.label}</span><Badge variant={p.allowed ? 'secondary' : 'outline'}>{p.allowed ? 'Được phép' : 'Không được phép'}</Badge></div><p className="text-xs text-muted-foreground">{p.module} · {p.tier === 0 ? 'Quản trị đặc quyền' : `Nấc ${p.tier}`} · {p.scope === 'own' ? 'Dữ liệu của mình' : 'Phạm vi nghiệp vụ hiện tại'}</p><p className="text-xs text-muted-foreground">{p.sources.length ? p.sources.map(s => `${sourceLabel[s.source_kind]}${s.source_name ? `: ${s.source_name}` : ''}${s.ends_at ? ` — đến ${new Date(s.ends_at).toLocaleString('vi-VN')}` : ''}`).join('; ') : sourceLabel[p.legacy.source.kind]}</p>{p.conflict && !p.bypass && <p className="text-xs text-destructive">Xung đột cho phép/từ chối — ưu tiên từ chối</p>}</div>;
 }
 export function BaseOrganization() {
   const { user, isSuperAdmin: isSA, can: canFn } = useCurrentUser();
-  const canRole = canFn('settings.role') || canFn('settings.permission');
   const qc = useQueryClient();
   const data = useQuery({ queryKey: ['base-org', user?.id], queryFn: baseOrgApi.read, retry: false });
   const [config, setConfig] = useState<OrgConfig>(emptyConfig);
@@ -50,7 +42,6 @@ export function BaseOrganization() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [confirmation, setConfirmation] = useState('');
   const [assigning, setAssigning] = useState<AppointmentTarget | null>(null);
   const [historySlot, setHistorySlot] = useState<SlotRef | null>(null);
   const [changing,setChanging]=useState<{id:string;specialty?:boolean}|null>(null);
@@ -63,7 +54,6 @@ export function BaseOrganization() {
   const edit = (fn: (c: OrgConfig) => OrgConfig) => { setConfig(fn); setDirty(true); setError(''); };
   const staff = data.data?.staff ?? [];
   const selected = staff.find(s => s.id === staffId);
-  const catalog = data.data?.catalog ?? [];
   const run = async (fn: () => Promise<void>) => { setBusy(true); setError(''); try { await fn(); } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); } };
   const actor: OrgActor = data.data?.actor ?? { super: false, assign_all: false, assign_units: [], appoint_all: false, appoint_units: [], view_history: false };
   const canEditStructure = actor.super || !!actor.structure_units?.length;
@@ -75,10 +65,9 @@ export function BaseOrganization() {
   const legacyPermissionChanged = sectionChanged('defaults') || sectionChanged('bundles') || sectionChanged('grants') || sectionChanged('bindings');
   const roleChanged = JSON.stringify(original?.role_links ?? []) !== JSON.stringify(config.role_links ?? []);
   const permissionChanged = legacyPermissionChanged || roleChanged;
-  const membershipOnly = dirty && !permissionChanged && !sectionChanged('units') && !sectionChanged('titles');
   const showPreview = () => run(async () => {
     if (!original) return;
-    setConfirmation(''); setReason(''); setMembershipMode(!permissionChanged);
+    setReason(''); setMembershipMode(!permissionChanged);
     if (legacyPermissionChanged) throw new Error('Quyền bổ sung chưa thể áp dụng trong lượt chuyển đổi này; không thay đổi quyền hiện có.');
     setPreview(await baseOrgApi.preview(data.data?.revision ?? 0, config, original));
   });
@@ -92,7 +81,7 @@ export function BaseOrganization() {
   if (data.isPending) return <p className="p-6 text-muted-foreground">Đang tải cơ cấu tổ chức…</p>;
   if (data.error) return <div className="space-y-3"><p className="text-destructive">{data.error.message}</p><Button variant="outline" onClick={() => data.refetch()}>Thử lại</Button></div>;
   const groupPermissions = (rows: EffectivePermission[]) => [...new Set(rows.map(p => p.module))].map(module => <details key={module} open className="border-b"><summary className="py-3 font-semibold text-sm cursor-pointer">{module}</summary>{rows.filter(p => p.module === module && `${p.label} ${p.key}`.toLocaleLowerCase('vi').includes(permissionSearch.toLocaleLowerCase('vi'))).map(p => <PermissionRow key={p.key} p={p} />)}</details>);
-  return <div className="space-y-5 max-w-6xl"><PageHeader title="Cơ cấu tổ chức" /><div className="flex flex-wrap gap-2 items-center"><Button size="sm" variant={section === 'chart' ? 'default' : 'outline'} onClick={() => setSection('chart')}><Network className="h-4 w-4 mr-2" />Cơ cấu & Nhân sự</Button>{canAssignAnywhere && <Button size="sm" variant={section === 'staff' ? 'default' : 'outline'} onClick={() => setSection('staff')}><Users className="h-4 w-4 mr-2" />Nhân sự</Button>}{settingsAccess.settings && <Button size="sm" variant={section === 'settings' ? 'default' : 'outline'} onClick={() => setSection('settings')}><Settings2 className="h-4 w-4 mr-2" />Role & Phân quyền</Button>}{(actor.super || actor.view_history) && <Button size="sm" variant={section === 'history' ? 'default' : 'outline'} onClick={() => setSection('history')}>Nhật ký</Button>}<Button className="ml-auto" size="sm" disabled={busy || !dirty} onClick={showPreview}><Eye className="h-4 w-4 mr-2" />Xem trước thay đổi</Button></div>{dirty && <Badge variant="outline">Có thay đổi chưa áp dụng</Badge>}{error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+  return <div className="space-y-5 max-w-6xl"><PageHeader title="Cơ cấu tổ chức" /><div className="flex flex-wrap gap-2 items-center"><Button size="sm" variant={section === 'chart' ? 'default' : 'outline'} onClick={() => setSection('chart')}><Network className="h-4 w-4 mr-2" />Cơ cấu & Nhân sự</Button>{canAssignAnywhere && <details className="relative"><summary className="cursor-pointer text-sm px-3 py-2">Nhân sự & Lịch sử</summary><div className="absolute top-full z-20 border bg-popover p-2 shadow-sm flex gap-2"><Button size="sm" variant={section === 'staff' ? 'default' : 'outline'} onClick={() => setSection('staff')}><Users className="h-4 w-4 mr-2" />Nhân sự</Button>{(actor.super || actor.view_history) && <Button size="sm" variant="outline" onClick={()=>setSection('history')}>Nhật ký</Button>}</div></details>}{settingsAccess.roles && <Button size="sm" variant={section === 'settings' ? 'default' : 'outline'} onClick={() => setSection('settings')}><Settings2 className="h-4 w-4 mr-2" />Role & Phân quyền</Button>}<Button className="ml-auto" size="sm" disabled={busy || !dirty} onClick={showPreview}><Eye className="h-4 w-4 mr-2" />Xem trước thay đổi</Button></div>{dirty && <div className="flex items-center gap-2"><Badge variant="outline">Có thay đổi chưa áp dụng</Badge><Button size="sm" variant="ghost" onClick={()=>{if(original)setConfig(structuredClone(original));setDirty(false);setError('');}}>Hủy bản nháp</Button></div>}{error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   {section === 'chart' && <OrgChart config={config} staff={staff} serverNow={data.data?.server_now} canManage={canAssignAnywhere || canEditStructure} onManageUnit={node => setManageUnit(node)} onOpenStaff={id => { setStaffId(id); setSection('staff'); }} onAssign={ref => setAssigning({unitId:ref.unitId,titleId:ref.slot.id})} onUnassign={(ref,p)=>{const m=config.memberships.find(x=>x.active&&x.unit_id===ref.unitId&&x.title_id===ref.slot.id&&x.user_id===p.id);if(m)setChanging({id:m.id});}} onSlotHistory={ref=>setHistorySlot(ref)} />}
   {section === 'staff' && <div className="grid md:grid-cols-[260px_1fr] gap-6"><div><div className="flex items-center gap-2 mb-3"><Search className="h-4 w-4 text-muted-foreground" /><Input aria-label="Tìm nhân sự" placeholder="Tìm nhân sự" value={search} onChange={e => setSearch(e.target.value)} /></div><div className="max-h-72 md:max-h-[650px] overflow-y-auto space-y-1">{staff.filter(s => s.name.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi'))).map(s => <Button className="w-full h-auto py-3 justify-start text-left whitespace-normal" variant={staffId === s.id ? 'secondary' : 'ghost'} key={s.id} onClick={() => setStaffId(s.id)}>{s.name}</Button>)}</div></div><div className="min-w-0">{selected ? <><h2 className="text-xl font-semibold">{selected.name}</h2><p className="text-sm text-muted-foreground mb-4">{selected.status}</p><Tabs defaultValue="effective"><TabsList className="w-full flex h-auto flex-wrap"><TabsTrigger value="default" className="flex-1">Quyền mặc định</TabsTrigger><TabsTrigger value="extra" className="flex-1">Tùy chỉnh quyền</TabsTrigger><TabsTrigger value="effective" className="flex-1">Quyền thực tế</TabsTrigger><TabsTrigger value="spec" className="flex-1">Chuyên môn</TabsTrigger></TabsList><TabsContent value="spec"><StaffSpecialties key={staffId} userId={staffId} /></TabsContent>
   <TabsContent value="default"><details><summary className="text-sm cursor-pointer">Nâng cao — nguồn cấp quyền</summary><StaffRoleSources userId={staffId} memberships={config.memberships.filter(m=>m.user_id===staffId&&m.active).map(m=>({title_source:config.titles.find(t=>t.id===m.title_id)?.source==='biz_positions'?'biz' as const:'base' as const,title_id:m.title_id??'',name:config.titles.find(t=>t.id===m.title_id)?.name??'Chưa có chức vụ'}))}/></details><div className="space-y-2">{config.memberships.filter(m=>m.user_id===staffId).map(m=><div key={m.id} className="border-b py-3"><p>{config.units.find(u=>u.id===m.unit_id)?.name} · {config.titles.find(t=>t.id===m.title_id)?.name}</p><p className="text-xs text-muted-foreground">{m.active?'Đang áp dụng':'Đã kết thúc'}</p>{m.active&&<div className="flex gap-2 mt-2"><Button size="sm" variant="outline" onClick={()=>setChanging({id:m.id})}>Miễn nhiệm</Button>{isSA&&marketingUnit(config,m.unit_id)&&config.titles.find(t=>t.id===m.title_id)?.source!=='biz_positions'&&<Button size="sm" variant="outline" onClick={()=>setChanging({id:m.id,specialty:true})}>Nhiệm vụ Marketing</Button>}</div>}</div>)}</div></TabsContent>
