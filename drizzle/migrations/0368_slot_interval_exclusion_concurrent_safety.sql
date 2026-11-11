@@ -1,0 +1,3 @@
+CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA extensions;
+ALTER TABLE public.org_assignments ADD CONSTRAINT org_slot_no_interval_overlap EXCLUDE USING gist (slot_id extensions.gist_text_ops WITH =, tstzrange(starts_at,ends_at,'[)') WITH &&) WHERE (slot_id IS NOT NULL AND status<>'cancelled');
+COMMENT ON CONSTRAINT org_slot_no_interval_overlap ON public.org_assignments IS 'Physical slot one-holder invariant enforced across concurrent transactions; adjacent intervals allowed, cancelled history retained.';

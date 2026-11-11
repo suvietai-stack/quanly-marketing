@@ -2577,6 +2577,13 @@
       "when": 1794386444472,
       "tag": "0367_audited_slot_role_replacement_and_task_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 368,
+      "version": "7",
+      "when": 1794386490709,
+      "tag": "0368_slot_interval_exclusion_concurrent_safety",
+      "breakpoints": true
     }
   ]
 }
