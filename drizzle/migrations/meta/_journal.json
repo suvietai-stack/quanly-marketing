@@ -2661,6 +2661,13 @@
       "when": 1794411527211,
       "tag": "0379_role_v2_position_roles_model",
       "breakpoints": true
+    },
+    {
+      "idx": 380,
+      "version": "7",
+      "when": 1794411584543,
+      "tag": "0380_position_roles_resolver_branch",
+      "breakpoints": true
     }
   ]
 }
