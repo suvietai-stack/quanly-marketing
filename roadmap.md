@@ -10,6 +10,7 @@
 - [ ] Nhân viên scope-limited LIVE: chưa có phiên được ủy quyền cho nhân viên trong lượt này; fixture own/team/slot/isolation đạt nhưng không thay thế nghiệm thu live. Không tự gán quyền hay chọn tài khoản.
 
 ## Chuẩn hóa toàn kho Role — yêu cầu chốt 11/11/2026
+- [ ] Tiếp tục 12:51 UTC: đủ 25 preset/diff, pending Marketing số 0372 không đụng 0371 Tín hiệu; audit live chỉ đọc, dry-run mapping, backup/rollback và test. Không áp quyền/bổ nhiệm hoặc Publish.
 - [ ] Audit 33 Role, phụ thuộc code/SQL/lịch sử và nguồn quyền; không ghi live.
 - [ ] Bộ gợi ý tối giản đủ 20 vị trí + 5 nhiệm vụ; bảo vệ 6 archived + 2 system và vị trí is_system.
 - [ ] Diff trước/sau, quyền giữ/bỏ/chưa cấu hình và số người/nguồn ảnh hưởng; UX dùng kho/ma trận hiện có.
