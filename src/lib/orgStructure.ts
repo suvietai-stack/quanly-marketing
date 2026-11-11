@@ -13,24 +13,24 @@ interface DefaultTitle { n: number; name: string; dep: number; code: string; lev
 export const DEFAULT_UNITS: DefaultUnit[] = [
   { n: 1, name: 'Khối Marketing', kind: 'block' },
   { n: 2, name: 'Khối Vận hành', kind: 'block' },
-  { n: 11, name: 'Bộ phận Marketing', kind: 'department', parent: 1 },
-  { n: 12, name: 'Bộ phận Thiết kế', kind: 'department', parent: 1 },
-  { n: 21, name: 'Bộ phận Hành chính & Nhân sự', kind: 'department', parent: 2 },
-  { n: 22, name: 'Bộ phận Kế toán', kind: 'department', parent: 2 },
-  { n: 23, name: 'Bộ phận Mua hàng & Giao vận', kind: 'department', parent: 2 },
+  { n: 11, name: 'Phòng Marketing', kind: 'department', parent: 1 },
+  { n: 12, name: 'Phòng Thiết kế', kind: 'department', parent: 1 },
+  { n: 21, name: 'Hành chính & Nhân sự', kind: 'department', parent: 2 },
+  { n: 22, name: 'Phòng Kế toán', kind: 'department', parent: 2 },
+  { n: 23, name: 'Phòng Mua hàng & Giao vận', kind: 'department', parent: 2 },
 ];
 
-/** Chức danh mặc định: mã ổn định, cấp bậc theo mô hình 5→0, quản lý một người, nhân viên không giới hạn. */
+/** Chức danh mặc định: tên chính thức, mã ổn định, cấp bậc theo mô hình 5→0, quản lý một người, nhân viên không giới hạn. */
 export const DEFAULT_TITLES: DefaultTitle[] = [
-  { n: 101, name: 'Trưởng bộ phận Marketing', dep: 11, code: 'mkt-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 120, name: 'Giám đốc Marketing', dep: 1, code: 'mkt_director', level: 3, kind: 'manager', capacity: 1 },
+  { n: 101, name: 'Trưởng phòng Marketing', dep: 11, code: 'mkt-head', level: 2, kind: 'manager', capacity: 1 },
   { n: 102, name: 'Nhân viên Marketing', dep: 11, code: 'mkt-staff', level: 0, kind: 'staff', capacity: 0 },
-  { n: 103, name: 'Trưởng bộ phận Thiết kế', dep: 12, code: 'design-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 103, name: 'Trưởng phòng Thiết kế', dep: 12, code: 'design-head', level: 2, kind: 'manager', capacity: 1 },
   { n: 104, name: 'Nhân viên Thiết kế', dep: 12, code: 'design-staff', level: 0, kind: 'staff', capacity: 0 },
-  { n: 105, name: 'Trưởng bộ phận Hành chính & Nhân sự', dep: 21, code: 'hr-head', level: 2, kind: 'manager', capacity: 1 },
-  { n: 106, name: 'Nhân viên Hành chính & Nhân sự', dep: 21, code: 'hr-staff', level: 0, kind: 'staff', capacity: 0 },
+  { n: 106, name: 'Hành chính Nhân sự', dep: 21, code: 'hr-staff', level: 0, kind: 'staff', capacity: 0 },
   { n: 107, name: 'Kế toán trưởng', dep: 22, code: 'acc-head', level: 2, kind: 'manager', capacity: 1 },
   { n: 108, name: 'Kế toán kho', dep: 22, code: 'acc-stock', level: 0, kind: 'staff', capacity: 0 },
-  { n: 109, name: 'Trưởng bộ phận Mua hàng & Giao vận', dep: 23, code: 'proc-head', level: 2, kind: 'manager', capacity: 1 },
+  { n: 109, name: 'Trưởng phòng Mua hàng & Giao vận', dep: 23, code: 'proc-head', level: 2, kind: 'manager', capacity: 1 },
   { n: 110, name: 'Nhân viên Thu mua', dep: 23, code: 'proc-buyer', level: 0, kind: 'staff', capacity: 0 },
   { n: 111, name: 'Nhân viên Đóng hàng', dep: 23, code: 'proc-packer', level: 0, kind: 'staff', capacity: 0 },
 ];

@@ -18,19 +18,20 @@ export function roleDraftSnapshot(links: TitleRoleLink[]) {
 export function canActivateRole(role: OriginalRole) {
   return !role.restricted && role.checks.length > 0 && role.checks.every(c => c.ready) && role.permissions.every(p => role.checks.some(c => c.key === p && c.ready));
 }
-// Suggestions are exact, conservative pairs only; never grant anything from a name.
+// Suggestions map titles to the standard Role catalog only; never grant anything from a name.
 const suggestions: Record<string, string> = {
-  'Trưởng bộ phận Marketing': 'Leader Marketing',
-  'Trưởng phòng Marketing': 'Leader Marketing',
-  'Giám đốc Marketing': 'Leader Marketing',
-  'Trưởng phòng Thiết kế': 'Designer / Chụp ảnh',
-  'Nhân viên Thiết kế': 'Designer / Chụp ảnh',
-  'Kế toán kho': 'Kế Toán',
-  'Kế toán trưởng': 'Kế Toán',
-  'Nhân viên Thu mua': 'Cung Ứng',
-  'Trưởng phòng Mua hàng & Giao vận': 'Cung Ứng',
+  'Giám đốc Marketing': 'Giám đốc Marketing',
+  'Trưởng phòng Marketing': 'Quản lý Marketing',
+  'Trưởng nhóm Marketing': 'Quản lý Marketing',
+  'Trưởng phòng Thiết kế': 'Quản lý Thiết kế',
+  'Trưởng nhóm Thiết kế': 'Quản lý Thiết kế',
+  'Nhân viên Thiết kế': 'Nhân viên Thiết kế',
+  'Kế toán trưởng': 'Kế toán trưởng',
+  'Kế toán kho': 'Kế toán kho',
   'Hành chính Nhân sự': 'Hành Chính Nhân Sự',
-  'Nhân viên Hành chính & Nhân sự': 'Hành Chính Nhân Sự',
+  'Trưởng phòng Mua hàng & Giao vận': 'Quản lý Mua hàng & Giao vận',
+  'Nhân viên Thu mua': 'Thu mua',
+  'Nhân viên Đóng hàng': 'Nhân viên Đóng hàng',
 };
 export function suggestedRole(title: string, roles: OriginalRole[]) {
   return roles.find(r => !r.restricted && r.name === suggestions[title]);
