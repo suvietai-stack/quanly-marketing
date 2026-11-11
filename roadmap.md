@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Fix tận gốc trên code hiện tại — 11/11/2026
+- [ ] Resolver theo nguồn/phạm vi; giữ compatibility trước cutover, không đổi quyền nhân sự thật.
+- [ ] Mapping tất cả bổ nhiệm chưa slot (active và lịch sử), chọn Role rõ ràng, thêm ô trống và preview xác nhận.
+- [ ] Role ô có lịch sử: kế hoạch thay thế an toàn, không viết lại Role lịch sử.
+- [ ] Marketing eligibility theo ID/mã/cây; nhiều nhiệm vụ, quyền dự kiến sau rời Marketing và bảo toàn chuyên môn Thiết kế/Chụp ảnh.
+- [ ] Role & Quyền thực tế theo nguồn; receiver counts; Role mới rỗng và mã ổn định.
+- [ ] Kiểm thử giả lập, hồi quy nghiệp vụ, Preview và báo cáo xác nhận/cutover còn chờ.
+
 ## Yêu cầu mới: Một kho Role → ô vị trí → bổ nhiệm → quyền
 - [x] Đọc tệp yêu cầu; audit chỉ đọc database/code/lịch sử đến 0358; Preview đăng nhập mở được Role & Phân quyền, không lỗi runtime.
 - [x] Kiểm kê trực tiếp, kho Role có preview/audit và chuyển ô có snapshot/khôi phục riêng tư; không reset tự động. Preview Role và chuyển ô đã mở trên phiên thật.
