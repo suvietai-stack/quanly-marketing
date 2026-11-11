@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 Tín hiệu production timeout — ưu tiên trước Role, 11/11/2026
+- [ ] Tái hiện Preview/published với phiên được ủy quyền; đo RPC/count/page và health/locks chỉ đọc.
+- [ ] Sửa tối thiểu trên draft; SQL/index chỉ PENDING, không thay quyền/dữ liệu/restart/publish.
+- [ ] Test SQL/phân trang/filter/phạm vi, 3 lần load và chuyển tab desktop/iPad; smoke CRM/3K/tổ chức.
+- [ ] Báo bằng chứng trước/sau, phân biệt draft với production và blocker cần Admin xác nhận.
+
 ## Chuẩn hóa toàn kho Role — yêu cầu chốt 11/11/2026
 - [ ] Audit 33 Role, phụ thuộc code/SQL/lịch sử và nguồn quyền; không ghi live.
 - [ ] Bộ gợi ý tối giản đủ 20 vị trí + 5 nhiệm vụ; bảo vệ 6 archived + 2 system và vị trí is_system.
