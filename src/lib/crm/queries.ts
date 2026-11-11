@@ -84,7 +84,7 @@ export function useCrmMutation(fn: string) {
     mutationFn: (data: Record<string, unknown>) => crmRpc<unknown>(fn, { _data: data }),
     onSuccess: async () => {
       await qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("crm_") });
-      if (fn === "crm_access_save") await useAuth.getState().refreshBizAccess();
+      if (fn === "crm_access_save") await useAuth.getState().refreshBizAccess(true);
     },
   });
 }

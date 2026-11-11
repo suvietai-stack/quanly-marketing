@@ -1,4 +1,5 @@
 import { createCoalescer } from "./singleFlight";
+import { mergeAccess, shouldRefresh } from "./accessCache";
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
@@ -862,11 +863,13 @@ export interface User {
 // ============ Store ============
 interface AuthState {
   baseAccess: EffectiveAccess | null;
-  refreshBaseAccess: () => Promise<void>;
+  refreshBaseAccess: (force?: boolean) => Promise<void>;
+  _loadBiz: () => Promise<void>;
+  accessSyncFailed: boolean;
   _loadBase: () => Promise<void>;
   _load: () => Promise<void>;
   bizAccess: EffectiveBizAccess | null;
-  refreshBizAccess: () => Promise<void>;
+  refreshBizAccess: (force?: boolean) => Promise<void>;
   users: User[];
   roles: Role[];
   currentUserId: ID | null;
@@ -907,6 +910,8 @@ interface AuthState {
 let initStarted = false;
 const authLoads = createCoalescer<string>(async () => { await useAuth.getState()._load(); });
 const baseLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBase(); });
+const bizLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBiz(); });
+const accessAt: { base: number | null; biz: number | null } = { base: null, biz: null };
 
 function mapProfileToUser(
   p: any,
@@ -941,25 +946,38 @@ function mapProfileToUser(
 
 export const useAuth = create<AuthState>((set, get) => ({
   baseAccess: null,
-  refreshBaseAccess: async () => {
+  refreshBaseAccess: async (force = false) => {
     const uid = get().currentUserId;
     if (!uid) { set({ baseAccess: null }); return; }
-    return baseLoads.join(uid);
+    if (!shouldRefresh(accessAt.base, Date.now(), force)) return;
+    return force ? baseLoads.refresh(uid) : baseLoads.join(uid);
   },
   _loadBase: async () => {
     const uid = get().currentUserId;
     if (!uid) { set({ baseAccess: null }); return; }
     const { data, error } = await supabase.rpc('base_permissions_effective');
     if (get().currentUserId !== uid) return;
-    set({ baseAccess: error ? null : data as unknown as EffectiveAccess });
+    const r = mergeAccess(get().baseAccess, accessAt.base, uid, { data: data as unknown as EffectiveAccess, error }, Date.now());
+    accessAt.base = r.verifiedAt;
+    if (r.value !== get().baseAccess || r.failed !== get().accessSyncFailed) set({ baseAccess: r.value, accessSyncFailed: r.failed });
   },
   bizAccess: null,
-  refreshBizAccess: async () => {
+  accessSyncFailed: false,
+  refreshBizAccess: async (force = false) => {
     const uid = get().currentUserId;
     if (!uid) { set({ bizAccess: null }); return; }
+    if (!shouldRefresh(accessAt.biz, Date.now(), force)) return;
+    return force ? bizLoads.refresh(uid) : bizLoads.join(uid);
+  },
+  _loadBiz: async () => {
+    const uid = get().currentUserId;
+    if (!uid) return;
     const { data, error } = await supabase.rpc('biz_effective_access');
     if (get().currentUserId !== uid) return;
-    set({ bizAccess: error ? null : data as unknown as EffectiveBizAccess });
+    const r = mergeAccess(get().bizAccess, accessAt.biz, uid, { data: data as unknown as EffectiveBizAccess, error }, Date.now());
+    accessAt.biz = r.verifiedAt;
+    if (r.value !== get().bizAccess) set({ bizAccess: r.value });
+    if (r.failed) set({ accessSyncFailed: true });
   },
   users: [],
   roles: [],
@@ -974,7 +992,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       if (!['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'].includes(event)) return;
       const nextId = session?.user?.id ?? null;
       const changed = nextId !== get().currentUserId;
-      if (changed) set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null });
+      if (changed) { accessAt.base = null; accessAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false }); }
       set({ currentUserId: nextId });
       if (session) {
         // Do not make Auth calls inside the SDK's locked callback.
@@ -1053,7 +1071,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       catalogPending: r.catalog_pending ?? [],
     }));
     set({ users, roles, loaded: true });
-    await Promise.all([get().refreshBizAccess(), get().refreshBaseAccess()]);
+    await Promise.all([get().refreshBizAccess(true), get().refreshBaseAccess(true)]);
   },
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },

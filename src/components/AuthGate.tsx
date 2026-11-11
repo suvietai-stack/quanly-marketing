@@ -48,19 +48,19 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!currentUserId) return;
     let active = true;
-    const refresh = async () => {
+    const refresh = async (force = false) => {
       const before = useAuth.getState().bizAccess;
       const previous = JSON.stringify([before?.permissions,before?.appointments,before?.legacy_assignments,before?.exceptions]);
-      await refreshBizAccess();
+      await refreshBizAccess(force);
       if (!active) return;
       const after = useAuth.getState().bizAccess;
       const changed = previous !== JSON.stringify([after?.permissions,after?.appointments,after?.legacy_assignments,after?.exceptions]);
-      if (changed) qc.removeQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') });
-      await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') });
+      // Chỉ tải lại dữ liệu Kinh doanh khi quyền thực sự đổi.
+      if (changed) { qc.removeQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') }); await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('biz_') }); }
     };
     const visible = () => { if (!document.hidden) void refresh(); };
-    const interval = window.setInterval(visible, 30000);
-    const boundary = nextBizChange ? window.setTimeout(() => void refresh(), Math.max(0, Math.min(2147483647, Date.parse(nextBizChange) - Date.now() + 100))) : undefined;
+    const interval = window.setInterval(visible, 120000);
+    const boundary = nextBizChange ? window.setTimeout(() => void refresh(true), Math.max(0, Math.min(2147483647, Date.parse(nextBizChange) - Date.now() + 100))) : undefined;
     window.addEventListener('focus', visible);
     document.addEventListener('visibilitychange', visible);
     return () => { active = false; clearInterval(interval); clearTimeout(boundary); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };

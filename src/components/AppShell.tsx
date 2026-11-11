@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener('focus', refresh);
     const boundary = baseAccess?.next_transition_at ? Math.max(0, new Date(baseAccess.next_transition_at).getTime() - Date.now() + 100) : null;
-    const transition = boundary !== null && boundary < 2147483647 ? setTimeout(refresh, boundary) : null;
+    const transition = boundary !== null && boundary < 2147483647 ? setTimeout(() => void useAuth.getState().refreshBaseAccess(true), boundary) : null;
     return () => { clearInterval(timer); if (transition !== null) clearTimeout(transition); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
   }, [user?.id, baseAccess?.next_transition_at]);
   const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data;
@@ -141,6 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
           {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} area={search.area} accessReady={launcherAccessReady} /> : children}
         </main>
+        {user && <AccessSyncNotice />}
         {user && <ChipiAssistant key={user.id} userId={user.id} />}
         {user && <RewardPopup key={`sao-${user.id}`} userId={user.id} />}
       </div>
@@ -160,6 +161,22 @@ export function PageHeader({
         )}
       </div>
       {actions && <div className="flex gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+/** Báo nhỏ khi chưa đồng bộ được quyền; không che trang, có nút thử lại. */
+function AccessSyncNotice() {
+  const failed = useAuth((s) => s.accessSyncFailed);
+  const [busy, setBusy] = useState(false);
+  if (!failed) return null;
+  return (
+    <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-md">
+      <span>Chưa đồng bộ được quyền mới nhất</span>
+      <button type="button" disabled={busy} className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+        onClick={async () => { setBusy(true); try { await Promise.all([useAuth.getState().refreshBaseAccess(true), useAuth.getState().refreshBizAccess(true)]); } finally { setBusy(false); } }}>
+        {busy ? 'Đang đồng bộ…' : 'Thử lại'}
+      </button>
     </div>
   );
 }
