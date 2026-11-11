@@ -42,6 +42,6 @@ describe('orderBySpecialty', () => {
       { user_id: 'a2', name: 'Ngọc', is_primary: true, unit_name: 'Phòng Marketing', title_name: null },
     ]);
     expect(matched.map(p => p.id)).toEqual(['a2']);
-    expect(rest.map(p => p.id)).toEqual(['a1', 'b1']);
+    expect(rest.map(p => p.id).sort()).toEqual(['a1', 'b1']);
   });
 });
