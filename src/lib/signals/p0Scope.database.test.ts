@@ -46,3 +46,15 @@ it('unsigned title mapping never gains its Role group scope',async()=>{
  await db.exec("update base_title_role_links set permission_signature=md5((select permissions::text from app_roles where id='team'))");
  expect(await scope(B,['Quà'])).toBe(true);expect(await scope(B,['Other'])).toBe(false);
 });
+
+it('exact live scope backup restores its checksum and truth table, then rolls forward',async()=>{
+ const manifest=JSON.parse(readFileSync('docs/rollback/2026-11-11-signals-p0-manifest.json','utf8'));
+ const f=manifest.functions.find((x:{signature:string})=>x.signature.startsWith('private.'));
+ const cases:[string|null,string[]][]=[[null,['Other']],[A,['Other']],[B,['Quà']],[B,['Other']],[B,['Khác:Web']],[C,['Other']]];
+ const expected=await Promise.all(cases.map(([u,g])=>scope(u,g)));
+ await db.exec(f.definition);
+ expect((await db.query<{hash:string}>('select md5(pg_get_functiondef($1::regprocedure)) hash',[f.signature])).rows[0]?.hash).toBe(f.hash);
+ expect(await Promise.all(cases.map(([u,g])=>scope(u,g)))).toEqual(expected);
+ await db.exec(readFileSync('docs/pending/signals_p0_scope_short_circuit.sql','utf8'));
+ expect(await Promise.all(cases.map(([u,g])=>scope(u,g)))).toEqual(expected);
+});

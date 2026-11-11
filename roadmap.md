@@ -5,7 +5,9 @@
 - [x] Sửa token invalidation tối thiểu; chuẩn bị 3 SQL PENDING, không thay quyền/dữ liệu/restart/publish.
 - [x] Test SQL/phân trang/filter/phạm vi; 187 hồi quy đạt và 12 test mới sau benchmark; 3 lần load desktop/iPad vẫn timeout, tab không refetch Tín hiệu; smoke CRM/3K/tổ chức OK trong cửa sổ quan sát.
 - [x] Báo docs/signals-p0-2026-11-11.md, không tuyên bố live fixed.
-- [ ] Nghiệm thu zero timeout/end-to-end SQL mới: CHỜ xác nhận vá database riêng + snapshot/rollback/staging; Preview dùng chung live, không thể apply riêng.
+- [x] Đã duyệt 12:25 UTC: backup/checksum + PGlite restore/forward thật, migration 0371 chỉ ba hàm áp atomically; 190 tests/build OK, số đếm/filter/8 sort/paging authenticated Super Admin đạt, checksums dữ liệu/Role không đổi.
+- [x] Publish frontend đúng commit đã duyệt: bundle mới xác minh; 6 load cuối desktop/iPad qua hai địa chỉ đều 200/zero timeout, counts p50 827,5ms/page 1277ms; Lovable URL canonical về base.suviet.vn; không đổi Role/restart/reset.
+- [ ] Nhân viên scope-limited LIVE: chưa có phiên được ủy quyền cho nhân viên trong lượt này; fixture own/team/slot/isolation đạt nhưng không thay thế nghiệm thu live. Không tự gán quyền hay chọn tài khoản.
 
 ## Chuẩn hóa toàn kho Role — yêu cầu chốt 11/11/2026
 - [ ] Audit 33 Role, phụ thuộc code/SQL/lịch sử và nguồn quyền; không ghi live.
