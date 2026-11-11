@@ -45,3 +45,36 @@ describe('orderBySpecialty', () => {
     expect(rest.map(p => p.id).sort()).toEqual(['a1', 'b1']);
   });
 });
+
+describe('resolvePickerSelection (định danh theo ID)', () => {
+  const people = [
+    { id: 'a1', name: 'Ngọc' },
+    { id: 'a2', name: 'Ngọc' },
+    { id: 'b1', name: 'Hòa' },
+  ];
+  it('ID hợp lệ luôn thắng, kể cả khi tên trùng người khác', () => {
+    const r = resolvePickerSelection(people, 'Ngọc', 'a2');
+    expect(r.selectedId).toBe('a2');
+    expect(r.legacyUnknown).toBe(false);
+  });
+  it('tên legacy khớp đúng một người thì tự gắn ID', () => {
+    const r = resolvePickerSelection(people, 'Hòa');
+    expect(r.selectedId).toBe('b1');
+    expect(r.legacyUnknown).toBe(false);
+  });
+  it('hai người trùng tên: không đoán theo tên, giữ trạng thái legacy', () => {
+    const r = resolvePickerSelection(people, 'Ngọc');
+    expect(r.selectedId).toBeUndefined();
+    expect(r.legacyUnknown).toBe(true);
+  });
+  it('ID không còn trong danh sách (nghỉ việc): giữ legacy, không tự chuyển giao', () => {
+    const r = resolvePickerSelection(people, 'Ngọc', 'zz');
+    expect(r.selectedId).toBeUndefined();
+    expect(r.legacyUnknown).toBe(true);
+  });
+  it('chưa chọn ai: không tự chọn', () => {
+    const r = resolvePickerSelection(people, undefined, undefined);
+    expect(r.selectedId).toBeUndefined();
+    expect(r.legacyUnknown).toBe(false);
+  });
+});
