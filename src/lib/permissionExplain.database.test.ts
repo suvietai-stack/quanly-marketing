@@ -113,7 +113,7 @@ it('effective khớp tuyệt đối private.has_permission cho mọi quyền ứ
 
 it('người có settings.user_view xem được; tài khoản thường bị chặn', async () => {
   const e = await explain(VIEWER, MULTI);
-  expect(e.user_id ?? (e as unknown as { user_id: string }).user_id).toBeDefined();
+  expect(e.direct_roles.length).toBe(2);
   await expect(explain(NOBODY, MULTI)).rejects.toThrow(/Không có quyền/);
 });
 
