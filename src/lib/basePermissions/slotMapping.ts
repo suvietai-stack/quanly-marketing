@@ -1,5 +1,6 @@
 import type { OrgCommand } from './commands';
 import type { RoleCatalog } from './roleCatalog';
+import { isCanonicalRole } from './defaultRolePresets';
 
 export type SlotMappingChoice = { assignmentId: string; roleId: string; slotId?: string; name?: string };
 export function mappingCommands(catalog: RoleCatalog, choices: SlotMappingChoice[]): OrgCommand[] {
@@ -8,7 +9,7 @@ export function mappingCommands(catalog: RoleCatalog, choices: SlotMappingChoice
     if (seen.has(choice.assignmentId)) throw new Error('Phân công bị chọn trùng.');
     seen.add(choice.assignmentId);
     const a = catalog.unmapped.find(row => row.id === choice.assignmentId);
-    const role = catalog.roles.find(r => r.id === choice.roleId && r.catalog_state === 'standard' && r.role_kind === 'position');
+    const role = catalog.roles.find(r => r.id === choice.roleId && isCanonicalRole(r) && r.catalog_state === 'standard' && r.role_kind === 'position' && !r.is_system);
     if (!a?.title_id || !role) throw new Error('Chọn chức danh và một Role vị trí chuẩn trước khi chuyển ô.');
     const existing = choice.slotId ? catalog.slots.find(s => s.id === choice.slotId && s.active && s.unit_id === a.unit_id && s.title_id === a.title_id && s.role_id === role.id) : undefined;
     if (choice.slotId && !existing) throw new Error('Ô không khớp Role, chức danh hoặc đơn vị.');

@@ -9,6 +9,7 @@ import type { RoleCatalog } from '@/lib/basePermissions/roleCatalog';
 import type { Preview } from '@/lib/basePermissions/types';
 import { baseOrgApi } from '@/lib/basePermissions/api';
 import { useAuth } from '@/lib/auth';
+import { isCanonicalRole } from '@/lib/basePermissions/defaultRolePresets';
 
 export function SlotRoleReplacement({ catalog }: { catalog: RoleCatalog }) {
   const qc = useQueryClient();
