@@ -82,7 +82,7 @@ it('chuyển chế độ sang "cộng thêm" qua RPC: quyền Role được cộ
   // Sau xác nhận: quyền Role + quyền bổ sung cùng có
   expect(await has('video.create')).toBe(true);
   expect(await has('task.view_all')).toBe(true);
-  const log = await db.query('select action from account_security_logs where target_id = $1', [OLD]);
+  const log = await db.query<{ action: string }>('select action from account_security_logs where target_id = $1', [OLD]);
   expect(log.rows.map(r => r.action)).toContain('override_mode_set:additive');
 });
 
