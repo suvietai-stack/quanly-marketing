@@ -152,7 +152,7 @@ export function PermissionCleanup() {
               <div><p className="font-medium">Trạng thái: <Badge variant={cleanupStatusTone(detail.status)}>{CLEANUP_STATUS_LABELS[detail.status]}</Badge></p>
                 <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">{detail.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
               </div>
-              <div><p className="font-medium">Role trực tiếp</p>{detail.roles.map(r => <p key={r.role_id}>{r.name} — {r.protected ? 'giữ nguyên (được bảo vệ)' : 'sẽ gỡ'}</p>)}</div>
+              <div><p className="font-medium">Role trực tiếp</p>{detail.roles.map(r => <p key={r.role_id}>{r.name} — {detail.removable.includes(r.role_id) ? 'sẽ ngừng nguồn cũ' : 'giữ nguyên'}</p>)}</div>
               <div><p className="font-medium">Nguồn quyền tự động sau chuyển đổi</p><p className="text-muted-foreground">{detail.appointment_sources} quyền từ chức vụ · {detail.specialty_sources} quyền từ nhiệm vụ Marketing</p></div>
               {detail.lost.length > 0 && <div><p className="font-medium text-destructive">Quyền sẽ mất ({detail.lost.length})</p><p className="text-xs text-muted-foreground break-words">{detail.lost.join(', ')}</p></div>}
               {detail.pending_work > 0 && <p className="text-destructive">Có {detail.pending_work} hồ sơ đang chờ trong kiểm kê Nghỉ phép/3K/Tài chính. Admin cần cấp bổ sung quyền xử lý; không tự thay người nhận hay người duyệt.</p>}
