@@ -553,16 +553,6 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
             <div><Label>Họ tên *</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
             <div><Label>Email đăng nhập</Label><Input value={form.email} readOnly /><p className="mt-1 text-xs text-muted-foreground">Email do hệ thống xác thực quản lý.</p></div>
             <div><Label>SĐT</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-            <div><Label>Vị trí</Label><Input value={form.desiredPosition} onChange={(e) => setForm({ ...form, desiredPosition: e.target.value })} /></div>
-            <div>
-              <Label>Role</Label>
-              <Select value={form.roleId} onValueChange={(v) => setForm({ ...form, roleId: v })} disabled={isSystem}>
-                <SelectTrigger><SelectValue placeholder="Chọn role" /></SelectTrigger>
-                <SelectContent>
-                  {s.roles.filter(r=>r.catalogState!=='compatibility').map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
             <div>
               <Label>Trạng thái</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as AccountStatus })} disabled={isSystem}>
@@ -571,25 +561,16 @@ function UserEditDialog({ user, onClose }: { user: User; onClose: () => void }) 
               </Select>
             </div>
             <div className="sm:col-span-2"><Label>Ghi chú</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            {!isSystem && <AccountOrgPanel userId={user.id} />}
           </TabsContent>
 
           <TabsContent value="perms" className="mt-4 space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded border bg-muted/30">
-              <Checkbox checked={!form.useCustom} onCheckedChange={(c) => setForm({ ...form, useCustom: !c })} id="use-role" />
-              <label htmlFor="use-role" className="text-sm cursor-pointer flex-1">
-                <div className="font-medium">Dùng quyền theo role</div>
-                <div className="text-xs text-muted-foreground">Tài khoản nhận toàn bộ quyền từ role đã chọn.</div>
-              </label>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded border bg-muted/30">
-              <Checkbox checked={form.useCustom} onCheckedChange={(c) => setForm({ ...form, useCustom: !!c })} id="use-custom" />
-              <label htmlFor="use-custom" className="text-sm cursor-pointer flex-1">
-                <div className="font-medium">Quyền bổ sung cá nhân</div>
-                <div className="text-xs text-muted-foreground">Cộng thêm vào quyền của role, chạy song song — không thay thế hay ghi đè quyền role.</div>
-              </label>
-            </div>
-            {form.useCustom && (
-              <PermissionMatrix value={perms} onChange={setPerms} />
+            <AccountPermsView userId={user.id} />
+            {canCustomPerm && (
+              <div className="border-t pt-4">
+                <Label className="text-sm font-semibold">Tùy chỉnh quyền</Label>
+                <StaffPermissionEditor key={user.id} userId={user.id} />
+              </div>
             )}
           </TabsContent>
 
