@@ -30,6 +30,8 @@ beforeAll(async () => {
  await db.exec(readFileSync('drizzle/migrations/0321_appointment_impact_skip_unchanged_sources.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0322_appointment_permission_read_single_snapshot.sql','utf8'));
  await db.exec(readFileSync('drizzle/migrations/0336_phase3a_native_role_audit.sql','utf8'));
+ await db.exec(`CREATE TABLE mkt_specialties(id text primary key,name text,role_id text,active boolean);INSERT INTO mkt_specialties VALUES('test-design','Thiết kế thử','verified-designer',true);`);
+ await db.exec(readFileSync('drizzle/migrations/0337_phase3a_assignment_specialty_sources.sql','utf8'));
  await db.exec("INSERT INTO app_roles(id,name,permissions) VALUES('verified-designer','Designer',ARRAY['order.view','order.view_mine','order.submit'])");
  await db.exec("INSERT INTO base_permission_catalog(key,label,module) VALUES('order.view','Xem Thiết kế','Thiết kế'),('order.view_mine','Xem việc của mình','Thiết kế'),('order.submit','Gửi duyệt','Thiết kế') ON CONFLICT DO NOTHING");
 
@@ -109,4 +111,19 @@ it('3A: audit reports actual activated and blocked keys, not a full Role grant',
  expect(await scalar("select private.org_role_permission_ready('oq.report_own') v")).toBe(true);
  expect(await scalar("select private.org_role_permission_ready('oq.report_all') v")).toBe(false);
  expect(await scalar("select private.org_role_permission_ready('finance.incoming.manage') v")).toBe(false);
+});
+
+it('3A: assignment specialties grant only after apply and revoke with that assignment',async()=>{
+ await actor(admin);const p=await preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:lead,kind:'concurrent',specialty_ids:['test-design']}}]);
+ expect(p.impact.some((x:any)=>x.user_id===lead)).toBe(true);
+ expect(await scalar("select private.has_permission($1,'order.submit') v",[lead])).toBe(false);await apply(p);
+ const rules=await scalar('select private.org_assignment_specialty_rules($1,private.base_config()) v',[lead]);expect(rules.map((r:any)=>r.permission).sort()).toEqual(['order.submit','order.view','order.view_mine']);
+ const id=await scalar("select id v from org_assignments where user_id=$1 and data ? 'specialty_ids'",[lead]);
+ await apply(await preview([{action:'end',data:{id,ends_at:new Date().toISOString()}}]));
+ expect(await scalar('select private.org_assignment_specialty_rules($1,private.base_config()) v',[lead])).toEqual([]);
+ expect(await scalar('select count(*)::int v from user_roles where user_id=$1',[lead])).toBe(1);
+});
+it('3A: unknown Marketing specialty is rejected atomically',async()=>{
+ await expect(preview([{action:'assign',data:{unit_id:'gd',title_id:'verified-title',user_id:director,kind:'concurrent',specialty_ids:['fake']}}])).rejects.toThrow('không hợp lệ');
+ expect(await scalar("select count(*)::int v from org_assignments where unit_id='gd' and user_id=$1",[director])).toBe(0);
 });
