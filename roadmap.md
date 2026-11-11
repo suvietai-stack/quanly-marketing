@@ -1,10 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## UX Role & ma trận quyền — 11/11/2026
-- [ ] Ma trận nhóm quyền dùng chung, kho Role một đường chỉnh, preset nháp có kiểm chứng.
-- [ ] RPC tạo Role có quyền an toàn; cá nhân chỉ additive, preview có audit và bảo vệ replace đang bật.
-- [ ] Ba khu vực gọn desktop/mobile; kiểm thử A/B cùng Role, nguồn riêng và hồi quy/Preview.
-- [ ] Bàn giao phạm vi đã kiểm chứng, dữ liệu giữ nguyên, việc chờ Admin.
+- [x] Ma trận nhóm quyền dùng chung, kho Role một đường chỉnh, 9 preset nháp lọc theo nguồn backend; không áp production.
+- [x] 0369–0370: tạo Role có quyền an toàn; cá nhân chỉ additive, preview có audit và bảo vệ replace đang bật.
+- [x] Ba khu vực gọn desktop/mobile; 160 test đạt, gồm A/B dùng has_permission, hồi quy; preview Role mới 10 quyền gợi ý mở được, không áp; build/typecheck harness OK.
+- [x] Bàn giao docs/role-permission-matrix-ux-report.md; nguồn legacy giữ nguyên, xác nhận Admin trước áp.
+- [ ] Nghiệm thu browser quyền riêng và preset Role hiện hữu: kết nối Lovable Cloud pooler unavailable, phiên kiểm thử chờ khôi phục; chưa hoàn tất, không chỉnh Auth hoặc dữ liệu để vượt rào.
 
 ## Fix tận gốc trên code hiện tại — 11/11/2026
 - [x] Sửa resolver ô lấy slot.role_id trực tiếp; virtual snapshot dùng trong preview; permission/phạm vi cùng nguồn. Nguồn chưa mapping giữ nguyên.
