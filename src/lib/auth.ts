@@ -1103,6 +1103,7 @@ function mapProfileToUser(
     roleId: ur?.role_id,
     useCustom: ov?.use_custom ?? false,
     customPermissions: ov?.permissions ?? [],
+    overrideMode: ov?.mode === "additive" ? "additive" : "replace",
     status: p.status,
     createdAt: p.created_at,
     system: !!p.is_system_admin,
@@ -1200,7 +1201,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       .map((d) => fullById.get(d.id) ?? d)
       .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     const userRoles = (urRes.data ?? []) as { user_id: string; role_id: string }[];
-    const overrides = (ovRes.data ?? []) as { user_id: string; use_custom: boolean; permissions: string[] }[];
+    const overrides = (ovRes.data ?? []) as { user_id: string; use_custom: boolean; permissions: string[]; mode?: string }[];
     const users = merged.map((p) => mapProfileToUser(p, userRoles, overrides));
     const roles: Role[] = (rolesRes.data ?? []).map((r: any) => ({
       id: r.id,
