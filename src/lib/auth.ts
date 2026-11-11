@@ -1563,7 +1563,9 @@ export function explainPermission(
   return {
     ok: true,
     reason: source === "custom"
-      ? "Cấp qua quyền riêng (ghi đè role)"
+      ? additive
+        ? "Cấp qua quyền bổ sung cá nhân (cộng thêm vào Role)"
+        : "Cấp qua quyền riêng (thay thế Role)"
       : `Cấp qua role "${role?.name ?? ""}"`,
     source,
     roleName: role?.name,
