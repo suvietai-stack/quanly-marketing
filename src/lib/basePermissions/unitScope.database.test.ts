@@ -54,6 +54,9 @@ insert into mkt_specialties values ('design','Thiết kế','role-designer',true
 insert into base_title_role_links values ('11111111-1111-1111-1111-111111111111','biz','t1','role-standard-sales-head',true,'own',false,1,'test',null,now(),array['ot.view_own'],md5((select permissions::text from app_roles where id='role-standard-sales-head')));
 insert into test_grants values ('${mgr}','leave.view_unit'),('${mgr}','ot.view_unit'),('${mgr}','finance.incoming.view_unit');`);
   await db.exec(readFileSync('drizzle/migrations/0358_unit_scope_leave_finance_orders_retire_role_designer.sql', 'utf8'));
+  // The trigger itself lives in an earlier migration; attach it here to exercise the 0358 function.
+  await db.exec(`create trigger app_roles_resign_links after update of permissions on app_roles
+    for each row when (old.permissions is distinct from new.permissions) execute function private.base_role_links_resign()`);
 }, 30000);
 afterAll(() => db.close());
 
@@ -99,6 +102,8 @@ it('role-designer retired: specialties point to the standard design role, old ro
 it('manager roles gained unit permissions and links were re-signed with a real audit actor', async () => {
   const perms = (await db.query<{ permissions: string[] }>(`select permissions from app_roles where id='role-standard-sales-head'`)).rows[0].permissions;
   expect(perms).toEqual(expect.arrayContaining(['ot.view_unit', 'finance.incoming.view_unit', 'leave.view_unit']));
+  // A later role-permission change re-signs links and writes an audit event with a real actor.
+  await db.query(`update app_roles set permissions = permissions || '{ot.report}'::text[] where id='role-standard-sales-head'`);
   const link = (await db.query<{ permission_signature: string }>(`select permission_signature from base_title_role_links where role_id='role-standard-sales-head'`)).rows[0];
   const sig = await scalar(`select md5(coalesce(permissions,'{}'::text[])::text) v from app_roles where id='role-standard-sales-head'`, []);
   expect(link.permission_signature).toBe(sig);
