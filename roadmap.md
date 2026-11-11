@@ -3,7 +3,12 @@
 ## Chấp nhận mất quyền legacy — 15:05 UTC
 - [ ] Fresh snapshot, pending approver check, policy/diff; apply 25 verified V2 defaults qua audited RPC.
 - [ ] Bind Đức/Quỳnh Anh sang V2, chấp nhận legacy loss; giữ mọi membership/title/history và không tự bổ nhiệm lại Ngọc.
-- [ ] Retire 17 title links qua org_change audit, delete zero-ref non-system legacy sau kiểm tra code/RPC; protected onboarding stays if needed.
+- [ ] HOÃN theo chủ dự án 15:26: retire title links/xóa legacy/slot migration chờ mô hình một vị trí nhiều người. Migration retirement bị hủy, không chạy.
+
+## Quản trị Kinh doanh theo chức năng — 15:26 UTC
+- [x] Ma trận: một nhóm Quản trị Kinh doanh, 5 nhóm con theo 17 key thật; CRM/3K/Tín hiệu/Hỏi giá riêng.
+- [ ] Preset/live biz.* cho Role KD: BLOCKED — biz_can chỉ đọc bổ nhiệm Kinh doanh, không đọc Role; đề xuất docs/pending/biz_role_source.md chờ duyệt sau lượt cơ cấu nhiều người/vị trí.
+- [ ] Test matrix/preset/scope, build; không Publish, không đụng cơ cấu/0371.
 - [ ] Test/read-back scoped sessions, cache, rollback/UI and publish only after full real E2E pass.
 
 ## Cutover an toàn được yêu cầu 14:49 UTC
