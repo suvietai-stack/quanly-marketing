@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      account_permission_changes: {
+        Row: {
+          actor_id: string
+          after_data: Json
+          before_data: Json
+          created_at: string
+          id: string
+          reason: string
+          target_id: string
+        }
+        Insert: {
+          actor_id: string
+          after_data: Json
+          before_data: Json
+          created_at?: string
+          id?: string
+          reason: string
+          target_id: string
+        }
+        Update: {
+          actor_id?: string
+          after_data?: Json
+          before_data?: Json
+          created_at?: string
+          id?: string
+          reason?: string
+          target_id?: string
+        }
+        Relationships: []
+      }
       account_security_logs: {
         Row: {
           action: string
@@ -9682,6 +9712,17 @@ export type Database = {
         Returns: Json
       }
       account_permission_explain: { Args: { _target: string }; Returns: Json }
+      account_supplement_read: { Args: { _target: string }; Returns: Json }
+      account_supplement_save: {
+        Args: {
+          _fingerprint: string
+          _permissions: string[]
+          _reason: string
+          _roles: string[]
+          _target: string
+        }
+        Returns: Json
+      }
       account_username_identity: {
         Args: { _username: string }
         Returns: string

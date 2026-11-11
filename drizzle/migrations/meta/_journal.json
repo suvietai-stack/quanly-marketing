@@ -2381,6 +2381,13 @@
       "when": 1794366435627,
       "tag": "0339_final_permission_transition",
       "breakpoints": true
+    },
+    {
+      "idx": 340,
+      "version": "7",
+      "when": 1794366556402,
+      "tag": "0340_supplemental_permissions_atomic",
+      "breakpoints": true
     }
   ]
 }
