@@ -5,7 +5,7 @@ import { MKT_READY } from './marketingReady';
 import roles from './fixtures/marketingTaskRoles.snapshot.json';
 import { permissionPresets } from './permissionEditor';
 
-// Chạy luật SQL thật trong docs/pending/0371 trên Postgres (PGlite) với bản chụp Role nhiệm vụ live; không động dữ liệu thật.
+// Chạy luật SQL thật trong docs/pending/0372 trên Postgres (PGlite) với bản chụp Role nhiệm vụ live; không động dữ liệu thật.
 const db = new PGlite();
 const NGOC = '00000000-0000-0000-0000-00000000c001'; // fixture "Lê Minh Ngọc"
 const PEER = '00000000-0000-0000-0000-00000000c002';
@@ -24,6 +24,8 @@ beforeAll(async () => {
   create table mkt_staff_specialties(user_id uuid, specialty_id text, state text, eligibility_enforced boolean);
   create table private.legacy_reset_accounts(user_id uuid, active boolean);
   create table personal(user_id uuid, permission text);
+  create table user_roles(user_id uuid, role_id text);
+  create table user_permission_overrides(user_id uuid,use_custom boolean,mode text,permissions text[]);
   create table cfg(c jsonb);
   insert into app_roles values ${roleRows}, ('role-photo','Chụp ảnh','specialty','standard',array['order.take','order.view_mine']);
   insert into mkt_specialties values ('content','Content Web','role-content-web',true),('social','Social','role-social',true),('video','Video','role-video',true),('photo','Chụp ảnh','role-photo',true);
@@ -38,17 +40,22 @@ beforeAll(async () => {
   create function private.org_role_permission_ready(p text) returns boolean language sql immutable as $$ select private.mkt_specialty_permission_ready(p) $$;
   create function private.org_marketing_eligible(u uuid, c jsonb) returns boolean language sql as $$ SELECT private.is_active(u) AND EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m JOIN LATERAL jsonb_array_elements(coalesce(c->'titles','[]')) t ON t->>'id'=m->>'title_id' WHERE m->>'user_id'=u::text AND private.base_valid_at(m) AND coalesce(m->>'status','active')='active' AND coalesce((t->>'active')::boolean,false) AND EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(c->'units','[]')) b WHERE b->>'kind'='block' AND (b->>'code'='marketing') AND coalesce((b->>'active')::boolean,true) AND private.base_role_unit_contains(c,b->>'id',m->>'unit_id'))) $$;
   create function private.mkt_prev_rules(u uuid, c jsonb) returns jsonb language sql as $$ select coalesce(jsonb_agg(jsonb_build_object('permission',permission,'effect','ALLOW','source_kind','personal')),'[]') from personal where user_id=u $$;
-  create function private.slot_previous_source_rows(c jsonb) returns table(user_id uuid) language sql as $f$ select m.user_id from mkt_staff_specialties m join mkt_specialties s on s.id=m.specialty_id join app_roles r on r.id=s.role_id where (r.role_kind<>'marketing_task' OR NOT m.eligibility_enforced OR private.org_marketing_eligible(m.user_id,c)) $f$;`);
+  create function private.slot_previous_source_rows(c jsonb) returns table(user_id uuid,role_id text,source_kind text) language sql as $f$ select m.user_id,r.id,'task'::text from mkt_staff_specialties m join mkt_specialties s on s.id=m.specialty_id join app_roles r on r.id=s.role_id where (r.role_kind<>'marketing_task' OR NOT m.eligibility_enforced OR private.org_marketing_eligible(m.user_id,c)) $f$;
+  create function private.role_source_rows(c jsonb) returns table(user_id uuid,role_id text,source_kind text) language sql as $f$ select * from private.slot_previous_source_rows(c) union all select (m->>'user_id')::uuid,r.id,'task'::text from jsonb_array_elements(c->'memberships') m cross join lateral jsonb_array_elements_text(coalesce(m->'specialty_ids','[]')) sid join mkt_specialties s on s.id=sid join app_roles r on r.id=s.role_id where m->'specialty_signatures'->>s.id=md5(coalesce(r.permissions,'{}')::text) $f$;
+  create function private.base_config() returns jsonb language sql as $$ select c from cfg $$;
+  create function private.has_permission(_user_id uuid,_permission text) returns boolean language sql as $$ select exists(select 1 from user_roles ur join app_roles r on r.id=ur.role_id where ur.user_id=_user_id AND _permission=ANY(r.permissions)) $$;`);
   // Bộ lọc mkt_specialty_rules gọi trước phase3a; tạo phase3a/reset sau khi nạp file pending.
-  const pending = readFileSync('docs/pending/0371_marketing_task_role_is_source.sql', 'utf8');
+  const pending = readFileSync('docs/pending/0372_marketing_task_role_is_source.sql', 'utf8');
   await db.exec(`create function private.phase3a_previous_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.org_assignment_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.reset_previous_base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select private.phase3a_previous_rules(u,c)||private.org_assignment_specialty_rules(u,c) $$;
    create function private.legacy_reset_applies(u uuid) returns boolean language sql as $$ select exists(select 1 from private.legacy_reset_accounts where user_id=u and active) and not private.is_super_admin(u) $$;`);
+  await db.exec(`create function private.base_rules(u uuid,c jsonb) returns jsonb language sql as $$select '[]'::jsonb$$;
+   create function private.base_tier1(u uuid,p text) returns text language sql as $$ with rows as (select x from cfg,jsonb_array_elements(private.base_rules(u,cfg.c)) x where x->>'permission'=p) select case when exists(select 1 from rows where x->>'effect'='DENY') then 'DENY' when exists(select 1 from rows where x->>'effect'='ALLOW') then 'ALLOW' else 'NOT_CONFIGURED' end $$;`);
+  await db.exec(readFileSync('docs/backup/role-review-2026-11-11/has-permission.sql','utf8'));
   await db.exec(pending);
   await db.exec(`create or replace function private.phase3a_previous_rules(u uuid, c jsonb) returns jsonb language sql as $$ select private.mkt_prev_rules(u,c)||private.mkt_specialty_rules(u,c) $$;
-   create function has(u uuid, p text) returns boolean language sql as $$ with r as (select x from cfg, jsonb_array_elements(private.base_rules(u, cfg.c)) x)
-     select exists(select 1 from r where x->>'permission'=p and x->>'effect'='ALLOW') and not exists(select 1 from r where x->>'permission'=p and x->>'effect'='DENY') $$;`);
+   create function has(u uuid, p text) returns boolean language sql as $$ select private.has_permission(u,p) $$;`);
   await db.exec(`insert into profiles values ('${NGOC}','Đang hoạt động'),('${PEER}','Đang hoạt động'),('${SALE}','Đang hoạt động'),('${DESIGN}','Đang hoạt động');
    insert into private.legacy_reset_accounts values ('${NGOC}',true),('${PEER}',true),('${SALE}',true),('${DESIGN}',true);`);
   await setMemberships([['m1', NGOC, 'mkt-content'], ['m2', PEER, 'mkt-content'], ['m3', SALE, 'sales'], ['m4', DESIGN, 'sales']]);
@@ -104,7 +111,7 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
   });
   it('sửa ma trận Role (áp bộ gợi ý Content Web) có hiệu lực ngay cho mọi người giữ Role', async () => {
     const before = (await db.query<{ p: string[] }>("select permissions p from app_roles where id='role-content-web'")).rows[0].p;
-    const preset = permissionPresets.find(x => x.id === 'content')!.keys;
+    const preset = permissionPresets.find(x => x.id === 'content')?.keys ?? [];
     await db.query("update app_roles set permissions=$1 where id='role-content-web'", [preset]);
     expect(await has(NGOC, 'social.post_create')).toBe(true); // vẫn có vì Role Video (Admin đã chọn) cũng cấp — hợp quyền đúng nguồn
     expect(await has(PEER, 'social.post_create')).toBe(false);
@@ -124,5 +131,53 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
     await db.query('update cfg set c=$1', [JSON.stringify(c)]);
     expect(await sources(PEER, 'web.view')).toEqual(['marketing_appointment']);
     expect(await has(SALE, 'web.view')).toBe(false); // bổ nhiệm ngoài Marketing không còn mở Role nhiệm vụ
+  });
+  it('historical direct task cannot bypass eligibility or backend readiness', async () => {
+    await db.exec(`insert into user_roles values ('${SALE}','role-content-web'),('${PEER}','role-content-web')`);
+    const direct = async (u:string,p:string) => (await db.query<{ok:boolean}>('select private.has_permission($1,$2) ok',[u,p])).rows[0].ok;
+    expect(await direct(SALE,'web.content_view')).toBe(false);
+    expect(await direct(PEER,'web.content_view')).toBe(true);
+    expect(await direct(PEER,'web.publish')).toBe(false);
+  });
+  it('source display is eligible and deduplicated for dual task paths', async () => {
+    const rows = (await db.query<{user_id:string;role_id:string}>('select * from cfg, lateral private.role_source_rows(cfg.c)')).rows;
+    expect(rows.filter(r=>r.user_id===PEER&&r.role_id==='role-content-web')).toHaveLength(1);
+    expect(rows.filter(r=>r.user_id===SALE&&r.role_id==='role-content-web')).toHaveLength(0);
+  });
+  it('minimal Content role gives Ngọc exactly configured task rights, not the old 90-permission Role', async () => {
+    await setMemberships([['m1',NGOC,'mkt-content'],['m2',PEER,'mkt-content']]);
+    await db.exec("update app_roles set permissions=array['web.view','web.content_view','web.content_view_mine','web.outline_start','web.outline_submit','web.post_write_start','web.post_submit'] where id='role-content-web';update mkt_staff_specialties set state='ended' where specialty_id='video'");
+    expect(await has(NGOC,'web.content_view')).toBe(true);
+    expect(await has(NGOC,'web.outline_start')).toBe(true);
+    expect(await has(NGOC,'social.post_create')).toBe(false);
+    expect(await has(PEER,'social.post_create')).toBe(false);
+  });
+  it('actual additive fallback isolates A from B even after legacy reset', async () => {
+    await db.exec(`insert into user_permission_overrides values ('${NGOC}',true,'additive',array['leave.edit_own'])`);
+    expect(await has(NGOC,'leave.edit_own')).toBe(true);
+    expect(await has(PEER,'leave.edit_own')).toBe(false);
+    expect(await has(NGOC,'web.content_view')).toBe(true);
+  });
+  it('locked user fails closed; Super Admin still uses existing protected branch', async () => {
+    await db.exec(`update profiles set status='Tạm khóa' where id='${NGOC}'`);
+    expect(await has(NGOC,'web.content_view')).toBe(false);
+    await db.exec(`update profiles set status='Đang hoạt động' where id='${NGOC}';create or replace function private.is_super_admin(u uuid) returns boolean language sql as $$select u='${DESIGN}'::uuid$$;`);
+    expect(await has(DESIGN,'settings.role')).toBe(true);
+    await db.exec('create or replace function private.is_super_admin(u uuid) returns boolean language sql as $$select false$$;');
+  });
+  it('real pending SQL restores old reset behavior and rolls forward without modifying Role rows', async () => {
+    const before = (await db.query('select id,permissions from app_roles order by id')).rows;
+    // Different return type in the small source fixture: replace it with exact live backup first.
+    await db.exec('drop function private.role_source_rows(jsonb);drop function private.slot_previous_source_rows(jsonb);');
+    await db.exec(readFileSync('docs/backup/role-review-2026-11-11/functions.sql','utf8'));
+    const source=JSON.parse(readFileSync('docs/backup/role-review-2026-11-11/source-and-triggers.json','utf8')) as {definition:string};
+    await db.exec(source.definition);
+    await db.exec(readFileSync('docs/backup/role-review-2026-11-11/has-permission.sql','utf8'));
+    // NGOC has no direct Role. Restored legacy-reset fence blocks his task rights.
+    expect(await has(NGOC,'web.content_view')).toBe(false);
+    await db.exec(readFileSync('docs/pending/0372_marketing_task_role_is_source.sql','utf8'));
+    expect(await has(NGOC,'web.content_view')).toBe(true);
+    expect(await has(NGOC,'web.outline_start')).toBe(true);
+    expect((await db.query('select id,permissions from app_roles order by id')).rows).toEqual(before);
   });
 });

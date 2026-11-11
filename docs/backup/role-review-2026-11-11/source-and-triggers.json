@@ -1,0 +1,30 @@
+{
+  "md5": "ce13485d8a163df0808967de4ab4797a",
+  "triggers": [
+    {
+      "name": "app_role_delete_guard",
+      "definition": "CREATE OR REPLACE FUNCTION public.app_role_delete_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ BEGIN\n IF OLD.is_system OR private.role_in_use(OLD.id) THEN RAISE EXCEPTION 'Role còn nguồn sử dụng; hãy chuyển đổi trước khi xóa.' USING ERRCODE='23503'; END IF; RETURN OLD; END $function$\n"
+    },
+    {
+      "name": "app_roles_resign_links",
+      "definition": "CREATE OR REPLACE FUNCTION private.base_role_links_resign()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE v_actor uuid;\nBEGIN\n  SELECT p.id INTO v_actor FROM public.profiles p WHERE p.id = auth.uid();\n  IF v_actor IS NULL THEN\n    SELECT ur.user_id INTO v_actor FROM public.user_roles ur WHERE ur.role_id = 'role-super-admin' ORDER BY ur.user_id LIMIT 1;\n  END IF;\n  WITH upd AS (\n    UPDATE public.base_title_role_links l\n    SET enabled_permissions = ARRAY(\n          SELECT p FROM unnest(coalesce(l.enabled_permissions,'{}'::text[])) p\n          WHERE p = ANY (NEW.permissions) AND private.org_role_permission_ready(p)),\n        permission_signature = md5(coalesce(NEW.permissions,'{}'::text[])::text),\n        revision = l.revision + 1,\n        updated_at = now()\n    WHERE l.role_id = NEW.id\n      AND (l.permission_signature IS DISTINCT FROM md5(coalesce(NEW.permissions,'{}'::text[])::text)\n           OR l.enabled_permissions <> ARRAY(\n                SELECT p FROM unnest(coalesce(l.enabled_permissions,'{}'::text[])) p\n                WHERE p = ANY (NEW.permissions) AND private.org_role_permission_ready(p)))\n    RETURNING l.title_source, l.title_id\n  )\n  INSERT INTO public.base_title_role_events (actor_id, title_source, title_id, reason, before_data, after_data)\n  SELECT v_actor, u.title_source, u.title_id,\n         'Tự đồng bộ chữ ký liên kết sau khi Role thay đổi quyền',\n         jsonb_build_object('role_id', OLD.id, 'permissions', OLD.permissions),\n         jsonb_build_object('role_id', NEW.id, 'permissions', NEW.permissions)\n  FROM upd u\n  WHERE v_actor IS NOT NULL;\n\n  UPDATE public.org_assignments a\n  SET data = jsonb_set(a.data, '{specialty_signatures}',\n             coalesce(a.data->'specialty_signatures','{}'::jsonb) || jsonb_build_object(s.id, md5(coalesce(NEW.permissions,'{}'::text[])::text))),\n      revision = a.revision + 1\n  FROM public.mkt_specialties s\n  WHERE s.role_id = NEW.id\n    AND a.data->'specialty_ids' ? s.id\n    AND (a.data->'specialty_signatures'->>s.id) IS DISTINCT FROM md5(coalesce(NEW.permissions,'{}'::text[])::text);\n\n  RETURN NEW;\nEND\n$function$\n"
+    },
+    {
+      "name": "role_catalog_record",
+      "definition": "CREATE OR REPLACE FUNCTION private.role_catalog_record()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n BEGIN\n INSERT INTO private.role_catalog_audit(actor_id,action,role_id,before_data,after_data,reason)\n VALUES(auth.uid(),TG_OP,CASE WHEN TG_OP='DELETE' THEN OLD.id ELSE NEW.id END,CASE WHEN TG_OP='INSERT' THEN NULL ELSE to_jsonb(OLD) END,CASE WHEN TG_OP='DELETE' THEN NULL ELSE to_jsonb(NEW) END,coalesce(nullif(current_setting('app.role_reason',true),''),'Thay đổi qua cổng Role hiện hành'));\n IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW;\n END $function$\n"
+    },
+    {
+      "name": "role_catalog_system_guard",
+      "definition": "CREATE OR REPLACE FUNCTION private.role_catalog_system_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ BEGIN\n IF OLD.id='role-super-admin' AND (NEW.permissions IS DISTINCT FROM OLD.permissions OR NEW.name IS DISTINCT FROM OLD.name OR NOT NEW.is_system OR NEW.catalog_state IS DISTINCT FROM OLD.catalog_state OR NEW.role_kind IS DISTINCT FROM OLD.role_kind) THEN RAISE EXCEPTION 'Role Super Admin không được thay đổi qua cổng thông thường.' USING ERRCODE='42501'; END IF;\n IF NEW.role_kind='marketing_task' AND OLD.role_kind IS DISTINCT FROM NEW.role_kind AND private.role_in_use(OLD.id) THEN RAISE EXCEPTION 'Không đổi loại Role đang có nguồn sử dụng.'; END IF;\n RETURN NEW; END $function$\n"
+    },
+    {
+      "name": "role_new_empty_guard",
+      "definition": "CREATE OR REPLACE FUNCTION private.role_new_empty_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ BEGIN IF NOT NEW.is_system THEN PERFORM private.role_editor_validate(NEW.role_kind,NEW.permissions,'{}'); END IF; IF NEW.role_code IS NULL THEN NEW.role_code:=NEW.id; END IF; RETURN NEW; END $function$\n"
+    },
+    {
+      "name": "trg_app_roles_updated",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nBEGIN NEW.updated_at = now(); RETURN NEW; END;\n$function$\n"
+    }
+  ],
+  "definition": "CREATE OR REPLACE FUNCTION private.role_source_rows(c jsonb)\n RETURNS TABLE(user_id uuid, role_id text, source_kind text, source_id text, unit_id text, legacy boolean, eligible boolean, scope text, permissions text[])\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n SELECT * FROM private.slot_previous_source_rows(c)\n UNION ALL\n SELECT (m->>'user_id')::uuid,r.id,'task',m->>'id'||':'||s.id,m->>'unit_id',true,private.org_marketing_eligible((m->>'user_id')::uuid,c),'native',ARRAY(SELECT p FROM unnest(r.permissions) p WHERE private.org_role_permission_ready(p))\n FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m CROSS JOIN LATERAL jsonb_array_elements_text(coalesce(m->'specialty_ids','[]')) sid JOIN mkt_specialties s ON s.id=sid AND s.active JOIN app_roles r ON r.id=s.role_id\n WHERE private.is_active((m->>'user_id')::uuid) AND private.base_valid_at(m) AND m->>'status'='active' AND m->'specialty_signatures'->>s.id=md5(coalesce(r.permissions,'{}')::text) $function$\n"
+}

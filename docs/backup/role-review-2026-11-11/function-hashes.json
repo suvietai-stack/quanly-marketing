@@ -1,0 +1,6 @@
+{
+  "private.base_rules(uuid,jsonb)": "b7359b228a98c7f3c569c2098d509c12",
+  "private.mkt_specialty_rules(uuid,jsonb)": "7e533e3c63b78ac7f1d77bab59bed04a",
+  "private.slot_previous_source_rows(jsonb)": "54810e2df1dcf688f5024df0ce354dfa",
+  "private.org_assignment_specialty_rules(uuid,jsonb)": "69f604c02113025515c8b99efa001d8c"
+}

@@ -10,11 +10,14 @@
 - [ ] Nhân viên scope-limited LIVE: chưa có phiên được ủy quyền cho nhân viên trong lượt này; fixture own/team/slot/isolation đạt nhưng không thay thế nghiệm thu live. Không tự gán quyền hay chọn tài khoản.
 
 ## Chuẩn hóa toàn kho Role — yêu cầu chốt 11/11/2026
-- [ ] Audit 33 Role, phụ thuộc code/SQL/lịch sử và nguồn quyền; không ghi live.
-- [ ] Bộ gợi ý tối giản đủ 20 vị trí + 5 nhiệm vụ; bảo vệ 6 archived + 2 system và vị trí is_system.
-- [ ] Diff trước/sau, quyền giữ/bỏ/chưa cấu hình và số người/nguồn ảnh hưởng; UX dùng kho/ma trận hiện có.
-- [ ] Chuẩn bị quy trình pending snapshot/preview/apply/restore với signature đồng bộ; không apply.
-- [ ] Kiểm thử core SQL/ma trận/cache/phân hệ, benchmark và Preview desktop/mobile; bàn giao quyết định còn chờ.
+- [x] Tiếp tục 12:51 UTC: code đủ 25 preset/diff trong RoleCatalog, pending Marketing 0372, preflight/checksum, backup/rollback sáu hàm, dry-run mapping và audit archived; không đụng 0371, không áp quyền/bổ nhiệm/Publish. Report docs/role-review-2026-11-11/report.md.
+- [x] 409 tests hồi quy + lượt cuối Marketing 16 tests và modules 96 tests; typecheck exit 0/build OK; Preview desktop/mobile Content 7 quyền, tab không tải lại quyền; CRM/3K/Signals không lỗi RPC.
+- [ ] Owner duyệt diff/mapping/SQL quyền 0372; sau đó nghiệm thu nhân viên scope-limited live và concurrency/restore slots. Native nghiệp vụ quản lý chưa đủ để cutover toàn Base.
+- [x] Audit 33 Role và nguồn live; archived có RPC/lịch sử nên giữ nguyên. Không ghi live.
+- [x] Bộ gợi ý tối giản đủ 20 vị trí + 5 nhiệm vụ; bảo vệ 6 archived + 2 system và vị trí is_system.
+- [x] Diff trước/sau, quyền giữ/bỏ/chưa cấu hình và số người/nguồn ảnh hưởng; UX dùng kho/ma trận hiện có.
+- [x] Chuẩn bị pending snapshot/preview/apply/restore và xác minh trigger signature có sẵn; không apply.
+- [x] Kiểm thử core SQL/ma trận/cache/phân hệ và Preview desktop/mobile; bàn giao quyết định còn chờ. Chưa benchmark quyền nhân viên live sau SQL vì chưa được áp.
 
 ## UX Role & ma trận quyền — 11/11/2026
 - [x] Ma trận nhóm quyền dùng chung, kho Role một đường chỉnh, 9 preset nháp lọc theo nguồn backend; không áp production.
