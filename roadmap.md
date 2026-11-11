@@ -1,5 +1,16 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Yêu cầu mới: Một kho Role → ô vị trí → bổ nhiệm → quyền
+- [x] Đọc tệp yêu cầu; audit chỉ đọc database/code/lịch sử đến 0358; Preview đăng nhập mở được Role & Phân quyền, không lỗi runtime.
+- [ ] Kiểm kê trực tiếp và snapshot riêng tư; xem trước chuyển đổi/khôi phục, không reset tự động.
+- [ ] Chuẩn hóa kho 14 Role vị trí + 5 nhiệm vụ, giữ ID đang tham chiếu; thống nhất quản trị tạo/sửa/ngừng/xóa có kiểm toán.
+- [ ] Tách chức danh dùng chung khỏi ô vị trí; một Role/một người mỗi ô, chống chồng khoảng và đồng thời; chuyển đổi có xác nhận.
+- [ ] Gắn permission với chính nguồn/phạm vi cấp; kiểm chứng mọi đường RPC/RLS, CRM/3K/Tín hiệu/Tiền Về/Đơn hàng/phê duyệt.
+- [ ] Role nhiệm vụ Marketing chỉ sinh quyền khi còn bổ nhiệm Marketing, giữ lịch sử và chống đường cấp vòng.
+- [ ] Kiểm thử 15 tình huống yêu cầu, hồi quy và Preview; bàn giao danh sách mapping/xung đột/nguồn chưa chuyển được; chưa Publish.
+
+Các mục lịch sử bên dưới mô tả các lần triển khai trước, không phải tiêu chí hoàn thành yêu cầu mới.
+
 ## Bản 71: Phạm vi đơn vị + dọn cơ chế cũ (migration 0358)
 - [x] Phạm vi đơn vị backend cho Nghỉ phép/Tiền Về/Đơn hàng: base_unit_member + 3 quyền view_unit, RLS/RPC thực thi, cấp qua bổ nhiệm quản lý; kiểm chứng dữ liệu thật (Trưởng Phòng thấy đúng đơn vị, ngoài đơn vị bị chặn).
 - [x] Ngừng role-designer: chuyên môn Thiết kế/Chụp ảnh → Role chuẩn Nhân viên Thiết kế, 2 nhân sự giữ nguyên quyền, Role cũ archived không xóa.
