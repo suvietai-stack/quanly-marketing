@@ -1,4 +1,11 @@
-# Roadmap — Giai đoạn 3A: Role chuẩn trước chuyển đổi quyền cũ
+# Roadmap — Chuyển đổi quyền cuối cùng
+
+- [ ] Snapshot đầy đủ và chuyển đổi nguồn Role cũ ngoài Kinh doanh có thể phân loại, giữ ngoại lệ và quản trị.
+- [ ] Mở thao tác chuyển đổi/khôi phục có xác nhận, giữ nguyên nguồn bổ nhiệm và tập quyền đã kiểm chứng.
+- [ ] Quyền bổ sung thật tại Nhân sự, dùng Role/permission chung và kiểm tra máy chủ.
+- [ ] Kiểm thử cô lập, kiểm tra Preview và bàn giao số liệu thật; không Publish.
+
+## Giai đoạn 3A trước đó
 
 - [x] Kiểm chứng từng quyền của chín liên kết chức vụ còn chờ, gồm đọc/ghi/báo cáo/xuất/workflow.
 - [x] Chỉ kích hoạt tập quyền có rào backend an toàn; ghi rõ chức năng quản lý còn chờ.
@@ -19,4 +26,4 @@
 - [x] 8. Báo cáo bàn giao docs/phase25-report.md.
 
 Mở (chờ): quyền quản lý thiết yếu của 9 chức vụ còn chặn — backend nhiều phân hệ chưa có rào đơn vị và workflow đầy đủ; cần triển khai hợp đồng phạm vi riêng từng phân hệ trước khi kích hoạt. Không reset; 8 tài khoản chưa đủ quyền thay thế. Báo cáo: docs/phase3a-role-activation-report.md.
-Nguyên tắc: không reset quyền, không Publish, Kinh doanh giữ nguyên.
+Quyết định mới: được chuyển đổi nguồn cũ ngoài Kinh doanh có thể xác định chính xác, có snapshot/khôi phục; không bổ nhiệm tự động, không Publish, Kinh doanh giữ nguyên.
