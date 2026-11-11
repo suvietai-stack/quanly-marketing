@@ -25,6 +25,7 @@ beforeAll(async () => {
   create table private.legacy_reset_accounts(user_id uuid, active boolean);
   create table personal(user_id uuid, permission text);
   create table user_roles(user_id uuid, role_id text);
+  create table user_permission_overrides(user_id uuid,use_custom boolean,mode text,permissions text[]);
   create table cfg(c jsonb);
   insert into app_roles values ${roleRows}, ('role-photo','Chụp ảnh','specialty','standard',array['order.take','order.view_mine']);
   insert into mkt_specialties values ('content','Content Web','role-content-web',true),('social','Social','role-social',true),('video','Video','role-video',true),('photo','Chụp ảnh','role-photo',true);
@@ -49,10 +50,12 @@ beforeAll(async () => {
    create function private.org_assignment_specialty_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
    create function private.reset_previous_base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select private.phase3a_previous_rules(u,c)||private.org_assignment_specialty_rules(u,c) $$;
    create function private.legacy_reset_applies(u uuid) returns boolean language sql as $$ select exists(select 1 from private.legacy_reset_accounts where user_id=u and active) and not private.is_super_admin(u) $$;`);
+  await db.exec(`create function private.base_rules(u uuid,c jsonb) returns jsonb language sql as $$select '[]'::jsonb$$;
+   create function private.base_tier1(u uuid,p text) returns text language sql as $$ with rows as (select x from cfg,jsonb_array_elements(private.base_rules(u,cfg.c)) x where x->>'permission'=p) select case when exists(select 1 from rows where x->>'effect'='DENY') then 'DENY' when exists(select 1 from rows where x->>'effect'='ALLOW') then 'ALLOW' else 'NOT_CONFIGURED' end $$;`);
+  await db.exec(readFileSync('docs/backup/role-review-2026-11-11/has-permission.sql','utf8'));
   await db.exec(pending);
   await db.exec(`create or replace function private.phase3a_previous_rules(u uuid, c jsonb) returns jsonb language sql as $$ select private.mkt_prev_rules(u,c)||private.mkt_specialty_rules(u,c) $$;
-   create function has(u uuid, p text) returns boolean language sql as $$ with r as (select x from cfg, jsonb_array_elements(private.base_rules(u, cfg.c)) x)
-     select exists(select 1 from r where x->>'permission'=p and x->>'effect'='ALLOW') and not exists(select 1 from r where x->>'permission'=p and x->>'effect'='DENY') $$;`);
+   create function has(u uuid, p text) returns boolean language sql as $$ select private.has_permission(u,p) $$;`);
   await db.exec(`insert into profiles values ('${NGOC}','Đang hoạt động'),('${PEER}','Đang hoạt động'),('${SALE}','Đang hoạt động'),('${DESIGN}','Đang hoạt động');
    insert into private.legacy_reset_accounts values ('${NGOC}',true),('${PEER}',true),('${SALE}',true),('${DESIGN}',true);`);
   await setMemberships([['m1', NGOC, 'mkt-content'], ['m2', PEER, 'mkt-content'], ['m3', SALE, 'sales'], ['m4', DESIGN, 'sales']]);
@@ -148,5 +151,33 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
     expect(await has(NGOC,'web.outline_start')).toBe(true);
     expect(await has(NGOC,'social.post_create')).toBe(false);
     expect(await has(PEER,'social.post_create')).toBe(false);
+  });
+  it('actual additive fallback isolates A from B even after legacy reset', async () => {
+    await db.exec(`insert into user_permission_overrides values ('${NGOC}',true,'additive',array['leave.edit_own'])`);
+    expect(await has(NGOC,'leave.edit_own')).toBe(true);
+    expect(await has(PEER,'leave.edit_own')).toBe(false);
+    expect(await has(NGOC,'web.content_view')).toBe(true);
+  });
+  it('locked user fails closed; Super Admin still uses existing protected branch', async () => {
+    await db.exec(`update profiles set status='Tạm khóa' where id='${NGOC}'`);
+    expect(await has(NGOC,'web.content_view')).toBe(false);
+    await db.exec(`update profiles set status='Đang hoạt động' where id='${NGOC}';create or replace function private.is_super_admin(u uuid) returns boolean language sql as $$select u='${DESIGN}'::uuid$$;`);
+    expect(await has(DESIGN,'settings.role')).toBe(true);
+    await db.exec('create or replace function private.is_super_admin(u uuid) returns boolean language sql as $$select false$$;');
+  });
+  it('real pending SQL restores old reset behavior and rolls forward without modifying Role rows', async () => {
+    const before = (await db.query('select id,permissions from app_roles order by id')).rows;
+    // Different return type in the small source fixture: replace it with exact live backup first.
+    await db.exec('drop function private.role_source_rows(jsonb);drop function private.slot_previous_source_rows(jsonb);');
+    await db.exec(readFileSync('docs/backup/role-review-2026-11-11/functions.sql','utf8'));
+    const source=JSON.parse(readFileSync('docs/backup/role-review-2026-11-11/source-and-triggers.json','utf8')) as {definition:string};
+    await db.exec(source.definition);
+    await db.exec(readFileSync('docs/backup/role-review-2026-11-11/has-permission.sql','utf8'));
+    // NGOC has no direct Role. Restored legacy-reset fence blocks his task rights.
+    expect(await has(NGOC,'web.content_view')).toBe(false);
+    await db.exec(readFileSync('docs/pending/0372_marketing_task_role_is_source.sql','utf8'));
+    expect(await has(NGOC,'web.content_view')).toBe(true);
+    expect(await has(NGOC,'web.outline_start')).toBe(true);
+    expect((await db.query('select id,permissions from app_roles order by id')).rows).toEqual(before);
   });
 });
