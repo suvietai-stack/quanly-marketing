@@ -11,7 +11,7 @@ beforeAll(async () => {
     CREATE FUNCTION private.is_super_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${admin}'::uuid$$;
     CREATE FUNCTION private.org_role_permission_ready(text) RETURNS boolean LANGUAGE sql AS $$SELECT $1='leave.create'$$;
     CREATE TABLE app_roles(id text PRIMARY KEY,name text,description text,permissions text[]);
-    CREATE TABLE org_assignments(source text,status text,ends_at timestamptz);
+    CREATE TABLE org_assignments(source text,status text,ends_at timestamptz,title_id text);
     CREATE TABLE org_titles(id text,source text); CREATE TABLE base_title_role_links(id text,title_id text,role_id text,is_primary boolean,scope_kind text,enabled_permissions text[]);
     CREATE TABLE mkt_specialties(id text); CREATE TABLE user_roles(user_id uuid,role_id text);
     CREATE TABLE private.org_control(id boolean,revision bigint); INSERT INTO private.org_control VALUES(true,1);
@@ -50,7 +50,7 @@ it('registration is idempotent without duplicate Roles or snapshots', async () =
   expect(await scalar("select count(*)::int v from app_roles where catalog_state='standard'")).toBe(10);
 });
 it('equivalent manager Roles merge while unrelated live appointments stay intact',async()=>{
- await db.exec("insert into org_assignments values('canonical','active',null)");
+ await db.exec("insert into org_assignments values('canonical','active',null,'unrelated')");
  const r=await scalar('select standard_role_catalog_consolidate() v');
  expect(r.merged).toBe(2);expect(r.changed_accounts).toBe(0);
  expect(await scalar("select name v from app_roles where id='role-standard-mkt-head'")).toBe('Quản lý Marketing');
