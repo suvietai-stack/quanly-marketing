@@ -50,7 +50,7 @@ export function BaseOrganization() {
   const [manageUnit, setManageUnit] = useState<ChartNode | null>(null);
   const [membershipMode, setMembershipMode] = useState(false);
   const [reason, setReason] = useState('');
-  useEffect(() => { const timer = setInterval(() => { if (!dirty) { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 30000); return () => clearInterval(timer); }, [qc,user?.id,dirty]);
+  useEffect(() => { const timer = setInterval(() => { if (!dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 60000); return () => clearInterval(timer); }, [qc,user?.id,dirty]);
   const effective = useQuery({ queryKey: ['base-effective', user?.id, staffId], queryFn: () => baseOrgApi.effective(staffId), enabled: !!staffId, retry: false });
   useEffect(() => { if (data.data && !dirty) setConfig(structuredClone(data.data.config)); }, [data.data, dirty]);
   const edit = (fn: (c: OrgConfig) => OrgConfig) => { setConfig(fn); setDirty(true); setError(''); };
