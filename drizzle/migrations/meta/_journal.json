@@ -2647,6 +2647,13 @@
       "when": 1794408952446,
       "tag": "0377_role_v2_task_edit_avoids_legacy_assignment_resign",
       "breakpoints": true
+    },
+    {
+      "idx": 378,
+      "version": "7",
+      "when": 1794409094223,
+      "tag": "0378_role_v2_equal_rights_design_specialty_rebind",
+      "breakpoints": true
     }
   ]
 }
