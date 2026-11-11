@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AppointmentPermissionSummary } from '@/components/AppointmentPermissionSummary';
+import { AppointmentPermissionSummary, AssignmentSpecialties } from '@/components/AppointmentPermissionSummary';
 import { ArrowRightLeft, Check, History, Plus, Search, ShieldCheck, UserPlus, Users, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -114,6 +114,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
   const [confirmManagerEnd, setConfirmManagerEnd] = useState(false);
   const [appointing, setAppointing] = useState<string>(''); // title id của ô quản lý
   const [appointUser, setAppointUser] = useState('');
+  const [specialtyIds, setSpecialtyIds] = useState<string[]>([]);
 
   const rights = useMemo(() => unitRights(config, unitId, actor), [config, unitId, actor]);
   const titles = useMemo(() => unitTitles(config, unitId), [config, unitId]);
@@ -132,10 +133,10 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
   const canAssign = rights.assign;
   const canAppoint = rights.appoint;
 
-  const resetPick = () => { setPicked(new Set()); setStep('pick'); setTitleId(''); setForm('primary'); setReport(null); };
+  const resetPick = () => { setPicked(new Set()); setStep('pick'); setTitleId(''); setForm('primary'); setReport(null); setSpecialtyIds([]); };
   const doAssign = () => {
     const r = assignMany(config, unitId, titleId, [...picked], form);
-    onEdit(() => r.config);
+    onEdit(() => ({...r.config,memberships:r.config.memberships.map(m=>config.memberships.some(x=>x.id===m.id)?m:{...m,specialty_ids:config.titles.find(t=>t.id===titleId)?.source==='biz_positions'?[]:specialtyIds})}));
     setReport(r);
   };
   const selectedConfig = { ...config, memberships: config.memberships.filter(m => sourceIds.includes(m.id)) };
@@ -201,7 +202,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                       <p className="text-xs text-muted-foreground">{holders.length ? holders.map(h => nameOf(h.user_id)).join(', ') : 'Chưa phân công'}</p>
                     </div>
                     {canAppoint && (
-                      <Button size="sm" variant="outline" onClick={() => { setAppointing(t.id); setAppointUser(''); }}>
+                      <Button size="sm" variant="outline" onClick={() => { setAppointing(t.id); setAppointUser(''); setSpecialtyIds([]); }}>
                         <UserPlus className="mr-1.5 h-4 w-4" />{holders.length ? 'Thay đổi' : 'Bổ nhiệm'}
                       </Button>
                     )}
@@ -323,7 +324,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                     </SelectContent>
                   </Select>
                 </div>
-                <AppointmentPermissionSummary titleId={titleId} config={config} />
+                <AppointmentPermissionSummary titleId={titleId} config={config} />{titleOf(titleId)?.source!=='biz_positions' && <AssignmentSpecialties selected={specialtyIds} onChange={setSpecialtyIds} />}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setStep('pick')}>Quay lại</Button>
                   <Button disabled={!titleId} onClick={doAssign}>Đưa vào thay đổi</Button>
@@ -404,8 +405,8 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                       <SelectContent>{staff.filter(s => s.status === 'Đang hoạt động').map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <AppointmentPermissionSummary titleId={appointing} config={config} />
-                  <Label>Ngày hiệu lực</Label><Input aria-label="Ngày hiệu lực bổ nhiệm" type="datetime-local" value={effectiveAt} onChange={e=>setEffectiveAt(e.target.value)} /><Button disabled={!appointUser} onClick={() => { onEdit(c => { const next = assignSlot(c, unitId, appointing, appointUser); if (!effectiveAt) return next; const at = new Date(effectiveAt).toISOString(); return { ...next, memberships: next.memberships.map(m => c.memberships.some(old=>old.id===m.id&&old.ends_at!==m.ends_at) ? { ...m, ends_at:at, active:true } : !c.memberships.some(old=>old.id===m.id) ? { ...m, starts_at:at } : m) }; }); setAppointing(''); }}>Đưa vào thay đổi</Button>
+                  <AppointmentPermissionSummary titleId={appointing} config={config} />{titleOf(appointing)?.source!=='biz_positions' && <AssignmentSpecialties selected={specialtyIds} onChange={setSpecialtyIds} />}
+                  <Label>Ngày hiệu lực</Label><Input aria-label="Ngày hiệu lực bổ nhiệm" type="datetime-local" value={effectiveAt} onChange={e=>setEffectiveAt(e.target.value)} /><Button disabled={!appointUser} onClick={() => { onEdit(c => { const assigned = assignSlot(c, unitId, appointing, appointUser); const next = {...assigned,memberships:assigned.memberships.map(m=>c.memberships.some(x=>x.id===m.id)?m:{...m,specialty_ids:titleOf(appointing)?.source==='biz_positions'?[]:specialtyIds})}; if (!effectiveAt) return next; const at = new Date(effectiveAt).toISOString(); return { ...next, memberships: next.memberships.map(m => c.memberships.some(old=>old.id===m.id&&old.ends_at!==m.ends_at) ? { ...m, ends_at:at, active:true } : !c.memberships.some(old=>old.id===m.id) ? { ...m, starts_at:at } : m) }; }); setAppointing(''); }}>Đưa vào thay đổi</Button>
                 </div>
               );
             })()}
