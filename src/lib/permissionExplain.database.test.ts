@@ -13,6 +13,7 @@ const MULTI = '00000000-0000-0000-0000-0000000000b1';
 const REPLACE = '00000000-0000-0000-0000-0000000000b2';
 const ADDITIVE = '00000000-0000-0000-0000-0000000000b3';
 const DENIED = '00000000-0000-0000-0000-0000000000b4';
+const VERIFIED_ROLE = '00000000-0000-0000-0000-0000000000b5';
 
 beforeAll(async () => {
   await db.exec(`create schema auth; create schema private; create role anon; create role authenticated; create role service_role;
@@ -55,8 +56,9 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0330_new_staff_role_default_and_additive_overrides.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0331_override_mode_legacy_default.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0332_packing_staff_role.sql', 'utf8'));
-  await db.exec(readFileSync('drizzle/migrations/0334_account_permission_explain.sql', 'utf8'));
   await db.exec(readFileSync('drizzle/migrations/0335_ot_packing_verified_permissions.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0351_account_permission_explain_set_based.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0353_unified_permission_resolver_parity.sql', 'utf8'));
   // Dữ liệu quyền riêng sau khi migration 0331 thêm cột mode.
   await db.query(`insert into user_permission_overrides(user_id, use_custom, permissions, mode) values
     ('${REPLACE}', true, array['web.content_view'], 'replace'),
