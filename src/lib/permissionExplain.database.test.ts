@@ -25,7 +25,7 @@ beforeAll(async () => {
   create function private.mkt_specialty_permission_ready(p text) returns boolean immutable language sql as $$ select false $$;
   create function private.base_tier1(u uuid, p text) returns text language sql as $$ select case when p = 'ot.view_own' and u = '${DENIED}'::uuid then 'DENY' else 'NOT_CONFIGURED' end $$;
   create function private.base_config() returns jsonb language sql as $$ select '{}'::jsonb $$;
-  create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select '[]'::jsonb $$;
+  create function private.base_rules(u uuid, c jsonb) returns jsonb language sql as $$ select case when u = '${DENIED}'::uuid then '[{"permission":"ot.view_own","effect":"DENY"}]'::jsonb else '[]'::jsonb end $$;
   create table profiles(id uuid primary key, full_name text, status text);
   create table app_roles(id text primary key, name text, description text, permissions text[], is_system boolean, biz_scope text, biz_detail_exception boolean, biz_settings_disabled boolean, signal_scope text[], signal_scope_all boolean);
   create table user_roles(user_id uuid, role_id text, unique(user_id, role_id));
