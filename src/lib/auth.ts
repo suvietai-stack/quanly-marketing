@@ -458,6 +458,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("leave.view_own", "Xem đơn cá nhân", "Đơn Từ & Phê Duyệt", "Xem"),
   P("leave.view_assigned", "Xem đơn được giao duyệt", "Đơn Từ & Phê Duyệt", "Xem"),
   P("leave.view_all", "Xem toàn bộ đơn", "Đơn Từ & Phê Duyệt", "Xem"),
+  P("leave.view_unit", "Xem đơn của thành viên đơn vị mình quản lý", "Đơn Từ & Phê Duyệt", "Xem"),
   P("leave.create", "Tạo đơn cá nhân", "Đơn Từ & Phê Duyệt", "Tạo"),
   P("leave.create_for", "Tạo đơn hộ", "Đơn Từ & Phê Duyệt", "Tạo"),
   P("leave.edit_own", "Sửa đơn cá nhân", "Đơn Từ & Phê Duyệt", "Sửa"),
@@ -496,6 +497,7 @@ export const PERMISSIONS: PermissionDef[] = [
   // ===== Theo Dõi Đơn Hàng =====
   P("ot.view_own", "Xem đơn phụ trách", "Theo Dõi Đơn Hàng", "Xem"),
   P("ot.view_all", "Xem toàn bộ đơn", "Theo Dõi Đơn Hàng", "Xem"),
+  P("ot.view_unit", "Xem đơn hàng của thành viên đơn vị mình quản lý", "Theo Dõi Đơn Hàng", "Xem"),
   P("ot.create", "Tạo đơn thủ công", "Theo Dõi Đơn Hàng", "Đơn hàng"),
   P("ot.accept", "Tiếp nhận đơn", "Theo Dõi Đơn Hàng", "Đơn hàng"),
   P("ot.assign", "Phân công người phụ trách", "Theo Dõi Đơn Hàng", "Đơn hàng"),
@@ -512,6 +514,7 @@ export const PERMISSIONS: PermissionDef[] = [
 
   // ===== Tài Chính Kế Toán =====
   P("finance.incoming.view", "Xem Tiền Về", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
+  P("finance.incoming.view_unit", "Xem Tiền Về của thành viên đơn vị mình quản lý", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
   P("finance.incoming.claim", "Sale xác nhận giao dịch", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
   P("finance.incoming.reconcile", "Xem toàn bộ / sửa ghi chú / xác nhận loại Khác", "Tài Chính Kế Toán", "Tiền Về — Kế toán"),
   P("finance.incoming.manual_view", "Xem khoản thủ công (Tiền mặt / TK khác)", "Tài Chính Kế Toán", "Tiền Về — Xem và xác nhận"),
