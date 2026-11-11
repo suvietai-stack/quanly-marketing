@@ -17,3 +17,4 @@
 - Historical cleanup remains readable; standard-only reset uses base_perm_standard_reset_* with private.legacy_reset_accounts fencing legacy business evaluators and Role/override regrants, transactional snapshots in base_perm_cleanup_runs and conflict-safe restore. Standard appointment rules survive; unsupported new business activation stays explicitly blocked rather than reviving old appointments.
 
 - Marketing task rights = configured app_roles.permissions ∩ backend-ready keys ∩ active source ∩ Marketing eligibility (legacy rows included); never module whitelists inside resolvers — Role stays the single customizable source, trimming happens via audited role_catalog_change.
+- Default suggestions use responsibilities, never legacy unions; retain desired existing rights and policy-gate additions. Risk labels are editor-only; pending reduction guard rechecks unresolved approver responsibility at preview and apply.
