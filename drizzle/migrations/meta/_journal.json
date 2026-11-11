@@ -2409,6 +2409,13 @@
       "when": 1794368305794,
       "tag": "0343_standard_role_catalog_source_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 344,
+      "version": "7",
+      "when": 1794369407986,
+      "tag": "0344_org_immediate_appointment_clock",
+      "breakpoints": true
     }
   ]
 }
