@@ -458,7 +458,8 @@ export interface OptimizeHistoryEntry {
   oldLink?: string;
   optimizeSource?: OptimizeSource;
   optimizeReason?: OptimizeReason;
-  writer?: string;            // người phụ trách tối ưu
+  writer?: string;            // người phụ trách tối ưu (tên hiển thị, tương thích)
+  writerId?: ID;              // định danh ổn định người phụ trách (ID tài khoản)
   optimizeReviewer?: string;  // người duyệt
   completedAt: string;        // ngày hoàn thành (YYYY-MM-DD)
   resultLink?: string;        // link bài sau cập nhật
@@ -485,6 +486,7 @@ export interface WebContent {
   // Phân công
   assigner?: string;
   writer?: string;
+  writerId?: ID;              // định danh ổn định người viết (ID tài khoản)
   outlineReviewer?: string;
   draftReviewer?: string;
   publisher?: string;
@@ -619,7 +621,9 @@ export interface SocialPost {
   topic?: string;
   plan?: string;
   writer?: string;
+  writerId?: ID;              // định danh ổn định người viết (ID tài khoản)
   designer?: string;
+  designerId?: ID;            // định danh ổn định người thiết kế (ID tài khoản)
   reviewer?: string;
   publisher?: string;
   scheduledDate?: string;
@@ -724,7 +728,8 @@ export interface Video {
   purpose?: string;
   description?: string;
   assigner?: string;            // người giao việc
-  owner?: string;               // người phụ trách
+  owner?: string;               // người phụ trách (tên hiển thị, tương thích)
+  ownerId?: ID;                 // định danh ổn định người phụ trách (ID tài khoản)
   reviewer?: string;            // người duyệt
   createdAt?: string;
   scriptDeadline?: string;
@@ -825,6 +830,7 @@ export interface DesignOrder {
   assignedBy?: string;
   assignedAt?: string;
   assignee?: string;
+  assigneeId?: ID;              // định danh ổn định người phụ trách (ID tài khoản)
   reviewer?: string;
   deadline?: string;
   priority?: OrderPriority;
