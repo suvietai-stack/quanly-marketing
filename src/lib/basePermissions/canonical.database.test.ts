@@ -138,3 +138,38 @@ it('immediate appointments ignore client clock skew, grant in preview and persis
  await apply(p);
  expect(await scalar('select starts_at=$2::timestamptz v from org_assignments where id=$1',[assignment.id,assignment.starts_at])).toBe(true);
 });
+it('stock accounting, purchasing and packing grant their own reviewed sets only',async()=>{
+ await actor(admin);
+ const sets=[{id:'stock',name:'Kế toán kho',permissions:['leave.create','att.create']},{id:'buyer',name:'Thu mua',permissions:['oq.create','oq.accept','oq.reply_price','oq.reply_progress','oq.report_own']},{id:'packing',name:'Đóng hàng',permissions:['ot.view_own','ot.task_view','ot.task_update','ot.stage_update']}];
+ for(const r of sets){
+  await db.query('insert into app_roles(id,name,permissions) values($1,$2,$3)',[r.id,r.name,r.permissions]);
+  await apply(await preview([{action:'title',data:{id:r.id,unit_id:'gd',name:r.name,kind:'staff',capacity:0,active:true}}]));
+  await applyRoles(await preview([{action:'roles',data:{id:r.id,roles:[{role_id:r.id,is_primary:true,scope_kind:'own',enabled_permissions:r.permissions}]}}]));
+  await db.query('insert into profiles values($1,$2,$3)',[`00000000-0000-0000-0000-${r.id==='stock'?'000000000007':r.id==='buyer'?'000000000008':'000000000009'}`,r.name,'Đang hoạt động']);
+  const uid=`00000000-0000-0000-0000-${r.id==='stock'?'000000000007':r.id==='buyer'?'000000000008':'000000000009'}`;
+  expect(await scalar("select private.has_permission($1,$2) v",[uid,r.permissions[0]])).toBe(false);
+  await apply(await preview([{action:'assign',data:{unit_id:'gd',title_id:r.id,user_id:uid,immediate:true}}]));
+  for(const key of r.permissions) expect(await scalar('select private.has_permission($1,$2) v',[uid,key])).toBe(true);
+  expect(await scalar("select private.has_permission($1,'settings.role') v",[uid])).toBe(false);
+  expect(await scalar("select private.has_permission($1,'finance.incoming.manage') v",[uid])).toBe(false);
+ }
+});
+it('multiple roleless Marketing staff receive SEO + Social + Video sources and removing Video retains the others',async()=>{
+ await actor(admin);
+ const uid='00000000-0000-0000-0000-000000000010',other='00000000-0000-0000-0000-000000000011';
+ await db.query("insert into profiles values($1,'Marketing A','Đang hoạt động'),($2,'Marketing B','Đang hoạt động')",[uid,other]);
+ for(const [id,key] of [['seo','order.view'],['social','order.view_mine'],['video','order.submit']]){
+  await db.query('insert into app_roles(id,name,permissions) values($1,$1,$2)',[id,[key]]);
+  await db.query('insert into mkt_specialties values($1,$1,$1,true)',[id]);
+ }
+ await apply(await preview([{action:'title',data:{id:'mkt-staff-test',unit_id:'gd',name:'Nhân viên Marketing',kind:'staff',capacity:0,active:true}}]));
+ await apply(await preview([uid,other].map(user_id=>({action:'assign',data:{unit_id:'gd',title_id:'mkt-staff-test',user_id,immediate:true,specialty_ids:['seo','social','video']}}))));
+ for(const user of [uid,other]){
+  expect((await scalar('select private.org_assignment_specialty_rules($1,private.org_config()) v',[user])).map((x:any)=>x.role_id).sort()).toEqual(['seo','social','video']);
+  expect(await scalar('select count(*)::int v from user_roles where user_id=$1',[user])).toBe(0);
+ }
+ const old=await scalar("select id v from org_assignments where user_id=$1 and title_id='mkt-staff-test'",[uid]);
+ await apply(await preview([{action:'end',data:{id:old,immediate:true}},{action:'assign',data:{unit_id:'gd',title_id:'mkt-staff-test',user_id:uid,immediate:true,specialty_ids:['seo','social']}}]));
+ expect((await scalar('select private.org_assignment_specialty_rules($1,private.org_config()) v',[uid])).map((x:any)=>x.role_id).sort()).toEqual(['seo','social']);
+ expect((await scalar('select private.org_assignment_specialty_rules($1,private.org_config()) v',[other])).map((x:any)=>x.role_id).sort()).toEqual(['seo','social','video']);
+});
