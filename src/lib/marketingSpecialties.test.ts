@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applySpecialtyDiff, orderBySpecialty } from './marketingSpecialties';
+import { applySpecialtyDiff, orderBySpecialty, resolvePickerSelection } from './marketingSpecialties';
 describe('applySpecialtyDiff', () => {
   it('keeps multiple specialties for one person', () => {
     expect(applySpecialtyDiff(new Set(['seo']), new Set(['seo','social','video']))).toEqual({ add: ['social','video'], remove: [] });
