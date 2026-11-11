@@ -1475,7 +1475,11 @@ export const useAuth = create<AuthState>((set, get) => ({
 // ============ Helpers ============
 export function getUserPermissions(user: User | null | undefined, roles: Role[]): Set<PermissionKey> {
   if (!user) return new Set();
-  // Quyền bổ sung cá nhân chạy song song: cộng thêm vào quyền Role, không thay thế.
+  // Chế độ quyền riêng: 'replace' (legacy, mặc định) thay thế Role; 'additive' cộng thêm vào Role.
+  // Phải khớp private.has_permission trong backend.
+  if (user.useCustom && user.overrideMode !== "additive") {
+    return new Set<PermissionKey>(user.customPermissions ?? []);
+  }
   const role = roles.find((r) => r.id === user.roleId);
   const perms = new Set<PermissionKey>(role ? role.permissions : []);
   if (user.useCustom && user.customPermissions) for (const p of user.customPermissions) perms.add(p);
@@ -1527,16 +1531,17 @@ export function explainPermission(
   }
   const resolved = resolvePermKey(key);
   const role = roles.find((r) => r.id === user.roleId);
-  const source: "role" | "custom" = user.useCustom ? "custom" : "role";
-  const granted = user.useCustom
-    ? new Set(user.customPermissions ?? [])
-    : new Set(role?.permissions ?? []);
+  const additive = user.useCustom && user.overrideMode === "additive";
+  const granted = getUserPermissions(user, roles);
+  const inRole = !!role && role.permissions.includes(resolved);
+  const inCustom = !!user.useCustom && (user.customPermissions ?? []).includes(resolved);
+  const source: "role" | "custom" = inCustom && !inRole ? "custom" : "role";
   if (!granted.has(resolved)) {
     return {
       ok: false,
-      reason: source === "custom"
-        ? `Không có trong quyền riêng của user`
-        : `Không có trong role "${role?.name ?? "(chưa gán)"}"`,
+      reason: user.useCustom && !additive
+        ? `Không có trong quyền riêng của user (chế độ thay thế Role)`
+        : `Không có trong role "${role?.name ?? "(chưa gán)"}"${additive ? " hoặc quyền bổ sung" : ""}`,
       source: "missing",
       roleName: role?.name,
     };
