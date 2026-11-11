@@ -19,7 +19,9 @@ it('Content reduces to seven configured task actions, removes cross-module right
 });
 it('both protected system positions retain their exact permissions', () => {
   for (const id of ['role-dong-hang', 'role-nhan-su-moi']) {
-    expect(defaultRoleImpact(role(id, ['ot.task_update', 'leave.create'], true), policy)?.after).toEqual(['ot.task_update', 'leave.create']);
+    const stored=role(id, ['ot.task_update', 'leave.create'], true);
+    expect(defaultRoleImpact(stored, policy)).toBeUndefined();
+    expect(stored.permissions).toEqual(['ot.task_update', 'leave.create']);
   }
 });
 it('missing backend capability is excluded, never assumed', () => {
