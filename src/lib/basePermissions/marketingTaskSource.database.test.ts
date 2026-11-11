@@ -3,7 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MKT_READY } from './marketingReady';
 import roles from './fixtures/marketingTaskRoles.snapshot.json';
-import { PERMISSION_PRESETS } from './permissionEditor';
+import { permissionPresets } from './permissionEditor';
 
 // Chạy luật SQL thật trong docs/pending/0371 trên Postgres (PGlite) với bản chụp Role nhiệm vụ live; không động dữ liệu thật.
 const db = new PGlite();
@@ -104,7 +104,7 @@ describe('Role nhiệm vụ Marketing là nguồn chuẩn (SQL thật)', () => {
   });
   it('sửa ma trận Role (áp bộ gợi ý Content Web) có hiệu lực ngay cho mọi người giữ Role', async () => {
     const before = (await db.query<{ p: string[] }>("select permissions p from app_roles where id='role-content-web'")).rows[0].p;
-    const preset = PERMISSION_PRESETS.find(x => x.id === 'content')!.keys;
+    const preset = permissionPresets.find(x => x.id === 'content')!.keys;
     await db.query("update app_roles set permissions=$1 where id='role-content-web'", [preset]);
     expect(await has(NGOC, 'social.post_create')).toBe(false);
     expect(await has(PEER, 'social.post_create')).toBe(false);
