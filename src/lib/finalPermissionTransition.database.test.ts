@@ -23,18 +23,31 @@ beforeAll(async()=>{
  create function private.cleanup_is_biz_staff(u uuid) returns boolean language sql as $$select exists(select 1 from biz_department_members where user_id=u)$$;
  create function private.org_fingerprint() returns text language sql as $$select 'stable'$$;
  create function private.base_config() returns jsonb language sql as $$select '{}'::jsonb$$;
+ create function private.base_rules(u uuid,c jsonb) returns jsonb language sql as $$select '[]'::jsonb$$;
+ create function private.org_role_permission_ready(p text) returns boolean language sql as $$select false$$;
+ create function private.mkt_specialty_permission_ready(p text) returns boolean language sql as $$select false$$;
  create function private.has_permission(u uuid,p text) returns boolean language sql as $$select exists(select 1 from user_roles ur join app_roles r on r.id=ur.role_id where ur.user_id=u and p=any(r.permissions))$$;
  create function private.cleanup_account_eval(u uuid,c jsonb) returns jsonb language sql as $$select jsonb_build_object('user_id',u,'group','C','roles','[]'::jsonb,'lost',jsonb_build_array('video.create'),'pending_work',1)$$;
  insert into profiles(id,full_name,status) values('${SA}','Admin','Đang hoạt động'),('${MKT}','Mkt','Đang hoạt động'),('${BIZ}','Biz','Đang hoạt động'),('${CUSTOM}','Custom','Đang hoạt động');
  insert into app_roles values('role-video','Video',array['video.create']),('role-kinh-doanh','Biz',array['biz.view']),('safe-extra','Extra',array['order.view']);
  insert into user_roles values('${SA}','safe-extra','2020-01-01'),('${MKT}','role-video','2020-01-01'),('${BIZ}','role-video','2020-01-01'),('${CUSTOM}','role-video','2020-01-01');
  insert into biz_department_members values('${BIZ}');insert into user_permission_overrides(user_id,use_custom,permissions,mode) values('${CUSTOM}',true,array['signal.sale'],'replace');insert into base_permission_catalog values('order.view'),('settings.role');`);
- for(const f of ['0339_final_permission_transition','0340_supplemental_permissions_atomic']) await db.exec(readFileSync(`drizzle/migrations/${f}.sql`,'utf8'));
+ for(const f of ['0339_final_permission_transition','0340_supplemental_permissions_atomic','0341_final_snapshot_set_based']) await db.exec(readFileSync(`drizzle/migrations/${f}.sql`,'utf8'));
  await db.query("select set_config('test.uid',$1,false)",[SA]);
 },30000);
 afterAll(()=>db.close());
 async function preview(){return (await db.query<{p:{fingerprint:string;accounts:{user_id:string;status:string}[]}}>('select base_perm_final_preview() p')).rows[0].p;}
 let run:string;
+it('optimized snapshot matches effective roles, replace overrides, additive sources and deny precedence',async()=>{
+ await db.query("insert into base_permission_catalog values('video.create'),('signal.sale')");
+ const s=(await db.query<{s:{user_id:string;permissions:string[]}[]}>('select private.final_effective_snapshot() s')).rows[0].s;
+ expect(s.find(x=>x.user_id===MKT)?.permissions).toEqual(['video.create']);
+ expect(s.find(x=>x.user_id===CUSTOM)?.permissions).toEqual(['signal.sale']);
+ await db.exec("create or replace function private.base_rules(u uuid,c jsonb) returns jsonb language sql as $$select '[{\"permission\":\"video.create\",\"effect\":\"DENY\"}]'::jsonb$$;create or replace function private.org_role_permission_ready(p text) returns boolean language sql as $$select p='video.create'$$;");
+ const denied=(await db.query<{s:{user_id:string;permissions:string[]}[]}>('select private.final_effective_snapshot() s')).rows[0].s;
+ expect(denied.find(x=>x.user_id===MKT)?.permissions).toEqual([]);
+ await db.exec("create or replace function private.base_rules(u uuid,c jsonb) returns jsonb language sql as $$select '[]'::jsonb$$;");
+});
 it('keeps business membership and ambiguous custom overrides; unappointed staff may transition',async()=>{const p=await preview();expect(p.accounts.find(a=>a.user_id===MKT)?.status).toBe('ready');expect(p.accounts.find(a=>a.user_id===BIZ)?.status).toBe('protected');expect(p.accounts.find(a=>a.user_id===CUSTOM)?.status).toBe('review');});
 it('rejects stale preview and missing confirmation',async()=>{await expect(db.query('select base_perm_final_execute($1,$2,$3)',[[MKT],'bad','CHUYỂN ĐỔI QUYỀN'])).rejects.toThrow(/xem trước/);await expect(db.query('select base_perm_final_execute($1,$2,$3)',[[MKT],(await preview()).fingerprint,'wrong'])).rejects.toThrow(/xác nhận/);});
 it('retires only classified old source and snapshots all original relationships without assigning people',async()=>{const p=await preview();const r=(await db.query<{r:{run_id:string;accounts:number;removed:unknown[]}}>('select base_perm_final_execute($1,$2,$3) r',[[MKT,BIZ,CUSTOM],p.fingerprint,'CHUYỂN ĐỔI QUYỀN'])).rows[0].r;run=r.run_id;expect(r.accounts).toBe(1);expect(r.removed).toHaveLength(1);expect((await db.query('select * from org_assignments')).rows).toHaveLength(0);expect((await db.query('select * from user_roles where user_id=$1',[BIZ])).rows).toHaveLength(1);const s=(await db.query<{snapshot:{user_roles:unknown[]}}>('select snapshot from base_perm_cleanup_runs where id=$1',[run])).rows[0];expect(s.snapshot.user_roles).toHaveLength(4);});
