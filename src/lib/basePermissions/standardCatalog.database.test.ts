@@ -29,15 +29,6 @@ it('rejects non-admin catalog registration', async () => {
   await expect(scalar('select standard_role_catalog_setup() v')).rejects.toThrow('Super Admin');
   expect(await scalar('select count(*)::int v from private.standard_role_catalog_runs')).toBe(0);
 });
-it('equivalent manager Roles merge while unrelated live appointments stay intact',async()=>{
- await db.exec("insert into org_assignments values('canonical','active',null)");
- const r=await scalar('select standard_role_catalog_consolidate() v');
- expect(r.merged).toBe(2);expect(r.changed_accounts).toBe(0);
- expect(await scalar("select name v from app_roles where id='role-standard-mkt-head'")).toBe('Quản lý Marketing');
- expect(await scalar("select catalog_state v from app_roles where id='role-standard-mkt-team'")).toBe('compatibility');
- expect(await scalar('select count(*)::int v from org_assignments')).toBe(1);
- expect((await scalar('select standard_role_catalog_consolidate() v')).already_applied).toBe(true);
-});
 it('creates ten distinct Roles without assigning staff or changing existing direct grants', async () => {
   await db.query("select set_config('test.uid',$1,false)",[admin]);
   const result = await scalar('select standard_role_catalog_setup() v');
@@ -57,4 +48,13 @@ it('registration is idempotent without duplicate Roles or snapshots', async () =
   expect((await scalar('select standard_role_catalog_setup() v')).already_applied).toBe(true);
   expect(await scalar('select count(*)::int v from private.standard_role_catalog_runs')).toBe(1);
   expect(await scalar("select count(*)::int v from app_roles where catalog_state='standard'")).toBe(10);
+});
+it('equivalent manager Roles merge while unrelated live appointments stay intact',async()=>{
+ await db.exec("insert into org_assignments values('canonical','active',null)");
+ const r=await scalar('select standard_role_catalog_consolidate() v');
+ expect(r.merged).toBe(2);expect(r.changed_accounts).toBe(0);
+ expect(await scalar("select name v from app_roles where id='role-standard-mkt-head'")).toBe('Quản lý Marketing');
+ expect(await scalar("select catalog_state v from app_roles where id='role-standard-mkt-team'")).toBe('compatibility');
+ expect(await scalar('select count(*)::int v from org_assignments')).toBe(1);
+ expect((await scalar('select standard_role_catalog_consolidate() v')).already_applied).toBe(true);
 });
