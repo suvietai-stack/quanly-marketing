@@ -166,6 +166,7 @@ export type Database = {
           biz_detail_exception: boolean
           biz_scope: string
           biz_settings_disabled: boolean
+          catalog_generation: number
           catalog_group: string | null
           catalog_pending: string[]
           catalog_state: string
@@ -185,6 +186,7 @@ export type Database = {
           biz_detail_exception?: boolean
           biz_scope?: string
           biz_settings_disabled?: boolean
+          catalog_generation?: number
           catalog_group?: string | null
           catalog_pending?: string[]
           catalog_state?: string
@@ -204,6 +206,7 @@ export type Database = {
           biz_detail_exception?: boolean
           biz_scope?: string
           biz_settings_disabled?: boolean
+          catalog_generation?: number
           catalog_group?: string | null
           catalog_pending?: string[]
           catalog_state?: string
