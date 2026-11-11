@@ -46,3 +46,42 @@ describe('visual root nesting and biz title scoping', () => {
     expect(mkt.children[0].slots ?? []).toEqual([]);
   });
 });
+describe('deduplicate staff within a unit by user ID', () => {
+  const cfg: OrgConfig = { ...emptyConfig(), units: [
+    { id: 'biz-unit', name: 'Kinh doanh', kind: 'department', active: true },
+  ], titles: [
+    { id: 'sale', name: 'Kinh doanh Đơn hàng', unit_id: 'biz-unit', active: true, kind: 'staff', level: 0 },
+    { id: 'manager', name: 'Quản lý', unit_id: 'biz-unit', active: true, kind: 'manager', level: 2 },
+  ], memberships: [
+    { id: 'membership', user_id: 'u1', unit_id: 'biz-unit', active: true },
+    { id: 'appointment', user_id: 'u1', unit_id: 'biz-unit', title_id: 'sale', active: true },
+    { id: 'duplicate', user_id: 'u1', unit_id: 'biz-unit', title_id: 'sale', active: true },
+    { id: 'second-position', user_id: 'u1', unit_id: 'biz-unit', title_id: 'manager', active: true },
+    { id: 'same-name', user_id: 'u2', unit_id: 'biz-unit', active: true },
+  ] };
+  const staff = [{ id: 'u1', name: 'Ngọc' }, { id: 'u2', name: 'Ngọc' }];
+  const node = buildOrganizationTree(cfg, staff, '2026-11-11T00:00:00Z')[0];
+  it('does not repeat a valid slot holder in the unassigned list', () => {
+    expect(node.people.map(p => p.id)).toEqual(['u2']);
+  });
+  it('shows one user once in the same position', () => {
+    expect(node.slots?.find(s => s.id === 'sale')?.holders.map(p => p.id)).toEqual(['u1']);
+  });
+  it('preserves genuine concurrent positions', () => {
+    expect(node.slots?.find(s => s.id === 'manager')?.holders.map(p => p.id)).toEqual(['u1']);
+  });
+  it('does not merge two IDs sharing a name', () => {
+    expect(countPeople(node)).toBe(2);
+    expect(node.people[0]).toEqual({ id: 'u2', name: 'Ngọc', title: undefined, duties: undefined });
+  });
+  it('does not hide a membership for an expired appointment', () => {
+    const ended = { ...cfg, memberships: cfg.memberships.map(m => m.title_id ? { ...m, ends_at: '2026-11-10T00:00:00Z' } : m) };
+    expect(buildOrganizationTree(ended, staff, '2026-11-11T00:00:00Z')[0].people.map(p => p.id)).toEqual(['u1', 'u2']);
+  });
+  it('does not change membership records or history', () => {
+    const before = JSON.stringify(cfg.memberships);
+    buildOrganizationTree(cfg, staff, '2026-11-11T00:00:00Z');
+    expect(JSON.stringify(cfg.memberships)).toBe(before);
+    expect(cfg.memberships).toHaveLength(5);
+  });
+});
