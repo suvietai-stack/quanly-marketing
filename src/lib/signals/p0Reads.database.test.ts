@@ -23,6 +23,18 @@ beforeAll(async()=>{
  await db.exec(readFileSync('docs/pending/signals_p0_page_filtered_history.sql','utf8'));
 },60000);
 
+it('pending invoker counts/page benchmark at 658 isolated records without changing results',async()=>{
+ await db.exec(`INSERT INTO opportunity_signals(id,assigned_to,status,created_at,updated_at)
+ SELECT ('00000000-0000-0000-0002-'||lpad(i::text,12,'0'))::uuid,'${A}','consulting','2026-11-01','2026-11-09' FROM generate_series(1,658) i;
+ SELECT set_config('test.uid','${A}',false);SET ROLE authenticated;`);
+ for(const [oldName,newName,args] of [['previous_counts','signal_list_counts',"'{}'"],['previous_page','signal_list_page',"'{}','work',0,40"]]){
+  const t=performance.now();const old=(await db.query<{v:unknown}>(`select ${oldName}(${args}) v`)).rows[0]?.v;const before=performance.now()-t;
+  const n=performance.now();const next=(await db.query<{v:unknown}>(`select ${newName}(${args}) v`)).rows[0]?.v;const after=performance.now()-n;
+  expect(next).toEqual(old);console.log('658-row isolated benchmark',newName,'before',Math.round(before),'ms after',Math.round(after),'ms');
+ }
+ await db.exec("RESET ROLE;DELETE FROM opportunity_signals WHERE id::text LIKE '00000000-0000-0000-0002-%'");
+},60000);
+
 it('multi-group counts are distinct and page offsets never leak another owner',async()=>{
  await db.exec(`INSERT INTO opportunity_signals(id,assigned_to,status,need_groups,created_at) VALUES
  ('${id(3)}','${A}','waiting',array['Quà','Kho'],'2026-11-01'),
