@@ -2479,6 +2479,13 @@
       "when": 1794376021763,
       "tag": "0353_unified_permission_resolver_parity",
       "breakpoints": true
+    },
+    {
+      "idx": 354,
+      "version": "7",
+      "when": 1794376948942,
+      "tag": "0354_biz_standard_appointment_contract",
+      "breakpoints": true
     }
   ]
 }
