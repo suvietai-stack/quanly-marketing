@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Quyết định mới: ngừng toàn bộ quyền legacy
+- [ ] Kiểm kê và snapshot nguồn quyền, bảo vệ quản trị khôi phục/dịch vụ thiết yếu.
+- [ ] Ngừng nguồn legacy gồm Kinh doanh, chống cấp lại, phục hồi và kiểm kê trước/sau.
+- [ ] Sửa sơ đồ trùng nhân sự theo ID, giữ kiêm nhiệm và lịch sử.
+- [ ] Kiểm thử, xác nhận Preview, bàn giao số liệu và giới hạn; chưa Publish.
+
 ## Hoàn thiện theo yêu cầu bản 62
 - [x] Xem trước Marketing trên Preview không lỗi; sửa mốc tức thời máy chủ, lưu/refresh/miễn nhiệm đã kiểm chứng bằng nhân sự cô lập.
 - [x] Gộp Cơ cấu & Nhân sự / Role & Phân quyền; chức vụ về drawer đơn vị, gỡ ba dialog cũ và form phân công riêng.
