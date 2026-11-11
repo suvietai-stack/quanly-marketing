@@ -2437,6 +2437,13 @@
       "when": 1794371299742,
       "tag": "0347_legacy_reset_standard_only_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 348,
+      "version": "7",
+      "when": 1794371446759,
+      "tag": "0348_legacy_reset_snapshot_timeout",
+      "breakpoints": true
     }
   ]
 }
