@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Bản 70: Hoàn thiện toàn bộ phân quyền + dọn sạch cơ chế cũ (file upload mới)
+- [ ] Rà soát toàn bộ chức vụ, Role, permission thực tế của mọi phân hệ.
+- [ ] Phạm vi đầy đủ: cá nhân/nhóm/phòng/hệ/khối/công ty; backend/RPC/RLS, không filter frontend.
+- [ ] Cài Role chuẩn vào từng chức vụ; bổ nhiệm tự cấp, miễn nhiệm thu hồi, kiêm nhiệm tổng hợp.
+- [ ] Nhóm quyền: Điều hành, Kinh doanh (CRM/Tín hiệu/biz/k3), Marketing, Thiết kế, Kế toán & Tài chính, Mua hàng & Giao vận, HCNS, Phê duyệt toàn Base.
+- [ ] Dọn sạch: Role legacy, liên kết legacy, cấp Role trực tiếp, resolver cũ, sync tự cấp lại, UI trùng, fallback — có snapshot + rollback, không xóa dữ liệu/lịch sử/tài khoản.
+- [ ] Giữ Super Admin, tài khoản khôi phục, tài khoản dịch vụ; không Publish.
+
 ## Bản 69: Hoàn thiện phân quyền nghiệp vụ sau 0353
 - [x] Kiểm chứng trên dữ liệu thật: 10 liên kết Chức vụ → Role chuẩn ĐÃ trực tiếp cấp quyền (org_role_rules không phụ thuộc cờ active; chữ ký hợp lệ); 5 nhân sự đang bổ nhiệm (Kế toán trưởng, HCNS, Thu mua, Thiết kế, GĐ Marketing) nhận quyền chuẩn qua bổ nhiệm.
 - [x] Migration 0354 — hợp đồng Kinh doanh chuẩn sau reset: tài khoản reset chỉ dùng biz.*/k3.*/CRM khi có bổ nhiệm Kinh doanh chuẩn tạo SAU reset (qua org_change); bổ nhiệm/thành viên legacy giữ làm lịch sử, không tự phục hồi; miễn nhiệm thu hồi toàn bộ; phạm vi lọc theo mốc reset ở mọi resolver trung tâm (participant/manager/all_scope/scope_ok/appointment_scope/can/executive_holder/department_access).

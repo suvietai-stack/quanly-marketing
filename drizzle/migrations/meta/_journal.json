@@ -2486,6 +2486,27 @@
       "when": 1794376948942,
       "tag": "0354_biz_standard_appointment_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 355,
+      "version": "7",
+      "when": 1794377698797,
+      "tag": "0355_complete_title_roles_signal_crm_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 356,
+      "version": "7",
+      "when": 1794377802770,
+      "tag": "0356_biz_title_links_verified_module_perms",
+      "breakpoints": true
+    },
+    {
+      "idx": 357,
+      "version": "7",
+      "when": 1794377909762,
+      "tag": "0357_sales_head_role_scope_fallback_tighten",
+      "breakpoints": true
     }
   ]
 }

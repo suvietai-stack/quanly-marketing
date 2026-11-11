@@ -54,7 +54,7 @@ export function RolePermissionMatrix({ categories, personal }: { categories: Per
   const { isSuperAdmin, can } = useCurrentUser();
   const canEdit = isSuperAdmin || can("settings.role");
   const [busy, setBusy] = useState<string | null>(null);
-  const editable = roles.filter((r) => r.id !== SUPER_ADMIN_ID);
+  const editable = roles.filter((r) => r.id !== SUPER_ADMIN_ID && r.catalogState === 'standard');
 
   const toggle = async (role: Role, cat: PermCategory) => {
     const turnOn = categoryState(role.permissions, cat) !== "on";
