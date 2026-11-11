@@ -2668,6 +2668,13 @@
       "when": 1794411584543,
       "tag": "0380_position_roles_resolver_branch",
       "breakpoints": true
+    },
+    {
+      "idx": 381,
+      "version": "7",
+      "when": 1794413302126,
+      "tag": "0381_position_role_org_change_command",
+      "breakpoints": true
     }
   ]
 }
