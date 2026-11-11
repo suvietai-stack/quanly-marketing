@@ -25,7 +25,7 @@ export function TitleRoleDefaults({ source, titleId, titleName, disabled, staged
   const [inspected, setInspected] = useState<OriginalRole | null>(null);
   const [enabled, setEnabled] = useState<Record<string,string[]>>({});
   const links = (stagedLinks ?? query.data?.links ?? []).filter(l => l.title_source === source && l.title_id === titleId);
-  const roles = query.data?.roles.filter(r => !r.restricted) ?? [];
+  const roles = query.data?.roles.filter(r => !r.restricted && r.catalog_state !== 'compatibility') ?? [];
   const suggestion = suggestedRole(titleName, roles);
   const start = () => { setPrimary(links.find(l => l.is_primary)?.role_id ?? ''); setExtra(links.filter(l => !l.is_primary).map(l => l.role_id)); setScope(links[0]?.scope_kind ?? 'own'); setEnabled(Object.fromEntries(links.map(l=>[l.role_id,l.enabled_permissions??[]]))); setReason(''); setError(''); setOpen(true); };
   const save = async () => {

@@ -20,6 +20,7 @@ interface DrawerProps {
   config: OrgConfig;
   staff: Staff[];
   actor: OrgActor;
+  onAppoint: (titleId?: string) => void;
   onEdit: (fn: (c: OrgConfig) => OrgConfig) => void;
   onEditDefaults: (unitId: string) => void;
   onClose: () => void;
@@ -99,7 +100,7 @@ function StaffMultiPicker({ config, staff, unitId, selected, onChange }: {
 }
 
 /** Drawer quản lý một đơn vị: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị. */
-export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefaults, onClose }: DrawerProps) {
+export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEditDefaults, onClose }: DrawerProps) {
   const unit = config.units.find(u => u.id === unitId);
   const [adding, setAdding] = useState(false);
   const [moving, setMoving] = useState(false);
@@ -202,7 +203,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                       <p className="text-xs text-muted-foreground">{holders.length ? holders.map(h => nameOf(h.user_id)).join(', ') : 'Chưa phân công'}</p>
                     </div>
                     {canAppoint && (
-                      <Button size="sm" variant="outline" onClick={() => { setAppointing(t.id); setAppointUser(''); setSpecialtyIds([]); }}>
+                      <Button size="sm" variant="outline" onClick={() => onAppoint(t.id)}>
                         <UserPlus className="mr-1.5 h-4 w-4" />{holders.length ? 'Thay đổi' : 'Bổ nhiệm'}
                       </Button>
                     )}
@@ -212,8 +213,8 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
             </div>
             {canAssign && (
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => { resetPick(); setAdding(true); }}><Plus className="mr-1.5 h-4 w-4" />Thêm nhân sự</Button>
-                <Button size="sm" variant="outline" onClick={() => { resetPick(); setMoveTitle(''); setConfirmManagerEnd(false); setSourceIds([]); setMoving(true); }}><ArrowRightLeft className="mr-1.5 h-4 w-4" />Điều chuyển nhân sự</Button>
+                <Button size="sm" onClick={() => onAppoint()}><Plus className="mr-1.5 h-4 w-4" />Thêm nhân sự</Button>
+                <Button size="sm" variant="outline" onClick={() => onAppoint()}><ArrowRightLeft className="mr-1.5 h-4 w-4" />Điều chuyển nhân sự</Button>
               </div>
             )}
             <div>
@@ -233,7 +234,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onEdit, onEditDefa
                   <Badge variant="outline" className="text-[10px] font-normal">{slotCapacity(t) === 1 ? 'Một người' : slotCapacity(t) > 1 ? `Tối đa ${slotCapacity(t)}` : 'Nhiều người'}</Badge>
                 </p>
                 {t.description && <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>}
-                <p className="mt-1 text-xs text-muted-foreground">Đang giữ: {titleHoldersCount(config, t.id)} người</p>
+                <p className="mt-1 text-xs text-muted-foreground">Đang giữ: {titleHoldersCount(config, t.id)} người</p>{(canAssign || canAppoint) && <Button size="sm" variant="outline" className="mt-2" onClick={()=>onAppoint(t.id)}>Bổ nhiệm / Thêm nhân sự</Button>}
               </div>
             ))}
             {!titles.length && <p className="py-4 text-sm text-muted-foreground">Chưa có chức danh — thêm tại Cài đặt → Chức vụ & Cấp bậc.</p>}

@@ -2395,6 +2395,20 @@
       "when": 1794366770251,
       "tag": "0341_final_snapshot_set_based",
       "breakpoints": true
+    },
+    {
+      "idx": 342,
+      "version": "7",
+      "when": 1794368229572,
+      "tag": "0342_standard_role_catalog_and_safe_setup",
+      "breakpoints": true
+    },
+    {
+      "idx": 343,
+      "version": "7",
+      "when": 1794368305794,
+      "tag": "0343_standard_role_catalog_source_validation",
+      "breakpoints": true
     }
   ]
 }

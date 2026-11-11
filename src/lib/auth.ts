@@ -999,6 +999,9 @@ export const SYSTEM_ADMIN_USERNAME = "Admin";
 
 // ============ Types ============
 export interface Role {
+  catalogState?: string;
+  catalogGroup?: string;
+  catalogPending?: string[];
   id: ID;
   name: string;
   description?: string;
@@ -1214,6 +1217,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       description: r.description ?? undefined,
       permissions: r.permissions ?? [],
       system: !!r.is_system,
+      catalogState: r.catalog_state,
+      catalogGroup: r.catalog_group ?? undefined,
+      catalogPending: r.catalog_pending ?? [],
     }));
     set({ users, roles, loaded: true });
     await Promise.all([get().refreshBizAccess(), get().refreshBaseAccess()]);
