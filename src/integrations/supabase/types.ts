@@ -6542,6 +6542,7 @@ export type Database = {
       }
       mkt_staff_specialties: {
         Row: {
+          eligibility_enforced: boolean
           is_primary: boolean
           origin: string
           source: Json
@@ -6553,6 +6554,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          eligibility_enforced?: boolean
           is_primary?: boolean
           origin: string
           source?: Json
@@ -6564,6 +6566,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          eligibility_enforced?: boolean
           is_primary?: boolean
           origin?: string
           source?: Json
@@ -11353,6 +11356,7 @@ export type Database = {
         Args: { _endpoint: string; _id: string }
         Returns: undefined
       }
+      role_actual_sources: { Args: { _target: string }; Returns: Json }
       role_catalog_change: {
         Args: {
           _action?: string

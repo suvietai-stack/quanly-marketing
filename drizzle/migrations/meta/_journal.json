@@ -2556,6 +2556,13 @@
       "when": 1794385169062,
       "tag": "0364_role_catalog_set_based_receiver_counts",
       "breakpoints": true
+    },
+    {
+      "idx": 365,
+      "version": "7",
+      "when": 1794385947895,
+      "tag": "0365_slot_source_resolver_and_task_eligibility",
+      "breakpoints": true
     }
   ]
 }
