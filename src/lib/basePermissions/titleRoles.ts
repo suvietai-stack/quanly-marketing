@@ -11,6 +11,8 @@ export const VERIFIED_APPOINTMENT_PERMISSIONS = [
   'oq.create','oq.accept','oq.reply_price','oq.reply_progress','oq.report_own','oq.view_own','oq.view_all','oq.manage','oq.report_all','oq.report_export',
   'ot.view_own','ot.task_view','ot.task_update','ot.stage_update','ot.accept','ot.assign','ot.create','ot.manage','ot.report','ot.report_export','ot.reschedule_propose','ot.reschedule_reply','ot.supplier','ot.view_all',
   'finance.incoming.view','finance.incoming.view_totals','finance.incoming.claim','finance.incoming.reconcile','finance.incoming.manual_view','finance.incoming.manual_create','finance.incoming.manual_manage','finance.incoming.manage','finance.incoming.remind',
+  'signal.sale','signal.report','signal.reassign','signal.view_all','signal.assign','signal.create','signal.edit','signal.manage','signal.delete','signal.catalog',
+  'biz.crm_use','biz.crm_access','biz.crm_view_scope','biz.crm_edit_other','biz.crm_transfer','biz.crm_archive','biz.crm_export','biz.crm_settings',
   'kpi.view_own','overview.view','overview.own_only','settings.view',
 ];
 export interface TitleLinkAudit { title_id: string; title_name: string; role_id: string; role_name: string; scope_kind: string; signature_valid: boolean; enabled: string[]; eligible: string[]; blocked: {key:string;reason:string}[] }
@@ -43,6 +45,13 @@ const suggestions: Record<string, string> = {
   'Trưởng phòng Mua hàng & Giao vận': 'Quản lý Mua hàng & Giao vận',
   'Nhân viên Thu mua': 'Thu mua',
   'Nhân viên Đóng hàng': 'Nhân viên Đóng hàng',
+  'Nhân viên Kinh doanh': 'Nhân viên Kinh doanh',
+  'Trưởng Phòng': 'Trưởng phòng Kinh doanh',
+  'Trưởng Nhóm': 'Nhân viên Kinh doanh',
+  'Nhân viên Marketing': 'Nhân viên Marketing',
+  'Giám Đốc': 'Viewer / Ban Giám Đốc',
+  'Giám Đốc Điều hành': 'Viewer / Ban Giám Đốc',
+  'Phó Giám Đốc Điều hành': 'Viewer / Ban Giám Đốc',
 };
 export function suggestedRole(title: string, roles: OriginalRole[]) {
   return roles.find(r => !r.restricted && r.name === suggestions[title]);
