@@ -58,3 +58,19 @@ it('rebind rejects lost or added specialty rights',async()=>{
  await expect(db.exec("select role_specialty_rebind('preview','photography','role-v2-design-staff')")).rejects.toThrow('đổi quyền');
  expect(await val("select role_id v from mkt_specialties where id='photography'")).toBe('old-design');
 });
+it('V2 specialty Role edits never rewrite canonical appointment signatures',async()=>{
+ await db.exec(`alter table org_assignments add column data jsonb default '{}',add column revision int default 1;
+ alter table base_title_role_links add column role_id text,add column enabled_permissions text[],add column permission_signature text,add column revision int,add column updated_at timestamptz,add column title_source text,add column title_id text;
+ create table profiles(id uuid);insert into profiles values('${admin}');
+ alter table user_roles add column user_id uuid,add column role_id text;
+ create table base_title_role_events(actor_id uuid,title_source text,title_id text,reason text,before_data jsonb,after_data jsonb);
+ create function private.org_role_permission_ready(text) returns boolean language sql as $$select true$$;
+ insert into org_assignments(id,data) values(1,'{"specialty_ids":["design"],"specialty_signatures":{"design":"old"}}');`);
+ const old=readFileSync('docs/role-v2-cutover-2026-11-11/rollback-signature-sync.sql','utf8');
+ await db.exec(old);
+ await db.exec(readFileSync('drizzle/migrations/0377_role_v2_task_edit_avoids_legacy_assignment_resign.sql','utf8'));
+ await db.exec('create trigger resign after update of permissions on app_roles for each row execute function private.base_role_links_resign()');
+ await db.exec("update app_roles set permissions='{order.view,order.take}' where id='role-v2-design-staff'");
+ expect(await val("select data->'specialty_signatures'->>'design' v from org_assignments where id=1")).toBe('old');
+ expect(await val('select revision v from org_assignments where id=1')).toBe(1);
+});
