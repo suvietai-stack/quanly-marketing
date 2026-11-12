@@ -43,6 +43,28 @@ beforeAll(async () => {
     CASE WHEN i%10=0 THEN 'won' ELSE 'consulting' END,CASE WHEN i%66=0 THEN now() ELSE NULL END FROM generate_series(1,665) i;`);
   await db.exec(definition('private.sig_scope_ok(uuid,text[])'));
   await db.exec(readFileSync('docs/signals-p0-2026-11-12/rollback.sql', 'utf8'));
+  await db.exec(`ALTER TABLE opportunity_signals ADD COLUMN assigned_at timestamptz, ADD COLUMN created_at timestamptz DEFAULT '2026-11-01', ADD COLUMN updated_at timestamptz DEFAULT '2026-11-09', ADD COLUMN detected_on date DEFAULT '2026-11-09', ADD COLUMN customer_name text DEFAULT 'Khách', ADD COLUMN phone text DEFAULT '0901234567', ADD COLUMN products text[] DEFAULT '{}', ADD COLUMN need_group text, ADD COLUMN source text DEFAULT 'Website', ADD COLUMN lost_reason text, ADD COLUMN potential text DEFAULT 'unrated', ADD COLUMN next_contact_on date, ADD COLUMN revenue numeric, ADD COLUMN closed_at timestamptz;
+  CREATE TABLE opportunity_signal_notes(id uuid DEFAULT gen_random_uuid(),signal_id uuid,note text,status_from text,status_to text,created_at timestamptz,event_type text,is_progression boolean);
+  CREATE TABLE opportunity_signal_events(id uuid DEFAULT gen_random_uuid(),signal_id uuid,kind text,detail jsonb,created_at timestamptz);
+  CREATE TABLE signal_label_links(signal_id uuid,label_id uuid);
+  ALTER TABLE opportunity_signal_notes ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE opportunity_signal_events ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE signal_label_links ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY scoped ON opportunity_signal_notes TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));
+  CREATE POLICY scoped ON opportunity_signal_events TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));
+  CREATE POLICY scoped ON signal_label_links TO authenticated USING(EXISTS(SELECT 1 FROM opportunity_signals s WHERE s.id=signal_id));
+  GRANT SELECT ON opportunity_signal_notes,opportunity_signal_events,signal_label_links TO authenticated;
+  CREATE FUNCTION signal_note_is_progression(_note text,_event text,_marker boolean) RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path=public AS $$ SELECT coalesce(_marker, coalesce(trim(_event),'') <> 'Đã tiếp nhận' AND (coalesce(trim(_note),'') <> '' OR coalesce(trim(_event),'') NOT IN ('','Đã tiếp nhận','Khác'))) $$;
+  INSERT INTO opportunity_signal_notes(signal_id,note,created_at,is_progression) SELECT id,'Ghi chú thật',created_at+interval '1 day',true FROM opportunity_signals LIMIT 50;
+  INSERT INTO opportunity_signal_events(signal_id,kind,detail,created_at) SELECT id,'assign',jsonb_build_object('to',assigned_to),created_at FROM opportunity_signals LIMIT 40;
+  INSERT INTO signal_label_links SELECT id,'${uid(100)}' FROM opportunity_signals LIMIT 20;`);
+  const base=readFileSync('drizzle/migrations/0274_signal_paged_filtered_reads.sql','utf8').split('\n')[0]
+    .replace('public.signal_filtered(', 'public.signal_base_filtered(')
+    .replace('SETOF public.signal_list_priority','SETOF public.opportunity_signals')
+    .replace('FROM signal_list_priority s','FROM opportunity_signals s');
+  await db.exec(base);
+  await db.exec(definition('signal_list_counts(jsonb)'));
+  await db.exec(definition('signal_list_page(jsonb,text,integer,integer)'));
 }, 60000);
 afterAll(() => db.close());
 
@@ -56,6 +78,7 @@ async function rows(n: number) {
 it('preserves the exact live scope truth table: direct, slot, signed/unsigned titles, fallback, Khác and multi-group', async () => {
   await db.exec(patch);
   for (const n of [1,2,3,4,5,6,7,8,9,10]) {
+    await db.exec(`SELECT set_config('test.uid','${uid(n)}',false);`);
     for (const groups of [null, [], ['Quà'], ['Other'], ['Other','Quà'], ['Khác:Web']]) {
       const r = (await db.query<{ old: boolean; next: boolean }>(`SELECT private.sig_scope_ok($1,$2) old,
         EXISTS(SELECT 1 FROM (SELECT private.sig_read_scope_context($1) value) c WHERE (value->>'all')::boolean OR
@@ -63,6 +86,9 @@ it('preserves the exact live scope truth table: direct, slot, signed/unsigned ti
       expect(r?.next).toBe(r?.old);
     }
   }
+  await db.exec(`SELECT set_config('test.uid','${uid(3)}',false); SET ROLE authenticated;`);
+  expect((await db.query<{v:{all:boolean;groups:string[]}}>('SELECT private.sig_read_scope_context($1) v',[uid(4)])).rows[0]?.v).toEqual({all:false,groups:[]});
+  await db.exec('RESET ROLE');
 });
 
 it('RLS parity across admin, bounded, DENY/no grant, assigned, creator and locked users; exact rollback', async () => {
@@ -90,6 +116,33 @@ it('statement context does not use client/session cache and reevaluates revoked 
   expect(await rows(3)).toEqual([]);
   await db.exec(`UPDATE grants SET allowed=true WHERE user_id='${uid(3)}'; UPDATE app_roles SET signal_scope=ARRAY['Quà','Khác'] WHERE id='bounded';`);
 });
+
+it('live 0371 invoker counts/page retain all facets, cancellation, eight sorts and pagination under each RLS caller',async()=>{
+  const filters=[{},{quick:'consulting'},{quick:'won'},{q:'Khách'},{q:'missing'},{needGroup:'Quà'},{needGroup:'Khác:Web'},{saleId:uid(8)},{creatorId:uid(10)},{stage:'advice'},{potential:'high'},{work:'action'},{cancelled:true},{from:'2026-11-09',to:'2026-11-09'},{labelId:uid(100)}];
+  const sorts=['work','priority','activity','newest','oldest','soonest','potential','value'];
+  const oldPolicy=readFileSync('docs/signals-p0-2026-11-12/rollback.sql','utf8');
+  const newPolicy=patch.slice(patch.indexOf('ALTER POLICY'));
+  for(const n of [1,3,5,7,8,9,10]){
+    await db.exec(oldPolicy);
+    await db.exec(`SELECT set_config('test.uid','${uid(n)}',false); SET ROLE authenticated;`);
+    const before=[];
+    for(const f of filters){
+      const counts=(await db.query('SELECT signal_list_counts($1) v',[f])).rows;
+      const pages=[];
+      for(const sort of sorts) for(const offset of [0,40]) pages.push((await db.query('SELECT signal_list_page($1,$2,$3,40) v',[f,sort,offset])).rows);
+      before.push({counts,pages});
+    }
+    await db.exec('RESET ROLE');await db.exec(newPolicy);await db.exec('SET ROLE authenticated');
+    for(const [i,f] of filters.entries()){
+      expect((await db.query('SELECT signal_list_counts($1) v',[f])).rows).toEqual(before[i]?.counts);
+      let j=0;
+      for(const sort of sorts) for(const offset of [0,40]) expect((await db.query('SELECT signal_list_page($1,$2,$3,40) v',[f,sort,offset])).rows).toEqual(before[i]?.pages[j++]);
+    }
+    await db.exec('RESET ROLE');
+  }
+  const metadata=(await db.query<{prosecdef:boolean}>("SELECT prosecdef FROM pg_proc WHERE oid IN ('signal_list_counts(jsonb)'::regprocedure,'signal_list_page(jsonb,text,integer,integer)'::regprocedure)")).rows;
+  expect(metadata).toEqual([{prosecdef:false},{prosecdef:false}]);
+},120000);
 
 it('admin avoids organization resolver and bounded scan has a once-per-statement InitPlan; benchmark 665 rows', async () => {
   await db.exec("SELECT set_config('test.forbid_sources','true',false)");

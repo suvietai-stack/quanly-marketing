@@ -1,8 +1,8 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## P0 Tín hiệu tái timeout — 12/11/2026, ưu tiên cao nhất
-- [ ] Tái hiện phiên được ủy quyền production/Preview desktop/iPad; đo request, lỗi, scope, health và resolver live chỉ đọc.
-- [ ] Bản vá cô lập: snapshot DDL/MD5/ACL/owner/policy, rollback; PGlite parity/RLS/DENY/8 sorts/pagination và benchmark.
+- [x] Đo production/Preview Admin desktop/iPad: counts963–5643ms/page1440–7256ms, không duplicate/57014 trong mẫu; scoped user chưa có phiên. App heartbeat/celebration ở mẫu đầu; probe sau chặn ghi tự động.
+- [x] SQL scope InitPlan self-only pending + exact snapshot/rollback;5tests mới+88hồi quy đạt,665-row isolated35→3ms,8sort/filter/paging parity; report docs/signals-p0-2026-11-12/report.md.
 - [ ] Migration mới: chờ owner duyệt riêng trước áp; không chạy lại 0371/pending cũ, không đổi dữ liệu/quyền hay Publish.
 - [ ] Nghiệm thu sau áp bằng phiên thật; report nguyên nhân/kết quả/giới hạn. Tạm dừng roadmap 3K/Role trong lượt này.
 

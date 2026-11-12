@@ -1,0 +1,889 @@
+[
+  {
+    "site": "preview",
+    "width": 1280,
+    "path": "/signals",
+    "elapsed_ms": 24266,
+    "requests": [
+      {
+        "endpoint": "reviews",
+        "status": 200,
+        "ms": 1089
+      },
+      {
+        "endpoint": "user_roles",
+        "status": 200,
+        "ms": 1125
+      },
+      {
+        "endpoint": "keywords",
+        "status": 200,
+        "ms": 1139
+      },
+      {
+        "endpoint": "map_posts",
+        "status": 200,
+        "ms": 1148
+      },
+      {
+        "endpoint": "places",
+        "status": 200,
+        "ms": 1155
+      },
+      {
+        "endpoint": "socials",
+        "status": 200,
+        "ms": 1188
+      },
+      {
+        "endpoint": "growth",
+        "status": 200,
+        "ms": 1201
+      },
+      {
+        "endpoint": "websites",
+        "status": 200,
+        "ms": 1213
+      },
+      {
+        "endpoint": "tasks",
+        "status": 200,
+        "ms": 1218
+      },
+      {
+        "endpoint": "profiles",
+        "status": 200,
+        "ms": 1229
+      },
+      {
+        "endpoint": "web_topics",
+        "status": 200,
+        "ms": 1228
+      },
+      {
+        "endpoint": "user_permission_overrides",
+        "status": 200,
+        "ms": 1235
+      },
+      {
+        "endpoint": "brands",
+        "status": 200,
+        "ms": 1340
+      },
+      {
+        "endpoint": "rpc/get_profiles_directory",
+        "status": 200,
+        "ms": 1346
+      },
+      {
+        "endpoint": "backlinks",
+        "status": 200,
+        "ms": 1347
+      },
+      {
+        "endpoint": "entities",
+        "status": 200,
+        "ms": 1349
+      },
+      {
+        "endpoint": "app_branding",
+        "status": 200,
+        "ms": 1649
+      },
+      {
+        "endpoint": "web_contents",
+        "status": 200,
+        "ms": 1645
+      },
+      {
+        "endpoint": "videos",
+        "status": 200,
+        "ms": 1660
+      },
+      {
+        "endpoint": "app_roles",
+        "status": 200,
+        "ms": 1666
+      },
+      {
+        "endpoint": "orders",
+        "status": 200,
+        "ms": 1687
+      },
+      {
+        "endpoint": "seo_checks",
+        "status": 200,
+        "ms": 1759
+      },
+      {
+        "endpoint": "social_posts",
+        "status": 200,
+        "ms": 1936
+      },
+      {
+        "endpoint": "rpc/biz_effective_access",
+        "status": 200,
+        "ms": 518
+      },
+      {
+        "endpoint": "profiles",
+        "status": 204,
+        "ms": 1109
+      },
+      {
+        "endpoint": "rpc/base_permissions_effective",
+        "status": 200,
+        "ms": 1428
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 491
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 360
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 365
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 389
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 400
+      },
+      {
+        "endpoint": "signal_labels",
+        "status": 200,
+        "ms": 420
+      },
+      {
+        "endpoint": "rpc/biz_approvals_read",
+        "status": 200,
+        "ms": 482
+      },
+      {
+        "endpoint": "notifications",
+        "status": 200,
+        "ms": 551
+      },
+      {
+        "endpoint": "rpc/approval_center_read",
+        "status": 200,
+        "ms": 986
+      },
+      {
+        "endpoint": "rpc/signal_list_counts",
+        "status": 200,
+        "ms": 1054
+      },
+      {
+        "endpoint": "rpc/signal_list_page",
+        "status": 200,
+        "ms": 1615
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 365
+      },
+      {
+        "endpoint": "rpc/signal_change_token",
+        "status": 200,
+        "ms": 1019
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 356
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 324
+      }
+    ],
+    "after_focus": [
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 324
+      }
+    ],
+    "alerts": [],
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "site": "preview",
+    "width": 1024,
+    "path": "/signals",
+    "elapsed_ms": 24191,
+    "requests": [
+      {
+        "endpoint": "websites",
+        "status": 200,
+        "ms": 928
+      },
+      {
+        "endpoint": "keywords",
+        "status": 200,
+        "ms": 948
+      },
+      {
+        "endpoint": "user_roles",
+        "status": 200,
+        "ms": 955
+      },
+      {
+        "endpoint": "tasks",
+        "status": 200,
+        "ms": 982
+      },
+      {
+        "endpoint": "entities",
+        "status": 200,
+        "ms": 1059
+      },
+      {
+        "endpoint": "rpc/get_profiles_directory",
+        "status": 200,
+        "ms": 1082
+      },
+      {
+        "endpoint": "user_permission_overrides",
+        "status": 200,
+        "ms": 1154
+      },
+      {
+        "endpoint": "growth",
+        "status": 200,
+        "ms": 1151
+      },
+      {
+        "endpoint": "socials",
+        "status": 200,
+        "ms": 1155
+      },
+      {
+        "endpoint": "reviews",
+        "status": 200,
+        "ms": 1232
+      },
+      {
+        "endpoint": "places",
+        "status": 200,
+        "ms": 1234
+      },
+      {
+        "endpoint": "backlinks",
+        "status": 200,
+        "ms": 1235
+      },
+      {
+        "endpoint": "map_posts",
+        "status": 200,
+        "ms": 1237
+      },
+      {
+        "endpoint": "brands",
+        "status": 200,
+        "ms": 1239
+      },
+      {
+        "endpoint": "web_topics",
+        "status": 200,
+        "ms": 1236
+      },
+      {
+        "endpoint": "profiles",
+        "status": 200,
+        "ms": 1271
+      },
+      {
+        "endpoint": "web_contents",
+        "status": 200,
+        "ms": 1505
+      },
+      {
+        "endpoint": "app_roles",
+        "status": 200,
+        "ms": 1519
+      },
+      {
+        "endpoint": "seo_checks",
+        "status": 200,
+        "ms": 1518
+      },
+      {
+        "endpoint": "orders",
+        "status": 200,
+        "ms": 1571
+      },
+      {
+        "endpoint": "videos",
+        "status": 200,
+        "ms": 1573
+      },
+      {
+        "endpoint": "app_branding",
+        "status": 200,
+        "ms": 1578
+      },
+      {
+        "endpoint": "social_posts",
+        "status": 200,
+        "ms": 1644
+      },
+      {
+        "endpoint": "profiles",
+        "status": 204,
+        "ms": 378
+      },
+      {
+        "endpoint": "rpc/biz_effective_access",
+        "status": 200,
+        "ms": 444
+      },
+      {
+        "endpoint": "rpc/base_permissions_effective",
+        "status": 200,
+        "ms": 1540
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 420
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 342
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 394
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 400
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 407
+      },
+      {
+        "endpoint": "rpc/biz_approvals_read",
+        "status": 200,
+        "ms": 431
+      },
+      {
+        "endpoint": "signal_labels",
+        "status": 200,
+        "ms": 477
+      },
+      {
+        "endpoint": "notifications",
+        "status": 200,
+        "ms": 528
+      },
+      {
+        "endpoint": "rpc/approval_center_read",
+        "status": 200,
+        "ms": 1248
+      },
+      {
+        "endpoint": "rpc/signal_list_counts",
+        "status": 200,
+        "ms": 1316
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 679
+      },
+      {
+        "endpoint": "rpc/signal_list_page",
+        "status": 200,
+        "ms": 6138
+      },
+      {
+        "endpoint": "rpc/signal_change_token",
+        "status": 200,
+        "ms": 2755
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 358
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 333
+      }
+    ],
+    "after_focus": [
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 333
+      }
+    ],
+    "alerts": [],
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "site": "production",
+    "width": 1280,
+    "path": "/signals",
+    "elapsed_ms": 24289,
+    "requests": [
+      {
+        "endpoint": "entities",
+        "status": 200,
+        "ms": 956
+      },
+      {
+        "endpoint": "websites",
+        "status": 200,
+        "ms": 966
+      },
+      {
+        "endpoint": "rpc/get_profiles_directory",
+        "status": 200,
+        "ms": 1046
+      },
+      {
+        "endpoint": "user_roles",
+        "status": 200,
+        "ms": 1050
+      },
+      {
+        "endpoint": "reviews",
+        "status": 200,
+        "ms": 1076
+      },
+      {
+        "endpoint": "web_topics",
+        "status": 200,
+        "ms": 1087
+      },
+      {
+        "endpoint": "backlinks",
+        "status": 200,
+        "ms": 1089
+      },
+      {
+        "endpoint": "socials",
+        "status": 200,
+        "ms": 1094
+      },
+      {
+        "endpoint": "places",
+        "status": 200,
+        "ms": 1111
+      },
+      {
+        "endpoint": "keywords",
+        "status": 200,
+        "ms": 1118
+      },
+      {
+        "endpoint": "profiles",
+        "status": 200,
+        "ms": 1189
+      },
+      {
+        "endpoint": "growth",
+        "status": 200,
+        "ms": 1187
+      },
+      {
+        "endpoint": "brands",
+        "status": 200,
+        "ms": 1233
+      },
+      {
+        "endpoint": "map_posts",
+        "status": 200,
+        "ms": 1233
+      },
+      {
+        "endpoint": "user_permission_overrides",
+        "status": 200,
+        "ms": 1237
+      },
+      {
+        "endpoint": "tasks",
+        "status": 200,
+        "ms": 1237
+      },
+      {
+        "endpoint": "app_roles",
+        "status": 200,
+        "ms": 1451
+      },
+      {
+        "endpoint": "orders",
+        "status": 200,
+        "ms": 1470
+      },
+      {
+        "endpoint": "app_branding",
+        "status": 200,
+        "ms": 1550
+      },
+      {
+        "endpoint": "videos",
+        "status": 200,
+        "ms": 1554
+      },
+      {
+        "endpoint": "web_contents",
+        "status": 200,
+        "ms": 1631
+      },
+      {
+        "endpoint": "seo_checks",
+        "status": 200,
+        "ms": 1694
+      },
+      {
+        "endpoint": "profiles",
+        "status": 204,
+        "ms": 386
+      },
+      {
+        "endpoint": "rpc/biz_effective_access",
+        "status": 200,
+        "ms": 451
+      },
+      {
+        "endpoint": "social_posts",
+        "status": 200,
+        "ms": 1922
+      },
+      {
+        "endpoint": "rpc/base_permissions_effective",
+        "status": 200,
+        "ms": 1716
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 325
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 324
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 339
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 347
+      },
+      {
+        "endpoint": "rpc/biz_approvals_read",
+        "status": 200,
+        "ms": 347
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 368
+      },
+      {
+        "endpoint": "signal_labels",
+        "status": 200,
+        "ms": 383
+      },
+      {
+        "endpoint": "notifications",
+        "status": 200,
+        "ms": 420
+      },
+      {
+        "endpoint": "rpc/signal_list_counts",
+        "status": 200,
+        "ms": 963
+      },
+      {
+        "endpoint": "rpc/approval_center_read",
+        "status": 200,
+        "ms": 1096
+      },
+      {
+        "endpoint": "rpc/signal_list_page",
+        "status": 200,
+        "ms": 1440
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 343
+      },
+      {
+        "endpoint": "rpc/signal_change_token",
+        "status": 200,
+        "ms": 1238
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 315
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 311
+      }
+    ],
+    "after_focus": [
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 311
+      }
+    ],
+    "alerts": [],
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "site": "production",
+    "width": 1024,
+    "path": "/signals",
+    "elapsed_ms": 24838,
+    "requests": [
+      {
+        "endpoint": "app_branding",
+        "status": 200,
+        "ms": 1765
+      },
+      {
+        "endpoint": "entities",
+        "status": 200,
+        "ms": 2177
+      },
+      {
+        "endpoint": "places",
+        "status": 200,
+        "ms": 2342
+      },
+      {
+        "endpoint": "map_posts",
+        "status": 200,
+        "ms": 2343
+      },
+      {
+        "endpoint": "user_permission_overrides",
+        "status": 200,
+        "ms": 2399
+      },
+      {
+        "endpoint": "backlinks",
+        "status": 200,
+        "ms": 2396
+      },
+      {
+        "endpoint": "rpc/get_profiles_directory",
+        "status": 200,
+        "ms": 2439
+      },
+      {
+        "endpoint": "web_topics",
+        "status": 200,
+        "ms": 2489
+      },
+      {
+        "endpoint": "videos",
+        "status": 200,
+        "ms": 2810
+      },
+      {
+        "endpoint": "profiles",
+        "status": 200,
+        "ms": 2857
+      },
+      {
+        "endpoint": "growth",
+        "status": 200,
+        "ms": 2987
+      },
+      {
+        "endpoint": "keywords",
+        "status": 200,
+        "ms": 2990
+      },
+      {
+        "endpoint": "socials",
+        "status": 200,
+        "ms": 2995
+      },
+      {
+        "endpoint": "reviews",
+        "status": 200,
+        "ms": 3007
+      },
+      {
+        "endpoint": "user_roles",
+        "status": 200,
+        "ms": 3076
+      },
+      {
+        "endpoint": "websites",
+        "status": 200,
+        "ms": 3115
+      },
+      {
+        "endpoint": "brands",
+        "status": 200,
+        "ms": 3153
+      },
+      {
+        "endpoint": "social_posts",
+        "status": 200,
+        "ms": 3158
+      },
+      {
+        "endpoint": "tasks",
+        "status": 200,
+        "ms": 3221
+      },
+      {
+        "endpoint": "seo_checks",
+        "status": 200,
+        "ms": 3237
+      },
+      {
+        "endpoint": "app_roles",
+        "status": 200,
+        "ms": 3474
+      },
+      {
+        "endpoint": "web_contents",
+        "status": 200,
+        "ms": 3549
+      },
+      {
+        "endpoint": "orders",
+        "status": 200,
+        "ms": 3632
+      },
+      {
+        "endpoint": "rpc/biz_effective_access",
+        "status": 200,
+        "ms": 1227
+      },
+      {
+        "endpoint": "profiles",
+        "status": 204,
+        "ms": 1228
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 950
+      },
+      {
+        "endpoint": "rpc/base_permissions_effective",
+        "status": 200,
+        "ms": 3234
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 2292
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 2730
+      },
+      {
+        "endpoint": "rpc/biz_approvals_read",
+        "status": 200,
+        "ms": 3235
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 2192
+      },
+      {
+        "endpoint": "notifications",
+        "status": 200,
+        "ms": 4417
+      },
+      {
+        "endpoint": "rpc/signal_list_counts",
+        "status": 200,
+        "ms": 5643
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 5863
+      },
+      {
+        "endpoint": "catalogs",
+        "status": 200,
+        "ms": 6367
+      },
+      {
+        "endpoint": "signal_labels",
+        "status": 200,
+        "ms": 7180
+      },
+      {
+        "endpoint": "rpc/signal_list_page",
+        "status": 200,
+        "ms": 7256
+      },
+      {
+        "endpoint": "rpc/approval_center_read",
+        "status": 200,
+        "ms": 8508
+      },
+      {
+        "endpoint": "rpc/signal_change_token",
+        "status": 200,
+        "ms": 2847
+      },
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 1113
+      }
+    ],
+    "after_focus": [
+      {
+        "endpoint": "rpc/sao_celebration_claim",
+        "status": 200,
+        "ms": 1113
+      }
+    ],
+    "alerts": [],
+    "errors": [],
+    "overflow": false
+  }
+]

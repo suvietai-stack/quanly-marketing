@@ -1,0 +1,162 @@
+{
+  "reads": [
+    {
+      "label": "id-only limit 1",
+      "ms": 358,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 1
+    },
+    {
+      "label": "id-only limit 40",
+      "ms": 386,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "id-only limit 665",
+      "ms": 965,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 665
+    },
+    {
+      "label": "counts 0",
+      "ms": 706,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": 655,
+      "rows": null
+    },
+    {
+      "label": "page 0",
+      "ms": 1205,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "counts 1",
+      "ms": 662,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": 655,
+      "rows": null
+    },
+    {
+      "label": "page 1",
+      "ms": 1238,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "counts 2",
+      "ms": 746,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": 655,
+      "rows": null
+    },
+    {
+      "label": "page 2",
+      "ms": 1540,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort work",
+      "ms": 1558,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort priority",
+      "ms": 1249,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort activity",
+      "ms": 1349,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort newest",
+      "ms": 1554,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort oldest",
+      "ms": 1419,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort soonest",
+      "ms": 1529,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort potential",
+      "ms": 2220,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    },
+    {
+      "label": "sort value",
+      "ms": 2620,
+      "status": 200,
+      "code": null,
+      "message": null,
+      "total": null,
+      "rows": 40
+    }
+  ],
+  "blocked_app_writes": [
+    "profiles heartbeat",
+    "sao_celebration_claim",
+    "sao_celebration_claim"
+  ]
+}

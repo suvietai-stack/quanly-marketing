@@ -4,11 +4,13 @@ SET LOCAL lock_timeout = '2s';
 DO $$ BEGIN
   IF md5(pg_get_functiondef('private.sig_scope_ok(uuid,text[])'::regprocedure)) <> '319bb21470d346ad639a1758ae7e13e4'
   THEN RAISE EXCEPTION 'Signal scope changed since snapshot; re-audit required'; END IF;
+  IF (SELECT md5(qual) FROM pg_policies WHERE schemaname='public' AND tablename='opportunity_signals' AND policyname='sig_select') IS DISTINCT FROM 'b40a5cec6cf98a86495a46262d5189a8'
+  THEN RAISE EXCEPTION 'Signal read policy changed since snapshot; re-audit required'; END IF;
 END $$;
 
 CREATE FUNCTION private.sig_read_scope_context(_uid uuid)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-SELECT CASE WHEN _uid IS NULL THEN jsonb_build_object('all',false,'groups','[]'::jsonb)
+SELECT CASE WHEN _uid IS NULL OR _uid IS DISTINCT FROM auth.uid() THEN jsonb_build_object('all',false,'groups','[]'::jsonb)
 WHEN private.is_super_admin(_uid) OR private.is_admin(_uid)
 THEN jsonb_build_object('all',true,'groups','[]'::jsonb)
 ELSE (
