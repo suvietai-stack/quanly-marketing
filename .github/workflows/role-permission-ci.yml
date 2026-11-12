@@ -30,6 +30,6 @@ jobs:
       - name: Verify staged permission SQL integrity
         run: node scripts/check-role-510-package.mjs
       - name: Test Role/permission gates without production database
-        run: bunx vitest run src/lib/basePermissions/directRoleAssignment.test.ts src/lib/basePermissions/permissionEditor.test.ts src/lib/basePermissions/permissionFull.database.test.ts src/lib/basePermissions/dormantReactivation.database.test.ts src/lib/basePermissions/legacyDeleteGuards.database.test.ts src/lib/basePermissions/roleV1Retirement.database.test.ts
+        run: bunx vitest run src/lib/basePermissions/directRoleAssignment.test.ts src/lib/basePermissions/permissionEditor.test.ts src/lib/basePermissions/permissionFull.database.test.ts src/lib/basePermissions/dormantReactivation.database.test.ts src/lib/basePermissions/legacyDeleteGuards.database.test.ts src/lib/basePermissions/legacyRoleRetirement.database.test.ts src/lib/basePermissions/roleV1Retirement.database.test.ts
       - name: Build frontend
         run: bun run build
