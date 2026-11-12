@@ -328,3 +328,5 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 - [x] Stage riêng docs/leave-set-based-2026-11-12: owner-set theo statement, fixture parity/DENY/interval/closure/creator/approver/own;30 sequential fixture benchmark;backup/SHA/rollback. Không áp SQL.
 - [x] Earlier d5bbb4b3 release superseded by ecf2aab2 published/live confirmed above; no repeat deployment needed.
 - [ ] E2E nhân viên thật: BLOCKED chỉ có phiên Super Admin được cấp; SQL live EXPLAIN/parity BLOCKED private function EXECUTE của công cụ đọc. Không mở grant/impersonation; native DENY/full source parity còn cần xác minh trước SQL approval.
+
+- [ ] P0 universal grantability SQL e818e8af… staged — waiting owner approval of exact SHA
