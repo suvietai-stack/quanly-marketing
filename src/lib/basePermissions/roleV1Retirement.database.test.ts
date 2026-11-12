@@ -23,6 +23,7 @@ beforeAll(async () => {
     CREATE TABLE base_title_role_links(id uuid PRIMARY KEY,role_id text NOT NULL REFERENCES app_roles(id),
       active boolean NOT NULL DEFAULT false);
     CREATE TABLE user_roles(user_id uuid,role_id text NOT NULL REFERENCES app_roles(id));
+    CREATE TABLE profiles(id uuid PRIMARY KEY,status text);
     CREATE FUNCTION public.account_approve(_target uuid,_role text DEFAULT NULL::text)
       RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public','private'
       AS $$ BEGIN RETURN '{}'::jsonb; END $$;
