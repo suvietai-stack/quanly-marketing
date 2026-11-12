@@ -16,5 +16,10 @@ Authenticated existing Super Admin, no impersonation, desktop 1280x1800 and mobi
 - Test artifacts under /tmp/browser/leave-scoped (temporary). No live request was created, edited, approved or cancelled.
 - Ordinary employee authenticated E2E is UNTESTED: provided session is Super Admin. Deterministic filter, permission-tab and actor cancellation tests cover the code paths without employee JWT impersonation; they do not establish production employee RLS performance.
 
-## Remaining verification
-Publish and production filtered HTTP smoke pending at initial report creation. Backend scope/RLS is unchanged and may still need separately approved optimization; do not claim ordinary employees universally fixed before authorized employee E2E.
+## Tests and production verification
+- Code commit ecf2aab2. All 67 Leave tests pass; automatic build OK including 10:07:02 UTC.
+- Full suite: 1846 pass, 5 fail across launcher.test.ts (2), mobileShell.test.ts (1), biz/my-work.database.test.ts (2). These are the previously reported unrelated navigation/time-dependent failures; no files involved in those failures were changed here. They remain unresolved, not a clean full-suite result.
+- Published once. Production https://base.suviet.vn/leave HTTP 200 at 10:07:02 UTC, full header `psr2.8767c1a2-107e-4006-9019-047ad5378a2f.1795082821.dYKlynA6tnirCIuqHIJvo4iFTR_F7jinSdkEcnREwG8`; core deployment identifier 8767c1a2-107e-4006-9019-047ad5378a2f. The signed header suffix is request-specific; browser behavior, not header alone, confirms the scoped code is live.
+- Two fresh desktop/mobile production rounds as existing authorized Super Admin: exactly one owner-filtered initial GET, one approver-filtered GET when selected, one unfiltered RLS manage GET when selected, report cache reuse with no extra GET. Confirmatory round observed all six GETs HTTP 200, no page errors, no retry buttons or loading spinner at report completion. Navigation/auth/3s wait-inclusive initial elapsed 6.606s desktop / 5.605s mobile; these are NOT endpoint timings or employee benchmarks.
+- Ordinary employee authenticated E2E remains UNTESTED; no employee JWT impersonation. Backend scope/RLS unchanged and may still need separately approved optimization; do not claim ordinary employees universally fixed before authorized employee E2E.
+- No SQL/migration/Role/personnel/leave writes, and no change to other staged candidates.
