@@ -10,6 +10,7 @@ it('every one of the 17 business admin keys sits in exactly one of 5 subgroups, 
   expect(grouped).toEqual(real);
   expect(bizSubgroupOf('biz.crm_use')).toBeUndefined();
 });
-it('no default Role proposes business admin keys while the server does not accept them from Roles', () => {
-  for (const p of defaultRolePresets) expect(p.keys.filter(k => bizSubgroupOf(k))).toEqual([]);
+it('default Roles propose only scoped view/submission business keys, never approval, management or all-block', () => {
+  const allowed = new Set(['biz.view_own', 'biz.view_dept', 'biz.goal_submit', 'biz.plan_submit', 'biz.report_submit']);
+  for (const p of defaultRolePresets) expect(p.keys.filter(k => bizSubgroupOf(k) && !allowed.has(k))).toEqual([]);
 });

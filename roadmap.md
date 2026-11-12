@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Tiếp tục sau kiểm tra live 12/11 — SQL chỉ PENDING
+- [x] Audit ánh xạ ID/source org↔biz (3 hệ, 4 phòng, 0 nhóm), backup đủ 14 cổng + checksum; không chạy lại 0379–0382.
+- [x] SQL PENDING Role V2 + scope cùng nguồn + DENY/reset/auth, rollback; 12 PGlite restricted-user/RLS tests đạt.
+- [x] Preset Sales nháp tối giản; policy máy chủ vẫn tự loại quyền chưa mở, không duyệt/xem toàn Khối.
+- [x] Nhiều nhân viên/vị trí test; 342 hồi quy quyền/cache/Marketing/CRM/3K/Tín hiệu; Preview read-only không lỗi/tràn ngang.
+- [ ] Áp SQL live: BLOCKED — cần duyệt migration, rồi nối riêng nộp KR/Kế hoạch/Báo cáo, diff từng người và phiên nhân viên scoped.
+- [ ] Mở 10 ô Biz trong ma trận/áp preset live, xóa legacy, Publish: chờ bước trên.
+
 ## Mô hình vị trí nhiều người — 15:32 UTC (THAY THẾ cutover theo ô)
 - [x] Dừng tạo ô theo người trên giao diện; rà 25 ô → 16 vị trí, 0 xung đột Role, 24 người.
 - [x] Kế hoạch + dry-run + rollback: docs/position-model-2026-11-11/.

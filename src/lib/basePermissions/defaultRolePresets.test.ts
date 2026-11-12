@@ -70,3 +70,15 @@ it('responsible HR draft retains assigned leave approval but never finance appro
   expect(p?.keys).toContain('leave.approve');
   expect(p?.keys.filter(k => /settings|export|finance|delete/.test(k))).toEqual([]);
 });
+it('Sales business suggestions are minimal, policy-gated and never automatically propose approval or all-block access', () => {
+  for (const level of ['staff', 'team', 'head', 'director']) {
+    const p = defaultRolePresets.find(p => p.roleId === `role-v2-sales-${level}`);
+    expect(p?.keys.filter(k => /biz\..*(approve|manage)|biz\.view_all/.test(k))).toEqual([]);
+    if (level === 'staff') expect(p?.keys).not.toContain('biz.view_dept');
+    else expect(p?.keys).toContain('biz.view_dept');
+    const d = defaultRoleImpact(role(`role-v2-sales-${level}`, ['biz.crm_use']), []);
+    expect(d?.added).toEqual([]);
+    expect(d?.unavailable).toContain(level === 'staff' ? 'biz.goal_submit' : 'biz.view_dept');
+  }
+  expect(defaultRolePresets.find(p => p.roleId === 'role-v2-sales-director')?.keys).not.toContain('biz.goal_submit');
+});

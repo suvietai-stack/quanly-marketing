@@ -1,0 +1,72 @@
+[
+  {
+    "schema": "public",
+    "name": "biz_step_scope_ok",
+    "md5": "3cf0e08a182a337ae25359cbef120be8"
+  },
+  {
+    "schema": "public",
+    "name": "biz_participant",
+    "md5": "a0a53878e86985d41d012ed13db026e5"
+  },
+  {
+    "schema": "public",
+    "name": "biz_can",
+    "md5": "f6eda4b5951bc99ff315f7d2862c9559"
+  },
+  {
+    "schema": "public",
+    "name": "biz_all_scope",
+    "md5": "7e23945aea087b09c0c03cb9dbc383c0"
+  },
+  {
+    "schema": "private",
+    "name": "legacy_business_allowed",
+    "md5": "db3e9d158b2176711a2e0fabe087b956"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goal_can_read",
+    "md5": "751d9be4706b91a4f26b1829afb33633"
+  },
+  {
+    "schema": "public",
+    "name": "biz_department_access",
+    "md5": "a19fe009ee1cd36f3e5d7b63a8c05c73"
+  },
+  {
+    "schema": "public",
+    "name": "biz_member_access",
+    "md5": "3bbdb20a410430b8ec4bae31f3e74e80"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goal_can_review",
+    "md5": "bb3053ba947c2c1423a1db2a5912d760"
+  },
+  {
+    "schema": "public",
+    "name": "biz_doc_access",
+    "md5": "57e6a3d9757111a17d57c27e8c86534b"
+  },
+  {
+    "schema": "public",
+    "name": "biz_scope_ok",
+    "md5": "81107f07c3d74cc824947b40c7a3892d"
+  },
+  {
+    "schema": "private",
+    "name": "permission_editor_policy",
+    "md5": "c11f9a01d1b9b2a56b990e365d9fd7af"
+  },
+  {
+    "schema": "public",
+    "name": "permission_editor_read",
+    "md5": "a05bdf849369af3837f4a7f6d482660b"
+  },
+  {
+    "schema": "private",
+    "name": "org_role_permission_ready",
+    "md5": "dc24adec9021ac7b73f987c8659c8b4b"
+  }
+]

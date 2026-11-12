@@ -9,7 +9,7 @@ export const bizSubgroups = [
 ] as const;
 // Viewing KR, plans and reports reuses the shared Dashboard view scope; no separate view keys exist.
 export const bizViewNote = 'Xem KR, Kế hoạch, Báo cáo dùng chung phạm vi xem ở Dashboard (cá nhân / phòng / toàn Khối).';
-export const bizSourceNote = 'Máy chủ hiện cấp quyền này theo bổ nhiệm Kinh doanh, chưa nhận từ Role. Chưa thể tích trong Role.';
+export const bizSourceNote = 'Phạm vi theo đơn vị của chính bổ nhiệm. Quyền chưa được máy chủ xác minh vẫn khóa.';
 export function bizSubgroupOf(key: string) {
   return bizSubgroups.find(g => (g.keys as readonly string[]).includes(key))?.id ?? (key.startsWith('biz.') && !key.startsWith('biz.crm_') ? 'other' : undefined);
 }

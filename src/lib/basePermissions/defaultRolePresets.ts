@@ -6,15 +6,18 @@ import { permissionDelta, presetPermissions } from './permissionEditor';
 const personal = ['att.create', 'att.view_own', 'leave.create', 'leave.view_own', 'leave.recall'];
 const ownTasks = ['task.view', 'task.view_mine', 'task.accept', 'task.start', 'task.update_result', 'task.submit_completion', 'task.resubmit_completion', 'task.view_history', 'task.add_note'];
 const sales = ['biz.crm_use', 'signal.sale', 'oq.create', 'oq.view_own', 'oq.accept', 'oq.report_own', 'ot.view_own'];
+// Draft suggestions only: unavailable additions are removed by live editor policy below.
+const salesPersonalBiz = ['biz.view_own', 'biz.goal_submit', 'biz.plan_submit', 'biz.report_submit'];
+const salesManagedBiz = ['biz.view_dept'];
 const designer = ['order.view', 'order.view_mine', 'order.take', 'order.update_draft', 'order.submit', 'order.resubmit', 'order.deliver', 'order.history', 'order.open_delivery'];
 const supply = ['oq.view_own', 'oq.accept', 'oq.reply_price', 'oq.reply_progress', 'oq.report_own', 'ot.view_own', 'ot.task_view', 'ot.task_update', 'ot.reschedule_reply'];
 const packing = ['ot.view_own', 'ot.task_view', 'ot.accept', 'ot.task_update', 'ot.stage_update', 'ot.reschedule_reply'];
 const finance = ['finance.incoming.view', 'finance.incoming.manual_view'];
 export const defaultRolePresets = [
-  { roleId: 'role-v2-sales-director', name: 'Giám đốc Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
-  { roleId: 'role-v2-sales-head', name: 'Trưởng phòng Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
-  { roleId: 'role-v2-sales-team', name: 'Trưởng nhóm Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
-  { roleId: 'role-v2-sales-staff', name: 'Nhân viên Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, 'finance.incoming.view', 'finance.incoming.claim', 'finance.incoming.manual_view'] },
+  { roleId: 'role-v2-sales-director', name: 'Giám đốc Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, ...salesManagedBiz, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
+  { roleId: 'role-v2-sales-head', name: 'Trưởng phòng Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, ...salesPersonalBiz, ...salesManagedBiz, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
+  { roleId: 'role-v2-sales-team', name: 'Trưởng nhóm Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, ...salesPersonalBiz, ...salesManagedBiz, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
+  { roleId: 'role-v2-sales-staff', name: 'Nhân viên Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...personal, ...sales, ...salesPersonalBiz, 'finance.incoming.view', 'finance.incoming.claim', 'finance.incoming.manual_view'] },
   { roleId: 'role-v2-design-head', name: 'Trưởng phòng Thiết kế', group: 'Thiết kế', kind: 'position', keys: [...personal, ...designer, 'leave.view_unit'] },
   { roleId: 'role-v2-design-staff', name: 'Nhân viên Thiết kế', group: 'Thiết kế', kind: 'position', keys: [...personal, ...designer] },
   { roleId: 'role-v2-mkt-director', name: 'Giám đốc Marketing', group: 'Marketing', kind: 'position', keys: [...personal, ...ownTasks, 'leave.view_unit'] },
