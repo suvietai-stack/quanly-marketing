@@ -14,16 +14,16 @@ export function DesignWorkflowSummary({ order }: { order: DesignOrder }) {
   const index = stages.findIndex((s) => s.key === stage);
   return (
     <section
-      className="space-y-3 rounded-xl border bg-muted/25 p-3 sm:p-4"
+      className="min-w-0 space-y-3 rounded-xl border bg-muted/25 p-3 sm:p-4"
       aria-label="Tiến trình công việc"
     >
       <div className="overflow-x-auto pb-1">
-        <ol className="grid min-w-[460px] grid-cols-5 gap-2">
+        <ol className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-5">
           {stages.map((s, i) => (
             <li
               key={s.key}
               aria-current={s.key === stage ? "step" : undefined}
-              className={`flex items-center gap-2 rounded-md px-2 py-2 text-xs ${s.key === stage ? "bg-primary text-primary-foreground font-semibold" : i < index ? "text-primary" : "text-muted-foreground"}`}
+              className={`flex min-w-0 items-center gap-2 rounded-md px-2 py-2 text-xs ${s.key === stage ? "bg-primary text-primary-foreground font-semibold" : i < index ? "text-primary" : "text-muted-foreground"}`}
             >
               <span
                 className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${s.key === stage ? "border-primary-foreground/50" : "border-current/25"}`}
@@ -56,7 +56,7 @@ export function DesignWorkflowSummary({ order }: { order: DesignOrder }) {
           </strong>
         </p>
         <p
-          className={`flex items-center gap-2 ${designOverdue(order) ? "text-destructive" : ""}`}
+          className={`flex min-w-0 items-center gap-2 ${designOverdue(order) ? "text-destructive" : ""}`}
         >
           <CalendarDays className="size-3.5 shrink-0" />
           {order.deadline

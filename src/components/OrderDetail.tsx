@@ -224,7 +224,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="design-mobile-dialog max-w-4xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 flex-wrap">
             <span>{order.title}</span>
@@ -334,7 +334,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               <DesignAttachments orderId={order.id} flow={o.workflowKind} value={o.inputAttachments || []} onChange={inputAttachments=>setField({inputAttachments})} disabled={!canEdit} onBusy={setUploading}/>
             </div>
 
-            <div className="flex justify-between items-center pt-2">
+            <div className="flex flex-col items-stretch justify-between gap-3 pt-2 sm:flex-row sm:items-center">
               <div className="text-xs text-muted-foreground">
                 Tạo: {fmtDate(order.takenAt) === "—" ? "—" : ""}
                 {order.takenAt && <>Nhận: {fmtDate(order.takenAt)} · </>}

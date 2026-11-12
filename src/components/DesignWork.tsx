@@ -411,7 +411,7 @@ export function DesignWork({
     </article>
   );
   return (
-    <div className="min-w-0 space-y-5 pb-4">
+    <div className="design-workspace min-w-0 w-full max-w-full space-y-5 pb-4">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -420,7 +420,7 @@ export function DesignWork({
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
             {title}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
             Theo dõi đầu việc, phản hồi và bàn giao trên cùng một luồng.
           </p>
         </div>
@@ -476,10 +476,10 @@ export function DesignWork({
                 type="button"
                 aria-pressed={queue === m.key}
                 onClick={() => chooseQueue(m.key)}
-                className={`rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary/50 focus-visible:outline-primary ${queue === m.key ? "border-primary/60 ring-1 ring-primary/10" : ""}`}
+                className={`min-w-0 rounded-xl border bg-card p-3 text-left transition-colors sm:p-4 hover:border-primary/50 focus-visible:outline-primary ${queue === m.key ? "border-primary/60 ring-1 ring-primary/10" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <span className="min-w-0 text-xs font-medium leading-5 text-muted-foreground">
                     {m.label}
                   </span>
                   <m.icon
@@ -522,7 +522,7 @@ export function DesignWork({
             </div>
             <div className="space-y-3 p-3 md:p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="relative min-w-0 basis-48 flex-1">
+                <div className="relative min-w-0 basis-full flex-1 sm:basis-48">
                   <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
                   <Input
                     aria-label="Tìm công việc thiết kế"
@@ -542,7 +542,7 @@ export function DesignWork({
                   )}
                 </Button>
                 <div
-                  className="flex rounded-lg border p-0.5"
+                  className="ml-auto flex shrink-0 rounded-lg border p-0.5 sm:ml-0"
                   aria-label="Cách hiển thị"
                 >
                   <Button
@@ -824,7 +824,7 @@ export function DesignWork({
         </>
       )}
       <Dialog open={catalogOpen} onOpenChange={setCatalogOpen}>
-        <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
+        <DialogContent className="design-mobile-dialog max-h-[85dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cài đặt danh mục Thiết Kế</DialogTitle>
           </DialogHeader>
@@ -832,7 +832,7 @@ export function DesignWork({
         </DialogContent>
       </Dialog>
       <Sheet open={filters} onOpenChange={setFilters}>
-        <SheetContent className="overflow-y-auto">
+        <SheetContent className="design-mobile-sheet overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Bộ lọc công việc</SheetTitle>
           </SheetHeader>
@@ -840,7 +840,7 @@ export function DesignWork({
         </SheetContent>
       </Sheet>
       <Dialog open={adding} onOpenChange={setAdding}>
-        <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
+        <DialogContent className="design-mobile-dialog max-h-[85dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Tạo {flow ? designLabel(flow) : "công việc"}
