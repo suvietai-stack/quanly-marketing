@@ -28,6 +28,7 @@ import * as api from "@/lib/leave/api";
 import type { LeaveRequest, LeaveStatus } from "@/lib/leave/api";
 import { retryLeaveRead, leaveRetryDelay, leaveReadMessage } from "@/lib/leave/readPolicy";
 import { validLeaveTab } from '@/lib/leave/accessState';
+import { leaveListScope, leaveListKey, leaveActorQuery } from '@/lib/leave/listScope';
 
 const QUICK = [5, 10, 15, 20, 25, 30, 60];
 const LAST_APPROVER = "leave_last_approver";
@@ -79,9 +80,6 @@ export function LeavePage() {
   const name = useNames();
   const uid = user?.id;
   const settingsQ = useQuery({ queryKey: ["leave", "settings", uid], queryFn: ({ signal }) => api.getSettings({ signal }), enabled: !!uid, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
-  const listQ = useQuery({ queryKey: ["leave", "list", uid], queryFn: ({ signal }) => api.listRequests({ signal }), enabled: !!uid, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
-  const all = listQ.data || [];
-  const listState = { loading: listQ.isLoading, error: listQ.isError ? leaveReadMessage(listQ.error) : null, onRetry: () => { void listQ.refetch(); } };
 
   const showMine = can("leave.view_own") || can("leave.create");
   const showApprove = can("leave.view_assigned") || can("leave.approve");
@@ -100,16 +98,25 @@ export function LeavePage() {
   const [form, setForm] = useState<FormState | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mineFilter, setMineFilter] = useState('all');
+  const scope = leaveListScope(tab, { mine: showMine, approve: showApprove, manage: showManage, report: showReport });
+  const listQ = useQuery({ queryKey: leaveListKey(uid, scope), queryFn: ({ signal }) => {
+    if (!uid || !scope) throw new Error('Cần đăng nhập và quyền xem phù hợp.');
+    return api.listRequests({ scope, uid, signal });
+  }, enabled: !!uid && !!scope, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
+  const all = listQ.data || [];
+  const listState = { loading: listQ.isLoading, error: listQ.isError ? leaveReadMessage(listQ.error) : null, onRetry: () => { void listQ.refetch(); } };
+  // Keep the already-loaded approver badge across tab changes; never fetch it in the background.
+  const cachedApprove = qc.getQueryData<LeaveRequest[]>(leaveListKey(uid, 'approve'));
 
   useEffect(() => {
     const tabs = [showMine && 'mine', showApprove && 'approve', showManage && 'manage', showReport && 'report'].filter((t): t is string => !!t);
     setTab(current => validLeaveTab(current, tabs));
   }, [showMine, showApprove, showManage, showReport]);
 
-  const refresh = () => qc.invalidateQueries({ predicate: q => q.queryKey[0] === 'leave' && q.queryKey.includes(uid) });
-  const mine = all.filter((r) => r.owner_id === uid);
-  const toApprove = all.filter((r) => r.approver_id === uid && r.owner_id !== uid);
-  const pendingApprove = toApprove.filter((r) => r.status === "pending" || r.cancel_state === "requested").length;
+  const refresh = () => qc.invalidateQueries({ predicate: q => leaveActorQuery(q.queryKey, uid) });
+  const mine = scope === 'mine' ? all.filter(r => r.owner_id === uid) : [];
+  const toApprove = scope === 'approve' ? all.filter(r => r.approver_id === uid && r.owner_id !== uid) : [];
+  const pendingApprove = (scope === 'approve' ? toApprove : cachedApprove || []).filter(r => r.approver_id === uid && r.owner_id !== uid && (r.status === 'pending' || r.cancel_state === 'requested')).length;
 
   const setOpen = (id: string | null) => {
     setOpenId(id);

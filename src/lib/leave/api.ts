@@ -4,6 +4,7 @@ import { pushDispatch } from "@/lib/push.functions";
 import { leaveGroupDispatch } from "./zaloGroup.functions";
 import type { LeaveSettings, LeaveType } from "./calc";
 import { readLeave } from "./readPolicy";
+import { filterLeaveList, LEAVE_LIST_LIMIT, type LeaveListScope } from './listScope';
 
 const db = supabase as any;
 export const leaveErr = (e: any) => e?.message || "Có lỗi xảy ra";
@@ -53,8 +54,9 @@ export async function listApprovers(opts?: { signal?: AbortSignal }): Promise<{ 
   return readLeave('Người duyệt', signal => db.rpc('leave_approvers').abortSignal(signal), opts?.signal);
 }
 
-export async function listRequests(opts?: { signal?: AbortSignal }): Promise<LeaveRequest[]> {
-  const data = await readLeave<LeaveRequest[] | null>('Danh sách đơn', signal => db.from('leave_requests').select('*').order('created_at', { ascending: false }).limit(1000).abortSignal(signal), opts?.signal);
+export async function listRequests(opts: { scope: LeaveListScope; uid: string; signal?: AbortSignal }): Promise<LeaveRequest[]> {
+  if (!opts.uid) throw new Error('Cần đăng nhập để tải đơn.');
+  const data = await readLeave<LeaveRequest[] | null>('Danh sách đơn', signal => filterLeaveList(db.from('leave_requests').select('*'), opts.scope, opts.uid).order('created_at', { ascending: false }).limit(LEAVE_LIST_LIMIT).abortSignal(signal), opts.signal);
   return data || [];
 }
 export async function getRequest(id: string, opts?: { signal?: AbortSignal }): Promise<LeaveRequest | null> {

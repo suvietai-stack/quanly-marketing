@@ -311,6 +311,8 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 - [ ] Xóa 33 Role cũ: chỉ sau khi chủ chốt 3 ngoại lệ + kiểm tra 0 phụ thuộc. Chưa Publish.
 
 ## P0 Nghỉ phép nhân viên — 12/11/2026 09:48 UTC
+- [x] Owner10:00 code: server owner/approver filters, lazy privileged full list, actor/scope keys; desktop/mobile authenticated HTTP and timeout/403/retry verified; NO SQL changes.
+- [ ] Owner10:00 release: commit/publish/live filtered HTTP verification.
 - [x] Phân biệt quyền chưa xác minh với denied/data/settings; fixture không JWT tái hiện pending→own/retry/signout desktop/mobile, không đọc đơn trước quyền.
 - [x] Frontend tương thích: LeaveAccess bound12s, tab hợp lệ, lỗi operation/HTTP/code/duration, actor invalidation;59 tests/buildOK, real Super Admin desktop/mobile không lỗi.
 - [x] Stage riêng docs/leave-set-based-2026-11-12: owner-set theo statement, fixture parity/DENY/interval/closure/creator/approver/own;30 sequential fixture benchmark;backup/SHA/rollback. Không áp SQL.
