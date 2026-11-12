@@ -26,6 +26,7 @@ import {
 } from "@/lib/leave/calc";
 import * as api from "@/lib/leave/api";
 import type { LeaveRequest, LeaveStatus } from "@/lib/leave/api";
+import { retryLeaveRead, leaveRetryDelay, leaveReadMessage } from "@/lib/leave/readPolicy";
 
 const QUICK = [5, 10, 15, 20, 25, 30, 60];
 const LAST_APPROVER = "leave_last_approver";
@@ -75,10 +76,11 @@ export function LeavePage() {
   const { user, can } = useCurrentUser();
   const qc = useQueryClient();
   const name = useNames();
-  const settingsQ = useQuery({ queryKey: ["leave", "settings"], queryFn: api.getSettings });
-  const listQ = useQuery({ queryKey: ["leave", "list"], queryFn: api.listRequests, enabled: !!user });
-  const all = listQ.data || [];
   const uid = user?.id;
+  const settingsQ = useQuery({ queryKey: ["leave", "settings", uid], queryFn: ({ signal }) => api.getSettings({ signal }), enabled: !!uid, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
+  const listQ = useQuery({ queryKey: ["leave", "list", uid], queryFn: ({ signal }) => api.listRequests({ signal }), enabled: !!uid, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
+  const all = listQ.data || [];
+  const listState = { loading: listQ.isPending, error: listQ.isError && !listQ.data ? leaveReadMessage(listQ.error) : null, onRetry: () => { void listQ.refetch(); } };
 
   const showMine = can("leave.view_own") || can("leave.create");
   const showApprove = can("leave.view_assigned") || can("leave.approve");
@@ -131,6 +133,7 @@ export function LeavePage() {
         {can('leave.settings') && <div className="flex justify-end"><FunctionSettingsButton onClick={() => setSettingsOpen(true)} /></div>}
         {(can('leave.create') || can('leave.create_for')) && <div className="grid grid-cols-3 gap-2">{(Object.keys(TYPE_LABEL) as LeaveType[]).map(type => <Button key={type} variant="outline" disabled={!settings} className="h-auto min-h-24 min-w-0 flex-col gap-2 whitespace-normal rounded-lg bg-card px-1 py-3" onClick={() => setForm({ mode:'create', type })}><TypeIcon type={type} /><span className="text-xs">{TYPE_LABEL[type]}</span></Button>)}</div>}
       </div>
+      {settingsQ.isError && !settings && <LoadError message={`Chưa tải được cài đặt nên tạm chưa tạo đơn: ${leaveReadMessage(settingsQ.error)}`} onRetry={() => { void settingsQ.refetch(); }} />}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="max-md:flex max-md:w-full max-md:justify-start max-md:overflow-x-auto max-md:flex-nowrap max-md:min-h-11 md:flex-wrap h-auto">
           {showMine && <TabsTrigger value="mine">Đơn của tôi</TabsTrigger>}
@@ -140,10 +143,10 @@ export function LeavePage() {
         </TabsList>
         {showMine && <TabsContent value="mine" className="mt-4">
           <div className="md:hidden flex gap-1 overflow-x-auto mb-3">{[['all','Tất cả'],['pending','Chờ duyệt'],['approved','Đã duyệt'],['other','Khác']].map(([value,label]) => <Button key={value} size="sm" className="min-h-11 shrink-0" variant={mineFilter === value ? 'default' : 'outline'} onClick={() => setMineFilter(value)}>{label}</Button>)}</div>
-          <div className="md:hidden"><RequestList rows={[...mine].filter(r => mineFilter === 'all' || r.status === mineFilter || (mineFilter === 'other' && !['pending','approved'].includes(r.status))).sort((a,b) => Number(b.status === 'pending') - Number(a.status === 'pending'))} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty="Không có đơn phù hợp." /></div><div className="hidden md:block"><RequestList rows={mine} loading={listQ.isLoading} onOpen={setOpen} name={name} showOwner={false} empty="Bạn chưa có đơn nghỉ phép, đi muộn, về sớm." /></div>
+          <div className="md:hidden"><RequestList rows={[...mine].filter(r => mineFilter === 'all' || r.status === mineFilter || (mineFilter === 'other' && !['pending','approved'].includes(r.status))).sort((a,b) => Number(b.status === 'pending') - Number(a.status === 'pending'))} {...listState} onOpen={setOpen} name={name} showOwner={false} empty="Không có đơn phù hợp." /></div><div className="hidden md:block"><RequestList rows={mine} {...listState} onOpen={setOpen} name={name} showOwner={false} empty="Bạn chưa có đơn nghỉ phép, đi muộn, về sớm." /></div>
         </TabsContent>}
-        {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
-        {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} loading={listQ.isLoading} onOpen={setOpen} name={name} /></TabsContent>}
+        {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} {...listState} onOpen={setOpen} name={name} /></TabsContent>}
+        {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} {...listState} onOpen={setOpen} name={name} /></TabsContent>}
         {showReport && <TabsContent value="report" className="mt-4">
           <LeaveReport rows={all} name={name} />
         </TabsContent>}
@@ -172,7 +175,12 @@ export function LeavePage() {
 }
 
 /* ================= Lists ================= */
-function RequestList({ rows, loading, onOpen, name, showOwner, empty }: { rows: LeaveRequest[]; loading: boolean; onOpen: (id: string) => void; name: (id?: string | null) => string; showOwner: boolean; empty: string }) {
+function LoadError({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return <Card role="alert" className="border-destructive/40"><CardContent className="flex flex-wrap items-center justify-between gap-3 py-4 text-sm"><span className="text-destructive">{message}</span>{onRetry && <Button size="sm" variant="outline" onClick={onRetry}>Thử lại</Button>}</CardContent></Card>;
+}
+
+function RequestList({ rows, loading, error, onRetry, onOpen, name, showOwner, empty }: { rows: LeaveRequest[]; loading: boolean; error?: string | null; onRetry?: () => void; onOpen: (id: string) => void; name: (id?: string | null) => string; showOwner: boolean; empty: string }) {
+  if (error) return <LoadError message={error} onRetry={onRetry} />;
   if (loading) return <p className="text-sm text-muted-foreground py-6">Đang tải…</p>;
   if (!rows.length) return <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">{empty}</CardContent></Card>;
   return (
@@ -202,7 +210,7 @@ function TypeIcon({ type }: { type: LeaveType }) {
   return <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0"><I className="h-4 w-4" /></div>;
 }
 
-function ApproveList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean; onOpen: (id: string) => void; name: (id?: string | null) => string }) {
+function ApproveList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean; error?: string | null; onRetry?: () => void; onOpen: (id: string) => void; name: (id?: string | null) => string }) {
   const [f, setF] = useState<"todo" | "done">("todo");
   const todo = rows.filter((r) => r.status === "pending" || r.cancel_state === "requested");
   const done = rows.filter((r) => !(r.status === "pending" || r.cancel_state === "requested"));
@@ -215,7 +223,7 @@ function ApproveList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean
   </>;
 }
 
-function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean; onOpen: (id: string) => void; name: (id?: string | null) => string }) {
+function ManageList({ rows, ...rest }: { rows: LeaveRequest[]; loading: boolean; error?: string | null; onRetry?: () => void; onOpen: (id: string) => void; name: (id?: string | null) => string }) {
   const [st, setSt] = useState<string>("all");
   const [tp, setTp] = useState<string>("all");
   const [q, setQ] = useState("");

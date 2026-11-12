@@ -1,1 +1,2 @@
 - UI access cache (accessCache.ts) is per-tab memory, per-user: passive refresh throttled, mutations force; transient errors keep last verified access ≤10 min and never past next_transition — server stays authoritative.
+- Leave list/settings reads are actor-keyed, abort-bounded (readPolicy.ts withDeadline) with finite transient-only retry and explicit error+retry UI — no endless spinner, permission errors never retry.

@@ -3,6 +3,7 @@ import { zaloDispatch } from "@/lib/zalo.functions";
 import { pushDispatch } from "@/lib/push.functions";
 import { leaveGroupDispatch } from "./zaloGroup.functions";
 import type { LeaveSettings, LeaveType } from "./calc";
+import { withDeadline } from "./readPolicy";
 
 const db = supabase as any;
 export const leaveErr = (e: any) => e?.message || "Có lỗi xảy ra";
@@ -43,13 +44,17 @@ async function rpc<T = any>(fn: string, args?: any): Promise<T> {
 }
 const WRITE_RPC = new Set(["leave_submit", "leave_resubmit", "leave_decide", "leave_cancel_request", "leave_cancel_decide", "leave_reassign", "leave_exception_cancel"]);
 
-export const getSettings = () => rpc<LeaveSettings>("leave_settings_get");
+export async function getSettings(opts?: { signal?: AbortSignal }): Promise<LeaveSettings> {
+  const { data, error } = await withDeadline((signal) => db.rpc("leave_settings_get").abortSignal(signal), opts?.signal) as { data: LeaveSettings; error: unknown };
+  if (error) throw error;
+  return data;
+}
 export const saveSettings = (data: LeaveSettings) => rpc("leave_settings_save", { _data: data });
 export const reasonUsage = (id: string) => rpc<number>("leave_reason_usage", { _id: id });
 export const listApprovers = () => rpc<{ id: string; full_name: string }[]>("leave_approvers");
 
-export async function listRequests(): Promise<LeaveRequest[]> {
-  const { data, error } = await db.from("leave_requests").select("*").order("created_at", { ascending: false }).limit(1000);
+export async function listRequests(opts?: { signal?: AbortSignal }): Promise<LeaveRequest[]> {
+  const { data, error } = await withDeadline((signal) => db.from("leave_requests").select("*").order("created_at", { ascending: false }).limit(1000).abortSignal(signal), opts?.signal) as { data: LeaveRequest[] | null; error: unknown };
   if (error) throw error;
   return data || [];
 }
