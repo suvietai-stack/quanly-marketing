@@ -24,4 +24,4 @@
 - Exact SHA256 in `SHA256SUMS`; final newline included. **Do not apply until separate exact SQL approval after remaining native parity/ACL review**. Plan approval is not migration approval.
 
 ## Release
-Frontend commit/deployment readback pending at report creation; code readiness does not mean staff production issue fixed.
+Frontend code committed `d5bbb4b3`, publish requested once. Readback 09:58–09:59 UTC: production HTTP200, authenticated Super Admin desktop/mobile existing list works without page errors; header deployment core `b33cc209-10aa-4a27-9a04-a88c5f2ee2d4`. However fetched `/assets/leave-DG-RINJQ.js` still imports old PermissionGate and does not contain the new LeaveAccess wait or leave.view_unit. Therefore **new code live is NOT confirmed; release pending/unverified**, despite changed header. No republish or SQL application. Staff E2E remains untested.
