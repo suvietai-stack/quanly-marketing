@@ -1,14 +1,15 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Tinh gọn hiệu năng toàn Base — 12/11 07:16
-- [ ] Audit dependency gen1/slots, live checksum/ACL và rào nghiệp vụ; không mutation.
-- [ ] Ship code-only lazy tab/editor/history, cancellation và reuse actor-specific; kiểm thử desktop/mobile.
-- [ ] Reconcile candidate timeout hiện hữu, exact SHA/rollback/parity; SQL CHƯA ÁP, chờ duyệt riêng.
-- [ ] Commit/publish tương thích backend hiện tại, kiểm tra deployment ID + auth smoke; báo hiệu năng quan sát.
+- [x] Audit trực tiếp dependency SQL/frontend/FK + checksum/ACL; 31gen1/26V2/25slots/86assignments/13overrides/2SA giữ nguyên. Transitive native reconcile chưa đủ để cắt gen1.
+- [x] Code-only lazy tools/advanced history, cancellation, actor-target-revision cache;55 tests/buildOK, auth read-only desktop/mobile510/24, effective chỉ tải tab explicit; commit9611e9a9.
+- [x] Cập nhật candidate duy nhất in-place SHA6acee6d6a91a55c035811c5342c30fba38608fc03749f2609f1cd38579ffba25,3hàm/rollback/parity/catalog exclusion; thay331ad3a8.
+- [ ] SQL apply/native V2 retirement/compact auth + scoped employee/cold30+30: BLOCKED duyệt riêng exact SQL và native-scope reconcile/phiên nhân viên; không mutation.
+- [ ] Publish requested9611e9a9;07:33:27Z domain200 vẫn e65746b1 và default effective cũ, NEW RELEASE PENDING chưa xác nhận live. Không publish lại.
 
 ## P0 full personal permission catalog — 12/11 06:49
 - [x] Owner06:59 addendum: one actor-keyed authenticated catalog SELECT merged by key;30 tests+desktop/mobile fixtures pass local450+remote60/full510, no grants/RLS changes; commit1e06d541, publish requested.
-- [ ] Addendum production confirmation: observed prior ebaf680f UI still full510 but no catalog GET; new deployment not yet verified. No repeat publish/SQL.
+- [x] Addendum production confirmed read-only07:06:31Z: deployment e65746b1,510unique/24modules/one authenticated catalogGET200.
 - [x] Full 510/24 catalog,15 grantable/495 unsupported; baseline revocation, inherited-only unchecked, reused effective source; lazy groups and fail-closed policy errors; no DB changes.
 - [x] 51 targeted tests + desktop/mobile fixture preview/save/readback; buildOK; commit c781ad40 published. Production ebaf680f-f4a8-4ba9-90a9-82aeae5fa03f confirmed full catalog/disabled unsupported on1280/390, no writes/runtime errors. Mobile policy unavailable remained safely read-only.
 - [ ] Backend expansion: BLOCKED separate owner approval and module scope/workflow proof; staged organization SQL unchanged.
@@ -17,7 +18,7 @@
 - [x] Snapshot 8 hàm/ACL/owner và stats; benchmark SA30 REST reads 26 ceiling8s errors; scan units0.098ms; report phân biệt repetition verified vs phase attribution chưa đo.
 - [x] Stage candidate3hàm SHA331ad3a8: config/rules một lần + unit set-based/SA fast path/effective grouped; rollback và preflight.49 tests đạt, fixture p95 old3.30→new1.32ms không suy ra production.
 - [x] Frontend1retry1s/cancel/user+revision/failclosed/skeleton; browser desktop/mobile lỗi→retry→render đạt; buildOK; đã request publish tương thích backend.
-- [ ] Apply SQL và đo production/cold p95<2s/30page reload: BLOCKED owner duyệt exact SHA331ad3a83764d9563605b8c1d7113166751a2cc6f7e8f0ea72099ab753e2ea25; không áp trước.
+- [ ] Apply SQL và đo production/cold p95<2s/30page reload: BLOCKED owner duyệt exact SHA6acee6d6a91a55c035811c5342c30fba38608fc03749f2609f1cd38579ffba25 (supersedes331ad3a8); không áp trước.
 - [ ] Production phase profiling/service/nonadmin/full UI: BLOCKED quyền private profiling và phiên nhân viên chưa được cấp phép; không thêm EXECUTE/impersonation.06:41Z HTTP200 nhưng same deploy prefix và screenshot timeout cũ; publish request chưa xác nhận live, lỗi gốc vẫn còn.
 
 ## Giám đốc phương án A — 12/11 06:18
