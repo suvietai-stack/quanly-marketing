@@ -38,3 +38,9 @@ Each directory has `candidate.sql`, `backup.sql`, `rollback.sql`. Exact file-byt
 - Latest read-only baseline: 57 Roles, 88 org assignments, 25 historical slots, 13 overrides. Prior 86 was superseded by a real intervening appointment outside this turn; no assumption that current count should be reset.
 - Security scan: 3 existing warnings (password leak check, k3_settings and mkt_specialties policies), no critical result; external Wiz scan unavailable. No security policy changed to bypass them.
 - Production deployment evidence will be recorded after the safe frontend publish request; requested is not equivalent to live.
+
+## Release readback
+- Code commit `f93ea307`; publish requested once. First HTTP read at 09:21:27 UTC still served previous deployment `3d6e4344-f0e6-4a4d-9485-55a8621095d2` (old leave bundle).
+- Subsequent real authenticated production browser navigation served `bdfb1cef-6d36-4681-a1f4-662cd4cdf720`. Mobile hung request surfaced error in 15.255 seconds from navigation; retry recovered with zero spinner/retry buttons/page errors. New deployed behavior confirmed; no republish.
+- Local desktop 403 simulation showed explicit permission/session error; rapid attendance→leave navigation recovered with zero page errors/spinner. Screenshots verified visually.
+- New release URL: https://base.suviet.vn. No SQL/Role/staff data applied.

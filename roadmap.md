@@ -1,11 +1,14 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Owner 12/11 09:11 — ổn định và chính sách Role thống nhất
-- [ ] Audit guard 510 quyền; UI full catalog + lý do thực; SQL chính sách chung riêng, SHA/backup/rollback, không áp.
-- [ ] Kiểm chứng quyết định quản lý cũ của Nguyễn Thảo; stage chuyển nguồn V2 bảo toàn lịch sử, không nhân sự live.
-- [ ] Kiểm tra /leave theo phiên được phép; sửa timeout/cancellation/error/retry mobile, test và publish frontend tương thích.
-- [ ] Stage lịch sử org tóm tắt/phân trang/detail có scope, SHA/backup/rollback; frontend không phụ thuộc SQL pending.
-- [ ] Báo tests/commit/deployment thực và từng blocker nghiệm thu.
+- [x] Audit guard/catalog; UI full510+lý do nguồn; stage metadata policy+SHA/backup/rollback, không áp.
+- [x] Xác nhận Nguyễn Thảo legacy manager + staff; thiếu mapping head phòng2; stage wrapper preview nguyên tử, không nhân sự live.
+- [x] /leave toàn bộ reads12s/cancel/actor/retry/error mobile+desktop;68tests/buildOK, commitf93ea307; publish live bdfb1cef, hang→error15.255s từ navigation→retry hồi phục.
+- [x] Stage history20summary/page50max/detail scope+rollback; không phát hành frontend phụ thuộc SQL pending.
+- [x] Báo kết quả tại docs/base-stability-2026-11-12/report.md và SHA256SUMS.
+- [ ] Mở cấp quyền mọi nguồn/Role bổ sung trực tiếp: BLOCKED native source/scope/workflow contracts và duyệt SQL riêng; metadata candidate không mở thêm quyền.
+- [ ] Áp bốn SQL: BLOCKED owner duyệt từng exact SHA; history cần frontend paired; manager cần full business fixture và rollback dữ liệu trước personnel apply.
+- [ ] /leave nhân viên live: BLOCKED phiên hiện có chỉ Super Admin; không tự chọn/impersonate nhân viên.
 
 ## Tinh gọn hiệu năng toàn Base — 12/11 07:16
 - [x] Audit trực tiếp dependency SQL/frontend/FK + checksum/ACL; 31gen1/26V2/25slots/86assignments/13overrides/2SA giữ nguyên. Transitive native reconcile chưa đủ để cắt gen1.
