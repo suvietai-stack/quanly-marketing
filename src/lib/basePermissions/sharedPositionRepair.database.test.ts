@@ -31,11 +31,15 @@ beforeAll(async()=>{
  create function private.base_valid_at(jsonb) returns boolean language sql as $$select coalesce(($1->>'active')::boolean,false) and coalesce(($1->>'starts_at')::timestamptz,'-infinity')<=now() and coalesce(($1->>'ends_at')::timestamptz,'infinity')>now()$$;
  create function private.org_role_permission_ready(text) returns boolean language sql as $$select true$$;`);
  if(!original)throw new Error('Missing exact backup');await db.exec(original);
+ const oldResolver=functions.find(r=>r.proname==='org_slot_rules')?.ddl;if(!oldResolver)throw new Error('Missing original resolver');await db.exec(oldResolver);
+ await db.exec(`create table mkt_staff_specialties(user_id uuid,specialty_id text,eligibility_enforced boolean,state text);create table mkt_specialties(id text,active boolean,role_id text);create table user_roles(user_id uuid,role_id text);create function private.org_marketing_eligible(uuid,jsonb) returns boolean language sql as $$select true$$;create function private.mkt_specialty_permission_ready(text) returns boolean language sql as $$select true$$;`);
+ const sourceBackup=readFileSync('docs/org-repair-2026-11-12/source-resolver-rollback.sql','utf8');await db.exec(sourceBackup);
+ await db.exec(`create function private.slot_previous_role_rules(uuid,jsonb) returns jsonb language sql as $$select '[{"permission":"unsafe.legacy","effect":"ALLOW"}]'::jsonb$$;`);await db.exec(readFileSync('docs/org-repair-2026-11-12/role-rules-rollback.sql','utf8'));
  await db.exec(readFileSync('docs/pending/org_assign_shared_position.sql','utf8'));
 },30000);
 beforeEach(async()=>{await db.exec(`delete from org_assignments;update app_roles set catalog_generation=2,is_system=false,role_kind='position';select set_config('t.allowed','yes',false);select set_config('t.admin','yes',false);`);});
 afterAll(()=>db.close());
-it('reproduces original empty-slot error then accepts two slotless staff with exact patch',async()=>{if(!original)throw new Error('missing');await db.exec(original);await expect(run()).rejects.toThrow('ô vị trí');await db.exec(readFileSync('docs/pending/org_assign_shared_position.sql','utf8'));await run();await run(other);expect((await db.query('select slot_id from org_assignments')).rows).toEqual([{slot_id:null},{slot_id:null}]);});
+it('reproduces original empty-slot error then accepts two slotless staff with exact patch',async()=>{if(!original)throw new Error('missing');await db.exec(original);const resolver=functions.find(r=>r.proname==='org_slot_rules')?.ddl;if(!resolver)throw new Error('missing');await db.exec(resolver);await db.exec(readFileSync('docs/org-repair-2026-11-12/source-resolver-rollback.sql','utf8'));await db.exec(readFileSync('docs/org-repair-2026-11-12/role-rules-rollback.sql','utf8'));await expect(run()).rejects.toThrow('ô vị trí');await db.exec(readFileSync('docs/pending/org_assign_shared_position.sql','utf8'));await run();await run(other);expect((await db.query('select slot_id from org_assignments')).rows).toEqual([{slot_id:null},{slot_id:null}]);});
 it('rejects missing or legacy mapping and performs no insert',async()=>{await db.exec('update app_roles set catalog_generation=1');await expect(run()).rejects.toThrow('Role V2');expect((await db.query('select count(*)::int n from org_assignments')).rows).toEqual([{n:0}]);});
 it('rejects system and marketing-task mapping',async()=>{await db.exec('update app_roles set is_system=true');await expect(run()).rejects.toThrow('Role V2');await db.exec("update app_roles set is_system=false,role_kind='marketing_task'");await expect(run()).rejects.toThrow('Role V2');});
 it('preserves cross-unit denial and locked-account rejection',async()=>{await expect(run(uid,'staff','outside')).rejects.toThrow('denied');await db.exec("update profiles set status='Tạm khóa' where id='"+other+"'");await expect(run(other)).rejects.toThrow('chưa hoạt động');await db.exec("update profiles set status='Đang hoạt động'");});
@@ -50,6 +54,20 @@ it('24 existing titled sources match slotless V2 keys; all 12 mirrors remain tit
  const at=Date.parse('2026-11-12T03:28:00Z');const active=snapshot.assignments.filter((a:any)=>a.status==='active'&&Date.parse(a.starts_at)<=at&&(!a.ends_at||Date.parse(a.ends_at)>at));
  const titled=active.filter((a:any)=>a.title_id);expect(titled).toHaveLength(24);expect(active.filter((a:any)=>!a.title_id)).toHaveLength(12);
  const config={titles:snapshot.titles,position_slots:snapshot.slots,memberships:active.map((a:any)=>({...a,active:true}))};
- for(const a of titled){const rows=async(c:any)=>(await db.query<{v:any[]}>('select private.org_slot_rules($1,$2) v',[a.user_id,c])).rows[0].v.map(r=>[r.permission,r.unit_id,r.role_id].join(':')).sort();const before=await rows(config);const after=await rows({...config,memberships:config.memberships.map((m:any)=>m.id===a.id?{...m,slot_id:null}:m)});expect(after).toEqual(before);}
+ const rows=async(user:string,c:any)=>(await db.query<{v:any[]}>('select private.org_slot_rules($1,$2) v',[user,c])).rows[0].v.map(r=>[r.permission,r.unit_id,r.role_id].join(':')).sort();
+ const baseline=await Promise.all(titled.map((a:any)=>rows(a.user_id,config)));
+ const systemRows=snapshot.roles.filter((r:any)=>r.catalog_generation<2&&r.is_system);expect(systemRows.map((r:any)=>r.id).sort()).toEqual(['role-admin','role-dong-hang','role-nhan-su-moi','role-super-admin']);
+ const candidate=readFileSync('docs/pending/org_assign_shared_position.sql','utf8').split('-- Historical slot_id remains provenance only.')[1];await db.exec(candidate.slice(candidate.indexOf('CREATE OR REPLACE FUNCTION')));
+ for(let i=0;i<titled.length;i++)expect(await rows(titled[i].user_id,config)).toEqual(baseline[i]);
+ const noSlots={...config,position_slots:[]};for(let i=0;i<titled.length;i++)expect(await rows(titled[i].user_id,noSlots)).toEqual(baseline[i]);
+ const sources=(await db.query<{role_id:string;source_kind:string;source_id:string}>('select role_id,source_kind,source_id from private.slot_previous_source_rows($1)',[config])).rows;expect(sources.filter(r=>r.source_kind==='slot'||r.source_kind==='title_legacy')).toEqual([]);expect(new Set(sources.filter(r=>r.source_kind==='position').map(r=>r.source_id)).size).toBe(24);
+ const effective=(await db.query<{v:any[]}>('select private.org_role_rules($1,$2) v',[titled[0].user_id,config])).rows[0].v;expect(effective.some(r=>r.permission==='unsafe.legacy')).toBe(false);
  const mirrors={...config,memberships:config.memberships.filter((a:any)=>!a.title_id)};for(const a of mirrors.memberships)expect((await db.query<{v:any[]}>('select private.org_slot_rules($1,$2) v',[a.user_id,mirrors])).rows[0].v).toEqual([]);
+});
+it('fourth staff holder remains unlimited even with legacy capacity=1; new slot targets denied',async()=>{
+ await db.exec("insert into app_roles values('v2','position','standard',2,false,ARRAY['order.view'],'Staff') on conflict(id) do nothing;insert into org_position_roles values('d','staff','v2'),('d','head','v2')");
+ await db.exec("update org_titles set capacity=1 where id='staff'");
+ for(let n=1;n<=4;n++){const id=`00000000-0000-0000-0001-00000000000${n}`;await db.query("insert into profiles values($1,'Đang hoạt động') on conflict(id) do nothing",[id]);await run(id);}
+ expect((await db.query('select count(*)::int n from org_assignments')).rows).toEqual([{n:4}]);
+ await expect(run(uid,'staff','d',{slot_id:'old'})).rejects.toThrow('Ô cũ');await db.exec("update org_titles set capacity=0 where id='staff'");
 });

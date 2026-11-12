@@ -1,5 +1,12 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Cutover tận gốc bổ sung — 12/11 03:39
+- [x] Cùng candidate org_assign_shared_position 4 hàm, không migration trùng: ngắt nguồn slot + title fallback, provenance đồng nguồn V2; parity24/no-slot/mirror12/no legacy poison,136tests + fourth-holder browser3sizes đạt.
+- [x] Code không tạo bổ nhiệm slot nữa; history giữ86/25. Audit27gen1: 16titleFK/13Roles còn, old catalog funcs mention IDs; 4system/2SA bảo vệ, không CASCADE. Report cutover-addendum.md/gen1-deletion-audit.md.
+- [ ] Apply4hàm: BLOCKED duyệt exact expanded candidate; tool áp ngay không card, chưa gọi; prior one-guard consent không tự mở rộng.
+- [ ] Gen1delete: BLOCKED archive/restore titleFK + fence recreation funcs + live source acceptance; chưa xóa dòng nào.
+- [ ] Cây cha/5 mapping: BLOCKED audited org_change live scope/impact acceptance; DDL-only tool không nhận data-only migration, không bypass guards. Publish chờ backend E2E, Biz17/3K/Signals/CRM giữ nguyên.
+
 ## P0 sơ đồ và bổ nhiệm — 12/11 03:28
 - [x] Sơ đồ nhóm theo (unit,title), holders distinct, lịch sử ô cũ giữ; bổ nhiệm không truyền slot, người đang giữ bị chặn chọn trùng.
 - [x] Snapshot exact DDL/ACL/owner/rows, patch guard slot-required + mapping V2 fail-closed và khóa pair; clone/rollback/24 source parity/12 mirror no Role, 102 tests đạt.

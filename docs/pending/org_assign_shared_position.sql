@@ -1,5 +1,8 @@
 -- PENDING: owner approval required; no rows, policies, ACLs or Role grants changed.
 DO $$ BEGIN
+ IF md5(pg_get_functiondef('private.org_role_rules(uuid,jsonb)'::regprocedure)) <> '3411ccfb43bf8f1519281a27690750ac' THEN RAISE EXCEPTION 'role rules baseline changed'; END IF;
+ IF md5(pg_get_functiondef('private.org_slot_rules(uuid,jsonb)'::regprocedure)) <> 'a0724fa201571faeef6da5ec0a44a000' THEN RAISE EXCEPTION 'slot resolver baseline changed'; END IF;
+ IF md5(pg_get_functiondef('private.slot_previous_source_rows(jsonb)'::regprocedure)) <> '54810e2df1dcf688f5024df0ce354dfa' THEN RAISE EXCEPTION 'source resolver baseline changed'; END IF;
  IF md5(pg_get_functiondef('private.org_commands(jsonb)'::regprocedure)) <> 'c759e726c6c627bbae8f113db9e0f285' THEN
  RAISE EXCEPTION 'org_commands baseline changed; re-audit required'; END IF;
 END $$;
@@ -75,9 +78,10 @@ AS $function$ DECLARE x jsonb;v jsonb;old_ record;title_ record;unit_ record;id_
  v:=v||jsonb_build_object('specialty_signatures',(SELECT jsonb_object_agg(s.id,md5(coalesce(r.permissions,'{}')::text)) FROM mkt_specialties s JOIN app_roles r ON r.id=s.role_id WHERE s.id IN (SELECT jsonb_array_elements_text(v->'specialty_ids'))));
  ELSE v:=v-'specialty_signatures';END IF;
  at_:=coalesce(nullif(v->>'starts_at','')::timestamptz,clock_timestamp());end_:=nullif(v->>'ends_at','')::timestamptz;IF at_<clock_timestamp()-interval '10 minutes' OR end_<=at_ THEN RAISE EXCEPTION 'Không tạo phân công hồi tố hoặc thời hạn không hợp lệ.';END IF;category_:=coalesce(v->>'kind','primary');IF category_ NOT IN ('primary','concurrent') THEN RAISE EXCEPTION 'Chọn phân công chính hoặc kiêm nhiệm.';END IF;
+ IF nullif(v->>'slot_id','') IS NOT NULL THEN RAISE EXCEPTION 'Ô cũ chỉ dùng lịch sử; bổ nhiệm theo đơn vị và chức danh.' USING ERRCODE='42501'; END IF;
  PERFORM pg_advisory_xact_lock(hashtext('org-position:'||unit_.id||':'||title_.id));
  IF EXISTS(SELECT 1 FROM org_assignments WHERE unit_id=unit_.id AND title_id=title_.id AND status<>'cancelled' AND tstzrange(starts_at,ends_at,'[)')&&tstzrange(at_,end_,'[)') AND user_id=(v->>'user_id')::uuid AND (nullif(v->>'slot_id','') IS NULL OR slot_id=v->>'slot_id')) THEN RAISE EXCEPTION 'Trùng phân công trong khoảng hiệu lực.';END IF;
- IF nullif(v->>'slot_id','') IS NULL AND title_.capacity>0 AND (SELECT count(*) FROM org_assignments WHERE unit_id=unit_.id AND title_id=title_.id AND status<>'cancelled' AND tstzrange(starts_at,ends_at,'[)')&&tstzrange(at_,end_,'[)'))>=title_.capacity THEN RAISE EXCEPTION 'Vị trí vượt số người tối đa trong khoảng hiệu lực.';END IF;
+ IF nullif(v->>'slot_id','') IS NULL AND title_.kind='manager' AND title_.capacity>0 AND (SELECT count(*) FROM org_assignments WHERE unit_id=unit_.id AND title_id=title_.id AND status<>'cancelled' AND tstzrange(starts_at,ends_at,'[)')&&tstzrange(at_,end_,'[)'))>=title_.capacity THEN RAISE EXCEPTION 'Vị trí vượt số người tối đa trong khoảng hiệu lực.';END IF;
  IF category_='primary' AND EXISTS(SELECT 1 FROM org_assignments WHERE user_id=(v->>'user_id')::uuid AND category='primary' AND unit_id<>unit_.id AND status<>'cancelled' AND tstzrange(starts_at,ends_at,'[)')&&tstzrange(at_,end_,'[)')) THEN RAISE EXCEPTION 'Chọn phân công nguồn cần kết thúc trước khi điều chuyển.';END IF;
  IF title_.source='biz_positions' THEN s:=NULL;d:=NULL;t:=NULL;IF unit_.kind='system' THEN s:=unit_.id::uuid;ELSIF unit_.kind='department' THEN d:=unit_.id::uuid;ELSIF unit_.kind='team' THEN t:=unit_.id::uuid;ELSIF unit_.kind<>'company' THEN RAISE EXCEPTION 'Chức vụ nghiệp vụ cần đơn vị tương thích.';END IF;PERFORM private.org_biz_appointment(jsonb_build_object('position_id',title_.id,'user_id',v->>'user_id','system_id',s,'department_id',d,'team_id',t,'started_at',at_,'ended_at',end_),id_::uuid);src_:='biz_appointments';category_:='appointment';ELSE src_:='canonical';END IF;
  IF nullif(v->>'slot_id','') IS NULL AND NOT EXISTS(
@@ -101,3 +105,31 @@ AS $function$ DECLARE x jsonb;v jsonb;old_ record;title_ record;unit_ record;id_
  ELSE RAISE EXCEPTION 'Thao tác chưa được hỗ trợ an toàn: %',x->>'action';END IF;
  END LOOP; RETURN affected;END $function$
 ;
+
+-- Historical slot_id remains provenance only. No assignment row is rewritten.
+CREATE OR REPLACE FUNCTION private.org_slot_rules(u uuid,c jsonb) RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $function$
+ SELECT coalesce(jsonb_agg(x.rule),'[]'::jsonb) FROM (
+ SELECT jsonb_build_object('id',(m->>'id')||':'||r.id||':'||p,'permission',p,'effect','ALLOW','scope','native','active',true,'source_kind','appointment_role','source_id',m->>'id','source_name',r.name,'role_id',r.id,'unit_id',m->>'unit_id','slot_id',NULL,'starts_at',m->>'starts_at','ends_at',m->>'ends_at','legacy',false) rule
+ FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m JOIN public.org_position_roles b ON b.unit_id=m->>'unit_id' AND b.title_id=m->>'title_id' JOIN LATERAL jsonb_array_elements(coalesce(c->'titles','[]')) t ON t->>'id'=m->>'title_id' JOIN app_roles r ON r.id=b.role_id AND r.role_kind='position' AND r.catalog_state='standard' AND NOT r.is_system AND r.catalog_generation>=2 CROSS JOIN LATERAL unnest(r.permissions) p
+ WHERE private.is_active(u) AND m->>'user_id'=u::text AND private.base_valid_at(m) AND coalesce(m->>'status','active')='active' AND coalesce((t->>'active')::boolean,false) AND private.org_role_permission_ready(p)
+) x $function$
+;
+
+-- Provenance reads now agree with canonical source; specialties/direct sources unchanged.
+CREATE OR REPLACE FUNCTION private.slot_previous_source_rows(c jsonb)
+ RETURNS TABLE(user_id uuid, role_id text, source_kind text, source_id text, unit_id text, legacy boolean, eligible boolean, scope text, permissions text[])
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT (m->>'user_id')::uuid,r.id,'position',m->>'id',m->>'unit_id',false,true,'native',ARRAY(SELECT p FROM unnest(r.permissions) p WHERE private.org_role_permission_ready(p))
+ FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m
+ JOIN org_position_roles b ON b.unit_id=m->>'unit_id' AND b.title_id=m->>'title_id'
+ JOIN LATERAL jsonb_array_elements(coalesce(c->'titles','[]')) t ON t->>'id'=m->>'title_id'
+ JOIN app_roles r ON r.id=b.role_id AND r.role_kind='position' AND r.catalog_state='standard' AND r.catalog_generation>=2 AND NOT r.is_system
+ WHERE private.base_valid_at(m) AND coalesce(m->>'status','active')='active' AND coalesce((t->>'active')::boolean,false) AND private.is_active((m->>'user_id')::uuid)
+ UNION ALL SELECT m.user_id,r.id,CASE WHEN r.role_kind='marketing_task' THEN 'task' ELSE 'specialty' END,m.specialty_id,NULL,NOT m.eligibility_enforced,r.role_kind<>'marketing_task' OR private.org_marketing_eligible(m.user_id,c),'own',ARRAY(SELECT p FROM unnest(r.permissions) p WHERE private.mkt_specialty_permission_ready(p)) FROM mkt_staff_specialties m JOIN mkt_specialties s ON s.id=m.specialty_id AND s.active JOIN app_roles r ON r.id=s.role_id WHERE m.state='active' AND private.is_active(m.user_id) AND (r.role_kind<>'marketing_task' OR NOT m.eligibility_enforced OR private.org_marketing_eligible(m.user_id,c)) UNION ALL SELECT ur.user_id,r.id,'direct',r.id,NULL,true,true,'native',r.permissions FROM user_roles ur JOIN app_roles r ON r.id=ur.role_id WHERE private.is_active(ur.user_id) $function$;
+
+-- Retire legacy title fallback; inactive links must never revive on slotless appointments.
+CREATE OR REPLACE FUNCTION private.org_role_rules(u uuid,c jsonb) RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO public AS $$ SELECT private.org_slot_rules(u,c) $$;
+COMMENT ON COLUMN public.org_assignments.slot_id IS 'DEPRECATED for authorization and new appointments: retained only as historical provenance; live position Role comes from org_position_roles(unit_id,title_id).';

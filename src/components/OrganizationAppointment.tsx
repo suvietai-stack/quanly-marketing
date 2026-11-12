@@ -11,7 +11,7 @@ import { appointmentDraft, appointmentEligible, marketingUnit } from '@/lib/base
 import type { OrgConfig, Preview } from '@/lib/basePermissions/types';
 import { membershipEffective, unitTitles, orgConfigDiff } from '@/lib/orgStructure';
 
-export interface AppointmentTarget { unitId: string; titleId?: string; slotId?: string; mode?: 'primary' | 'concurrent' | 'transfer' }
+export interface AppointmentTarget { unitId: string; titleId?: string; mode?: 'primary' | 'concurrent' | 'transfer' }
 export function OrganizationAppointment({ target, config, staff, onClose, onPreview, onApply }: {
   target: AppointmentTarget; config: OrgConfig; staff: {id: string; name: string; status: string}[];
   onClose: () => void; onPreview: (next: OrgConfig) => Promise<Preview>; onApply: (p: Preview, reason: string) => Promise<void>;
