@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan, designLabel, DESIGN_FLOWS } from '@/lib/orders/design';
+import { DesignWorkflowSummary } from './DesignWorkflowSummary';
 import {DesignClassification} from './DesignClassification';
 import {DesignAttachments} from './DesignAttachments';
 import {validDocumentUrl} from '@/lib/orders/catalogs';
@@ -27,6 +28,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [uploading,setUploading]=useState(false);
+  const [activeTab, setActiveTab] = useState("workflow");
 
   if (!found) return null;
   const order: DesignOrder = found;
@@ -103,13 +105,18 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   if (status === "Chờ phân công") {
     actions.push({
-      label: "NHẬN JOB",
+      label: "Nhận việc",
       onClick: async () => {
-        const { error } = await (supabase as any).rpc("order_take_job", { _id: order.id });
-        if (error) { toast.error(error.message); await s.reload(); return; }
-        setDraft({});
-        await s.reload();
-        toast.success("Bạn đã nhận Job");
+        if (saving || uploading) return;
+        setSaving(true); setSaveError('');
+        try {
+          const { error } = await (supabase as any).rpc("order_take_job", { _id: order.id });
+          if (error) throw new Error(error.message);
+          setDraft({});
+          await s.reload();
+          toast.success("Bạn đã nhận việc");
+        } catch (error) { setSaveError(error instanceof Error ? error.message : 'Không nhận được việc.'); }
+        finally { setSaving(false); }
       },
       show: !order.assignee && designCan(can,order.workflowKind,'take'),
     });
@@ -217,7 +224,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 flex-wrap">
             <span>{order.title}</span>
@@ -230,10 +237,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="info">
+        <DesignWorkflowSummary order={order} />
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+            <TabsTrigger value="workflow">Xử lý công việc</TabsTrigger>
             <TabsTrigger value="history">Lịch sử ({order.history?.length || 0})</TabsTrigger>
           </TabsList>
 
@@ -334,7 +342,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 {order.deliveredAt && <>Bàn giao: {fmtDate(order.deliveredAt)} · </>}
                 {order.completedAt && <>Hoàn thành: {fmtDate(order.completedAt)}</>}
               </div>
-              <Button onClick={saveOnly} disabled={saving || uploading || (!canEdit && !designCan(can,order.workflowKind,'assign')) || Object.keys(draft).length === 0}>{saving?'Đang lưu…':'Lưu thay đổi'}</Button>
+              <Button onClick={saveOnly} disabled={saving || uploading || Object.keys(draft).length === 0}>{saving?'Đang lưu…':'Lưu thay đổi'}</Button>
             </div>
           </TabsContent>
 
@@ -343,6 +351,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               <div className="text-sm text-muted-foreground">
                 Trạng thái hiện tại: <StatusBadge value={order.status} />
               </div>
+              {!order.assignee && (isAdmin || designCan(can,order.workflowKind,'assign')) && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed p-3"><p className="text-sm text-muted-foreground">Công việc chưa có người thực hiện.</p><Button variant="outline" size="sm" onClick={() => setActiveTab('info')}>Phân công công việc</Button></div>}
+              <div className="flex flex-wrap gap-2">{[{label:'Mở bản nháp',url:order.draftLink},{label:'Mở bản chỉnh sửa',url:order.reviseLink},{label:'Mở file bàn giao',url:order.deliverLink}].filter(item=>item.url && validDocumentUrl(item.url)).map(item=><a key={item.label} href={item.url} target="_blank" rel="noopener noreferrer" className="rounded-md border px-3 py-2 text-sm font-medium text-primary hover:bg-muted">{item.label} ↗</a>)}</div>
               {order.reviewNotes && (
                 <div className="rounded-md bg-destructive/10 border border-destructive/30 p-3 text-sm">
                   <strong>Ghi chú sửa gần nhất:</strong> {order.reviewNotes}
@@ -363,7 +373,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
               <div className="flex flex-wrap gap-2">
                 {actions.filter((a) => a.show).map((a) => (
-                  <Button key={a.label} disabled={saving} variant={a.variant || "default"} onClick={a.onClick}>{a.label}</Button>
+                  <Button key={a.label} disabled={saving || uploading} variant={a.variant || "default"} onClick={a.onClick}>{a.label}</Button>
                 ))}
                 {actions.filter((a) => a.show).length === 0 && (
                   <p className="text-sm text-muted-foreground">Không có hành động khả dụng cho trạng thái này (hoặc bạn không có quyền).</p>
@@ -430,3 +440,4 @@ function PersonSelect({ label, value, onChange, disabled }: { label: string; val
     </div>
   );
 }
+
