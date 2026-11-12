@@ -20,3 +20,10 @@ rollback.sql  sha256 865d5826c963eace95e376eec1b1561a1e3f7ca4a736e4c42907e7fb4b3
 Tests: src/lib/basePermissions/orgSignature.database.test.ts — 15/15 pass (isolated PGlite): preflight accept/refuse; live def reproduces loop; (1) generated id varies → pass; canonical + two synthetic rows parity + multiplicity; (2) unrelated existing id change fails; (3) canonical id change fails; (4) unit/person/category/status/start/end fail; (5) extra member fails; (6) fake business rows (other user/titled/other time/unrelated unit, or no matching assign) keep UUID; end/ids/source_id-named rows keep UUID; (7) transfer/concurrent parity, mismatched source/category not normalized; (8) legacy ids significant; permissions/role links/slots kept; no position() in SQL.
 Not tested: full org_change preview→apply on real Biz tables (needs isolated full fixture or approved apply).
 Status: PENDING separate exact owner approval of sha256 29c79563…ecd0. Not applied; no assignments changed.
+
+## Post-apply smoke (12/11 08:5xZ, read-only)
+Live md5 1d8ea364154c986e31ce2e705746a03d. Super Admin browser, Kinh Doanh Quà Tặng 2 → Thêm nhân sự → Nhân viên Kinh doanh → Xem trước: org_change preview HTTP 200 in 3.64s, modal "Xem trước bổ nhiệm" rendered, no page errors. Apply requests were blocked at network layer; "Xác nhận bổ nhiệm" never clicked.
+Preview impact: before 86 → after 88 memberships; signature has canonical appointment with exact id + exactly 1 `projected:biz_department_members|…` (primary, title null). applied_at null.
+HR counts before/after identical: org_assignments 86, biz_appointments 40, dept members 30, team 0, affiliations 1, org_events 40. Only private.org_previews +1.
+Unauthenticated org_change: 401. Isolated tests 15/15.
+Apply path NOT E2E tested (no rollback-protected authorized transaction available).
