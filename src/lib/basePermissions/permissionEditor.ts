@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; grantable?: boolean; reason?: string }
+export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; grantable?: boolean; reason?: string; deny_ready?: boolean; unit_binding?: string | null }
 export const permissionEditorApi = {
   async read(): Promise<EditorPolicy[]> {
     const { data, error } = await supabase.rpc('permission_editor_read');
@@ -37,9 +37,11 @@ export function isGrantable(key: string, policy: EditorPolicy[]): boolean {
 /** Capability metadata is authoritative; never infer grants from a module or Role name. */
 export function permissionAvailability(policy: EditorPolicy[], key: string, source: string) {
   const row = policy.find(p => p.key === key);
-  // Compatibility only: existing source-specific rights cannot be removed before SQL approval.
-  const ready = isGrantable(key,policy) || row && (source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true && row.scope === 'own' : source === 'marketing_task' ? row.task_ready : row.position_ready);
-  if (ready && row) return { ready: true, reason: scopeLabels[row.scope] };
+  // Unified server contract (deny_ready present): each source flag is authoritative, no client-side Role-kind narrowing.
+  // Older contract: conservative legacy intersection until the staged SQL is approved.
+  const unified = row?.deny_ready !== undefined;
+  const ready = unified ? !!row && sourceFlag(row, source) : isGrantable(key,policy) || row && (source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true && row.scope === 'own' : source === 'marketing_task' ? row.task_ready : row.position_ready);
+  if (ready && row) return { ready: true, reason: row.scope === 'unit' && source !== 'position' ? `${scopeLabels.unit} · nguồn này không gắn đơn vị nên không mở thêm dữ liệu đơn vị` : scopeLabels[row.scope] };
   if (row?.reason) return { ready: false, reason: row.reason };
   if (row?.scope === 'unit' && source !== 'position') return { ready: false, reason: 'Nguồn này chưa truyền phạm vi đơn vị tới cổng kiểm tra quyền; chưa thể cấp.' };
   if (row) return { ready: false, reason: 'Quyền có trong chính sách máy chủ nhưng nguồn cấp này chưa được kiểm chứng; chưa thể cấp.' };
@@ -56,4 +58,19 @@ export function permissionControl(policy: EditorPolicy[], key: string, source: s
 /** Only additions need capability readiness; retained historic keys stay subject to server validation. */
 export function unsupportedPermissionAdditions(policy: EditorPolicy[], source: string, baseline: string[], value: string[]) {
   return [...new Set(value)].filter(key=>!baseline.includes(key)&&!permissionAvailability(policy,key,source).ready);
+}function sourceFlag(row: EditorPolicy, source: string): boolean {
+  return source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true : source === 'marketing_task' ? row.task_ready : row.position_ready;
+}
+/** Personal three-state model: inherit (Role sources decide), explicit ALLOW, explicit DENY (wins over every Role). */
+export type PersonalState = 'inherit' | 'allow' | 'deny';
+export function personalState(key: string, allow: string[], deny: string[]): PersonalState {
+  return deny.includes(key) ? 'deny' : allow.includes(key) ? 'allow' : 'inherit';
+}
+export function setPersonalState(key: string, state: PersonalState, allow: string[], deny: string[]) {
+  const a = allow.filter(k => k !== key), d = deny.filter(k => k !== key);
+  return { allow: state === 'allow' ? [...a, key] : a, deny: state === 'deny' ? [...d, key] : d };
+}
+/** DENY is offered only where the server confirms the gate reads the shared resolver; retained denies can always be removed. */
+export function canDeny(policy: EditorPolicy[], key: string, baselineDeny: string[]): boolean {
+  return policy.find(p => p.key === key)?.deny_ready === true || baselineDeny.includes(key);
 }

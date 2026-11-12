@@ -12,13 +12,16 @@ import { toast } from 'sonner';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
 import { readPermissionCatalog } from '@/lib/basePermissions/permissionCatalog';
 
-type Supplement = { fingerprint: string; role_ids: string[]; permissions: string[] | null; legacy_override: boolean; inactive_legacy: boolean };
-type PersonalPreview = { id: string; fingerprint: string; added: string[]; removed: string[]; affected_users: string[]; inactive_legacy: boolean };
+type Supplement = { fingerprint: string; role_ids: string[]; permissions: string[] | null; legacy_override: boolean; inactive_legacy: boolean; denied_permissions?: string[] | null; deny_supported?: boolean };
+type PersonalPreview = { id: string; fingerprint: string; added: string[]; removed: string[]; deny_added?: string[]; deny_removed?: string[]; affected_users: string[]; inactive_legacy: boolean };
+// Staged backend overloads (3-arg preview / 6-arg save) are not in generated types until the owner approves the SQL.
+const rpc = supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
 
 export function StaffPermissionEditor({ userId, effective, effectiveError }: { userId: string; effective?: EffectivePermission[]; effectiveError?: boolean }) {
   const { user } = useCurrentUser();
   const qc = useQueryClient();
   const [draft, setDraft] = useState<string[] | null>(null);
+  const [denyDraft, setDenyDraft] = useState<string[] | null>(null);
   const [reason, setReason] = useState('');
   const [preview, setPreview] = useState<PersonalPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,36 +41,44 @@ export function StaffPermissionEditor({ userId, effective, effectiveError }: { u
   if (q.error) return <p role="alert" className="py-4 text-muted-foreground">{q.error.message}</p>;
   if (!q.data) return null;
   const current = draft ?? q.data.permissions ?? [];
+  const denySupported = q.data.deny_supported === true;
+  const baselineDenied = q.data.denied_permissions ?? [];
+  const currentDenied = denyDraft ?? baselineDenied;
+  const dirty = draft !== null || denyDraft !== null;
   const label = (key: string) => PERMISSIONS.find(p => p.key === key)?.label ?? catalog.data?.find(p => p.key === key)?.label ?? key;
   const openPreview = () => run(async () => {
     if(!policy.data || unsupportedPermissionAdditions(policy.data,'personal',q.data?.permissions??[],current).length) throw new Error('Bản nháp có quyền mới chưa được máy chủ cho phép.');
-    const { data, error } = await supabase.rpc('account_supplement_preview', { _target: userId, _permissions: current });
+    const { data, error } = denySupported
+      ? await rpc('account_supplement_preview', { _target: userId, _permissions: current, _denied: currentDenied })
+      : await supabase.rpc('account_supplement_preview', { _target: userId, _permissions: current });
     if (error) throw error;
     setPreview(data as unknown as PersonalPreview);
   });
   const save = () => run(async () => {
-    if (!preview || !q.data || !draft) return;
-    const { error } = await supabase.rpc('account_supplement_save', { _target: userId, _roles: q.data.role_ids, _permissions: draft, _fingerprint: preview.fingerprint, _reason: reason });
+    if (!preview || !q.data || !dirty) return;
+    const { error } = denySupported
+      ? await rpc('account_supplement_save', { _target: userId, _roles: q.data.role_ids, _permissions: current, _denied: currentDenied, _fingerprint: preview.fingerprint, _reason: reason })
+      : await supabase.rpc('account_supplement_save', { _target: userId, _roles: q.data.role_ids, _permissions: current, _fingerprint: preview.fingerprint, _reason: reason });
     if (error) throw error;
-    setDraft(null); setPreview(null); setReason('');
+    setDraft(null); setDenyDraft(null); setPreview(null); setReason('');
     await qc.invalidateQueries(); await useAuth.getState().reload(); toast.success('Đã lưu quyền bổ sung cho nhân viên này.');
   });
   return <div className="space-y-4 py-4">
-    <div className="border-l-2 border-primary pl-3"><h3 className="font-semibold">Quyền bổ sung cá nhân</h3><p className="mt-1 text-sm text-muted-foreground">Chỉ cộng thêm cho nhân viên này. Những người cùng Role không bị ảnh hưởng.</p></div>
+    <div className="border-l-2 border-primary pl-3"><h3 className="font-semibold">{denySupported ? 'Quyền riêng của nhân viên' : 'Quyền bổ sung cá nhân'}</h3><p className="mt-1 text-sm text-muted-foreground">{denySupported ? 'Theo Role: nhận theo Role chung, vị trí, nhiệm vụ. Cho phép: thêm riêng. Chặn: tắt quyền này cho riêng nhân viên, thắng mọi Role. Người cùng Role không bị ảnh hưởng.' : 'Chỉ cộng thêm cho nhân viên này. Những người cùng Role không bị ảnh hưởng.'}</p>{!denySupported && <p className="mt-1 text-xs text-muted-foreground">Chặn quyền riêng đang chờ chủ dự án duyệt cập nhật máy chủ; hiện chỉ cộng thêm được.</p>}</div>
     {q.data.legacy_override ? <p role="alert" className="text-destructive">Quyền riêng cũ đang bật. Cần đối chiếu và xác nhận chuyển đổi trước; cấu hình hiện tại được giữ nguyên.</p> : <>
       {q.data.inactive_legacy && <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">Có cấu hình cũ đang tắt</summary><p className="pt-2">Chưa thay đổi. Nếu xác nhận lưu, chỉ quyền riêng của nhân viên này chuyển sang cộng thêm; bản trước được lưu trong nhật ký.</p></details>}
       {policy.error && <p role="alert" className="text-destructive">Chưa tải được các quyền có phạm vi an toàn. Danh mục chỉ xem, chưa thể thay đổi.</p>}
       {catalog.isPending && <p className="text-sm text-muted-foreground">Đang đối chiếu danh mục quyền toàn Base…</p>}
       {catalog.error && <p role="alert" className="text-destructive text-sm">Chưa tải được danh mục quyền toàn Base. Đang hiện danh mục có sẵn, chỉ xem.</p>}
       {effectiveError && <p role="alert" className="text-muted-foreground text-sm">Chưa tải được quyền hiệu lực và nguồn Role; trạng thái quyền riêng vẫn giữ nguyên.</p>}
-      <PermissionChecklist personal value={current} onChange={v => { setDraft(v); setPreview(null); }} policy={policy.data ?? []} baseline={q.data.permissions ?? []} effective={effective} catalog={catalog.data ?? []} disabled={!policy.data || !!policy.error || !catalog.data || !!catalog.error || busy}/>
-      <div className="flex flex-wrap gap-2"><Button disabled={!draft || busy || !policy.data || !!policy.error || !catalog.data || !!catalog.error} onClick={openPreview}>Xem trước quyền riêng</Button><Button variant="ghost" disabled={!draft || busy} onClick={() => { setDraft(null); setPreview(null); setError(''); }}>Hủy thay đổi</Button></div>
+      <PermissionChecklist personal value={current} onChange={v => { setDraft(v); setPreview(null); }} denied={denySupported ? currentDenied : undefined} baselineDenied={baselineDenied} onPersonalChange={denySupported ? (a, d) => { setDraft(a); setDenyDraft(d); setPreview(null); } : undefined} policy={policy.data ?? []} baseline={q.data.permissions ?? []} effective={effective} catalog={catalog.data ?? []} disabled={!policy.data || !!policy.error || !catalog.data || !!catalog.error || busy}/>
+      <div className="flex flex-wrap gap-2"><Button disabled={!dirty || busy || !policy.data || !!policy.error || !catalog.data || !!catalog.error} onClick={openPreview}>Xem trước quyền riêng</Button><Button variant="ghost" disabled={!dirty || busy} onClick={() => { setDraft(null); setDenyDraft(null); setPreview(null); setError(''); }}>Hủy thay đổi</Button></div>
     </>}
     {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
     <Dialog open={!!preview} onOpenChange={v => !busy && !v && setPreview(null)}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Xác nhận quyền riêng</DialogTitle></DialogHeader>
-      <p className="font-medium">Thêm {preview?.added.length ?? 0} / bỏ {preview?.removed.length ?? 0} quyền · chỉ 1 nhân viên</p>
-      <p className="text-sm text-muted-foreground">Bỏ quyền bổ sung không trừ quyền đang nhận từ Role, vị trí hoặc nhiệm vụ.</p>
-      {preview?.added.map(k => <p key={k} className="text-sm">Thêm: {label(k)}</p>)}{preview?.removed.map(k => <p key={k} className="text-sm">Bỏ bổ sung: {label(k)}</p>)}
+      <p className="font-medium">Thêm {preview?.added.length ?? 0} / bỏ {preview?.removed.length ?? 0}{denySupported ? ` · chặn ${preview?.deny_added?.length ?? 0} / bỏ chặn ${preview?.deny_removed?.length ?? 0}` : ''} quyền · chỉ 1 nhân viên</p>
+      <p className="text-sm text-muted-foreground">{denySupported ? 'Bỏ “Cho phép” chỉ quay về theo Role; muốn tắt hẳn quyền thì chọn “Chặn”.' : 'Bỏ quyền bổ sung không trừ quyền đang nhận từ Role, vị trí hoặc nhiệm vụ.'}</p>
+      {preview?.added.map(k => <p key={k} className="text-sm">Thêm: {label(k)}</p>)}{preview?.removed.map(k => <p key={k} className="text-sm">Bỏ bổ sung: {label(k)}</p>)}{preview?.deny_added?.map(k => <p key={k} className="text-sm text-destructive">Chặn: {label(k)}</p>)}{preview?.deny_removed?.map(k => <p key={k} className="text-sm">Bỏ chặn (theo Role): {label(k)}</p>)}
       {preview?.inactive_legacy && <p className="text-sm text-muted-foreground">Cấu hình riêng cũ đang tắt được thay bằng quyền cộng thêm đã chọn. Nhật ký giữ bản trước.</p>}
       <Label htmlFor={`personal-reason-${userId}`}>Lý do thay đổi</Label><Input id={`personal-reason-${userId}`} value={reason} onChange={e => setReason(e.target.value)}/>
       {error && <p role="alert" className="text-destructive text-sm">{error}</p>}

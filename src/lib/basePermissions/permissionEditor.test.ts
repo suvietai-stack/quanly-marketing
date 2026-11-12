@@ -35,3 +35,23 @@ it('legacy common/task/personal intersection is universal but a source-only key 
  expect(isGrantable('web.view',policy)).toBe(false);
  expect(isGrantable('leave.create',[{...policy[0],common_ready:true,grantable:false}])).toBe(false);
 });
+
+import { personalState, setPersonalState, canDeny } from './permissionEditor';
+const unified = (over: Partial<EditorPolicy>): EditorPolicy => ({ key: 'leave.view_unit', scope: 'unit', personal: true, position_ready: true, task_ready: true, common_ready: true, deny_ready: true, ...over });
+it('unified contract: the same server-ready key is selectable in Common, position, task and personal', () => {
+  const p = [unified({})];
+  for (const source of ['common', 'position', 'marketing_task', 'personal']) expect(permissionAvailability(p, 'leave.view_unit', source).ready).toBe(true);
+  expect(permissionAvailability(p, 'leave.view_unit', 'common').reason).toContain('không mở thêm dữ liệu đơn vị');
+  expect(permissionAvailability([unified({ common_ready: false })], 'leave.view_unit', 'common').ready).toBe(false);
+});
+it('personal three states: unchecking ALLOW returns to inherit, DENY replaces ALLOW, never both', () => {
+  let s = setPersonalState('a', 'allow', [], []); expect(personalState('a', s.allow, s.deny)).toBe('allow');
+  s = setPersonalState('a', 'deny', s.allow, s.deny); expect(s).toEqual({ allow: [], deny: ['a'] });
+  s = setPersonalState('a', 'inherit', s.allow, s.deny); expect(s).toEqual({ allow: [], deny: [] });
+  expect(personalState('a', [], [])).toBe('inherit');
+});
+it('DENY is only offered where the server confirms enforcement; held denies stay removable', () => {
+  expect(canDeny([unified({ deny_ready: false })], 'leave.view_unit', [])).toBe(false);
+  expect(canDeny([unified({})], 'leave.view_unit', [])).toBe(true);
+  expect(canDeny([], 'biz.view_all', ['biz.view_all'])).toBe(true);
+});
