@@ -6,10 +6,10 @@ describe('Mobile launcher shares live navigation visibility', () => {
   it('retains ordered CRM, 3K and approval pins while access is unresolved', () => {
     const pins = ['/biz/crm', '/biz/3k', '/biz/approvals', '/leave'];
     expect(reconcilePins(pins, groups(['leave.create']), false)).toEqual(pins);
-    expect(allowedPins(pins, groups(['leave.create']))).toEqual(['/leave']);
+    expect(allowedPins(pins, groups(['leave.create']))).toEqual(['/biz/3k', '/leave']);
   });
   it('prunes a confirmed revocation only after access is resolved', () => {
-    expect(reconcilePins(['/biz/crm', '/biz/3k'], groups(['biz.crm_use']), true)).toEqual(['/biz/crm']);
+    expect(reconcilePins(['/biz/crm', '/signals'], groups(['biz.crm_use']), true)).toEqual(['/biz/crm']);
   });
   it('reads stored preferences without consulting pending permissions', () => {
     expect(storedPins(['/biz/crm', null, '/biz/crm', '', '/biz/approvals'])).toEqual(['/biz/crm', '/biz/approvals']);

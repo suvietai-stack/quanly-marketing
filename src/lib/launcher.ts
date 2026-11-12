@@ -27,3 +27,12 @@ export function movePin(pins: string[], path: string, direction: -1 | 1): string
   [copy[index], copy[next]] = [copy[next], copy[index]];
   return copy;
 }
+
+/** Suggestions are derived from visible navigation only; they never become stored pins. */
+export function suggestedLauncherApps(groups: NavGroup[], limit = 6): NavItem[] {
+  const apps = launcherApps(groups).filter(item => item.to !== '/');
+  const preferred = ['/tasks', '/approvals', '/signals', '/leave', '/orders', '/finance/incoming'];
+  const byRoute = new Map(apps.map(item => [item.to, item]));
+  const routes = [...new Set([...preferred.filter(path => byRoute.has(path)), ...apps.map(item => item.to)])];
+  return routes.slice(0, Math.max(0, limit)).map(path => byRoute.get(path)!);
+}
