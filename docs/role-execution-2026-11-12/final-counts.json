@@ -1,0 +1,15 @@
+{
+  "rows": [
+    {
+      "counts": {
+        "assignments": 86,
+        "bindings": 21,
+        "common": 1,
+        "overrides": 13,
+        "roles": 57,
+        "slots": 25,
+        "superadmins": 2
+      }
+    }
+  ]
+}

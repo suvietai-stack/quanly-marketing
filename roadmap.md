@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Thực thi owner chốt 12/11 04:08
+- [x] Preflight live: 16/25/86/25/16/56/13; 10 function MD5 khớp staged; 18 SQL tests đạt.
+- [x] Áp 0385 shared-position 4 hàm và 0386 Common; Common lần đầu timeout rollback, retry thành công; readback ACL giữ.
+- [x] Common 4 own keys qua Role preview/apply/readback; 5 mapping qua org_change 16→21, cây 3 Khối parent org-company; impact=0. 86 assignments/25 slots/13 overrides/56 Role cũ giữ nguyên.
+- [x] Readback RPC 26 nhân sự: 23 active có 4 Common, 3 khóa zero allowed; 371 quyền/cache tests đạt; browser 3sizes fixtures + live Common desktop/mobile đạt.
+- [ ] Full scoped employee E2E/Publish: chưa có phiên nhân viên cho 10 luồng write; không tự chọn/mint người khác. Domain suite 722/724, 2 lỗi thời gian có sẵn ở biz/my-work; chưa Publish.
+- [ ] Cleanup gen1: 16 title FK/SQL dependency còn, giữ 4 system/2 SA; Biz Role source/3K application-scope staged chưa cutover, không grant vượt readiness.
+
 ## Ba loại Role thật — 12/11 03:54
 - [x] Kho ba nhóm và hồ sơ ba nguồn + quyền riêng, editor hiện hữu giữ nguyên; quyền chung chưa sẵn sàng không tích giả.
 - [x] Một SQL common staged với baseline/checksum/rollback, clone exact writer + evaluator: active/no-appointment/union hai task/personal/DENY/guard; nối tiếp source cutover hiện hữu, không SQL apply.

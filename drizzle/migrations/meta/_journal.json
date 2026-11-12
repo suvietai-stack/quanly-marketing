@@ -2696,6 +2696,20 @@
       "when": 1794449068861,
       "tag": "0384_k3_personal_invitation_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 385,
+      "version": "7",
+      "when": 1794456681786,
+      "tag": "0385_org_assign_shared_position",
+      "breakpoints": true
+    },
+    {
+      "idx": 386,
+      "version": "7",
+      "when": 1794457241934,
+      "tag": "0386_role_common_company",
+      "breakpoints": true
     }
   ]
 }
