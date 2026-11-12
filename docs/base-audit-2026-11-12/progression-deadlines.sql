@@ -26,4 +26,5 @@ AS $function$
  SELECT signal_id,sale_id,sequence,due_on,CASE WHEN backlog IS NOT NULL THEN 'overdue' WHEN done THEN 'updated' WHEN due_on=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN 'today' WHEN due_on=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date+1 THEN 'soon' ELSE 'ok' END,CASE WHEN backlog IS NULL THEN 0 ELSE greatest(1,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date-(backlog AT TIME ZONE 'Asia/Ho_Chi_Minh')::date+1) END,(private.progression_boundary(started_at,sequence+1) AT TIME ZONE 'Asia/Ho_Chi_Minh')::date-1,now() FROM state;
 $function$
 
+;
 COMMIT;
