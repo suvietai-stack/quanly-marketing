@@ -34,7 +34,7 @@ END $function$;
 
 -- PENDING. Role actions only; existing source/source_id mapping, no new permission or organization tables.
 CREATE OR REPLACE FUNCTION private.biz_v2_ready(p text) RETURNS boolean
-LANGUAGE sql IMMUTABLE AS $$ SELECT p=ANY(ARRAY['biz.view_own','biz.view_dept','biz.dashboard_public','biz.goal_submit','biz.goal_approve','biz.plan_submit','biz.plan_request_revision','biz.report_submit','biz.report_approve','biz.approval_view']) $$;
+LANGUAGE sql IMMUTABLE AS $$ SELECT p=ANY(ARRAY['biz.view_own','biz.view_dept','biz.goal_submit','biz.goal_approve','biz.plan_submit','biz.plan_request_revision','biz.report_submit','biz.report_approve','biz.approval_view']) $$;
 
 CREATE OR REPLACE FUNCTION private.biz_v2_denied(u uuid,p text) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
@@ -48,16 +48,14 @@ CREATE OR REPLACE FUNCTION private.biz_v2_sources(u uuid,p text)
 RETURNS TABLE(assignment_id text,role_id text,unit_id text,kind text,source_id text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
  SELECT DISTINCT a.id,ar.id,ou.id,ou.kind,ou.source_id
- FROM jsonb_array_elements(private.base_rules(u,private.base_config())) r
- JOIN org_assignments a ON a.id=r->>'source_id' AND a.user_id=u AND a.unit_id=r->>'unit_id'
+ FROM org_assignments a
  JOIN org_units ou ON ou.id=a.unit_id AND ou.active
  JOIN org_titles t ON t.id=a.title_id AND t.active
- JOIN org_position_roles b ON b.unit_id=a.unit_id AND b.title_id=a.title_id AND b.role_id=r->>'role_id'
+ JOIN org_position_roles b ON b.unit_id=a.unit_id AND b.title_id=a.title_id
  JOIN app_roles ar ON ar.id=b.role_id AND ar.catalog_generation=2 AND ar.role_kind='position' AND ar.catalog_state='standard' AND NOT ar.is_system
- WHERE private.is_active(u) AND private.legacy_business_allowed(u) AND private.biz_source_ok(u,a.starts_at)
+ WHERE private.is_active(u) AND private.biz_source_ok(u,a.starts_at)
  AND private.biz_v2_ready(p) AND NOT private.biz_v2_denied(u,p)
- AND r->>'permission'=p AND r->>'effect'='ALLOW' AND r->>'source_kind'='appointment_role'
- AND private.base_valid_at(r) AND p=ANY(ar.permissions)
+ AND a.user_id=u AND p=ANY(ar.permissions)
  AND a.status='active' AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now())
  AND (
   (ou.kind='department' AND ou.source='biz_departments' AND EXISTS(SELECT 1 FROM biz_departments d WHERE d.id::text=ou.source_id AND d.active AND EXISTS(SELECT 1 FROM org_units s WHERE s.id=ou.parent_id AND s.active AND s.source='biz_systems' AND s.source_id=d.system_id::text)))
@@ -93,11 +91,11 @@ $$;
 CREATE OR REPLACE FUNCTION public.biz_can(_actor uuid,_permission text) RETURNS boolean
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 BEGIN
- IF NOT private.is_active(_actor) OR NOT private.legacy_business_allowed(_actor) THEN RETURN false; END IF;
+ IF NOT private.is_active(_actor) THEN RETURN false; END IF;
  IF public.biz_admin(_actor) THEN RETURN true; END IF;
  IF private.biz_v2_ready(_permission) THEN
   IF private.biz_v2_denied(_actor,_permission) THEN RETURN false; END IF;
-  RETURN private.biz_v2_can_at(_actor,_permission) OR public.biz_exception_ok(_actor,_permission);
+  RETURN private.biz_v2_can_at(_actor,_permission) OR (private.legacy_business_allowed(_actor) AND public.biz_exception_ok(_actor,_permission));
  END IF;
  -- CRM/3K/unsupported administration keep their existing independent gates.
  RETURN private.biz_v2_previous_biz_can(_actor,_permission);
@@ -105,13 +103,13 @@ END $$;
 
 CREATE OR REPLACE FUNCTION private.biz_v2_read(u uuid,owner_ uuid,dept_ uuid,at_ timestamptz DEFAULT now()) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT private.is_active(u) AND private.legacy_business_allowed(u) AND (
+ SELECT private.is_active(u) AND (
  public.biz_admin(u)
  OR private.biz_v2_can_at(u,'biz.view_own',owner_,dept_,at_)
  OR private.biz_v2_can_at(u,'biz.view_dept',owner_,dept_,at_)
  -- Explicit audited legacy exceptions stay native-scoped; they cannot borrow a Role source.
- OR (NOT private.biz_v2_denied(u,'biz.view_all') AND public.biz_exception_ok(u,'biz.view_all','all'))
- OR (NOT private.biz_v2_denied(u,'biz.view_dept') AND public.biz_exception_ok(u,'biz.view_dept') AND public.biz_scope_ok(u,owner_,dept_,at_))
+ OR (private.legacy_business_allowed(u) AND NOT private.biz_v2_denied(u,'biz.view_all') AND public.biz_exception_ok(u,'biz.view_all','all'))
+ OR (private.legacy_business_allowed(u) AND NOT private.biz_v2_denied(u,'biz.view_dept') AND public.biz_exception_ok(u,'biz.view_dept') AND public.biz_scope_ok(u,owner_,dept_,at_))
  )
 $$;
 
@@ -124,7 +122,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.biz_doc_access(_user uuid,_dept uuid,_kind text,_review boolean DEFAULT false) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT private.is_active(auth.uid()) AND private.legacy_business_allowed(auth.uid()) AND _kind IN ('plan','report') AND
+ SELECT private.is_active(auth.uid()) AND _kind IN ('plan','report') AND
  CASE WHEN NOT _review THEN private.biz_v2_read(auth.uid(),_user,_dept)
   OR (_kind='report' AND private.biz_v2_can_at(auth.uid(),'biz.approval_view',_user,_dept) AND EXISTS(SELECT 1 FROM biz_document_versions v JOIN biz_documents d ON d.id=v.document_id WHERE d.user_id=_user AND d.department_id=_dept AND d.kind='report' AND public.biz_run_assigned(v.id)))
  ELSE _user<>auth.uid() AND (public.biz_admin(auth.uid()) OR
@@ -134,16 +132,16 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.biz_step_scope_ok(_steps jsonb,_index integer,_actor uuid,_owner uuid,_dept uuid,_at timestamptz) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT private.is_active(_actor) AND private.legacy_business_allowed(_actor) AND (
+ SELECT private.is_active(_actor) AND (
  public.biz_admin(_actor) OR (
  _actor<>_owner AND (_steps->_index->>'user_id'=_actor::text OR _steps->_index->>'substitute_id'=_actor::text)
  AND EXISTS(SELECT 1 FROM biz_approval_runs r WHERE r.steps=_steps AND r.current_step=_index AND r.owner_id=_owner AND r.department_id=_dept AND r.status='pending'
- AND private.biz_v2_can_at(_actor,CASE WHEN r.kind='goal_year' THEN 'biz.goal_approve' ELSE 'biz.report_approve' END,_owner,_dept,_at))))
+ AND private.biz_v2_can_at(_actor,CASE WHEN r.kind IN ('goal_year','rolling_plan') THEN 'biz.goal_approve' WHEN r.kind='report' OR r.kind LIKE 'report_%' THEN 'biz.report_approve' ELSE NULL END,_owner,_dept,_at))))
 $$;
 
 CREATE OR REPLACE FUNCTION public.biz_department_access(_department_id uuid) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT private.is_active(auth.uid()) AND private.legacy_business_allowed(auth.uid()) AND (public.biz_admin(auth.uid())
+ SELECT private.is_active(auth.uid()) AND (public.biz_admin(auth.uid())
  OR private.biz_v2_can_at(auth.uid(),'biz.view_dept',NULL,_department_id)
  OR EXISTS(SELECT 1 FROM biz_department_members m WHERE m.department_id=_department_id AND m.user_id=auth.uid() AND m.started_at<=now() AND (m.ended_at IS NULL OR m.ended_at>now()) AND private.biz_v2_can_at(auth.uid(),'biz.view_own',m.user_id,_department_id))
  OR (NOT private.biz_v2_denied(auth.uid(),'biz.view_all') AND public.biz_exception_ok(auth.uid(),'biz.view_all','all')))
@@ -155,3 +153,283 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT private
 REVOKE ALL ON FUNCTION private.biz_v2_ready(text),private.biz_v2_denied(uuid,text),private.biz_v2_sources(uuid,text),private.biz_v2_can_at(uuid,text,uuid,uuid,timestamptz),private.biz_v2_read(uuid,uuid,uuid,timestamptz) FROM PUBLIC,anon,authenticated,service_role;
 
 REVOKE ALL ON FUNCTION private.biz_v2_previous_biz_can(uuid,text) FROM PUBLIC,anon,authenticated,service_role;
+
+-- Stage 3 target-scoped writer, Dashboard, approval-history and cache integration (PENDING).
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_goal_start(integer, text)'::regprocedure)) <> 'f6e215f7166849f343e641fa4ca28d9f' THEN RAISE EXCEPTION 'Gate changed: biz_goal_start'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_goal_start(_year integer, _reason text DEFAULT NULL::text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g public.biz_annual_goals; v_id uuid; m public.biz_department_members; d public.biz_departments;
+BEGIN
+ IF NOT public.biz_can(auth.uid(),'biz.goal_submit') THEN RAISE EXCEPTION 'Không có quyền lập mục tiêu.'; END IF;
+ PERFORM 1 FROM public.profiles WHERE id=auth.uid() FOR UPDATE;
+ SELECT * INTO m FROM public.biz_department_members WHERE user_id=auth.uid() AND ended_at IS NULL;
+ SELECT * INTO d FROM public.biz_departments WHERE id=m.department_id AND active;
+ IF d.id IS NULL THEN RAISE EXCEPTION 'Bạn chưa thuộc phòng kinh doanh đang hoạt động. Liên hệ người quản lý.'; END IF;
+ IF NOT public.biz_admin(auth.uid()) AND NOT private.biz_v2_can_at(auth.uid(),'biz.goal_submit',auth.uid(),d.id) THEN RAISE EXCEPTION 'Role không cho lập mục tiêu tại phòng này.'; END IF;
+ SELECT * INTO g FROM public.biz_annual_goals WHERE user_id=auth.uid() AND year=_year FOR UPDATE;
+ IF g.id IS NOT NULL AND NOT public.biz_admin(auth.uid()) AND NOT private.biz_v2_can_at(auth.uid(),'biz.goal_submit',g.user_id,g.department_id) THEN RAISE EXCEPTION 'Không có quyền tại phòng của mục tiêu.'; END IF;
+ IF g.id IS NULL THEN
+  IF NOT EXISTS(SELECT 1 FROM public.biz_kr_metrics WHERE department_id=d.id AND active) THEN RAISE EXCEPTION 'Phòng chưa có chỉ số KR.'; END IF;
+  INSERT INTO public.biz_annual_goals(user_id,year,department_id,department_name) VALUES(auth.uid(),_year,d.id,d.name) RETURNING * INTO g;
+ END IF;
+ SELECT id INTO v_id FROM public.biz_goal_versions WHERE goal_id=g.id AND status<>'approved';
+ IF v_id IS NOT NULL THEN RETURN v_id; END IF;
+ IF g.official_version_id IS NOT NULL AND btrim(coalesce(_reason,''))='' THEN RAISE EXCEPTION 'Cần nêu lý do điều chỉnh.'; END IF;
+ INSERT INTO public.biz_goal_versions(goal_id,version,reason) VALUES(g.id,coalesce((SELECT max(version) FROM public.biz_goal_versions WHERE goal_id=g.id),0)+1,nullif(btrim(_reason),'')) RETURNING id INTO v_id;
+ IF g.official_version_id IS NOT NULL THEN
+  INSERT INTO public.biz_goal_items(version_id,metric_id,definition,annual,months) SELECT v_id,metric_id,definition,annual,months FROM public.biz_goal_items WHERE version_id=g.official_version_id;
+ ELSE
+  INSERT INTO public.biz_goal_items(version_id,metric_id,definition) SELECT v_id,id,jsonb_build_object('name',name,'description',description,'unit',unit,'aggregation',aggregation,'value_kind',value_kind,'direction',direction) FROM public.biz_kr_metrics WHERE department_id=g.department_id AND active;
+ END IF;
+ INSERT INTO public.biz_goal_events(goal_id,version_id,actor_id,action,comment) VALUES(g.id,v_id,auth.uid(),'created',_reason);
+ RETURN v_id;
+END $function$
+;
+
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_goal_save(uuid, integer, jsonb, boolean)'::regprocedure)) <> '60eaeacc26f0314be799402d94252362' THEN RAISE EXCEPTION 'Gate changed: biz_goal_save'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_goal_save(_version_id uuid, _revision integer, _items jsonb, _submit boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE v public.biz_goal_versions; g public.biz_annual_goals; i public.biz_goal_items; r jsonb; annual_value numeric; month_values numeric[]; aggregate_value numeric; val jsonb;
+BEGIN
+ SELECT * INTO v FROM public.biz_goal_versions WHERE id=_version_id FOR UPDATE;
+ SELECT * INTO g FROM public.biz_annual_goals WHERE id=v.goal_id;
+ IF g.user_id IS DISTINCT FROM auth.uid() OR NOT public.biz_participant(auth.uid()) OR NOT (public.biz_admin(auth.uid()) OR private.biz_v2_can_at(auth.uid(),'biz.goal_submit',g.user_id,g.department_id)) THEN RAISE EXCEPTION 'Không có quyền sửa mục tiêu.'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.biz_department_members m JOIN public.biz_departments d ON d.id=m.department_id AND d.active WHERE m.user_id=auth.uid() AND m.ended_at IS NULL) THEN RAISE EXCEPTION 'Bạn chưa thuộc phòng kinh doanh hợp lệ.'; END IF;
+ IF v.status NOT IN ('draft','changes') THEN RAISE EXCEPTION 'Mục tiêu đang chờ duyệt hoặc đã khóa.'; END IF;
+ IF v.revision<>_revision THEN RAISE EXCEPTION 'Dữ liệu đã thay đổi. Hãy tải lại trước khi lưu.'; END IF;
+ IF jsonb_typeof(_items) IS DISTINCT FROM 'array' OR jsonb_array_length(_items)<>(SELECT count(*) FROM public.biz_goal_items WHERE version_id=v.id) OR (SELECT count(DISTINCT x->>'metric_id') FROM jsonb_array_elements(_items) x)<>jsonb_array_length(_items) THEN RAISE EXCEPTION 'Danh sách KR không hợp lệ.'; END IF;
+ FOR i IN SELECT * FROM public.biz_goal_items WHERE version_id=v.id LOOP
+  SELECT x INTO r FROM jsonb_array_elements(_items) x WHERE x->>'metric_id'=i.metric_id::text;
+  IF r IS NULL OR jsonb_typeof(r->'months') IS DISTINCT FROM 'array' OR jsonb_array_length(r->'months')<>12 THEN RAISE EXCEPTION 'Cần đủ 12 ô tháng cho mỗi KR.'; END IF;
+  FOR val IN SELECT r->'annual' UNION ALL SELECT x FROM jsonb_array_elements(r->'months') x LOOP
+   IF val IS NOT NULL AND val<>'null'::jsonb AND (val#>>'{}') !~ '^[0-9]{1,20}$' THEN RAISE EXCEPTION 'Giá trị phải là số nguyên không âm, tối đa 20 chữ số.'; END IF;
+  END LOOP;
+  annual_value:=(r->>'annual')::numeric;
+  SELECT array_agg((x#>>'{}')::numeric ORDER BY n) INTO month_values FROM jsonb_array_elements(r->'months') WITH ORDINALITY t(x,n);
+  IF _submit THEN
+   IF annual_value IS NULL OR array_position(month_values,NULL) IS NOT NULL THEN RAISE EXCEPTION 'Cần nhập mục tiêu năm và đủ 12 tháng.'; END IF;
+   SELECT CASE WHEN i.definition->>'aggregation'='sum' THEN sum(x) ELSE avg(x) END INTO aggregate_value FROM unnest(month_values) x;
+   IF aggregate_value<>annual_value THEN RAISE EXCEPTION 'Phân bổ tháng không khớp mục tiêu năm: %.',i.definition->>'name'; END IF;
+  END IF;
+  UPDATE public.biz_goal_items SET annual=annual_value,months=month_values WHERE id=i.id;
+ END LOOP;
+ UPDATE public.biz_goal_versions SET status=CASE WHEN _submit THEN 'pending' ELSE status END,submitted_at=CASE WHEN _submit THEN now() ELSE submitted_at END,revision=revision+1,updated_at=now() WHERE id=v.id;
+ INSERT INTO public.biz_goal_events(goal_id,version_id,actor_id,action,payload) VALUES(g.id,v.id,auth.uid(),CASE WHEN _submit THEN 'submitted' ELSE 'saved' END,_items);
+END $function$
+;
+
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_document_start(text, text, integer, integer, text)'::regprocedure)) <> '3ea4244e0aab9aae0945c363b47aea23' THEN RAISE EXCEPTION 'Gate changed: biz_document_start'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_document_start(_kind text, _period_kind text, _year integer, _period integer, _reason text DEFAULT NULL::text)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE d public.biz_documents; v_id uuid; dep uuid; target uuid; vals jsonb; pstart date; cyc jsonb;
+BEGIN
+ IF _kind NOT IN ('plan','report') OR NOT public.biz_can(auth.uid(),'biz.'||_kind||'_submit') THEN RAISE EXCEPTION 'Không có quyền nộp tài liệu.'; END IF;
+ PERFORM public.biz_period_start(_year,_period_kind,_period); PERFORM 1 FROM public.profiles WHERE id=auth.uid() FOR UPDATE;
+ pstart:=public.biz_period_start_date(_period_kind,_year,_period);
+ dep:=public.biz_period_department_any(auth.uid(),_period_kind,_year,_period); IF dep IS NULL THEN RAISE EXCEPTION 'Bạn không thuộc phòng kinh doanh trong kỳ này.'; END IF;
+ SELECT * INTO d FROM public.biz_documents WHERE user_id=auth.uid() AND kind=_kind AND period_kind=_period_kind AND year=_year AND period=_period FOR UPDATE;
+ IF NOT public.biz_admin(auth.uid()) AND NOT private.biz_v2_can_at(auth.uid(),'biz.'||_kind||'_submit',auth.uid(),coalesce(d.department_id,dep)) THEN RAISE EXCEPTION 'Không có quyền nộp tại phòng của kỳ này.'; END IF;
+ IF d.id IS NULL AND _kind='report' THEN IF NOT public.biz_report_period_matches(auth.uid(),_period_kind,_year,_period) THEN RAISE EXCEPTION 'Kỳ xem giao thời điểm đổi chu kỳ; chỉ nộp kỳ nguồn được giao, không tạo nghĩa vụ trùng.'; END IF;
+   cyc:=public.biz_report_cycle_config_of(auth.uid(),pstart);
+   IF coalesce(cyc->>'cycle','month')<>_period_kind THEN RAISE EXCEPTION 'Đơn vị của bạn đang áp dụng chu kỳ báo cáo khác cho kỳ này — không tạo hồ sơ trùng.'; END IF;
+   IF _period_kind='day' AND cyc->'workdays' IS NOT NULL AND coalesce(cyc->'workdays'->>(extract(isodow FROM pstart)::integer::text),'true')='false' THEN RAISE EXCEPTION 'Ngày này không thuộc lịch báo cáo của đơn vị.'; END IF;
+ END IF;
+ IF d.id IS NULL THEN INSERT INTO public.biz_documents(user_id,department_id,department_name,kind,period_kind,year,period,deadline,period_start,period_end) SELECT auth.uid(),id,name,_kind,_period_kind,_year,_period,public.biz_any_deadline_at(_kind||'_'||_period_kind,_year,_period),pstart,public.biz_period_end_date(_period_kind,_year,_period) FROM public.biz_departments WHERE id=dep RETURNING * INTO d; END IF;
+ SELECT id INTO v_id FROM public.biz_document_versions WHERE document_id=d.id AND status<>'approved'; IF v_id IS NOT NULL THEN RETURN v_id; END IF;
+ IF d.official_version_id IS NOT NULL AND btrim(coalesce(_reason,''))='' THEN RAISE EXCEPTION 'Cần nêu lý do điều chỉnh.'; END IF;
+ SELECT official_version_id INTO target FROM public.biz_annual_goals WHERE user_id=auth.uid() AND year=_year;
+ vals:='[]';
+ IF _kind='report' AND target IS NOT NULL THEN
+   IF _period_kind='month' THEN
+     SELECT coalesce(jsonb_agg(jsonb_build_object('metric_id',metric_id,'definition',definition,'target',months[_period]::text,'annual_target',annual::text,'actual',NULL)),'[]') INTO vals FROM public.biz_goal_items WHERE version_id=target;
+   ELSIF _period_kind='quarter' THEN
+     SELECT coalesce(jsonb_agg(jsonb_build_object('metric_id',metric_id,'definition',definition,'target',qt,'annual_target',annual::text,'actual',NULL)),'[]') INTO vals
+     FROM (SELECT metric_id,definition,annual,months,
+              CASE WHEN (months[(_period-1)*3+1]#>>'{}')~'^[0-9]+$' AND (months[(_period-1)*3+2]#>>'{}')~'^[0-9]+$' AND (months[(_period-1)*3+3]#>>'{}')~'^[0-9]+$'
+                  THEN ((months[(_period-1)*3+1]#>>'{}')::numeric+(months[(_period-1)*3+2]#>>'{}')::numeric+(months[(_period-1)*3+3]#>>'{}')::numeric)::text END AS qt
+           FROM public.biz_goal_items WHERE version_id=target) g;
+   ELSE
+     SELECT coalesce(jsonb_agg(jsonb_build_object('metric_id',metric_id,'definition',definition,'target',NULL,'annual_target',annual::text,'actual',NULL)),'[]') INTO vals FROM public.biz_goal_items WHERE version_id=target;
+   END IF;
+ END IF;
+ INSERT INTO public.biz_document_versions(document_id,version,reason,target_version_id,items) VALUES(d.id,coalesce((SELECT max(version) FROM public.biz_document_versions WHERE document_id=d.id),0)+1,nullif(btrim(_reason),''),CASE WHEN _kind='report' THEN target END,vals) RETURNING id INTO v_id;
+ IF d.official_version_id IS NOT NULL THEN UPDATE public.biz_document_versions SET url=old.url,notes=old.notes,attachments=old.attachments,allocations=old.allocations,target_version_id=old.target_version_id,items=old.items FROM public.biz_document_versions old WHERE old.id=d.official_version_id AND biz_document_versions.id=v_id; END IF;
+ INSERT INTO public.biz_document_events(document_id,version_id,actor_id,action,payload) VALUES(d.id,v_id,auth.uid(),'created',jsonb_build_object('reason',_reason)); RETURN v_id;
+END $function$
+;
+
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_document_save(uuid, integer, text, text, jsonb, boolean, jsonb, jsonb)'::regprocedure)) <> '486218151e7460cb43d00881a232f934' THEN RAISE EXCEPTION 'Gate changed: biz_document_save'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_document_save(_id uuid, _revision integer, _url text, _notes text, _actuals jsonb, _submit boolean DEFAULT false, _attachments jsonb DEFAULT NULL::jsonb, _allocations jsonb DEFAULT NULL::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE v public.biz_document_versions; d public.biz_documents; new_items jsonb:='[]'; i jsonb; a jsonb; att jsonb; first_official boolean:=false;
+  segs jsonb:='[]'; seg jsonb; al jsonb; tot numeric; wk text; cs date; ce date; mend date;
+BEGIN
+ SELECT * INTO v FROM public.biz_document_versions WHERE id=_id FOR UPDATE; SELECT * INTO d FROM public.biz_documents WHERE id=v.document_id FOR UPDATE;
+ IF d.user_id IS DISTINCT FROM auth.uid() OR NOT public.biz_participant(auth.uid()) OR NOT (public.biz_admin(auth.uid()) OR private.biz_v2_can_at(auth.uid(),'biz.'||d.kind||'_submit',d.user_id,d.department_id)) THEN RAISE EXCEPTION 'Không có quyền sửa tài liệu.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('biz_report_docs:'||d.user_id::text)); IF v.status NOT IN ('draft','changes') THEN RAISE EXCEPTION 'Tài liệu đang chờ duyệt hoặc đã khóa.'; END IF;
+ IF v.revision<>_revision THEN RAISE EXCEPTION 'Dữ liệu đã thay đổi. Hãy tải lại.'; END IF;
+ IF btrim(coalesce(_url,''))<>'' AND NOT public.biz_docs_url_ok(btrim(_url)) THEN RAISE EXCEPTION 'Link phải là Google Docs HTTPS hợp lệ.'; END IF;
+ IF _submit AND d.kind='plan' AND NOT public.biz_docs_url_ok(btrim(coalesce(_url,''))) THEN RAISE EXCEPTION 'Vui lòng nhập link Google Docs kế hoạch chính thức trước khi nộp.'; END IF;
+ IF _attachments IS NOT NULL THEN
+  IF jsonb_typeof(_attachments) IS DISTINCT FROM 'array' OR jsonb_array_length(_attachments)>10 THEN RAISE EXCEPTION 'Tài liệu đính kèm phải là danh sách tối đa 10 mục.'; END IF;
+  FOR att IN SELECT * FROM jsonb_array_elements(_attachments) LOOP
+   IF btrim(coalesce(att->>'name',''))='' OR length(att->>'name')>200 THEN RAISE EXCEPTION 'Mỗi tài liệu đính kèm cần tên, tối đa 200 ký tự.'; END IF;
+   IF coalesce(att->>'url','')!~'^https://[^[:space:]]+$' OR length(att->>'url')>2000 THEN RAISE EXCEPTION 'Liên kết tài liệu đính kèm phải là HTTPS hợp lệ.'; END IF;
+   IF length(coalesce(att->>'description',''))>500 THEN RAISE EXCEPTION 'Mô tả tài liệu tối đa 500 ký tự.'; END IF;
+  END LOOP;
+ END IF;
+ IF d.kind='report' AND d.period_kind<>'year' THEN
+  IF jsonb_typeof(_actuals) IS DISTINCT FROM 'array' OR jsonb_array_length(_actuals)<>jsonb_array_length(v.items) OR (SELECT count(DISTINCT x->>'metric_id') FROM jsonb_array_elements(_actuals) x)<>jsonb_array_length(_actuals) THEN RAISE EXCEPTION 'Danh sách KR không hợp lệ.'; END IF;
+  FOR i IN SELECT * FROM jsonb_array_elements(v.items) LOOP
+   SELECT x->'actual' INTO a FROM jsonb_array_elements(_actuals) x WHERE x->>'metric_id'=i->>'metric_id';
+   IF a IS NULL THEN RAISE EXCEPTION 'Thiếu KR.'; END IF;
+   IF a<>'null'::jsonb AND (a#>>'{}') !~ '^[0-9]{1,20}$' THEN RAISE EXCEPTION 'Thực tế phải là số nguyên không âm, tối đa 20 chữ số.'; END IF;
+   IF _submit AND a='null'::jsonb THEN RAISE EXCEPTION 'Cần nhập kết quả từng KR, giá trị 0 hợp lệ.'; END IF;
+   new_items:=new_items||jsonb_build_array(i||jsonb_build_object('actual',a));
+  END LOOP;
+ ELSE
+  IF coalesce(_actuals,'[]'::jsonb)<>'[]'::jsonb THEN RAISE EXCEPTION 'Không nhập lại thực tế kỳ Năm hoặc số liệu kế hoạch.'; END IF;
+  new_items:=v.items;
+ END IF;
+ -- Phân bổ tuần giao tháng/năm: bắt buộc khi nộp, tổng các đoạn = tổng tuần từng KR.
+ IF d.kind='report' AND d.period_kind='week' AND d.period_start IS NOT NULL AND to_char(d.period_start,'YYYY-MM')<>to_char(d.period_end,'YYYY-MM') THEN
+  cs:=d.period_start; ce:=d.period_end;
+  WHILE cs<=ce LOOP
+   mend:=(date_trunc('month',cs)+interval '1 month - 1 day')::date;
+   segs:=segs||jsonb_build_object('from',cs,'to',least(mend,ce));
+   cs:=least(mend,ce)+1;
+  END LOOP;
+  IF _submit THEN
+   IF jsonb_typeof(_allocations) IS DISTINCT FROM 'array' OR (SELECT count(*) FROM jsonb_array_elements(_allocations))<>jsonb_array_length(v.items)*jsonb_array_length(segs) THEN RAISE EXCEPTION 'Tuần giao tháng cần phân bổ thực tế cho từng KR theo từng đoạn tháng.'; END IF;
+   IF (SELECT count(DISTINCT (x->>'metric_id',x->>'from',x->>'to')) FROM jsonb_array_elements(_allocations) x)<>jsonb_array_length(_allocations) THEN RAISE EXCEPTION 'Phân bổ không được trùng đoạn KR.'; END IF;
+   FOR i IN SELECT * FROM jsonb_array_elements(new_items) LOOP
+    FOR seg IN SELECT * FROM jsonb_array_elements(segs) LOOP
+     SELECT x INTO al FROM jsonb_array_elements(_allocations) x WHERE x->>'metric_id'=i->>'metric_id' AND x->>'from'=seg->>'from' AND x->>'to'=seg->>'to';
+     IF al IS NULL OR al->>'actual' IS NULL OR (al->>'actual')!~'^[0-9]{1,20}$' THEN RAISE EXCEPTION 'Thiếu phân bổ hợp lệ cho KR trong đoạn % đến %.', seg->>'from', seg->>'to'; END IF;
+    END LOOP;
+    SELECT coalesce(sum((x->>'actual')::numeric),0) INTO tot FROM jsonb_array_elements(_allocations) x WHERE x->>'metric_id'=i->>'metric_id';
+    wk:=i->>'actual';
+    IF tot<>(wk)::numeric THEN RAISE EXCEPTION 'Tổng phân bổ phải bằng tổng tuần của từng KR.'; END IF;
+   END LOOP;
+  ELSIF _allocations IS NOT NULL AND jsonb_typeof(_allocations) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'Phân bổ không hợp lệ.'; END IF;
+ ELSE
+  IF _allocations IS NOT NULL AND coalesce(_allocations,'null'::jsonb) NOT IN ('null'::jsonb,'[]'::jsonb) THEN RAISE EXCEPTION 'Chỉ kỳ Tuần giao tháng mới cần phân bổ.'; END IF;
+  _allocations:=NULL;
+ END IF;
+ IF _submit AND d.first_submitted_at IS NULL THEN
+  DECLARE phase_ text; late_id uuid;
+  BEGIN
+   IF d.kind='report' AND NOT public.biz_report_deadline_ready(d.kind,d.period_kind,d.year,d.period) THEN RAISE EXCEPTION 'Cần hoàn tất ba mốc deadline Báo cáo trước khi nộp.'; END IF; phase_:=public.biz_any_phase(d.kind,d.period_kind,d.year,d.period,now());
+   IF phase_='not_open' THEN RAISE EXCEPTION 'Kỳ nộp chưa mở.'; END IF;
+   IF phase_='closed' THEN RAISE EXCEPTION 'Kỳ nộp đã đóng hoàn toàn.'; END IF;
+   IF phase_='overdue' THEN
+    SELECT id INTO late_id FROM public.biz_late_requests WHERE user_id=d.user_id AND kind=d.kind AND period_kind=d.period_kind AND year=d.year AND period=d.period AND status='approved' ORDER BY created_at DESC LIMIT 1 FOR UPDATE;
+    IF late_id IS NULL THEN RAISE EXCEPTION 'Đã quá hạn nộp trực tiếp. Cần được duyệt nộp bù.'; END IF;
+    UPDATE public.biz_late_requests SET status='used',used_at=now() WHERE id=late_id;
+   END IF;
+   UPDATE public.biz_documents SET deadline=public.biz_any_deadline_at(d.kind||'_'||d.period_kind,d.year,d.period),deadline_frozen=true,first_submitted_at=now(),late_submitted=phase_='overdue' WHERE id=d.id;
+  END;
+ END IF;
+ IF _submit THEN UPDATE public.biz_documents SET last_submitted_at=now() WHERE id=d.id; END IF;
+ first_official:=_submit AND d.kind='report' AND d.official_version_id IS NULL;
+ UPDATE public.biz_document_versions SET url=nullif(btrim(_url),''),notes=nullif(btrim(_notes),''),attachments=coalesce(_attachments,v.attachments),items=new_items,allocations=CASE WHEN _allocations IS NOT NULL THEN _allocations WHEN d.period_kind='week' THEN v.allocations ELSE NULL END,status=CASE WHEN _submit AND d.kind='plan' AND v.status='changes' THEN 'resubmitted' WHEN _submit AND first_official THEN 'approved' WHEN _submit THEN 'pending' ELSE status END,submitted_at=CASE WHEN _submit THEN now() ELSE submitted_at END,approved_at=CASE WHEN first_official THEN now() END,approved_by=CASE WHEN first_official THEN auth.uid() END,revision=revision+1 WHERE id=v.id;
+ IF first_official THEN UPDATE public.biz_documents SET official_version_id=v.id WHERE id=d.id; END IF;
+ INSERT INTO public.biz_document_events(document_id,version_id,actor_id,action,payload) VALUES(d.id,v.id,auth.uid(),CASE WHEN _submit THEN 'submitted' ELSE 'saved' END,jsonb_build_object('old',to_jsonb(v),'new',jsonb_build_object('url',_url,'notes',_notes,'items',new_items,'attachments',coalesce(_attachments,v.attachments),'allocations',_allocations),'target_version_id',v.target_version_id,'resubmitted',_submit AND v.status='changes','official',first_official));
+END $function$
+;
+
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_dashboard_read(integer, text, integer, uuid, uuid, text)'::regprocedure)) <> '8d9581ab1e3b79a8838237244de30fd2' THEN RAISE EXCEPTION 'Gate changed: biz_dashboard_read'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_dashboard_read(_year integer, _period_kind text DEFAULT 'year'::text, _period integer DEFAULT 1, _department_id uuid DEFAULT NULL::uuid, _user_id uuid DEFAULT NULL::uuid, _mode text DEFAULT 'official'::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE a uuid:=auth.uid(); all_ok boolean; dept_ok boolean; self_ok boolean; lo int; hi int; result jsonb;
+BEGIN
+ _mode:='official';
+ PERFORM public.biz_period_start(_year,_period_kind,_period);
+ IF _mode NOT IN ('official','provisional') THEN RAISE EXCEPTION 'Chế độ không hợp lệ'; END IF;
+ all_ok:=public.biz_admin(a) OR (private.legacy_business_allowed(a) AND NOT private.biz_v2_denied(a,'biz.view_all') AND public.biz_exception_ok(a,'biz.view_all','all'));dept_ok:=public.biz_can(a,'biz.view_dept');self_ok:=public.biz_can(a,'biz.view_own');
+ IF a IS NULL OR NOT(all_ok OR dept_ok OR self_ok) THEN RAISE EXCEPTION 'Không có quyền xem Dashboard';END IF;
+ IF _user_id IS NOT NULL AND _user_id<>a AND NOT(all_ok OR dept_ok) THEN RAISE EXCEPTION 'Không có quyền xem nhân viên';END IF;
+ IF _department_id IS NOT NULL AND NOT all_ok AND NOT EXISTS(SELECT 1 FROM public.biz_department_members m WHERE m.department_id=_department_id AND ((m.user_id=a AND m.ended_at IS NULL AND self_ok) OR (dept_ok AND private.biz_v2_can_at(a,'biz.view_dept',m.user_id,m.department_id,m.started_at)))) THEN RAISE EXCEPTION 'Không có quyền xem phòng';END IF;
+ lo:=CASE _period_kind WHEN 'month' THEN _period WHEN 'quarter' THEN (_period-1)*3+1 ELSE 1 END;hi:=lo+CASE _period_kind WHEN 'month' THEN 0 WHEN 'quarter' THEN 2 ELSE 11 END;
+ WITH roster AS (
+ SELECT p.id user_id,p.full_name employee_name,m.month,coalesce(d.department_id,public.biz_period_department(p.id,_year,'month',m.month)) department_id,d.id document_id,d.official_version_id,coalesce(d.first_submitted_at,least(now(),(make_date(_year,m.month,1)+interval '1 month') AT TIME ZONE 'Asia/Ho_Chi_Minh'-interval '1 microsecond')) scope_at
+ FROM public.profiles p CROSS JOIN generate_series(1,12) m(month) LEFT JOIN public.biz_documents d ON d.user_id=p.id AND d.kind='report' AND d.period_kind='month' AND d.year=_year AND d.period=m.month
+ WHERE public.biz_period_department(p.id,_year,'month',m.month) IS NOT NULL AND (_user_id IS NULL OR _user_id=p.id)
+ ), visible AS (
+ SELECT r.* FROM roster r WHERE (all_ok OR (self_ok AND r.user_id=a) OR (dept_ok AND private.biz_v2_can_at(a,'biz.view_dept',r.user_id,r.department_id,r.scope_at))) AND (_department_id IS NULL OR r.department_id=_department_id)
+ ), chosen AS (
+ SELECT r.*,coalesce(CASE WHEN _mode='provisional' THEN (SELECT id FROM public.biz_document_versions WHERE document_id=r.document_id AND status='pending' ORDER BY version DESC LIMIT 1) END,r.official_version_id) version_id FROM visible r
+ ), baselines AS (
+ SELECT r.*,v.items,v.target_version_id,coalesce(v.target_version_id,(SELECT target_version_id FROM public.biz_document_versions WHERE document_id=r.document_id ORDER BY version DESC LIMIT 1),(SELECT official_version_id FROM public.biz_annual_goals WHERE user_id=r.user_id AND year=_year)) baseline_id FROM chosen r LEFT JOIN public.biz_document_versions v ON v.id=r.version_id
+ ), facts AS (
+ SELECT r.user_id,r.employee_name,r.department_id,dep.name department_name,r.month,r.version_id,r.target_version_id,r.baseline_id,i.metric_id,i.definition,i.months[r.month]::text target,CASE WHEN i.definition->>'aggregation'='sum' THEN private.biz_report_actual_range(r.user_id,i.metric_id,make_date(_year,r.month,1),(make_date(_year,r.month,1)+interval '1 month - 1 day')::date,_mode) ELSE (SELECT x->>'actual' FROM jsonb_array_elements(coalesce(r.items,'[]')) x WHERE x->>'metric_id'=i.metric_id::text) END actual
+ FROM baselines r JOIN public.biz_departments dep ON dep.id=r.department_id JOIN public.biz_goal_items i ON i.version_id=r.baseline_id
+ ), obligations AS (
+ SELECT p.id user_id,p.full_name employee_name,'plan'::text kind,coalesce(d.department_id,public.biz_period_department(p.id,_year,_period_kind,_period)) department_id,d.first_submitted_at,public.biz_deadline_status(CASE WHEN d.deadline_frozen THEN d.deadline ELSE public.biz_deadline_at('plan_'||_period_kind,_year,_period) END,d.first_submitted_at,now()) time_status,coalesce((SELECT status FROM public.biz_document_versions WHERE document_id=d.id ORDER BY version DESC LIMIT 1),'missing') approval_status,d.official_version_id IS NOT NULL official FROM public.profiles p LEFT JOIN public.biz_documents d ON d.user_id=p.id AND d.kind='plan' AND d.period_kind=_period_kind AND d.year=_year AND d.period=_period WHERE _period_kind IN ('month','quarter','year') AND public.biz_period_department(p.id,_year,_period_kind,_period) IS NOT NULL AND (_user_id IS NULL OR p.id=_user_id)
+ UNION ALL SELECT user_id,employee_name,'report',department_id,first_submitted_at,time_status,approval_status,official FROM jsonb_to_recordset(private.biz_report_obligations(_year,_period_kind,_period)) o(user_id uuid,employee_name text,department_id uuid,first_submitted_at timestamptz,time_status text,approval_status text,official boolean) WHERE _user_id IS NULL OR user_id=_user_id
+ ), scoped_obligations AS (
+ SELECT o.*,dep.name department_name FROM obligations o JOIN public.biz_departments dep ON dep.id=o.department_id WHERE (_department_id IS NULL OR o.department_id=_department_id) AND (all_ok OR (self_ok AND o.user_id=a) OR (dept_ok AND private.biz_v2_can_at(a,'biz.view_dept',o.user_id,o.department_id,coalesce(o.first_submitted_at,now()))))
+ )
+ SELECT jsonb_build_object('year',_year,'period_kind',_period_kind,'period',_period,'mode',_mode,'lo',lo,'hi',hi,'server_now',now(),'facts',coalesce((SELECT jsonb_agg(to_jsonb(f)) FROM facts f),'[]'),'roster',coalesce((SELECT jsonb_agg(jsonb_build_object('user_id',r.user_id,'employee_name',r.employee_name,'department_id',r.department_id,'department_name',dep.name,'month',r.month,'official',r.official_version_id IS NOT NULL,'system_id',(SELECT system_id FROM public.biz_department_system_history WHERE department_id=r.department_id AND started_at<=r.scope_at AND (ended_at IS NULL OR ended_at>r.scope_at) LIMIT 1),'team_id',(SELECT team_id FROM public.biz_team_members tm JOIN public.biz_teams t ON t.id=tm.team_id WHERE tm.user_id=r.user_id AND t.department_id=r.department_id AND tm.started_at<=r.scope_at AND (tm.ended_at IS NULL OR tm.ended_at>r.scope_at) LIMIT 1))) FROM visible r JOIN public.biz_departments dep ON dep.id=r.department_id),'[]'),'obligations',coalesce((SELECT jsonb_agg(to_jsonb(o)) FROM scoped_obligations o),'[]')) INTO result;
+ RETURN result;
+END $function$
+;
+
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_run_can_read(uuid)'::regprocedure)) <> '2ea99ae8b360dce916a3cae7b9075087' THEN RAISE EXCEPTION 'Gate changed: biz_run_can_read'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_run_can_read(_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT private.is_active(auth.uid()) AND EXISTS(SELECT 1 FROM biz_approval_runs r WHERE r.id=_id AND (
+ private.biz_v2_read(auth.uid(),r.owner_id,r.department_id,r.submitted_at)
+ OR (private.biz_v2_can_at(auth.uid(),'biz.approval_view',r.owner_id,r.department_id,r.submitted_at)
+ AND EXISTS(SELECT 1 FROM jsonb_array_elements(r.steps) s WHERE s->>'user_id'=auth.uid()::text OR s->>'substitute_id'=auth.uid()::text))))
+$function$;
+
+DO $$ BEGIN IF md5(pg_get_functiondef('public.biz_effective_access(uuid)'::regprocedure)) <> 'f4ee4d45f1e1c985cbd2cd43ec18932d' THEN RAISE EXCEPTION 'Gate changed: biz_effective_access'; END IF; END $$;
+
+CREATE OR REPLACE FUNCTION public.biz_effective_access(_user uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE u uuid:=coalesce(_user,auth.uid());perms jsonb;
+BEGIN
+IF auth.uid() IS NULL OR (u<>auth.uid() AND NOT public.biz_org_can_manage() AND NOT private.sig_can(auth.uid(),'settings.role')) THEN RAISE EXCEPTION 'Không có quyền xem quyền nhân sự.';END IF;
+SELECT coalesce(jsonb_agg(p),'[]') INTO perms FROM (
+  SELECT p FROM unnest(ARRAY['biz.intervene','biz.access_manage','biz.dashboard_public','biz.view_own','biz.view_dept','biz.view_all','biz.plan_submit','biz.goal_submit','biz.report_submit','biz.plan_request_revision','biz.goal_approve','biz.report_approve','biz.late_approve','biz.approval_view','biz.org_manage','biz.dept_manage','biz.kr_manage','biz.deadline_manage','biz.workflow_manage']) p WHERE public.biz_can(u,p)
+  UNION ALL
+  SELECT p FROM unnest(ARRAY['k3.use','k3.view_scope','k3.comment','k3.settings']) p WHERE public.k3_can(u,p) UNION ALL SELECT p FROM unnest(ARRAY['biz.crm_use','biz.crm_view_scope','biz.crm_edit_other','biz.crm_transfer','biz.crm_export','biz.crm_archive','biz.crm_settings','biz.crm_access']) p WHERE public.crm_can(u,p)
+) q;
+RETURN jsonb_build_object('user_id',u,'permissions',perms,'server_now',now(),'super_admin',public.is_super_admin(u),'appointments',(SELECT coalesce(jsonb_agg(jsonb_build_object('id',a.id,'position',a.position_snapshot->>'name','scope',a.scope_kind,'unit_name',CASE a.scope_kind WHEN 'system' THEN CASE WHEN coalesce((a.position_snapshot->>'all_business')::boolean,false) THEN 'Toàn Khối Kinh doanh Sứ Việt' ELSE (SELECT name FROM public.biz_systems WHERE id=a.system_id) END WHEN 'department' THEN (SELECT name FROM public.biz_departments WHERE id=a.department_id) WHEN 'team' THEN (SELECT name FROM public.biz_teams WHERE id=a.team_id) ELSE 'Cá nhân' END,'started_at',a.started_at,'ended_at',a.ended_at)),'[]') FROM public.biz_appointments a WHERE a.user_id=u AND a.status<>'cancelled' AND a.started_at<=now() AND (a.ended_at IS NULL OR a.ended_at>now())),'legacy_assignments',(SELECT coalesce(jsonb_agg(jsonb_build_object('id',a.id,'position',coalesce(p.name,a.position),'scope',p.unit_kind,'unit_name',coalesce(s.name,d.name,t.name),'started_at',a.started_at,'ended_at',a.ended_at)),'[]') FROM public.biz_management_assignments a LEFT JOIN public.biz_positions p ON p.code=a.position LEFT JOIN public.biz_systems s ON s.id=a.system_id LEFT JOIN public.biz_departments d ON d.id=a.department_id LEFT JOIN public.biz_teams t ON t.id=a.team_id WHERE a.user_id=u AND a.started_at<=now() AND (a.ended_at IS NULL OR a.ended_at>now())),'exceptions',(SELECT coalesce(jsonb_agg(to_jsonb(e)),'[]') FROM public.biz_access_exceptions e WHERE (e.user_id=u OR EXISTS(SELECT 1 FROM public.user_roles r WHERE r.user_id=u AND r.role_id=e.role_id)) AND e.revoked_at IS NULL AND e.started_at<=now() AND (e.ended_at IS NULL OR e.ended_at>now())),'next_change',(SELECT min(at_) FROM (SELECT oa.starts_at at_ FROM public.org_assignments oa WHERE oa.user_id=u AND oa.status='active' UNION ALL SELECT oa.ends_at FROM public.org_assignments oa WHERE oa.user_id=u AND oa.status='active' UNION ALL SELECT a.started_at at_ FROM public.biz_appointments a WHERE a.user_id=u AND a.status<>'cancelled' UNION ALL SELECT a.ended_at FROM public.biz_appointments a WHERE a.user_id=u AND a.status<>'cancelled' UNION ALL SELECT a.started_at FROM public.biz_management_assignments a WHERE a.user_id=u UNION ALL SELECT a.ended_at FROM public.biz_management_assignments a WHERE a.user_id=u UNION ALL SELECT e.started_at FROM public.biz_access_exceptions e WHERE e.user_id=u OR EXISTS(SELECT 1 FROM public.user_roles r WHERE r.user_id=u AND r.role_id=e.role_id) UNION ALL SELECT e.ended_at FROM public.biz_access_exceptions e WHERE e.user_id=u OR EXISTS(SELECT 1 FROM public.user_roles r WHERE r.user_id=u AND r.role_id=e.role_id)) q WHERE at_>now()));
+END $function$
+;

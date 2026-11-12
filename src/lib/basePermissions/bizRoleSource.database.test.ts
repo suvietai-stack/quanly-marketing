@@ -8,6 +8,8 @@ const [admin, staff, lead, head, director, outside] = [1, 2, 3, 4, 5, 6].map(id)
 const [system, otherSystem, dept, otherDept, team, sibling] = [11, 12, 21, 22, 31, 32].map(id);
 const sql = readFileSync('docs/pending/biz_role_source.sql', 'utf8');
 const backup = readFileSync('docs/biz-role-source-2026-11-12/live-functions.sql', 'utf8');
+const integrationBackup = readFileSync('docs/biz-role-source-2026-11-12/integration-live-functions.sql', 'utf8');
+const readiness = readFileSync('docs/pending/biz_role_source_readiness.sql', 'utf8');
 const value = async (q: string, args: unknown[] = []) => (await db.query<{ v: boolean }>(q, args)).rows[0]?.v;
 const actor = async (u: string) => db.query("select set_config('test.uid',$1,false)", [u]);
 const can = (u: string, p: string, owner: string | null = null, department: string | null = null) =>
@@ -92,6 +94,23 @@ beforeAll(async () => {
     GRANT USAGE ON SCHEMA public,auth TO authenticated;
     GRANT SELECT ON biz_documents TO authenticated;
     CREATE POLICY documents_read ON biz_documents FOR SELECT TO authenticated USING(public.biz_doc_access(user_id,department_id,kind));`);
+  // Exact live column types let the real public writer definitions compile, not reduced mock RPCs.
+  const columns = JSON.parse(readFileSync('docs/biz-role-source-2026-11-12/live-test-columns.json', 'utf8')) as { table: string; name: string; type: string }[];
+  for (const column of columns) {
+    await db.exec(`CREATE TABLE IF NOT EXISTS public.${column.table} ();
+      ALTER TABLE public.${column.table} ADD COLUMN IF NOT EXISTS ${column.name} ${column.type};`);
+  }
+  for (const name of ['biz_goal_start', 'biz_goal_save', 'biz_document_start', 'biz_document_save', 'biz_dashboard_read', 'biz_run_can_read', 'biz_effective_access']) {
+    const definition = integrationBackup.match(new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\([\\s\\S]*?\\$function\\$\\s*;`))?.[0];
+    if (!definition) throw new Error(`Missing integration snapshot ${name}`);
+    await db.exec(definition);
+  }
+  await db.exec('CREATE FUNCTION private.mkt_specialty_permission_ready(text) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$');
+  for (const name of ['org_role_permission_ready', 'permission_editor_policy']) {
+    const definition = integrationBackup.match(new RegExp(`CREATE OR REPLACE FUNCTION private\\.${name}\\([\\s\\S]*?\\$function\\$\\s*;`))?.[0];
+    if (!definition) throw new Error(`Missing readiness snapshot ${name}`);
+    await db.exec(definition);
+  }
   await db.exec(sql);
   await actor(staff);
 }, 30000);
@@ -154,6 +173,53 @@ it('old source before reset cannot be revived merely by binding V2', async () =>
   await db.query('insert into test_reset values($1,now())', [head]);
   expect(await can(head, 'biz.view_dept', staff, dept)).toBe(false);
 });
+it('valid new org source remains usable even if legacy business gate is closed', async () => {
+  await db.query("insert into test_reset values($1,now()-interval '2 days')", [head]);
+  await db.exec('CREATE OR REPLACE FUNCTION private.legacy_business_allowed(u uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT false $$');
+  expect(await can(head, 'biz.view_dept', staff, dept)).toBe(true);
+  expect(await value("select biz_can($1,'biz.view_dept') v", [head])).toBe(true);
+});
+it('many simultaneous holders share one position binding without new slots', async () => {
+  await db.exec(`insert into org_assignments(id,user_id,unit_id,title_id) values('second-staff','${outside}','${team}','staff');
+    insert into biz_department_members(id,user_id,department_id) values(gen_random_uuid(),'${outside}','${dept}');
+    insert into biz_team_members(user_id,team_id) values('${outside}','${team}');`);
+  expect(await can(outside, 'biz.view_own', outside, dept)).toBe(true);
+  expect(await can(staff, 'biz.view_own', outside, dept)).toBe(false);
+  expect((await db.query("select count(*)::int n from org_position_roles where title_id='staff'")).rows).toEqual([{ n: 1 }]);
+});
+it('real goal save RPC rejects own historical goal in an unrelated department before writing', async () => {
+  await actor(staff);
+  await db.exec(`insert into biz_annual_goals(id,user_id,department_id) values('${id(301)}','${staff}','${otherDept}');
+    insert into biz_goal_versions(id,goal_id,status,revision) values('${id(302)}','${id(301)}','draft',0);`);
+  await expect(db.query('select biz_goal_save($1,0,$2,false)', [id(302), '[]'])).rejects.toThrow('Không có quyền sửa mục tiêu');
+});
+it('real document save RPC rejects own historical report outside the granting source', async () => {
+  await actor(staff);
+  await db.exec(`insert into biz_documents(id,user_id,department_id,kind) values('${id(303)}','${staff}','${otherDept}','report');
+    insert into biz_document_versions(id,document_id,status,revision) values('${id(304)}','${id(303)}','draft',0);`);
+  await expect(db.query('select biz_document_save($1,0,null,null,$2,false,null,null)', [id(304), '[]'])).rejects.toThrow('Không có quyền sửa tài liệu');
+});
+it('real goal save records an authorized own draft and audit, then revocation blocks the next save', async () => {
+  await actor(staff);
+  await db.exec(`insert into biz_annual_goals(id,user_id,department_id) values('${id(305)}','${staff}','${dept}');
+    insert into biz_goal_versions(id,goal_id,status,revision) values('${id(306)}','${id(305)}','draft',0);`);
+  await db.query('select biz_goal_save($1,0,$2,false)', [id(306), '[]']);
+  expect((await db.query('select revision from biz_goal_versions where id=$1', [id(306)])).rows).toEqual([{ revision: 1 }]);
+  expect((await db.query('select action,actor_id from biz_goal_events where version_id=$1', [id(306)])).rows).toEqual([{ action: 'saved', actor_id: staff }]);
+  await db.exec("update app_roles set permissions='{biz.view_own}' where id='role-v2-sales-staff'");
+  await expect(db.query('select biz_goal_save($1,1,$2,false)', [id(306), '[]'])).rejects.toThrow('Không có quyền sửa mục tiêu');
+});
+it('readiness opens only nine enforced action keys, never published/global/settings or Marketing personal grants', async () => {
+  const supported = ['biz.view_own','biz.goal_submit','biz.plan_submit','biz.report_submit','biz.view_dept','biz.goal_approve','biz.report_approve','biz.plan_request_revision','biz.approval_view'];
+  for (const key of [...supported, 'biz.dashboard_public','biz.view_all','biz.plan_approve','biz.kr_manage','biz.org_manage','biz.workflow_manage','biz.deadline_manage','biz.dept_manage']) {
+    await db.query('insert into base_permission_catalog values($1)', [key]);
+  }
+  await db.exec(readiness);
+  expect((await db.query<{ key: string }>("select key from private.permission_editor_policy() where key like 'biz.%' order by key")).rows.map(r => r.key)).toEqual([...supported].sort());
+  expect((await db.query("select count(*)::int n from private.permission_editor_policy() where key like 'biz.%' and personal")).rows).toEqual([{ n: 0 }]);
+  expect(await value("select private.org_role_permission_ready('biz.dashboard_public') v")).toBe(false);
+  expect(await value("select private.org_role_permission_ready('k3.use') v")).toBe(false);
+});
 it('unverified source mapping, legacy Role and unsupported keys grant nothing', async () => {
   await db.exec(`update org_units set source='canonical' where id='${dept}'`);
   expect(await can(head, 'biz.view_dept', staff, dept)).toBe(false);
@@ -178,6 +244,10 @@ it('rollback restores exact original definitions and forward reapply succeeds', 
   const names = ['biz_can', 'biz_doc_access', 'biz_step_scope_ok', 'biz_department_access', 'biz_goal_can_read', 'biz_member_access'];
   const originals = names.map(name => backup.match(new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\([\\s\\S]*?\\$function\\$;`))?.[0]);
   for (const original of originals) if (original) await db.exec(original);
+  for (const name of ['biz_goal_start', 'biz_goal_save', 'biz_document_start', 'biz_document_save', 'biz_dashboard_read', 'biz_run_can_read', 'biz_effective_access']) {
+    const original = integrationBackup.match(new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\([\\s\\S]*?\\$function\\$\\s*;`))?.[0];
+    if (original) await db.exec(original);
+  }
   await db.exec(sql);
   expect(await can(head, 'biz.view_dept', staff, dept)).toBe(true);
 });

@@ -1,0 +1,50 @@
+[
+  {
+    "schema": "public",
+    "name": "biz_late_can_act",
+    "args": "_request uuid",
+    "md5": "45ee45d422d0e44159d17e6e4197bea7"
+  },
+  {
+    "schema": "public",
+    "name": "biz_dashboard_aggregate",
+    "args": "_facts jsonb, _lo integer, _hi integer, _axis text",
+    "md5": "504672acbf4254f0a08aec1ad039b05b"
+  },
+  {
+    "schema": "public",
+    "name": "biz_dashboard_data",
+    "args": "_year integer, _period_kind text, _period integer, _department_id uuid, _user_id uuid, _mode text",
+    "md5": "de176d1c8ba2a146dd0d72edae01463a"
+  },
+  {
+    "schema": "public",
+    "name": "biz_approvals_read",
+    "args": "",
+    "md5": "6338825b457c58530c351a281c711ff7"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goal_draft_delete",
+    "args": "_version_id uuid",
+    "md5": "9d5e4537651ce8cd57740a02e973598f"
+  },
+  {
+    "schema": "public",
+    "name": "biz_dashboard_published",
+    "args": "_year integer, _period_kind text, _period integer",
+    "md5": "b3b49f72fa117baf21af551605f20fa9"
+  },
+  {
+    "schema": "public",
+    "name": "biz_document_open",
+    "args": "_version_id uuid",
+    "md5": "bf041ff0e0491e14918b1995c1a1dc10"
+  },
+  {
+    "schema": "private",
+    "name": "position_role_sources",
+    "args": "_user uuid, _at timestamp with time zone",
+    "md5": "e3f4df8de3f12b237eb974d4ba423781"
+  }
+]

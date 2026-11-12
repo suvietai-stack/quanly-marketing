@@ -1,0 +1,1642 @@
+[
+  {
+    "name": "id",
+    "table": "biz_access_exceptions",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_access_exceptions",
+    "type": "uuid"
+  },
+  {
+    "name": "role_id",
+    "table": "biz_access_exceptions",
+    "type": "text"
+  },
+  {
+    "name": "permission",
+    "table": "biz_access_exceptions",
+    "type": "text"
+  },
+  {
+    "name": "scope_kind",
+    "table": "biz_access_exceptions",
+    "type": "text"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_access_exceptions",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_access_exceptions",
+    "type": "uuid"
+  },
+  {
+    "name": "team_id",
+    "table": "biz_access_exceptions",
+    "type": "uuid"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_access_exceptions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_access_exceptions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "revoked_at",
+    "table": "biz_access_exceptions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "granted_by",
+    "table": "biz_access_exceptions",
+    "type": "uuid"
+  },
+  {
+    "name": "reason",
+    "table": "biz_access_exceptions",
+    "type": "text"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_access_exceptions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_annual_goals",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_annual_goals",
+    "type": "uuid"
+  },
+  {
+    "name": "year",
+    "table": "biz_annual_goals",
+    "type": "integer"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_annual_goals",
+    "type": "uuid"
+  },
+  {
+    "name": "department_name",
+    "table": "biz_annual_goals",
+    "type": "text"
+  },
+  {
+    "name": "official_version_id",
+    "table": "biz_annual_goals",
+    "type": "uuid"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_annual_goals",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "position_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "team_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "scope_kind",
+    "table": "biz_appointments",
+    "type": "text"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_appointments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_appointments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "status",
+    "table": "biz_appointments",
+    "type": "text"
+  },
+  {
+    "name": "position_snapshot",
+    "table": "biz_appointments",
+    "type": "jsonb"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "replaces_id",
+    "table": "biz_appointments",
+    "type": "uuid"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_appointments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_approval_events",
+    "type": "uuid"
+  },
+  {
+    "name": "run_id",
+    "table": "biz_approval_events",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_approval_events",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_approval_events",
+    "type": "text"
+  },
+  {
+    "name": "step",
+    "table": "biz_approval_events",
+    "type": "integer"
+  },
+  {
+    "name": "comment",
+    "table": "biz_approval_events",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "table": "biz_approval_events",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_approval_events",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "workflow_id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "version_id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "kind",
+    "table": "biz_approval_runs",
+    "type": "text"
+  },
+  {
+    "name": "owner_id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "team_id",
+    "table": "biz_approval_runs",
+    "type": "uuid"
+  },
+  {
+    "name": "org_snapshot",
+    "table": "biz_approval_runs",
+    "type": "jsonb"
+  },
+  {
+    "name": "content_snapshot",
+    "table": "biz_approval_runs",
+    "type": "jsonb"
+  },
+  {
+    "name": "steps",
+    "table": "biz_approval_runs",
+    "type": "jsonb"
+  },
+  {
+    "name": "current_step",
+    "table": "biz_approval_runs",
+    "type": "integer"
+  },
+  {
+    "name": "status",
+    "table": "biz_approval_runs",
+    "type": "text"
+  },
+  {
+    "name": "submitted_at",
+    "table": "biz_approval_runs",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "step_started_at",
+    "table": "biz_approval_runs",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "revision",
+    "table": "biz_approval_runs",
+    "type": "integer"
+  },
+  {
+    "name": "id",
+    "table": "biz_approval_workflows",
+    "type": "uuid"
+  },
+  {
+    "name": "family_id",
+    "table": "biz_approval_workflows",
+    "type": "uuid"
+  },
+  {
+    "name": "version",
+    "table": "biz_approval_workflows",
+    "type": "integer"
+  },
+  {
+    "name": "name",
+    "table": "biz_approval_workflows",
+    "type": "text"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_approval_workflows",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_approval_workflows",
+    "type": "uuid"
+  },
+  {
+    "name": "kind",
+    "table": "biz_approval_workflows",
+    "type": "text"
+  },
+  {
+    "name": "effective_from",
+    "table": "biz_approval_workflows",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "active",
+    "table": "biz_approval_workflows",
+    "type": "boolean"
+  },
+  {
+    "name": "steps",
+    "table": "biz_approval_workflows",
+    "type": "jsonb"
+  },
+  {
+    "name": "director_steps",
+    "table": "biz_approval_workflows",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_by",
+    "table": "biz_approval_workflows",
+    "type": "uuid"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_approval_workflows",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_deadline_config",
+    "type": "boolean"
+  },
+  {
+    "name": "data",
+    "table": "biz_deadline_config",
+    "type": "jsonb"
+  },
+  {
+    "name": "updated_by",
+    "table": "biz_deadline_config",
+    "type": "uuid"
+  },
+  {
+    "name": "updated_at",
+    "table": "biz_deadline_config",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_deadline_config_log",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_deadline_config_log",
+    "type": "uuid"
+  },
+  {
+    "name": "old_data",
+    "table": "biz_deadline_config_log",
+    "type": "jsonb"
+  },
+  {
+    "name": "new_data",
+    "table": "biz_deadline_config_log",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_deadline_config_log",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_demo_sets",
+    "type": "uuid"
+  },
+  {
+    "name": "owner_id",
+    "table": "biz_demo_sets",
+    "type": "uuid"
+  },
+  {
+    "name": "payload",
+    "table": "biz_demo_sets",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_demo_sets",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "revision",
+    "table": "biz_demo_sets",
+    "type": "integer"
+  },
+  {
+    "name": "id",
+    "table": "biz_department_members",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_department_members",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_department_members",
+    "type": "uuid"
+  },
+  {
+    "name": "is_manager",
+    "table": "biz_department_members",
+    "type": "boolean"
+  },
+  {
+    "name": "effective_from",
+    "table": "biz_department_members",
+    "type": "date"
+  },
+  {
+    "name": "effective_to",
+    "table": "biz_department_members",
+    "type": "date"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_department_members",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_department_members",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_department_members",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_department_system_history",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_department_system_history",
+    "type": "uuid"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_department_system_history",
+    "type": "uuid"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_department_system_history",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_department_system_history",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_department_system_history",
+    "type": "uuid"
+  },
+  {
+    "name": "id",
+    "table": "biz_departments",
+    "type": "uuid"
+  },
+  {
+    "name": "name",
+    "table": "biz_departments",
+    "type": "text"
+  },
+  {
+    "name": "description",
+    "table": "biz_departments",
+    "type": "text"
+  },
+  {
+    "name": "active",
+    "table": "biz_departments",
+    "type": "boolean"
+  },
+  {
+    "name": "sort_order",
+    "table": "biz_departments",
+    "type": "integer"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_departments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "updated_at",
+    "table": "biz_departments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_departments",
+    "type": "uuid"
+  },
+  {
+    "name": "id",
+    "table": "biz_document_events",
+    "type": "uuid"
+  },
+  {
+    "name": "document_id",
+    "table": "biz_document_events",
+    "type": "uuid"
+  },
+  {
+    "name": "version_id",
+    "table": "biz_document_events",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_document_events",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_document_events",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "table": "biz_document_events",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_document_events",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_document_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "document_id",
+    "table": "biz_document_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "version",
+    "table": "biz_document_versions",
+    "type": "integer"
+  },
+  {
+    "name": "revision",
+    "table": "biz_document_versions",
+    "type": "integer"
+  },
+  {
+    "name": "status",
+    "table": "biz_document_versions",
+    "type": "text"
+  },
+  {
+    "name": "url",
+    "table": "biz_document_versions",
+    "type": "text"
+  },
+  {
+    "name": "notes",
+    "table": "biz_document_versions",
+    "type": "text"
+  },
+  {
+    "name": "reason",
+    "table": "biz_document_versions",
+    "type": "text"
+  },
+  {
+    "name": "target_version_id",
+    "table": "biz_document_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "items",
+    "table": "biz_document_versions",
+    "type": "jsonb"
+  },
+  {
+    "name": "submitted_at",
+    "table": "biz_document_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "approved_at",
+    "table": "biz_document_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "approved_by",
+    "table": "biz_document_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "review_comment",
+    "table": "biz_document_versions",
+    "type": "text"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_document_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "attachments",
+    "table": "biz_document_versions",
+    "type": "jsonb"
+  },
+  {
+    "name": "allocations",
+    "table": "biz_document_versions",
+    "type": "jsonb"
+  },
+  {
+    "name": "id",
+    "table": "biz_document_views",
+    "type": "uuid"
+  },
+  {
+    "name": "version_id",
+    "table": "biz_document_views",
+    "type": "uuid"
+  },
+  {
+    "name": "viewer_id",
+    "table": "biz_document_views",
+    "type": "uuid"
+  },
+  {
+    "name": "first_opened_at",
+    "table": "biz_document_views",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "latest_opened_at",
+    "table": "biz_document_views",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_documents",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_documents",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_documents",
+    "type": "uuid"
+  },
+  {
+    "name": "department_name",
+    "table": "biz_documents",
+    "type": "text"
+  },
+  {
+    "name": "kind",
+    "table": "biz_documents",
+    "type": "text"
+  },
+  {
+    "name": "period_kind",
+    "table": "biz_documents",
+    "type": "text"
+  },
+  {
+    "name": "year",
+    "table": "biz_documents",
+    "type": "integer"
+  },
+  {
+    "name": "period",
+    "table": "biz_documents",
+    "type": "integer"
+  },
+  {
+    "name": "deadline",
+    "table": "biz_documents",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "deadline_frozen",
+    "table": "biz_documents",
+    "type": "boolean"
+  },
+  {
+    "name": "first_submitted_at",
+    "table": "biz_documents",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "last_submitted_at",
+    "table": "biz_documents",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "official_version_id",
+    "table": "biz_documents",
+    "type": "uuid"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_documents",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "late_submitted",
+    "table": "biz_documents",
+    "type": "boolean"
+  },
+  {
+    "name": "period_start",
+    "table": "biz_documents",
+    "type": "date"
+  },
+  {
+    "name": "period_end",
+    "table": "biz_documents",
+    "type": "date"
+  },
+  {
+    "name": "id",
+    "table": "biz_goal_events",
+    "type": "uuid"
+  },
+  {
+    "name": "goal_id",
+    "table": "biz_goal_events",
+    "type": "uuid"
+  },
+  {
+    "name": "version_id",
+    "table": "biz_goal_events",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_goal_events",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_goal_events",
+    "type": "text"
+  },
+  {
+    "name": "comment",
+    "table": "biz_goal_events",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "table": "biz_goal_events",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_goal_events",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_goal_items",
+    "type": "uuid"
+  },
+  {
+    "name": "version_id",
+    "table": "biz_goal_items",
+    "type": "uuid"
+  },
+  {
+    "name": "metric_id",
+    "table": "biz_goal_items",
+    "type": "uuid"
+  },
+  {
+    "name": "definition",
+    "table": "biz_goal_items",
+    "type": "jsonb"
+  },
+  {
+    "name": "annual",
+    "table": "biz_goal_items",
+    "type": "numeric"
+  },
+  {
+    "name": "months",
+    "table": "biz_goal_items",
+    "type": "numeric[]"
+  },
+  {
+    "name": "id",
+    "table": "biz_goal_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "goal_id",
+    "table": "biz_goal_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "version",
+    "table": "biz_goal_versions",
+    "type": "integer"
+  },
+  {
+    "name": "status",
+    "table": "biz_goal_versions",
+    "type": "text"
+  },
+  {
+    "name": "reason",
+    "table": "biz_goal_versions",
+    "type": "text"
+  },
+  {
+    "name": "review_comment",
+    "table": "biz_goal_versions",
+    "type": "text"
+  },
+  {
+    "name": "submitted_at",
+    "table": "biz_goal_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "approved_at",
+    "table": "biz_goal_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "approved_by",
+    "table": "biz_goal_versions",
+    "type": "uuid"
+  },
+  {
+    "name": "revision",
+    "table": "biz_goal_versions",
+    "type": "integer"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_goal_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "updated_at",
+    "table": "biz_goal_versions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_kr_metrics",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_kr_metrics",
+    "type": "uuid"
+  },
+  {
+    "name": "name",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "description",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "unit",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "value_kind",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "aggregation",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "direction",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "sort_order",
+    "table": "biz_kr_metrics",
+    "type": "integer"
+  },
+  {
+    "name": "active",
+    "table": "biz_kr_metrics",
+    "type": "boolean"
+  },
+  {
+    "name": "effective_from",
+    "table": "biz_kr_metrics",
+    "type": "date"
+  },
+  {
+    "name": "effective_to",
+    "table": "biz_kr_metrics",
+    "type": "date"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_kr_metrics",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "updated_at",
+    "table": "biz_kr_metrics",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "standard_code",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "standard_label",
+    "table": "biz_kr_metrics",
+    "type": "text"
+  },
+  {
+    "name": "id",
+    "table": "biz_late_requests",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_late_requests",
+    "type": "uuid"
+  },
+  {
+    "name": "kind",
+    "table": "biz_late_requests",
+    "type": "text"
+  },
+  {
+    "name": "period_kind",
+    "table": "biz_late_requests",
+    "type": "text"
+  },
+  {
+    "name": "year",
+    "table": "biz_late_requests",
+    "type": "integer"
+  },
+  {
+    "name": "period",
+    "table": "biz_late_requests",
+    "type": "integer"
+  },
+  {
+    "name": "reason",
+    "table": "biz_late_requests",
+    "type": "text"
+  },
+  {
+    "name": "status",
+    "table": "biz_late_requests",
+    "type": "text"
+  },
+  {
+    "name": "decided_by",
+    "table": "biz_late_requests",
+    "type": "uuid"
+  },
+  {
+    "name": "decided_at",
+    "table": "biz_late_requests",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "decision_comment",
+    "table": "biz_late_requests",
+    "type": "text"
+  },
+  {
+    "name": "used_at",
+    "table": "biz_late_requests",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_late_requests",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_late_requests",
+    "type": "uuid"
+  },
+  {
+    "name": "revision",
+    "table": "biz_late_requests",
+    "type": "integer"
+  },
+  {
+    "name": "id",
+    "table": "biz_management_assignments",
+    "type": "uuid"
+  },
+  {
+    "name": "position",
+    "table": "biz_management_assignments",
+    "type": "text"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_management_assignments",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_management_assignments",
+    "type": "uuid"
+  },
+  {
+    "name": "team_id",
+    "table": "biz_management_assignments",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_management_assignments",
+    "type": "uuid"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_management_assignments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_management_assignments",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_management_assignments",
+    "type": "uuid"
+  },
+  {
+    "name": "id",
+    "table": "biz_member_affiliations",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_member_affiliations",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_member_affiliations",
+    "type": "uuid"
+  },
+  {
+    "name": "team_id",
+    "table": "biz_member_affiliations",
+    "type": "uuid"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_member_affiliations",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_member_affiliations",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "appointment_id",
+    "table": "biz_member_affiliations",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_member_affiliations",
+    "type": "uuid"
+  },
+  {
+    "name": "id",
+    "table": "biz_opening_actual_events",
+    "type": "uuid"
+  },
+  {
+    "name": "opening_id",
+    "table": "biz_opening_actual_events",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_opening_actual_events",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_opening_actual_events",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "table": "biz_opening_actual_events",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_opening_actual_events",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_opening_actuals",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_opening_actuals",
+    "type": "uuid"
+  },
+  {
+    "name": "metric_id",
+    "table": "biz_opening_actuals",
+    "type": "uuid"
+  },
+  {
+    "name": "period_start",
+    "table": "biz_opening_actuals",
+    "type": "date"
+  },
+  {
+    "name": "period_end",
+    "table": "biz_opening_actuals",
+    "type": "date"
+  },
+  {
+    "name": "value",
+    "table": "biz_opening_actuals",
+    "type": "text"
+  },
+  {
+    "name": "source_note",
+    "table": "biz_opening_actuals",
+    "type": "text"
+  },
+  {
+    "name": "confirmed_by",
+    "table": "biz_opening_actuals",
+    "type": "uuid"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_opening_actuals",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_org_events",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_org_events",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_org_events",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "table": "biz_org_events",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_org_events",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_positions",
+    "type": "uuid"
+  },
+  {
+    "name": "code",
+    "table": "biz_positions",
+    "type": "text"
+  },
+  {
+    "name": "name",
+    "table": "biz_positions",
+    "type": "text"
+  },
+  {
+    "name": "description",
+    "table": "biz_positions",
+    "type": "text"
+  },
+  {
+    "name": "level",
+    "table": "biz_positions",
+    "type": "integer"
+  },
+  {
+    "name": "unit_kind",
+    "table": "biz_positions",
+    "type": "text"
+  },
+  {
+    "name": "sort_order",
+    "table": "biz_positions",
+    "type": "integer"
+  },
+  {
+    "name": "active",
+    "table": "biz_positions",
+    "type": "boolean"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_positions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "updated_at",
+    "table": "biz_positions",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "business_policy",
+    "table": "biz_positions",
+    "type": "text"
+  },
+  {
+    "name": "all_business",
+    "table": "biz_positions",
+    "type": "boolean"
+  },
+  {
+    "name": "id",
+    "table": "biz_report_cycle_config_log",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_report_cycle_config_log",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_report_cycle_config_log",
+    "type": "text"
+  },
+  {
+    "name": "config_id",
+    "table": "biz_report_cycle_config_log",
+    "type": "uuid"
+  },
+  {
+    "name": "old_row",
+    "table": "biz_report_cycle_config_log",
+    "type": "jsonb"
+  },
+  {
+    "name": "new_row",
+    "table": "biz_report_cycle_config_log",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_report_cycle_config_log",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_report_cycle_configs",
+    "type": "uuid"
+  },
+  {
+    "name": "scope",
+    "table": "biz_report_cycle_configs",
+    "type": "text"
+  },
+  {
+    "name": "system_id",
+    "table": "biz_report_cycle_configs",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_report_cycle_configs",
+    "type": "uuid"
+  },
+  {
+    "name": "cycle",
+    "table": "biz_report_cycle_configs",
+    "type": "text"
+  },
+  {
+    "name": "effective_from",
+    "table": "biz_report_cycle_configs",
+    "type": "date"
+  },
+  {
+    "name": "workdays",
+    "table": "biz_report_cycle_configs",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_by",
+    "table": "biz_report_cycle_configs",
+    "type": "uuid"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_report_cycle_configs",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "updated_at",
+    "table": "biz_report_cycle_configs",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "inherit_parent",
+    "table": "biz_report_cycle_configs",
+    "type": "boolean"
+  },
+  {
+    "name": "id",
+    "table": "biz_rolling_events",
+    "type": "uuid"
+  },
+  {
+    "name": "plan_id",
+    "table": "biz_rolling_events",
+    "type": "uuid"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_rolling_events",
+    "type": "uuid"
+  },
+  {
+    "name": "action",
+    "table": "biz_rolling_events",
+    "type": "text"
+  },
+  {
+    "name": "payload",
+    "table": "biz_rolling_events",
+    "type": "jsonb"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_rolling_events",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_rolling_plans",
+    "type": "uuid"
+  },
+  {
+    "name": "goal_id",
+    "table": "biz_rolling_plans",
+    "type": "uuid"
+  },
+  {
+    "name": "version",
+    "table": "biz_rolling_plans",
+    "type": "integer"
+  },
+  {
+    "name": "revision",
+    "table": "biz_rolling_plans",
+    "type": "integer"
+  },
+  {
+    "name": "status",
+    "table": "biz_rolling_plans",
+    "type": "text"
+  },
+  {
+    "name": "reason",
+    "table": "biz_rolling_plans",
+    "type": "text"
+  },
+  {
+    "name": "base_version_id",
+    "table": "biz_rolling_plans",
+    "type": "uuid"
+  },
+  {
+    "name": "first_month",
+    "table": "biz_rolling_plans",
+    "type": "integer"
+  },
+  {
+    "name": "basis",
+    "table": "biz_rolling_plans",
+    "type": "jsonb"
+  },
+  {
+    "name": "items",
+    "table": "biz_rolling_plans",
+    "type": "jsonb"
+  },
+  {
+    "name": "submitted_at",
+    "table": "biz_rolling_plans",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "approved_at",
+    "table": "biz_rolling_plans",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "approved_by",
+    "table": "biz_rolling_plans",
+    "type": "uuid"
+  },
+  {
+    "name": "review_comment",
+    "table": "biz_rolling_plans",
+    "type": "text"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_rolling_plans",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_systems",
+    "type": "uuid"
+  },
+  {
+    "name": "name",
+    "table": "biz_systems",
+    "type": "text"
+  },
+  {
+    "name": "active",
+    "table": "biz_systems",
+    "type": "boolean"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_systems",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "biz_team_members",
+    "type": "uuid"
+  },
+  {
+    "name": "team_id",
+    "table": "biz_team_members",
+    "type": "uuid"
+  },
+  {
+    "name": "user_id",
+    "table": "biz_team_members",
+    "type": "uuid"
+  },
+  {
+    "name": "started_at",
+    "table": "biz_team_members",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "ended_at",
+    "table": "biz_team_members",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "actor_id",
+    "table": "biz_team_members",
+    "type": "uuid"
+  },
+  {
+    "name": "id",
+    "table": "biz_teams",
+    "type": "uuid"
+  },
+  {
+    "name": "department_id",
+    "table": "biz_teams",
+    "type": "uuid"
+  },
+  {
+    "name": "name",
+    "table": "biz_teams",
+    "type": "text"
+  },
+  {
+    "name": "active",
+    "table": "biz_teams",
+    "type": "boolean"
+  },
+  {
+    "name": "created_at",
+    "table": "biz_teams",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "id",
+    "table": "profiles",
+    "type": "uuid"
+  },
+  {
+    "name": "username",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "full_name",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "email",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "phone",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "desired_position",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "notes",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "status",
+    "table": "profiles",
+    "type": "text"
+  },
+  {
+    "name": "is_system_admin",
+    "table": "profiles",
+    "type": "boolean"
+  },
+  {
+    "name": "must_change_password",
+    "table": "profiles",
+    "type": "boolean"
+  },
+  {
+    "name": "created_at",
+    "table": "profiles",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "updated_at",
+    "table": "profiles",
+    "type": "timestamp with time zone"
+  },
+  {
+    "name": "last_seen_at",
+    "table": "profiles",
+    "type": "timestamp with time zone"
+  }
+]

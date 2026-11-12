@@ -1,0 +1,122 @@
+[
+  {
+    "schema": "public",
+    "name": "biz_can",
+    "args": "_actor uuid, _permission text",
+    "md5": "f6eda4b5951bc99ff315f7d2862c9559"
+  },
+  {
+    "schema": "private",
+    "name": "legacy_business_allowed",
+    "args": "u uuid",
+    "md5": "db3e9d158b2176711a2e0fabe087b956"
+  },
+  {
+    "schema": "public",
+    "name": "biz_department_access",
+    "args": "_department_id uuid",
+    "md5": "a19fe009ee1cd36f3e5d7b63a8c05c73"
+  },
+  {
+    "schema": "public",
+    "name": "biz_member_access",
+    "args": "_user_id uuid, _department_id uuid",
+    "md5": "3bbdb20a410430b8ec4bae31f3e74e80"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goal_can_review",
+    "args": "_user_id uuid, _department_id uuid",
+    "md5": "bb3053ba947c2c1423a1db2a5912d760"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goals_read",
+    "args": "_year integer",
+    "md5": "ca1c403e5e11424f206cc9dc690d6f96"
+  },
+  {
+    "schema": "public",
+    "name": "biz_approval_step",
+    "args": "_version uuid, _approve boolean, _comment text",
+    "md5": "e63b653324aa604d2754b5861fa7d059"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goal_save",
+    "args": "_version_id uuid, _revision integer, _items jsonb, _submit boolean",
+    "md5": "60eaeacc26f0314be799402d94252362"
+  },
+  {
+    "schema": "private",
+    "name": "biz_source_ok",
+    "args": "_user uuid, _started_at timestamp with time zone",
+    "md5": "b629eb608a23636aa793caff7117d8c0"
+  },
+  {
+    "schema": "private",
+    "name": "org_slot_rules",
+    "args": "u uuid, c jsonb",
+    "md5": "a0724fa201571faeef6da5ec0a44a000"
+  },
+  {
+    "schema": "public",
+    "name": "biz_document_save_guard",
+    "args": "",
+    "md5": "c9dce266efa98db7ab6b647260780574"
+  },
+  {
+    "schema": "public",
+    "name": "biz_documents_read",
+    "args": "_kind text, _period_kind text, _year integer, _period integer",
+    "md5": "3aa21f9ec27904ada410eb84d0fdb96a"
+  },
+  {
+    "schema": "public",
+    "name": "biz_document_start",
+    "args": "_kind text, _period_kind text, _year integer, _period integer, _reason text",
+    "md5": "3ea4244e0aab9aae0945c363b47aea23"
+  },
+  {
+    "schema": "public",
+    "name": "biz_goal_start",
+    "args": "_year integer, _reason text",
+    "md5": "f6e215f7166849f343e641fa4ca28d9f"
+  },
+  {
+    "schema": "public",
+    "name": "biz_run_can_read",
+    "args": "_id uuid",
+    "md5": "2ea99ae8b360dce916a3cae7b9075087"
+  },
+  {
+    "schema": "public",
+    "name": "biz_effective_access",
+    "args": "_user uuid",
+    "md5": "f4ee4d45f1e1c985cbd2cd43ec18932d"
+  },
+  {
+    "schema": "public",
+    "name": "biz_document_save",
+    "args": "_id uuid, _revision integer, _url text, _notes text, _actuals jsonb, _submit boolean, _attachments jsonb, _allocations jsonb",
+    "md5": "486218151e7460cb43d00881a232f934"
+  },
+  {
+    "schema": "public",
+    "name": "biz_dashboard_read",
+    "args": "_year integer, _period_kind text, _period integer, _department_id uuid, _user_id uuid, _mode text",
+    "md5": "8d9581ab1e3b79a8838237244de30fd2"
+  },
+  {
+    "schema": "private",
+    "name": "permission_editor_policy",
+    "args": "",
+    "md5": "c11f9a01d1b9b2a56b990e365d9fd7af"
+  },
+  {
+    "schema": "private",
+    "name": "org_role_permission_ready",
+    "args": "p text",
+    "md5": "dc24adec9021ac7b73f987c8659c8b4b"
+  }
+]
