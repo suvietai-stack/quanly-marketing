@@ -4,6 +4,7 @@ import { allDependencies } from '@/lib/auth';
 import { personalChecklistRows } from '@/lib/basePermissions/personalChecklist';
 import { scopeLabels, type EditorPolicy } from '@/lib/basePermissions/permissionEditor';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
+import type { CatalogPermission } from '@/lib/basePermissions/permissionCatalog';
 import { permissionRisk } from '@/lib/basePermissions/permissionRisk';
 import { bizSubgroups, BIZ_GROUP } from '@/lib/basePermissions/bizPermissionGroups';
 import { Button } from '@/components/ui/button';
@@ -12,13 +13,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export function PersonalPermissionChecklist({ value, onChange, policy, baseline, disabled, effective = [] }: {
-  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; baseline: string[]; disabled: boolean; effective?: EffectivePermission[];
+export function PersonalPermissionChecklist({ value, onChange, policy, baseline, disabled, effective = [], catalog = [] }: {
+  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; baseline: string[]; disabled: boolean; effective?: EffectivePermission[]; catalog?: CatalogPermission[];
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const rows = useMemo(() => personalChecklistRows(policy, baseline, value, effective), [policy, baseline, value, effective]);
+  const rows = useMemo(() => personalChecklistRows(policy, baseline, value, effective, catalog), [policy, baseline, value, effective, catalog]);
   const groups = useMemo(() => [...new Set(rows.map(p => p.group))], [rows]);
   const query = search.trim().toLocaleLowerCase('vi');
   const visible = rows.filter(p => `${p.key} ${p.label} ${p.group} ${p.description ?? ''}`.toLocaleLowerCase('vi').includes(query) &&

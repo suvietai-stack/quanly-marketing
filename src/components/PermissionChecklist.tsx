@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PersonalPermissionChecklist } from './PersonalPermissionChecklist';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
+import type { CatalogPermission } from '@/lib/basePermissions/permissionCatalog';
 
 export function PermissionChecklist(props: {
-  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[];
+  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[]; catalog?: CatalogPermission[];
 }) {
   if (props.personal) return <PersonalPermissionChecklist {...props} disabled={props.disabled ?? false} baseline={props.baseline ?? []}/>;
   return <RolePermissionChecklist {...props}/>;

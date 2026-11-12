@@ -10,6 +10,7 @@ import { PermissionChecklist } from '@/components/PermissionChecklist';
 import { permissionEditorApi } from '@/lib/basePermissions/permissionEditor';
 import { toast } from 'sonner';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
+import { readPermissionCatalog } from '@/lib/basePermissions/permissionCatalog';
 
 type Supplement = { fingerprint: string; role_ids: string[]; permissions: string[] | null; legacy_override: boolean; inactive_legacy: boolean };
 type PersonalPreview = { id: string; fingerprint: string; added: string[]; removed: string[]; affected_users: string[]; inactive_legacy: boolean };
@@ -23,6 +24,7 @@ export function StaffPermissionEditor({ userId, effective, effectiveError }: { u
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const policy = useQuery({ queryKey: ['permission-editor-policy', user?.id], queryFn: permissionEditorApi.read, retry: false });
+  const catalog = useQuery({ queryKey: ['personal-permission-catalog', user?.id], queryFn: ({ signal }) => readPermissionCatalog(signal), enabled: !!user, retry: false, staleTime: 60000, refetchOnWindowFocus: true });
   const q = useQuery({ queryKey: ['staff-supplement', user?.id, userId], retry: false, queryFn: async () => {
     const { data, error } = await supabase.rpc('account_supplement_read', { _target: userId });
     if (error) throw error;
@@ -36,7 +38,7 @@ export function StaffPermissionEditor({ userId, effective, effectiveError }: { u
   if (q.error) return <p role="alert" className="py-4 text-muted-foreground">{q.error.message}</p>;
   if (!q.data) return null;
   const current = draft ?? q.data.permissions ?? [];
-  const label = (key: string) => PERMISSIONS.find(p => p.key === key)?.label ?? key;
+  const label = (key: string) => PERMISSIONS.find(p => p.key === key)?.label ?? catalog.data?.find(p => p.key === key)?.label ?? key;
   const openPreview = () => run(async () => {
     const { data, error } = await supabase.rpc('account_supplement_preview', { _target: userId, _permissions: current });
     if (error) throw error;
@@ -54,9 +56,11 @@ export function StaffPermissionEditor({ userId, effective, effectiveError }: { u
     {q.data.legacy_override ? <p role="alert" className="text-destructive">Quyền riêng cũ đang bật. Cần đối chiếu và xác nhận chuyển đổi trước; cấu hình hiện tại được giữ nguyên.</p> : <>
       {q.data.inactive_legacy && <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">Có cấu hình cũ đang tắt</summary><p className="pt-2">Chưa thay đổi. Nếu xác nhận lưu, chỉ quyền riêng của nhân viên này chuyển sang cộng thêm; bản trước được lưu trong nhật ký.</p></details>}
       {policy.error && <p role="alert" className="text-destructive">Chưa tải được các quyền có phạm vi an toàn. Danh mục chỉ xem, chưa thể thay đổi.</p>}
+      {catalog.isPending && <p className="text-sm text-muted-foreground">Đang đối chiếu danh mục quyền toàn Base…</p>}
+      {catalog.error && <p role="alert" className="text-destructive text-sm">Chưa tải được danh mục quyền toàn Base. Đang hiện danh mục có sẵn, chỉ xem.</p>}
       {effectiveError && <p role="alert" className="text-muted-foreground text-sm">Chưa tải được quyền hiệu lực và nguồn Role; trạng thái quyền riêng vẫn giữ nguyên.</p>}
-      <PermissionChecklist personal value={current} onChange={v => { setDraft(v); setPreview(null); }} policy={policy.data ?? []} baseline={q.data.permissions ?? []} effective={effective} disabled={!policy.data || !!policy.error || busy}/>
-      <div className="flex flex-wrap gap-2"><Button disabled={!draft || busy || !policy.data || !!policy.error} onClick={openPreview}>Xem trước quyền riêng</Button><Button variant="ghost" disabled={!draft || busy} onClick={() => { setDraft(null); setPreview(null); setError(''); }}>Hủy thay đổi</Button></div>
+      <PermissionChecklist personal value={current} onChange={v => { setDraft(v); setPreview(null); }} policy={policy.data ?? []} baseline={q.data.permissions ?? []} effective={effective} catalog={catalog.data ?? []} disabled={!policy.data || !!policy.error || !catalog.data || !!catalog.error || busy}/>
+      <div className="flex flex-wrap gap-2"><Button disabled={!draft || busy || !policy.data || !!policy.error || !catalog.data || !!catalog.error} onClick={openPreview}>Xem trước quyền riêng</Button><Button variant="ghost" disabled={!draft || busy} onClick={() => { setDraft(null); setPreview(null); setError(''); }}>Hủy thay đổi</Button></div>
     </>}
     {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
     <Dialog open={!!preview} onOpenChange={v => !busy && !v && setPreview(null)}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Xác nhận quyền riêng</DialogTitle></DialogHeader>

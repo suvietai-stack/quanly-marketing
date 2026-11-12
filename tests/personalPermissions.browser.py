@@ -4,17 +4,20 @@ from playwright.async_api import async_playwright,expect
 OUT=Path('/tmp/browser/personal-permissions')
 OUT.mkdir(parents=True,exist_ok=True)
 POLICY=json.load(open(Path(__file__).parent/'fixtures/personal-policy.json'))
+CATALOG=json.load(open(Path(__file__).parent/'fixtures/permission-catalog.json'))
 HTML='''<div id="root"></div><script type="module">import RefreshRuntime from "/@react-refresh";RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;</script><script type="module" src="/tests/personalPermissions.browser.tsx"></script>'''
 async def main():
  async with async_playwright() as p:
   browser=await p.chromium.launch(headless=True)
   for width in [1280,390]:
-   page=await browser.new_page(viewport={'width':width,'height':1800}); selected=['settings.role']; calls=[]; errors=[]
+   page=await browser.new_page(viewport={'width':width,'height':1800}); selected=['settings.role']; calls=[]; errors=[]; catalog_reads=0
    page.on('pageerror',lambda e:errors.append(str(e)))
    async def rpc(r):
-    nonlocal selected
+    nonlocal selected,catalog_reads
     name=r.request.url.split('/')[-1]; payload=r.request.post_data_json or {};calls.append(name)
-    if name=='permission_editor_read':data=POLICY
+    if 'base_permission_catalog?' in name:
+     assert r.request.method=='GET';catalog_reads+=1;data=CATALOG
+    elif name=='permission_editor_read':data=POLICY
     elif name=='account_supplement_read':data={'fingerprint':'fixture','role_ids':[],'permissions':selected,'legacy_override':False,'inactive_legacy':False}
     elif name=='account_supplement_preview':
      assert payload['_permissions']==['settings.role','leave.edit_own'],payload
@@ -37,6 +40,9 @@ async def main():
    await page.get_by_label('Tìm quyền bổ sung').fill('');start=time.perf_counter()
    while await page.locator('section > button[aria-expanded="false"]').count():await page.locator('section > button[aria-expanded="false"]').first.click()
    assert await page.get_by_role('checkbox').count()==510
+   assert catalog_reads==2, catalog_reads
+   assert len(set(await page.get_by_role('checkbox').evaluate_all('(els)=>els.map(e=>e.getAttribute("aria-label"))')))==510
+   await expect(page.get_by_role('checkbox',name='order.photo.approve',exact=True)).to_be_disabled()
    print(width,'expand 510 ms',round((time.perf_counter()-start)*1000),'grantable15, baselineunsupported revocable; RPCs',calls)
    assert await page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert not errors,errors
    await page.screenshot(path=str(OUT/f'all-{width}.png'))

@@ -1,0 +1,2552 @@
+[
+  {
+    "key": "att.create",
+    "label": "Tạo giải trình chấm công cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.edit_own",
+    "label": "Sửa / thu hồi giải trình cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.manage",
+    "label": "Quản lý giải trình",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.reconcile",
+    "label": "Đối chiếu giải trình",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.report",
+    "label": "Xem báo cáo giải trình",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.settings",
+    "label": "Quản lý cài đặt giải trình",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.view_all",
+    "label": "Xem toàn bộ giải trình",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.view_own",
+    "label": "Xem giải trình cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "att.witness",
+    "label": "Xác nhận làm chứng (chỉ giải trình được chọn)",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "biz.approval_view",
+    "label": "Xem Trung tâm Phê duyệt trong phạm vi",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.crm_access",
+    "label": "Cấp quyền nghiệp vụ CRM",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_archive",
+    "label": "Lưu trữ và khôi phục khách",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_edit_other",
+    "label": "Sửa hộ khách trong phạm vi",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_export",
+    "label": "Xuất dữ liệu CRM",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_settings",
+    "label": "Cài đặt danh mục CRM",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_transfer",
+    "label": "Bàn giao khách trong phạm vi",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_use",
+    "label": "Sử dụng CRM cá nhân",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.crm_view_scope",
+    "label": "Xem CRM nhân viên trong phạm vi",
+    "module": "CRM Khách Hàng"
+  },
+  {
+    "key": "biz.dashboard_public",
+    "label": "Xem Dashboard tổng hợp toàn Khối",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.deadline_manage",
+    "label": "Quản lý deadline nộp",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.dept_manage",
+    "label": "Quản lý phòng ban kinh doanh",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.goal_approve",
+    "label": "Duyệt mục tiêu KR",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.goal_submit",
+    "label": "Lập và gửi mục tiêu KR",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.kr_manage",
+    "label": "Quản lý chỉ số KR",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.org_manage",
+    "label": "Quản lý cơ cấu tổ chức và phân công",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.plan_approve",
+    "label": "Duyệt kế hoạch (quy trình cũ)",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.plan_request_revision",
+    "label": "Yêu cầu chỉnh sửa kế hoạch",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.plan_submit",
+    "label": "Nộp kế hoạch kinh doanh",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.report_approve",
+    "label": "Duyệt báo cáo",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.report_submit",
+    "label": "Nộp báo cáo kinh doanh",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.view_all",
+    "label": "Ngoại lệ xem hồ sơ chi tiết toàn Khối",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.view_dept",
+    "label": "Xem dữ liệu phòng ban mình",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.view_own",
+    "label": "Xem dữ liệu cá nhân",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "biz.workflow_manage",
+    "label": "Cấu hình quy trình phê duyệt",
+    "module": "Quản trị Kinh doanh"
+  },
+  {
+    "key": "brand.contact",
+    "label": "Quản lý thông tin liên hệ",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.create",
+    "label": "Tạo thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.delete",
+    "label": "Xóa thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.docs",
+    "label": "Quản lý tài liệu/guideline",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.edit",
+    "label": "Sửa thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.identity",
+    "label": "Quản lý nhận diện thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.notes",
+    "label": "Quản lý ghi chú vận hành",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.profile",
+    "label": "Quản lý hồ sơ thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.staff",
+    "label": "Quản lý nhân sự phụ trách",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.view",
+    "label": "Xem thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.view_all",
+    "label": "Xem tất cả thương hiệu",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "brand.view_channels",
+    "label": "Quản lý kênh liên kết",
+    "module": "Thương Hiệu"
+  },
+  {
+    "key": "create_content_optimization",
+    "label": "Tạo việc tối ưu từ Bài đã đăng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "create_scheduled_content_optimization",
+    "label": "Kiểm tra & tạo việc tối ưu theo lịch",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "finance.incoming.bank_config",
+    "label": "Cài đặt ngân hàng",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.claim",
+    "label": "Sale xác nhận giao dịch",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.gmf_config",
+    "label": "Cài đặt thông báo Zalo GMF",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.manage",
+    "label": "Quản lý / điều chỉnh giao dịch",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.manual_create",
+    "label": "Thêm khoản thủ công",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.manual_manage",
+    "label": "Quản lý (sửa / hủy) khoản thủ công",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.manual_view",
+    "label": "Xem khoản thủ công (Tiền mặt / TK khác)",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.reconcile",
+    "label": "Xem toàn bộ / sửa ghi chú / xác nhận loại Khác",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.remind",
+    "label": "Nhắc xác nhận thủ công",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.view",
+    "label": "Xem Tiền Về",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.view_totals",
+    "label": "Xem tổng tiền và thống kê tài chính",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "finance.incoming.view_unit",
+    "label": "Xem giao dịch Tiền Về do thành viên đơn vị mình quản lý phụ trách",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.advance.approve",
+    "label": "Phê duyệt đề nghị tạm ứng",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.advance.pay",
+    "label": "Xác nhận chi tiền tạm ứng",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.advance.report",
+    "label": "Xem báo cáo tạm ứng",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.advance.settings",
+    "label": "Cài đặt quy trình tạm ứng",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.advance.view_scope",
+    "label": "Xem đề nghị tạm ứng thuộc phạm vi",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.payment.approve",
+    "label": "Phê duyệt đề nghị thanh toán",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.payment.pay",
+    "label": "Xác nhận chi tiền thanh toán",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.payment.report",
+    "label": "Xem báo cáo thanh toán",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.payment.settings",
+    "label": "Cài đặt quy trình thanh toán",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.payment.view_scope",
+    "label": "Xem đề nghị thanh toán thuộc phạm vi",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.salary.approve",
+    "label": "Phê duyệt tạm ứng lương",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.salary.deduct",
+    "label": "Xác nhận khấu trừ/hoàn trả",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.salary.pay",
+    "label": "Xác nhận chi tạm ứng lương",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.salary.report",
+    "label": "Xem báo cáo tạm ứng lương",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.salary.settings",
+    "label": "Cài đặt quy trình tạm ứng lương",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "fr.salary.view_scope",
+    "label": "Xem tạm ứng lương thuộc phạm vi",
+    "module": "Tài Chính Kế Toán"
+  },
+  {
+    "key": "integration.facebook_leads",
+    "label": "Quản lý Facebook Lead Ads (kết nối Page, cấu hình Form, xem lỗi, thử lại)",
+    "module": "Tích hợp Marketing"
+  },
+  {
+    "key": "integration.website_forms",
+    "label": "Quản lý Website Forms (thêm Website, cấp/thu hồi khóa, cấu hình Form, xem lỗi, thử lại)",
+    "module": "Tích hợp Marketing"
+  },
+  {
+    "key": "k3.comment",
+    "label": "Nhận xét 3K nhân viên",
+    "module": "Quản lý 3K"
+  },
+  {
+    "key": "k3.settings",
+    "label": "Cấu hình module 3K",
+    "module": "Quản lý 3K"
+  },
+  {
+    "key": "k3.use",
+    "label": "Lập và cập nhật 3K cá nhân",
+    "module": "Quản lý 3K"
+  },
+  {
+    "key": "k3.view_scope",
+    "label": "Xem 3K trong phạm vi quản lý",
+    "module": "Quản lý 3K"
+  },
+  {
+    "key": "kpi.goal_archive",
+    "label": "Hủy / Lưu trữ mục tiêu",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.goal_create",
+    "label": "Tạo mục tiêu",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.goal_delete",
+    "label": "Xóa mục tiêu chưa phát sinh dữ liệu",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.goal_edit",
+    "label": "Sửa mục tiêu",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.kr_adjust",
+    "label": "Điều chỉnh KR đã giao",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.kr_assign",
+    "label": "Thêm / Giao KR",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.period_manage",
+    "label": "Quản lý kỳ KPI",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.report",
+    "label": "Xem báo cáo KPI",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.report_export",
+    "label": "Xuất báo cáo KPI",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.view_all",
+    "label": "Xem toàn bộ KPI",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "kpi.view_own",
+    "label": "Xem KPI cá nhân",
+    "module": "KPI / Giao KPI"
+  },
+  {
+    "key": "leave.approve",
+    "label": "Phê duyệt đơn (chỉ đơn được chỉ định)",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.cancel_handle",
+    "label": "Xử lý hủy đơn",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.create",
+    "label": "Tạo đơn cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.create_for",
+    "label": "Tạo đơn hộ",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.edit_others",
+    "label": "Sửa đơn nhân viên",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.edit_own",
+    "label": "Sửa đơn cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.exception",
+    "label": "Xử lý ngoại lệ đơn từ",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.export",
+    "label": "Xuất báo cáo",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.reassign",
+    "label": "Chuyển người duyệt",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.recall",
+    "label": "Thu hồi đơn cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.report",
+    "label": "Xem báo cáo đơn từ",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.settings",
+    "label": "Quản lý cài đặt đơn từ",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.view_all",
+    "label": "Xem toàn bộ đơn",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.view_assigned",
+    "label": "Xem đơn được giao duyệt",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.view_own",
+    "label": "Xem đơn cá nhân",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "leave.view_unit",
+    "label": "Xem đơn của thành viên đơn vị mình quản lý",
+    "module": "Đơn Từ & Phê Duyệt"
+  },
+  {
+    "key": "local.assign_owner",
+    "label": "Gán người phụ trách Local",
+    "module": "Local"
+  },
+  {
+    "key": "local.create",
+    "label": "Tạo địa điểm",
+    "module": "Local"
+  },
+  {
+    "key": "local.delete",
+    "label": "Xóa địa điểm",
+    "module": "Local"
+  },
+  {
+    "key": "local.edit",
+    "label": "Sửa địa điểm",
+    "module": "Local"
+  },
+  {
+    "key": "local.growth_create",
+    "label": "Thêm kỳ báo cáo Local",
+    "module": "Local"
+  },
+  {
+    "key": "local.growth_delete",
+    "label": "Xóa kỳ báo cáo Local",
+    "module": "Local"
+  },
+  {
+    "key": "local.growth_edit",
+    "label": "Sửa kỳ báo cáo Local",
+    "module": "Local"
+  },
+  {
+    "key": "local.growth_view",
+    "label": "Xem tăng trưởng Local",
+    "module": "Local"
+  },
+  {
+    "key": "local.photo",
+    "label": "Cập nhật ảnh địa điểm",
+    "module": "Local"
+  },
+  {
+    "key": "local.post_create",
+    "label": "Tạo bài đăng Map",
+    "module": "Local"
+  },
+  {
+    "key": "local.post_delete",
+    "label": "Xóa bài đăng Map",
+    "module": "Local"
+  },
+  {
+    "key": "local.post_edit",
+    "label": "Sửa bài đăng Map",
+    "module": "Local"
+  },
+  {
+    "key": "local.products",
+    "label": "Quản lý sản phẩm/dịch vụ Map",
+    "module": "Local"
+  },
+  {
+    "key": "local.report",
+    "label": "Xem báo cáo local",
+    "module": "Local"
+  },
+  {
+    "key": "local.review",
+    "label": "Xem review",
+    "module": "Local"
+  },
+  {
+    "key": "local.review_create",
+    "label": "Thêm review thủ công",
+    "module": "Local"
+  },
+  {
+    "key": "local.review_reply",
+    "label": "Phản hồi review",
+    "module": "Local"
+  },
+  {
+    "key": "local.review_status",
+    "label": "Cập nhật trạng thái phản hồi",
+    "module": "Local"
+  },
+  {
+    "key": "local.view",
+    "label": "Xem local map",
+    "module": "Local"
+  },
+  {
+    "key": "local.view_all",
+    "label": "Xem tất cả Local Map",
+    "module": "Local"
+  },
+  {
+    "key": "local.view_mine",
+    "label": "Chỉ xem Local liên quan",
+    "module": "Local"
+  },
+  {
+    "key": "oq.accept",
+    "label": "Tiếp nhận yêu cầu được giao",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.create",
+    "label": "Tạo yêu cầu",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.delete_cancelled",
+    "label": "Xóa yêu cầu đã hủy",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.manage",
+    "label": "Quản lý yêu cầu (can thiệp trường hợp đặc biệt)",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.reply_price",
+    "label": "Phản hồi Hỏi Giá",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.reply_progress",
+    "label": "Phản hồi Hỏi Tiến Độ",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.report_all",
+    "label": "Xem báo cáo toàn bộ Hỏi Giá & Tiến Độ",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.report_export",
+    "label": "Xuất báo cáo Excel",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.report_own",
+    "label": "Xem báo cáo cá nhân",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.view_all",
+    "label": "Xem toàn bộ yêu cầu",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "oq.view_own",
+    "label": "Xem yêu cầu cá nhân",
+    "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+  },
+  {
+    "key": "order.approve",
+    "label": "Duyệt order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.assign",
+    "label": "Gán người phụ trách order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.cancel",
+    "label": "Hủy order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.complete",
+    "label": "Xác nhận hoàn thành order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.create",
+    "label": "Tạo order thiết kế",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.delete",
+    "label": "Xóa order thiết kế",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.deliver",
+    "label": "Bàn giao file",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.edit",
+    "label": "Sửa order thiết kế",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.edit_reviewer",
+    "label": "Chỉnh Người duyệt order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.force_status",
+    "label": "Ép chuyển trạng thái order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.history",
+    "label": "Xem lịch sử xử lý order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.approve",
+    "label": "Duyệt — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.assign",
+    "label": "Phân công — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.cancel",
+    "label": "Hủy — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.complete",
+    "label": "Xác nhận hoàn thành — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.create",
+    "label": "Tạo yêu cầu — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.delete",
+    "label": "Xóa nháp — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.deliver",
+    "label": "Bàn giao — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.edit",
+    "label": "Sửa thông tin — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.edit_reviewer",
+    "label": "Đổi người duyệt — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.force_status",
+    "label": "Can thiệp trạng thái — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.report_view",
+    "label": "Xem báo cáo — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.request_changes",
+    "label": "Yêu cầu sửa — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.restore",
+    "label": "Khôi phục — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.resubmit",
+    "label": "Gửi lại — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.send_request",
+    "label": "Gửi yêu cầu — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.submit",
+    "label": "Gửi duyệt — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.take",
+    "label": "Nhận việc — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.update_draft",
+    "label": "Cập nhật file — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.view",
+    "label": "Xem việc — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.marketing_design.view_all",
+    "label": "Xem toàn bộ — Ấn phẩm Marketing",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.open_delivery",
+    "label": "Mở link file bàn giao",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.approve",
+    "label": "Duyệt — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.assign",
+    "label": "Phân công — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.cancel",
+    "label": "Hủy — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.complete",
+    "label": "Xác nhận hoàn thành — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.create",
+    "label": "Tạo yêu cầu — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.delete",
+    "label": "Xóa nháp — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.deliver",
+    "label": "Bàn giao — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.edit",
+    "label": "Sửa thông tin — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.edit_reviewer",
+    "label": "Đổi người duyệt — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.force_status",
+    "label": "Can thiệp trạng thái — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.report_view",
+    "label": "Xem báo cáo — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.request_changes",
+    "label": "Yêu cầu sửa — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.restore",
+    "label": "Khôi phục — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.resubmit",
+    "label": "Gửi lại — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.send_request",
+    "label": "Gửi yêu cầu — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.submit",
+    "label": "Gửi duyệt — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.take",
+    "label": "Nhận việc — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.update_draft",
+    "label": "Cập nhật file — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.view",
+    "label": "Xem việc — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.order_mockup.view_all",
+    "label": "Xem toàn bộ — Ma-két đơn hàng",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.approve",
+    "label": "Duyệt — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.assign",
+    "label": "Phân công — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.cancel",
+    "label": "Hủy — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.complete",
+    "label": "Xác nhận hoàn thành — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.create",
+    "label": "Tạo yêu cầu — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.delete",
+    "label": "Xóa nháp — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.deliver",
+    "label": "Bàn giao — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.edit",
+    "label": "Sửa thông tin — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.edit_reviewer",
+    "label": "Đổi người duyệt — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.force_status",
+    "label": "Can thiệp trạng thái — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.report_view",
+    "label": "Xem báo cáo — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.request_changes",
+    "label": "Yêu cầu sửa — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.restore",
+    "label": "Khôi phục — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.resubmit",
+    "label": "Gửi lại — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.send_request",
+    "label": "Gửi yêu cầu — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.submit",
+    "label": "Gửi duyệt — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.take",
+    "label": "Nhận việc — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.update_draft",
+    "label": "Cập nhật file — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.view",
+    "label": "Xem việc — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.photo.view_all",
+    "label": "Xem toàn bộ — Chụp ảnh",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.report_view",
+    "label": "Xem báo cáo Order Thiết Kế",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.request_changes",
+    "label": "Yêu cầu sửa order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.restore",
+    "label": "Khôi phục order đã hủy",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.resubmit",
+    "label": "Gửi duyệt lại order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.send_request",
+    "label": "Gửi yêu cầu order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.submit",
+    "label": "Gửi duyệt order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.take",
+    "label": "Nhận order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.update_draft",
+    "label": "Cập nhật file nháp",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.view",
+    "label": "Xem order thiết kế",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.view_all",
+    "label": "Xem tất cả order",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "order.view_mine",
+    "label": "Chỉ xem order liên quan",
+    "module": "Thiết Kế"
+  },
+  {
+    "key": "org.appoint_manager",
+    "label": "Bổ nhiệm/miễn nhiệm vị trí quản lý",
+    "module": "Cơ cấu tổ chức"
+  },
+  {
+    "key": "org.assign_staff",
+    "label": "Thêm, bỏ gán và điều chuyển nhân sự",
+    "module": "Cơ cấu tổ chức"
+  },
+  {
+    "key": "org.manage_permissions",
+    "label": "Quản lý quy tắc phân quyền tổ chức",
+    "module": "Cơ cấu tổ chức"
+  },
+  {
+    "key": "org.manage_structure",
+    "label": "Tạo/sửa đơn vị và chức danh",
+    "module": "Cơ cấu tổ chức"
+  },
+  {
+    "key": "org.view",
+    "label": "Xem sơ đồ cơ cấu tổ chức",
+    "module": "Cơ cấu tổ chức"
+  },
+  {
+    "key": "org.view_history",
+    "label": "Xem lịch sử phân công và bổ nhiệm",
+    "module": "Cơ cấu tổ chức"
+  },
+  {
+    "key": "ot.accept",
+    "label": "Tiếp nhận đơn",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.assign",
+    "label": "Phân công người phụ trách",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.create",
+    "label": "Tạo đơn thủ công",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.manage",
+    "label": "Quản lý đơn hàng",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.report",
+    "label": "Xem báo cáo",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.report_export",
+    "label": "Xuất báo cáo",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.reschedule_propose",
+    "label": "Đề xuất điều chỉnh lịch",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.reschedule_reply",
+    "label": "Phản hồi điều chỉnh lịch",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.settings",
+    "label": "Quản lý cài đặt đơn hàng",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.stage_update",
+    "label": "Cập nhật tiến độ công đoạn",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.supplier",
+    "label": "Quản lý nhà cung cấp",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.task_update",
+    "label": "Cập nhật công việc được giao",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.task_view",
+    "label": "Xem công việc được giao",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.view_all",
+    "label": "Xem toàn bộ đơn",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.view_own",
+    "label": "Xem đơn phụ trách",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "ot.view_unit",
+    "label": "Xem đơn hàng của thành viên đơn vị mình quản lý",
+    "module": "Theo Dõi Đơn Hàng"
+  },
+  {
+    "key": "overview.alerts",
+    "label": "Xem việc cần chú ý",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "overview.all_dept",
+    "label": "Xem việc của toàn phòng",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "overview.brand_summary",
+    "label": "Thống kê theo thương hiệu",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "overview.module_summary",
+    "label": "Thống kê theo module",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "overview.own_only",
+    "label": "Chỉ xem việc liên quan đến mình",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "overview.staff_summary",
+    "label": "Thống kê theo người phụ trách",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "overview.view",
+    "label": "Xem Tổng Quan",
+    "module": "Tổng Quan"
+  },
+  {
+    "key": "pause_content_optimization_schedule",
+    "label": "Tạm dừng/khôi phục lịch tối ưu",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "report.attention",
+    "label": "Xem việc cần chú ý toàn app",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.attention_all",
+    "label": "Xem tất cả cảnh báo",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.by_brand",
+    "label": "Báo cáo theo thương hiệu",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.by_module",
+    "label": "Báo cáo theo module",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.by_staff",
+    "label": "Báo cáo theo người phụ trách",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.export",
+    "label": "Xuất báo cáo",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.growth",
+    "label": "Xem dữ liệu tăng trưởng",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "report.view",
+    "label": "Xem báo cáo tổng quan",
+    "module": "Báo Cáo"
+  },
+  {
+    "key": "sale_work.access",
+    "label": "Truy cập Sale Work Zalo",
+    "module": "Sale Work Zalo"
+  },
+  {
+    "key": "sale_work.manage_credentials",
+    "label": "Cấp/sửa/thu hồi tài khoản Sale Work của nhân sự",
+    "module": "Sale Work Zalo"
+  },
+  {
+    "key": "sale_work.manage_settings",
+    "label": "Cấu hình URL và hiển thị Sale Work",
+    "module": "Sale Work Zalo"
+  },
+  {
+    "key": "sale_work.view_audit",
+    "label": "Xem nhật ký quản trị Sale Work (không gồm mật khẩu)",
+    "module": "Sale Work Zalo"
+  },
+  {
+    "key": "sale_work.view_own",
+    "label": "Xem/sao chép thông tin đăng nhập của chính mình",
+    "module": "Sale Work Zalo"
+  },
+  {
+    "key": "sao.manual_grant",
+    "label": "Cộng Sao thủ công có lý do",
+    "module": "Sao Sứ Việt"
+  },
+  {
+    "key": "sao.program_manage",
+    "label": "Quản lý chương trình thưởng Sao",
+    "module": "Sao Sứ Việt"
+  },
+  {
+    "key": "sao.shop_manage",
+    "label": "Quản lý quà và xác nhận phát quà",
+    "module": "Sao Sứ Việt"
+  },
+  {
+    "key": "set_content_optimization_schedule",
+    "label": "Thiết lập lịch tối ưu từ Bài đã đăng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "settings.account_approve",
+    "label": "Duyệt tài khoản mới",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.account_lock",
+    "label": "Khóa/mở khóa tài khoản",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.account_reject",
+    "label": "Từ chối tài khoản mới",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.activity_log",
+    "label": "Xem log thao tác",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.assign_role",
+    "label": "Gán role",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.brand_types",
+    "label": "Quản lý loại thương hiệu",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.catalog",
+    "label": "Quản lý danh mục trạng thái",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.design_types",
+    "label": "Quản lý loại thiết kế",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.login_history",
+    "label": "Xem lịch sử đăng nhập",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.people",
+    "label": "Quản lý nhân sự",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.permission",
+    "label": "Quản lý ma trận phân quyền",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.plan_topic",
+    "label": "Quản lý Plan / Topic",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.priority",
+    "label": "Quản lý mức ưu tiên",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.role",
+    "label": "Tạo / sửa / xóa role",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.social_types",
+    "label": "Quản lý loại kênh social",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.system_edit",
+    "label": "Chỉnh thông tin hệ thống",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.system_view",
+    "label": "Xem thông tin hệ thống",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.task_types",
+    "label": "Quản lý loại task",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.template",
+    "label": "Quản lý template checklist",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.user_create",
+    "label": "Tạo tài khoản",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.user_custom_perm",
+    "label": "Tùy chỉnh quyền riêng theo user",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.user_delete",
+    "label": "Xóa tài khoản",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.user_edit",
+    "label": "Sửa tài khoản",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.user_reset_password",
+    "label": "Reset mật khẩu",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.user_view",
+    "label": "Xem tài khoản",
+    "module": "Tài khoản"
+  },
+  {
+    "key": "settings.video_types",
+    "label": "Quản lý loại video",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.view",
+    "label": "Xem cài đặt",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.view_presence",
+    "label": "Xem trạng thái online nhân sự",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "settings.web_types",
+    "label": "Quản lý loại website",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "signal.assign",
+    "label": "Phân công Sale",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.catalog",
+    "label": "Quản lý danh mục tín hiệu (Nguồn, Loại sản phẩm, Nhóm nhu cầu)",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.create",
+    "label": "Tạo tín hiệu (Marketing)",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.delete",
+    "label": "Xóa tín hiệu (chưa có nhật ký)",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.edit",
+    "label": "Sửa thông tin tín hiệu",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.manage",
+    "label": "Quản lý tín hiệu (sửa, xóa, hủy, mở lại)",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.reassign",
+    "label": "Đổi Sale",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.report",
+    "label": "Xem báo cáo tín hiệu",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.sale",
+    "label": "Kinh doanh — nhận tín hiệu được giao",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "signal.view_all",
+    "label": "Xem toàn bộ tín hiệu",
+    "module": "Tín Hiệu Cơ Hội"
+  },
+  {
+    "key": "social.assign_owner",
+    "label": "Gán người phụ trách kênh",
+    "module": "Social"
+  },
+  {
+    "key": "social.create",
+    "label": "Tạo kênh social",
+    "module": "Social"
+  },
+  {
+    "key": "social.delete",
+    "label": "Xóa kênh social",
+    "module": "Social"
+  },
+  {
+    "key": "social.edit",
+    "label": "Sửa kênh social",
+    "module": "Social"
+  },
+  {
+    "key": "social.growth_create",
+    "label": "Thêm kỳ báo cáo Social",
+    "module": "Social"
+  },
+  {
+    "key": "social.growth_delete",
+    "label": "Xóa kỳ báo cáo Social",
+    "module": "Social"
+  },
+  {
+    "key": "social.growth_edit",
+    "label": "Sửa kỳ báo cáo Social",
+    "module": "Social"
+  },
+  {
+    "key": "social.growth_open",
+    "label": "Mở link báo cáo Social",
+    "module": "Social"
+  },
+  {
+    "key": "social.growth_update",
+    "label": "Cập nhật tăng trưởng social",
+    "module": "Social"
+  },
+  {
+    "key": "social.growth_view",
+    "label": "Xem tăng trưởng social",
+    "module": "Social"
+  },
+  {
+    "key": "social.manage_info",
+    "label": "Quản lý thông tin kênh",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_approve",
+    "label": "Duyệt bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_assign",
+    "label": "Giao bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_cancel",
+    "label": "Hủy bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_complete",
+    "label": "Hoàn thành bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_confirm_published",
+    "label": "Xác nhận đã đăng bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_create",
+    "label": "Tạo bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_delete",
+    "label": "Xóa bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_edit",
+    "label": "Sửa bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_force_status",
+    "label": "Ép chuyển trạng thái bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_history",
+    "label": "Xem lịch sử xử lý bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_move_pending_publish",
+    "label": "Chuyển bài sang chờ đăng",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_request_changes",
+    "label": "Yêu cầu sửa bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_restore",
+    "label": "Khôi phục bài social đã hủy",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_resubmit",
+    "label": "Gửi duyệt lại bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_start",
+    "label": "Bắt đầu làm bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_submit",
+    "label": "Gửi duyệt bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_view",
+    "label": "Xem bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_view_all",
+    "label": "Xem tất cả bài social",
+    "module": "Social"
+  },
+  {
+    "key": "social.post_view_mine",
+    "label": "Chỉ xem bài liên quan",
+    "module": "Social"
+  },
+  {
+    "key": "social.report",
+    "label": "Xem báo cáo social",
+    "module": "Social"
+  },
+  {
+    "key": "social.view",
+    "label": "Xem kênh social",
+    "module": "Social"
+  },
+  {
+    "key": "social.view_all",
+    "label": "Xem tất cả kênh social",
+    "module": "Social"
+  },
+  {
+    "key": "social.view_mine",
+    "label": "Chỉ xem kênh liên quan",
+    "module": "Social"
+  },
+  {
+    "key": "system.branding",
+    "label": "Quản lý thông tin hệ thống",
+    "module": "Cài Đặt"
+  },
+  {
+    "key": "task.accept",
+    "label": "Nhận task (legacy)",
+    "module": "Task"
+  },
+  {
+    "key": "task.add_note",
+    "label": "Ghi chú xử lý task",
+    "module": "Task"
+  },
+  {
+    "key": "task.approve_completion",
+    "label": "Xác nhận hoàn thành task",
+    "module": "Task"
+  },
+  {
+    "key": "task.assign",
+    "label": "Giao task",
+    "module": "Task"
+  },
+  {
+    "key": "task.cancel",
+    "label": "Hủy task",
+    "module": "Task"
+  },
+  {
+    "key": "task.complete",
+    "label": "Hoàn thành task (legacy)",
+    "module": "Task"
+  },
+  {
+    "key": "task.create",
+    "label": "Tạo task",
+    "module": "Task"
+  },
+  {
+    "key": "task.delete",
+    "label": "Xóa task",
+    "module": "Task"
+  },
+  {
+    "key": "task.edit",
+    "label": "Sửa task",
+    "module": "Task"
+  },
+  {
+    "key": "task.edit_assignee",
+    "label": "Sửa người phụ trách task",
+    "module": "Task"
+  },
+  {
+    "key": "task.edit_deadline",
+    "label": "Sửa deadline task",
+    "module": "Task"
+  },
+  {
+    "key": "task.edit_priority",
+    "label": "Sửa mức ưu tiên task",
+    "module": "Task"
+  },
+  {
+    "key": "task.force_change_status",
+    "label": "Ép chuyển trạng thái task (alias)",
+    "module": "Task"
+  },
+  {
+    "key": "task.force_status",
+    "label": "Ép chuyển trạng thái task",
+    "module": "Task"
+  },
+  {
+    "key": "task.reopen_completed",
+    "label": "Mở lại task đã hoàn thành",
+    "module": "Task"
+  },
+  {
+    "key": "task.request_revision",
+    "label": "Yêu cầu sửa task",
+    "module": "Task"
+  },
+  {
+    "key": "task.restore",
+    "label": "Khôi phục task đã hủy",
+    "module": "Task"
+  },
+  {
+    "key": "task.resubmit_completion",
+    "label": "Gửi lại hoàn thành task",
+    "module": "Task"
+  },
+  {
+    "key": "task.start",
+    "label": "Bắt đầu làm task",
+    "module": "Task"
+  },
+  {
+    "key": "task.submit_completion",
+    "label": "Gửi hoàn thành task",
+    "module": "Task"
+  },
+  {
+    "key": "task.update_result",
+    "label": "Cập nhật kết quả task",
+    "module": "Task"
+  },
+  {
+    "key": "task.update_status",
+    "label": "Cập nhật trạng thái task (legacy)",
+    "module": "Task"
+  },
+  {
+    "key": "task.view",
+    "label": "Xem task",
+    "module": "Task"
+  },
+  {
+    "key": "task.view_all",
+    "label": "Xem tất cả task",
+    "module": "Task"
+  },
+  {
+    "key": "task.view_created_by_me",
+    "label": "Xem task tôi giao",
+    "module": "Task"
+  },
+  {
+    "key": "task.view_history",
+    "label": "Xem lịch sử xử lý task",
+    "module": "Task"
+  },
+  {
+    "key": "task.view_mine",
+    "label": "Chỉ xem task liên quan đến mình",
+    "module": "Task"
+  },
+  {
+    "key": "video.approve",
+    "label": "Duyệt video",
+    "module": "Video"
+  },
+  {
+    "key": "video.assign",
+    "label": "Giao video",
+    "module": "Video"
+  },
+  {
+    "key": "video.cancel",
+    "label": "Hủy video",
+    "module": "Video"
+  },
+  {
+    "key": "video.complete",
+    "label": "Hoàn thành video",
+    "module": "Video"
+  },
+  {
+    "key": "video.confirm_published",
+    "label": "Xác nhận đã đăng video",
+    "module": "Video"
+  },
+  {
+    "key": "video.create",
+    "label": "Tạo video",
+    "module": "Video"
+  },
+  {
+    "key": "video.create_design_order",
+    "label": "Tạo order thiết kế từ video",
+    "module": "Video"
+  },
+  {
+    "key": "video.delete",
+    "label": "Xóa video",
+    "module": "Video"
+  },
+  {
+    "key": "video.deliver",
+    "label": "Bàn giao video",
+    "module": "Video"
+  },
+  {
+    "key": "video.edit",
+    "label": "Sửa video",
+    "module": "Video"
+  },
+  {
+    "key": "video.edit_cut",
+    "label": "Cập nhật bản dựng",
+    "module": "Video"
+  },
+  {
+    "key": "video.footage",
+    "label": "Cập nhật footage",
+    "module": "Video"
+  },
+  {
+    "key": "video.force_status",
+    "label": "Ép chuyển trạng thái video",
+    "module": "Video"
+  },
+  {
+    "key": "video.history",
+    "label": "Xem lịch sử xử lý video",
+    "module": "Video"
+  },
+  {
+    "key": "video.move_editing",
+    "label": "Chuyển sang đang dựng",
+    "module": "Video"
+  },
+  {
+    "key": "video.move_shooting",
+    "label": "Chuyển sang quay / thu tư liệu",
+    "module": "Video"
+  },
+  {
+    "key": "video.reject",
+    "label": "Yêu cầu sửa video",
+    "module": "Video"
+  },
+  {
+    "key": "video.restore",
+    "label": "Khôi phục video đã hủy",
+    "module": "Video"
+  },
+  {
+    "key": "video.resubmit",
+    "label": "Gửi duyệt lại video",
+    "module": "Video"
+  },
+  {
+    "key": "video.script_approve",
+    "label": "Duyệt kịch bản",
+    "module": "Video"
+  },
+  {
+    "key": "video.script_reject",
+    "label": "Yêu cầu sửa kịch bản",
+    "module": "Video"
+  },
+  {
+    "key": "video.script_resubmit",
+    "label": "Gửi duyệt lại kịch bản",
+    "module": "Video"
+  },
+  {
+    "key": "video.script_start",
+    "label": "Bắt đầu làm kịch bản",
+    "module": "Video"
+  },
+  {
+    "key": "video.script_submit",
+    "label": "Gửi duyệt kịch bản",
+    "module": "Video"
+  },
+  {
+    "key": "video.submit",
+    "label": "Gửi duyệt video",
+    "module": "Video"
+  },
+  {
+    "key": "video.view",
+    "label": "Xem video",
+    "module": "Video"
+  },
+  {
+    "key": "video.view_all",
+    "label": "Xem tất cả video",
+    "module": "Video"
+  },
+  {
+    "key": "video.view_mine",
+    "label": "Chỉ xem video liên quan",
+    "module": "Video"
+  },
+  {
+    "key": "web.approve_web_draft",
+    "label": "Duyệt bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.assign_content",
+    "label": "Gán người phụ trách Content",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.assign_seo",
+    "label": "Gán người phụ trách SEO",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.assign_tech",
+    "label": "Gán người phụ trách kỹ thuật",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_cost",
+    "label": "Quản lý chi phí Backlink",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_create",
+    "label": "Thêm Backlink / PR",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_delete",
+    "label": "Xóa Backlink / PR",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_edit",
+    "label": "Sửa Backlink / PR",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_open",
+    "label": "Mở link bài PR",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_status",
+    "label": "Cập nhật trạng thái Backlink",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.backlink_view",
+    "label": "Xem Backlink / PR",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_filter_topic",
+    "label": "Lọc/check theo Topic",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_kw_create",
+    "label": "Thêm từ khóa phụ",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_kw_delete",
+    "label": "Xóa từ khóa phụ",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_kw_edit",
+    "label": "Sửa từ khóa phụ",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_open_url",
+    "label": "Mở URL đích",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_primary",
+    "label": "Cập nhật TOP từ khóa chính",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_secondary",
+    "label": "Cập nhật TOP từ khóa phụ",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.checktop_view",
+    "label": "Xem Check TOP",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.complete",
+    "label": "Hoàn thành Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_assign",
+    "label": "Giao content web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_cancel",
+    "label": "Hủy Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_create",
+    "label": "Tạo content web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_delete",
+    "label": "Xóa content web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit",
+    "label": "Sửa content web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit_article_reviewer",
+    "label": "Sửa người duyệt bài",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit_brief",
+    "label": "Sửa brief Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit_deadline",
+    "label": "Sửa deadline Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit_outline_reviewer",
+    "label": "Sửa người duyệt outline",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit_publisher",
+    "label": "Sửa người đăng web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_edit_writer",
+    "label": "Sửa người viết",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_history",
+    "label": "Xem lịch sử xử lý Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_note",
+    "label": "Ghi chú xử lý Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_restore",
+    "label": "Khôi phục Content Web đã hủy",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_view",
+    "label": "Xem Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_view_all",
+    "label": "Xem tất cả Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.content_view_mine",
+    "label": "Chỉ xem Content Web liên quan",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.create",
+    "label": "Tạo dự án web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.delete",
+    "label": "Xóa dự án web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.edit",
+    "label": "Sửa dự án web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.edit_published_url",
+    "label": "Sửa link bài đã đăng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.edit_web_draft_note",
+    "label": "Sửa ghi chú bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.edit_web_draft_url",
+    "label": "Chỉnh link bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_create",
+    "label": "Thêm Entity",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_delete",
+    "label": "Xóa Entity",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_edit",
+    "label": "Sửa Entity",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_open_link",
+    "label": "Mở link Entity",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_reveal_password",
+    "label": "Xem mật khẩu Entity",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_view",
+    "label": "Xem Entity / Social SEO",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.entity_view_account",
+    "label": "Xem thông tin tài khoản Entity",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.force_change_web_draft_status",
+    "label": "Ép chuyển trạng thái bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.force_status",
+    "label": "Ép chuyển trạng thái Content Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.growth_create",
+    "label": "Thêm kỳ báo cáo tăng trưởng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.growth_delete",
+    "label": "Xóa kỳ báo cáo tăng trưởng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.growth_edit",
+    "label": "Sửa kỳ báo cáo tăng trưởng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.growth_open",
+    "label": "Mở link báo cáo GA/GSC",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.growth_view",
+    "label": "Xem Tăng Trưởng Website",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.index_view",
+    "label": "Xem Bài đã đăng / Index",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.keyword_manage_sheet",
+    "label": "Quản lý Link Sheet Keyword",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.keyword_open_sheet",
+    "label": "Mở Link Sheet Keyword",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.keyword_topic_create",
+    "label": "Tạo Topic Keyword",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.keyword_topic_delete",
+    "label": "Xóa Topic Keyword",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.keyword_topic_edit",
+    "label": "Sửa Topic Keyword",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.keyword_view",
+    "label": "Xem Nghiên Cứu Keyword",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.manage_info",
+    "label": "Quản lý thông tin dự án",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.move_pending_publish",
+    "label": "Chuyển sang chờ đăng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.open_detail",
+    "label": "Mở chi tiết dự án web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.open_published_url",
+    "label": "Mở link bài đã đăng",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.outline_approve",
+    "label": "Duyệt outline",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.outline_reject",
+    "label": "Yêu cầu sửa outline",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.outline_resubmit",
+    "label": "Gửi duyệt lại outline",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.outline_start",
+    "label": "Bắt đầu làm outline",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.outline_submit",
+    "label": "Gửi duyệt outline",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.post_approve",
+    "label": "Duyệt bài",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.post_reject",
+    "label": "Yêu cầu sửa bài",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.post_resubmit",
+    "label": "Gửi duyệt lại bài",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.post_submit",
+    "label": "Gửi duyệt bài",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.post_write_start",
+    "label": "Bắt đầu viết bài",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.publish",
+    "label": "Xác nhận đã đăng web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_assign",
+    "label": "Giao tối ưu lại",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_complete",
+    "label": "Hoàn thành tối ưu lại",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_create",
+    "label": "Tạo đầu việc tối ưu lại",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_delete",
+    "label": "Xóa đầu việc tối ưu lại",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_edit",
+    "label": "Sửa đầu việc tối ưu lại",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_status",
+    "label": "Cập nhật trạng thái tối ưu lại",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.reopt_view",
+    "label": "Xem Tối ưu lại Content",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.report_action",
+    "label": "Mở cảnh báo nhanh",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.report_alerts",
+    "label": "Xem Việc cần chú ý web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.report_alerts_all",
+    "label": "Xem tất cả Việc cần chú ý",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.report_by_staff",
+    "label": "Báo cáo theo người phụ trách",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.report_by_topic",
+    "label": "Báo cáo theo Topic",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.report_view",
+    "label": "Xem Báo Cáo Web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.request_web_draft_revision",
+    "label": "Yêu cầu sửa bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.resubmit_web_draft_review",
+    "label": "Gửi duyệt lại bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.select_shared_entity",
+    "label": "Chọn Entity đã share",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.start_web_draft_layout",
+    "label": "Bắt đầu trình bày nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.submit_web_draft_review",
+    "label": "Gửi duyệt bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.tech_check",
+    "label": "Tích checklist Technical SEO",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.tech_edit_desc",
+    "label": "Sửa diễn giải checklist",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.tech_reset",
+    "label": "Reset checklist Technical SEO",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.tech_template",
+    "label": "Quản lý template checklist Technical SEO",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.tech_view",
+    "label": "Xem Technical SEO",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.update_index",
+    "label": "Cập nhật trạng thái index",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.update_share",
+    "label": "Cập nhật Share Social",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.update_share_date",
+    "label": "Cập nhật ngày share social",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.view",
+    "label": "Xem dự án web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.view_all",
+    "label": "Xem tất cả dự án web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.view_mine",
+    "label": "Chỉ xem dự án web liên quan đến mình",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.view_web_draft_revision_note",
+    "label": "Xem ghi chú sửa bản nháp web",
+    "module": "Dự Án Web"
+  },
+  {
+    "key": "web.view_web_draft_url",
+    "label": "Xem link bản nháp web",
+    "module": "Dự Án Web"
+  }
+]
