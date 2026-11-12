@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean }
+export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean }
 export const permissionEditorApi = {
   async read(): Promise<EditorPolicy[]> {
     const { data, error } = await supabase.rpc('permission_editor_read');
@@ -19,8 +19,11 @@ export const permissionPresets = [
   { id: 'video', name: 'Video', kind: 'marketing_task', keys: ['video.view','video.view_mine','video.create','video.script_start','video.script_submit','video.submit'], note: 'Làm và gửi video; không duyệt hoặc can thiệp trạng thái.' },
 ] as const;
 export function presetPermissions(keys: readonly string[], policy: EditorPolicy[], kind: string): string[] {
-  const allowed = new Set(policy.filter(p => kind === 'marketing_task' ? p.task_ready : p.position_ready).map(p => p.key));
+  const allowed = new Set(rolePermissionPolicy(policy,kind).map(p => p.key));
   return [...new Set(keys.filter(k => allowed.has(k)))];
+}
+export function rolePermissionPolicy(policy:EditorPolicy[],kind:string):EditorPolicy[]{
+  return policy.filter(p=>kind==='common'?p.common_ready===true&&p.scope==='own':kind==='marketing_task'?p.task_ready:p.position_ready);
 }
 export function permissionDelta(before: string[], after: string[]) {
   return { added: [...new Set(after)].filter(k => !before.includes(k)), removed: [...new Set(before)].filter(k => !after.includes(k)) };

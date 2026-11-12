@@ -1,5 +1,10 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Ba loại Role thật — 12/11 03:54
+- [x] Kho ba nhóm và hồ sơ ba nguồn + quyền riêng, editor hiện hữu giữ nguyên; quyền chung chưa sẵn sàng không tích giả.
+- [x] Một SQL common staged với baseline/checksum/rollback, clone exact writer + evaluator: active/no-appointment/union hai task/personal/DENY/guard; nối tiếp source cutover hiện hữu, không SQL apply.
+- [ ] Apply common + shared-position/live scoped E2E/Publish: chờ owner duyệt exact SQL; không sửa Role/dữ liệu production để test.
+
 ## P0 chỉnh Role V2 — 12/11 03:47
 - [x] Ma trận chỉnh trực tiếp trong RoleCatalog, preview thêm/bỏ, giữ server guard; shortcut từ vị trí, tổng quan chỉ xem ghi rõ.
 - [x] Live writer/guard exact clone + 120 regression tests, add/remove/guard/system/DENY/parity; browser desktop/iPad/mobile saved/read-back fixture, authorized Admin Preview mở/hủy không ghi. Backend đã hỗ trợ edit, không migration mới.

@@ -1,0 +1,66 @@
+import {PGlite} from '@electric-sql/pglite';
+import {readFileSync} from 'node:fs';
+import {beforeAll,afterAll,it,expect} from 'vitest';
+const db=new PGlite();
+const admin='00000000-0000-0000-0000-000000000001',person='00000000-0000-0000-0000-000000000002',other='00000000-0000-0000-0000-000000000003';
+const value=async(sql:string,args:unknown[]=[])=> (await db.query<{v:unknown}>(sql,args)).rows[0]?.v;
+beforeAll(async()=>{
+ await db.exec(`create schema private;create schema auth;create role anon;create role authenticated;
+ create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.actor',true),'')::uuid$$;
+ create table profiles(id uuid primary key,status text);
+ insert into profiles values('${admin}','active'),('${person}','active'),('${other}','locked');
+ create function private.is_active(u uuid) returns boolean language sql as $$select exists(select 1 from profiles where id=u and status='active')$$;
+ create function private.is_super_admin(u uuid) returns boolean language sql as $$select u='${admin}'::uuid$$;
+ create table app_roles(id text primary key,name text,description text,permissions text[] default '{}',is_system boolean default false,catalog_state text,catalog_group text,role_kind text,role_code text,signal_scope_all boolean default false,signal_scope text[] default '{}',catalog_generation int default 2,updated_at timestamptz, constraint app_roles_role_kind_check check(role_kind in ('position','marketing_task','system')));
+ create table user_roles(user_id uuid,role_id text);create table base_title_role_links(id text);create table org_assignments(id text);create table org_position_slots(id text);create table mkt_specialties(id text);create table mkt_staff_specialties(id text);create table leave_requests(id text);
+ create table private.role_catalog_previews(id uuid default gen_random_uuid(),actor_id uuid,action text,role_id text,proposed jsonb,before_data jsonb,baseline text,expires_at timestamptz default now()+interval '10 minutes',applied_at timestamptz);
+ create table base_permission_catalog(key text);insert into base_permission_catalog values('leave.view_own'),('leave.create'),('leave.view_unit');
+ create function private.org_role_permission_ready(text) returns boolean language sql as $$select $1 in ('leave.view_own','leave.create','leave.view_unit')$$;
+ create function private.mkt_specialty_permission_ready(text) returns boolean language sql as $$select false$$;
+ create function private.permission_editor_policy() returns table(key text,scope text,personal boolean) language sql as $$values('leave.view_own','own',true),('leave.create','own',true),('leave.view_unit','unit',false)$$;
+ create function private.base_config() returns jsonb language sql as $$select '{}'::jsonb$$;
+ create function private.legacy_reset_applies(uuid) returns boolean language sql as $$select true$$;
+ create table test_rules(user_id uuid,rule jsonb);
+ create function private.reset_previous_base_rules(uuid,jsonb) returns jsonb language sql as $$select coalesce(jsonb_agg(rule),'[]') from test_rules where user_id=$1$$;
+ create function private.slot_previous_source_rows(jsonb) returns table(user_id uuid,role_id text,source_kind text,source_id text,unit_id text,legacy boolean,eligible boolean,scope text,permissions text[]) language sql as $$select null::uuid,null::text,null::text,null::text,null::text,false,false,null::text,null::text[] where false$$;
+ create function private.base_valid_at(jsonb) returns boolean language sql as $$select true$$;
+ create function private.org_marketing_eligible(uuid,jsonb) returns boolean language sql as $$select false$$;
+ alter table mkt_specialties add active boolean;alter table mkt_specialties add role_id text;
+ create function private.role_catalog_fingerprint() returns text language sql as $$select md5(coalesce(string_agg(to_jsonb(r)::text,'|' order by id),'')) from app_roles r$$;
+ create function private.role_in_use(text) returns boolean language sql as $$select false$$;
+ create function private.role_references(text) returns jsonb language sql as $$select '{}'::jsonb$$;
+ create function private.role_v2_reduction_guard(text) returns void language plpgsql as $$begin if current_setting('test.pending',true)='yes' then raise exception 'pending obligations';end if;end$$;
+ create function private.slot_catalog_previous_read() returns jsonb language sql as $$select jsonb_build_object('roles',coalesce(jsonb_agg(to_jsonb(r)),'[]')) from app_roles r$$;
+ select set_config('test.actor','${admin}',false);`);
+ // Populate exact live preflight definitions over fixture dependencies before applying the candidate byte-for-byte.
+ for(const name of ['private.base_rules','private.role_source_rows','private.role_editor_validate','public.role_catalog_read','public.role_catalog_change','public.permission_editor_read'])await db.exec(readFileSync(`docs/role-three-sources-2026-11-12/${name}.sql`,'utf8'));
+ await db.exec(readFileSync('docs/pending/role_common_company.sql','utf8'));
+ await db.exec(`create table user_permission_overrides(user_id uuid,use_custom boolean,mode text,permissions text[]);
+ create function private.base_tier1(u uuid,k text) returns text language sql as $$select case when exists(select 1 from jsonb_array_elements(private.base_rules(u,private.base_config())) r where r->>'permission'=k and r->>'effect'='DENY') then 'DENY' when exists(select 1 from jsonb_array_elements(private.base_rules(u,private.base_config())) r where r->>'permission'=k and r->>'effect'='ALLOW') then 'ALLOW' else 'NOT_CONFIGURED' end$$;`);
+ await db.exec(readFileSync('docs/role-three-sources-2026-11-12/private.has_permission.sql','utf8'));
+},30000);
+afterAll(()=>db.close());
+const preview=async(permissions:string[])=>await value("select role_catalog_change('preview','edit','role-v2-common',$1) v",[{name:'Quyền chung',role_kind:'common',permissions,signal_scope_all:false,signal_scope:[]}]) as {id:string};
+const apply=(id:string)=>db.query("select role_catalog_change('apply',null,null,null,$1,'ÁP DỤNG ROLE','common fixture')",[id]);
+it('one empty common Role creates no per-person links or implicit grant',async()=>{expect(await value("select count(*)::int v from app_roles where role_kind='common'")).toBe(1);expect(await value('select count(*)::int v from user_roles')).toBe(0);expect(await value('select private.common_role_rules($1) v',[person])).toEqual([]);});
+it('active account without appointment gets edited common; locked and newly pending get none',async()=>{const p=await preview(['leave.view_own']);await apply(p.id);expect((await value('select private.common_role_rules($1) v',[person]) as {permission:string}[]).map(r=>r.permission)).toEqual(['leave.view_own']);expect(await value('select private.common_role_rules($1) v',[other])).toEqual([]);await db.query("update profiles set status='pending' where id=$1",[other]);expect(await value('select private.common_role_rules($1) v',[other])).toEqual([]);await db.query("update profiles set status='active' where id=$1",[other]);expect((await value('select private.common_role_rules($1) v',[other]) as unknown[])).toHaveLength(1);});
+it('source provenance includes every active account without assignment; eligibility stays own',async()=>{expect(await value("select count(*)::int v from private.role_source_rows('{}') where source_kind='common'")).toBe(3);expect(await value("select bool_and(unit_id is null and scope='own' and not legacy) v from private.role_source_rows('{}') where source_kind='common'")).toBe(true);});
+it('common cannot grant unit/admin/unsupported or bypass 3K application readiness',async()=>{await expect(preview(['leave.view_unit'])).rejects.toThrow('cá nhân');await expect(preview(['settings.role'])).rejects.toThrow('cá nhân');await expect(preview(['k3.use'])).rejects.toThrow('cá nhân');});
+it('common unions existing sources but preserves explicit DENY even behind legacy reset',async()=>{await db.query('insert into test_rules values($1,$2)',[person,{permission:'leave.view_own',effect:'DENY',source_kind:'custom'}]);const rules=await value("select private.base_rules($1,'{}') v",[person]) as {effect:string}[];expect(rules.map(r=>r.effect).sort()).toEqual(['ALLOW','DENY']);});
+it('common edits add and remove for all active users, obligations rechecked, unrelated Role untouched',async()=>{await db.exec("insert into app_roles(id,name,role_kind,permissions) values('position','Position','position','{leave.create}')");const p=await preview(['leave.view_own','leave.create']);await apply(p.id);expect((await value('select private.common_role_rules($1) v',[person]) as unknown[])).toHaveLength(2);const q=await preview([]);await db.exec("select set_config('test.pending','yes',false)");await expect(apply(q.id)).rejects.toThrow('pending');await db.exec("select set_config('test.pending','no',false)");await apply(q.id);expect(await value('select private.common_role_rules($1) v',[person])).toEqual([]);expect(await value("select permissions v from app_roles where id='position'")).toEqual(['leave.create']);});
+it('common cannot be recreated, retyped or deleted; non-admin cannot edit',async()=>{await expect(db.query("select role_catalog_change('preview','delete','role-v2-common')")).rejects.toThrow('quyền chung');await expect(db.exec("insert into app_roles(id,role_kind) values('another','common')")).rejects.toThrow('unique');await db.query("select set_config('test.actor',$1,false)",[person]);await expect(preview([])).rejects.toThrow('Super Admin');await db.query("select set_config('test.actor',$1,false)",[admin]);});
+it('live permission evaluator unions common, position, two tasks and personal without cross-user grants; DENY and inactive win',async()=>{
+ const p=await preview(['leave.view_own']);await apply(p.id);
+ await db.exec("insert into app_roles(id,name,role_kind,catalog_state) values('task-a','A','marketing_task','standard'),('task-b','B','marketing_task','standard');update app_roles set catalog_state='standard' where id='position';insert into base_permission_catalog values('position.action'),('task.a'),('task.b'),('personal.action');");
+ // Fixture verified capabilities correspond to the existing server-ready scopes, not new live keys.
+ await db.exec("create or replace function private.org_role_permission_ready(text) returns boolean language sql as $$select $1 in ('leave.view_own','leave.create','leave.view_unit','position.action','task.a','task.b')$$;");
+ for(const [key,role,kind] of [['position.action','position','appointment_role'],['task.a','task-a','marketing_appointment'],['task.b','task-b','marketing_appointment']])await db.query('insert into test_rules values($1,$2)',[person,{permission:key,role_id:role,source_kind:kind,effect:'ALLOW',scope:'assigned',unit_id:'unit-a'}]);
+ await db.query('insert into user_permission_overrides values($1,true,\'additive\',$2)',[person,['personal.action']]);
+ for(const key of ['position.action','task.a','task.b','personal.action'])expect(await value('select private.has_permission($1,$2) v',[person,key])).toBe(true);
+ // Explicit earlier DENY remains above the common grant in the unmodified live evaluator.
+ expect(await value("select private.has_permission($1,'leave.view_own') v",[person])).toBe(false);
+ expect(await value("select private.has_permission($1,'personal.action') v",[other])).toBe(false);
+ await db.query("delete from test_rules where user_id=$1 and rule->>'role_id'='task-a'",[person]);expect(await value("select private.has_permission($1,'task.a') v",[person])).toBe(false);expect(await value("select private.has_permission($1,'task.b') v",[person])).toBe(true);
+ await db.query("update profiles set status='locked' where id=$1",[person]);expect(await value("select private.has_permission($1,'personal.action') v",[person])).toBe(false);
+ expect(await value("select private.has_permission($1,'unconfigured.admin') v",[admin])).toBe(true);
+});

@@ -1,0 +1,16 @@
+adc888ae8f1f18c9a8c6ef7335222b2d7f20350edb8732b445f3276c5607744d  docs/role-three-sources-2026-11-12/baseline.txt
+f57dd489630fb01be447a723a4f8d6b19a688eb6b08a3fb29d33e37fed0e0b05  docs/role-three-sources-2026-11-12/private.base_rules.sql
+d5327310e0c072d6d87c48ec72dad597105ff93d26accb0f5567de4f1fb27da9  docs/role-three-sources-2026-11-12/private.has_permission.sql
+2eb56c9c3af97707527e759420b3137dca4df6560643201fc777bfe173f0d05f  docs/role-three-sources-2026-11-12/private.org_role_permission_ready.sql
+5116de43460791fe7ade8c13a55732e9dff890a8626173354ee31d57f2b6a3dd  docs/role-three-sources-2026-11-12/private.permission_editor_policy.sql
+b0096bcae62fd250bf6be2097c8aa03412d44d9116fc14c0093e4539d045164c  docs/role-three-sources-2026-11-12/private.role_editor_validate.sql
+cbeb55029ac06c26c01a1351e1e35faa6109e0d58d9b2d2b8bd0fe1851bacd04  docs/role-three-sources-2026-11-12/private.role_source_rows.sql
+f17d24de59af2b9f2ff389d03f0dbb6c4b3b0fd3575a26f0040a047d026b28bd  docs/role-three-sources-2026-11-12/public.account_org_summary.sql
+41c46b748b9fbf9ecb7a58aef062cb3e3bff2a6e63ec3ce72aeb896f61ddb564  docs/role-three-sources-2026-11-12/public.permission_editor_read.sql
+195d7ada2fe6f5d8abfd928f49c2c2e2361b9f74e5c6ef3caba9ee0dff552c0b  docs/role-three-sources-2026-11-12/public.role_catalog_change.sql
+0735935465a7b2713ef05cea63c0de2281de86bbe5ae4bcc28b7776c0e4429f7  docs/role-three-sources-2026-11-12/public.role_catalog_read.sql
+ba6aece45da56c29cdb240c427fe96a6a0e44184f7995e6a3b1ed730a80f6e29  docs/role-three-sources-2026-11-12/report.md
+74039e81ebb557d1a0f2c801477d1d5c2e6adf1e823fb8c01bfdb10d23eb597e  docs/role-three-sources-2026-11-12/rollback.sql
+d28ef2b5c1bd85c80370f5f42ccc6c82ddfedb1e01f85ac2b1b55bd1805ffe6c  docs/role-three-sources-2026-11-12/snapshot.json
+daabfba543cf406e9035a5cefc56c4fd9c821d9185b110279d83421ab95bcf84  docs/role-three-sources-2026-11-12/triggers.json
+e61957fd05126d2db2d8aec26eeb5eba41ec0145c547e3978130eabbb9895cd2  docs/pending/role_common_company.sql
