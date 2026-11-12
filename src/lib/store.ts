@@ -1,4 +1,5 @@
 import { createCoalescer } from "./singleFlight";
+import { readAllPages, isTransientStoreRead } from "./storeRead";
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1214,17 +1215,21 @@ const emptyCollections = (): { [K in CollectionKey]: Collections[K][] } => ({
 let storeUser: string | null = null;
 const storeLoads = createCoalescer<string>((uid) => useStore.getState()._load(uid));
 
-async function loadAllFromSupabase() {
+async function loadAllFromSupabase(previous: Pick<State, CollectionKey | "plans" | "topics">) {
+  const failures: string[] = [];
   const results = await Promise.all(
     COLLECTION_KEYS.map(async (key) => {
       const table = TABLE_FOR[key];
-      const { data, error } = await (supabase as any)
-        .from(table)
-        .select(key === 'orders' ? 'id, data, created_at, updated_at, created_by, workflow_kind' : 'id, data')
-        .order("created_at", { ascending: false });
-      if (error) {
-        console.error(`Load ${table} failed:`, error.message);
-        return [key, [] as any[]] as const;
+      let data: any[];
+      try {
+        data = await readAllPages<any>((from, to, signal) => (supabase as any)
+          .from(table)
+          .select(key === 'orders' ? 'id, data, created_at, updated_at, created_by, workflow_kind' : 'id, data')
+          .order("created_at", { ascending: false }).order("id")
+          .range(from, to).abortSignal(signal));
+      } catch (error) {
+        failures.push(table);
+        return [key, isTransientStoreRead(error) ? previous[key] : []] as const;
       }
       let items = (data ?? []).map((r: any) => ({ id: r.id, ...(r.data ?? {}), ...(key === 'orders' ? {workflowKind: r.workflow_kind ?? r.data?.workflowKind, recordCreatedAt: r.created_at, recordUpdatedAt: r.updated_at, recordCreatedBy: r.created_by} : {}) }));
       if (key === "socialPosts") {
@@ -1245,13 +1250,17 @@ async function loadAllFromSupabase() {
       return [key, items] as const;
     }),
   );
-  const cat = await supabase.from("catalogs").select("scope, items");
-  const catMap: Record<string, string[]> = { plans: [], topics: [] };
+  const cat = await readAllPages<any>((from, to, signal) => (supabase as any).from("catalogs")
+    .select("scope, items").order("scope").range(from, to).abortSignal(signal))
+    .then(data => ({ data, error: null as unknown })).catch(error => ({ data: null, error }));
+  const retainCatalog = cat.error && isTransientStoreRead(cat.error);
+  const catMap: Record<string, string[]> = { plans: retainCatalog ? previous.plans : [], topics: retainCatalog ? previous.topics : [] };
+  if (cat.error) failures.push("catalogs");
   for (const row of cat.data ?? []) {
     catMap[(row as any).scope] = ((row as any).items as string[]) ?? [];
   }
   const collections = Object.fromEntries(results) as Partial<{ [K in CollectionKey]: Collections[K][] }>;
-  return { ...collections, plans: catMap.plans ?? [], topics: catMap.topics ?? [] };
+  return { ...collections, plans: catMap.plans ?? [], topics: catMap.topics ?? [], readFailures: failures };
 }
 
 type TableKey = Exclude<CollectionKey, "people">;
@@ -1325,7 +1334,7 @@ export const useStore = create<State>((set, get) => ({
       const uid = session?.user?.id ?? null;
       if (session && uid) {
         // Làm mới token hằng giờ không cần tải lại 18 bảng; chỉ tải khi đổi người dùng.
-        if (uid !== storeUser || event === 'USER_UPDATED') { storeUser = uid; setTimeout(() => void storeLoads.join(uid), 0); }
+        if (uid !== storeUser || event === 'USER_UPDATED') { if (uid !== storeUser) set({ ...emptyCollections(), plans: [], topics: [], loaded: false }); storeUser = uid; setTimeout(() => void storeLoads.join(uid), 0); }
       } else {
         storeUser = null;
         set({ ...emptyCollections(), plans: [], topics: [], loaded: false });
@@ -1345,11 +1354,13 @@ export const useStore = create<State>((set, get) => ({
 
   _load: async (uid: string) => {
     try {
-      const next = await loadAllFromSupabase();
+      const { readFailures, ...next } = await loadAllFromSupabase(get());
       if (storeUser !== uid) return;
       set({ ...next, loaded: true });
+      if (readFailures.length) toast.error(`Không tải được ${readFailures.length} nhóm dữ liệu. Vui lòng tải lại; dữ liệu cũ chỉ được giữ khi lỗi kết nối tạm thời.`);
       recomputePeople();
     } catch (e: any) {
+      if (storeUser !== uid) return;
       console.error("Reload store failed", e);
       set({ loaded: true });
     }
@@ -1440,3 +1451,4 @@ export const ensureSeoChecks = (
   });
   return missing;
 };
+
