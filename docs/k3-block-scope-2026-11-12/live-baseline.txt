@@ -1,0 +1,80 @@
+[map[snapshot:map[blocks:[map[id:biz-block name:Khối Kinh doanh parent_id:<nil>] map[id:b5e00000-0000-4000-8000-000000000001 name:Khối Marketing parent_id:<nil>] map[id:b5e00000-0000-4000-8000-000000000002 name:Khối Vận hành parent_id:<nil>]] functions:[map[args:_actor uuid, _permission text def:CREATE OR REPLACE FUNCTION public.k3_can(_actor uuid, _permission text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ BEGIN
+ IF NOT private.is_active(_actor) THEN RETURN false; END IF;
+ IF public.is_super_admin(_actor) OR public.biz_admin(_actor) THEN RETURN true; END IF;
+ IF private.k3_personal_denied(_actor,_permission) THEN RETURN false; END IF;
+ IF _permission='k3.use' THEN RETURN true; END IF;
+ IF NOT private.legacy_business_allowed(_actor) THEN RETURN false; END IF;
+ IF _permission IN ('k3.view_scope','k3.comment') THEN RETURN public.biz_manager(_actor) OR public.biz_all_scope(_actor); END IF;
+ RETURN false; END $function$
+ md5:6f9082b7996e66a08e7cea2f31a8c48a name:k3_can schema:public] map[args:_user uuid, _date date def:CREATE OR REPLACE FUNCTION private.k3_day_obligated(_user uuid, _date date)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE cfg jsonb;h text;available boolean:=false;
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM k3_settings WHERE id AND enabled AND effective_from<=_date AND discipline_from<=_date) OR NOT public.k3_can(_user,'k3.use') OR NOT public.biz_participant(_user) OR NOT EXISTS(SELECT 1 FROM profiles WHERE id=_user AND status='Đang hoạt động') THEN RETURN false; END IF;
+ SELECT data INTO cfg FROM leave_settings WHERE id=1;
+ IF cfg->'schedule' IS NULL OR EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(cfg->'holidays','[]')) x WHERE x->>'date'=_date::text) THEN RETURN false; END IF;
+ FOREACH h IN ARRAY ARRAY['am','pm'] LOOP
+ IF coalesce((cfg->'schedule'->extract(isodow FROM _date)::int::text->>h)::boolean,false) AND NOT EXISTS(SELECT 1 FROM leave_requests l WHERE l.owner_id=_user AND l.type='leave' AND l.status='approved' AND _date BETWEEN (l.payload->>'start_date')::date AND (l.payload->>'end_date')::date AND (_date>(l.payload->>'start_date')::date OR l.payload->>'start_half'='am' OR h='pm') AND (_date<(l.payload->>'end_date')::date OR l.payload->>'end_half'='pm' OR h='am')) THEN available:=true; END IF;
+ END LOOP;
+ RETURN available;
+END $function$
+ md5:076fdf135ecb814cfeb8c2d34e5c801e name:k3_day_obligated schema:private] map[args: def:CREATE OR REPLACE FUNCTION private.k3_plan_changed()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE u record;
+BEGIN
+ -- Include assigned/cooperating employees; do not mint employee confirmations.
+ FOR u IN SELECT id FROM profiles WHERE status='Đang hoạt động' AND public.k3_can(id,'k3.use') AND public.biz_participant(id) LOOP PERFORM private.k3_plan_capture(u.id); END LOOP;
+ RETURN NULL;
+END $function$
+ md5:747bba016fb854adde9ea58fe6e11336 name:k3_plan_changed schema:private] map[args: def:CREATE OR REPLACE FUNCTION public.k3_settings_read()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings;BEGIN
+  IF NOT private.is_active(auth.uid()) THEN RAISE EXCEPTION 'Tài khoản không còn hoạt động.' USING ERRCODE='42501'; END IF;
+  SELECT * INTO s FROM public.k3_settings WHERE id=true;
+  RETURN jsonb_build_object(
+    'enabled', coalesce(s.enabled,false),
+    'effective_from', s.effective_from,
+    'plan_by', coalesce(s.plan_by,'08:45'::time),
+    'summary_by', coalesce(s.summary_by,'18:00'::time),
+    'max_focus', coalesce(s.max_focus,3),
+    'allow_personal_goal', coalesce(s.allow_personal_goal,true),
+    'allow_team_goal', coalesce(s.allow_team_goal,true),
+    'allow_invite', coalesce(s.allow_invite,true),
+    'allow_assign', coalesce(s.allow_assign,true),
+    'updated_at', s.updated_at,
+    'can_use', public.k3_can(auth.uid(),'k3.use'),
+    'can_view_scope', public.k3_can(auth.uid(),'k3.view_scope'),
+    'can_comment', public.k3_can(auth.uid(),'k3.comment'),
+    'can_settings', public.k3_can(auth.uid(),'k3.settings'),
+    'today', (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+  );
+END$function$
+ md5:85f7485ed3a26fc4b2edf7b87a468729 name:k3_settings_read schema:public] map[args:_date date def:CREATE OR REPLACE FUNCTION private.k3_write_guard(_date date)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings; BEGIN
+ IF auth.uid() IS NULL OR NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text)); SELECT * INTO s FROM public.k3_settings WHERE id FOR SHARE;
+ IF NOT coalesce(s.enabled,false) THEN RAISE EXCEPTION 'Module 3K đang tạm khóa, chỉ được xem lịch sử.'; END IF;
+ IF _date IS NULL OR s.effective_from IS NULL OR _date<s.effective_from THEN RAISE EXCEPTION 'Ngày thực hiện nằm ngoài thời gian áp dụng 3K.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+ END$function$
+ md5:5e521c013d67f3853f430179ac40044a name:k3_write_guard schema:private]] settings:map[allow_assign:true allow_invite:true allow_personal_goal:true allow_team_goal:true company_effective_from:<nil> discipline_from:2026-11-06 effective_from:2026-11-02 enabled:true id:true max_focus:3 month_enabled:false period_deadlines:map[] period_effective_from:<nil> plan_by:08:45:00 summary_by:17:00:00 updated_at:2026-11-05T10:13:09.310072+00:00 updated_by:513712ca-d679-41aa-9c68-97c3bb6cd9df week_enabled:false]]]]

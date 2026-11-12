@@ -14,6 +14,7 @@ import { k3PeriodConfigQuery,useK3PeriodMutation } from '@/lib/biz/k3PeriodQueri
 import { useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import type { K3PeriodConfig } from '@/lib/biz/k3Periods';
 import { Biz3KAutomation } from './Biz3KAutomation';
+import { Biz3KApplicationScope } from './Biz3KApplicationScope';
 
 interface LogRow {
   id: number;
@@ -57,6 +58,7 @@ export function Biz3KSettings({ settings }: { settings: K3Settings }) {
   };
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      <Biz3KApplicationScope />
       <div className="space-y-4 rounded-lg border border-border bg-card p-4">
         <h3 className="font-medium">Quy định thực thi</h3>
         <label className="flex items-center justify-between gap-3 text-sm">

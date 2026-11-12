@@ -1,0 +1,4 @@
+7f34eae0fd0c50b320d807ebba4edf5a63cb7b1d2daa33b583edf8a8ca74a614  docs/k3-block-scope-2026-11-12/live-baseline.txt
+9dca0c0ed4a75de01228239786aee3c2dca4b81ca7ed1591c444fcc004cf3691  docs/k3-block-scope-2026-11-12/report.md
+7ecf1c515ad2cd6f606c6919a6e244fa4d0047a0f23b1274963b2d02175cb97d  docs/k3-block-scope-2026-11-12/rollback.sql
+6437ef51b400b9e1a42cf6a20392437552f5be57dfd63b3e2fb005547cd5a3a3  docs/pending/k3_application_scope.sql

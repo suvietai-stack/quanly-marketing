@@ -1,6 +1,8 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Chốt mới 12/11: 3K toàn công ty theo sơ đồ
+- [x] Chọn Khối: section Settings + dynamic IDs/all/company option/preview/revision Save; một SQL extension PENDING sau 0383/0384, 9 scope tests + 27 personal/cache đạt; UI fixture desktop/iPad/mobile không overflow, live Save chưa mở.
+- [ ] Activate chọn Khối: BLOCKED full owner writer/trigger + historical read-only/navigation + obligations/reminders/automation/Zalo scope cutover/rollback and authorized employee E2E. SQL chưa gửi tool, không có approval card; không áp live/Publish.
 - [x] Cá nhân trước: áp 0383/0384 active self-only + nullable org attribution + khóa directory/invite mới; 319 tests đạt, 141 KG/3 days/3 tasks giữ nguyên, không hồi tố.
 - [ ] Publish cá nhân: BLOCKED bởi chưa có phiên nhân viên non-Biz được ủy quyền để nghiệm thu tạo/lưu/đọc lại trên web; phiên hiện có là Super Admin. SQL fixture không thay live scoped E2E.
 - [x] Audit live baseline 23 active/19 holders/138 KG/3 days/3 tasks; snapshot 132 hàm MD5 verified, columns; 41 hàm còn phụ thuộc Biz.
