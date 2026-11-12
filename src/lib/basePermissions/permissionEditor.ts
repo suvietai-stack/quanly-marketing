@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; reason?: string }
+export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; grantable?: boolean; reason?: string }
 export const permissionEditorApi = {
   async read(): Promise<EditorPolicy[]> {
     const { data, error } = await supabase.rpc('permission_editor_read');
@@ -29,10 +29,16 @@ export function permissionDelta(before: string[], after: string[]) {
   return { added: [...new Set(after)].filter(k => !before.includes(k)), removed: [...new Set(before)].filter(k => !after.includes(k)) };
 }
 export const scopeLabels = { own: 'Của mình / được giao', assigned: 'Theo công việc được giao', unit: 'Đơn vị của nguồn bổ nhiệm' };
+/** Universal backend contract. No Role kind, module or department participates. */
+export function isGrantable(key: string, policy: EditorPolicy[]): boolean {
+  const row = policy.find(p=>p.key===key);
+  return row?.grantable === true || (!!row && row.grantable === undefined && row.personal && row.position_ready && row.task_ready && row.common_ready === true && row.scope === 'own');
+}
 /** Capability metadata is authoritative; never infer grants from a module or Role name. */
 export function permissionAvailability(policy: EditorPolicy[], key: string, source: string) {
   const row = policy.find(p => p.key === key);
-  const ready = row && (source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true && row.scope === 'own' : source === 'marketing_task' ? row.task_ready : row.position_ready);
+  // Compatibility only: existing source-specific rights cannot be removed before SQL approval.
+  const ready = isGrantable(key,policy) || row && (source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true && row.scope === 'own' : source === 'marketing_task' ? row.task_ready : row.position_ready);
   if (ready && row) return { ready: true, reason: scopeLabels[row.scope] };
   if (row?.reason) return { ready: false, reason: row.reason };
   if (row?.scope === 'unit' && source !== 'position') return { ready: false, reason: 'Nguồn này chưa truyền phạm vi đơn vị tới cổng kiểm tra quyền; chưa thể cấp.' };

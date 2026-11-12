@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
-import { permissionPresets, presetPermissions, permissionDelta, rolePermissionPolicy, permissionAvailability, permissionControl, unsupportedPermissionAdditions, type EditorPolicy } from './permissionEditor';
+import { isGrantable, permissionPresets, presetPermissions, permissionDelta, rolePermissionPolicy, permissionAvailability, permissionControl, unsupportedPermissionAdditions, type EditorPolicy } from './permissionEditor';
 const policy:EditorPolicy[]=[{key:'leave.create',scope:'own',personal:true,position_ready:true,task_ready:true},{key:'leave.view_unit',scope:'unit',personal:false,position_ready:true,task_ready:false},{key:'web.view',scope:'assigned',personal:false,position_ready:false,task_ready:true}];
 it('preset intersects existing verified source capabilities, never grants missing key',()=>{expect(presetPermissions(['leave.create','web.view','settings.role'],policy,'position')).toEqual(['leave.create']);expect(presetPermissions(['web.view','leave.view_unit'],policy,'marketing_task')).toEqual(['web.view']);});
 it('draft preset never mutates stored Role permissions',()=>{const stored=['settings.role','leave.create'];const before=[...stored];const suggested=presetPermissions(['leave.create'],policy,'position');expect(stored).toEqual(before);expect(permissionDelta(stored,suggested)).toEqual({added:[],removed:['settings.role']});});
@@ -23,4 +23,15 @@ it('historic unsupported keys can be retained or removed, never inferred as read
 });
 it('unit-only capability shows scope requirement for personal rather than fake selector',()=>{
  expect(permissionControl(policy,'leave.view_unit','personal',[],[])).toMatchObject({ready:false,editable:false,state:'scope_required'});
+});
+it('isGrantable has no source argument and explicit backend readiness works identically in all editors',()=>{
+ const p:EditorPolicy[]=[{key:'safe.native',scope:'unit',personal:false,position_ready:false,task_ready:false,grantable:true}];
+ expect(isGrantable('safe.native',p)).toBe(true);
+ for(const source of ['common','position','marketing_task','personal'])expect(permissionControl(p,'safe.native',source,[],[]).editable).toBe(true);
+ expect(isGrantable('settings.role',p)).toBe(false);
+});
+it('legacy common/task/personal intersection is universal but a source-only key is not',()=>{
+ expect(isGrantable('leave.create',[{...policy[0],common_ready:true}])).toBe(true);
+ expect(isGrantable('web.view',policy)).toBe(false);
+ expect(isGrantable('leave.create',[{...policy[0],common_ready:true,grantable:false}])).toBe(false);
 });
