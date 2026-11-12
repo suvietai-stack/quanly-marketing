@@ -1,0 +1,23 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RoleCatalog } from '../src/components/RoleCatalog';
+import { useAuth } from '../src/lib/auth';
+import { roleCatalogApi, type CatalogRole, type RolePreview } from '../src/lib/basePermissions/roleCatalog';
+import { permissionEditorApi } from '../src/lib/basePermissions/permissionEditor';
+import { baseOrgApi } from '../src/lib/basePermissions/api';
+import { emptyConfig } from '../src/lib/basePermissions/types';
+import '../src/styles.css';
+
+const role:CatalogRole={id:'role-v2-hr',role_code:'role-v2-hr',name:'Nhân sự V2',description:'',is_system:false,permissions:['leave.view_own'],role_kind:'position',catalog_group:'Vận hành',catalog_state:'standard',receivers:2,signal_scope_all:false,signal_scope:[],references:{positions:[],titles:[],direct:0,specialties:[]},permission_checks:[]};
+let reads=0, saves=0, refreshes=0;
+baseOrgApi.read=async()=>({revision:1,config:emptyConfig(),server_now:new Date().toISOString()});
+const states=()=>{document.body.dataset.reads=String(reads);document.body.dataset.saves=String(saves);document.body.dataset.refreshes=String(refreshes);};
+const viewer=new URLSearchParams(location.search).get('viewer')==='1';
+useAuth.setState({currentUserId:'actor',users:[{id:'actor',fullName:'Quản trị',roleId:viewer?'role-staff':'role-super-admin',status:'Đang hoạt động',username:'fixture'},{id:'member',fullName:'Nhân viên A',roleId:'role-v2-hr',status:'Đang hoạt động',username:'member'}] as ReturnType<typeof useAuth.getState>['users'],roles:[],reload:async()=>{refreshes++;states();}});
+roleCatalogApi.read=async()=>{reads++;states();return {server_now:new Date().toISOString(),roles:[role],slots:[],mapping:[],unmapped:[],direct_count:0,override_rows:0,audit:[]};};
+permissionEditorApi.read=async()=>[{key:'leave.view_own',scope:'own',personal:true,position_ready:true,task_ready:false},{key:'leave.create',scope:'own',personal:true,position_ready:true,task_ready:false}];
+let preview:RolePreview|null=null;
+roleCatalogApi.preview=async(action,id,proposal)=>{if(!proposal)throw new Error('No proposal');preview={id:'preview',action,role_id:id??role.id,before:{...role,permissions:[...role.permissions]},after:proposal,added:proposal.permissions.filter(k=>!role.permissions.includes(k)),removed:role.permissions.filter(k=>!proposal.permissions.includes(k)),affected_users:['member'],expires_at:new Date(Date.now()+600000).toISOString()};return preview;};
+roleCatalogApi.apply=async()=>{if(!preview)throw new Error('No preview');role.permissions=[...preview.after.permissions];saves++;states();};
+const root=document.getElementById('root');if(root)createRoot(root).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false,refetchOnWindowFocus:false}}})}><main className="mx-auto max-w-6xl p-4"><RoleCatalog canManage={!viewer}/></main></QueryClientProvider>);

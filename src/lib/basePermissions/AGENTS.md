@@ -1,6 +1,6 @@
 # Base organization permissions
 - Chart rows are shared (unit,title) groups with distinct effective holders; new chart appointments omit historical slot IDs and title history includes every former slot — prevents per-person positions without erasing history.
-- RoleCatalog is the sole Role editor; shared checklists use explicit server policy keys and dependency hints, never CRUD inference or global bulk grants, preserving native scope gates.
+- RoleCatalog is the sole inline Role editor; reductions use the existing actor-bound preview/apply and server obligation guard, never a blanket client prohibition. Shared checklists use explicit server policy keys and dependency hints, preserving native scope gates.
 - Canonical Role drafts use new audited ID/key pairs, never catalog_state alone; legacy Roles remain untouched and are excluded from new slot selectors. Only server-reviewed canonical creation may persist draft IDs, preventing mixed legacy rights or name-based mapping.
 - Personal writes require actor-bound expiring preview, unchanged direct Roles and additive-only save; active replace stays blocked and per-user audit preserves old state without a fourth source.
 - Pending shared-position cutover resolves every titled appointment through (unit,title) V2 binding; slot IDs stay historical and legacy title fallback is retired together with provenance reads — prevents divergent permission sources without rewriting appointments.

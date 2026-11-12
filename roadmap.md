@@ -1,5 +1,10 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 chỉnh Role V2 — 12/11 03:47
+- [x] Ma trận chỉnh trực tiếp trong RoleCatalog, preview thêm/bỏ, giữ server guard; shortcut từ vị trí, tổng quan chỉ xem ghi rõ.
+- [x] Live writer/guard exact clone + 120 regression tests, add/remove/guard/system/DENY/parity; browser desktop/iPad/mobile saved/read-back fixture, authorized Admin Preview mở/hủy không ghi. Backend đã hỗ trợ edit, không migration mới.
+- [ ] Publish: chờ cutover bổ nhiệm đã được duyệt/applied + backend E2E; không xuất bản UI khi SQL bổ nhiệm còn lỗi.
+
 ## Cutover tận gốc bổ sung — 12/11 03:39
 - [x] Cùng candidate org_assign_shared_position 4 hàm, không migration trùng: ngắt nguồn slot + title fallback, provenance đồng nguồn V2; parity24/no-slot/mirror12/no legacy poison,136tests + fourth-holder browser3sizes đạt.
 - [x] Code không tạo bổ nhiệm slot nữa; history giữ86/25. Audit27gen1: 16titleFK/13Roles còn, old catalog funcs mention IDs; 4system/2SA bảo vệ, không CASCADE. Report cutover-addendum.md/gen1-deletion-audit.md.

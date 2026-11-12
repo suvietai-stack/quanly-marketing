@@ -40,14 +40,14 @@ beforeAll(async () => {
   create function private.role_references(r text) returns jsonb language sql as $$select '{}'::jsonb$$;
   create function private.org_role_permission_ready(p text) returns boolean language sql as $$select p like 'leave.%' or p like 'order.%' or p like 'signal.%'$$;
   create function private.mkt_specialty_permission_ready(p text) returns boolean language sql as $$select p like 'web.%' or p like 'social.%'$$;
-  create function private.permission_editor_policy() returns table(key text,scope text) language sql as $$values('leave.view_own','own'),('web.view','own'),('web.content_view','own')$$;
+  create function private.permission_editor_policy() returns table(key text,scope text) language sql as $$values('leave.view_own','own'),('leave.create','own'),('web.view','own'),('web.content_view','own')$$;
   create function private.role_editor_validate(kind text,next_permissions text[],previous_permissions text[]) returns void language plpgsql as $$ begin if exists(select 1 from unnest(coalesce(next_permissions,'{}')) p where not p=any(coalesce(previous_permissions,'{}')) and not exists(select 1 from private.permission_editor_policy() s where s.key=p and case when kind='marketing_task' then private.mkt_specialty_permission_ready(p) and s.scope<>'unit' else private.org_role_permission_ready(p) end)) then raise exception 'Quyền mới chưa có phạm vi an toàn' using errcode='42501'; end if; end $$;
   create function private.role_in_use(r text) returns boolean language sql as $$select exists(select 1 from user_roles where role_id=r) or exists(select 1 from base_title_role_links where role_id=r) or exists(select 1 from mkt_specialties where role_id=r) or exists(select 1 from org_position_slots where role_id=r)$$;
   create function private.base_valid_at(m jsonb) returns boolean language sql as $$select (m->>'starts_at')::timestamptz<=now() and (nullif(m->>'ends_at','') is null or (m->>'ends_at')::timestamptz>now())$$;
   create function private.base_role_unit_contains(c jsonb,root text,unit text) returns boolean language sql as $$with recursive up(id) as (select unit union select u->>'parent_id' from up join lateral jsonb_array_elements(c->'units') u on u->>'id'=up.id where u->>'parent_id' is not null) select exists(select 1 from up where id=root)$$;
   create function private.org_marketing_eligible(u uuid,c jsonb) returns boolean language sql as $$select false$$;
   create function public.standard_role_catalog_setup() returns jsonb language sql as $$select '{}'::jsonb$$;create function public.standard_role_catalog_consolidate() returns jsonb language sql as $$select '{}'::jsonb$$;
-  insert into base_permission_catalog values('leave.view_own'),('leave.settings'),('leave.approve'),('signal.sale'),('order.view_all'),('web.view'),('web.content_view'),('web.post_submit'),('order.view');
+  insert into base_permission_catalog values('leave.create'),('leave.view_own'),('leave.settings'),('leave.approve'),('signal.sale'),('order.view_all'),('web.view'),('web.content_view'),('web.post_submit'),('order.view');
   insert into app_roles(id,name,permissions,catalog_state,role_kind,signal_scope_all,signal_scope,is_system) values
    ('role-old-hr','Hành chính Nhân sự','{leave.view_own,leave.settings}','standard','position',true,'{}',false),
    ('role-old-sales','Nhân viên Kinh doanh','{leave.view_own,signal.sale}','standard','position',false,'{Nhập sỉ,Khác}',false),
@@ -58,6 +58,9 @@ beforeAll(async () => {
   create trigger app_role_delete_guard before delete on app_roles for each row execute function public.app_role_delete_guard();`);
   await db.exec(forward);
   await db.exec(readFileSync('docs/pending/role_v2_reduction_guard.sql', 'utf8'));
+  // Exercise the exact live writer/guard, not a competing pending migration.
+  await db.exec(readFileSync('docs/role-editability-2026-11-12/role_v2_reduction_guard.sql','utf8'));
+  await db.exec(readFileSync('docs/role-editability-2026-11-12/role_catalog_change.sql','utf8'));
   await db.exec(`create trigger role_new_empty_guard before insert on app_roles for each row execute function private.role_new_empty_guard();`);
   await as(admin);
 }, 30000);
@@ -172,6 +175,23 @@ it('stale baseline and system reductions fail closed', async () => {
   await db.exec("update app_roles set description='concurrent change' where id='role-v2-sales-staff'");
   await expect(apply(p.id)).rejects.toThrow('nguồn đã thay đổi');
   await expect(db.query("select role_catalog_change('preview','edit','role-super-admin',$1)", [{name:'Super Admin',role_kind:'system',permissions:[]}])).rejects.toThrow('hệ thống');
+});
+
+
+it('live writer permits position add/remove, preserves unknown stored rights and unrelated Roles', async () => {
+  const original = await v("select permissions v from app_roles where id='role-v2-sales-staff'") as string[];
+  const unrelated = await v("select permissions v from app_roles where id='role-v2-hr'");
+  await db.exec("update app_roles set permissions=array_append(permissions,'historical.unknown') where id='role-v2-sales-staff'");
+  const body = {name:'Nhân viên Kinh doanh',role_kind:'position',permissions:[...original,'historical.unknown','leave.create'],signal_scope_all:false,signal_scope:['Nhập sỉ','Khác']};
+  const p = await v("select role_catalog_change('preview','edit','role-v2-sales-staff',$1) v",[body]) as {id:string};
+  await apply(p.id);
+  expect(await v("select permissions @> '{historical.unknown,leave.create}'::text[] v from app_roles where id='role-v2-sales-staff'")).toBe(true);
+  const reduced = {...body,permissions:['historical.unknown']};
+  const q = await v("select role_catalog_change('preview','edit','role-v2-sales-staff',$1) v",[reduced]) as {id:string};
+  await apply(q.id);
+  expect(await v("select permissions v from app_roles where id='role-v2-sales-staff'")).toEqual(['historical.unknown']);
+  expect(await v("select permissions v from app_roles where id='role-v2-hr'")).toEqual(unrelated);
+  await as(sale);await expect(apply(q.id)).rejects.toThrow('Super Admin');await as(admin);
 });
 
 it('rollback restores the exact previous writer: canonical IDs are ignored again', async () => {
