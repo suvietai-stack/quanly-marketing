@@ -220,6 +220,31 @@ it('readiness opens only nine enforced action keys, never published/global/setti
   expect(await value("select private.org_role_permission_ready('biz.dashboard_public') v")).toBe(false);
   expect(await value("select private.org_role_permission_ready('k3.use') v")).toBe(false);
 });
+it('anonymized live structure has zero Role-sourced Biz grants before an explicit Sales edit', async () => {
+  const fixture = JSON.parse(readFileSync('docs/biz-role-source-2026-11-12/live-structural-fixture.json', 'utf8')) as Record<string, Record<string, unknown>[]>;
+  await db.exec('delete from org_assignments; delete from org_position_roles; delete from org_titles; delete from org_units; delete from app_roles; delete from profiles; delete from biz_teams; delete from biz_departments; delete from biz_systems');
+  const tables: Record<string, string> = { profiles: 'profiles', units: 'org_units', titles: 'org_titles', bindings: 'org_position_roles', roles: 'app_roles', assignments: 'org_assignments', departments: 'biz_departments', systems: 'biz_systems', teams: 'biz_teams' };
+  const columns: Record<string, string[]> = { profiles: ['id','status'], units: ['id','parent_id','kind','source','source_id','active'], titles: ['id','active'], bindings: ['unit_id','title_id','role_id'], roles: ['id','permissions','catalog_generation','role_kind','catalog_state','is_system'], assignments: ['id','user_id','unit_id','title_id','starts_at','ends_at','status'], departments: ['id','system_id','active'], systems: ['id','active'], teams: ['id','department_id','active'] };
+  for (const [key, table] of Object.entries(tables)) {
+    for (const row of fixture[key] ?? []) {
+      const cols = columns[key].filter(c => c in row);
+      await db.query(`insert into ${table}(${cols.join(',')}) values(${cols.map((_, i) => `$${i+1}`).join(',')})`, cols.map(c => row[c]));
+    }
+  }
+  expect(fixture.profiles).toHaveLength(23);
+  expect(fixture.bindings).toHaveLength(16);
+  expect(fixture.assignments).toHaveLength(86);
+  expect((await db.query("select count(*)::int n from profiles p cross join lateral private.biz_v2_sources(p.id,'biz.view_dept') s")).rows).toEqual([{ n: 0 }]);
+  await db.exec("update app_roles set permissions=array_append(permissions,'biz.view_dept') where id='role-v2-sales-head'");
+  const sources = (await db.query<{ user_id: string; source_id: string }>("select p.id user_id,s.source_id from profiles p cross join lateral private.biz_v2_sources(p.id,'biz.view_dept') s")).rows;
+  expect(sources.length).toBeGreaterThan(0);
+  for (const source of sources) {
+    expect(await can(source.user_id, 'biz.view_dept', source.user_id, source.source_id)).toBe(true);
+    for (const other of fixture.departments.filter(d => d.id !== source.source_id)) {
+      expect(await can(source.user_id, 'biz.view_dept', source.user_id, String(other.id))).toBe(false);
+    }
+  }
+});
 it('unverified source mapping, legacy Role and unsupported keys grant nothing', async () => {
   await db.exec(`update org_units set source='canonical' where id='${dept}'`);
   expect(await can(head, 'biz.view_dept', staff, dept)).toBe(false);

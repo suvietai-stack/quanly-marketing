@@ -9,7 +9,8 @@
 - [ ] Hoàn thiện toàn bộ RPC/automation/Zalo và scoped E2E trước xác nhận áp migration riêng.
 
 ## Tiếp tục sau kiểm tra live 12/11 — SQL chỉ PENDING
-- [ ] Xác nhận 01:37: kế thừa cùng SQL pending, nối RPC nộp/lưu/Dashboard/lịch sử duyệt và readiness; không apply khi chưa chứng minh scope từng cổng, không auto cấp Role live.
+- [x] Xác nhận 01:37: cùng SQL candidate đã nối RPC nộp/lưu/Dashboard/lịch sử duyệt/cache; 19 SQL tests + 12 preset tests, readiness 9 key pending, UI bổ sung chỉ additive.
+- [ ] Apply Biz: BLOCKED — 8 key chưa target-scope, full live effective diff/workflow + phiên scoped chưa nghiệm thu; organization editor đang statement timeout. Chưa gửi migration card, không auto Role live.
 - [x] Audit ánh xạ ID/source org↔biz (3 hệ, 4 phòng, 0 nhóm), backup đủ 14 cổng + checksum; không chạy lại 0379–0382.
 - [x] SQL PENDING Role V2 + scope cùng nguồn + DENY/reset/auth, rollback; 12 PGlite restricted-user/RLS tests đạt.
 - [x] Preset Sales nháp tối giản; policy máy chủ vẫn tự loại quyền chưa mở, không duyệt/xem toàn Khối.

@@ -130,13 +130,21 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
   (_kind='report' AND private.biz_v2_can_at(auth.uid(),'biz.report_approve',_user,_dept) AND EXISTS(SELECT 1 FROM biz_document_versions v JOIN biz_documents d ON d.id=v.document_id JOIN biz_approval_runs r ON r.version_id=v.id WHERE d.user_id=_user AND d.department_id=_dept AND d.kind='report' AND r.status='pending' AND public.biz_run_assigned(v.id,true) AND public.biz_step_scope_ok(r.steps,r.current_step,auth.uid(),r.owner_id,r.department_id,r.submitted_at)))) END
 $$;
 
+CREATE OR REPLACE FUNCTION private.biz_v2_previous_step_scope_ok(_steps jsonb, _index integer, _actor uuid, _owner uuid, _dept uuid, _at timestamp with time zone)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT public.is_super_admin(_actor) OR public.biz_scope_ok(_actor,_owner,_dept,_at) OR ((_steps->_index->>'type'='user' OR _steps->_index->>'substitute_id'=_actor::text) AND (_steps->_index->>'user_id'=_actor::text OR _steps->_index->>'substitute_id'=_actor::text) AND EXISTS(SELECT 1 FROM public.profiles WHERE id=_actor AND status='Đang hoạt động'))$function$;
+REVOKE ALL ON FUNCTION private.biz_v2_previous_step_scope_ok(jsonb,integer,uuid,uuid,uuid,timestamptz) FROM PUBLIC,anon,authenticated,service_role;
+
 CREATE OR REPLACE FUNCTION public.biz_step_scope_ok(_steps jsonb,_index integer,_actor uuid,_owner uuid,_dept uuid,_at timestamptz) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
  SELECT private.is_active(_actor) AND (
  public.biz_admin(_actor) OR (
  _actor<>_owner AND (_steps->_index->>'user_id'=_actor::text OR _steps->_index->>'substitute_id'=_actor::text)
  AND EXISTS(SELECT 1 FROM biz_approval_runs r WHERE r.steps=_steps AND r.current_step=_index AND r.owner_id=_owner AND r.department_id=_dept AND r.status='pending'
- AND private.biz_v2_can_at(_actor,CASE WHEN r.kind IN ('goal_year','rolling_plan') THEN 'biz.goal_approve' WHEN r.kind='report' OR r.kind LIKE 'report_%' THEN 'biz.report_approve' ELSE NULL END,_owner,_dept,_at))))
+ AND (private.biz_v2_can_at(_actor,CASE WHEN r.kind IN ('goal_year','rolling_plan') THEN 'biz.goal_approve' WHEN r.kind='report' OR r.kind LIKE 'report_%' THEN 'biz.report_approve' ELSE NULL END,_owner,_dept,_at) OR (r.kind LIKE 'late_%' AND private.legacy_business_allowed(_actor) AND NOT private.biz_v2_denied(_actor,'biz.late_approve') AND private.biz_v2_previous_step_scope_ok(_steps,_index,_actor,_owner,_dept,_at))))))
 $$;
 
 CREATE OR REPLACE FUNCTION public.biz_department_access(_department_id uuid) RETURNS boolean
@@ -381,7 +389,7 @@ BEGIN
  FROM public.profiles p CROSS JOIN generate_series(1,12) m(month) LEFT JOIN public.biz_documents d ON d.user_id=p.id AND d.kind='report' AND d.period_kind='month' AND d.year=_year AND d.period=m.month
  WHERE public.biz_period_department(p.id,_year,'month',m.month) IS NOT NULL AND (_user_id IS NULL OR _user_id=p.id)
  ), visible AS (
- SELECT r.* FROM roster r WHERE (all_ok OR (self_ok AND r.user_id=a) OR (dept_ok AND private.biz_v2_can_at(a,'biz.view_dept',r.user_id,r.department_id,r.scope_at))) AND (_department_id IS NULL OR r.department_id=_department_id)
+ SELECT r.* FROM roster r WHERE private.biz_v2_read(a,r.user_id,r.department_id,r.scope_at) AND (_department_id IS NULL OR r.department_id=_department_id)
  ), chosen AS (
  SELECT r.*,coalesce(CASE WHEN _mode='provisional' THEN (SELECT id FROM public.biz_document_versions WHERE document_id=r.document_id AND status='pending' ORDER BY version DESC LIMIT 1) END,r.official_version_id) version_id FROM visible r
  ), baselines AS (
@@ -393,7 +401,7 @@ BEGIN
  SELECT p.id user_id,p.full_name employee_name,'plan'::text kind,coalesce(d.department_id,public.biz_period_department(p.id,_year,_period_kind,_period)) department_id,d.first_submitted_at,public.biz_deadline_status(CASE WHEN d.deadline_frozen THEN d.deadline ELSE public.biz_deadline_at('plan_'||_period_kind,_year,_period) END,d.first_submitted_at,now()) time_status,coalesce((SELECT status FROM public.biz_document_versions WHERE document_id=d.id ORDER BY version DESC LIMIT 1),'missing') approval_status,d.official_version_id IS NOT NULL official FROM public.profiles p LEFT JOIN public.biz_documents d ON d.user_id=p.id AND d.kind='plan' AND d.period_kind=_period_kind AND d.year=_year AND d.period=_period WHERE _period_kind IN ('month','quarter','year') AND public.biz_period_department(p.id,_year,_period_kind,_period) IS NOT NULL AND (_user_id IS NULL OR p.id=_user_id)
  UNION ALL SELECT user_id,employee_name,'report',department_id,first_submitted_at,time_status,approval_status,official FROM jsonb_to_recordset(private.biz_report_obligations(_year,_period_kind,_period)) o(user_id uuid,employee_name text,department_id uuid,first_submitted_at timestamptz,time_status text,approval_status text,official boolean) WHERE _user_id IS NULL OR user_id=_user_id
  ), scoped_obligations AS (
- SELECT o.*,dep.name department_name FROM obligations o JOIN public.biz_departments dep ON dep.id=o.department_id WHERE (_department_id IS NULL OR o.department_id=_department_id) AND (all_ok OR (self_ok AND o.user_id=a) OR (dept_ok AND private.biz_v2_can_at(a,'biz.view_dept',o.user_id,o.department_id,coalesce(o.first_submitted_at,now()))))
+ SELECT o.*,dep.name department_name FROM obligations o JOIN public.biz_departments dep ON dep.id=o.department_id WHERE (_department_id IS NULL OR o.department_id=_department_id) AND private.biz_v2_read(a,o.user_id,o.department_id,coalesce(o.first_submitted_at,now()))
  )
  SELECT jsonb_build_object('year',_year,'period_kind',_period_kind,'period',_period,'mode',_mode,'lo',lo,'hi',hi,'server_now',now(),'facts',coalesce((SELECT jsonb_agg(to_jsonb(f)) FROM facts f),'[]'),'roster',coalesce((SELECT jsonb_agg(jsonb_build_object('user_id',r.user_id,'employee_name',r.employee_name,'department_id',r.department_id,'department_name',dep.name,'month',r.month,'official',r.official_version_id IS NOT NULL,'system_id',(SELECT system_id FROM public.biz_department_system_history WHERE department_id=r.department_id AND started_at<=r.scope_at AND (ended_at IS NULL OR ended_at>r.scope_at) LIMIT 1),'team_id',(SELECT team_id FROM public.biz_team_members tm JOIN public.biz_teams t ON t.id=tm.team_id WHERE tm.user_id=r.user_id AND t.department_id=r.department_id AND tm.started_at<=r.scope_at AND (tm.ended_at IS NULL OR tm.ended_at>r.scope_at) LIMIT 1))) FROM visible r JOIN public.biz_departments dep ON dep.id=r.department_id),'[]'),'obligations',coalesce((SELECT jsonb_agg(to_jsonb(o)) FROM scoped_obligations o),'[]')) INTO result;
  RETURN result;

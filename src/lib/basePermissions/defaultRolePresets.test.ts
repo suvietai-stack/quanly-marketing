@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
-import { defaultRolePresets, defaultRoleImpact } from './defaultRolePresets';
+import { defaultRolePresets, defaultRoleImpact, salesBusinessDraft } from './defaultRolePresets';
 import type { CatalogRole } from './roleCatalog';
 import type { EditorPolicy } from './permissionEditor';
 const policy: EditorPolicy[] = [...new Set(defaultRolePresets.flatMap(p => [...p.keys]))].map(key => ({ key, scope: 'assigned', personal: false, position_ready: true, task_ready: true }));
@@ -81,4 +81,13 @@ it('Sales business suggestions are minimal, policy-gated and never automatically
     expect(d?.unavailable).toContain(level === 'staff' ? 'biz.goal_submit' : 'biz.view_dept');
   }
   expect(defaultRolePresets.find(p => p.roleId === 'role-v2-sales-director')?.keys).not.toContain('biz.goal_submit');
+});
+it('business-only Sales draft preserves all existing rights and adds no approval or global management', () => {
+  const stored = role('role-v2-sales-head', ['signal.assign', 'biz.crm_edit_other', 'finance.incoming.view_unit']);
+  const draft = salesBusinessDraft(stored, policy);
+  expect(draft?.removed).toEqual([]);
+  expect(draft?.after).toEqual([...stored.permissions, 'biz.view_own', 'biz.goal_submit', 'biz.plan_submit', 'biz.report_submit', 'biz.view_dept']);
+  expect(stored.permissions).toEqual(['signal.assign', 'biz.crm_edit_other', 'finance.incoming.view_unit']);
+  expect(salesBusinessDraft(stored, [])?.added).toEqual([]);
+  expect(salesBusinessDraft(role('role-v2-task-content-web', []), policy)).toBeUndefined();
 });

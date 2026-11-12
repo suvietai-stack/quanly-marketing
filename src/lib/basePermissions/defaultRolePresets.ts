@@ -45,6 +45,16 @@ export function isCanonicalRole(role: Pick<CatalogRole, 'id' | 'role_kind' | 'ro
   return defaultRolePresets.some(p => p.roleId === role.id && p.kind === role.role_kind) && role.role_code === role.id;
 }
 
+// Dedicated business additions never reduce unrelated CRM/Signals/finance rights on an existing Role.
+export function salesBusinessDraft(role: CatalogRole, policy: EditorPolicy[]) {
+  const preset = defaultRolePresets.find(p => p.roleId === role.id && p.group === 'Kinh doanh');
+  if (!preset || role.is_system || role.role_kind !== 'position') return undefined;
+  const keys = preset.keys.filter(k => k.startsWith('biz.') && !k.startsWith('biz.crm_'));
+  const ready = presetPermissions(keys, policy, 'position');
+  const after = [...new Set([...role.permissions, ...ready])];
+  return { after, ...permissionDelta(role.permissions, after), unavailable: keys.filter(k => !ready.includes(k)) };
+}
+
 export function defaultRoleImpact(role: CatalogRole, policy: EditorPolicy[]) {
   const preset = defaultRolePresets.find(p => p.roleId === role.id && p.kind === role.role_kind);
   if (!preset || role.catalog_state !== 'standard') return undefined;

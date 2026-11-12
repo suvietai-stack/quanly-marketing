@@ -1,0 +1,12 @@
+9e16c19c22658d5608b389671d78c4965d7f50703572738f34dd4c4eac63c48c  docs/biz-role-source-2026-11-12/live-functions.sql
+9991c058436053e501fd66c90cb6f0bea504f42ca5124511b86599800855e0c1  docs/biz-role-source-2026-11-12/live-checksums.json
+c65636eb9b7d6f6b364b2e1ba00174c427f6ee0d987e0bb18314861fcaae7d41  docs/biz-role-source-2026-11-12/rollback.sql
+12943346f654a5d2cc08f0cd1b5ba3d95bb43a1dca43e046668d5f9bad4d0e78  docs/biz-role-source-2026-11-12/report.md
+5c90efba09362e066f01f26be47c7e64fb540a32c0f1d84f090297c1c987a732  docs/biz-role-source-2026-11-12/integration-live-functions.sql
+fb5dff94f363cc3bbeed99f009479d0231d744dacff32da74e880e5971b2c425  docs/biz-role-source-2026-11-12/integration-live-checksums.json
+1f95a20dda9980fe245fbef4771d53a4a4fa1637a4083d7633a702bd649501eb  docs/biz-role-source-2026-11-12/live-test-columns.json
+356edf45355d6531d186c0daf83979a6890f1d8d1359eaf7e167146d91b235e5  docs/biz-role-source-2026-11-12/sibling-live-functions.sql
+498037b90ce918bbbf312bedcd62ef682a0f6eb2907ef90a6c4d2c91282755f7  docs/biz-role-source-2026-11-12/sibling-live-checksums.json
+1e92c8da76a094ab1fc10316458eaf06760414d1a2c192c11e9535b19a1b14ee  docs/biz-role-source-2026-11-12/live-structural-fixture.json
+378cda332b677d3e4f0a605ebfd1c6c316577fb7a3e4687a1c3aecd72ece822b  docs/pending/biz_role_source.sql
+5aabcaed59ad81fc45d2a8689b1084286be406781adedb4804a2a08690d5369b  docs/pending/biz_role_source_readiness.sql
