@@ -1,7 +1,8 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## P0 full personal permission catalog — 12/11 06:49
-- [ ] Owner06:59 addendum: merge one authenticated catalog SELECT by key, test local450+remote60/full510, no new grants/RLS; follow up published UI without duplicate job.
+- [x] Owner06:59 addendum: one actor-keyed authenticated catalog SELECT merged by key;30 tests+desktop/mobile fixtures pass local450+remote60/full510, no grants/RLS changes; commit1e06d541, publish requested.
+- [ ] Addendum production confirmation: observed prior ebaf680f UI still full510 but no catalog GET; new deployment not yet verified. No repeat publish/SQL.
 - [x] Full 510/24 catalog,15 grantable/495 unsupported; baseline revocation, inherited-only unchecked, reused effective source; lazy groups and fail-closed policy errors; no DB changes.
 - [x] 51 targeted tests + desktop/mobile fixture preview/save/readback; buildOK; commit c781ad40 published. Production ebaf680f-f4a8-4ba9-90a9-82aeae5fa03f confirmed full catalog/disabled unsupported on1280/390, no writes/runtime errors. Mobile policy unavailable remained safely read-only.
 - [ ] Backend expansion: BLOCKED separate owner approval and module scope/workflow proof; staged organization SQL unchanged.
