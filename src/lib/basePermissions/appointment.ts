@@ -1,5 +1,6 @@
 import type { OrgConfig } from './types';
 import { membershipEffective, membershipKind } from '@/lib/orgStructure';
+import { effectivePositionHolders } from './positionHolders';
 
 export function appointmentEligible(status: string): boolean {
   return status === 'Đang hoạt động';
@@ -26,9 +27,9 @@ export function appointmentDraft(config: OrgConfig, unitId: string, titleId: str
   const ids = [...new Set(users)];
   if (!ids.length) throw new Error('Chọn nhân sự để bổ nhiệm.');
   const capacity = title.kind === 'manager' ? title.capacity ?? 0 : 0;
-  const held = config.memberships.filter(m => m.unit_id === unitId && m.title_id === titleId && membershipEffective(m,effectiveAt)).length;
+  const held = effectivePositionHolders(config.memberships, unitId, titleId, Date.parse(effectiveAt)).length;
   if (capacity > 0 && held + ids.length > capacity) throw new Error(capacity === 1 ? 'Vị trí quản lý chỉ có một người; cần kết thúc bổ nhiệm hiện tại trước.' : 'Vị trí quản lý đã đủ người theo sức chứa đã đặt.');
-  const primaryElsewhere = config.memberships.filter(m => ids.includes(m.user_id) && membershipEffective(m) && membershipKind(m) === 'primary' && m.unit_id !== unitId);
+  const primaryElsewhere = config.memberships.filter(m => ids.includes(m.user_id) && membershipEffective(m,effectiveAt) && membershipKind(m) === 'primary' && m.unit_id !== unitId);
   if (primaryElsewhere.length && mode === 'primary') throw new Error('Chọn Điều chuyển hoặc Kiêm nhiệm cho nhân sự đang thuộc đơn vị khác.');
   if (specialtyIds.length && (!marketingUnit(config, unitId) || title.source === 'biz_positions')) throw new Error('Nhiệm vụ Marketing chỉ áp dụng trong Khối Marketing.');
   let next = structuredClone(config);

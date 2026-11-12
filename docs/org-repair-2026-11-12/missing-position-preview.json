@@ -1,0 +1,47 @@
+[
+  {
+    "action": "position_role",
+    "data": {
+      "unit_id": "b5e00000-0000-4000-8000-000000000011",
+      "title_id": "b5e00000-0000-4000-8000-000000000101",
+      "role_id": "role-v2-mkt-head",
+      "reason": "Bổ sung mapping vị trí trống đã kiểm tra — chờ phê duyệt"
+    }
+  },
+  {
+    "action": "position_role",
+    "data": {
+      "unit_id": "b5e00000-0000-4000-8000-000000000012",
+      "title_id": "b5e00000-0000-4000-8000-000000000103",
+      "role_id": "role-v2-design-head",
+      "reason": "Bổ sung mapping vị trí trống đã kiểm tra — chờ phê duyệt"
+    }
+  },
+  {
+    "action": "position_role",
+    "data": {
+      "unit_id": "b5e00000-0000-4000-8000-000000000022",
+      "title_id": "b5e00000-0000-4000-8000-000000000108",
+      "role_id": "role-v2-account-stock",
+      "reason": "Bổ sung mapping vị trí trống đã kiểm tra — chờ phê duyệt"
+    }
+  },
+  {
+    "action": "position_role",
+    "data": {
+      "unit_id": "b5e00000-0000-4000-8000-000000000023",
+      "title_id": "b5e00000-0000-4000-8000-000000000109",
+      "role_id": "role-v2-proc-head",
+      "reason": "Bổ sung mapping vị trí trống đã kiểm tra — chờ phê duyệt"
+    }
+  },
+  {
+    "action": "position_role",
+    "data": {
+      "unit_id": "b5e00000-0000-4000-8000-000000000023",
+      "title_id": "b5e00000-0000-4000-8000-000000000111",
+      "role_id": "role-v2-packing",
+      "reason": "Bổ sung mapping vị trí trống đã kiểm tra — chờ phê duyệt"
+    }
+  }
+]

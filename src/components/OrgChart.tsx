@@ -58,9 +58,9 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
           {slot.manager && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
         </div>
         {holders.length > 0
-          ? holders.map(p => (
-            <Button key={p.id} variant="link" className="h-auto p-0 text-sm whitespace-normal" onClick={() => onOpen(p)}>{p.name}</Button>
-          ))
+          ? <ul className="space-y-1">{holders.map(p => (
+            <li key={p.id}><Button variant="link" className="h-auto max-w-full justify-start p-0 text-left text-sm whitespace-normal break-words" onClick={() => onOpen(p)}>{p.name}</Button></li>
+          ))}</ul>
           : <p className="text-xs italic text-muted-foreground">{slot.manager ? 'Chưa bổ nhiệm' : 'Chưa có nhân sự'}</p>}
       </div>
       {actions.canManage && (actions.onAssign || actions.onUnassign || actions.onSlotHistory) && (
@@ -71,7 +71,7 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
           <DropdownMenuContent align="end">
             {actions.onAssign && (
               <DropdownMenuItem onClick={() => actions.onAssign?.(ref)}>
-                <UserPlus className="h-4 w-4 mr-2" />{slot.manager && slot.holders.length ? 'Đổi người' : 'Bổ nhiệm / Thêm nhân sự'}
+                <UserPlus className="h-4 w-4 mr-2" />Bổ nhiệm / Thêm nhân sự
               </DropdownMenuItem>
             )}
             {actions.onUnassign && slot.holders.map(p => (

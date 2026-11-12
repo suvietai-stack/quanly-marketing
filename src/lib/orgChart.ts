@@ -1,5 +1,6 @@
 import type { OrgConfig, Unit } from '@/lib/basePermissions/types';
-import { slotCapacity, titleKind, titleLevel, unitTitles } from '@/lib/orgStructure';
+import { titleKind, titleLevel, unitTitles } from '@/lib/orgStructure';
+import { effectivePositionHolders } from '@/lib/basePermissions/positionHolders';
 
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
@@ -15,13 +16,13 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
   const make = (u: Unit, path: Set<string>): ChartNode => {
     const next = new Set([...path, u.id]);
     const titles = unitTitles(config, u.id);
-    const physical = (config.position_slots ?? []).filter(s => s.unit_id === u.id && s.active);
-    const physicalTitleIds = new Set(physical.map(s => s.title_id));
-    const slots = titles.filter(t => !physicalTitleIds.has(t.id)).map(t => ({ id: t.id, titleId: t.id, title: t.name, manager: titleKind(t) === 'manager', level: titleLevel(t), capacity: slotCapacity(t), holders: [...new Map(current.filter(m => m.unit_id === u.id && m.title_id === t.id).map(m => [m.user_id, personOf(m)])).values()] })).sort((a,b) => b.level-a.level || Number(b.manager)-Number(a.manager));
-    slots.push(...physical.map(s => { const t = config.titles.find(t => t.id === s.title_id); return {id:s.id,titleId:s.title_id,title:s.name,manager:t ? titleKind(t)==='manager' : false,level:t ? titleLevel(t):0,capacity:1,holders:current.filter(m=>m.slot_id===s.id).map(personOf)}; }));
+    const slots = [...new Map(titles.map(t => [t.id, t])).values()].map(t => ({ id: t.id, titleId: t.id, title: t.name, manager: titleKind(t) === 'manager', level: titleLevel(t), capacity: titleKind(t) === 'manager' ? t.capacity ?? 0 : 0, holders: effectivePositionHolders(config.memberships, u.id, t.id, Date.parse(now)).map(id => {
+      const membership = current.find(m => m.user_id === id && m.unit_id === u.id && m.title_id === t.id);
+      return membership ? personOf(membership) : { id, name: names.get(id) ?? 'Nhân sự', title: t.name };
+    }) })).sort((a,b) => b.level-a.level || Number(b.manager)-Number(a.manager));
     const slotted = new Set(titles.map(t => t.id));
     const holderIds = new Set(slots.flatMap(slot => slot.holders.map(person => person.id)));
-    const people = [...new Map(current.filter(m => m.unit_id === u.id && !holderIds.has(m.user_id) && (!m.title_id || !slotted.has(m.title_id) || (physicalTitleIds.has(m.title_id) && !m.slot_id))).map(m => [m.user_id, personOf(m)])).values()];
+    const people = [...new Map(current.filter(m => m.unit_id === u.id && !holderIds.has(m.user_id) && (!m.title_id || !slotted.has(m.title_id))).map(m => [m.user_id, personOf(m)])).values()];
     return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
   };
   const roots = config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id));

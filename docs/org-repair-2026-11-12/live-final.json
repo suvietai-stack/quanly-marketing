@@ -1,0 +1,12 @@
+{
+  "rows": [
+    {
+      "assignments": 86,
+      "command_md5": "c759e726c6c627bbae8f113db9e0f285",
+      "mappings": 16,
+      "roles": 56,
+      "root_blocks": 3,
+      "slots": 25
+    }
+  ]
+}

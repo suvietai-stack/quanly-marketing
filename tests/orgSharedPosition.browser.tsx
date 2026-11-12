@@ -1,0 +1,10 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { OrgChart } from '../src/components/OrgChart';
+import { OrganizationAppointment } from '../src/components/OrganizationAppointment';
+import { emptyConfig } from '../src/lib/basePermissions/types';
+import '../src/styles.css';
+const config={...emptyConfig(),units:[{id:'m',name:'Phòng Marketing',kind:'department' as const,active:true}],titles:[{id:'staff',unit_id:'m',name:'Nhân viên Marketing',kind:'staff' as const,active:true},{id:'head',unit_id:'m',name:'Trưởng phòng Marketing',kind:'manager' as const,capacity:1,active:true}],position_slots:['empty','a','b','c'].map(id=>({id,unit_id:'m',title_id:'staff',role_id:'role-v2-mkt-staff',name:`UUID-${id}`,active:true})),memberships:['a','b','c'].map(id=>({id,user_id:id,unit_id:'m',title_id:'staff',slot_id:id,active:true}))};
+function Fixture(){const [current,setCurrent]=React.useState(config);const [open,setOpen]=React.useState(false);const staff=[{id:'a',name:'Ngọc',status:'Đang hoạt động'},{id:'b',name:'Mai Loan',status:'Đang hoạt động'},{id:'c',name:'Nhân sự thứ ba',status:'Đang hoạt động'},{id:'new',name:'Người mới',status:'Đang hoạt động'}];return <><OrgChart config={current} staff={staff} canManage onAssign={ref=>{document.body.dataset.assigned=JSON.stringify({unitId:ref.unitId,titleId:ref.slot.titleId});setOpen(true);}}/>{open&&<OrganizationAppointment target={{unitId:'m',titleId:'staff'}} config={current} staff={staff} onClose={()=>setOpen(false)} onPreview={async next=>({id:'fixture',revision:1,impact:[],before:current,after:next})} onApply={async p=>{if(p.after)setCurrent(p.after as typeof config);}}/>}</>}
+const root=document.getElementById('root');if(root)createRoot(root).render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><Fixture/></QueryClientProvider>);

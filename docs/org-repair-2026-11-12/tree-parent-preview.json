@@ -1,0 +1,32 @@
+[
+  {
+    "action": "unit",
+    "data": {
+      "active": true,
+      "id": "b5e00000-0000-4000-8000-000000000001",
+      "kind": "block",
+      "name": "Khối Marketing",
+      "parent_id": "org-company"
+    }
+  },
+  {
+    "action": "unit",
+    "data": {
+      "active": true,
+      "id": "b5e00000-0000-4000-8000-000000000002",
+      "kind": "block",
+      "name": "Khối Vận hành",
+      "parent_id": "org-company"
+    }
+  },
+  {
+    "action": "unit",
+    "data": {
+      "id": "biz-block",
+      "name": "Khối Kinh doanh",
+      "kind": "block",
+      "active": true,
+      "parent_id": "org-company"
+    }
+  }
+]

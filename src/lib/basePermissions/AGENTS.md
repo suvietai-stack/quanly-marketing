@@ -1,4 +1,5 @@
 # Base organization permissions
+- Chart rows are shared (unit,title) groups with distinct effective holders; new chart appointments omit historical slot IDs and title history includes every former slot — prevents per-person positions without erasing history.
 - RoleCatalog is the sole Role editor; shared checklists use explicit server policy keys and dependency hints, never CRUD inference or global bulk grants, preserving native scope gates.
 - Canonical Role drafts use new audited ID/key pairs, never catalog_state alone; legacy Roles remain untouched and are excluded from new slot selectors. Only server-reviewed canonical creation may persist draft IDs, preventing mixed legacy rights or name-based mapping.
 - Personal writes require actor-bound expiring preview, unchanged direct Roles and additive-only save; active replace stays blocked and per-user audit preserves old state without a fourth source.

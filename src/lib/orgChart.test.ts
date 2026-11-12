@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildOrganizationTree, countPeople, nodeMatches } from './orgChart';
 import { emptyConfig, type OrgConfig } from './basePermissions/types';
+import { slotHistory } from './orgStructure';
 const config: OrgConfig = { ...emptyConfig(), units: [
   { id: 'company', name: 'Công ty', kind: 'company', active: true },
   { id: 'marketing', name: 'Marketing', kind: 'block', active: true },
@@ -84,4 +85,20 @@ describe('deduplicate staff within a unit by user ID', () => {
     expect(JSON.stringify(cfg.memberships)).toBe(before);
     expect(cfg.memberships).toHaveLength(5);
   });
+});
+
+it('groups four historical Marketing slots into one title with three distinct holders', () => {
+  const c: OrgConfig = { ...emptyConfig(), units: [{id:'m',name:'Phòng Marketing',kind:'department',active:true}],
+    titles: [{id:'staff',unit_id:'m',name:'Nhân viên Marketing',kind:'staff',capacity:1,active:true}, {id:'head',unit_id:'m',name:'Trưởng phòng Marketing',kind:'manager',capacity:1,active:true}],
+    position_slots: ['empty','a','b','c'].map(id=>({id,unit_id:'m',title_id:'staff',role_id:'role-v2-mkt-staff',name:`Nhân viên Marketing · ${id}`,active:true})),
+    memberships: ['a','b','c'].flatMap(user_id=>[{id:user_id,user_id,unit_id:'m',title_id:'staff',slot_id:user_id,active:true},{id:`mirror-${user_id}`,user_id,unit_id:'m',active:true}]).concat([{id:'duplicate',user_id:'a',unit_id:'m',title_id:'staff',slot_id:'a',active:true}]) };
+  const node=buildOrganizationTree(c,[], '2026-11-12T03:28:00Z')[0];
+  expect(node.slots?.map(s=>s.id).sort()).toEqual(['head','staff']);
+  expect(node.slots?.find(s=>s.id==='staff')?.holders.map(p=>p.id)).toEqual(['a','b','c']);
+  expect(node.slots?.find(s=>s.id==='staff')?.capacity).toBe(0);
+  expect(node.slots?.find(s=>s.id==='head')?.holders).toEqual([]);
+  expect(node.people).toEqual([]);
+  expect(countPeople(node)).toBe(3);
+  expect(slotHistory(c,'m','staff').map(m=>m.id).sort()).toEqual(['a','b','c','duplicate']);
+  expect(c.position_slots).toHaveLength(4);
 });

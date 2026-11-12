@@ -1,5 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 sơ đồ và bổ nhiệm — 12/11 03:28
+- [x] Sơ đồ nhóm theo (unit,title), holders distinct, lịch sử ô cũ giữ; bổ nhiệm không truyền slot, người đang giữ bị chặn chọn trùng.
+- [x] Snapshot exact DDL/ACL/owner/rows, patch guard slot-required + mapping V2 fail-closed và khóa pair; clone/rollback/24 source parity/12 mirror no Role, 102 tests đạt.
+- [x] Desktop/iPad/mobile tạo–xem trước–lưu–đọc lại fixture; authorized Admin Preview đọc Marketing 1 dòng/3 người; build OK, report docs/org-repair-2026-11-12/report.md.
+- [ ] Áp SQL: BLOCKED cần owner duyệt exact org_assign_shared_position (lov_database--migration áp ngay, không có card); live86/25/16/56 giữ nguyên.
+- [ ] Cây cha Công ty và 5 mapping trống: candidate org_change riêng, subtree clone1→16/block unchanged; BLOCKED live scope/impact preview và xác nhận riêng, không bypass projection guards bằng migration dữ liệu.
+- [ ] Publish: BLOCKED backend SQL chưa áp/E2E chưa đạt; Biz17/Signals/3K giữ nguyên.
+
 ## P0 tạo 3K — 12/11 02:38, ưu tiên mới
 - [x] Khôi phục Cơ bản/Nâng cao rõ đầu form, cùng state/payload đúng lựa chọn, không mất KF/KPI;6browser desktop/iPad/mobile đạt, realPreviewAdmin mởform khônglưu.
 - [x] Snapshot/checksum RPC+rollback4triggers; SQLtargetedpending,25-user125→5captures/35→10ms isolated,247tests3K đạt; live142/140/139/851giữ, khôngSQLapply/Role/Signalschanges. Report docs/k3-create-p0-2026-11-12/report.md.
