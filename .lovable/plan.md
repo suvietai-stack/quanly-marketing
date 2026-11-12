@@ -1,14 +1,16 @@
-# Nối Role V2 với phạm vi Kinh doanh — bản thử, SQL chưa áp
+# Kết quả kiểm tra Publish (chỉ đọc, 12/11/2026 04:29 UTC)
 
-## Thiết kế đã chốt
-- Tái sử dụng ánh xạ `org_units.source/source_id` hiện có: 3 hệ, 4 phòng, 0 nhóm. Không thêm bảng ánh xạ hay nguồn phân quyền song song.
-- Role của chính bổ nhiệm cấp hành động; đơn vị của cùng bổ nhiệm giới hạn own/team/phòng/hệ/khối. Kiêm nhiệm hợp nguồn, không ghép quyền nguồn A với phạm vi B.
-- Giữ DENY, trạng thái hoạt động, mốc reset, lịch sử phân phòng/nhóm và bước duyệt. Không tự tái cấp bổ nhiệm cũ.
-- SQL PENDING có bản sao đầy đủ cổng hiện tại, checksum/preflight, rollback; không chạy lại 0379–0382.
-- Chỉ mở các quyền thực sự có cổng phạm vi được kiểm thử; quyền quản trị toàn cục và quyền Kế hoạch không có quy trình duyệt vẫn khóa. Preset Sales tối giản, không tự thêm duyệt hoặc xem toàn Khối.
-
-## Kiểm chứng
-PGlite thực thi chính SQL pending với phiên restricted, kiểm tra RLS/RPC, nhiều người/vị trí, kiêm nhiệm, DENY, thu hồi, reset, nguồn sai/ngoài phạm vi và rollback. Hồi quy Marketing/cache/CRM/3K/Tín hiệu. Preview chỉ đọc desktop/iPad/mobile.
+## Bằng chứng
+- https://base.suviet.vn trả 200 với header `x-deployment-id` chứa đúng `b03ce5e3-5f4b-4153-89e8-01907fe6ff42`, nên bản deploy mới đang phục vụ production.
+- https://quanly-suviet.lovable.app trả 302 về base.suviet.vn (domain chính), nên cả hai địa chỉ đều ra cùng một bản.
+- Commit mới nhất là `063d79b4` (04:26:58 UTC). Bản deploy được yêu cầu sau commit này, nên gần như chắc chắn nó nằm trong bản deploy.
+- Thử không đăng nhập: /login 200, /organization 200 (trang tải được, cổng đăng nhập chạy phía trình duyệt). Không ghi dữ liệu nào.
 
 ## Giới hạn
-Không áp SQL, sửa dữ liệu nghiệp vụ, xóa Role/liên kết cũ hoặc Publish. Chưa coi fixture là E2E nhân viên live. Áp cổng quyền và thay Role thật là hai bước riêng, cần diff từng người và audited preview/apply trước khi cutover.
+- Không có công cụ đọc trạng thái deployment theo ID, nên "succeeded" được suy ra từ header đang phục vụ, không lấy từ API.
+- Header không ghi mã commit. Việc 063d79b4 có trong deploy được suy ra từ thứ tự thời gian.
+- Chưa thử /organization khi đã đăng nhập trên production.
+- Cờ "đã publish" của project chỉ cho biết site đang công khai. Bằng chứng có bản mới là header deployment-id, không phải cờ này.
+
+## Bước tiếp theo nếu được duyệt
+- Thử trên production với phiên đã được ủy quyền: đăng nhập, rồi mở /organization ở chế độ chỉ đọc, ghi thời gian tải và lỗi console.
