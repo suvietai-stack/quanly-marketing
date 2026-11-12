@@ -1,0 +1,2 @@
+-- Read-only scope regression: mismatches must be zero.
+WITH actors AS MATERIALIZED(SELECT id,private.sig_scope_context(id) AS context FROM profiles WHERE private.is_active(id)), groups AS MATERIALIZED(SELECT DISTINCT need_groups AS g FROM opportunity_signals UNION SELECT ARRAY[]::text[] UNION SELECT ARRAY['Khác:kiểm tra']::text[] UNION SELECT ARRAY['__unknown__']::text[]) SELECT count(*) AS comparisons,count(*) FILTER(WHERE private.sig_scope_ok(id,g) IS DISTINCT FROM private.sig_scope_matches(context,g)) AS mismatches FROM actors CROSS JOIN groups;
