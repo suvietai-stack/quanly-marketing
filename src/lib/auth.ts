@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
 import type { EffectiveAccess } from '@/lib/basePermissions/types';
 import { VERIFIED_APPOINTMENT_PERMISSIONS } from '@/lib/basePermissions/titleRoles';
+import { assertNoDirectRoleAssignment } from '@/lib/basePermissions/directRoleAssignment';
 import {
   adminResetPassword,
   adminDeleteUser,
@@ -1171,7 +1172,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   approve: async (id, roleId) => {
-    const { data, error } = await supabase.rpc('account_approve', { _target: id, ...roleId ? { _role: roleId } : {} });
+    assertNoDirectRoleAssignment(roleId);
+    // Activated employees start with Common rights. Position/task Role comes from the org chart.
+    const { data, error } = await supabase.rpc('account_approve', { _target: id });
     if (error) throw new Error(error.message);
     await get().reload();
     return data as { emailConfirmed: boolean; ready: boolean };
@@ -1189,12 +1192,11 @@ export const useAuth = create<AuthState>((set, get) => ({
     await get().reload();
   },
 
-  setRole: async (id, roleId) => {
-    const { error: deleteError } = await supabase.from("user_roles").delete().eq("user_id", id);
-    if (deleteError) throw new Error(deleteError.message);
-    const { error } = await supabase.from("user_roles").insert({ user_id: id, role_id: roleId });
-    if (error) throw new Error(error.message);
-    await get().reload();
+  setRole: async (_id, roleId) => {
+    // Legacy direct Role assignment was a two-statement delete/insert that could erase
+    // protected assignments. Never use it; org appointments are the sole position source.
+    assertNoDirectRoleAssignment(roleId);
+    throw new Error('Role vị trí phải gắn qua sơ đồ tổ chức, không gán trực tiếp cho nhân viên.');
   },
 
   setUseCustom: async (id, useCustom) => {
