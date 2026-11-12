@@ -1,0 +1,2394 @@
+CREATE OR REPLACE FUNCTION public.k3_action_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE a public.k3_actions; old public.k3_actions; g public.k3_goals; p jsonb:=_payload; _id uuid:=nullif(p->>'id','')::uuid; key uuid:=nullif(p->>'request_key','')::uuid; _assignee uuid; _collab uuid; _collabs uuid[]:=coalesce((SELECT array_agg(value::uuid) FROM jsonb_array_elements_text(coalesce(p->'collaborators','[]'::jsonb))),'{}'::uuid[]);
+BEGIN
+  IF nullif(p->>'manual_progress','') IS NOT NULL OR p ? 'status' THEN RAISE EXCEPTION 'Chỉ cập nhật kết quả KPI; trạng thái và tiến độ được tính tự động.'; END IF; IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+  IF _id IS NOT NULL THEN
+    SELECT * INTO old FROM public.k3_actions WHERE id=_id FOR UPDATE;
+    IF old.id IS NULL OR NOT (private.k3_goal_manage_ok(auth.uid(), old.goal_id) OR private.k3_action_worker_ok(auth.uid(), old.id)) THEN RAISE EXCEPTION 'Bạn không được sửa hành động này.'; END IF;
+    IF old.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'KF đang nằm trong Thùng lưu trữ. Hãy khôi phục trước khi chỉnh sửa.'; END IF;
+    IF (p->>'revision')::bigint IS DISTINCT FROM old.revision THEN RAISE EXCEPTION 'Hành động đã thay đổi. Vui lòng tải lại.'; END IF;
+    IF (p ? 'assignee_id' OR p ? 'collaborators') AND NOT private.k3_goal_manage_ok(auth.uid(), old.goal_id) THEN RAISE EXCEPTION 'Chỉ người chủ trì KG được phân công lại KF.'; END IF;
+  ELSE
+    IF key IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu lưu hành động.'; END IF;
+    SELECT * INTO a FROM public.k3_actions WHERE user_id=auth.uid() AND request_key=key;
+    IF a.id IS NOT NULL THEN RETURN to_jsonb(a); END IF;
+  END IF;
+  SELECT * INTO g FROM public.k3_goals WHERE id=coalesce(old.goal_id,nullif(p->>'goal_id','')::uuid) FOR UPDATE;
+  IF g.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy mục tiêu.'; END IF;
+  IF g.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Mục tiêu đang nằm trong Thùng lưu trữ.'; END IF;
+  IF _id IS NULL AND NOT private.k3_goal_manage_ok(auth.uid(), g.id) THEN RAISE EXCEPTION 'Chỉ người chủ trì KG được thêm KF.'; END IF;
+  IF g.status IN ('ended_missed','cancelled') THEN RAISE EXCEPTION 'Mục tiêu đã kết thúc.'; END IF;
+  IF g.period_type='custom' THEN PERFORM private.k3_write_guard(greatest(g.period_start, coalesce((SELECT effective_from FROM public.k3_settings WHERE id), g.period_start)));
+  ELSE PERFORM private.k3_period_write_guard(g.period_type,g.period_start); END IF;
+  IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Tên hành động không được trống.'; END IF;
+  IF nullif(p->>'manual_progress','') IS NOT NULL AND btrim(coalesce(p->>'progress_source',''))='' THEN RAISE EXCEPTION 'Xác nhận tiến độ thủ công cần ghi nguồn.'; END IF;
+  IF nullif(p->>'start_date','')::date > nullif(p->>'due_date','')::date THEN RAISE EXCEPTION 'Ngày bắt đầu phải trước hạn hoàn thành.'; END IF;
+  _assignee:=coalesce(nullif(p->>'assignee_id','')::uuid, old.assignee_id, g.user_id);
+  IF _assignee<>g.user_id AND NOT EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_assignee AND m.status='accepted') THEN RAISE EXCEPTION 'Người phụ trách KF phải là chủ trì hoặc thành viên đã chấp nhận tham gia KG.'; END IF;
+  FOREACH _collab IN ARRAY _collabs LOOP
+    IF _collab<>g.user_id AND NOT EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_collab AND m.status='accepted') THEN RAISE EXCEPTION 'Người phối hợp phải là thành viên đã chấp nhận tham gia KG.'; END IF;
+  END LOOP;
+  IF _id IS NULL THEN
+    INSERT INTO public.k3_actions(goal_id,user_id,name,start_date,due_date,note,manual_progress,progress_source,request_key,assignee_id,is_key,start_time,due_time,inherit_timeline,execution_schedule)
+    VALUES(g.id,g.user_id,btrim(p->>'name'),nullif(p->>'start_date','')::date,nullif(p->>'due_date','')::date,nullif(btrim(p->>'note'),''),nullif(p->>'manual_progress','')::smallint,nullif(btrim(p->>'progress_source'),''),key,_assignee,coalesce((p->>'is_key')::boolean,false),nullif(p->>'start_time','')::time,nullif(p->>'due_time','')::time,coalesce((p->>'inherit_timeline')::boolean,true),coalesce(p->'execution_schedule','{"mode":"daily"}'::jsonb))
+    RETURNING * INTO a;
+  ELSE
+    UPDATE public.k3_actions SET start_time=CASE WHEN p ? 'start_time' THEN nullif(p->>'start_time','')::time ELSE start_time END,due_time=CASE WHEN p ? 'due_time' THEN nullif(p->>'due_time','')::time ELSE due_time END,inherit_timeline=coalesce((p->>'inherit_timeline')::boolean,inherit_timeline),execution_schedule=coalesce(p->'execution_schedule',execution_schedule),name=btrim(p->>'name'),start_date=nullif(p->>'start_date','')::date,due_date=nullif(p->>'due_date','')::date,note=nullif(btrim(p->>'note'),''),manual_progress=nullif(p->>'manual_progress','')::smallint,progress_source=nullif(btrim(p->>'progress_source'),''),
+      assignee_id=_assignee,is_key=coalesce((p->>'is_key')::boolean,old.is_key),revision=revision+1,updated_at=now()
+    WHERE id=_id RETURNING * INTO a;
+  END IF;
+  IF p ? 'collaborators' THEN
+    DELETE FROM public.k3_action_collaborators WHERE action_id=a.id AND user_id<>ALL(_collabs);
+    INSERT INTO public.k3_action_collaborators(action_id,user_id,added_by) SELECT a.id,c,auth.uid() FROM unnest(_collabs) c ON CONFLICT DO NOTHING;
+  END IF;
+  UPDATE public.k3_actions SET start_time=CASE WHEN p ? 'start_time' THEN nullif(p->>'start_time','')::time ELSE start_time END,due_time=CASE WHEN p ? 'due_time' THEN nullif(p->>'due_time','')::time ELSE due_time END,inherit_timeline=coalesce((p->>'inherit_timeline')::boolean,CASE WHEN old.id IS NULL THEN true ELSE inherit_timeline END),execution_schedule=coalesce(p->'execution_schedule',execution_schedule) WHERE id=a.id RETURNING * INTO a;
+ IF g.status<>'draft' AND a.status='draft' AND EXISTS(SELECT 1 FROM k3_kpis WHERE action_id=a.id AND required) THEN UPDATE k3_actions SET status='not_started' WHERE id=a.id RETURNING * INTO a; END IF; UPDATE k3_actions SET required=coalesce((p->>'required')::boolean,required) WHERE id=a.id RETURNING * INTO a; INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) VALUES(g.user_id,g.id,a.id,auth.uid(),'action_save',jsonb_build_object('before',to_jsonb(old),'after',to_jsonb(a)));
+  RETURN to_jsonb(a);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_action_status(_id uuid, _status text, _problem text, _cause text, _solution text, _revision bigint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE a public.k3_actions; unmet text;
+BEGIN
+  IF _status NOT IN ('paused','ended_missed','cancelled') OR nullif(btrim(_problem),'') IS NULL THEN RAISE EXCEPTION 'Trạng thái thông thường tự động; quyết định đặc biệt cần lý do.'; END IF; IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO a FROM public.k3_actions WHERE id=_id FOR UPDATE;
+  IF a.id IS NULL OR NOT (private.k3_goal_manage_ok(auth.uid(), a.goal_id) OR private.k3_action_worker_ok(auth.uid(), a.id)) THEN RAISE EXCEPTION 'Bạn không có quyền đổi trạng thái hành động này.'; END IF;
+  IF a.deleted_at IS NOT NULL OR EXISTS(SELECT 1 FROM k3_goals WHERE id=a.goal_id AND deleted_at IS NOT NULL) THEN RAISE EXCEPTION 'Công việc đang trong Thùng rác.'; END IF; PERFORM private.k3_write_guard(greatest((SELECT period_start FROM k3_goals WHERE id=a.goal_id),coalesce((SELECT effective_from FROM k3_settings WHERE id),(SELECT period_start FROM k3_goals WHERE id=a.goal_id)))); IF _revision IS NULL OR _revision <> a.revision THEN RAISE EXCEPTION 'Hành động đã thay đổi. Vui lòng tải lại.'; END IF;
+  IF _status NOT IN ('draft','not_started','in_progress','paused','done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Trạng thái không hợp lệ.'; END IF;
+  IF _status='done' THEN RAISE EXCEPTION 'Hoàn thành được tự xác định từ kết quả KPI.'; END IF; IF _status='done' THEN
+    SELECT string_agg(k.name,'; ') INTO unmet FROM public.k3_kpis k WHERE k.action_id=a.id AND k.kind='cumulative' AND coalesce(k.target,0)>0 AND private.k3_action_kpi_actual(a.id,k.id,k.unit) < k.target;
+    IF unmet IS NOT NULL THEN RAISE EXCEPTION 'Chưa đạt KPI: %. Hãy ghi nhận Kết thúc chưa đạt nếu dừng hành động này.', unmet; END IF;
+  END IF;
+  IF _status='ended_missed' AND (btrim(coalesce(_problem,''))='' OR btrim(coalesce(_cause,''))='' OR btrim(coalesce(_solution,''))='') THEN RAISE EXCEPTION 'Kết thúc chưa đạt cần đủ Vấn đề - Nguyên nhân - Giải pháp.'; END IF;
+  UPDATE public.k3_actions SET status=_status,
+    problem=CASE WHEN _status='ended_missed' THEN btrim(_problem) ELSE problem END,
+    cause=CASE WHEN _status='ended_missed' THEN btrim(_cause) ELSE cause END,
+    solution=CASE WHEN _status='ended_missed' THEN btrim(_solution) ELSE solution END,
+    closed_at=CASE WHEN _status IN ('done','ended_missed','cancelled') THEN now() ELSE NULL END,
+    closed_by=CASE WHEN _status IN ('done','ended_missed','cancelled') THEN auth.uid() ELSE NULL END,
+    revision=revision+1, updated_at=now()
+  WHERE id=a.id RETURNING * INTO a;
+  INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) VALUES(a.user_id,a.goal_id,a.id,auth.uid(),'action_status',jsonb_build_object('status',_status));
+  RETURN to_jsonb(a);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_action_visible(_actor uuid, _action uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.id = _action AND public.k3_goal_visible(_actor, a.goal_id))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_auto_close_run()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE d date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;c k3_automation_config;u record;s jsonb;n int:=0; failures int:=0;
+BEGIN
+ SELECT * INTO c FROM k3_automation_config WHERE id;
+ IF NOT c.auto_close OR (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::time<c.close_time OR d<c.enabled_from OR NOT EXISTS(SELECT 1 FROM k3_settings WHERE id AND enabled AND effective_from<=d) THEN RETURN jsonb_build_object('closed',0); END IF;
+ FOR u IN SELECT p.id FROM profiles p WHERE p.status='Đang hoạt động' AND public.k3_can(p.id,'k3.use') LOOP
+ s:=private.k3_employee_day_source(u.id,d);
+ IF (NOT private.k3_day_obligated(u.id,d) AND (s->>'action_count')::int=0 AND (s->>'result_count')::int=0) OR EXISTS(SELECT 1 FROM k3_daily_closes WHERE user_id=u.id AND work_date=d) THEN CONTINUE; END IF;
+ BEGIN PERFORM private.k3_close_one(u.id,d,'auto'); INSERT INTO k3_close_runs(work_date,user_id,status) VALUES(d,u.id,'closed'); n:=n+1;
+ EXCEPTION WHEN OTHERS THEN INSERT INTO k3_close_runs(work_date,user_id,status,error) VALUES(d,u.id,'failed',left(SQLERRM,300));failures:=failures+1; END;
+ END LOOP;
+ RETURN jsonb_build_object('closed',n,'failed',failures);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_automation_read()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE c k3_automation_config;
+BEGIN
+ IF NOT public.k3_can(auth.uid(),'k3.settings') THEN RAISE EXCEPTION 'Chỉ Admin được cấu hình tự động 3K.'; END IF;
+ SELECT * INTO c FROM k3_automation_config WHERE id;
+ RETURN coalesce(to_jsonb(c),'{}')||jsonb_build_object('auto_close',coalesce(c.auto_close,true),'close_time',coalesce(c.close_time,'18:00'::time),'send_time',coalesce(c.send_time,'18:05'::time),'zalo_enabled',coalesce(c.zalo_enabled,false),'scope_kind',coalesce(c.scope_kind,'all'));
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_automation_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE ct time:=(_payload->>'close_time')::time; st time:=(_payload->>'send_time')::time; sk text:=_payload->>'scope_kind'; sid uuid:=nullif(_payload->>'scope_id','')::uuid; old jsonb;
+BEGIN
+ IF NOT public.k3_can(auth.uid(),'k3.settings') THEN RAISE EXCEPTION 'Chỉ Admin được cấu hình tự động 3K.'; END IF;
+ IF ct IS NULL OR st IS NULL OR st<=ct OR extract(second FROM ct)<>0 OR extract(second FROM st)<>0 THEN RAISE EXCEPTION 'Giờ gửi phải sau giờ chốt; chọn giờ và phút.'; END IF;
+ IF sk NOT IN ('all','system','department') OR sk IS NULL THEN RAISE EXCEPTION 'Phạm vi không hợp lệ.'; END IF;
+ IF sk='system' AND NOT EXISTS(SELECT 1 FROM biz_systems WHERE id=sid) OR sk='department' AND NOT EXISTS(SELECT 1 FROM biz_departments WHERE id=sid) THEN RAISE EXCEPTION 'Cần chọn Hệ/Phòng hợp lệ.'; END IF;
+ IF coalesce((_payload->>'zalo_enabled')::boolean,false) AND btrim(coalesce(_payload->>'group_id',''))='' THEN RAISE EXCEPTION 'Cần chọn nhóm Zalo.'; END IF;
+ IF coalesce((_payload->>'review_reminders')::boolean,false) AND (coalesce((_payload->>'review_remind_time')::time,'17:00')>=ct OR extract(second FROM coalesce((_payload->>'review_remind_time')::time,'17:00'))<>0 OR coalesce((_payload->>'review_second_reminder')::boolean,false) AND (coalesce((_payload->>'review_second_time')::time,'17:30')>=ct OR coalesce((_payload->>'review_second_time')::time,'17:30')<=coalesce((_payload->>'review_remind_time')::time,'17:00'))) THEN RAISE EXCEPTION 'Giờ nhắc phải trước giờ chốt; lần hai phải sau lần đầu.'; END IF; SELECT to_jsonb(c) INTO old FROM k3_automation_config c WHERE id FOR UPDATE;
+ INSERT INTO k3_automation_config(id,auto_close,close_time,zalo_enabled,group_id,group_name,send_time,scope_kind,scope_id,updated_by) VALUES(true,coalesce((_payload->>'auto_close')::boolean,true),ct,coalesce((_payload->>'zalo_enabled')::boolean,false),nullif(btrim(_payload->>'group_id'),''),nullif(btrim(_payload->>'group_name'),''),st,sk,CASE WHEN sk<>'all' THEN sid END,auth.uid()) ON CONFLICT(id) DO UPDATE SET auto_close=excluded.auto_close,close_time=excluded.close_time,zalo_enabled=excluded.zalo_enabled,group_id=excluded.group_id,group_name=excluded.group_name,send_time=excluded.send_time,scope_kind=excluded.scope_kind,scope_id=excluded.scope_id,updated_at=now(),updated_by=auth.uid();
+ INSERT INTO k3_settings_log(changed_by,snapshot) VALUES(auth.uid(),jsonb_build_object('old',old,'new',public.k3_automation_read(),'kind','automation'));
+ PERFORM cron.schedule('k3-auto-close',extract(minute FROM ct)::int::text||' '||mod(extract(hour FROM ct)::int+17,24)::text||' * * *','SELECT public.k3_auto_close_run();');
+ UPDATE k3_automation_config SET employee_review_enabled=coalesce((_payload->>'employee_review_enabled')::boolean,employee_review_enabled),review_reminders=coalesce((_payload->>'review_reminders')::boolean,review_reminders),review_remind_time=coalesce((_payload->>'review_remind_time')::time,review_remind_time),review_second_reminder=coalesce((_payload->>'review_second_reminder')::boolean,review_second_reminder),review_second_time=coalesce((_payload->>'review_second_time')::time,review_second_time) WHERE id; PERFORM private.k3_review_schedule(); RETURN public.k3_automation_read();
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_can(_actor uuid, _permission text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN IF NOT private.legacy_business_allowed(_actor) THEN RETURN false; END IF;
+  IF _actor IS NULL OR NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=_actor AND status='Đang hoạt động') THEN RETURN false; END IF;
+  IF public.is_super_admin(_actor) OR public.biz_admin(_actor) THEN RETURN true; END IF;
+  IF _permission='k3.use' THEN RETURN public.biz_participant(_actor); END IF;
+  IF _permission IN ('k3.view_scope','k3.comment') THEN RETURN public.biz_manager(_actor) OR public.biz_all_scope(_actor); END IF;
+  RETURN false;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_comment_save(_day_id uuid, _task_id uuid, _body text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE d public.k3_days; c public.k3_comments; BEGIN
+ SELECT * INTO d FROM public.k3_days WHERE id=_day_id;
+ IF d.id IS NULL OR auth.uid() IS NULL OR NOT public.k3_can(auth.uid(),'k3.comment') OR NOT public.k3_day_scope_ok(auth.uid(),d.id) THEN RAISE EXCEPTION 'Bạn không có quyền nhận xét 3K này.'; END IF;
+ IF NOT coalesce((SELECT enabled FROM public.k3_settings WHERE id),false) THEN RAISE EXCEPTION 'Module 3K đang tạm khóa.'; END IF;
+ IF _task_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.k3_tasks WHERE id=_task_id AND day_id=d.id AND user_id=d.user_id AND deleted_at IS NULL) THEN RAISE EXCEPTION 'Công việc nhận xét không thuộc đúng nhân viên và ngày.'; END IF;
+ IF btrim(coalesce(_body,''))='' THEN RAISE EXCEPTION 'Nội dung nhận xét không được trống.'; END IF;
+ INSERT INTO public.k3_comments(day_id,task_id,author_id,body) VALUES(d.id,_task_id,auth.uid(),btrim(_body)) RETURNING * INTO c; RETURN to_jsonb(c); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_data_review_save(_kind text, _id uuid, _reason text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE row jsonb; v public.k3_data_reviews;
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Admin được rà soát.'; END IF;
+ IF btrim(coalesce(_reason,''))='' THEN RAISE EXCEPTION 'Cần lý do rà soát.'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM private.k3_kpi_upgrade_backups) THEN RAISE EXCEPTION 'Cần bản sao đã kiểm đếm trước cách ly.'; END IF;
+ IF _kind='goal' THEN SELECT to_jsonb(t) INTO row FROM k3_goals t WHERE id=_id FOR UPDATE;
+ ELSIF _kind='action' THEN SELECT to_jsonb(t) INTO row FROM k3_actions t WHERE id=_id FOR UPDATE;
+ ELSIF _kind='kpi' THEN SELECT to_jsonb(t) INTO row FROM k3_kpis t WHERE id=_id FOR UPDATE;
+ ELSIF _kind='task' THEN SELECT to_jsonb(t) INTO row FROM k3_tasks t WHERE id=_id FOR UPDATE;
+ ELSE RAISE EXCEPTION 'Loại dữ liệu không hợp lệ.'; END IF;
+ IF row IS NULL THEN RAISE EXCEPTION 'Không tìm thấy dữ liệu.'; END IF;
+ INSERT INTO public.k3_data_reviews(kind,record_id,reason,original_snapshot) VALUES(_kind,_id,btrim(_reason),row) ON CONFLICT(kind,record_id) DO NOTHING RETURNING * INTO v;
+ IF v.id IS NULL THEN SELECT * INTO v FROM k3_data_reviews WHERE kind=_kind AND record_id=_id; END IF;
+ RETURN to_jsonb(v);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_day_read(_date date)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT public.k3_user_day_read(auth.uid(),_date)$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_day_save(_date date, _kg text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE d public.k3_days; BEGIN
+ PERFORM private.k3_write_guard(_date);
+ INSERT INTO public.k3_days(user_id,work_date,kg,planned_at) VALUES(auth.uid(),_date,nullif(btrim(coalesce(_kg,'')),''),now()) ON CONFLICT(user_id,work_date) DO UPDATE SET kg=excluded.kg,updated_at=now() RETURNING * INTO d;
+ INSERT INTO public.k3_task_events(day_id,actor_id,action,detail) VALUES(d.id,auth.uid(),'plan',jsonb_build_object('kg',d.kg)); RETURN to_jsonb(d); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_day_scope_ok(_actor uuid, _day uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT EXISTS(SELECT 1 FROM public.k3_days d WHERE d.id=_day AND _actor IS NOT NULL AND ((_actor=d.user_id AND public.k3_can(_actor,'k3.use')) OR (public.k3_can(_actor,'k3.view_scope') AND public.biz_scope_ok(_actor,d.user_id,d.department_id,(d.work_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')))))$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_deletable(_kind text, _id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); g public.k3_goals; a public.k3_actions; t public.k3_tasks;
+BEGIN
+  IF uid IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','Chưa đăng nhập.'); END IF;
+  -- k3delete hotfix fence
+  IF NOT public.k3_can(uid,'k3.use') THEN RETURN jsonb_build_object('ok',false,'reason','Bạn không có quyền xóa công việc.'); END IF;
+  IF _kind='action' AND EXISTS(SELECT 1 FROM k3_actions x WHERE x.id=_id AND x.deleted_at IS NULL AND NOT EXISTS(SELECT 1 FROM k3_actions s WHERE s.goal_id=x.goal_id AND s.id<>x.id AND s.deleted_at IS NULL)) THEN
+    RETURN public.k3_deletable('goal',(SELECT goal_id FROM k3_actions WHERE id=_id));
+  END IF;
+  IF _kind='goal' THEN
+    SELECT * INTO g FROM public.k3_goals WHERE id=_id AND deleted_at IS NULL;
+    IF g.id IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','Không tìm thấy công việc.'); END IF;
+    IF NOT (g.user_id=uid OR public.biz_admin(uid)) THEN RETURN jsonb_build_object('ok',false,'reason','Chỉ người chủ trì hoặc Admin được xóa.'); END IF;
+    IF g.status='cancelled' THEN RETURN jsonb_build_object('ok',false,'reason','Công việc đã hủy được giữ trong lịch sử.'); END IF; 
+    
+    RETURN jsonb_build_object('ok',true);
+  ELSIF _kind='action' THEN
+    SELECT * INTO a FROM public.k3_actions WHERE id=_id AND deleted_at IS NULL;
+    IF a.id IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','Không tìm thấy KF.'); END IF;
+    SELECT * INTO g FROM public.k3_goals WHERE id=a.goal_id;
+    IF g.deleted_at IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'reason','Công việc chứa KF này đang ở Thùng rác.'); END IF;
+    IF NOT (private.k3_goal_manage_ok(uid,a.goal_id) OR (a.user_id=uid AND a.assignee_id=uid AND NOT EXISTS(SELECT 1 FROM public.k3_action_collaborators c WHERE c.action_id=a.id) AND NOT EXISTS(SELECT 1 FROM public.k3_tasks x WHERE x.action_id=a.id AND x.user_id<>uid AND x.deleted_at IS NULL))) THEN RETURN jsonb_build_object('ok',false,'reason','Bạn không có quyền xóa KF này.'); END IF;
+    IF a.status='cancelled' OR g.status='cancelled' THEN RETURN jsonb_build_object('ok',false,'reason','Công việc đã hủy được giữ trong lịch sử.'); END IF; 
+    
+    IF g.status<>'draft' AND NOT EXISTS(SELECT 1 FROM public.k3_actions x WHERE x.goal_id=g.id AND x.id<>a.id AND x.deleted_at IS NULL AND x.status<>'cancelled') THEN RETURN jsonb_build_object('ok',false,'reason','KF duy nhất của công việc đang thực hiện — hãy xóa toàn bộ công việc.'); END IF;
+    RETURN jsonb_build_object('ok',true);
+  ELSIF _kind='task' THEN
+    SELECT * INTO t FROM public.k3_tasks WHERE id=_id AND deleted_at IS NULL;
+    IF t.id IS NULL THEN RETURN jsonb_build_object('ok',false,'reason','Không tìm thấy công việc.'); END IF;
+    IF t.user_id<>uid AND NOT public.biz_admin(uid) THEN RETURN jsonb_build_object('ok',false,'reason','Bạn không được xóa công việc của người khác.'); END IF;
+    
+    
+    RETURN jsonb_build_object('ok',true);
+  ELSE RETURN jsonb_build_object('ok',false,'reason','Loại dữ liệu không hợp lệ.'); END IF;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_discipline_exclude(_user uuid, _date date, _reason text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ IF NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Admin được loại dữ liệu khỏi thống kê.'; END IF;
+ IF btrim(coalesce(_reason,''))='' THEN RAISE EXCEPTION 'Cần lý do đối soát.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(_user::text));
+ UPDATE k3_plan_checkpoints SET excluded_at=now(),excluded_by=auth.uid(),exclusion_reason=_reason WHERE user_id=_user AND work_date=_date;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Chưa có dấu mốc ngày này.'; END IF;
+ INSERT INTO k3_discipline_events(user_id,work_date,actor_id,action,detail) VALUES(_user,_date,auth.uid(),'exclude',jsonb_build_object('reason',_reason));RETURN true;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_discipline_read(_start date, _end date, _manage boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid();d date;p record;c k3_plan_checkpoints;s jsonb;rows jsonb:='[]';duty boolean;
+BEGIN
+ IF uid IS NULL OR NOT public.k3_can(uid,CASE WHEN _manage THEN 'k3.view_scope' ELSE 'k3.use' END) THEN RAISE EXCEPTION 'Bạn không có quyền xem kỷ luật 3K.'; END IF;
+ IF _end<_start OR _end-_start>366 THEN RAISE EXCEPTION 'Khoảng xem tối đa một năm.'; END IF;
+ FOR d IN SELECT generate_series(_start::timestamp,least(_end,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)::timestamp,interval '1 day')::date LOOP
+ FOR p IN SELECT id,full_name FROM profiles WHERE (NOT _manage AND id=uid) OR (_manage AND public.k3_can(id,'k3.use') AND public.biz_participant(id) AND (public.biz_admin(uid) OR public.biz_scope_ok(uid,id,coalesce((SELECT department_id FROM k3_plan_checkpoints WHERE user_id=id AND work_date=d),public.biz_department_at(id,d)),d::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))) LOOP
+ SELECT * INTO c FROM k3_plan_checkpoints WHERE user_id=p.id AND work_date=d;
+ duty:=coalesce(c.obligated,private.k3_day_obligated(p.id,d));s:=private.k3_employee_review_state(p.id,d);
+ rows:=rows||jsonb_build_array(jsonb_build_object('user_id',p.id,'name',p.full_name,'date',d,'department',(SELECT name FROM biz_departments WHERE id=coalesce(c.department_id,public.biz_department_at(p.id,d))),'obligated',duty AND c.excluded_at IS NULL,'plan_status',CASE WHEN c.excluded_at IS NOT NULL OR NOT duty THEN 'na' ELSE coalesce(c.current_status,'unobserved') END,'plan_source',c.source,'deadline_at',c.deadline_at,'initial_status',c.initial_status,'observed_at',c.observed_at,'excluded',c.excluded_at IS NOT NULL,'exclusion_reason',c.exclusion_reason,'manual_status',s->>'manual_status','summary_due_at',c.summary_deadline_at,'confirmed_at',s->'confirmed_at','summary_late',coalesce((s->>'summary_late')::boolean,false),'system_status',s->>'system_status','action_count',s->'action_count','result_count',s->'result_count'));
+ END LOOP; END LOOP;RETURN rows;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_draft_delete(_kind text, _id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN RETURN public.k3_soft_delete(_kind,_id); END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_employee_review_confirm(_date date, _version text, _request_key uuid, _ack_missing boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); s jsonb; existing k3_employee_reviews;
+BEGIN
+ IF uid IS NULL OR NOT public.k3_can(uid,'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền tổng kết.'; END IF;
+ IF _date>(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date OR _request_key IS NULL THEN RAISE EXCEPTION 'Ngày hoặc mã yêu cầu không hợp lệ.'; END IF;
+ IF NOT coalesce((SELECT employee_review_enabled FROM k3_automation_config WHERE id),true) THEN RAISE EXCEPTION 'Tổng kết thủ công đang tắt.'; END IF; PERFORM private.k3_write_guard(_date); PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(uid::text));
+ SELECT * INTO existing FROM k3_employee_reviews WHERE user_id=uid AND request_key=_request_key;
+ IF existing.id IS NOT NULL THEN IF existing.work_date<>_date THEN RAISE EXCEPTION 'Mã yêu cầu thuộc ngày khác.'; END IF; RETURN public.k3_employee_review_read(_date); END IF;
+ s:=private.k3_employee_day_source(uid,_date);
+ IF private.k3_review_fingerprint(s) IS DISTINCT FROM _version THEN RAISE EXCEPTION 'Dữ liệu đã thay đổi ở nơi khác. Vui lòng rà soát lại.'; END IF;
+ IF (s->>'missing')::int>0 AND NOT _ack_missing THEN RAISE EXCEPTION 'Cần xác nhận đã xem cảnh báo KF chưa cập nhật.'; END IF;
+ INSERT INTO k3_employee_reviews(user_id,work_date,actor_id,source_version,snapshot,missing_acknowledged,request_key) VALUES(uid,_date,uid,_version,s,_ack_missing,_request_key);
+ RETURN public.k3_employee_review_read(_date);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_employee_review_read(_date date, _user uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=coalesce(_user,auth.uid()); s jsonb;
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.k3_can(auth.uid(),CASE WHEN uid=auth.uid() THEN 'k3.use' ELSE 'k3.view_scope' END) THEN RAISE EXCEPTION 'Bạn không có quyền xem tổng kết.'; END IF;
+ IF uid<>auth.uid() AND NOT public.biz_admin(auth.uid()) AND NOT public.biz_scope_ok(auth.uid(),uid,coalesce((SELECT department_id FROM k3_daily_closes WHERE user_id=uid AND work_date=_date),public.biz_department_at(uid,_date)),_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh') THEN RAISE EXCEPTION 'Nhân viên ngoài phạm vi.'; END IF;
+ s:=private.k3_employee_review_state(uid,_date);
+ RETURN s||jsonb_build_object('history',coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'revision',revision,'source_version',source_version,'confirmed_at',confirmed_at,'actor_id',actor_id,'missing',snapshot->'missing') ORDER BY revision DESC) FROM k3_employee_reviews WHERE user_id=uid AND work_date=_date),'[]'));
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_employee_review_team(_date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid();rows jsonb;
+BEGIN
+ IF uid IS NULL OR NOT public.k3_can(uid,'k3.view_scope') THEN RAISE EXCEPTION 'Bạn không có quyền theo dõi tổng kết.'; END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',p.id,'name',p.full_name,'department',dep.name,'data',private.k3_employee_review_state(p.id,_date)) ORDER BY p.full_name),'[]') INTO rows FROM profiles p LEFT JOIN biz_departments dep ON dep.id=public.biz_department_at(p.id,_date) WHERE public.k3_can(p.id,'k3.use') AND (public.biz_admin(uid) OR public.biz_scope_ok(uid,p.id,coalesce((SELECT department_id FROM k3_daily_closes WHERE user_id=p.id AND work_date=_date),dep.id),_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) AND (NOT public.biz_admin(p.id) OR public.biz_participant(p.id));
+ RETURN rows; END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_goal_activate(_id uuid, _revision bigint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g k3_goals;
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));SELECT * INTO g FROM k3_goals WHERE id=_id FOR UPDATE;
+ IF g.id IS NULL OR g.deleted_at IS NOT NULL OR NOT private.k3_goal_manage_ok(auth.uid(),_id) THEN RAISE EXCEPTION 'Bạn không được lưu công việc này.'; END IF;
+ IF g.revision IS DISTINCT FROM _revision THEN RAISE EXCEPTION 'Công việc đã thay đổi. Vui lòng tải lại.'; END IF;
+ IF g.status<>'draft' THEN RETURN to_jsonb(g); END IF;
+ PERFORM private.k3_write_guard(greatest(g.period_start,coalesce((SELECT effective_from FROM k3_settings WHERE id),g.period_start)));
+ IF NOT EXISTS(SELECT 1 FROM k3_actions WHERE goal_id=_id AND deleted_at IS NULL AND status<>'cancelled') OR EXISTS(SELECT 1 FROM k3_actions a WHERE a.goal_id=_id AND a.deleted_at IS NULL AND a.status<>'cancelled' AND NOT EXISTS(SELECT 1 FROM k3_kpis k WHERE k.action_id=a.id AND k.required)) THEN RAISE EXCEPTION 'Công việc cần KF và ít nhất một KPI bắt buộc cho mỗi KF.'; END IF;
+ IF EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND (v.record_id=_id OR v.record_id IN(SELECT id FROM k3_actions WHERE goal_id=_id) OR v.record_id IN(SELECT k.id FROM k3_kpis k LEFT JOIN k3_actions a ON a.id=k.action_id WHERE coalesce(k.goal_id,a.goal_id)=_id))) THEN RAISE EXCEPTION 'Công việc đang chờ rà soát.'; END IF;
+ UPDATE k3_goals SET status='not_started',revision=revision+1,updated_at=now() WHERE id=_id RETURNING * INTO g;
+ UPDATE k3_actions SET status='not_started',revision=revision+1,updated_at=now() WHERE goal_id=_id AND status='draft' AND deleted_at IS NULL;
+ INSERT INTO k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,auth.uid(),'goal_valid_save',jsonb_build_object('revision',g.revision));
+ RETURN to_jsonb(g)||jsonb_build_object('status',private.k3_entity_metric('goal',g.id)->>'status');
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_goal_detail(_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g public.k3_goals; today date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO g FROM public.k3_goals WHERE id=_id;
+  IF g.id IS NULL OR NOT public.k3_goal_visible(auth.uid(), g.id) THEN RAISE EXCEPTION 'Bạn không có quyền xem mục tiêu này.'; END IF;
+  IF g.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Mục tiêu đang nằm trong Thùng lưu trữ.'; END IF;
+  RETURN jsonb_build_object(
+    'goal', to_jsonb(g) || jsonb_build_object('owner_id',g.user_id,'metric',private.k3_entity_metric('goal',g.id),'status',private.k3_entity_metric('goal',g.id)->>'status') || jsonb_build_object('owner_name',(SELECT full_name FROM public.profiles WHERE id=g.user_id),'overdue_days',CASE WHEN private.k3_goal_overdue(g.id) THEN greatest(1,today-coalesce(g.due_date,g.period_end)) ELSE 0 END),
+    'kpis', coalesce((SELECT jsonb_agg(row) FROM (
+      SELECT jsonb_build_object('id',k.id,'name',k.name,'kind',k.kind,'target',k.target,'unit',k.unit,'manual_actual',k.manual_actual,'manual_source',k.manual_source,
+        'actual',CASE WHEN k.kind='cumulative' THEN (SELECT coalesce(sum(t.kpi_actual),0) FROM public.k3_tasks t JOIN public.k3_actions a ON a.id=t.action_id WHERE a.goal_id=g.id AND a.deleted_at IS NULL AND t.deleted_at IS NULL AND NOT t.is_unscheduled AND t.kpi_actual IS NOT NULL AND (t.kpi_id=k.id OR (t.kpi_id IS NULL AND nullif(btrim(coalesce(t.kpi_unit,'')),'') IS NOT DISTINCT FROM nullif(btrim(coalesce(k.unit,'')),'')))) ELSE k.manual_actual END) row
+      FROM public.k3_kpis k WHERE k.goal_id=g.id ORDER BY k.sort_order,k.created_at) sorted),'[]'::jsonb),
+    'actions', coalesce((SELECT jsonb_agg(row) FROM (
+      SELECT jsonb_build_object('action',to_jsonb(a)||jsonb_build_object('status',private.k3_entity_metric('action',a.id)->>'status','kpi_summary',private.k3_entity_metric('action',a.id)),'assignee_name',(SELECT full_name FROM public.profiles WHERE id=a.assignee_id),
+        'collaborators',coalesce((SELECT jsonb_agg(jsonb_build_object('user_id',c.user_id,'full_name',pr.full_name)) FROM public.k3_action_collaborators c JOIN public.profiles pr ON pr.id=c.user_id WHERE c.action_id=a.id),'[]'::jsonb),
+        'kpis',coalesce((SELECT jsonb_agg(krow) FROM (SELECT jsonb_build_object('id',k.id,'name',k.name,'kind',k.kind,'target',k.target,'unit',k.unit,'manual_actual',k.manual_actual,'manual_source',k.manual_source,
+            'actual',CASE WHEN k.kind='cumulative' THEN private.k3_action_kpi_actual(a.id,k.id,k.unit) ELSE k.manual_actual END) krow FROM public.k3_kpis k WHERE k.action_id=a.id ORDER BY k.sort_order,k.created_at) ksorted),'[]'::jsonb),
+        'member_actuals',coalesce((SELECT jsonb_agg(mrow) FROM (SELECT jsonb_build_object('user_id',t.user_id,'full_name',pr.full_name,'actual',sum(t.kpi_actual),'days',count(DISTINCT t.work_date)) mrow FROM public.k3_tasks t JOIN public.profiles pr ON pr.id=t.user_id WHERE t.action_id=a.id AND t.deleted_at IS NULL AND NOT t.is_unscheduled AND t.kpi_actual IS NOT NULL GROUP BY t.user_id,pr.full_name) msorted),'[]'::jsonb),
+        'task_total',(SELECT count(*) FROM public.k3_tasks t WHERE t.action_id=a.id AND t.deleted_at IS NULL AND NOT t.is_unscheduled),
+        'task_done',(SELECT count(*) FROM public.k3_tasks t WHERE t.action_id=a.id AND t.deleted_at IS NULL AND NOT t.is_unscheduled AND private.k3_task_complete(t.kpi_target,t.kpi_actual,t.progress,t.status)),
+        'overdue_days',CASE WHEN private.k3_action_overdue(a.id) THEN greatest(1,today-coalesce(a.due_date,g.period_end)) ELSE 0 END) row
+      FROM public.k3_actions a WHERE a.goal_id=g.id AND a.status<>'cancelled' AND a.deleted_at IS NULL ORDER BY a.is_key DESC, a.created_at) sorted),'[]'::jsonb),
+    'members', coalesce((SELECT jsonb_agg(row) FROM (
+      SELECT jsonb_build_object('user_id',m.user_id,'full_name',p.full_name,'status',m.status,'invited_at',m.invited_at,'responded_at',m.responded_at,
+        'departments',coalesce((SELECT array_agg(DISTINCT d.name) FROM public.biz_department_members mm JOIN public.biz_departments d ON d.id=mm.department_id WHERE mm.user_id=m.user_id),'{}'::text[])) row
+      FROM public.k3_goal_members m JOIN public.profiles p ON p.id=m.user_id WHERE m.goal_id=g.id ORDER BY m.invited_at) sorted),'[]'::jsonb),
+    'executions', coalesce((SELECT jsonb_agg(row) FROM (
+      SELECT jsonb_build_object('id',t.id,'work_date',t.work_date,'name',t.name,'status',t.status,'kpi_actual',t.kpi_actual,'kpi_unit',t.kpi_unit,'kpi_id',t.kpi_id,'progress',t.progress,'action_id',t.action_id,'user_id',t.user_id,'full_name',p.full_name,'problem',t.problem,'solution',t.solution) row
+      FROM public.k3_tasks t JOIN public.profiles p ON p.id=t.user_id
+      WHERE t.action_id IN (SELECT a.id FROM public.k3_actions a WHERE a.goal_id=g.id AND a.deleted_at IS NULL) AND t.deleted_at IS NULL AND NOT t.is_unscheduled
+      ORDER BY t.work_date DESC, t.id LIMIT 200) sorted),'[]'::jsonb),
+    'events', coalesce((SELECT jsonb_agg(row) FROM (
+      SELECT jsonb_build_object('id',e.id,'action',e.action,'detail',e.detail,'created_at',e.created_at,'actor_name',(SELECT full_name FROM public.profiles WHERE id=e.actor_id)) row
+      FROM public.k3_plan_events e WHERE e.goal_id=g.id ORDER BY e.created_at DESC LIMIT 100) sorted),'[]'::jsonb),
+    'can_manage', private.k3_goal_manage_ok(auth.uid(), g.id),
+    'my_member_status', (SELECT status FROM public.k3_goal_members WHERE goal_id=g.id AND user_id=auth.uid()),
+    'today', today
+  );
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_goal_list(_filter text DEFAULT 'all'::text, _q text DEFAULT ''::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE today date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  IF NOT public.k3_can(auth.uid(),'k3.use') AND NOT public.k3_can(auth.uid(),'k3.view_scope') THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K.'; END IF;
+  RETURN coalesce((SELECT jsonb_agg(row) FROM (
+    SELECT row FROM (
+      SELECT jsonb_build_object(
+        'id',g.id,'name',g.name,'metric',private.k3_entity_metric('goal',g.id),'status',private.k3_entity_metric('goal',g.id)->>'status','period_type',g.period_type,'period_start',g.period_start,'period_end',g.period_end,'due_date',g.due_date,'start_time',g.start_time,'due_time',g.due_time,'is_key',g.is_key,
+        'owner_id',g.user_id,'owner_name',p.full_name,'revision',g.revision,
+        'my_role',CASE WHEN g.user_id=auth.uid() THEN 'owner' ELSE m.status END,
+        'member_count',(SELECT count(*) FROM public.k3_goal_members x WHERE x.goal_id=g.id AND x.status='accepted'),
+        'kf_total',(SELECT count(*) FROM public.k3_actions a WHERE a.goal_id=g.id AND a.status<>'cancelled' AND a.deleted_at IS NULL),
+        'kf_done',(SELECT count(*) FROM public.k3_actions a WHERE a.goal_id=g.id AND private.k3_entity_metric('action',a.id)->>'status'='done' AND a.deleted_at IS NULL),
+        'overdue_days',CASE WHEN private.k3_goal_overdue(g.id) THEN greatest(1,today-coalesce(g.due_date,g.period_end)) ELSE 0 END
+      ) row
+      FROM public.k3_goals g
+      JOIN public.profiles p ON p.id=g.user_id
+      LEFT JOIN public.k3_goal_members m ON m.goal_id=g.id AND m.user_id=auth.uid()
+      WHERE g.deleted_at IS NULL AND g.status<>'cancelled'
+        AND (coalesce(_q,'')='' OR g.name ILIKE '%'||_q||'%')
+        AND (
+          (_filter='mine' AND g.user_id=auth.uid())
+          OR (_filter='joined' AND m.status='accepted' AND g.user_id<>auth.uid())
+          OR (_filter='invited' AND m.status='invited')
+          OR (_filter='assigned' AND g.user_id<>auth.uid() AND m.status='accepted' AND EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.goal_id=g.id AND a.assignee_id=auth.uid() AND a.status<>'cancelled' AND a.deleted_at IS NULL))
+          OR (_filter='collab' AND public.k3_goal_visible(auth.uid(),g.id) AND EXISTS(SELECT 1 FROM public.k3_goal_members x WHERE x.goal_id=g.id AND x.status IN ('invited','accepted')))
+          OR (_filter='scope' AND public.k3_can(auth.uid(),'k3.view_scope') AND g.user_id<>auth.uid() AND (public.biz_admin(auth.uid()) OR public.biz_scope_ok(auth.uid(),g.user_id,g.department_id,(g.period_start::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))))
+          OR (_filter IN ('all','active','overdue','done') AND (g.user_id=auth.uid() OR EXISTS(SELECT 1 FROM k3_actions pa WHERE pa.goal_id=g.id AND pa.deleted_at IS NULL AND private.k3_action_worker_ok(auth.uid(),pa.id))))
+        )
+        AND (_filter<>'active' OR private.k3_entity_metric('goal',g.id)->>'status' IN ('not_started','in_progress','paused'))
+        AND (_filter<>'overdue' OR private.k3_goal_overdue(g.id))
+        AND (_filter<>'done' OR private.k3_entity_metric('goal',g.id)->>'status'='done')
+    ) unsorted ORDER BY (row->>'is_key')::boolean DESC, row->>'period_end'
+  ) sorted),'[]'::jsonb);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_goal_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g public.k3_goals; old public.k3_goals; p jsonb:=_payload; _id uuid:=nullif(p->>'id','')::uuid; typ text:=coalesce(nullif(p->>'period_type',''),'custom'); dt date:=nullif(p->>'period_start','')::date; de date:=nullif(p->>'period_end','')::date; key uuid:=nullif(p->>'request_key','')::uuid; st text;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+  IF _id IS NOT NULL THEN
+    SELECT * INTO old FROM public.k3_goals WHERE id=_id FOR UPDATE;
+    IF old.id IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(), old.id) THEN RAISE EXCEPTION 'Bạn không được sửa mục tiêu này.'; END IF;
+    IF old.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Mục tiêu đang nằm trong Thùng lưu trữ. Hãy khôi phục trước khi chỉnh sửa.'; END IF;
+    IF (p->>'revision')::bigint IS DISTINCT FROM old.revision THEN RAISE EXCEPTION 'Mục tiêu đã thay đổi. Vui lòng tải lại.'; END IF;
+    typ:=old.period_type;
+    IF typ='custom' THEN
+      dt:=coalesce(dt, old.period_start);
+      de:=coalesce(de, old.period_end);
+    ELSE
+      dt:=old.period_start; de:=old.period_end;
+    END IF;
+  ELSE
+    IF key IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu lưu mục tiêu.'; END IF;
+    SELECT * INTO g FROM public.k3_goals WHERE user_id=auth.uid() AND request_key=key;
+    IF g.id IS NOT NULL THEN RETURN to_jsonb(g); END IF;
+    IF NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF;
+    IF NOT coalesce((SELECT allow_personal_goal FROM public.k3_settings WHERE id),true) AND NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Quyền tạo KG đang tắt trong Cài đặt 3K.'; END IF;
+  END IF;
+  IF typ='custom' THEN
+    IF dt IS NULL OR de IS NULL OR de < dt THEN RAISE EXCEPTION 'Cần chọn ngày bắt đầu và hạn hoàn thành hợp lệ.'; END IF;
+    PERFORM private.k3_write_guard(greatest(dt, coalesce((SELECT effective_from FROM public.k3_settings WHERE id), dt)));
+  ELSE
+    dt:=public.k3_period_start(typ,dt);
+    IF dt IS NULL THEN RAISE EXCEPTION 'Cần chọn kỳ.'; END IF;
+    de:=public.k3_period_end(typ,dt);
+    PERFORM private.k3_period_write_guard(typ,dt);
+  END IF;
+  IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Tên mục tiêu không được trống.'; END IF;
+  IF p ? 'status' AND p->>'status'<>'draft' THEN RAISE EXCEPTION 'Trạng thái thực hiện do hệ thống xác định. Lưu công việc hợp lệ thay vì chọn trạng thái.'; END IF; st:='draft';
+  IF st NOT IN ('draft','not_started','in_progress') THEN RAISE EXCEPTION 'Trạng thái khởi tạo không hợp lệ.'; END IF;
+  IF _id IS NULL THEN
+    INSERT INTO public.k3_goals(user_id,period_type,period_start,period_end,name,description,expected_result,due_date,department_id,request_key,status,is_key,start_time,due_time)
+    VALUES(auth.uid(),typ,dt,de,btrim(p->>'name'),nullif(btrim(p->>'description'),''),nullif(btrim(p->>'expected_result'),''),coalesce(nullif(p->>'due_date','')::date,de),public.biz_department_at(auth.uid(),greatest(dt,coalesce((SELECT period_effective_from FROM public.k3_settings WHERE id),dt))),key,st,coalesce((p->>'is_key')::boolean,false),nullif(p->>'start_time','')::time,nullif(p->>'due_time','')::time)
+    RETURNING * INTO g;
+  ELSE
+    UPDATE public.k3_goals SET start_time=CASE WHEN p ? 'start_time' THEN nullif(p->>'start_time','')::time ELSE start_time END,due_time=CASE WHEN p ? 'due_time' THEN nullif(p->>'due_time','')::time ELSE due_time END,name=btrim(p->>'name'),description=nullif(btrim(p->>'description'),''),expected_result=nullif(btrim(p->>'expected_result'),''),due_date=nullif(p->>'due_date','')::date,is_key=coalesce((p->>'is_key')::boolean,old.is_key),
+      period_start=CASE WHEN old.period_type='custom' THEN dt ELSE old.period_start END,
+      period_end=CASE WHEN old.period_type='custom' THEN de ELSE old.period_end END,
+      revision=revision+1,updated_at=now()
+    WHERE id=_id RETURNING * INTO g;
+  END IF;
+  UPDATE public.k3_goals SET start_time=CASE WHEN p ? 'start_time' THEN nullif(p->>'start_time','')::time ELSE start_time END,due_time=CASE WHEN p ? 'due_time' THEN nullif(p->>'due_time','')::time ELSE due_time END WHERE id=g.id RETURNING * INTO g;
+ INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,auth.uid(),'goal_save',jsonb_build_object('before',to_jsonb(old),'after',to_jsonb(g)));
+  RETURN to_jsonb(g);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_goal_status(_id uuid, _status text, _note text, _revision bigint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g public.k3_goals;
+BEGIN
+  IF _status NOT IN ('paused','ended_missed','cancelled') OR nullif(btrim(_note),'') IS NULL THEN RAISE EXCEPTION 'Trạng thái thông thường tự động; quyết định đặc biệt cần lý do.'; END IF; IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO g FROM public.k3_goals WHERE id=_id FOR UPDATE;
+  IF g.id IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(), g.id) THEN RAISE EXCEPTION 'Bạn không có quyền đổi trạng thái mục tiêu này.'; END IF;
+  IF g.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Công việc đang trong Thùng rác.'; END IF; PERFORM private.k3_write_guard(greatest(g.period_start,coalesce((SELECT effective_from FROM k3_settings WHERE id),g.period_start))); IF _revision IS NULL OR _revision <> g.revision THEN RAISE EXCEPTION 'Mục tiêu đã thay đổi. Vui lòng tải lại.'; END IF;
+  IF _status NOT IN ('draft','not_started','in_progress','paused','done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Trạng thái không hợp lệ.'; END IF;
+  IF _status='in_progress' AND NOT EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.goal_id=g.id AND a.status<>'cancelled') THEN RAISE EXCEPTION 'KG bắt đầu thực hiện cần ít nhất một KF.'; END IF;
+  UPDATE public.k3_goals SET status=_status,
+    closed_at=CASE WHEN _status IN ('done','ended_missed','cancelled') THEN now() ELSE NULL END,
+    closed_by=CASE WHEN _status IN ('done','ended_missed','cancelled') THEN auth.uid() ELSE NULL END,
+    close_note=CASE WHEN _status IN ('done','ended_missed','cancelled') THEN nullif(btrim(coalesce(_note,'')),'') ELSE close_note END,
+    revision=revision+1, updated_at=now()
+  WHERE id=g.id RETURNING * INTO g;
+  INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,auth.uid(),'goal_status',jsonb_build_object('status',_status,'note',nullif(btrim(coalesce(_note,'')),'')));
+  RETURN to_jsonb(g);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_goal_visible(_actor uuid, _goal uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS(
+    SELECT 1 FROM public.k3_goals g
+    WHERE g.id = _goal AND _actor IS NOT NULL AND (
+      public.biz_admin(_actor)
+      OR (g.user_id = _actor AND public.k3_can(_actor, 'k3.use'))
+      OR EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id = g.id AND m.user_id = _actor AND m.status IN ('invited','accepted') AND public.k3_can(_actor, 'k3.use'))
+      OR (public.k3_can(_actor, 'k3.view_scope') AND public.biz_scope_ok(_actor, g.user_id, g.department_id, (g.period_start::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')))
+    )
+  )
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_accept(_result uuid, _revision bigint, _decision text, _reason text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE r k3_kpi_results; k k3_kpis; a k3_kpi_acceptances;
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ SELECT * INTO r FROM k3_kpi_results WHERE id=_result;
+ IF r.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy kết quả.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(r.user_id::text)); PERFORM pg_advisory_xact_lock(hashtext('k3result'),hashtext(r.kpi_id::text));
+ SELECT * INTO r FROM k3_kpi_results WHERE id=_result FOR UPDATE;
+ IF NOT public.biz_admin(auth.uid()) AND (auth.uid()=r.user_id OR NOT public.k3_can(auth.uid(),'k3.view_scope') OR NOT public.biz_scope_ok(auth.uid(),r.user_id,public.biz_department_at(r.user_id,r.work_date),r.work_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) THEN RAISE EXCEPTION 'Bạn không có quyền nghiệm thu trong phạm vi này.'; END IF;
+ IF NOT public.k3_goal_visible(auth.uid(),r.goal_id) OR EXISTS(SELECT 1 FROM k3_data_reviews WHERE status='pending' AND record_id IN(r.kpi_id,r.goal_id,r.action_id)) OR EXISTS(SELECT 1 FROM k3_goals WHERE id=r.goal_id AND deleted_at IS NOT NULL) OR EXISTS(SELECT 1 FROM k3_actions WHERE id=r.action_id AND deleted_at IS NOT NULL) THEN RAISE EXCEPTION 'Kết quả ngoài phạm vi hoặc đang lưu trữ/chờ rà soát.'; END IF; PERFORM private.k3_write_guard(r.work_date);
+ IF r.revision<>_revision OR r.deleted_at IS NOT NULL OR r.review_reason IS NOT NULL THEN RAISE EXCEPTION 'Kết quả đã thay đổi hoặc đang lưu trữ.'; END IF;
+ SELECT * INTO k FROM k3_kpis WHERE id=r.kpi_id;
+ IF NOT coalesce((k.config->>'acceptance_required')::boolean,false) THEN RAISE EXCEPTION 'KPI không yêu cầu nghiệm thu.'; END IF;
+ IF _decision NOT IN('accepted','rejected') OR nullif(btrim(_reason),'') IS NULL THEN RAISE EXCEPTION 'Cần quyết định và lý do nghiệm thu.'; END IF;
+ INSERT INTO k3_kpi_acceptances(result_id,result_revision,decision,actor_id,reason) VALUES(r.id,r.revision,_decision,auth.uid(),btrim(_reason)) RETURNING * INTO a;
+ INSERT INTO k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) VALUES(r.user_id,r.goal_id,r.action_id,auth.uid(),'kpi_acceptance',to_jsonb(a)); RETURN to_jsonb(a);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_backup_create()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE snapshot jsonb; counts jsonb; b private.k3_kpi_upgrade_backups;
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Admin được tạo bản sao kiểm kê.'; END IF;
+ LOCK TABLE public.k3_goals,public.k3_actions,public.k3_kpis,public.k3_tasks,public.k3_days,public.k3_summary_versions,public.k3_task_events,public.k3_plan_events,public.k3_goal_members,public.k3_action_collaborators,public.k3_period_summaries,public.k3_comments,public.k3_period_comments,public.k3_kpi_results,public.k3_kpi_result_versions,public.k3_kpi_day_confirmations,public.k3_data_reviews IN SHARE MODE;
+ snapshot:=jsonb_build_object('goals',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_goals t),'actions',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_actions t),'kpis',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_kpis t),'tasks',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_tasks t),'days',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_days t),'summary_versions',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_summary_versions t),'task_events',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_task_events t),'plan_events',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_plan_events t),'members',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_goal_members t),'collaborators',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_action_collaborators t),'period_summaries',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_period_summaries t),'comments',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_comments t),'period_comments',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_period_comments t),'results',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_kpi_results t),'result_versions',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_kpi_result_versions t),'confirmations',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_kpi_day_confirmations t),'reviews',(SELECT coalesce(jsonb_agg(to_jsonb(t)),'[]') FROM k3_data_reviews t));
+ SELECT jsonb_object_agg(key,jsonb_array_length(value)) INTO counts FROM jsonb_each(snapshot);
+ INSERT INTO private.k3_kpi_upgrade_backups(created_by,snapshot,counts) VALUES(auth.uid(),snapshot,counts) RETURNING * INTO b;
+ IF (b.counts->>'tasks')::int<>(SELECT count(*) FROM k3_tasks) OR (b.counts->>'summary_versions')::int<>(SELECT count(*) FROM k3_summary_versions) THEN RAISE EXCEPTION 'Bản sao chưa đối soát đủ.'; END IF;
+ RETURN jsonb_build_object('id',b.id,'created_at',b.created_at,'counts',b.counts,'verified',true);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_configure(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+#variable_conflict use_variable
+DECLARE p jsonb:=_payload; k public.k3_kpis; kid uuid:=nullif(p->>'id','')::uuid; aid uuid:=nullif(p->>'action_id','')::uuid; gid uuid:=nullif(p->>'goal_id','')::uuid; key uuid:=nullif(p->>'request_key','')::uuid; perm uuid; measure text:=coalesce(p->>'measure','cumulative'); condition text:=coalesce(p->>'condition','gte'); target numeric:=nullif(p->>'target','')::numeric; upper_target numeric:=nullif(p->>'target_max','')::numeric; milestones jsonb:=coalesce(p->'milestones','[]'::jsonb);
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF; IF NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF; PERFORM private.k3_write_guard((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date);
+ IF kid IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtext('k3result'),hashtext(kid::text)); SELECT * INTO k FROM public.k3_kpis WHERE id=kid FOR UPDATE; IF k.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy KPI.'; END IF; aid:=k.action_id; gid:=k.goal_id; END IF;
+ IF aid IS NOT NULL THEN SELECT goal_id INTO perm FROM public.k3_actions WHERE id=aid; ELSE perm:=gid; END IF;
+ IF perm IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(),perm) THEN RAISE EXCEPTION 'Bạn không có quyền cấu hình KPI.'; END IF;
+ IF EXISTS(SELECT 1 FROM public.k3_goals WHERE id=perm AND deleted_at IS NOT NULL) OR EXISTS(SELECT 1 FROM public.k3_actions WHERE id=aid AND deleted_at IS NOT NULL) OR EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE status='pending' AND record_id IN (perm,aid,kid)) THEN RAISE EXCEPTION 'KG/KF/KPI đang lưu trữ hoặc chờ rà soát.'; END IF;
+ IF kid IS NOT NULL AND (EXISTS(SELECT 1 FROM public.k3_kpi_results WHERE kpi_id=kid) OR EXISTS(SELECT 1 FROM public.k3_tasks t WHERE t.kpi_id=kid OR (t.action_id=aid AND t.kpi_id IS NULL AND t.kpi_actual IS NOT NULL))) THEN RAISE EXCEPTION 'KPI đã có kết quả. Không được đổi công thức hồi tố.'; END IF;
+ IF btrim(coalesce(p->>'name',''))='' OR measure NOT IN ('cumulative','distinct','current','ratio','average','milestone','duration','binary','frequency','streak') OR condition NOT IN ('gte','lte','eq','range') THEN RAISE EXCEPTION 'Tên hoặc phương thức/điều kiện KPI không hợp lệ.'; END IF;
+ IF measure NOT IN ('milestone','binary') AND (target IS NULL OR target<0 OR target::text IN ('NaN','Infinity','-Infinity')) THEN RAISE EXCEPTION 'Chỉ tiêu cần là số không âm hữu hạn.'; END IF;
+ IF condition='range' AND (upper_target IS NULL OR upper_target<target OR upper_target::text IN ('NaN','Infinity','-Infinity')) THEN RAISE EXCEPTION 'Khoảng chỉ tiêu không hợp lệ.'; END IF;
+ IF jsonb_typeof(milestones)<>'array' OR (measure='milestone' AND (jsonb_array_length(milestones)=0 OR EXISTS(SELECT 1 FROM jsonb_array_elements(milestones) x WHERE jsonb_typeof(x)<>'string' OR btrim(x#>>'{}')=''))) THEN RAISE EXCEPTION 'Mốc cần danh sách tiêu chí hợp lệ.'; END IF;
+ PERFORM private.k3_validate_config(measure,coalesce(p->'config','{}'::jsonb),target); IF measure='binary' THEN target:=1; condition:='gte'; END IF; IF kid IS NULL THEN
+ IF key IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3config'),hashtext(key::text));
+ SELECT * INTO k FROM public.k3_kpis WHERE request_key=key;
+ IF k.id IS NOT NULL THEN IF coalesce(k.goal_id,(SELECT goal_id FROM public.k3_actions WHERE id=k.action_id))<>perm THEN RAISE EXCEPTION 'Mã yêu cầu thuộc hồ sơ khác.'; END IF; INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) SELECT g.user_id,perm,aid,auth.uid(),'kpi_configure',jsonb_build_object('kpi_id',k.id) FROM k3_goals g WHERE g.id=perm; IF k.action_id IS NOT NULL AND k.required THEN UPDATE k3_actions a SET status='not_started',revision=a.revision+1,updated_at=now() FROM k3_goals g WHERE a.id=k.action_id AND a.goal_id=g.id AND a.deleted_at IS NULL AND g.deleted_at IS NULL AND a.status='draft' AND g.status NOT IN('draft','paused','cancelled','ended_missed'); END IF; RETURN to_jsonb(k); END IF;
+ INSERT INTO public.k3_kpis(goal_id,action_id,name,kind,measure,condition,target,target_max,unit,required,milestones,config,created_by,request_key) VALUES(CASE WHEN aid IS NULL THEN gid END,aid,btrim(p->>'name'),CASE WHEN measure IN ('ratio','milestone') THEN measure ELSE 'cumulative' END,measure,condition,target,upper_target,CASE WHEN measure='duration' THEN 'phút' ELSE nullif(btrim(p->>'unit'),'') END,coalesce((p->>'required')::boolean,true),milestones,coalesce(p->'config','{}'::jsonb),auth.uid(),key) RETURNING * INTO k;
+ ELSE UPDATE public.k3_kpis SET name=btrim(p->>'name'),measure=measure,condition=condition,target=target,target_max=upper_target,unit=CASE WHEN measure='duration' THEN 'phút' ELSE nullif(btrim(p->>'unit'),'') END,required=coalesce((p->>'required')::boolean,true),milestones=milestones,config=coalesce(p->'config','{}'::jsonb),config_revision=k.config_revision+1,updated_at=now() WHERE id=kid RETURNING * INTO k; END IF;
+ INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) SELECT g.user_id,perm,aid,auth.uid(),'kpi_configure',jsonb_build_object('kpi_id',k.id) FROM k3_goals g WHERE g.id=perm; IF k.action_id IS NOT NULL AND k.required THEN UPDATE k3_actions a SET status='not_started',revision=a.revision+1,updated_at=now() FROM k3_goals g WHERE a.id=k.action_id AND a.goal_id=g.id AND a.deleted_at IS NULL AND g.deleted_at IS NULL AND a.status='draft' AND g.status NOT IN('draft','paused','cancelled','ended_missed'); END IF; RETURN to_jsonb(k);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_day_confirm(_date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); rows jsonb; c public.k3_kpi_day_confirmations;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(uid::text)); PERFORM private.k3_write_guard(_date);
+ IF _date>(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN RAISE EXCEPTION 'Không chốt ngày tương lai.'; END IF;
+ IF EXISTS(SELECT 1 FROM public.k3_kpi_results r WHERE r.user_id=uid AND r.work_date=_date AND r.deleted_at IS NULL AND r.review_reason IS NULL AND NOT private.k3_result_can_write(uid,r.kpi_id)) THEN RAISE EXCEPTION 'Có kết quả không còn quyền thực hiện hoặc đang lưu trữ.'; END IF;
+ SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) INTO rows FROM public.k3_kpi_results r WHERE r.user_id=uid AND r.work_date=_date AND r.deleted_at IS NULL AND r.review_reason IS NULL;
+ IF rows IS NULL THEN RAISE EXCEPTION 'Ngày này chưa có kết quả KPI.'; END IF;
+ INSERT INTO public.k3_kpi_day_confirmations(user_id,work_date,snapshot,actor_id) VALUES(uid,_date,rows,uid) RETURNING * INTO c;
+ PERFORM private.k3_close_one(uid,_date,'manual'); RETURN to_jsonb(c);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_day_read(_date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); rows jsonb; c public.k3_kpi_day_confirmations;
+BEGIN
+ IF uid IS NULL OR NOT public.k3_can(uid,'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF;
+ SELECT * INTO c FROM k3_kpi_day_confirmations WHERE user_id=uid AND work_date=_date ORDER BY confirmed_at DESC,id DESC LIMIT 1;
+ SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.id),'[]'::jsonb) INTO rows FROM k3_kpi_results r WHERE user_id=uid AND work_date=_date AND deleted_at IS NULL AND review_reason IS NULL;
+ RETURN jsonb_build_object('closed_at',(SELECT closed_at FROM k3_daily_closes WHERE user_id=uid AND work_date=_date),'close_source',(SELECT source FROM k3_daily_closes WHERE user_id=uid AND work_date=_date),'auto_close_time',CASE WHEN coalesce((SELECT auto_close FROM k3_automation_config WHERE id),true) THEN coalesce((SELECT close_time FROM k3_automation_config WHERE id),'18:00'::time) END,'date',_date,'result_count',jsonb_array_length(rows),'confirmed_at',coalesce(c.confirmed_at,(SELECT closed_at FROM k3_daily_closes WHERE user_id=uid AND work_date=_date)),'needs_confirmation',coalesce((SELECT snapshot FROM (SELECT x.snapshot,x.confirmed_at AS at,x.id FROM k3_kpi_day_confirmations x WHERE x.user_id=uid AND x.work_date=_date UNION ALL SELECT x.snapshot->'results',x.closed_at,x.id FROM k3_daily_closes x WHERE x.user_id=uid AND x.work_date=_date) x ORDER BY at DESC,id DESC LIMIT 1)<>rows,false),'actions',coalesce((SELECT jsonb_agg(jsonb_build_object('id',a.id,'goal_id',g.id,'delete_kind',CASE WHEN (SELECT count(*) FROM public.k3_actions sibling WHERE sibling.goal_id=g.id AND sibling.deleted_at IS NULL)=1 THEN 'goal' ELSE 'action' END,'name',a.name,'goal_name',g.name,'due_date',CASE WHEN a.inherit_timeline THEN coalesce(g.due_date,g.period_end) ELSE coalesce(a.due_date,g.period_end) END,'due_time',CASE WHEN a.inherit_timeline THEN g.due_time ELSE a.due_time END,'metric',private.k3_entity_state('action',a.id,CASE WHEN _date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN now() ELSE private.k3_timepoint(_date,(SELECT close_time FROM k3_automation_config WHERE id),true) END),'kpis',coalesce((SELECT jsonb_agg(jsonb_build_object('id',k.id,'name',k.name,'metric',private.k3_result_metric(k.id,false))) FROM k3_kpis k WHERE k.action_id=a.id),'[]'::jsonb)) ORDER BY a.is_key DESC,a.created_at) FROM k3_actions a JOIN k3_goals g ON g.id=a.goal_id WHERE (private.k3_action_on_date(a.id,_date) OR EXISTS(SELECT 1 FROM jsonb_array_elements(rows) result WHERE result->>'action_id'=a.id::text)) AND private.k3_action_worker_ok(uid,a.id) AND g.deleted_at IS NULL AND a.deleted_at IS NULL AND g.status NOT IN ('draft','paused','cancelled','ended_missed') AND a.status NOT IN ('draft','paused','cancelled','ended_missed') AND _date BETWEEN coalesce(a.start_date,g.period_start) AND g.period_end AND NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id IN (g.id,a.id))),'[]'::jsonb));
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_delete(_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k public.k3_kpis; _goal uuid;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO k FROM public.k3_kpis WHERE id=_id;
+  IF k.id IS NULL THEN RETURN true; END IF;
+  _goal:=coalesce(k.goal_id,(SELECT goal_id FROM public.k3_actions WHERE id=k.action_id));
+  IF NOT private.k3_goal_manage_ok(auth.uid(), _goal) THEN RAISE EXCEPTION 'Bạn không có quyền xóa KPI của mục tiêu này.'; END IF;
+  DELETE FROM public.k3_kpis WHERE id=_id;
+  RETURN true;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_inventory()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Admin được kiểm kê dữ liệu 3K.'; END IF;
+ RETURN jsonb_build_object('counts',jsonb_build_object('goals',(SELECT count(*) FROM k3_goals),'actions',(SELECT count(*) FROM k3_actions),'kpis',(SELECT count(*) FROM k3_kpis),'tasks',(SELECT count(*) FROM k3_tasks),'days',(SELECT count(*) FROM k3_days),'summary_versions',(SELECT count(*) FROM k3_summary_versions)),'tasks',coalesce((SELECT jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'work_date',t.work_date,'owner_name',p.full_name,'has_official',(d.summarized_at IS NOT NULL),'actual',t.kpi_actual,'classification',CASE WHEN t.kpi_id IS NOT NULL AND EXISTS(SELECT 1 FROM k3_kpis k WHERE k.id=t.kpi_id AND k.action_id=t.action_id) THEN 'A' WHEN t.action_id IS NOT NULL AND (SELECT count(*) FROM k3_kpis k WHERE k.action_id=t.action_id AND k.kind='cumulative' AND k.unit IS NOT DISTINCT FROM t.kpi_unit)=1 AND t.kpi_actual IS NOT NULL THEN 'B' ELSE 'C' END,'reason',CASE WHEN t.action_id IS NULL THEN 'Chưa liên kết KF; giữ bản chốt/ngày gốc để rà soát.' WHEN t.kpi_id IS NULL THEN 'Chưa liên kết KPI; cần xác minh nguồn trước chuyển đổi.' ELSE 'Có định danh nguồn; cần đối chiếu kết quả.' END)) FROM k3_tasks t JOIN k3_days d ON d.id=t.day_id LEFT JOIN profiles p ON p.id=t.user_id),'[]'::jsonb),'review_count',(SELECT count(*) FROM k3_data_reviews WHERE status='pending'),'backup_verified',EXISTS(SELECT 1 FROM private.k3_kpi_upgrade_backups),'last_backup',(SELECT jsonb_build_object('id',id,'created_at',created_at,'counts',counts) FROM private.k3_kpi_upgrade_backups ORDER BY created_at DESC LIMIT 1));
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_result_preview(_kpi uuid, _date date, _payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k k3_kpis; rows jsonb; p jsonb:=_payload;
+BEGIN
+ SELECT * INTO k FROM k3_kpis WHERE id=_kpi;
+ IF auth.uid() IS NULL OR NOT private.k3_result_can_write(auth.uid(),_kpi) THEN RAISE EXCEPTION 'Bạn không có quyền cập nhật KPI.'; END IF;
+ SELECT coalesce(jsonb_agg(r),'[]') INTO rows FROM jsonb_array_elements(private.k3_measure_rows(_kpi,false)) r WHERE NOT(r->>'user_id'=auth.uid()::text AND r->>'work_date'=_date::text);
+ IF k.measure='duration' AND k.config->>'duration_unit'='hours' AND coalesce(k.config->>'duration_method','total')='total' THEN p:=p||jsonb_build_object('value',(p->>'value')::numeric*60); END IF;
+ IF k.measure='duration' AND k.config->>'duration_method'='intervals' THEN p:=p||jsonb_build_object('value',(SELECT sum(extract(epoch FROM (x->>'end')::timestamptz-(x->>'start')::timestamptz)/60) FROM jsonb_array_elements(coalesce(p->'intervals','[]')) x)); END IF; RETURN private.k3_measure_eval(to_jsonb(k),rows||jsonb_build_array(p||jsonb_build_object('user_id',auth.uid(),'work_date',_date,'updated_at',now(),'acceptance',NULL)),_date);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_result_read(_kpi uuid, _date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k public.k3_kpis; g uuid;
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ SELECT * INTO k FROM public.k3_kpis WHERE id=_kpi; SELECT coalesce(k.goal_id,a.goal_id) INTO g FROM (SELECT 1) dummy LEFT JOIN public.k3_actions a ON a.id=k.action_id;
+ IF g IS NULL OR NOT public.k3_goal_visible(auth.uid(),g) THEN RAISE EXCEPTION 'Bạn không có quyền xem KPI.'; END IF;
+ RETURN jsonb_build_object('day_closed',(EXISTS(SELECT 1 FROM k3_daily_closes WHERE user_id=auth.uid() AND work_date=_date) OR EXISTS(SELECT 1 FROM k3_kpi_day_confirmations WHERE user_id=auth.uid() AND work_date=_date)),'kpi',to_jsonb(k),'can_update',private.k3_result_can_write(auth.uid(),k.id),'daily_metric',private.k3_measure_eval(to_jsonb(k),coalesce((SELECT jsonb_agg(r) FROM jsonb_array_elements(private.k3_measure_rows(k.id,false)) r WHERE r->>'user_id'=auth.uid()::text AND r->>'work_date'=_date::text),'[]'),_date),'daily_plan',k.config->'daily_target','can_accept',coalesce((k.config->>'acceptance_required')::boolean,false) AND (public.biz_admin(auth.uid()) OR public.k3_can(auth.uid(),'k3.view_scope')),'acceptances',coalesce((SELECT jsonb_agg(to_jsonb(a)) FROM k3_kpi_acceptances a JOIN k3_kpi_results r ON r.id=a.result_id WHERE r.kpi_id=k.id AND private.k3_result_detail_ok(auth.uid(),r.user_id,r.goal_id,r.work_date)),'[]'),'metric',private.k3_measure_eval(to_jsonb(k),private.k3_measure_rows(k.id,false),_date),'official_metric',private.k3_measure_eval(to_jsonb(k),private.k3_measure_rows(k.id,true),_date),'daily',(SELECT to_jsonb(r) FROM public.k3_kpi_results r WHERE r.kpi_id=k.id AND r.user_id=auth.uid() AND r.work_date=_date),'results',coalesce((SELECT jsonb_agg((CASE WHEN private.k3_result_detail_ok(auth.uid(),r.user_id,r.goal_id,r.work_date) THEN to_jsonb(r) ELSE to_jsonb(r)-ARRAY['note','evidence','problem','cause','solution'] END)||jsonb_build_object('full_name',p.full_name,'is_confirmed',EXISTS(SELECT 1 FROM private.k3_result_eligible(r.kpi_id,true) er WHERE er.id=r.id)) ORDER BY r.work_date,r.updated_at) FROM public.k3_kpi_results r LEFT JOIN public.profiles p ON p.id=r.user_id LEFT JOIN LATERAL (SELECT * FROM public.k3_kpi_day_confirmations c WHERE c.user_id=r.user_id AND c.work_date=r.work_date ORDER BY c.confirmed_at DESC,c.id DESC LIMIT 1) c ON true WHERE r.kpi_id=k.id AND r.deleted_at IS NULL AND r.review_reason IS NULL),'[]'::jsonb),'history',coalesce((SELECT jsonb_agg(to_jsonb(v) ORDER BY v.created_at DESC) FROM public.k3_kpi_result_versions v JOIN public.k3_kpi_results r ON r.id=v.result_id WHERE r.kpi_id=k.id AND private.k3_result_detail_ok(auth.uid(),r.user_id,r.goal_id,r.work_date)),'[]'::jsonb));
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_result_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE p jsonb:=_payload; uid uuid:=auth.uid(); kid uuid:=nullif(p->>'kpi_id','')::uuid; day date:=nullif(p->>'work_date','')::date; key uuid:=nullif(p->>'request_key','')::uuid; k public.k3_kpis; g public.k3_goals; a public.k3_actions; old public.k3_kpi_results; r public.k3_kpi_results; val numeric:=nullif(p->>'value','')::numeric; num numeric:=nullif(p->>'numerator','')::numeric; den numeric:=nullif(p->>'denominator','')::numeric; arr jsonb; done jsonb;
+BEGIN
+ IF uid IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ IF key IS NULL OR day IS NULL OR kid IS NULL THEN RAISE EXCEPTION 'Thiếu KPI, ngày hoặc mã yêu cầu.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(uid::text));
+ PERFORM pg_advisory_xact_lock(hashtext('k3result'),hashtext(kid::text));
+ IF NOT private.k3_result_can_write(uid,kid) THEN RAISE EXCEPTION 'Bạn không được cập nhật KPI này hoặc KG/KF đang bị khóa/lưu trữ.'; END IF;
+ IF EXISTS(SELECT 1 FROM public.k3_kpi_result_versions WHERE actor_id=uid AND request_key=key) THEN RETURN public.k3_kpi_result_read(kid,day); END IF;
+ IF day>(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN RAISE EXCEPTION 'Không ghi kết quả cho ngày tương lai.'; END IF;
+ PERFORM private.k3_write_guard(day); IF (EXISTS(SELECT 1 FROM k3_daily_closes WHERE user_id=uid AND work_date=day) OR EXISTS(SELECT 1 FROM k3_kpi_day_confirmations WHERE user_id=uid AND work_date=day)) AND btrim(coalesce(p->>'correction_reason',''))='' THEN RAISE EXCEPTION 'Ngày đã chốt; cần lý do điều chỉnh để giữ lịch sử.'; END IF;
+ SELECT * INTO k FROM public.k3_kpis WHERE id=kid FOR UPDATE;
+  -- k3delete result fence: recheck visibility after waiting on the KPI lock.
+  IF NOT private.k3_result_can_write(uid,kid) THEN RAISE EXCEPTION 'Công việc đã thay đổi hoặc đang ở Thùng rác. Vui lòng tải lại.'; END IF;
+ IF k.measure='duration' AND k.config->>'duration_unit'='hours' AND coalesce(k.config->>'duration_method','total')='total' THEN val:=val*60; END IF; IF k.measure='duration' AND k.config->>'duration_method'='intervals' THEN val:=0; END IF; SELECT * INTO a FROM public.k3_actions WHERE id=k.action_id; SELECT * INTO g FROM public.k3_goals WHERE id=coalesce(k.goal_id,a.goal_id);
+ IF day<coalesce(a.start_date,g.period_start) OR day>g.period_end THEN RAISE EXCEPTION 'Ngày kết quả ngoài khoảng thực hiện.'; END IF;
+ SELECT * INTO old FROM public.k3_kpi_results WHERE kpi_id=kid AND user_id=uid AND work_date=day FOR UPDATE;
+ IF coalesce((p->>'revision')::bigint,0)<>coalesce(old.revision,0) THEN RAISE EXCEPTION 'Kết quả đã được sửa ở nơi khác. Vui lòng tải lại.'; END IF;
+ IF old.deleted_at IS NOT NULL OR old.review_reason IS NOT NULL THEN RAISE EXCEPTION 'Kết quả đang lưu trữ/chờ rà soát.'; END IF;
+ IF val IS NOT NULL AND val::text IN ('NaN','Infinity','-Infinity') OR num IS NOT NULL AND num::text IN ('NaN','Infinity','-Infinity') OR den IS NOT NULL AND den::text IN ('NaN','Infinity','-Infinity') THEN RAISE EXCEPTION 'Số liệu phải hữu hạn.'; END IF;
+ IF k.measure IN ('cumulative','current','duration','binary','frequency','streak') AND (val IS NULL OR val<0) THEN RAISE EXCEPTION 'Kết quả thực tế cần là số không âm.'; END IF;
+ IF k.measure IN ('ratio','average') AND (num IS NULL OR den IS NULL OR num<0 OR den<0) THEN RAISE EXCEPTION 'Cần tổng/tử số không âm và số quan sát/mẫu số không âm.'; END IF;
+ IF k.measure='ratio' AND num>den THEN RAISE EXCEPTION 'Tử số tỷ lệ không được lớn hơn mẫu số.'; END IF;
+ arr:=coalesce(p->'objects','[]'::jsonb); done:=coalesce(p->'completed','[]'::jsonb);
+ IF jsonb_typeof(arr)<>'array' OR jsonb_typeof(done)<>'array' THEN RAISE EXCEPTION 'Định danh/mốc cần là danh sách.'; END IF;
+ IF k.measure='distinct' AND EXISTS(SELECT 1 FROM jsonb_array_elements(arr) x WHERE jsonb_typeof(x)<>'string' OR btrim(x#>>'{}')='') THEN RAISE EXCEPTION 'Cần định danh đối tượng hợp lệ.'; END IF;
+ IF k.measure='milestone' AND (jsonb_array_length(k.milestones)=0 OR btrim(coalesce(p->>'evidence',''))='' OR EXISTS(SELECT 1 FROM jsonb_array_elements_text(done) x WHERE NOT k.milestones ? x)) THEN RAISE EXCEPTION 'Mốc cần tiêu chí đã cấu hình và bằng chứng.'; END IF;
+ INSERT INTO public.k3_kpi_results(kpi_id,goal_id,action_id,user_id,work_date,value,numerator,denominator,objects,completed,evidence,note,problem,cause,solution,intervals,updated_by)
+ VALUES(kid,g.id,a.id,uid,day,CASE WHEN k.measure IN ('cumulative','current','duration','binary','frequency','streak') THEN val END,CASE WHEN k.measure IN ('ratio','average') THEN num END,CASE WHEN k.measure IN ('ratio','average') THEN den END,CASE WHEN k.measure='distinct' THEN arr ELSE '[]'::jsonb END,CASE WHEN k.measure='milestone' THEN done ELSE '[]'::jsonb END,nullif(btrim(p->>'evidence'),''),nullif(btrim(p->>'note'),''),nullif(btrim(p->>'problem'),''),nullif(btrim(p->>'cause'),''),nullif(btrim(p->>'solution'),''),coalesce(p->'intervals','[]'::jsonb),uid)
+ ON CONFLICT(kpi_id,user_id,work_date) DO UPDATE SET value=excluded.value,numerator=excluded.numerator,denominator=excluded.denominator,objects=excluded.objects,completed=excluded.completed,evidence=excluded.evidence,note=excluded.note,problem=excluded.problem,cause=excluded.cause,solution=excluded.solution,intervals=excluded.intervals,revision=k3_kpi_results.revision+1,updated_at=now(),updated_by=uid RETURNING * INTO r;
+ INSERT INTO public.k3_kpi_result_versions(result_id,revision,snapshot,request_key,actor_id) VALUES(r.id,r.revision,to_jsonb(r),key,uid);
+ INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) VALUES(uid,g.id,a.id,uid,'kpi_result_save',jsonb_build_object('correction_reason',nullif(btrim(p->>'correction_reason'),''),'result_id',r.id,'before',to_jsonb(old),'after',to_jsonb(r)));
+ RETURN public.k3_kpi_result_read(kid,day);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_kpi_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ IF nullif(_payload->>'manual_actual','') IS NOT NULL THEN RAISE EXCEPTION 'Ghi kết quả qua Cập nhật KPI theo ngày, không nhập giá trị xác nhận thủ công.'; END IF;
+ RETURN public.k3_kpi_configure(_payload||jsonb_build_object('measure',coalesce(_payload->>'measure',_payload->>'kind','cumulative')));
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_legacy_task_archive(_id uuid, _reason text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE t k3_tasks; b private.k3_kpi_upgrade_backups; v k3_data_reviews; stamp timestamptz:=clock_timestamp();
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Admin được lưu trữ dữ liệu cũ.'; END IF;
+ IF btrim(coalesce(_reason,''))='' THEN RAISE EXCEPTION 'Cần lý do lưu trữ.'; END IF;
+ SELECT * INTO t FROM k3_tasks WHERE id=_id;
+ IF t.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy công việc.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(t.user_id::text));
+ SELECT * INTO t FROM k3_tasks WHERE id=_id FOR UPDATE;
+ IF t.kpi_id IS NOT NULL THEN RAISE EXCEPTION 'Công việc có KPI định danh; không thuộc dữ liệu thiếu quy cách.'; END IF;
+ IF EXISTS(SELECT 1 FROM k3_days d WHERE d.id=t.day_id AND d.summarized_at IS NOT NULL) OR EXISTS(SELECT 1 FROM k3_summary_versions s CROSS JOIN LATERAL jsonb_array_elements(s.snapshot->'tasks') x WHERE x->>'id'=t.id::text) OR EXISTS(SELECT 1 FROM k3_period_summaries s CROSS JOIN LATERAL jsonb_array_elements(s.snapshot->'tasks') x WHERE x->>'id'=t.id::text) THEN RAISE EXCEPTION 'Có chốt sổ lịch sử; giữ bản gốc, không bắt đầu xóa 15 ngày.'; END IF;
+ SELECT * INTO b FROM private.k3_kpi_upgrade_backups bk WHERE EXISTS(SELECT 1 FROM jsonb_array_elements(bk.snapshot->'tasks') x WHERE x=to_jsonb(t)) ORDER BY bk.created_at DESC LIMIT 1;
+ IF b.id IS NULL OR EXISTS(SELECT 1 FROM jsonb_each(b.snapshot) e WHERE jsonb_typeof(e.value)<>'array' OR (b.counts->>e.key)::int IS DISTINCT FROM jsonb_array_length(e.value)) THEN RAISE EXCEPTION 'Cần bản sao mới đã kiểm đếm và khớp nguyên bản.'; END IF;
+ INSERT INTO k3_data_reviews(kind,record_id,reason,original_snapshot,archived_at,purge_at,backup_id) VALUES('task',t.id,btrim(_reason),to_jsonb(t),stamp,NULL,b.id) ON CONFLICT(kind,record_id) DO UPDATE SET reason=excluded.reason,original_snapshot=excluded.original_snapshot,status='pending',archived_at=excluded.archived_at,purge_at=excluded.purge_at,backup_id=excluded.backup_id RETURNING * INTO v;
+ UPDATE k3_tasks SET deleted_at=stamp,deleted_by=auth.uid() WHERE id=t.id;
+ INSERT INTO k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,auth.uid(),'archive',jsonb_build_object('review_id',v.id,'backup_id',b.id,'reason',_reason));
+ RETURN to_jsonb(v);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_legacy_task_restore(_review uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE v k3_data_reviews; t k3_tasks;
+BEGIN
+ IF auth.uid() IS NULL OR NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Chỉ Admin được khôi phục dữ liệu cũ.'; END IF;
+ SELECT * INTO v FROM k3_data_reviews WHERE id=_review FOR UPDATE;
+ IF v.kind<>'task' OR v.archived_at IS NULL OR v.status<>'pending' THEN RAISE EXCEPTION 'Không có công việc lưu trữ để khôi phục.'; END IF;
+ 
+ SELECT * INTO t FROM k3_tasks WHERE id=v.record_id FOR UPDATE;
+ IF t.id IS NULL OR t.deleted_at IS DISTINCT FROM v.archived_at THEN RAISE EXCEPTION 'Bản gốc đã thay đổi; cần đối soát.'; END IF;
+ UPDATE k3_tasks SET deleted_at=NULL,deleted_by=NULL WHERE id=t.id;
+ UPDATE k3_data_reviews SET status='resolved',resolved_at=now(),resolved_by=auth.uid(),resolution_note='Khôi phục nguyên bản' WHERE id=v.id;
+ INSERT INTO k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,auth.uid(),'restore',jsonb_build_object('review_id',v.id));
+ RETURN true;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_measured_period_read(_start date, _end date, _manage boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); people jsonb;
+BEGIN
+ IF uid IS NULL OR NOT public.k3_can(uid,CASE WHEN _manage THEN 'k3.view_scope' ELSE 'k3.use' END) THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K trong phạm vi này.'; END IF;
+ IF _end<_start OR _end-_start>366 THEN RAISE EXCEPTION 'Khoảng ngày không hợp lệ.'; END IF;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',p.id,'name',p.full_name,'department_id',dep.id,'department',dep.name,
+ 'updated',EXISTS(SELECT 1 FROM k3_kpi_results r JOIN k3_goals g ON g.id=r.goal_id WHERE r.user_id=p.id AND r.work_date BETWEEN _start AND _end AND r.deleted_at IS NULL AND r.review_reason IS NULL AND (p.id=uid OR public.biz_admin(uid) OR public.biz_scope_ok(uid,p.id,coalesce(g.department_id,public.biz_department_at(p.id,r.work_date)),r.work_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))),
+ 'closes',(SELECT count(*) FROM k3_daily_closes c WHERE c.user_id=p.id AND c.work_date BETWEEN _start AND _end AND (p.id=uid OR public.biz_admin(uid) OR public.biz_scope_ok(uid,p.id,c.department_id,c.work_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))),
+ 'kpis',coalesce((SELECT jsonb_agg(jsonb_build_object('id',k.id,'name',k.name,'unit',k.unit,'measure',k.measure,'target',k.target,'goal_name',g.name,'action_name',a.name,'metric',private.k3_result_metric_range(k.id,false,_start,_end,p.id),'official_metric',private.k3_result_metric_range(k.id,true,_start,_end,p.id))) FROM k3_kpis k LEFT JOIN k3_actions a ON a.id=k.action_id JOIN k3_goals g ON g.id=coalesce(k.goal_id,a.goal_id) WHERE g.deleted_at IS NULL AND (a.id IS NULL OR a.deleted_at IS NULL) AND NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id IN(k.id,g.id,a.id)) AND EXISTS(SELECT 1 FROM private.k3_result_eligible_range(k.id,false,_start,_end,p.id))),'[]'::jsonb)
+ ) ORDER BY p.full_name),'[]'::jsonb) INTO people FROM profiles p LEFT JOIN biz_departments dep ON dep.id=public.biz_department_at(p.id,_end) WHERE CASE WHEN NOT _manage THEN p.id=uid ELSE p.id<>uid AND (public.biz_admin(uid) OR public.biz_scope_ok(uid,p.id,dep.id,_end::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) AND public.k3_can(p.id,'k3.use') END;
+ RETURN people;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_member_invite(_goal_id uuid, _user_ids uuid[])
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g public.k3_goals; u uuid; invited int:=0;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO g FROM public.k3_goals WHERE id=_goal_id FOR UPDATE;
+  IF g.id IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(), g.id) THEN RAISE EXCEPTION 'Bạn không có quyền mời thành viên vào mục tiêu này.'; END IF;
+  IF g.status IN ('done','ended_missed','cancelled') THEN RAISE EXCEPTION 'Mục tiêu đã kết thúc, không thể mời thành viên.'; END IF;
+  IF NOT coalesce((SELECT (allow_invite AND allow_team_goal) FROM public.k3_settings WHERE id),true) AND NOT public.biz_admin(auth.uid()) THEN RAISE EXCEPTION 'Quyền mời thành viên đang tắt trong Cài đặt 3K.'; END IF;
+  FOREACH u IN ARRAY coalesce(_user_ids,'{}'::uuid[]) LOOP
+    IF u IS NULL OR u=g.user_id THEN CONTINUE; END IF;
+    IF NOT public.k3_can(u,'k3.use') THEN RAISE EXCEPTION 'Nhân sự được mời phải đang hoạt động và thuộc Cơ cấu tổ chức Kinh doanh.'; END IF;
+    INSERT INTO public.k3_goal_members(goal_id,user_id,status,invited_by,invited_at)
+    VALUES(g.id,u,'invited',auth.uid(),now())
+    ON CONFLICT (goal_id,user_id) DO UPDATE SET status='invited',invited_by=auth.uid(),invited_at=now(),responded_at=NULL,revoked_at=NULL,revoked_by=NULL
+      WHERE public.k3_goal_members.status IN ('declined','revoked');
+    invited:=invited+1;
+    INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,auth.uid(),'member_invite',jsonb_build_object('member',u));
+  END LOOP;
+  RETURN jsonb_build_object('invited',invited);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_member_respond(_goal_id uuid, _accept boolean)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE m public.k3_goal_members; g public.k3_goals;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO m FROM public.k3_goal_members WHERE goal_id=_goal_id AND user_id=auth.uid() FOR UPDATE;
+  IF m.id IS NULL OR m.status<>'invited' THEN RAISE EXCEPTION 'Không có lời mời đang chờ bạn xác nhận.'; END IF;
+  UPDATE public.k3_goal_members SET status=CASE WHEN _accept THEN 'accepted' ELSE 'declined' END, responded_at=now() WHERE id=m.id RETURNING * INTO m;
+  SELECT * INTO g FROM public.k3_goals WHERE id=_goal_id;
+  INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,auth.uid(),CASE WHEN _accept THEN 'member_accept' ELSE 'member_decline' END,jsonb_build_object('member',auth.uid()));
+  RETURN to_jsonb(m);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_member_revoke(_goal_id uuid, _user_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE m public.k3_goal_members; g public.k3_goals;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  SELECT * INTO g FROM public.k3_goals WHERE id=_goal_id FOR UPDATE;
+  IF g.id IS NULL OR NOT private.k3_goal_manage_ok(auth.uid(), g.id) THEN RAISE EXCEPTION 'Bạn không có quyền thu hồi thành viên của mục tiêu này.'; END IF;
+  SELECT * INTO m FROM public.k3_goal_members WHERE goal_id=_goal_id AND user_id=_user_id FOR UPDATE;
+  IF m.id IS NULL OR m.status NOT IN ('invited','accepted') THEN RAISE EXCEPTION 'Thành viên không còn tham gia mục tiêu này.'; END IF;
+  UPDATE public.k3_goal_members SET status='revoked',revoked_at=now(),revoked_by=auth.uid() WHERE id=m.id RETURNING * INTO m;
+  INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,auth.uid(),'member_revoke',jsonb_build_object('member',_user_id));
+  RETURN to_jsonb(m);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_member_search(_q text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF;
+  RETURN coalesce((SELECT jsonb_agg(jsonb_build_object('id',x.id,'full_name',x.full_name,'departments',x.departments) ORDER BY x.full_name) FROM (
+    SELECT p.id, p.full_name, coalesce(array_agg(DISTINCT d.name) FILTER (WHERE d.name IS NOT NULL), '{}'::text[]) departments
+    FROM public.profiles p
+    LEFT JOIN public.biz_department_members m ON m.user_id=p.id
+    LEFT JOIN public.biz_departments d ON d.id=m.department_id
+    WHERE p.status='Đang hoạt động' AND (coalesce(_q,'')='' OR p.full_name ILIKE '%'||_q||'%')
+    GROUP BY p.id, p.full_name ORDER BY p.full_name LIMIT 20) x),'[]'::jsonb);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_module_settings_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE old public.k3_settings; s public.k3_settings;
+BEGIN
+  IF NOT public.k3_can(auth.uid(),'k3.settings') THEN RAISE EXCEPTION 'Bạn không có quyền cấu hình 3K.'; END IF;
+  SELECT * INTO old FROM public.k3_settings WHERE id FOR UPDATE;
+  UPDATE public.k3_settings SET
+    allow_personal_goal=coalesce((_payload->>'allow_personal_goal')::boolean, allow_personal_goal),
+    allow_team_goal=coalesce((_payload->>'allow_team_goal')::boolean, allow_team_goal),
+    allow_invite=coalesce((_payload->>'allow_invite')::boolean, allow_invite),
+    allow_assign=coalesce((_payload->>'allow_assign')::boolean, allow_assign),
+    updated_at=now(), updated_by=auth.uid()
+  WHERE id RETURNING * INTO s;
+  INSERT INTO public.k3_settings_log(changed_by,snapshot) VALUES(auth.uid(),jsonb_build_object('old',to_jsonb(old),'new',to_jsonb(s)));
+  RETURN to_jsonb(s);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_comment_save(_user uuid, _type text, _date date, _body text, _goal uuid DEFAULT NULL::uuid, _action uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE r jsonb; c public.k3_period_comments; BEGIN
+ IF NOT public.k3_can(auth.uid(),'k3.comment') OR NOT coalesce((SELECT enabled FROM public.k3_settings WHERE id),false) THEN RAISE EXCEPTION 'Bạn không được nhận xét 3K lúc này.'; END IF; r:=public.k3_period_read(_type,_date,_user);
+ IF btrim(coalesce(_body,''))='' THEN RAISE EXCEPTION 'Nội dung nhận xét không được trống.'; END IF;
+ IF _goal IS NOT NULL AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r->'goals') v WHERE v->>'id'=_goal::text) THEN RAISE EXCEPTION 'Mục tiêu nhận xét không thuộc nhân viên hoặc kỳ.'; END IF;
+ IF _action IS NOT NULL AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r->'actions') v WHERE v->>'id'=_action::text AND (_goal IS NULL OR v->>'goal_id'=_goal::text)) THEN RAISE EXCEPTION 'Hành động nhận xét không khớp mục tiêu.'; END IF;
+ INSERT INTO public.k3_period_comments(user_id,period_type,period_start,goal_id,action_id,author_id,body) VALUES(_user,_type,public.k3_period_start(_type,_date),_goal,_action,auth.uid(),btrim(_body)) RETURNING * INTO c; RETURN to_jsonb(c); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_config_read()
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT to_jsonb(s) FROM public.k3_settings s WHERE id AND auth.uid() IS NOT NULL$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_end(_type text, _date date)
+ RETURNS date
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$SELECT CASE WHEN _type='week' THEN public.k3_period_start(_type,_date)+6 WHEN _type='month' THEN (public.k3_period_start(_type,_date)+interval '1 month'-interval '1 day')::date WHEN _type='quarter' THEN (public.k3_period_start(_type,_date)+interval '3 months'-interval '1 day')::date END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_read(_type text, _date date, _user uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE uid uuid:=coalesce(_user,auth.uid()); dt date:=public.k3_period_start(_type,_date); de date:=public.k3_period_end(_type,_date); tasks jsonb; goals jsonb; actions jsonb; sums jsonb; comments jsonb; fp text; BEGIN
+ IF dt IS NULL OR auth.uid() IS NULL OR (uid=auth.uid() AND NOT public.k3_can(auth.uid(),'k3.use')) OR (uid<>auth.uid() AND NOT public.k3_can(auth.uid(),'k3.view_scope')) THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K này.'; END IF;
+ IF uid<>auth.uid() AND NOT EXISTS(SELECT 1 FROM generate_series(dt::timestamp,de::timestamp,interval '1 day') x WHERE public.biz_scope_ok(auth.uid(),uid,public.biz_department_at(uid,x::date),(x::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))) AND NOT EXISTS(SELECT 1 FROM public.k3_days WHERE user_id=uid AND work_date BETWEEN dt AND de AND public.k3_day_scope_ok(auth.uid(),id)) THEN RAISE EXCEPTION 'Nhân viên ngoài phạm vi quản lý.'; END IF;
+ SELECT coalesce(jsonb_agg(to_jsonb(g) ORDER BY g.created_at,g.id),'[]'::jsonb) INTO goals FROM public.k3_goals g WHERE user_id=uid AND period_start<=de AND period_end>=dt AND (uid=auth.uid() OR public.biz_scope_ok(auth.uid(),uid,g.department_id,(g.period_start::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')));
+ SELECT coalesce(jsonb_agg(to_jsonb(a) ORDER BY a.created_at,a.id),'[]'::jsonb) INTO actions FROM public.k3_actions a WHERE goal_id IN(SELECT (v->>'id')::uuid FROM jsonb_array_elements(goals) v);
+ SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY is_unscheduled DESC,work_date,is_focus DESC,start_time NULLS LAST,id),'[]'::jsonb) INTO tasks FROM public.k3_tasks t WHERE user_id=uid AND deleted_at IS NULL AND ((NOT is_unscheduled AND work_date BETWEEN dt AND de) OR (is_unscheduled AND action_id IN(SELECT (v->>'id')::uuid FROM jsonb_array_elements(actions) v))) AND (uid=auth.uid() OR public.k3_day_scope_ok(auth.uid(),day_id));
+ fp:=md5(jsonb_build_object('tasks',(SELECT coalesce(jsonb_agg(v-ARRAY['updated_at','updated_by','revision','note','links','how','place','sort_order'] ORDER BY v->>'id'),'[]'::jsonb) FROM jsonb_array_elements(tasks) v),'goals',(SELECT coalesce(jsonb_agg(v-ARRAY['updated_at','revision'] ORDER BY v->>'id'),'[]'::jsonb) FROM jsonb_array_elements(goals) v),'actions',(SELECT coalesce(jsonb_agg(v-ARRAY['updated_at','revision'] ORDER BY v->>'id'),'[]'::jsonb) FROM jsonb_array_elements(actions) v))::text);
+ SELECT coalesce(jsonb_agg(to_jsonb(v) ORDER BY confirmed_at DESC),'[]'::jsonb) INTO sums FROM public.k3_period_summaries v WHERE user_id=uid AND period_type=_type AND period_start=dt AND (uid=auth.uid() OR public.biz_scope_ok(auth.uid(),uid,v.department_id,(dt::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')));
+ SELECT coalesce(jsonb_agg(to_jsonb(c)||jsonb_build_object('author_name',p.full_name) ORDER BY c.created_at),'[]'::jsonb) INTO comments FROM public.k3_period_comments c LEFT JOIN public.profiles p ON p.id=c.author_id WHERE c.user_id=uid AND c.period_type=_type AND c.period_start=dt AND (uid=auth.uid() OR public.biz_scope_ok(auth.uid(),uid,public.biz_department_at(uid,dt),(dt::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')));
+ RETURN jsonb_build_object('planned_at',(SELECT min(created_at) FROM public.k3_goals WHERE user_id=uid AND period_type=_type AND period_start=dt AND (uid=auth.uid() OR public.biz_scope_ok(auth.uid(),uid,department_id,(dt::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')))),'plan_deadline',private.k3_period_deadline(_type,dt,'plan',coalesce((SELECT min(created_at) FROM public.k3_goals WHERE user_id=uid AND period_type=_type AND period_start=dt),now())),'summary_deadline',private.k3_period_deadline(_type,dt,'summary',coalesce((SELECT min(confirmed_at) FROM public.k3_period_summaries WHERE user_id=uid AND period_type=_type AND period_start=dt),now())),'period_start',dt,'period_end',de,'tasks',tasks,'goals',goals,'actions',actions,'summaries',sums,'comments',comments,'fingerprint',fp,'needs_confirmation',jsonb_array_length(sums)>0 AND sums->0->>'fingerprint'<>fp,'can_comment',public.k3_can(auth.uid(),'k3.comment'),'user_id',uid,'events',coalesce((SELECT jsonb_agg(to_jsonb(e) ORDER BY created_at DESC) FROM (SELECT * FROM public.k3_plan_events WHERE user_id=uid AND goal_id IN(SELECT (v->>'id')::uuid FROM jsonb_array_elements(goals) v) ORDER BY created_at DESC LIMIT 100) e),'[]'::jsonb)); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_settings_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings; old public.k3_settings; x record; dl jsonb:=coalesce(_payload->'period_deadlines','{}'::jsonb); BEGIN IF NOT public.k3_can(auth.uid(),'k3.settings') THEN RAISE EXCEPTION 'Bạn không có quyền cấu hình 3K.'; END IF; SELECT * INTO old FROM public.k3_settings WHERE id FOR UPDATE;
+IF (coalesce((_payload->>'week_enabled')::boolean,false) OR coalesce((_payload->>'month_enabled')::boolean,false)) AND nullif(_payload->>'period_effective_from','') IS NULL THEN RAISE EXCEPTION 'Cần chọn ngày bắt đầu áp dụng Tuần/Tháng.'; END IF;
+FOR x IN SELECT * FROM jsonb_each(dl) LOOP IF x.key NOT IN('week_plan','week_summary','month_plan','month_summary') OR (x.value->>'offset')::int IS NULL OR (x.value->>'offset')::int NOT BETWEEN -31 AND 62 OR nullif(x.value->>'time','') IS NULL OR nullif(x.value->>'effective_from','')::date IS NULL THEN RAISE EXCEPTION 'Deadline cần ngày tương đối, giờ và ngày hiệu lực hợp lệ.'; END IF; PERFORM (x.value->>'time')::time; END LOOP;
+UPDATE public.k3_settings SET week_enabled=coalesce((_payload->>'week_enabled')::boolean,false),month_enabled=coalesce((_payload->>'month_enabled')::boolean,false),period_effective_from=nullif(_payload->>'period_effective_from','')::date,period_deadlines=dl,updated_at=now(),updated_by=auth.uid() WHERE id RETURNING * INTO s;
+INSERT INTO public.k3_settings_log(changed_by,snapshot) VALUES(auth.uid(),jsonb_build_object('old',to_jsonb(old),'new',to_jsonb(s))); RETURN to_jsonb(s); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_start(_type text, _date date)
+ RETURNS date
+ LANGUAGE plpgsql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$BEGIN IF _type='week' THEN RETURN _date-(extract(isodow FROM _date)::int-1); ELSIF _type='month' THEN RETURN date_trunc('month',_date)::date; ELSIF _type='quarter' THEN RETURN date_trunc('quarter',_date)::date; ELSE RAISE EXCEPTION 'Chu kỳ 3K không hợp lệ.'; END IF; END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_summary_confirm(_type text, _date date, _note text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE r jsonb; v public.k3_period_summaries; dt date:=public.k3_period_start(_type,_date); BEGIN
+ PERFORM private.k3_period_write_guard(_type,dt); IF public.k3_period_end(_type,dt)>(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN RAISE EXCEPTION 'Chưa thể tổng kết kỳ chưa kết thúc.'; END IF;
+ r:=public.k3_period_read(_type,dt,auth.uid()); IF jsonb_array_length(r->'tasks')=0 AND jsonb_array_length(r->'goals')=0 THEN RAISE EXCEPTION 'Chưa có dữ liệu 3K để tổng kết.'; END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements(r->'tasks') t WHERE NOT private.k3_task_complete((t->>'kpi_target')::numeric,(t->>'kpi_actual')::numeric,(t->>'progress')::int,t->>'status') AND (btrim(coalesce(t->>'problem',''))='' OR btrim(coalesce(t->>'cause',''))='' OR btrim(coalesce(t->>'solution',''))='')) THEN RAISE EXCEPTION 'Công việc chưa hoàn thành cần đủ Vấn đề - Nguyên nhân - Giải pháp.'; END IF;
+ INSERT INTO public.k3_period_summaries(user_id,period_type,period_start,fingerprint,note,snapshot,department_id) VALUES(auth.uid(),_type,dt,r->>'fingerprint',nullif(btrim(_note),''),r-ARRAY['summaries','comments','events'],public.biz_department_at(auth.uid(),dt)) ON CONFLICT(user_id,period_type,period_start,fingerprint) DO NOTHING RETURNING * INTO v;
+ IF v.id IS NULL THEN SELECT * INTO v FROM public.k3_period_summaries WHERE user_id=auth.uid() AND period_type=_type AND period_start=dt AND fingerprint=r->>'fingerprint'; END IF; RETURN to_jsonb(v); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_period_team_read(_type text, _date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE result jsonb:='[]'::jsonb; p record; r jsonb; dt date:=public.k3_period_start(_type,_date); de date:=public.k3_period_end(_type,_date); BEGIN
+ IF NOT public.k3_can(auth.uid(),'k3.view_scope') THEN RAISE EXCEPTION 'Bạn không có quyền xem phạm vi quản lý.'; END IF;
+ FOR p IN SELECT DISTINCT pr.id,pr.full_name FROM public.profiles pr WHERE pr.id<>auth.uid() AND (EXISTS(SELECT 1 FROM generate_series(dt::timestamp,de::timestamp,interval '1 day') x WHERE public.biz_department_at(pr.id,x::date) IS NOT NULL AND public.biz_scope_ok(auth.uid(),pr.id,public.biz_department_at(pr.id,x::date),(x::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))) OR EXISTS(SELECT 1 FROM public.k3_days WHERE user_id=pr.id AND work_date BETWEEN dt AND de AND public.k3_day_scope_ok(auth.uid(),id))) ORDER BY pr.full_name LIMIT 200 LOOP
+ r:=public.k3_period_read(_type,dt,p.id); result:=result||jsonb_build_array(jsonb_build_object('user_id',p.id,'full_name',p.full_name,'department_id',public.biz_department_at(p.id,dt),'department_name',(SELECT name FROM public.biz_departments WHERE id=public.biz_department_at(p.id,dt)),'data',r)); END LOOP; RETURN result; END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_plan_checkpoint_run()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE u record;n int:=0;
+BEGIN FOR u IN SELECT id FROM profiles WHERE status='Đang hoạt động' AND public.k3_can(id,'k3.use') AND public.biz_participant(id) LOOP PERFORM private.k3_plan_capture(u.id);n:=n+1; END LOOP; RETURN n; END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_plan_task_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE p jsonb:=_payload; a public.k3_actions; g public.k3_goals; t public.k3_tasks; result jsonb; _kpi uuid:=nullif(_payload->>'kpi_id','')::uuid; BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF; PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+ SELECT * INTO a FROM public.k3_actions WHERE id=nullif(p->>'action_id','')::uuid; SELECT * INTO g FROM public.k3_goals WHERE id=a.goal_id;
+ IF a.id IS NULL OR NOT private.k3_action_worker_ok(auth.uid(), a.id) THEN RAISE EXCEPTION 'Bạn không tham gia thực hiện hành động này.'; END IF;
+ IF a.deleted_at IS NOT NULL OR g.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'KF/KG đang nằm trong Thùng lưu trữ. Hãy khôi phục trước khi ghi nhận.'; END IF;
+ IF _kpi IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.k3_kpis k WHERE k.id=_kpi AND k.action_id=a.id) THEN RAISE EXCEPTION 'KPI không thuộc hành động này.'; END IF;
+ IF g.period_type='custom' THEN PERFORM private.k3_write_guard(greatest(g.period_start, coalesce((SELECT effective_from FROM public.k3_settings WHERE id), g.period_start))); ELSE PERFORM private.k3_period_write_guard(g.period_type,g.period_start); END IF;
+ IF nullif(p->>'id','') IS NOT NULL THEN SELECT * INTO t FROM public.k3_tasks WHERE id=(p->>'id')::uuid; IF t.user_id IS DISTINCT FROM auth.uid() THEN RAISE EXCEPTION 'Bạn không được sửa việc người khác.'; END IF;
+ ELSE IF nullif(p->>'request_key','') IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu công việc.'; END IF; SELECT * INTO t FROM public.k3_tasks WHERE user_id=auth.uid() AND request_key=(p->>'request_key')::uuid; IF t.id IS NOT NULL THEN RETURN to_jsonb(t); END IF; END IF;
+ IF nullif(p->>'work_date','') IS NULL THEN p:=p||jsonb_build_object('work_date',coalesce(t.work_date,greatest(g.period_start,(SELECT effective_from FROM public.k3_settings WHERE id)))); END IF;
+ IF t.id IS NULL AND nullif(_payload->>'work_date','') IS NULL THEN PERFORM set_config('k3.creating_unscheduled','yes',true); END IF; result:=public.k3_task_save(p); PERFORM set_config('k3.creating_unscheduled','',true);
+ PERFORM set_config('k3.scheduling','yes',true);
+ UPDATE public.k3_tasks SET action_id=a.id,is_unscheduled=CASE WHEN t.id IS NULL THEN nullif(_payload->>'work_date','') IS NULL ELSE t.is_unscheduled END,original_work_date=CASE WHEN t.id IS NULL AND nullif(_payload->>'work_date','') IS NULL THEN NULL ELSE original_work_date END,kpi_id=coalesce(_kpi,kpi_id) WHERE id=(result->>'id')::uuid RETURNING * INTO t;
+ PERFORM set_config('k3.scheduling','',true);
+ INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,auth.uid(),'link',jsonb_build_object('action_id',a.id,'kpi_id',_kpi,'is_unscheduled',t.is_unscheduled)); RETURN to_jsonb(t); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_purge_expired(_batch integer DEFAULT 100)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+#variable_conflict use_column
+DECLARE uid uuid:=auth.uid(); cutoff timestamptz:=now()-interval '15 days'; g record; a record; n_g int:=0; n_a int:=0; n_t int:=0; n_skip int:=0;
+BEGIN
+  IF uid IS NOT NULL AND NOT public.biz_admin(uid) THEN RAISE EXCEPTION 'Chỉ Admin hoặc tác vụ hệ thống được dọn Thùng lưu trữ.'; END IF;
+  PERFORM private.k3_review_purge_expired(); FOR g IN SELECT id,user_id,deleted_by FROM public.k3_goals WHERE deleted_at IS NOT NULL AND deleted_at<=cutoff ORDER BY deleted_at LIMIT _batch LOOP
+    IF private.k3_goal_has_official(g.id) OR private.k3_goal_has_results(g.id) OR EXISTS(SELECT 1 FROM public.k3_kpi_results WHERE goal_id=g.id) OR EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE v.status='pending' AND (v.record_id=g.id OR v.record_id IN (SELECT id FROM k3_actions WHERE goal_id=g.id) OR v.record_id IN (SELECT id FROM k3_tasks WHERE action_id IN (SELECT id FROM k3_actions WHERE goal_id=g.id)) OR v.record_id IN (SELECT id FROM k3_kpis WHERE goal_id=g.id OR action_id IN (SELECT id FROM k3_actions WHERE goal_id=g.id)))) THEN n_skip:=n_skip+1; CONTINUE; END IF;
+    DELETE FROM public.k3_tasks t USING public.k3_actions a WHERE t.action_id=a.id AND a.goal_id=g.id;
+    DELETE FROM public.k3_period_comments c WHERE c.goal_id=g.id OR c.action_id IN (SELECT id FROM public.k3_actions WHERE goal_id=g.id);
+    DELETE FROM public.k3_plan_events WHERE goal_id=g.id;
+    DELETE FROM public.k3_kpi_config_versions WHERE kpi_id IN(SELECT id FROM k3_kpis WHERE goal_id=g.id OR action_id IN(SELECT id FROM k3_actions WHERE goal_id=g.id)); DELETE FROM public.k3_actions WHERE goal_id=g.id;
+    DELETE FROM public.k3_goals WHERE id=g.id;
+    INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,NULL,coalesce(g.deleted_by,g.user_id),'purge',jsonb_build_object('kind','goal','id',g.id));
+    n_g:=n_g+1;
+  END LOOP;
+  FOR a IN SELECT a2.id,a2.user_id,a2.goal_id,a2.deleted_by FROM public.k3_actions a2 JOIN public.k3_goals g2 ON g2.id=a2.goal_id WHERE a2.deleted_at IS NOT NULL AND a2.deleted_at<=cutoff AND g2.deleted_at IS NULL ORDER BY a2.deleted_at LIMIT _batch LOOP
+    IF private.k3_action_has_official(a.id) OR private.k3_action_has_results(a.id) OR EXISTS(SELECT 1 FROM public.k3_kpi_results WHERE action_id=a.id) OR EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE v.status='pending' AND (v.record_id=a.id OR v.record_id IN (SELECT id FROM k3_tasks WHERE action_id=a.id) OR v.record_id IN (SELECT id FROM k3_kpis WHERE action_id=a.id))) THEN n_skip:=n_skip+1; CONTINUE; END IF;
+    DELETE FROM public.k3_tasks WHERE action_id=a.id;
+    DELETE FROM public.k3_period_comments WHERE action_id=a.id;
+    DELETE FROM public.k3_plan_events WHERE action_id=a.id;
+    DELETE FROM public.k3_kpi_config_versions WHERE kpi_id IN(SELECT id FROM k3_kpis WHERE action_id=a.id); DELETE FROM public.k3_actions WHERE id=a.id;
+    INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(a.user_id,a.goal_id,coalesce(a.deleted_by,a.user_id),'purge',jsonb_build_object('kind','action','id',a.id));
+    n_a:=n_a+1;
+  END LOOP;
+  WITH del AS (
+    SELECT t.id FROM public.k3_tasks t JOIN public.k3_days d ON d.id=t.day_id
+    WHERE t.deleted_at IS NOT NULL AND t.deleted_at<=cutoff AND d.summarized_at IS NULL AND t.kpi_actual IS NULL AND NOT EXISTS(SELECT 1 FROM k3_kpi_results r WHERE r.kpi_id=t.kpi_id) AND NOT EXISTS(SELECT 1 FROM k3_employee_reviews r WHERE jsonb_path_exists(r.snapshot,'$.** ? (@ == $id)',jsonb_build_object('id',t.id::text))) AND NOT EXISTS(SELECT 1 FROM k3_daily_closes c WHERE jsonb_path_exists(c.snapshot,'$.** ? (@ == $id)',jsonb_build_object('id',t.id::text))) AND NOT EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE v.status='pending' AND v.record_id=t.id)
+    ORDER BY t.deleted_at LIMIT _batch
+  ), gone AS (DELETE FROM public.k3_tasks WHERE id IN (SELECT id FROM del) RETURNING id)
+  SELECT count(*) INTO n_t FROM gone;
+  RETURN jsonb_build_object('purged_goals',n_g,'purged_actions',n_a,'purged_tasks',n_t,'skipped_protected',n_skip,'cutoff',cutoff);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_quick_create(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE p jsonb:=_payload;key uuid:=nullif(p->>'request_key','')::uuid;g jsonb;gid uuid;kf jsonb;kpi jsonb;kid uuid;created_kf int:=0;start_now boolean:=coalesce((p->>'save_valid')::boolean,(p->>'start_now')::boolean,false);members uuid[]:=coalesce((SELECT array_agg(value::uuid) FROM jsonb_array_elements_text(coalesce(p->'member_ids','[]'))),'{}');
+BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ IF key IS NULL THEN RAISE EXCEPTION 'Thiếu mã yêu cầu tạo công việc.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+ SELECT id INTO gid FROM k3_goals WHERE user_id=auth.uid() AND request_key=key;
+ IF gid IS NOT NULL THEN RETURN jsonb_build_object('goal_id',gid,'duplicated',true); END IF;
+ IF p->>'creation_mode'='basic' THEN
+ kpi:=coalesce(p->'kpi','{}');kpi:=kpi||jsonb_build_object('name',coalesce(nullif(btrim(kpi->>'name'),''),p->>'name'),'measure',coalesce(kpi->>'measure','binary'));
+ IF kpi->>'measure'='binary' AND nullif(btrim(kpi->'config'->>'valid_condition'),'') IS NULL THEN kpi:=kpi||jsonb_build_object('config',coalesce(kpi->'config','{}')||jsonb_build_object('valid_condition',p->>'expected_result')); END IF;
+ p:=p||jsonb_build_object('kfs',jsonb_build_array(jsonb_build_object('name',p->>'name','inherit_timeline',true,'kpis',jsonb_build_array(kpi))));
+ END IF;
+ IF start_now AND jsonb_array_length(coalesce(p->'kfs','[]'))=0 THEN RAISE EXCEPTION 'Công việc bắt đầu cần ít nhất một KF.'; END IF;
+ g:=public.k3_goal_save(p||jsonb_build_object('period_type','custom','status','draft'));gid:=(g->>'id')::uuid; UPDATE public.k3_goals SET creation_mode=CASE WHEN p->>'creation_mode' IN ('basic','advanced') THEN p->>'creation_mode' ELSE NULL END WHERE id=gid;
+ FOR kf IN SELECT * FROM jsonb_array_elements(coalesce(p->'kfs','[]')) LOOP
+ kid:=(public.k3_action_save(kf||jsonb_build_object('request_key',coalesce(nullif(kf->>'request_key','')::uuid,gen_random_uuid()),'goal_id',gid,'name',coalesce(nullif(btrim(kf->>'name'),''),p->>'name'),'inherit_timeline',coalesce((kf->>'inherit_timeline')::boolean,true),'assignee_id',coalesce(nullif(kf->>'assignee_id',''),auth.uid()::text)))->>'id')::uuid;
+ FOR kpi IN SELECT * FROM jsonb_array_elements(coalesce(kf->'kpis','[]')) LOOP
+ kpi:=kpi||jsonb_build_object('name',coalesce(nullif(btrim(kpi->>'name'),''),kf->>'name',p->>'name'),'action_id',kid,'request_key',coalesce(nullif(kpi->>'request_key','')::uuid,gen_random_uuid()));
+ IF kpi->>'measure'='binary' AND nullif(btrim(kpi->'config'->>'valid_condition'),'') IS NULL THEN kpi:=kpi||jsonb_build_object('config',coalesce(kpi->'config','{}')||jsonb_build_object('valid_condition',p->>'expected_result')); END IF;
+ PERFORM public.k3_kpi_configure(kpi);
+ END LOOP;
+ IF start_now AND NOT EXISTS(SELECT 1 FROM k3_kpis WHERE action_id=kid) THEN RAISE EXCEPTION 'KF cần ít nhất một KPI hợp lệ.'; END IF;
+ created_kf:=created_kf+1;
+ END LOOP;
+ IF start_now THEN PERFORM public.k3_goal_activate(gid,(SELECT revision FROM k3_goals WHERE id=gid)); END IF; IF cardinality(members)>0 THEN PERFORM public.k3_member_invite(gid,members); END IF;
+ INSERT INTO k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(auth.uid(),gid,auth.uid(),'quick_create',jsonb_build_object('kf_count',created_kf,'start_now',start_now,'creation_mode',p->>'creation_mode'));
+ RETURN jsonb_build_object('goal_id',gid,'kf_count',created_kf,'duplicated',false);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_restore(_kind text, _id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+#variable_conflict use_column
+DECLARE uid uuid:=auth.uid(); g public.k3_goals; a public.k3_actions; t public.k3_tasks; stamp timestamptz;
+BEGIN
+  IF EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE v.record_id=_id AND v.status='pending') THEN RAISE EXCEPTION 'Dữ liệu chờ rà soát: chỉ xử lý qua khu vực quản trị, không vào Thùng rác 15 ngày.'; END IF; IF uid IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  IF _kind='goal' THEN
+    SELECT * INTO g FROM public.k3_goals WHERE id=_id FOR UPDATE;
+    IF g.id IS NULL OR g.deleted_at IS NULL THEN RAISE EXCEPTION 'Mục tiêu không nằm trong Thùng lưu trữ.'; END IF;
+    IF NOT (g.user_id=uid OR public.biz_admin(uid)) THEN RAISE EXCEPTION 'Chỉ người chủ trì hoặc Admin được khôi phục mục tiêu này.'; END IF;
+    IF g.deleted_at+interval '15 days'<=now() THEN RAISE EXCEPTION 'Đã hết thời hạn khôi phục 15 ngày.'; END IF; stamp:=g.deleted_at;
+    UPDATE public.k3_goals SET deleted_at=NULL, deleted_by=NULL, updated_at=now() WHERE id=g.id;
+    UPDATE public.k3_actions SET deleted_at=NULL, deleted_by=NULL, updated_at=now() WHERE goal_id=g.id AND deleted_at=stamp AND deleted_by IS NOT DISTINCT FROM g.deleted_by;
+    UPDATE public.k3_tasks t SET deleted_at=NULL, deleted_by=NULL, updated_at=now() FROM public.k3_actions a WHERE t.action_id=a.id AND a.goal_id=g.id AND t.deleted_at=stamp AND t.deleted_by IS NOT DISTINCT FROM g.deleted_by AND NOT EXISTS(SELECT 1 FROM public.k3_days d WHERE d.id=t.day_id AND d.summarized_at IS NOT NULL);
+    INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(g.user_id,g.id,uid,'goal_restore','{}'::jsonb);
+    RETURN jsonb_build_object('ok',true);
+  ELSIF _kind='action' THEN
+    SELECT * INTO a FROM public.k3_actions WHERE id=_id FOR UPDATE;
+    IF a.id IS NULL OR a.deleted_at IS NULL THEN RAISE EXCEPTION 'KF không nằm trong Thùng lưu trữ.'; END IF;
+    SELECT * INTO g FROM public.k3_goals WHERE id=a.goal_id;
+    IF g.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Hãy khôi phục KG chứa KF này trước.'; END IF;
+    IF NOT (private.k3_goal_manage_ok(uid,a.goal_id) OR (a.assignee_id=uid AND a.deleted_by=uid)) THEN RAISE EXCEPTION 'Bạn không có quyền khôi phục KF này.'; END IF;
+    IF a.deleted_at+interval '15 days'<=now() THEN RAISE EXCEPTION 'Đã hết thời hạn khôi phục 15 ngày.'; END IF; stamp:=a.deleted_at;
+    UPDATE public.k3_actions SET deleted_at=NULL, deleted_by=NULL, updated_at=now() WHERE id=a.id;
+    UPDATE public.k3_tasks t SET deleted_at=NULL, deleted_by=NULL, updated_at=now() WHERE t.action_id=a.id AND t.deleted_at=stamp AND t.deleted_by IS NOT DISTINCT FROM a.deleted_by AND NOT EXISTS(SELECT 1 FROM public.k3_days d WHERE d.id=t.day_id AND d.summarized_at IS NOT NULL);
+    INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) VALUES(a.user_id,a.goal_id,a.id,uid,'action_restore','{}'::jsonb);
+    RETURN jsonb_build_object('ok',true);
+  ELSIF _kind='task' THEN
+    SELECT * INTO t FROM public.k3_tasks WHERE id=_id FOR UPDATE;
+    IF t.id IS NULL OR t.deleted_at IS NULL THEN RAISE EXCEPTION 'Bản ghi không nằm trong Thùng lưu trữ.'; END IF;
+    IF NOT (t.user_id=uid OR public.biz_admin(uid)) THEN RAISE EXCEPTION 'Bạn không có quyền khôi phục bản ghi này.'; END IF;
+    
+    IF t.action_id IS NOT NULL AND EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.id=t.action_id AND a.deleted_at IS NOT NULL) THEN RAISE EXCEPTION 'Hãy khôi phục KF chứa công việc này trước.'; END IF;
+    IF t.deleted_at+interval '15 days'<=now() THEN RAISE EXCEPTION 'Đã hết thời hạn khôi phục 15 ngày.'; END IF; UPDATE public.k3_tasks SET deleted_at=NULL, deleted_by=NULL, updated_at=now(), updated_by=uid WHERE id=t.id;
+    INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,uid,'restore','{}'::jsonb);
+    RETURN jsonb_build_object('ok',true);
+  ELSE RAISE EXCEPTION 'Loại dữ liệu không hợp lệ.'; END IF;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_review_reminder_run()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE c k3_automation_config;d date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;tm time:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::time;u record;s jsonb;slot text;n int:=0;affected int;
+BEGIN
+ SELECT * INTO c FROM k3_automation_config WHERE id;
+ IF NOT c.review_reminders OR NOT c.employee_review_enabled OR d<c.enabled_from OR tm>=c.close_time OR NOT EXISTS(SELECT 1 FROM k3_settings WHERE id AND enabled AND effective_from<=d) THEN RETURN 0; END IF;
+ slot:=CASE WHEN c.review_second_reminder AND tm>=c.review_second_time THEN 'second' WHEN tm>=c.review_remind_time THEN 'first' END; IF slot IS NULL THEN RETURN 0; END IF;
+ FOR u IN SELECT id FROM profiles WHERE status='Đang hoạt động' AND public.k3_can(id,'k3.use') LOOP
+ IF EXISTS(SELECT 1 FROM leave_requests l WHERE l.owner_id=u.id AND l.type='leave' AND l.status='approved' AND d BETWEEN (l.payload->>'start_date')::date AND (l.payload->>'end_date')::date) THEN CONTINUE; END IF;
+ s:=private.k3_employee_review_state(u.id,d);
+ IF s->>'manual_status'='reviewed' OR ((s->>'action_count')::int=0 AND (s->>'result_count')::int=0) THEN CONTINUE; END IF;
+ INSERT INTO notifications(recipient_id,kind,dedup_key,zalo_status,push_status,payload) VALUES(u.id,'biz_deadline','k3-review:'||d||':'||u.id||':'||slot,'ineligible','none',jsonb_build_object('module','k3','title','Tổng kết 3K hôm nay','message',CASE WHEN s->>'manual_status'='reconfirm' THEN 'Bạn đã cập nhật KPI sau khi tổng kết. Vui lòng kiểm tra và xác nhận lại.' ELSE 'Bạn chưa tổng kết 3K hôm nay. Vui lòng rà soát công việc và xác nhận trước giờ chốt tự động.' END,'url','/biz/3k')) ON CONFLICT(dedup_key) DO NOTHING;
+ GET DIAGNOSTICS affected=ROW_COUNT;n:=n+affected;
+ END LOOP; RETURN n;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_scope_ok(_actor uuid, _user uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ SELECT private.legacy_business_allowed(_actor) AND (
+  SELECT _actor IS NOT NULL AND _user IS NOT NULL AND (
+    public.biz_all_scope(_actor)
+    OR EXISTS(SELECT 1 FROM public.biz_department_members m WHERE m.user_id=_user AND public.biz_scope_ok(_actor, _user, m.department_id))
+  )); $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_settings_read()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings;BEGIN
+  IF NOT private.is_active(auth.uid()) THEN RAISE EXCEPTION 'Tài khoản không còn hoạt động.' USING ERRCODE='42501'; END IF;
+  SELECT * INTO s FROM public.k3_settings WHERE id=true;
+  RETURN jsonb_build_object(
+    'enabled', coalesce(s.enabled,false),
+    'effective_from', s.effective_from,
+    'plan_by', coalesce(s.plan_by,'08:45'::time),
+    'summary_by', coalesce(s.summary_by,'18:00'::time),
+    'max_focus', coalesce(s.max_focus,3),
+    'allow_personal_goal', coalesce(s.allow_personal_goal,true),
+    'allow_team_goal', coalesce(s.allow_team_goal,true),
+    'allow_invite', coalesce(s.allow_invite,true),
+    'allow_assign', coalesce(s.allow_assign,true),
+    'updated_at', s.updated_at,
+    'can_use', public.k3_can(auth.uid(),'k3.use'),
+    'can_view_scope', public.k3_can(auth.uid(),'k3.view_scope'),
+    'can_comment', public.k3_can(auth.uid(),'k3.comment'),
+    'can_settings', public.k3_can(auth.uid(),'k3.settings'),
+    'today', (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+  );
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_settings_save(_enabled boolean, _effective_from date, _plan_by time without time zone, _summary_by time without time zone, _max_focus smallint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE old_row public.k3_settings;BEGIN
+  IF NOT public.k3_can(auth.uid(),'k3.settings') THEN RAISE EXCEPTION 'Bạn không có quyền cấu hình 3K.'; END IF;
+  IF _plan_by IS NULL OR _summary_by IS NULL THEN RAISE EXCEPTION 'Giờ lập 3K và giờ tổng kết không được trống.'; END IF;
+  IF _max_focus IS NULL OR _max_focus NOT BETWEEN 1 AND 5 THEN RAISE EXCEPTION 'Số mũi khoan tối đa phải từ 1 đến 5.'; END IF;
+  IF _enabled AND _effective_from IS NULL THEN RAISE EXCEPTION 'Cần chọn ngày bắt đầu áp dụng trước khi bật 3K.'; END IF;
+  SELECT * INTO old_row FROM public.k3_settings WHERE id=true;
+  INSERT INTO public.k3_settings(id, enabled, effective_from, plan_by, summary_by, max_focus, updated_by, updated_at)
+  VALUES (true, _enabled, _effective_from, _plan_by, _summary_by, _max_focus, auth.uid(), now())
+  ON CONFLICT (id) DO UPDATE SET enabled=excluded.enabled, effective_from=excluded.effective_from, plan_by=excluded.plan_by, summary_by=excluded.summary_by, max_focus=excluded.max_focus, updated_by=excluded.updated_by, updated_at=excluded.updated_at;
+  INSERT INTO public.k3_settings_log(changed_by, snapshot)
+  VALUES (auth.uid(), jsonb_build_object('old', to_jsonb(old_row), 'new', jsonb_build_object('enabled',_enabled,'effective_from',_effective_from,'plan_by',_plan_by,'summary_by',_summary_by,'max_focus',_max_focus)));
+  PERFORM private.k3_plan_schedule(); RETURN public.k3_settings_read();
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_soft_delete(_kind text, _id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); stamp timestamptz:=now(); vg public.k3_goals; va public.k3_actions;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  -- k3delete hotfix fence
+  IF NOT public.k3_can(uid,'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền xóa công việc.'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(uid::text));
+  IF _kind='action' AND EXISTS(SELECT 1 FROM k3_actions x WHERE x.id=_id AND x.deleted_at IS NULL AND NOT EXISTS(SELECT 1 FROM k3_actions s WHERE s.goal_id=x.goal_id AND s.id<>x.id AND s.deleted_at IS NULL)) THEN
+    RETURN public.k3_soft_delete('goal',(SELECT goal_id FROM k3_actions WHERE id=_id));
+  END IF;
+  IF _kind='goal' THEN
+    SELECT * INTO vg FROM public.k3_goals WHERE id=_id FOR UPDATE;
+    IF vg.id IS NULL OR vg.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Không tìm thấy công việc hoặc công việc đã nằm trong Thùng rác.'; END IF;
+    IF NOT (vg.user_id=uid OR public.biz_admin(uid)) THEN RAISE EXCEPTION 'Chỉ người chủ trì hoặc Admin được xóa công việc này.'; END IF;
+    PERFORM k.id FROM k3_kpis k LEFT JOIN k3_actions a ON a.id=k.action_id WHERE coalesce(k.goal_id,a.goal_id)=vg.id ORDER BY k.id FOR UPDATE OF k;
+    IF vg.status='cancelled' THEN RAISE EXCEPTION 'Công việc đã hủy được giữ trong lịch sử, không chuyển vào Thùng rác.'; END IF;
+    
+    
+    
+    UPDATE public.k3_actions SET deleted_at=stamp, deleted_by=uid, updated_at=now() WHERE goal_id=vg.id AND deleted_at IS NULL;
+    UPDATE public.k3_goals SET deleted_at=stamp, deleted_by=uid, updated_at=now() WHERE id=vg.id;
+    INSERT INTO public.k3_plan_events(user_id,goal_id,actor_id,action,detail) VALUES(vg.user_id,vg.id,uid,'goal_soft_delete',jsonb_build_object('member_ids',(SELECT coalesce(jsonb_agg(user_id),'[]'::jsonb) FROM public.k3_goal_members WHERE goal_id=vg.id AND status IN ('invited','accepted'))));
+    RETURN jsonb_build_object('ok',true,'kind','goal','kf_count',(SELECT count(*) FROM public.k3_actions x WHERE x.goal_id=vg.id AND x.deleted_at=stamp));
+  ELSIF _kind='action' THEN
+    SELECT * INTO va FROM public.k3_actions WHERE id=_id FOR UPDATE;
+    IF va.id IS NULL OR va.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Không tìm thấy KF hoặc KF đã nằm trong Thùng rác.'; END IF;
+    SELECT * INTO vg FROM public.k3_goals WHERE id=va.goal_id;
+    IF vg.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Công việc chứa KF này đang nằm trong Thùng rác.'; END IF;
+    IF NOT private.k3_goal_manage_ok(uid, va.goal_id) THEN
+      IF NOT (va.user_id=uid AND va.assignee_id=uid AND NOT EXISTS(SELECT 1 FROM public.k3_action_collaborators c WHERE c.action_id=va.id) AND NOT EXISTS(SELECT 1 FROM public.k3_tasks x WHERE x.action_id=va.id AND x.user_id<>uid AND x.deleted_at IS NULL)) THEN
+        RAISE EXCEPTION 'Chỉ người chủ trì hoặc người phụ trách KF chưa có phối hợp được xóa KF này.';
+      END IF;
+    END IF;
+    PERFORM k.id FROM k3_kpis k WHERE k.action_id=va.id ORDER BY k.id FOR UPDATE;
+    IF va.status='cancelled' OR vg.status='cancelled' THEN RAISE EXCEPTION 'Công việc đã hủy được giữ trong lịch sử, không chuyển vào Thùng rác.'; END IF;
+    
+    
+    IF vg.status<>'draft' AND NOT EXISTS(SELECT 1 FROM public.k3_actions x WHERE x.goal_id=vg.id AND x.id<>va.id AND x.deleted_at IS NULL AND x.status<>'cancelled') THEN RAISE EXCEPTION 'Không được xóa KF duy nhất của công việc đang thực hiện. Hãy xóa toàn bộ công việc.'; END IF;
+    
+    UPDATE public.k3_actions SET deleted_at=stamp, deleted_by=uid, updated_at=now() WHERE id=va.id;
+    INSERT INTO public.k3_plan_events(user_id,goal_id,action_id,actor_id,action,detail) VALUES(va.user_id,va.goal_id,va.id,uid,'action_soft_delete','{}'::jsonb);
+    RETURN jsonb_build_object('ok',true,'kind','action');
+  ELSIF _kind='task' THEN
+    PERFORM public.k3_task_delete(_id);
+    RETURN jsonb_build_object('ok',true,'kind','task');
+  ELSE RAISE EXCEPTION 'Loại dữ liệu không hợp lệ.'; END IF;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_summary_confirm(_date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE d public.k3_days; missing text; snap jsonb; BEGIN
+ PERFORM private.k3_write_guard(_date); IF _date>(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN RAISE EXCEPTION 'Chưa thể tổng kết ngày tương lai.'; END IF;
+ SELECT * INTO d FROM public.k3_days WHERE user_id=auth.uid() AND work_date=_date FOR UPDATE;
+ IF d.id IS NULL THEN RAISE EXCEPTION 'Chưa có 3K cho ngày này.'; END IF;
+ SELECT string_agg(name,'; ') INTO missing FROM public.k3_tasks WHERE day_id=d.id AND deleted_at IS NULL AND NOT is_unscheduled AND NOT private.k3_task_complete(kpi_target,kpi_actual,progress,status) AND (btrim(coalesce(problem,''))='' OR btrim(coalesce(cause,''))='' OR btrim(coalesce(solution,''))='');
+ IF missing IS NOT NULL THEN RAISE EXCEPTION 'Công việc chưa hoàn thành cần đủ Vấn đề - Nguyên nhân - Giải pháp: %',missing; END IF;
+ IF d.confirmed_revision IS NOT DISTINCT FROM d.data_revision AND EXISTS(SELECT 1 FROM public.k3_summary_versions WHERE day_id=d.id AND revision=d.data_revision) THEN RETURN to_jsonb(d); END IF;
+ snap:=jsonb_build_object('kg',d.kg,'tasks',coalesce((SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.k3_tasks t WHERE day_id=d.id AND deleted_at IS NULL AND NOT is_unscheduled),'[]'::jsonb));
+ INSERT INTO public.k3_summary_versions(day_id,revision,actor_id,snapshot) VALUES(d.id,d.data_revision,auth.uid(),snap) ON CONFLICT(day_id,revision) DO NOTHING;
+ UPDATE public.k3_days SET summarized_at=coalesce(summarized_at,now()),confirmed_at=now(),confirmed_revision=data_revision,updated_at=now() WHERE id=d.id RETURNING * INTO d;
+ INSERT INTO public.k3_task_events(day_id,actor_id,action,detail) VALUES(d.id,auth.uid(),'summary',jsonb_build_object('revision',d.data_revision,'snapshot',snap)); RETURN to_jsonb(d); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_task_delete(_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE t public.k3_tasks; BEGIN
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text)); SELECT * INTO t FROM public.k3_tasks WHERE id=_id FOR UPDATE;
+ IF t.id IS NULL OR (t.user_id<>auth.uid() AND NOT public.biz_admin(auth.uid())) THEN RAISE EXCEPTION 'Bạn không được xóa công việc của người khác.'; END IF;
+ PERFORM private.k3_write_guard(t.work_date);
+ IF t.deleted_at IS NOT NULL THEN RETURN true; END IF;
+ 
+ 
+ INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,auth.uid(),'delete',jsonb_build_object('before',to_jsonb(t)));
+ UPDATE public.k3_tasks SET deleted_at=now(),deleted_by=auth.uid(),updated_at=now(),updated_by=auth.uid() WHERE id=t.id; RETURN true; END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_task_save(_payload jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings; d public.k3_days; old public.k3_tasks; t public.k3_tasks; _id uuid:=nullif(_payload->>'id','')::uuid; _date date:=nullif(_payload->>'work_date','')::date; _key uuid:=nullif(_payload->>'request_key','')::uuid; p jsonb:=_payload; BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+ IF _id IS NOT NULL THEN SELECT * INTO old FROM public.k3_tasks WHERE id=_id FOR UPDATE;
+  IF old.id IS NULL OR old.user_id<>auth.uid() OR old.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Bạn không được chỉnh sửa công việc của người khác.'; END IF;
+  IF old.action_id IS NOT NULL AND EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.id=old.action_id AND a.deleted_at IS NOT NULL) THEN RAISE EXCEPTION 'KF của công việc này đang nằm trong Thùng lưu trữ.'; END IF;
+  IF _date IS NOT NULL AND _date<>old.work_date THEN RAISE EXCEPTION 'Công việc phải được cập nhật đúng ngày gốc.'; END IF;
+  IF p ? 'revision' AND (p->>'revision')::bigint<>old.revision THEN RAISE EXCEPTION 'Công việc đã được cập nhật ở nơi khác. Vui lòng tải lại.'; END IF;
+  _date:=old.work_date; p:=to_jsonb(old)||p;
+ ELSE IF _key IS NOT NULL THEN SELECT * INTO t FROM public.k3_tasks WHERE user_id=auth.uid() AND request_key=_key; IF t.id IS NOT NULL THEN RETURN to_jsonb(t); END IF; END IF; END IF;
+ PERFORM private.k3_write_guard(_date);
+ SELECT * INTO s FROM public.k3_settings WHERE id;
+ IF btrim(coalesce(p->>'name',''))='' THEN RAISE EXCEPTION 'Tên công việc không được trống.'; END IF;
+ INSERT INTO public.k3_days(user_id,work_date,planned_at) VALUES(auth.uid(),_date,now()) ON CONFLICT(user_id,work_date) DO NOTHING;
+ SELECT * INTO d FROM public.k3_days WHERE user_id=auth.uid() AND work_date=_date FOR UPDATE;
+ IF coalesce((p->>'is_focus')::boolean,false) AND (SELECT count(*) FROM public.k3_tasks WHERE day_id=d.id AND is_focus AND deleted_at IS NULL AND id IS DISTINCT FROM _id)>=coalesce(s.max_focus,3) THEN RAISE EXCEPTION 'Mỗi ngày chỉ chọn tối đa % công việc trọng tâm.',coalesce(s.max_focus,3); END IF;
+ IF _id IS NULL THEN
+ INSERT INTO public.k3_tasks(day_id,user_id,work_date,name,start_time,end_time,kpi_target,kpi_unit,kpi_actual,progress,status,is_focus,how,place,links,note,problem,cause,solution,sort_order,created_by,updated_by,request_key)
+ VALUES(d.id,auth.uid(),_date,btrim(p->>'name'),nullif(p->>'start_time','')::time,nullif(p->>'end_time','')::time,nullif(p->>'kpi_target','')::numeric,nullif(btrim(p->>'kpi_unit'),''),nullif(p->>'kpi_actual','')::numeric,coalesce(nullif(p->>'progress','')::int,0),coalesce(p->>'status','todo'),coalesce((p->>'is_focus')::boolean,false),nullif(btrim(p->>'how'),''),nullif(btrim(p->>'place'),''),p->'links',nullif(btrim(p->>'note'),''),nullif(btrim(p->>'problem'),''),nullif(btrim(p->>'cause'),''),nullif(btrim(p->>'solution'),''),coalesce((p->>'sort_order')::int,0),auth.uid(),auth.uid(),_key) RETURNING * INTO t;
+ ELSE UPDATE public.k3_tasks SET name=btrim(p->>'name'),start_time=nullif(p->>'start_time','')::time,end_time=nullif(p->>'end_time','')::time,kpi_target=nullif(p->>'kpi_target','')::numeric,kpi_unit=nullif(btrim(p->>'kpi_unit'),''),kpi_actual=nullif(p->>'kpi_actual','')::numeric,progress=coalesce(nullif(p->>'progress','')::int,0),status=p->>'status',is_focus=coalesce((p->>'is_focus')::boolean,false),how=nullif(btrim(p->>'how'),''),place=nullif(btrim(p->>'place'),''),links=p->'links',note=nullif(btrim(p->>'note'),''),problem=nullif(btrim(p->>'problem'),''),cause=nullif(btrim(p->>'cause'),''),solution=nullif(btrim(p->>'solution'),''),updated_at=now(),updated_by=auth.uid() WHERE id=_id RETURNING * INTO t; END IF;
+ INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(d.id,t.id,auth.uid(),CASE WHEN _id IS NULL THEN 'create' ELSE 'update' END,jsonb_build_object('before',to_jsonb(old),'after',to_jsonb(t))); RETURN to_jsonb(t); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_task_schedule(_id uuid, _date date, _revision bigint)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE t public.k3_tasks; old public.k3_tasks; d public.k3_days; s public.k3_settings; BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF; PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text)); SELECT * INTO old FROM public.k3_tasks WHERE id=_id FOR UPDATE;
+ IF old.id IS NULL OR old.user_id<>auth.uid() OR old.deleted_at IS NOT NULL THEN RAISE EXCEPTION 'Bạn không được xếp lịch việc người khác.'; END IF; IF old.revision<>_revision OR _revision IS NULL THEN RAISE EXCEPTION 'Công việc đã thay đổi. Vui lòng tải lại.'; END IF;
+ PERFORM private.k3_write_guard(_date); IF _date<(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AND old.work_date<>_date THEN RAISE EXCEPTION 'Chỉ được xếp lịch sang hôm nay hoặc ngày tương lai.'; END IF;
+ SELECT * INTO s FROM public.k3_settings WHERE id;
+ INSERT INTO public.k3_days(user_id,work_date,planned_at) VALUES(auth.uid(),_date,now()) ON CONFLICT(user_id,work_date) DO NOTHING;
+ SELECT * INTO d FROM public.k3_days WHERE user_id=auth.uid() AND work_date=_date FOR UPDATE;
+ IF old.is_focus AND (SELECT count(*) FROM public.k3_tasks WHERE day_id=d.id AND is_focus AND deleted_at IS NULL AND NOT is_unscheduled AND id<>old.id)>=s.max_focus THEN RAISE EXCEPTION 'Ngày mới đã đủ mũi khoan trọng tâm.'; END IF;
+ PERFORM set_config('k3.scheduling','yes',true);
+ UPDATE public.k3_tasks SET day_id=d.id,work_date=_date,is_unscheduled=false,original_work_date=coalesce(original_work_date,CASE WHEN is_unscheduled THEN _date ELSE work_date END),updated_at=now(),updated_by=auth.uid() WHERE id=old.id RETURNING * INTO t;
+ PERFORM set_config('k3.scheduling','',true);
+ INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(old.day_id,t.id,auth.uid(),'schedule',jsonb_build_object('before',to_jsonb(old),'after',to_jsonb(t)));
+ IF old.day_id<>t.day_id THEN INSERT INTO public.k3_task_events(day_id,task_id,actor_id,action,detail) VALUES(t.day_id,t.id,auth.uid(),'schedule',jsonb_build_object('before',to_jsonb(old),'after',to_jsonb(t))); END IF; RETURN to_jsonb(t); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_task_update(_id uuid, _status text, _kpi_actual numeric, _progress integer, _problem text, _cause text, _solution text, _note text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE t public.k3_tasks; BEGIN
+ SELECT * INTO t FROM public.k3_tasks WHERE id=_id;
+ IF t.id IS NULL OR t.user_id<>auth.uid() THEN RAISE EXCEPTION 'Bạn không được cập nhật công việc của người khác.'; END IF;
+ RETURN public.k3_task_save(jsonb_build_object('id',_id,'revision',t.revision,'work_date',t.work_date,'status',_status,'kpi_actual',coalesce(_kpi_actual,t.kpi_actual),'progress',coalesce(_progress,t.progress),'problem',_problem,'cause',_cause,'solution',_solution,'note',coalesce(nullif(btrim(_note),''),t.note))); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_team_read(_date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE today date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+BEGIN
+ IF NOT public.k3_can(auth.uid(),'k3.view_scope') THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K trong phạm vi quản lý.'; END IF;
+ RETURN coalesce((SELECT jsonb_agg(jsonb_build_object(
+   'user_id',p.id,'full_name',p.full_name,'departments',jsonb_build_array(dep.name),'department_id',dep.id,
+   'day',CASE WHEN d.id IS NULL THEN NULL ELSE to_jsonb(d) END,
+   'total',c.total,'done',c.done,'open',c.total-c.done,'issues',c.issues,'focus',c.focus,
+   'status_key',CASE
+     WHEN d.id IS NULL THEN 'none'
+     WHEN d.summarized_at IS NOT NULL AND d.data_revision IS DISTINCT FROM d.confirmed_revision THEN 'reconfirm'
+     WHEN d.summarized_at IS NOT NULL THEN 'summarized'
+     WHEN upd.n>0 THEN 'updated'
+     ELSE 'planned' END,
+   'goals_active',coalesce(ga.n,0),'kf_active',coalesce(kf.n,0),'kf_overdue',coalesce(kf.od,0)
+ ) ORDER BY p.full_name)
+ FROM public.profiles p
+ LEFT JOIN public.k3_days d ON d.user_id=p.id AND d.work_date=_date
+ LEFT JOIN public.biz_departments dep ON dep.id=coalesce(d.department_id,public.biz_department_at(p.id,_date))
+ LEFT JOIN LATERAL(SELECT count(*) total,count(*) FILTER(WHERE private.k3_task_complete(kpi_target,kpi_actual,progress,status)) done,count(*) FILTER(WHERE NOT private.k3_task_complete(kpi_target,kpi_actual,progress,status) AND (btrim(coalesce(problem,''))<>'' OR btrim(coalesce(solution,''))<>'')) issues,count(*) FILTER(WHERE is_focus) focus FROM public.k3_tasks WHERE day_id=d.id AND deleted_at IS NULL AND NOT is_unscheduled) c ON true
+ LEFT JOIN LATERAL(SELECT count(*) n FROM public.k3_tasks t WHERE t.day_id=d.id AND t.deleted_at IS NULL AND NOT t.is_unscheduled AND (t.status<>'todo' OR t.kpi_actual IS NOT NULL OR t.progress>0)) upd ON true
+ LEFT JOIN LATERAL(SELECT count(*) n FROM public.k3_goals g WHERE g.deleted_at IS NULL AND private.k3_entity_metric('goal',g.id)->>'status' IN ('not_started','in_progress','paused') AND (g.user_id=p.id OR EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=p.id AND m.status='accepted'))) ga ON true
+ LEFT JOIN LATERAL(SELECT count(*) n,count(*) FILTER(WHERE private.k3_action_overdue(a.id)) od FROM public.k3_actions a JOIN public.k3_goals g2 ON g2.id=a.goal_id WHERE a.deleted_at IS NULL AND g2.deleted_at IS NULL AND private.k3_entity_metric('action',a.id)->>'status' IN ('not_started','in_progress','paused') AND private.k3_entity_metric('goal',g2.id)->>'status' IN ('not_started','in_progress','paused') AND (a.assignee_id=p.id OR EXISTS(SELECT 1 FROM public.k3_action_collaborators c2 WHERE c2.action_id=a.id AND c2.user_id=p.id))) kf ON true
+ WHERE p.id<>auth.uid() AND CASE WHEN d.id IS NOT NULL THEN public.k3_day_scope_ok(auth.uid(),d.id) ELSE p.status='Đang hoạt động' AND dep.id IS NOT NULL AND public.biz_scope_ok(auth.uid(),p.id,dep.id,(_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) END),'[]'::jsonb); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_trash_list(_kind text DEFAULT 'all'::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE uid uuid:=auth.uid(); adm boolean; scp boolean;
+BEGIN
+  IF uid IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF;
+  adm:=public.biz_admin(uid); scp:=public.k3_can(uid,'k3.view_scope');
+  RETURN coalesce((SELECT jsonb_agg(row ORDER BY row->>'deleted_at' DESC) FROM (
+    SELECT jsonb_build_object(
+      'kind','goal','id',g.id,'name',g.name,'owner_id',g.user_id,'owner_name',po.full_name,
+      'deleted_by',g.deleted_by,'deleted_by_name',pd.full_name,'deleted_at',g.deleted_at,
+      'purge_at',g.deleted_at+interval '15 days',
+      'seconds_left',greatest(0,extract(epoch FROM (g.deleted_at+interval '15 days'-now()))::bigint),
+      'kf_count',(SELECT count(*) FROM public.k3_actions a WHERE a.goal_id=g.id AND a.deleted_at IS NOT NULL),
+      'restorable',(g.deleted_at+interval '15 days'>now() AND (g.user_id=uid OR adm))
+    ) row
+    FROM public.k3_goals g JOIN public.profiles po ON po.id=g.user_id LEFT JOIN public.profiles pd ON pd.id=g.deleted_by
+    WHERE _kind IN ('all','goal') AND g.deleted_at IS NOT NULL
+      AND (adm OR g.user_id=uid OR (scp AND public.biz_scope_ok(uid,g.user_id,g.department_id,(g.period_start::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))))
+    UNION ALL
+    SELECT jsonb_build_object(
+      'kind','action','id',a.id,'name',a.name,'goal_id',a.goal_id,'goal_name',g.name,'owner_id',a.user_id,'owner_name',po.full_name,
+      'deleted_by',a.deleted_by,'deleted_by_name',pd.full_name,'deleted_at',a.deleted_at,
+      'purge_at',a.deleted_at+interval '15 days',
+      'seconds_left',greatest(0,extract(epoch FROM (a.deleted_at+interval '15 days'-now()))::bigint),
+      'parent_deleted',(g.deleted_at IS NOT NULL),
+      'restorable',(a.deleted_at+interval '15 days'>now() AND g.deleted_at IS NULL AND (private.k3_goal_manage_ok(uid,a.goal_id) OR (a.assignee_id=uid AND a.deleted_by=uid)))
+    )
+    FROM public.k3_actions a JOIN public.k3_goals g ON g.id=a.goal_id JOIN public.profiles po ON po.id=a.user_id LEFT JOIN public.profiles pd ON pd.id=a.deleted_by
+    WHERE _kind IN ('all','action') AND a.deleted_at IS NOT NULL
+      AND (adm OR a.user_id=uid OR a.assignee_id=uid OR (scp AND public.biz_scope_ok(uid,g.user_id,g.department_id,(g.period_start::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))))
+    UNION ALL
+    SELECT jsonb_build_object(
+      'kind','task','id',t.id,'name',t.name,'work_date',t.work_date,'owner_id',t.user_id,'owner_name',po.full_name,
+      'deleted_by',t.deleted_by,'deleted_by_name',pd.full_name,'deleted_at',t.deleted_at,
+      'purge_at',t.deleted_at+interval '15 days',
+      'seconds_left',greatest(0,extract(epoch FROM (t.deleted_at+interval '15 days'-now()))::bigint),
+      'day_summarized',(d.summarized_at IS NOT NULL),
+      'parent_deleted',(t.action_id IS NOT NULL AND EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.id=t.action_id AND a.deleted_at IS NOT NULL)),
+      'restorable',(d.summarized_at IS NULL AND (t.user_id=uid OR adm) AND NOT (t.action_id IS NOT NULL AND EXISTS(SELECT 1 FROM public.k3_actions a WHERE a.id=t.action_id AND a.deleted_at IS NOT NULL)))
+    )
+    FROM public.k3_tasks t JOIN public.k3_days d ON d.id=t.day_id JOIN public.profiles po ON po.id=t.user_id LEFT JOIN public.profiles pd ON pd.id=t.deleted_by
+    WHERE _kind IN ('all','task') AND t.deleted_at IS NOT NULL
+      AND (adm OR t.user_id=uid OR (scp AND public.k3_day_scope_ok(uid,t.day_id)))
+  ) rows),'[]'::jsonb);
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_user_day_read(_user uuid, _date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE d public.k3_days; BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Chưa đăng nhập.'; END IF; SELECT * INTO d FROM public.k3_days WHERE user_id=_user AND work_date=_date;
+ IF (_user=auth.uid() AND NOT public.k3_can(auth.uid(),'k3.use')) OR (_user<>auth.uid() AND NOT (public.k3_can(auth.uid(),'k3.view_scope') AND CASE WHEN d.id IS NOT NULL THEN public.k3_day_scope_ok(auth.uid(),d.id) ELSE public.biz_scope_ok(auth.uid(),_user,public.biz_department_at(_user,_date),(_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')) END)) THEN RAISE EXCEPTION 'Bạn không có quyền xem 3K của nhân viên này.'; END IF;
+ RETURN jsonb_build_object('settings',public.k3_settings_read(),'user',(SELECT jsonb_build_object('id',id,'full_name',full_name) FROM public.profiles WHERE id=_user),'day',CASE WHEN d.id IS NULL THEN NULL ELSE to_jsonb(d) END,
+ 'tasks',coalesce((SELECT jsonb_agg(to_jsonb(t) ORDER BY is_focus DESC,sort_order,start_time NULLS LAST,created_at) FROM public.k3_tasks t WHERE day_id=d.id AND deleted_at IS NULL AND NOT is_unscheduled),'[]'::jsonb),
+ 'comments',coalesce((SELECT jsonb_agg(to_jsonb(c)||jsonb_build_object('author_name',p.full_name) ORDER BY c.created_at) FROM public.k3_comments c LEFT JOIN public.profiles p ON p.id=c.author_id WHERE c.day_id=d.id),'[]'::jsonb),
+ 'events',coalesce((SELECT jsonb_agg(to_jsonb(e) ORDER BY e.created_at DESC) FROM (SELECT * FROM public.k3_task_events WHERE day_id=d.id ORDER BY created_at DESC LIMIT 100) e),'[]'::jsonb),
+ 'summaries',coalesce((SELECT jsonb_agg(to_jsonb(v) ORDER BY confirmed_at DESC) FROM public.k3_summary_versions v WHERE day_id=d.id),'[]'::jsonb),'can_comment',d.id IS NOT NULL AND public.k3_can(auth.uid(),'k3.comment') AND public.k3_day_scope_ok(auth.uid(),d.id),
+ 'active_goals',coalesce((SELECT jsonb_agg(jsonb_build_object('id',g.id,'name',g.name,'status',g.status,'period_start',g.period_start,'period_end',g.period_end,'due_date',g.due_date,'is_key',g.is_key,'owner_name',(SELECT full_name FROM public.profiles WHERE id=g.user_id),'my_role',CASE WHEN g.user_id=_user THEN 'owner' ELSE m.status END) ORDER BY g.is_key DESC, g.period_end)
+   FROM public.k3_goals g LEFT JOIN public.k3_goal_members m ON m.goal_id=g.id AND m.user_id=_user
+   WHERE g.deleted_at IS NULL AND private.k3_entity_metric('goal',g.id)->>'status' IN ('not_started','in_progress','paused') AND g.period_start<=_date AND g.period_end>=_date
+     AND (g.user_id=_user OR m.status='accepted')),'[]'::jsonb),
+ 'assigned_actions',coalesce((SELECT jsonb_agg(jsonb_build_object('id',a.id,'goal_id',a.goal_id,'goal_name',g.name,'name',a.name,'status',a.status,'due_date',a.due_date,'is_key',a.is_key,'my_part',CASE WHEN a.assignee_id=_user THEN 'assignee' ELSE 'collaborator' END,'already_today',EXISTS(SELECT 1 FROM public.k3_tasks t WHERE t.action_id=a.id AND t.user_id=_user AND t.work_date=_date AND t.deleted_at IS NULL)) ORDER BY a.is_key DESC, a.due_date NULLS LAST)
+   FROM public.k3_actions a JOIN public.k3_goals g ON g.id=a.goal_id
+   WHERE a.deleted_at IS NULL AND g.deleted_at IS NULL AND private.k3_entity_metric('action',a.id)->>'status' IN ('not_started','in_progress','paused') AND private.k3_entity_metric('goal',g.id)->>'status' IN ('not_started','in_progress','paused')
+     AND private.k3_action_on_date(a.id,_date)
+     AND (g.user_id=_user OR EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_user AND m.status='accepted'))
+     AND (a.assignee_id=_user OR EXISTS(SELECT 1 FROM public.k3_action_collaborators c WHERE c.action_id=a.id AND c.user_id=_user))),'[]'::jsonb)); END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_zalo_report_claim()
+ RETURNS SETOF k3_zalo_reports
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ UPDATE k3_zalo_reports SET status='unknown',error='Tiến trình gửi gián đoạn; cần đối soát, không gửi lại.' WHERE status='sending' AND attempted_at<now()-interval '20 minutes';
+ UPDATE k3_zalo_reports r SET status='skipped',error='Cấu hình nhận báo cáo đã thay đổi; không tự chuyển người nhận.' FROM k3_automation_config c WHERE c.id AND r.status='pending' AND (NOT c.zalo_enabled OR r.group_id IS DISTINCT FROM c.group_id OR r.scope_kind IS DISTINCT FROM c.scope_kind OR r.scope_id IS DISTINCT FROM c.scope_id);
+ RETURN QUERY WITH chosen AS (SELECT r.id FROM k3_zalo_reports r JOIN k3_automation_config c ON c.id WHERE r.status='pending' AND c.zalo_enabled AND r.group_id=c.group_id AND r.scope_kind=c.scope_kind AND r.scope_id IS NOT DISTINCT FROM c.scope_id ORDER BY r.created_at LIMIT 5 FOR UPDATE OF r SKIP LOCKED) UPDATE k3_zalo_reports r SET status='sending',lease=gen_random_uuid(),attempted_at=now() WHERE r.id IN(SELECT id FROM chosen) RETURNING r.*;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_zalo_report_finish(_id uuid, _lease uuid, _status text, _error text DEFAULT NULL::text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE n int;
+BEGIN
+ IF _status NOT IN ('sent','failed','unknown','skipped') THEN RAISE EXCEPTION 'Trạng thái không hợp lệ.'; END IF;
+ UPDATE k3_zalo_reports SET status=_status,error=left(_error,300),sent_at=CASE WHEN _status='sent' THEN now() END WHERE id=_id AND lease=_lease AND status='sending'; GET DIAGNOSTICS n=ROW_COUNT; RETURN n=1;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_zalo_report_preview(_date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE c k3_automation_config;data jsonb;
+BEGIN
+ IF NOT public.k3_can(auth.uid(),'k3.settings') THEN RAISE EXCEPTION 'Bạn không có quyền xem trước báo cáo.'; END IF;
+ SELECT * INTO c FROM k3_automation_config WHERE id;
+ SELECT coalesce(jsonb_agg(jsonb_build_object('user_id',user_id,'department_id',department_id,'data',snapshot) ORDER BY snapshot->>'name'),'[]') INTO data FROM k3_daily_closes WHERE work_date=_date AND (c.scope_kind='all' OR c.scope_kind='system' AND system_id=c.scope_id OR c.scope_kind='department' AND department_id=c.scope_id);
+ RETURN data; END $function$
+;
+
+CREATE OR REPLACE FUNCTION public.k3_zalo_report_queue()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE c k3_automation_config; d date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date; n int;
+BEGIN
+ SELECT * INTO c FROM k3_automation_config WHERE id;
+ IF NOT coalesce(c.zalo_enabled,false) OR c.group_id IS NULL OR (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::time<c.send_time OR d<c.enabled_from THEN RETURN 0; END IF;
+ INSERT INTO k3_zalo_reports(work_date,group_id,scope_kind,scope_id,snapshot) SELECT d,c.group_id,c.scope_kind,c.scope_id,coalesce(jsonb_agg(jsonb_build_object('user_id',user_id,'department_id',department_id,'data',snapshot) ORDER BY snapshot->>'name'),'[]') FROM k3_daily_closes WHERE work_date=d AND (c.scope_kind='all' OR c.scope_kind='system' AND system_id=c.scope_id OR c.scope_kind='department' AND department_id=c.scope_id) HAVING count(*)>0 ON CONFLICT(work_date,group_id) DO NOTHING;
+ GET DIAGNOSTICS n=ROW_COUNT; RETURN n;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_consistency()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$BEGIN IF NOT EXISTS(SELECT 1 FROM public.k3_goals WHERE id=NEW.goal_id AND user_id=NEW.user_id) THEN RAISE EXCEPTION 'Hành động không khớp chủ mục tiêu.'; END IF; RETURN NEW; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_has_official(_action uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS(SELECT 1 FROM k3_employee_reviews r WHERE jsonb_path_exists(r.snapshot,'$.** ? (@ == $id)',jsonb_build_object('id',_action::text))) OR EXISTS(SELECT 1 FROM k3_daily_closes c WHERE jsonb_path_exists(c.snapshot,'$.** ? (@ == $id)',jsonb_build_object('id',_action::text))) OR EXISTS(SELECT 1 FROM public.k3_daily_closes c CROSS JOIN LATERAL jsonb_array_elements(c.snapshot->'results') s WHERE s->>'action_id'=_action::text) OR EXISTS(SELECT 1 FROM public.k3_kpi_results r JOIN public.k3_kpi_day_confirmations c ON c.user_id=r.user_id AND c.work_date=r.work_date WHERE r.action_id=_action AND EXISTS(SELECT 1 FROM jsonb_array_elements(c.snapshot) s WHERE s->>'id'=r.id::text)) OR EXISTS(SELECT 1 FROM public.k3_tasks t JOIN public.k3_days d ON d.id=t.day_id WHERE t.action_id=_action AND d.summarized_at IS NOT NULL)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_has_results(_action uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT EXISTS(SELECT 1 FROM k3_kpi_results r WHERE r.action_id=_action OR r.kpi_id IN(SELECT id FROM k3_kpis WHERE action_id=_action))
+ OR EXISTS(SELECT 1 FROM k3_kpi_result_versions v WHERE v.snapshot->>'action_id'=_action::text)
+ OR EXISTS(SELECT 1 FROM k3_tasks t WHERE t.action_id=_action AND (t.kpi_actual IS NOT NULL OR t.status IN('doing','done','incomplete') OR coalesce(t.progress,0)>0 OR EXISTS(SELECT 1 FROM k3_task_events e WHERE e.task_id=t.id AND e.action NOT IN('create','delete'))))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_kpi_actual(_action uuid, _kpi uuid, _unit text)
+ RETURNS numeric
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT coalesce(sum(t.kpi_actual),0) FROM public.k3_tasks t
+  WHERE t.action_id=_action AND t.deleted_at IS NULL AND NOT t.is_unscheduled AND t.kpi_actual IS NOT NULL
+    AND (t.kpi_id=_kpi OR (t.kpi_id IS NULL AND nullif(btrim(coalesce(t.kpi_unit,'')),'') IS NOT DISTINCT FROM nullif(btrim(coalesce(_unit,'')),'')))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_on_date(_action uuid, _date date)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT _date BETWEEN coalesce(CASE WHEN a.inherit_timeline THEN g.period_start ELSE a.start_date END,g.period_start) AND coalesce(CASE WHEN a.inherit_timeline THEN coalesce(g.due_date,g.period_end) ELSE a.due_date END,g.period_end)
+ AND CASE coalesce(a.execution_schedule->>'mode','daily') WHEN 'daily' THEN true WHEN 'dates' THEN a.execution_schedule->'dates' ? _date::text WHEN 'weekdays' THEN EXISTS(SELECT 1 FROM jsonb_array_elements_text(a.execution_schedule->'weekdays') d WHERE d::int=extract(isodow FROM _date)::int) WHEN 'weekly' THEN extract(isodow FROM _date)=extract(isodow FROM coalesce(a.start_date,g.period_start)) ELSE false END
+ FROM k3_actions a JOIN k3_goals g ON g.id=a.goal_id WHERE a.id=_action AND a.deleted_at IS NULL AND g.deleted_at IS NULL $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_overdue(_action uuid, _at timestamp with time zone DEFAULT now())
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT coalesce((private.k3_entity_state('action',_action,_at)->>'overdue')::boolean,false)$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_action_worker_ok(_user uuid, _action uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS(
+    SELECT 1 FROM public.k3_actions a JOIN public.k3_goals g ON g.id=a.goal_id
+    WHERE a.id=_action AND a.status<>'cancelled' AND g.status NOT IN ('done','ended_missed','cancelled') AND (
+      (g.user_id=_user AND (a.assignee_id=_user OR EXISTS(SELECT 1 FROM k3_action_collaborators cc WHERE cc.action_id=a.id AND cc.user_id=_user)))
+      OR (EXISTS(SELECT 1 FROM public.k3_goal_members m WHERE m.goal_id=g.id AND m.user_id=_user AND m.status='accepted')
+          AND (a.assignee_id=_user OR EXISTS(SELECT 1 FROM public.k3_action_collaborators c WHERE c.action_id=a.id AND c.user_id=_user)))
+    )
+  )
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_capture_summary_deadline()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ SELECT (NEW.work_date+summary_by) AT TIME ZONE 'Asia/Ho_Chi_Minh' INTO NEW.summary_deadline_at FROM k3_settings WHERE id;
+ RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_checkpoint_immutable()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ IF ROW(NEW.user_id,NEW.work_date,NEW.department_id,NEW.deadline_at,NEW.observed_at,NEW.obligated,NEW.initial_status,NEW.initial_snapshot,NEW.summary_deadline_at) IS DISTINCT FROM ROW(OLD.user_id,OLD.work_date,OLD.department_id,OLD.deadline_at,OLD.observed_at,OLD.obligated,OLD.initial_status,OLD.initial_snapshot,OLD.summary_deadline_at) THEN RAISE EXCEPTION 'Dấu mốc đầu ngày không được ghi đè.'; END IF;
+ RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_close_discipline_snapshot()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE c k3_plan_checkpoints; r k3_employee_reviews;due timestamptz;
+BEGIN
+ SELECT * INTO c FROM k3_plan_checkpoints WHERE user_id=NEW.user_id AND work_date=NEW.work_date;
+ SELECT * INTO r FROM k3_employee_reviews WHERE user_id=NEW.user_id AND work_date=NEW.work_date ORDER BY revision DESC LIMIT 1;
+ due:=r.summary_deadline_at;
+ NEW.snapshot:=NEW.snapshot||jsonb_build_object('discipline',jsonb_build_object('obligated',coalesce(c.obligated,private.k3_day_obligated(NEW.user_id,NEW.work_date)) AND c.excluded_at IS NULL,'plan_status',CASE WHEN c.excluded_at IS NOT NULL THEN 'na' ELSE coalesce(c.current_status,'unobserved') END,'source',c.source,'observed_at',c.observed_at,'deadline_at',c.deadline_at,'summary_late',coalesce(r.confirmed_at>due,false)));
+ RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_close_employee_review_snapshot()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE s jsonb;
+BEGIN
+ s:=private.k3_employee_review_state(NEW.user_id,NEW.work_date);
+ NEW.snapshot:=NEW.snapshot||jsonb_build_object('employee_review',jsonb_build_object('status',s->>'manual_status','confirmed_at',s->'confirmed_at','revision',s->'confirmation_revision','source_version',s->>'source_version'),'review_day',s,'actions',s->'actions'); RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_close_measurements_snapshot()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE rows jsonb;
+BEGIN
+ SELECT coalesce(jsonb_agg(r||jsonb_build_object('kpi_snapshot',to_jsonb(k),'day_metric',private.k3_measure_eval(to_jsonb(k),jsonb_build_array(r||jsonb_build_object('acceptance',(SELECT a.decision FROM k3_kpi_acceptances a WHERE a.result_id=(r->>'id')::uuid AND a.result_revision=(r->>'revision')::bigint ORDER BY a.created_at DESC,a.id DESC LIMIT 1))),NEW.work_date))),'[]') INTO rows FROM jsonb_array_elements(NEW.snapshot->'results') r JOIN k3_kpis k ON k.id=(r->>'kpi_id')::uuid;
+ NEW.snapshot:=jsonb_set(NEW.snapshot,'{measurements}',rows); RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_close_one(_user uuid, _date date, _source text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE rows jsonb; acts jsonb; dep uuid; sys uuid; made uuid;
+BEGIN
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(_user::text));
+ IF EXISTS(SELECT 1 FROM k3_daily_closes WHERE user_id=_user AND work_date=_date) THEN RETURN; END IF;
+ dep:=public.biz_department_at(_user,_date); SELECT system_id INTO sys FROM biz_departments WHERE id=dep;
+ SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.id),'[]') INTO rows FROM k3_kpi_results r WHERE user_id=_user AND work_date=_date AND deleted_at IS NULL AND review_reason IS NULL AND NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id IN (r.kpi_id,r.action_id,r.goal_id));
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',a.id,'goal_id',g.id,'name',a.name,'metric',private.k3_entity_state('action',a.id,CASE WHEN _date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN now() ELSE private.k3_timepoint(_date,(SELECT close_time FROM k3_automation_config WHERE id),true) END),'overdue',private.k3_action_overdue(a.id,CASE WHEN _date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN now() ELSE private.k3_timepoint(_date,(SELECT close_time FROM k3_automation_config WHERE id),true) END),'updated',EXISTS(SELECT 1 FROM jsonb_array_elements(rows) r WHERE r->>'action_id'=a.id::text))),'[]') INTO acts FROM k3_actions a JOIN k3_goals g ON g.id=a.goal_id WHERE private.k3_action_on_date(a.id,_date) AND private.k3_action_worker_ok(_user,a.id) AND a.deleted_at IS NULL AND g.deleted_at IS NULL AND a.status NOT IN ('draft','paused','cancelled','ended_missed') AND g.status NOT IN ('draft','paused','cancelled','ended_missed') AND _date BETWEEN coalesce(a.start_date,g.period_start) AND g.period_end AND NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id IN(a.id,g.id));
+ INSERT INTO k3_daily_closes(user_id,work_date,department_id,system_id,source,snapshot,actor_id) VALUES(_user,_date,dep,sys,_source,jsonb_build_object('results',rows,'actions',acts,'updated',jsonb_array_length(rows)>0,'name',(SELECT full_name FROM profiles WHERE id=_user),'department',(SELECT name FROM biz_departments WHERE id=dep)),CASE WHEN _source='manual' THEN auth.uid() END) ON CONFLICT(user_id,work_date) DO NOTHING RETURNING id INTO made;
+
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_config_revision_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN IF TG_OP='UPDATE' THEN NEW.config_revision:=OLD.config_revision+1; END IF;
+ IF NEW.config ? 'milestones' AND NEW.milestones IS DISTINCT FROM (SELECT coalesce(jsonb_agg(m->>'id'),'[]') FROM jsonb_array_elements(NEW.config->'milestones') m) THEN RAISE EXCEPTION 'Danh sách mốc và cấu hình mốc không khớp.'; END IF;
+ IF TG_OP='UPDATE' AND EXISTS(SELECT 1 FROM k3_kpi_results WHERE kpi_id=OLD.id) THEN RAISE EXCEPTION 'KPI đã có kết quả. Không được đổi công thức hồi tố.'; END IF;
+ RETURN NEW; END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_config_snapshot()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ BEGIN
+ INSERT INTO public.k3_kpi_config_versions(kpi_id,revision,snapshot,actor_id) VALUES(NEW.id,NEW.config_revision,to_jsonb(NEW),auth.uid()); RETURN NEW; END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_day_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings; BEGIN
+ IF TG_OP='INSERT' THEN SELECT * INTO s FROM public.k3_settings WHERE id; NEW.department_id:=public.biz_department_at(NEW.user_id,NEW.work_date); NEW.plan_deadline:=(NEW.work_date+coalesce(s.plan_by,'08:45'::time)) AT TIME ZONE 'Asia/Ho_Chi_Minh'; NEW.summary_deadline:=(NEW.work_date+coalesce(s.summary_by,'18:00'::time)) AT TIME ZONE 'Asia/Ho_Chi_Minh';
+ ELSIF NEW.kg IS DISTINCT FROM OLD.kg THEN NEW.data_revision:=OLD.data_revision+1; END IF;
+ RETURN NEW; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_day_obligated(_user uuid, _date date)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE cfg jsonb;h text;available boolean:=false;
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM k3_settings WHERE id AND enabled AND effective_from<=_date AND discipline_from<=_date) OR NOT public.k3_can(_user,'k3.use') OR NOT public.biz_participant(_user) OR NOT EXISTS(SELECT 1 FROM profiles WHERE id=_user AND status='Đang hoạt động') THEN RETURN false; END IF;
+ SELECT data INTO cfg FROM leave_settings WHERE id=1;
+ IF cfg->'schedule' IS NULL OR EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(cfg->'holidays','[]')) x WHERE x->>'date'=_date::text) THEN RETURN false; END IF;
+ FOREACH h IN ARRAY ARRAY['am','pm'] LOOP
+ IF coalesce((cfg->'schedule'->extract(isodow FROM _date)::int::text->>h)::boolean,false) AND NOT EXISTS(SELECT 1 FROM leave_requests l WHERE l.owner_id=_user AND l.type='leave' AND l.status='approved' AND _date BETWEEN (l.payload->>'start_date')::date AND (l.payload->>'end_date')::date AND (_date>(l.payload->>'start_date')::date OR l.payload->>'start_half'='am' OR h='pm') AND (_date<(l.payload->>'end_date')::date OR l.payload->>'end_half'='pm' OR h='am')) THEN available:=true; END IF;
+ END LOOP;
+ RETURN available;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_employee_day_source(_user uuid, _date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE rows jsonb; acts jsonb; goals jsonb;
+BEGIN
+ SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.id),'[]') INTO rows FROM k3_kpi_results r WHERE user_id=_user AND work_date=_date AND deleted_at IS NULL AND review_reason IS NULL AND NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id IN(r.kpi_id,r.action_id,r.goal_id));
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',a.id,'goal_id',g.id,'name',a.name,'goal_name',to_jsonb(g)->>'name','assignee_id',a.assignee_id,'assignee_name',(SELECT full_name FROM profiles WHERE id=a.assignee_id),'due_date',a.due_date,'metric',private.k3_entity_state('action',a.id,CASE WHEN _date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN now() ELSE private.k3_timepoint(_date,(SELECT close_time FROM k3_automation_config WHERE id),true) END),'overdue',private.k3_action_overdue(a.id,CASE WHEN _date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date THEN now() ELSE private.k3_timepoint(_date,(SELECT close_time FROM k3_automation_config WHERE id),true) END),'revision',to_jsonb(a)->'revision','updated',EXISTS(SELECT 1 FROM jsonb_array_elements(rows) r WHERE r->>'action_id'=a.id::text),'kpis',coalesce((SELECT jsonb_agg(to_jsonb(k) ORDER BY k.id) FROM k3_kpis k WHERE k.action_id=a.id AND NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id=k.id)),'[]')) ORDER BY g.id,a.id),'[]') INTO acts FROM k3_actions a JOIN k3_goals g ON g.id=a.goal_id WHERE NOT EXISTS(SELECT 1 FROM k3_data_reviews v WHERE v.status='pending' AND v.record_id IN(a.id,g.id)) AND (EXISTS(SELECT 1 FROM jsonb_array_elements(rows) r WHERE r->>'action_id'=a.id::text) OR (private.k3_action_worker_ok(_user,a.id) AND a.deleted_at IS NULL AND g.deleted_at IS NULL AND a.status NOT IN('draft','paused','cancelled','ended_missed') AND g.status NOT IN('draft','paused','cancelled','ended_missed') AND _date BETWEEN coalesce(a.start_date,g.period_start) AND g.period_end AND private.k3_action_on_date(a.id,_date)));
+ SELECT coalesce(jsonb_agg(to_jsonb(k) ORDER BY k.id),'[]') INTO goals FROM k3_kpis k WHERE k.goal_id IS NOT NULL AND EXISTS(SELECT 1 FROM jsonb_array_elements(rows) r WHERE r->>'kpi_id'=k.id::text);
+ RETURN jsonb_build_object('results',rows,'actions',acts,'goal_kpis',goals,'missing', (SELECT count(*) FROM jsonb_array_elements(acts) a WHERE NOT (a->>'updated')::boolean),'result_count',jsonb_array_length(rows),'action_count',jsonb_array_length(acts),'goal_count',(SELECT count(DISTINCT a->>'goal_id') FROM jsonb_array_elements(acts) a));
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_employee_review_state(_user uuid, _date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE s jsonb; r k3_employee_reviews; c k3_daily_closes; ver text;
+BEGIN
+ s:=private.k3_employee_day_source(_user,_date); ver:=private.k3_review_fingerprint(s);
+ SELECT * INTO r FROM k3_employee_reviews WHERE user_id=_user AND work_date=_date ORDER BY revision DESC LIMIT 1;
+ SELECT * INTO c FROM k3_daily_closes WHERE user_id=_user AND work_date=_date;
+ RETURN s||jsonb_build_object('user_id',_user,'date',_date,'source_version',ver,'manual_status',CASE WHEN r.id IS NULL THEN 'none' WHEN r.source_version=ver THEN 'reviewed' ELSE 'reconfirm' END,'confirmed_at',r.confirmed_at,'confirmation_revision',r.revision,'closed_at',c.closed_at,'system_status',CASE WHEN c.id IS NULL THEN 'open' WHEN private.k3_result_identity(c.snapshot->'results') IS DISTINCT FROM private.k3_result_identity(s->'results') OR (c.snapshot->'review_day' IS NOT NULL AND private.k3_review_fingerprint(c.snapshot->'review_day') IS DISTINCT FROM private.k3_review_fingerprint(s)) THEN 'adjusted' WHEN c.source='auto' THEN 'auto_closed' ELSE 'legacy_closed' END,'auto_close_time',(SELECT close_time FROM k3_automation_config WHERE id),'summary_late',coalesce(r.confirmed_at>r.summary_deadline_at,false),'legacy_confirmation',EXISTS(SELECT 1 FROM k3_kpi_day_confirmations WHERE user_id=_user AND work_date=_date));
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_entity_metric(_kind text, _id uuid)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ SELECT private.k3_entity_state(_kind,_id,now()) $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_entity_state(_kind text, _id uuid, _at timestamp with time zone DEFAULT now())
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g k3_goals; a k3_actions; lifecycle text; starts timestamptz; deadline timestamptz; total int:=0; met int:=0; children int:=0; child_done int:=0; observations int:=0; result jsonb; state text; basis text;
+BEGIN
+ IF _kind='goal' THEN SELECT * INTO g FROM k3_goals WHERE id=_id AND deleted_at IS NULL; lifecycle:=g.status; starts:=private.k3_timepoint(g.period_start,g.start_time,false);deadline:=private.k3_timepoint(coalesce(g.due_date,g.period_end),g.due_time,true);
+ ELSIF _kind='action' THEN SELECT * INTO a FROM k3_actions WHERE id=_id AND deleted_at IS NULL;SELECT * INTO g FROM k3_goals WHERE id=a.goal_id AND deleted_at IS NULL;lifecycle:=CASE WHEN g.status IN('draft','paused','cancelled','ended_missed') THEN g.status ELSE a.status END;
+ starts:=private.k3_timepoint(CASE WHEN a.inherit_timeline THEN g.period_start ELSE coalesce(a.start_date,g.period_start) END,CASE WHEN a.inherit_timeline THEN g.start_time ELSE a.start_time END,false);deadline:=private.k3_timepoint(CASE WHEN a.inherit_timeline THEN coalesce(g.due_date,g.period_end) ELSE coalesce(a.due_date,g.period_end) END,CASE WHEN a.inherit_timeline THEN g.due_time ELSE a.due_time END,true);
+ ELSE RAISE EXCEPTION 'Loại công việc không hợp lệ.'; END IF;
+ IF g.id IS NULL THEN RETURN jsonb_build_object('status','draft','kpi_total',0,'kpi_met',0,'overdue',false,'review_required',true); END IF;
+ FOR result IN SELECT private.k3_metric_at(k.id,_at) FROM k3_kpis k WHERE k.required AND CASE WHEN _kind='goal' THEN k.goal_id=_id ELSE k.action_id=_id END LOOP
+ total:=total+1;met:=met+CASE WHEN (result->>'attained')::boolean IS TRUE THEN 1 ELSE 0 END;observations:=observations+coalesce((result->>'result_count')::int,0);
+ END LOOP;
+ basis:='own_kpis';
+ IF _kind='goal' THEN
+ SELECT count(*)::int,count(*) FILTER(WHERE private.k3_entity_state('action',c.id,_at)->>'status'='done')::int INTO children,child_done FROM k3_actions c WHERE c.goal_id=_id AND c.deleted_at IS NULL AND c.status<>'cancelled' AND c.required;
+ IF total=0 THEN basis:='actions'; END IF;
+ END IF;
+ state:=CASE WHEN lifecycle IN('draft','paused','cancelled','ended_missed') THEN lifecycle WHEN _at<starts THEN 'not_started' WHEN (total>0 AND total=met) OR (_kind='goal' AND total=0 AND children>0 AND children=child_done) THEN 'done' ELSE 'in_progress' END;
+ RETURN jsonb_build_object('status',state,'kpi_total',total,'kpi_met',met,'kf_total',children,'kf_done',child_done,'completion_basis',basis,'start_at',starts,'deadline_at',deadline,'result_count',observations,'overdue',state IN('in_progress','paused') AND _at>deadline,'overdue_seconds',CASE WHEN state IN('in_progress','paused') AND _at>deadline THEN floor(extract(epoch FROM _at-deadline)) ELSE 0 END,'review_required',total=0 AND (_kind='action' OR children=0),'state_model','automatic_v1');
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_goal_consistency()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$BEGIN
+  IF NEW.period_type = 'custom' THEN
+    IF NEW.period_start IS NULL OR NEW.period_end IS NULL OR NEW.period_end < NEW.period_start THEN RAISE EXCEPTION 'Khoảng thời gian mục tiêu không hợp lệ.'; END IF;
+  ELSIF NEW.period_start <> public.k3_period_start(NEW.period_type, NEW.period_start) OR NEW.period_end <> public.k3_period_end(NEW.period_type, NEW.period_start) THEN
+    RAISE EXCEPTION 'Khoảng kỳ mục tiêu không hợp lệ.';
+  END IF;
+  RETURN NEW;
+END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_goal_has_official(_goal uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS(SELECT 1 FROM k3_employee_reviews r WHERE jsonb_path_exists(r.snapshot,'$.** ? (@ == $id)',jsonb_build_object('id',_goal::text))) OR EXISTS(SELECT 1 FROM k3_daily_closes c WHERE jsonb_path_exists(c.snapshot,'$.** ? (@ == $id)',jsonb_build_object('id',_goal::text))) OR EXISTS(SELECT 1 FROM public.k3_daily_closes c CROSS JOIN LATERAL jsonb_array_elements(c.snapshot->'results') s WHERE s->>'goal_id'=_goal::text) OR EXISTS(SELECT 1 FROM public.k3_kpi_results r JOIN public.k3_kpi_day_confirmations c ON c.user_id=r.user_id AND c.work_date=r.work_date WHERE r.goal_id=_goal AND EXISTS(SELECT 1 FROM jsonb_array_elements(c.snapshot) s WHERE s->>'id'=r.id::text)) OR EXISTS(SELECT 1 FROM public.k3_tasks t JOIN public.k3_actions a ON a.id=t.action_id JOIN public.k3_days d ON d.id=t.day_id WHERE a.goal_id=_goal AND d.summarized_at IS NOT NULL)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_goal_has_results(_goal uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT EXISTS(SELECT 1 FROM k3_kpi_results r WHERE r.goal_id=_goal OR r.action_id IN(SELECT id FROM k3_actions WHERE goal_id=_goal) OR r.kpi_id IN(SELECT k.id FROM k3_kpis k LEFT JOIN k3_actions a ON a.id=k.action_id WHERE coalesce(k.goal_id,a.goal_id)=_goal))
+ OR EXISTS(SELECT 1 FROM k3_kpi_result_versions v WHERE v.snapshot->>'goal_id'=_goal::text OR v.snapshot->>'action_id' IN(SELECT id::text FROM k3_actions WHERE goal_id=_goal))
+ OR EXISTS(SELECT 1 FROM k3_tasks t JOIN k3_actions a ON a.id=t.action_id WHERE a.goal_id=_goal AND (t.kpi_actual IS NOT NULL OR t.status IN('doing','done','incomplete') OR coalesce(t.progress,0)>0 OR EXISTS(SELECT 1 FROM k3_task_events e WHERE e.task_id=t.id AND e.action NOT IN('create','delete'))))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_goal_manage_ok(_actor uuid, _goal uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT _actor IS NOT NULL AND (public.biz_admin(_actor) OR EXISTS(SELECT 1 FROM public.k3_goals g WHERE g.id=_goal AND g.user_id=_actor))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_goal_overdue(_goal uuid, _at timestamp with time zone DEFAULT now())
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT coalesce((private.k3_entity_state('goal',_goal,_at)->>'overdue')::boolean,false)$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_measure_eval(_k jsonb, _rows jsonb, _date date)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$
+DECLARE mode text:=_k->>'measure'; cfg jsonb:=coalesce(_k->'config','{}'); tar numeric:=nullif(_k->>'target','')::numeric; upper_tar numeric:=nullif(_k->>'target_max','')::numeric; cond text:=coalesce(_k->>'condition','gte'); x numeric; num numeric; den numeric; total numeric; pct numeric; attained boolean; n int; pending int; rows jsonb:=coalesce(_rows,'[]'); scoped jsonb; ids jsonb; m jsonb; milestone_count int; weight_total numeric; weight_done numeric; lo date; hi date; d date; streak int:=0; longest int:=0; yes boolean; tol numeric:=coalesce((cfg->>'tolerance')::numeric,0); baseline numeric:=nullif(cfg->>'baseline','')::numeric;
+BEGIN
+ SELECT coalesce(jsonb_agg(r),'[]') INTO rows FROM jsonb_array_elements(rows) r WHERE r->>'deleted_at' IS NULL AND r->>'review_reason' IS NULL AND (r->>'work_date' IS NULL OR (r->>'work_date')::date<=_date);
+ SELECT count(*),sum((r->>'value')::numeric),sum((r->>'numerator')::numeric),sum((r->>'denominator')::numeric),count(*) FILTER(WHERE coalesce((cfg->>'acceptance_required')::boolean,false) AND coalesce(r->>'acceptance','')<>'accepted') INTO n,total,num,den,pending FROM jsonb_array_elements(rows) r;
+ IF coalesce((cfg->>'acceptance_required')::boolean,false) THEN SELECT coalesce(jsonb_agg(r),'[]') INTO rows FROM jsonb_array_elements(rows) r WHERE r->>'acceptance'='accepted'; END IF;
+ SELECT count(*),sum((r->>'value')::numeric),sum((r->>'numerator')::numeric),sum((r->>'denominator')::numeric) INTO n,total,num,den FROM jsonb_array_elements(rows) r; scoped:=rows;
+ IF mode='frequency' THEN
+ lo:=CASE cfg->>'cycle' WHEN 'month' THEN date_trunc('month',_date)::date WHEN 'week' THEN date_trunc('week',_date)::date ELSE _date END;
+ hi:=CASE cfg->>'cycle' WHEN 'month' THEN (lo+interval '1 month'-interval '1 day')::date WHEN 'week' THEN lo+6 ELSE lo END;
+ SELECT coalesce(jsonb_agg(r),'[]') INTO scoped FROM jsonb_array_elements(rows) r WHERE (r->>'work_date')::date BETWEEN greatest(lo,(cfg->>'start_date')::date) AND least(hi,(cfg->>'end_date')::date);
+ END IF;
+ IF mode IN('cumulative','duration','frequency') THEN SELECT sum((r->>'value')::numeric) INTO x FROM jsonb_array_elements(scoped) r; IF x IS NOT NULL AND mode='cumulative' THEN x:=x+coalesce(baseline,0); END IF;
+ ELSIF mode IN('current','binary') THEN SELECT (r->>'value')::numeric INTO x FROM jsonb_array_elements(scoped) r ORDER BY r->>'work_date' DESC,r->>'updated_at' DESC,r->>'id' DESC LIMIT 1;
+ ELSIF mode IN('ratio','average') THEN SELECT sum((r->>'numerator')::numeric),sum((r->>'denominator')::numeric) INTO num,den FROM jsonb_array_elements(scoped) r; x:=CASE WHEN den>0 THEN num/den*CASE WHEN mode='ratio' THEN 100 ELSE 1 END ELSE NULL END;
+ ELSIF mode='distinct' THEN IF jsonb_array_length(scoped)>0 THEN SELECT count(DISTINCT CASE WHEN cfg->>'normalization'='trim_lower' THEN lower(btrim(item)) ELSE item END)::numeric INTO x FROM jsonb_array_elements(scoped) r CROSS JOIN LATERAL jsonb_array_elements_text(r->'objects') item; END IF;
+ ELSIF mode='milestone' THEN
+ SELECT coalesce(jsonb_agg(DISTINCT item),'[]') INTO ids FROM jsonb_array_elements(scoped) r CROSS JOIN LATERAL jsonb_array_elements_text(r->'completed') item;
+ milestone_count:=jsonb_array_length(coalesce(cfg->'milestones',_k->'milestones','[]'));
+ IF jsonb_array_length(scoped)>0 THEN SELECT count(*)::numeric INTO x FROM jsonb_array_elements_text(coalesce(_k->'milestones','[]')) item WHERE ids ? item; END IF;
+ tar:=milestone_count;
+ IF cfg ? 'milestones' THEN
+ SELECT sum((item->>'weight')::numeric),sum((item->>'weight')::numeric) FILTER(WHERE ids ? (item->>'id')) INTO weight_total,weight_done FROM jsonb_array_elements(cfg->'milestones') item;
+ IF weight_total>0 THEN pct:=round(coalesce(weight_done,0)/weight_total*100,2); ELSE pct:=CASE WHEN x IS NOT NULL AND tar>0 THEN round(x/tar*100,2) END; END IF;
+ attained:=jsonb_array_length(scoped)>0 AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(cfg->'milestones') item WHERE coalesce((item->>'required')::boolean,true) AND NOT ids ? (item->>'id')) AND EXISTS(SELECT 1 FROM jsonb_array_elements(cfg->'milestones') item WHERE coalesce((item->>'required')::boolean,true));
+ END IF;
+ ELSIF mode='streak' THEN
+ lo:=(cfg->>'start_date')::date; hi:=least(_date,(cfg->>'end_date')::date);
+ IF lo IS NOT NULL AND hi IS NOT NULL AND hi>=lo THEN
+ FOR d IN SELECT generate_series(lo,hi,interval '1 day')::date LOOP
+ IF NOT cfg ? 'weekdays' OR cfg->'weekdays' @> jsonb_build_array(extract(isodow FROM d)::int) THEN
+ SELECT coalesce(bool_or((r->>'value')::numeric=1),false) INTO yes FROM jsonb_array_elements(scoped) r WHERE (r->>'work_date')::date=d;
+ IF yes THEN streak:=streak+1; longest:=greatest(longest,streak); ELSE streak:=0; END IF;
+ END IF;
+ END LOOP; x:=streak;
+ END IF;
+ END IF;
+ IF x IS NOT NULL AND tar IS NOT NULL AND attained IS NULL THEN attained:=CASE cond WHEN 'gte' THEN x>=tar-tol WHEN 'lte' THEN x<=tar+tol WHEN 'eq' THEN abs(x-tar)<=tol WHEN 'range' THEN CASE WHEN upper_tar IS NULL THEN NULL ELSE x BETWEEN tar-tol AND upper_tar+tol END END; END IF;
+ IF mode='current' AND cond='lte' AND baseline IS NOT NULL AND baseline>tar AND x IS NOT NULL THEN pct:=round(greatest(0,(baseline-x)/(baseline-tar)*100),2);
+ ELSIF pct IS NULL AND x IS NOT NULL AND tar>0 AND cond='gte' THEN pct:=round(x/tar*100,2); END IF;
+ IF pending>0 AND coalesce((cfg->>'acceptance_required')::boolean,false) THEN attained:=false; END IF;
+ RETURN jsonb_build_object('actual',x,'progress',pct,'attained',attained,'status',CASE WHEN n=0 AND pending=0 THEN 'not_started' WHEN attained THEN 'done' ELSE 'in_progress' END,'result_count',n,'numerator',num,'denominator',den,'total_actual',total,'longest_streak',longest,'cycle_start',lo,'cycle_end',hi,'pending_acceptance',pending,'milestone_total',milestone_count);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_measure_rows(_kpi uuid, _official boolean)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT coalesce(jsonb_agg(to_jsonb(r)||jsonb_build_object('acceptance',private.k3_result_acceptance(r.id,_official))),'[]') FROM private.k3_result_eligible(_kpi,_official) r;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_metric_at(_kpi uuid, _at timestamp with time zone)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k k3_kpis; rows jsonb;
+BEGIN
+ SELECT * INTO k FROM k3_kpis WHERE id=_kpi;
+ SELECT coalesce(jsonb_agg(s.row||jsonb_build_object('acceptance',(SELECT a.decision FROM k3_kpi_acceptances a WHERE a.result_id=r.id AND a.result_revision=(s.row->>'revision')::bigint AND a.created_at<=_at ORDER BY a.created_at DESC,a.id DESC LIMIT 1))),'[]') INTO rows FROM private.k3_result_eligible(_kpi,false) r CROSS JOIN LATERAL (SELECT coalesce((SELECT v.snapshot FROM k3_kpi_result_versions v WHERE v.result_id=r.id AND v.created_at<=_at ORDER BY v.revision DESC LIMIT 1),CASE WHEN r.updated_at<=_at THEN to_jsonb(r) END) row) s WHERE s.row IS NOT NULL AND (s.row->>'work_date')::date<=(_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+ RETURN private.k3_measure_eval(to_jsonb(k),rows,(_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date);
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_period_comment_scope(_actor uuid, _comment uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$SELECT EXISTS(SELECT 1 FROM public.k3_period_comments c WHERE c.id=_comment AND ((c.user_id=_actor AND public.k3_can(_actor,'k3.use')) OR (public.k3_can(_actor,'k3.view_scope') AND public.biz_scope_ok(_actor,c.user_id,public.biz_department_at(c.user_id,c.period_start),(c.period_start::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')))))$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_period_deadline(_type text, _date date, _phase text, _at timestamp with time zone DEFAULT now())
+ RETURNS timestamp with time zone
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE cfg jsonb; dl jsonb; dt date:=public.k3_period_start(_type,_date); BEGIN
+ SELECT snapshot->'new' INTO cfg FROM public.k3_settings_log WHERE changed_at<=_at AND snapshot->'new' ? 'period_deadlines' ORDER BY changed_at DESC,id DESC LIMIT 1;
+ IF cfg IS NULL THEN SELECT to_jsonb(s) INTO cfg FROM public.k3_settings s WHERE id; END IF;
+ dl:=cfg->'period_deadlines'->(_type||'_'||_phase);
+ IF dl IS NULL OR nullif(dl->>'effective_from','')::date>dt OR nullif(dl->>'time','') IS NULL OR nullif(dl->>'offset','') IS NULL THEN RETURN NULL; END IF;
+ RETURN ((dt+(dl->>'offset')::int)+(dl->>'time')::time) AT TIME ZONE 'Asia/Ho_Chi_Minh'; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_period_write_guard(_type text, _date date)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings; BEGIN PERFORM private.k3_write_guard(greatest(_date,(SELECT effective_from FROM public.k3_settings WHERE id))); SELECT * INTO s FROM public.k3_settings WHERE id FOR SHARE; IF _type NOT IN('week','month') OR NOT (CASE WHEN _type='week' THEN s.week_enabled ELSE s.month_enabled END) OR s.period_effective_from IS NULL OR public.k3_period_end(_type,_date)<s.period_effective_from THEN RAISE EXCEPTION 'Chu kỳ 3K chưa được kích hoạt hoặc chưa đến ngày áp dụng.'; END IF; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_plan_capture(_user uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE d date:=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;cut timestamptz;plans jsonb;on_time jsonb;duty boolean;src text;first_at timestamptz;old k3_plan_checkpoints;st text;
+BEGIN
+ SELECT (d+plan_by) AT TIME ZONE 'Asia/Ho_Chi_Minh' INTO cut FROM k3_settings WHERE id AND enabled AND discipline_from<=d AND effective_from<=d;
+ IF cut IS NULL OR now()<cut THEN RETURN; END IF;
+ 
+ SELECT * INTO old FROM k3_plan_checkpoints WHERE user_id=_user AND work_date=d FOR UPDATE;
+ duty:=private.k3_day_obligated(_user,d);plans:=private.k3_plan_day_source(_user,d);
+ SELECT coalesce(jsonb_agg(x),'[]') INTO on_time FROM jsonb_array_elements(plans) x WHERE (x->>'established_at')::timestamptz<=cut;
+ -- No historical reconstruction: only the scheduled checkpoint may establish on-time status.
+ IF old.user_id IS NULL THEN
+ st:=CASE WHEN NOT duty THEN 'na' WHEN now()>cut+interval '5 minutes' THEN 'unobserved' WHEN jsonb_array_length(on_time)>0 THEN 'on_time' ELSE 'none' END;
+ SELECT CASE WHEN count(DISTINCT x->>'source')>1 THEN 'mixed' ELSE min(x->>'source') END,min((x->>'established_at')::timestamptz) INTO src,first_at FROM jsonb_array_elements(CASE WHEN st='on_time' THEN on_time ELSE plans END) x;
+ INSERT INTO k3_plan_checkpoints(user_id,work_date,department_id,deadline_at,obligated,initial_status,initial_snapshot,current_status,source,first_plan_at) VALUES(_user,d,public.biz_department_at(_user,d),cut,duty,st,plans,CASE WHEN st='none' AND jsonb_array_length(plans)>0 THEN 'late' ELSE st END,src,first_at) ON CONFLICT(user_id,work_date) DO NOTHING; IF NOT FOUND THEN RETURN; END IF;
+ INSERT INTO k3_discipline_events(user_id,work_date,action,detail) VALUES(_user,d,'checkpoint',jsonb_build_object('status',st,'plans',plans,'deadline_at',cut));
+ ELSIF old.current_status='none' AND jsonb_array_length(plans)>0 THEN
+ SELECT CASE WHEN count(DISTINCT x->>'source')>1 THEN 'mixed' ELSE min(x->>'source') END,min((x->>'established_at')::timestamptz) INTO src,first_at FROM jsonb_array_elements(plans) x;
+ UPDATE k3_plan_checkpoints SET current_status='late',source=src,first_plan_at=first_at WHERE user_id=_user AND work_date=d;
+ INSERT INTO k3_discipline_events(user_id,work_date,actor_id,action,detail) VALUES(_user,d,auth.uid(),'late_plan',plans);
+ END IF;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_plan_changed()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE u record;
+BEGIN
+ -- Include assigned/cooperating employees; do not mint employee confirmations.
+ FOR u IN SELECT id FROM profiles WHERE status='Đang hoạt động' AND public.k3_can(id,'k3.use') AND public.biz_participant(id) LOOP PERFORM private.k3_plan_capture(u.id); END LOOP;
+ RETURN NULL;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_plan_day_source(_user uuid, _date date)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',a.id,'goal_id',g.id,'revision',a.revision,'source',CASE WHEN g.user_id=_user AND g.period_start=_date AND g.period_end=_date THEN 'self' ELSE 'scheduled' END,'established_at',greatest(a.created_at,g.created_at,a.updated_at,g.updated_at)) ORDER BY a.id),'[]') FROM k3_actions a JOIN k3_goals g ON g.id=a.goal_id WHERE a.deleted_at IS NULL AND g.deleted_at IS NULL AND a.status NOT IN('draft','paused','cancelled','ended_missed') AND g.status NOT IN('draft','paused','cancelled','ended_missed') AND private.k3_action_on_date(a.id,_date) AND private.k3_action_worker_ok(_user,a.id) AND NOT EXISTS(SELECT 1 FROM k3_data_reviews r WHERE r.status='pending' AND r.record_id IN(a.id,g.id));
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_plan_schedule()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE t time;j record;
+BEGIN
+ FOR j IN SELECT jobid FROM cron.job WHERE jobname='k3-morning-checkpoint' LOOP PERFORM cron.unschedule(j.jobid); END LOOP;
+ SELECT (plan_by-interval '7 hours')::time INTO t FROM k3_settings WHERE id AND enabled;
+ IF t IS NOT NULL THEN PERFORM cron.schedule('k3-morning-checkpoint',extract(minute FROM t)::int||' '||extract(hour FROM t)::int||' * * *','SELECT public.k3_plan_checkpoint_run();'); END IF;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_acceptance(_result uuid, _official boolean)
+ RETURNS text
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT a.decision FROM k3_kpi_results r JOIN k3_kpi_acceptances a ON a.result_id=r.id AND a.result_revision=r.revision WHERE r.id=_result AND (NOT _official OR a.created_at<=(SELECT max(c.at) FROM (SELECT d.closed_at AS at FROM k3_daily_closes d WHERE d.user_id=r.user_id AND d.work_date=r.work_date UNION ALL SELECT d.confirmed_at FROM k3_kpi_day_confirmations d WHERE d.user_id=r.user_id AND d.work_date=r.work_date AND d.source='manual') c)) ORDER BY a.created_at DESC,a.id DESC LIMIT 1;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_can_write(_uid uuid, _kpi uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT EXISTS(SELECT 1 FROM public.k3_kpis k LEFT JOIN public.k3_actions a ON a.id=k.action_id JOIN public.k3_goals g ON g.id=coalesce(k.goal_id,a.goal_id) WHERE k.id=_kpi AND _uid IS NOT NULL AND public.k3_can(_uid,'k3.use') AND g.deleted_at IS NULL AND (a.id IS NULL OR a.deleted_at IS NULL) AND g.status NOT IN ('draft','paused','cancelled','ended_missed') AND (a.id IS NULL OR a.status NOT IN ('draft','paused','cancelled','ended_missed')) AND NOT EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE v.status='pending' AND ((v.kind='kpi' AND v.record_id=k.id) OR (v.kind='goal' AND v.record_id=g.id) OR (v.kind='action' AND v.record_id=a.id))) AND CASE WHEN a.id IS NOT NULL THEN private.k3_action_worker_ok(_uid,a.id) ELSE g.user_id=_uid OR public.biz_admin(_uid) END)
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_detail_ok(_actor uuid, _owner uuid, _goal uuid, _date date)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT _actor IS NOT NULL AND EXISTS(SELECT 1 FROM k3_goals g WHERE g.id=_goal AND (public.biz_admin(_actor) OR (_actor=_owner AND public.k3_goal_visible(_actor,g.id)) OR (g.user_id=_actor AND public.k3_can(_actor,'k3.use')) OR (public.k3_can(_actor,'k3.view_scope') AND public.biz_scope_ok(_actor,_owner,g.department_id,(_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')))))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_eligible(_kpi uuid, _official boolean)
+ RETURNS SETOF k3_kpi_results
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT r.* FROM public.k3_kpi_results r JOIN public.k3_kpis k ON k.id=r.kpi_id LEFT JOIN public.k3_actions a ON a.id=r.action_id JOIN public.k3_goals g ON g.id=r.goal_id LEFT JOIN LATERAL (
+ SELECT snapshot FROM (SELECT c.snapshot,c.confirmed_at AS at,c.id FROM public.k3_kpi_day_confirmations c WHERE c.user_id=r.user_id AND c.work_date=r.work_date AND c.source='manual' UNION ALL SELECT d.snapshot->'results',d.closed_at,d.id FROM public.k3_daily_closes d WHERE d.user_id=r.user_id AND d.work_date=r.work_date) c ORDER BY at DESC,id DESC LIMIT 1
+ ) c ON true WHERE r.kpi_id=_kpi AND r.deleted_at IS NULL AND r.review_reason IS NULL AND g.deleted_at IS NULL AND (a.id IS NULL OR a.deleted_at IS NULL) AND NOT EXISTS(SELECT 1 FROM public.k3_data_reviews v WHERE v.status='pending' AND ((v.kind='kpi' AND v.record_id=r.kpi_id) OR (v.kind='goal' AND v.record_id=r.goal_id) OR (v.kind='action' AND v.record_id=r.action_id))) AND (NOT _official OR EXISTS(SELECT 1 FROM jsonb_array_elements(c.snapshot) s WHERE s->>'id'=r.id::text AND (s->>'revision')::bigint=r.revision))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_eligible_range(_kpi uuid, _official boolean, _start date, _end date, _user uuid)
+ RETURNS SETOF k3_kpi_results
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+SELECT r.* FROM private.k3_result_eligible(_kpi,_official) r JOIN k3_goals g ON g.id=r.goal_id WHERE r.work_date BETWEEN _start AND _end AND (_user IS NULL OR r.user_id=_user) AND (r.user_id=auth.uid() OR public.biz_admin(auth.uid()) OR (public.k3_can(auth.uid(),'k3.view_scope') AND public.biz_scope_ok(auth.uid(),r.user_id,coalesce((SELECT department_id FROM k3_daily_closes WHERE user_id=r.user_id AND work_date=r.work_date),g.department_id,public.biz_department_at(r.user_id,r.work_date)),r.work_date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')))
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_identity(_rows jsonb)
+ RETURNS jsonb
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$ SELECT coalesce(jsonb_agg(jsonb_build_object('id',r->>'id','revision',r->>'revision') ORDER BY r->>'id'),'[]') FROM jsonb_array_elements(coalesce(_rows,'[]')) r $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_measure_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k k3_kpis; item jsonb; minutes numeric;
+BEGIN
+ SELECT * INTO k FROM k3_kpis WHERE id=NEW.kpi_id; NEW.config_revision:=k.config_revision;
+ IF coalesce((k.config->>'evidence_required')::boolean,false) AND nullif(btrim(NEW.evidence),'') IS NULL THEN RAISE EXCEPTION 'KPI này yêu cầu bằng chứng.'; END IF;
+ IF k.measure IN('binary','streak') AND (NEW.value IS NULL OR NEW.value NOT IN(0,1)) THEN RAISE EXCEPTION 'Kết quả Có/Chưa hoặc chuỗi phải là 0 hoặc 1.'; END IF;
+ IF k.measure='frequency' AND (NEW.value IS NULL OR NEW.value<0 OR trunc(NEW.value)<>NEW.value) THEN RAISE EXCEPTION 'Số lần phải là số nguyên không âm.'; END IF;
+ IF k.measure IN('frequency','streak') AND (NEW.work_date NOT BETWEEN (k.config->>'start_date')::date AND (k.config->>'end_date')::date OR k.config ? 'weekdays' AND NOT k.config->'weekdays' @> jsonb_build_array(extract(isodow FROM NEW.work_date)::int)) THEN RAISE EXCEPTION 'Ngày này ngoài lịch áp dụng KPI.'; END IF;
+ IF k.measure='average' AND trunc(NEW.denominator)<>NEW.denominator THEN RAISE EXCEPTION 'Số quan sát phải là số nguyên.'; END IF;
+ IF k.measure='duration' AND k.config->>'duration_method'='intervals' THEN
+ IF jsonb_typeof(NEW.intervals)<>'array' OR jsonb_array_length(NEW.intervals)=0 THEN RAISE EXCEPTION 'Cần khoảng thời gian thực hiện.'; END IF;
+ FOR item IN SELECT * FROM jsonb_array_elements(NEW.intervals) LOOP
+ IF (item->>'end')::timestamptz<=(item->>'start')::timestamptz OR ((item->>'start')::timestamptz AT TIME ZONE 'Asia/Ho_Chi_Minh')::date<>NEW.work_date OR ((item->>'end')::timestamptz AT TIME ZONE 'Asia/Ho_Chi_Minh')::date<>NEW.work_date THEN RAISE EXCEPTION 'Khoảng thời gian phải hợp lệ trong ngày thực hiện.'; END IF;
+ END LOOP;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements(NEW.intervals) WITH ORDINALITY a(x,i) JOIN jsonb_array_elements(NEW.intervals) WITH ORDINALITY b(x,i) ON a.i<b.i WHERE tstzrange((a.x->>'start')::timestamptz,(a.x->>'end')::timestamptz,'[)') && tstzrange((b.x->>'start')::timestamptz,(b.x->>'end')::timestamptz,'[)')) THEN RAISE EXCEPTION 'Khoảng thời gian bị chồng lấn.'; END IF;
+ SELECT sum(extract(epoch FROM (x->>'end')::timestamptz-(x->>'start')::timestamptz)/60) INTO minutes FROM jsonb_array_elements(NEW.intervals) x; NEW.value:=minutes;
+ END IF;
+ IF k.measure='milestone' AND coalesce((k.config->>'sequential')::boolean,false) AND EXISTS(SELECT 1 FROM jsonb_array_elements(k.config->'milestones') WITH ORDINALITY later(m,i) JOIN jsonb_array_elements(k.config->'milestones') WITH ORDINALITY earlier(m,i) ON earlier.i<later.i WHERE NEW.completed ? (later.m->>'id') AND NOT NEW.completed ? (earlier.m->>'id') AND NOT EXISTS(SELECT 1 FROM private.k3_measure_rows(k.id,false) r WHERE (r->>'work_date')::date<=NEW.work_date AND r->>'id'<>NEW.id::text AND r->'completed' ? (earlier.m->>'id') AND (NOT coalesce((k.config->>'acceptance_required')::boolean,false) OR r->>'acceptance'='accepted'))) THEN RAISE EXCEPTION 'Phải hoàn thành các mốc trước theo thứ tự.'; END IF; RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_metric(_kpi uuid, _official boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k k3_kpis; BEGIN SELECT * INTO k FROM k3_kpis WHERE id=_kpi; IF k.id IS NULL THEN RAISE EXCEPTION 'Không tìm thấy KPI.'; END IF; RETURN private.k3_measure_eval(to_jsonb(k),private.k3_measure_rows(_kpi,_official),(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date); END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_result_metric_range(_kpi uuid, _official boolean, _start date, _end date, _user uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE k k3_kpis; rows jsonb; config jsonb;
+BEGIN
+ SELECT * INTO k FROM k3_kpis WHERE id=_kpi;
+ SELECT coalesce(jsonb_agg(to_jsonb(r)||jsonb_build_object('acceptance',private.k3_result_acceptance(r.id,_official))),'[]') INTO rows FROM private.k3_result_eligible_range(_kpi,_official,_start,_end,_user) r;
+ config:=to_jsonb(k); IF k.measure='streak' THEN config:=jsonb_set(config,'{config,start_date}',to_jsonb(greatest(_start,(k.config->>'start_date')::date))); END IF;
+ RETURN private.k3_measure_eval(config,rows,least(_end,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)); END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_review_fingerprint(_source jsonb)
+ RETURNS text
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$
+ SELECT md5(jsonb_build_object('results',_source->'results','actions',coalesce((SELECT jsonb_agg(a-'metric'-'overdue' ORDER BY a->>'id') FROM jsonb_array_elements(_source->'actions') a),'[]'),'goal_kpis',_source->'goal_kpis','missing',_source->'missing','result_count',_source->'result_count','action_count',_source->'action_count','goal_count',_source->'goal_count')::text);
+$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_review_purge_expired()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ BEGIN RETURN 0; END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_review_schedule()
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE c k3_automation_config;utc time;job record;
+BEGIN
+ SELECT * INTO c FROM k3_automation_config WHERE id;
+ FOR job IN SELECT jobid FROM cron.job WHERE jobname IN('k3-review-reminder-first','k3-review-reminder-second') LOOP PERFORM cron.unschedule(job.jobid); END LOOP;
+ IF c.review_reminders AND c.employee_review_enabled THEN
+ utc:=(c.review_remind_time-interval '7 hours')::time;
+ PERFORM cron.schedule('k3-review-reminder-first',extract(minute FROM utc)::int||' '||extract(hour FROM utc)::int||' * * *','SELECT public.k3_review_reminder_run();');
+ IF c.review_second_reminder THEN utc:=(c.review_second_time-interval '7 hours')::time; PERFORM cron.schedule('k3-review-reminder-second',extract(minute FROM utc)::int||' '||extract(hour FROM utc)::int||' * * *','SELECT public.k3_review_reminder_run();'); END IF;
+ END IF;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_task_comment_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$BEGIN IF NEW.task_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.k3_tasks WHERE id=NEW.task_id AND day_id=NEW.day_id AND deleted_at IS NULL) THEN RAISE EXCEPTION 'Nhận xét không khớp công việc và ngày.'; END IF; RETURN NEW; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_task_complete(_target numeric, _actual numeric, _progress integer, _status text)
+ RETURNS boolean
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$SELECT _status='done' AND CASE WHEN coalesce(_target,0)>0 THEN coalesce(_actual,0)>=_target ELSE _progress>=100 END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_task_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE d public.k3_days; a public.k3_actions; BEGIN
+ SELECT * INTO d FROM public.k3_days WHERE id=NEW.day_id FOR UPDATE; IF d.id IS NULL OR d.user_id<>NEW.user_id OR d.work_date<>NEW.work_date THEN RAISE EXCEPTION 'Công việc không khớp ngày gốc hoặc chủ sở hữu.'; END IF;
+ IF TG_OP='UPDATE' AND NEW.user_id<>OLD.user_id THEN RAISE EXCEPTION 'Không được đổi chủ sở hữu.'; END IF;
+ IF TG_OP='UPDATE' AND (NEW.day_id<>OLD.day_id OR NEW.work_date<>OLD.work_date OR NEW.is_unscheduled<>OLD.is_unscheduled) AND coalesce(current_setting('k3.scheduling',true),'')<>'yes' THEN RAISE EXCEPTION 'Chỉ được đổi ngày qua thao tác xếp lịch riêng.'; END IF;
+ IF NEW.action_id IS NOT NULL AND NOT private.k3_action_worker_ok(NEW.user_id, NEW.action_id) THEN RAISE EXCEPTION 'Bạn không tham gia thực hiện hành động này.'; END IF;
+ IF TG_OP='INSERT' THEN NEW.original_work_date:=CASE WHEN NEW.is_unscheduled THEN NULL ELSE NEW.work_date END; END IF;
+ IF NEW.kpi_target<0 OR NEW.kpi_actual<0 THEN RAISE EXCEPTION 'KPI không được âm.'; END IF;
+ IF TG_OP='INSERT' OR (NEW.kpi_target,NEW.kpi_actual,NEW.progress,NEW.status) IS DISTINCT FROM (OLD.kpi_target,OLD.kpi_actual,OLD.progress,OLD.status) THEN
+ IF NEW.kpi_target>0 THEN NEW.progress:=least(100,round(coalesce(NEW.kpi_actual,0)/NEW.kpi_target*100)); END IF;
+ IF NEW.status='done' AND ((NEW.kpi_target>0 AND coalesce(NEW.kpi_actual,0)<NEW.kpi_target) OR (coalesce(NEW.kpi_target,0)<=0 AND NEW.progress<100)) THEN RAISE EXCEPTION 'Chưa đạt chỉ tiêu hoàn thành. Hãy ghi nhận Kết thúc – Chưa đạt chỉ tiêu.'; END IF; END IF;
+ IF NEW.status='incomplete' AND (TG_OP='INSERT' OR (NEW.status,NEW.problem,NEW.cause,NEW.solution) IS DISTINCT FROM (OLD.status,OLD.problem,OLD.cause,OLD.solution)) AND (btrim(coalesce(NEW.problem,''))='' OR btrim(coalesce(NEW.cause,''))='' OR btrim(coalesce(NEW.solution,''))='') THEN RAISE EXCEPTION 'Kết thúc chưa đạt cần đủ Vấn đề - Nguyên nhân - Giải pháp.'; END IF;
+ IF TG_OP='UPDATE' THEN NEW.revision:=OLD.revision+1; END IF; RETURN NEW; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_task_link_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE link jsonb; BEGIN
+ IF NEW.links IS NOT NULL AND NEW.links<>'null'::jsonb THEN
+ IF jsonb_typeof(NEW.links)<>'array' OR jsonb_array_length(NEW.links)>10 THEN RAISE EXCEPTION 'Tối đa 10 link tài liệu hợp lệ.'; END IF;
+ FOR link IN SELECT * FROM jsonb_array_elements(NEW.links) LOOP IF coalesce(link->>'url','') !~ '^https://[^[:space:]]+$' THEN RAISE EXCEPTION 'Link tài liệu phải là đường dẫn https hợp lệ.'; END IF; END LOOP; END IF; RETURN NEW; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_task_revision()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$BEGIN
+ IF TG_OP='INSERT' OR private.k3_task_summary_relevant(to_jsonb(OLD),to_jsonb(NEW)) THEN
+ IF NOT NEW.is_unscheduled THEN UPDATE public.k3_days SET data_revision=data_revision+1,planned_at=coalesce(planned_at,now()) WHERE id=NEW.day_id; END IF;
+ IF TG_OP='UPDATE' AND (OLD.day_id<>NEW.day_id OR NEW.is_unscheduled) AND NOT OLD.is_unscheduled THEN UPDATE public.k3_days SET data_revision=data_revision+1 WHERE id=OLD.day_id; END IF;
+ END IF; RETURN NEW; END$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_task_summary_relevant(_before jsonb, _after jsonb)
+ RETURNS boolean
+ LANGUAGE sql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$SELECT (_before-ARRAY['revision','updated_at','updated_by','note','links','how','place','sort_order']) IS DISTINCT FROM (_after-ARRAY['revision','updated_at','updated_by','note','links','how','place','sort_order'])$function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_timeline_guard()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE g k3_goals; s date; e date; st time; et time; mode text;
+BEGIN
+ IF TG_TABLE_NAME='k3_goals' THEN s:=NEW.period_start;e:=coalesce(NEW.due_date,NEW.period_end);st:=NEW.start_time;et:=NEW.due_time;
+ ELSE
+ SELECT * INTO g FROM k3_goals WHERE id=NEW.goal_id;
+ s:=CASE WHEN NEW.inherit_timeline THEN g.period_start ELSE coalesce(NEW.start_date,g.period_start) END;e:=CASE WHEN NEW.inherit_timeline THEN coalesce(g.due_date,g.period_end) ELSE coalesce(NEW.due_date,g.period_end) END;
+ st:=CASE WHEN NEW.inherit_timeline THEN g.start_time ELSE NEW.start_time END;et:=CASE WHEN NEW.inherit_timeline THEN g.due_time ELSE NEW.due_time END;
+ IF private.k3_timepoint(s,st,false)<private.k3_timepoint(g.period_start,g.start_time,false) OR private.k3_timepoint(e,et,true)>private.k3_timepoint(coalesce(g.due_date,g.period_end),g.due_time,true) THEN RAISE EXCEPTION 'Thời gian KF nằm ngoài khoảng KG. Hãy chỉnh thời gian KF hoặc KG.'; END IF;
+ mode:=coalesce(NEW.execution_schedule->>'mode','daily');
+ IF mode NOT IN('daily','dates','weekdays','weekly') THEN RAISE EXCEPTION 'Lộ trình không hợp lệ.'; END IF;
+ IF mode='dates' AND (jsonb_typeof(NEW.execution_schedule->'dates') IS DISTINCT FROM 'array' OR jsonb_array_length(NEW.execution_schedule->'dates')=0) THEN RAISE EXCEPTION 'Chọn ít nhất một ngày thực hiện.'; END IF;
+ IF mode='dates' AND EXISTS(SELECT 1 FROM jsonb_array_elements_text(NEW.execution_schedule->'dates') d WHERE d::date<s OR d::date>e) THEN RAISE EXCEPTION 'Ngày trong lộ trình nằm ngoài khoảng KF.'; END IF;
+ IF mode='weekdays' AND (jsonb_typeof(NEW.execution_schedule->'weekdays') IS DISTINCT FROM 'array' OR jsonb_array_length(NEW.execution_schedule->'weekdays')=0) THEN RAISE EXCEPTION 'Chọn thứ thực hiện.'; END IF;
+ IF mode='weekdays' AND EXISTS(SELECT 1 FROM jsonb_array_elements_text(NEW.execution_schedule->'weekdays') d WHERE d::int NOT BETWEEN 1 AND 7) THEN RAISE EXCEPTION 'Thứ thực hiện không hợp lệ.'; END IF;
+ IF nullif(NEW.execution_schedule->>'end_time','')::time < nullif(NEW.execution_schedule->>'start_time','')::time THEN RAISE EXCEPTION 'Giờ kết thúc lộ trình không được trước giờ bắt đầu.'; END IF;
+ END IF;
+ IF private.k3_timepoint(e,et,true)<private.k3_timepoint(s,st,false) THEN RAISE EXCEPTION 'Hạn hoàn thành không được trước thời điểm bắt đầu.'; END IF;
+ IF (st IS NOT NULL AND extract(second FROM st)<>0) OR (et IS NOT NULL AND extract(second FROM et)<>0) THEN RAISE EXCEPTION 'Thời gian dự kiến chỉ chọn đến phút.'; END IF;
+ RETURN NEW;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_timepoint(_date date, _time time without time zone, _deadline boolean DEFAULT false)
+ RETURNS timestamp with time zone
+ LANGUAGE sql
+ IMMUTABLE
+AS $function$ SELECT (_date+coalesce(_time,CASE WHEN _deadline THEN time '23:59:59.999999' ELSE time '00:00' END)) AT TIME ZONE 'Asia/Ho_Chi_Minh' $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_validate_config(_measure text, _config jsonb, _target numeric)
+ RETURNS void
+ LANGUAGE plpgsql
+ IMMUTABLE
+ SET search_path TO 'public'
+AS $function$
+DECLARE c jsonb:=coalesce(_config,'{}'); m jsonb; total numeric; ids int; n int;
+BEGIN
+ IF jsonb_typeof(c)<>'object' THEN RAISE EXCEPTION 'Cấu hình KPI phải có cấu trúc hợp lệ.'; END IF;
+ IF c ? 'baseline' AND (nullif(btrim(c->>'baseline_source'),'') IS NULL OR (c->>'baseline')::numeric<0 OR (c->>'baseline')::numeric::text IN('NaN','Infinity','-Infinity')) THEN RAISE EXCEPTION 'Giá trị bắt đầu cần căn cứ và số không âm hữu hạn.'; END IF;
+ IF c ? 'tolerance' AND ((c->>'tolerance')::numeric<0 OR (c->>'tolerance')::numeric::text IN('NaN','Infinity','-Infinity')) THEN RAISE EXCEPTION 'Sai số phải không âm hữu hạn.'; END IF;
+ IF c ? 'precision' AND (c->>'precision')::int NOT BETWEEN 0 AND 8 THEN RAISE EXCEPTION 'Độ chính xác từ 0 đến 8 chữ số.'; END IF;
+ IF c ? 'daily_target' AND ((c->>'daily_target')::numeric<=0 OR (c->>'daily_target')::numeric::text IN('NaN','Infinity','-Infinity')) THEN RAISE EXCEPTION 'Kế hoạch ngày phải lớn hơn 0 hữu hạn.'; END IF;
+ IF _measure IN('binary','frequency','streak') AND nullif(btrim(c->>'valid_condition'),'') IS NULL THEN RAISE EXCEPTION 'Chưa có tiêu chí hoàn thành. Hãy bổ sung kết quả cần đạt hoặc điều kiện hoàn thành KPI.'; END IF;
+ IF _measure IN('frequency','streak') THEN
+ IF coalesce(c->>'cycle','') NOT IN('day','week','month') OR _measure='streak' AND c->>'cycle'<>'day' THEN RAISE EXCEPTION 'Chu kỳ không hợp lệ.'; END IF;
+ IF nullif(c->>'start_date','') IS NULL OR nullif(c->>'end_date','') IS NULL OR (c->>'end_date')::date<(c->>'start_date')::date THEN RAISE EXCEPTION 'Cần khoảng ngày áp dụng hợp lệ.'; END IF;
+ IF _target IS NULL OR _target<1 OR trunc(_target)<>_target THEN RAISE EXCEPTION 'Số lần/chuỗi mục tiêu phải là số nguyên dương.'; END IF;
+ END IF;
+ IF c ? 'weekdays' AND (jsonb_typeof(c->'weekdays')<>'array' OR jsonb_array_length(c->'weekdays')=0) THEN RAISE EXCEPTION 'Cần ít nhất một ngày áp dụng.'; END IF;
+ IF c ? 'weekdays' AND EXISTS(SELECT 1 FROM jsonb_array_elements_text(c->'weekdays') x WHERE x::int NOT BETWEEN 1 AND 7) THEN RAISE EXCEPTION 'Ngày áp dụng từ 1 đến 7.'; END IF;
+ IF _measure='distinct' AND (nullif(btrim(c->>'entity_type'),'') IS NULL OR nullif(btrim(c->>'identifier_field'),'') IS NULL OR coalesce(c->>'normalization','') NOT IN('exact','trim_lower')) THEN RAISE EXCEPTION 'Cần loại đối tượng, trường định danh và quy tắc trùng.'; END IF;
+ IF _measure='duration' AND (coalesce(c->>'duration_unit','minutes') NOT IN('minutes','hours') OR coalesce(c->>'duration_method','total') NOT IN('total','intervals')) THEN RAISE EXCEPTION 'Phương thức thời lượng không hợp lệ.'; END IF;
+ IF _measure='milestone' AND c ? 'milestones' THEN
+ IF jsonb_typeof(c->'milestones')<>'array' OR jsonb_array_length(c->'milestones')=0 THEN RAISE EXCEPTION 'Cần ít nhất một mốc.'; END IF;
+ SELECT count(*),count(DISTINCT x->>'id'),sum((x->>'weight')::numeric) INTO n,ids,total FROM jsonb_array_elements(c->'milestones') x;
+ IF ids<>n THEN RAISE EXCEPTION 'Định danh mốc không được trùng.'; END IF;
+ FOR m IN SELECT * FROM jsonb_array_elements(c->'milestones') LOOP
+ IF nullif(btrim(m->>'id'),'') IS NULL OR nullif(btrim(m->>'name'),'') IS NULL OR nullif(btrim(m->>'condition'),'') IS NULL THEN RAISE EXCEPTION 'Mốc cần tên và điều kiện hoàn thành.'; END IF;
+ IF total IS NOT NULL AND (NOT m ? 'weight' OR (m->>'weight')::numeric<=0) THEN RAISE EXCEPTION 'Mọi mốc phải có trọng số dương khi dùng trọng số.'; END IF;
+ END LOOP;
+ IF total IS NOT NULL AND total<>100 THEN RAISE EXCEPTION 'Tổng trọng số phải bằng 100.'; END IF;
+ END IF;
+END $function$
+;
+
+CREATE OR REPLACE FUNCTION private.k3_write_guard(_date date)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$DECLARE s public.k3_settings; BEGIN
+ IF auth.uid() IS NULL OR NOT public.k3_can(auth.uid(),'k3.use') THEN RAISE EXCEPTION 'Bạn không có quyền sử dụng 3K.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text)); SELECT * INTO s FROM public.k3_settings WHERE id FOR SHARE;
+ IF NOT coalesce(s.enabled,false) THEN RAISE EXCEPTION 'Module 3K đang tạm khóa, chỉ được xem lịch sử.'; END IF;
+ IF _date IS NULL OR s.effective_from IS NULL OR _date<s.effective_from THEN RAISE EXCEPTION 'Ngày thực hiện nằm ngoài thời gian áp dụng 3K.'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext('k3owner'),hashtext(auth.uid()::text));
+ END$function$
+;

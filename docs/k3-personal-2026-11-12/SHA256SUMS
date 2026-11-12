@@ -1,0 +1,9 @@
+39cfea1217219d82ce70dddc699764e4c92b407324c85087d49f6acbeeee8541  docs/k3-personal-2026-11-12/functions.json
+0e0c4b2ee62e27260d79629d621c28be26da322a0f7843006b9eaa9466cdeb30  docs/k3-personal-2026-11-12/live-functions.sql
+95d4e0d2af7a15c4915d7d68f14df897e2bbbdd19950d12a28c75af265b6f2c7  docs/k3-personal-2026-11-12/readiness-snapshot.json
+9d333a735feced61b2e84a768886b17f00c6d577d49efbc54f49936717a95ec5  docs/k3-personal-2026-11-12/report.md
+f6e39edcc0b4e1f5fd23126b278e7e49c43debef85e59e6cab4294c845563675  docs/k3-personal-2026-11-12/rollback.sql
+1d337a0b0c15a454a47fd1000c63d9bdbced7a9b78af3e54533fde7fddb25f73  docs/k3-personal-2026-11-12/schema.json
+4ad14679f96b9bd17bcf2b774f59176e09f9439aa6ed8ce2c2a3cf0d3a461c55  docs/k3-personal-2026-11-12/test-fixture.sql
+7e33bfbe5bfc1ccdad11c607b635ad94ba6f5baa71e831dd05d69d39168ab9fa  drizzle/migrations/0383_k3_personal_company_access.sql
+2618aac8fe9dbc6032a6756fd138dda98e211e8a6aa0f37e0d27b4926adad91e  drizzle/migrations/0384_k3_personal_invitation_guard.sql

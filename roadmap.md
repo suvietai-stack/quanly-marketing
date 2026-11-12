@@ -1,11 +1,13 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Chốt mới 12/11: 3K toàn công ty theo sơ đồ
+- [x] Cá nhân trước: áp 0383/0384 active self-only + nullable org attribution + khóa directory/invite mới; 319 tests đạt, 141 KG/3 days/3 tasks giữ nguyên, không hồi tố.
+- [ ] Publish cá nhân: BLOCKED bởi chưa có phiên nhân viên non-Biz được ủy quyền để nghiệm thu tạo/lưu/đọc lại trên web; phiên hiện có là Super Admin. SQL fixture không thay live scoped E2E.
 - [x] Audit live baseline 23 active/19 holders/138 KG/3 days/3 tasks; snapshot 132 hàm MD5 verified, columns; 41 hàm còn phụ thuộc Biz.
 - [x] SQL stage 1/2 PENDING: nullable org_unit_id + company_effective_from NULL, private scope helpers; không thay k3_can live.
 - [x] PGlite core own/manager/kiêm nhiệm/DENY/frozen history/prospective date; sửa appointment UI không chọn ô cũ/cap staff, tests.
 - [ ] Kiểm thử nhân sự các khối, quản lý/kiêm nhiệm/cross-unit invitation, rollback, cache và ngày/tuần/tháng.
-- [ ] Giao diện/preset/menu chỉ sau nguồn backend ready; không chỉ đổi menu/cấp k3.use; không bulk Role live hay Publish.
+- [x] Menu Điều hành/3K của tôi, route cũ tương thích, 20 preset vị trí gợi ý k3.use; 5 task không có quản lý. Không bulk Role live; chưa Publish.
 - [ ] Hoàn thiện toàn bộ RPC/automation/Zalo và scoped E2E trước xác nhận áp migration riêng.
 
 ## Tiếp tục sau kiểm tra live 12/11 — SQL chỉ PENDING

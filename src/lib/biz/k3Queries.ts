@@ -4,7 +4,9 @@ import type { K3DayData, K3Settings, K3TeamRow } from './k3';
 
 export const k3SettingsQuery = (uid: string) => queryOptions({
   queryKey: ['k3_settings', uid],
-  staleTime: 0,
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+  retry: false,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_settings_read');
     if (error) throw error;

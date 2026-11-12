@@ -10,6 +10,11 @@ it('covers exactly 20 positions and 5 tasks without duplicate IDs', () => {
   expect(defaultRolePresets.filter(p => p.kind === 'marketing_task')).toHaveLength(5);
   expect(new Set(defaultRolePresets.map(p => p.roleId)).size).toBe(25);
 });
+it('all 20 positions suggest only personal 3K, no task preset grants 3K management',()=>{
+  for(const p of defaultRolePresets.filter(p=>p.kind==='position')) expect(p.keys).toContain('k3.use');
+  for(const p of defaultRolePresets) expect(p.keys.filter(k=>['k3.view_scope','k3.comment','k3.settings'].includes(k))).toEqual([]);
+  for(const p of defaultRolePresets.filter(p=>p.kind==='marketing_task')) expect(p.keys).not.toContain('k3.use');
+});
 it('Content task default keeps only verified Content workflow actions and leaves the stored Role untouched', () => {
   const stored = role('role-v2-task-content-web', ['web.view', 'web.content_view', 'social.post_create', 'settings.role']);
   const impact = defaultRoleImpact(stored, policy);

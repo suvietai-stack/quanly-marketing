@@ -1,0 +1,2658 @@
+{
+  "counts": {
+    "days": 3,
+    "goals": 141,
+    "tasks": 3,
+    "active": 23
+  },
+  "columns": [
+    {
+      "name": "action_id",
+      "type": "uuid",
+      "table": "k3_action_collaborators",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_action_collaborators",
+      "default": null
+    },
+    {
+      "name": "added_by",
+      "type": "uuid",
+      "table": "k3_action_collaborators",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_action_collaborators",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "goal_id",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "kpi_target",
+      "type": "numeric",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "kpi_unit",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "start_date",
+      "type": "date",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "due_date",
+      "type": "date",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "manual_progress",
+      "type": "smallint",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "progress_source",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_actions",
+      "default": "0"
+    },
+    {
+      "name": "request_key",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_actions",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_actions",
+      "default": "now()"
+    },
+    {
+      "name": "assignee_id",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_actions",
+      "default": "'in_progress'::text"
+    },
+    {
+      "name": "is_key",
+      "type": "boolean",
+      "table": "k3_actions",
+      "default": "false"
+    },
+    {
+      "name": "problem",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "cause",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "solution",
+      "type": "text",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "closed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "closed_by",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "deleted_at",
+      "type": "timestamp with time zone",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "deleted_by",
+      "type": "uuid",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "start_time",
+      "type": "time without time zone",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "due_time",
+      "type": "time without time zone",
+      "table": "k3_actions",
+      "default": null
+    },
+    {
+      "name": "inherit_timeline",
+      "type": "boolean",
+      "table": "k3_actions",
+      "default": "false"
+    },
+    {
+      "name": "execution_schedule",
+      "type": "jsonb",
+      "table": "k3_actions",
+      "default": "'{\"mode\": \"daily\"}'::jsonb"
+    },
+    {
+      "name": "required",
+      "type": "boolean",
+      "table": "k3_actions",
+      "default": "true"
+    },
+    {
+      "name": "id",
+      "type": "boolean",
+      "table": "k3_automation_config",
+      "default": "true"
+    },
+    {
+      "name": "auto_close",
+      "type": "boolean",
+      "table": "k3_automation_config",
+      "default": "true"
+    },
+    {
+      "name": "close_time",
+      "type": "time without time zone",
+      "table": "k3_automation_config",
+      "default": "'18:00:00'::time without time zone"
+    },
+    {
+      "name": "enabled_from",
+      "type": "date",
+      "table": "k3_automation_config",
+      "default": "((now() AT TIME ZONE 'Asia/Ho_Chi_Minh'::text))::date"
+    },
+    {
+      "name": "zalo_enabled",
+      "type": "boolean",
+      "table": "k3_automation_config",
+      "default": "false"
+    },
+    {
+      "name": "group_id",
+      "type": "text",
+      "table": "k3_automation_config",
+      "default": null
+    },
+    {
+      "name": "group_name",
+      "type": "text",
+      "table": "k3_automation_config",
+      "default": null
+    },
+    {
+      "name": "send_time",
+      "type": "time without time zone",
+      "table": "k3_automation_config",
+      "default": "'18:05:00'::time without time zone"
+    },
+    {
+      "name": "scope_kind",
+      "type": "text",
+      "table": "k3_automation_config",
+      "default": "'all'::text"
+    },
+    {
+      "name": "scope_id",
+      "type": "uuid",
+      "table": "k3_automation_config",
+      "default": null
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_automation_config",
+      "default": "now()"
+    },
+    {
+      "name": "updated_by",
+      "type": "uuid",
+      "table": "k3_automation_config",
+      "default": null
+    },
+    {
+      "name": "employee_review_enabled",
+      "type": "boolean",
+      "table": "k3_automation_config",
+      "default": "true"
+    },
+    {
+      "name": "review_reminders",
+      "type": "boolean",
+      "table": "k3_automation_config",
+      "default": "true"
+    },
+    {
+      "name": "review_remind_time",
+      "type": "time without time zone",
+      "table": "k3_automation_config",
+      "default": "'17:00:00'::time without time zone"
+    },
+    {
+      "name": "review_second_reminder",
+      "type": "boolean",
+      "table": "k3_automation_config",
+      "default": "false"
+    },
+    {
+      "name": "review_second_time",
+      "type": "time without time zone",
+      "table": "k3_automation_config",
+      "default": "'17:30:00'::time without time zone"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_close_runs",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_close_runs",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_close_runs",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_close_runs",
+      "default": null
+    },
+    {
+      "name": "error",
+      "type": "text",
+      "table": "k3_close_runs",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_close_runs",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_comments",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "day_id",
+      "type": "uuid",
+      "table": "k3_comments",
+      "default": null
+    },
+    {
+      "name": "task_id",
+      "type": "uuid",
+      "table": "k3_comments",
+      "default": null
+    },
+    {
+      "name": "author_id",
+      "type": "uuid",
+      "table": "k3_comments",
+      "default": null
+    },
+    {
+      "name": "body",
+      "type": "text",
+      "table": "k3_comments",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_comments",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_daily_closes",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "department_id",
+      "type": "uuid",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "system_id",
+      "type": "uuid",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "source",
+      "type": "text",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "closed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_daily_closes",
+      "default": "now()"
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_daily_closes",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_data_reviews",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "kind",
+      "type": "text",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "record_id",
+      "type": "uuid",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "reason",
+      "type": "text",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "original_snapshot",
+      "type": "jsonb",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_data_reviews",
+      "default": "'pending'::text"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_data_reviews",
+      "default": "now()"
+    },
+    {
+      "name": "resolved_at",
+      "type": "timestamp with time zone",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "resolved_by",
+      "type": "uuid",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "resolution_note",
+      "type": "text",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "archived_at",
+      "type": "timestamp with time zone",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "purge_at",
+      "type": "timestamp with time zone",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "backup_id",
+      "type": "uuid",
+      "table": "k3_data_reviews",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_days",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "kg",
+      "type": "text",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "planned_at",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "summarized_at",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "summary_note",
+      "type": "text",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": "now()"
+    },
+    {
+      "name": "data_revision",
+      "type": "bigint",
+      "table": "k3_days",
+      "default": "0"
+    },
+    {
+      "name": "confirmed_revision",
+      "type": "bigint",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "confirmed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "department_id",
+      "type": "uuid",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "plan_deadline",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "summary_deadline",
+      "type": "timestamp with time zone",
+      "table": "k3_days",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "k3_discipline_events",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_discipline_events",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_discipline_events",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_discipline_events",
+      "default": null
+    },
+    {
+      "name": "action",
+      "type": "text",
+      "table": "k3_discipline_events",
+      "default": null
+    },
+    {
+      "name": "detail",
+      "type": "jsonb",
+      "table": "k3_discipline_events",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_discipline_events",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_employee_reviews",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "source_version",
+      "type": "text",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "missing_acknowledged",
+      "type": "boolean",
+      "table": "k3_employee_reviews",
+      "default": "false"
+    },
+    {
+      "name": "request_key",
+      "type": "uuid",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "confirmed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_employee_reviews",
+      "default": "now()"
+    },
+    {
+      "name": "summary_deadline_at",
+      "type": "timestamp with time zone",
+      "table": "k3_employee_reviews",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_goal_members",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "goal_id",
+      "type": "uuid",
+      "table": "k3_goal_members",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_goal_members",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_goal_members",
+      "default": "'invited'::text"
+    },
+    {
+      "name": "invited_by",
+      "type": "uuid",
+      "table": "k3_goal_members",
+      "default": null
+    },
+    {
+      "name": "invited_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goal_members",
+      "default": "now()"
+    },
+    {
+      "name": "responded_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goal_members",
+      "default": null
+    },
+    {
+      "name": "revoked_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goal_members",
+      "default": null
+    },
+    {
+      "name": "revoked_by",
+      "type": "uuid",
+      "table": "k3_goal_members",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_goals",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "period_type",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "period_start",
+      "type": "date",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "period_end",
+      "type": "date",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "expected_result",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "kpi_target",
+      "type": "numeric",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "kpi_unit",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "due_date",
+      "type": "date",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "department_id",
+      "type": "uuid",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_goals",
+      "default": "0"
+    },
+    {
+      "name": "request_key",
+      "type": "uuid",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goals",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goals",
+      "default": "now()"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_goals",
+      "default": "'in_progress'::text"
+    },
+    {
+      "name": "is_key",
+      "type": "boolean",
+      "table": "k3_goals",
+      "default": "false"
+    },
+    {
+      "name": "closed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "closed_by",
+      "type": "uuid",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "close_note",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "deleted_at",
+      "type": "timestamp with time zone",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "deleted_by",
+      "type": "uuid",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "start_time",
+      "type": "time without time zone",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "due_time",
+      "type": "time without time zone",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "creation_mode",
+      "type": "text",
+      "table": "k3_goals",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_kpi_acceptances",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "result_id",
+      "type": "uuid",
+      "table": "k3_kpi_acceptances",
+      "default": null
+    },
+    {
+      "name": "result_revision",
+      "type": "bigint",
+      "table": "k3_kpi_acceptances",
+      "default": null
+    },
+    {
+      "name": "decision",
+      "type": "text",
+      "table": "k3_kpi_acceptances",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_kpi_acceptances",
+      "default": null
+    },
+    {
+      "name": "reason",
+      "type": "text",
+      "table": "k3_kpi_acceptances",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_acceptances",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_kpi_config_versions",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "kpi_id",
+      "type": "uuid",
+      "table": "k3_kpi_config_versions",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_kpi_config_versions",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_kpi_config_versions",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_kpi_config_versions",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_config_versions",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_kpi_day_confirmations",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_kpi_day_confirmations",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_kpi_day_confirmations",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_kpi_day_confirmations",
+      "default": null
+    },
+    {
+      "name": "confirmed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_day_confirmations",
+      "default": "now()"
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_kpi_day_confirmations",
+      "default": null
+    },
+    {
+      "name": "source",
+      "type": "text",
+      "table": "k3_kpi_day_confirmations",
+      "default": "'manual'::text"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_kpi_result_versions",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "result_id",
+      "type": "uuid",
+      "table": "k3_kpi_result_versions",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_kpi_result_versions",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_kpi_result_versions",
+      "default": null
+    },
+    {
+      "name": "request_key",
+      "type": "uuid",
+      "table": "k3_kpi_result_versions",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_kpi_result_versions",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_result_versions",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_kpi_results",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "kpi_id",
+      "type": "uuid",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "goal_id",
+      "type": "uuid",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "action_id",
+      "type": "uuid",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "value",
+      "type": "numeric",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "numerator",
+      "type": "numeric",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "denominator",
+      "type": "numeric",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "objects",
+      "type": "jsonb",
+      "table": "k3_kpi_results",
+      "default": "'[]'::jsonb"
+    },
+    {
+      "name": "completed",
+      "type": "jsonb",
+      "table": "k3_kpi_results",
+      "default": "'[]'::jsonb"
+    },
+    {
+      "name": "evidence",
+      "type": "text",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "problem",
+      "type": "text",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "cause",
+      "type": "text",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "solution",
+      "type": "text",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_kpi_results",
+      "default": "1"
+    },
+    {
+      "name": "updated_by",
+      "type": "uuid",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_results",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_results",
+      "default": "now()"
+    },
+    {
+      "name": "review_reason",
+      "type": "text",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "deleted_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpi_results",
+      "default": null
+    },
+    {
+      "name": "config_revision",
+      "type": "bigint",
+      "table": "k3_kpi_results",
+      "default": "1"
+    },
+    {
+      "name": "intervals",
+      "type": "jsonb",
+      "table": "k3_kpi_results",
+      "default": "'[]'::jsonb"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_kpis",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "goal_id",
+      "type": "uuid",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "action_id",
+      "type": "uuid",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "kind",
+      "type": "text",
+      "table": "k3_kpis",
+      "default": "'cumulative'::text"
+    },
+    {
+      "name": "target",
+      "type": "numeric",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "unit",
+      "type": "text",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "manual_actual",
+      "type": "numeric",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "manual_source",
+      "type": "text",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "sort_order",
+      "type": "integer",
+      "table": "k3_kpis",
+      "default": "0"
+    },
+    {
+      "name": "created_by",
+      "type": "uuid",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpis",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_kpis",
+      "default": "now()"
+    },
+    {
+      "name": "request_key",
+      "type": "uuid",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "measure",
+      "type": "text",
+      "table": "k3_kpis",
+      "default": "'cumulative'::text"
+    },
+    {
+      "name": "condition",
+      "type": "text",
+      "table": "k3_kpis",
+      "default": "'gte'::text"
+    },
+    {
+      "name": "target_max",
+      "type": "numeric",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "required",
+      "type": "boolean",
+      "table": "k3_kpis",
+      "default": "true"
+    },
+    {
+      "name": "milestones",
+      "type": "jsonb",
+      "table": "k3_kpis",
+      "default": "'[]'::jsonb"
+    },
+    {
+      "name": "config",
+      "type": "jsonb",
+      "table": "k3_kpis",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "config_revision",
+      "type": "bigint",
+      "table": "k3_kpis",
+      "default": "1"
+    },
+    {
+      "name": "replaces_kpi_id",
+      "type": "uuid",
+      "table": "k3_kpis",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_period_comments",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "period_type",
+      "type": "text",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "period_start",
+      "type": "date",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "goal_id",
+      "type": "uuid",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "action_id",
+      "type": "uuid",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "author_id",
+      "type": "uuid",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "body",
+      "type": "text",
+      "table": "k3_period_comments",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_period_comments",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_period_summaries",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "period_type",
+      "type": "text",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "period_start",
+      "type": "date",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "fingerprint",
+      "type": "text",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "confirmed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_period_summaries",
+      "default": "now()"
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "department_id",
+      "type": "uuid",
+      "table": "k3_period_summaries",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "department_id",
+      "type": "uuid",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "deadline_at",
+      "type": "timestamp with time zone",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "observed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_plan_checkpoints",
+      "default": "now()"
+    },
+    {
+      "name": "obligated",
+      "type": "boolean",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "initial_status",
+      "type": "text",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "initial_snapshot",
+      "type": "jsonb",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "current_status",
+      "type": "text",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "source",
+      "type": "text",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "first_plan_at",
+      "type": "timestamp with time zone",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "excluded_at",
+      "type": "timestamp with time zone",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "excluded_by",
+      "type": "uuid",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "exclusion_reason",
+      "type": "text",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "summary_deadline_at",
+      "type": "timestamp with time zone",
+      "table": "k3_plan_checkpoints",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "goal_id",
+      "type": "uuid",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "action_id",
+      "type": "uuid",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "action",
+      "type": "text",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "detail",
+      "type": "jsonb",
+      "table": "k3_plan_events",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_plan_events",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "true"
+    },
+    {
+      "name": "enabled",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "false"
+    },
+    {
+      "name": "effective_from",
+      "type": "date",
+      "table": "k3_settings",
+      "default": null
+    },
+    {
+      "name": "plan_by",
+      "type": "time without time zone",
+      "table": "k3_settings",
+      "default": "'08:45:00'::time without time zone"
+    },
+    {
+      "name": "summary_by",
+      "type": "time without time zone",
+      "table": "k3_settings",
+      "default": "'18:00:00'::time without time zone"
+    },
+    {
+      "name": "max_focus",
+      "type": "smallint",
+      "table": "k3_settings",
+      "default": "3"
+    },
+    {
+      "name": "updated_by",
+      "type": "uuid",
+      "table": "k3_settings",
+      "default": null
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_settings",
+      "default": "now()"
+    },
+    {
+      "name": "week_enabled",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "false"
+    },
+    {
+      "name": "month_enabled",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "false"
+    },
+    {
+      "name": "period_effective_from",
+      "type": "date",
+      "table": "k3_settings",
+      "default": null
+    },
+    {
+      "name": "period_deadlines",
+      "type": "jsonb",
+      "table": "k3_settings",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "allow_personal_goal",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "true"
+    },
+    {
+      "name": "allow_team_goal",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "true"
+    },
+    {
+      "name": "allow_invite",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "true"
+    },
+    {
+      "name": "allow_assign",
+      "type": "boolean",
+      "table": "k3_settings",
+      "default": "true"
+    },
+    {
+      "name": "discipline_from",
+      "type": "date",
+      "table": "k3_settings",
+      "default": "(((now() AT TIME ZONE 'Asia/Ho_Chi_Minh'::text))::date + 1)"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "k3_settings_log",
+      "default": null
+    },
+    {
+      "name": "changed_by",
+      "type": "uuid",
+      "table": "k3_settings_log",
+      "default": null
+    },
+    {
+      "name": "changed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_settings_log",
+      "default": "now()"
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_settings_log",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_summary_versions",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "day_id",
+      "type": "uuid",
+      "table": "k3_summary_versions",
+      "default": null
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_summary_versions",
+      "default": null
+    },
+    {
+      "name": "confirmed_at",
+      "type": "timestamp with time zone",
+      "table": "k3_summary_versions",
+      "default": "now()"
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_summary_versions",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_summary_versions",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "k3_task_events",
+      "default": null
+    },
+    {
+      "name": "day_id",
+      "type": "uuid",
+      "table": "k3_task_events",
+      "default": null
+    },
+    {
+      "name": "task_id",
+      "type": "uuid",
+      "table": "k3_task_events",
+      "default": null
+    },
+    {
+      "name": "actor_id",
+      "type": "uuid",
+      "table": "k3_task_events",
+      "default": null
+    },
+    {
+      "name": "action",
+      "type": "text",
+      "table": "k3_task_events",
+      "default": null
+    },
+    {
+      "name": "detail",
+      "type": "jsonb",
+      "table": "k3_task_events",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_task_events",
+      "default": "now()"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "day_id",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "start_time",
+      "type": "time without time zone",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "end_time",
+      "type": "time without time zone",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "kpi_target",
+      "type": "numeric",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "kpi_unit",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "kpi_actual",
+      "type": "numeric",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "progress",
+      "type": "smallint",
+      "table": "k3_tasks",
+      "default": "0"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": "'todo'::text"
+    },
+    {
+      "name": "is_focus",
+      "type": "boolean",
+      "table": "k3_tasks",
+      "default": "false"
+    },
+    {
+      "name": "how",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "place",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "links",
+      "type": "jsonb",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "problem",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "cause",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "solution",
+      "type": "text",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "sort_order",
+      "type": "integer",
+      "table": "k3_tasks",
+      "default": "0"
+    },
+    {
+      "name": "created_by",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "updated_by",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_tasks",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "k3_tasks",
+      "default": "now()"
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "table": "k3_tasks",
+      "default": "0"
+    },
+    {
+      "name": "request_key",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "deleted_at",
+      "type": "timestamp with time zone",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "action_id",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "is_unscheduled",
+      "type": "boolean",
+      "table": "k3_tasks",
+      "default": "false"
+    },
+    {
+      "name": "original_work_date",
+      "type": "date",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "kpi_id",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "deleted_by",
+      "type": "uuid",
+      "table": "k3_tasks",
+      "default": null
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "k3_zalo_reports",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "work_date",
+      "type": "date",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "group_id",
+      "type": "text",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "scope_kind",
+      "type": "text",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "scope_id",
+      "type": "uuid",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "snapshot",
+      "type": "jsonb",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "k3_zalo_reports",
+      "default": "'pending'::text"
+    },
+    {
+      "name": "lease",
+      "type": "uuid",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "attempted_at",
+      "type": "timestamp with time zone",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "sent_at",
+      "type": "timestamp with time zone",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "error",
+      "type": "text",
+      "table": "k3_zalo_reports",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "k3_zalo_reports",
+      "default": "now()"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "qual": "k3_action_visible(auth.uid(), action_id)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_action_collaborators",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_action_collaborators_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_actions",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((deleted_at IS NULL) AND k3_action_visible(auth.uid(), id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_actions",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_action_own",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "k3_can(auth.uid(), 'k3.settings'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_automation_config",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_automation_admin",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "biz_admin(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_close_runs",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_close_run_admin",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_comments",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "k3_day_scope_ok(auth.uid(), day_id)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_comments",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_comments_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR biz_admin(auth.uid()) OR (k3_can(auth.uid(), 'k3.view_scope'::text) AND biz_scope_ok(auth.uid(), user_id, department_id, ((work_date)::timestamp without time zone AT TIME ZONE 'Asia/Ho_Chi_Minh'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_daily_closes",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_close_scope",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "biz_admin(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_data_reviews",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_reviews_admin",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_days",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) AND k3_can(auth.uid(), 'k3.use'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_days",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_days_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR biz_admin(auth.uid()) OR (k3_can(auth.uid(), 'k3.view_scope'::text) AND biz_scope_ok(auth.uid(), user_id, biz_department_at(user_id, work_date), ((work_date)::timestamp without time zone AT TIME ZONE 'Asia/Ho_Chi_Minh'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_discipline_events",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_discipline_events_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR biz_admin(auth.uid()) OR (k3_can(auth.uid(), 'k3.view_scope'::text) AND biz_scope_ok(auth.uid(), user_id, COALESCE(( SELECT k3_daily_closes.department_id\n   FROM k3_daily_closes\n  WHERE ((k3_daily_closes.user_id = k3_employee_reviews.user_id) AND (k3_daily_closes.work_date = k3_employee_reviews.work_date))), biz_department_at(user_id, work_date)), ((work_date)::timestamp without time zone AT TIME ZONE 'Asia/Ho_Chi_Minh'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_employee_reviews",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_employee_review_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "k3_goal_visible(auth.uid(), goal_id)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_goal_members",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_goal_members_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_goals",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((deleted_at IS NULL) AND k3_goal_visible(auth.uid(), id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_goals",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_goal_own",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM k3_kpi_results r\n  WHERE ((r.id = k3_kpi_acceptances.result_id) AND private.k3_result_detail_ok(auth.uid(), r.user_id, r.goal_id, r.work_date))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_kpi_acceptances",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_acceptance_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM (k3_kpis k\n     LEFT JOIN k3_actions a ON ((a.id = k.action_id)))\n  WHERE ((k.id = k3_kpi_config_versions.kpi_id) AND k3_goal_visible(auth.uid(), COALESCE(k.goal_id, a.goal_id)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_kpi_config_versions",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_config_version_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR biz_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_kpi_day_confirmations",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_result_confirm_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM k3_kpi_results r\n  WHERE ((r.id = k3_kpi_result_versions.result_id) AND private.k3_result_detail_ok(auth.uid(), r.user_id, r.goal_id, r.work_date))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_kpi_result_versions",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_result_version_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.k3_result_detail_ok(auth.uid(), user_id, goal_id, work_date)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_kpi_results",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_result_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(((goal_id IS NOT NULL) AND k3_goal_visible(auth.uid(), goal_id)) OR ((action_id IS NOT NULL) AND k3_action_visible(auth.uid(), action_id)))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_kpis",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_kpis_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_period_comments",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) AND k3_can(auth.uid(), 'k3.use'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_period_comments",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_period_comment_own",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_period_summaries",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) AND k3_can(auth.uid(), 'k3.use'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_period_summaries",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_period_summary_own",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) OR biz_admin(auth.uid()) OR (k3_can(auth.uid(), 'k3.view_scope'::text) AND biz_scope_ok(auth.uid(), user_id, department_id, ((work_date)::timestamp without time zone AT TIME ZONE 'Asia/Ho_Chi_Minh'::text))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_plan_checkpoints",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_checkpoint_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_plan_events",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) AND k3_can(auth.uid(), 'k3.use'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_plan_events",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_plan_event_own",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_settings",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "true",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_settings",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_settings_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_settings_log",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "k3_can(auth.uid(), 'k3.settings'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_settings_log",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_settings_log_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_summary_versions",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM k3_days d\n  WHERE ((d.id = k3_summary_versions.day_id) AND (d.user_id = auth.uid()))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_summary_versions",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_summary_own",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_task_events",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM k3_days d\n  WHERE ((d.id = k3_task_events.day_id) AND (d.user_id = auth.uid()))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_task_events",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_task_events_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_tasks",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((user_id = auth.uid()) AND k3_can(auth.uid(), 'k3.use'::text))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_tasks",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_tasks_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "k3_can(auth.uid(), 'k3.settings'::text)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "k3_zalo_reports",
+      "permissive": "PERMISSIVE",
+      "policyname": "k3_zalo_admin",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "triggers": [
+    {
+      "table": "k3_days",
+      "definition": "CREATE TRIGGER k3_day_integrity BEFORE INSERT OR UPDATE ON public.k3_days FOR EACH ROW EXECUTE FUNCTION private.k3_day_guard()"
+    },
+    {
+      "table": "k3_tasks",
+      "definition": "CREATE TRIGGER k3_task_integrity BEFORE INSERT OR UPDATE ON public.k3_tasks FOR EACH ROW EXECUTE FUNCTION private.k3_task_guard()"
+    },
+    {
+      "table": "k3_tasks",
+      "definition": "CREATE TRIGGER k3_task_revision AFTER INSERT OR UPDATE ON public.k3_tasks FOR EACH ROW EXECUTE FUNCTION private.k3_task_revision()"
+    },
+    {
+      "table": "k3_tasks",
+      "definition": "CREATE TRIGGER k3_task_link_validation BEFORE INSERT OR UPDATE OF links ON public.k3_tasks FOR EACH ROW EXECUTE FUNCTION private.k3_task_link_guard()"
+    },
+    {
+      "table": "k3_comments",
+      "definition": "CREATE TRIGGER k3_task_comment_integrity BEFORE INSERT OR UPDATE ON public.k3_comments FOR EACH ROW EXECUTE FUNCTION private.k3_task_comment_guard()"
+    },
+    {
+      "table": "k3_goals",
+      "definition": "CREATE TRIGGER k3_goal_consistency BEFORE INSERT OR UPDATE ON public.k3_goals FOR EACH ROW EXECUTE FUNCTION private.k3_goal_consistency()"
+    },
+    {
+      "table": "k3_actions",
+      "definition": "CREATE TRIGGER k3_action_consistency BEFORE INSERT OR UPDATE ON public.k3_actions FOR EACH ROW EXECUTE FUNCTION private.k3_action_consistency()"
+    },
+    {
+      "table": "k3_kpis",
+      "definition": "CREATE TRIGGER k3_config_snapshot AFTER INSERT OR UPDATE OF config, measure, condition, target, target_max, required, milestones ON public.k3_kpis FOR EACH ROW EXECUTE FUNCTION private.k3_config_snapshot()"
+    },
+    {
+      "table": "k3_kpi_results",
+      "definition": "CREATE TRIGGER k3_result_measure_guard BEFORE INSERT OR UPDATE ON public.k3_kpi_results FOR EACH ROW EXECUTE FUNCTION private.k3_result_measure_guard()"
+    },
+    {
+      "table": "k3_kpis",
+      "definition": "CREATE TRIGGER k3_config_revision_guard BEFORE INSERT OR UPDATE OF config, measure, condition, target, target_max, required, milestones ON public.k3_kpis FOR EACH ROW EXECUTE FUNCTION private.k3_config_revision_guard()"
+    },
+    {
+      "table": "k3_daily_closes",
+      "definition": "CREATE TRIGGER k3_close_measurements_snapshot BEFORE INSERT ON public.k3_daily_closes FOR EACH ROW EXECUTE FUNCTION private.k3_close_measurements_snapshot()"
+    },
+    {
+      "table": "k3_daily_closes",
+      "definition": "CREATE TRIGGER k3_close_employee_review_snapshot BEFORE INSERT ON public.k3_daily_closes FOR EACH ROW EXECUTE FUNCTION private.k3_close_employee_review_snapshot()"
+    },
+    {
+      "table": "k3_goals",
+      "definition": "CREATE TRIGGER k3_goal_timeline BEFORE INSERT OR UPDATE OF period_start, period_end, due_date, start_time, due_time ON public.k3_goals FOR EACH ROW EXECUTE FUNCTION private.k3_timeline_guard()"
+    },
+    {
+      "table": "k3_actions",
+      "definition": "CREATE TRIGGER k3_action_timeline BEFORE INSERT OR UPDATE OF start_date, due_date, start_time, due_time, inherit_timeline, execution_schedule ON public.k3_actions FOR EACH ROW EXECUTE FUNCTION private.k3_timeline_guard()"
+    },
+    {
+      "table": "k3_actions",
+      "definition": "CREATE TRIGGER k3_plan_change AFTER INSERT OR UPDATE ON public.k3_actions FOR EACH STATEMENT EXECUTE FUNCTION private.k3_plan_changed()"
+    },
+    {
+      "table": "k3_goals",
+      "definition": "CREATE TRIGGER k3_goal_plan_change AFTER INSERT OR UPDATE ON public.k3_goals FOR EACH STATEMENT EXECUTE FUNCTION private.k3_plan_changed()"
+    },
+    {
+      "table": "k3_goal_members",
+      "definition": "CREATE TRIGGER k3_member_plan_change AFTER INSERT OR DELETE OR UPDATE ON public.k3_goal_members FOR EACH STATEMENT EXECUTE FUNCTION private.k3_plan_changed()"
+    },
+    {
+      "table": "k3_action_collaborators",
+      "definition": "CREATE TRIGGER k3_collaborator_plan_change AFTER INSERT OR DELETE OR UPDATE ON public.k3_action_collaborators FOR EACH STATEMENT EXECUTE FUNCTION private.k3_plan_changed()"
+    },
+    {
+      "table": "k3_daily_closes",
+      "definition": "CREATE TRIGGER k3_close_discipline BEFORE INSERT ON public.k3_daily_closes FOR EACH ROW EXECUTE FUNCTION private.k3_close_discipline_snapshot()"
+    },
+    {
+      "table": "k3_plan_checkpoints",
+      "definition": "CREATE TRIGGER k3_checkpoint_immutable BEFORE UPDATE ON public.k3_plan_checkpoints FOR EACH ROW EXECUTE FUNCTION private.k3_checkpoint_immutable()"
+    },
+    {
+      "table": "k3_plan_checkpoints",
+      "definition": "CREATE TRIGGER k3_checkpoint_summary_deadline BEFORE INSERT ON public.k3_plan_checkpoints FOR EACH ROW EXECUTE FUNCTION private.k3_capture_summary_deadline()"
+    },
+    {
+      "table": "k3_employee_reviews",
+      "definition": "CREATE TRIGGER k3_review_summary_deadline BEFORE INSERT ON public.k3_employee_reviews FOR EACH ROW EXECUTE FUNCTION private.k3_capture_summary_deadline()"
+    }
+  ]
+}

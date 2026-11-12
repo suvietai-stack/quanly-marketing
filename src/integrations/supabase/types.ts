@@ -4899,6 +4899,7 @@ export type Database = {
           closed_at: string
           department_id: string | null
           id: string
+          org_unit_id: string | null
           snapshot: Json
           source: string
           system_id: string | null
@@ -4910,6 +4911,7 @@ export type Database = {
           closed_at?: string
           department_id?: string | null
           id?: string
+          org_unit_id?: string | null
           snapshot: Json
           source: string
           system_id?: string | null
@@ -4921,13 +4923,22 @@ export type Database = {
           closed_at?: string
           department_id?: string | null
           id?: string
+          org_unit_id?: string | null
           snapshot?: Json
           source?: string
           system_id?: string | null
           user_id?: string
           work_date?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "k3_daily_closes_org_unit_id_fkey"
+            columns: ["org_unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       k3_data_reviews: {
         Row: {
@@ -4986,6 +4997,7 @@ export type Database = {
           department_id: string | null
           id: string
           kg: string | null
+          org_unit_id: string | null
           plan_deadline: string | null
           planned_at: string | null
           summarized_at: string | null
@@ -5003,6 +5015,7 @@ export type Database = {
           department_id?: string | null
           id?: string
           kg?: string | null
+          org_unit_id?: string | null
           plan_deadline?: string | null
           planned_at?: string | null
           summarized_at?: string | null
@@ -5020,6 +5033,7 @@ export type Database = {
           department_id?: string | null
           id?: string
           kg?: string | null
+          org_unit_id?: string | null
           plan_deadline?: string | null
           planned_at?: string | null
           summarized_at?: string | null
@@ -5035,6 +5049,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_days_org_unit_id_fkey"
+            columns: ["org_unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
             referencedColumns: ["id"]
           },
         ]
@@ -5174,6 +5195,7 @@ export type Database = {
           kpi_target: number | null
           kpi_unit: string | null
           name: string
+          org_unit_id: string | null
           period_end: string
           period_start: string
           period_type: string
@@ -5202,6 +5224,7 @@ export type Database = {
           kpi_target?: number | null
           kpi_unit?: string | null
           name: string
+          org_unit_id?: string | null
           period_end: string
           period_start: string
           period_type: string
@@ -5230,6 +5253,7 @@ export type Database = {
           kpi_target?: number | null
           kpi_unit?: string | null
           name?: string
+          org_unit_id?: string | null
           period_end?: string
           period_start?: string
           period_type?: string
@@ -5246,6 +5270,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_goals_org_unit_id_fkey"
+            columns: ["org_unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
             referencedColumns: ["id"]
           },
         ]
@@ -5649,6 +5680,7 @@ export type Database = {
           fingerprint: string
           id: string
           note: string | null
+          org_unit_id: string | null
           period_start: string
           period_type: string
           snapshot: Json
@@ -5660,6 +5692,7 @@ export type Database = {
           fingerprint: string
           id?: string
           note?: string | null
+          org_unit_id?: string | null
           period_start: string
           period_type: string
           snapshot: Json
@@ -5671,6 +5704,7 @@ export type Database = {
           fingerprint?: string
           id?: string
           note?: string | null
+          org_unit_id?: string | null
           period_start?: string
           period_type?: string
           snapshot?: Json
@@ -5682,6 +5716,13 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "biz_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3_period_summaries_org_unit_id_fkey"
+            columns: ["org_unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
             referencedColumns: ["id"]
           },
         ]
@@ -5794,6 +5835,7 @@ export type Database = {
           allow_invite: boolean
           allow_personal_goal: boolean
           allow_team_goal: boolean
+          company_effective_from: string | null
           discipline_from: string
           effective_from: string | null
           enabled: boolean
@@ -5813,6 +5855,7 @@ export type Database = {
           allow_invite?: boolean
           allow_personal_goal?: boolean
           allow_team_goal?: boolean
+          company_effective_from?: string | null
           discipline_from?: string
           effective_from?: string | null
           enabled?: boolean
@@ -5832,6 +5875,7 @@ export type Database = {
           allow_invite?: boolean
           allow_personal_goal?: boolean
           allow_team_goal?: boolean
+          company_effective_from?: string | null
           discipline_from?: string
           effective_from?: string | null
           enabled?: boolean

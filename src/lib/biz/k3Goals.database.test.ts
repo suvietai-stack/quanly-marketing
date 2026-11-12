@@ -211,7 +211,9 @@ it('C. một KF có nhiều KPI cùng đơn vị: kết quả gắn đúng từn
   expect(Number(kpis.find((k) => k.id === k1.id)!.actual)).toBe(10);
   expect(Number(kpis.find((k) => k.id === k2.id)!.actual)).toBe(3);
   // KPI không thuộc KF bị từ chối.
-  await expect(db.query(`SELECT k3_plan_task_save('{"name":"Sai KPI","action_id":"${a.id}","kpi_id":"${k1.id.replace(/.$/, '0')}","work_date":"${today}","request_key":"30000000-0000-0000-0000-0000000000c3"}')`)).rejects.toThrow();
+  const unrelatedKpi = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+  expect(await val(`SELECT count(*)::int v FROM k3_kpis WHERE id='${unrelatedKpi}'`)).toBe(0);
+  await expect(db.query(`SELECT k3_plan_task_save('{"name":"Sai KPI","action_id":"${a.id}","kpi_id":"${unrelatedKpi}","work_date":"${today}","request_key":"30000000-0000-0000-0000-0000000000c3"}')`)).rejects.toThrow();
 });
 
 it('A. thu hồi thành viên: không còn sửa/đổi trạng thái/ghi kết quả KF đã được giao', async () => {

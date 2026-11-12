@@ -12,12 +12,15 @@ describe('Presentation-only navigation', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.to === path)).toHaveLength(1);
     expect(mobilePage(navigationGroups, path).area).toBe('Marketing');
   });
-  it('keeps existing KPI pins and search valid in Marketing, and 3K/KR in Business', () => {
+  it('keeps existing KPI pins and search valid in Marketing, and personal 3K in Operations', () => {
     const groups = visibleNavigation(access(['kpi.view_own', 'kpi.report', 'k3.use', 'biz.goal_submit']));
     expect(allowedPins(['/settings/kpi-v2', '/reports-v2'], groups)).toEqual(['/settings/kpi-v2', '/reports-v2']);
     expect(searchLauncher(groups, 'Marketing KPI').map(i => i.to)).toEqual(['/settings/kpi-v2', '/reports-v2']);
     expect(groups.find(g => g.label === 'Marketing')?.items.find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
-    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/3k', '/biz/products']);
+    expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/products']);
+  });
+  it('personal K3 is a single common entry independent of Biz permissions', () => {
+    expect(visibleNavigation(access()).filter(g => g.items.some(i => i.to === '/biz/3k')).map(g => g.label)).toEqual(['Điều hành']);
   });
   it('has ten areas in the mandated order', () => {
     expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
@@ -27,7 +30,7 @@ describe('Presentation-only navigation', () => {
     ['order.view','Thiết Kế','/orders'],
     ['leave.create','Hành Chính & Nhân Sự','/leave'],
     ['finance.incoming.view','Kế Toán & Tài Chính','/finance/incoming'],
-    ['k3.use','Kinh doanh','/biz/3k'],
+    
   ])('shows parent using only child permission %s', (permission, group, path) => {
     expect(visibleNavigation(access([permission])).find(g => g.label === group)?.items.map(i => i.to)).toContain(path);
     expect(paths(access())).not.toContain(path);

@@ -43,10 +43,11 @@ function Biz3KScreen() {
 
   const tabs: { key: Section; label: string; icon: typeof ListChecks; show: boolean }[] = [
     { key: 'mine', label: '3K Của Tôi', icon: ListChecks, show: settings.can_use },
-    { key: 'collab', label: '3K Nhóm/Phòng Ban', icon: Users, show: settings.can_use || settings.can_view_scope },
+    { key: 'collab', label: '3K phối hợp', icon: Users, show: settings.can_use },
     { key: 'monitor', label: 'Theo Dõi Nhân Viên', icon: ClipboardList, show: settings.can_view_scope },
   ];
   const visible = tabs.filter((t) => t.show);
+  if (!settings.can_use && !settings.can_view_scope && !settings.can_settings) return <p className="py-8 text-center text-sm text-destructive">Bạn không có quyền sử dụng 3K.</p>;
   const active = section === 'archive' ? 'archive' : section === 'settings'
     ? (settings.can_settings ? 'settings' : (visible[0]?.key ?? 'mine'))
     : visible.some((t) => t.key === section) ? section : (visible[0]?.key ?? 'mine');
