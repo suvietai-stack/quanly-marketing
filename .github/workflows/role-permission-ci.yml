@@ -1,0 +1,35 @@
+name: Role permissions verification
+on:
+  push:
+    branches:
+      - fix/universal-role-permissions-510
+  pull_request:
+    paths:
+      - '.github/workflows/role-permission-ci.yml'
+      - 'src/lib/basePermissions/**'
+      - 'src/lib/auth.ts'
+      - 'src/components/RoleActualSources.tsx'
+      - 'src/components/BaseOrganization.tsx'
+      - 'src/components/RoleCatalog.tsx'
+      - 'docs/role-permission-full-2026-11-12/**'
+      - 'docs/role-v1-retirement-2026-11-12/**'
+permissions:
+  contents: read
+jobs:
+  permission-tests:
+    name: Verify role grants, DENY and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout proposed GitHub branch
+        uses: actions/checkout@v4
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Verify staged permission SQL integrity
+        run: node scripts/check-role-510-package.mjs
+      - name: Test Role/permission gates without production database
+        run: bunx vitest run src/lib/basePermissions/directRoleAssignment.test.ts src/lib/basePermissions/permissionEditor.test.ts src/lib/basePermissions/permissionFull.database.test.ts
+      - name: Build frontend
+        run: bun run build
