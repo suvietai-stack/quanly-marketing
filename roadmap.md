@@ -309,3 +309,9 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 - [x] D. 23/25 bổ nhiệm đang hiệu lực đã gắn ô vị trí (23 slots); sửa lỗi chữ ký tác động org_change (0375).
 - [ ] Ngoại lệ chờ chủ dự án: Vũ Văn Đức (GĐ ĐH, 16 quyền rộng từ link Viewer cũ), Nguyễn Quỳnh Anh (leave.export), Ngọc (leave.approve/view_assigned/report — 2 đơn chờ duyệt).
 - [ ] Xóa 33 Role cũ: chỉ sau khi chủ chốt 3 ngoại lệ + kiểm tra 0 phụ thuộc. Chưa Publish.
+
+## P0 Nghỉ phép nhân viên — 12/11/2026 09:48 UTC
+- [ ] Phân biệt phiên/quyền đang tải, SELECT RLS, cài đặt, timeout và 403; tái hiện bằng fixture không giả mạo JWT.
+- [ ] Sửa frontend tương thích nếu có bằng chứng; kiểm thử desktop/mobile, commit và xác minh phát hành.
+- [ ] Stage gói SELECT set-based riêng: tính tập owner hợp lệ một lần, parity phạm vi/DENY/lịch sử, benchmark, backup/SHA/rollback; không áp SQL.
+- [ ] E2E nhân viên thật chỉ khi có phiên được owner ủy quyền; nếu thiếu ghi UNTESTED, không tuyên bố đã sửa thành công.
