@@ -1,9 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## Giám đốc phương án A — 12/11 06:18
-- [ ] Audit quyền đọc và duyệt thực; chỉ chỉnh role-v2-executive qua Super Admin preview/apply, snapshot và guard giảm quyền.
-- [ ] Kiểm thử đúng người duyệt/phạm vi công ty, effective readback, audit và parity Roles/nhân sự; không deploy cho thay Role động.
-- [ ] Quyền toàn công ty ngoài editor policy: không cấp khi backend readiness/scope chưa đủ; ghi rõ module bị chặn, không mở whitelist/RLS.
+- [x] Audit RPC/RLS/editor thực; Super Admin preview 2413db79 → apply 06:22:54Z thêm riêng ot.view_unit, removed=[]; audit c781d0a8, snapshot SHA lưu báo cáo.
+- [x] 28/28 tests: negative unassigned/self/status/permission, reduction obligations, unit scope/tree; effective readback ALLOW appointment_role tại org-company; 56 Role khác/Common7/13 overrides/86 assignments/21 bindings giữ nguyên. Không deploy.
+- [ ] Rút leave.edit_others/reassign/cancel_handle/exception: BLOCKED guard hai đơn pending 8c767733 và 0ae59f7d; không vượt guard hoặc xử lý đơn hộ.
+- [ ] Xem toàn công ty các module còn lại: BLOCKED editor policy; 9 candidate bị authorized RPC từ chối, CRM/Biz còn eligibility, Signals legacy scope, Orders RLS permissive; không mở whitelist/RLS.
+- [ ] Employee/production UI E2E: BLOCKED chưa có phiên Giám đốc được cấp phép; production HTTP200 nhưng authenticated organization timeout, local Role catalog timeout. Không tuyên bố hoàn tất A/full access.
 
 ## Thực thi owner chốt 12/11 04:08
 - [x] Preflight live: 16/25/86/25/16/56/13; 10 function MD5 khớp staged; 18 SQL tests đạt.
