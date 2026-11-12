@@ -1,5 +1,12 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Owner 12/11 09:11 — ổn định và chính sách Role thống nhất
+- [ ] Audit guard 510 quyền; UI full catalog + lý do thực; SQL chính sách chung riêng, SHA/backup/rollback, không áp.
+- [ ] Kiểm chứng quyết định quản lý cũ của Nguyễn Thảo; stage chuyển nguồn V2 bảo toàn lịch sử, không nhân sự live.
+- [ ] Kiểm tra /leave theo phiên được phép; sửa timeout/cancellation/error/retry mobile, test và publish frontend tương thích.
+- [ ] Stage lịch sử org tóm tắt/phân trang/detail có scope, SHA/backup/rollback; frontend không phụ thuộc SQL pending.
+- [ ] Báo tests/commit/deployment thực và từng blocker nghiệm thu.
+
 ## Tinh gọn hiệu năng toàn Base — 12/11 07:16
 - [x] Audit trực tiếp dependency SQL/frontend/FK + checksum/ACL; 31gen1/26V2/25slots/86assignments/13overrides/2SA giữ nguyên. Transitive native reconcile chưa đủ để cắt gen1.
 - [x] Code-only lazy tools/advanced history, cancellation, actor-target-revision cache;55 tests/buildOK, auth read-only desktop/mobile510/24, effective chỉ tải tab explicit; commit9611e9a9.

@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean }
+export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; reason?: string }
 export const permissionEditorApi = {
   async read(): Promise<EditorPolicy[]> {
     const { data, error } = await supabase.rpc('permission_editor_read');
@@ -29,3 +29,13 @@ export function permissionDelta(before: string[], after: string[]) {
   return { added: [...new Set(after)].filter(k => !before.includes(k)), removed: [...new Set(before)].filter(k => !after.includes(k)) };
 }
 export const scopeLabels = { own: 'Của mình / được giao', assigned: 'Theo công việc được giao', unit: 'Đơn vị của nguồn bổ nhiệm' };
+/** Capability metadata is authoritative; never infer grants from a module or Role name. */
+export function permissionAvailability(policy: EditorPolicy[], key: string, source: string) {
+  const row = policy.find(p => p.key === key);
+  const ready = row && (source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true && row.scope === 'own' : source === 'marketing_task' ? row.task_ready : row.position_ready);
+  if (ready && row) return { ready: true, reason: scopeLabels[row.scope] };
+  if (row?.reason) return { ready: false, reason: row.reason };
+  if (row?.scope === 'unit' && source !== 'position') return { ready: false, reason: 'Nguồn này chưa truyền phạm vi đơn vị tới cổng kiểm tra quyền; chưa thể cấp.' };
+  if (row) return { ready: false, reason: 'Quyền có trong chính sách máy chủ nhưng nguồn cấp này chưa được kiểm chứng; chưa thể cấp.' };
+  return { ready: false, reason: 'Máy chủ chưa công bố quyền này trong chính sách cấp quyền đã kiểm chứng; chưa thể cấp.' };
+}

@@ -20,7 +20,7 @@ describe('leave read policy', () => {
   });
   it('retries 57014, timeout and 5xx at most twice', () => {
     expect(retryLeaveRead(0, { code: '57014' })).toBe(true);
-    expect(retryLeaveRead(1, new LeaveTimeoutError())).toBe(true);
+    expect(retryLeaveRead(1, new LeaveTimeoutError())).toBe(false);
     expect(retryLeaveRead(0, { status: 503 })).toBe(true);
     expect(retryLeaveRead(2, { code: '57014' })).toBe(false);
   });
@@ -28,6 +28,18 @@ describe('leave read policy', () => {
     expect(retryLeaveRead(0, { status: 401 })).toBe(false);
     expect(retryLeaveRead(0, { status: 403 })).toBe(false);
     expect(retryLeaveRead(0, { code: '42501' })).toBe(false);
+  });
+  it('rejects an already cancelled actor/route without starting the read', async () => {
+    const outer = new AbortController(); outer.abort(); const run = vi.fn();
+    await expect(withDeadline(run, outer.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(run).not.toHaveBeenCalled();
+  });
+  it('caller cancellation settles even when the SDK promise ignores abort', async () => {
+    const outer = new AbortController();
+    const pending = withDeadline(() => new Promise(() => {}), outer.signal);
+    outer.abort();
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    expect(retryLeaveRead(0, new DOMException('cancelled', 'AbortError'))).toBe(false);
   });
   it('maps permission and timeout errors to explicit messages', () => {
     expect(leaveReadMessage({ code: '42501' })).toMatch(/không có quyền/);

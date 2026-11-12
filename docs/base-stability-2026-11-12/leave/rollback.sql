@@ -1,0 +1,2 @@
+-- STAGED ONLY. Same SELECT visibility; statement-constant permission probes only.
+ALTER POLICY "leave_requests read" ON public.leave_requests USING ((((owner_id = auth.uid()) AND private.sig_can(auth.uid(), 'leave.view_own')) OR ((created_by = auth.uid()) AND private.sig_can(auth.uid(), 'leave.create_for')) OR ((approver_id = auth.uid()) AND (private.sig_can(auth.uid(), 'leave.view_assigned') OR private.sig_can(auth.uid(), 'leave.approve'))) OR private.sig_can(auth.uid(), 'leave.view_all') OR private.leave_unit_visible(auth.uid(), owner_id)));

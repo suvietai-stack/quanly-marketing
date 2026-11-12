@@ -49,7 +49,7 @@ export function PersonalPermissionChecklist({ value, onChange, policy, baseline,
             {p.selected && <span className="block text-xs text-primary">Đã cấp riêng{!p.grantable ? ' · có thể thu hồi' : ''}</span>}
             {p.roleSources.length > 0 && <span className="block break-words text-xs text-muted-foreground">Đang có từ Role: {p.roleSources.map(s => s.source_name ?? ({ common: 'Quyền chung', appointment_role: 'Vị trí', marketing_appointment: 'Nhiệm vụ', marketing_specialty: 'Chuyên môn', role: 'Role' }[s.source_kind] ?? s.source_kind)).join(', ')}</span>}
             {p.effective && <span className="block text-xs text-muted-foreground">Quyền hiệu lực: {p.effective.allowed ? 'Được phép' : 'Không được phép'}{p.effective.decision === 'DENY' ? ' · ưu tiên từ chối' : ''}</span>}
-            <span className="block break-words text-xs text-muted-foreground">{p.policy ? scopeLabels[p.policy.scope] : 'Chưa thể cấp riêng — backend chưa hỗ trợ/phạm vi chưa kiểm chứng'}</span>
+            <span className="block break-words text-xs text-muted-foreground">{p.availability.reason}</span>
             {permissionRisk(p.key) && <span className="block break-words text-xs text-warning">{permissionRisk(p.key)}</span>}
           </span>
         </label>)}</div></div>)}</div>}

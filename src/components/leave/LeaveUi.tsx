@@ -80,7 +80,7 @@ export function LeavePage() {
   const settingsQ = useQuery({ queryKey: ["leave", "settings", uid], queryFn: ({ signal }) => api.getSettings({ signal }), enabled: !!uid, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
   const listQ = useQuery({ queryKey: ["leave", "list", uid], queryFn: ({ signal }) => api.listRequests({ signal }), enabled: !!uid, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
   const all = listQ.data || [];
-  const listState = { loading: listQ.isPending, error: listQ.isError && !listQ.data ? leaveReadMessage(listQ.error) : null, onRetry: () => { void listQ.refetch(); } };
+  const listState = { loading: listQ.isLoading, error: listQ.isError ? leaveReadMessage(listQ.error) : null, onRetry: () => { void listQ.refetch(); } };
 
   const showMine = can("leave.view_own") || can("leave.create");
   const showApprove = can("leave.view_assigned") || can("leave.approve");
@@ -148,7 +148,7 @@ export function LeavePage() {
         {showApprove && <TabsContent value="approve" className="mt-4"><ApproveList rows={toApprove} {...listState} onOpen={setOpen} name={name} /></TabsContent>}
         {showManage && <TabsContent value="manage" className="mt-4"><ManageList rows={all} {...listState} onOpen={setOpen} name={name} /></TabsContent>}
         {showReport && <TabsContent value="report" className="mt-4">
-          <LeaveReport rows={all} name={name} />
+          {listQ.isError ? <LoadError message={leaveReadMessage(listQ.error)} onRetry={listState.onRetry} /> : listQ.isLoading ? <p className="py-6 text-sm text-muted-foreground">Đang tải…</p> : <LeaveReport rows={all} name={name} />}
         </TabsContent>}
       </Tabs>
 
@@ -284,7 +284,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
   const [rangeMode, setRangeMode] = useState('day');
   const [dirty, setDirty] = useState(false);
   const close = () => { if (dirty && !busy) setDiscarding(true); else if (!busy) onClose(); };
-  const approversQ = useQuery({ queryKey: ["leave", "approvers"], queryFn: api.listApprovers });
+  const approversQ = useQuery({ queryKey: ["leave", "approvers", user?.id], queryFn: ({ signal }) => api.listApprovers({ signal }), enabled: !!user, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
   const approvers = (approversQ.data || []).filter((a) => a.id !== owner);
   const canFor = can("leave.create_for") && state.mode === "create";
 
@@ -412,6 +412,7 @@ function FormDialog({ state, settings, onClose, onDone }: { state: FormState; se
           </div>
           <div className="space-y-1.5">
             <Label>Người phê duyệt</Label>
+            {approversQ.isError && <LoadError message={leaveReadMessage(approversQ.error)} onRetry={() => { void approversQ.refetch(); }} />}
             <Select value={approvers.some((a) => a.id === approver) ? approver : ""} onValueChange={setApprover}>
               <SelectTrigger><SelectValue placeholder={approversQ.isLoading ? "Đang tải…" : approvers.length ? "Chọn người duyệt" : "Chưa có ai được cấp quyền Phê duyệt đơn"} /></SelectTrigger>
               <SelectContent>{approvers.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent>
@@ -446,9 +447,9 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
   onEdit: (r: LeaveRequest, mode: "edit" | "resubmit") => void;
 }) {
   const { user, can } = useCurrentUser();
-  const q = useQuery({ queryKey: ["leave", "one", id], queryFn: () => api.getRequest(id) });
-  const h = useQuery({ queryKey: ["leave", "hist", id], queryFn: () => api.getHistory(id), enabled: !!q.data });
-  const approversQ = useQuery({ queryKey: ["leave", "approvers"], queryFn: api.listApprovers, enabled: can("leave.reassign") });
+  const q = useQuery({ queryKey: ["leave", "one", user?.id, id], queryFn: ({ signal }) => api.getRequest(id, { signal }), enabled: !!user, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
+  const h = useQuery({ queryKey: ["leave", "hist", user?.id, id], queryFn: ({ signal }) => api.getHistory(id, { signal }), enabled: !!user && !!q.data, retry: retryLeaveRead, retryDelay: leaveRetryDelay });
+  const approversQ = useQuery({ queryKey: ["leave", "approvers", user?.id], queryFn: ({ signal }) => api.listApprovers({ signal }), enabled: !!user && can("leave.reassign"), retry: retryLeaveRead, retryDelay: leaveRetryDelay });
   const [act, setAct] = useState<null | { kind: "approve" | "reject" | "recall" | "cancel_req" | "cancel_ok" | "cancel_no" | "reassign" | "exception" }>(null);
   const [note, setNote] = useState("");
   const [target, setTarget] = useState("");
@@ -501,13 +502,15 @@ function DetailSheet({ id, settings, name, onClose, onChanged, onEdit }: {
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent side="right" className="leave-mobile-sheet w-full h-full max-w-none sm:max-w-xl overflow-y-auto">
         <SheetHeader><SheetTitle>{r ? `Đơn ${TYPE_LABEL[r.type].toLowerCase()}` : "Chi tiết đơn"}</SheetTitle></SheetHeader>
-        {q.isLoading ? <p className="text-sm text-muted-foreground mt-6">Đang tải…</p> : !r ? (
+        {q.isError ? <LoadError message={leaveReadMessage(q.error)} onRetry={() => { void q.refetch(); }} /> : q.isLoading ? <p className="text-sm text-muted-foreground mt-6">Đang tải…</p> : !r ? (
           <div className="mt-10 text-center">
             <h3 className="font-semibold">Không thể mở đơn</h3>
             <p className="text-sm text-muted-foreground mt-1">Đơn không tồn tại hoặc bạn không có quyền xem đơn này.</p>
           </div>
         ) : (
           <div className="mt-4 space-y-4 text-sm">
+            {h.isError && <LoadError message={`Chưa tải được lịch sử: ${leaveReadMessage(h.error)}`} onRetry={() => { void h.refetch(); }} />}
+            {approversQ.isError && <LoadError message={leaveReadMessage(approversQ.error)} onRetry={() => { void approversQ.refetch(); }} />}
             <StatusBadge r={r} />
             <dl className="grid grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[120px_1fr] gap-x-2 gap-y-1.5">
               <dt className="text-muted-foreground">Người đứng tên</dt><dd>{name(r.owner_id)}</dd>

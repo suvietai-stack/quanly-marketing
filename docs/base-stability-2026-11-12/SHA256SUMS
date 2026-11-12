@@ -1,0 +1,12 @@
+61ee67d77c2583c8b0a37d1a56db9f852b593d3770bb0fc5223c39cdbbf9f006  docs/base-stability-2026-11-12/history/candidate.sql
+adb98b29816b302b1bc80d09a4390b43f2f031018b5021a3eef31cb795d16107  docs/base-stability-2026-11-12/leave/candidate.sql
+898d11126eb4e0eb7785f75edc075136a9d7132bc101f9fde036f9824d89e229  docs/base-stability-2026-11-12/management/candidate.sql
+b3ed7bfd32ab3abef23107318a677aec69c2a55ea59d9d227904f96dbd550f86  docs/base-stability-2026-11-12/permissions/candidate.sql
+2f38dbde1d727d9daa8a65c56c32202eca7b7f88f16997fd2fe327ac13ff78ba  docs/base-stability-2026-11-12/history/rollback.sql
+95ed6eface251aa200de4c173bf9cfa7908504ad33cf837e5f730aa52c333331  docs/base-stability-2026-11-12/leave/rollback.sql
+6f3ee65b7bf875df69c94fc03dd1dbec7be9cc4dc764959bdab7ac5f69fe8a2f  docs/base-stability-2026-11-12/management/rollback.sql
+ef0657befffe32701fa6f9cc3136795147845f8ef31762c1af57e5a91d709f1c  docs/base-stability-2026-11-12/permissions/rollback.sql
+327871e061b77ba2d8f8515cc8dc9d8e7f8d8e8762a570d40f85a0cfdd7d7b42  docs/base-stability-2026-11-12/history/backup.sql
+95ed6eface251aa200de4c173bf9cfa7908504ad33cf837e5f730aa52c333331  docs/base-stability-2026-11-12/leave/backup.sql
+4c54b004e81a997681c1cb7ba43704cb26486b468d74880460c0caf0a5f88fca  docs/base-stability-2026-11-12/management/backup.sql
+917270228a33ca516bde937d4581262747bb955055186bb4d83a3ed5a4b0402b  docs/base-stability-2026-11-12/permissions/backup.sql

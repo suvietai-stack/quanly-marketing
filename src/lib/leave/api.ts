@@ -51,23 +51,27 @@ export async function getSettings(opts?: { signal?: AbortSignal }): Promise<Leav
 }
 export const saveSettings = (data: LeaveSettings) => rpc("leave_settings_save", { _data: data });
 export const reasonUsage = (id: string) => rpc<number>("leave_reason_usage", { _id: id });
-export const listApprovers = () => rpc<{ id: string; full_name: string }[]>("leave_approvers");
+export async function listApprovers(opts?: { signal?: AbortSignal }): Promise<{ id: string; full_name: string }[]> {
+  const { data, error } = await withDeadline(signal => db.rpc('leave_approvers').abortSignal(signal), opts?.signal) as { data: { id: string; full_name: string }[]; error: unknown };
+  if (error) throw error;
+  return data;
+}
 
 export async function listRequests(opts?: { signal?: AbortSignal }): Promise<LeaveRequest[]> {
   const { data, error } = await withDeadline((signal) => db.from("leave_requests").select("*").order("created_at", { ascending: false }).limit(1000).abortSignal(signal), opts?.signal) as { data: LeaveRequest[] | null; error: unknown };
   if (error) throw error;
   return data || [];
 }
-export async function getRequest(id: string): Promise<LeaveRequest | null> {
-  const { data, error } = await db.from("leave_requests").select("*").eq("id", id).maybeSingle();
+export async function getRequest(id: string, opts?: { signal?: AbortSignal }): Promise<LeaveRequest | null> {
+  const { data, error } = await withDeadline(signal => db.from("leave_requests").select("*").eq("id", id).maybeSingle().abortSignal(signal), opts?.signal) as { data: LeaveRequest | null; error: unknown };
   if (error) throw error;
   return data;
 }
-export async function getHistory(id: string): Promise<{ subs: LeaveSubmission[]; events: LeaveEvent[] }> {
-  const [a, b] = await Promise.all([
-    db.from("leave_request_submissions").select("*").eq("request_id", id).order("no"),
-    db.from("leave_request_events").select("*").eq("request_id", id).order("created_at"),
-  ]);
+export async function getHistory(id: string, opts?: { signal?: AbortSignal }): Promise<{ subs: LeaveSubmission[]; events: LeaveEvent[] }> {
+  const [a, b] = await withDeadline(signal => Promise.all([
+    db.from("leave_request_submissions").select("*").eq("request_id", id).order("no").abortSignal(signal),
+    db.from("leave_request_events").select("*").eq("request_id", id).order("created_at").abortSignal(signal),
+  ]), opts?.signal) as [{ data: LeaveSubmission[]; error: unknown }, { data: LeaveEvent[]; error: unknown }];
   if (a.error) throw a.error; if (b.error) throw b.error;
   return { subs: a.data || [], events: b.data || [] };
 }
