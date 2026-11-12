@@ -1,10 +1,18 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Chốt mới 12/11: 3K toàn công ty theo sơ đồ
+- [x] Audit live baseline 23 active/19 holders/138 KG/3 days/3 tasks; snapshot 132 hàm MD5 verified, columns; 41 hàm còn phụ thuộc Biz.
+- [x] SQL stage 1/2 PENDING: nullable org_unit_id + company_effective_from NULL, private scope helpers; không thay k3_can live.
+- [x] PGlite core own/manager/kiêm nhiệm/DENY/frozen history/prospective date; sửa appointment UI không chọn ô cũ/cap staff, tests.
+- [ ] Kiểm thử nhân sự các khối, quản lý/kiêm nhiệm/cross-unit invitation, rollback, cache và ngày/tuần/tháng.
+- [ ] Giao diện/preset/menu chỉ sau nguồn backend ready; không chỉ đổi menu/cấp k3.use; không bulk Role live hay Publish.
+- [ ] Hoàn thiện toàn bộ RPC/automation/Zalo và scoped E2E trước xác nhận áp migration riêng.
+
 ## Tiếp tục sau kiểm tra live 12/11 — SQL chỉ PENDING
 - [x] Audit ánh xạ ID/source org↔biz (3 hệ, 4 phòng, 0 nhóm), backup đủ 14 cổng + checksum; không chạy lại 0379–0382.
 - [x] SQL PENDING Role V2 + scope cùng nguồn + DENY/reset/auth, rollback; 12 PGlite restricted-user/RLS tests đạt.
 - [x] Preset Sales nháp tối giản; policy máy chủ vẫn tự loại quyền chưa mở, không duyệt/xem toàn Khối.
-- [x] Nhiều nhân viên/vị trí test; 342 hồi quy quyền/cache/Marketing/CRM/3K/Tín hiệu; Preview read-only không lỗi/tràn ngang.
+- [x] Nhiều nhân viên/vị trí test; 342 hồi quy quyền/cache/Marketing/CRM/3K/Tín hiệu. Preview kiểm tra thiếu: còn loading/session restore, chưa nghiệm thu dữ liệu/UI.
 - [ ] Áp SQL live: BLOCKED — cần duyệt migration, rồi nối riêng nộp KR/Kế hoạch/Báo cáo, diff từng người và phiên nhân viên scoped.
 - [ ] Mở 10 ô Biz trong ma trận/áp preset live, xóa legacy, Publish: chờ bước trên.
 

@@ -1,0 +1,794 @@
+[
+  {
+    "schema": "public",
+    "name": "k3_action_save",
+    "args": "_payload jsonb",
+    "md5": "f21bce9d18800e9927d6fdc65aafb00d"
+  },
+  {
+    "schema": "public",
+    "name": "k3_action_status",
+    "args": "_id uuid, _status text, _problem text, _cause text, _solution text, _revision bigint",
+    "md5": "05a1cb81405ad48d2f644b89e15baf93"
+  },
+  {
+    "schema": "public",
+    "name": "k3_action_visible",
+    "args": "_actor uuid, _action uuid",
+    "md5": "51896dd1783a5a0d7d225543cfc02ac1"
+  },
+  {
+    "schema": "public",
+    "name": "k3_auto_close_run",
+    "args": "",
+    "md5": "e08cdcde71c73a0f004ce27d0fcf3243"
+  },
+  {
+    "schema": "public",
+    "name": "k3_automation_read",
+    "args": "",
+    "md5": "bbda0ad321a29234e1fe261d99b427a0"
+  },
+  {
+    "schema": "public",
+    "name": "k3_automation_save",
+    "args": "_payload jsonb",
+    "md5": "b9c41bd30c9c2f8805bde92b43cf79f8"
+  },
+  {
+    "schema": "public",
+    "name": "k3_can",
+    "args": "_actor uuid, _permission text",
+    "md5": "10bc47528360083b3012377fb7802e49"
+  },
+  {
+    "schema": "public",
+    "name": "k3_comment_save",
+    "args": "_day_id uuid, _task_id uuid, _body text",
+    "md5": "e1d4fa8e8323477c35183cc368f938f3"
+  },
+  {
+    "schema": "public",
+    "name": "k3_data_review_save",
+    "args": "_kind text, _id uuid, _reason text",
+    "md5": "fbe86baefd25ff20d1c3a0eb81453c57"
+  },
+  {
+    "schema": "public",
+    "name": "k3_day_read",
+    "args": "_date date",
+    "md5": "06ca5ad6b8dd9e804f6fdccbfbc2d4e6"
+  },
+  {
+    "schema": "public",
+    "name": "k3_day_save",
+    "args": "_date date, _kg text",
+    "md5": "71bf9c3d9525ccfa635ebfff05877e53"
+  },
+  {
+    "schema": "public",
+    "name": "k3_day_scope_ok",
+    "args": "_actor uuid, _day uuid",
+    "md5": "3e05b3123e056e84fb1b8fe178d5ee4a"
+  },
+  {
+    "schema": "public",
+    "name": "k3_deletable",
+    "args": "_kind text, _id uuid",
+    "md5": "b70e159f5688daff55d06394dcf14a0e"
+  },
+  {
+    "schema": "public",
+    "name": "k3_discipline_exclude",
+    "args": "_user uuid, _date date, _reason text",
+    "md5": "b54d4e34a30e2a63f0b4558a5357476a"
+  },
+  {
+    "schema": "public",
+    "name": "k3_discipline_read",
+    "args": "_start date, _end date, _manage boolean",
+    "md5": "dc332b4627c50253c7329df65d3b60c4"
+  },
+  {
+    "schema": "public",
+    "name": "k3_draft_delete",
+    "args": "_kind text, _id uuid",
+    "md5": "d0a2efa861ff4b2ed3b1a88b22fd8671"
+  },
+  {
+    "schema": "public",
+    "name": "k3_employee_review_confirm",
+    "args": "_date date, _version text, _request_key uuid, _ack_missing boolean",
+    "md5": "38c6fe4d3ecd577100a986d2e28d16f2"
+  },
+  {
+    "schema": "public",
+    "name": "k3_employee_review_read",
+    "args": "_date date, _user uuid",
+    "md5": "36a1e8a8cc895f87da50669a0a8a2434"
+  },
+  {
+    "schema": "public",
+    "name": "k3_employee_review_team",
+    "args": "_date date",
+    "md5": "e1f6740156fc44aa19dd024fc421612f"
+  },
+  {
+    "schema": "public",
+    "name": "k3_goal_activate",
+    "args": "_id uuid, _revision bigint",
+    "md5": "21ad3cea714071c2b529bd3efa11dff6"
+  },
+  {
+    "schema": "public",
+    "name": "k3_goal_detail",
+    "args": "_id uuid",
+    "md5": "86ae276aef1999df75cd4f3a5e8b50a4"
+  },
+  {
+    "schema": "public",
+    "name": "k3_goal_list",
+    "args": "_filter text, _q text",
+    "md5": "2a459dc245b1b51112ed4d2bb3875873"
+  },
+  {
+    "schema": "public",
+    "name": "k3_goal_save",
+    "args": "_payload jsonb",
+    "md5": "847b21b66dbe2e5be5d35515c3be7fc2"
+  },
+  {
+    "schema": "public",
+    "name": "k3_goal_status",
+    "args": "_id uuid, _status text, _note text, _revision bigint",
+    "md5": "283f2774f4bc450d4a42db3e7d3f423f"
+  },
+  {
+    "schema": "public",
+    "name": "k3_goal_visible",
+    "args": "_actor uuid, _goal uuid",
+    "md5": "7dc1ea4ac4dc9ca246945a45c68a8a04"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_accept",
+    "args": "_result uuid, _revision bigint, _decision text, _reason text",
+    "md5": "beea887127d4fd5af69138a72c68c87a"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_backup_create",
+    "args": "",
+    "md5": "523d39c4292fb3decab27acc111f4a94"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_configure",
+    "args": "_payload jsonb",
+    "md5": "8b37af4f20c2d90aa15a76a6e0fc37ef"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_day_confirm",
+    "args": "_date date",
+    "md5": "590c04353ed4741ea3a121d0b73ecd6d"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_day_read",
+    "args": "_date date",
+    "md5": "6efee2dec733e01e1a06ec257b7d9ced"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_delete",
+    "args": "_id uuid",
+    "md5": "6ce6da618c99c637ed99db7c225aeae6"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_inventory",
+    "args": "",
+    "md5": "bc36e4e94b13c49a16f7ae87abade1f2"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_result_preview",
+    "args": "_kpi uuid, _date date, _payload jsonb",
+    "md5": "b266f1e98af2b1ba016bc5a567474b02"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_result_read",
+    "args": "_kpi uuid, _date date",
+    "md5": "b15c654917de7d8adf85c29d94c5605c"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_result_save",
+    "args": "_payload jsonb",
+    "md5": "558592f976e634637306d9d2b6c19659"
+  },
+  {
+    "schema": "public",
+    "name": "k3_kpi_save",
+    "args": "_payload jsonb",
+    "md5": "f3c09a4a204ebac287e275befedc21d1"
+  },
+  {
+    "schema": "public",
+    "name": "k3_legacy_task_archive",
+    "args": "_id uuid, _reason text",
+    "md5": "d113a0122544877ae0a1078f681686ff"
+  },
+  {
+    "schema": "public",
+    "name": "k3_legacy_task_restore",
+    "args": "_review uuid",
+    "md5": "d80d4d35b84c010021f6e17d04a8dd47"
+  },
+  {
+    "schema": "public",
+    "name": "k3_measured_period_read",
+    "args": "_start date, _end date, _manage boolean",
+    "md5": "1dcb2478a815746b9b8eb6f152854005"
+  },
+  {
+    "schema": "public",
+    "name": "k3_member_invite",
+    "args": "_goal_id uuid, _user_ids uuid[]",
+    "md5": "b994a934060adc9e4ccae3171f517a8e"
+  },
+  {
+    "schema": "public",
+    "name": "k3_member_respond",
+    "args": "_goal_id uuid, _accept boolean",
+    "md5": "93655841eaa322f6732c9e96ee6b73d1"
+  },
+  {
+    "schema": "public",
+    "name": "k3_member_revoke",
+    "args": "_goal_id uuid, _user_id uuid",
+    "md5": "54d342153d9063afd0c5562513091e65"
+  },
+  {
+    "schema": "public",
+    "name": "k3_member_search",
+    "args": "_q text",
+    "md5": "8021312a146cee1c8cfed8c476143ead"
+  },
+  {
+    "schema": "public",
+    "name": "k3_module_settings_save",
+    "args": "_payload jsonb",
+    "md5": "c465a358f19765e76f7ae5f577cbdc8e"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_comment_save",
+    "args": "_user uuid, _type text, _date date, _body text, _goal uuid, _action uuid",
+    "md5": "612d2e201d16f8ab9493067f497e3118"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_config_read",
+    "args": "",
+    "md5": "f6c7be381b854b4db999268c10b3b974"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_end",
+    "args": "_type text, _date date",
+    "md5": "3587095bcd2e9398b85f27ab005fad51"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_read",
+    "args": "_type text, _date date, _user uuid",
+    "md5": "9df1e88d207b512a0d270ed424e89576"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_settings_save",
+    "args": "_payload jsonb",
+    "md5": "c32648337235bde0951cacdc3bb6a86f"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_start",
+    "args": "_type text, _date date",
+    "md5": "f5fd4f22df5f7175485fca0d6f890f26"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_summary_confirm",
+    "args": "_type text, _date date, _note text",
+    "md5": "091247c81b2c8afd1a4bbd2479774a20"
+  },
+  {
+    "schema": "public",
+    "name": "k3_period_team_read",
+    "args": "_type text, _date date",
+    "md5": "ed253e2f704d44c697906cfbc704a557"
+  },
+  {
+    "schema": "public",
+    "name": "k3_plan_checkpoint_run",
+    "args": "",
+    "md5": "6336f48c0efc790033bf0dcd7e92d773"
+  },
+  {
+    "schema": "public",
+    "name": "k3_plan_task_save",
+    "args": "_payload jsonb",
+    "md5": "3320d5b9b83db09c7781492b36287007"
+  },
+  {
+    "schema": "public",
+    "name": "k3_purge_expired",
+    "args": "_batch integer",
+    "md5": "7e8187596c3bfdab211278ba03a32af4"
+  },
+  {
+    "schema": "public",
+    "name": "k3_quick_create",
+    "args": "_payload jsonb",
+    "md5": "e8e6f7ee55584ac9ba202f40d3f2d554"
+  },
+  {
+    "schema": "public",
+    "name": "k3_restore",
+    "args": "_kind text, _id uuid",
+    "md5": "9b9532081abad702a67af7037969c629"
+  },
+  {
+    "schema": "public",
+    "name": "k3_review_reminder_run",
+    "args": "",
+    "md5": "257a528ee15766414843e06d44963402"
+  },
+  {
+    "schema": "public",
+    "name": "k3_scope_ok",
+    "args": "_actor uuid, _user uuid",
+    "md5": "48e1fe2bbef21ce7cd9e7d7b8585ea3f"
+  },
+  {
+    "schema": "public",
+    "name": "k3_settings_read",
+    "args": "",
+    "md5": "85f7485ed3a26fc4b2edf7b87a468729"
+  },
+  {
+    "schema": "public",
+    "name": "k3_settings_save",
+    "args": "_enabled boolean, _effective_from date, _plan_by time without time zone, _summary_by time without time zone, _max_focus smallint",
+    "md5": "fee59d4c4f6f326318df7c293ce4cc62"
+  },
+  {
+    "schema": "public",
+    "name": "k3_soft_delete",
+    "args": "_kind text, _id uuid",
+    "md5": "394bc192a85561406f54713c25994dfe"
+  },
+  {
+    "schema": "public",
+    "name": "k3_summary_confirm",
+    "args": "_date date",
+    "md5": "9608405ca2a15ed2b3530a17614021ef"
+  },
+  {
+    "schema": "public",
+    "name": "k3_task_delete",
+    "args": "_id uuid",
+    "md5": "54cabf0e6a067fd9ec4307f53ec29b81"
+  },
+  {
+    "schema": "public",
+    "name": "k3_task_save",
+    "args": "_payload jsonb",
+    "md5": "ed98c7738d02a15dab61d5efe9cc5160"
+  },
+  {
+    "schema": "public",
+    "name": "k3_task_schedule",
+    "args": "_id uuid, _date date, _revision bigint",
+    "md5": "b8ff89e9c6e4a9bb946ce4e2aa69dad9"
+  },
+  {
+    "schema": "public",
+    "name": "k3_task_update",
+    "args": "_id uuid, _status text, _kpi_actual numeric, _progress integer, _problem text, _cause text, _solution text, _note text",
+    "md5": "000fe28ea2ee29588a92ae50f2c7d643"
+  },
+  {
+    "schema": "public",
+    "name": "k3_team_read",
+    "args": "_date date",
+    "md5": "c368d7164921ae0d2e36afce62fe10b9"
+  },
+  {
+    "schema": "public",
+    "name": "k3_trash_list",
+    "args": "_kind text",
+    "md5": "6015eb562b47ec393dce05b8b3cc1a72"
+  },
+  {
+    "schema": "public",
+    "name": "k3_user_day_read",
+    "args": "_user uuid, _date date",
+    "md5": "5f1ba7678754015f6789d1e3930d2f74"
+  },
+  {
+    "schema": "public",
+    "name": "k3_zalo_report_claim",
+    "args": "",
+    "md5": "8036707b9c49b7169acb1594181242bf"
+  },
+  {
+    "schema": "public",
+    "name": "k3_zalo_report_finish",
+    "args": "_id uuid, _lease uuid, _status text, _error text",
+    "md5": "8ed762b303442b6bc89a97a77495b188"
+  },
+  {
+    "schema": "public",
+    "name": "k3_zalo_report_preview",
+    "args": "_date date",
+    "md5": "817b44944d552fd994fae546b3d7788d"
+  },
+  {
+    "schema": "public",
+    "name": "k3_zalo_report_queue",
+    "args": "",
+    "md5": "a99131e4eeed42544c1fca451aa39371"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_consistency",
+    "args": "",
+    "md5": "0b4bdadfc75af1a9ee9128706c51655a"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_has_official",
+    "args": "_action uuid",
+    "md5": "5e0201e99cccc13ebe04fae93f40896c"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_has_results",
+    "args": "_action uuid",
+    "md5": "404eeb279347e0a19374a39d76c41209"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_kpi_actual",
+    "args": "_action uuid, _kpi uuid, _unit text",
+    "md5": "f289d7dcdd3055a18f35ab1e80512ed3"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_on_date",
+    "args": "_action uuid, _date date",
+    "md5": "f77553839d1e976b182239fc0c825caf"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_overdue",
+    "args": "_action uuid, _at timestamp with time zone",
+    "md5": "fcfd6e56cd46d1112f95d4f2d77aa13f"
+  },
+  {
+    "schema": "private",
+    "name": "k3_action_worker_ok",
+    "args": "_user uuid, _action uuid",
+    "md5": "4897365e77615e48d0fdf8cb0ba4a79e"
+  },
+  {
+    "schema": "private",
+    "name": "k3_capture_summary_deadline",
+    "args": "",
+    "md5": "e0628139ea314ef082d51c9e1332988c"
+  },
+  {
+    "schema": "private",
+    "name": "k3_checkpoint_immutable",
+    "args": "",
+    "md5": "883bb1b554b16d7a72656e04ef1e9cd0"
+  },
+  {
+    "schema": "private",
+    "name": "k3_close_discipline_snapshot",
+    "args": "",
+    "md5": "b914d0eaf3cada9174b4320078a778f9"
+  },
+  {
+    "schema": "private",
+    "name": "k3_close_employee_review_snapshot",
+    "args": "",
+    "md5": "4f820b01cc4b429b608477b6d8ae1ed6"
+  },
+  {
+    "schema": "private",
+    "name": "k3_close_measurements_snapshot",
+    "args": "",
+    "md5": "71196f1abdb763f2d6fea89c8045670e"
+  },
+  {
+    "schema": "private",
+    "name": "k3_close_one",
+    "args": "_user uuid, _date date, _source text",
+    "md5": "de34cae22560d2508bb6d9f287ec208e"
+  },
+  {
+    "schema": "private",
+    "name": "k3_config_revision_guard",
+    "args": "",
+    "md5": "ab270ca49b7426a29c0a1ae3a5050c4d"
+  },
+  {
+    "schema": "private",
+    "name": "k3_config_snapshot",
+    "args": "",
+    "md5": "69d3cf59c4f7383de49109c61ccb6c39"
+  },
+  {
+    "schema": "private",
+    "name": "k3_day_guard",
+    "args": "",
+    "md5": "983847d1885f9f8e063a6d11d33a262c"
+  },
+  {
+    "schema": "private",
+    "name": "k3_day_obligated",
+    "args": "_user uuid, _date date",
+    "md5": "076fdf135ecb814cfeb8c2d34e5c801e"
+  },
+  {
+    "schema": "private",
+    "name": "k3_employee_day_source",
+    "args": "_user uuid, _date date",
+    "md5": "07ac0cf5f06b709bf8b96aed3988cb7a"
+  },
+  {
+    "schema": "private",
+    "name": "k3_employee_review_state",
+    "args": "_user uuid, _date date",
+    "md5": "a808824d36eb1b738ec4bd4202c8f880"
+  },
+  {
+    "schema": "private",
+    "name": "k3_entity_metric",
+    "args": "_kind text, _id uuid",
+    "md5": "9bfd1ed2c19e3e46241fd999d2bfb263"
+  },
+  {
+    "schema": "private",
+    "name": "k3_entity_state",
+    "args": "_kind text, _id uuid, _at timestamp with time zone",
+    "md5": "21b4253c3ba0b6084b56c56145b004ce"
+  },
+  {
+    "schema": "private",
+    "name": "k3_goal_consistency",
+    "args": "",
+    "md5": "e92460f791d9c778e537439a230157a4"
+  },
+  {
+    "schema": "private",
+    "name": "k3_goal_has_official",
+    "args": "_goal uuid",
+    "md5": "a1d20173d84062f78c75b76bd70bdf05"
+  },
+  {
+    "schema": "private",
+    "name": "k3_goal_has_results",
+    "args": "_goal uuid",
+    "md5": "df1475e54bdad5aa29dfe4550a7040be"
+  },
+  {
+    "schema": "private",
+    "name": "k3_goal_manage_ok",
+    "args": "_actor uuid, _goal uuid",
+    "md5": "01708330ddf0f82b4d1c03b6328da863"
+  },
+  {
+    "schema": "private",
+    "name": "k3_goal_overdue",
+    "args": "_goal uuid, _at timestamp with time zone",
+    "md5": "6d416487b9830262607c1032b7b054e3"
+  },
+  {
+    "schema": "private",
+    "name": "k3_measure_eval",
+    "args": "_k jsonb, _rows jsonb, _date date",
+    "md5": "1a944fcf39a0d2f041faff04b7370894"
+  },
+  {
+    "schema": "private",
+    "name": "k3_measure_rows",
+    "args": "_kpi uuid, _official boolean",
+    "md5": "12b21f78404fa130f2c7f0047266df1b"
+  },
+  {
+    "schema": "private",
+    "name": "k3_metric_at",
+    "args": "_kpi uuid, _at timestamp with time zone",
+    "md5": "8405daf8270266016f67e87c04cb2a88"
+  },
+  {
+    "schema": "private",
+    "name": "k3_period_comment_scope",
+    "args": "_actor uuid, _comment uuid",
+    "md5": "51f581afc251056c73f8b0c8774ca6ab"
+  },
+  {
+    "schema": "private",
+    "name": "k3_period_deadline",
+    "args": "_type text, _date date, _phase text, _at timestamp with time zone",
+    "md5": "d281f948729c0c973cf5ce73ed99b7f7"
+  },
+  {
+    "schema": "private",
+    "name": "k3_period_write_guard",
+    "args": "_type text, _date date",
+    "md5": "ba58c5a0de1cd8c79e59938313b89fb4"
+  },
+  {
+    "schema": "private",
+    "name": "k3_plan_capture",
+    "args": "_user uuid",
+    "md5": "b001458f08a1cc617257f0192237523a"
+  },
+  {
+    "schema": "private",
+    "name": "k3_plan_changed",
+    "args": "",
+    "md5": "747bba016fb854adde9ea58fe6e11336"
+  },
+  {
+    "schema": "private",
+    "name": "k3_plan_day_source",
+    "args": "_user uuid, _date date",
+    "md5": "ac63aa83e2b041e53127a51564b56d42"
+  },
+  {
+    "schema": "private",
+    "name": "k3_plan_schedule",
+    "args": "",
+    "md5": "edc599dc333400178c9f5036fd7c3b10"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_acceptance",
+    "args": "_result uuid, _official boolean",
+    "md5": "b6ace79b94bed484e834ccdd71eeabc5"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_can_write",
+    "args": "_uid uuid, _kpi uuid",
+    "md5": "1000967f7f3ca4281bdcd7fa5624be93"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_detail_ok",
+    "args": "_actor uuid, _owner uuid, _goal uuid, _date date",
+    "md5": "bc92371c1cee67cd8ad85df10933094e"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_eligible",
+    "args": "_kpi uuid, _official boolean",
+    "md5": "6f1405c91f9a5c92466dd43830c6b6f1"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_eligible_range",
+    "args": "_kpi uuid, _official boolean, _start date, _end date, _user uuid",
+    "md5": "8a6f445314723ecfd88197f8935d2b8c"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_identity",
+    "args": "_rows jsonb",
+    "md5": "29c94ecd62d35212481d2de377835d16"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_measure_guard",
+    "args": "",
+    "md5": "18839d1dcd6722830841c323ea444253"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_metric",
+    "args": "_kpi uuid, _official boolean",
+    "md5": "65403b22916b4542697ac7265f97a9ac"
+  },
+  {
+    "schema": "private",
+    "name": "k3_result_metric_range",
+    "args": "_kpi uuid, _official boolean, _start date, _end date, _user uuid",
+    "md5": "5d1e0def753a5c6fd0b922728e08962b"
+  },
+  {
+    "schema": "private",
+    "name": "k3_review_fingerprint",
+    "args": "_source jsonb",
+    "md5": "54df32837d0e08a53b39983a453cfeb5"
+  },
+  {
+    "schema": "private",
+    "name": "k3_review_purge_expired",
+    "args": "",
+    "md5": "a1381c547e38ece307e1c5c3ca16f39a"
+  },
+  {
+    "schema": "private",
+    "name": "k3_review_schedule",
+    "args": "",
+    "md5": "69a3fa4aa46b27970143f0be1fc51f7a"
+  },
+  {
+    "schema": "private",
+    "name": "k3_task_comment_guard",
+    "args": "",
+    "md5": "c9da49ecd69f4f012d33875d07cf5c52"
+  },
+  {
+    "schema": "private",
+    "name": "k3_task_complete",
+    "args": "_target numeric, _actual numeric, _progress integer, _status text",
+    "md5": "deaedef9ed1fa1825e9acc953b3cb3b1"
+  },
+  {
+    "schema": "private",
+    "name": "k3_task_guard",
+    "args": "",
+    "md5": "dccc3e3571ec4516e218f41b216cad53"
+  },
+  {
+    "schema": "private",
+    "name": "k3_task_link_guard",
+    "args": "",
+    "md5": "17160ce58c34731ad5069b8a0b06c940"
+  },
+  {
+    "schema": "private",
+    "name": "k3_task_revision",
+    "args": "",
+    "md5": "27990a5dfa8f9e7ec12b77a0961e5165"
+  },
+  {
+    "schema": "private",
+    "name": "k3_task_summary_relevant",
+    "args": "_before jsonb, _after jsonb",
+    "md5": "dfd051148e9293d561537d817146aea3"
+  },
+  {
+    "schema": "private",
+    "name": "k3_timeline_guard",
+    "args": "",
+    "md5": "9c9b4d1c08b57d82d88876ae8bcb4740"
+  },
+  {
+    "schema": "private",
+    "name": "k3_timepoint",
+    "args": "_date date, _time time without time zone, _deadline boolean",
+    "md5": "c9a39ad624f6a6f727fb8842d084527d"
+  },
+  {
+    "schema": "private",
+    "name": "k3_validate_config",
+    "args": "_measure text, _config jsonb, _target numeric",
+    "md5": "d1e712e85ab2dd2567284cbd320cbe26"
+  },
+  {
+    "schema": "private",
+    "name": "k3_write_guard",
+    "args": "_date date",
+    "md5": "5e521c013d67f3853f430179ac40044a"
+  }
+]

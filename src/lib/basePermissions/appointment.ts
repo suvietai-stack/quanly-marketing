@@ -1,5 +1,5 @@
 import type { OrgConfig } from './types';
-import { assignSlot, membershipEffective, membershipKind } from '@/lib/orgStructure';
+import { membershipEffective, membershipKind } from '@/lib/orgStructure';
 
 export function appointmentEligible(status: string): boolean {
   return status === 'Đang hoạt động';
@@ -25,7 +25,9 @@ export function appointmentDraft(config: OrgConfig, unitId: string, titleId: str
   if(slot&&(users.length!==1||config.memberships.some(m=>m.slot_id===slotId&&membershipEffective(m,effectiveAt))))throw new Error('Ô vị trí chỉ nhận một người và phải đang trống.');
   const ids = [...new Set(users)];
   if (!ids.length) throw new Error('Chọn nhân sự để bổ nhiệm.');
-  if ((title.kind === 'manager' || title.capacity === 1) && ids.length > 1) throw new Error('Vị trí quản lý chỉ có một người.');
+  const capacity = title.kind === 'manager' ? title.capacity ?? 0 : 0;
+  const held = config.memberships.filter(m => m.unit_id === unitId && m.title_id === titleId && membershipEffective(m,effectiveAt)).length;
+  if (capacity > 0 && held + ids.length > capacity) throw new Error(capacity === 1 ? 'Vị trí quản lý chỉ có một người; cần kết thúc bổ nhiệm hiện tại trước.' : 'Vị trí quản lý đã đủ người theo sức chứa đã đặt.');
   const primaryElsewhere = config.memberships.filter(m => ids.includes(m.user_id) && membershipEffective(m) && membershipKind(m) === 'primary' && m.unit_id !== unitId);
   if (primaryElsewhere.length && mode === 'primary') throw new Error('Chọn Điều chuyển hoặc Kiêm nhiệm cho nhân sự đang thuộc đơn vị khác.');
   if (specialtyIds.length && (!marketingUnit(config, unitId) || title.source === 'biz_positions')) throw new Error('Nhiệm vụ Marketing chỉ áp dụng trong Khối Marketing.');
@@ -36,7 +38,7 @@ export function appointmentDraft(config: OrgConfig, unitId: string, titleId: str
     if (next.memberships.some(m => membershipEffective(m,effectiveAt) && m.user_id === userId && m.unit_id === unitId && m.title_id === titleId && (!slotId || m.slot_id===slotId))) throw new Error('Nhân sự đã có phân công này.');
     const beforeIds = new Set(next.memberships.map(m => m.id));
     if(slot){next.memberships.push({id:crypto.randomUUID(),user_id:userId,unit_id:unitId,title_id:titleId,slot_id:slotId,active:true,starts_at:now});}
-    else next = assignSlot(next, unitId, titleId, userId);
+    else next.memberships.push({id:crypto.randomUUID(),user_id:userId,unit_id:unitId,title_id:titleId,active:true,starts_at:now});
     next.memberships = next.memberships.map(m => beforeIds.has(m.id) ? {...m,...(m.ends_at !== config.memberships.find(x=>x.id===m.id)?.ends_at ? {ends_at:now}: {})} : {...m, starts_at:now, kind: mode === 'concurrent' ? 'concurrent' : 'primary', specialty_ids: specialtyIds});
   }
   return next;
