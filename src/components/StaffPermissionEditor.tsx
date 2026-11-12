@@ -15,7 +15,7 @@ import { readPermissionCatalog } from '@/lib/basePermissions/permissionCatalog';
 type Supplement = { fingerprint: string; role_ids: string[]; permissions: string[] | null; legacy_override: boolean; inactive_legacy: boolean; denied_permissions?: string[] | null; deny_supported?: boolean };
 type PersonalPreview = { id: string; fingerprint: string; added: string[]; removed: string[]; deny_added?: string[]; deny_removed?: string[]; affected_users: string[]; inactive_legacy: boolean };
 // Staged backend overloads (3-arg preview / 6-arg save) are not in generated types until the owner approves the SQL.
-const rpc = supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
+const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>;
 
 export function StaffPermissionEditor({ userId, effective, effectiveError }: { userId: string; effective?: EffectivePermission[]; effectiveError?: boolean }) {
   const { user } = useCurrentUser();
