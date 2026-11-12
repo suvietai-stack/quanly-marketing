@@ -136,9 +136,9 @@ export async function findSamePhone(phone: string, exceptId?: string): Promise<P
 
 /** Xóa: DB chỉ cho phép khi chưa có nhật ký và chưa Chốt/Trượt. Trả false nếu bị chặn. */
 export async function deleteSignal(id: string): Promise<boolean> {
-  const { data, error } = await db.from("opportunity_signals").delete().eq("id", id).select("id");
+  const { data, error } = await db.rpc("signal_delete", { _id: id });
   if (error) throw error;
-  return (data ?? []).length > 0;
+  return data === true;
 }
 
 export async function cancelSignal(id: string, reason: string, undo = false) {
@@ -224,3 +224,4 @@ export async function deadlineReport(from?:string,to?:string,sale?:string,group?
 export async function deadlineHistory(id:string):Promise<DeadlineHistory[]> {
   return fetchAll<DeadlineHistory>((a,b)=>db.rpc('signal_progression_history',{_id:id}).order('starts_at',{ascending:false}).order('sequence',{ascending:false}).range(a,b));
 }
+

@@ -310,7 +310,11 @@ export function SignalsPage() {
         if (u.searchParams.has("open")) { u.searchParams.delete("open"); window.history.replaceState(null, "", u.pathname + u.search); }
       }}>
         <SheetContent side="right" className="signal-mobile-sheet w-full h-full max-w-none sm:max-w-xl overflow-y-auto p-0">
-          {open && <SignalDetail key={open.id} s={open} last={last[open.id]} />}
+          {open && <SignalDetail key={open.id} s={open} last={last[open.id]} onDeleted={() => {
+            setOpenId(null);
+            const u = new URL(window.location.href);
+            if (u.searchParams.has('open')) { u.searchParams.delete('open'); window.history.replaceState(null, '', u.pathname + u.search); }
+          }} />}
           {denied && (
             <div className="p-6 pt-12 space-y-2">
               <SheetHeader><SheetTitle>Không thể mở tín hiệu</SheetTitle></SheetHeader>
@@ -626,7 +630,7 @@ function Pick({ value, onChange, opts }: { value?: string; onChange: (v: string)
   );
 }
 
-function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
+function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDeleted?: () => void }) {
   const p = useSignalPerms();
   const name = useUserName();
   const qc = useQueryClient();
@@ -644,6 +648,8 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
   const canConsult = !closed && !cancelled && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
   const refresh = () => refreshSignals(qc);
   const assignLock = useRef(false);
+  const deleteLock = useRef(false);
+  const [deleting, setDeleting] = useState(false);
 
   const doAssign = async (uid: string) => {
     if (assignLock.current) return;
@@ -664,12 +670,16 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
     try { await reopenSignal(s.id, r.trim()); await refresh(); toast.success("Đã mở lại — lịch sử chốt/trượt cũ vẫn giữ trong nhật ký"); } catch (e) { toast.error(errMsg(e)); }
   };
   const doDelete = async () => {
+    if (deleteLock.current) return;
     if (!window.confirm(`Xóa tín hiệu "${s.customer_name}"? Không thể hoàn tác.`)) return;
+    deleteLock.current = true; setDeleting(true);
     try {
       const ok = await deleteSignal(s.id);
       if (!ok) return toast.error("Không xóa được: tín hiệu đã có nhật ký tư vấn hoặc kết quả. Hãy dùng Hủy.");
-      toast.success("Đã xóa tín hiệu"); refresh();
+      onDeleted?.();
+      toast.success("Đã xóa tín hiệu"); await refresh();
     } catch (e) { toast.error(errMsg(e)); }
+    finally { deleteLock.current = false; setDeleting(false); }
   };
   const doCancel = async (undo: boolean) => {
     const r = undo ? (window.confirm("Bỏ hủy tín hiệu này?") ? "" : null) : window.prompt("Lý do hủy (nhập nhầm, trùng lặp…)?");
@@ -726,7 +736,7 @@ function SignalDetail({ s, last }: { s: Signal; last?: LastNote }) {
                 <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" aria-label="Thao tác"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {canEditInfo && <DropdownMenuItem onClick={() => setEditing(true)}><PencilLine className="h-4 w-4 mr-2" />Sửa tín hiệu</DropdownMenuItem>}
-                  {canDelete && <DropdownMenuItem onClick={doDelete} className="text-destructive"><Trash2 className="h-4 w-4 mr-2" />Xóa tín hiệu</DropdownMenuItem>}
+                  {canDelete && <DropdownMenuItem disabled={deleting} onClick={doDelete} className="text-destructive"><Trash2 className="h-4 w-4 mr-2" />Xóa tín hiệu</DropdownMenuItem>}
                   {p.manage && (cancelled
                     ? <DropdownMenuItem onClick={() => doCancel(true)}><Undo2 className="h-4 w-4 mr-2" />Bỏ hủy</DropdownMenuItem>
                     : <DropdownMenuItem onClick={() => doCancel(false)}><Ban className="h-4 w-4 mr-2" />Hủy tín hiệu</DropdownMenuItem>)}
@@ -993,5 +1003,6 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
     </div>
   );
 }
+
 
 
