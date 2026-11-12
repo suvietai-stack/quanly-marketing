@@ -1,3 +1,4 @@
+- LeaveAccess waits for actor-matched authoritative Base access before evaluating the Leave page gate, with bounded retry; unit-only viewers enter the same RLS-filtered list — prevents premature denial without granting rights.
 # Navigation architecture
 - Permission editors show the full catalog, but enabled controls use server capability metadata and report server-supplied reasons; catalog presence alone never permits a grant — keeps staged policy changes from becoming fake live permissions.
 - Organization tools load on demand with local Suspense boundaries; staff defaults to sources, effective reads only on the explicit effective tab, and editors share an actor-keyed catalog query. Revision refresh preserves staff selection but closes write previews; backend payload trimming remains staged — avoids hidden-tab work without caching server permits.

@@ -27,6 +27,7 @@ import {
 import * as api from "@/lib/leave/api";
 import type { LeaveRequest, LeaveStatus } from "@/lib/leave/api";
 import { retryLeaveRead, leaveRetryDelay, leaveReadMessage } from "@/lib/leave/readPolicy";
+import { validLeaveTab } from '@/lib/leave/accessState';
 
 const QUICK = [5, 10, 15, 20, 25, 30, 60];
 const LAST_APPROVER = "leave_last_approver";
@@ -84,7 +85,7 @@ export function LeavePage() {
 
   const showMine = can("leave.view_own") || can("leave.create");
   const showApprove = can("leave.view_assigned") || can("leave.approve");
-  const showManage = can("leave.view_all");
+  const showManage = can("leave.view_all") || can("leave.view_unit");
   const showReport = can("leave.report");
   const initial = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   // Liên kết cũ (/leave?att=… hoặc ?tab=att) chuyển sang trang Giải trình chấm công (điều hướng trong app, không tải lại trang).
@@ -100,7 +101,12 @@ export function LeavePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mineFilter, setMineFilter] = useState('all');
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ["leave"] });
+  useEffect(() => {
+    const tabs = [showMine && 'mine', showApprove && 'approve', showManage && 'manage', showReport && 'report'].filter((t): t is string => !!t);
+    setTab(current => validLeaveTab(current, tabs));
+  }, [showMine, showApprove, showManage, showReport]);
+
+  const refresh = () => qc.invalidateQueries({ predicate: q => q.queryKey[0] === 'leave' && q.queryKey.includes(uid) });
   const mine = all.filter((r) => r.owner_id === uid);
   const toApprove = all.filter((r) => r.approver_id === uid && r.owner_id !== uid);
   const pendingApprove = toApprove.filter((r) => r.status === "pending" || r.cancel_state === "requested").length;

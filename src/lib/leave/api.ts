@@ -3,7 +3,7 @@ import { zaloDispatch } from "@/lib/zalo.functions";
 import { pushDispatch } from "@/lib/push.functions";
 import { leaveGroupDispatch } from "./zaloGroup.functions";
 import type { LeaveSettings, LeaveType } from "./calc";
-import { withDeadline } from "./readPolicy";
+import { readLeave } from "./readPolicy";
 
 const db = supabase as any;
 export const leaveErr = (e: any) => e?.message || "Có lỗi xảy ra";
@@ -45,35 +45,27 @@ async function rpc<T = any>(fn: string, args?: any): Promise<T> {
 const WRITE_RPC = new Set(["leave_submit", "leave_resubmit", "leave_decide", "leave_cancel_request", "leave_cancel_decide", "leave_reassign", "leave_exception_cancel"]);
 
 export async function getSettings(opts?: { signal?: AbortSignal }): Promise<LeaveSettings> {
-  const { data, error } = await withDeadline((signal) => db.rpc("leave_settings_get").abortSignal(signal), opts?.signal) as { data: LeaveSettings; error: unknown };
-  if (error) throw error;
-  return data;
+  return readLeave<LeaveSettings>('Cài đặt', signal => db.rpc('leave_settings_get').abortSignal(signal), opts?.signal);
 }
 export const saveSettings = (data: LeaveSettings) => rpc("leave_settings_save", { _data: data });
 export const reasonUsage = (id: string) => rpc<number>("leave_reason_usage", { _id: id });
 export async function listApprovers(opts?: { signal?: AbortSignal }): Promise<{ id: string; full_name: string }[]> {
-  const { data, error } = await withDeadline(signal => db.rpc('leave_approvers').abortSignal(signal), opts?.signal) as { data: { id: string; full_name: string }[]; error: unknown };
-  if (error) throw error;
-  return data;
+  return readLeave('Người duyệt', signal => db.rpc('leave_approvers').abortSignal(signal), opts?.signal);
 }
 
 export async function listRequests(opts?: { signal?: AbortSignal }): Promise<LeaveRequest[]> {
-  const { data, error } = await withDeadline((signal) => db.from("leave_requests").select("*").order("created_at", { ascending: false }).limit(1000).abortSignal(signal), opts?.signal) as { data: LeaveRequest[] | null; error: unknown };
-  if (error) throw error;
+  const data = await readLeave<LeaveRequest[] | null>('Danh sách đơn', signal => db.from('leave_requests').select('*').order('created_at', { ascending: false }).limit(1000).abortSignal(signal), opts?.signal);
   return data || [];
 }
 export async function getRequest(id: string, opts?: { signal?: AbortSignal }): Promise<LeaveRequest | null> {
-  const { data, error } = await withDeadline(signal => db.from("leave_requests").select("*").eq("id", id).maybeSingle().abortSignal(signal), opts?.signal) as { data: LeaveRequest | null; error: unknown };
-  if (error) throw error;
-  return data;
+  return readLeave<LeaveRequest | null>('Chi tiết đơn', signal => db.from('leave_requests').select('*').eq('id', id).maybeSingle().abortSignal(signal), opts?.signal);
 }
 export async function getHistory(id: string, opts?: { signal?: AbortSignal }): Promise<{ subs: LeaveSubmission[]; events: LeaveEvent[] }> {
-  const [a, b] = await withDeadline(signal => Promise.all([
-    db.from("leave_request_submissions").select("*").eq("request_id", id).order("no").abortSignal(signal),
-    db.from("leave_request_events").select("*").eq("request_id", id).order("created_at").abortSignal(signal),
-  ]), opts?.signal) as [{ data: LeaveSubmission[]; error: unknown }, { data: LeaveEvent[]; error: unknown }];
-  if (a.error) throw a.error; if (b.error) throw b.error;
-  return { subs: a.data || [], events: b.data || [] };
+  const [subs, events] = await Promise.all([
+    readLeave<LeaveSubmission[] | null>('Phiên bản đơn', signal => db.from('leave_request_submissions').select('*').eq('request_id', id).order('no').abortSignal(signal), opts?.signal),
+    readLeave<LeaveEvent[] | null>('Lịch sử đơn', signal => db.from('leave_request_events').select('*').eq('request_id', id).order('created_at').abortSignal(signal), opts?.signal),
+  ]);
+  return { subs: subs || [], events: events || [] };
 }
 
 export interface FormInput { owner?: string | null; type: LeaveType; payload: any; reasonId: string; detail: string; approver: string; exception?: string }

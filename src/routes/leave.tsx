@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { RequirePermission } from "@/components/PermissionGate";
-import { LeavePage } from "@/components/leave/LeaveUi";
+import { LeaveAccess } from "@/components/leave/LeaveAccess";
 
 export const Route = createFileRoute("/leave")({
   head: () => ({ meta: [
@@ -11,9 +10,5 @@ export const Route = createFileRoute("/leave")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
-  component: () => (
-    <RequirePermission perm={["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"]}>
-      <LeavePage />
-    </RequirePermission>
-  ),
+  component: LeaveAccess,
 });

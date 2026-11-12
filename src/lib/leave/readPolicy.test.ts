@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { withDeadline, retryLeaveRead, leaveReadMessage, LeaveTimeoutError } from './readPolicy';
+import { withDeadline, retryLeaveRead, leaveReadMessage, LeaveTimeoutError, readLeave, LeaveReadError } from './readPolicy';
 
 describe('leave read policy', () => {
   it('resolves fast reads, including empty lists', async () => {
@@ -42,8 +42,16 @@ describe('leave read policy', () => {
     expect(retryLeaveRead(0, new DOMException('cancelled', 'AbortError'))).toBe(false);
   });
   it('maps permission and timeout errors to explicit messages', () => {
-    expect(leaveReadMessage({ code: '42501' })).toMatch(/không có quyền/);
+    expect(leaveReadMessage({ code: '42501' })).toMatch(/từ chối quyền/);
     expect(leaveReadMessage({ code: '57014' })).toMatch(/quá lâu/);
   });
+});
+it('retains HTTP status, operation and duration without exposing response details', async () => {
+  let failure: unknown;
+  try { await readLeave('Danh sách đơn', async () => ({data:null,error:{code:'42501',message:'denied'},status:403})); } catch(e) { failure=e; }
+  expect(failure).toBeInstanceOf(LeaveReadError);
+  expect(retryLeaveRead(0,failure)).toBe(false);
+  expect(leaveReadMessage(failure)).toContain('HTTP 403');
+  expect(leaveReadMessage(failure)).toContain('Danh sách đơn');
 });
 vi.useRealTimers();

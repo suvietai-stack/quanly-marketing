@@ -1,2 +1,3 @@
 - UI access cache (accessCache.ts) is per-tab memory, per-user: passive refresh throttled, mutations force; transient errors keep last verified access ≤10 min and never past next_transition — server stays authoritative.
 - All Leave list/settings/detail/history/approver reads are actor-keyed and abort-bounded; cancellation settles even if the SDK ignores abort, client deadlines surface immediately, and only completed transient failures retry finitely — no endless spinner or retry after sign-out.
+- Leave read errors retain operation, HTTP status, code and elapsed time without response details or identity; access-pending and data failures stay distinct — enables safe staff diagnostics without exposing credentials.

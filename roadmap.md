@@ -311,7 +311,8 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 - [ ] Xóa 33 Role cũ: chỉ sau khi chủ chốt 3 ngoại lệ + kiểm tra 0 phụ thuộc. Chưa Publish.
 
 ## P0 Nghỉ phép nhân viên — 12/11/2026 09:48 UTC
-- [ ] Phân biệt phiên/quyền đang tải, SELECT RLS, cài đặt, timeout và 403; tái hiện bằng fixture không giả mạo JWT.
-- [ ] Sửa frontend tương thích nếu có bằng chứng; kiểm thử desktop/mobile, commit và xác minh phát hành.
-- [ ] Stage gói SELECT set-based riêng: tính tập owner hợp lệ một lần, parity phạm vi/DENY/lịch sử, benchmark, backup/SHA/rollback; không áp SQL.
-- [ ] E2E nhân viên thật chỉ khi có phiên được owner ủy quyền; nếu thiếu ghi UNTESTED, không tuyên bố đã sửa thành công.
+- [x] Phân biệt quyền chưa xác minh với denied/data/settings; fixture không JWT tái hiện pending→own/retry/signout desktop/mobile, không đọc đơn trước quyền.
+- [x] Frontend tương thích: LeaveAccess bound12s, tab hợp lệ, lỗi operation/HTTP/code/duration, actor invalidation;59 tests/buildOK, real Super Admin desktop/mobile không lỗi.
+- [x] Stage riêng docs/leave-set-based-2026-11-12: owner-set theo statement, fixture parity/DENY/interval/closure/creator/approver/own;30 sequential fixture benchmark;backup/SHA/rollback. Không áp SQL.
+- [ ] Publish/production readback: chờ kiểm tra phát hành lượt này.
+- [ ] E2E nhân viên thật: BLOCKED chỉ có phiên Super Admin được cấp; SQL live EXPLAIN/parity BLOCKED private function EXECUTE của công cụ đọc. Không mở grant/impersonation; native DENY/full source parity còn cần xác minh trước SQL approval.

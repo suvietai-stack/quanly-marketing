@@ -6,6 +6,28 @@ export class LeaveTimeoutError extends Error {
   constructor() { super('Máy chủ phản hồi quá lâu. Vui lòng thử lại.'); }
 }
 
+export class LeaveReadError extends Error {
+  code?: string;
+  status?: number;
+  constructor(public operation: string, public durationMs: number, error: unknown, status?: number) {
+    const e = error as { code?: string; message?: string };
+    super(e?.message || 'Không tải được dữ liệu.');
+    this.code = e?.code;
+    this.status = status;
+  }
+}
+export async function readLeave<T>(operation: string, run: (signal: AbortSignal) => PromiseLike<{ data: T; error: unknown; status?: number }>, outer?: AbortSignal): Promise<T> {
+  const started = Date.now();
+  try {
+    const result = await withDeadline(run, outer);
+    if (result.error) throw new LeaveReadError(operation, Date.now() - started, result.error, result.status);
+    return result.data;
+  } catch (error) {
+    if (error instanceof LeaveReadError || (error as {name?:string})?.name === 'AbortError') throw error;
+    throw new LeaveReadError(operation, Date.now() - started, error);
+  }
+}
+
 /** Runs `run` with a signal that aborts on caller abort or after `ms`; a timeout rejects with LeaveTimeoutError. */
 export async function withDeadline<T>(run: (signal: AbortSignal) => PromiseLike<T>, outer?: AbortSignal, ms = LEAVE_READ_TIMEOUT_MS): Promise<T> {
   const ctl = new AbortController();
@@ -41,7 +63,9 @@ export const leaveRetryDelay = (attempt: number) => Math.min(1000 * 2 ** attempt
 
 export function leaveReadMessage(error: unknown): string {
   const e = error as { code?: string; message?: string; status?: number };
-  if (e?.code === '42501' || e?.status === 401 || e?.status === 403) return 'Bạn không có quyền xem dữ liệu này hoặc phiên đăng nhập đã hết hạn.';
-  if (e?.code === 'LEAVE_TIMEOUT' || e?.code === '57014') return 'Máy chủ phản hồi quá lâu. Vui lòng thử lại.';
-  return e?.message || 'Không tải được dữ liệu.';
+  const message = e?.status === 401 || e?.code === 'PGRST301' ? 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.'
+    : e?.code === '42501' || e?.status === 403 ? 'Máy chủ từ chối quyền xem dữ liệu này. Vui lòng liên hệ Admin.'
+    : e?.code === 'LEAVE_TIMEOUT' || e?.code === '57014' ? 'Máy chủ phản hồi quá lâu. Vui lòng thử lại.'
+    : e?.message || 'Không tải được dữ liệu.';
+  return error instanceof LeaveReadError ? `${message} (${error.operation} · ${error.status ? `HTTP ${error.status} · ` : ''}${error.code ?? 'NETWORK'} · ${(error.durationMs / 1000).toFixed(1)} giây)` : message;
 }
