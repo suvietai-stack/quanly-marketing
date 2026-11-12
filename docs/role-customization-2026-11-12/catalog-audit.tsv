@@ -1,6 +1,6 @@
 key	module	classification	evidence_or_blocker
 att.create	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
-att.edit_own	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+att.edit_own	Đơn Từ & Phê Duyệt	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
 att.manage	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
 att.reconcile	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
 att.report	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
@@ -97,7 +97,7 @@ leave.cancel_handle	Đơn Từ & Phê Duyệt	native_audit_pending	Not in review
 leave.create	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
 leave.create_for	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
 leave.edit_others	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
-leave.edit_own	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+leave.edit_own	Đơn Từ & Phê Duyệt	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
 leave.exception	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
 leave.export	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
 leave.reassign	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.

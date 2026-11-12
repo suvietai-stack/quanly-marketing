@@ -311,7 +311,8 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 - [ ] Xóa 33 Role cũ: chỉ sau khi chủ chốt 3 ngoại lệ + kiểm tra 0 phụ thuộc. Chưa Publish.
 
 ## P0 Nghỉ phép nhân viên — 12/11/2026 09:48 UTC
-- [ ] Owner10:12 P0 Role customization: audit live guards/catalog, unified truthful capability UI, isolated safe-key SQL stage with snapshot/SHA/rollback (NO APPLY), draft preview/cancel tests, compatible frontend publish/live check; no Leave changes.
+- [x] Owner10:12 code: unified capability/retained/scope UI, all presets visible, safe preview guard;87 tests/buildOK, four authenticated preview/cancel HTTP200; no Role/Leave/SQL writes.
+- [ ] Owner10:12 release: publish compatible code/live verification. Broader 510-key grant unlock BLOCKED native same-source scope proofs + activation fence + separate owner-approved SQL; contract-only12-key candidate staged, not an expansion.
 - [x] Owner10:00 code: server owner/approver filters, lazy privileged full list, actor/scope keys; desktop/mobile authenticated HTTP and timeout/403/retry verified; NO SQL changes.
 - [x] Owner10:00 release: ecf2aab2 published once;production core8767c1a2, HTTP200, real desktop/mobile owner/approver/manage filtered HTTP200 and report lazy cache verified;67 Leave tests/buildOK. Full suite1846pass/5 unrelated pre-existing failures remain.
 - [x] Phân biệt quyền chưa xác minh với denied/data/settings; fixture không JWT tái hiện pending→own/retry/signout desktop/mobile, không đọc đơn trước quyền.

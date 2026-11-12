@@ -1,11 +1,9 @@
 [
   "leave.create",
   "leave.view_own",
-  "leave.edit_own",
   "leave.recall",
   "att.create",
   "att.view_own",
-  "att.edit_own",
   "att.witness",
   "order.view",
   "order.view_mine",
