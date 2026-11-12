@@ -1,0 +1,223 @@
+{
+  "policies": [
+    {
+      "cmd": "ALL",
+      "qual": "( SELECT private.is_active(auth.uid()) AS is_active)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signal_events",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM opportunity_signals s\n  WHERE (s.id = opportunity_signal_events.signal_id)))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signal_events",
+      "permissive": "PERMISSIVE",
+      "policyname": "sig_events_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "( SELECT private.is_active(auth.uid()) AS is_active)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signal_notes",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM opportunity_signals s\n  WHERE (s.id = opportunity_signal_notes.signal_id)))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signal_notes",
+      "permissive": "PERMISSIVE",
+      "policyname": "sig_notes_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "( SELECT private.is_active(auth.uid()) AS is_active)",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signals",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "schemaname": "public",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "((private.sig_can(auth.uid(), 'signal.manage'::text) OR private.sig_can(auth.uid(), 'signal.delete'::text)) AND private.sig_scope_ok(auth.uid(), need_groups) AND ((status IS NULL) OR (status <> ALL (ARRAY['won'::text, 'lost'::text]))) AND (NOT (EXISTS ( SELECT 1\n   FROM opportunity_signal_notes n\n  WHERE (n.signal_id = opportunity_signals.id)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signals",
+      "permissive": "PERMISSIVE",
+      "policyname": "sig_delete",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signals",
+      "permissive": "PERMISSIVE",
+      "policyname": "sig_insert",
+      "schemaname": "public",
+      "with_check": "((created_by = auth.uid()) AND (assigned_to IS NULL) AND (status IS NULL) AND (private.sig_can(auth.uid(), 'signal.create'::text) OR private.sig_can(auth.uid(), 'signal.manage'::text)))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(((( SELECT private.sig_can(auth.uid(), 'signal.view_all'::text) AS sig_can) OR ( SELECT private.sig_can(auth.uid(), 'signal.manage'::text) AS sig_can)) AND private.sig_scope_ok(( SELECT auth.uid() AS uid), need_groups)) OR ((created_by = ( SELECT auth.uid() AS uid)) AND ( SELECT private.sig_can(auth.uid(), 'signal.create'::text) AS sig_can)) OR ((assigned_to = ( SELECT auth.uid() AS uid)) AND ( SELECT private.sig_can(auth.uid(), 'signal.sale'::text) AS sig_can)))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signals",
+      "permissive": "PERMISSIVE",
+      "policyname": "sig_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(((private.sig_can(auth.uid(), 'signal.manage'::text) OR private.sig_can(auth.uid(), 'signal.edit'::text)) AND private.sig_scope_ok(auth.uid(), need_groups)) OR ((created_by = auth.uid()) AND private.sig_can(auth.uid(), 'signal.create'::text) AND ((status IS NULL) OR (status = ANY (ARRAY['waiting'::text, 'consulting'::text])))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "opportunity_signals",
+      "permissive": "PERMISSIVE",
+      "policyname": "sig_update",
+      "schemaname": "public",
+      "with_check": "(private.sig_can(auth.uid(), 'signal.manage'::text) OR private.sig_can(auth.uid(), 'signal.edit'::text) OR ((created_by = auth.uid()) AND private.sig_can(auth.uid(), 'signal.create'::text) AND ((status IS NULL) OR (status = ANY (ARRAY['waiting'::text, 'consulting'::text])))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((EXISTS ( SELECT 1\n   FROM signal_labels l\n  WHERE ((l.id = signal_label_links.label_id) AND ((l.owner_id IS NULL) OR (l.owner_id = auth.uid()))))) AND (EXISTS ( SELECT 1\n   FROM opportunity_signals s\n  WHERE ((s.id = signal_label_links.signal_id) AND private.sig_visible(auth.uid(), s.created_by, s.assigned_to, s.need_groups)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "signal_label_links",
+      "permissive": "PERMISSIVE",
+      "policyname": "signal_label_links_read",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "md5": "e33e140fa029c3ec44b733fa010be28f",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": true,
+      "signature": "private.sig_visible(uuid,uuid,uuid,text[])",
+      "definition": "CREATE OR REPLACE FUNCTION private.sig_visible(_uid uuid, _created_by uuid, _assigned_to uuid, _groups text[])\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT ((private.sig_can(_uid,'signal.view_all') OR private.sig_can(_uid,'signal.manage')\n           OR private.sig_can(_uid,'signal.edit') OR private.sig_can(_uid,'signal.delete')\n           OR private.sig_can(_uid,'signal.assign') OR private.sig_can(_uid,'signal.report'))\n          AND private.sig_scope_ok(_uid, _groups))\n    OR (_created_by = _uid AND private.sig_can(_uid,'signal.create'))\n    OR (_assigned_to = _uid AND private.sig_can(_uid,'signal.sale'));\n$function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": null,
+      "md5": "7ff0d4b442916343decfd3bbc8d6a25e",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": true,
+      "signature": "private.sig_can(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION private.sig_can(_uid uuid, _perm text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT _uid IS NOT NULL AND private.is_active(_uid)\n    AND (private.is_super_admin(_uid) OR private.has_permission(_uid, _perm));\n$function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "md5": "319bb21470d346ad639a1758ae7e13e4",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": true,
+      "signature": "private.sig_scope_ok(uuid,text[])",
+      "definition": "CREATE OR REPLACE FUNCTION private.sig_scope_ok(_uid uuid, _groups text[])\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nSELECT CASE WHEN _uid IS NULL THEN false WHEN private.is_super_admin(_uid) OR private.is_admin(_uid) THEN true\nELSE EXISTS(SELECT 1 FROM private.role_source_rows(private.base_config()) source JOIN app_roles role ON role.id=source.role_id WHERE source.user_id=_uid AND source.source_kind='slot' AND EXISTS(SELECT 1 FROM unnest(source.permissions) p WHERE p LIKE 'signal.%') AND (role.signal_scope_all OR EXISTS(SELECT 1 FROM unnest(coalesce(_groups,'{}')) g WHERE g=ANY(role.signal_scope) OR (g LIKE 'Khác:%' AND 'Khác'=ANY(role.signal_scope))))) OR (\n(NOT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id=_uid) AND NOT EXISTS (SELECT 1 FROM public.org_assignments a JOIN public.base_title_role_links l ON l.title_id=a.title_id AND a.slot_id IS NULL WHERE a.user_id=_uid AND a.status='active' AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now())))\nOR EXISTS(SELECT 1 FROM public.user_roles ur JOIN public.app_roles r ON r.id=ur.role_id WHERE ur.user_id=_uid AND r.signal_scope_all)\nOR EXISTS(SELECT 1 FROM public.user_roles ur JOIN public.app_roles r ON r.id=ur.role_id,unnest(coalesce(_groups,'{}')) g WHERE ur.user_id=_uid AND (g=ANY(r.signal_scope) OR (g LIKE 'Khác:%' AND 'Khác'=ANY(r.signal_scope))))\nOR EXISTS(SELECT 1 FROM public.org_assignments a JOIN public.base_title_role_links l ON l.title_id=a.title_id AND a.slot_id IS NULL JOIN public.app_roles r ON r.id=l.role_id WHERE a.user_id=_uid AND a.status='active' AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now()) AND l.permission_signature=md5(coalesce(r.permissions,'{}')::text) AND r.signal_scope_all)\nOR EXISTS(SELECT 1 FROM public.org_assignments a JOIN public.base_title_role_links l ON l.title_id=a.title_id AND a.slot_id IS NULL JOIN public.app_roles r ON r.id=l.role_id,unnest(coalesce(_groups,'{}')) g WHERE a.user_id=_uid AND a.status='active' AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now()) AND l.permission_signature=md5(coalesce(r.permissions,'{}')::text) AND (g=ANY(r.signal_scope) OR (g LIKE 'Khác:%' AND 'Khác'=ANY(r.signal_scope))))) END;\n$function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "md5": "ce13485d8a163df0808967de4ab4797a",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": true,
+      "signature": "private.role_source_rows(jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION private.role_source_rows(c jsonb)\n RETURNS TABLE(user_id uuid, role_id text, source_kind text, source_id text, unit_id text, legacy boolean, eligible boolean, scope text, permissions text[])\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n SELECT * FROM private.slot_previous_source_rows(c)\n UNION ALL\n SELECT (m->>'user_id')::uuid,r.id,'task',m->>'id'||':'||s.id,m->>'unit_id',true,private.org_marketing_eligible((m->>'user_id')::uuid,c),'native',ARRAY(SELECT p FROM unnest(r.permissions) p WHERE private.org_role_permission_ready(p))\n FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m CROSS JOIN LATERAL jsonb_array_elements_text(coalesce(m->'specialty_ids','[]')) sid JOIN mkt_specialties s ON s.id=sid AND s.active JOIN app_roles r ON r.id=s.role_id\n WHERE private.is_active((m->>'user_id')::uuid) AND private.base_valid_at(m) AND m->>'status'='active' AND m->'specialty_signatures'->>s.id=md5(coalesce(r.permissions,'{}')::text) $function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "md5": "cfed54d4b4fb2edf6b4abdd64314c035",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": true,
+      "signature": "private.base_config()",
+      "definition": "CREATE OR REPLACE FUNCTION private.base_config()\n RETURNS jsonb\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ SELECT private.org_role_previous_config()||jsonb_build_object('position_slots',c->'position_slots','role_links',c->'role_links','memberships',c->'memberships','units',c->'units','titles',c->'titles') FROM (SELECT private.org_config() c OFFSET 0) snapshot $function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "0390ccc7fed10ddec0b8dba874af00a9",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": false,
+      "signature": "signal_list_page(jsonb,text,integer,integer)",
+      "definition": "CREATE OR REPLACE FUNCTION public.signal_list_page(_filter jsonb DEFAULT '{}'::jsonb, _sort text DEFAULT 'work'::text, _offset integer DEFAULT 0, _limit integer DEFAULT 40)\n RETURNS jsonb\n LANGUAGE sql\n STABLE\n SET search_path TO 'public'\nAS $function$ WITH filtered AS MATERIALIZED (SELECT * FROM signal_base_filtered(_filter)), assigns AS(SELECT e.signal_id,max(e.created_at) FILTER(WHERE e.detail ? 'to' AND e.detail->'to'='null'::jsonb) unassigned_at,max(e.created_at) FILTER(WHERE e.detail->>'to'=s.assigned_to::text) assigned_at FROM opportunity_signal_events e JOIN filtered s ON s.id=e.signal_id WHERE e.kind='assign' GROUP BY e.signal_id),notes AS(SELECT n.signal_id,max(n.created_at) FILTER(WHERE status_to='waiting' AND status_from IS DISTINCT FROM status_to) waiting_at,max(n.created_at) activity_at FROM opportunity_signal_notes n JOIN filtered f ON f.id=n.signal_id GROUP BY n.signal_id), ranked AS ( SELECT s.*,CASE WHEN s.cancelled_at IS NOT NULL OR s.status IN ('won','lost') THEN 3 WHEN s.assigned_to IS NULL AND s.status IS NULL THEN 0 WHEN s.status='waiting' THEN 1 ELSE 2 END list_priority,CASE WHEN s.cancelled_at IS NOT NULL OR s.status IN ('won','lost') THEN NULL::timestamptz WHEN s.assigned_to IS NULL AND s.status IS NULL THEN coalesce(a.unassigned_at,s.created_at) WHEN s.status='waiting' THEN coalesce(greatest(a.assigned_at,n.waiting_at,s.assigned_at),s.created_at) ELSE NULL::timestamptz END list_wait_since,greatest(s.updated_at,n.activity_at) list_activity_at,CASE WHEN s.cancelled_at IS NOT NULL OR s.status IN ('won','lost') THEN 3 WHEN s.assigned_to IS NULL AND s.status IS NULL THEN 0 WHEN s.status='waiting' THEN 1 ELSE 2 END list_work_priority,NULL::date list_progression_due_on FROM filtered s LEFT JOIN assigns a ON a.signal_id=s.id LEFT JOIN notes n ON n.signal_id=s.id), page AS MATERIALIZED (SELECT s.* FROM ranked s ORDER BY CASE WHEN _sort IN ('work','priority') THEN s.list_work_priority END,CASE WHEN _sort IN ('work','priority') THEN s.list_wait_since END ASC NULLS LAST,CASE WHEN _sort='oldest' THEN s.created_at END ASC,CASE WHEN _sort='newest' THEN s.created_at END DESC,CASE WHEN _sort='soonest' THEN s.next_contact_on END ASC NULLS LAST,CASE WHEN _sort='potential' THEN CASE s.potential WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END END,CASE WHEN _sort='value' THEN s.revenue END DESC NULLS LAST,s.list_activity_at DESC,s.id LIMIT greatest(1,least(_limit,50)) OFFSET greatest(_offset,0)), numbered AS (SELECT s.*,row_number() OVER(ORDER BY CASE WHEN _sort IN ('work','priority') THEN s.list_work_priority END,CASE WHEN _sort IN ('work','priority') THEN s.list_wait_since END ASC NULLS LAST,CASE WHEN _sort='oldest' THEN s.created_at END ASC,CASE WHEN _sort='newest' THEN s.created_at END DESC,CASE WHEN _sort='soonest' THEN s.next_contact_on END ASC NULLS LAST,CASE WHEN _sort='potential' THEN CASE s.potential WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END END,CASE WHEN _sort='value' THEN s.revenue END DESC NULLS LAST,s.list_activity_at DESC,s.id) ord FROM page s), enriched AS (SELECT p.ord,(to_jsonb(p)-'ord'-'address'-'marketing_note'-'potential_updated_by'-'potential_updated_at'-'cancel_reason')||jsonb_build_object('label_ids',coalesce((SELECT jsonb_agg(l.label_id ORDER BY l.label_id) FROM signal_label_links l WHERE l.signal_id=p.id),'[]'),'note_count',(SELECT count(*) FROM opportunity_signal_notes n WHERE n.signal_id=p.id AND signal_note_is_progression(n.note,n.event_type,n.is_progression)),'last_note',(SELECT jsonb_build_object('signal_id',n.signal_id,'created_at',n.created_at,'note',n.note,'event_type',n.event_type) FROM opportunity_signal_notes n WHERE n.signal_id=p.id AND signal_note_is_progression(n.note,n.event_type,n.is_progression) ORDER BY n.created_at DESC,n.id DESC LIMIT 1)) row FROM numbered p) SELECT jsonb_build_object('rows',coalesce((SELECT jsonb_agg(row ORDER BY ord) FROM enriched),'[]')) $function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "055f8638e1ecd26785de2021c8e60278",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": false,
+      "signature": "signal_list_counts(jsonb)",
+      "definition": "CREATE OR REPLACE FUNCTION public.signal_list_counts(_filter jsonb DEFAULT '{}'::jsonb)\n RETURNS jsonb\n LANGUAGE sql\n STABLE\n SET search_path TO 'public'\nAS $function$ WITH visible AS MATERIALIZED (SELECT * FROM opportunity_signals),base AS MATERIALIZED(SELECT * FROM (SELECT s.* FROM visible s CROSS JOIN (SELECT _filter-'quick'-'status' AS value) f WHERE coalesce((f.value->>'cancelled')::boolean,false)=(s.cancelled_at IS NOT NULL) AND (coalesce(f.value->>'q','')='' OR strpos(lower(s.customer_name),lower(btrim(f.value->>'q')))>0 OR strpos(s.phone,btrim(f.value->>'q'))>0) AND (coalesce(f.value->>'from','')='' OR CASE WHEN f.value->>'basis'='closed' THEN (s.closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ELSE s.detected_on END>=(f.value->>'from')::date) AND (coalesce(f.value->>'to','')='' OR CASE WHEN f.value->>'basis'='closed' THEN (s.closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ELSE s.detected_on END<=(f.value->>'to')::date) AND (coalesce(f.value->>'source','')='' OR s.source=f.value->>'source') AND (coalesce(f.value->>'product','')='' OR f.value->>'product'=ANY(s.products)) AND (coalesce(f.value->>'needGroup','')='' OR f.value->>'needGroup'=ANY(CASE WHEN cardinality(s.need_groups)>0 THEN s.need_groups ELSE array_remove(ARRAY[s.need_group],NULL) END)) AND (coalesce(f.value->>'saleId','')='' OR s.assigned_to::text=f.value->>'saleId') AND (coalesce(f.value->>'creatorId','')='' OR s.created_by::text=f.value->>'creatorId') AND (NOT coalesce((f.value->>'unassigned')::boolean,false) OR s.assigned_to IS NULL) AND (coalesce(f.value->>'lostReason','')='' OR CASE WHEN s.lost_reason LIKE 'Khác%' THEN 'Khác' ELSE s.lost_reason END=f.value->>'lostReason') AND (coalesce(f.value->>'potential','')='' OR coalesce(s.potential,'unrated')=f.value->>'potential') AND (coalesce(f.value->>'labelId','')='' OR EXISTS(SELECT 1 FROM signal_label_links l WHERE l.signal_id=s.id AND l.label_id::text=f.value->>'labelId')) AND (coalesce(f.value->>'stage','')='' OR CASE WHEN s.status IS NULL OR s.status IN ('waiting','contacting') THEN 'intake' WHEN s.status IN ('consulting','quoted') THEN 'advice' WHEN s.status='lost' THEN 'ended' ELSE 'closing' END=f.value->>'stage') AND (coalesce(f.value->>'status',f.value->>'quick','all') IN ('','all') OR CASE WHEN coalesce(f.value->>'status',f.value->>'quick')='unassigned' THEN s.assigned_to IS NULL AND s.status IS NULL ELSE s.status=coalesce(f.value->>'status',f.value->>'quick') END) AND (coalesce(f.value->>'nextFrom','')='' OR s.next_contact_on>=(f.value->>'nextFrom')::date) AND (coalesce(f.value->>'nextTo','')='' OR s.next_contact_on<=(f.value->>'nextTo')::date) AND (coalesce(f.value->>'work','all')='all' OR (f.value->>'work'='high' AND s.potential='high') OR (f.value->>'work'='won' AND s.status='won') OR (f.value->>'work'='overdue' AND s.status IN ('waiting','contacting','consulting','quoted','deposit') AND s.next_contact_on<(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) OR (f.value->>'work'='action' AND s.status IN ('waiting','contacting','consulting','quoted','deposit') AND (s.next_contact_on<=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date OR (s.potential='high' AND s.next_contact_on IS NULL)))))),needs AS MATERIALIZED(SELECT * FROM (SELECT s.* FROM visible s CROSS JOIN (SELECT _filter-'needGroup' AS value) f WHERE coalesce((f.value->>'cancelled')::boolean,false)=(s.cancelled_at IS NOT NULL) AND (coalesce(f.value->>'q','')='' OR strpos(lower(s.customer_name),lower(btrim(f.value->>'q')))>0 OR strpos(s.phone,btrim(f.value->>'q'))>0) AND (coalesce(f.value->>'from','')='' OR CASE WHEN f.value->>'basis'='closed' THEN (s.closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ELSE s.detected_on END>=(f.value->>'from')::date) AND (coalesce(f.value->>'to','')='' OR CASE WHEN f.value->>'basis'='closed' THEN (s.closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ELSE s.detected_on END<=(f.value->>'to')::date) AND (coalesce(f.value->>'source','')='' OR s.source=f.value->>'source') AND (coalesce(f.value->>'product','')='' OR f.value->>'product'=ANY(s.products)) AND (coalesce(f.value->>'needGroup','')='' OR f.value->>'needGroup'=ANY(CASE WHEN cardinality(s.need_groups)>0 THEN s.need_groups ELSE array_remove(ARRAY[s.need_group],NULL) END)) AND (coalesce(f.value->>'saleId','')='' OR s.assigned_to::text=f.value->>'saleId') AND (coalesce(f.value->>'creatorId','')='' OR s.created_by::text=f.value->>'creatorId') AND (NOT coalesce((f.value->>'unassigned')::boolean,false) OR s.assigned_to IS NULL) AND (coalesce(f.value->>'lostReason','')='' OR CASE WHEN s.lost_reason LIKE 'Khác%' THEN 'Khác' ELSE s.lost_reason END=f.value->>'lostReason') AND (coalesce(f.value->>'potential','')='' OR coalesce(s.potential,'unrated')=f.value->>'potential') AND (coalesce(f.value->>'labelId','')='' OR EXISTS(SELECT 1 FROM signal_label_links l WHERE l.signal_id=s.id AND l.label_id::text=f.value->>'labelId')) AND (coalesce(f.value->>'stage','')='' OR CASE WHEN s.status IS NULL OR s.status IN ('waiting','contacting') THEN 'intake' WHEN s.status IN ('consulting','quoted') THEN 'advice' WHEN s.status='lost' THEN 'ended' ELSE 'closing' END=f.value->>'stage') AND (coalesce(f.value->>'status',f.value->>'quick','all') IN ('','all') OR CASE WHEN coalesce(f.value->>'status',f.value->>'quick')='unassigned' THEN s.assigned_to IS NULL AND s.status IS NULL ELSE s.status=coalesce(f.value->>'status',f.value->>'quick') END) AND (coalesce(f.value->>'nextFrom','')='' OR s.next_contact_on>=(f.value->>'nextFrom')::date) AND (coalesce(f.value->>'nextTo','')='' OR s.next_contact_on<=(f.value->>'nextTo')::date) AND (coalesce(f.value->>'work','all')='all' OR (f.value->>'work'='high' AND s.potential='high') OR (f.value->>'work'='won' AND s.status='won') OR (f.value->>'work'='overdue' AND s.status IN ('waiting','contacting','consulting','quoted','deposit') AND s.next_contact_on<(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) OR (f.value->>'work'='action' AND s.status IN ('waiting','contacting','consulting','quoted','deposit') AND (s.next_contact_on<=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date OR (s.potential='high' AND s.next_contact_on IS NULL)))))),st AS(SELECT coalesce(status,'unassigned') key,count(*) n FROM base GROUP BY status),ng AS(SELECT g key,count(DISTINCT s.id) n FROM needs s CROSS JOIN LATERAL unnest(CASE WHEN cardinality(s.need_groups)>0 THEN s.need_groups ELSE array_remove(ARRAY[s.need_group],NULL) END) g GROUP BY g),mine AS(SELECT * FROM visible WHERE assigned_to=auth.uid() AND cancelled_at IS NULL) SELECT jsonb_build_object('total',(SELECT count(*) FROM (SELECT s.* FROM visible s CROSS JOIN (SELECT _filter AS value) f WHERE coalesce((f.value->>'cancelled')::boolean,false)=(s.cancelled_at IS NOT NULL) AND (coalesce(f.value->>'q','')='' OR strpos(lower(s.customer_name),lower(btrim(f.value->>'q')))>0 OR strpos(s.phone,btrim(f.value->>'q'))>0) AND (coalesce(f.value->>'from','')='' OR CASE WHEN f.value->>'basis'='closed' THEN (s.closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ELSE s.detected_on END>=(f.value->>'from')::date) AND (coalesce(f.value->>'to','')='' OR CASE WHEN f.value->>'basis'='closed' THEN (s.closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ELSE s.detected_on END<=(f.value->>'to')::date) AND (coalesce(f.value->>'source','')='' OR s.source=f.value->>'source') AND (coalesce(f.value->>'product','')='' OR f.value->>'product'=ANY(s.products)) AND (coalesce(f.value->>'needGroup','')='' OR f.value->>'needGroup'=ANY(CASE WHEN cardinality(s.need_groups)>0 THEN s.need_groups ELSE array_remove(ARRAY[s.need_group],NULL) END)) AND (coalesce(f.value->>'saleId','')='' OR s.assigned_to::text=f.value->>'saleId') AND (coalesce(f.value->>'creatorId','')='' OR s.created_by::text=f.value->>'creatorId') AND (NOT coalesce((f.value->>'unassigned')::boolean,false) OR s.assigned_to IS NULL) AND (coalesce(f.value->>'lostReason','')='' OR CASE WHEN s.lost_reason LIKE 'Khác%' THEN 'Khác' ELSE s.lost_reason END=f.value->>'lostReason') AND (coalesce(f.value->>'potential','')='' OR coalesce(s.potential,'unrated')=f.value->>'potential') AND (coalesce(f.value->>'labelId','')='' OR EXISTS(SELECT 1 FROM signal_label_links l WHERE l.signal_id=s.id AND l.label_id::text=f.value->>'labelId')) AND (coalesce(f.value->>'stage','')='' OR CASE WHEN s.status IS NULL OR s.status IN ('waiting','contacting') THEN 'intake' WHEN s.status IN ('consulting','quoted') THEN 'advice' WHEN s.status='lost' THEN 'ended' ELSE 'closing' END=f.value->>'stage') AND (coalesce(f.value->>'status',f.value->>'quick','all') IN ('','all') OR CASE WHEN coalesce(f.value->>'status',f.value->>'quick')='unassigned' THEN s.assigned_to IS NULL AND s.status IS NULL ELSE s.status=coalesce(f.value->>'status',f.value->>'quick') END) AND (coalesce(f.value->>'nextFrom','')='' OR s.next_contact_on>=(f.value->>'nextFrom')::date) AND (coalesce(f.value->>'nextTo','')='' OR s.next_contact_on<=(f.value->>'nextTo')::date) AND (coalesce(f.value->>'work','all')='all' OR (f.value->>'work'='high' AND s.potential='high') OR (f.value->>'work'='won' AND s.status='won') OR (f.value->>'work'='overdue' AND s.status IN ('waiting','contacting','consulting','quoted','deposit') AND s.next_contact_on<(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) OR (f.value->>'work'='action' AND s.status IN ('waiting','contacting','consulting','quoted','deposit') AND (s.next_contact_on<=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date OR (s.potential='high' AND s.next_contact_on IS NULL)))))),'status',coalesce((SELECT jsonb_object_agg(key,n) FROM st),'{}')||jsonb_build_object('all',(SELECT count(*) FROM base)),'needs',coalesce((SELECT jsonb_object_agg(key,n) FROM ng),'{}')||jsonb_build_object('all',(SELECT count(*) FROM needs)),'sales',coalesce((SELECT jsonb_agg(DISTINCT assigned_to) FILTER(WHERE assigned_to IS NOT NULL) FROM visible),'[]'),'creators',coalesce((SELECT jsonb_agg(DISTINCT created_by) FROM visible),'[]'),'mine',jsonb_build_object('waiting',(SELECT count(*) FROM mine WHERE status='waiting'),'active',(SELECT count(*) FROM mine WHERE status IN ('contacting','consulting','quoted','deposit')),'quoted',(SELECT count(*) FROM mine WHERE status='quoted'),'won',(SELECT count(*) FROM mine WHERE status='won' AND date_trunc('month',closed_at AT TIME ZONE 'Asia/Ho_Chi_Minh')=date_trunc('month',now() AT TIME ZONE 'Asia/Ho_Chi_Minh')))) $function$\n",
+      "volatility": "s"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "md5": "c57afd7736a787a1cd89d48962f0261e",
+      "owner": "postgres",
+      "config": [
+        "search_path=public"
+      ],
+      "definer": true,
+      "signature": "private.has_permission(uuid,text)",
+      "definition": "CREATE OR REPLACE FUNCTION private.has_permission(_user_id uuid, _permission text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ SELECT private.is_active(_user_id) AND (private.is_super_admin(_user_id) OR CASE\n WHEN (private.org_role_permission_ready(_permission) OR private.mkt_specialty_permission_ready(_permission) OR _permission LIKE 'sale_work.%') AND private.base_tier1(_user_id,_permission)='DENY' THEN false\n WHEN (private.org_role_permission_ready(_permission) OR private.mkt_specialty_permission_ready(_permission) OR _permission LIKE 'sale_work.%') AND private.base_tier1(_user_id,_permission)='ALLOW' THEN true\n WHEN EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND o.mode='replace') THEN EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND _permission=ANY(o.permissions))\n ELSE EXISTS(SELECT 1 FROM user_roles ur JOIN app_roles r ON r.id=ur.role_id WHERE ur.user_id=_user_id AND _permission=ANY(r.permissions))\n   OR EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND o.mode='additive' AND _permission=ANY(o.permissions)) END) $function$\n",
+      "volatility": "s"
+    }
+  ],
+  "captured_at": "2026-11-12T02:29:05.959272+00:00"
+}

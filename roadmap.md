@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 Tín hiệu tái timeout — 12/11/2026, ưu tiên cao nhất
+- [ ] Tái hiện phiên được ủy quyền production/Preview desktop/iPad; đo request, lỗi, scope, health và resolver live chỉ đọc.
+- [ ] Bản vá cô lập: snapshot DDL/MD5/ACL/owner/policy, rollback; PGlite parity/RLS/DENY/8 sorts/pagination và benchmark.
+- [ ] Migration mới: chờ owner duyệt riêng trước áp; không chạy lại 0371/pending cũ, không đổi dữ liệu/quyền hay Publish.
+- [ ] Nghiệm thu sau áp bằng phiên thật; report nguyên nhân/kết quả/giới hạn. Tạm dừng roadmap 3K/Role trong lượt này.
+
 ## Chốt mới 12/11: 3K toàn công ty theo sơ đồ
 - [x] Chọn Khối: section Settings + dynamic IDs/all/company option/preview/revision Save; một SQL extension PENDING sau 0383/0384, 9 scope tests + 27 personal/cache đạt; UI fixture desktop/iPad/mobile không overflow, live Save chưa mở.
 - [ ] Activate chọn Khối: BLOCKED full owner writer/trigger + historical read-only/navigation + obligations/reminders/automation/Zalo scope cutover/rollback and authorized employee E2E. SQL chưa gửi tool, không có approval card; không áp live/Publish.
