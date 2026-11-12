@@ -8,6 +8,7 @@
 - Candidate expresses the universal branch and readiness flag without changing any existing validation outcome. It intentionally does not expand source-scoped rights that existing resolvers would ignore.
 - Baseline/owner/ACL guarded; snapshot and backup included. SHA256SUMS is authoritative. Owner must approve candidate separately; **NOT APPLIED**. Earlier broad work is superseded for this request.
 - Desktop four draft toggle/preview/cancel flows passed with HTTP 200; no business save. Mobile draft still becomes read-only when searching, so mobile acceptance is FAIL and no mobile fix is claimed.
+- Release: commit `335cf3f3`, production deployment core `c8852150-7425-4b64-9b57-a34a76cdac49`, HTTP 200 on https://base.suviet.vn/organization. Four production desktop preview/cancel requests HTTP 200, no page errors. 401 Base tests passed; build OK. SQL remains staged, not applied.
 
 Candidate SHA256: `ac37b039d9711e0e9d4bd3b41cb626a5ab2ba8abc8d2759a0695ac48ea79ffbf`
 

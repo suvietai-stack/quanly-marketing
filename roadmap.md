@@ -313,7 +313,8 @@ Quyết định mới thay thế ngoại lệ cũ: reset cả Kinh doanh đã th
 ## P0 Nghỉ phép nhân viên — 12/11/2026 09:48 UTC
 - [x] Owner10:12 code: unified capability/retained/scope UI, all presets visible, safe preview guard;87 tests/buildOK, four authenticated preview/cancel HTTP200; no Role/Leave/SQL writes.
 - [x] Owner10:12 release:6d22f739/core d3fae7ff HTTP200, new capability markers+four desktop authenticated preview/cancel verified;398 tests/buildOK;57/88/13 hashes unchanged. No SQL applied.
-- [ ] Owner10:25 minimal priority: shared editor/helper implemented, one validator/read candidate staged; verify tests/publish. SQL blocked on separate exact SHA approval; 12 universal existing/0 new; 467 unpublished ≠ unenforced. Mobile search remains FAIL, no speculative fix.
+- [x] Owner10:25 safe code: one editor/helper, 401 Base tests/build OK, commit335cf3f3 published; production corec8852150 HTTP200; four desktop preview/cancel HTTP200, no business saves.
+- [ ] Owner10:25 SQL blocked on separate exact SHA approval ac37b039…79ffbf; snapshot/rollback in role-editor-minimal package. 12 universal existing/0 new; 467 unpublished ≠ unenforced. Mobile search remains FAIL, root cause unconfirmed; no speculative fix.
 - [x] Owner10:00 code: server owner/approver filters, lazy privileged full list, actor/scope keys; desktop/mobile authenticated HTTP and timeout/403/retry verified; NO SQL changes.
 - [x] Owner10:00 release: ecf2aab2 published once;production core8767c1a2, HTTP200, real desktop/mobile owner/approver/manage filtered HTTP200 and report lazy cache verified;67 Leave tests/buildOK. Full suite1846pass/5 unrelated pre-existing failures remain.
 - [x] Phân biệt quyền chưa xác minh với denied/data/settings; fixture không JWT tái hiện pending→own/retry/signout desktop/mobile, không đọc đơn trước quyền.
