@@ -1,0 +1,346 @@
+[
+  {
+    "key": "att.create",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "att.edit_own",
+    "scope": "own",
+    "personal": true,
+    "task_ready": false,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "att.view_own",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "att.witness",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "k3.use",
+    "scope": "own",
+    "personal": true,
+    "task_ready": false,
+    "common_ready": false,
+    "position_ready": true
+  },
+  {
+    "key": "leave.create",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "leave.edit_own",
+    "scope": "own",
+    "personal": true,
+    "task_ready": false,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "leave.recall",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "leave.view_own",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "leave.view_unit",
+    "scope": "unit",
+    "personal": false,
+    "task_ready": false,
+    "common_ready": false,
+    "position_ready": true
+  },
+  {
+    "key": "local.post_create",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "local.post_edit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "local.view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "local.view_mine",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "order.history",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "order.submit",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "order.take",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "order.update_draft",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "order.view",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "order.view_mine",
+    "scope": "own",
+    "personal": true,
+    "task_ready": true,
+    "common_ready": true,
+    "position_ready": true
+  },
+  {
+    "key": "ot.view_unit",
+    "scope": "unit",
+    "personal": false,
+    "task_ready": false,
+    "common_ready": false,
+    "position_ready": true
+  },
+  {
+    "key": "social.post_create",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "social.post_edit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "social.post_start",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "social.post_submit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "social.post_view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "social.post_view_mine",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "social.view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "video.create",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "video.script_start",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "video.script_submit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "video.submit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "video.view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "video.view_mine",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.content_view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.content_view_mine",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.keyword_open_sheet",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.keyword_view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.outline_start",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.outline_submit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.post_submit",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.post_write_start",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  },
+  {
+    "key": "web.view",
+    "scope": "assigned",
+    "personal": false,
+    "task_ready": true,
+    "common_ready": false,
+    "position_ready": false
+  }
+]

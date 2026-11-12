@@ -1,5 +1,10 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 full personal permission catalog — 12/11 06:49
+- [ ] Full 510/24 catalog, personal readiness, baseline revocation, shared effective source read; bounded lazy groups and fail-closed policy errors; no DB changes.
+- [ ] Targeted rules + fixture preview/save/readback desktop/mobile; publish and production read-only confirmation.
+- [ ] Backend expansion: BLOCKED separate owner approval and module scope/workflow proof; staged organization SQL unchanged.
+
 ## P0 organization timeout — 12/11 06:30
 - [x] Snapshot 8 hàm/ACL/owner và stats; benchmark SA30 REST reads 26 ceiling8s errors; scan units0.098ms; report phân biệt repetition verified vs phase attribution chưa đo.
 - [x] Stage candidate3hàm SHA331ad3a8: config/rules một lần + unit set-based/SA fast path/effective grouped; rollback và preflight.49 tests đạt, fixture p95 old3.30→new1.32ms không suy ra production.

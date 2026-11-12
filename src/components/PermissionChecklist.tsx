@@ -10,8 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PersonalPermissionChecklist } from './PersonalPermissionChecklist';
+import type { EffectivePermission } from '@/lib/basePermissions/types';
 
-export function PermissionChecklist({ value, onChange, policy, disabled = false, personal = false, baseline = [] }: {
+export function PermissionChecklist(props: {
+  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[];
+}) {
+  if (props.personal) return <PersonalPermissionChecklist {...props} disabled={props.disabled ?? false} baseline={props.baseline ?? []}/>;
+  return <RolePermissionChecklist {...props}/>;
+}
+function RolePermissionChecklist({ value, onChange, policy, disabled = false, personal = false, baseline = [] }: {
   value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[];
 }) {
   const [search, setSearch] = useState('');

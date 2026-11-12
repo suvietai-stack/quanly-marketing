@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PermissionChecklist } from '@/components/PermissionChecklist';
 import { permissionEditorApi } from '@/lib/basePermissions/permissionEditor';
 import { toast } from 'sonner';
+import type { EffectivePermission } from '@/lib/basePermissions/types';
 
 type Supplement = { fingerprint: string; role_ids: string[]; permissions: string[] | null; legacy_override: boolean; inactive_legacy: boolean };
 type PersonalPreview = { id: string; fingerprint: string; added: string[]; removed: string[]; affected_users: string[]; inactive_legacy: boolean };
 
-export function StaffPermissionEditor({ userId }: { userId: string }) {
+export function StaffPermissionEditor({ userId, effective, effectiveError }: { userId: string; effective?: EffectivePermission[]; effectiveError?: boolean }) {
   const { user } = useCurrentUser();
   const qc = useQueryClient();
   const [draft, setDraft] = useState<string[] | null>(null);
@@ -52,8 +53,10 @@ export function StaffPermissionEditor({ userId }: { userId: string }) {
     <div className="border-l-2 border-primary pl-3"><h3 className="font-semibold">Quyền bổ sung cá nhân</h3><p className="mt-1 text-sm text-muted-foreground">Chỉ cộng thêm cho nhân viên này. Những người cùng Role không bị ảnh hưởng.</p></div>
     {q.data.legacy_override ? <p role="alert" className="text-destructive">Quyền riêng cũ đang bật. Cần đối chiếu và xác nhận chuyển đổi trước; cấu hình hiện tại được giữ nguyên.</p> : <>
       {q.data.inactive_legacy && <details className="text-sm text-muted-foreground"><summary className="cursor-pointer">Có cấu hình cũ đang tắt</summary><p className="pt-2">Chưa thay đổi. Nếu xác nhận lưu, chỉ quyền riêng của nhân viên này chuyển sang cộng thêm; bản trước được lưu trong nhật ký.</p></details>}
-      {policy.error ? <p role="alert" className="text-destructive">Chưa tải được các quyền có phạm vi an toàn.</p> : <PermissionChecklist personal value={current} onChange={v => { setDraft(v); setPreview(null); }} policy={policy.data ?? []} baseline={q.data.permissions ?? []} disabled={!policy.data || busy}/>}
-      <div className="flex flex-wrap gap-2"><Button disabled={!draft || busy || !policy.data} onClick={openPreview}>Xem trước quyền riêng</Button><Button variant="ghost" disabled={!draft || busy} onClick={() => { setDraft(null); setPreview(null); setError(''); }}>Hủy thay đổi</Button></div>
+      {policy.error && <p role="alert" className="text-destructive">Chưa tải được các quyền có phạm vi an toàn. Danh mục chỉ xem, chưa thể thay đổi.</p>}
+      {effectiveError && <p role="alert" className="text-muted-foreground text-sm">Chưa tải được quyền hiệu lực và nguồn Role; trạng thái quyền riêng vẫn giữ nguyên.</p>}
+      <PermissionChecklist personal value={current} onChange={v => { setDraft(v); setPreview(null); }} policy={policy.data ?? []} baseline={q.data.permissions ?? []} effective={effective} disabled={!policy.data || !!policy.error || busy}/>
+      <div className="flex flex-wrap gap-2"><Button disabled={!draft || busy || !policy.data || !!policy.error} onClick={openPreview}>Xem trước quyền riêng</Button><Button variant="ghost" disabled={!draft || busy} onClick={() => { setDraft(null); setPreview(null); setError(''); }}>Hủy thay đổi</Button></div>
     </>}
     {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
     <Dialog open={!!preview} onOpenChange={v => !busy && !v && setPreview(null)}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Xác nhận quyền riêng</DialogTitle></DialogHeader>
