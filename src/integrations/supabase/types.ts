@@ -8356,6 +8356,12 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_profiles: {
+        Row: { user_id: string; details: Json; avatar: string }
+        Insert: { user_id?: string; details?: Json; avatar?: string }
+        Update: { user_id?: string; details?: Json; avatar?: string }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

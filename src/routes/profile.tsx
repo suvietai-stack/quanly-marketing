@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { isFakeEmail } from "@/lib/password";
 import { PageHeader } from "@/components/AppShell";
+import { PersonalProfile } from "@/components/PersonalProfile";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,10 +81,12 @@ function RecoveryEmailCard() {
 }
 
 function ProfilePage() {
+  const me = useAuth(s => s.users.find(u => u.id === s.currentUserId));
   return (
     <>
-      <PageHeader title="Hồ sơ cá nhân" description="Bảo mật tài khoản của bạn: đổi mật khẩu và quản lý email khôi phục." />
-      <div className="space-y-6">
+      <PageHeader title="Hồ sơ cá nhân" description="Không gian của bạn: cập nhật hồ sơ, thông tin liên hệ và bảo mật tài khoản." />
+      <div className="mx-auto max-w-3xl space-y-6">
+        {me && <PersonalProfile key={me.id} userId={me.id} fullName={me.fullName} />}
         <section className="space-y-3">
           <h2 className="text-base font-semibold">Bảo mật — Đổi mật khẩu</h2>
           <ChangePasswordForm />
@@ -96,3 +99,4 @@ function ProfilePage() {
     </>
   );
 }
+
