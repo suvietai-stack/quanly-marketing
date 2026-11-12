@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Owner 12/11 11:38 — actual universal editability audit
+- [x] Read-only 510-key/source/gate audit: 8 proven own universal after candidate; 502 not universally proven, including 6 grandfathered Order keys.
+- [x] One actual-expansion package: leave.edit_own + att.edit_own task readiness, exact baseline/ACL/rollback;17 new tests/61 targeted PASS; no production SQL.
+- [x] Report docs/role-grant-expansion-2026-11-12/report.md;57/88/13/2 and fingerprints unchanged; no grants or publication.
+- [ ] Apply candidate3c4b23f8…4085bd7: BLOCKED separate owner approval of exact SHA; two-connection PostgreSQL contention and scoped employee E2E not verified.
+
 ## Owner 12/11 09:11 — ổn định và chính sách Role thống nhất
 - [x] Audit guard/catalog; UI full510+lý do nguồn; stage metadata policy+SHA/backup/rollback, không áp.
 - [x] Xác nhận Nguyễn Thảo legacy manager + staff; thiếu mapping head phòng2; stage wrapper preview nguyên tử, không nhân sự live.
