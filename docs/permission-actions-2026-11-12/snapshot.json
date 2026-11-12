@@ -1,0 +1,4165 @@
+{
+  "catalog": [
+    {
+      "dependencies": [],
+      "key": "att.create",
+      "label": "Tạo giải trình chấm công cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.edit_own",
+      "label": "Sửa / thu hồi giải trình cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.manage",
+      "label": "Quản lý giải trình",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.reconcile",
+      "label": "Đối chiếu giải trình",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.report",
+      "label": "Xem báo cáo giải trình",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.settings",
+      "label": "Quản lý cài đặt giải trình",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.view_all",
+      "label": "Xem toàn bộ giải trình",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.view_own",
+      "label": "Xem giải trình cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "att.witness",
+      "label": "Xác nhận làm chứng (chỉ giải trình được chọn)",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.approval_view",
+      "label": "Xem Trung tâm Phê duyệt trong phạm vi",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_access",
+      "label": "Cấp quyền nghiệp vụ CRM",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_archive",
+      "label": "Lưu trữ và khôi phục khách",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_edit_other",
+      "label": "Sửa hộ khách trong phạm vi",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_export",
+      "label": "Xuất dữ liệu CRM",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_settings",
+      "label": "Cài đặt danh mục CRM",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_transfer",
+      "label": "Bàn giao khách trong phạm vi",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_use",
+      "label": "Sử dụng CRM cá nhân",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.crm_view_scope",
+      "label": "Xem CRM nhân viên trong phạm vi",
+      "module": "CRM Khách Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.dashboard_public",
+      "label": "Xem Dashboard tổng hợp toàn Khối",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.deadline_manage",
+      "label": "Quản lý deadline nộp",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.dept_manage",
+      "label": "Quản lý phòng ban kinh doanh",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.goal_approve",
+      "label": "Duyệt mục tiêu KR",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.goal_submit",
+      "label": "Lập và gửi mục tiêu KR",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.kr_manage",
+      "label": "Quản lý chỉ số KR",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.org_manage",
+      "label": "Quản lý cơ cấu tổ chức và phân công",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.plan_approve",
+      "label": "Duyệt kế hoạch (quy trình cũ)",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.plan_request_revision",
+      "label": "Yêu cầu chỉnh sửa kế hoạch",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.plan_submit",
+      "label": "Nộp kế hoạch kinh doanh",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.report_approve",
+      "label": "Duyệt báo cáo",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.report_submit",
+      "label": "Nộp báo cáo kinh doanh",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.view_all",
+      "label": "Ngoại lệ xem hồ sơ chi tiết toàn Khối",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.view_dept",
+      "label": "Xem dữ liệu phòng ban mình",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.view_own",
+      "label": "Xem dữ liệu cá nhân",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [],
+      "key": "biz.workflow_manage",
+      "label": "Cấu hình quy trình phê duyệt",
+      "module": "Quản trị Kinh doanh"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.contact",
+      "label": "Quản lý thông tin liên hệ",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.create",
+      "label": "Tạo thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.delete",
+      "label": "Xóa thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.docs",
+      "label": "Quản lý tài liệu/guideline",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.edit",
+      "label": "Sửa thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.identity",
+      "label": "Quản lý nhận diện thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.notes",
+      "label": "Quản lý ghi chú vận hành",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.profile",
+      "label": "Quản lý hồ sơ thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.staff",
+      "label": "Quản lý nhân sự phụ trách",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [],
+      "key": "brand.view",
+      "label": "Xem thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [],
+      "key": "brand.view_all",
+      "label": "Xem tất cả thương hiệu",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "brand.view"
+      ],
+      "key": "brand.view_channels",
+      "label": "Quản lý kênh liên kết",
+      "module": "Thương Hiệu"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "create_content_optimization",
+      "label": "Tạo việc tối ưu từ Bài đã đăng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "create_scheduled_content_optimization",
+      "label": "Kiểm tra & tạo việc tối ưu theo lịch",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.bank_config",
+      "label": "Cài đặt ngân hàng",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.claim",
+      "label": "Sale xác nhận giao dịch",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.gmf_config",
+      "label": "Cài đặt thông báo Zalo GMF",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.manage",
+      "label": "Quản lý / điều chỉnh giao dịch",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.manual_create",
+      "label": "Thêm khoản thủ công",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.manual_manage",
+      "label": "Quản lý (sửa / hủy) khoản thủ công",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.manual_view",
+      "label": "Xem khoản thủ công (Tiền mặt / TK khác)",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.reconcile",
+      "label": "Xem toàn bộ / sửa ghi chú / xác nhận loại Khác",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.remind",
+      "label": "Nhắc xác nhận thủ công",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.view",
+      "label": "Xem Tiền Về",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.view_totals",
+      "label": "Xem tổng tiền và thống kê tài chính",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "finance.incoming.view_unit",
+      "label": "Xem giao dịch Tiền Về do thành viên đơn vị mình quản lý phụ trách",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.advance.approve",
+      "label": "Phê duyệt đề nghị tạm ứng",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.advance.pay",
+      "label": "Xác nhận chi tiền tạm ứng",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.advance.report",
+      "label": "Xem báo cáo tạm ứng",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.advance.settings",
+      "label": "Cài đặt quy trình tạm ứng",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.advance.view_scope",
+      "label": "Xem đề nghị tạm ứng thuộc phạm vi",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.payment.approve",
+      "label": "Phê duyệt đề nghị thanh toán",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.payment.pay",
+      "label": "Xác nhận chi tiền thanh toán",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.payment.report",
+      "label": "Xem báo cáo thanh toán",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.payment.settings",
+      "label": "Cài đặt quy trình thanh toán",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.payment.view_scope",
+      "label": "Xem đề nghị thanh toán thuộc phạm vi",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.salary.approve",
+      "label": "Phê duyệt tạm ứng lương",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.salary.deduct",
+      "label": "Xác nhận khấu trừ/hoàn trả",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.salary.pay",
+      "label": "Xác nhận chi tạm ứng lương",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.salary.report",
+      "label": "Xem báo cáo tạm ứng lương",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.salary.settings",
+      "label": "Cài đặt quy trình tạm ứng lương",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "fr.salary.view_scope",
+      "label": "Xem tạm ứng lương thuộc phạm vi",
+      "module": "Tài Chính Kế Toán"
+    },
+    {
+      "dependencies": [],
+      "key": "integration.facebook_leads",
+      "label": "Quản lý Facebook Lead Ads (kết nối Page, cấu hình Form, xem lỗi, thử lại)",
+      "module": "Tích hợp Marketing"
+    },
+    {
+      "dependencies": [],
+      "key": "integration.website_forms",
+      "label": "Quản lý Website Forms (thêm Website, cấp/thu hồi khóa, cấu hình Form, xem lỗi, thử lại)",
+      "module": "Tích hợp Marketing"
+    },
+    {
+      "dependencies": [],
+      "key": "k3.comment",
+      "label": "Nhận xét 3K nhân viên",
+      "module": "Quản lý 3K"
+    },
+    {
+      "dependencies": [],
+      "key": "k3.settings",
+      "label": "Cấu hình module 3K",
+      "module": "Quản lý 3K"
+    },
+    {
+      "dependencies": [],
+      "key": "k3.use",
+      "label": "Lập và cập nhật 3K cá nhân",
+      "module": "Quản lý 3K"
+    },
+    {
+      "dependencies": [],
+      "key": "k3.view_scope",
+      "label": "Xem 3K trong phạm vi quản lý",
+      "module": "Quản lý 3K"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.goal_archive",
+      "label": "Hủy / Lưu trữ mục tiêu",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.goal_create",
+      "label": "Tạo mục tiêu",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.goal_delete",
+      "label": "Xóa mục tiêu chưa phát sinh dữ liệu",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.goal_edit",
+      "label": "Sửa mục tiêu",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.kr_adjust",
+      "label": "Điều chỉnh KR đã giao",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.kr_assign",
+      "label": "Thêm / Giao KR",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.period_manage",
+      "label": "Quản lý kỳ KPI",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.report",
+      "label": "Xem báo cáo KPI",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.report_export",
+      "label": "Xuất báo cáo KPI",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.view_all",
+      "label": "Xem toàn bộ KPI",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "kpi.view_own",
+      "label": "Xem KPI cá nhân",
+      "module": "KPI / Giao KPI"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.approve",
+      "label": "Phê duyệt đơn (chỉ đơn được chỉ định)",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.cancel_handle",
+      "label": "Xử lý hủy đơn",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.create",
+      "label": "Tạo đơn cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.create_for",
+      "label": "Tạo đơn hộ",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.edit_others",
+      "label": "Sửa đơn nhân viên",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.edit_own",
+      "label": "Sửa đơn cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.exception",
+      "label": "Xử lý ngoại lệ đơn từ",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.export",
+      "label": "Xuất báo cáo",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.reassign",
+      "label": "Chuyển người duyệt",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.recall",
+      "label": "Thu hồi đơn cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.report",
+      "label": "Xem báo cáo đơn từ",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.settings",
+      "label": "Quản lý cài đặt đơn từ",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.view_all",
+      "label": "Xem toàn bộ đơn",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.view_assigned",
+      "label": "Xem đơn được giao duyệt",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.view_own",
+      "label": "Xem đơn cá nhân",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [],
+      "key": "leave.view_unit",
+      "label": "Xem đơn của thành viên đơn vị mình quản lý",
+      "module": "Đơn Từ & Phê Duyệt"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.assign_owner",
+      "label": "Gán người phụ trách Local",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.create",
+      "label": "Tạo địa điểm",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.delete",
+      "label": "Xóa địa điểm",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.edit",
+      "label": "Sửa địa điểm",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.growth_view",
+        "local.view"
+      ],
+      "key": "local.growth_create",
+      "label": "Thêm kỳ báo cáo Local",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.growth_view",
+        "local.view"
+      ],
+      "key": "local.growth_delete",
+      "label": "Xóa kỳ báo cáo Local",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.growth_view",
+        "local.view"
+      ],
+      "key": "local.growth_edit",
+      "label": "Sửa kỳ báo cáo Local",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "local.growth_view",
+      "label": "Xem tăng trưởng Local",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.photo",
+      "label": "Cập nhật ảnh địa điểm",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.post_create",
+      "label": "Tạo bài đăng Map",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.post_delete",
+      "label": "Xóa bài đăng Map",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.post_edit",
+      "label": "Sửa bài đăng Map",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.view"
+      ],
+      "key": "local.products",
+      "label": "Quản lý sản phẩm/dịch vụ Map",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "local.report",
+      "label": "Xem báo cáo local",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "local.review",
+      "label": "Xem review",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.review",
+        "local.view"
+      ],
+      "key": "local.review_create",
+      "label": "Thêm review thủ công",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.review",
+        "local.view"
+      ],
+      "key": "local.review_reply",
+      "label": "Phản hồi review",
+      "module": "Local"
+    },
+    {
+      "dependencies": [
+        "local.review",
+        "local.view"
+      ],
+      "key": "local.review_status",
+      "label": "Cập nhật trạng thái phản hồi",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "local.view",
+      "label": "Xem local map",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "local.view_all",
+      "label": "Xem tất cả Local Map",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "local.view_mine",
+      "label": "Chỉ xem Local liên quan",
+      "module": "Local"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.accept",
+      "label": "Tiếp nhận yêu cầu được giao",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.create",
+      "label": "Tạo yêu cầu",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.delete_cancelled",
+      "label": "Xóa yêu cầu đã hủy",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.manage",
+      "label": "Quản lý yêu cầu (can thiệp trường hợp đặc biệt)",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.reply_price",
+      "label": "Phản hồi Hỏi Giá",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.reply_progress",
+      "label": "Phản hồi Hỏi Tiến Độ",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.report_all",
+      "label": "Xem báo cáo toàn bộ Hỏi Giá & Tiến Độ",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.report_export",
+      "label": "Xuất báo cáo Excel",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.report_own",
+      "label": "Xem báo cáo cá nhân",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.view_all",
+      "label": "Xem toàn bộ yêu cầu",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [],
+      "key": "oq.view_own",
+      "label": "Xem yêu cầu cá nhân",
+      "module": "Đơn Hàng — Hỏi Giá & Tiến Độ"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.approve",
+      "label": "Duyệt order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.assign",
+      "label": "Gán người phụ trách order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.cancel",
+      "label": "Hủy order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.complete",
+      "label": "Xác nhận hoàn thành order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.create",
+      "label": "Tạo order thiết kế",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.delete",
+      "label": "Xóa order thiết kế",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.deliver",
+      "label": "Bàn giao file",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.edit",
+      "label": "Sửa order thiết kế",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.edit_reviewer",
+      "label": "Chỉnh Người duyệt order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.force_status",
+      "label": "Ép chuyển trạng thái order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.history",
+      "label": "Xem lịch sử xử lý order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.approve",
+      "label": "Duyệt — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.assign",
+      "label": "Phân công — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.cancel",
+      "label": "Hủy — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.complete",
+      "label": "Xác nhận hoàn thành — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.create",
+      "label": "Tạo yêu cầu — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.delete",
+      "label": "Xóa nháp — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.deliver",
+      "label": "Bàn giao — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.edit",
+      "label": "Sửa thông tin — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.edit_reviewer",
+      "label": "Đổi người duyệt — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.force_status",
+      "label": "Can thiệp trạng thái — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.report_view",
+      "label": "Xem báo cáo — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.request_changes",
+      "label": "Yêu cầu sửa — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.restore",
+      "label": "Khôi phục — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.resubmit",
+      "label": "Gửi lại — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.send_request",
+      "label": "Gửi yêu cầu — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.submit",
+      "label": "Gửi duyệt — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.take",
+      "label": "Nhận việc — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.update_draft",
+      "label": "Cập nhật file — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.view",
+      "label": "Xem việc — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.marketing_design.view_all",
+      "label": "Xem toàn bộ — Ấn phẩm Marketing",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.open_delivery",
+      "label": "Mở link file bàn giao",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.approve",
+      "label": "Duyệt — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.assign",
+      "label": "Phân công — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.cancel",
+      "label": "Hủy — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.complete",
+      "label": "Xác nhận hoàn thành — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.create",
+      "label": "Tạo yêu cầu — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.delete",
+      "label": "Xóa nháp — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.deliver",
+      "label": "Bàn giao — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.edit",
+      "label": "Sửa thông tin — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.edit_reviewer",
+      "label": "Đổi người duyệt — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.force_status",
+      "label": "Can thiệp trạng thái — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.report_view",
+      "label": "Xem báo cáo — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.request_changes",
+      "label": "Yêu cầu sửa — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.restore",
+      "label": "Khôi phục — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.resubmit",
+      "label": "Gửi lại — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.send_request",
+      "label": "Gửi yêu cầu — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.submit",
+      "label": "Gửi duyệt — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.take",
+      "label": "Nhận việc — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.update_draft",
+      "label": "Cập nhật file — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.view",
+      "label": "Xem việc — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.order_mockup.view_all",
+      "label": "Xem toàn bộ — Ma-két đơn hàng",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.approve",
+      "label": "Duyệt — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.assign",
+      "label": "Phân công — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.cancel",
+      "label": "Hủy — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.complete",
+      "label": "Xác nhận hoàn thành — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.create",
+      "label": "Tạo yêu cầu — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.delete",
+      "label": "Xóa nháp — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.deliver",
+      "label": "Bàn giao — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.edit",
+      "label": "Sửa thông tin — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.edit_reviewer",
+      "label": "Đổi người duyệt — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.force_status",
+      "label": "Can thiệp trạng thái — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.report_view",
+      "label": "Xem báo cáo — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.request_changes",
+      "label": "Yêu cầu sửa — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.restore",
+      "label": "Khôi phục — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.resubmit",
+      "label": "Gửi lại — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.send_request",
+      "label": "Gửi yêu cầu — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.submit",
+      "label": "Gửi duyệt — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.take",
+      "label": "Nhận việc — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.update_draft",
+      "label": "Cập nhật file — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.view",
+      "label": "Xem việc — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.photo.view_all",
+      "label": "Xem toàn bộ — Chụp ảnh",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.report_view",
+      "label": "Xem báo cáo Order Thiết Kế",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.request_changes",
+      "label": "Yêu cầu sửa order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.restore",
+      "label": "Khôi phục order đã hủy",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.resubmit",
+      "label": "Gửi duyệt lại order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.send_request",
+      "label": "Gửi yêu cầu order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.submit",
+      "label": "Gửi duyệt order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.take",
+      "label": "Nhận order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [
+        "order.view"
+      ],
+      "key": "order.update_draft",
+      "label": "Cập nhật file nháp",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.view",
+      "label": "Xem order thiết kế",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.view_all",
+      "label": "Xem tất cả order",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "order.view_mine",
+      "label": "Chỉ xem order liên quan",
+      "module": "Thiết Kế"
+    },
+    {
+      "dependencies": [],
+      "key": "org.appoint_manager",
+      "label": "Bổ nhiệm/miễn nhiệm vị trí quản lý",
+      "module": "Cơ cấu tổ chức"
+    },
+    {
+      "dependencies": [],
+      "key": "org.assign_staff",
+      "label": "Thêm, bỏ gán và điều chuyển nhân sự",
+      "module": "Cơ cấu tổ chức"
+    },
+    {
+      "dependencies": [],
+      "key": "org.manage_permissions",
+      "label": "Quản lý quy tắc phân quyền tổ chức",
+      "module": "Cơ cấu tổ chức"
+    },
+    {
+      "dependencies": [],
+      "key": "org.manage_structure",
+      "label": "Tạo/sửa đơn vị và chức danh",
+      "module": "Cơ cấu tổ chức"
+    },
+    {
+      "dependencies": [],
+      "key": "org.view",
+      "label": "Xem sơ đồ cơ cấu tổ chức",
+      "module": "Cơ cấu tổ chức"
+    },
+    {
+      "dependencies": [],
+      "key": "org.view_history",
+      "label": "Xem lịch sử phân công và bổ nhiệm",
+      "module": "Cơ cấu tổ chức"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.accept",
+      "label": "Tiếp nhận đơn",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.assign",
+      "label": "Phân công người phụ trách",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.create",
+      "label": "Tạo đơn thủ công",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.manage",
+      "label": "Quản lý đơn hàng",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.report",
+      "label": "Xem báo cáo",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.report_export",
+      "label": "Xuất báo cáo",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.reschedule_propose",
+      "label": "Đề xuất điều chỉnh lịch",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.reschedule_reply",
+      "label": "Phản hồi điều chỉnh lịch",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.settings",
+      "label": "Quản lý cài đặt đơn hàng",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.stage_update",
+      "label": "Cập nhật tiến độ công đoạn",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.supplier",
+      "label": "Quản lý nhà cung cấp",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.task_update",
+      "label": "Cập nhật công việc được giao",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.task_view",
+      "label": "Xem công việc được giao",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.view_all",
+      "label": "Xem toàn bộ đơn",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.view_own",
+      "label": "Xem đơn phụ trách",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "ot.view_unit",
+      "label": "Xem đơn hàng của thành viên đơn vị mình quản lý",
+      "module": "Theo Dõi Đơn Hàng"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.alerts",
+      "label": "Xem việc cần chú ý",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.all_dept",
+      "label": "Xem việc của toàn phòng",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.brand_summary",
+      "label": "Thống kê theo thương hiệu",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.module_summary",
+      "label": "Thống kê theo module",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.own_only",
+      "label": "Chỉ xem việc liên quan đến mình",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.staff_summary",
+      "label": "Thống kê theo người phụ trách",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [],
+      "key": "overview.view",
+      "label": "Xem Tổng Quan",
+      "module": "Tổng Quan"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "pause_content_optimization_schedule",
+      "label": "Tạm dừng/khôi phục lịch tối ưu",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "report.attention",
+      "label": "Xem việc cần chú ý toàn app",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.attention_all",
+      "label": "Xem tất cả cảnh báo",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.by_brand",
+      "label": "Báo cáo theo thương hiệu",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.by_module",
+      "label": "Báo cáo theo module",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.by_staff",
+      "label": "Báo cáo theo người phụ trách",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.export",
+      "label": "Xuất báo cáo",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.growth",
+      "label": "Xem dữ liệu tăng trưởng",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "report.view",
+      "label": "Xem báo cáo tổng quan",
+      "module": "Báo Cáo"
+    },
+    {
+      "dependencies": [],
+      "key": "sale_work.access",
+      "label": "Truy cập Sale Work Zalo",
+      "module": "Sale Work Zalo"
+    },
+    {
+      "dependencies": [],
+      "key": "sale_work.manage_credentials",
+      "label": "Cấp/sửa/thu hồi tài khoản Sale Work của nhân sự",
+      "module": "Sale Work Zalo"
+    },
+    {
+      "dependencies": [],
+      "key": "sale_work.manage_settings",
+      "label": "Cấu hình URL và hiển thị Sale Work",
+      "module": "Sale Work Zalo"
+    },
+    {
+      "dependencies": [],
+      "key": "sale_work.view_audit",
+      "label": "Xem nhật ký quản trị Sale Work (không gồm mật khẩu)",
+      "module": "Sale Work Zalo"
+    },
+    {
+      "dependencies": [
+        "sale_work.access"
+      ],
+      "key": "sale_work.view_own",
+      "label": "Xem/sao chép thông tin đăng nhập của chính mình",
+      "module": "Sale Work Zalo"
+    },
+    {
+      "dependencies": [],
+      "key": "sao.manual_grant",
+      "label": "Cộng Sao thủ công có lý do",
+      "module": "Sao Sứ Việt"
+    },
+    {
+      "dependencies": [],
+      "key": "sao.program_manage",
+      "label": "Quản lý chương trình thưởng Sao",
+      "module": "Sao Sứ Việt"
+    },
+    {
+      "dependencies": [],
+      "key": "sao.shop_manage",
+      "label": "Quản lý quà và xác nhận phát quà",
+      "module": "Sao Sứ Việt"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "set_content_optimization_schedule",
+      "label": "Thiết lập lịch tối ưu từ Bài đã đăng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.account_approve",
+      "label": "Duyệt tài khoản mới",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.account_lock",
+      "label": "Khóa/mở khóa tài khoản",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.account_reject",
+      "label": "Từ chối tài khoản mới",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [],
+      "key": "settings.activity_log",
+      "label": "Xem log thao tác",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.assign_role",
+      "label": "Gán role",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.brand_types",
+      "label": "Quản lý loại thương hiệu",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.catalog",
+      "label": "Quản lý danh mục trạng thái",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.design_types",
+      "label": "Quản lý loại thiết kế",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [],
+      "key": "settings.login_history",
+      "label": "Xem lịch sử đăng nhập",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.people",
+      "label": "Quản lý nhân sự",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.role"
+      ],
+      "key": "settings.permission",
+      "label": "Quản lý ma trận phân quyền",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.plan_topic",
+      "label": "Quản lý Plan / Topic",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.priority",
+      "label": "Quản lý mức ưu tiên",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [],
+      "key": "settings.role",
+      "label": "Tạo / sửa / xóa role",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.social_types",
+      "label": "Quản lý loại kênh social",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.system_edit",
+      "label": "Chỉnh thông tin hệ thống",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.system_view",
+      "label": "Xem thông tin hệ thống",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.task_types",
+      "label": "Quản lý loại task",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.template",
+      "label": "Quản lý template checklist",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.user_create",
+      "label": "Tạo tài khoản",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.user_custom_perm",
+      "label": "Tùy chỉnh quyền riêng theo user",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.user_delete",
+      "label": "Xóa tài khoản",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.user_edit",
+      "label": "Sửa tài khoản",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.user_view"
+      ],
+      "key": "settings.user_reset_password",
+      "label": "Reset mật khẩu",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [],
+      "key": "settings.user_view",
+      "label": "Xem tài khoản",
+      "module": "Tài khoản"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.video_types",
+      "label": "Quản lý loại video",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [],
+      "key": "settings.view",
+      "label": "Xem cài đặt",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.view_presence",
+      "label": "Xem trạng thái online nhân sự",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "settings.view"
+      ],
+      "key": "settings.web_types",
+      "label": "Quản lý loại website",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.assign",
+      "label": "Phân công Sale",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.catalog",
+      "label": "Quản lý danh mục tín hiệu (Nguồn, Loại sản phẩm, Nhóm nhu cầu)",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.create",
+      "label": "Tạo tín hiệu (Marketing)",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.delete",
+      "label": "Xóa tín hiệu (chưa có nhật ký)",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.edit",
+      "label": "Sửa thông tin tín hiệu",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.manage",
+      "label": "Quản lý tín hiệu (sửa, xóa, hủy, mở lại)",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.reassign",
+      "label": "Đổi Sale",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.report",
+      "label": "Xem báo cáo tín hiệu",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.sale",
+      "label": "Kinh doanh — nhận tín hiệu được giao",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [],
+      "key": "signal.view_all",
+      "label": "Xem toàn bộ tín hiệu",
+      "module": "Tín Hiệu Cơ Hội"
+    },
+    {
+      "dependencies": [
+        "social.view"
+      ],
+      "key": "social.assign_owner",
+      "label": "Gán người phụ trách kênh",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.view"
+      ],
+      "key": "social.create",
+      "label": "Tạo kênh social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.view"
+      ],
+      "key": "social.delete",
+      "label": "Xóa kênh social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.view"
+      ],
+      "key": "social.edit",
+      "label": "Sửa kênh social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.growth_view"
+      ],
+      "key": "social.growth_create",
+      "label": "Thêm kỳ báo cáo Social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.growth_view"
+      ],
+      "key": "social.growth_delete",
+      "label": "Xóa kỳ báo cáo Social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.growth_view"
+      ],
+      "key": "social.growth_edit",
+      "label": "Sửa kỳ báo cáo Social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.growth_view"
+      ],
+      "key": "social.growth_open",
+      "label": "Mở link báo cáo Social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.growth_view"
+      ],
+      "key": "social.growth_update",
+      "label": "Cập nhật tăng trưởng social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.growth_view",
+      "label": "Xem tăng trưởng social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.view"
+      ],
+      "key": "social.manage_info",
+      "label": "Quản lý thông tin kênh",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_approve",
+      "label": "Duyệt bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_assign",
+      "label": "Giao bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_cancel",
+      "label": "Hủy bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_complete",
+      "label": "Hoàn thành bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_confirm_published",
+      "label": "Xác nhận đã đăng bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_create",
+      "label": "Tạo bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_delete",
+      "label": "Xóa bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_edit",
+      "label": "Sửa bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_force_status",
+      "label": "Ép chuyển trạng thái bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_history",
+      "label": "Xem lịch sử xử lý bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_move_pending_publish",
+      "label": "Chuyển bài sang chờ đăng",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_request_changes",
+      "label": "Yêu cầu sửa bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_restore",
+      "label": "Khôi phục bài social đã hủy",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_resubmit",
+      "label": "Gửi duyệt lại bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_start",
+      "label": "Bắt đầu làm bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [
+        "social.post_view"
+      ],
+      "key": "social.post_submit",
+      "label": "Gửi duyệt bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.post_view",
+      "label": "Xem bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.post_view_all",
+      "label": "Xem tất cả bài social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.post_view_mine",
+      "label": "Chỉ xem bài liên quan",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.report",
+      "label": "Xem báo cáo social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.view",
+      "label": "Xem kênh social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.view_all",
+      "label": "Xem tất cả kênh social",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "social.view_mine",
+      "label": "Chỉ xem kênh liên quan",
+      "module": "Social"
+    },
+    {
+      "dependencies": [],
+      "key": "system.branding",
+      "label": "Quản lý thông tin hệ thống",
+      "module": "Cài Đặt"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.accept",
+      "label": "Nhận task (legacy)",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.add_note",
+      "label": "Ghi chú xử lý task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.approve_completion",
+      "label": "Xác nhận hoàn thành task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.assign",
+      "label": "Giao task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.cancel",
+      "label": "Hủy task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.complete",
+      "label": "Hoàn thành task (legacy)",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.create",
+      "label": "Tạo task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.delete",
+      "label": "Xóa task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.edit",
+      "label": "Sửa task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.edit_assignee",
+      "label": "Sửa người phụ trách task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.edit_deadline",
+      "label": "Sửa deadline task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.edit_priority",
+      "label": "Sửa mức ưu tiên task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.force_change_status",
+      "label": "Ép chuyển trạng thái task (alias)",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.force_status",
+      "label": "Ép chuyển trạng thái task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.reopen_completed",
+      "label": "Mở lại task đã hoàn thành",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.request_revision",
+      "label": "Yêu cầu sửa task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.restore",
+      "label": "Khôi phục task đã hủy",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.resubmit_completion",
+      "label": "Gửi lại hoàn thành task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.start",
+      "label": "Bắt đầu làm task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.submit_completion",
+      "label": "Gửi hoàn thành task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.update_result",
+      "label": "Cập nhật kết quả task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.update_status",
+      "label": "Cập nhật trạng thái task (legacy)",
+      "module": "Task"
+    },
+    {
+      "dependencies": [],
+      "key": "task.view",
+      "label": "Xem task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.view_all",
+      "label": "Xem tất cả task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.view_created_by_me",
+      "label": "Xem task tôi giao",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.view_history",
+      "label": "Xem lịch sử xử lý task",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "task.view"
+      ],
+      "key": "task.view_mine",
+      "label": "Chỉ xem task liên quan đến mình",
+      "module": "Task"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.approve",
+      "label": "Duyệt video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.assign",
+      "label": "Giao video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.cancel",
+      "label": "Hủy video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.complete",
+      "label": "Hoàn thành video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.confirm_published",
+      "label": "Xác nhận đã đăng video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.create",
+      "label": "Tạo video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.create_design_order",
+      "label": "Tạo order thiết kế từ video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.delete",
+      "label": "Xóa video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.deliver",
+      "label": "Bàn giao video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.edit",
+      "label": "Sửa video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.edit_cut",
+      "label": "Cập nhật bản dựng",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.footage",
+      "label": "Cập nhật footage",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.force_status",
+      "label": "Ép chuyển trạng thái video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.history",
+      "label": "Xem lịch sử xử lý video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.move_editing",
+      "label": "Chuyển sang đang dựng",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.move_shooting",
+      "label": "Chuyển sang quay / thu tư liệu",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.reject",
+      "label": "Yêu cầu sửa video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.restore",
+      "label": "Khôi phục video đã hủy",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.resubmit",
+      "label": "Gửi duyệt lại video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.script_approve",
+      "label": "Duyệt kịch bản",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.script_reject",
+      "label": "Yêu cầu sửa kịch bản",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.script_resubmit",
+      "label": "Gửi duyệt lại kịch bản",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.script_start",
+      "label": "Bắt đầu làm kịch bản",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.script_submit",
+      "label": "Gửi duyệt kịch bản",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "video.view"
+      ],
+      "key": "video.submit",
+      "label": "Gửi duyệt video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [],
+      "key": "video.view",
+      "label": "Xem video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [],
+      "key": "video.view_all",
+      "label": "Xem tất cả video",
+      "module": "Video"
+    },
+    {
+      "dependencies": [],
+      "key": "video.view_mine",
+      "label": "Chỉ xem video liên quan",
+      "module": "Video"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.approve_web_draft",
+      "label": "Duyệt bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.assign_content",
+      "label": "Gán người phụ trách Content",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.assign_seo",
+      "label": "Gán người phụ trách SEO",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.assign_tech",
+      "label": "Gán người phụ trách kỹ thuật",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.backlink_view",
+        "web.view"
+      ],
+      "key": "web.backlink_cost",
+      "label": "Quản lý chi phí Backlink",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.backlink_view",
+        "web.view"
+      ],
+      "key": "web.backlink_create",
+      "label": "Thêm Backlink / PR",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.backlink_view",
+        "web.view"
+      ],
+      "key": "web.backlink_delete",
+      "label": "Xóa Backlink / PR",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.backlink_view",
+        "web.view"
+      ],
+      "key": "web.backlink_edit",
+      "label": "Sửa Backlink / PR",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.backlink_view",
+        "web.view"
+      ],
+      "key": "web.backlink_open",
+      "label": "Mở link bài PR",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.backlink_view",
+        "web.view"
+      ],
+      "key": "web.backlink_status",
+      "label": "Cập nhật trạng thái Backlink",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.backlink_view",
+      "label": "Xem Backlink / PR",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_filter_topic",
+      "label": "Lọc/check theo Topic",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_kw_create",
+      "label": "Thêm từ khóa phụ",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_kw_delete",
+      "label": "Xóa từ khóa phụ",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_kw_edit",
+      "label": "Sửa từ khóa phụ",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_open_url",
+      "label": "Mở URL đích",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_primary",
+      "label": "Cập nhật TOP từ khóa chính",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.checktop_view",
+        "web.view"
+      ],
+      "key": "web.checktop_secondary",
+      "label": "Cập nhật TOP từ khóa phụ",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.checktop_view",
+      "label": "Xem Check TOP",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.complete",
+      "label": "Hoàn thành Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_assign",
+      "label": "Giao content web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_cancel",
+      "label": "Hủy Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_create",
+      "label": "Tạo content web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_delete",
+      "label": "Xóa content web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit",
+      "label": "Sửa content web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit_article_reviewer",
+      "label": "Sửa người duyệt bài",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit_brief",
+      "label": "Sửa brief Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit_deadline",
+      "label": "Sửa deadline Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit_outline_reviewer",
+      "label": "Sửa người duyệt outline",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit_publisher",
+      "label": "Sửa người đăng web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_edit_writer",
+      "label": "Sửa người viết",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_history",
+      "label": "Xem lịch sử xử lý Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_note",
+      "label": "Ghi chú xử lý Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.content_restore",
+      "label": "Khôi phục Content Web đã hủy",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.content_view",
+      "label": "Xem Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.content_view_all",
+      "label": "Xem tất cả Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.content_view_mine",
+      "label": "Chỉ xem Content Web liên quan",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.create",
+      "label": "Tạo dự án web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.delete",
+      "label": "Xóa dự án web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.edit",
+      "label": "Sửa dự án web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.index_view",
+        "web.view"
+      ],
+      "key": "web.edit_published_url",
+      "label": "Sửa link bài đã đăng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.edit_web_draft_note",
+      "label": "Sửa ghi chú bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.edit_web_draft_url",
+      "label": "Chỉnh link bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.entity_view",
+        "web.view"
+      ],
+      "key": "web.entity_create",
+      "label": "Thêm Entity",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.entity_view",
+        "web.view"
+      ],
+      "key": "web.entity_delete",
+      "label": "Xóa Entity",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.entity_view",
+        "web.view"
+      ],
+      "key": "web.entity_edit",
+      "label": "Sửa Entity",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.entity_view",
+        "web.view"
+      ],
+      "key": "web.entity_open_link",
+      "label": "Mở link Entity",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.entity_view_account",
+        "web.entity_view",
+        "web.view"
+      ],
+      "key": "web.entity_reveal_password",
+      "label": "Xem mật khẩu Entity",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.entity_view",
+      "label": "Xem Entity / Social SEO",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.entity_view",
+        "web.view"
+      ],
+      "key": "web.entity_view_account",
+      "label": "Xem thông tin tài khoản Entity",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.force_change_web_draft_status",
+      "label": "Ép chuyển trạng thái bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.force_status",
+      "label": "Ép chuyển trạng thái Content Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.growth_view",
+        "web.view"
+      ],
+      "key": "web.growth_create",
+      "label": "Thêm kỳ báo cáo tăng trưởng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.growth_view",
+        "web.view"
+      ],
+      "key": "web.growth_delete",
+      "label": "Xóa kỳ báo cáo tăng trưởng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.growth_view",
+        "web.view"
+      ],
+      "key": "web.growth_edit",
+      "label": "Sửa kỳ báo cáo tăng trưởng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.growth_view",
+        "web.view"
+      ],
+      "key": "web.growth_open",
+      "label": "Mở link báo cáo GA/GSC",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.growth_view",
+      "label": "Xem Tăng Trưởng Website",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.index_view",
+      "label": "Xem Bài đã đăng / Index",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.keyword_view",
+        "web.view"
+      ],
+      "key": "web.keyword_manage_sheet",
+      "label": "Quản lý Link Sheet Keyword",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.keyword_view",
+        "web.view"
+      ],
+      "key": "web.keyword_open_sheet",
+      "label": "Mở Link Sheet Keyword",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.keyword_view",
+        "web.view"
+      ],
+      "key": "web.keyword_topic_create",
+      "label": "Tạo Topic Keyword",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.keyword_view",
+        "web.view"
+      ],
+      "key": "web.keyword_topic_delete",
+      "label": "Xóa Topic Keyword",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.keyword_view",
+        "web.view"
+      ],
+      "key": "web.keyword_topic_edit",
+      "label": "Sửa Topic Keyword",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.keyword_view",
+      "label": "Xem Nghiên Cứu Keyword",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.manage_info",
+      "label": "Quản lý thông tin dự án",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.move_pending_publish",
+      "label": "Chuyển sang chờ đăng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.open_detail",
+      "label": "Mở chi tiết dự án web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.index_view",
+        "web.view"
+      ],
+      "key": "web.open_published_url",
+      "label": "Mở link bài đã đăng",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.outline_approve",
+      "label": "Duyệt outline",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.outline_reject",
+      "label": "Yêu cầu sửa outline",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.outline_resubmit",
+      "label": "Gửi duyệt lại outline",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.outline_start",
+      "label": "Bắt đầu làm outline",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.outline_submit",
+      "label": "Gửi duyệt outline",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.post_approve",
+      "label": "Duyệt bài",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.post_reject",
+      "label": "Yêu cầu sửa bài",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.post_resubmit",
+      "label": "Gửi duyệt lại bài",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.post_submit",
+      "label": "Gửi duyệt bài",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.post_write_start",
+      "label": "Bắt đầu viết bài",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.publish",
+      "label": "Xác nhận đã đăng web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "web.reopt_assign",
+      "label": "Giao tối ưu lại",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "web.reopt_complete",
+      "label": "Hoàn thành tối ưu lại",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "web.reopt_create",
+      "label": "Tạo đầu việc tối ưu lại",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "web.reopt_delete",
+      "label": "Xóa đầu việc tối ưu lại",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "web.reopt_edit",
+      "label": "Sửa đầu việc tối ưu lại",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.reopt_view",
+        "web.view"
+      ],
+      "key": "web.reopt_status",
+      "label": "Cập nhật trạng thái tối ưu lại",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.reopt_view",
+      "label": "Xem Tối ưu lại Content",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.report_view",
+        "web.view"
+      ],
+      "key": "web.report_action",
+      "label": "Mở cảnh báo nhanh",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.report_view",
+        "web.view"
+      ],
+      "key": "web.report_alerts",
+      "label": "Xem Việc cần chú ý web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.report_view",
+        "web.view"
+      ],
+      "key": "web.report_alerts_all",
+      "label": "Xem tất cả Việc cần chú ý",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.report_view",
+        "web.view"
+      ],
+      "key": "web.report_by_staff",
+      "label": "Báo cáo theo người phụ trách",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.report_view",
+        "web.view"
+      ],
+      "key": "web.report_by_topic",
+      "label": "Báo cáo theo Topic",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.report_view",
+      "label": "Xem Báo Cáo Web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.request_web_draft_revision",
+      "label": "Yêu cầu sửa bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.resubmit_web_draft_review",
+      "label": "Gửi duyệt lại bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.index_view",
+        "web.view"
+      ],
+      "key": "web.select_shared_entity",
+      "label": "Chọn Entity đã share",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.start_web_draft_layout",
+      "label": "Bắt đầu trình bày nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.submit_web_draft_review",
+      "label": "Gửi duyệt bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.tech_view",
+        "web.view"
+      ],
+      "key": "web.tech_check",
+      "label": "Tích checklist Technical SEO",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.tech_view",
+        "web.view"
+      ],
+      "key": "web.tech_edit_desc",
+      "label": "Sửa diễn giải checklist",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.tech_view",
+        "web.view"
+      ],
+      "key": "web.tech_reset",
+      "label": "Reset checklist Technical SEO",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.tech_view",
+        "web.view"
+      ],
+      "key": "web.tech_template",
+      "label": "Quản lý template checklist Technical SEO",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.view"
+      ],
+      "key": "web.tech_view",
+      "label": "Xem Technical SEO",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.index_view",
+        "web.view"
+      ],
+      "key": "web.update_index",
+      "label": "Cập nhật trạng thái index",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.index_view",
+        "web.view"
+      ],
+      "key": "web.update_share",
+      "label": "Cập nhật Share Social",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.index_view",
+        "web.view"
+      ],
+      "key": "web.update_share_date",
+      "label": "Cập nhật ngày share social",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.view",
+      "label": "Xem dự án web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.view_all",
+      "label": "Xem tất cả dự án web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [],
+      "key": "web.view_mine",
+      "label": "Chỉ xem dự án web liên quan đến mình",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.view_web_draft_revision_note",
+      "label": "Xem ghi chú sửa bản nháp web",
+      "module": "Dự Án Web"
+    },
+    {
+      "dependencies": [
+        "web.content_view",
+        "web.view"
+      ],
+      "key": "web.view_web_draft_url",
+      "label": "Xem link bản nháp web",
+      "module": "Dự Án Web"
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION private.is_active(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS (\n    SELECT 1 FROM public.profiles\n    WHERE id = _user_id AND status = 'Đang hoạt động'\n  );\n$function$\n",
+      "identity": "_user_id uuid",
+      "md5": "74e3dda25d8ca7880f227656cd5fcc7b",
+      "name": "is_active",
+      "owner": "postgres",
+      "schema": "private"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION private.is_super_admin(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ SELECT private.is_active(_user_id) AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=_user_id AND role_id='role-super-admin'); $function$\n",
+      "identity": "_user_id uuid",
+      "md5": "687ed3ba3cc6fef74327c3c4b31a0865",
+      "name": "is_super_admin",
+      "owner": "postgres",
+      "schema": "private"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.design_can(_uid uuid, _flow text, _action text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'private'\nAS $function$\n SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR CASE WHEN EXISTS(SELECT 1 FROM unnest(ARRAY['photo','marketing_design','order_mockup']) f WHERE private.has_permission(_uid,'order.'||f||'.'||_action)) THEN _flow IS NOT NULL AND private.has_permission(_uid,'order.'||_flow||'.'||_action) ELSE private.has_permission(_uid,'order.'||_action) END);\n$function$\n",
+      "identity": "_uid uuid, _flow text, _action text",
+      "md5": "d26b2b271c96df8eae1e38e0ef19e8c0",
+      "name": "design_can",
+      "owner": "postgres",
+      "schema": "public"
+    },
+    {
+      "acl": "",
+      "definition": "CREATE OR REPLACE FUNCTION private.design_read(_uid uuid, _creator uuid, _data jsonb, _flow text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'private'\nAS $function$\n SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR (public.design_can(_uid,_flow,'view') AND (public.design_can(_uid,_flow,'view_all') OR public.design_can(_uid,_flow,'assign') OR _creator=_uid OR private.design_person(_uid,_data->>'requester') OR private.design_person(_uid,_data->>'assignee') OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')) OR (coalesce(_data->>'assignee','')='' AND _data->>'status' IN ('Chờ phân công','Mới tạo') AND public.design_can(_uid,_flow,'take')))));\n$function$\n",
+      "identity": "_uid uuid, _creator uuid, _data jsonb, _flow text",
+      "md5": "9c752ee03ed121da2962e5a540c5d24c",
+      "name": "design_read",
+      "owner": "postgres",
+      "schema": "private"
+    },
+    {
+      "acl": "",
+      "definition": "CREATE OR REPLACE FUNCTION private.design_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'private'\nAS $function$\nDECLARE u uuid:=auth.uid(); f text; d jsonb; od jsonb; st text; os text; req boolean; own boolean; rev boolean; mgr boolean; admin boolean; k text; h jsonb; oh jsonb; nm text; ts text:=to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"');\nBEGIN\n IF u IS NULL THEN IF current_setting('role',true) IN ('anon','authenticated') THEN RAISE EXCEPTION 'Chưa đăng nhập' USING ERRCODE='42501'; END IF; IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW; END IF;\n IF NOT private.is_active(u) THEN RAISE EXCEPTION 'Tài khoản không hoạt động' USING ERRCODE='42501'; END IF;\n admin:=private.is_admin(u);\n IF TG_OP='DELETE' THEN\n   IF NOT private.design_read(u,OLD.created_by,OLD.data,OLD.workflow_kind) OR NOT public.design_can(u,OLD.workflow_kind,'delete') THEN RAISE EXCEPTION 'Không có quyền xóa Order' USING ERRCODE='42501'; END IF;\n   IF jsonb_array_length(coalesce(OLD.data->'history','[]'))>0 THEN RAISE EXCEPTION 'Order có lịch sử; hãy hủy thay vì xóa'; END IF; RETURN OLD;\n END IF;\n d:=NEW.data; f:=coalesce(nullif(d->>'workflowKind',''),NEW.workflow_kind);\n IF f IS NOT NULL AND f NOT IN ('photo','marketing_design','order_mockup') THEN RAISE EXCEPTION 'Luồng không hợp lệ'; END IF;\n NEW.workflow_kind:=f; IF f IS NOT NULL THEN d:=d||jsonb_build_object('workflowKind',f); END IF;\n st:=coalesce(d->>'status','Chờ phân công'); IF st='Mới tạo' THEN st:='Chờ phân công'; END IF; IF st='Đang làm' THEN st:='Đang thực hiện'; END IF;\n h:=coalesce(d->'history','[]'); IF jsonb_typeof(h)<>'array' THEN RAISE EXCEPTION 'Lịch sử không hợp lệ'; END IF;\n SELECT coalesce(nullif(full_name,''),username) INTO nm FROM profiles WHERE id=u;\n IF TG_OP='INSERT' THEN\n   IF NOT public.design_can(u,f,'create') THEN RAISE EXCEPTION 'Không có quyền tạo Order trong luồng này' USING ERRCODE='42501'; END IF;\n   IF NEW.created_by IS DISTINCT FROM u THEN RAISE EXCEPTION 'Người tạo không hợp lệ' USING ERRCODE='42501'; END IF;\n   IF NOT admin AND NOT private.design_person(u,d->>'requester') THEN RAISE EXCEPTION 'Người yêu cầu phải là tài khoản tạo Order' USING ERRCODE='42501'; END IF;\n   IF coalesce(d->>'assignee','')<>'' AND NOT public.design_can(u,f,'assign') THEN RAISE EXCEPTION 'Không có quyền phân công' USING ERRCODE='42501'; END IF;\n   IF st NOT IN ('Chờ phân công','Chờ nhận việc') THEN RAISE EXCEPTION 'Trạng thái khởi tạo không hợp lệ'; END IF;\n ELSE\n   od:=OLD.data; os:=od->>'status'; IF os='Mới tạo' THEN os:='Chờ phân công'; END IF; IF os='Đang làm' THEN os:='Đang thực hiện'; END IF;\n   IF NEW.id IS DISTINCT FROM OLD.id OR NEW.created_by IS DISTINCT FROM OLD.created_by OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN RAISE EXCEPTION 'Không được đổi danh tính Order'; END IF;\n   IF NOT private.design_read(u,OLD.created_by,od,OLD.workflow_kind) THEN RAISE EXCEPTION 'Không có quyền xem Order' USING ERRCODE='42501'; END IF;\n   req:=OLD.created_by=u OR private.design_person(u,od->>'requester'); own:=private.design_person(u,od->>'assignee'); rev:=private.design_person(u,coalesce(nullif(od->>'reviewer',''),od->>'requester')); mgr:=admin OR public.design_can(u,OLD.workflow_kind,'assign');\n   oh:=coalesce(od->'history','[]');\n   IF jsonb_array_length(h)<jsonb_array_length(oh) OR EXISTS(SELECT 1 FROM jsonb_array_elements(oh) WITH ORDINALITY e(v,n) WHERE h->((n-1)::int) IS DISTINCT FROM v) THEN RAISE EXCEPTION 'Không được sửa hoặc xóa lịch sử'; END IF;\n   IF f IS DISTINCT FROM OLD.workflow_kind AND NOT (mgr AND public.design_can(u,f,'assign')) THEN RAISE EXCEPTION 'Chỉ điều phối được phân loại luồng' USING ERRCODE='42501'; END IF;\n   IF d->>'requester' IS DISTINCT FROM od->>'requester' AND NOT admin THEN RAISE EXCEPTION 'Không được đổi người yêu cầu'; END IF;\n   IF d->>'assignee' IS DISTINCT FROM od->>'assignee' AND NOT mgr AND NOT (coalesce(od->>'assignee','')='' AND public.design_can(u,f,'take') AND d->>'assignee'=nm) THEN RAISE EXCEPTION 'Không có quyền đổi người thực hiện' USING ERRCODE='42501'; END IF;\n   IF d->>'reviewer' IS DISTINCT FROM od->>'reviewer' AND NOT admin AND NOT (req AND os IN ('Chờ phân công','Chờ nhận việc')) AND NOT public.design_can(u,f,'edit_reviewer') THEN RAISE EXCEPTION 'Không có quyền đổi người duyệt' USING ERRCODE='42501'; END IF;\n   FOREACH k IN ARRAY ARRAY['takenAt','submittedAt','deliveredAt','completedAt','revisions','assignedAt','assignedBy'] LOOP\n    IF d->k IS DISTINCT FROM od->k AND st=os AND NOT (k IN ('assignedAt','assignedBy') AND mgr AND d->>'assignee' IS DISTINCT FROM od->>'assignee') THEN RAISE EXCEPTION 'Không được sửa mốc xử lý lịch sử: %',k; END IF;\n   END LOOP;\n   IF st IS DISTINCT FROM os THEN\n     IF jsonb_array_length(h)<=jsonb_array_length(oh) THEN RAISE EXCEPTION 'Chuyển trạng thái cần thêm lịch sử'; END IF;\n     IF admin OR (mgr AND public.design_can(u,f,'force_status')) THEN NULL;\n     ELSIF d->>'assignee' IS DISTINCT FROM od->>'assignee' AND mgr AND st IN ('Chờ phân công','Chờ nhận việc') THEN NULL;\n     ELSIF os IN ('Chờ phân công','Chờ nhận việc') AND st='Đang thực hiện' AND public.design_can(u,f,'take') AND (own OR (coalesce(od->>'assignee','')='' AND d->>'assignee'=nm)) THEN NULL;\n     ELSIF os='Chờ phân công' AND st='Chờ nhận việc' AND req AND public.design_can(u,f,'send_request') AND coalesce(d->>'assignee','')<>'' THEN NULL;\n     ELSIF os='Đang thực hiện' AND st='Chờ duyệt' AND own AND public.design_can(u,f,'submit') THEN NULL;\n     ELSIF os='Cần sửa' AND st='Chờ duyệt' AND own AND public.design_can(u,f,'resubmit') THEN NULL;\n     ELSIF os='Chờ duyệt' AND st='Đã duyệt' AND rev AND public.design_can(u,f,'approve') THEN NULL;\n     ELSIF os IN ('Chờ duyệt','Đã bàn giao') AND st='Cần sửa' AND rev AND public.design_can(u,f,'request_changes') AND coalesce(trim(d->>'reviewNotes'),'')<>'' THEN NULL;\n     ELSIF os='Đã duyệt' AND st='Đã bàn giao' AND own AND public.design_can(u,f,'deliver') THEN NULL;\n     ELSIF os='Đã bàn giao' AND st='Hoàn thành' AND (rev OR req) AND public.design_can(u,f,'complete') THEN NULL;\n     ELSIF os NOT IN ('Hoàn thành','Đã hủy') AND st='Đã hủy' AND (req OR mgr) AND public.design_can(u,f,'cancel') THEN NULL;\n     ELSIF os='Đã hủy' AND st IN ('Chờ phân công','Chờ nhận việc') AND (req OR mgr) AND public.design_can(u,f,'restore') THEN NULL;\n     ELSE RAISE EXCEPTION 'Không có quyền thực hiện bước này' USING ERRCODE='42501'; END IF;\n     IF st IN ('Đã duyệt','Cần sửa') AND private.design_person(u,d->>'assignee') AND NOT admin THEN RAISE EXCEPTION 'Không được tự duyệt'; END IF;\n     IF st='Đang thực hiện' THEN d:=d||jsonb_build_object('takenAt',ts); END IF;\n     IF st='Chờ duyệt' THEN d:=d||jsonb_build_object('submittedAt',ts); END IF;\n     IF st='Đã bàn giao' THEN d:=d||jsonb_build_object('deliveredAt',ts); END IF;\n     IF st='Hoàn thành' THEN d:=d||jsonb_build_object('completedAt',ts); END IF;\n     IF st='Cần sửa' THEN d:=d||jsonb_build_object('revisions',coalesce((od->>'revisions')::int,0)+1); END IF;\n   END IF;\n   IF (d-ARRAY['status','history','takenAt','submittedAt','deliveredAt','completedAt','revisions','reviewNotes','cancelReason','assignee','assignedAt','assignedBy','reviewer','workflowKind','draftLink','reviseLink','deliverLink']) IS DISTINCT FROM (od-ARRAY['status','history','takenAt','submittedAt','deliveredAt','completedAt','revisions','reviewNotes','cancelReason','assignee','assignedAt','assignedBy','reviewer','workflowKind','draftLink','reviseLink','deliverLink']) AND NOT admin AND NOT ((req OR own OR mgr) AND public.design_can(u,f,'edit')) THEN RAISE EXCEPTION 'Không có quyền sửa thông tin' USING ERRCODE='42501'; END IF;\n END IF;\n IF coalesce(d->>'assignee','')<>'' AND NOT EXISTS(SELECT 1 FROM profiles p WHERE p.status='Đang hoạt động' AND (p.full_name=d->>'assignee' OR p.username=d->>'assignee') AND public.design_can(p.id,f,'take')) THEN IF TG_OP='INSERT' OR d->>'assignee' IS DISTINCT FROM od->>'assignee' THEN RAISE EXCEPTION 'Người thực hiện chưa có quyền nhận luồng này'; END IF; END IF;\n IF st IN ('Chờ duyệt','Đã duyệt') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester') THEN RAISE EXCEPTION 'Người thực hiện không được đồng thời là người duyệt'; END IF;\n NEW.data:=d||jsonb_build_object('status',st); NEW.updated_at:=now(); RETURN NEW;\nEND $function$\n",
+      "identity": "",
+      "md5": "a0c56f4a3b8d9d69d84e155740311243",
+      "name": "design_guard",
+      "owner": "postgres",
+      "schema": "private"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION public.cw_uid(_name text)\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT CASE WHEN count(*) = 1 THEN (array_agg(id))[1] END FROM public.profiles\n  WHERE coalesce(trim(_name),'') <> '' AND (lower(trim(full_name)) = lower(trim(_name)) OR lower(trim(username)) = lower(trim(_name)))\n    AND status = 'Đang hoạt động';\n$function$\n",
+      "identity": "_name text",
+      "md5": "e0f752c969b2e82d8423183187e0bfd7",
+      "name": "cw_uid",
+      "owner": "postgres",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "definition": "CREATE OR REPLACE FUNCTION private.has_permission(_user_id uuid, _permission text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ SELECT private.is_active(_user_id) AND (private.is_super_admin(_user_id) OR CASE\n WHEN (private.org_role_permission_ready(_permission) OR private.mkt_specialty_permission_ready(_permission) OR _permission LIKE 'sale_work.%') AND private.base_tier1(_user_id,_permission)='DENY' THEN false\n WHEN (private.org_role_permission_ready(_permission) OR private.mkt_specialty_permission_ready(_permission) OR _permission LIKE 'sale_work.%') AND private.base_tier1(_user_id,_permission)='ALLOW' THEN true\n WHEN EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND o.mode='replace') THEN EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND _permission=ANY(o.permissions))\n ELSE EXISTS(SELECT 1 FROM user_roles ur JOIN app_roles r ON r.id=ur.role_id WHERE ur.user_id=_user_id AND _permission=ANY(r.permissions))\n   OR EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND o.mode='additive' AND _permission=ANY(o.permissions)) END) $function$\n",
+      "identity": "_user_id uuid, _permission text",
+      "md5": "c57afd7736a787a1cd89d48962f0261e",
+      "name": "has_permission",
+      "owner": "postgres",
+      "schema": "private"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can delete keywords",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "keywords",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can insert keywords",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "keywords",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can read keywords",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "keywords",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can update keywords",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "keywords",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "keywords",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can delete social_posts",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "social_posts",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can insert social_posts",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "social_posts",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can read social_posts",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "social_posts",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can update social_posts",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "social_posts",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "social_posts",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can delete socials",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "socials",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can insert socials",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "socials",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can read socials",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "socials",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can update socials",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "socials",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "socials",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can delete tasks",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "tasks",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can insert tasks",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "tasks",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can read tasks",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "tasks",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can update tasks",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "tasks",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "tasks",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can delete web_topics",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "web_topics",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can insert web_topics",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "web_topics",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can read web_topics",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "web_topics",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can update web_topics",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "web_topics",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "web_topics",
+      "with_check": "private.is_active(auth.uid())"
+    },
+    {
+      "cmd": "DELETE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can delete websites",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "websites",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can insert websites",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "websites",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can read websites",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "websites",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active users can update websites",
+      "qual": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "websites",
+      "with_check": "(private.is_active(auth.uid()) OR private.is_admin(auth.uid()))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "account_active_guard",
+      "qual": "private.is_active(auth.uid())",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "websites",
+      "with_check": "private.is_active(auth.uid())"
+    }
+  ],
+  "tables": [
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,sandbox_exec=ar/postgres}",
+      "name": "keywords",
+      "owner": "postgres",
+      "rls": true
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,sandbox_exec=ar/postgres}",
+      "name": "social_posts",
+      "owner": "postgres",
+      "rls": true
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,sandbox_exec=ar/postgres}",
+      "name": "socials",
+      "owner": "postgres",
+      "rls": true
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,sandbox_exec=ar/postgres}",
+      "name": "tasks",
+      "owner": "postgres",
+      "rls": true
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,sandbox_exec=ar/postgres}",
+      "name": "web_topics",
+      "owner": "postgres",
+      "rls": true
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres,sandbox_exec=ar/postgres}",
+      "name": "websites",
+      "owner": "postgres",
+      "rls": true
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER set_updated_at_keywords BEFORE UPDATE ON public.keywords FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function": "set_updated_at()",
+      "name": "set_updated_at_keywords",
+      "table": "keywords"
+    },
+    {
+      "definition": "CREATE TRIGGER set_updated_at_social_posts BEFORE UPDATE ON public.social_posts FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function": "set_updated_at()",
+      "name": "set_updated_at_social_posts",
+      "table": "social_posts"
+    },
+    {
+      "definition": "CREATE TRIGGER set_updated_at_socials BEFORE UPDATE ON public.socials FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function": "set_updated_at()",
+      "name": "set_updated_at_socials",
+      "table": "socials"
+    },
+    {
+      "definition": "CREATE TRIGGER sao_task_reward AFTER UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION private.sao_task_event()",
+      "function": "private.sao_task_event()",
+      "name": "sao_task_reward",
+      "table": "tasks"
+    },
+    {
+      "definition": "CREATE TRIGGER set_updated_at_tasks BEFORE UPDATE ON public.tasks FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function": "set_updated_at()",
+      "name": "set_updated_at_tasks",
+      "table": "tasks"
+    },
+    {
+      "definition": "CREATE TRIGGER set_updated_at_web_topics BEFORE UPDATE ON public.web_topics FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function": "set_updated_at()",
+      "name": "set_updated_at_web_topics",
+      "table": "web_topics"
+    },
+    {
+      "definition": "CREATE TRIGGER set_updated_at_websites BEFORE UPDATE ON public.websites FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+      "function": "set_updated_at()",
+      "name": "set_updated_at_websites",
+      "table": "websites"
+    }
+  ]
+}
