@@ -1,10 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
 ## P0 organization timeout — 12/11 06:30
-- [ ] Snapshot/trace RPC và stats live; benchmark Super Admin được ủy quyền, không thay Role hoặc dữ liệu.
-- [ ] Stage một candidate tối ưu config/rules một lần, set-based unit rights + Super Admin fast path; checksum/preflight/rollback và parity tests. Không áp SQL khi chưa owner duyệt exact nội dung.
-- [ ] Frontend bounded retry/backoff, cùng-user fail-closed state, focus/invalidation, timing không private payload; browser kiểm tra và publish nếu đạt tương thích backend.
-- [ ] Báo timings thật, mục tiêu cold p95<2s/30 reload, deploy và blocker production verification.
+- [x] Snapshot 8 hàm/ACL/owner và stats; benchmark SA30 REST reads 26 ceiling8s errors; scan units0.098ms; report phân biệt repetition verified vs phase attribution chưa đo.
+- [x] Stage candidate3hàm SHA331ad3a8: config/rules một lần + unit set-based/SA fast path/effective grouped; rollback và preflight.49 tests đạt, fixture p95 old3.30→new1.32ms không suy ra production.
+- [x] Frontend1retry1s/cancel/user+revision/failclosed/skeleton; browser desktop/mobile lỗi→retry→render đạt; buildOK; đã request publish tương thích backend.
+- [ ] Apply SQL và đo production/cold p95<2s/30page reload: BLOCKED owner duyệt exact SHA331ad3a83764d9563605b8c1d7113166751a2cc6f7e8f0ea72099ab753e2ea25; không áp trước.
+- [ ] Production phase profiling/service/nonadmin/full UI: BLOCKED quyền private profiling và phiên nhân viên chưa được cấp phép; không thêm EXECUTE/impersonation.06:41Z HTTP200 nhưng same deploy prefix và screenshot timeout cũ; publish request chưa xác nhận live, lỗi gốc vẫn còn.
 
 ## Giám đốc phương án A — 12/11 06:18
 - [x] Audit RPC/RLS/editor thực; Super Admin preview 2413db79 → apply 06:22:54Z thêm riêng ot.view_unit, removed=[]; audit c781d0a8, snapshot SHA lưu báo cáo.

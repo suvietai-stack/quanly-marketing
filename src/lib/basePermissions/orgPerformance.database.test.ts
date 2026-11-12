@@ -64,3 +64,13 @@ it('changing a source is immediately reflected, without cached actor rules',asyn
  await rules([{permission:'org.view',effect:'ALLOW',unit_id:'block'}]);const second=await value('select org_workspace_read() v');
  expect(first.config.units.map((r:any)=>r.id)).toEqual(['dept']);expect(second.config.units.map((r:any)=>r.id).sort()).toEqual(['block','dept']);
 });
+it('30 isolated candidate reads stay under the eight-second ceiling with output parity',async()=>{
+ await rules([{permission:'org.view',effect:'ALLOW',unit_id:'company'}]);
+ const timings: Record<string,number[]> = {before:[],after:[]};
+ for(const [name,sql] of Object.entries({before:'select workspace_before() v',after:'select org_workspace_read() v'})) {
+  for(let i=0;i<30;i++){const t=performance.now();await value(sql);timings[name].push(performance.now()-t);}
+ }
+ for(const [name,rows] of Object.entries(timings)) console.info('isolated-workspace-benchmark',name,{p95Ms:rows.sort((a,b)=>a-b)[28],maxMs:Math.max(...rows),calls:rows.length});
+ expect(Math.max(...timings.after)).toBeLessThan(8000);
+ // Local fixtures are not a substitute for the requested cold production p95.
+});
