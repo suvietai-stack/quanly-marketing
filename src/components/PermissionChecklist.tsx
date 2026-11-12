@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Search, ShieldAlert, Plus } from 'lucide-react';
 import { PERMISSIONS, allDependencies } from '@/lib/auth';
 import type { EditorPolicy } from '@/lib/basePermissions/permissionEditor';
-import { scopeLabels } from '@/lib/basePermissions/permissionEditor';
+import { permissionControl, rolePermissionPolicy } from '@/lib/basePermissions/permissionEditor';
 import { permissionRisk } from '@/lib/basePermissions/permissionRisk';
 import { BIZ_GROUP, bizSubgroups, bizSourceNote, bizViewNote } from '@/lib/basePermissions/bizPermissionGroups';
 import { Button } from '@/components/ui/button';
@@ -15,17 +15,17 @@ import type { EffectivePermission } from '@/lib/basePermissions/types';
 import { mergePermissionCatalog, type CatalogPermission } from '@/lib/basePermissions/permissionCatalog';
 
 export function PermissionChecklist(props: {
-  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
+  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; source?: string; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
 }) {
   if (props.personal) return <PersonalPermissionChecklist {...props} disabled={props.disabled ?? false} baseline={props.baseline ?? []}/>;
   return <RolePermissionChecklist {...props}/>;
 }
-function RolePermissionChecklist({ value, onChange, policy, disabled = false, personal = false, baseline = [], catalog = [], checks = [] }: {
-  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
+function RolePermissionChecklist({ value, onChange, policy, source = 'position', disabled = false, personal = false, baseline = [], catalog = [], checks = [] }: {
+  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; source?: string; disabled?: boolean; personal?: boolean; baseline?: string[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const available = policy.filter(p => !personal || p.personal);
+  const available = personal ? policy.filter(p => p.personal) : rolePermissionPolicy(policy,source);
   const lookup = new Map(available.map(p => [p.key, p]));
   const merged = mergePermissionCatalog(catalog, PERMISSIONS);
   const definitions = [...merged, ...baseline.filter(k => !merged.some(p => p.key === k)).map(key => ({ key, label: key, group: 'Quyền đang giữ' }))];
@@ -34,13 +34,14 @@ function RolePermissionChecklist({ value, onChange, policy, disabled = false, pe
   const groups = [...new Set(rows.map(p => p.group))];
   const missing = value.flatMap(key => { const parents = allDependencies(key).filter(k => !value.includes(k)); return parents.length ? [{ key, parents }] : []; });
   const label = (key: string) => definitions.find(p => p.key === key)?.label ?? key;
-  const toggle = (key: string, checked: boolean) => onChange(checked ? [...new Set([...value, key])] : value.filter(k => k !== key));
+  const toggle = (key: string, checked: boolean) => { if(disabled || !permissionControl(policy,key,source,baseline,value).editable)return; onChange(checked ? [...new Set([...value, key])] : value.filter(k => k !== key)); };
   return <div className="min-w-0 space-y-3">
     <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-background py-3">
       <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><Input className="pl-9" aria-label={personal ? 'Tìm quyền bổ sung' : 'Tìm quyền trong ma trận'} placeholder="Tìm chức năng, quyền…" value={search} onChange={e => setSearch(e.target.value)}/></div>
       <Select value={filter} onValueChange={setFilter}><SelectTrigger className="w-36" aria-label="Lọc quyền đã chọn"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tất cả</SelectItem><SelectItem value="selected">Đã chọn</SelectItem><SelectItem value="unselected">Chưa chọn</SelectItem><SelectItem value="sensitive">Nhạy cảm</SelectItem></SelectContent></Select>
       <Badge variant="secondary">{value.length} quyền đã tích</Badge>
       <Badge variant="outline">{new Set(definitions.map(p => p.group)).size} module · {definitions.length} quyền</Badge>
+      <Badge variant="outline">{definitions.filter(p=>lookup.has(p.key)).length} có thể cấp · {definitions.filter(p=>!lookup.has(p.key)).length} chưa khả dụng</Badge>
     </div>
     {missing.length > 0 && <details open className="border-l-2 border-warning bg-warning/10 px-3 py-2 text-sm"><summary className="cursor-pointer font-medium">{missing.length} quyền cần quyền truy cập đi kèm</summary><div className="space-y-2 pt-2">{missing.map(m => <div key={m.key}><p>{label(m.key)}: cần {m.parents.map(label).join(', ')}.</p><p className="text-xs text-muted-foreground">Có thể không dùng được chức năng nếu thiếu quyền truy cập. Điều kiện nghiệp vụ vẫn được kiểm tra riêng.</p><Button size="sm" variant="ghost" disabled={disabled || m.parents.some(k => !lookup.has(k))} onClick={() => onChange([...new Set([...value, ...m.parents])])}><Plus className="mr-1 size-3"/>Chọn quyền đi kèm</Button>{m.parents.some(k => !lookup.has(k)) && <p className="text-xs text-muted-foreground">Quyền đi kèm cần cấu hình an toàn trước.</p>}</div>)}</div></details>}
     <div className="divide-y border-y">{groups.map(group => {
@@ -53,10 +54,10 @@ function RolePermissionChecklist({ value, onChange, policy, disabled = false, pe
           const items = rows.filter(p => p.group === group && (group !== BIZ_GROUP || (sub.name === 'Khác' ? !bizSubgroups.some(g => (g.keys as readonly string[]).includes(p.key)) : sub.keys.includes(p.key))));
           if (!items.length) return null;
           const grid = <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">{items.map(p => {
-            const safe = lookup.get(p.key); const checked = value.includes(p.key); const held = baseline.includes(p.key);
+            const safe = lookup.get(p.key); const checked = value.includes(p.key); const control = permissionControl(policy,p.key,source,baseline,value);
             return <label key={p.key} className="flex min-w-0 items-start gap-3 rounded-md px-2 py-3 hover:bg-muted/40">
-              <Checkbox className="mt-0.5 shrink-0" aria-label={p.label} checked={checked} disabled={disabled || (!safe && !held && !checked)} onCheckedChange={v => toggle(p.key, v === true)}/>
-              <span className="min-w-0 text-sm"><span className="block break-words font-medium">{p.label}</span><span className="mt-1 block break-all text-xs text-muted-foreground">{p.key}</span><span className="mt-1 block text-xs text-muted-foreground">{safe ? scopeLabels[safe.scope] : checks.find(c => c.key === p.key)?.reason || (held ? 'Đang giữ · chỉ thu hồi; nguồn cấp chưa được kiểm chứng.' : 'Máy chủ chưa cho phép quyền này từ nguồn Role hiện tại; chưa thể cấp.')}</span>{permissionRisk(p.key) && <span className="mt-1 block text-xs text-warning">{permissionRisk(p.key)}</span>}{!safe && <ShieldAlert className="mt-1 size-3 text-muted-foreground"/>}</span>
+              <Checkbox className="mt-0.5 shrink-0" aria-label={p.key} data-permission-key={p.key} data-capability={control.state} checked={checked} disabled={disabled || !control.editable} onCheckedChange={v => toggle(p.key, v === true)}/>
+              <span className="min-w-0 text-sm"><span className="block break-words font-medium">{p.label}</span><span className="mt-1 block break-all text-xs text-muted-foreground">{p.key}</span><span className="mt-1 block text-xs text-muted-foreground">{control.reason}{!control.ready && checks.find(c => c.key === p.key)?.reason ? ` · ${checks.find(c => c.key === p.key)?.reason}` : ''}</span>{permissionRisk(p.key) && <span className="mt-1 block text-xs text-warning">{permissionRisk(p.key)}</span>}{!safe && <ShieldAlert className="mt-1 size-3 text-muted-foreground"/>}</span>
             </label>;
           })}</div>;
           return sub.name ? <details key={sub.name} open className="border-l pl-3"><summary className="cursor-pointer py-2 text-sm font-medium">{sub.name}<span className="ml-2 font-normal text-muted-foreground">{items.filter(p => value.includes(p.key)).length}/{items.length}</span></summary>{grid}</details> : <div key="all">{grid}</div>;

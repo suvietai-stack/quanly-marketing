@@ -23,7 +23,7 @@ export function presetPermissions(keys: readonly string[], policy: EditorPolicy[
   return [...new Set(keys.filter(k => allowed.has(k)))];
 }
 export function rolePermissionPolicy(policy:EditorPolicy[],kind:string):EditorPolicy[]{
-  return policy.filter(p=>kind==='common'?p.common_ready===true&&p.scope==='own':kind==='marketing_task'?p.task_ready:p.position_ready);
+  return policy.filter(p=>permissionAvailability(policy,p.key,kind).ready);
 }
 export function permissionDelta(before: string[], after: string[]) {
   return { added: [...new Set(after)].filter(k => !before.includes(k)), removed: [...new Set(before)].filter(k => !after.includes(k)) };
@@ -38,4 +38,16 @@ export function permissionAvailability(policy: EditorPolicy[], key: string, sour
   if (row?.scope === 'unit' && source !== 'position') return { ready: false, reason: 'Nguồn này chưa truyền phạm vi đơn vị tới cổng kiểm tra quyền; chưa thể cấp.' };
   if (row) return { ready: false, reason: 'Quyền có trong chính sách máy chủ nhưng nguồn cấp này chưa được kiểm chứng; chưa thể cấp.' };
   return { ready: false, reason: 'Máy chủ chưa công bố quyền này trong chính sách cấp quyền đã kiểm chứng; chưa thể cấp.' };
+}
+export function permissionControl(policy: EditorPolicy[], key: string, source: string, baseline: string[], value: string[]) {
+  const availability = permissionAvailability(policy,key,source);
+  const row = policy.find(p=>p.key===key);
+  const held = baseline.includes(key);
+  return { ...availability, selected: value.includes(key), editable: availability.ready || held,
+    state: availability.ready ? 'selectable' : held ? 'retained' : row?.scope === 'unit' ? 'scope_required' : 'unavailable',
+    reason: availability.ready ? availability.reason : held ? `Đang giữ · có thể giữ hoặc thu hồi. ${availability.reason}` : availability.reason };
+}
+/** Only additions need capability readiness; retained historic keys stay subject to server validation. */
+export function unsupportedPermissionAdditions(policy: EditorPolicy[], source: string, baseline: string[], value: string[]) {
+  return [...new Set(value)].filter(key=>!baseline.includes(key)&&!permissionAvailability(policy,key,source).ready);
 }

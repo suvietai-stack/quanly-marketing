@@ -1,0 +1,511 @@
+key	module	classification	evidence_or_blocker
+att.create	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+att.edit_own	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+att.manage	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+att.reconcile	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+att.report	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+att.settings	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+att.view_all	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+att.view_own	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+att.witness	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+biz.approval_view	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_access	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_archive	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_edit_other	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_export	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_settings	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_transfer	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_use	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.crm_view_scope	CRM Khách Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.dashboard_public	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.deadline_manage	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.dept_manage	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.goal_approve	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.goal_submit	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.kr_manage	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.org_manage	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.plan_approve	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.plan_request_revision	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.plan_submit	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.report_approve	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.report_submit	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.view_all	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.view_dept	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.view_own	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+biz.workflow_manage	Quản trị Kinh doanh	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.contact	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.create	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.delete	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.docs	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.edit	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.identity	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.notes	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.profile	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.staff	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.view	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.view_all	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+brand.view_channels	Thương Hiệu	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+create_content_optimization	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+create_scheduled_content_optimization	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.bank_config	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.claim	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.gmf_config	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.manage	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.manual_create	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.manual_manage	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.manual_view	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.reconcile	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.remind	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.view	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.view_totals	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+finance.incoming.view_unit	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.advance.approve	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.advance.pay	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.advance.report	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.advance.settings	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.advance.view_scope	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.payment.approve	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.payment.pay	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.payment.report	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.payment.settings	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.payment.view_scope	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.salary.approve	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.salary.deduct	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.salary.pay	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.salary.report	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.salary.settings	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+fr.salary.view_scope	Tài Chính Kế Toán	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+integration.facebook_leads	Tích hợp Marketing	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+integration.website_forms	Tích hợp Marketing	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+k3.comment	Quản lý 3K	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+k3.settings	Quản lý 3K	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+k3.use	Quản lý 3K	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+k3.view_scope	Quản lý 3K	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.goal_archive	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.goal_create	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.goal_delete	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.goal_edit	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.kr_adjust	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.kr_assign	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.period_manage	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.report	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.report_export	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.view_all	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+kpi.view_own	KPI / Giao KPI	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.approve	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.cancel_handle	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.create	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+leave.create_for	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.edit_others	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.edit_own	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+leave.exception	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.export	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.reassign	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.recall	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+leave.report	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.settings	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.view_all	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.view_assigned	Đơn Từ & Phê Duyệt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+leave.view_own	Đơn Từ & Phê Duyệt	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+leave.view_unit	Đơn Từ & Phê Duyệt	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+local.assign_owner	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.create	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.delete	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.edit	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.growth_create	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.growth_delete	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.growth_edit	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.growth_view	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.photo	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.post_create	Local	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+local.post_delete	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.post_edit	Local	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+local.products	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.report	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.review	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.review_create	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.review_reply	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.review_status	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.view	Local	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+local.view_all	Local	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+local.view_mine	Local	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+oq.accept	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.create	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.delete_cancelled	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.manage	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.reply_price	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.reply_progress	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.report_all	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.report_export	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.report_own	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.view_all	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+oq.view_own	Đơn Hàng — Hỏi Giá & Tiến Độ	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.approve	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.assign	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.cancel	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.complete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.create	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.delete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.deliver	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.edit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.edit_reviewer	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.force_status	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.history	Thiết Kế	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+order.marketing_design.approve	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.assign	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.cancel	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.complete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.create	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.delete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.deliver	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.edit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.edit_reviewer	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.force_status	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.report_view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.request_changes	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.restore	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.resubmit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.send_request	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.submit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.take	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.update_draft	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.marketing_design.view_all	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.open_delivery	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.approve	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.assign	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.cancel	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.complete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.create	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.delete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.deliver	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.edit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.edit_reviewer	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.force_status	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.report_view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.request_changes	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.restore	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.resubmit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.send_request	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.submit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.take	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.update_draft	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.order_mockup.view_all	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.approve	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.assign	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.cancel	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.complete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.create	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.delete	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.deliver	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.edit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.edit_reviewer	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.force_status	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.report_view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.request_changes	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.restore	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.resubmit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.send_request	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.submit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.take	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.update_draft	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.photo.view_all	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.report_view	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.request_changes	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.restore	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.resubmit	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.send_request	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.submit	Thiết Kế	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+order.take	Thiết Kế	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+order.update_draft	Thiết Kế	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+order.view	Thiết Kế	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+order.view_all	Thiết Kế	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+order.view_mine	Thiết Kế	reviewed_own_candidate	Existing personal+position own contract; candidate permits same key from all ordinary Role kinds; native owner/workflow still authoritative.
+org.appoint_manager	Cơ cấu tổ chức	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+org.assign_staff	Cơ cấu tổ chức	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+org.manage_permissions	Cơ cấu tổ chức	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+org.manage_structure	Cơ cấu tổ chức	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+org.view	Cơ cấu tổ chức	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+org.view_history	Cơ cấu tổ chức	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+ot.accept	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.assign	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.create	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.manage	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.report	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.report_export	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.reschedule_propose	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.reschedule_reply	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.settings	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.stage_update	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.supplier	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.task_update	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.task_view	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.view_all	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.view_own	Theo Dõi Đơn Hàng	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+ot.view_unit	Theo Dõi Đơn Hàng	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+overview.alerts	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+overview.all_dept	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+overview.brand_summary	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+overview.module_summary	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+overview.own_only	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+overview.staff_summary	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+overview.view	Tổng Quan	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+pause_content_optimization_schedule	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.attention	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.attention_all	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.by_brand	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.by_module	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.by_staff	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.export	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.growth	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+report.view	Báo Cáo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sale_work.access	Sale Work Zalo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sale_work.manage_credentials	Sale Work Zalo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sale_work.manage_settings	Sale Work Zalo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sale_work.view_audit	Sale Work Zalo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sale_work.view_own	Sale Work Zalo	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sao.manual_grant	Sao Sứ Việt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sao.program_manage	Sao Sứ Việt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+sao.shop_manage	Sao Sứ Việt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+set_content_optimization_schedule	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.account_approve	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.account_lock	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.account_reject	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.activity_log	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.assign_role	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.brand_types	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.catalog	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.design_types	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.login_history	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.people	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.permission	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.plan_topic	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.priority	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.role	Tài khoản	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+settings.social_types	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.system_edit	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.system_view	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.task_types	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.template	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.user_create	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.user_custom_perm	Tài khoản	privileged_audit_required	SuperAdmin/bootstrap and anti-self-promotion gates must remain; not added by candidate.
+settings.user_delete	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.user_edit	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.user_reset_password	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.user_view	Tài khoản	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.video_types	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.view	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.view_presence	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+settings.web_types	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.assign	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.catalog	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.create	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.delete	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.edit	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.manage	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.reassign	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.report	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.sale	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+signal.view_all	Tín Hiệu Cơ Hội	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.assign_owner	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.create	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.delete	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.edit	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.growth_create	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.growth_delete	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.growth_edit	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.growth_open	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.growth_update	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.growth_view	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.manage_info	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_approve	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_assign	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_cancel	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_complete	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_confirm_published	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_create	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.post_delete	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_edit	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.post_force_status	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_history	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_move_pending_publish	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_request_changes	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_restore	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_resubmit	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_start	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.post_submit	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.post_view	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.post_view_all	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.post_view_mine	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.report	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.view	Social	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+social.view_all	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+social.view_mine	Social	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+system.branding	Cài Đặt	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.accept	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.add_note	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.approve_completion	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.assign	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.cancel	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.complete	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.create	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.delete	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.edit	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.edit_assignee	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.edit_deadline	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.edit_priority	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.force_change_status	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.force_status	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.reopen_completed	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.request_revision	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.restore	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.resubmit_completion	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.start	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.submit_completion	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.update_result	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.update_status	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.view	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.view_all	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.view_created_by_me	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.view_history	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+task.view_mine	Task	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.approve	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.assign	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.cancel	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.complete	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.confirm_published	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.create	Video	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+video.create_design_order	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.delete	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.deliver	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.edit	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.edit_cut	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.footage	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.force_status	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.history	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.move_editing	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.move_shooting	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.reject	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.restore	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.resubmit	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.script_approve	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.script_reject	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.script_resubmit	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.script_start	Video	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+video.script_submit	Video	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+video.submit	Video	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+video.view	Video	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+video.view_all	Video	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+video.view_mine	Video	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.approve_web_draft	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.assign_content	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.assign_seo	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.assign_tech	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_cost	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_open	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_status	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.backlink_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_filter_topic	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_kw_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_kw_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_kw_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_open_url	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_primary	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_secondary	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.checktop_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.complete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_assign	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_cancel	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit_article_reviewer	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit_brief	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit_deadline	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit_outline_reviewer	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit_publisher	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_edit_writer	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_history	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_note	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_restore	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_view	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.content_view_all	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.content_view_mine	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.edit_published_url	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.edit_web_draft_note	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.edit_web_draft_url	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_open_link	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_reveal_password	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.entity_view_account	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.force_change_web_draft_status	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.force_status	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.growth_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.growth_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.growth_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.growth_open	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.growth_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.index_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.keyword_manage_sheet	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.keyword_open_sheet	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.keyword_topic_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.keyword_topic_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.keyword_topic_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.keyword_view	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.manage_info	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.move_pending_publish	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.open_detail	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.open_published_url	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.outline_approve	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.outline_reject	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.outline_resubmit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.outline_start	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.outline_submit	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.post_approve	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.post_reject	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.post_resubmit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.post_submit	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.post_write_start	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.publish	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_assign	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_complete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_create	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_delete	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_edit	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_status	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.reopt_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.report_action	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.report_alerts	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.report_alerts_all	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.report_by_staff	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.report_by_topic	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.report_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.request_web_draft_revision	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.resubmit_web_draft_review	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.select_shared_entity	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.start_web_draft_layout	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.submit_web_draft_review	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.tech_check	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.tech_edit_desc	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.tech_reset	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.tech_template	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.tech_view	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.update_index	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.update_share	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.update_share_date	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.view	Dự Án Web	scope_or_source_contract_pending	Existing editor contract retained; kind/individual universal propagation and native scope need independent parity.
+web.view_all	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.view_mine	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.view_web_draft_revision_note	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.
+web.view_web_draft_url	Dự Án Web	native_audit_pending	Not in reviewed editor policy; readiness predicate alone is not proof of target-scoped enforcement.

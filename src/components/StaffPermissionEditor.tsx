@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PermissionChecklist } from '@/components/PermissionChecklist';
-import { permissionEditorApi } from '@/lib/basePermissions/permissionEditor';
+import { permissionEditorApi, unsupportedPermissionAdditions } from '@/lib/basePermissions/permissionEditor';
 import { toast } from 'sonner';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
 import { readPermissionCatalog } from '@/lib/basePermissions/permissionCatalog';
@@ -40,6 +40,7 @@ export function StaffPermissionEditor({ userId, effective, effectiveError }: { u
   const current = draft ?? q.data.permissions ?? [];
   const label = (key: string) => PERMISSIONS.find(p => p.key === key)?.label ?? catalog.data?.find(p => p.key === key)?.label ?? key;
   const openPreview = () => run(async () => {
+    if(!policy.data || unsupportedPermissionAdditions(policy.data,'personal',q.data?.permissions??[],current).length) throw new Error('Bản nháp có quyền mới chưa được máy chủ cho phép.');
     const { data, error } = await supabase.rpc('account_supplement_preview', { _target: userId, _permissions: current });
     if (error) throw error;
     setPreview(data as unknown as PersonalPreview);
