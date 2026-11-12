@@ -1,5 +1,10 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 tạo 3K — 12/11 02:38, ưu tiên mới
+- [x] Khôi phục Cơ bản/Nâng cao rõ đầu form, cùng state/payload đúng lựa chọn, không mất KF/KPI;6browser desktop/iPad/mobile đạt, realPreviewAdmin mởform khônglưu.
+- [x] Snapshot/checksum RPC+rollback4triggers; SQLtargetedpending,25-user125→5captures/35→10ms isolated,247tests3K đạt; live142/140/139/851giữ, khôngSQLapply/Role/Signalschanges. Report docs/k3-create-p0-2026-11-12/report.md.
+- [ ] Áp DB chờ owner duyệt riêng; nghiệm thu live scoped sau áp, chưa Publish.
+
 ## P0 Tín hiệu tái timeout — 12/11/2026, ưu tiên cao nhất
 - [x] Đo production/Preview Admin desktop/iPad: counts963–5643ms/page1440–7256ms, không duplicate/57014 trong mẫu; scoped user chưa có phiên. App heartbeat/celebration ở mẫu đầu; probe sau chặn ghi tự động.
 - [x] SQL scope InitPlan self-only pending + exact snapshot/rollback;5tests mới+88hồi quy đạt,665-row isolated35→3ms,8sort/filter/paging parity; report docs/signals-p0-2026-11-12/report.md.

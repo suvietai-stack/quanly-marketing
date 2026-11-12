@@ -6,6 +6,13 @@ export interface K3CreationKf {
   execution_schedule: { mode: 'daily' | 'dates' | 'weekdays' | 'weekly'; dates?: string[]; weekdays?: number[]; start_time?: string; end_time?: string };
 }
 export const newCreationKf = (): K3CreationKf => ({ key: crypto.randomUUID(), name: '', kpis: [{ ...newK3KpiDraft(), measure: 'binary' }], start_date: '', due_date: '', start_time: '', due_time: '', inherit_timeline: true, execution_schedule: { mode: 'daily' } });
+export type K3CreationMode = 'basic' | 'advanced';
+export function canUseBasicCreation(kfs: K3CreationKf[], name: string, memberCount = 0) {
+  const k = kfs[0]; const p = k?.kpis[0];
+  return kfs.length === 1 && k?.kpis.length === 1 && k.inherit_timeline
+    && k.execution_schedule.mode === 'daily' && !k.execution_schedule.start_time && !k.execution_schedule.end_time
+    && (!k.name || k.name === name) && !!p && ['binary','cumulative'].includes(p.measure) && memberCount === 0;
+}
 export function inheritKpi(kpi: K3KpiDraft, name: string, expected: string, start: string, end: string) {
   return { ...kpi, name: kpi.name.trim() || name, config: { ...kpi.config,
     ...(kpi.measure === 'binary' && !kpi.config.valid_condition?.trim() ? { valid_condition: expected.trim() || name } : {}),

@@ -65,6 +65,9 @@ beforeAll(async () => {
   await db.exec(readFileSync('drizzle/migrations/0239_k3_configured_action_revision_alias.sql','utf8'));
   const dailyContext = readFileSync('drizzle/migrations/0242_k3_daily_context_and_cancelled_visibility.sql','utf8');
   await db.exec(dailyContext.slice(0, dailyContext.indexOf(" def:=pg_get_functiondef('public.k3_kpi_day_read")) + 'END $patch$;');
+  await db.exec('ALTER TABLE k3_goals ADD COLUMN creation_mode text;');
+  const live=JSON.parse(readFileSync('docs/k3-create-p0-2026-11-12/functions.json','utf8'));
+  await db.exec(live.find((f:{signature:string})=>f.signature==='k3_quick_create(jsonb)').definition);
 }, 30000);
 
 afterAll(() => db.close());
@@ -234,4 +237,25 @@ it('simple name-only binary criterion stores one KG/KF/KPI without changing its 
  const r=await create(payload({expected_result:'Soạn báo giá khách sạn Vinh Nghệ An',save_valid:true,start_time:'',due_time:''}));
  expect(await val(`SELECT config->>'valid_condition' v FROM k3_kpis WHERE action_id IN(SELECT id FROM k3_actions WHERE goal_id='${r.goal_id}')`)).toBe('Soạn báo giá khách sạn Vinh Nghệ An');
  expect(await val(`SELECT count(*)::int v FROM k3_kpis WHERE action_id IN(SELECT id FROM k3_actions WHERE goal_id='${r.goal_id}')`)).toBe(1);
+});
+
+it('ambiguous committed response retry keeps one KG/KF/KPI and explicit advanced mode',async()=>{
+ const p=payload({creation_mode:'advanced',save_valid:true,kfs:[{name:'Soạn báo giá',kpis:[{measure:'binary'}]}]});
+ const committed=await create(p); // Response lost after commit: same request key is retried.
+ const retry=await create(p);
+ expect(retry.goal_id).toBe(committed.goal_id);expect(retry.duplicated).toBe(true);
+ expect(await val(`SELECT creation_mode v FROM k3_goals WHERE id='${committed.goal_id}'`)).toBe('advanced');
+ expect(await val(`SELECT count(*)::int v FROM k3_actions WHERE goal_id='${committed.goal_id}'`)).toBe(1);
+ expect(await val(`SELECT count(*)::int v FROM k3_kpis WHERE action_id IN(SELECT id FROM k3_actions WHERE goal_id='${committed.goal_id}')`)).toBe(1);
+});
+it('statement cancellation midway rolls back structure and permits retry of the same request key',async()=>{
+ const p=payload({save_valid:true}); const before=await val('SELECT count(*)::int v FROM k3_goals');
+ await db.exec(`CREATE FUNCTION private.fixture_cancel() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'canceling statement due to statement timeout' USING ERRCODE='57014';END$$;
+ CREATE TRIGGER fixture_cancel AFTER INSERT ON k3_kpis FOR EACH ROW EXECUTE FUNCTION private.fixture_cancel();`);
+ await expect(create(p)).rejects.toMatchObject({code:'57014'});
+ expect(await val('SELECT count(*)::int v FROM k3_goals')).toBe(before);
+ expect(await val(`SELECT count(*)::int v FROM k3_actions WHERE request_key='${p.request_key}'`)).toBe(0);
+ await db.exec('DROP TRIGGER fixture_cancel ON k3_kpis;');
+ const retry=await create(p);expect(retry.duplicated).toBe(false);
+ expect(await val(`SELECT count(*)::int v FROM k3_goals WHERE request_key='${p.request_key}'`)).toBe(1);
 });

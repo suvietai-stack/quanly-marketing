@@ -83,3 +83,45 @@ it('summary deadline remains frozen when the current setting changes',async()=>{
  await db.exec(`UPDATE k3_settings SET summary_by='20:00'`);
  expect(await val(`SELECT summary_deadline_at::text v FROM k3_plan_checkpoints LIMIT 1`)).toBe(deadline);
 });
+
+it('targeted trigger preserves real checkpoint snapshots while avoiding unrelated users and covers reassignment',async()=>{
+ const snapshot=JSON.parse(readFileSync('docs/k3-create-p0-2026-11-12/functions.json','utf8'));
+ await db.exec(snapshot.find((f:{signature:string})=>f.signature==='private.k3_plan_changed()').definition);
+ await db.exec(`ALTER TABLE k3_actions ADD COLUMN user_id uuid DEFAULT '${user}',ADD COLUMN assignee_id uuid DEFAULT '${user}';
+ ALTER TABLE k3_goal_members ADD COLUMN goal_id uuid,ADD COLUMN user_id uuid,ADD COLUMN status text;
+ ALTER TABLE k3_action_collaborators ADD COLUMN action_id uuid,ADD COLUMN user_id uuid;
+ CREATE OR REPLACE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+ CREATE OR REPLACE FUNCTION biz_participant(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT true$$;
+ INSERT INTO profiles SELECT ('10000000-0000-0000-0001-'||lpad(i::text,12,'0'))::uuid,'Fixture employee','Đang hoạt động' FROM generate_series(1,24) i;
+ ALTER FUNCTION private.k3_plan_capture(uuid) RENAME TO original_capture;
+ CREATE TABLE capture_calls(user_id uuid);
+ CREATE FUNCTION private.k3_plan_capture(u uuid) RETURNS void LANGUAGE plpgsql AS $$BEGIN INSERT INTO capture_calls VALUES(u);PERFORM private.original_capture(u);END$$;`);
+ // Establish everyone's checkpoint with the unchanged authoritative capture first.
+ await db.exec('SELECT private.k3_plan_capture(id) FROM profiles;TRUNCATE capture_calls;');
+ const initial=(await db.query('SELECT user_id,initial_status,initial_snapshot,deadline_at,summary_deadline_at FROM k3_plan_checkpoints ORDER BY user_id')).rows;
+ const t=performance.now();
+ for(let i=0;i<5;i++) await db.exec(`UPDATE k3_goals SET updated_at=updated_at WHERE id='${goal}'`);
+ const before=performance.now()-t;
+ expect(await val('SELECT count(*)::int v FROM capture_calls')).toBe(125);
+ await db.exec('TRUNCATE capture_calls;');
+ await db.exec(readFileSync('docs/pending/k3_plan_targeted_capture.sql','utf8'));
+ const start=performance.now();
+ for(let i=0;i<5;i++) await db.exec(`UPDATE k3_goals SET updated_at=updated_at WHERE id='${goal}'`);
+ const after=performance.now()-start;
+ expect(await val('SELECT count(*)::int v FROM capture_calls')).toBe(5);
+ expect((await db.query('SELECT user_id,initial_status,initial_snapshot,deadline_at,summary_deadline_at FROM k3_plan_checkpoints ORDER BY user_id')).rows).toEqual(initial);
+ const other='10000000-0000-0000-0001-000000000001';
+ await db.exec(`TRUNCATE capture_calls;UPDATE k3_actions SET assignee_id='${other}' WHERE id='${action}';`);
+ expect((await db.query('SELECT DISTINCT user_id FROM capture_calls ORDER BY user_id')).rows).toEqual([{user_id:user},{user_id:other}]);
+ await db.exec(`TRUNCATE capture_calls;INSERT INTO k3_goal_members VALUES(gen_random_uuid(),'${goal}','${other}','accepted');DELETE FROM k3_goal_members WHERE user_id='${other}';`);
+ expect(await val(`SELECT count(*)::int v FROM capture_calls WHERE user_id='${other}'`)).toBe(2);
+ await db.exec(`TRUNCATE capture_calls;UPDATE k3_goals SET updated_at=updated_at WHERE id='${goal}' AND false;`);
+ expect(await val('SELECT count(*)::int v FROM capture_calls')).toBe(0);
+ // No broad eligibility changes; existing non-Biz/denied guards still exclude.
+ await db.exec(`CREATE OR REPLACE FUNCTION k3_can(uuid,text) RETURNS boolean LANGUAGE sql AS $$SELECT $1<>'${other}'::uuid$$;
+ TRUNCATE capture_calls;UPDATE k3_actions SET revision=revision+1 WHERE id='${action}';`);
+ expect(await val(`SELECT count(*)::int v FROM capture_calls WHERE user_id='${other}'`)).toBe(0);
+ console.log('isolated 25-user five-statement checkpoint benchmark',Math.round(before),'->',Math.round(after),'ms; 125 -> 5 captures');
+ await db.exec(readFileSync('docs/k3-create-p0-2026-11-12/rollback.sql','utf8'));
+ expect(await val(`SELECT md5(pg_get_functiondef('private.k3_plan_changed()'::regprocedure)) v`)).toBe('747bba016fb854adde9ea58fe6e11336');
+},60000);

@@ -1,8 +1,15 @@
 import { expect, it } from 'vitest';
-import { creationError, creationKfPayload, inheritKpi, newCreationKf, timelineError } from './k3Creation';
+import { canUseBasicCreation, creationError, creationKfPayload, inheritKpi, newCreationKf, timelineError } from './k3Creation';
 
 it('same-day 09:30 to 11:00 is valid', () => {
   expect(timelineError('2026-11-05', '2026-11-05', '09:30', '11:00')).toBe('');
+});
+it('basic mode cannot silently flatten multiple KF or KPI or a custom schedule', () => {
+ const k=newCreationKf(); expect(canUseBasicCreation([k],'Task')).toBe(true);
+ expect(canUseBasicCreation([k,newCreationKf()],'Task')).toBe(false);
+ expect(canUseBasicCreation([{...k,kpis:[...k.kpis,...newCreationKf().kpis]}],'Task')).toBe(false);
+ expect(canUseBasicCreation([{...k,execution_schedule:{mode:'weekly'}}],'Task')).toBe(false);
+ expect(canUseBasicCreation([k],'Task',1)).toBe(false);
 });
 it('date-only deadline means the end of the day', () => {
   expect(timelineError('2026-11-05', '2026-11-05', '09:30', '')).toBe('');

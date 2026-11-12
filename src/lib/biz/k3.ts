@@ -214,6 +214,7 @@ export function k3LateFlags(day: K3Day | null, s: K3Settings, workDate: string, 
 export function k3Error(e: unknown): string {
   const message = e instanceof Error ? e.message : typeof e === 'object' && e && 'message' in e && typeof e.message === 'string' ? e.message : '';
   const code = typeof e === 'object' && e && 'code' in e ? String(e.code) : '';
+  if (code === '57014' || /statement timeout/i.test(message)) return 'Hết thời gian chờ lưu công việc. Vui lòng thử lại; yêu cầu cũ được giữ để tránh tạo trùng.';
   if (/^(?:42|22|23|XX|PGRST)/.test(code) || /column .* does not exist|relation .* does not exist|syntax error|permission denied|violates .*constraint|invalid input syntax|SQLSTATE/i.test(message)) {
     console.error('[3K] RPC failure', { code, message });
     return 'Chưa thể xử lý công việc lúc này. Vui lòng thử lại; nếu vẫn lỗi, báo quản trị viên.';
