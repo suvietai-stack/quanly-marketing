@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit'; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; grantable?: boolean; reason?: string; deny_ready?: boolean; unit_binding?: string | null }
+export interface EditorPolicy { key: string; scope: 'own' | 'assigned' | 'unit' | 'native'; privileged?: boolean; personal: boolean; position_ready: boolean; task_ready: boolean; common_ready?: boolean; grantable?: boolean; reason?: string; deny_ready?: boolean; unit_binding?: string | null }
 export const permissionEditorApi = {
   async read(): Promise<EditorPolicy[]> {
     const { data, error } = await supabase.rpc('permission_editor_read');
@@ -28,7 +28,7 @@ export function rolePermissionPolicy(policy:EditorPolicy[],kind:string):EditorPo
 export function permissionDelta(before: string[], after: string[]) {
   return { added: [...new Set(after)].filter(k => !before.includes(k)), removed: [...new Set(before)].filter(k => !after.includes(k)) };
 }
-export const scopeLabels = { own: 'Của mình / được giao', assigned: 'Theo công việc được giao', unit: 'Đơn vị của nguồn bổ nhiệm' };
+export const scopeLabels = { own: 'Của mình / được giao', assigned: 'Theo công việc được giao', unit: 'Đơn vị của nguồn bổ nhiệm', native: 'Theo phạm vi dữ liệu của chính chức năng' };
 /** Universal backend contract. No Role kind, module or department participates. */
 export function isGrantable(key: string, policy: EditorPolicy[]): boolean {
   const row = policy.find(p=>p.key===key);
@@ -41,7 +41,7 @@ export function permissionAvailability(policy: EditorPolicy[], key: string, sour
   // Older contract: conservative legacy intersection until the staged SQL is approved.
   const unified = row?.deny_ready !== undefined;
   const ready = unified ? !!row && sourceFlag(row, source) : isGrantable(key,policy) || row && (source === 'personal' ? row.personal : source === 'common' ? row.common_ready === true && row.scope === 'own' : source === 'marketing_task' ? row.task_ready : row.position_ready);
-  if (ready && row) return { ready: true, reason: row.scope === 'unit' && source !== 'position' ? `${scopeLabels.unit} · nguồn này không gắn đơn vị nên không mở thêm dữ liệu đơn vị` : scopeLabels[row.scope] };
+  if (ready && row) { const base = row.scope === 'unit' && source !== 'position' ? `${scopeLabels.unit} · nguồn này không gắn đơn vị nên không mở thêm dữ liệu đơn vị` : scopeLabels[row.scope] ?? scopeLabels.native; return { ready: true, reason: row.privileged && row.reason ? `${base} · ${row.reason}` : base }; }
   if (row?.reason) return { ready: false, reason: row.reason };
   if (row?.scope === 'unit' && source !== 'position') return { ready: false, reason: 'Nguồn này chưa truyền phạm vi đơn vị tới cổng kiểm tra quyền; chưa thể cấp.' };
   if (row) return { ready: false, reason: 'Quyền có trong chính sách máy chủ nhưng nguồn cấp này chưa được kiểm chứng; chưa thể cấp.' };

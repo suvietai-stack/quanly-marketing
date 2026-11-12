@@ -55,3 +55,7 @@ it('DENY is only offered where the server confirms enforcement; held denies stay
   expect(canDeny([unified({})], 'leave.view_unit', [])).toBe(true);
   expect(canDeny([], 'biz.view_all', ['biz.view_all'])).toBe(true);
 });
+it('administration keys stay selectable for Super Admin with an explicit server note', () => {
+  const p: EditorPolicy[] = [{ key: 'settings.role', scope: 'native', personal: true, position_ready: true, task_ready: true, common_ready: true, deny_ready: true, privileged: true, reason: 'Quyền quản trị: chỉ Super Admin cấp; có nhật ký.' }];
+  for (const source of ['common', 'position', 'marketing_task', 'personal']) expect(permissionAvailability(p, 'settings.role', source)).toEqual({ ready: true, reason: 'Theo phạm vi dữ liệu của chính chức năng · Quyền quản trị: chỉ Super Admin cấp; có nhật ký.' });
+});

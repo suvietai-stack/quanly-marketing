@@ -1,3 +1,5 @@
+> SUPERSEDED by docs/role-permission-full-2026-11-12 (all 510). Do not apply this package.
+
 # Role on/off + personal ALLOW/DENY — STAGED, NOT APPLIED
 
 Supersedes role-grant-universal e818e8af and role-grant-expansion 3c4b23f8 (apply neither).
