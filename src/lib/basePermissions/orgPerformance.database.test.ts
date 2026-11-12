@@ -36,7 +36,7 @@ beforeAll(async () => {
  await db.query("select set_config('test.actor',$1,false)",[user]);
 },30000);
 afterAll(()=>db.close());
-const normalized = (x: any): any => Array.isArray(x) ? x.map(normalized).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))) : x && typeof x==='object' ? Object.fromEntries(Object.entries(x).filter(([k])=>k!=='server_now').map(([k,v])=>[k,normalized(v)])) : x;
+const normalized = (x: any): any => Array.isArray(x) ? x.map(normalized).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))) : x && typeof x==='object' ? Object.fromEntries(Object.entries(x).filter(([k])=>k!=='server_now' && k!=='catalog').map(([k,v])=>[k,normalized(v)])) : x;
 const rules = async (rows: object[]) => { await db.exec('delete from fixture_rules');for(const row of rows) await db.query('insert into fixture_rules values($1)',[row]); };
 it.each(['company','block','dept'])('exact scoped output parity for %s and DENY winning on child',async unit=>{
  await rules([{permission:'org.assign_staff',effect:'ALLOW',unit_id:unit},{permission:'org.view',effect:'ALLOW',unit_id:unit},{permission:'org.view',effect:'DENY',unit_id:'dept'}]);
@@ -53,6 +53,12 @@ it('inactive actor remains rejected by both readers',async()=>{
  await expect(value('select org_workspace_read() v')).rejects.toThrow('đăng nhập');
  await expect(value('select workspace_before() v')).rejects.toThrow('đăng nhập');
  await db.exec("select set_config('test.active','true',false)");
+});
+it('workspace does not return the 510-key editor catalog even to Super Admin',async()=>{
+ await db.query("select set_config('test.actor',$1,false)",[admin]);
+ expect((await value('select workspace_before() v')).catalog).toHaveLength(512);
+ expect((await value('select org_workspace_read() v')).catalog).toEqual([]);
+ await db.query("select set_config('test.actor',$1,false)",[user]);
 });
 it('effective output retains exact source order, DENY, unsupported keys and K3 legacy eligibility',async()=>{
  await rules([{permission:'p.1',effect:'ALLOW',source_id:'a'},{permission:'p.1',effect:'DENY',source_id:'b'},{permission:'biz.crm_use',effect:'ALLOW',source_id:'c'},{permission:'p.510',effect:'ALLOW'}]);

@@ -1,5 +1,8 @@
 # P0 organization read timeout — 12 November 2026
 
+## Superseding review — 07:16 owner request
+The sole candidate was updated in place to return `catalog: []` from workspace; editors already read the authenticated catalog on demand. SHA256 `6acee6d6a91a55c035811c5342c30fba38608fc03749f2609f1cd38579ffba25` supersedes `331ad3a8…`; the old SHA must NOT be approved/applied for this revision. Same three functions, same owner/ACL/DDL preflight and rollback. No live SQL was applied. Historical sections below describe the prior candidate; current evidence and explicit remaining scope are in `docs/base-performance-2026-11-12/report.md`.
+
 ## Verified diagnosis
 - Previous executive operation completed at 06:22:54Z, adding only ot.view_unit. This investigation does not change Roles, overrides, tree, appointments or business data and runs no migrations.
 - Live pg_stat_statements: org_workspace_read 1530 calls, mean 1344.00 ms, max 7931.25 ms; base_permissions_effective() 5918 calls, mean 2719.94 ms, max 8000.55 ms; role_catalog_read 138 calls, mean 628.24 ms, max 7040.84 ms. Parameterized effective reads: 170 calls, mean 1834.84 ms, max 7388.01 ms.

@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PersonalPermissionChecklist } from './PersonalPermissionChecklist';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
-import type { CatalogPermission } from '@/lib/basePermissions/permissionCatalog';
+import { mergePermissionCatalog, type CatalogPermission } from '@/lib/basePermissions/permissionCatalog';
 
 export function PermissionChecklist(props: {
   value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[]; catalog?: CatalogPermission[];
@@ -20,14 +20,15 @@ export function PermissionChecklist(props: {
   if (props.personal) return <PersonalPermissionChecklist {...props} disabled={props.disabled ?? false} baseline={props.baseline ?? []}/>;
   return <RolePermissionChecklist {...props}/>;
 }
-function RolePermissionChecklist({ value, onChange, policy, disabled = false, personal = false, baseline = [] }: {
-  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[];
+function RolePermissionChecklist({ value, onChange, policy, disabled = false, personal = false, baseline = [], catalog = [] }: {
+  value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; disabled?: boolean; personal?: boolean; baseline?: string[]; catalog?: CatalogPermission[];
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const available = policy.filter(p => !personal || p.personal);
   const lookup = new Map(available.map(p => [p.key, p]));
-  const definitions = [...PERMISSIONS, ...baseline.filter(k => !PERMISSIONS.some(p => p.key === k)).map(key => ({ key, label: key, group: 'Quyền đang giữ' }))];
+  const merged = mergePermissionCatalog(catalog, PERMISSIONS);
+  const definitions = [...merged, ...baseline.filter(k => !merged.some(p => p.key === k)).map(key => ({ key, label: key, group: 'Quyền đang giữ' }))];
   const permitted = definitions.filter(p => !personal || lookup.has(p.key) || baseline.includes(p.key));
   const rows = permitted.filter(p => `${p.label} ${p.group} ${p.key}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')) && (filter === 'all' || (filter === 'sensitive' ? !!permissionRisk(p.key) : filter === 'selected' ? value.includes(p.key) : !value.includes(p.key))));
   const groups = [...new Set(rows.map(p => p.group))];

@@ -24,7 +24,7 @@ export function StaffPermissionEditor({ userId, effective, effectiveError }: { u
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const policy = useQuery({ queryKey: ['permission-editor-policy', user?.id], queryFn: permissionEditorApi.read, retry: false });
-  const catalog = useQuery({ queryKey: ['personal-permission-catalog', user?.id], queryFn: ({ signal }) => readPermissionCatalog(signal), enabled: !!user, retry: false, staleTime: 60000, refetchOnWindowFocus: true });
+  const catalog = useQuery({ queryKey: ['permission-catalog', user?.id], queryFn: ({ signal }) => readPermissionCatalog(signal), enabled: !!user, retry: false, staleTime: 60000, refetchOnWindowFocus: true });
   const q = useQuery({ queryKey: ['staff-supplement', user?.id, userId], retry: false, queryFn: async () => {
     const { data, error } = await supabase.rpc('account_supplement_read', { _target: userId });
     if (error) throw error;

@@ -9,7 +9,7 @@ export interface RoleCatalog {common_role_ready?:boolean;server_now:string;roles
 export interface RoleProposal {canonical_id?:string;name:string;description:string;role_kind:RoleKind;catalog_group:string;permissions:string[];signal_scope_all:boolean;signal_scope:string[]}
 export interface RolePreview {id:string;action:string;role_id:string;before:CatalogRole|null;after:RoleProposal;added:string[];removed:string[];affected_users:string[];expires_at:string}
 export const roleCatalogApi={
- async read():Promise<RoleCatalog>{const {data,error}=await supabase.rpc('role_catalog_read');if(error)throw new Error(error.message);return data as unknown as RoleCatalog;},
+ async read(context?:{signal?:AbortSignal}):Promise<RoleCatalog>{const request=supabase.rpc('role_catalog_read');const {data,error}=await(context?.signal?request.abortSignal(context.signal):request);if(error)throw new Error(error.message);return data as unknown as RoleCatalog;},
  async preview(action:'create'|'edit'|'archive'|'delete',roleId?:string,proposal?:RoleProposal):Promise<RolePreview>{const {data,error}=await supabase.rpc('role_catalog_change',{_phase:'preview',_action:action,_role_id:roleId,_proposed:proposal as unknown as Json});if(error)throw new Error(error.message);return data as unknown as RolePreview;},
  async apply(id:string,reason:string){const {error}=await supabase.rpc('role_catalog_change',{_phase:'apply',_preview:id,_confirmation:'ÁP DỤNG ROLE',_reason:reason});if(error)throw new Error(error.message);},
 };

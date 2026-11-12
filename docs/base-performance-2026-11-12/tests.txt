@@ -1,0 +1,22 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.1 [39m[90m/dev-server[39m
+
+ [32m✓[39m src/lib/accessCache.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/workspacePolicy.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/readPolicy.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/personalChecklist.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/executiveA.database.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 2316[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/roleCutover.database.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 2597[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/roleSourceScope.database.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 2783[2mms[22m[39m
+ [32m✓[39m src/lib/basePermissions/commonRole.database.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 2937[2mms[22m[39m
+[90mstdout[2m | src/lib/basePermissions/orgPerformance.database.test.ts[2m > [22m[2m30 isolated candidate reads stay under the eight-second ceiling with output parity
+[22m[39misolated-workspace-benchmark before { p95Ms: [33m3.444745000000239[39m, maxMs: [33m3.535197000000153[39m, calls: [33m30[39m }
+isolated-workspace-benchmark after { p95Ms: [33m1.32774500000005[39m, maxMs: [33m1.375742000000173[39m, calls: [33m30[39m }
+
+ [32m✓[39m src/lib/basePermissions/orgPerformance.database.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 2964[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+[2m      Tests [22m [1m[32m55 passed[39m[22m[90m (55)[39m
+[2m   Start at [22m 07:32:15
+[2m   Duration [22m 3.20s[2m (tests 93%, transform 4%, import 3%)[22m
+

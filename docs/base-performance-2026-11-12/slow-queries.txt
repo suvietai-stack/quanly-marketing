@@ -1,0 +1,116 @@
+Slowest queries in the user schemas (ranked by total execution time), times in milliseconds:
+[
+  {
+    "calls": 7157,
+    "max_ms": "7996.27",
+    "mean_ms": "3178.59",
+    "query": "WITH pgrst_source AS (SELECT \"pgrst_call\".* FROM \"public\".\"signal_progression_deadlines\"() pgrst_call) SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM (SELECT \"record\".* FROM \"pgrst_source\" AS \"record\"  ORDER BY \"record\".\"signal_id\" ASC  LIMIT $1 OFFSET $2) _postgrest_t",
+    "total_ms": "22749174.21"
+  },
+  {
+    "calls": 21475,
+    "max_ms": "7874.38",
+    "mean_ms": "792.88",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"opportunity_signals\".* FROM \"public\".\"opportunity_signals\"  ORDER BY \"public\".\"opportunity_signals\".\"detected_on\" DESC , \"public\".\"opportunity_signals\".\"created_at\" DESC , \"public\".\"opportunity_signals\".\"id\" ASC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "17027140.33"
+  },
+  {
+    "calls": 15616,
+    "max_ms": "7933.73",
+    "mean_ms": "1079.22",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"opportunity_signal_notes\".\"signal_id\", \"public\".\"opportunity_signal_notes\".\"created_at\", \"public\".\"opportunity_signal_notes\".\"event_type\", \"public\".\"opportunity_signal_notes\".\"note\" FROM \"public\".\"opportunity_signal_notes\"  ORDER BY \"public\".\"opportunity_signal_notes\".\"created_at\" DESC , \"public\".\"opportunity_signal_notes\".\"id\" ASC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "16853101.55"
+  },
+  {
+    "calls": 15158,
+    "max_ms": "7980.97",
+    "mean_ms": "1093.57",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"opportunity_signal_notes\".\"signal_id\", \"public\".\"opportunity_signal_notes\".\"author_id\", \"public\".\"opportunity_signal_notes\".\"created_at\" FROM \"public\".\"opportunity_signal_notes\"  ORDER BY \"public\".\"opportunity_signal_notes\".\"id\" ASC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "16576334.71"
+  },
+  {
+    "calls": 54835,
+    "max_ms": "7661.47",
+    "mean_ms": "175.87",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"social_posts\".\"id\", \"public\".\"social_posts\".\"data\" FROM \"public\".\"social_posts\"  ORDER BY \"public\".\"social_posts\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "9643816.20"
+  },
+  {
+    "calls": 54823,
+    "max_ms": "5584.79",
+    "mean_ms": "168.32",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"seo_checks\".\"id\", \"public\".\"seo_checks\".\"data\" FROM \"public\".\"seo_checks\"  ORDER BY \"public\".\"seo_checks\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "9227755.81"
+  },
+  {
+    "calls": 386537,
+    "max_ms": "7555.84",
+    "mean_ms": "14.37",
+    "query": "WITH pgrst_source AS (UPDATE \"public\".\"profiles\" SET \"last_seen_at\" = \"pgrst_body\".\"last_seen_at\" FROM (SELECT $1 AS json_data) pgrst_payload, LATERAL (SELECT \"last_seen_at\" FROM json_to_record(pgrst_payload.json_data) AS _(\"last_seen_at\" timestamp with time zone) ) pgrst_body  WHERE  \"public\".\"profiles\".\"id\" = $2 RETURNING $3) SELECT $4 AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, array[]::text[] AS header, $5::text AS body, nullif(current_setting($6, $7), $8) AS response_headers, nullif(current_setting($9, $10), $11) AS response_status, $12 AS response_inserted FROM (SELECT * FROM pgrst_source) _postgrest_t",
+    "total_ms": "5555220.15"
+  },
+  {
+    "calls": 54837,
+    "max_ms": "6343.30",
+    "mean_ms": "58.43",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"web_contents\".\"id\", \"public\".\"web_contents\".\"data\" FROM \"public\".\"web_contents\"  ORDER BY \"public\".\"web_contents\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "3204136.50"
+  },
+  {
+    "calls": 4166,
+    "max_ms": "7714.41",
+    "mean_ms": "567.34",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"orders\".\"id\", \"public\".\"orders\".\"data\", \"public\".\"orders\".\"created_at\", \"public\".\"orders\".\"updated_at\", \"public\".\"orders\".\"created_by\", \"public\".\"orders\".\"workflow_kind\" FROM \"public\".\"orders\"  ORDER BY \"public\".\"orders\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "2363543.89"
+  },
+  {
+    "calls": 786,
+    "max_ms": "7988.45",
+    "mean_ms": "2877.88",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"signal_list_priority\".* FROM \"public\".\"signal_list_priority\"  ORDER BY \"public\".\"signal_list_priority\".\"list_work_priority\" ASC , \"public\".\"signal_list_priority\".\"list_wait_since\" ASC NULLS LAST, \"public\".\"signal_list_priority\".\"list_progression_due_on\" ASC NULLS LAST, \"public\".\"signal_list_priority\".\"list_activity_at\" DESC , \"public\".\"signal_list_priority\".\"id\" ASC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "2262012.22"
+  },
+  {
+    "calls": 20724,
+    "max_ms": "7401.80",
+    "mean_ms": "105.62",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"notifications\".\"id\", \"public\".\"notifications\".\"kind\", \"public\".\"notifications\".\"signal_id\", \"public\".\"notifications\".\"leave_request_id\", \"public\".\"notifications\".\"attendance_id\", \"public\".\"notifications\".\"content_id\", \"public\".\"notifications\".\"order_id\", \"public\".\"notifications\".\"oq_flow_id\", \"public\".\"notifications\".\"ot_order_id\", \"public\".\"notifications\".\"bank_tx_id\", \"public\".\"notifications\".\"payload\", \"public\".\"notifications\".\"read_at\", \"public\".\"notifications\".\"created_at\" FROM \"public\".\"notifications\" WHERE  \"public\".\"notifications\".\"recipient_id\" = $1  ORDER BY \"public\".\"notifications\".\"created_at\" DESC  LIMIT $2 OFFSET $3 )  SELECT $4::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $5) AS body, nullif(current_setting($6, $7), $8) AS response_headers, nullif(current_setting($9, $10), $11) AS response_status, $12 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "2188792.39"
+  },
+  {
+    "calls": 865,
+    "max_ms": "7769.07",
+    "mean_ms": "2428.03",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"opportunity_signals\".* FROM \"public\".\"opportunity_signals\"  ORDER BY \"public\".\"opportunity_signals\".\"detected_on\" DESC , \"public\".\"opportunity_signals\".\"created_at\" DESC , \"public\".\"opportunity_signals\".\"id\" ASC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "2100242.82"
+  },
+  {
+    "calls": 50224,
+    "max_ms": "3070.92",
+    "mean_ms": "30.46",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"orders\".\"id\", \"public\".\"orders\".\"data\" FROM \"public\".\"orders\"  ORDER BY \"public\".\"orders\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "1529626.93"
+  },
+  {
+    "calls": 54861,
+    "max_ms": "2434.90",
+    "mean_ms": "22.41",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"tasks\".\"id\", \"public\".\"tasks\".\"data\" FROM \"public\".\"tasks\"  ORDER BY \"public\".\"tasks\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "1229623.29"
+  },
+  {
+    "calls": 54844,
+    "max_ms": "6232.37",
+    "mean_ms": "21.04",
+    "query": "WITH pgrst_source AS ( SELECT \"public\".\"videos\".\"id\", \"public\".\"videos\".\"data\" FROM \"public\".\"videos\"  ORDER BY \"public\".\"videos\".\"created_at\" DESC  LIMIT $1 OFFSET $2 )  SELECT $3::bigint AS total_result_set, pg_catalog.count(_postgrest_t) AS page_total, coalesce(json_agg(_postgrest_t), $4) AS body, nullif(current_setting($5, $6), $7) AS response_headers, nullif(current_setting($8, $9), $10) AS response_status, $11 AS response_inserted FROM ( SELECT * FROM pgrst_source ) _postgrest_t",
+    "total_ms": "1153755.70"
+  }
+]
+
+The query text above is normalized by pg_stat_statements: literals are replaced with placeholders like $1, $2. You cannot EXPLAIN it as-is — first reconstruct a runnable statement by substituting realistic concrete values for each placeholder (e.g. a plausible id, timestamp, or status the app would actually use).
+
+Next steps to optimize:
+1. For the slowest queries above, reconstruct the statement with real values, then run `EXPLAIN (ANALYZE, BUFFERS) <query>` via the read_query tool to see the plan. Look for Seq Scans on columns used in WHERE/JOIN/ORDER BY on large tables. For INSERT/UPDATE/DELETE statements use plain `EXPLAIN` (without ANALYZE) — ANALYZE executes the statement, and read_query is read-only so a write would be rejected anyway.
+2. Add a targeted index for those columns through the lov_database--migration tool, e.g. `CREATE INDEX IF NOT EXISTS idx_<table>_<cols> ON <schema>.<table> (<cols>);`. Do NOT use CREATE INDEX CONCURRENTLY — it cannot run inside the migration transaction.
+3. Re-run EXPLAIN to confirm the plan now uses the index. Prefer indexes that match real query predicates; avoid indexing low-selectivity columns. High-volume INSERTs and single-row primary-key UPDATEs usually can't be improved with indexes — their cost is call volume, so investigate the app's write frequency instead.
+Only suggest changes for tables in the user's schemas. Explain the tradeoff (faster reads, slightly slower writes, extra storage) in plain language.

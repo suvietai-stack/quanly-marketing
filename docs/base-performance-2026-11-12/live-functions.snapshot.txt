@@ -1,0 +1,138 @@
+[map[snapshot:[map[acl:{postgres=X/postgres} args:u uuid, c jsonb definition:CREATE OR REPLACE FUNCTION private.base_effective(u uuid, c jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ DECLARE result jsonb:='[]';r record;d text;l jsonb;ok boolean;privileged boolean;active boolean;rules jsonb;BEGIN active:=private.is_active(u);privileged:=private.is_super_admin(u);rules:=private.base_rules(u,c);FOR r IN SELECT * FROM base_permission_catalog ORDER BY module,key LOOP d:=CASE WHEN private.base_supported(r.key) THEN CASE WHEN EXISTS(SELECT 1 FROM jsonb_array_elements(rules) x WHERE x->>'permission'=r.key AND x->>'effect'='DENY') THEN 'DENY' WHEN EXISTS(SELECT 1 FROM jsonb_array_elements(rules) x WHERE x->>'permission'=r.key AND x->>'effect'='ALLOW') THEN 'ALLOW' ELSE 'NOT_CONFIGURED' END ELSE 'NOT_CONFIGURED' END;l:=private.base_legacy(u,r.key);ok:=active AND (privileged OR (r.key LIKE 'biz.crm_%' AND public.biz_admin(u)) OR CASE WHEN d='DENY' THEN false WHEN d='ALLOW' THEN true ELSE (l->>'allowed')::boolean END);result:=result||jsonb_build_array(jsonb_build_object('key',r.key,'label',r.label,'module',r.module,'allowed',ok,'decision',d,'bypass',privileged OR (r.key LIKE 'biz.crm_%' AND public.biz_admin(u)),'tier',CASE WHEN privileged OR (r.key LIKE 'biz.crm_%' AND public.biz_admin(u)) THEN 0 WHEN d<>'NOT_CONFIGURED' THEN 1 ELSE (l->'source'->>'tier')::int END,'legacy',l,'sources',coalesce((SELECT jsonb_agg(x) FROM jsonb_array_elements(rules) x WHERE x->>'permission'=r.key),'[]'::jsonb),'supported',private.base_supported(r.key),'scope',CASE WHEN r.key LIKE 'biz.crm_%' AND d='ALLOW' THEN 'own' ELSE 'native' END,'conflict',EXISTS(SELECT 1 FROM jsonb_array_elements(rules) x WHERE x->>'permission'=r.key AND x->>'effect'='ALLOW') AND EXISTS(SELECT 1 FROM jsonb_array_elements(rules) x WHERE x->>'permission'=r.key AND x->>'effect'='DENY')));END LOOP;RETURN result;END $function$
+ md5:527ea1caab337534d91764ce27671cca name:base_effective owner:postgres schema:private] map[acl:{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} args:_user uuid definition:CREATE OR REPLACE FUNCTION public.base_permissions_effective(_user uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ DECLARE u uuid:=coalesce(_user,auth.uid());BEGIN IF auth.uid() IS NULL OR NOT private.is_active(auth.uid()) OR (u<>auth.uid() AND NOT private.base_org_admin()) THEN RAISE EXCEPTION 'Không có quyền xem phân quyền.';END IF;RETURN jsonb_build_object('user_id',u,'revision',coalesce((SELECT revision FROM base_org_state WHERE id),0),'server_now',now(),'next_transition_at',private.base_next_transition(private.base_config()),'permissions',private.base_effective(u,private.base_config()));END $function$
+ md5:296ec39cdb9cb4098e1a7b04329f88bb name:base_permissions_effective owner:postgres schema:public] map[acl:{postgres=X/postgres} args:u uuid, c jsonb definition:CREATE OR REPLACE FUNCTION private.base_rules(u uuid, c jsonb)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT coalesce(jsonb_agg(r),'[]') || private.common_role_rules(u) FROM jsonb_array_elements(private.reset_previous_base_rules(u,c)) r WHERE NOT private.legacy_reset_applies(u) OR r->>'effect'='DENY' OR (r->>'source_kind' IN ('appointment_role','marketing_appointment') AND EXISTS(SELECT 1 FROM app_roles ar WHERE ar.id=r->>'role_id' AND ar.catalog_state='standard'))
+$function$
+ md5:b007f5a4af182af9fb99e45ded5a565c name:base_rules owner:postgres schema:private] map[acl:{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} args:_actor uuid, _permission text definition:CREATE OR REPLACE FUNCTION public.biz_can(_actor uuid, _permission text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+BEGIN
+ IF NOT private.legacy_business_allowed(_actor) THEN RETURN false; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=_actor AND status='Đang hoạt động') THEN RETURN false;END IF;
+ IF public.is_super_admin(_actor) THEN RETURN true;END IF;
+ IF _permission NOT LIKE 'biz.%' THEN RETURN private.sig_can(_actor,_permission);END IF;
+ IF public.biz_admin(_actor) THEN RETURN true;END IF;
+ IF _permission='biz.access_manage' THEN RETURN false;END IF;
+ IF _permission='biz.intervene' THEN RETURN EXISTS(SELECT 1 FROM public.biz_appointments a WHERE a.user_id=_actor AND a.status<>'cancelled' AND a.started_at<=now() AND (a.ended_at IS NULL OR a.ended_at>now()) AND a.position_snapshot->>'code' IN ('executive_director','deputy_executive_director') AND a.position_snapshot->>'business_policy'='executive' AND coalesce((a.position_snapshot->>'all_business')::boolean,false) AND private.biz_source_ok(a.user_id, a.started_at));END IF;
+ IF public.biz_exception_ok(_actor,_permission) THEN RETURN true;END IF;
+ IF _permission='biz.view_all' THEN RETURN public.biz_all_scope(_actor);END IF;
+ IF _permission='biz.dashboard_public' THEN RETURN public.biz_participant(_actor) OR public.biz_all_scope(_actor);END IF;
+ IF _permission IN ('biz.view_dept','biz.approval_view') THEN RETURN public.biz_manager(_actor) OR public.biz_all_scope(_actor) OR EXISTS(SELECT 1 FROM public.biz_approval_runs r WHERE r.status='pending' AND (r.steps->r.current_step->>'user_id'=_actor::text OR r.steps->r.current_step->>'substitute_id'=_actor::text));END IF;
+ IF _permission IN ('biz.view_own','biz.plan_submit','biz.goal_submit','biz.report_submit') THEN RETURN public.biz_participant(_actor) AND (NOT EXISTS(SELECT 1 FROM public.biz_appointments a WHERE a.user_id=_actor AND a.status<>'cancelled' AND a.started_at<=now() AND (a.ended_at IS NULL OR a.ended_at>now()) AND a.position_snapshot->>'business_policy'='executive' AND private.biz_source_ok(a.user_id, a.started_at)) OR EXISTS(SELECT 1 FROM public.biz_appointments a WHERE a.user_id=_actor AND a.status<>'cancelled' AND a.started_at<=now() AND (a.ended_at IS NULL OR a.ended_at>now()) AND coalesce(a.position_snapshot->>'business_policy','personal')<>'executive' AND private.biz_source_ok(a.user_id, a.started_at)));END IF;
+ IF _permission='biz.plan_request_revision' THEN RETURN public.biz_manager(_actor);END IF;
+ IF _permission IN ('biz.goal_approve','biz.report_approve','biz.late_approve') THEN RETURN public.biz_manager(_actor) OR EXISTS(SELECT 1 FROM public.biz_approval_runs r WHERE r.status='pending' AND (r.steps->r.current_step->>'user_id'=_actor::text OR r.steps->r.current_step->>'substitute_id'=_actor::text));END IF;
+ IF _permission='biz.plan_approve' THEN RETURN false;END IF;
+ RETURN false;
+END $function$
+ md5:f6eda4b5951bc99ff315f7d2862c9559 name:biz_can owner:postgres schema:public] map[acl:{postgres=X/postgres,service_role=X/postgres} args:_user_id uuid, _permission text definition:CREATE OR REPLACE FUNCTION public.has_permission(_user_id uuid, _permission text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public', 'private'
+AS $function$
+  SELECT private.has_permission(_user_id, _permission);
+$function$
+ md5:c0791e066f12bf115e07ffcfe4f8001a name:has_permission owner:postgres schema:public] map[acl:{postgres=X/postgres,authenticated=X/postgres} args:_user_id uuid, _permission text definition:CREATE OR REPLACE FUNCTION private.has_permission(_user_id uuid, _permission text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ SELECT private.is_active(_user_id) AND (private.is_super_admin(_user_id) OR CASE
+ WHEN (private.org_role_permission_ready(_permission) OR private.mkt_specialty_permission_ready(_permission) OR _permission LIKE 'sale_work.%') AND private.base_tier1(_user_id,_permission)='DENY' THEN false
+ WHEN (private.org_role_permission_ready(_permission) OR private.mkt_specialty_permission_ready(_permission) OR _permission LIKE 'sale_work.%') AND private.base_tier1(_user_id,_permission)='ALLOW' THEN true
+ WHEN EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND o.mode='replace') THEN EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND _permission=ANY(o.permissions))
+ ELSE EXISTS(SELECT 1 FROM user_roles ur JOIN app_roles r ON r.id=ur.role_id WHERE ur.user_id=_user_id AND _permission=ANY(r.permissions))
+   OR EXISTS(SELECT 1 FROM user_permission_overrides o WHERE o.user_id=_user_id AND o.use_custom=true AND o.mode='additive' AND _permission=ANY(o.permissions)) END) $function$
+ md5:c57afd7736a787a1cd89d48962f0261e name:has_permission owner:postgres schema:private] map[acl:{postgres=X/postgres,service_role=X/postgres} args:_user_id uuid definition:CREATE OR REPLACE FUNCTION public.is_super_admin(_user_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public', 'private'
+AS $function$
+  SELECT private.is_super_admin(_user_id);
+$function$
+ md5:3807ab1a442f7cca40687163e7b8c160 name:is_super_admin owner:postgres schema:public] map[acl:{postgres=X/postgres,authenticated=X/postgres} args:_user_id uuid definition:CREATE OR REPLACE FUNCTION private.is_super_admin(_user_id uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ SELECT private.is_active(_user_id) AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=_user_id AND role_id='role-super-admin'); $function$
+ md5:687ed3ba3cc6fef74327c3c4b31a0865 name:is_super_admin owner:postgres schema:private] map[acl:{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} args:_actor uuid, _permission text definition:CREATE OR REPLACE FUNCTION public.k3_can(_actor uuid, _permission text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ BEGIN
+ IF NOT private.is_active(_actor) THEN RETURN false; END IF;
+ IF public.is_super_admin(_actor) OR public.biz_admin(_actor) THEN RETURN true; END IF;
+ IF private.k3_personal_denied(_actor,_permission) THEN RETURN false; END IF;
+ IF _permission='k3.use' THEN RETURN true; END IF;
+ IF NOT private.legacy_business_allowed(_actor) THEN RETURN false; END IF;
+ IF _permission IN ('k3.view_scope','k3.comment') THEN RETURN public.biz_manager(_actor) OR public.biz_all_scope(_actor); END IF;
+ RETURN false; END $function$
+ md5:6f9082b7996e66a08e7cea2f31a8c48a name:k3_can owner:postgres schema:public] map[acl:{postgres=X/postgres} args: definition:CREATE OR REPLACE FUNCTION private.org_config()
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ SELECT private.org_role_previous_org_config()||jsonb_build_object('position_slots',(SELECT coalesce(jsonb_agg(to_jsonb(s) ORDER BY id),'[]') FROM public.org_position_slots s))||jsonb_build_object('role_links',(SELECT coalesce(jsonb_agg(to_jsonb(l) ORDER BY title_source,title_id,role_id),'[]') FROM base_title_role_links l)) $function$
+ md5:a30c9b3aca5caed07961d924476e2083 name:org_config owner:postgres schema:private] map[acl:{postgres=X/postgres} args:u uuid, c jsonb definition:CREATE OR REPLACE FUNCTION private.org_role_rules(u uuid, c jsonb)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ SELECT private.org_slot_rules(u,c) $function$
+ md5:48f358d8d408b54c2656009cb9ef7eb4 name:org_role_rules owner:postgres schema:private] map[acl:{postgres=X/postgres} args:u uuid, c jsonb definition:CREATE OR REPLACE FUNCTION private.org_slot_rules(u uuid, c jsonb)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT coalesce(jsonb_agg(x.rule),'[]'::jsonb) FROM (
+ SELECT jsonb_build_object('id',(m->>'id')||':'||r.id||':'||p,'permission',p,'effect','ALLOW','scope','native','active',true,'source_kind','appointment_role','source_id',m->>'id','source_name',r.name,'role_id',r.id,'unit_id',m->>'unit_id','slot_id',NULL,'starts_at',m->>'starts_at','ends_at',m->>'ends_at','legacy',false) rule
+ FROM jsonb_array_elements(coalesce(c->'memberships','[]')) m JOIN public.org_position_roles b ON b.unit_id=m->>'unit_id' AND b.title_id=m->>'title_id' JOIN LATERAL jsonb_array_elements(coalesce(c->'titles','[]')) t ON t->>'id'=m->>'title_id' JOIN app_roles r ON r.id=b.role_id AND r.role_kind='position' AND r.catalog_state='standard' AND NOT r.is_system AND r.catalog_generation>=2 CROSS JOIN LATERAL unnest(r.permissions) p
+ WHERE private.is_active(u) AND m->>'user_id'=u::text AND private.base_valid_at(m) AND coalesce(m->>'status','active')='active' AND coalesce((t->>'active')::boolean,false) AND private.org_role_permission_ready(p)
+) x $function$
+ md5:8378b03b30cbff30004a03f24b77520a name:org_slot_rules owner:postgres schema:private] map[acl:{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres} args: definition:CREATE OR REPLACE FUNCTION public.org_workspace_read()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ DECLARE c jsonb;super_ boolean;visible text[];assign_ text[];appoint_ text[];structure_ text[];history_ text[];configured boolean;BEGIN IF auth.uid() IS NULL OR NOT private.is_active(auth.uid()) THEN RAISE EXCEPTION 'Vui lòng đăng nhập lại.';END IF;super_:=private.is_super_admin(auth.uid());c:=private.org_config(); SELECT coalesce(array_agg(id),'{}') INTO assign_ FROM org_units WHERE private.org_can(auth.uid(),'org.assign_staff',id); SELECT coalesce(array_agg(id),'{}') INTO appoint_ FROM org_units WHERE private.org_can(auth.uid(),'org.appoint_manager',id); SELECT coalesce(array_agg(id),'{}') INTO structure_ FROM org_units WHERE private.org_can(auth.uid(),'org.manage_structure',id); SELECT coalesce(array_agg(id),'{}') INTO history_ FROM org_units WHERE private.org_can(auth.uid(),'org.view_history',id); SELECT EXISTS(SELECT 1 FROM jsonb_array_elements(private.base_rules(auth.uid(),c)) r WHERE r->>'permission' LIKE 'org.%') INTO configured; SELECT coalesce(array_agg(id),'{}') INTO visible FROM org_units WHERE super_ OR private.org_can(auth.uid(),'org.view',id) OR id=ANY(assign_||appoint_||structure_) OR NOT configured;
+ c:=c||jsonb_build_object('units',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(c->'units') x WHERE x->>'id'=ANY(visible)),'titles',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(c->'titles') x WHERE super_ OR x->>'unit_id'=ANY(visible) OR (x->>'unit_id' IS NULL AND EXISTS(SELECT 1 FROM org_units u WHERE u.id=ANY(visible) AND (u.kind=x->>'unit_kind' OR (x->>'unit_kind'='individual' AND u.kind IN ('department','team')))))),'memberships',(SELECT coalesce(jsonb_agg(x),'[]') FROM jsonb_array_elements(c->'memberships') x WHERE x->>'unit_id'=ANY(visible) AND (super_ OR x->>'unit_id'=ANY(history_) OR ((x->>'active')::boolean AND (nullif(x->>'starts_at','') IS NULL OR (x->>'starts_at')::timestamptz<=now())))));
+ IF NOT super_ THEN c:=c||jsonb_build_object('defaults','[]'::jsonb,'grants','[]'::jsonb,'bindings','[]'::jsonb,'bundles','[]'::jsonb);END IF;
+ RETURN jsonb_build_object('revision',(SELECT revision FROM private.org_control WHERE id),'server_now',now(),'config',c,'staff',(SELECT coalesce(jsonb_agg(jsonb_build_object('id',id,'name',full_name,'status',status)),'[]') FROM profiles WHERE super_ OR cardinality(assign_||appoint_)>0 OR id IN (SELECT user_id FROM org_assignments WHERE unit_id=ANY(visible) AND (ends_at IS NULL OR ends_at>now()) AND (starts_at IS NULL OR starts_at<=now()))),'catalog',(SELECT coalesce(jsonb_agg(jsonb_build_object('key',key,'label',label,'module',module,'supported',private.base_supported(key))),'[]') FROM base_permission_catalog WHERE super_),'actor',jsonb_build_object('super',super_,'assign_all',super_,'appoint_all',super_,'assign_units',assign_,'appoint_units',appoint_,'structure_units',structure_,'view_history',cardinality(history_)>0,'history_units',history_),'events',(SELECT coalesce(jsonb_agg(to_jsonb(e)),'[]') FROM (SELECT * FROM org_events e WHERE super_ OR (jsonb_array_length(e.unit_ids)>0 AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements_text(e.unit_ids) u WHERE NOT u=ANY(history_))) ORDER BY created_at DESC LIMIT 100)e));END $function$
+ md5:cec7b76e1dfb8f4cae00e13a4fd6d0e4 name:org_workspace_read owner:postgres schema:public] map[acl:{postgres=X/postgres} args:role_id_ text definition:CREATE OR REPLACE FUNCTION private.role_v2_reduction_guard(role_id_ text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$ BEGIN IF EXISTS(SELECT 1 FROM public.leave_requests l JOIN private.role_source_rows(private.base_config()) s ON s.user_id=l.approver_id WHERE s.role_id=role_id_ AND (l.status='pending' OR (l.cancel_state IS NOT NULL AND l.cancel_state NOT IN ('approved','rejected','cancelled','recalled')))) THEN RAISE EXCEPTION 'Còn trách nhiệm duyệt đơn chưa xử lý; dừng giảm quyền Role.' USING ERRCODE='42501'; END IF; END $function$
+ md5:97d1b33ca5995d1a5d4dd730c5cf0608 name:role_v2_reduction_guard owner:postgres schema:private] map[acl:<nil> args:_uid uuid, _perm text definition:CREATE OR REPLACE FUNCTION private.sig_can(_uid uuid, _perm text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  SELECT _uid IS NOT NULL AND private.is_active(_uid)
+    AND (private.is_super_admin(_uid) OR private.has_permission(_uid, _perm));
+$function$
+ md5:7ff0d4b442916343decfd3bbc8d6a25e name:sig_can owner:postgres schema:private]]]]

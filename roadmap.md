@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## Tinh gọn hiệu năng toàn Base — 12/11 07:16
+- [ ] Audit dependency gen1/slots, live checksum/ACL và rào nghiệp vụ; không mutation.
+- [ ] Ship code-only lazy tab/editor/history, cancellation và reuse actor-specific; kiểm thử desktop/mobile.
+- [ ] Reconcile candidate timeout hiện hữu, exact SHA/rollback/parity; SQL CHƯA ÁP, chờ duyệt riêng.
+- [ ] Commit/publish tương thích backend hiện tại, kiểm tra deployment ID + auth smoke; báo hiệu năng quan sát.
+
 ## P0 full personal permission catalog — 12/11 06:49
 - [x] Owner06:59 addendum: one actor-keyed authenticated catalog SELECT merged by key;30 tests+desktop/mobile fixtures pass local450+remote60/full510, no grants/RLS changes; commit1e06d541, publish requested.
 - [ ] Addendum production confirmation: observed prior ebaf680f UI still full510 but no catalog GET; new deployment not yet verified. No repeat publish/SQL.
