@@ -1,5 +1,11 @@
 # Roadmap — Role chuẩn và bổ nhiệm
 
+## P0 organization timeout — 12/11 06:30
+- [ ] Snapshot/trace RPC và stats live; benchmark Super Admin được ủy quyền, không thay Role hoặc dữ liệu.
+- [ ] Stage một candidate tối ưu config/rules một lần, set-based unit rights + Super Admin fast path; checksum/preflight/rollback và parity tests. Không áp SQL khi chưa owner duyệt exact nội dung.
+- [ ] Frontend bounded retry/backoff, cùng-user fail-closed state, focus/invalidation, timing không private payload; browser kiểm tra và publish nếu đạt tương thích backend.
+- [ ] Báo timings thật, mục tiêu cold p95<2s/30 reload, deploy và blocker production verification.
+
 ## Giám đốc phương án A — 12/11 06:18
 - [x] Audit RPC/RLS/editor thực; Super Admin preview 2413db79 → apply 06:22:54Z thêm riêng ot.view_unit, removed=[]; audit c781d0a8, snapshot SHA lưu báo cáo.
 - [x] 28/28 tests: negative unassigned/self/status/permission, reduction obligations, unit scope/tree; effective readback ALLOW appointment_role tại org-company; 56 Role khác/Common7/13 overrides/86 assignments/21 bindings giữ nguyên. Không deploy.

@@ -26,15 +26,22 @@ import { baseOrgApi } from '@/lib/basePermissions/api';
 import { emptyConfig, type OrgActor, type OrgConfig, type Preview, type EffectivePermission } from '@/lib/basePermissions/types';
 import { useAuth, useCurrentUser } from '@/lib/auth';
 import { organizationSettingsAccess } from '@/lib/rolePresentation';
+import { Skeleton } from '@/components/ui/skeleton';
+import { organizationReadKey, organizationRetryDelay, retryOrganizationRead } from '@/lib/basePermissions/readPolicy';
 
 const sourceLabel: Record<string, string> = { common:'Quyền chung',default: 'Mặc định', direct: 'Trực tiếp', bundle: 'Bộ quyền', role: 'Role cũ', custom: 'Quyền riêng cũ', business: 'Kinh doanh', appointment_role: 'Role theo bổ nhiệm', marketing_appointment: 'Nhiệm vụ theo bổ nhiệm', marketing_specialty: 'Chuyên môn Marketing' };
 function PermissionRow({ p }: { p: EffectivePermission }) {
   return <div className="border-b py-3 space-y-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-sm">{p.label}</span><Badge variant={p.allowed ? 'secondary' : 'outline'}>{p.allowed ? 'Được phép' : 'Không được phép'}</Badge></div><p className="text-xs text-muted-foreground">{p.module} · {p.tier === 0 ? 'Quản trị đặc quyền' : `Nấc ${p.tier}`} · {p.scope === 'own' ? 'Dữ liệu của mình' : 'Phạm vi nghiệp vụ hiện tại'}</p><p className="text-xs text-muted-foreground">{p.sources.length ? p.sources.map(s => `${sourceLabel[s.source_kind]}${s.source_name ? `: ${s.source_name}` : ''}${s.ends_at ? ` — đến ${new Date(s.ends_at).toLocaleString('vi-VN')}` : ''}`).join('; ') : sourceLabel[p.legacy.source.kind]}</p>{p.conflict && !p.bypass && <p className="text-xs text-destructive">Xung đột cho phép/từ chối — ưu tiên từ chối</p>}</div>;
 }
 export function BaseOrganization() {
+  const { user } = useCurrentUser();
+  return <OrganizationWorkspace key={user?.id ?? 'signed-out'} />;
+}
+function OrganizationWorkspace() {
   const { user, isSuperAdmin: isSA, can: canFn } = useCurrentUser();
+  const accessRevision = useAuth(s => s.baseAccess && s.baseAccess.user_id === user?.id ? s.baseAccess.revision : undefined);
   const qc = useQueryClient();
-  const data = useQuery({ queryKey: ['base-org', user?.id], queryFn: baseOrgApi.read, retry: false });
+  const data = useQuery({ queryKey: organizationReadKey(user?.id, accessRevision), queryFn: baseOrgApi.read, enabled: !!user && user.status === 'Đang hoạt động', retry: retryOrganizationRead, retryDelay: organizationRetryDelay, staleTime: 0, gcTime: 0, refetchOnWindowFocus: 'always' });
   const [config, setConfig] = useState<OrgConfig>(emptyConfig);
   const [dirty, setDirty] = useState(false);
   const [staffId, setStaffId] = useState('');
@@ -53,6 +60,7 @@ export function BaseOrganization() {
   useEffect(() => { const timer = setInterval(() => { if (!dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 60000); return () => clearInterval(timer); }, [qc,user?.id,dirty]);
   const effective = useQuery({ queryKey: ['base-effective', user?.id, staffId], queryFn: () => baseOrgApi.effective(staffId), enabled: !!staffId, retry: false });
   useEffect(() => { if (data.data && !dirty) setConfig(structuredClone(data.data.config)); }, [data.data, dirty]);
+  useEffect(() => { setConfig(emptyConfig()); setDirty(false); setPreview(null); setAssigning(null); setChanging(null); setManageUnit(null); setStaffId(''); }, [accessRevision]);
   const edit = (fn: (c: OrgConfig) => OrgConfig) => { setConfig(fn); setDirty(true); setError(''); };
   const staff = data.data?.staff ?? [];
   const selected = staff.find(s => s.id === staffId);
@@ -80,8 +88,9 @@ export function BaseOrganization() {
     await qc.invalidateQueries();
     await useAuth.getState().reload();
   });
-  if (data.isPending) return <p className="p-6 text-muted-foreground">Đang tải cơ cấu tổ chức…</p>;
-  if (data.error) return <div className="space-y-3"><p className="text-destructive">{data.error.message}</p><Button variant="outline" onClick={() => data.refetch()}>Thử lại</Button></div>;
+  if (!user || user.status !== 'Đang hoạt động') return <p role="alert" className="p-6 text-destructive">Vui lòng đăng nhập lại.</p>;
+  if (data.isPending) return <div aria-busy="true" aria-label="Đang tải cơ cấu tổ chức" className="space-y-5 p-6"><PageHeader title="Cơ cấu tổ chức" /><Skeleton className="h-10 w-64" /><Skeleton className="h-64 w-full" /></div>;
+  if (data.error) return <div className="space-y-3"><PageHeader title="Cơ cấu tổ chức" /><p role="alert" className="text-destructive">Không tải được cơ cấu tổ chức. {data.error instanceof Error ? data.error.message : 'Vui lòng thử lại sau.'}</p><Button variant="outline" disabled={data.isFetching} onClick={() => data.refetch()}>{data.isFetching ? 'Đang tải lại…' : 'Thử lại'}</Button></div>;
   const groupPermissions = (rows: EffectivePermission[]) => [...new Set(rows.map(p => p.module))].map(module => <details key={module} open className="border-b"><summary className="py-3 font-semibold text-sm cursor-pointer">{module}</summary>{rows.filter(p => p.module === module && `${p.label} ${p.key}`.toLocaleLowerCase('vi').includes(permissionSearch.toLocaleLowerCase('vi'))).map(p => <PermissionRow key={p.key} p={p} />)}</details>);
   return <div className="space-y-5 max-w-6xl"><PageHeader title="Cơ cấu tổ chức" /><div className="flex flex-wrap gap-2 items-center"><Button size="sm" variant={section === 'chart' ? 'default' : 'outline'} onClick={() => setSection('chart')}><Network className="h-4 w-4 mr-2" />Cơ cấu & Bổ nhiệm</Button>{canAssignAnywhere && <Button size="sm" variant={section==='staff'?'default':'outline'} onClick={()=>setSection('staff')}><Users className="mr-2 size-4"/>Hồ sơ nhân viên</Button>}{settingsAccess.roles && <Button size="sm" variant={section === 'settings' ? 'default' : 'outline'} onClick={() => setSection('settings')}><Settings2 className="h-4 w-4 mr-2" />Role & Phân quyền</Button>}<Button className="ml-auto" size="sm" disabled={busy || !dirty} onClick={showPreview}><Eye className="h-4 w-4 mr-2" />Xem trước thay đổi</Button></div>{dirty && <div className="flex items-center gap-2"><Badge variant="outline">Có thay đổi chưa áp dụng</Badge><Button size="sm" variant="ghost" onClick={()=>{if(original)setConfig(structuredClone(original));setDirty(false);setError('');}}>Hủy bản nháp</Button></div>}{error && <p role="alert" className="text-sm text-destructive">{error}</p>}
   {section === 'chart' && <OrgChart config={config} staff={staff} serverNow={data.data?.server_now} canManage={canAssignAnywhere || canEditStructure} onManageUnit={node => setManageUnit(node)} onOpenStaff={id => { setStaffId(id); setSection('staff'); }} onAssign={ref => setAssigning({unitId:ref.unitId,titleId:ref.slot.titleId??ref.slot.id})} onUnassign={(ref,p)=>{const m=config.memberships.find(x=>x.active&&x.status!=='cancelled'&&(!x.starts_at||x.starts_at<=(data.data?.server_now??new Date().toISOString()))&&(!x.ends_at||x.ends_at>(data.data?.server_now??new Date().toISOString()))&&x.unit_id===ref.unitId&&x.title_id===(ref.slot.titleId??ref.slot.id)&&x.user_id===p.id);if(m)setChanging({id:m.id});}} onSlotHistory={ref=>setHistorySlot(ref)} />}
