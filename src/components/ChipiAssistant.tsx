@@ -10,7 +10,9 @@ import { chipiAssets } from "@/assets/chipi/states";
 import { chipiState, chipiDisplayState, CHIPI_PLAY_INTERVAL_MS, CHIPI_PLAY_DURATION_MS, currentChipiNotice, newChipiNotice, type ChipiNotice, type ChipiDecoration } from "@/lib/chipi";
 
 export function ChipiAssistant({ userId }: { userId: string }) {
-  const [mode, setMode] = useState<"full" | "small" | "hidden">("full");
+  const [mode, setMode] = useState<"full" | "small" | "hidden">(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? "small" : "full"
+  );
   const [ready, setReady] = useState(false);
   const [hello, setHello] = useState(true);
   const [notice, setNotice] = useState<ChipiNotice>();
@@ -104,7 +106,10 @@ export function ChipiAssistant({ userId }: { userId: string }) {
       setSize(validChipiSize(preferences.size));
       setChatEnabled(preferences.chatEnabled !== false);
       const saved = JSON.parse(sessionStorage.getItem(key) ?? "{}");
-      if (["full", "small", "hidden"].includes(saved.mode)) setMode(saved.mode);
+      const mobile = window.matchMedia("(max-width: 767px)").matches;
+      // A compact assistant is the mobile default, even for sessions that previously used the old full-size default.
+      // An explicitly hidden or minimized assistant is still respected.
+      if (saved.mode === "hidden" || saved.mode === "small" || (!mobile && saved.mode === "full")) setMode(saved.mode);
       seen.current = new Set(Array.isArray(saved.seen) ? saved.seen : []);
       lastBubble.current = typeof saved.lastBubble === "number" ? saved.lastBubble : 0;
       setHello(!saved.visited);
