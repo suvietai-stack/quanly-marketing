@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { AlertCircle, RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, RefreshCw, Search, ClipboardCheck, Clock3 } from 'lucide-react';
 import { useCurrentUser } from '@/lib/auth';
 import {
   approvalCenterQuery, filterItems, sortTodo, sourceGroup, waitingText, vnd, dateText,
@@ -20,11 +20,11 @@ const TAB_LABELS: Record<Tab, string> = { todo: 'Chờ tôi', mine: 'Đang trìn
 /** Nút mở hồ sơ: điều hướng nội bộ TanStack Router, không tải lại ứng dụng. */
 function OpenButton({ item, tab, full }: { item: ApprovalItem; tab: Tab; full?: boolean }) {
   const navigate = useNavigate();
-  const label = tab === 'done' ? 'Xem chi tiết' : 'Xem & xử lý';
+  const label = tab === 'todo' ? 'Mở hồ sơ để duyệt' : 'Xem chi tiết';
   const parsed = parseApprovalUrl(item.url);
   if (!parsed) {
     return (
-      <Button size="sm" variant={tab === 'todo' ? 'default' : 'outline'} className={full ? 'w-full sm:w-auto' : undefined} asChild>
+      <Button size="sm" variant={tab === 'todo' ? 'default' : 'outline'} className={full ? 'approval-open-button w-full min-h-11 rounded-xl' : 'min-h-11'} asChild>
         <a href={item.url}>{label}</a>
       </Button>
     );
@@ -33,7 +33,7 @@ function OpenButton({ item, tab, full }: { item: ApprovalItem; tab: Tab; full?: 
     <Button
       size="sm"
       variant={tab === 'todo' ? 'default' : 'outline'}
-      className={full ? 'w-full sm:w-auto' : undefined}
+      className={full ? 'approval-open-button w-full min-h-11 rounded-xl' : 'min-h-11'}
       onClick={() => navigate({ to: parsed.to as '/', search: parsed.search as never })}
     >
       {label}
@@ -43,16 +43,16 @@ function OpenButton({ item, tab, full }: { item: ApprovalItem; tab: Tab; full?: 
 
 function ItemCard({ item, now, tab }: { item: ApprovalItem; now: string; tab: Tab }) {
   return (
-    <div className="rounded-lg border bg-card p-4 space-y-2">
+    <article className={cn("approval-item-card rounded-2xl border bg-card p-4 space-y-3 shadow-soft", item.overdue && tab === "todo" && "border-destructive/30")}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{item.title}</p>
-          <p className="font-medium break-words">{[item.requester, item.code].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs font-semibold text-primary break-words">{item.title}</p>
+          <p className="mt-1 text-base font-semibold leading-6 break-words">{[item.requester, item.code].filter(Boolean).join(' · ')}</p>
         </div>
         {item.overdue && tab === 'todo' && <Badge variant="destructive" className="shrink-0">Quá hạn</Badge>}
       </div>
-      {item.summary && <p className="text-sm text-muted-foreground line-clamp-2 break-words">{item.summary}</p>}
-      {item.amount != null && <p className="text-lg font-semibold tabular-nums">{vnd(item.amount)}</p>}
+      {item.summary && <p className="text-sm text-muted-foreground line-clamp-3 break-words leading-6">{item.summary}</p>}
+      {item.amount != null && <p className="approval-amount rounded-xl bg-primary/5 px-3 py-2 text-xl font-bold tabular-nums break-words">{vnd(item.amount)}</p>}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {tab === 'done' ? (
           <>{item.action && <span className="font-medium text-foreground">{item.action}</span>}{item.acted_at && <span>{dateText(item.acted_at)}</span>}</>
@@ -61,7 +61,7 @@ function ItemCard({ item, now, tab }: { item: ApprovalItem; now: string; tab: Ta
         )}
       </div>
       <OpenButton item={item} tab={tab} full />
-    </div>
+    </article>
   );
 }
 
@@ -102,6 +102,7 @@ export function ApprovalCenter() {
   const query = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id });
   const [tab, setTab] = useState<Tab>('todo');
   const [search, setSearch] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [group, setGroup] = useState<ApprovalGroup | 'all'>('all');
 
   const data = query.data;
@@ -111,20 +112,22 @@ export function ApprovalCenter() {
     const list = tab === 'todo' ? data.todo : tab === 'mine' ? data.mine : data.done;
     return tab === 'todo' ? sortTodo(list) : list;
   }, [data, tab]);
-  const items = useMemo(() => filterItems(rawItems, search, group), [rawItems, search, group]);
-  const groups = useMemo(() => {
-    if (!data) return [];
-    const all = [...data.todo, ...data.mine, ...data.done];
-    return [...new Set(all.map((i) => sourceGroup(i.source)))];
-  }, [data]);
+  const items = useMemo(() => filterItems(rawItems, search, group).filter(i => tab !== 'todo' || !overdueOnly || i.overdue), [rawItems, search, group, overdueOnly, tab]);
+  const hasFilters = !!search.trim() || group !== 'all' || (tab === 'todo' && overdueOnly);
+  const resetFilters = () => {setSearch('');setGroup('all');setOverdueOnly(false);};
+  const chooseTab = (next: Tab) => {setTab(next);setGroup('all');setOverdueOnly(false);};
+  const groups = useMemo(() => [...new Set(rawItems.map(i => sourceGroup(i.source)))], [rawItems]);
+  const groupCount = (g: string) => rawItems.filter(i => sourceGroup(i.source) === g).length;
+  const overdueCount = data?.todo.filter(i => i.overdue).length ?? 0;
+
 
   return (
-    <div className="space-y-4 pb-24 md:pb-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="approval-center-mobile min-w-0 space-y-4 pb-24 md:pb-8">
+      <div className="approval-center-heading flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight">Phê duyệt</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {data ? `${data.todo.length} việc đang chờ bạn xử lý` : 'Đang tải…'}
+            {data ? `${data.todo.length} việc chờ xử lý${data.errors?.length ? ' từ nguồn đã tải' : ''}` : query.error ? 'Chưa tải được dữ liệu' : 'Đang tải…'}
           </p>
         </div>
         <Button variant="ghost" size="icon" aria-label="Làm mới" onClick={() => query.refetch()} disabled={query.isFetching}>
@@ -132,29 +135,40 @@ export function ApprovalCenter() {
         </Button>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList className="w-full sm:w-auto grid grid-cols-3">
+      {data && <section className="approval-overview rounded-3xl p-4 md:hidden" aria-label="Tổng quan phê duyệt">
+        <p className="flex items-center gap-2 text-xs font-medium"><ClipboardCheck className="h-4 w-4" />TRUNG TÂM ĐIỀU HÀNH</p>
+        <h2 className="mt-3 text-xl font-semibold">{data.todo.length ? 'Các hồ sơ đang chờ bạn' : data.errors?.length ? 'Kiểm tra các nguồn chưa tải' : 'Bạn đã xử lý hết việc chờ'}</h2>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <button className="approval-stat" onClick={() => {resetFilters();chooseTab('todo');}}><strong>{data.todo.length}</strong><span>Chờ xử lý</span></button>
+          <button className="approval-stat" onClick={() => {resetFilters();chooseTab('todo');setOverdueOnly(true);}}><strong>{overdueCount}</strong><span>Quá hạn</span></button>
+          <button className="approval-stat" onClick={() => {resetFilters();chooseTab('mine');}}><strong>{data.mine.length}</strong><span>Đang trình</span></button>
+        </div>
+        {data.errors?.length ? <p className="mt-3 text-xs leading-5">Số liệu chưa đầy đủ vì một số nguồn chưa tải được.</p> : <p className="mt-3 text-xs leading-5">Hồ sơ quá hạn và chờ lâu được ưu tiên hiển thị.</p>}
+      </section>}
+      <Tabs value={tab} onValueChange={(v) => chooseTab(v as Tab)}>
+        <TabsList className="approval-main-tabs w-full md:w-auto grid grid-cols-3">
           {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
             <TabsTrigger key={t} value={t}>
-              {TAB_LABELS[t]}{t === 'todo' && data && data.todo.length > 0 ? ` (${data.todo.length})` : ''}
+              {TAB_LABELS[t]}{data ? ` (${data[t].length})` : ''}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
 
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1 sm:max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input aria-label="Tìm hồ sơ" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm người gửi, mã, nội dung…" className="pl-8" />
+      <div className="approval-filter-panel flex flex-col gap-3 rounded-2xl border bg-card p-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+          <Input aria-label="Tìm hồ sơ" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm người gửi, mã, nội dung…" className="h-11 rounded-xl pl-10 pr-3 text-base" />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-          <Button size="sm" variant={group === 'all' ? 'default' : 'outline'} className="shrink-0" onClick={() => setGroup('all')}>Tất cả</Button>
+        <div className="approval-group-filters flex gap-1.5 overflow-x-auto pb-1">
+          <Button size="sm" variant={group === 'all' ? 'default' : 'outline'} className="min-h-11 shrink-0 rounded-xl" aria-pressed={group === 'all'} onClick={() => setGroup('all')}>Tất cả ({rawItems.length})</Button>
           {groups.map((g) => (
-            <Button key={g} size="sm" variant={group === g ? 'default' : 'outline'} className="shrink-0" onClick={() => setGroup(g)}>{groupLabel(g)}</Button>
+            <Button key={g} size="sm" variant={group === g ? 'default' : 'outline'} className="min-h-11 shrink-0 rounded-xl" aria-pressed={group === g} onClick={() => setGroup(g)}>{groupLabel(g)} ({groupCount(g)})</Button>
           ))}
         </div>
       </div>
 
+      {data && <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-muted-foreground">{items.length} hồ sơ hiển thị{tab === 'todo' ? ' · Ưu tiên quá hạn, chờ lâu' : ''}</p><div className="flex items-center gap-2">{tab === 'todo' && <Button size="sm" className="min-h-11 rounded-xl" variant={overdueOnly ? 'secondary' : 'outline'} aria-pressed={overdueOnly} onClick={() => setOverdueOnly(v => !v)}><Clock3 className="h-4 w-4" />Quá hạn ({overdueCount})</Button>}{hasFilters && <Button size="sm" variant="ghost" className="min-h-11" onClick={resetFilters}>Đặt lại</Button>}</div></div>}
       {!!data?.errors?.length && (
         <p role="alert" className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -170,7 +184,7 @@ export function ApprovalCenter() {
       )}
       {!query.isPending && !query.error && items.length === 0 && (
         <p className="text-muted-foreground py-10 text-center border rounded-lg">
-          {tab === 'todo' ? 'Không có việc cần phê duyệt.' : tab === 'mine' ? 'Bạn chưa có hồ sơ nào đang trình duyệt.' : 'Chưa có hồ sơ đã xử lý.'}
+          {hasFilters ? 'Không có hồ sơ phù hợp bộ lọc. Bấm Đặt lại để xem toàn bộ.' : data?.errors?.length ? 'Chưa tìm thấy hồ sơ trong các nguồn đã tải. Hãy thử làm mới.' : tab === 'todo' ? 'Không có việc cần phê duyệt.' : tab === 'mine' ? 'Bạn chưa có hồ sơ nào đang trình duyệt.' : 'Chưa có hồ sơ đã xử lý.'}
         </p>
       )}
 
@@ -202,3 +216,4 @@ export function ApprovalCenter() {
     </div>
   );
 }
+
