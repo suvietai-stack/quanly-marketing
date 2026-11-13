@@ -46,7 +46,7 @@ export type FrRequestLine = {
   id: string; request_id: string; line_no: number; name: string; catalog_id: string | null;
   unit: string | null; qty: number; unit_price: number; line_total: number;
 };
-export type FrSettings = { kind: FrKind; flow: { label: string; perm?: string; user_id?: string }[]; limits: Record<string, any> };
+export type FrSettings = { kind: FrKind; flow: { label: string; perm?: string; user_id?: string; position?: string }[]; limits: Record<string, any> };
 export type FrSettleOption = { id: string; code: string; title: string; paid_amount: number; settled_amount: number; remaining: number };
 
 export const frApi = {
@@ -90,3 +90,4 @@ export const frApi = {
   profiles: (ids: string[]) =>
     ids.length ? sel<{ id: string; full_name: string | null }[]>(db.from("profiles").select("id,full_name").in("id", ids)) : Promise.resolve([]),
 };
+

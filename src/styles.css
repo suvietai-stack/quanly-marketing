@@ -472,3 +472,22 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
  .content-mobile-dialog .content-form-fields { max-height: none; overflow: visible; min-width: 0; }
  .content-mobile-dialog .content-form-footer { gap: 8px; position: sticky; bottom: -16px; background: var(--background); padding-block: 12px; border-top: 1px solid var(--border); z-index: 1; }
 }
+
+@media (max-width: 767px) {
+ .finance-requests-mobile { overflow-wrap: anywhere; }
+ .finance-requests-mobile > .flex:first-of-type { flex-direction: column; align-items: stretch; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+ .fr-mobile-tabs { width: 100%; padding-block: 4px; }
+ .fr-mobile-tabs button { flex-shrink: 0; min-height: 44px; border-radius: 12px; }
+ .finance-requests-mobile :is(input,select,textarea) { min-width: 0; max-width: 100%; font-size: 16px; }
+ .finance-requests-mobile :is(button,input,select) { min-height: 44px; }
+ .fr-request-card { box-shadow: 0 4px 16px #102d5405; }
+ .fr-request-card > div:first-child { flex-wrap: wrap; }
+ .fr-request-card > .font-medium { font-size: 16px; line-height: 1.5; }
+ .fr-mobile-dialog { top: 0; left: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; transform: none; translate: 0 0 !important; grid-template-columns: minmax(0,1fr); border-radius: 0; align-content: start; padding: max(20px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; }
+ .fr-mobile-sheet { width: 100%; max-width: 100%; height: 100dvh; padding: max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom)); }
+ :is(.fr-mobile-dialog,.fr-mobile-sheet) > * { min-width: 0; }
+ :is(.fr-mobile-dialog,.fr-mobile-sheet) :is(input,textarea,select) { min-width: 0; max-width: 100%; font-size: 16px; }
+ :is(.fr-mobile-dialog,.fr-mobile-sheet) :is(button,input,select) { min-height: 44px; }
+ :is(.fr-mobile-dialog,.fr-mobile-sheet) h2 { padding-right: 24px; line-height: 1.5; overflow-wrap: anywhere; }
+ .fr-form-actions { position: sticky; bottom: -16px; padding-block: 12px; background: var(--background); border-top: 1px solid var(--border); z-index: 1; }
+}

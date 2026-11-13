@@ -100,11 +100,11 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
   const loading = (tab === "mine" && mine.isLoading) || (tab === "all" && all.isLoading) || (tab === "todo" && (pendingSteps.isLoading || todo.isLoading));
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="finance-requests-mobile space-y-4 pb-24 min-w-0">
       <PageHeader title={FR_KIND_LABEL[kind]} />
       <div className="flex flex-wrap items-center gap-2">
         <Button onClick={() => { setEditing(null); setCreateOpen(true); }}><Plus className="h-4 w-4 mr-1" />Tạo đề nghị</Button>
-        <div className="flex gap-1 overflow-x-auto">
+        <div className="fr-mobile-tabs flex gap-1 overflow-x-auto max-w-full">
           <button className={chip(tab === "mine")} onClick={() => setTab("mine")}>Đề nghị của tôi</button>
           <button className={chip(tab === "todo")} onClick={() => setTab("todo")}>Chờ tôi xử lý</button>
           {canScope && <button className={chip(tab === "all")} onClick={() => setTab("all")}>Tất cả</button>}
@@ -166,7 +166,7 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
 
 function RequestCard({ r, uid, onOpen }: { r: FrRequest; uid: string; onOpen: () => void }) {
   return (
-    <button onClick={onOpen} className="text-left rounded-lg border bg-card p-3 space-y-1.5 hover:bg-accent/50 transition-colors">
+    <button onClick={onOpen} className="fr-request-card text-left rounded-2xl border bg-card p-4 space-y-2 hover:bg-accent/50 transition-colors">
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-sm font-semibold">{r.code}</span>
         <Badge variant={FR_STATUS_VARIANT[r.status]}>{FR_STATUS_LABEL[r.status]}</Badge>
@@ -312,7 +312,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className={`${kind === "payment" ? "sm:max-w-3xl" : "max-w-lg"} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent className={`fr-mobile-dialog ${kind === "payment" ? "sm:max-w-3xl" : "max-w-lg"} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader><DialogTitle>{editing ? `Sửa ${FR_KIND_LABEL[kind]}` : `Tạo ${FR_KIND_LABEL[kind]}`}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           {kind !== "payment" && (
@@ -431,7 +431,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
           <Field label="Ghi chú">
             <Textarea rows={2} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
-          <div className="flex gap-2 pt-2">
+          <div className="fr-form-actions flex gap-2 pt-2">
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => save(false)}>Lưu nháp</Button>
             <Button className="flex-1" disabled={busy} onClick={() => save(true)}>{busy ? "Đang lưu…" : "Gửi đề nghị"}</Button>
           </div>
@@ -466,7 +466,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
     catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
 
-  if (!r) return <Sheet open onOpenChange={(o) => !o && onClose()}><SheetContent className="w-full sm:max-w-xl overflow-y-auto"><p className="p-4 text-sm text-muted-foreground">Đang tải…</p></SheetContent></Sheet>;
+  if (!r) return <Sheet open onOpenChange={(o) => !o && onClose()}><SheetContent className="fr-mobile-sheet w-full sm:max-w-xl overflow-y-auto"><p className="p-4 text-sm text-muted-foreground">Đang tải…</p></SheetContent></Sheet>;
 
   const isOwner = r.requester_id === uid;
   const typeName = (types.data ?? []).find((t) => t.id === (kind === "advance" ? r.advance_type_id : r.payment_type_id))?.name;
@@ -487,7 +487,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+      <SheetContent className="fr-mobile-sheet w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <span className="font-mono">{r.code}</span>
@@ -618,7 +618,7 @@ function PayDialog({ open, onClose, remaining, onConfirm }: {
   useEffect(() => { if (open) { setAmount(fmtAmountInput(String(remaining))); setRef(""); setNote(""); } }, [open, remaining]);
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="fr-mobile-dialog max-w-md">
         <DialogHeader><DialogTitle>Xác nhận chi tiền</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Field label={`Số tiền thực chi (còn phải chi: ${vnd(remaining)}) *`}>
@@ -651,7 +651,7 @@ function DeductDialog({ open, onClose, remaining, onConfirm }: {
   useEffect(() => { if (open) { setAmount(fmtAmountInput(String(remaining))); setNote(""); } }, [open, remaining]);
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="fr-mobile-dialog max-w-md">
         <DialogHeader><DialogTitle>Xác nhận khấu trừ/hoàn trả</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Field label={`Số tiền khấu trừ lần này (còn lại: ${vnd(remaining)}) *`}>
@@ -784,7 +784,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (cfg) {
-      setFlow((cfg.flow ?? []).map((s: any) => ({ label: s.label ?? "", perm: s.perm ?? `${permPrefix}.approve` })));
+      setFlow((cfg.flow ?? []).map((s: any) => ({ label: s.label ?? "", perm: s.position === 'executive_director' ? 'position:executive_director' : s.user_id ? `user:${s.user_id}` : s.perm ?? `${permPrefix}.approve` })));
       setLimits(cfg.limits ?? {});
     }
   }, [cfg, permPrefix]);
@@ -792,7 +792,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
   const save = async () => {
     setBusy(true);
     try {
-      await frApi.saveSettings(kind, flow.map((s, i) => ({ label: s.label || `Cấp duyệt ${i + 1}`, perm: s.perm })), limits);
+      await frApi.saveSettings(kind, flow.map((s, i) => ({ label: s.label || `Cấp duyệt ${i + 1}`, ...(s.perm === 'position:executive_director' ? {position:'executive_director'} : s.perm.startsWith('user:') ? {user_id:s.perm.slice(5)} : {perm:s.perm}) })), limits);
       toast.success("Đã lưu cài đặt");
       onSaved();
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
@@ -803,7 +803,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
     <div className="space-y-6 max-w-2xl">
       <div className="rounded-lg border p-4 space-y-3">
         <div className="font-semibold">Quy trình phê duyệt</div>
-        <p className="text-sm text-muted-foreground">Mỗi cấp duyệt gán cho người giữ một quyền. Đề nghị đi qua từng cấp theo thứ tự.</p>
+        <p className="text-sm text-muted-foreground">Mỗi cấp duyệt gán theo chức danh hoặc quyền được chọn. Đề nghị đi qua từng cấp theo thứ tự.</p>
         {flow.map((s, i) => (
           <div key={i} className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-mono w-6">{i + 1}.</span>
@@ -811,6 +811,8 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
               onChange={(e) => setFlow(flow.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
             <select className="h-10 rounded-md border bg-background px-2 text-sm" value={s.perm}
               onChange={(e) => setFlow(flow.map((x, j) => (j === i ? { ...x, perm: e.target.value } : x)))}>
+              <option value="position:executive_director">Giám đốc điều hành (theo bổ nhiệm hiện tại)</option>
+              {s.perm.startsWith('user:') && <option value={s.perm}>Người duyệt được chỉ định</option>}
               <option value={`${permPrefix}.approve`}>Người có quyền Phê duyệt</option>
               <option value={`${permPrefix}.view_scope`}>Người có quyền Xem phạm vi</option>
               <option value={`${permPrefix}.settings`}>Người có quyền Cài đặt</option>
@@ -952,7 +954,7 @@ function TypeEditDialog({ kind, editing, count, onClose, onSaved }: {
   };
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="fr-mobile-dialog max-w-md">
         <DialogHeader><DialogTitle>{editing ? "Sửa" : "Thêm"} {kind === "advance" ? "loại tạm ứng" : "loại thanh toán"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Field label="Tên loại *"><Input maxLength={200} value={name} onChange={(e) => setName(e.target.value)} /></Field>
@@ -1021,3 +1023,4 @@ function LineCatalogManager() {
     </div>
   );
 }
+
