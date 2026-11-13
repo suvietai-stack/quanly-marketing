@@ -919,7 +919,7 @@ const accessAt: { base: number | null; biz: number | null } = { base: null, biz:
 const accessAttemptAt: { base: number | null; biz: number | null } = { base: null, biz: null };
 
 // Index verified server decisions once per response instead of scanning the
-// 510-key permission catalog for every navigation item and action check.
+// permission catalog for every navigation item and action check.
 const effectivePermissionIndexes = new WeakMap<EffectiveAccess, Map<string, boolean>>();
 function verifiedPermission(access: EffectiveAccess, key: string): boolean | undefined {
   let index = effectivePermissionIndexes.get(access);
@@ -974,7 +974,15 @@ export const useAuth = create<AuthState>((set, get) => ({
   _loadBase: async () => {
     const uid = get().currentUserId;
     if (!uid) { set({ baseAccess: null }); return; }
-    const { data, error } = await supabase.rpc('base_permissions_effective');
+    // Staff navigation needs only general Base decisions. Business / 3K is
+    // independently verified by biz_effective_access and stays fail-closed.
+    // Avoid resolving the costly business legacy rules twice for every login.
+    const quick = await supabase.rpc('base_permissions_navigation' as never);
+    // Safe during rollout: the old RPC remains available until the new
+    // migration is applied. Never fall back on authorization/network errors.
+    const { data, error } = quick.error?.code === 'PGRST202'
+      ? await supabase.rpc('base_permissions_effective')
+      : quick;
     if (get().currentUserId !== uid) return;
     const r = mergeAccess(get().baseAccess, accessAt.base, uid, { data: data as unknown as EffectiveAccess, error }, Date.now());
     accessAt.base = r.verifiedAt;
