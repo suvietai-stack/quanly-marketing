@@ -126,5 +126,6 @@ BEGIN
 END
 $function$;
 
+REVOKE ALL ON FUNCTION private.base_staff_effective(uuid,jsonb) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.base_permissions_navigation() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.base_permissions_navigation() TO authenticated;
