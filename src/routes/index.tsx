@@ -669,6 +669,7 @@ function DeptOverview() {
   const [channelType, setChannelType] = useState<"all" | "Website" | "Social" | "Local">("all");
   const [staffMobileLimit, setStaffMobileLimit] = useState(6);
   const [channelMobileLimit, setChannelMobileLimit] = useState(6);
+  const [showMoreMetrics, setShowMoreMetrics] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [drawerStaff, setDrawerStaff] = useState<string | null>(null);
@@ -995,16 +996,23 @@ function DeptOverview() {
         </CardContent>
       </Card>
 
-      {/* ===== Quick Stat Cards ===== */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
-        <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
-        <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
-        <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
-        <Stat label="Jobs quá hạn" value={stats.overdue} icon={AlertTriangle} tone="danger" />
-        <Stat label="Jobs cần sửa" value={stats.needsFix} icon={FileEdit} tone="warn" />
-        <Stat label="Jobs chờ duyệt" value={stats.pendingReview} icon={Clock} tone="warn" />
-        <Stat label="Tỷ lệ đúng hạn" value={`${stats.onTimeRate}%`} icon={ClipboardCheck} tone="success" hint={`${stats.done} jobs hoàn thành`} />
-      </div>
+      {/* ===== Quick Stat Cards: 4 action KPIs first on narrow screens ===== */}
+      <section aria-label="Chỉ số vận hành" className="space-y-2.5">
+        <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
+          <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
+          <Stat label="Jobs quá hạn" value={stats.overdue} icon={AlertTriangle} tone="danger" />
+          <Stat label="Jobs cần sửa" value={stats.needsFix} icon={FileEdit} tone="warn" />
+          <Stat label="Jobs chờ duyệt" value={stats.pendingReview} icon={Clock} tone="warn" />
+          <div className={showMoreMetrics ? "contents" : "hidden md:contents"}>
+            <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
+            <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
+            <Stat label="Tỷ lệ đúng hạn" value={`${stats.onTimeRate}%`} icon={ClipboardCheck} tone="success" hint={`${stats.done} jobs hoàn thành`} />
+          </div>
+        </div>
+        <button type="button" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border bg-card text-xs font-semibold text-primary md:hidden" aria-expanded={showMoreMetrics} onClick={() => setShowMoreMetrics(v => !v)}>
+          {showMoreMetrics ? "Thu gọn chỉ số" : "Xem thêm chỉ số"} {showMoreMetrics ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+        </button>
+      </section>
 
       {/* ===== Staff Performance ===== */}
       {canStaff && (
