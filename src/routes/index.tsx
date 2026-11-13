@@ -13,9 +13,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import {
   ListChecks, AlertTriangle, Clock, CheckCircle2, Globe, Share2,
   MapPin, Video, Inbox, Hourglass, ArrowRight, FileEdit, ClipboardCheck,
-  Briefcase, RefreshCw, X, ExternalLink,
+  Briefcase, RefreshCw, X, ExternalLink, LayoutGrid, ArrowUp, ArrowDown, Search,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { getPublicBranding } from "@/lib/branding.functions";
 import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
@@ -118,25 +118,38 @@ function Overview() {
   }[tab];
 
   return (
-    <>
-      <PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} />
+    <div className="dashboard-page min-w-0 space-y-4 md:space-y-6">
+      {/* The mobile header is intentionally brief: action cards follow immediately. */}
+      <header className="dashboard-hero md:hidden rounded-2xl p-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <span className="rounded-xl bg-white/15 p-2 text-white"><LayoutGrid className="h-5 w-5" /></span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-cyan-100">Bảng điều khiển</p>
+            <h2 className="mt-1 text-[20px] font-bold leading-snug text-white">
+              {tab === "mine" ? "Công việc của tôi" : tab === "ops" ? "Điều hành công việc" : tab === "staff" ? "Hiệu suất nhân sự" : "Tổng hợp tiến độ"}
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-blue-100">{desc}</p>
+          </div>
+        </div>
+      </header>
+      <div className="hidden md:block"><PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} /></div>
       {canSeeAllDept ? (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="mine">Của tôi</TabsTrigger>
-            {isKpiV2Enabled() && <TabsTrigger value="summary">Tổng hợp</TabsTrigger>}
-            {isKpiV2Enabled() && isKpiManager && <TabsTrigger value="staff">Nhân sự</TabsTrigger>}
-            <TabsTrigger value="ops">Vận hành</TabsTrigger>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "mine" | "summary" | "staff" | "ops")} className="min-w-0">
+          <TabsList className="dashboard-main-tabs grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-transparent p-0 md:flex md:w-fit md:flex-wrap">
+            <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="mine"><Inbox className="h-4 w-4" /> Của tôi</TabsTrigger>
+            {isKpiV2Enabled() && <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="summary"><Globe className="h-4 w-4" /> Tổng hợp</TabsTrigger>}
+            {isKpiV2Enabled() && isKpiManager && <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="staff"><Briefcase className="h-4 w-4" /> Nhân sự</TabsTrigger>}
+            <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="ops"><ClipboardCheck className="h-4 w-4" /> Vận hành</TabsTrigger>
           </TabsList>
-          <TabsContent value="mine" className="mt-6"><MineOverview /></TabsContent>
-          <TabsContent value="summary" className="mt-6"><ManagerSummary /></TabsContent>
-          {isKpiManager && <TabsContent value="staff" className="mt-6"><StaffTable /></TabsContent>}
-          <TabsContent value="ops" className="mt-6"><DeptOverview /></TabsContent>
+          <TabsContent value="mine" className="mt-4"><MineOverview /></TabsContent>
+          <TabsContent value="summary" className="mt-4"><ManagerSummary /></TabsContent>
+          {isKpiManager && <TabsContent value="staff" className="mt-4"><StaffTable /></TabsContent>}
+          <TabsContent value="ops" className="mt-4"><DeptOverview /></TabsContent>
         </Tabs>
       ) : (
         <MineOverview />
       )}
-    </>
+    </div>
   );
 }
 
@@ -316,51 +329,79 @@ type WorkTab = "mine" | "review" | "fix" | "waiting" | "overdue" | "done";
 function MineOverview() {
   const items = useMyWork();
   const { user } = useCurrentUser();
-  const [tab, setTab] = useState<WorkTab>("overdue");
+  const [tab, setTab] = useState<WorkTab>("mine");
+  const [taskSearch, setTaskSearch] = useState("");
+  const [kpiExpanded, setKpiExpanded] = useState(false);
+  useEffect(() => {
+    // On desktop preserve the old immediately visible KPI panel; on mobile
+    // defer expensive KPI hydration until the user explicitly expands it.
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setKpiExpanded(!media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const needAction = items.needsFix.length + items.toReview.length;
   const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  const filterWork = (list: WorkItem[]) => {
+    const q = taskSearch.trim().toLocaleLowerCase("vi");
+    return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
+  };
+  const emptyMessage = (normal: string) => taskSearch.trim() ? "Không tìm thấy công việc phù hợp. Hãy thử từ khóa khác." : normal;
 
   return (
-    <div className="space-y-8">
-      <section>
-        <SectionTitle>Công việc</SectionTitle>
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-          <ClickStat label="Đang thực hiện" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
-          <ClickStat label="Cần xử lý" hint="Cần sửa + chờ tôi duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
-          <ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} />
+    <div className="flex min-w-0 flex-col gap-5 md:gap-8">
+      <section className="order-1" aria-label="Công việc quan trọng">
+        <SectionTitle>Cần chú ý</SectionTitle>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
+          <ClickStat label="Đang làm" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
+          <ClickStat label="Cần xử lý" hint="Cần sửa và chờ duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
+          <div className="col-span-2 sm:col-span-1"><ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} /></div>
         </div>
       </section>
 
-      {isKpiV2Enabled() && user && (
-        <section>
-          <SectionTitle>KPI của tôi</SectionTitle>
-          <PersonalKpi userId={user.id} />
-        </section>
-      )}
-
-      <section id="my-work">
-        <SectionTitle>Việc cần làm</SectionTitle>
-        <Card>
-          <CardContent className="pt-6">
+      <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <SectionTitle>Danh sách cần làm</SectionTitle>
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{items.mine.length} đang thực hiện</span>
+        </div>
+        <Card className="dashboard-work-panel overflow-hidden rounded-2xl">
+          <CardContent className="p-3 sm:p-5">
+            <div className="relative mb-3 flex items-center">
+              <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <input type="search" value={taskSearch} onChange={e => setTaskSearch(e.target.value)} aria-label="Tìm công việc trong mục đang xem" placeholder="Tìm tên việc, thương hiệu, trạng thái..." className="min-h-11 w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+            </div>
             <Tabs value={tab} onValueChange={(v) => setTab(v as WorkTab)}>
-              <TabsList className="flex-wrap h-auto">
-                <TabsTrigger value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
-                <TabsTrigger value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
-                <TabsTrigger value="mine">Đang thực hiện ({items.mine.length})</TabsTrigger>
-                <TabsTrigger value="review">Chờ tôi duyệt ({items.toReview.length})</TabsTrigger>
-                <TabsTrigger value="waiting">Chờ người khác ({items.waiting.length})</TabsTrigger>
-                <TabsTrigger value="done">Hoàn thành 7 ngày ({items.doneRecent.length})</TabsTrigger>
+              <TabsList className="dashboard-work-tabs grid h-auto w-full grid-cols-3 gap-1.5 bg-transparent p-0">
+                <TabsTrigger data-tone="info" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="mine">Đang làm ({items.mine.length})</TabsTrigger>
+                <TabsTrigger data-tone="danger" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
+                <TabsTrigger data-tone="warn" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
+                <TabsTrigger data-tone="violet" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="review">Chờ duyệt ({items.toReview.length})</TabsTrigger>
+                <TabsTrigger data-tone="muted" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="waiting">Đang chờ ({items.waiting.length})</TabsTrigger>
+                <TabsTrigger data-tone="success" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="done">Đã xong ({items.doneRecent.length})</TabsTrigger>
               </TabsList>
-              <TabsContent value="mine"><WorkTable items={sortByDue(items.mine)} empty="Hiện chưa có việc nào bạn đang thực hiện." /></TabsContent>
-              <TabsContent value="review"><WorkTable items={items.toReview} empty="Không có việc nào đang chờ bạn duyệt." /></TabsContent>
-              <TabsContent value="fix"><WorkTable items={items.needsFix} empty="Không có việc nào cần sửa." /></TabsContent>
-              <TabsContent value="waiting"><WorkTable items={items.waiting} empty="Không có việc nào đang chờ người khác." /></TabsContent>
-              <TabsContent value="overdue"><WorkTable items={sortByDue(items.overdue)} empty="Tuyệt vời! Không có việc nào quá hạn." /></TabsContent>
-              <TabsContent value="done"><WorkTable items={items.doneRecent} empty="Chưa có việc hoàn thành trong 7 ngày." /></TabsContent>
+              <TabsContent value="mine"><WorkTable items={filterWork(sortByDue(items.mine))} empty={emptyMessage("Hiện chưa có việc nào bạn đang thực hiện.")} /></TabsContent>
+              <TabsContent value="review"><WorkTable items={filterWork(items.toReview)} empty={emptyMessage("Không có việc nào đang chờ bạn duyệt.")} /></TabsContent>
+              <TabsContent value="fix"><WorkTable items={filterWork(items.needsFix)} empty={emptyMessage("Không có việc nào cần sửa.")} /></TabsContent>
+              <TabsContent value="waiting"><WorkTable items={filterWork(items.waiting)} empty={emptyMessage("Không có việc nào đang chờ người khác.")} /></TabsContent>
+              <TabsContent value="overdue"><WorkTable items={filterWork(sortByDue(items.overdue))} empty={emptyMessage("Không có việc nào quá hạn.")} /></TabsContent>
+              <TabsContent value="done"><WorkTable items={filterWork(items.doneRecent)} empty={emptyMessage("Chưa có việc hoàn thành trong 7 ngày.")} /></TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </section>
+
+      {isKpiV2Enabled() && user && (
+        <section className="order-3 md:order-2">
+          <div className="dashboard-kpi-panel rounded-2xl border bg-card p-3 md:p-5">
+            <button type="button" className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-1 text-left" aria-expanded={kpiExpanded} onClick={() => setKpiExpanded(v => !v)}>
+              <span className="flex min-w-0 items-center gap-2.5"><span className="rounded-lg bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"><CheckCircle2 className="h-5 w-5" /></span><span className="min-w-0"><strong className="block text-sm">KPI của tôi</strong><span className="block text-xs text-muted-foreground">Mở xem tiến độ và chỉ tiêu cá nhân</span></span></span>
+              {kpiExpanded ? <ArrowUp className="h-4 w-4 shrink-0 text-primary" /> : <ArrowDown className="h-4 w-4 shrink-0 text-primary" />}
+            </button>
+            {kpiExpanded && <div className="mt-4 border-t pt-4"><PersonalKpi userId={user.id} /></div>}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -374,15 +415,15 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success"; hint?: string; onClick?: () => void }) {
-  const toneCls = { info: "bg-primary/10 text-primary", warn: "bg-warning/15 text-warning-foreground", danger: "bg-destructive/10 text-destructive", success: "bg-success/10 text-success" }[tone];
   return (
-    <button onClick={onClick} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/40 hover:shadow-sm">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${toneCls}`}><Icon className="h-5 w-5" /></div>
-      <div className="min-w-0">
-        <div className="text-2xl font-semibold tabular-nums leading-tight">{value}</div>
-        <div className="text-sm text-muted-foreground">{label}</div>
-        {hint && <div className="text-[11px] text-muted-foreground/80">{hint}</div>}
-      </div>
+    <button type="button" onClick={onClick} className={`dashboard-stat dashboard-stat-${tone} flex h-full min-h-28 w-full flex-col items-start justify-between gap-2 rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-24 sm:flex-row sm:items-center sm:p-4`}>
+      <span className="dashboard-stat-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"><Icon className="h-5 w-5" /></span>
+      <span className="min-w-0 flex-1">
+        <strong className="block text-2xl font-bold leading-none tabular-nums">{value}</strong>
+        <span className="mt-1 block text-xs font-semibold leading-tight sm:text-sm">{label}</span>
+        {hint && <span className="mt-1 hidden text-[10px] leading-tight opacity-75 sm:block">{hint}</span>}
+      </span>
+      <ArrowRight className="hidden h-4 w-4 shrink-0 opacity-65 sm:block" aria-hidden="true" />
     </button>
   );
 }
@@ -418,18 +459,18 @@ function ManagerSummary() {
     <div className="space-y-8">
       <div className="flex flex-wrap gap-2">
         {keys.length > 0 && <PeriodSelect keys={keys} value={key} onChange={setPk} />}
-        <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
+        <select aria-label="Lọc theo thương hiệu" className="min-h-11 max-w-full rounded-xl border border-input bg-background px-3 text-sm" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
           <option value="">Tất cả thương hiệu</option>
           {s.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
         <ClickStat label="Chỉ tiêu có nguy cơ chậm" icon={Clock} tone="warn"
           value={withData.length ? atRisk.length : <span className="text-base font-medium text-muted-foreground">Chưa đủ dữ liệu</span>}
           hint={withData.length ? `Trên ${withData.length} chỉ tiêu đo được, so với thời gian đã trôi qua` : undefined}
           onClick={() => document.getElementById("channel-progress")?.scrollIntoView({ behavior: "smooth" })} />
         <ClickStat label="Công việc chờ tôi duyệt" value={my.toReview.length} icon={ClipboardCheck} tone="info" onClick={() => setSheet("review")} />
-        <ClickStat label="Công việc quá hạn" value={overdueAll.length} icon={AlertTriangle} tone="danger" onClick={() => setSheet("overdue")} />
+        <div className="col-span-2 sm:col-span-1"><ClickStat label="Công việc quá hạn" value={overdueAll.length} icon={AlertTriangle} tone="danger" onClick={() => setSheet("overdue")} /></div>
       </div>
       <section id="channel-progress">
         <SectionTitle>Tiến độ triển khai theo thương hiệu và kênh</SectionTitle>
@@ -449,47 +490,69 @@ function ManagerSummary() {
 }
 
 function WorkTable({ items, empty }: { items: WorkItem[]; empty: string }) {
+  const [visibleCount, setVisibleCount] = useState(8);
   if (items.length === 0) {
     return (
-      <div className="py-12 text-center text-sm text-muted-foreground">{empty}</div>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-emerald-50/70 px-4 py-7 text-center dark:bg-emerald-950/30">
+        <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+        <p className="text-sm font-medium text-emerald-950 dark:text-emerald-100">{empty}</p>
+      </div>
     );
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground bg-muted/40">
-          <tr>
-            <th className="text-left font-medium px-3 py-2.5">Loại</th>
-            <th className="text-left font-medium px-3 py-2.5">Nội dung</th>
-            <th className="text-left font-medium px-3 py-2.5">Module</th>
-            <th className="text-left font-medium px-3 py-2.5">Thương hiệu</th>
-            <th className="text-left font-medium px-3 py-2.5">Vai trò</th>
-            <th className="text-left font-medium px-3 py-2.5">Hạn</th>
-            <th className="text-left font-medium px-3 py-2.5">Trạng thái</th>
-            <th className="text-right font-medium px-3 py-2.5">Mở việc</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {items.map((it) => (
-            <tr key={it.id} className="hover:bg-muted/30">
-              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{it.kind}</td>
+    <div className="min-w-0">
+      {/* Mobile: task cards with immediate action; do not make people scroll a wide table. */}
+      <div className="space-y-2.5 md:hidden" aria-label={`Danh sách ${items.length} công việc`}>
+        {items.slice(0,visibleCount).map(it => {
+          const overdue = isOverdue(it.due,it.status);
+          const needsFix = it.status.includes("Cần sửa");
+          return <article key={it.id} className={`dashboard-work-card rounded-xl border p-3 ${overdue ? "border-rose-200 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/20" : needsFix ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-border bg-card"}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{it.module}</span>
+              <StatusBadge value={it.status} />
+            </div>
+            <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-foreground">{it.title}</h3>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-5 text-muted-foreground">
+              {it.brand && <span className="max-w-full truncate">🏷 {it.brand}</span>}
+              {it.mineAs && <span className="max-w-full truncate">Vai trò: {it.mineAs}</span>}
+              {it.due && <span className={overdue ? "font-semibold text-rose-700 dark:text-rose-300" : ""}><Clock className="mr-1 inline h-3 w-3" />{fmtDate(it.due)}</span>}
+            </div>
+            <Button asChild variant="outline" size="sm" className="mt-3 min-h-11 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-blue-50 dark:bg-card">
+              <Link to={it.href}>Mở công việc <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            </Button>
+          </article>;
+        })}
+        {visibleCount < items.length && <Button type="button" variant="outline" className="min-h-11 w-full rounded-xl" onClick={() => setVisibleCount(n => n+8)}>Xem thêm {Math.min(8,items.length-visibleCount)} việc <ArrowDown className="ml-1 h-4 w-4" /></Button>}
+      </div>
+      {/* Desktop retains the complete operational table and all columns. */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2.5 text-left font-medium">Loại</th>
+              <th className="px-3 py-2.5 text-left font-medium">Nội dung</th>
+              <th className="px-3 py-2.5 text-left font-medium">Module</th>
+              <th className="px-3 py-2.5 text-left font-medium">Thương hiệu</th>
+              <th className="px-3 py-2.5 text-left font-medium">Vai trò</th>
+              <th className="px-3 py-2.5 text-left font-medium">Hạn</th>
+              <th className="px-3 py-2.5 text-left font-medium">Trạng thái</th>
+              <th className="px-3 py-2.5 text-right font-medium">Mở việc</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {items.map(it => <tr key={it.id} className="hover:bg-muted/30">
+              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.kind}</td>
               <td className="px-3 py-2 font-medium">{it.title}</td>
               <td className="px-3 py-2 text-muted-foreground">{it.module}</td>
               <td className="px-3 py-2 text-muted-foreground">{it.brand || "—"}</td>
-              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{it.mineAs || "—"}</td>
-              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{fmtDate(it.due)}</td>
+              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.mineAs || "—"}</td>
+              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{fmtDate(it.due)}</td>
               <td className="px-3 py-2"><StatusBadge value={it.status} /></td>
-              <td className="px-3 py-2 text-right">
-                <Button asChild size="sm" variant="outline">
-                  <Link to={it.href}>
-                    Mở <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              <td className="px-3 py-2 text-right"><Button asChild size="sm" variant="outline"><Link to={it.href}>Mở <ArrowRight className="h-3.5 w-3.5" /></Link></Button></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -546,26 +609,17 @@ function isNeedsFixStatus(s: string): boolean {
 function Stat({ label, value, icon: Icon, tone = "default", hint }: {
   label: string; value: number | string; icon: any; tone?: "default" | "warn" | "danger" | "success" | "info"; hint?: string;
 }) {
-  const tones: Record<string, string> = {
-    default: "bg-secondary text-secondary-foreground",
-    warn: "bg-warning/15 text-[oklch(0.45_0.13_75)]",
-    danger: "bg-destructive/10 text-destructive",
-    success: "bg-success/15 text-success",
-    info: "bg-info/15 text-info",
-  };
   return (
-    <Card>
-      <CardContent className="p-5 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
-          <div className="text-2xl font-semibold mt-1.5 tracking-tight tabular-nums">{value}</div>
-          {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
-        </div>
-        <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${tones[tone]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardContent>
-    </Card>
+    <div className={`dashboard-metric dashboard-metric-${tone} flex min-h-28 items-start justify-between gap-2 rounded-2xl border p-3 shadow-sm sm:min-h-32 sm:p-4`}>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-semibold leading-tight">{label}</div>
+        <div className="mt-2 text-2xl font-bold tracking-tight tabular-nums">{value}</div>
+        {hint && <div className="mt-1 text-[11px] leading-tight opacity-80">{hint}</div>}
+      </div>
+      <div className="dashboard-metric-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+        <Icon className="h-5 w-5" />
+      </div>
+    </div>
   );
 }
 
@@ -604,6 +658,8 @@ function DeptOverview() {
   const [moduleFilter, setModuleFilter] = useState<string>("");
   const [staff, setStaff] = useState<string>("");
   const [channelType, setChannelType] = useState<"all" | "Website" | "Social" | "Local">("all");
+  const [staffMobileLimit, setStaffMobileLimit] = useState(6);
+  const [channelMobileLimit, setChannelMobileLimit] = useState(6);
   const [refreshKey, setRefreshKey] = useState(0);
   const [drawerStaff, setDrawerStaff] = useState<string | null>(null);
 
@@ -720,28 +776,29 @@ function DeptOverview() {
 
   // ----- Staff performance -----
   const staffRows = useMemo(() => {
-    type Row = { name: string; role?: string; assigned: number; done: number; open: number; overdue: number; needsFix: number; pending: number; onTimeRate: number; };
+    type Row = { name: string; role?: string; assigned: number; done: number; open: number; overdue: number; needsFix: number; pending: number; onTimeRate: number; onTimeDone: number; };
     const map = new Map<string, Row>();
     for (const j of filteredJobs) {
       if (!j.assignee) continue;
       let row = map.get(j.assignee);
       if (!row) {
         const person = s.people.find((p) => p.name === j.assignee);
-        row = { name: j.assignee, role: person?.role || person?.position, assigned: 0, done: 0, open: 0, overdue: 0, needsFix: 0, pending: 0, onTimeRate: 0 };
+        row = { name: j.assignee, role: person?.role || person?.position, assigned: 0, done: 0, open: 0, overdue: 0, needsFix: 0, pending: 0, onTimeRate: 0, onTimeDone: 0 };
         map.set(j.assignee, row);
       }
       row.assigned++;
-      if (isDoneStatus(j.status)) row.done++;
-      else if (j.status !== "Đã hủy") row.open++;
+      if (isDoneStatus(j.status)) {
+        row.done++;
+        if (j.deadline && j.completedAt && new Date(j.completedAt) <= new Date(j.deadline + "T23:59:59"))
+          row.onTimeDone++;
+      } else if (j.status !== "Đã hủy") row.open++;
       if (isOverdue(j.deadline, j.status)) row.overdue++;
       if (isNeedsFixStatus(j.status)) row.needsFix++;
       if (isPendingReview(j.status)) row.pending++;
     }
-    // Compute on-time rate
+    // Single pass over jobs above avoids a separate scan for every employee.
     for (const row of map.values()) {
-      const myDone = filteredJobs.filter((j) => j.assignee === row.name && isDoneStatus(j.status));
-      const onTime = myDone.filter((j) => j.deadline && j.completedAt && new Date(j.completedAt) <= new Date(j.deadline + "T23:59:59"));
-      row.onTimeRate = myDone.length > 0 ? Math.round((onTime.length / myDone.length) * 100) : 0;
+      row.onTimeRate = row.done > 0 ? Math.round((row.onTimeDone / row.done) * 100) : 0;
     }
     return Array.from(map.values()).sort((a, b) => b.assigned - a.assigned);
   }, [filteredJobs, s.people]);
@@ -854,14 +911,15 @@ function DeptOverview() {
   return (
     <>
       {/* ===== Filter Bar ===== */}
-      <Card className="mb-6">
-        <CardContent className="p-4 flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-md border bg-background overflow-hidden">
+      <Card className="dashboard-filters mb-4 overflow-hidden rounded-2xl md:mb-6">
+        <CardContent className="flex flex-wrap items-center gap-2.5 p-3 sm:p-4">
+          <div className="dashboard-range-tabs flex w-full items-center gap-1 overflow-x-auto rounded-xl bg-muted/70 p-1 md:w-auto">
             {(["today", "week", "month", "quarter", "all"] as RangeKey[]).map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                aria-pressed={range === r}
+                className={`min-h-10 flex-1 shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors md:flex-none md:text-xs ${
                   range === r ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                 }`}
               >
@@ -875,8 +933,8 @@ function DeptOverview() {
             options={moduleOptions.map((m) => ({ value: m, label: m }))} />
           <FilterSelect value={staff} onChange={setStaff} placeholder="Tất cả nhân sự"
             options={staffOptions.map((n) => ({ value: n, label: n }))} />
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setRefreshKey((k) => k + 1)}>
+          <div className="flex w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+            <Button variant="outline" size="sm" className="min-h-10 rounded-xl" onClick={() => setRefreshKey((k) => k + 1)}>
               <RefreshCw className="h-3.5 w-3.5" /> Làm mới
             </Button>
             {hasFilter && (
@@ -889,7 +947,7 @@ function DeptOverview() {
       </Card>
 
       {/* ===== Quick Stat Cards ===== */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
         <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
         <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
         <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
@@ -901,26 +959,47 @@ function DeptOverview() {
 
       {/* ===== Staff Performance ===== */}
       {canStaff && (
-        <Card className="mt-6">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+        <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
+          <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 sm:flex-row">
             <div>
               <CardTitle className="text-base">Hiệu suất nhân viên</CardTitle>
               <div className="text-xs text-muted-foreground mt-1">
                 Theo dõi khối lượng công việc, tiến độ và tình trạng xử lý của từng nhân sự trong kỳ.
               </div>
             </div>
-            <div className="inline-flex rounded-md border bg-background overflow-hidden text-xs">
+            <div className="dashboard-segment flex w-full items-center gap-1 rounded-xl bg-muted/70 p-1 text-[11px] sm:w-auto sm:text-xs">
               {([["all","Tất cả"],["overdue","Quá hạn"],["fix","Cần sửa"],["pending","Chờ duyệt"]] as const).map(([k, l]) => (
                 <button
                   key={k}
                   onClick={() => setStaffSubFilter(k)}
-                  className={`px-2.5 py-1.5 font-medium transition-colors ${staffSubFilter === k ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  aria-pressed={staffSubFilter === k}
+                  className={`min-h-9 flex-1 rounded-lg px-1.5 py-1 text-[11px] font-semibold transition-colors sm:flex-none sm:px-2.5 ${staffSubFilter === k ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent"}`}
                 >{l}</button>
               ))}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="space-y-2.5 p-3 md:hidden">
+              {visibleStaffRows.length === 0 && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Chưa có dữ liệu nhân sự theo bộ lọc.</p>}
+              {visibleStaffRows.slice(0,staffMobileLimit).map(r => (
+                <button type="button" key={r.name} className="dashboard-person-card flex min-h-28 w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left" onClick={() => setDrawerStaff(r.name)} aria-label={`Xem hiệu suất của ${r.name}`}>
+                  <span className="flex w-full items-center gap-2.5">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-xs font-bold text-blue-900 dark:bg-blue-950 dark:text-blue-200">{avatarInitials(r.name)}</span>
+                    <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{r.name}</strong><span className="block truncate text-[11px] text-muted-foreground">{r.role || "Nhân viên"} · {r.assigned} việc được giao</span></span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+                  </span>
+                  <span className="grid grid-cols-4 gap-1 text-center text-[10px]">
+                    <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"><strong className="block text-lg tabular-nums">{r.done}</strong>Đã xong</span>
+                    <span className="rounded-lg bg-blue-50 p-1.5 text-blue-800 dark:bg-blue-950 dark:text-blue-200"><strong className="block text-lg tabular-nums">{r.open}</strong>Đang mở</span>
+                    <span className="rounded-lg bg-rose-50 p-1.5 text-rose-800 dark:bg-rose-950 dark:text-rose-200"><strong className="block text-lg tabular-nums">{r.overdue}</strong>Quá hạn</span>
+                    <span className="rounded-lg bg-amber-50 p-1.5 text-amber-800 dark:bg-amber-950 dark:text-amber-200"><strong className="block text-lg tabular-nums">{r.needsFix}</strong>Cần sửa</span>
+                  </span>
+                  <span className="flex w-full items-center gap-2 text-xs text-muted-foreground"><span className="shrink-0">Đúng hạn</span><Progress value={r.onTimeRate} className="h-1.5 flex-1" /><strong className="text-foreground">{r.onTimeRate}%</strong></span>
+                </button>
+              ))}
+              {visibleStaffRows.length > staffMobileLimit && <Button type="button" variant="outline" className="min-h-11 w-full rounded-xl" onClick={() => setStaffMobileLimit(n => n+6)}>Xem thêm nhân viên <ArrowDown className="h-4 w-4" /></Button>}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground bg-muted/40">
                   <tr>
@@ -975,26 +1054,48 @@ function DeptOverview() {
 
       {/* ===== Channel Performance ===== */}
       {canChannel && (
-        <Card className="mt-6">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+        <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
+          <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 sm:flex-row">
             <div>
               <CardTitle className="text-base">Hiệu quả kênh truyền thông</CardTitle>
               <div className="text-xs text-muted-foreground mt-1">
                 Theo dõi hiệu quả vận hành các kênh Website, Social và Local Map theo từng thương hiệu.
               </div>
             </div>
-            <div className="inline-flex rounded-md border bg-background overflow-hidden text-xs">
+            <div className="dashboard-segment flex w-full gap-1 rounded-xl bg-muted/70 p-1 text-xs sm:w-auto">
               {(["all", "Website", "Social", "Local"] as const).map((k) => (
                 <button
                   key={k}
                   onClick={() => setChannelType(k)}
-                  className={`px-2.5 py-1.5 font-medium transition-colors ${channelType === k ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  aria-pressed={channelType === k}
+                  className={`min-h-9 flex-1 rounded-lg px-2 py-1.5 font-semibold transition-colors sm:flex-none ${channelType === k ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent"}`}
                 >{k === "all" ? "Tất cả" : k}</button>
               ))}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="space-y-2.5 p-3 md:hidden">
+              {visibleChannels.length === 0 && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Chưa có kênh phù hợp với bộ lọc.</p>}
+              {visibleChannels.slice(0,channelMobileLimit).map(r => (
+                <article key={`${r.type}-${r.id}`} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="rounded-md bg-sky-50 px-2 py-1 text-[10px] font-semibold text-sky-800 dark:bg-sky-950 dark:text-sky-200">{r.type}</span>
+                      <h3 className="mt-2 break-words text-sm font-semibold leading-5">{r.name}</h3>
+                    </div>
+                    {healthBadge(channelHealth(r.posts,r.status))}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{r.brand || "Chưa gắn thương hiệu"} · {r.owner || "Chưa phân công"}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">Nội dung <strong className="ml-1 text-sm text-foreground tabular-nums">{r.posts}</strong></span>
+                    <span className="max-w-[60%] truncate text-right text-[11px] text-muted-foreground">{r.growth || (r.lead != null ? `${r.lead} đánh giá` : "Chưa có số tăng trưởng")}</span>
+                  </div>
+                  <Button asChild variant="outline" className="mt-3 min-h-11 w-full rounded-xl border-primary/25 text-primary"><Link to={r.href}>Xem kênh <ArrowRight className="h-4 w-4" /></Link></Button>
+                </article>
+              ))}
+              {visibleChannels.length > channelMobileLimit && <Button type="button" variant="outline" className="min-h-11 w-full rounded-xl" onClick={() => setChannelMobileLimit(n => n+6)}>Xem thêm kênh <ArrowDown className="h-4 w-4" /></Button>}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground bg-muted/40">
                   <tr>
@@ -1037,13 +1138,28 @@ function DeptOverview() {
       )}
 
       {/* ===== Bottlenecks ===== */}
-      <Card className="mt-6">
+      <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
         <CardHeader>
           <CardTitle className="text-base">Điểm nghẽn cần chú ý</CardTitle>
           <div className="text-xs text-muted-foreground">Các việc đang làm tắc quy trình — ưu tiên xử lý nhanh.</div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="space-y-2.5 p-3 md:hidden">
+            {bottlenecks.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"><CheckCircle2 className="mx-auto mb-2 h-6 w-6" />Không có điểm nghẽn cần chú ý.</div>}
+            {bottlenecks.map((b,i) => (
+              <article key={`${b.href}-${b.title}-${i}`} className={`rounded-xl border p-3 ${b.sev === "Cao" ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20" : b.sev === "Trung bình" ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-border bg-card"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`rounded-md px-2 py-1 text-[11px] font-semibold ${b.sev === "Cao" ? "bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100" : b.sev === "Trung bình" ? "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100"}`}>{b.type}</span>
+                  <StatusBadge value={b.status} />
+                </div>
+                <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-6">{b.title}</h3>
+                <p className="mt-1 text-[11px] text-muted-foreground">{b.module} · {b.assignee || "Chưa có người xử lý"}</p>
+                {b.due && <p className="mt-1 text-[11px] font-medium"><Clock className="mr-1 inline h-3 w-3" />Hạn: {fmtDate(b.due)}</p>}
+                <Button asChild variant="outline" className="mt-3 min-h-11 w-full rounded-xl border-primary/25 bg-card text-primary"><Link to={b.href}>Xử lý công việc <ArrowRight className="h-4 w-4" /></Link></Button>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground bg-muted/40">
                 <tr>
@@ -1092,22 +1208,22 @@ function DeptOverview() {
       </Card>
 
       {/* ===== Quick access ===== */}
-      <Card className="mt-6">
+      <Card className="mt-5 rounded-2xl md:mt-6">
         <CardHeader><CardTitle className="text-base">Truy cập nhanh</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <CardContent className="grid grid-cols-2 gap-2.5 p-3 pt-0 sm:grid-cols-4 sm:gap-3 sm:p-5 lg:grid-cols-7">
           {[
-            { to: "/tasks", icon: ListChecks, label: "Task" },
-            { to: "/brands", icon: Briefcase, label: "Thương hiệu" },
-            { to: "/websites", icon: Globe, label: "Website" },
-            { to: "/social", icon: Share2, label: "Social" },
-            { to: "/local", icon: MapPin, label: "Local Map" },
-            { to: "/videos", icon: Video, label: "Video" },
-            { to: "/orders", icon: FileEdit, label: "Thiết kế" },
+            { to: "/tasks", icon: ListChecks, label: "Công việc", tone: "blue" },
+            { to: "/brands", icon: Briefcase, label: "Thương hiệu", tone: "indigo" },
+            { to: "/websites", icon: Globe, label: "Website", tone: "cyan" },
+            { to: "/social", icon: Share2, label: "Social", tone: "pink" },
+            { to: "/local", icon: MapPin, label: "Local Map", tone: "emerald" },
+            { to: "/videos", icon: Video, label: "Video", tone: "orange" },
+            { to: "/orders", icon: FileEdit, label: "Thiết kế", tone: "violet" },
           ].map((q) => (
             <Link key={q.to} to={q.to}
-              className="flex flex-col items-start gap-2 rounded-lg border bg-card p-3 hover:border-primary/40 hover:bg-accent/40 transition-colors">
-              <q.icon className="h-5 w-5 text-primary" />
-              <div className="text-sm font-medium">{q.label}</div>
+              className={`dashboard-shortcut dashboard-shortcut-${q.tone} flex min-h-24 flex-col items-start justify-between gap-2 rounded-xl border p-3 transition-all hover:-translate-y-0.5 hover:shadow-md`}>
+              <q.icon className="h-5 w-5" />
+              <div className="text-xs font-semibold sm:text-sm">{q.label}</div>
             </Link>
           ))}
         </CardContent>
@@ -1172,7 +1288,8 @@ function FilterSelect({ value, onChange, placeholder, options }: {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-8 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+      aria-label={placeholder}
+      className="min-h-10 min-w-0 rounded-xl border border-input bg-background px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
     >
       <option value="">{placeholder}</option>
       {options.map((o) => (

@@ -203,6 +203,7 @@ export function StaffTable() {
   const store = useStore();
   const [pk, setPk] = useState("");
   const [sel, setSel] = useState<string | null>(null);
+  const [mobileLimit, setMobileLimit] = useState(8);
   if (!isKpiV2Enabled()) return null;
   if (error) return <p className="text-sm text-destructive">Không tải được KPI: {error}</p>;
   if (!db) return <p className="text-sm text-muted-foreground">Đang tải…</p>;
@@ -219,7 +220,25 @@ export function StaffTable() {
   return (
     <div className="space-y-3">
       <PeriodSelect keys={keys} value={key} onChange={setPk} />
-      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="space-y-2.5 md:hidden">
+        {rows.slice(0,mobileLimit).map(({u,r}) => {
+          const own = r.items.filter(i => !i.contributionOnly);
+          return <button type="button" key={u.id} onClick={() => setSel(u.id)} className="dashboard-person-card flex min-h-28 w-full flex-col gap-2.5 rounded-2xl border bg-card p-3.5 text-left shadow-sm">
+            <span className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-2.5"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200"><Users className="h-5 w-5" /></span><span className="min-w-0"><strong className="block truncate text-sm">{u.fullName || u.username}</strong><span className="block text-xs text-muted-foreground">{own.length} chỉ tiêu được giao</span></span></span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
+            </span>
+            <span className="flex flex-wrap gap-1.5">
+              {own.slice(0,2).map(it => <span key={it.item.id} className="rounded-lg bg-blue-50 px-2.5 py-1.5 text-[11px] font-medium text-blue-900 dark:bg-blue-950 dark:text-blue-200">{CAT[it.category] ?? "KPI"}: {it.actual ?? "—"}/{it.target}</span>)}
+              {own.length > 2 && <span className="rounded-lg bg-muted px-2.5 py-1.5 text-[11px] text-muted-foreground">+{own.length-2} chỉ tiêu</span>}
+            </span>
+            <span className="flex items-center justify-between rounded-lg bg-muted/50 px-2.5 py-2 text-xs"><span className="text-muted-foreground">Công việc quá hạn</span><strong className={r.overdue.length ? "text-rose-700 dark:text-rose-300" : "text-emerald-700 dark:text-emerald-300"}>{r.overdue.length}</strong></span>
+          </button>;
+        })}
+        {!rows.length && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Kỳ này chưa có nhân sự được giao KPI.</p>}
+        {rows.length > mobileLimit && <button type="button" onClick={() => setMobileLimit(n => n+8)} className="min-h-11 w-full rounded-xl border bg-card text-sm font-semibold text-primary">Xem thêm nhân sự ↓</button>}
+      </div>
+      <div className="hidden overflow-x-auto rounded-xl border border-border bg-card md:block">
         <table className="w-full min-w-[560px] text-sm">
           <thead className="border-b border-border text-left text-xs text-muted-foreground">
             <tr><th className="px-4 py-2.5 font-medium">Nhân sự</th><th className="font-medium">KPI được giao</th><th className="font-medium">Tiến độ</th><th className="font-medium">Quá hạn</th><th /></tr>
@@ -262,7 +281,7 @@ export function StaffTable() {
 
 export function PeriodSelect({ keys, value, onChange }: { keys: string[]; value: string; onChange: (v: string) => void }) {
   return (
-    <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={value} onChange={(e) => onChange(e.target.value)}>
+    <select aria-label="Chọn kỳ KPI" className="min-h-11 max-w-full rounded-xl border border-input bg-background px-3 text-sm" value={value} onChange={(e) => onChange(e.target.value)}>
       {keys.map((k) => <option key={k} value={k}>{periodLabel(k)}</option>)}
     </select>
   );
