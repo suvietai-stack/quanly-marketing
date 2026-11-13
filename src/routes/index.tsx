@@ -670,6 +670,11 @@ function DeptOverview() {
   const [staffMobileLimit, setStaffMobileLimit] = useState(6);
   const [channelMobileLimit, setChannelMobileLimit] = useState(6);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
+  const [issueFilter, setIssueFilter] = useState<"all" | "overdue" | "fix" | "review">("all");
+  const showIssues = (filter: "overdue" | "fix" | "review") => {
+    setIssueFilter(filter);
+    document.getElementById("dashboard-bottlenecks")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [drawerStaff, setDrawerStaff] = useState<string | null>(null);
@@ -933,8 +938,14 @@ function DeptOverview() {
       }
     }
     const sevOrder: Record<string, number> = { Cao: 0, "Trung bình": 1, Thấp: 2 };
-    return list.sort((a, b) => sevOrder[a.sev] - sevOrder[b.sev]).slice(0, 10);
+    return list.sort((a, b) => sevOrder[a.sev] - sevOrder[b.sev]);
   }, [filteredJobs, s.webContents, brandId]);
+  const visibleBottlenecks = useMemo(() => bottlenecks.filter(b =>
+    issueFilter === "all" ||
+    (issueFilter === "overdue" && /quá hạn/i.test(b.type)) ||
+    (issueFilter === "fix" && /cần sửa/i.test(b.type)) ||
+    (issueFilter === "review" && /chờ duyệt/i.test(b.type))
+  ).slice(0, 10), [bottlenecks, issueFilter]);
 
   // ----- Staff detail (drawer) -----
   const drawerData = useMemo(() => {
@@ -1000,9 +1011,9 @@ function DeptOverview() {
       <section aria-label="Chỉ số vận hành" className="space-y-2.5">
         <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
           <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
-          <Stat label="Jobs quá hạn" value={stats.overdue} icon={AlertTriangle} tone="danger" />
-          <Stat label="Jobs cần sửa" value={stats.needsFix} icon={FileEdit} tone="warn" />
-          <Stat label="Jobs chờ duyệt" value={stats.pendingReview} icon={Clock} tone="warn" />
+          <button type="button" onClick={() => showIssues("overdue")} className="dashboard-metric-action min-w-0 rounded-2xl text-left" aria-label={`Xem các điểm nghẽn quá hạn, có ${stats.overdue} công việc quá hạn`}><Stat label="Jobs quá hạn" value={stats.overdue} icon={AlertTriangle} tone="danger" /></button>
+          <button type="button" onClick={() => showIssues("fix")} className="dashboard-metric-action min-w-0 rounded-2xl text-left" aria-label={`Xem các điểm nghẽn cần sửa, có ${stats.needsFix} công việc`}><Stat label="Jobs cần sửa" value={stats.needsFix} icon={FileEdit} tone="warn" /></button>
+          <button type="button" onClick={() => showIssues("review")} className="dashboard-metric-action min-w-0 rounded-2xl text-left" aria-label={`Xem các điểm nghẽn chờ duyệt, có ${stats.pendingReview} công việc`}><Stat label="Jobs chờ duyệt" value={stats.pendingReview} icon={Clock} tone="warn" /></button>
           <div className={showMoreMetrics ? "contents" : "hidden md:contents"}>
             <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
             <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
@@ -1195,15 +1206,18 @@ function DeptOverview() {
       )}
 
       {/* ===== Bottlenecks ===== */}
-      <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
+      <Card id="dashboard-bottlenecks" className="mt-5 scroll-mt-28 overflow-hidden rounded-2xl md:mt-6">
         <CardHeader>
           <CardTitle className="text-base">Điểm nghẽn cần chú ý</CardTitle>
           <div className="text-xs text-muted-foreground">Các việc đang làm tắc quy trình — ưu tiên xử lý nhanh.</div>
+          <div className="dashboard-segment mt-2 grid grid-cols-4 gap-1 rounded-xl bg-muted/70 p-1" aria-label="Lọc điểm nghẽn">
+            {([["all","Tất cả"],["overdue","Quá hạn"],["fix","Cần sửa"],["review","Chờ duyệt"]] as const).map(([k,label]) => <button key={k} type="button" aria-pressed={issueFilter === k} onClick={() => setIssueFilter(k)} className={`min-h-10 rounded-lg px-1 text-[11px] font-semibold transition-colors ${issueFilter === k ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-accent"}`}>{label}</button>)}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="space-y-2.5 p-3 md:hidden">
-            {bottlenecks.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"><CheckCircle2 className="mx-auto mb-2 h-6 w-6" />Không có điểm nghẽn cần chú ý.</div>}
-            {bottlenecks.map((b,i) => (
+            {visibleBottlenecks.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"><CheckCircle2 className="mx-auto mb-2 h-6 w-6" />Không có điểm nghẽn cần chú ý.</div>}
+            {visibleBottlenecks.map((b,i) => (
               <article key={`${b.href}-${b.title}-${i}`} className={`rounded-xl border p-3 ${b.sev === "Cao" ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20" : b.sev === "Trung bình" ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-border bg-card"}`}>
                 <div className="flex items-center justify-between gap-2">
                   <span className={`rounded-md px-2 py-1 text-[11px] font-semibold ${b.sev === "Cao" ? "bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100" : b.sev === "Trung bình" ? "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100"}`}>{b.type}</span>
@@ -1232,10 +1246,10 @@ function DeptOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {bottlenecks.length === 0 && (
+                {visibleBottlenecks.length === 0 && (
                   <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">Không có điểm nghẽn nào cần chú ý.</td></tr>
                 )}
-                {bottlenecks.map((b, i) => (
+                {visibleBottlenecks.map((b, i) => (
                   <tr key={i} className="hover:bg-muted/30">
                     <td className="px-4 py-2.5">
                       <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
