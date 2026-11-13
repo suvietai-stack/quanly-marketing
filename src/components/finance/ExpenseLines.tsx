@@ -37,9 +37,9 @@ export function ExpenseLinesEditor({ lines, onChange, catalog }: {
   const total = linesTotal(lines);
 
   return (
-    <div className="space-y-2">
+    <div className="fr-expense-lines space-y-2">
       {/* Desktop: bảng nhập nhanh */}
-      <div className="hidden sm:block rounded-lg border overflow-hidden">
+      <div className="hidden md:block rounded-lg border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 text-muted-foreground">
@@ -114,9 +114,9 @@ export function ExpenseLinesEditor({ lines, onChange, catalog }: {
       </div>
 
       {/* Mobile: thẻ thu gọn */}
-      <div className="sm:hidden space-y-2">
+      <div className="md:hidden space-y-2">
         {lines.map((l, i) => (
-          <div key={i} className="rounded-lg border bg-card p-3">
+          <div key={i} className="fr-expense-card rounded-2xl border bg-card p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="font-medium leading-snug">{i + 1}. {l.name || <span className="text-muted-foreground">Chưa đặt tên</span>}</div>
@@ -144,7 +144,7 @@ export function ExpenseLinesEditor({ lines, onChange, catalog }: {
 
       <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto"
         onClick={() => {
-          if (window.matchMedia("(max-width: 639px)").matches) {
+          if (window.matchMedia("(max-width: 767px)").matches) {
             onChange([...lines, emptyLine()]);
             setEditIdx(lines.length);
           } else add();
@@ -196,7 +196,7 @@ function LineDialog({ line, catalog, onClose, onSave }: {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="fr-mobile-dialog fr-expense-dialog max-w-md">
         <DialogHeader><DialogTitle>Khoản chi</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
@@ -207,7 +207,7 @@ function LineDialog({ line, catalog, onClose, onSave }: {
               {catalog.filter((c) => c.active).map((c) => <option key={c.id} value={c.name} />)}
             </datalist>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label>ĐVT</Label>
               <Input maxLength={30} value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Khoản" />
@@ -216,7 +216,7 @@ function LineDialog({ line, catalog, onClose, onSave }: {
               <Label>Số lượng</Label>
               <Input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value.replace(/[^\d.,]/g, ""))} />
             </div>
-            <div className="space-y-1.5">
+            <div className="col-span-2 md:col-span-1 space-y-1.5">
               <Label>Đơn giá *</Label>
               <Input inputMode="numeric" value={price} onChange={(e) => setPrice(fmtAmountInput(e.target.value))} placeholder="0" />
             </div>
@@ -244,10 +244,10 @@ export function ExpenseLinesView({ lines }: { lines: FrRequestLine[] }) {
   if (!lines.length) return null;
   const total = lines.reduce((s, l) => s + Number(l.line_total), 0);
   return (
-    <div className="space-y-2">
+    <div className="fr-expense-lines space-y-2">
       <div className="font-semibold text-sm">Bảng kê khoản chi</div>
       {/* Desktop */}
-      <div className="hidden sm:block rounded-lg border overflow-hidden">
+      <div className="hidden md:block rounded-lg border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 text-muted-foreground">
@@ -274,9 +274,9 @@ export function ExpenseLinesView({ lines }: { lines: FrRequestLine[] }) {
         </table>
       </div>
       {/* Mobile */}
-      <div className="sm:hidden space-y-2">
+      <div className="md:hidden space-y-2">
         {lines.map((l) => (
-          <div key={l.id} className="rounded-lg border bg-card p-3 flex items-start justify-between gap-2">
+          <div key={l.id} className="fr-expense-card rounded-2xl border bg-card p-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="font-medium leading-snug">{l.line_no}. {l.name}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
@@ -293,3 +293,4 @@ export function ExpenseLinesView({ lines }: { lines: FrRequestLine[] }) {
     </div>
   );
 }
+

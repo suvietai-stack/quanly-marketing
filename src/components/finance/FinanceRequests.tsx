@@ -570,7 +570,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
               <div className="rounded-lg border p-3 space-y-2">
                 <div className="font-semibold text-sm">Xử lý phê duyệt</div>
                 <Textarea rows={2} maxLength={1000} placeholder="Ý kiến / lý do (bắt buộc khi từ chối hoặc yêu cầu bổ sung)" value={comment} onChange={(e) => setComment(e.target.value)} />
-                <div className="grid grid-cols-3 gap-2">
+                <div className="fr-decision-actions grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <Button disabled={busy} onClick={() => act(() => frApi.decide(r.id, "approve", comment), "Đã phê duyệt")}>Phê duyệt</Button>
                   <Button variant="secondary" disabled={busy} onClick={() => act(() => frApi.decide(r.id, "info", comment), "Đã yêu cầu bổ sung")}>Yêu cầu bổ sung</Button>
                   <Button variant="destructive" disabled={busy} onClick={() => act(() => frApi.decide(r.id, "reject", comment), "Đã từ chối")}>Từ chối</Button>
@@ -584,7 +584,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
           <div className="space-y-2">
             <div className="font-semibold text-sm">Lịch sử</div>
             {(events.data ?? []).map((e) => (
-              <div key={e.id} className="text-sm flex gap-2">
+              <div key={e.id} className="fr-history-event text-sm flex gap-2">
                 <span className="text-muted-foreground shrink-0">{fmtDateTime(e.created_at)}</span>
                 <span>{FR_EVENT_LABEL[e.action] ?? e.action}{e.payload?.comment ? ` — “${e.payload.comment}”` : ""}{e.action === "pay" ? ` — ${vnd(e.payload?.amount)}` : ""}{e.action === "deduct" ? ` — ${vnd(e.payload?.amount)}` : ""}</span>
               </div>

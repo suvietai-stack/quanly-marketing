@@ -491,3 +491,16 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
  :is(.fr-mobile-dialog,.fr-mobile-sheet) h2 { padding-right: 24px; line-height: 1.5; overflow-wrap: anywhere; }
  .fr-form-actions { position: sticky; bottom: -16px; padding-block: 12px; background: var(--background); border-top: 1px solid var(--border); z-index: 1; }
 }
+
+@media (max-width: 767px) {
+ .fr-expense-lines { min-width: 0; overflow-wrap: anywhere; }
+ .fr-expense-card > .flex { flex-wrap: wrap; }
+ .fr-expense-card .shrink-0 { max-width: 100%; }
+ .fr-expense-card > .flex > .text-right { flex-basis: 100%; border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+ .fr-expense-card .h-8.w-8 { width: 44px; height: 44px; }
+ .fr-expense-card.flex { flex-direction: column; }
+ .fr-expense-lines > .flex { flex-wrap: wrap; gap: 8px; }
+ .fr-expense-dialog input { min-height: 48px; }
+ .fr-decision-actions { grid-template-columns: minmax(0,1fr); }
+ .fr-history-event { flex-direction: column; gap: 4px; padding-block: 8px; border-bottom: 1px solid var(--border); }
+}
