@@ -2,13 +2,13 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { supabase } from '@/integrations/supabase/client';
 import type { K3PeriodConfig, K3PeriodData, K3PeriodType } from './k3Periods';
 
-export const k3PeriodConfigQuery=(uid:string)=>queryOptions({queryKey:['k3_period_config',uid],queryFn:async()=>{
+export const k3PeriodConfigQuery=(uid:string)=>queryOptions({queryKey:['k3_period_config',uid],staleTime:60_000,refetchOnWindowFocus:false,queryFn:async()=>{
   const {data,error}=await supabase.rpc('k3_period_config_read'); if(error) throw error; return data as unknown as K3PeriodConfig;
 }});
-export const k3PeriodQuery=(uid:string,type:K3PeriodType,date:string,user?:string)=>queryOptions({queryKey:['k3_period',uid,type,date,user??uid],queryFn:async()=>{
+export const k3PeriodQuery=(uid:string,type:K3PeriodType,date:string,user?:string)=>queryOptions({queryKey:['k3_period',uid,type,date,user??uid],staleTime:45_000,refetchOnWindowFocus:false,queryFn:async()=>{
   const {data,error}=await supabase.rpc('k3_period_read',{_type:type,_date:date,_user:user??uid}); if(error) throw error; return data as unknown as K3PeriodData;
 }});
-export const k3PeriodTeamQuery=(uid:string,type:K3PeriodType,date:string)=>queryOptions({queryKey:['k3_period_team',uid,type,date],queryFn:async()=>{
+export const k3PeriodTeamQuery=(uid:string,type:K3PeriodType,date:string)=>queryOptions({queryKey:['k3_period_team',uid,type,date],staleTime:45_000,refetchOnWindowFocus:false,queryFn:async()=>{
   const {data,error}=await supabase.rpc('k3_period_team_read',{_type:type,_date:date}); if(error) throw error;
   return data as unknown as {user_id:string;full_name:string;department_id:string|null;department_name:string|null;data:K3PeriodData}[];
 }});
