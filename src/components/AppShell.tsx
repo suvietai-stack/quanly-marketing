@@ -170,7 +170,22 @@ function AccessSyncNotice() {
   const failed = useAuth((s) => s.accessSyncFailed);
   const baseFailed = useAuth((s) => s.baseAccessFailed);
   const bizFailed = useAuth((s) => s.bizAccessFailed);
+  const uid = useAuth((s) => s.currentUserId);
   const [busy, setBusy] = useState(false);
+  // A transient connection failure on mobile should self-heal once without
+  // asking staff to press Retry; never retry a healthy permission source.
+  useEffect(() => {
+    if (!failed || !uid) return;
+    const timer = window.setTimeout(() => {
+      const state = useAuth.getState();
+      if (state.currentUserId !== uid) return;
+      const reads: Promise<void>[] = [];
+      if (state.baseAccessFailed) reads.push(state.refreshBaseAccess(true));
+      if (state.bizAccessFailed) reads.push(state.refreshBizAccess(true));
+      void Promise.allSettled(reads);
+    }, 12_000);
+    return () => window.clearTimeout(timer);
+  }, [failed, baseFailed, bizFailed, uid]);
   if (!failed) return null;
   const explanation = baseFailed && bizFailed ? 'Chưa đồng bộ được quyền hệ thống và kinh doanh'
     : baseFailed ? 'Chưa đồng bộ được quyền hệ thống'
@@ -179,7 +194,16 @@ function AccessSyncNotice() {
     <div role="status" className="access-sync-notice fixed bottom-4 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-md">
       <span>{explanation}</span>
       <button type="button" disabled={busy} className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
-        onClick={async () => { setBusy(true); try { await Promise.all([useAuth.getState().refreshBaseAccess(true), useAuth.getState().refreshBizAccess(true)]); } finally { setBusy(false); } }}>
+        onClick={async () => {
+          setBusy(true);
+          try {
+            const state = useAuth.getState();
+            const reads: Promise<void>[] = [];
+            if (state.baseAccessFailed) reads.push(state.refreshBaseAccess(true));
+            if (state.bizAccessFailed) reads.push(state.refreshBizAccess(true));
+            await Promise.allSettled(reads);
+          } finally { setBusy(false); }
+        }}>
         {busy ? 'Đang đồng bộ…' : 'Thử lại'}
       </button>
     </div>
