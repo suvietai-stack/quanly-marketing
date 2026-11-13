@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import {
   ListChecks, AlertTriangle, Clock, CheckCircle2, Globe, Share2,
   MapPin, Video, Inbox, Hourglass, ArrowRight, FileEdit, ClipboardCheck,
-  Briefcase, RefreshCw, X, ExternalLink, LayoutGrid, ArrowUp, ArrowDown,
+  Briefcase, RefreshCw, X, ExternalLink, LayoutGrid, ArrowUp, ArrowDown, Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
@@ -330,6 +330,7 @@ function MineOverview() {
   const items = useMyWork();
   const { user } = useCurrentUser();
   const [tab, setTab] = useState<WorkTab>("mine");
+  const [taskSearch, setTaskSearch] = useState("");
   const [kpiExpanded, setKpiExpanded] = useState(false);
   useEffect(() => {
     // On desktop preserve the old immediately visible KPI panel; on mobile
@@ -342,6 +343,11 @@ function MineOverview() {
   }, []);
   const needAction = items.needsFix.length + items.toReview.length;
   const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  const filterWork = (list: WorkItem[]) => {
+    const q = taskSearch.trim().toLocaleLowerCase("vi");
+    return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
+  };
+  const emptyMessage = (normal: string) => taskSearch.trim() ? "Không tìm thấy công việc phù hợp. Hãy thử từ khóa khác." : normal;
 
   return (
     <div className="flex min-w-0 flex-col gap-5 md:gap-8">
@@ -361,6 +367,10 @@ function MineOverview() {
         </div>
         <Card className="dashboard-work-panel overflow-hidden rounded-2xl">
           <CardContent className="p-3 sm:p-5">
+            <div className="relative mb-3 flex items-center">
+              <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <input type="search" value={taskSearch} onChange={e => setTaskSearch(e.target.value)} aria-label="Tìm công việc trong mục đang xem" placeholder="Tìm tên việc, thương hiệu, trạng thái..." className="min-h-11 w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+            </div>
             <Tabs value={tab} onValueChange={(v) => setTab(v as WorkTab)}>
               <TabsList className="dashboard-work-tabs grid h-auto w-full grid-cols-3 gap-1.5 bg-transparent p-0">
                 <TabsTrigger data-tone="info" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="mine">Đang làm ({items.mine.length})</TabsTrigger>
@@ -370,12 +380,12 @@ function MineOverview() {
                 <TabsTrigger data-tone="muted" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="waiting">Đang chờ ({items.waiting.length})</TabsTrigger>
                 <TabsTrigger data-tone="success" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="done">Đã xong ({items.doneRecent.length})</TabsTrigger>
               </TabsList>
-              <TabsContent value="mine"><WorkTable items={sortByDue(items.mine)} empty="Hiện chưa có việc nào bạn đang thực hiện." /></TabsContent>
-              <TabsContent value="review"><WorkTable items={items.toReview} empty="Không có việc nào đang chờ bạn duyệt." /></TabsContent>
-              <TabsContent value="fix"><WorkTable items={items.needsFix} empty="Không có việc nào cần sửa." /></TabsContent>
-              <TabsContent value="waiting"><WorkTable items={items.waiting} empty="Không có việc nào đang chờ người khác." /></TabsContent>
-              <TabsContent value="overdue"><WorkTable items={sortByDue(items.overdue)} empty="Không có việc nào quá hạn." /></TabsContent>
-              <TabsContent value="done"><WorkTable items={items.doneRecent} empty="Chưa có việc hoàn thành trong 7 ngày." /></TabsContent>
+              <TabsContent value="mine"><WorkTable items={filterWork(sortByDue(items.mine))} empty={emptyMessage("Hiện chưa có việc nào bạn đang thực hiện.")} /></TabsContent>
+              <TabsContent value="review"><WorkTable items={filterWork(items.toReview)} empty={emptyMessage("Không có việc nào đang chờ bạn duyệt.")} /></TabsContent>
+              <TabsContent value="fix"><WorkTable items={filterWork(items.needsFix)} empty={emptyMessage("Không có việc nào cần sửa.")} /></TabsContent>
+              <TabsContent value="waiting"><WorkTable items={filterWork(items.waiting)} empty={emptyMessage("Không có việc nào đang chờ người khác.")} /></TabsContent>
+              <TabsContent value="overdue"><WorkTable items={filterWork(sortByDue(items.overdue))} empty={emptyMessage("Không có việc nào quá hạn.")} /></TabsContent>
+              <TabsContent value="done"><WorkTable items={filterWork(items.doneRecent)} empty={emptyMessage("Chưa có việc hoàn thành trong 7 ngày.")} /></TabsContent>
             </Tabs>
           </CardContent>
         </Card>
