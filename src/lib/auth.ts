@@ -914,6 +914,9 @@ const authLoads = createCoalescer<string>(async () => { await useAuth.getState()
 const baseLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBase(); });
 const bizLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBiz(); });
 const accessAt: { base: number | null; biz: number | null } = { base: null, biz: null };
+// Also throttle failed automatic attempts. A missing last-verified timestamp must
+// not turn every focus/visibility event into another expensive permission RPC.
+const accessAttemptAt: { base: number | null; biz: number | null } = { base: null, biz: null };
 
 // Index verified server decisions once per response instead of scanning the
 // 510-key permission catalog for every navigation item and action check.
@@ -963,7 +966,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   refreshBaseAccess: async (force = false) => {
     const uid = get().currentUserId;
     if (!uid) { set({ baseAccess: null }); return; }
-    if (!shouldRefresh(accessAt.base, Date.now(), force)) return;
+    const now = Date.now();
+    if (!shouldRefresh(accessAt.base, now, force) || !shouldRefresh(accessAttemptAt.base, now, force)) return;
+    accessAttemptAt.base = now;
     return force ? baseLoads.refresh(uid) : baseLoads.join(uid);
   },
   _loadBase: async () => {
@@ -984,7 +989,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   refreshBizAccess: async (force = false) => {
     const uid = get().currentUserId;
     if (!uid) { set({ bizAccess: null }); return; }
-    if (!shouldRefresh(accessAt.biz, Date.now(), force)) return;
+    const now = Date.now();
+    if (!shouldRefresh(accessAt.biz, now, force) || !shouldRefresh(accessAttemptAt.biz, now, force)) return;
+    accessAttemptAt.biz = now;
     return force ? bizLoads.refresh(uid) : bizLoads.join(uid);
   },
   _loadBiz: async () => {
@@ -1012,7 +1019,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       const prevId = get().currentUserId;
       const action = authEventAction(event, prevId, nextId, get().initialized && get().loaded);
       if (action === 'ignore') return; // sự kiện phát lại cùng người: không tải lại quyền
-      if (nextId !== prevId) { accessAt.base = null; accessAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false, baseAccessFailed: false, bizAccessFailed: false }); }
+      if (nextId !== prevId) { accessAt.base = null; accessAt.biz = null; accessAttemptAt.base = null; accessAttemptAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false, baseAccessFailed: false, bizAccessFailed: false }); }
       set({ currentUserId: nextId });
       if (action === 'clear') { set({ users: [], roles: [], loaded: false }); return; }
       // Do not make Auth calls inside the SDK's locked callback.
