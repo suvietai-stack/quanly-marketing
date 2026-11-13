@@ -347,6 +347,15 @@ function MineOverview() {
     return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
   };
   const emptyMessage = (normal: string) => taskSearch.trim() ? "Không tìm thấy công việc phù hợp. Hãy thử từ khóa khác." : normal;
+  const activeCount = {
+    mine: items.mine.length,
+    review: items.toReview.length,
+    fix: items.needsFix.length,
+    waiting: items.waiting.length,
+    overdue: items.overdue.length,
+    done: items.doneRecent.length,
+  }[tab];
+  const activeShortLabel = { mine: "đang làm", review: "chờ duyệt", fix: "cần sửa", waiting: "đang chờ", overdue: "quá hạn", done: "hoàn thành" }[tab];
 
   return (
     <div className="flex min-w-0 flex-col gap-5 md:gap-8">
@@ -363,7 +372,7 @@ function MineOverview() {
       <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <SectionTitle>Danh sách cần làm</SectionTitle>
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{items.mine.length} đang thực hiện</span>
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{activeCount} {activeShortLabel}</span>
         </div>
         <Card className="dashboard-work-panel overflow-hidden rounded-2xl">
           <CardContent className="p-3 sm:p-5">
@@ -513,7 +522,7 @@ function WorkTable({ items, empty }: { items: WorkItem[]; empty: string }) {
             </div>
             <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-foreground">{it.title}</h3>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-5 text-muted-foreground">
-              {it.brand && <span className="max-w-full truncate">🏷 {it.brand}</span>}
+              {it.brand && <span className="max-w-full truncate"><Briefcase className="mr-1 inline h-3 w-3" aria-hidden="true" />{it.brand}</span>}
               {it.mineAs && <span className="max-w-full truncate">Vai trò: {it.mineAs}</span>}
               {it.due && <span className={overdue ? "font-semibold text-rose-700 dark:text-rose-300" : ""}><Clock className="mr-1 inline h-3 w-3" />{fmtDate(it.due)}</span>}
             </div>
@@ -661,7 +670,19 @@ function DeptOverview() {
   const [staffMobileLimit, setStaffMobileLimit] = useState(6);
   const [channelMobileLimit, setChannelMobileLimit] = useState(6);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [drawerStaff, setDrawerStaff] = useState<string | null>(null);
+  const refreshDashboard = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      // An explicit refresh must update server data, not just recompute a date.
+      await useStore.getState().reload();
+      setRefreshKey(k => k + 1);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const rangeStart = useMemo(() => computeRangeStart(range), [range, refreshKey]);
   const inRange = (iso?: string) => {
@@ -934,8 +955,8 @@ function DeptOverview() {
           <FilterSelect value={staff} onChange={setStaff} placeholder="Tất cả nhân sự"
             options={staffOptions.map((n) => ({ value: n, label: n }))} />
           <div className="flex w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
-            <Button variant="outline" size="sm" className="min-h-10 rounded-xl" onClick={() => setRefreshKey((k) => k + 1)}>
-              <RefreshCw className="h-3.5 w-3.5" /> Làm mới
+            <Button variant="outline" size="sm" className="min-h-10 rounded-xl" onClick={() => void refreshDashboard()} disabled={refreshing} aria-busy={refreshing}>
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> {refreshing ? "Đang cập nhật…" : "Làm mới"}
             </Button>
             {hasFilter && (
               <Button variant="ghost" size="sm" onClick={resetFilters}>
