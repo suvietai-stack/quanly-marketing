@@ -13,7 +13,7 @@ export function SignalAssignmentDialog({ actorId, currentId, currentName, custom
   const [selected, setSelected] = useState('');
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
-  const sales = useQuery({ queryKey: ['sig:sales', actorId], queryFn: salesList, retry: 1, staleTime: 0 });
+  const sales = useQuery({ queryKey: ['sig:sales', actorId], queryFn: salesList, enabled: !!actorId, retry: 1, staleTime: 60_000 });
   const isRemoval = selected === '__unassign';
   const target = sales.data?.find(u => u.id === selected);
   const valid = !!selected && !sales.isFetching && !sales.isError && (isRemoval ? !!currentId : !!target && target.id !== currentId);
