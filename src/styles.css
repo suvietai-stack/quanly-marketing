@@ -363,11 +363,24 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
 .launcher-welcome { position: relative; overflow: hidden; isolation: isolate; border-radius: 26px; padding: 24px 22px; background: linear-gradient(120deg,#102d54 0%,#184d77 65%,#176c78 100%); color: #fff; box-shadow: 0 12px 28px #15395920; }
 .launcher-welcome-content { position: relative; z-index: 1; }
 .launcher-eyebrow { display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 600; letter-spacing: 1.6px; color: #bce1e7; }
-.launcher-welcome h2 { margin-top: 14px; font-size: clamp(22px,6vw,28px); line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
+.launcher-welcome h2 { margin-top: 14px; font-size: clamp(22px,6vw,28px); line-height: 1.3; font-weight: 700; color: #fff; overflow-wrap: anywhere; text-wrap: balance; }
 .launcher-welcome p { margin-top: 8px; max-width: 240px; font-size: 13px; line-height: 1.6; color: #d5e3ef; }
-.launcher-dashboard-link { display: inline-flex; min-height: 44px; align-items: center; gap: 10px; margin-top: 15px; padding: 0 14px; border: 1px solid #ffffff30; border-radius: 13px; background: #ffffff12; font-size: 12px; font-weight: 600; }
+.launcher-dashboard-link { display: inline-flex; min-height: 44px; align-items: center; gap: 10px; margin-top: 15px; padding: 0 14px; border: 1px solid #ffffff45; border-radius: 13px; background: #ffffff18; color: #fff; font-size: 12px; font-weight: 600; }
 .launcher-dashboard-link:focus-visible { outline: 2px solid white; outline-offset: 3px; }
 .launcher-welcome-orbit { position: absolute; z-index: 0; right: -85px; top: -30px; width: 220px; height: 220px; border: 32px solid #ffffff06; border-radius: 50%; box-shadow: 0 0 0 30px #ffffff04,0 0 0 60px #ffffff03; pointer-events: none; }
+/* The atmosphere shifts with the local day without affecting dashboard content. */
+.launcher-welcome[data-period='morning'] { background: linear-gradient(120deg,#12375f 0%,#18577c 65%,#197785 100%); }
+.launcher-welcome[data-period='midday'] { background: linear-gradient(120deg,#164667 0%,#1c6478 65%,#227b81 100%); }
+.launcher-welcome[data-period='afternoon'] { background: linear-gradient(120deg,#203968 0%,#30527f 65%,#356b8b 100%); }
+.launcher-welcome[data-period='evening'] { background: linear-gradient(120deg,#222c58 0%,#304b7b 65%,#426b83 100%); }
+.launcher-welcome[data-period='late'] { background: linear-gradient(120deg,#262a43 0%,#38395e 65%,#505472 100%); }
+@media (max-width: 767px) {
+  .launcher-home .launcher-welcome { padding: 20px; border-radius: 22px; }
+  .launcher-home .launcher-welcome h2 { margin-top: 10px; font-size: clamp(20px, 5.4vw, 25px); line-height: 1.27; }
+  .launcher-home .launcher-welcome p { max-width: 100%; margin-top: 8px; font-size: 12px; line-height: 1.5; }
+  .launcher-home .launcher-dashboard-link { min-height: 42px; margin-top: 13px; }
+  .launcher-home .launcher-eyebrow { letter-spacing: 1.2px; }
+}
 .launcher-search input { border-color: color-mix(in oklab,var(--border) 65%,transparent); box-shadow: 0 4px 14px #102d5405; }
 .launcher-panel { min-width: 0; padding: 16px 12px 12px; border: 1px solid color-mix(in oklab,var(--border) 65%,transparent); border-radius: 24px; background: var(--card); box-shadow: 0 4px 20px #102d5404; }
 .launcher-panel > .flex:first-child { padding: 0 4px; }
