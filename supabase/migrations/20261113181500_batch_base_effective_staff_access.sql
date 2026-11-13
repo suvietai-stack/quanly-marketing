@@ -1,10 +1,14 @@
+-- Staff/mobile permission snapshot, without the costly business/3K legacy
+-- calls (these are separately authoritative via biz_effective_access).
+-- Full detail base_permissions_effective remains unchanged for management.
+-- No role mutations, data updates, or business-side authorization changes.
 -- Read-path performance fix only: resolve Role and personal override ONCE per
 -- identity instead of executing their two SELECTs for every one of 510 keys.
 -- The existing biz/k3 legacy resolvers and all tier-one deny/allow decisions
 -- remain authoritative. This function does not grant new permissions.
 -- Before enabling, regression compare JSONB output against the old resolver
 -- for admin, additive, replace and standard staff accounts.
-CREATE OR REPLACE FUNCTION private.base_effective(u uuid, c jsonb)
+CREATE OR REPLACE FUNCTION private.base_staff_effective(u uuid, c jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
 STABLE SECURITY DEFINER
@@ -46,13 +50,12 @@ BEGIN
     GROUP BY x->>'permission'
   ), catalog AS MATERIALIZED (
     SELECT cat.*,private.base_supported(cat.key) AS supported,
-      privileged_ OR (cat.key LIKE 'biz.crm_%' AND public.biz_admin(u)) AS bypass
+      privileged_ AS bypass
     FROM public.base_permission_catalog cat
+    WHERE cat.key NOT LIKE 'biz.%' AND cat.key NOT LIKE 'k3.%'
   ), legacies AS MATERIALIZED (
     SELECT cat.*,
-      CASE WHEN cat.key LIKE 'biz.%' OR cat.key LIKE 'k3.%'
-        THEN private.base_legacy(u,cat.key)
-        ELSE jsonb_build_object(
+      jsonb_build_object(
           'allowed',
           CASE WHEN o.mode='replace' THEN cat.key=ANY(o.permissions)
             ELSE cat.key=ANY(rc.perms) OR
@@ -64,8 +67,7 @@ BEGIN
               THEN '{"kind":"custom","tier":3,"mode":"additive"}'::jsonb
             ELSE jsonb_build_object('kind','role','tier',3,'names',rc.names)
           END
-        )
-      END AS legacy
+        ) AS legacy
     FROM catalog cat CROSS JOIN role_context rc LEFT JOIN ov o ON true
   ), decisions AS MATERIALIZED (
     SELECT r.*,coalesce(g.sources,'[]'::jsonb) AS sources,
@@ -93,3 +95,36 @@ BEGIN
   RETURN result_;
 END
 $function$;
+
+-- Reuse the full snapshot only for system administrators (already fast).
+-- Staff receive a server-verified snapshot for 481 general permissions.
+-- Auth remains checked on the database; the client does not grant rights.
+CREATE OR REPLACE FUNCTION public.base_permissions_navigation()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  u uuid := auth.uid();
+  c_ jsonb;
+BEGIN
+  IF u IS NULL OR NOT private.is_active(u) THEN
+    RAISE EXCEPTION 'Không có quyền xem phân quyền.';
+  END IF;
+  IF private.is_super_admin(u) THEN
+    RETURN public.base_permissions_effective(u);
+  END IF;
+  c_ := private.base_config();
+  RETURN jsonb_build_object(
+    'user_id',u,
+    'revision',coalesce((SELECT revision FROM public.base_org_state WHERE id),0),
+    'server_now',now(),
+    'next_transition_at',private.base_next_transition(c_),
+    'permissions',private.base_staff_effective(u,c_)
+  );
+END
+$function$;
+
+REVOKE ALL ON FUNCTION public.base_permissions_navigation() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.base_permissions_navigation() TO authenticated;
