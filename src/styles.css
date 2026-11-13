@@ -548,3 +548,15 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
  .oq-timing-details[open] > summary::before { content: '−'; }
  .oq-mobile-detail .sticky.top-14 { top: var(--mobile-header-height); }
 }
+
+/* Keep sync warnings above the iPhone bottom navigation instead of behind it. */
+@media (max-width: 767px) {
+  .access-sync-notice {
+    bottom: calc(var(--mobile-nav-height, 72px) + 8px);
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+}

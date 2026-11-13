@@ -139,6 +139,17 @@ const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 
 export function SignalsPage() {
   const p = useSignalPerms();
+  // Prefetch the eligible Sale directory as soon as an authorized manager
+  // opens Signals, rather than waiting for the assignment dialog to open.
+  // Same user-keyed React Query cache as SignalAssignmentDialog.
+  useQuery({
+    queryKey: [`${SIG}sales`, p.userId],
+    queryFn: salesList,
+    enabled: !!p.userId && (p.assignNew || p.reassign),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
   const name = useUserName();
   const care={on:false};const setCare=(_value:unknown)=>{};
   const labels = useSignalLabels(p.userId);
@@ -660,7 +671,9 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
       // Backend đã xác nhận: cập nhật tạm chi tiết đang mở theo đúng kết quả, rồi đồng bộ lại từ máy chủ.
       qc.setQueryData([`${SIG}detail`, p.userId, s.id], (old: Signal | null | undefined) => old ? { ...old, assigned_to: uid || null, assigned_at: uid ? new Date().toISOString() : null, status: uid ? "waiting" : null } : old);
       toast.success(uid ? "Đã phân công" : "Đã bỏ phân công");
-      await refresh();
+      // Server has saved the assignment; refresh the visible list in the background
+      // rather than keeping the confirmation dialog open until every query completes.
+      void refresh();
       return true;
     }
     catch (e) { toast.error(errMsg(e)); return false; }

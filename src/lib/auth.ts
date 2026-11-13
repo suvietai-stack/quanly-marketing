@@ -866,6 +866,8 @@ interface AuthState {
   refreshBaseAccess: (force?: boolean) => Promise<void>;
   _loadBiz: () => Promise<void>;
   accessSyncFailed: boolean;
+  baseAccessFailed: boolean;
+  bizAccessFailed: boolean;
   _loadBase: () => Promise<void>;
   _load: () => Promise<void>;
   bizAccess: EffectiveBizAccess | null;
@@ -912,6 +914,21 @@ const authLoads = createCoalescer<string>(async () => { await useAuth.getState()
 const baseLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBase(); });
 const bizLoads = createCoalescer<string>(async () => { await useAuth.getState()._loadBiz(); });
 const accessAt: { base: number | null; biz: number | null } = { base: null, biz: null };
+// Also throttle failed automatic attempts. A missing last-verified timestamp must
+// not turn every focus/visibility event into another expensive permission RPC.
+const accessAttemptAt: { base: number | null; biz: number | null } = { base: null, biz: null };
+
+// Index verified server decisions once per response instead of scanning the
+// 510-key permission catalog for every navigation item and action check.
+const effectivePermissionIndexes = new WeakMap<EffectiveAccess, Map<string, boolean>>();
+function verifiedPermission(access: EffectiveAccess, key: string): boolean | undefined {
+  let index = effectivePermissionIndexes.get(access);
+  if (!index) {
+    index = new Map(access.permissions.filter(p => p.supported).map(p => [p.key, p.allowed]));
+    effectivePermissionIndexes.set(access, index);
+  }
+  return index.get(key);
+}
 
 function mapProfileToUser(
   p: any,
@@ -949,7 +966,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   refreshBaseAccess: async (force = false) => {
     const uid = get().currentUserId;
     if (!uid) { set({ baseAccess: null }); return; }
-    if (!shouldRefresh(accessAt.base, Date.now(), force)) return;
+    const now = Date.now();
+    if (!shouldRefresh(accessAt.base, now, force) || !shouldRefresh(accessAttemptAt.base, now, force)) return;
+    accessAttemptAt.base = now;
     return force ? baseLoads.refresh(uid) : baseLoads.join(uid);
   },
   _loadBase: async () => {
@@ -959,14 +978,20 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (get().currentUserId !== uid) return;
     const r = mergeAccess(get().baseAccess, accessAt.base, uid, { data: data as unknown as EffectiveAccess, error }, Date.now());
     accessAt.base = r.verifiedAt;
-    if (r.value !== get().baseAccess || r.failed !== get().accessSyncFailed) set({ baseAccess: r.value, accessSyncFailed: r.failed });
+    const bizFailed = get().bizAccessFailed;
+    if (r.value !== get().baseAccess || r.failed !== get().baseAccessFailed)
+      set({ baseAccess: r.value, baseAccessFailed: r.failed, accessSyncFailed: r.failed || bizFailed });
   },
   bizAccess: null,
   accessSyncFailed: false,
+  baseAccessFailed: false,
+  bizAccessFailed: false,
   refreshBizAccess: async (force = false) => {
     const uid = get().currentUserId;
     if (!uid) { set({ bizAccess: null }); return; }
-    if (!shouldRefresh(accessAt.biz, Date.now(), force)) return;
+    const now = Date.now();
+    if (!shouldRefresh(accessAt.biz, now, force) || !shouldRefresh(accessAttemptAt.biz, now, force)) return;
+    accessAttemptAt.biz = now;
     return force ? bizLoads.refresh(uid) : bizLoads.join(uid);
   },
   _loadBiz: async () => {
@@ -976,8 +1001,9 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (get().currentUserId !== uid) return;
     const r = mergeAccess(get().bizAccess, accessAt.biz, uid, { data: data as unknown as EffectiveBizAccess, error }, Date.now());
     accessAt.biz = r.verifiedAt;
-    if (r.value !== get().bizAccess) set({ bizAccess: r.value });
-    if (r.failed) set({ accessSyncFailed: true });
+    const baseFailed = get().baseAccessFailed;
+    if (r.value !== get().bizAccess || r.failed !== get().bizAccessFailed)
+      set({ bizAccess: r.value, bizAccessFailed: r.failed, accessSyncFailed: r.failed || baseFailed });
   },
   users: [],
   roles: [],
@@ -993,7 +1019,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       const prevId = get().currentUserId;
       const action = authEventAction(event, prevId, nextId, get().initialized && get().loaded);
       if (action === 'ignore') return; // sự kiện phát lại cùng người: không tải lại quyền
-      if (nextId !== prevId) { accessAt.base = null; accessAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false }); }
+      if (nextId !== prevId) { accessAt.base = null; accessAt.biz = null; accessAttemptAt.base = null; accessAttemptAt.biz = null; set({ users: [], roles: [], loaded: false, bizAccess: null, baseAccess: null, accessSyncFailed: false, baseAccessFailed: false, bizAccessFailed: false }); }
       set({ currentUserId: nextId });
       if (action === 'clear') { set({ users: [], roles: [], loaded: false }); return; }
       // Do not make Auth calls inside the SDK's locked callback.
@@ -1023,6 +1049,11 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       const { data: { user } } = await supabase.auth.getUser();
       set({ currentUserId: user?.id ?? null });
+      // Authentication is verified at this point. Unlock AuthGate's guarded
+      // loading state immediately; the directory can become usable before the
+      // slower server permission snapshots finish. No permission is inferred
+      // from this flag: all sensitive gates still fail closed until verified.
+      set({ initialized: true });
       if (user) await authLoads.join(user.id);
     } finally {
       set({ initialized: true });
@@ -1037,6 +1068,10 @@ export const useAuth = create<AuthState>((set, get) => ({
   _load: async () => {
     const requestedUser = get().currentUserId;
     if (!requestedUser) return;
+    // Run server-verified permission reads alongside the profile directory;
+    // previously we waited for five directory queries first, then spent
+    // several seconds resolving permissions for non-admin accounts.
+    const accessReads = Promise.all([get().refreshBizAccess(true), get().refreshBaseAccess(true)]);
     const [dirRes, fullProfRes, rolesRes, urRes, ovRes] = await Promise.all([
       supabase.rpc("get_profiles_directory"),
       // RLS limits this to self + (admins see all). Sensitive fields are merged in for those rows.
@@ -1046,7 +1081,14 @@ export const useAuth = create<AuthState>((set, get) => ({
       supabase.from("user_permission_overrides").select("*"),
     ]);
     if (get().currentUserId !== requestedUser) return;
-    if (fullProfRes.error) { set({ users: [], roles: [], loaded: true, bizAccess: null }); return; }
+    // Directory is authoritative for the visible people list. Failure of an
+    // optional full-profile SELECT must not discard valid self/directory data
+    // or prevent server permission reads (RLS can differ for staff).
+    if (fullProfRes.error && dirRes.error) {
+      set({ users: [], roles: [], loaded: true });
+      await accessReads;
+      return;
+    }
     const directory = (dirRes.data ?? fullProfRes.data ?? []) as any[];
     const fullProfiles = (fullProfRes.data ?? []) as any[];
     const fullById = new Map(fullProfiles.map((p) => [p.id, p]));
@@ -1068,7 +1110,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       catalogPending: r.catalog_pending ?? [],
     }));
     set({ users, roles, loaded: true });
-    await Promise.all([get().refreshBizAccess(true), get().refreshBaseAccess(true)]);
+    await accessReads;
   },
 
   ensureSeed: async () => { /* Database is pre-seeded by migration. */ },
@@ -1419,8 +1461,8 @@ export function useCurrentUser() {
     // Khớp private.has_permission: tài khoản không hoạt động không có quyền nào, kể cả Super Admin.
     if (!u || u.status !== 'Đang hoạt động') return false;
     if (isSuperAdmin) return true;
-    const effective = baseAccess?.user_id === u.id ? baseAccess?.permissions.find(p => p.key === key && p.supported) : undefined;
-    if (effective) return effective.allowed;
+    const effective = baseAccess?.user_id === u.id ? verifiedPermission(baseAccess, key) : undefined;
+    if (effective !== undefined) return effective;
     // New supported permissions fail closed while their authoritative read is unavailable.
     if ([...VERIFIED_APPOINTMENT_PERMISSIONS,'sale_work.access','sale_work.view_own','sale_work.manage_settings','sale_work.manage_credentials','sale_work.view_audit','biz.crm_use','org.view','org.assign_staff','org.appoint_manager','org.view_history'].includes(key) && baseAccess?.user_id !== u.id) return false;
     // Quyền Kinh doanh/3K lấy từ quyền hiệu lực máy chủ (Cơ cấu tổ chức), không từ Role tổng.
