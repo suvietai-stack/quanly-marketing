@@ -383,3 +383,35 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
   .base-app-content:has(> .launcher-home) { background: color-mix(in oklab,var(--muted) 45%,var(--background)); }
 }
 @media (prefers-reduced-motion: no-preference) { .launcher-area,.launcher-tile { transition: transform 120ms ease,background-color 120ms ease; } }
+
+/* Video production: mobile cards and contained editors reuse existing workflows. */
+.video-view-switch button { min-height: 44px; border-radius: 9px; }
+.video-mobile-card button:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+@media (max-width: 767px) {
+ .videos-workspace { overflow-wrap: anywhere; }
+ .videos-workspace > div:first-child { gap: 12px; flex-wrap: wrap; }
+ .video-toolbar { box-shadow: 0 4px 20px #102d5405; }
+ .video-board { scroll-snap-type: x proximity; }
+ .video-board-columns { gap: 12px; }
+ .video-board-column { width: min(82vw,310px); scroll-snap-align: start; }
+ .video-board-column button { min-height: 72px; overflow-wrap: anywhere; }
+ .video-mobile-dialog { top: 0; left: 0; transform: none; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; display: flex; flex-direction: column; gap: 12px; padding: max(20px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom)); overflow: hidden; }
+ .video-mobile-dialog > :first-child { flex-shrink: 0; padding-right: 28px; }
+ .video-mobile-dialog > .grid { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
+ .video-mobile-dialog > .video-form-footer { flex-shrink: 0; }
+ .video-mobile-dialog > .video-detail-tabs { flex: 1; min-height: 0; overflow-y: auto; }
+ .video-mobile-dialog [role="tablist"] { display: flex; width: 100%; height: auto; min-height: 44px; position: sticky; top: 0; z-index: 2; }
+ .video-mobile-dialog [role="tab"] { flex: 1; min-width: 0; min-height: 44px; }
+ .video-mobile-dialog :is(input,textarea,select) { font-size: 16px; min-width: 0; }
+ .video-mobile-dialog :is(button,input,[role="combobox"]) { min-height: 44px; }
+ .video-mobile-dialog :is([role="tabpanel"],.grid) { min-width: 0; }
+ .video-mobile-dialog [role="tabpanel"] > .grid { max-height: none; overflow: visible; }
+ .video-mobile-dialog [role="tabpanel"] > .flex { flex-wrap: wrap; gap: 8px; }
+ .video-mobile-dialog .min-w-\[200px\] { min-width: 0; flex-basis: 100%; }
+}
+@media (max-width: 767px) {
+ .video-view-switch button { min-width: 0; padding-inline: 4px; gap: 4px; font-size: 12px; }
+ .video-view-switch button svg { width: 14px; height: 14px; margin-right: 0; }
+ .video-mobile-dialog .video-form-footer { gap: 8px; margin-top: 0; padding-top: 12px; border-top: 1px solid var(--border); }
+ .video-mobile-dialog h2 { overflow-wrap: anywhere; }
+}

@@ -127,10 +127,10 @@ export function VideoFormDialog({
   const [v, setV] = useState<Video>(initial ?? emptyVideo(brands[0]?.id || ""));
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="video-mobile-dialog max-w-3xl">
         <DialogHeader><DialogTitle>{initial ? "Chỉnh sửa video" : "Tạo video mới"}</DialogTitle></DialogHeader>
         <VideoFormFields value={v} onChange={setV} />
-        <DialogFooter className="mt-4">
+        <DialogFooter className="video-form-footer mt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Huỷ</Button>
           <Button onClick={() => {
             if (!v.title.trim()) { toast.error("Nhập tên video"); return; }
@@ -212,7 +212,7 @@ export function VideoDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="video-mobile-dialog max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 flex-wrap">
             <span>{video.title}</span>
@@ -221,10 +221,10 @@ export function VideoDetailDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="info">
+        <Tabs defaultValue="info" className="video-detail-tabs">
           <TabsList>
             <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="workflow">Workflow</TabsTrigger>
+            <TabsTrigger value="workflow">Quy trình</TabsTrigger>
             <TabsTrigger value="history"><HistoryIcon className="h-3.5 w-3.5 mr-1" />Lịch sử</TabsTrigger>
           </TabsList>
 
@@ -438,3 +438,4 @@ export function VideoDetailDialog({
     </Dialog>
   );
 }
+
