@@ -1,10 +1,8 @@
-# Kiểm tra deployment 8c213eb0 (chỉ đọc)
+# Deployment verification (read-only) — result
 
-Không có thay đổi nào cần thực hiện. Kết quả kiểm tra lúc 09:35 UTC 13/11/2026:
+- base.suviet.vn/organization: HTTP 200, x-deployment-id cef1ab92-c6f9-4530-aea4-6f9ad51ff54e (checked 11:52 UTC).
+- quanly-suviet.lovable.app redirects (302) to base.suviet.vn, which serves the same deployment.
+- HEAD 5da75cb6 changes since editor commit 335cf3f3 under src/: only one test file. The live permission editor is the same code as before.
+- Backend: the 510-permission expansion SQL (SHA 3c4b23f8…) is still NOT applied. No permissions were granted.
 
-- PASS: base.suviet.vn trả HTTP 200, x-deployment-id = 8c213eb0-4c6c-4c70-83d3-17141489e4f2.
-- PASS: quanly-suviet.lovable.app trả 302 về base.suviet.vn (tên miền chính), sau đó 200 cùng deployment ID.
-- PASS: /login và /organization trả 200.
-- CHƯA XÁC MINH: commit f51826c8 (header không ghi commit); đăng nhập/chức năng thực tế.
-
-Không sửa code, không migrate, không publish.
+No further action proposed; no writes, no SQL, no republish.
