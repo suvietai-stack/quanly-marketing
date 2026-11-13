@@ -35,6 +35,7 @@ function Biz3KScreen() {
   const [legacyDayOpen, setLegacyDayOpen] = useState(false);
   const chooseSection = (next: Section) => {
     if (next === 'monitor' && mode === 'all') setMode('day');
+    if (next !== 'mine') setLegacyDayOpen(false);
     setSection(next);
   };
 
@@ -108,7 +109,7 @@ function Biz3KScreen() {
           <section className="space-y-3">
             <div className="k3-period-tabs flex min-w-0 gap-1 overflow-x-auto border-b border-border pb-2">
               {(['day', 'week', 'month', 'quarter', 'all'] as const).map((v) => (
-                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" aria-pressed={mode === v} onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" aria-pressed={mode === v} onClick={() => { if (v !== 'day') setLegacyDayOpen(false); setMode(v); }}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
             {mode === 'day' && <><Biz3KKpiDay settings={settings} date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-2" onToggle={e => setLegacyDayOpen(e.currentTarget.open)}><summary className="text-sm text-muted-foreground">Dữ liệu công việc cũ (chỉ xem khi cần)</summary>{legacyDayOpen && <div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div>}</details></>}
@@ -124,7 +125,7 @@ function Biz3KScreen() {
         <div className="space-y-3">
           <div className="k3-period-tabs flex gap-1 overflow-x-auto border-b border-border pb-3">
             {(['day', 'week', 'month', 'quarter'] as const).map((v) => (
-              <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" aria-pressed={mode === v} onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+              <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" aria-pressed={mode === v} onClick={() => { if (v !== 'day') setLegacyDayOpen(false); setMode(v); }}>{MODE_LABEL[v]}</Button>
             ))}
           </div>
           {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
