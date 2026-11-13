@@ -34,6 +34,7 @@ import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
+import { SignalAssignmentDialog } from './SignalAssignmentDialog';
 import { signalPage, signalCounts, signalById, listParams, changeToken } from '@/lib/signals/paged';
 import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
 import { observedSignalChange } from '@/lib/signals/polling';
@@ -640,19 +641,19 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
   const history=useInfiniteQuery({queryKey:[`${SIG}hist`,p.userId,s.id,s.updated_at],initialPageParam:0,queryFn:({pageParam})=>signalHistory(s.id,pageParam),getNextPageParam:(last,pages)=>last.hasMore?pages.length*30:undefined});
   const hist={...history,data:history.data?{notes:history.data.pages.flatMap(p=>p.notes),events:history.data.pages.flatMap(p=>p.events),noteCount:history.data.pages[0]?.noteCount??0}:undefined};
   const [showProgression, setShowProgression] = useState(false);
-  const sales = useQuery({ queryKey: [`${SIG}sales`, p.userId], queryFn: salesList, enabled: p.assign });
   const closed = s.status === "won" || s.status === "lost";
   const cancelled = !!s.cancelled_at;
   const canEditInfo = !closed && !cancelled && (p.edit || (p.create && s.created_by === p.userId && (!s.status || s.status === "waiting" || s.status === "consulting")));
   const canDelete = p.del && !closed && (hist.data ? hist.data.notes.length === 0 : false);
   const canConsult = !closed && !cancelled && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || p.manage);
   const refresh = () => refreshSignals(qc);
+  const [assigning, setAssigning] = useState(false);
   const assignLock = useRef(false);
   const deleteLock = useRef(false);
   const [deleting, setDeleting] = useState(false);
 
   const doAssign = async (uid: string) => {
-    if (assignLock.current) return;
+    if (assignLock.current) return false;
     assignLock.current = true;
     try {
       await assignSignal(s.id, uid || null);
@@ -660,8 +661,9 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
       qc.setQueryData([`${SIG}detail`, p.userId, s.id], (old: Signal | null | undefined) => old ? { ...old, assigned_to: uid || null, assigned_at: uid ? new Date().toISOString() : null, status: uid ? "waiting" : null } : old);
       toast.success(uid ? "Đã phân công" : "Đã bỏ phân công");
       await refresh();
+      return true;
     }
-    catch (e) { toast.error(errMsg(e)); }
+    catch (e) { toast.error(errMsg(e)); return false; }
     finally { assignLock.current = false; }
   };
   const doReopen = async () => {
@@ -799,15 +801,12 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
             {canEditInfo && <Button variant="outline" onClick={() => setEditing(true)}>Sửa thông tin</Button>}
             {closed && p.manage && <Button variant="outline" onClick={doReopen}><RotateCcw className="h-4 w-4 mr-1" />Mở lại</Button>}
           </div>
-          {(s.assigned_to ? p.reassign : p.assignNew) && !closed && (
-            <Field label="Sale phụ trách">
-              <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={s.assigned_to ?? ""} onChange={(e) => doAssign(e.target.value)}>
-                <option value="">Chưa phân công</option>
-                {s.assigned_to && !(sales.data ?? []).some((u) => u.id === s.assigned_to) && <option value={s.assigned_to}>{name(s.assigned_to)}</option>}
-                {(sales.data ?? []).map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}
-              </select>
-            </Field>
-          )}
+          {(s.assigned_to ? p.reassign : p.assignNew) && !closed && !cancelled && <Field label="Sale phụ trách">
+            <p className="text-sm">{s.assigned_to ? name(s.assigned_to) : 'Chưa phân công'}</p>
+            <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => setAssigning(true)}>{s.assigned_to ? 'Đổi Sale phụ trách' : 'Phân công Sale'}</Button>
+          </Field>}
+          {assigning && (s.assigned_to ? p.reassign : p.assignNew) && !closed && !cancelled && <SignalAssignmentDialog key={`${s.id}:${s.assigned_to}`} actorId={p.userId} currentId={s.assigned_to} currentName={name(s.assigned_to)} customerName={s.customer_name} onClose={() => setAssigning(false)} onConfirm={doAssign} />}
+
         </Section>
       </div>
 

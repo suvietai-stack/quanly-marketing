@@ -121,7 +121,7 @@ export async function signalHistory(id: string, offset = 0): Promise<{ notes: Si
 
 export async function salesList(): Promise<{ id: string; full_name: string }[]> {
   const { data, error } = await db.rpc("signal_sales_list");
-  if (error) return [];
+  if (error) throw error;
   return data ?? [];
 }
 
