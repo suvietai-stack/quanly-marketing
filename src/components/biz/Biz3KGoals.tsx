@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Check, Loader2, Pencil, Plus, Star, Target, UserPlus, Users, X, MoreHorizontal } from 'lucide-react';
@@ -70,10 +70,17 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
   const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : variant === 'collab' ? 'collab' : 'all');
   const [sub, setSub] = useState('all');
   const [search, setSearch] = useState('');
+  const [serverSearch, setServerSearch] = useState('');
+  useEffect(() => {
+    const handle = window.setTimeout(() => setServerSearch(search.trim()), 300);
+    return () => window.clearTimeout(handle);
+  }, [search]);
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const { data, isLoading, error, refetch } = useQuery({ ...k3GoalListQuery(uid, filter, search.trim()), enabled: !!uid });
-  const invited = useQuery({ ...k3GoalListQuery(uid, 'invited', ''), enabled: !!uid });
+  // The compact weekly/monthly/quarterly header only provides KG creation.
+  // It must not load the entire goal catalogue and invitations behind the scenes.
+  const { data, isLoading, error, refetch } = useQuery({ ...k3GoalListQuery(uid, filter, serverSearch), enabled: !!uid && !compact });
+  const invited = useQuery({ ...k3GoalListQuery(uid, 'invited', ''), enabled: !!uid && !compact });
   const mutation = useK3GoalMutation();
 
   const shown = useMemo(() => {
@@ -132,7 +139,7 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
           </div>
         )}
         <div className="flex-1" />
-        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant !== 'personal' && !settings.allow_team_goal)}>
+        <Button size="sm" className="max-md:min-h-11 max-md:w-full md:w-auto" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant !== 'personal' && !settings.allow_team_goal)}>
           <Plus className="mr-1 h-4 w-4" /> {variant === 'personal' ? 'Tạo công việc' : 'Tạo công việc nhóm'}
         </Button>
       </div>
