@@ -442,6 +442,10 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
 @media (max-width: 767px) {
  .k3-day-summary { background: linear-gradient(125deg,#102d54,#185e79); color: #fff; border: 0; box-shadow: 0 8px 24px #102d5418; }
  .k3-day-summary p { color: #e0edf4; }
+ .k3-day-summary :is(h2,h3,strong) { color: #fff; }
+ .k3-section-tabs { overflow: visible; scroll-snap-type: none; }
+ .k3-section-tabs button { min-width: 0; white-space: normal; text-align: center; line-height: 1.15; }
+ .k3-work-card > .flex:last-child button { touch-action: manipulation; }
  .k3-day-counts > div { border-radius: 12px; padding: 12px 6px; background: #ffffff10; text-align: center; }
  .k3-day-counts strong { display: block; font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
  .k3-day-counts span { display: block; margin-top: 6px; font-size: 10px; line-height: 1.4; color: #d8e9f1; }

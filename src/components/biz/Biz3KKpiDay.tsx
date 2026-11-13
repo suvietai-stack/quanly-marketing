@@ -29,9 +29,10 @@ export function Biz3KKpiDay({ settings, date, today, onDateChange }: { settings:
   const [creating, setCreating] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const [history, setHistory] = useState<DayAction | null>(null);
+  const [disciplineOpen, setDisciplineOpen] = useState(false);
   const [choosing, setChoosing] = useState<DayAction | null>(null);
-  const review = useQuery(employeeReviewQuery(uid,date));
-  const query = useQuery({ queryKey: ['k3_kpi_day',uid,date], refetchInterval:30000, enabled:!!uid, queryFn:async()=>{ const {data,error}=await supabase.rpc('k3_kpi_day_read',{_date:date}); if(error) throw error; return data as unknown as DayData; } });
+  const review = useQuery({ ...employeeReviewQuery(uid,date), enabled: !!uid, staleTime: 45_000, refetchOnWindowFocus: false, retry: 1 });
+  const query = useQuery({ queryKey: ['k3_kpi_day',uid,date], staleTime: 30_000, refetchInterval: 90_000, refetchOnWindowFocus: false, retry: 1, enabled:!!uid, queryFn:async()=>{ const {data,error}=await supabase.rpc('k3_kpi_day_read',{_date:date}); if(error) throw error; return data as unknown as DayData; } });
   const actions = query.data?.actions.filter(a => a.metric.status !== 'cancelled') ?? [];
   const visibleActions = actions.filter(a => (filter === 'all' || (filter === 'done' ? a.metric.status === 'done' : a.metric.status !== 'done')) && a.name.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi')));
   const completed = actions.filter(a => a.metric.status === 'done').length;
@@ -45,7 +46,7 @@ export function Biz3KKpiDay({ settings, date, today, onDateChange }: { settings:
     {creating && <Biz3KQuickCreate variant="personal" defaultDate={today} onClose={()=>setCreating(false)} />}
     {detail && <GoalDetailSheet id={detail} settings={settings} onClose={()=>setDetail(null)} />}
     {reviewOpen && <Biz3KDayReview date={date} today={today} onClose={()=>setReviewOpen(false)} />}
-    {query.isLoading && <p className="text-sm text-muted-foreground">Đang tải công việc…</p>}
+    {query.isLoading && <div className="space-y-2" role="status" aria-label="Đang tải danh sách công việc"><div className="h-20 animate-pulse rounded-2xl bg-muted" /><div className="h-20 animate-pulse rounded-2xl bg-muted" /></div>}
     {query.error && <div className="text-sm text-destructive">{k3Error(query.error)} <Button variant="ghost" onClick={()=>query.refetch()}>Thử lại</Button></div>}
     {query.data && actions.length > 0 && <div className="k3-day-filter rounded-2xl border bg-card p-3 space-y-3">
       <div className="relative"><Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" aria-hidden="true" /><Input aria-label="Tìm công việc trong ngày" placeholder="Tìm công việc trong ngày…" value={search} onChange={e => setSearch(e.target.value)} className="h-11 rounded-xl pl-10 text-base" /></div>
@@ -54,12 +55,15 @@ export function Biz3KKpiDay({ settings, date, today, onDateChange }: { settings:
     </div>}
     {query.data && actions.length > 0 && visibleActions.length === 0 && <p role="status" className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">Không có công việc phù hợp. Hãy thử từ khóa hoặc bộ lọc khác.</p>}
     {visibleActions.map(a=><div key={a.id} className="k3-work-card space-y-3 rounded-2xl border border-border bg-card p-4 shadow-soft"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 md:flex"><div className="min-w-0 flex-1"><p className="break-words font-medium">{a.name}</p><p className="mt-1 text-xs text-muted-foreground">Hạn {a.due_date ?? '—'}{a.due_time ? ` · ${a.due_time.slice(0,5)}` : ''}</p></div><span className="max-md:col-start-1 max-md:row-start-2"><GoalStatusBadge status={a.metric.status} metric={a.metric} /></span><DropdownMenu><DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="shrink-0 max-md:h-11 max-md:w-11 max-md:col-start-2 max-md:row-start-1" aria-label={`Thao tác khác cho ${a.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{a.goal_id && <DropdownMenuItem onSelect={()=>setDetail(a.goal_id ?? null)}><Pencil className="mr-2 h-4 w-4" />Sửa công việc / Xem chi tiết</DropdownMenuItem>}<DropdownMenuItem onSelect={()=>setHistory(a)}><History className="mr-2 h-4 w-4" />Lịch sử kết quả</DropdownMenuItem><K3DeleteMenuItem kind={a.delete_kind==='goal' && a.goal_id ? 'goal':'action'} id={a.delete_kind==='goal' && a.goal_id ? a.goal_id:a.id} name={a.name} /></DropdownMenuContent></DropdownMenu></div>
-      {a.kpis.length===1 ? a.kpis.map(k=><Biz3KKpiResult key={k.id} kpiId={k.id} date={date} compact hideName showStatus={false} />) : a.kpis.length > 1 ? <><div className="md:hidden"><p className="text-sm">{a.metric.kpi_met}/{a.metric.kpi_total} chỉ số đạt</p><Button variant="outline" className="mt-2 min-h-11 w-full" onClick={() => setChoosing(a)}>Cập nhật kết quả</Button></div><details className="hidden md:block"><summary className="cursor-pointer py-2 text-sm">{a.kpis.length} chỉ số · Cập nhật kết quả</summary>{a.kpis.map(k=><Biz3KKpiResult key={k.id} kpiId={k.id} date={date} compact showStatus={false} />)}</details></> : null}
+      {a.kpis.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/60 p-3">
+        <div className="min-w-0"><p className="text-xs font-medium text-foreground">{a.metric.kpi_met}/{a.metric.kpi_total} KPI đạt</p><p className="mt-1 text-[11px] text-muted-foreground">Chạm để xem và ghi nhận KPI</p></div>
+        <Button type="button" variant="outline" className="min-h-11 shrink-0 rounded-xl border-primary/30 text-primary hover:bg-primary/10" onClick={() => setChoosing(a)}>Cập nhật kết quả</Button>
+      </div>}
       {!a.kpis.length && <p className="text-sm text-muted-foreground">Chưa có chỉ số đo kết quả.</p>}
     </div>)}
     {query.data && !query.data.actions.filter(a=>a.metric.status!=='cancelled').length && <p className="rounded-2xl border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">Chưa có công việc trong ngày này. Bấm “Tạo công việc” để bắt đầu.</p>}
-    <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm">Kỷ luật ngày của tôi</summary><Biz3KDiscipline start={date} end={date} /></details>
-    {choosing && <Dialog open onOpenChange={o=>!o&&setChoosing(null)}><DialogContent className="k3-mobile-dialog max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>{choosing.name}</DialogTitle></DialogHeader>{choosing.kpis.map(k=><Biz3KKpiResult key={k.id} kpiId={k.id} date={date} compact showStatus={false} />)}</DialogContent></Dialog>}
+    <details className="rounded-xl border bg-card px-3" onToggle={e => setDisciplineOpen(e.currentTarget.open)}><summary className="cursor-pointer min-h-11 py-3 text-sm font-medium">Kỷ luật ngày của tôi</summary>{disciplineOpen && <Biz3KDiscipline start={date} end={date} />}</details>
+    {choosing && <Dialog open onOpenChange={o=>!o&&setChoosing(null)}><DialogContent className="k3-mobile-dialog max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Ghi nhận kết quả · {choosing.name}</DialogTitle></DialogHeader>{choosing.kpis.map(k=><Biz3KKpiResult key={k.id} kpiId={k.id} date={date} compact showStatus={false} />)}</DialogContent></Dialog>}
     {history && <Dialog open onOpenChange={o=>!o&&setHistory(null)}><DialogContent className="k3-mobile-dialog max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử · {history.name}</DialogTitle></DialogHeader>{history.kpis.map(k=><Biz3KKpiResult key={k.id} kpiId={k.id} date={date} historyOnly />)}</DialogContent></Dialog>}
   </div>;
 }

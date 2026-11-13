@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Archive, ClipboardList, ListChecks, Settings2, Users, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3SettingsQuery } from '@/lib/biz/k3Queries';
 import { cn } from '@/lib/utils';
-import { Biz3KMyDay } from './Biz3KMyDay';
-import { Biz3KSettings } from './Biz3KSettings';
-import { Biz3KMeasuredPeriod } from './Biz3KMeasuredPeriod';
-import { Biz3KGoals } from './Biz3KGoals';
-import { Biz3KKpiDay } from './Biz3KKpiDay';
-import { Biz3KArchive } from './Biz3KArchive';
+// Each 3K workspace is loaded only when selected. The legacy day editor and
+// administration screens no longer inflate the first mobile load.
+const Biz3KMyDay = lazy(() => import('./Biz3KMyDay').then(m => ({ default: m.Biz3KMyDay })));
+const Biz3KSettings = lazy(() => import('./Biz3KSettings').then(m => ({ default: m.Biz3KSettings })));
+const Biz3KMeasuredPeriod = lazy(() => import('./Biz3KMeasuredPeriod').then(m => ({ default: m.Biz3KMeasuredPeriod })));
+const Biz3KGoals = lazy(() => import('./Biz3KGoals').then(m => ({ default: m.Biz3KGoals })));
+const Biz3KKpiDay = lazy(() => import('./Biz3KKpiDay').then(m => ({ default: m.Biz3KKpiDay })));
+const Biz3KArchive = lazy(() => import('./Biz3KArchive').then(m => ({ default: m.Biz3KArchive })));
+
 import { Button } from '@/components/ui/button';
 import { K3DeleteProvider } from './Biz3KDelete';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -29,8 +32,10 @@ function Biz3KScreen() {
   const [section, setSection] = useState<Section>('mine');
   const [mode, setMode] = useState<Mode>('day');
   const [date, setDate] = useState<string | null>(null);
+  const [legacyDayOpen, setLegacyDayOpen] = useState(false);
   const chooseSection = (next: Section) => {
     if (next === 'monitor' && mode === 'all') setMode('day');
+    if (next !== 'mine') setLegacyDayOpen(false);
     setSection(next);
   };
 
@@ -44,10 +49,10 @@ function Biz3KScreen() {
     );
   }
 
-  const tabs: { key: Section; label: string; icon: typeof ListChecks; show: boolean }[] = [
-    { key: 'mine', label: '3K Của Tôi', icon: ListChecks, show: settings.can_use },
-    { key: 'collab', label: '3K phối hợp', icon: Users, show: settings.can_use },
-    { key: 'monitor', label: 'Theo Dõi Nhân Viên', icon: ClipboardList, show: settings.can_view_scope },
+  const tabs: { key: Section; label: string; mobileLabel: string; icon: typeof ListChecks; show: boolean }[] = [
+    { key: 'mine', label: '3K Của Tôi', mobileLabel: 'Của tôi', icon: ListChecks, show: settings.can_use },
+    { key: 'collab', label: '3K phối hợp', mobileLabel: 'Phối hợp', icon: Users, show: settings.can_use },
+    { key: 'monitor', label: 'Theo Dõi Nhân Viên', mobileLabel: 'Nhân viên', icon: ClipboardList, show: settings.can_view_scope },
   ];
   const visible = tabs.filter((t) => t.show);
   if (!settings.can_use && !settings.can_view_scope && !settings.can_settings) return <p className="py-8 text-center text-sm text-destructive">Bạn không có quyền sử dụng 3K.</p>;
@@ -60,7 +65,7 @@ function Biz3KScreen() {
       <section className="k3-mobile-navigation md:hidden rounded-2xl border bg-card p-3 space-y-3">
         <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">Không gian 3K</h2><p className="text-xs text-muted-foreground mt-1">Lập việc · Cập nhật · Tổng kết</p></div>
         <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-xl" aria-label="Thao tác phụ 3K"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => chooseSection('archive')}><Archive />Thùng lưu trữ</DropdownMenuItem>{settings.can_settings && <DropdownMenuItem onSelect={() => chooseSection('settings')}><Settings2 />Cài đặt 3K</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu></div>
-        <div className="k3-section-tabs flex gap-2 overflow-x-auto pb-1" aria-label="Khu vực 3K">{visible.map(t => <Button key={t.key} variant={active === t.key ? 'default' : 'outline'} className="min-h-11 shrink-0 rounded-xl text-xs" aria-pressed={active === t.key} onClick={() => chooseSection(t.key)}><t.icon className="h-4 w-4" />{t.label}</Button>)}</div>
+        <div className="k3-section-tabs grid gap-1.5" style={{ gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))` }} aria-label="Khu vực 3K">{visible.map(t => <Button key={t.key} variant={active === t.key ? 'default' : 'outline'} className={cn('min-h-12 min-w-0 flex-col gap-1 rounded-xl px-1.5 py-2 text-[11px] leading-tight', active !== t.key && (t.key === 'collab' ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200' : t.key === 'monitor' ? 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200'))} aria-label={t.label} aria-pressed={active === t.key} onClick={() => chooseSection(t.key)}><t.icon className="h-4 w-4 shrink-0" /><span>{t.mobileLabel}</span></Button>)}</div>
         {(active === 'archive' || active === 'settings') && <p className="text-sm font-medium">{active === 'archive' ? 'Thùng lưu trữ' : 'Cài đặt 3K'}</p>}
       </section>
       <div className="hidden md:flex flex-wrap items-center gap-2">
@@ -98,15 +103,16 @@ function Biz3KScreen() {
         </div>
       )}
 
+      <Suspense fallback={<div className="rounded-2xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground" role="status">Đang mở khu vực 3K…</div>}>
       {active === 'mine' && (
         <div className="space-y-6">
           <section className="space-y-3">
             <div className="k3-period-tabs flex min-w-0 gap-1 overflow-x-auto border-b border-border pb-2">
               {(['day', 'week', 'month', 'quarter', 'all'] as const).map((v) => (
-                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" aria-pressed={mode === v} onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" aria-pressed={mode === v} onClick={() => { if (v !== 'day') setLegacyDayOpen(false); setMode(v); }}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
-            {mode === 'day' && <><Biz3KKpiDay settings={settings} date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
+            {mode === 'day' && <><Biz3KKpiDay settings={settings} date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-2" onToggle={e => setLegacyDayOpen(e.currentTarget.open)}><summary className="text-sm text-muted-foreground">Dữ liệu công việc cũ (chỉ xem khi cần)</summary>{legacyDayOpen && <div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div>}</details></>}
             {(mode === 'week' || mode === 'month' || mode === 'quarter') && <><Biz3KGoals settings={settings} variant="personal" compact /><Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} /></>}
             {mode === 'all' && <Biz3KGoals settings={settings} variant="personal" />}
           </section>
@@ -119,7 +125,7 @@ function Biz3KScreen() {
         <div className="space-y-3">
           <div className="k3-period-tabs flex gap-1 overflow-x-auto border-b border-border pb-3">
             {(['day', 'week', 'month', 'quarter'] as const).map((v) => (
-              <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" aria-pressed={mode === v} onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+              <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" aria-pressed={mode === v} onClick={() => { if (v !== 'day') setLegacyDayOpen(false); setMode(v); }}>{MODE_LABEL[v]}</Button>
             ))}
           </div>
           {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
@@ -128,6 +134,7 @@ function Biz3KScreen() {
 
       {active === 'settings' && <Biz3KSettings settings={settings} />}
       {active === 'archive' && <Biz3KArchive admin={settings.can_settings} />}
+      </Suspense>
     </div>
   );
 }

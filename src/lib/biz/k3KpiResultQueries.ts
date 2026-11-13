@@ -22,7 +22,7 @@ export interface K3ResultData {
   history: { id: string; revision: number; snapshot: K3SavedResult; created_at: string }[];
 }
 export const k3KpiResultQuery = (uid: string, kpi: string, date: string) => queryOptions({
-  queryKey: ['k3_kpi_result', uid, kpi, date], staleTime: 0,
+  queryKey: ['k3_kpi_result', uid, kpi, date], staleTime: 30_000, refetchOnWindowFocus: false, retry: 1,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_kpi_result_read', { _kpi: kpi, _date: date });
     if (error) throw error;

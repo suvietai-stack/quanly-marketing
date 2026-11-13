@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Check, Loader2, Pencil, Plus, Star, Target, UserPlus, Users, X, MoreHorizontal } from 'lucide-react';
@@ -70,10 +70,17 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
   const [filter, setFilter] = useState(variant === 'scope' ? 'scope' : variant === 'collab' ? 'collab' : 'all');
   const [sub, setSub] = useState('all');
   const [search, setSearch] = useState('');
+  const [serverSearch, setServerSearch] = useState('');
+  useEffect(() => {
+    const handle = window.setTimeout(() => setServerSearch(search.trim()), 300);
+    return () => window.clearTimeout(handle);
+  }, [search]);
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const { data, isLoading, error, refetch } = useQuery({ ...k3GoalListQuery(uid, filter, search.trim()), enabled: !!uid });
-  const invited = useQuery({ ...k3GoalListQuery(uid, 'invited', ''), enabled: !!uid });
+  // The compact weekly/monthly/quarterly header only provides KG creation.
+  // It must not load the entire goal catalogue and invitations behind the scenes.
+  const { data, isLoading, error, refetch } = useQuery({ ...k3GoalListQuery(uid, filter, serverSearch), enabled: !!uid && !compact });
+  const invited = useQuery({ ...k3GoalListQuery(uid, 'invited', ''), enabled: !!uid && !compact });
   const mutation = useK3GoalMutation();
 
   const shown = useMemo(() => {
@@ -132,7 +139,7 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
           </div>
         )}
         <div className="flex-1" />
-        <Button size="sm" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant !== 'personal' && !settings.allow_team_goal)}>
+        <Button size="sm" className="max-md:min-h-11 max-md:w-full md:w-auto" onClick={() => setCreating(true)} disabled={!settings.enabled || (variant !== 'personal' && !settings.allow_team_goal)}>
           <Plus className="mr-1 h-4 w-4" /> {variant === 'personal' ? 'Tạo công việc' : 'Tạo công việc nhóm'}
         </Button>
       </div>
@@ -238,6 +245,20 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
 }
 
 
+/** Keep the goal detail concise. Each KPI's history is an independent RPC
+ * and should only load after the corresponding accordion is expanded. */
+function GoalKpiAccordion({ kpis, date, title }: {
+  kpis: { id: string; name: string }[]; date: string; title: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (!kpis.length) return null;
+  return <details className="rounded-xl border bg-muted/30 px-3" onToggle={e => setExpanded(e.currentTarget.open)}>
+    <summary className="cursor-pointer min-h-11 py-3 text-sm font-medium text-primary">{title} · {kpis.length} chỉ số</summary>
+    {expanded && <div className="space-y-2 pb-3">{kpis.map(k => <Biz3KKpiResult key={k.id} kpiId={k.id} date={date} showStatus={false} />)}</div>}
+  </details>;
+}
+
+
 export function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Settings; onClose: () => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data, isLoading, error, refetch } = useQuery({ ...k3GoalDetailQuery(uid, id), enabled: !!uid && !!id });
@@ -278,12 +299,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
               </p>
               {g.expected_result && <p className="text-sm"><span className="font-medium">Kết quả cần đạt:</span> {g.expected_result}</p>}
               {g.description && <p className="text-sm text-muted-foreground">{g.description}</p>}
-              {data.kpis.length > 0 && (
-                <div className="space-y-1.5 border-t border-border pt-2">
-                  <p className="text-xs font-medium text-muted-foreground">KPI kết quả KG</p>
-                  {data.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
-                </div>
-              )}
+              {data.kpis.length > 0 && <GoalKpiAccordion kpis={data.kpis} date={data.today} title="KPI kết quả KG" />}
               <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
                 {canManage && !closed && (
                   <>
@@ -351,7 +367,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                       </div>
                       <GoalStatusBadge status={a.action.status} metric={a.action.kpi_summary} overdueDays={a.overdue_days} />
                     </div>
-                    {a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
+                    <GoalKpiAccordion kpis={a.kpis} date={data.today} title="KPI hành động KF" />
                     {a.member_actuals.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Đóng góp: {a.member_actuals.map((m) => `${m.full_name} ${m.actual}`).join(' · ')}

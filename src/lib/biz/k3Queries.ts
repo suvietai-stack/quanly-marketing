@@ -16,7 +16,9 @@ export const k3SettingsQuery = (uid: string) => queryOptions({
 
 export const k3DayQuery = (uid: string, date: string) => queryOptions({
   queryKey: ['k3_day', uid, date],
-  staleTime: 0,
+  staleTime: 30_000,
+  refetchOnWindowFocus: false,
+  retry: 1,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_day_read', { _date: date });
     if (error) throw error;
@@ -26,7 +28,9 @@ export const k3DayQuery = (uid: string, date: string) => queryOptions({
 
 export const k3TeamQuery = (uid: string, date: string) => queryOptions({
   queryKey: ['k3_team', uid, date],
-  staleTime: 0,
+  staleTime: 30_000,
+  refetchOnWindowFocus: false,
+  retry: 1,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_team_read', { _date: date });
     if (error) throw error;
@@ -36,7 +40,9 @@ export const k3TeamQuery = (uid: string, date: string) => queryOptions({
 
 export const k3UserDayQuery = (uid: string, user: string, date: string) => queryOptions({
   queryKey: ['k3_user_day', uid, user, date],
-  staleTime: 0,
+  staleTime: 30_000,
+  refetchOnWindowFocus: false,
+  retry: 1,
   queryFn: async () => {
     const { data, error } = await supabase.rpc('k3_user_day_read', { _user: user, _date: date });
     if (error) throw error;
