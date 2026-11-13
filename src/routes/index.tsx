@@ -1118,13 +1118,28 @@ function DeptOverview() {
       )}
 
       {/* ===== Bottlenecks ===== */}
-      <Card className="mt-6">
+      <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
         <CardHeader>
           <CardTitle className="text-base">Điểm nghẽn cần chú ý</CardTitle>
           <div className="text-xs text-muted-foreground">Các việc đang làm tắc quy trình — ưu tiên xử lý nhanh.</div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="space-y-2.5 p-3 md:hidden">
+            {bottlenecks.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"><CheckCircle2 className="mx-auto mb-2 h-6 w-6" />Không có điểm nghẽn cần chú ý.</div>}
+            {bottlenecks.map((b,i) => (
+              <article key={`${b.href}-${b.title}-${i}`} className={`rounded-xl border p-3 ${b.sev === "Cao" ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20" : b.sev === "Trung bình" ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-border bg-card"}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`rounded-md px-2 py-1 text-[11px] font-semibold ${b.sev === "Cao" ? "bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100" : b.sev === "Trung bình" ? "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100"}`}>{b.type}</span>
+                  <StatusBadge value={b.status} />
+                </div>
+                <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-6">{b.title}</h3>
+                <p className="mt-1 text-[11px] text-muted-foreground">{b.module} · {b.assignee || "Chưa có người xử lý"}</p>
+                {b.due && <p className="mt-1 text-[11px] font-medium"><Clock className="mr-1 inline h-3 w-3" />Hạn: {fmtDate(b.due)}</p>}
+                <Button asChild variant="outline" className="mt-3 min-h-11 w-full rounded-xl border-primary/25 bg-card text-primary"><Link to={b.href}>Xử lý công việc <ArrowRight className="h-4 w-4" /></Link></Button>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground bg-muted/40">
                 <tr>
@@ -1173,22 +1188,22 @@ function DeptOverview() {
       </Card>
 
       {/* ===== Quick access ===== */}
-      <Card className="mt-6">
+      <Card className="mt-5 rounded-2xl md:mt-6">
         <CardHeader><CardTitle className="text-base">Truy cập nhanh</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <CardContent className="grid grid-cols-2 gap-2.5 p-3 pt-0 sm:grid-cols-4 sm:gap-3 sm:p-5 lg:grid-cols-7">
           {[
-            { to: "/tasks", icon: ListChecks, label: "Task" },
-            { to: "/brands", icon: Briefcase, label: "Thương hiệu" },
-            { to: "/websites", icon: Globe, label: "Website" },
-            { to: "/social", icon: Share2, label: "Social" },
-            { to: "/local", icon: MapPin, label: "Local Map" },
-            { to: "/videos", icon: Video, label: "Video" },
-            { to: "/orders", icon: FileEdit, label: "Thiết kế" },
+            { to: "/tasks", icon: ListChecks, label: "Công việc", tone: "blue" },
+            { to: "/brands", icon: Briefcase, label: "Thương hiệu", tone: "indigo" },
+            { to: "/websites", icon: Globe, label: "Website", tone: "cyan" },
+            { to: "/social", icon: Share2, label: "Social", tone: "pink" },
+            { to: "/local", icon: MapPin, label: "Local Map", tone: "emerald" },
+            { to: "/videos", icon: Video, label: "Video", tone: "orange" },
+            { to: "/orders", icon: FileEdit, label: "Thiết kế", tone: "violet" },
           ].map((q) => (
             <Link key={q.to} to={q.to}
-              className="flex flex-col items-start gap-2 rounded-lg border bg-card p-3 hover:border-primary/40 hover:bg-accent/40 transition-colors">
-              <q.icon className="h-5 w-5 text-primary" />
-              <div className="text-sm font-medium">{q.label}</div>
+              className={`dashboard-shortcut dashboard-shortcut-${q.tone} flex min-h-24 flex-col items-start justify-between gap-2 rounded-xl border p-3 transition-all hover:-translate-y-0.5 hover:shadow-md`}>
+              <q.icon className="h-5 w-5" />
+              <div className="text-xs font-semibold sm:text-sm">{q.label}</div>
             </Link>
           ))}
         </CardContent>
@@ -1253,7 +1268,8 @@ function FilterSelect({ value, onChange, placeholder, options }: {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-8 rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+      aria-label={placeholder}
+      className="min-h-10 min-w-0 rounded-xl border border-input bg-background px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
     >
       <option value="">{placeholder}</option>
       {options.map((o) => (
