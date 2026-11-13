@@ -590,26 +590,17 @@ function isNeedsFixStatus(s: string): boolean {
 function Stat({ label, value, icon: Icon, tone = "default", hint }: {
   label: string; value: number | string; icon: any; tone?: "default" | "warn" | "danger" | "success" | "info"; hint?: string;
 }) {
-  const tones: Record<string, string> = {
-    default: "bg-secondary text-secondary-foreground",
-    warn: "bg-warning/15 text-[oklch(0.45_0.13_75)]",
-    danger: "bg-destructive/10 text-destructive",
-    success: "bg-success/15 text-success",
-    info: "bg-info/15 text-info",
-  };
   return (
-    <Card>
-      <CardContent className="p-5 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
-          <div className="text-2xl font-semibold mt-1.5 tracking-tight tabular-nums">{value}</div>
-          {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
-        </div>
-        <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${tones[tone]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardContent>
-    </Card>
+    <div className={`dashboard-metric dashboard-metric-${tone} flex min-h-28 items-start justify-between gap-2 rounded-2xl border p-3 shadow-sm sm:min-h-32 sm:p-4`}>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-semibold leading-tight">{label}</div>
+        <div className="mt-2 text-2xl font-bold tracking-tight tabular-nums">{value}</div>
+        {hint && <div className="mt-1 text-[11px] leading-tight opacity-80">{hint}</div>}
+      </div>
+      <div className="dashboard-metric-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+        <Icon className="h-5 w-5" />
+      </div>
+    </div>
   );
 }
 
@@ -648,6 +639,8 @@ function DeptOverview() {
   const [moduleFilter, setModuleFilter] = useState<string>("");
   const [staff, setStaff] = useState<string>("");
   const [channelType, setChannelType] = useState<"all" | "Website" | "Social" | "Local">("all");
+  const [staffMobileLimit, setStaffMobileLimit] = useState(6);
+  const [channelMobileLimit, setChannelMobileLimit] = useState(6);
   const [refreshKey, setRefreshKey] = useState(0);
   const [drawerStaff, setDrawerStaff] = useState<string | null>(null);
 
@@ -898,14 +891,15 @@ function DeptOverview() {
   return (
     <>
       {/* ===== Filter Bar ===== */}
-      <Card className="mb-6">
-        <CardContent className="p-4 flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-md border bg-background overflow-hidden">
+      <Card className="dashboard-filters mb-4 overflow-hidden rounded-2xl md:mb-6">
+        <CardContent className="flex flex-wrap items-center gap-2.5 p-3 sm:p-4">
+          <div className="dashboard-range-tabs flex w-full items-center gap-1 overflow-x-auto rounded-xl bg-muted/70 p-1 md:w-auto">
             {(["today", "week", "month", "quarter", "all"] as RangeKey[]).map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                aria-pressed={range === r}
+                className={`min-h-10 flex-1 shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors md:flex-none md:text-xs ${
                   range === r ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                 }`}
               >
@@ -919,8 +913,8 @@ function DeptOverview() {
             options={moduleOptions.map((m) => ({ value: m, label: m }))} />
           <FilterSelect value={staff} onChange={setStaff} placeholder="Tất cả nhân sự"
             options={staffOptions.map((n) => ({ value: n, label: n }))} />
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setRefreshKey((k) => k + 1)}>
+          <div className="flex w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+            <Button variant="outline" size="sm" className="min-h-10 rounded-xl" onClick={() => setRefreshKey((k) => k + 1)}>
               <RefreshCw className="h-3.5 w-3.5" /> Làm mới
             </Button>
             {hasFilter && (
@@ -933,7 +927,7 @@ function DeptOverview() {
       </Card>
 
       {/* ===== Quick Stat Cards ===== */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
         <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
         <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
         <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
@@ -945,26 +939,47 @@ function DeptOverview() {
 
       {/* ===== Staff Performance ===== */}
       {canStaff && (
-        <Card className="mt-6">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+        <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
+          <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 sm:flex-row">
             <div>
               <CardTitle className="text-base">Hiệu suất nhân viên</CardTitle>
               <div className="text-xs text-muted-foreground mt-1">
                 Theo dõi khối lượng công việc, tiến độ và tình trạng xử lý của từng nhân sự trong kỳ.
               </div>
             </div>
-            <div className="inline-flex rounded-md border bg-background overflow-hidden text-xs">
+            <div className="dashboard-segment flex w-full items-center gap-1 rounded-xl bg-muted/70 p-1 text-[11px] sm:w-auto sm:text-xs">
               {([["all","Tất cả"],["overdue","Quá hạn"],["fix","Cần sửa"],["pending","Chờ duyệt"]] as const).map(([k, l]) => (
                 <button
                   key={k}
                   onClick={() => setStaffSubFilter(k)}
-                  className={`px-2.5 py-1.5 font-medium transition-colors ${staffSubFilter === k ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  aria-pressed={staffSubFilter === k}
+                  className={`min-h-9 flex-1 rounded-lg px-1.5 py-1 text-[11px] font-semibold transition-colors sm:flex-none sm:px-2.5 ${staffSubFilter === k ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent"}`}
                 >{l}</button>
               ))}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="space-y-2.5 p-3 md:hidden">
+              {visibleStaffRows.length === 0 && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Chưa có dữ liệu nhân sự theo bộ lọc.</p>}
+              {visibleStaffRows.slice(0,staffMobileLimit).map(r => (
+                <button type="button" key={r.name} className="dashboard-person-card flex min-h-28 w-full flex-col gap-2 rounded-xl border bg-card p-3 text-left" onClick={() => setDrawerStaff(r.name)} aria-label={`Xem hiệu suất của ${r.name}`}>
+                  <span className="flex w-full items-center gap-2.5">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-xs font-bold text-blue-900 dark:bg-blue-950 dark:text-blue-200">{avatarInitials(r.name)}</span>
+                    <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{r.name}</strong><span className="block truncate text-[11px] text-muted-foreground">{r.role || "Nhân viên"} · {r.assigned} việc được giao</span></span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+                  </span>
+                  <span className="grid grid-cols-4 gap-1 text-center text-[10px]">
+                    <span className="rounded-lg bg-emerald-50 p-1.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"><strong className="block text-lg tabular-nums">{r.done}</strong>Đã xong</span>
+                    <span className="rounded-lg bg-blue-50 p-1.5 text-blue-800 dark:bg-blue-950 dark:text-blue-200"><strong className="block text-lg tabular-nums">{r.open}</strong>Đang mở</span>
+                    <span className="rounded-lg bg-rose-50 p-1.5 text-rose-800 dark:bg-rose-950 dark:text-rose-200"><strong className="block text-lg tabular-nums">{r.overdue}</strong>Quá hạn</span>
+                    <span className="rounded-lg bg-amber-50 p-1.5 text-amber-800 dark:bg-amber-950 dark:text-amber-200"><strong className="block text-lg tabular-nums">{r.needsFix}</strong>Cần sửa</span>
+                  </span>
+                  <span className="flex w-full items-center gap-2 text-xs text-muted-foreground"><span className="shrink-0">Đúng hạn</span><Progress value={r.onTimeRate} className="h-1.5 flex-1" /><strong className="text-foreground">{r.onTimeRate}%</strong></span>
+                </button>
+              ))}
+              {visibleStaffRows.length > staffMobileLimit && <Button type="button" variant="outline" className="min-h-11 w-full rounded-xl" onClick={() => setStaffMobileLimit(n => n+6)}>Xem thêm nhân viên <ArrowDown className="h-4 w-4" /></Button>}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground bg-muted/40">
                   <tr>
@@ -1019,26 +1034,48 @@ function DeptOverview() {
 
       {/* ===== Channel Performance ===== */}
       {canChannel && (
-        <Card className="mt-6">
-          <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+        <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
+          <CardHeader className="flex flex-col items-start justify-between gap-3 space-y-0 sm:flex-row">
             <div>
               <CardTitle className="text-base">Hiệu quả kênh truyền thông</CardTitle>
               <div className="text-xs text-muted-foreground mt-1">
                 Theo dõi hiệu quả vận hành các kênh Website, Social và Local Map theo từng thương hiệu.
               </div>
             </div>
-            <div className="inline-flex rounded-md border bg-background overflow-hidden text-xs">
+            <div className="dashboard-segment flex w-full gap-1 rounded-xl bg-muted/70 p-1 text-xs sm:w-auto">
               {(["all", "Website", "Social", "Local"] as const).map((k) => (
                 <button
                   key={k}
                   onClick={() => setChannelType(k)}
-                  className={`px-2.5 py-1.5 font-medium transition-colors ${channelType === k ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  aria-pressed={channelType === k}
+                  className={`min-h-9 flex-1 rounded-lg px-2 py-1.5 font-semibold transition-colors sm:flex-none ${channelType === k ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent"}`}
                 >{k === "all" ? "Tất cả" : k}</button>
               ))}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
+            <div className="space-y-2.5 p-3 md:hidden">
+              {visibleChannels.length === 0 && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Chưa có kênh phù hợp với bộ lọc.</p>}
+              {visibleChannels.slice(0,channelMobileLimit).map(r => (
+                <article key={`${r.type}-${r.id}`} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="rounded-md bg-sky-50 px-2 py-1 text-[10px] font-semibold text-sky-800 dark:bg-sky-950 dark:text-sky-200">{r.type}</span>
+                      <h3 className="mt-2 break-words text-sm font-semibold leading-5">{r.name}</h3>
+                    </div>
+                    {healthBadge(channelHealth(r.posts,r.status))}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{r.brand || "Chưa gắn thương hiệu"} · {r.owner || "Chưa phân công"}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-muted/40 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">Nội dung <strong className="ml-1 text-sm text-foreground tabular-nums">{r.posts}</strong></span>
+                    <span className="max-w-[60%] truncate text-right text-[11px] text-muted-foreground">{r.growth || (r.lead != null ? `${r.lead} đánh giá` : "Chưa có số tăng trưởng")}</span>
+                  </div>
+                  <Button asChild variant="outline" className="mt-3 min-h-11 w-full rounded-xl border-primary/25 text-primary"><Link to={r.href}>Xem kênh <ArrowRight className="h-4 w-4" /></Link></Button>
+                </article>
+              ))}
+              {visibleChannels.length > channelMobileLimit && <Button type="button" variant="outline" className="min-h-11 w-full rounded-xl" onClick={() => setChannelMobileLimit(n => n+6)}>Xem thêm kênh <ArrowDown className="h-4 w-4" /></Button>}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground bg-muted/40">
                   <tr>
