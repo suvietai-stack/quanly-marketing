@@ -341,7 +341,6 @@ function MineOverview() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const needAction = items.needsFix.length + items.toReview.length;
   const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const filterWork = (list: WorkItem[]) => {
     const q = taskSearch.trim().toLocaleLowerCase("vi");
@@ -353,10 +352,11 @@ function MineOverview() {
     <div className="flex min-w-0 flex-col gap-5 md:gap-8">
       <section className="order-1" aria-label="Công việc quan trọng">
         <SectionTitle>Cần chú ý</SectionTitle>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
           <ClickStat label="Đang làm" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
-          <ClickStat label="Cần xử lý" hint="Cần sửa và chờ duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
-          <div className="col-span-2 sm:col-span-1"><ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} /></div>
+          <ClickStat label="Chờ tôi duyệt" value={items.toReview.length} icon={ClipboardCheck} tone="violet" onClick={() => go("review")} />
+          <ClickStat label="Cần sửa" value={items.needsFix.length} icon={FileEdit} tone="warn" onClick={() => go("fix")} />
+          <ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} />
         </div>
       </section>
 
@@ -414,7 +414,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
 }
 
-function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success"; hint?: string; onClick?: () => void }) {
+function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success" | "violet"; hint?: string; onClick?: () => void }) {
   return (
     <button type="button" onClick={onClick} className={`dashboard-stat dashboard-stat-${tone} flex h-full min-h-28 w-full flex-col items-start justify-between gap-2 rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-24 sm:flex-row sm:items-center sm:p-4`}>
       <span className="dashboard-stat-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"><Icon className="h-5 w-5" /></span>
