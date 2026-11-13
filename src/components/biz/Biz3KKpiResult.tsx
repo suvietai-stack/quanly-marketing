@@ -34,7 +34,7 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true, readOnly = fals
   const binaryText = data.metric?.pending_acceptance ? 'Chờ nghiệm thu'
     : data.metric ? (data.metric.attained ? 'Đã hoàn thành' : 'Chưa hoàn thành')
     : data.daily ? 'Đã cập nhật' : 'Chưa cập nhật';
-  return <div className="space-y-2 border-b border-border py-2">
+  return <div className="k3-result-block space-y-2 border-b border-border py-2">
     {!historyOnly && <><div className="flex flex-wrap items-start justify-between gap-2">
       {!hideName && <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{data.kpi.name}</p>{!compact && <p className="text-xs text-muted-foreground">{K3_MEASURE_LABELS[data.kpi.measure]}{isBinary ? '' : ` · Chỉ tiêu ${data.kpi.target ?? data.kpi.milestones?.length ?? '—'} ${data.kpi.unit}`}</p>}</div>}
       {showStatus && <Badge variant={data.metric.attained ? 'default' : 'secondary'}>{data.metric.status === 'not_started' ? 'Chưa bắt đầu' : data.metric.attained ? 'Hoàn thành' : 'Đang thực hiện'}</Badge>}

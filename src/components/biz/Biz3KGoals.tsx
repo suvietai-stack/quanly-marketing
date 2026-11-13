@@ -155,7 +155,7 @@ export function Biz3KGoals({ settings, variant = 'personal', compact = false }: 
       {!compact && <div className="space-y-2">
         {shown.map((g) => (
           <button key={g.id} type="button" onClick={() => setSelected(g.id)}
-            className="w-full rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/50">
+            className="k3-goal-card w-full rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/50">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 md:flex">
               <div className="min-w-0 flex-1">
                 <p className="break-words font-medium leading-snug">
@@ -565,4 +565,5 @@ function KpiDialog({ goalId, actionId, onClose }: { goalId?: string; actionId?: 
     </Dialog>
   );
 }
+
 

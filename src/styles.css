@@ -438,3 +438,17 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
  .k3-quick-create > .overflow-y-auto { flex: 1; min-height: 0; }
  .k3-quick-create > :not(.overflow-y-auto) { flex-shrink: 0; }
 }
+
+@media (max-width: 767px) {
+ .k3-day-summary { background: linear-gradient(125deg,#102d54,#185e79); color: #fff; border: 0; box-shadow: 0 8px 24px #102d5418; }
+ .k3-day-summary p { color: #e0edf4; }
+ .k3-day-counts > div { border-radius: 12px; padding: 12px 6px; background: #ffffff10; text-align: center; }
+ .k3-day-counts strong { display: block; font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+ .k3-day-counts span { display: block; margin-top: 6px; font-size: 10px; line-height: 1.4; color: #d8e9f1; }
+ .k3-work-card { border-color: color-mix(in oklab,var(--primary) 8%,var(--border)); }
+ .k3-result-block { padding: 12px; border: 0; border-radius: 12px; background: color-mix(in oklab,var(--muted) 50%,var(--card)); }
+ .k3-result-block > .flex:last-of-type > button { width: 100%; min-height: 44px; border-radius: 10px; }
+ .k3-goal-card { box-shadow: 0 3px 14px #102d5405; }
+ .k3-goal-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+ .k3-mobile-navigation { background: var(--card); }
+}
