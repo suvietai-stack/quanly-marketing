@@ -8329,6 +8329,32 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_profiles: {
+        Row: {
+          avatar: string
+          details: Json
+          user_id: string
+        }
+        Insert: {
+          avatar?: string
+          details?: Json
+          user_id?: string
+        }
+        Update: {
+          avatar?: string
+          details?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       places: {
         Row: {
           created_at: string
@@ -8354,12 +8380,6 @@ export type Database = {
           is_demo?: boolean
           updated_at?: string
         }
-        Relationships: []
-      }
-      personal_profiles: {
-        Row: { user_id: string; details: Json; avatar: string }
-        Insert: { user_id?: string; details?: Json; avatar?: string }
-        Update: { user_id?: string; details?: Json; avatar?: string }
         Relationships: []
       }
       profiles: {
@@ -9323,6 +9343,7 @@ export type Database = {
       }
       user_permission_overrides: {
         Row: {
+          denied_permissions: string[]
           mode: string
           permissions: string[]
           source_kind: string
@@ -9331,6 +9352,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          denied_permissions?: string[]
           mode?: string
           permissions?: string[]
           source_kind?: string
@@ -9339,6 +9361,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          denied_permissions?: string[]
           mode?: string
           permissions?: string[]
           source_kind?: string
@@ -9934,21 +9957,35 @@ export type Database = {
         Returns: Json
       }
       account_permission_explain: { Args: { _target: string }; Returns: Json }
-      account_supplement_preview: {
-        Args: { _permissions: string[]; _target: string }
-        Returns: Json
-      }
+      account_supplement_preview:
+        | { Args: { _permissions: string[]; _target: string }; Returns: Json }
+        | {
+            Args: { _denied: string[]; _permissions: string[]; _target: string }
+            Returns: Json
+          }
       account_supplement_read: { Args: { _target: string }; Returns: Json }
-      account_supplement_save: {
-        Args: {
-          _fingerprint: string
-          _permissions: string[]
-          _reason: string
-          _roles: string[]
-          _target: string
-        }
-        Returns: Json
-      }
+      account_supplement_save:
+        | {
+            Args: {
+              _denied: string[]
+              _fingerprint: string
+              _permissions: string[]
+              _reason: string
+              _roles: string[]
+              _target: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _fingerprint: string
+              _permissions: string[]
+              _reason: string
+              _roles: string[]
+              _target: string
+            }
+            Returns: Json
+          }
       account_username_identity: {
         Args: { _username: string }
         Returns: string
@@ -11653,6 +11690,7 @@ export type Database = {
         Returns: number
       }
       signal_change_token: { Args: never; Returns: string }
+      signal_delete: { Args: { _id: string }; Returns: boolean }
       signal_enrichment_save: {
         Args: {
           _id: string
