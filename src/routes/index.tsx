@@ -836,22 +836,50 @@ function DeptOverview() {
   type ChRow = { id: string; name: string; type: "Website" | "Social" | "Local"; brand?: string; owner?: string; url?: string; posts: number; growth?: string; lead?: number; status: string; href: string; };
   const channelRows = useMemo<ChRow[]>(() => {
     const rows: ChRow[] = [];
+    // Index once: the previous implementation scanned all posts/reviews/growth
+    // separately for every channel, which became slow on staff mobile devices.
+    const webCounts = new Map<string, number>();
+    for (const post of s.webContents) {
+      if (!post.websiteId || (isDoneStatus(post.status) && !inRange(post.completedAt))) continue;
+      webCounts.set(post.websiteId, (webCounts.get(post.websiteId) ?? 0) + 1);
+    }
+    const socialCounts = new Map<string, number>();
+    for (const post of s.socialPosts) {
+      if (!post.channelId || (isDoneStatus(post.status) && !inRange(post.publishedDate))) continue;
+      socialCounts.set(post.channelId, (socialCounts.get(post.channelId) ?? 0) + 1);
+    }
+    const localCounts = new Map<string, number>();
+    for (const post of s.mapPosts) {
+      if (!post.placeId || (isDoneStatus(post.status) && !inRange(post.publishedDate))) continue;
+      localCounts.set(post.placeId, (localCounts.get(post.placeId) ?? 0) + 1);
+    }
+    const reviewCounts = new Map<string, number>();
+    for (const review of s.reviews) {
+      if (review.placeId) reviewCounts.set(review.placeId, (reviewCounts.get(review.placeId) ?? 0) + 1);
+    }
+    // Latest still means last item in store order, consistent with existing UI.
+    const growthByWebsite = new Map<string, (typeof s.growth)[number]>();
+    const growthBySocial = new Map<string, (typeof s.growth)[number]>();
+    for (const growth of s.growth) {
+      if (growth.websiteId) growthByWebsite.set(growth.websiteId, growth);
+      if (growth.channelId) growthBySocial.set(growth.channelId, growth);
+    }
     for (const w of s.websites) {
       if (brandId && w.brandId !== brandId) continue;
-      const posts = s.webContents.filter((c) => c.websiteId === w.id && (isDoneStatus(c.status) ? inRange(c.completedAt) : true)).length;
-      const lastGrowth = s.growth.filter((g) => g.websiteId === w.id).slice(-1)[0];
+      const posts = webCounts.get(w.id) ?? 0;
+      const lastGrowth = growthByWebsite.get(w.id);
       rows.push({ id: w.id, name: w.name, type: "Website", brand: brandName(w.brandId), owner: w.seoOwner || w.contentOwner, url: w.url, posts, growth: lastGrowth?.organicTraffic != null ? `Organic: ${lastGrowth.organicTraffic.toLocaleString()}` : (lastGrowth?.totalTraffic != null ? `Traffic: ${lastGrowth.totalTraffic.toLocaleString()}` : undefined), status: w.status, href: `/websites/${w.id}` });
     }
     for (const c of s.socials) {
       if (brandId && c.brandId !== brandId) continue;
-      const posts = s.socialPosts.filter((p) => p.channelId === c.id && (isDoneStatus(p.status) ? inRange(p.publishedDate) : true)).length;
-      const lastGrowth = s.growth.filter((g) => g.channelId === c.id).slice(-1)[0];
+      const posts = socialCounts.get(c.id) ?? 0;
+      const lastGrowth = growthBySocial.get(c.id);
       rows.push({ id: c.id, name: c.name, type: "Social", brand: brandName(c.brandId), owner: c.owner, url: c.url, posts, growth: lastGrowth?.followerEnd != null ? `Follower: ${lastGrowth.followerEnd.toLocaleString()}` : undefined, status: c.status, href: `/social/${c.id}` });
     }
     for (const pl of s.places) {
       if (brandId && pl.brandId !== brandId) continue;
-      const posts = s.mapPosts.filter((p) => p.placeId === pl.id && (isDoneStatus(p.status) ? inRange(p.publishedDate) : true)).length;
-      const reviews = s.reviews.filter((r) => r.placeId === pl.id).length;
+      const posts = localCounts.get(pl.id) ?? 0;
+      const reviews = reviewCounts.get(pl.id) ?? 0;
       rows.push({ id: pl.id, name: pl.name, type: "Local", brand: brandName(pl.brandId), owner: pl.owner, url: pl.mapLink, posts, lead: reviews, status: pl.verifyStatus, href: `/local/${pl.id}` });
     }
     return rows;
