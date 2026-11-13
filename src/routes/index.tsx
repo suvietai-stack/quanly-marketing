@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import {
   ListChecks, AlertTriangle, Clock, CheckCircle2, Globe, Share2,
   MapPin, Video, Inbox, Hourglass, ArrowRight, FileEdit, ClipboardCheck,
-  Briefcase, RefreshCw, X, ExternalLink,
+  Briefcase, RefreshCw, X, ExternalLink, LayoutGrid, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
@@ -118,25 +118,38 @@ function Overview() {
   }[tab];
 
   return (
-    <>
-      <PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} />
+    <div className="dashboard-page min-w-0 space-y-4 md:space-y-6">
+      {/* The mobile header is intentionally brief: action cards follow immediately. */}
+      <header className="dashboard-hero md:hidden rounded-2xl p-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <span className="rounded-xl bg-white/15 p-2 text-white"><LayoutGrid className="h-5 w-5" /></span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-cyan-100">Bảng điều khiển</p>
+            <h2 className="mt-1 text-[20px] font-bold leading-snug text-white">
+              {tab === "mine" ? "Công việc của tôi" : tab === "ops" ? "Điều hành công việc" : tab === "staff" ? "Hiệu suất nhân sự" : "Tổng hợp tiến độ"}
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-blue-100">{desc}</p>
+          </div>
+        </div>
+      </header>
+      <div className="hidden md:block"><PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} /></div>
       {canSeeAllDept ? (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="mine">Của tôi</TabsTrigger>
-            {isKpiV2Enabled() && <TabsTrigger value="summary">Tổng hợp</TabsTrigger>}
-            {isKpiV2Enabled() && isKpiManager && <TabsTrigger value="staff">Nhân sự</TabsTrigger>}
-            <TabsTrigger value="ops">Vận hành</TabsTrigger>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "mine" | "summary" | "staff" | "ops")} className="min-w-0">
+          <TabsList className="dashboard-main-tabs grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-transparent p-0 md:flex md:w-fit md:flex-wrap">
+            <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="mine"><Inbox className="h-4 w-4" /> Của tôi</TabsTrigger>
+            {isKpiV2Enabled() && <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="summary"><Globe className="h-4 w-4" /> Tổng hợp</TabsTrigger>}
+            {isKpiV2Enabled() && isKpiManager && <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="staff"><Briefcase className="h-4 w-4" /> Nhân sự</TabsTrigger>}
+            <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="ops"><ClipboardCheck className="h-4 w-4" /> Vận hành</TabsTrigger>
           </TabsList>
-          <TabsContent value="mine" className="mt-6"><MineOverview /></TabsContent>
-          <TabsContent value="summary" className="mt-6"><ManagerSummary /></TabsContent>
-          {isKpiManager && <TabsContent value="staff" className="mt-6"><StaffTable /></TabsContent>}
-          <TabsContent value="ops" className="mt-6"><DeptOverview /></TabsContent>
+          <TabsContent value="mine" className="mt-4"><MineOverview /></TabsContent>
+          <TabsContent value="summary" className="mt-4"><ManagerSummary /></TabsContent>
+          {isKpiManager && <TabsContent value="staff" className="mt-4"><StaffTable /></TabsContent>}
+          <TabsContent value="ops" className="mt-4"><DeptOverview /></TabsContent>
         </Tabs>
       ) : (
         <MineOverview />
       )}
-    </>
+    </div>
   );
 }
 
@@ -316,51 +329,60 @@ type WorkTab = "mine" | "review" | "fix" | "waiting" | "overdue" | "done";
 function MineOverview() {
   const items = useMyWork();
   const { user } = useCurrentUser();
-  const [tab, setTab] = useState<WorkTab>("overdue");
+  const [tab, setTab] = useState<WorkTab>("mine");
+  const [kpiExpanded, setKpiExpanded] = useState(false);
   const needAction = items.needsFix.length + items.toReview.length;
   const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
   return (
-    <div className="space-y-8">
-      <section>
-        <SectionTitle>Công việc</SectionTitle>
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-          <ClickStat label="Đang thực hiện" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
-          <ClickStat label="Cần xử lý" hint="Cần sửa + chờ tôi duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
-          <ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} />
+    <div className="flex min-w-0 flex-col gap-5 md:gap-8">
+      <section className="order-1" aria-label="Công việc quan trọng">
+        <SectionTitle>Cần chú ý</SectionTitle>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
+          <ClickStat label="Đang làm" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
+          <ClickStat label="Cần xử lý" hint="Cần sửa và chờ duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
+          <div className="col-span-2 sm:col-span-1"><ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} /></div>
         </div>
       </section>
 
-      {isKpiV2Enabled() && user && (
-        <section>
-          <SectionTitle>KPI của tôi</SectionTitle>
-          <PersonalKpi userId={user.id} />
-        </section>
-      )}
-
-      <section id="my-work">
-        <SectionTitle>Việc cần làm</SectionTitle>
-        <Card>
-          <CardContent className="pt-6">
+      <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <SectionTitle>Danh sách cần làm</SectionTitle>
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{items.mine.length} đang thực hiện</span>
+        </div>
+        <Card className="dashboard-work-panel overflow-hidden rounded-2xl">
+          <CardContent className="p-3 sm:p-5">
             <Tabs value={tab} onValueChange={(v) => setTab(v as WorkTab)}>
-              <TabsList className="flex-wrap h-auto">
-                <TabsTrigger value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
-                <TabsTrigger value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
-                <TabsTrigger value="mine">Đang thực hiện ({items.mine.length})</TabsTrigger>
-                <TabsTrigger value="review">Chờ tôi duyệt ({items.toReview.length})</TabsTrigger>
-                <TabsTrigger value="waiting">Chờ người khác ({items.waiting.length})</TabsTrigger>
-                <TabsTrigger value="done">Hoàn thành 7 ngày ({items.doneRecent.length})</TabsTrigger>
+              <TabsList className="dashboard-work-tabs grid h-auto w-full grid-cols-3 gap-1.5 bg-transparent p-0">
+                <TabsTrigger data-tone="info" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="mine">Đang làm ({items.mine.length})</TabsTrigger>
+                <TabsTrigger data-tone="danger" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
+                <TabsTrigger data-tone="warn" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
+                <TabsTrigger data-tone="violet" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="review">Chờ duyệt ({items.toReview.length})</TabsTrigger>
+                <TabsTrigger data-tone="muted" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="waiting">Đang chờ ({items.waiting.length})</TabsTrigger>
+                <TabsTrigger data-tone="success" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="done">Đã xong ({items.doneRecent.length})</TabsTrigger>
               </TabsList>
               <TabsContent value="mine"><WorkTable items={sortByDue(items.mine)} empty="Hiện chưa có việc nào bạn đang thực hiện." /></TabsContent>
               <TabsContent value="review"><WorkTable items={items.toReview} empty="Không có việc nào đang chờ bạn duyệt." /></TabsContent>
               <TabsContent value="fix"><WorkTable items={items.needsFix} empty="Không có việc nào cần sửa." /></TabsContent>
               <TabsContent value="waiting"><WorkTable items={items.waiting} empty="Không có việc nào đang chờ người khác." /></TabsContent>
-              <TabsContent value="overdue"><WorkTable items={sortByDue(items.overdue)} empty="Tuyệt vời! Không có việc nào quá hạn." /></TabsContent>
+              <TabsContent value="overdue"><WorkTable items={sortByDue(items.overdue)} empty="Không có việc nào quá hạn." /></TabsContent>
               <TabsContent value="done"><WorkTable items={items.doneRecent} empty="Chưa có việc hoàn thành trong 7 ngày." /></TabsContent>
             </Tabs>
           </CardContent>
         </Card>
       </section>
+
+      {isKpiV2Enabled() && user && (
+        <section className="order-3 md:order-2">
+          <div className="dashboard-kpi-panel rounded-2xl border bg-card p-3 md:p-5">
+            <button type="button" className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-1 text-left" aria-expanded={kpiExpanded} onClick={() => setKpiExpanded(v => !v)}>
+              <span className="flex min-w-0 items-center gap-2.5"><span className="rounded-lg bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"><CheckCircle2 className="h-5 w-5" /></span><span className="min-w-0"><strong className="block text-sm">KPI của tôi</strong><span className="block text-xs text-muted-foreground">Mở xem tiến độ và chỉ tiêu cá nhân</span></span></span>
+              {kpiExpanded ? <ArrowUp className="h-4 w-4 shrink-0 text-primary" /> : <ArrowDown className="h-4 w-4 shrink-0 text-primary" />}
+            </button>
+            {kpiExpanded && <div className="mt-4 border-t pt-4"><PersonalKpi userId={user.id} /></div>}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -374,15 +396,15 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success"; hint?: string; onClick?: () => void }) {
-  const toneCls = { info: "bg-primary/10 text-primary", warn: "bg-warning/15 text-warning-foreground", danger: "bg-destructive/10 text-destructive", success: "bg-success/10 text-success" }[tone];
   return (
-    <button onClick={onClick} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/40 hover:shadow-sm">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${toneCls}`}><Icon className="h-5 w-5" /></div>
-      <div className="min-w-0">
-        <div className="text-2xl font-semibold tabular-nums leading-tight">{value}</div>
-        <div className="text-sm text-muted-foreground">{label}</div>
-        {hint && <div className="text-[11px] text-muted-foreground/80">{hint}</div>}
-      </div>
+    <button type="button" onClick={onClick} className={`dashboard-stat dashboard-stat-${tone} flex h-full min-h-28 w-full flex-col items-start justify-between gap-2 rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-24 sm:flex-row sm:items-center sm:p-4`}>
+      <span className="dashboard-stat-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"><Icon className="h-5 w-5" /></span>
+      <span className="min-w-0 flex-1">
+        <strong className="block text-2xl font-bold leading-none tabular-nums">{value}</strong>
+        <span className="mt-1 block text-xs font-semibold leading-tight sm:text-sm">{label}</span>
+        {hint && <span className="mt-1 hidden text-[10px] leading-tight opacity-75 sm:block">{hint}</span>}
+      </span>
+      <ArrowRight className="hidden h-4 w-4 shrink-0 opacity-65 sm:block" aria-hidden="true" />
     </button>
   );
 }
@@ -449,47 +471,69 @@ function ManagerSummary() {
 }
 
 function WorkTable({ items, empty }: { items: WorkItem[]; empty: string }) {
+  const [visibleCount, setVisibleCount] = useState(8);
   if (items.length === 0) {
     return (
-      <div className="py-12 text-center text-sm text-muted-foreground">{empty}</div>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-emerald-50/70 px-4 py-7 text-center dark:bg-emerald-950/30">
+        <CheckCircle2 className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+        <p className="text-sm font-medium text-emerald-950 dark:text-emerald-100">{empty}</p>
+      </div>
     );
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-xs text-muted-foreground bg-muted/40">
-          <tr>
-            <th className="text-left font-medium px-3 py-2.5">Loại</th>
-            <th className="text-left font-medium px-3 py-2.5">Nội dung</th>
-            <th className="text-left font-medium px-3 py-2.5">Module</th>
-            <th className="text-left font-medium px-3 py-2.5">Thương hiệu</th>
-            <th className="text-left font-medium px-3 py-2.5">Vai trò</th>
-            <th className="text-left font-medium px-3 py-2.5">Hạn</th>
-            <th className="text-left font-medium px-3 py-2.5">Trạng thái</th>
-            <th className="text-right font-medium px-3 py-2.5">Mở việc</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {items.map((it) => (
-            <tr key={it.id} className="hover:bg-muted/30">
-              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{it.kind}</td>
+    <div className="min-w-0">
+      {/* Mobile: task cards with immediate action; do not make people scroll a wide table. */}
+      <div className="space-y-2.5 md:hidden" aria-label={`Danh sách ${items.length} công việc`}>
+        {items.slice(0,visibleCount).map(it => {
+          const overdue = isOverdue(it.due,it.status);
+          const needsFix = it.status.includes("Cần sửa");
+          return <article key={it.id} className={`dashboard-work-card rounded-xl border p-3 ${overdue ? "border-rose-200 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/20" : needsFix ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-border bg-card"}`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{it.module}</span>
+              <StatusBadge value={it.status} />
+            </div>
+            <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-foreground">{it.title}</h3>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-5 text-muted-foreground">
+              {it.brand && <span className="max-w-full truncate">🏷 {it.brand}</span>}
+              {it.mineAs && <span className="max-w-full truncate">Vai trò: {it.mineAs}</span>}
+              {it.due && <span className={overdue ? "font-semibold text-rose-700 dark:text-rose-300" : ""}><Clock className="mr-1 inline h-3 w-3" />{fmtDate(it.due)}</span>}
+            </div>
+            <Button asChild variant="outline" size="sm" className="mt-3 min-h-11 w-full rounded-xl border-primary/25 bg-white text-primary hover:bg-blue-50 dark:bg-card">
+              <Link to={it.href}>Mở công việc <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            </Button>
+          </article>;
+        })}
+        {visibleCount < items.length && <Button type="button" variant="outline" className="min-h-11 w-full rounded-xl" onClick={() => setVisibleCount(n => n+8)}>Xem thêm {Math.min(8,items.length-visibleCount)} việc <ArrowDown className="ml-1 h-4 w-4" /></Button>}
+      </div>
+      {/* Desktop retains the complete operational table and all columns. */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2.5 text-left font-medium">Loại</th>
+              <th className="px-3 py-2.5 text-left font-medium">Nội dung</th>
+              <th className="px-3 py-2.5 text-left font-medium">Module</th>
+              <th className="px-3 py-2.5 text-left font-medium">Thương hiệu</th>
+              <th className="px-3 py-2.5 text-left font-medium">Vai trò</th>
+              <th className="px-3 py-2.5 text-left font-medium">Hạn</th>
+              <th className="px-3 py-2.5 text-left font-medium">Trạng thái</th>
+              <th className="px-3 py-2.5 text-right font-medium">Mở việc</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {items.map(it => <tr key={it.id} className="hover:bg-muted/30">
+              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.kind}</td>
               <td className="px-3 py-2 font-medium">{it.title}</td>
               <td className="px-3 py-2 text-muted-foreground">{it.module}</td>
               <td className="px-3 py-2 text-muted-foreground">{it.brand || "—"}</td>
-              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{it.mineAs || "—"}</td>
-              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{fmtDate(it.due)}</td>
+              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{it.mineAs || "—"}</td>
+              <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{fmtDate(it.due)}</td>
               <td className="px-3 py-2"><StatusBadge value={it.status} /></td>
-              <td className="px-3 py-2 text-right">
-                <Button asChild size="sm" variant="outline">
-                  <Link to={it.href}>
-                    Mở <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              <td className="px-3 py-2 text-right"><Button asChild size="sm" variant="outline"><Link to={it.href}>Mở <ArrowRight className="h-3.5 w-3.5" /></Link></Button></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
