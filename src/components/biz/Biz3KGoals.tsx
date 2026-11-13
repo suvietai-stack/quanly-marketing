@@ -245,6 +245,20 @@ function GoalDialog({ goal, onClose }: { goal?: K3GoalDetail['goal']; onClose: (
 }
 
 
+/** Keep the goal detail concise. Each KPI's history is an independent RPC
+ * and should only load after the corresponding accordion is expanded. */
+function GoalKpiAccordion({ kpis, date, title }: {
+  kpis: { id: string; name: string }[]; date: string; title: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (!kpis.length) return null;
+  return <details className="rounded-xl border bg-muted/30 px-3" onToggle={e => setExpanded(e.currentTarget.open)}>
+    <summary className="cursor-pointer min-h-11 py-3 text-sm font-medium text-primary">{title} · {kpis.length} chỉ số</summary>
+    {expanded && <div className="space-y-2 pb-3">{kpis.map(k => <Biz3KKpiResult key={k.id} kpiId={k.id} date={date} showStatus={false} />)}</div>}
+  </details>;
+}
+
+
 export function GoalDetailSheet({ id, settings, onClose }: { id: string; settings: K3Settings; onClose: () => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const { data, isLoading, error, refetch } = useQuery({ ...k3GoalDetailQuery(uid, id), enabled: !!uid && !!id });
@@ -285,12 +299,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
               </p>
               {g.expected_result && <p className="text-sm"><span className="font-medium">Kết quả cần đạt:</span> {g.expected_result}</p>}
               {g.description && <p className="text-sm text-muted-foreground">{g.description}</p>}
-              {data.kpis.length > 0 && (
-                <div className="space-y-1.5 border-t border-border pt-2">
-                  <p className="text-xs font-medium text-muted-foreground">KPI kết quả KG</p>
-                  {data.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
-                </div>
-              )}
+              {data.kpis.length > 0 && <GoalKpiAccordion kpis={data.kpis} date={data.today} title="KPI kết quả KG" />}
               <div className="flex flex-wrap gap-1.5 border-t border-border pt-2">
                 {canManage && !closed && (
                   <>
@@ -358,7 +367,7 @@ export function GoalDetailSheet({ id, settings, onClose }: { id: string; setting
                       </div>
                       <GoalStatusBadge status={a.action.status} metric={a.action.kpi_summary} overdueDays={a.overdue_days} />
                     </div>
-                    {a.kpis.map((k) => <Biz3KKpiResult key={k.id} kpiId={k.id} date={data.today} showStatus={false} />)}
+                    <GoalKpiAccordion kpis={a.kpis} date={data.today} title="KPI hành động KF" />
                     {a.member_actuals.length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Đóng góp: {a.member_actuals.map((m) => `${m.full_name} ${m.actual}`).join(' · ')}
