@@ -7,7 +7,6 @@ import { useCurrentUser } from "@/lib/auth";
 import { RequirePermission } from "@/components/PermissionGate";
 import { PageHeader } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { FilterBar } from "@/components/Common";
 import { ContentForm } from "@/components/ContentForm";
 import { ContentDetail, } from "@/components/ContentDetail";
 import { ContentCalendar } from "@/routes/websites.$id";
@@ -21,7 +20,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Plus, LayoutGrid, Table as TableIcon, Calendar as CalIcon, ExternalLink,
+  Search, SlidersHorizontal, FileText, ChevronRight, Plus, LayoutGrid, Table as TableIcon, Calendar as CalIcon, ExternalLink,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -42,6 +41,7 @@ function AllContents() {
   const canCreate = can("web.content_create");
   const { webContents, websites, brands, plans, topics } = s;
   const [view, setView] = useState<"table" | "kanban" | "calendar">("table");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [openContent, setOpenContent] = useState<WebContent | null>(null);
 
@@ -94,15 +94,18 @@ function AllContents() {
     (fWriter === "all" || c.writer === fWriter)
   ), [scoped, search, fWebsite, fBrand, fStatus, fType, fIndex, fPlan, fTopic, fWriter]);
 
+  const filterCount = [fWebsite,fBrand,fStatus,fType,fIndex,fPlan,fTopic,fWriter].filter(v => v !== 'all').length;
+  const resetFilters = () => {setFWebsite('all');setFBrand('all');setFStatus('all');setFType('all');setFIndex('all');setFPlan('all');setFTopic('all');setFWriter('all');};
+  const calendarItems = filtered.filter(c => c.publishedAt || c.publishDate).sort((a,b) => (a.publishedAt || a.publishDate || '').localeCompare(b.publishedAt || b.publishDate || ''));
   return (
-    <>
+    <div className="content-web-mobile min-w-0">
       <PageHeader
         title="Tất cả Content Web"
         description="Tổng hợp toàn bộ content của mọi website — leader xem nhanh tình hình sản xuất và xét duyệt."
         actions={canCreate ? (
           <Dialog open={adding} onOpenChange={setAdding}>
-            <DialogTrigger asChild><Button><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogTrigger asChild><Button className="min-h-11 rounded-xl"><Plus className="h-4 w-4" />Thêm bài</Button></DialogTrigger>
+            <DialogContent className="content-mobile-dialog max-w-3xl">
               <DialogHeader><DialogTitle>Tạo bài content</DialogTitle></DialogHeader>
               <ContentForm lockWebsite={false} onSubmit={(c) => s.add("webContents", c)} onClose={() => setAdding(false)} />
             </DialogContent>
@@ -117,49 +120,66 @@ function AllContents() {
           <button className="ml-2 underline" onClick={() => { setDenied(false); navigate({ search: {} }); }}>Đóng</button>
         </div>
       )}
-      <FilterBar>
-        <Input placeholder="Tìm tiêu đề, từ khóa..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+      <div className="rounded-2xl border bg-card p-3 mb-4 space-y-3">
+        <div className="flex gap-2"><div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" aria-hidden="true" /><Input aria-label="Tìm bài viết theo tiêu đề hoặc từ khóa" placeholder="Tìm tiêu đề, từ khóa…" value={search} onChange={e => setSearch(e.target.value)} className="h-11 pl-10 rounded-xl text-base" /></div><Button variant={filterCount ? 'secondary' : 'outline'} className="md:hidden min-h-11 rounded-xl" aria-expanded={filtersOpen} aria-controls="content-web-filters" onClick={() => setFiltersOpen(v => !v)}><SlidersHorizontal className="h-4 w-4" />Lọc{filterCount ? ` (${filterCount})` : ''}</Button></div>
+        <div id="content-web-filters" className={`${filtersOpen ? 'grid' : 'hidden'} grid-cols-1 md:flex md:flex-wrap gap-2`}>
+
         <Select value={fWebsite} onValueChange={setFWebsite}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Website" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[180px] min-h-11 rounded-xl"><SelectValue placeholder="Website" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả website</SelectItem>{websites.map((w) => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fBrand} onValueChange={setFBrand}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[160px] min-h-11 rounded-xl"><SelectValue placeholder="Thương hiệu" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả TH</SelectItem>{brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fStatus} onValueChange={setFStatus}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[170px] min-h-11 rounded-xl"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả trạng thái</SelectItem>{CONTENT_STATUSES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fType} onValueChange={setFType}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Loại" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[150px] min-h-11 rounded-xl"><SelectValue placeholder="Loại" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả loại</SelectItem>{CONTENT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fIndex} onValueChange={setFIndex}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Index" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[140px] min-h-11 rounded-xl"><SelectValue placeholder="Index" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả index</SelectItem>{["Chưa kiểm tra", "Chưa index", "Đã index", "Cần xử lý"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fWriter} onValueChange={setFWriter}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Người viết" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[160px] min-h-11 rounded-xl"><SelectValue placeholder="Người viết" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả người viết</SelectItem>{writers.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fPlan} onValueChange={setFPlan}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Plan" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[150px] min-h-11 rounded-xl"><SelectValue placeholder="Plan" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả plan</SelectItem>{plans.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={fTopic} onValueChange={setFTopic}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Topic" /></SelectTrigger>
+          <SelectTrigger className="w-full md:w-[150px] min-h-11 rounded-xl"><SelectValue placeholder="Topic" /></SelectTrigger>
           <SelectContent><SelectItem value="all">Tất cả topic</SelectItem>{topics.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
         </Select>
-        <div className="ml-auto inline-flex rounded-md border bg-card p-0.5">
-          <Button size="sm" variant={view === "table" ? "secondary" : "ghost"} onClick={() => setView("table")}><TableIcon className="h-4 w-4" />Table</Button>
-          <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} onClick={() => setView("kanban")}><LayoutGrid className="h-4 w-4" />Kanban</Button>
-          <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} onClick={() => setView("calendar")}><CalIcon className="h-4 w-4" />Lịch đăng</Button>
+        {filterCount > 0 && <Button variant="ghost" className="min-h-11" onClick={resetFilters}>Xóa bộ lọc</Button>}</div>
+        <div className="content-view-switch grid grid-cols-3 gap-1 rounded-xl bg-muted/60 p-1">
+          <Button size="sm" variant={view === "table" ? "secondary" : "ghost"} aria-pressed={view === "table"} onClick={() => setView("table")}><TableIcon className="h-4 w-4" />Danh sách</Button>
+          <Button size="sm" variant={view === "kanban" ? "secondary" : "ghost"} aria-pressed={view === "kanban"} onClick={() => setView("kanban")}><LayoutGrid className="h-4 w-4" />Tiến độ</Button>
+          <Button size="sm" variant={view === "calendar" ? "secondary" : "ghost"} aria-pressed={view === "calendar"} onClick={() => setView("calendar")}><CalIcon className="h-4 w-4" />Lịch đăng</Button>
         </div>
-      </FilterBar>
+      </div>
+      <div className="flex flex-wrap justify-between gap-2 mb-3"><p className="text-sm font-semibold">{filtered.length} bài viết <span className="font-normal text-muted-foreground">/ {scoped.length} trong phạm vi của bạn</span></p>{(search || filterCount > 0) && <Button variant="ghost" size="sm" onClick={() => {setSearch('');resetFilters();}}>Đặt lại</Button>}</div>
+      {filtered.length === 0 && <div className="rounded-2xl border border-dashed bg-card p-8 text-center"><FileText className="h-8 w-8 mx-auto mb-3 text-muted-foreground" /><h2 className="font-semibold">Không có bài viết phù hợp</h2><p className="mt-2 text-sm text-muted-foreground">Thử từ khóa khác hoặc đặt lại bộ lọc.</p></div>}
+      {view === 'table' && <div className="grid gap-3 md:hidden">{filtered.map(c => <article key={c.id} className="overflow-hidden rounded-2xl border bg-card shadow-soft">
+        <button className="w-full text-left p-4" onClick={() => setOpenContent(c)}>
+          <p className="text-xs text-muted-foreground truncate">{websites.find(w => w.id === c.websiteId)?.name || 'Website'} · {brands.find(b => b.id === c.brandId)?.name || 'Chưa chọn thương hiệu'}</p>
+          <div className="flex flex-wrap gap-2 my-3"><StatusBadge value={c.status} /><StatusBadge value={c.indexStatus} /></div>
+          <h2 className="text-base font-semibold leading-6 break-words">{c.title}</h2>
+          {c.mainKeyword && <p className="mt-2 text-xs text-muted-foreground break-words">Từ khóa: {c.mainKeyword}</p>}
+          <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3 text-xs"><div className="min-w-0"><span className="text-muted-foreground block mb-1">Người viết</span><span className="font-medium break-words">{c.writer || 'Chưa phân công'}</span></div><div><span className="text-muted-foreground block mb-1">Hạn hoàn thành</span><span className="font-medium">{c.deadline ? fmtDate(c.deadline) : 'Chưa đặt hạn'}</span></div></div>
+          <div className="flex justify-between items-center gap-2 mt-3 text-xs"><span className="min-w-0 text-muted-foreground break-words">{c.type} · Đăng: {fmtDate(c.publishedAt || c.publishDate)}</span><span className="shrink-0 inline-flex items-center text-primary">Chi tiết<ChevronRight className="h-4 w-4" /></span></div>
+        </button>
+        {(c.publishedLink || c.draftLink) && <div className="border-t px-4"><a href={c.publishedLink || c.draftLink} target="_blank" rel="noreferrer" className="min-h-11 inline-flex items-center gap-2 text-xs text-primary font-medium"><ExternalLink className="h-4 w-4" />{c.publishedLink ? 'Mở bài đã đăng' : 'Mở bản thảo'}</a></div>}
+      </article>)}</div>}
+
 
       {view === "table" && (
-        <Card><CardContent className="p-0">
+        <Card className="hidden md:block"><CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground bg-muted/40">
@@ -209,12 +229,12 @@ function AllContents() {
       )}
 
       {view === "kanban" && (
-        <div className="overflow-x-auto pb-2">
+        <div className="content-web-board overflow-x-auto pb-2">
           <div className="flex gap-3 min-w-max">
             {CONTENT_STATUSES.map((status) => {
               const items = filtered.filter((c) => c.status === status);
               return (
-                <div key={status} className="rounded-xl bg-muted/40 p-3 w-[260px] shrink-0">
+                <div key={status} className="content-web-column rounded-xl bg-muted/40 p-3 w-[260px] shrink-0">
                   <div className="flex items-center justify-between mb-3 px-1">
                     <StatusBadge value={status} /><span className="text-xs text-muted-foreground">{items.length}</span>
                   </div>
@@ -238,9 +258,10 @@ function AllContents() {
         </div>
       )}
 
-      {view === "calendar" && <ContentCalendar contents={filtered} onOpen={setOpenContent} />}
+      {view === "calendar" && <><div className="hidden md:block"><ContentCalendar contents={filtered} onOpen={setOpenContent} /></div><section aria-label="Lịch đăng bài" className="space-y-3 md:hidden">{!calendarItems.length && <p className="rounded-2xl border p-6 text-center text-sm text-muted-foreground">Chưa có bài viết được đặt ngày đăng trong danh sách này.</p>}{calendarItems.map(c => <button key={c.id} onClick={() => setOpenContent(c)} className="block w-full rounded-2xl border bg-card p-4 text-left"><p className="mb-2 text-xs font-semibold text-primary">{c.publishedAt ? 'Đã đăng' : 'Dự kiến đăng'} · {fmtDate(c.publishedAt || c.publishDate)}</p><h2 className="break-words font-semibold leading-6">{c.title}</h2><div className="mt-3 flex flex-wrap gap-2 items-center"><StatusBadge value={c.status} /><span className="text-xs text-muted-foreground">{c.writer || 'Chưa phân công'}</span></div></button>)}</section></>}
 
       <ContentDetail content={openContent} open={!!openContent} onClose={() => { setOpenContent(null); if (openId) navigate({ search: {} }); }} />
-    </>
+    </div>
   );
 }
+

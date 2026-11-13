@@ -528,7 +528,7 @@ export function ContentDetail({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && (setEditing(false), onClose())}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="content-mobile-dialog max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 flex-wrap">
             <span>{c.title}</span>
@@ -778,3 +778,4 @@ function FieldRow({ k, v }: { k: string; v?: React.ReactNode }) {
     </div>
   );
 }
+

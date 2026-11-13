@@ -88,7 +88,7 @@ export function ContentForm({
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2 max-h-[65vh] overflow-y-auto pr-1">
+      <div className="content-form-fields grid gap-3 sm:grid-cols-2 max-h-[65vh] overflow-y-auto pr-1">
         {!lockWebsite && (
           <div className="sm:col-span-2">
             <Label>Website *</Label>
@@ -213,7 +213,7 @@ export function ContentForm({
           </>
         )}
       </div>
-      <DialogFooter className="mt-4">
+      <DialogFooter className="content-form-footer mt-4">
         <Button variant="ghost" onClick={onClose}>Huỷ</Button>
         <Button onClick={() => {
           if (!c.title.trim() || !c.websiteId) return;
@@ -320,4 +320,5 @@ function TopicPicker({
     </div>
   );
 }
+
 
