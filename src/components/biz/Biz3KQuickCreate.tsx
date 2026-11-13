@@ -74,7 +74,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       setError(k3Error(e));
     } finally { submitting.current = false; }
   };
-  return <Dialog open onOpenChange={o => !o && close()}><DialogContent className="k3-mobile-dialog flex max-h-[90dvh] max-w-2xl flex-col overflow-hidden">
+  return <Dialog open onOpenChange={o => !o && close()}><DialogContent className="k3-mobile-dialog k3-quick-create flex max-h-[90dvh] max-w-2xl flex-col overflow-hidden">
     <DialogHeader><DialogTitle>Tạo công việc</DialogTitle></DialogHeader>
     <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
     <div className="min-h-0 space-y-4 overflow-y-auto px-1 pb-2">
@@ -107,3 +107,4 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
     {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={()=>setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
   </DialogContent></Dialog>;
 }
+

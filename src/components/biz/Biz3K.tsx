@@ -12,7 +12,6 @@ import { Biz3KKpiDay } from './Biz3KKpiDay';
 import { Biz3KArchive } from './Biz3KArchive';
 import { Button } from '@/components/ui/button';
 import { K3DeleteProvider } from './Biz3KDelete';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 type Section = 'mine' | 'collab' | 'monitor' | 'settings' | 'archive';
@@ -30,6 +29,10 @@ function Biz3KScreen() {
   const [section, setSection] = useState<Section>('mine');
   const [mode, setMode] = useState<Mode>('day');
   const [date, setDate] = useState<string | null>(null);
+  const chooseSection = (next: Section) => {
+    if (next === 'monitor' && mode === 'all') setMode('day');
+    setSection(next);
+  };
 
   if (isLoading) return <p className="py-8 text-center text-sm text-muted-foreground">Đang tải cấu hình 3K…</p>;
   if (error || !settings) {
@@ -54,17 +57,19 @@ function Biz3KScreen() {
 
   return (
     <div className="k3-mobile space-y-4 min-w-0">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 md:hidden">
-        <Select value={active} onValueChange={value => setSection(value as Section)}><SelectTrigger aria-label="Khu vực 3K" className="h-11 min-w-0"><SelectValue /></SelectTrigger><SelectContent>{visible.map(t => <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>)}<SelectItem value="archive">Thùng lưu trữ</SelectItem>{settings.can_settings && <SelectItem value="settings">Cài đặt 3K</SelectItem>}</SelectContent></Select>
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Thao tác phụ 3K"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setSection('archive')}><Archive />Thùng lưu trữ</DropdownMenuItem>{settings.can_settings && <DropdownMenuItem onSelect={() => setSection('settings')}><Settings2 />Cài đặt 3K</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>
-      </div>
+      <section className="k3-mobile-navigation md:hidden rounded-2xl border bg-card p-3 space-y-3">
+        <div className="flex items-center justify-between gap-2"><div><h2 className="font-semibold">Không gian 3K</h2><p className="text-xs text-muted-foreground mt-1">Lập việc · Cập nhật · Tổng kết</p></div>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-xl" aria-label="Thao tác phụ 3K"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => chooseSection('archive')}><Archive />Thùng lưu trữ</DropdownMenuItem>{settings.can_settings && <DropdownMenuItem onSelect={() => chooseSection('settings')}><Settings2 />Cài đặt 3K</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu></div>
+        <div className="k3-section-tabs flex gap-2 overflow-x-auto pb-1" aria-label="Khu vực 3K">{visible.map(t => <Button key={t.key} variant={active === t.key ? 'default' : 'outline'} className="min-h-11 shrink-0 rounded-xl text-xs" aria-pressed={active === t.key} onClick={() => chooseSection(t.key)}><t.icon className="h-4 w-4" />{t.label}</Button>)}</div>
+        {(active === 'archive' || active === 'settings') && <p className="text-sm font-medium">{active === 'archive' ? 'Thùng lưu trữ' : 'Cài đặt 3K'}</p>}
+      </section>
       <div className="hidden md:flex flex-wrap items-center gap-2">
         <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:flex-1">
           {visible.map((t) => (
             <Button variant="ghost"
               key={t.key}
               type="button"
-              onClick={() => setSection(t.key)}
+              onClick={() => chooseSection(t.key)}
               className={cn(
                 'inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors',
                 active === t.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:text-foreground',
@@ -75,9 +80,9 @@ function Biz3KScreen() {
             </Button>
           ))}
         </div>
-        <Button variant="outline" size="sm" onClick={() => setSection('archive')}><Archive className="mr-1 h-4 w-4" />Thùng lưu trữ</Button>
+        <Button variant="outline" size="sm" onClick={() => chooseSection('archive')}><Archive className="mr-1 h-4 w-4" />Thùng lưu trữ</Button>
         {settings.can_settings && (
-          <Button variant="ghost" type="button" onClick={() => setSection('settings')}
+          <Button variant="ghost" type="button" onClick={() => chooseSection('settings')}
             className={cn(
               'inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors',
               active === 'settings' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:text-foreground',
@@ -96,9 +101,9 @@ function Biz3KScreen() {
       {active === 'mine' && (
         <div className="space-y-6">
           <section className="space-y-3">
-            <div className="flex min-w-0 gap-1 overflow-x-auto border-b border-border pb-2">
+            <div className="k3-period-tabs flex min-w-0 gap-1 overflow-x-auto border-b border-border pb-2">
               {(['day', 'week', 'month', 'quarter', 'all'] as const).map((v) => (
-                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+                <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="shrink-0 whitespace-nowrap max-md:min-h-11" aria-pressed={mode === v} onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
               ))}
             </div>
             {mode === 'day' && <><Biz3KKpiDay settings={settings} date={date ?? settings.today} today={settings.today} onDateChange={setDate} /><details className="border-t border-border pt-3"><summary className="text-sm text-muted-foreground">Dữ liệu công việc ngày cũ</summary><div className="mt-3"><Biz3KMyDay settings={{ ...settings, enabled: false }} selectedDate={date ?? settings.today} onDateChange={setDate} /></div></details></>}
@@ -112,9 +117,9 @@ function Biz3KScreen() {
 
       {active === 'monitor' && (
         <div className="space-y-3">
-          <div className="flex gap-1 overflow-x-auto border-b border-border pb-3">
+          <div className="k3-period-tabs flex gap-1 overflow-x-auto border-b border-border pb-3">
             {(['day', 'week', 'month', 'quarter'] as const).map((v) => (
-              <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
+              <Button key={v} variant={mode === v ? 'default' : 'ghost'} size="sm" className="whitespace-nowrap" aria-pressed={mode === v} onClick={() => setMode(v)}>{MODE_LABEL[v]}</Button>
             ))}
           </div>
           {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'quarter') && <Biz3KMeasuredPeriod type={mode} date={date ?? settings.today} onDateChange={setDate} manage />}
@@ -126,3 +131,4 @@ function Biz3KScreen() {
     </div>
   );
 }
+
