@@ -525,3 +525,90 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
  .approval-item-card .approval-open-button { min-height: 46px; }
  .approval-item-card > .flex.text-xs { border-top: 1px solid var(--border); padding-top: 10px; line-height: 1.6; }
 }
+
+/* Mobile readability and first-screen density: Home and Approval Center.
+   Explicit heading colors override the app-wide heading ink on dark hero surfaces. */
+.launcher-welcome h2,
+.launcher-welcome .launcher-dashboard-link,
+.approval-overview h2,
+.approval-overview .approval-stat {
+  color: #fff;
+}
+@media (max-width: 767px) {
+  /* Put useful app shortcuts in the first viewport without shrinking touch targets. */
+  .launcher-home .launcher-welcome {
+    padding: 17px 18px;
+    border-radius: 20px;
+  }
+  .launcher-home .launcher-eyebrow { font-size: 10px; letter-spacing: 1.1px; }
+  .launcher-home .launcher-welcome h2 {
+    margin-top: 8px;
+    font-size: clamp(20px, 5vw, 24px);
+    line-height: 1.3;
+    color: #fff;
+  }
+  .launcher-home .launcher-welcome p {
+    margin-top: 6px;
+    max-width: 100%;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .launcher-home .launcher-dashboard-link {
+    min-height: 40px;
+    margin-top: 12px;
+    padding-inline: 12px;
+    color: #fff;
+  }
+  .launcher-home .launcher-panel { padding: 12px 10px; border-radius: 20px; }
+  .launcher-home .launcher-panel > .flex:first-child { padding-inline: 2px; }
+  .launcher-home .launcher-app-grid { gap: 4px; }
+  .launcher-home .launcher-tile {
+    min-height: 92px;
+    gap: 6px;
+    padding-top: 8px;
+    padding-bottom: 6px;
+  }
+  .launcher-home .launcher-icon { width: 43px; height: 43px; border-radius: 14px; }
+  .launcher-home .launcher-icon svg { width: 22px; height: 22px; }
+  .launcher-home .launcher-area { min-height: 130px; gap: 10px; padding: 13px; border-radius: 20px; }
+
+  /* Keep review counts glanceable; prioritize actual approval records. */
+  .approval-center-mobile .approval-overview {
+    padding: 13px 15px;
+    border-radius: 20px;
+  }
+  .approval-center-mobile .approval-overview h2 {
+    margin-top: 7px;
+    font-size: 16px;
+    line-height: 1.4;
+    color: #fff;
+  }
+  .approval-center-mobile .approval-overview > .grid { margin-top: 10px; gap: 7px; }
+  .approval-center-mobile .approval-stat {
+    min-height: 68px;
+    padding: 8px 3px;
+    border-radius: 12px;
+    color: #fff;
+  }
+  .approval-center-mobile .approval-stat strong { font-size: 22px; }
+  .approval-center-mobile .approval-stat span { margin-top: 3px; font-size: 10px; line-height: 1.3; }
+  .approval-center-mobile .approval-overview > p:last-child:not(:first-child) { margin-bottom: 0; }
+  .approval-center-mobile .approval-filter-panel { gap: 8px; padding: 10px; }
+  .approval-center-mobile .approval-item-card { padding: 14px; gap: 10px; }
+
+  /* Chipi stays accessible but no longer obscures filter chips and request cards. */
+  .chipi-assistant.chipi-small {
+    right: max(7px, env(safe-area-inset-right));
+    bottom: calc(var(--mobile-nav-height, 72px) + 8px);
+    width: 52px;
+  }
+  .chipi-small .chipi-tools > :not(:nth-child(2)) { display: none; }
+  .chipi-small .chipi-tools { padding-right: 2px; }
+  .chipi-small .chipi-art { width: 46px; height: 46px; }
+  .chipi-small .chipi-tools > button {
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+  }
+}

@@ -143,7 +143,7 @@ export function ApprovalCenter() {
           <button className="approval-stat" onClick={() => {resetFilters();chooseTab('todo');setOverdueOnly(true);}}><strong>{overdueCount}</strong><span>Quá hạn</span></button>
           <button className="approval-stat" onClick={() => {resetFilters();chooseTab('mine');}}><strong>{data.mine.length}</strong><span>Đang trình</span></button>
         </div>
-        {data.errors?.length ? <p className="mt-3 text-xs leading-5">Số liệu chưa đầy đủ vì một số nguồn chưa tải được.</p> : <p className="mt-3 text-xs leading-5">Hồ sơ quá hạn và chờ lâu được ưu tiên hiển thị.</p>}
+        {data.errors?.length ? <p className="mt-3 text-xs leading-5">Số liệu chưa đầy đủ vì một số nguồn chưa tải được.</p> : null}
       </section>}
       <Tabs value={tab} onValueChange={(v) => chooseTab(v as Tab)}>
         <TabsList className="approval-main-tabs w-full md:w-auto grid grid-cols-3">
@@ -168,7 +168,7 @@ export function ApprovalCenter() {
         </div>
       </div>
 
-      {data && <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-muted-foreground">{items.length} hồ sơ hiển thị{tab === 'todo' ? ' · Ưu tiên quá hạn, chờ lâu' : ''}</p><div className="flex items-center gap-2">{tab === 'todo' && <Button size="sm" className="min-h-11 rounded-xl" variant={overdueOnly ? 'secondary' : 'outline'} aria-pressed={overdueOnly} onClick={() => setOverdueOnly(v => !v)}><Clock3 className="h-4 w-4" />Quá hạn ({overdueCount})</Button>}{hasFilters && <Button size="sm" variant="ghost" className="min-h-11" onClick={resetFilters}>Đặt lại</Button>}</div></div>}
+      {data && <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-muted-foreground">{items.length} hồ sơ hiển thị{tab === 'todo' ? ' · Ưu tiên quá hạn, chờ lâu' : ''}</p><div className="flex items-center gap-2">{tab === 'todo' && (overdueCount > 0 || overdueOnly) && <Button size="sm" className="min-h-11 rounded-xl" variant={overdueOnly ? 'secondary' : 'outline'} aria-pressed={overdueOnly} onClick={() => setOverdueOnly(v => !v)}><Clock3 className="h-4 w-4" />Quá hạn ({overdueCount})</Button>}{hasFilters && <Button size="sm" variant="ghost" className="min-h-11" onClick={resetFilters}>Đặt lại</Button>}</div></div>}
       {!!data?.errors?.length && (
         <p role="alert" className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
           <AlertCircle className="h-4 w-4 shrink-0" />
