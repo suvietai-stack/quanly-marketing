@@ -1,17 +1,18 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Archive, ClipboardList, ListChecks, Settings2, Users, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3SettingsQuery } from '@/lib/biz/k3Queries';
 import { cn } from '@/lib/utils';
-// Each 3K workspace is loaded only when selected. The legacy day editor and
-// administration screens no longer inflate the first mobile load.
-const Biz3KMyDay = lazy(() => import('./Biz3KMyDay').then(m => ({ default: m.Biz3KMyDay })));
-const Biz3KSettings = lazy(() => import('./Biz3KSettings').then(m => ({ default: m.Biz3KSettings })));
-const Biz3KMeasuredPeriod = lazy(() => import('./Biz3KMeasuredPeriod').then(m => ({ default: m.Biz3KMeasuredPeriod })));
-const Biz3KGoals = lazy(() => import('./Biz3KGoals').then(m => ({ default: m.Biz3KGoals })));
-const Biz3KKpiDay = lazy(() => import('./Biz3KKpiDay').then(m => ({ default: m.Biz3KKpiDay })));
-const Biz3KArchive = lazy(() => import('./Biz3KArchive').then(m => ({ default: m.Biz3KArchive })));
+// 3K critical workspaces are imported together with their route to avoid a
+// second on-demand JS chunk request stalling mobile tab switches after publish.
+// Expensive DATA remains on-demand inside the components (KPI, legacy and audit).
+import { Biz3KMyDay } from './Biz3KMyDay';
+import { Biz3KSettings } from './Biz3KSettings';
+import { Biz3KMeasuredPeriod } from './Biz3KMeasuredPeriod';
+import { Biz3KGoals } from './Biz3KGoals';
+import { Biz3KKpiDay } from './Biz3KKpiDay';
+import { Biz3KArchive } from './Biz3KArchive';
 
 import { Button } from '@/components/ui/button';
 import { K3DeleteProvider } from './Biz3KDelete';
@@ -103,7 +104,7 @@ function Biz3KScreen() {
         </div>
       )}
 
-      <Suspense fallback={<div className="rounded-2xl border bg-card px-4 py-8 text-center text-sm text-muted-foreground" role="status">Đang mở khu vực 3K…</div>}>
+
       {active === 'mine' && (
         <div className="space-y-6">
           <section className="space-y-3">
@@ -134,7 +135,7 @@ function Biz3KScreen() {
 
       {active === 'settings' && <Biz3KSettings settings={settings} />}
       {active === 'archive' && <Biz3KArchive admin={settings.can_settings} />}
-      </Suspense>
+
     </div>
   );
 }
