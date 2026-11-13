@@ -341,29 +341,38 @@ function MineOverview() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const needAction = items.needsFix.length + items.toReview.length;
   const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const filterWork = (list: WorkItem[]) => {
     const q = taskSearch.trim().toLocaleLowerCase("vi");
     return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
   };
   const emptyMessage = (normal: string) => taskSearch.trim() ? "Không tìm thấy công việc phù hợp. Hãy thử từ khóa khác." : normal;
+  const activeCount = {
+    mine: items.mine.length,
+    review: items.toReview.length,
+    fix: items.needsFix.length,
+    waiting: items.waiting.length,
+    overdue: items.overdue.length,
+    done: items.doneRecent.length,
+  }[tab];
+  const activeShortLabel = { mine: "đang làm", review: "chờ duyệt", fix: "cần sửa", waiting: "đang chờ", overdue: "quá hạn", done: "hoàn thành" }[tab];
 
   return (
     <div className="flex min-w-0 flex-col gap-5 md:gap-8">
       <section className="order-1" aria-label="Công việc quan trọng">
         <SectionTitle>Cần chú ý</SectionTitle>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
           <ClickStat label="Đang làm" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
-          <ClickStat label="Cần xử lý" hint="Cần sửa và chờ duyệt" value={needAction} icon={FileEdit} tone="warn" onClick={() => go(items.needsFix.length ? "fix" : "review")} />
-          <div className="col-span-2 sm:col-span-1"><ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} /></div>
+          <ClickStat label="Chờ tôi duyệt" value={items.toReview.length} icon={ClipboardCheck} tone="violet" onClick={() => go("review")} />
+          <ClickStat label="Cần sửa" value={items.needsFix.length} icon={FileEdit} tone="warn" onClick={() => go("fix")} />
+          <ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} />
         </div>
       </section>
 
       <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
         <div className="mb-3 flex items-center justify-between gap-2">
           <SectionTitle>Danh sách cần làm</SectionTitle>
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{items.mine.length} đang thực hiện</span>
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{activeCount} {activeShortLabel}</span>
         </div>
         <Card className="dashboard-work-panel overflow-hidden rounded-2xl">
           <CardContent className="p-3 sm:p-5">
@@ -414,7 +423,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>;
 }
 
-function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success"; hint?: string; onClick?: () => void }) {
+function ClickStat({ label, value, icon: Icon, tone, hint, onClick }: { label: string; value: React.ReactNode; icon: any; tone: "info" | "warn" | "danger" | "success" | "violet"; hint?: string; onClick?: () => void }) {
   return (
     <button type="button" onClick={onClick} className={`dashboard-stat dashboard-stat-${tone} flex h-full min-h-28 w-full flex-col items-start justify-between gap-2 rounded-2xl border p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:min-h-24 sm:flex-row sm:items-center sm:p-4`}>
       <span className="dashboard-stat-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"><Icon className="h-5 w-5" /></span>
@@ -513,7 +522,7 @@ function WorkTable({ items, empty }: { items: WorkItem[]; empty: string }) {
             </div>
             <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-foreground">{it.title}</h3>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] leading-5 text-muted-foreground">
-              {it.brand && <span className="max-w-full truncate">🏷 {it.brand}</span>}
+              {it.brand && <span className="max-w-full truncate"><Briefcase className="mr-1 inline h-3 w-3" aria-hidden="true" />{it.brand}</span>}
               {it.mineAs && <span className="max-w-full truncate">Vai trò: {it.mineAs}</span>}
               {it.due && <span className={overdue ? "font-semibold text-rose-700 dark:text-rose-300" : ""}><Clock className="mr-1 inline h-3 w-3" />{fmtDate(it.due)}</span>}
             </div>
@@ -660,8 +669,26 @@ function DeptOverview() {
   const [channelType, setChannelType] = useState<"all" | "Website" | "Social" | "Local">("all");
   const [staffMobileLimit, setStaffMobileLimit] = useState(6);
   const [channelMobileLimit, setChannelMobileLimit] = useState(6);
+  const [showMoreMetrics, setShowMoreMetrics] = useState(false);
+  const [issueFilter, setIssueFilter] = useState<"all" | "overdue" | "fix" | "review">("all");
+  const showIssues = (filter: "overdue" | "fix" | "review") => {
+    setIssueFilter(filter);
+    document.getElementById("dashboard-bottlenecks")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [drawerStaff, setDrawerStaff] = useState<string | null>(null);
+  const refreshDashboard = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      // An explicit refresh must update server data, not just recompute a date.
+      await useStore.getState().reload();
+      setRefreshKey(k => k + 1);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const rangeStart = useMemo(() => computeRangeStart(range), [range, refreshKey]);
   const inRange = (iso?: string) => {
@@ -815,22 +842,50 @@ function DeptOverview() {
   type ChRow = { id: string; name: string; type: "Website" | "Social" | "Local"; brand?: string; owner?: string; url?: string; posts: number; growth?: string; lead?: number; status: string; href: string; };
   const channelRows = useMemo<ChRow[]>(() => {
     const rows: ChRow[] = [];
+    // Index once: the previous implementation scanned all posts/reviews/growth
+    // separately for every channel, which became slow on staff mobile devices.
+    const webCounts = new Map<string, number>();
+    for (const post of s.webContents) {
+      if (!post.websiteId || (isDoneStatus(post.status) && !inRange(post.completedAt))) continue;
+      webCounts.set(post.websiteId, (webCounts.get(post.websiteId) ?? 0) + 1);
+    }
+    const socialCounts = new Map<string, number>();
+    for (const post of s.socialPosts) {
+      if (!post.channelId || (isDoneStatus(post.status) && !inRange(post.publishedDate))) continue;
+      socialCounts.set(post.channelId, (socialCounts.get(post.channelId) ?? 0) + 1);
+    }
+    const localCounts = new Map<string, number>();
+    for (const post of s.mapPosts) {
+      if (!post.placeId || (isDoneStatus(post.status) && !inRange(post.publishedDate))) continue;
+      localCounts.set(post.placeId, (localCounts.get(post.placeId) ?? 0) + 1);
+    }
+    const reviewCounts = new Map<string, number>();
+    for (const review of s.reviews) {
+      if (review.placeId) reviewCounts.set(review.placeId, (reviewCounts.get(review.placeId) ?? 0) + 1);
+    }
+    // Latest still means last item in store order, consistent with existing UI.
+    const growthByWebsite = new Map<string, (typeof s.growth)[number]>();
+    const growthBySocial = new Map<string, (typeof s.growth)[number]>();
+    for (const growth of s.growth) {
+      if (growth.websiteId) growthByWebsite.set(growth.websiteId, growth);
+      if (growth.channelId) growthBySocial.set(growth.channelId, growth);
+    }
     for (const w of s.websites) {
       if (brandId && w.brandId !== brandId) continue;
-      const posts = s.webContents.filter((c) => c.websiteId === w.id && (isDoneStatus(c.status) ? inRange(c.completedAt) : true)).length;
-      const lastGrowth = s.growth.filter((g) => g.websiteId === w.id).slice(-1)[0];
+      const posts = webCounts.get(w.id) ?? 0;
+      const lastGrowth = growthByWebsite.get(w.id);
       rows.push({ id: w.id, name: w.name, type: "Website", brand: brandName(w.brandId), owner: w.seoOwner || w.contentOwner, url: w.url, posts, growth: lastGrowth?.organicTraffic != null ? `Organic: ${lastGrowth.organicTraffic.toLocaleString()}` : (lastGrowth?.totalTraffic != null ? `Traffic: ${lastGrowth.totalTraffic.toLocaleString()}` : undefined), status: w.status, href: `/websites/${w.id}` });
     }
     for (const c of s.socials) {
       if (brandId && c.brandId !== brandId) continue;
-      const posts = s.socialPosts.filter((p) => p.channelId === c.id && (isDoneStatus(p.status) ? inRange(p.publishedDate) : true)).length;
-      const lastGrowth = s.growth.filter((g) => g.channelId === c.id).slice(-1)[0];
+      const posts = socialCounts.get(c.id) ?? 0;
+      const lastGrowth = growthBySocial.get(c.id);
       rows.push({ id: c.id, name: c.name, type: "Social", brand: brandName(c.brandId), owner: c.owner, url: c.url, posts, growth: lastGrowth?.followerEnd != null ? `Follower: ${lastGrowth.followerEnd.toLocaleString()}` : undefined, status: c.status, href: `/social/${c.id}` });
     }
     for (const pl of s.places) {
       if (brandId && pl.brandId !== brandId) continue;
-      const posts = s.mapPosts.filter((p) => p.placeId === pl.id && (isDoneStatus(p.status) ? inRange(p.publishedDate) : true)).length;
-      const reviews = s.reviews.filter((r) => r.placeId === pl.id).length;
+      const posts = localCounts.get(pl.id) ?? 0;
+      const reviews = reviewCounts.get(pl.id) ?? 0;
       rows.push({ id: pl.id, name: pl.name, type: "Local", brand: brandName(pl.brandId), owner: pl.owner, url: pl.mapLink, posts, lead: reviews, status: pl.verifyStatus, href: `/local/${pl.id}` });
     }
     return rows;
@@ -883,8 +938,14 @@ function DeptOverview() {
       }
     }
     const sevOrder: Record<string, number> = { Cao: 0, "Trung bình": 1, Thấp: 2 };
-    return list.sort((a, b) => sevOrder[a.sev] - sevOrder[b.sev]).slice(0, 10);
+    return list.sort((a, b) => sevOrder[a.sev] - sevOrder[b.sev]);
   }, [filteredJobs, s.webContents, brandId]);
+  const visibleBottlenecks = useMemo(() => bottlenecks.filter(b =>
+    issueFilter === "all" ||
+    (issueFilter === "overdue" && /quá hạn/i.test(b.type)) ||
+    (issueFilter === "fix" && /cần sửa/i.test(b.type)) ||
+    (issueFilter === "review" && /chờ duyệt/i.test(b.type))
+  ).slice(0, 10), [bottlenecks, issueFilter]);
 
   // ----- Staff detail (drawer) -----
   const drawerData = useMemo(() => {
@@ -934,8 +995,8 @@ function DeptOverview() {
           <FilterSelect value={staff} onChange={setStaff} placeholder="Tất cả nhân sự"
             options={staffOptions.map((n) => ({ value: n, label: n }))} />
           <div className="flex w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
-            <Button variant="outline" size="sm" className="min-h-10 rounded-xl" onClick={() => setRefreshKey((k) => k + 1)}>
-              <RefreshCw className="h-3.5 w-3.5" /> Làm mới
+            <Button variant="outline" size="sm" className="min-h-10 rounded-xl" onClick={() => void refreshDashboard()} disabled={refreshing} aria-busy={refreshing}>
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> {refreshing ? "Đang cập nhật…" : "Làm mới"}
             </Button>
             {hasFilter && (
               <Button variant="ghost" size="sm" onClick={resetFilters}>
@@ -946,16 +1007,23 @@ function DeptOverview() {
         </CardContent>
       </Card>
 
-      {/* ===== Quick Stat Cards ===== */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 md:gap-4">
-        <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
-        <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
-        <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
-        <Stat label="Jobs quá hạn" value={stats.overdue} icon={AlertTriangle} tone="danger" />
-        <Stat label="Jobs cần sửa" value={stats.needsFix} icon={FileEdit} tone="warn" />
-        <Stat label="Jobs chờ duyệt" value={stats.pendingReview} icon={Clock} tone="warn" />
-        <Stat label="Tỷ lệ đúng hạn" value={`${stats.onTimeRate}%`} icon={ClipboardCheck} tone="success" hint={`${stats.done} jobs hoàn thành`} />
-      </div>
+      {/* ===== Quick Stat Cards: 4 action KPIs first on narrow screens ===== */}
+      <section aria-label="Chỉ số vận hành" className="space-y-2.5">
+        <div className="grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
+          <Stat label="Jobs đang mở" value={stats.open} icon={ListChecks} tone="info" />
+          <button type="button" onClick={() => showIssues("overdue")} className="dashboard-metric-action min-w-0 rounded-2xl text-left" aria-label={`Xem các điểm nghẽn quá hạn, có ${stats.overdue} công việc quá hạn`}><Stat label="Jobs quá hạn" value={stats.overdue} icon={AlertTriangle} tone="danger" /></button>
+          <button type="button" onClick={() => showIssues("fix")} className="dashboard-metric-action min-w-0 rounded-2xl text-left" aria-label={`Xem các điểm nghẽn cần sửa, có ${stats.needsFix} công việc`}><Stat label="Jobs cần sửa" value={stats.needsFix} icon={FileEdit} tone="warn" /></button>
+          <button type="button" onClick={() => showIssues("review")} className="dashboard-metric-action min-w-0 rounded-2xl text-left" aria-label={`Xem các điểm nghẽn chờ duyệt, có ${stats.pendingReview} công việc`}><Stat label="Jobs chờ duyệt" value={stats.pendingReview} icon={Clock} tone="warn" /></button>
+          <div className={showMoreMetrics ? "contents" : "hidden md:contents"}>
+            <Stat label="Tổng jobs phát sinh" value={stats.total} icon={Briefcase} tone="default" />
+            <Stat label="Jobs hoàn thành" value={stats.done} icon={CheckCircle2} tone="success" />
+            <Stat label="Tỷ lệ đúng hạn" value={`${stats.onTimeRate}%`} icon={ClipboardCheck} tone="success" hint={`${stats.done} jobs hoàn thành`} />
+          </div>
+        </div>
+        <button type="button" className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border bg-card text-xs font-semibold text-primary md:hidden" aria-expanded={showMoreMetrics} onClick={() => setShowMoreMetrics(v => !v)}>
+          {showMoreMetrics ? "Thu gọn chỉ số" : "Xem thêm chỉ số"} {showMoreMetrics ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+        </button>
+      </section>
 
       {/* ===== Staff Performance ===== */}
       {canStaff && (
@@ -1138,15 +1206,18 @@ function DeptOverview() {
       )}
 
       {/* ===== Bottlenecks ===== */}
-      <Card className="mt-5 overflow-hidden rounded-2xl md:mt-6">
+      <Card id="dashboard-bottlenecks" className="mt-5 scroll-mt-28 overflow-hidden rounded-2xl md:mt-6">
         <CardHeader>
           <CardTitle className="text-base">Điểm nghẽn cần chú ý</CardTitle>
           <div className="text-xs text-muted-foreground">Các việc đang làm tắc quy trình — ưu tiên xử lý nhanh.</div>
+          <div className="dashboard-segment mt-2 grid grid-cols-4 gap-1 rounded-xl bg-muted/70 p-1" aria-label="Lọc điểm nghẽn">
+            {([["all","Tất cả"],["overdue","Quá hạn"],["fix","Cần sửa"],["review","Chờ duyệt"]] as const).map(([k,label]) => <button key={k} type="button" aria-pressed={issueFilter === k} onClick={() => setIssueFilter(k)} className={`min-h-10 rounded-lg px-1 text-[11px] font-semibold transition-colors ${issueFilter === k ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-accent"}`}>{label}</button>)}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="space-y-2.5 p-3 md:hidden">
-            {bottlenecks.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"><CheckCircle2 className="mx-auto mb-2 h-6 w-6" />Không có điểm nghẽn cần chú ý.</div>}
-            {bottlenecks.map((b,i) => (
+            {visibleBottlenecks.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-6 text-center text-sm font-medium text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100"><CheckCircle2 className="mx-auto mb-2 h-6 w-6" />Không có điểm nghẽn cần chú ý.</div>}
+            {visibleBottlenecks.map((b,i) => (
               <article key={`${b.href}-${b.title}-${i}`} className={`rounded-xl border p-3 ${b.sev === "Cao" ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20" : b.sev === "Trung bình" ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20" : "border-border bg-card"}`}>
                 <div className="flex items-center justify-between gap-2">
                   <span className={`rounded-md px-2 py-1 text-[11px] font-semibold ${b.sev === "Cao" ? "bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100" : b.sev === "Trung bình" ? "bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100"}`}>{b.type}</span>
@@ -1175,10 +1246,10 @@ function DeptOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {bottlenecks.length === 0 && (
+                {visibleBottlenecks.length === 0 && (
                   <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">Không có điểm nghẽn nào cần chú ý.</td></tr>
                 )}
-                {bottlenecks.map((b, i) => (
+                {visibleBottlenecks.map((b, i) => (
                   <tr key={i} className="hover:bg-muted/30">
                     <td className="px-4 py-2.5">
                       <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
