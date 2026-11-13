@@ -139,6 +139,17 @@ const emptyFilter = (): ListFilter => ({ quick: "all", time: "" });
 
 export function SignalsPage() {
   const p = useSignalPerms();
+  // Prefetch the eligible Sale directory as soon as an authorized manager
+  // opens Signals, rather than waiting for the assignment dialog to open.
+  // Same user-keyed React Query cache as SignalAssignmentDialog.
+  useQuery({
+    queryKey: [`${SIG}sales`, p.userId],
+    queryFn: salesList,
+    enabled: !!p.userId && (p.assignNew || p.reassign),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
   const name = useUserName();
   const care={on:false};const setCare=(_value:unknown)=>{};
   const labels = useSignalLabels(p.userId);
