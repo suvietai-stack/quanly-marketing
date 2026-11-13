@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import { allowedPins, launcherApps, movePin, pinStorageKey, reconcilePins, searchLauncher, suggestedLauncherApps, storedPins } from '@/lib/launcher';
 import type { NavGroup, NavItem } from '@/lib/navigation';
+import { launcherGreetingAt } from '@/lib/launcherGreeting';
 
 const tones: Record<string, string> = {
   'Điều hành': 'launcher-tone-primary', 'Kinh doanh': 'launcher-tone-success', 'Showroom': 'launcher-tone-muted',
@@ -15,6 +16,17 @@ const tones: Record<string, string> = {
 };
 export function MobileLauncher({ groups, userId, area, accessReady = true, name }: { groups: NavGroup[]; userId: string; area?: string; accessReady?: boolean; name?: string }) {
   const [query, setQuery] = useState('');
+  const [localNow, setLocalNow] = useState<Date | null>(null);
+  useEffect(() => {
+    const update = () => setLocalNow(new Date());
+    // Resolve the clock after mount so server/client hydration remains stable.
+    update();
+    const timer = window.setInterval(update, 60_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') update(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
+  }, []);
+  const greeting = localNow ? launcherGreetingAt(localNow, name, userId) : null;
   const [saved, setSaved] = useState<{ uid: string; pins: string[] }>();
   const [showAll, setShowAll] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -61,9 +73,9 @@ export function MobileLauncher({ groups, userId, area, accessReady = true, name 
     </div>;
   };
   return <div className="mobile-launcher launcher-home space-y-5" data-testid="mobile-launcher">
-    {!area && !query.trim() && <section className="launcher-welcome" aria-label="Chào mừng">
-      <div className="launcher-welcome-content"><span className="launcher-eyebrow"><Sparkles aria-hidden="true" className="h-3.5 w-3.5" /> KHÔNG GIAN LÀM VIỆC</span>
-        <h2>Xin chào{ name?.trim() ? `, ${name.trim()}` : ''}!</h2><p>Một ngày mới, cùng Sứ Việt tạo giá trị.</p>
+    {!area && !query.trim() && <section className="launcher-welcome" data-period={greeting?.period ?? 'morning'} aria-label="Lời chào theo thời điểm trong ngày">
+      <div className="launcher-welcome-content"><span className="launcher-eyebrow"><Sparkles aria-hidden="true" className="h-3.5 w-3.5" /> {greeting?.eyebrow ?? 'KHÔNG GIAN LÀM VIỆC'}</span>
+        <h2>{greeting?.title ?? `Xin chào${name?.trim() ? `, ${name.trim()}` : ''}!`}</h2><p>{greeting?.subtitle ?? 'Mọi công việc, trong một không gian.'}</p>
         {apps.some(item => item.to === '/') && <Link to="/" search={{ view: 'dashboard' }} className="launcher-dashboard-link">Xem tổng quan <ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link>}
       </div><span className="launcher-welcome-orbit" aria-hidden="true" />
     </section>}
