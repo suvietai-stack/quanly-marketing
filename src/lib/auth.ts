@@ -1049,6 +1049,11 @@ export const useAuth = create<AuthState>((set, get) => ({
     try {
       const { data: { user } } = await supabase.auth.getUser();
       set({ currentUserId: user?.id ?? null });
+      // Authentication is verified at this point. Unlock AuthGate's guarded
+      // loading state immediately; the directory can become usable before the
+      // slower server permission snapshots finish. No permission is inferred
+      // from this flag: all sensitive gates still fail closed until verified.
+      set({ initialized: true });
       if (user) await authLoads.join(user.id);
     } finally {
       set({ initialized: true });
