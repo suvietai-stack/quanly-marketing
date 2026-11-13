@@ -1,6 +1,7 @@
 name: Dashboard validation
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'src/routes/index.tsx'
       - 'src/styles.css'
