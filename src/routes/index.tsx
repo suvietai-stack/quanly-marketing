@@ -459,7 +459,7 @@ function ManagerSummary() {
     <div className="space-y-8">
       <div className="flex flex-wrap gap-2">
         {keys.length > 0 && <PeriodSelect keys={keys} value={key} onChange={setPk} />}
-        <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
+        <select aria-label="Lọc theo thương hiệu" className="min-h-11 max-w-full rounded-xl border border-input bg-background px-3 text-sm" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
           <option value="">Tất cả thương hiệu</option>
           {s.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
@@ -470,7 +470,7 @@ function ManagerSummary() {
           hint={withData.length ? `Trên ${withData.length} chỉ tiêu đo được, so với thời gian đã trôi qua` : undefined}
           onClick={() => document.getElementById("channel-progress")?.scrollIntoView({ behavior: "smooth" })} />
         <ClickStat label="Công việc chờ tôi duyệt" value={my.toReview.length} icon={ClipboardCheck} tone="info" onClick={() => setSheet("review")} />
-        <ClickStat label="Công việc quá hạn" value={overdueAll.length} icon={AlertTriangle} tone="danger" onClick={() => setSheet("overdue")} />
+        <div className="col-span-2 sm:col-span-1"><ClickStat label="Công việc quá hạn" value={overdueAll.length} icon={AlertTriangle} tone="danger" onClick={() => setSheet("overdue")} /></div>
       </div>
       <section id="channel-progress">
         <SectionTitle>Tiến độ triển khai theo thương hiệu và kênh</SectionTitle>
