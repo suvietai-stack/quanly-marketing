@@ -114,9 +114,10 @@ function OqList() {
   const acceptBtns = (r: any) => r.status === "cancelled" ? delBtn(r) : r.flows.filter(canAccept).map((f: any) => <Button key={f.id} size="sm" disabled={busy === f.id} onClick={(e) => accept(e, f)}>Tiếp nhận{r.flows.length > 1 ? ` ${f.kind === "price" ? "Giá" : "Tiến độ"}` : ""}</Button>);
 
   return (
-    <div>
+    <div className="oq-mobile-list min-w-0">
       <PageHeader title="Hỏi Giá & Tiến Độ" description="Đơn Sứ Quà Tặng — hỏi giá, khả năng đáp ứng và ngày giao dự kiến trước khi chốt đơn."
         actions={can("oq.create") ? <Button asChild><Link to="/order-quotes/new" search={{ id: undefined }}><Plus className="h-4 w-4 mr-1" />Tạo yêu cầu</Link></Button> : undefined} />
+      <div className="oq-simple-guide mb-4 rounded-2xl border bg-card p-4 md:hidden"><h2 className="font-semibold text-sm">Hỏi nhanh, theo dõi rõ</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">1. Sale gửi yêu cầu → 2. Cung ứng trả lời → 3. Sale xem kết quả</p><div className="mt-3 flex flex-wrap gap-2 text-[11px]"><span className="rounded-lg bg-amber-100 px-2 py-1 text-amber-800">Chờ tiếp nhận</span><span className="rounded-lg bg-blue-100 px-2 py-1 text-blue-800">Đang xử lý</span><span className="rounded-lg bg-emerald-100 px-2 py-1 text-emerald-800">Đã trả lời</span></div></div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-3">
         <TabsList className="grid w-full grid-cols-3 h-11 sm:inline-flex sm:w-auto sm:h-10"><TabsTrigger value="all">Tất cả</TabsTrigger><TabsTrigger value="price">Hỏi Giá</TabsTrigger><TabsTrigger value="progress">Hỏi Tiến Độ</TabsTrigger></TabsList>
         {(can("oq.report_own") || can("oq.report_all")) && <Button asChild variant="outline" className="mt-2 w-full h-11 sm:mt-0 sm:ml-2 sm:w-auto sm:h-10"><Link to="/order-quotes/report"><BarChart3 className="h-4 w-4 mr-1" />Báo cáo thống kê</Link></Button>}
@@ -124,7 +125,7 @@ function OqList() {
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1 sm:max-w-sm">
           <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tên hoặc mã yêu cầu" className="pl-8 h-10" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tên hoặc mã yêu cầu" aria-label="Tìm yêu cầu theo tên hoặc mã" className="pl-8 h-11 rounded-xl text-base" />
         </div>
         <Sheet open={sheet} onOpenChange={setSheet}>
           <SheetTrigger asChild><Button variant={nFilters ? "secondary" : "outline"} className="h-10 shrink-0"><SlidersHorizontal className="h-4 w-4 mr-1" />Bộ lọc{nFilters ? ` (${nFilters})` : ""}</Button></SheetTrigger>
@@ -204,8 +205,8 @@ function OqList() {
           </div>
           <div className="md:hidden space-y-2">
             {rows.map((r) => { const od = overdue(r); return (
-              <div key={r.id + (r.flowCode ?? "")} role="button" tabIndex={0} onClick={() => open(r)} onKeyDown={(e) => e.key === "Enter" && open(r)} className={cn("w-full cursor-pointer text-left rounded-lg border bg-card p-3 space-y-2 active:bg-accent", od && "border-destructive/50 border-l-4 border-l-destructive")}>
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><span className="font-semibold line-clamp-2">{r.title || "(chưa đặt tên)"}</span><span className="font-mono text-xs text-muted-foreground">{r.flowCode ?? r.code ?? "Nháp"}</span></div>
+              <div key={r.id + (r.flowCode ?? "")} className={cn("oq-request-card w-full min-w-0 text-left rounded-2xl border bg-card p-4 space-y-3 shadow-soft", od && "border-destructive/50 border-l-4 border-l-destructive")}>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><button className="min-w-0 break-words text-left text-base font-semibold leading-6" onClick={() => open(r)}>{r.title || "(chưa đặt tên)"}</button><span className="font-mono text-xs text-muted-foreground">{r.flowCode ?? r.code ?? "Nháp"}</span></div>
                 <div className="flex flex-wrap items-center gap-1"><StatusCell r={r} />{od && <Badge variant="destructive">Quá hạn</Badge>}</div>
                 <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs">
                   {mode === "pending" ? <>
@@ -222,15 +223,18 @@ function OqList() {
                     <span className="text-muted-foreground">Sản phẩm/PA</span><span>{r.count}</span>
                   </>}
                 </div>
-                {mode !== "pending" && r.status !== "draft" && r.flows.map((f: any) => { const l = shortTimeLines(times.current(f.id), f.kind); return l && (
+                {r.status !== 'draft' && r.flows.length > 0 && <div className="rounded-xl bg-muted/50 p-3 space-y-2 text-xs">{r.flows.map((f: any) => <p key={f.id} className="leading-5 break-words"><strong>{f.kind === 'price' ? 'Hỏi giá' : 'Tiến độ'}:</strong> {f.status === 'pending' ? `Chờ ${name(f.assignee_id)} tiếp nhận` : f.status === 'answered' ? 'Đã có kết quả — mở để xem' : f.status === 'cancelled' ? 'Đã hủy' : f.waiting_info ? 'Chờ Sale bổ sung thông tin' : `${name(f.assignee_id)} đang xử lý`}</p>)}</div>}
+                {mode !== "pending" && r.status !== "draft" && <details className="oq-timing-details text-xs"><summary className="cursor-pointer text-muted-foreground min-h-11 flex items-center">Thời gian xử lý</summary>
+                {r.flows.map((f: any) => { const l = shortTimeLines(times.current(f.id), f.kind); return l && (
                   <div key={f.id + "t"} className="rounded bg-muted/40 px-2 py-1 text-xs">
                     <div className="font-medium uppercase text-[10px] tracking-wide">{f.kind === "price" ? "Giá" : "Tiến độ"} · {l.head}{l.running ? " (tạm tính)" : ""}</div>
                     <div>{l.resp}</div><div>{l.proc}</div>
                     <div className="text-[10px] text-muted-foreground">h = giờ · m = phút · s = giây</div>
                   </div>); })}
+                </details>}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] text-muted-foreground">Cập nhật {vnDateTime(lastUpdate(r))}</span>
-                  <div className="flex gap-1">{acceptBtns(r)}</div>
+                  <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" className="min-h-11 rounded-xl" onClick={() => open(r)}>{r.status === 'draft' ? 'Tiếp tục soạn' : 'Xem chi tiết'}</Button>{acceptBtns(r)}</div>
                 </div>
               </div>); })}
           </div>
@@ -266,3 +270,4 @@ function StatusCell({ r }: { r: any }) {
   if (r.status === "cancelled") return <Badge variant="outline" className="text-muted-foreground">Đã hủy</Badge>;
   return <div className="flex flex-col gap-1">{r.flows.map((f: any) => <FlowBadge key={f.id} kind={f.kind} status={f.status} waiting={f.waiting_info} />)}</div>;
 }
+

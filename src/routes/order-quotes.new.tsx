@@ -157,9 +157,10 @@ function OqForm() {
 
   const curErr = tried.has(step) ? stepErr(step) : null;
   return (
-    <div className="max-w-4xl mx-auto pb-32 md:pb-6">
+    <div className="oq-mobile-create max-w-4xl mx-auto pb-32 md:pb-6">
       <PageHeader title={id ? "Bản nháp yêu cầu" : "Tạo yêu cầu"} description="Phân loại: Đơn Sứ Quà Tặng" />
       <div className="sm:hidden mb-2 text-sm font-semibold">Bước {step + 1}/4 — {STEPS[step]}</div>
+      <p className="md:hidden mb-4 rounded-xl bg-primary/5 border border-primary/15 p-3 text-xs leading-5 text-muted-foreground">{['Đặt tên yêu cầu và thông tin giao hàng.','Thêm sản phẩm, số lượng và ảnh cần thiết.','Chọn hỏi giá hoặc tiến độ, rồi chọn người trả lời.','Kiểm tra lại thông tin trước khi gửi.'][step]}</p>
       <ol className="grid grid-cols-4 gap-1 mb-5">
         {STEPS.map((s, i) => (
           <li key={s}><button type="button" aria-label={`Bước ${i + 1}: ${s}`} onClick={() => i < step && setStep(i)} className={cn("w-full text-left rounded-md px-2 text-xs sm:text-sm border h-2 sm:h-auto sm:py-2", i === step ? "bg-primary text-primary-foreground border-primary" : i < step ? "bg-primary/40 sm:bg-accent border-primary/40 sm:border-border" : "bg-muted text-muted-foreground")}>
@@ -333,3 +334,4 @@ function OqForm() {
 
 const Row = ({ k, v }: { k: string; v: string }) => <div className="grid grid-cols-[110px_1fr] gap-2"><span className="text-muted-foreground">{k}</span><span className="whitespace-pre-wrap">{v}</span></div>;
 const FieldErr = ({ m }: { m?: string }) => (m ? <p className="text-xs text-destructive mt-1">{m}</p> : null);
+

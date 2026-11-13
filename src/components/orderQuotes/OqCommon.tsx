@@ -21,7 +21,7 @@ export function useUserName() {
 }
 
 export function FlowBadge({ kind, status, waiting }: { kind: "price" | "progress"; status: string; waiting?: boolean }) {
-  const tone = status === "answered" ? "bg-primary/15 text-primary" : status === "processing" ? "bg-accent text-accent-foreground" : status === "cancelled" ? "bg-muted text-muted-foreground line-through" : "bg-secondary text-secondary-foreground";
+  const tone = status === "answered" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" : status === "processing" ? waiting ? "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200" : status === "cancelled" ? "bg-muted text-muted-foreground line-through" : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200";
   return (
     <span className="inline-flex flex-wrap gap-1">
       <Badge variant="outline" className={cn("border-0 font-medium", tone)}>{kind === "price" ? "Giá" : "Tiến độ"}: {flowStatusLabel(kind, status)}</Badge>
@@ -189,3 +189,4 @@ function CaptionEdit({ im, onChanged }: { im: Img; onChanged?: () => void }) {
     </div>
   );
 }
+

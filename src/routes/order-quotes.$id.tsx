@@ -67,7 +67,7 @@ function OqDetail() {
   const flow = d.flows.find((f: any) => f.id === flowId);
 
   return (
-    <div className="pb-10">
+    <div className="oq-mobile-detail pb-10 min-w-0">
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 mb-4 sm:flex sm:gap-3">
         <Button variant="ghost" size="icon" asChild><Link to="/order-quotes" aria-label="Về danh sách"><ArrowLeft className="h-5 w-5" /></Link></Button>
         <div className="flex-1 min-w-0">
@@ -90,7 +90,7 @@ function OqDetail() {
         </div>
       )}
       <div className="grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-4">
-        <OrderInfo d={d} onChanged={refresh} />
+        <details className="oq-request-info min-w-0 rounded-2xl border p-3"><summary className="min-h-11 cursor-pointer text-sm font-semibold">Thông tin yêu cầu & sản phẩm</summary><div className="mt-3"><OrderInfo d={d} onChanged={refresh} /></div></details>
         {flow ? <div className="min-w-0">{d.flows.map((f: any) => <div key={f.id} className={f.id === flowId ? "" : "hidden"}><FlowPanel d={d} flow={f} onChanged={refresh} /></div>)}</div>
           : <Card><CardContent className="p-4 text-sm text-muted-foreground">Chưa có luồng xử lý.</CardContent></Card>}
       </div>
@@ -192,7 +192,8 @@ function FlowPanel({ d, flow, onChanged }: { d: any; flow: any; onChanged: () =>
             {rounds.length > 1 && <span className="text-muted-foreground">Lượt {round?.no}/{rounds.length}</span>}
           </div>
         )}
-        <FlowTimeSummary t={times.current(flow.id, round?.no)} kind={flow.kind} assignee={name(round?.assignee_id ?? flow.assignee_id)} />
+        <div className="oq-next-step rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm leading-6"><strong>Việc tiếp theo: </strong>{!active ? 'Yêu cầu đã dừng xử lý.' : flow.status === 'pending' ? canAccept ? 'Bấm “Xác nhận tiếp nhận” để bắt đầu.' : `Chờ ${name(flow.assignee_id)} tiếp nhận.` : flow.status === 'answered' ? 'Sale xem kết quả đã công bố bên dưới.' : flow.waiting_info ? 'Sale bổ sung thông tin để Cung ứng tiếp tục.' : editable ? 'Chọn sản phẩm, nhập phản hồi và công bố kết quả.' : `Chờ ${name(flow.assignee_id)} trả lời.`}</div>
+        <details className="oq-timing-details"><summary className="min-h-11 cursor-pointer text-xs text-muted-foreground flex items-center">Xem thời gian xử lý</summary><FlowTimeSummary t={times.current(flow.id, round?.no)} kind={flow.kind} assignee={name(round?.assignee_id ?? flow.assignee_id)} /></details>
         {rounds.length > 1 && (
           <details className="text-xs"><summary className="cursor-pointer text-muted-foreground">Thời gian các lượt</summary>
             <div className="mt-1 space-y-0.5">{times.all.filter((t) => t.flow_id === flow.id).sort((a, b) => a.round_no - b.round_no).map((t) => (
@@ -452,3 +453,4 @@ function CancelButton({ d, flow, onDone }: { d: any; flow: any; onDone: () => vo
 }
 
 const Info = ({ k, v }: { k: string; v: string }) => <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2"><span className="text-muted-foreground">{k}</span><span className="whitespace-pre-wrap break-words">{v}</span></div>;
+

@@ -525,3 +525,26 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
  .approval-item-card .approval-open-button { min-height: 46px; }
  .approval-item-card > .flex.text-xs { border-top: 1px solid var(--border); padding-top: 10px; line-height: 1.6; }
 }
+
+@media (min-width: 1024px) { .oq-request-info > summary { display: none; } .oq-request-info > div { display: block; } }
+@media (max-width: 767px) {
+ :is(.oq-mobile-list,.oq-mobile-detail,.oq-mobile-create) { overflow-wrap: anywhere; }
+ :is(.oq-mobile-list,.oq-mobile-detail,.oq-mobile-create) :is(input,textarea,[role="combobox"]) { min-width: 0; max-width: 100%; font-size: 16px; min-height: 44px; }
+ :is(.oq-mobile-list,.oq-mobile-detail,.oq-mobile-create) button { min-height: 44px; }
+ .oq-mobile-create ol button { min-height: 8px; }
+ .oq-mobile-list [role="tablist"] { border-radius: 14px; }
+ .oq-mobile-list [role="tab"] { min-width: 0; min-height: 44px; font-size: 12px; border-radius: 10px; }
+ .oq-mobile-list [aria-label="Trạng thái"] [role="tab"][aria-selected="true"] { background: var(--primary); color: var(--primary-foreground); }
+ .oq-request-card > .grid:first-child { grid-template-columns: minmax(0,1fr); gap: 4px; }
+ .oq-request-card > .flex:last-child { flex-direction: column; align-items: stretch; }
+ .oq-request-card > .flex:last-child > div { width: 100%; }
+ .oq-request-card > .flex:last-child button { flex: 1; }
+ .oq-request-card > .flex:last-child > span { font-size: 10px; }
+ .oq-mobile-detail > .grid:last-child > .oq-request-info { order: 2; }
+ .oq-mobile-detail > .grid:last-child > div { order: 1; }
+ .oq-mobile-detail .rounded-lg { border-radius: 16px; }
+ .oq-next-step { border-left: 4px solid var(--primary); }
+ .oq-timing-details > summary::before { content: '＋'; margin-right: 6px; }
+ .oq-timing-details[open] > summary::before { content: '−'; }
+ .oq-mobile-detail .sticky.top-14 { top: var(--mobile-header-height); }
+}
