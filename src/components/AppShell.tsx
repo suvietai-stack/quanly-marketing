@@ -37,8 +37,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
-  const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id });
-  const approvalCenter = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id });
+  const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id, staleTime: 60_000, refetchInterval: 120_000, retry: 1, refetchOnWindowFocus: false });
+  const approvalCenter = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id, staleTime: 60_000, refetchInterval: 120_000, retry: 1, refetchOnWindowFocus: false });
   const approvalsEligible = !!approvalCenter.data?.eligible;
   const approvalBadge = badgeText(approvalCenter.data?.todo.length ?? 0);
   const bizAccess = useAuth(s => s.bizAccess);
@@ -168,11 +168,16 @@ export function PageHeader({
 /** Báo nhỏ khi chưa đồng bộ được quyền; không che trang, có nút thử lại. */
 function AccessSyncNotice() {
   const failed = useAuth((s) => s.accessSyncFailed);
+  const baseFailed = useAuth((s) => s.baseAccessFailed);
+  const bizFailed = useAuth((s) => s.bizAccessFailed);
   const [busy, setBusy] = useState(false);
   if (!failed) return null;
+  const explanation = baseFailed && bizFailed ? 'Chưa đồng bộ được quyền hệ thống và kinh doanh'
+    : baseFailed ? 'Chưa đồng bộ được quyền hệ thống'
+    : 'Chưa đồng bộ được quyền kinh doanh';
   return (
-    <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-md">
-      <span>Chưa đồng bộ được quyền mới nhất</span>
+    <div role="status" className="access-sync-notice fixed bottom-4 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-md">
+      <span>{explanation}</span>
       <button type="button" disabled={busy} className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
         onClick={async () => { setBusy(true); try { await Promise.all([useAuth.getState().refreshBaseAccess(true), useAuth.getState().refreshBizAccess(true)]); } finally { setBusy(false); } }}>
         {busy ? 'Đang đồng bộ…' : 'Thử lại'}
