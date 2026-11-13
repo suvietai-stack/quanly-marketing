@@ -15,7 +15,7 @@ import {
   MapPin, Video, Inbox, Hourglass, ArrowRight, FileEdit, ClipboardCheck,
   Briefcase, RefreshCw, X, ExternalLink, LayoutGrid, ArrowUp, ArrowDown,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { getPublicBranding } from "@/lib/branding.functions";
 import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
@@ -331,6 +331,15 @@ function MineOverview() {
   const { user } = useCurrentUser();
   const [tab, setTab] = useState<WorkTab>("mine");
   const [kpiExpanded, setKpiExpanded] = useState(false);
+  useEffect(() => {
+    // On desktop preserve the old immediately visible KPI panel; on mobile
+    // defer expensive KPI hydration until the user explicitly expands it.
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setKpiExpanded(!media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const needAction = items.needsFix.length + items.toReview.length;
   const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
@@ -445,7 +454,7 @@ function ManagerSummary() {
           {s.brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3">
         <ClickStat label="Chỉ tiêu có nguy cơ chậm" icon={Clock} tone="warn"
           value={withData.length ? atRisk.length : <span className="text-base font-medium text-muted-foreground">Chưa đủ dữ liệu</span>}
           hint={withData.length ? `Trên ${withData.length} chỉ tiêu đo được, so với thời gian đã trôi qua` : undefined}
@@ -757,28 +766,29 @@ function DeptOverview() {
 
   // ----- Staff performance -----
   const staffRows = useMemo(() => {
-    type Row = { name: string; role?: string; assigned: number; done: number; open: number; overdue: number; needsFix: number; pending: number; onTimeRate: number; };
+    type Row = { name: string; role?: string; assigned: number; done: number; open: number; overdue: number; needsFix: number; pending: number; onTimeRate: number; onTimeDone: number; };
     const map = new Map<string, Row>();
     for (const j of filteredJobs) {
       if (!j.assignee) continue;
       let row = map.get(j.assignee);
       if (!row) {
         const person = s.people.find((p) => p.name === j.assignee);
-        row = { name: j.assignee, role: person?.role || person?.position, assigned: 0, done: 0, open: 0, overdue: 0, needsFix: 0, pending: 0, onTimeRate: 0 };
+        row = { name: j.assignee, role: person?.role || person?.position, assigned: 0, done: 0, open: 0, overdue: 0, needsFix: 0, pending: 0, onTimeRate: 0, onTimeDone: 0 };
         map.set(j.assignee, row);
       }
       row.assigned++;
-      if (isDoneStatus(j.status)) row.done++;
-      else if (j.status !== "Đã hủy") row.open++;
+      if (isDoneStatus(j.status)) {
+        row.done++;
+        if (j.deadline && j.completedAt && new Date(j.completedAt) <= new Date(j.deadline + "T23:59:59"))
+          row.onTimeDone++;
+      } else if (j.status !== "Đã hủy") row.open++;
       if (isOverdue(j.deadline, j.status)) row.overdue++;
       if (isNeedsFixStatus(j.status)) row.needsFix++;
       if (isPendingReview(j.status)) row.pending++;
     }
-    // Compute on-time rate
+    // Single pass over jobs above avoids a separate scan for every employee.
     for (const row of map.values()) {
-      const myDone = filteredJobs.filter((j) => j.assignee === row.name && isDoneStatus(j.status));
-      const onTime = myDone.filter((j) => j.deadline && j.completedAt && new Date(j.completedAt) <= new Date(j.deadline + "T23:59:59"));
-      row.onTimeRate = myDone.length > 0 ? Math.round((onTime.length / myDone.length) * 100) : 0;
+      row.onTimeRate = row.done > 0 ? Math.round((row.onTimeDone / row.done) * 100) : 0;
     }
     return Array.from(map.values()).sort((a, b) => b.assigned - a.assigned);
   }, [filteredJobs, s.people]);
