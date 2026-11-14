@@ -127,7 +127,9 @@ export async function answerAiSuviet(db:SupabaseClient, question:string,history:
       dataSources.push({kind:'base',title:row.title,href:row.source_url,snippet:row.summary});
     }
   }
-  const term=docSearchTerm(question,guides[0]);
+  // Knowledge files can teach NEW modules without a code change, provided
+  // the admin named the guide after the feature and shared it with staff.
+  const term=guides[0] ? docSearchTerm(question,guides[0]) : (features[0]?.label || docSearchTerm(question));
   const {data:docs,error:docError}=await db.rpc('ai_sv_knowledge_search',{p_query:term,p_limit:6});
   if(docError)console.warn('AI knowledge search unavailable:',docError.code);
   for(const doc of (docs??[]) as DocRow[]){
@@ -141,7 +143,7 @@ export async function answerAiSuviet(db:SupabaseClient, question:string,history:
     const playful=playfulFallback(question);
     if(autoFeatures.length && !guides.length){
       return {mode:'guide',answer:generalInventory
-        ? 'Các mục Base mình tìm thấy trong quyền của bạn:\\n'+autoFeatures.map(f=>'• '+f.description).join('\\n')+'\\n\\nBạn hỏi tên mục cụ thể để Chipi chỉ đường nhé.'
+        ? 'Một số mục Base có trong quyền của bạn:\\n'+autoFeatures.map(f=>'• '+f.description).join('\\n')+'\\n\\nBạn hỏi tên mục cụ thể để Chipi chỉ đường nhé.'
         : baseFeatureHelp(autoFeatures[0]),sources};
     }
     if(playful)return {mode:'guide',answer:playful,sources:[]};
