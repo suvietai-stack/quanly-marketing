@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Switch } from "@/components/ui/switch";
 import { CHIPI_SIZES, CHIPI_CHAT_LINES, validChipiSize, chipiGreeting, chipiGreetingPose, chipiChatDelay, nextChipiLine, type ChipiSize } from "@/lib/chipiChat";
 import { ChipiNoticeIcon } from "@/components/ChipiNoticeIcon";
+import { ChipiAiPanel } from "@/components/ai/ChipiAiPanel";
 import { Button } from "@/components/ui/button";
 import { NotificationBell, notificationText } from "@/components/ZaloUi";
 import { chipiAssets } from "@/assets/chipi/states";
@@ -22,6 +23,7 @@ export function ChipiAssistant({ userId }: { userId: string }) {
   const [chat, setChat] = useState<string>();
   const [chatPose, setChatPose] = useState<ChipiDecoration>("thankyou");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const lastLine = useRef(-1);
   const lastActive = useRef(0);
   const chatTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -138,16 +140,24 @@ export function ChipiAssistant({ userId }: { userId: string }) {
   const state = chipiDisplayState(business, chat ? chatPose : !chatEnabled ? "quiet" : decoration);
   return (
     <div className={`chipi-assistant chipi-size-${size} ${mode === "small" ? "chipi-small" : ""}`} data-state={state}>
+      <ChipiAiPanel open={aiOpen} onOpenChange={setAiOpen} />
       {chat && business === "idle" && mode === "full" && <div className="chipi-bubble p-4" role="status"><div className="flex items-start gap-2"><Smile className="h-4 w-4 text-chipi-orange shrink-0 mt-0.5" /><p className="text-sm flex-1">{chat}</p><Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" aria-label="Đóng lời chào Chipi" onClick={() => setChat(undefined)}><X /></Button></div></div>}
       {bubble && mode === "full" && notice && <div className="chipi-bubble p-4" role="status">
         <div className="flex items-start gap-2.5"><span className="chipi-notice-icon"><ChipiNoticeIcon kind={notice.kind} className="h-4 w-4" /></span><div className="min-w-0 flex-1"><p className="text-sm font-semibold break-words">{notificationText(notice)}</p><p className="text-xs text-muted-foreground mt-1.5">Chipi nhắc bạn kiểm tra nhé!</p></div><Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 -mr-1 -mt-1" aria-label="Đóng lời nhắc Chipi" onClick={() => setBubble(false)}><X /></Button></div>
       </div>}
       <div className="chipi-tools flex justify-end gap-1">
-        <Popover open={settingsOpen} onOpenChange={setSettingsOpen}><PopoverTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7 bg-background/90" title="Cài đặt Chipi" aria-label="Cài đặt Chipi"><Settings2 /></Button></PopoverTrigger><PopoverContent align="end" collisionPadding={12} className="w-72 max-w-[calc(100vw-24px)] space-y-4"><h3 className="font-semibold text-sm">Cài đặt Chipi</h3><div><p className="text-xs text-muted-foreground mb-2">Kích thước máy tính</p><div className="grid grid-cols-2 gap-2">{CHIPI_SIZES.map((value, index) => <Button key={value} size="sm" variant={size === value ? "default" : "outline"} onClick={() => setSize(value)} aria-pressed={size === value}>{["Nhỏ", "Vừa", "Lớn", "Rất lớn"][index]} · {value}px</Button>)}</div></div><div className="flex items-center justify-between gap-3"><label htmlFor={`chipi-chat-${userId}`} className="text-sm">Chipi trò chuyện vui</label><Switch id={`chipi-chat-${userId}`} checked={chatEnabled} onCheckedChange={setChatEnabled} /></div>{!chatEnabled && <p className="text-xs text-muted-foreground">Yên tĩnh · chỉ thông báo công việc</p>}</PopoverContent></Popover>
+        <NotificationBell onNotifications={onNotifications} />
+        <Popover open={settingsOpen} onOpenChange={setSettingsOpen}><PopoverTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7 bg-background/90" title="Cài đặt Chipi" aria-label="Cài đặt Chipi"><Settings2 /></Button></PopoverTrigger><PopoverContent align="end" collisionPadding={12} className="w-72 max-w-[calc(100vw-24px)] space-y-4"><h3 className="font-semibold text-sm">Cài đặt Chipi · AI Sứ Việt</h3><div><p className="text-xs text-muted-foreground mb-2">Kích thước máy tính</p><div className="grid grid-cols-2 gap-2">{CHIPI_SIZES.map((value, index) => <Button key={value} size="sm" variant={size === value ? "default" : "outline"} onClick={() => setSize(value)} aria-pressed={size === value}>{["Nhỏ", "Vừa", "Lớn", "Rất lớn"][index]} · {value}px</Button>)}</div></div><div className="flex items-center justify-between gap-3"><label htmlFor={`chipi-chat-${userId}`} className="text-sm">Lời chào vui tự động</label><Switch id={`chipi-chat-${userId}`} checked={chatEnabled} onCheckedChange={setChatEnabled} /></div>{!chatEnabled && <p className="text-xs text-muted-foreground">Yên tĩnh · chỉ thông báo công việc</p>}</PopoverContent></Popover>
         <Button size="icon" variant="ghost" className="h-7 w-7 bg-background/90" title={mode === "small" ? "Mở rộng Chipi" : "Thu nhỏ Chipi"} aria-label={mode === "small" ? "Mở rộng Chipi" : "Thu nhỏ Chipi"} onClick={() => { setMode(mode === "small" ? "full" : "small"); setBubble(false); }}>{mode === "small" ? <ChevronUp /> : <ChevronDown />}</Button>
         <Button size="icon" variant="ghost" className="h-7 w-7 bg-background/90" title="Ẩn Chipi trong phiên này" aria-label="Ẩn Chipi" onClick={() => { setMode("hidden"); setBubble(false); }}><EyeOff /></Button>
       </div>
-      <NotificationBell onNotifications={onNotifications} trigger={<span onClick={() => { setBubble(false); if (business === "idle" && chatEnabled && canChat()) { lastLine.current = nextChipiLine(lastLine.current, Math.random()); say(CHIPI_CHAT_LINES[lastLine.current] ?? CHIPI_CHAT_LINES[0]); } }} className={bubble ? "chipi-art chipi-bounce" : "chipi-art"}><span className={decoration ? "chipi-pose chipi-play" : "chipi-pose"}><img key={state} src={chipiAssets[state].url} alt="Chipi Sứ Việt" width={size} height={size} draggable={false} /></span></span>} />
+      <button type="button" className="chipi-trigger relative h-auto border-0 bg-transparent p-0 hover:bg-transparent" title="Hỏi AI Sứ Việt" aria-label="Mở trợ lý AI Sứ Việt" onClick={() => {setBubble(false);setAiOpen(true);setChat(undefined);}}>
+        <span className={bubble ? "chipi-art chipi-bounce" : "chipi-art"}>
+          <span className={decoration ? "chipi-pose chipi-play" : "chipi-pose"}>
+            <img key={state} src={chipiAssets[state].url} alt="Chipi · AI Sứ Việt" width={size} height={size} draggable={false}/>
+          </span>
+        </span>
+      </button>
     </div>
   );
 }
