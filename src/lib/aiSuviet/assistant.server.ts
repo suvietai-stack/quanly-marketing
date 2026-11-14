@@ -58,11 +58,11 @@ function fromResponse(raw:unknown):string {
   if(r.output_text)return r.output_text;
   return (r.output??[]).flatMap(o=>o.content??[]).filter(c=>c.type==='output_text'&&c.text).map(c=>c.text).join('\n').trim();
 }
-export async function callAiProvider(instructions:string,input:unknown,maxOutput=700):Promise<string|null> {
+export async function callAiProvider(instructions:string,input:unknown,maxOutput=700,timeoutMs=25_000):Promise<string|null> {
   const key=process.env.OPENAI_API_KEY?.trim();
   if(!key)return null;
   const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),25_000);
+  const timeout=setTimeout(()=>controller.abort(),timeoutMs);
   try{
     const response=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',signal:controller.signal,
