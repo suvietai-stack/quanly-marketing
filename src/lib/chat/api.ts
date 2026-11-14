@@ -48,11 +48,11 @@ export async function openDirectChat(otherId:string): Promise<string> {
 export async function createChatGroup(title:string,memberIds:string[]): Promise<string> {
   return unwrap(await db.rpc('sv_chat_create_group',{p_title:title.trim(),p_users:memberIds})) as string;
 }
-export async function chatMessages(threadId:string): Promise<ChatMessage[]> {
+export async function chatMessages(threadId:string,limit=60): Promise<ChatMessage[]> {
   const result = await db.from('sv_chat_messages')
     .select('id,thread_id,sender_id,body,attachment_path,attachment_name,attachment_mime,attachment_size,recalled_at,created_at')
     .eq('thread_id',threadId).order('created_at',{ascending:false})
-    .order('id',{ascending:false}).limit(60);
+    .order('id',{ascending:false}).limit(limit);
   const data = unwrap(result) as ChatMessage[];
   return data.reverse();
 }
