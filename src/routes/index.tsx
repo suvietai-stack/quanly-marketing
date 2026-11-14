@@ -342,6 +342,7 @@ function MineOverview() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
+  const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const filterWork = (list: WorkItem[]) => {
     const q = taskSearch.trim().toLocaleLowerCase("vi");
     return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
@@ -359,7 +360,7 @@ function MineOverview() {
 
   return (
     <div className="flex min-w-0 flex-col gap-5 md:gap-8">
-      <section className="order-1"><Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" aria-label="Đang mở báo cáo cá nhân"/>}><PersonalPerformance /></Suspense></section>
+      <section className="order-1">{(items.toReview.length>0||items.needsFix.length>0)&&<div className="mb-4 flex flex-wrap gap-2">{items.toReview.length>0&&<Button variant="outline" className="min-h-11 rounded-xl border-violet-200 text-violet-700 dark:border-violet-900 dark:text-violet-300" onClick={()=>go("review")}><ClipboardCheck className="h-4 w-4"/>Chờ tôi duyệt · {items.toReview.length}</Button>}{items.needsFix.length>0&&<Button variant="outline" className="min-h-11 rounded-xl border-amber-200 text-amber-800 dark:border-amber-900 dark:text-amber-300" onClick={()=>go("fix")}><FileEdit className="h-4 w-4"/>Cần sửa · {items.needsFix.length}</Button>}</div>}<Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" aria-label="Đang mở báo cáo cá nhân"/>}><PersonalPerformance /></Suspense></section>
 
       <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
         <div className="mb-3 flex items-center justify-between gap-2">
