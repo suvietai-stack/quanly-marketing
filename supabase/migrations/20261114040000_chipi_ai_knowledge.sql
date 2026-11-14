@@ -125,3 +125,26 @@ SELECT m.* FROM matches m ORDER BY m.last_updated DESC NULLS LAST
 $$;
 REVOKE ALL ON FUNCTION public.ai_sv_base_search(text,text,int) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.ai_sv_base_search(text,text,int) TO authenticated;
+
+-- Search only the document text the caller is allowed to see.
+-- Return a small excerpt, never send the entire private file to a model.
+CREATE OR REPLACE FUNCTION public.ai_sv_knowledge_search(p_query text DEFAULT '',p_limit int DEFAULT 6)
+RETURNS TABLE(id uuid,title text,excerpt text,updated_at timestamptz)
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path=''
+AS $$
+ SELECT d.id,d.title,
+  substring(d.content FROM greatest(1,CASE
+    WHEN p_query IS NULL OR btrim(p_query)='' THEN 1
+    ELSE position(lower(left(btrim(p_query),80)) IN lower(d.content))-200 END) FOR 1600),
+  d.updated_at
+ FROM public.ai_sv_documents d
+ WHERE d.status='ready' AND (
+   p_query IS NULL OR btrim(p_query)='' OR
+   d.title ILIKE '%'||left(btrim(p_query),80)||'%' OR
+   d.content ILIKE '%'||left(btrim(p_query),80)||'%')
+ ORDER BY (CASE WHEN d.title ILIKE '%'||left(btrim(coalesce(p_query,'')),80)||'%' THEN 0 ELSE 1 END),
+ d.updated_at DESC
+ LIMIT least(12,greatest(1,coalesce(p_limit,6)));
+$$;
+REVOKE ALL ON FUNCTION public.ai_sv_knowledge_search(text,int) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.ai_sv_knowledge_search(text,int) TO authenticated;
