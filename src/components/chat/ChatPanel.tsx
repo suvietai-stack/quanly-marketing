@@ -12,13 +12,12 @@ import {
 import {
   Users, UserRound, MessagesSquare, Search, Plus, ArrowLeft, Send, Paperclip,
   X, LoaderCircle, CheckCheck, FileText, Image, Download, RotateCcw, ShieldCheck,
-  ChevronDown, HeartHandshake,
+  ChevronDown, HeartHandshake, Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 
 function errorText(e:unknown) {return e instanceof Error?e.message:'Không kết nối được, hãy thử lại.';}
 function initials(s:string) {return s.trim().split(/\s+/).slice(-2).map(p=>p.charAt(0).toUpperCase()).join('')||'SV';}
@@ -124,7 +123,7 @@ function ChatCreate({ me, people, close, openThread }: {
         if(!group){void openOne(p.id);return;}
         setChosen(prev=>prev.includes(p.id)?prev.filter(id=>id!==p.id):[...prev,p.id]);
       }} className="flex min-h-12 w-full items-center gap-2.5 rounded-xl px-2 text-left hover:bg-muted">
-        {group?<Checkbox checked={chosen.includes(p.id)} aria-label={`Chọn ${p.full_name}`}/>:<ChatAvatar name={p.full_name}/>}
+        {group?<span aria-hidden="true" className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${chosen.includes(p.id)?'border-blue-600 bg-blue-600 text-white':'border-muted-foreground/30'}`}>{chosen.includes(p.id)&&<Check className="h-4 w-4"/>}</span>:<ChatAvatar name={p.full_name}/>}
         <span className="min-w-0 flex-1 truncate text-sm">{p.full_name}</span>
       </button>)}
       {!filtered.length && <p className="p-4 text-center text-xs text-muted-foreground">Không có đồng nghiệp phù hợp.</p>}
