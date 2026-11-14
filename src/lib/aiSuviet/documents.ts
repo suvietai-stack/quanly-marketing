@@ -88,7 +88,7 @@ export async function uploadKnowledgeDocument(file:File,title:string,uid:string)
   if(!mime)throw new Error('Định dạng file không hỗ trợ.');
   if(title.trim().length<2||title.trim().length>180)throw new Error('Tên tài liệu cần 2–180 ký tự.');
   const content=await extractKnowledgeText(file);
-  const extension=(file.name.toLowerCase().match(/\\.[a-z0-9]{2,5}$/)?.[0]||'.txt');
+  const extension=(file.name.toLowerCase().match(/\.[a-z0-9]{2,5}$/)?.[0]||'.txt');
   const path=`${uid}/${crypto.randomUUID()}${extension}`;
   const {error:uploadError}=await supabase.storage.from(AI_KNOWLEDGE_BUCKET).upload(path,file,{upsert:false,contentType:mime});
   if(uploadError)throw new Error(uploadError.message);
