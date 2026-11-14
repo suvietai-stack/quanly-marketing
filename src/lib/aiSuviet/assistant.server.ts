@@ -1,3 +1,5 @@
+import { readRecordContext } from './recordContext.server';
+import type { RecordContext } from './recordContext';
 import { providerKey } from './providerKey.server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { guideFallback, relevantBaseGuides, type BaseGuide } from './guides';
@@ -86,11 +88,15 @@ export async function callAiProvider(instructions:string,input:unknown,maxOutput
     return value.slice(0,5500);
   }finally{clearTimeout(timeout);}
 }
-export async function answerAiSuviet(db:SupabaseClient, question:string,history:AiHistory[]):Promise<AiReply>{
+export async function answerAiSuviet(db:SupabaseClient, question:string,history:AiHistory[],recordContext?:RecordContext):Promise<AiReply>{
   const guides=relevantBaseGuides(question,2);
   const procedural=likelyGuide(question);
   const dataSources:AiSource[]=[];
   const sourceLines:string[]=[];
+  const opened=recordContext?await readRecordContext(db,recordContext):null;
+  const key=await providerKey();
+  if(opened&&!key)return {mode:'guide',answer:opened.text,sources:[{kind:'base',title:opened.title,href:opened.href}]};
+  if(opened){dataSources.push({kind:'base',title:opened.title,href:opened.href});sourceLines.push('[HỒ SƠ ĐANG MỞ, ĐÃ ĐỌC LẠI THEO QUYỀN] '+opened.text);}
   // Discover navigation from the live Base sidebar source of truth on each
   // request. New releases automatically enter the catalogue without new
   // assistant prompt edits. Filter using the caller's effective permissions.
@@ -138,7 +144,6 @@ export async function answerAiSuviet(db:SupabaseClient, question:string,history:
     dataSources.push({kind:'document',title:doc.title,href:`/ai-knowledge?doc=${doc.id}`,snippet:doc.excerpt.slice(0,160)});
   }
   const sources=dataSources.slice(0,12);
-  const key=await providerKey();
   if(!key){
     if(guides[0]&&procedural)return {mode:'guide',answer:guideFallback(guides[0]),sources};
     const playful=playfulFallback(question);
@@ -166,6 +171,7 @@ QUAN TRỌNG:
 - Khi người hỏi muốn hướng dẫn thao tác mà nguồn chỉ có tên/vị trí chức năng, hãy nói rõ mới biết chức năng nằm ở đâu và cần tài liệu hướng dẫn để mô tả chi tiết.
 - Nếu có hướng dẫn thực tế: trả lời 3–5 bước ngắn gọn và chỉ rõ đường đi (menu/đường dẫn) theo hướng dẫn nguồn.
 - Người dùng có quyền xem các nguồn này theo RLS; không suy luận dữ liệu ngoài nguồn hoặc hỏi thông tin nhạy cảm.
+- Nếu có [HỒ SƠ ĐANG MỞ], ưu tiên trạng thái và người xử lý trong hồ sơ đó khi trả lời về hồ sơ này. Không ghép hồ sơ khác vào; không suy ra quyền thao tác của người hỏi chỉ từ tên người phụ trách.
 - Không phê duyệt, tạo, sửa, xóa, gửi tin hay thay đổi dữ liệu; chỉ hướng dẫn.
 - Không viết URL tưởng tượng, không tự nhận đã kiểm tra dữ liệu nếu nguồn vắng.
 - Với chuyện vui, có thể trò chuyện thân tình không cần nguồn; không đưa số liệu hay kiến thức bên ngoài như sự kiện có thật.

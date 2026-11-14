@@ -1,3 +1,4 @@
+import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { Phone, Plus, Search, RotateCcw, MessageCircle, PencilLine, SlidersHorizontal, AlertTriangle } from "lucide-react";
@@ -643,6 +644,7 @@ function Pick({ value, onChange, opts }: { value?: string; onChange: (v: string)
 }
 
 function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDeleted?: () => void }) {
+  useRegisterAiRecord('signal',s.id);
   const p = useSignalPerms();
   const name = useUserName();
   const qc = useQueryClient();
@@ -741,6 +743,7 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
 
   return (
     <div className="flex flex-col min-h-full">
+      <div className="px-4 pt-4 pr-12"><Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Chipi về hồ sơ này</Button></div>
       <div className="p-4 border-b space-y-2">
         <div className="flex items-start justify-between gap-2 pr-8">
           <h2 className="text-lg font-semibold leading-tight">{s.customer_name}</h2>
@@ -1015,6 +1018,7 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
     </div>
   );
 }
+
 
 
 

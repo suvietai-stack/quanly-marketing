@@ -1,3 +1,4 @@
+import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, FileText, Paperclip, Trash2, ArrowUp, ArrowDown, X } from "lucide-react";
@@ -447,6 +448,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   id: string; kind: FrKind; uid: string; canPay: boolean; canDeduct: boolean; isSuperAdmin: boolean;
   onClose: () => void; onChanged: () => void; onEdit: (r: FrRequest) => void; canDecidePerm: (perm: string) => boolean;
 }) {
+  useRegisterAiRecord('finance',id);
   const detail = useQuery({ queryKey: ["fr", "detail", id], queryFn: () => frApi.detail(id) });
   const steps = useQuery({ queryKey: ["fr", "steps", id], queryFn: () => frApi.steps(id) });
   const events = useQuery({ queryKey: ["fr", "events", id], queryFn: () => frApi.events(id) });
@@ -495,6 +497,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
           </SheetTitle>
         </SheetHeader>
         <div className="space-y-4 py-4">
+          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Chipi về hồ sơ này</Button>
           <div className="rounded-lg border p-3 space-y-2">
             <div className="text-2xl font-bold">{vnd(r.amount)}</div>
             <div className="font-medium">{r.title}</div>
@@ -1023,4 +1026,5 @@ function LineCatalogManager() {
     </div>
   );
 }
+
 

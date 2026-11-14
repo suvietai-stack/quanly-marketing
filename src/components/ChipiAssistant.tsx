@@ -24,6 +24,11 @@ export function ChipiAssistant({ userId }: { userId: string }) {
   const [chatPose, setChatPose] = useState<ChipiDecoration>("thankyou");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+  useEffect(() => {
+    const show = () => setAiOpen(true);
+    window.addEventListener("suviet-ai-open", show);
+    return () => window.removeEventListener("suviet-ai-open", show);
+  }, []);
   const lastLine = useRef(-1);
   const lastActive = useRef(0);
   const chatTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -136,7 +141,7 @@ export function ChipiAssistant({ userId }: { userId: string }) {
   }, []);
 
   if (!ready) return null;
-  if (mode === "hidden") return <div className="chipi-assistant chipi-hidden"><Button variant="outline" size="icon" title="Hiện Chipi" aria-label="Hiện Chipi" onClick={() => setMode("small")}><ChevronUp /></Button></div>;
+  if (mode === "hidden") return <><ChipiAiPanel open={aiOpen} onOpenChange={setAiOpen} /><div className="chipi-assistant chipi-hidden"><Button variant="outline" size="icon" title="Hiện Chipi" aria-label="Hiện Chipi" onClick={() => setMode("small")}><ChevronUp /></Button></div></>;
   const state = chipiDisplayState(business, chat ? chatPose : !chatEnabled ? "quiet" : decoration);
   return (
     <div className={`chipi-assistant chipi-size-${size} ${mode === "small" ? "chipi-small" : ""}`} data-state={state}>

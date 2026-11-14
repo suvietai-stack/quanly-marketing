@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 const questionSchema=z.object({
  question:z.string().trim().min(1).max(900),
+ context:z.object({kind:z.enum(['design','signal','finance']),id:z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/)}).optional(),
  history:z.array(z.object({
    role:z.enum(['user','assistant']),content:z.string().max(1500),
  })).max(8).default([]),
@@ -17,7 +18,7 @@ export const askAiSuviet=createServerFn({method:'POST'})
    const {data:active,error}=await db.rpc('community_active');
    if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được hỏi AI.');
    const {answerAiSuviet}=await import('./assistant.server');
-   return answerAiSuviet(db,data.question,data.history);
+   return answerAiSuviet(db,data.question,data.context?[]:data.history,data.context);
  });
 
 export const extractAiPdf=createServerFn({method:'POST'})

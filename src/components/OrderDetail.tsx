@@ -1,3 +1,4 @@
+import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useState } from "react";
 import { useStore, fmtDate, type DesignOrder, type OrderStatus, type OrderHistoryEntry, ORDER_STATUSES, ORDER_TYPES, ORDER_SOURCES, ORDER_PRIORITIES } from "@/lib/store";
 import { useCurrentUser, type PermissionKey } from "@/lib/auth";
@@ -21,6 +22,7 @@ import { DesignJobChat, DesignJobChatTab } from '@/components/design/DesignJobCh
 import {validDocumentUrl} from '@/lib/orders/catalogs';
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
+  useRegisterAiRecord('design',open?orderId:null);
   const s = useStore();
   const { user, can, isAdmin } = useCurrentUser();
   const found = orderId ? s.orders.find((o) => o.id === orderId) : null;
@@ -238,6 +240,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
           </div>
         </DialogHeader>
 
+        <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Chipi về hồ sơ này</Button>
         <DesignWorkflowSummary order={order} />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
@@ -446,4 +449,5 @@ function PersonSelect({ label, value, onChange, disabled }: { label: string; val
     </div>
   );
 }
+
 
