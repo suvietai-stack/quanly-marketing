@@ -99,5 +99,5 @@ export function relevantBaseGuides(question:string,limit=3):BaseGuide[]{
   }).filter(x=>x.score>=2).sort((a,b)=>b.score-a.score).slice(0,limit).map(x=>x.g);
 }
 export function guideFallback(guide:BaseGuide):string{
-  return `**${guide.title}**\n${guide.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}${guide.note?'\n\nLưu ý: '+guide.note:''}`;
+  return `${guide.title}\n${guide.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}${guide.note?'\n\nLưu ý: '+guide.note:''}`;
 }
