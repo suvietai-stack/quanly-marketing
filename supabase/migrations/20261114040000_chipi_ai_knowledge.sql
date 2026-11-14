@@ -148,3 +148,30 @@ AS $$
 $$;
 REVOKE ALL ON FUNCTION public.ai_sv_knowledge_search(text,int) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.ai_sv_knowledge_search(text,int) TO authenticated;
+
+-- Server-only message-rate limit (no client writes or reads).
+CREATE TABLE IF NOT EXISTS public.ai_sv_usage (
+ user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+ hour_start timestamptz NOT NULL,
+ request_count integer NOT NULL DEFAULT 0,
+ PRIMARY KEY(user_id,hour_start)
+);
+ALTER TABLE public.ai_sv_usage ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.ai_sv_usage FROM PUBLIC,anon,authenticated;
+CREATE OR REPLACE FUNCTION public.ai_sv_reserve_question()
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $$
+DECLARE count_ integer; h timestamptz:=date_trunc('hour',now());
+BEGIN
+ IF NOT public.community_active() THEN RETURN false; END IF;
+ INSERT INTO public.ai_sv_usage(user_id,hour_start,request_count)
+ VALUES(auth.uid(),h,1)
+ ON CONFLICT(user_id,hour_start)
+ DO UPDATE SET request_count=public.ai_sv_usage.request_count+1
+ WHERE public.ai_sv_usage.request_count<30
+ RETURNING request_count INTO count_;
+ RETURN count_ IS NOT NULL;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.ai_sv_reserve_question() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.ai_sv_reserve_question() TO authenticated;
