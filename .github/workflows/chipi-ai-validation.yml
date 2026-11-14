@@ -24,7 +24,7 @@ jobs:
       - name: Dependencies
         run: bun install --frozen-lockfile
       - name: Workflow guidance tests
-        run: bunx vitest run src/lib/aiSuviet/guides.test.ts
+        run: bunx vitest run src/lib/aiSuviet/guides.test.ts src/lib/aiSuviet/featureDiscovery.test.ts
       - name: Vite production build
         run: bun run build
       - name: TypeScript
