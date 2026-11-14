@@ -17,6 +17,7 @@ import { designCan, designLabel, DESIGN_FLOWS } from '@/lib/orders/design';
 import { DesignWorkflowSummary } from './DesignWorkflowSummary';
 import {DesignClassification} from './DesignClassification';
 import {DesignAttachments} from './DesignAttachments';
+import { DesignJobChat, DesignJobChatTab } from '@/components/design/DesignJobChat';
 import {validDocumentUrl} from '@/lib/orders/catalogs';
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -239,10 +240,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
         <DesignWorkflowSummary order={order} />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="info">Thông tin</TabsTrigger>
-            <TabsTrigger value="workflow">Xử lý công việc</TabsTrigger>
-            <TabsTrigger value="history">Lịch sử ({order.history?.length || 0})</TabsTrigger>
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
+            <TabsTrigger value="info" className="min-h-10 text-xs sm:text-sm">Thông tin</TabsTrigger>
+            <TabsTrigger value="workflow" className="min-h-10 text-xs sm:text-sm">Xử lý công việc</TabsTrigger>
+            <DesignJobChatTab jobId={order.id} active={open} />
+            <TabsTrigger value="history" className="min-h-10 text-xs sm:text-sm">Lịch sử ({order.history?.length || 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
@@ -392,6 +394,10 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 </div>
               )}
             </CardContent></Card>
+          </TabsContent>
+
+          <TabsContent value="job-chat" className="mt-4">
+            <DesignJobChat key={order.id} jobId={order.id}/>
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">
