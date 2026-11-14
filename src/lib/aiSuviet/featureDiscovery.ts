@@ -55,5 +55,5 @@ export function findBaseFeatures(question:string,catalogue:BaseFeature[],limit=6
     .slice(0,limit).map(x=>x.feature);
 }
 export function baseFeatureHelp(feature:BaseFeature):string{
-  return `Mình thấy mục **${feature.label}** nằm ở **${feature.description}**. Bạn có thể mở mục đó tại ${feature.path}. Hiện Chipi mới xác nhận được vị trí chức năng này, chưa có tài liệu đủ chi tiết để hướng dẫn chính xác từng nút. Bạn có thể nhờ quản trị bổ sung hướng dẫn vào Kho kiến thức AI nhé.`;
+  return `Mình thấy mục “${feature.label}” nằm ở ${feature.description}. Bạn có thể mở mục đó tại ${feature.path}. Hiện Chipi mới xác nhận được vị trí chức năng này, chưa có tài liệu đủ chi tiết để hướng dẫn chính xác từng nút. Bạn có thể nhờ quản trị bổ sung hướng dẫn vào Kho kiến thức AI nhé.`;
 }
