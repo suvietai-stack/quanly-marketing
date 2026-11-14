@@ -5,13 +5,13 @@ import { Heart, MessageCircle, ImagePlus, Send, Pin, Trash2, Pencil, X, Play, Us
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth, useCurrentUser } from '@/lib/auth';
+import { useCurrentUser } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import {
   COMMUNITY_BUCKET, type CommunityPost, type CommunityMedia,
   listCommunityPosts, listCommunityComments, addCommunityComment, deleteCommunityComment,
   toggleCommunityLike, editCommunityPost, pinCommunityPost, validateCommunityFiles,
-  createCommunityPost, deleteCommunityPost,
+  createCommunityPost, deleteCommunityPost, listCommunityMemberNames,
 } from '@/lib/community/api';
 
 function shortTime(iso: string) {
@@ -226,15 +226,22 @@ function CommunityPostCard({ post, meId, moderator, nameOf, onChange }: {
 
 export function CommunityFeed({ mineOnly = false }: { mineOnly?: boolean }) {
   const { user, isSuperAdmin } = useCurrentUser();
-  const roster = useAuth(s => s.users);
   const cache = useQueryClient();
   const uid = user?.id ?? '';
-  const names = useMemo(()=>new Map(roster.map(p => [p.id,p.fullName])),[roster]);
-  const nameOf = (id:string) => names.get(id) || 'Thành viên Sứ Việt';
+  const active = !!uid && user?.status === 'Đang hoạt động';
+  const members = useQuery({
+    queryKey: ['community','names',uid],
+    queryFn: listCommunityMemberNames,
+    enabled: active,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const names = useMemo(()=>new Map((members.data ?? []).map(p => [p.id,p.full_name])),[members.data]);
+  const nameOf = (id:string) => names.get(id) || (id === uid ? user?.fullName || 'Tôi' : 'Thành viên Sứ Việt');
   const feed = useInfiniteQuery({
     queryKey: ['community','posts',uid,mineOnly?'mine':'all'],
     initialPageParam: 0,
-    enabled: !!uid && user?.status === 'Đang hoạt động',
+    enabled: active,
     queryFn: ({pageParam}) => listCommunityPosts(pageParam,mineOnly?uid:undefined),
     getNextPageParam: (last,page) => last.length===10 ? page.length : undefined,
     staleTime: 30_000,
@@ -242,6 +249,8 @@ export function CommunityFeed({ mineOnly = false }: { mineOnly?: boolean }) {
   });
   const posts = feed.data?.pages.flat() ?? [];
   const refresh = () => void cache.invalidateQueries({ queryKey:['community'] });
+
+  if (!active) return <div role="alert" className="mx-auto max-w-xl rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground">Chỉ nhân viên đang hoạt động được truy cập Cộng đồng Sứ Việt.</div>;
 
   return <div className="mx-auto w-full max-w-[720px] space-y-4 pb-8">
     {!mineOnly && <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#12355c] via-[#1a5279] to-[#237980] p-5 text-white shadow-sm">
