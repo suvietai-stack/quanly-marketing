@@ -1,0 +1,29 @@
+name: Job design chat validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/lib/designJobChat/**'
+      - 'src/components/design/DesignJobChat.tsx'
+      - 'src/components/OrderDetail.tsx'
+      - 'supabase/migrations/20261114030000_design_job_private_chat.sql'
+      - '.github/workflows/design-job-chat-validation.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Job chat tests
+        run: bunx vitest run src/lib/designJobChat/api.test.ts
+      - name: Production build
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit
