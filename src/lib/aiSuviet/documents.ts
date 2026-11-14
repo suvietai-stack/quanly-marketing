@@ -35,6 +35,7 @@ async function docxText(file:File):Promise<string>{
     const local=view.getUint32(offset+42,true);
     const name=decoder.decode(bytes.slice(offset+46,offset+46+nameLen));
     if(name==='word/document.xml'){
+      if(view.getUint32(offset+24,true)>2_000_000)throw new Error('Nội dung Word vượt giới hạn xử lý an toàn.');
       if(!has(local,0x04034b50))throw new Error('Không đọc được nội dung Word.');
       const start=local+30+view.getUint16(local+26,true)+view.getUint16(local+28,true);
       if(start+size>bytes.length)throw new Error('File Word bị lỗi.');
