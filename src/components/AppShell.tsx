@@ -15,6 +15,8 @@ import { visibleNavigation } from "@/lib/navigation";
 import { MobileLauncher } from '@/components/MobileLauncher';
 import { MobileAppChrome } from '@/components/MobileAppChrome';
 import { ChatShortcut } from '@/components/chat/ChatShortcut';
+import { ChatPanel } from '@/components/chat/ChatPanel';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from "@/components/ZaloUi";
 import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
@@ -36,6 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const launcher = mobile && path === '/' && search.view !== 'dashboard';
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
   const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id, staleTime: 60_000, refetchInterval: 120_000, retry: 1, refetchOnWindowFocus: false });
@@ -119,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {approvalBadge && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">{approvalBadge}</span>}
             </Link>
           </Button>
-        )}<ChatShortcut/><div className="hidden md:block"><NotificationBell /></div></>}
+        )}<ChatShortcut onClick={() => setChatOpen(true)}/><div className="hidden md:block"><NotificationBell /></div></>}
         <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => setCollapsed(v => !v)} title={mini ? 'Mở rộng menu' : 'Thu gọn menu'} aria-label={mini ? 'Mở rộng menu' : 'Thu gọn menu'}>{mini ? <PanelLeftOpen /> : <PanelLeftClose />}</Button>
       </div>
     </aside>
@@ -145,6 +148,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         {user && <AccessSyncNotice />}
         {user && <ChipiAssistant key={user.id} userId={user.id} />}
         {user && <RewardPopup key={`sao-${user.id}`} userId={user.id} />}
+        <Sheet open={chatOpen} onOpenChange={setChatOpen}>
+          <SheetContent side="right" className="flex h-full w-[min(94vw,480px)] flex-col gap-3 overflow-y-auto p-3 sm:max-w-[480px]">
+            <SheetHeader className="pr-10 text-left">
+              <SheetTitle>Sứ Việt Chat</SheetTitle>
+              <SheetDescription>Nhắn tin nhanh mà không rời công việc đang mở.</SheetDescription>
+            </SheetHeader>
+            {chatOpen && user && <ChatPanel compact />}
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
