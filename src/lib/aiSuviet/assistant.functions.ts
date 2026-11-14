@@ -95,11 +95,16 @@ export const testAiSuvietConnection=createServerFn({method:'POST'})
    const controller=new AbortController();
    const timeout=setTimeout(()=>controller.abort(),10000);
    try {
-     const response=await fetch(`https://api.openai.com/v1/models/${encodeURIComponent(model)}`,{
-       method:'GET',signal:controller.signal,
-       headers:{Authorization:`Bearer ${key}`},
+     const response=await fetch('https://api.openai.com/v1/responses',{
+       method:'POST',signal:controller.signal,
+       headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
+       body:JSON.stringify({model,input:'Trả lời một từ: OK',max_output_tokens:64,store:false}),
      });
-     if(response.ok)return {connected:true,message:`Kết nối OpenAI thành công. Model: ${model}.`};
+     if(response.ok){
+       const payload=await response.json() as {status?:string;output?:unknown[]};
+       if(payload.status==='failed')return {connected:false,message:'OpenAI đã nhận yêu cầu nhưng không thể tạo câu trả lời.'};
+       return {connected:true,message:`Đã gửi và nhận thành công yêu cầu thử qua OpenAI. Model: ${model}.`};
+     }
      if(response.status===401)return {connected:false,message:'API Key không hợp lệ hoặc đã bị thu hồi.'};
      if(response.status===403)return {connected:false,message:'Dự án API chưa có quyền sử dụng model đã cấu hình.'};
      if(response.status===404)return {connected:false,message:'Không tìm thấy model đã cấu hình. Hãy kiểm tra SUVIET_AI_MODEL.'};
