@@ -260,7 +260,7 @@ export function CommunityFeed({ mineOnly = false }: { mineOnly?: boolean }) {
       <div className="mt-3 flex items-center gap-2 text-[11px] text-white/85"><ShieldCheck className="h-4 w-4" />Bảng tin riêng tư, không công khai ra Internet.</div>
     </section>}
     {!mineOnly && !!uid && <CommunityComposer userId={uid} authorName={user?.fullName || 'Thành viên Sứ Việt'} onCreated={refresh} />}
-    {mineOnly && <div className="flex items-center justify-between gap-2"><h2 className="text-lg font-bold">Bài viết của tôi</h2><Button asChild variant="outline" className="min-h-11 rounded-xl"><Link to="/community">Đến cộng đồng</Link></Button></div>}
+    {mineOnly && <div className="flex items-center justify-between gap-2"><h2 className="text-lg font-bold">Bài viết của tôi</h2><Button asChild variant="outline" className="min-h-11 rounded-xl"><Link to="/community" search={{tab:"feed",thread:undefined}}>Đến cộng đồng</Link></Button></div>}
     {feed.isLoading && <div role="status" className="space-y-3"><div className="h-48 animate-pulse rounded-2xl bg-muted" /><div className="h-40 animate-pulse rounded-2xl bg-muted" /></div>}
     {feed.isError && <div role="alert" className="space-y-3 rounded-2xl border bg-card p-5 text-center"><p className="text-sm">Chưa tải được bảng tin nội bộ. Hãy kiểm tra kết nối.</p><Button variant="outline" type="button" onClick={()=>void feed.refetch()}>Thử lại</Button></div>}
     {feed.isSuccess && posts.length===0 && <div className="rounded-2xl border border-dashed bg-card p-8 text-center">

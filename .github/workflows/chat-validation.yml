@@ -1,0 +1,31 @@
+name: Sứ Việt Messenger validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/lib/chat/**'
+      - 'src/components/chat/**'
+      - 'src/components/MobileAppChrome.tsx'
+      - 'src/components/AppShell.tsx'
+      - 'src/routes/community.tsx'
+      - 'supabase/migrations/20261114020000_suviet_chat_private.sql'
+      - '.github/workflows/chat-validation.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Messaging file validation unit tests
+        run: bunx vitest run src/lib/chat/api.test.ts
+      - name: Production build and regenerate route types
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
