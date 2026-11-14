@@ -20,6 +20,23 @@ REVOKE ALL ON FUNCTION public.community_active() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.community_moderator() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.community_active(), public.community_moderator() TO authenticated;
 
+-- Limited employee directory for author names only; no email, phone, role,
+-- birthday or other HR fields are exposed to the community feature.
+CREATE OR REPLACE FUNCTION public.community_member_names()
+RETURNS TABLE(id uuid, full_name text)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = ''
+AS $
+BEGIN
+ IF NOT public.community_active() THEN
+   RAISE EXCEPTION 'Chỉ nhân viên đang hoạt động được xem danh bạ cộng đồng.';
+ END IF;
+ RETURN QUERY SELECT p.id,p.full_name::text FROM public.profiles p
+ WHERE p.status::text = 'Đang hoạt động' ORDER BY p.full_name;
+END;
+$;
+REVOKE ALL ON FUNCTION public.community_member_names() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.community_member_names() TO authenticated;
+
 CREATE TABLE IF NOT EXISTS public.community_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   author_id uuid NOT NULL DEFAULT auth.uid() REFERENCES public.profiles(id) ON DELETE CASCADE,
