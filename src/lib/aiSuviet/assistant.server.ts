@@ -143,7 +143,7 @@ export async function answerAiSuviet(db:SupabaseClient, question:string,history:
     const playful=playfulFallback(question);
     if(autoFeatures.length && !guides.length){
       return {mode:'guide',answer:generalInventory
-        ? 'Một số mục Base có trong quyền của bạn:\\n'+autoFeatures.map(f=>'• '+f.description).join('\\n')+'\\n\\nBạn hỏi tên mục cụ thể để Chipi chỉ đường nhé.'
+        ? 'Một số mục Base có trong quyền của bạn:\n'+autoFeatures.map(f=>'• '+f.description).join('\n')+'\n\nBạn hỏi tên mục cụ thể để Chipi chỉ đường nhé.'
         : baseFeatureHelp(autoFeatures[0]),sources};
     }
     if(playful)return {mode:'guide',answer:playful,sources:[]};
