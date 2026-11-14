@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
+import { useQuery } from '@tanstack/react-query';
 import { Bot, BookOpen, Database, Send, Sparkles, LoaderCircle, FileText, ArrowUpRight, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { askAiSuviet } from '@/lib/aiSuviet/assistant.functions';
+import { askAiSuviet, getAiSuvietAvailability } from '@/lib/aiSuviet/assistant.functions';
 import type { AiReply, AiSource } from '@/lib/aiSuviet/assistant.server';
+import { useCurrentUser } from '@/lib/auth';
 
 type Bubble={id:number;role:'user'|'assistant';text:string;sources?:AiSource[];mode?:AiReply['mode']};
 const sampleQuestions=[
@@ -20,6 +22,14 @@ function errorText(e:unknown){return e instanceof Error?e.message:'AI chưa tr�
 export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(open:boolean)=>void}){
   const mobile=useIsMobile();
   const ask=useServerFn(askAiSuviet);
+  const checkAvailability=useServerFn(getAiSuvietAvailability);
+  const {user}=useCurrentUser();
+  const availability=useQuery({
+    queryKey:['ai-suviet','availability',user?.id],
+    queryFn:()=>checkAvailability(),
+    enabled:open&&!!user?.id&&user?.status==='Đang hoạt động',
+    staleTime:60_000,refetchOnWindowFocus:true,retry:1,
+  });
   const [input,setInput]=useState('');
   const [messages,setMessages]=useState<Bubble[]>([]);
   const [busy,setBusy]=useState(false);
@@ -58,6 +68,8 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
       </SheetHeader>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/75 p-4 dark:bg-slate-950/70" aria-label="Lịch sử hỏi đáp AI" role="log">
         {messages.length===0&&<div className="space-y-4">
+          {availability.data?.available===false&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">Chipi đang ở chế độ hướng dẫn có sẵn. Bạn vẫn có thể hỏi cách dùng Base; phần hỏi đáp AI tự nhiên và đọc tài liệu chuyên sâu sẽ hoạt động sau khi quản trị viên kết nối OpenAI.</p>}
+          {availability.data?.available===true&&<p className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-xs leading-5 text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Máy chủ đã nhận cấu hình OpenAI. Chipi sẽ thử trả lời từ dữ liệu mà bạn được phép xem; quản trị viên có thể kiểm tra kết nối trong Kho kiến thức AI.</p>}
           <div className="rounded-2xl border bg-card p-4">
             <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-amber-500"/><strong className="text-sm">Xin chào! Chipi đây!</strong></div>
             <p className="mt-2 text-sm leading-6">Bạn muốn biết cách dùng Base, tìm thông tin công việc hay chỉ muốn tâm sự một chút? Cứ hỏi mình nhé. 🌼</p>
