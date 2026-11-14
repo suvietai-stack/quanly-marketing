@@ -2,12 +2,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { useRef, useState } from 'react';
-import { BookOpenText, UploadCloud, FileText, FileSpreadsheet, FileCheck2, LockKeyhole, Users, Trash2, LoaderCircle, FileSearch } from 'lucide-react';
+import { BookOpenText, UploadCloud, FileText, FileSpreadsheet, FileCheck2, LockKeyhole, Users, Trash2, LoaderCircle, FileSearch, PlugZap, ShieldCheck, CheckCircle2, CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCurrentUser } from '@/lib/auth';
-import { extractAiPdf } from '@/lib/aiSuviet/assistant.functions';
+import { extractAiPdf, getAiSuvietConfiguration, testAiSuvietConnection } from '@/lib/aiSuviet/assistant.functions';
 import { knowledgeDocuments, uploadKnowledgeDocument, removeKnowledgeDocument, setKnowledgeVisibility, type AiDocument } from '@/lib/aiSuviet/documents';
 
 export const Route=createFileRoute('/ai-knowledge')({
@@ -23,12 +23,34 @@ function KnowledgePage(){
   const uid=user?.id||'';
   const qc=useQueryClient();
   const pdfExtract=useServerFn(extractAiPdf);
+  const readConfiguration=useServerFn(getAiSuvietConfiguration);
+  const testConnection=useServerFn(testAiSuvietConnection);
+  const [testBusy,setTestBusy]=useState(false);
+  const [testMessage,setTestMessage]=useState('');
   const [file,setFile]=useState<File|null>(null);
   const [title,setTitle]=useState('');
   const [busy,setBusy]=useState(false);
   const [running,setRunning]=useState('');
   const [expanded,setExpanded]=useState<string|null>(focused??null);
   const picker=useRef<HTMLInputElement>(null);
+  const config=useQuery({
+    queryKey:['ai-suviet','configuration',uid],
+    queryFn:()=>readConfiguration(),
+    enabled:!!uid&&isSuperAdmin,
+    staleTime:30_000,retry:1,
+  });
+  const verifyConnection=async()=>{
+    if(testBusy)return;
+    setTestBusy(true);
+    try{
+      const result=await testConnection();
+      setTestMessage(result.message);
+      if(result.connected)toast.success('Kết nối OpenAI đã được xác nhận.');
+      else toast.error(result.message);
+      void config.refetch();
+    }catch(error){setTestMessage(err(error));toast.error(err(error));}
+    finally{setTestBusy(false);}
+  };
   const {data:docs=[],isLoading,isError,refetch}=useQuery({
     queryKey:['ai-suviet','documents',uid],queryFn:knowledgeDocuments,
     enabled:!!uid&&user?.status==='Đang hoạt động',staleTime:20_000,retry:1,
@@ -72,6 +94,31 @@ function KnowledgePage(){
       <h1 className="mt-2 text-xl font-bold">Kho kiến thức AI</h1>
       <p className="mt-1 text-sm leading-6 text-muted-foreground">Tài liệu hướng dẫn và quy trình để Chipi trả lời đúng thông tin. Tệp gốc luôn riêng tư; chỉ nội dung được quản trị viên chia sẻ mới được nhân viên dùng để hỏi đáp.</p>
     </header>
+    {isSuperAdmin&&<section className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm" aria-label="Trạng thái kết nối AI">
+      <div className="flex items-start gap-3">
+        <div className="rounded-xl bg-blue-50 p-2.5 text-blue-700 dark:bg-slate-800 dark:text-blue-200"><PlugZap className="h-5 w-5"/></div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold">Kết nối OpenAI</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Chỉ hiển thị trạng thái. API Key luôn nằm trên máy chủ, không lưu trên trình duyệt hay trong Base.</p>
+        </div>
+      </div>
+      {config.isLoading&&<p role="status" className="text-xs text-muted-foreground">Đang kiểm tra cấu hình máy chủ…</p>}
+      {config.isError&&<p role="alert" className="text-xs text-rose-600">Chưa đọc được cấu hình. Kiểm tra kết nối tài khoản quản trị.</p>}
+      {config.data&&<div className="flex flex-wrap items-center gap-2">
+        {config.data.configured
+          ? <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"><CheckCircle2 className="h-4 w-4"/>Đã nhận API Key — chưa xác minh kết nối</span>
+          : <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200"><CircleAlert className="h-4 w-4"/>Chưa thêm API Key</span>}
+        <span className="rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">Model: {config.data.model}</span>
+      </div>}
+      {!config.data?.configured&&<p className="text-sm leading-6 text-muted-foreground">Nền tảng đã sẵn sàng. Khi có khóa, thêm biến môi trường <code className="rounded bg-muted px-1 py-0.5 text-xs">OPENAI_API_KEY</code> tại máy chủ chạy Base; sau đó kiểm tra kết nối tại đây. Chưa có khóa, Chipi vẫn trả lời được các hướng dẫn quy trình có sẵn.</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" type="button" variant="outline" className="min-h-10 rounded-xl" onClick={()=>void verifyConnection()} disabled={!config.data?.configured||testBusy}>
+          {testBusy?<LoaderCircle className="h-4 w-4 animate-spin"/>:<ShieldCheck className="h-4 w-4"/>}Kiểm tra kết nối
+        </Button>
+        <Button type="button" variant="ghost" size="sm" className="min-h-10" onClick={()=>{setTestMessage('');void config.refetch();}}>Làm mới trạng thái</Button>
+      </div>
+      {!!testMessage&&<p role="status" className="rounded-xl bg-muted px-3 py-2 text-xs">{testMessage}</p>}
+    </section>}
     {isSuperAdmin&&<form onSubmit={e=>void upload(e)} className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm">
       <h2 className="text-base font-semibold">Tải tài liệu lên</h2>
       <p className="text-xs text-muted-foreground">Hỗ trợ PDF, Word DOCX, Excel XLS/XLSX, TXT, MD, CSV · tối đa 6 MB mỗi tệp. Tài liệu mặc định chỉ quản trị viên được xem.</p>
