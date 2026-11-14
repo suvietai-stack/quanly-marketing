@@ -1,4 +1,4 @@
-import { MessageCircleHeart, LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, MessageSquare, Package, type LucideIcon } from 'lucide-react';
+import { BookOpenText, MessageCircleHeart, LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, MessageSquare, Package, type LucideIcon } from 'lucide-react';
 import type { PermissionKey } from '@/lib/auth';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean; badge?: string; perm?: PermissionKey; anyPerm?: PermissionKey[]; kpi?: boolean; adminOnly?: boolean; comingSoon?: boolean };
@@ -69,6 +69,7 @@ export const navigationGroups: NavGroup[] = [
   ] },
   { label: "Hệ thống", icon: Settings, items: [
 { to: "/settings", label: "Cài Đặt", icon: Settings, perm: "settings.view" },
+    { to: "/ai-knowledge", label: "Kho kiến thức AI", icon: BookOpenText, adminOnly: true },
   ] },
 ];
 export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
@@ -83,7 +84,7 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
       (!it.anyPerm || (isSuperAdmin && it.to.startsWith('/biz')) ||
         (it.to === '/biz/approvals' && access.hasAssignedApprovals) ||
         (isKpiAdmin && it.kpi) || it.anyPerm.some(can)) &&
-      (!it.kpi || access.kpiEnabled) && (!it.adminOnly || (it.to === '/organization' ? isSuperAdmin : isKpiAdmin)))
+      (!it.kpi || access.kpiEnabled) && (!it.adminOnly || (it.to === '/organization' || it.to === '/ai-knowledge' ? isSuperAdmin : isKpiAdmin)))
       .map(it => it.to === '/settings/kpi-v2' && !access.isKpiManager ? { ...it, label: 'KPI của tôi' } : it)
       .map(it => it.to === '/settings' && access.canApprove && access.pendingCount > 0 ? { ...it, badge: `${access.pendingCount} chờ duyệt` } : it);
     return { ...group, items: items.length ? [...items, ...group.items.filter(it => it.comingSoon)] : [] };
