@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser } from '@/lib/auth';
+import { TabsTrigger } from '@/components/ui/tabs';
 import { listCommunityMemberNames } from '@/lib/community/api';
 import {
-  type JobChatMessage, checkJobChatFile, jobChatDownload,
+  type JobChatMessage, canAccessJobChat, checkJobChatFile, jobChatDownload,
   jobChatUnreadCount, listJobChatMessages, nextJobChatPage, markJobChatRead,
   sendJobChatMessage,
 } from '@/lib/designJobChat/api';
@@ -62,6 +63,24 @@ function JobChatFile({msg}:{msg:JobChatMessage}) {
       {busy?<LoaderCircle className="h-4 w-4 shrink-0 animate-spin"/>:<Download className="h-4 w-4 shrink-0"/>}
     </Button>
   </div>;
+}
+
+/** Only display the tab for people actually participating in this Job.
+ * Database RLS separately enforces this for every message and attachment. */
+export function DesignJobChatTab({jobId,active}:{jobId:string;active:boolean}) {
+  const {user}=useCurrentUser();
+  const uid=user?.id||'';
+  const access=useQuery({
+    queryKey:['design-job-chat','access',uid,jobId],
+    queryFn:()=>canAccessJobChat(jobId),
+    enabled:active&&!!uid&&user?.status==='Đang hoạt động',
+    staleTime:15_000,retry:1,
+  });
+  if(!access.data)return null;
+  return <TabsTrigger value="job-chat" className="min-h-10 gap-1 text-xs sm:text-sm">
+    <MessageCircle className="h-4 w-4 shrink-0"/>Trao đổi
+    <JobChatUnreadBadge jobId={jobId} active={active}/>
+  </TabsTrigger>;
 }
 
 /** Badge in the Job detail tab. No global polling, only while the Job modal is open. */
