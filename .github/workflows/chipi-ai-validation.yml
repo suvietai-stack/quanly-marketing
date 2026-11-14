@@ -1,0 +1,31 @@
+name: Chipi AI Sứ Việt validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/lib/aiSuviet/**'
+      - 'src/components/ai/**'
+      - 'src/components/ChipiAssistant.tsx'
+      - 'src/lib/navigation.ts'
+      - 'src/routes/ai-knowledge.tsx'
+      - 'supabase/migrations/20261114040000_chipi_ai_knowledge.sql'
+      - '.github/workflows/chipi-ai-validation.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - name: Dependencies
+        run: bun install --frozen-lockfile
+      - name: Workflow guidance tests
+        run: bunx vitest run src/lib/aiSuviet/guides.test.ts
+      - name: Vite production build
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
