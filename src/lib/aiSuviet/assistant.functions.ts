@@ -56,6 +56,17 @@ export const extractAiPdf=createServerFn({method:'POST'})
  });
 
 
+/** Employee-visible mode indicator, checked only when the Chipi panel opens.
+ * Never sends API Key, model credentials or private files to the browser. */
+export const getAiSuvietAvailability=createServerFn({method:'GET'})
+ .middleware([requireSupabaseAuth])
+ .handler(async({context})=>{
+   const db=context.supabase as unknown as SupabaseClient;
+   const {data:active,error}=await db.rpc('community_active');
+   if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được sử dụng Chipi.');
+   return {available:Boolean(process.env.OPENAI_API_KEY?.trim())};
+ });
+
 /** Metadata only: never return the API key or any secret. */
 export const getAiSuvietConfiguration=createServerFn({method:'GET'})
  .middleware([requireSupabaseAuth])
