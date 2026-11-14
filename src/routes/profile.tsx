@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { isFakeEmail } from "@/lib/password";
 import { PageHeader } from "@/components/AppShell";
 import { PersonalProfile } from "@/components/PersonalProfile";
+import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,7 @@ function ProfilePage() {
       <PageHeader title="Hồ sơ cá nhân" description="Không gian của bạn: cập nhật hồ sơ, thông tin liên hệ và bảo mật tài khoản." />
       <div className="mx-auto max-w-3xl space-y-6">
         {me && <PersonalProfile key={me.id} userId={me.id} fullName={me.fullName} />}
+        {me && <section className="rounded-2xl border bg-muted/20 p-3 sm:p-4" aria-label="Các bài đã đăng trong cộng đồng"><CommunityFeed mineOnly /></section>}
         <section className="space-y-3">
           <h2 className="text-base font-semibold">Bảo mật — Đổi mật khẩu</h2>
           <ChangePasswordForm />
