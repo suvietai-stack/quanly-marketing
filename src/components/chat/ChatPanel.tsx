@@ -35,12 +35,24 @@ function ChatAvatar({name,group=false}: {name:string;group?:boolean}) {
 
 function ChatAttachment({msg}: {msg:ChatMessage}) {
   const [url,setUrl]=useState('');
+  const element=useRef<HTMLDivElement>(null);
+  const [visible,setVisible]=useState(false);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState(false);
   const path=msg.attachment_path;
   const image=!!msg.attachment_mime?.startsWith('image/');
   useEffect(()=>{
-    if(!path||!image)return;
+    if(!image)return;
+    const node=element.current;
+    if(!node || !('IntersectionObserver' in window)){setVisible(true);return;}
+    const observer=new IntersectionObserver(entries=>{
+      if(entries.some(e=>e.isIntersecting)){setVisible(true);observer.disconnect();}
+    },{rootMargin:'200px'});
+    observer.observe(node);
+    return ()=>observer.disconnect();
+  },[image,path]);
+  useEffect(()=>{
+    if(!path||!image||!visible)return;
     let cancelled=false; let created='';
     setError(false);
     void downloadChatAttachment(path).then(blob=>{
@@ -48,7 +60,7 @@ function ChatAttachment({msg}: {msg:ChatMessage}) {
       created=URL.createObjectURL(blob);setUrl(created);
     }).catch(()=>{if(!cancelled)setError(true);});
     return()=>{cancelled=true;if(created)URL.revokeObjectURL(created);setUrl('');};
-  },[path,image]);
+  },[path,image,visible]);
   if(!path)return null;
   const download=async()=>{
     if(loading)return;
@@ -62,7 +74,7 @@ function ChatAttachment({msg}: {msg:ChatMessage}) {
     }catch(e){toast.error(errorText(e));}
     finally{setLoading(false);}
   };
-  return <div className="mt-2 max-w-full rounded-xl border border-blue-100 bg-white/90 p-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+  return <div ref={element} className="mt-2 max-w-full rounded-xl border border-blue-100 bg-white/90 p-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
     {image && (url
       ? <button type="button" onClick={()=>void download()} className="block max-w-full" aria-label="Tải ảnh đính kèm"><img src={url} alt={msg.attachment_name||'Ảnh nội bộ'} className="max-h-60 max-w-full rounded-lg object-contain"/></button>
       : <div className="flex min-h-20 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">{error?'Không tải được ảnh':'Đang tải ảnh…'}</div>)}
@@ -129,6 +141,7 @@ function ChatConversation({ thread, me, names, onBack, onSent }: {
 }) {
   const client=useQueryClient();
   const [body,setBody]=useState('');
+  const [visibleLimit,setVisibleLimit]=useState(60);
   const [attachment,setAttachment]=useState<File|null>(null);
   const [busy,setBusy]=useState(false);
   const fileInput=useRef<HTMLInputElement>(null);
@@ -136,8 +149,8 @@ function ChatConversation({ thread, me, names, onBack, onSent }: {
   const nameOf=(id:string)=>names.get(id)||'Thành viên Sứ Việt';
   const label=thread.kind==='group'?(thread.title||'Nhóm chat'):nameOf(thread.member_ids.find(x=>x!==me)||'');
   const messages=useQuery({
-    queryKey:['chat','messages',me,thread.thread_id],
-    queryFn:()=>chatMessages(thread.thread_id),
+    queryKey:['chat','messages',me,thread.thread_id,visibleLimit],
+    queryFn:()=>chatMessages(thread.thread_id,visibleLimit),
     staleTime:3_000,refetchInterval:9_000,refetchOnWindowFocus:true,retry:1
   });
   const participants=useQuery({
@@ -189,7 +202,7 @@ function ChatConversation({ thread, me, names, onBack, onSent }: {
       await client.invalidateQueries({queryKey:['chat','inbox',me]});
     }catch(err){toast.error(errorText(err));}
   };
-  return <section className="flex h-[min(76dvh,760px)] min-h-[410px] w-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card md:h-[min(78dvh,780px)]">
+  return <section className="flex h-[calc(100dvh-var(--mobile-header-height,64px)-var(--mobile-nav-height,72px)-200px)] min-h-[285px] w-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card md:h-[min(78dvh,780px)] md:min-h-[480px]">
     <header className="flex min-h-16 items-center gap-2 border-b bg-card px-3 py-2">
       <Button type="button" variant="ghost" size="icon" className="h-11 w-10 shrink-0 md:hidden" onClick={onBack} aria-label="Quay lại danh sách chat"><ArrowLeft className="h-5 w-5"/></Button>
       <ChatAvatar name={label} group={thread.kind==='group'}/>
@@ -205,6 +218,7 @@ function ChatConversation({ thread, me, names, onBack, onSent }: {
       {messages.isSuccess && messages.data.length===0 && <div className="mx-auto max-w-xs py-12 text-center">
         <HeartHandshake className="mx-auto h-9 w-9 text-sky-600"/><p className="mt-3 text-sm font-semibold">Bắt đầu cuộc trò chuyện</p><p className="mt-1 text-xs text-muted-foreground">Lời chào đầu tiên có thể bắt đầu sự hợp tác tuyệt vời.</p>
       </div>}
+      {(messages.data?.length ?? 0) >= visibleLimit && <Button type="button" variant="outline" className="mx-auto flex min-h-9 rounded-xl text-xs" onClick={()=>setVisibleLimit(n=>n+60)}><ChevronDown className="h-4 w-4 rotate-180"/>Xem tin nhắn cũ</Button>}
       {messages.data?.map(msg=>{
         const mine=msg.sender_id===me;
         const readers=participants.data?.filter(p=>p.user_id!==me && new Date(p.last_read_at).getTime()>=new Date(msg.created_at).getTime()).length||0;
