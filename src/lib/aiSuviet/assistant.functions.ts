@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 const questionSchema=z.object({
@@ -12,20 +13,21 @@ export const askAiSuviet=createServerFn({method:'POST'})
  .middleware([requireSupabaseAuth])
  .inputValidator(value=>questionSchema.parse(value))
  .handler(async({data,context})=>{
-   const {data:active,error}=await context.supabase.rpc('community_active');
+   const db=context.supabase as unknown as SupabaseClient;
+   const {data:active,error}=await db.rpc('community_active');
    if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được hỏi AI.');
    const {answerAiSuviet}=await import('./assistant.server');
-   return answerAiSuviet(context.supabase,data.question,data.history);
+   return answerAiSuviet(db,data.question,data.history);
  });
 
 export const extractAiPdf=createServerFn({method:'POST'})
  .middleware([requireSupabaseAuth])
  .inputValidator(value=>z.object({id:z.string().uuid()}).parse(value))
  .handler(async({data,context})=>{
-   const {data:admin,error:adminError}=await context.supabase.rpc('community_moderator');
+   const db=context.supabase as unknown as SupabaseClient;
+   const {data:admin,error:adminError}=await db.rpc('community_moderator');
    if(adminError||!admin)throw new Error('Chỉ quản trị viên được xử lý tài liệu AI.');
-   const db=context.supabase;
-   const {data:doc,error}=await db.from('ai_sv_documents' as never)
+   const {data:doc,error}=await db.from('ai_sv_documents')
      .select('id,title,original_name,mime_type,storage_path,status' as never)
      .eq('id',data.id).maybeSingle();
    if(error||!doc)throw new Error('Không tìm thấy tài liệu.');
