@@ -3,7 +3,7 @@ create temp table ai_test_people as select id,row_number() over(order by id) n f
 grant select on ai_test_people to authenticated;
 set local role authenticated;
 do $$
-declare a uuid;b uuid;r uuid:=gen_random_uuid();late uuid:=gen_random_uuid();other uuid:=gen_random_uuid();m uuid;j jsonb;blocked boolean:=false;
+declare a uuid;b uuid;r uuid:=gen_random_uuid();late uuid:=gen_random_uuid();other uuid:=gen_random_uuid();older uuid:=gen_random_uuid();newer uuid:=gen_random_uuid();m uuid;j jsonb;blocked boolean:=false;
 begin
  select id into a from ai_test_people where n=1;select id into b from ai_test_people where n=2;
  if a is null or b is null then raise exception 'Need two active actors';end if;
@@ -17,6 +17,12 @@ begin
  if m is null then raise exception 'memory not saved';end if;
  j:=public.ai_sv_chat_begin(r,'general','fixture memory owner');
  if (j->>'created')::boolean then raise exception 'duplicate request';end if;
+ perform public.ai_sv_chat_begin(older,'general','fixture older preference');
+ perform pg_sleep(0.001);
+ perform public.ai_sv_chat_begin(newer,'general','fixture newer preference');
+ perform public.ai_sv_chat_finish(newer,'answer','ai','[]','[{"key":"preference:ordered","content":"newer preference"}]');
+ perform public.ai_sv_chat_finish(older,'answer','ai','[]','[{"key":"preference:ordered","content":"older preference"}]');
+ if (select content from public.ai_sv_memories where key='preference:ordered')<>'newer preference' then raise exception 'old reply overwrote newer preference';end if;
  perform set_config('request.jwt.claim.sub',b::text,true);
  if exists(select 1 from public.ai_sv_memories where user_id=a) or exists(select 1 from public.ai_sv_chat_turns where user_id=a) then raise exception 'cross-user RLS leak';end if;
  j:=public.ai_sv_recall('fixture','general');

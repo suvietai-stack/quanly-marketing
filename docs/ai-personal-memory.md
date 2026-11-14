@@ -17,7 +17,7 @@ Chipi đọc danh bạ cơ bản của toàn Base mỗi lần hỏi: tên nhân 
 
 Mở **Chipi nhớ về bạn** để xem, sửa hoặc quên. Nội dung đã sửa thủ công không bị cập nhật tự động ghi đè. Khi quên một ký ức, UI giải thích và yêu cầu xác nhận rằng toàn bộ cuộc trò chuyện đã lưu cũng bị xóa để không học lại thông tin đó; các ký ức khác giữ nguyên. Quên toàn bộ xóa cả ký ức và cuộc trò chuyện.
 
-Không có quyền đọc ký ức người khác trong ứng dụng, kể cả tài khoản quản trị; các chính sách RLS chỉ cho chủ tài khoản đang hoạt động đọc. Client không có quyền ghi trực tiếp. Các RPC dùng `auth.uid()`, không nhận user_id do client gửi. Khóa revision bảo vệ việc quên/sửa trước phản hồi đang xử lý, và request UUID chống ghi trùng. Giới hạn 100 lượt lưu/giờ, cộng giới hạn AI hiện có. Hội thoại gốc được giữ đến khi người dùng yêu cầu quên; dữ liệu trước bản phát hành này không thể phục hồi từ bộ nhớ tạm trình duyệt.
+Không có quyền đọc ký ức người khác trong ứng dụng, kể cả tài khoản quản trị; các chính sách RLS chỉ cho chủ tài khoản đang hoạt động đọc. Client không có quyền ghi trực tiếp. Các RPC dùng `auth.uid()`, không nhận user_id do client gửi. Khóa revision bảo vệ việc quên/sửa trước phản hồi đang xử lý, request UUID chống ghi trùng và source_at giữ thứ tự câu hỏi để phản hồi cũ không ghi đè sở thích mới. Giới hạn 100 lượt lưu/giờ, cộng giới hạn AI hiện có. Hội thoại gốc được giữ đến khi người dùng yêu cầu quên; dữ liệu trước bản phát hành này không thể phục hồi từ bộ nhớ tạm trình duyệt.
 
 ## Kiểm tra
 

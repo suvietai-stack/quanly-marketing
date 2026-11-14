@@ -22,12 +22,13 @@ create table if not exists public.ai_sv_memory_state(user_id uuid primary key re
 create table if not exists public.ai_sv_memories(
  id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id) on delete cascade,
  key text not null check(length(key) between 1 and 80),content text not null check(length(content) between 1 and 600),
- origin text not null check(origin in ('auto','manual')),updated_at timestamptz not null default now(),unique(user_id,key));
+ origin text not null check(origin in ('auto','manual')),source_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(user_id,key));
+alter table public.ai_sv_memories add column if not exists source_at timestamptz not null default now();
 create table if not exists public.ai_sv_chat_turns(
  id uuid primary key,user_id uuid not null references auth.users(id) on delete cascade,
  scope text not null check(length(scope) between 1 and 100),question text not null check(length(question) between 1 and 900),
  answer text,mode text,sources jsonb not null default '[]',revision bigint not null,
- created_at timestamptz not null default now(),completed_at timestamptz,
+ created_at timestamptz not null default clock_timestamp(),completed_at timestamptz,
  search tsvector generated always as (to_tsvector('simple',question)) stored);
 create index if not exists ai_sv_chat_owner_recent on public.ai_sv_chat_turns(user_id,created_at desc,id);
 create index if not exists ai_sv_chat_search on public.ai_sv_chat_turns using gin(search);
@@ -57,7 +58,7 @@ begin
   return jsonb_build_object('turn',to_jsonb(r),'created',false);
  end if;
  if (select count(*) from public.ai_sv_chat_turns where user_id=auth.uid() and created_at>now()-interval '1 hour')>=100 then raise exception 'Bạn đã đạt giới hạn lưu câu hỏi trong giờ này.';end if;
- insert into public.ai_sv_chat_turns(id,user_id,scope,question,revision) values(_id,auth.uid(),_scope,trim(_question),v) returning * into r;
+ insert into public.ai_sv_chat_turns(id,user_id,scope,question,revision,created_at) values(_id,auth.uid(),_scope,trim(_question),v,clock_timestamp()) returning * into r;
  return jsonb_build_object('turn',to_jsonb(r),'created',true);
 end $$;
 
@@ -75,9 +76,9 @@ begin
  if v=r.revision then
   for x in select value from jsonb_array_elements(_memories) limit 3 loop
    if length(x->>'key') between 1 and 80 and length(x->>'content') between 1 and 600 then
-    insert into public.ai_sv_memories(user_id,key,content,origin)
-    select auth.uid(),x->>'key',x->>'content','auto' where (select count(*) from public.ai_sv_memories where user_id=auth.uid())<60 or exists(select 1 from public.ai_sv_memories where user_id=auth.uid() and key=x->>'key')
-    on conflict(user_id,key) do update set content=excluded.content,updated_at=now() where public.ai_sv_memories.origin='auto';
+    insert into public.ai_sv_memories(user_id,key,content,origin,source_at)
+    select auth.uid(),x->>'key',x->>'content','auto',r.created_at where (select count(*) from public.ai_sv_memories where user_id=auth.uid())<60 or exists(select 1 from public.ai_sv_memories where user_id=auth.uid() and key=x->>'key')
+    on conflict(user_id,key) do update set content=excluded.content,source_at=excluded.source_at,updated_at=now() where public.ai_sv_memories.origin='auto' and public.ai_sv_memories.source_at<=excluded.source_at;
    end if;
   end loop;
  end if;
