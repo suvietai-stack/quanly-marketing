@@ -79,6 +79,13 @@ export const BASE_GUIDES:BaseGuide[] = [
    'Vào tab Tin nhắn để chat cá nhân hoặc tạo nhóm nội bộ.',
    'Trong trang Cá nhân, chọn Bài viết của tôi để xem lại bài đã đăng.'
   ]},
+ {id:'knowledge',title:'Tải tài liệu vào Kho kiến thức AI',keywords:['kho kiến thức','tải tài liệu','tải file cho ai','học tài liệu','bổ sung tài liệu'],
+  path:'/ai-knowledge',steps:[
+   'Đăng nhập tài khoản Super Admin rồi mở Hệ thống → Kho kiến thức AI.',
+   'Chọn tài liệu Word, Excel, PDF hoặc tệp văn bản; đặt tên và tải lên.',
+   'Với PDF, chọn Đọc PDF sau khi dịch vụ AI trên máy chủ được cấu hình.',
+   'Khi nội dung đã đọc xong, chọn Chia sẻ cho nhân viên để Chipi có thể sử dụng làm căn cứ.'
+  ],note:'Tài liệu mặc định chỉ quản trị viên được xem. File gốc không công khai.'},
  {id:'account',title:'Cập nhật hồ sơ cá nhân',keywords:['cá nhân','đổi mật khẩu','hồ sơ','tài khoản của tôi'],
   path:'/profile',steps:[
    'Chọn Cá nhân trên thanh dưới hoặc menu tài khoản.',
