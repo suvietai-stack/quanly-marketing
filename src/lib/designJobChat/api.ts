@@ -30,6 +30,9 @@ export async function listJobChatMessages(jobId: string, page = 0): Promise<JobC
 export function nextJobChatPage(last: JobChatMessage[], pages: JobChatMessage[][]) {
   return last.length === PAGE_SIZE ? pages.length : undefined;
 }
+export async function canAccessJobChat(jobId: string): Promise<boolean> {
+  return !!value(await db.rpc('sv_design_job_chat_access',{p_job_id:jobId}));
+}
 export async function jobChatUnreadCount(jobId: string): Promise<number> {
   return Number(value(await db.rpc('sv_design_job_chat_unread',{p_job_id:jobId}))) || 0;
 }
