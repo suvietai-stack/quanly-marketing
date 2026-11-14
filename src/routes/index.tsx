@@ -15,7 +15,8 @@ import {
   MapPin, Video, Inbox, Hourglass, ArrowRight, FileEdit, ClipboardCheck,
   Briefcase, RefreshCw, X, ExternalLink, LayoutGrid, ArrowUp, ArrowDown, Search,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+const PersonalPerformance = lazy(() => import("@/components/performance/PersonalPerformance"));
 import { isKpiV2Enabled } from "@/lib/kpi/service";
 import { getPublicBranding } from "@/lib/branding.functions";
 import { PersonalKpi, StaffTable, ChannelProgress, PeriodSelect, useKpiView, useChannelProgress, periodKeysOf, currentKey } from "@/components/kpi/PersonalKpi";
@@ -341,7 +342,6 @@ function MineOverview() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
   const filterWork = (list: WorkItem[]) => {
     const q = taskSearch.trim().toLocaleLowerCase("vi");
     return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
@@ -359,15 +359,7 @@ function MineOverview() {
 
   return (
     <div className="flex min-w-0 flex-col gap-5 md:gap-8">
-      <section className="order-1" aria-label="Công việc quan trọng">
-        <SectionTitle>Cần chú ý</SectionTitle>
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
-          <ClickStat label="Đang làm" value={items.mine.length} icon={Inbox} tone="info" onClick={() => go("mine")} />
-          <ClickStat label="Chờ tôi duyệt" value={items.toReview.length} icon={ClipboardCheck} tone="violet" onClick={() => go("review")} />
-          <ClickStat label="Cần sửa" value={items.needsFix.length} icon={FileEdit} tone="warn" onClick={() => go("fix")} />
-          <ClickStat label="Quá hạn" value={items.overdue.length} icon={AlertTriangle} tone="danger" onClick={() => go("overdue")} />
-        </div>
-      </section>
+      <section className="order-1"><Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" aria-label="Đang mở báo cáo cá nhân"/>}><PersonalPerformance /></Suspense></section>
 
       <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -1369,3 +1361,4 @@ function FilterSelect({ value, onChange, placeholder, options }: {
     </select>
   );
 }
+
