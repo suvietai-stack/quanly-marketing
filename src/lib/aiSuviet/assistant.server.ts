@@ -30,6 +30,9 @@ const stopWords=new Set(['tôi','em','anh','chị','sao','cách','đâu','nào',
 function bestSearch(question:string):string {
   const quoted=question.match(/["“](.{3,75})["”]/);
   if(quoted)return quoted[1].trim();
+  // Broad status/count questions must not accidentally filter all records out
+  // with generic words. The model must not treat these 18 hits as a full count.
+  if(/(bao nhiêu|tổng số|quá hạn|chờ duyệt|hôm nay|tuần này|tháng này|ai phụ trách)/i.test(question))return '';
   const ids=question.match(/\b[a-zA-Z0-9]{7,12}\b/);
   if(ids)return ids[0];
   const terms=question.replace(/[?!.:,;]+/g,' ').split(/\s+/)
