@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 const questionSchema=z.object({
+ requestId:z.string().uuid().default(()=>crypto.randomUUID()),
  question:z.string().trim().min(1).max(900),
  context:z.object({kind:z.enum(['design','signal','finance']),id:z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/)}).optional(),
  history:z.array(z.object({
@@ -18,7 +19,20 @@ export const askAiSuviet=createServerFn({method:'POST'})
    const {data:active,error}=await db.rpc('community_active');
    if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được hỏi AI.');
    const {answerAiSuviet}=await import('./assistant.server');
-   return answerAiSuviet(db,data.question,data.context?[]:data.history,data.context);
+   const {loadPersonalContext,personalScope}=await import('./personalContext.server');
+   const scope=personalScope(data.context);
+   const {data:begun,error:beginError}=await db.rpc('ai_sv_chat_begin',{_id:data.requestId,_scope:scope,_question:data.question});
+   if(beginError||!begun)throw new Error('Chưa lưu được câu hỏi. Bạn thử lại nhé.');
+   if(!begun.created){
+     if(begun.turn.completed_at)return {answer:begun.turn.answer as string,mode:begun.turn.mode as 'ai'|'guide'|'unconfigured',sources:begun.turn.sources as import('./assistant.server').AiSource[]};
+     throw new Error('Câu hỏi trước đang xử lý hoặc đã gián đoạn. Hãy gửi một câu hỏi mới.');
+   }
+   const personal={...await loadPersonalContext(db,data.question,scope),facts:[] as import('./personalContext.server').MemoryFact[]};
+   const reply=await answerAiSuviet(db,data.question,[],data.context,personal);
+   const {data:saved,error:saveError}=await db.rpc('ai_sv_chat_finish',{_id:data.requestId,_answer:reply.answer,_mode:reply.mode,_sources:reply.sources,_memories:personal.facts});
+   if(saveError)throw new Error('Chipi đã trả lời nhưng chưa lưu được bộ nhớ. Bạn thử lại nhé.');
+   if(!saved)throw new Error('Cuộc trò chuyện này đã được xóa trong lúc xử lý.');
+   return reply;
  });
 
 export const extractAiPdf=createServerFn({method:'POST'})
@@ -127,4 +141,40 @@ export const saveAiSuvietKey=createServerFn({method:'POST'})
    const {error}=await db.rpc('ai_sv_key_save',{_key:data.key});
    if(error)throw new Error(error.code==='42501'?'Chỉ Super Admin được thay khóa AI.':'Không lưu được API Key. Vui lòng kiểm tra định dạng và thử lại.');
    return {saved:true};
+ });
+
+export const getAiPersonalMemory=createServerFn({method:'POST'})
+ .middleware([requireSupabaseAuth])
+ .inputValidator(value=>z.object({scope:z.string().min(1).max(100).default('general')}).parse(value))
+ .handler(async({data,context})=>{
+  const db=context.supabase as unknown as SupabaseClient;
+  if(data.scope!=='general'){
+   const match=/^(design|signal|finance):([a-zA-Z0-9_-]{1,80})$/.exec(data.scope);
+   if(!match)throw new Error('Hồ sơ không hợp lệ.');
+   const {readRecordContext}=await import('./recordContext.server');
+   await readRecordContext(db,{kind:match[1] as 'design'|'signal'|'finance',id:match[2]});
+  }
+  const {data:recall,error}=await db.rpc('ai_sv_recall',{_scope:data.scope,_question:''});
+  if(error)throw new Error('Chưa đọc được bộ nhớ riêng.');
+  const {data:turns,error:turnError}=await db.from('ai_sv_chat_turns').select('id,question,answer,mode,sources,created_at').eq('user_id',context.userId).eq('scope',data.scope).not('completed_at','is',null).order('created_at',{ascending:false}).limit(20);
+  if(turnError)throw new Error('Chưa tải được cuộc trò chuyện.');
+  return {memories:(recall?.memories??[]) as import('./personalContext.server').PersonalMemory[],turns:(turns??[]).reverse() as {id:string;question:string;answer:string;mode:'ai'|'guide'|'unconfigured';sources:import('./assistant.server').AiSource[];created_at:string}[]};
+ });
+export const editAiPersonalMemory=createServerFn({method:'POST'})
+ .middleware([requireSupabaseAuth])
+ .inputValidator(value=>z.object({id:z.string().uuid(),content:z.string().trim().min(1).max(600)}).parse(value))
+ .handler(async({data,context})=>{
+  const db=context.supabase as unknown as SupabaseClient;
+  const {error}=await db.rpc('ai_sv_memory_edit',{_id:data.id,_content:data.content});
+  if(error)throw new Error('Không sửa được ký ức này.');
+  return {ok:true};
+ });
+export const forgetAiPersonalMemory=createServerFn({method:'POST'})
+ .middleware([requireSupabaseAuth])
+ .inputValidator(value=>z.object({id:z.string().uuid().nullable(),confirmation:z.literal('QUEN')}).parse(value))
+ .handler(async({data,context})=>{
+  const db=context.supabase as unknown as SupabaseClient;
+  const {error}=await db.rpc('ai_sv_memory_forget',{_id:data.id});
+  if(error)throw new Error('Chưa xóa được bộ nhớ.');
+  return {ok:true};
  });

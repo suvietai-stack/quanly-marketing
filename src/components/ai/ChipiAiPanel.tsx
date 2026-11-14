@@ -1,3 +1,4 @@
+import { ChipiMemory } from './ChipiMemory';
 import { useAiRecordContext } from '@/lib/aiSuviet/useRecordContext';
 import { RECORD_LABELS } from '@/lib/aiSuviet/recordContext';
 import { useEffect, useRef, useState } from 'react';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { askAiSuviet, getAiSuvietAvailability } from '@/lib/aiSuviet/assistant.functions';
+import { askAiSuviet, getAiSuvietAvailability, getAiPersonalMemory } from '@/lib/aiSuviet/assistant.functions';
 import type { AiReply, AiSource } from '@/lib/aiSuviet/assistant.server';
 import { useCurrentUser } from '@/lib/auth';
 
@@ -27,6 +28,10 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
   const generation=useRef(0);
   const mobile=useIsMobile();
   const ask=useServerFn(askAiSuviet);
+  const readPersonal=useServerFn(getAiPersonalMemory);
+  const scope=recordContext?`${recordContext.kind}:${recordContext.id}`:'general';
+  const hydrated=useRef(false);
+  const sending=useRef(false);
   const checkAvailability=useServerFn(getAiSuvietAvailability);
   const {user}=useCurrentUser();
   const availability=useQuery({
@@ -35,33 +40,36 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
     enabled:open&&!!user?.id&&user?.status==='Đang hoạt động',
     staleTime:60_000,refetchOnWindowFocus:true,retry:1,
   });
+  const personal=useQuery({queryKey:['ai-suviet','personal',user?.id,scope],queryFn:()=>readPersonal({data:{scope}}),enabled:open&&!!user?.id&&user?.status==='Đang hoạt động',staleTime:0,gcTime:0,retry:1});
   const [input,setInput]=useState('');
   const [messages,setMessages]=useState<Bubble[]>([]);
   const [busy,setBusy]=useState(false);
   const bottom=useRef<HTMLDivElement>(null);
   const nextId=useRef(1);
-  useEffect(()=>{generation.current++;setMessages([]);setInput('');setBusy(false);},[user?.id,contextKey]);
+  useEffect(()=>{generation.current++;hydrated.current=false;sending.current=false;setMessages([]);setInput('');setBusy(false);},[user?.id,contextKey]);
+  useEffect(()=>{if(personal.data&&!hydrated.current&&!sending.current){hydrated.current=true;setMessages(personal.data.turns.flatMap(t=>[{id:nextId.current++,role:'user' as const,text:t.question},{id:nextId.current++,role:'assistant' as const,text:t.answer,mode:t.mode,sources:t.sources}]));}},[personal.data]);
   useEffect(()=>{if(open)bottom.current?.scrollIntoView({block:'end'});},[messages.length,busy,open]);
   const send=async(text:string)=>{
     const message=text.trim();
-    if(!message||busy)return;
+    if(!message||sending.current||personal.isPending||personal.isError)return;
     if(message.length>900){toast.error('Câu hỏi tối đa 900 ký tự.');return;}
     const gen=generation.current;
-    const history=messages.slice(-6).map(m=>({role:m.role,content:m.text}));
+    sending.current=true;
     setMessages(old=>[...old,{id:nextId.current++,role:'user',text:message}]);
     setInput('');setBusy(true);
     try{
-      const answer=await ask({data:{question:message,history:recordContext?[]:history,context:recordContext??undefined}});
+      const answer=await ask({data:{requestId:crypto.randomUUID(),question:message,context:recordContext??undefined}});
       if(gen!==generation.current)return;
       setMessages(old=>[...old,{
         id:nextId.current++,role:'assistant',text:answer.answer,
         sources:answer.sources,mode:answer.mode,
       }]);
+      void personal.refetch();
     }catch(error){
       if(gen!==generation.current)return;
-      setMessages(old=>[...old,{id:nextId.current++,role:'assistant',text:'Chipi chưa kết nối được lúc này. Bạn thử hỏi lại sau nhé!'}]);
+      setMessages(old=>[...old,{id:nextId.current++,role:'assistant',text:errorText(error)}]);
       toast.error(errorText(error));
-    }finally{if(gen===generation.current)setBusy(false);}
+    }finally{if(gen===generation.current){sending.current=false;setBusy(false);}}
   };
   return <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent side={mobile?'bottom':'right'}
@@ -75,8 +83,11 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
           </div>
         </div>
       </SheetHeader>
+      <ChipiMemory key={`${user?.id}:${scope}`} memories={personal.data?.memories??[]} disabled={busy||personal.isPending||personal.isError} onChanged={()=>void personal.refetch()} onForgot={()=>{generation.current++;setMessages([]);hydrated.current=true;void personal.refetch();}}/>
+      {personal.isPending&&<p className="px-4 py-2 text-xs text-muted-foreground">Đang mở lại cuộc trò chuyện…</p>}
+      {personal.isError&&<div role="alert" className="px-4 py-2 text-xs text-rose-600">Chưa tải được bộ nhớ riêng. <Button size="sm" variant="ghost" onClick={()=>void personal.refetch()}>Thử lại</Button></div>}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/75 p-4 dark:bg-slate-950/70" aria-label="Lịch sử hỏi đáp AI" role="log">
-        {recordContext&&<section className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"><p className="text-xs font-semibold">Đang hỗ trợ: {RECORD_LABELS[recordContext.kind]} đang mở</p><p className="mt-1 text-xs leading-5">Chipi đọc lại hồ sơ theo quyền của bạn. Chưa có API key vẫn xem được tóm tắt và hướng dẫn theo trạng thái.</p><div className="mt-3 grid gap-2">{['Hồ sơ này đang chờ ai?','Tiếp theo tôi cần làm gì?','Tóm tắt hồ sơ đang mở'].map(q=><Button key={q} type="button" variant="outline" className="min-h-11 justify-start whitespace-normal text-left text-xs" disabled={busy} onClick={()=>void send(q)}>{q}</Button>)}</div></section>}
+        {recordContext&&<section className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"><p className="text-xs font-semibold">Đang hỗ trợ: {RECORD_LABELS[recordContext.kind]} đang mở</p><p className="mt-1 text-xs leading-5">Chipi đọc lại hồ sơ theo quyền của bạn. Trò chuyện được lưu riêng; dữ liệu hồ sơ luôn được đọc lại theo quyền hiện tại.</p><div className="mt-3 grid gap-2">{['Hồ sơ này đang chờ ai?','Tiếp theo tôi cần làm gì?','Tóm tắt hồ sơ đang mở'].map(q=><Button key={q} type="button" variant="outline" className="min-h-11 justify-start whitespace-normal text-left text-xs" disabled={busy||personal.isPending||personal.isError} onClick={()=>void send(q)}>{q}</Button>)}</div></section>}
         {messages.length===0&&!recordContext&&<div className="space-y-4">
           {availability.data?.available===false&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">Chipi đang ở chế độ hướng dẫn có sẵn. Bạn vẫn có thể hỏi cách dùng Base; phần hỏi đáp AI tự nhiên và đọc tài liệu chuyên sâu sẽ hoạt động sau khi quản trị viên kết nối OpenAI.</p>}
           {availability.data?.available===true&&<p className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-xs leading-5 text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Máy chủ đã nhận cấu hình OpenAI. Chipi sẽ thử trả lời từ dữ liệu mà bạn được phép xem; quản trị viên có thể kiểm tra kết nối trong Kho kiến thức AI.</p>}
@@ -96,6 +107,7 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
             </button>)}
           </div>
         </div>}
+        {messages.length>0&&<p className="text-center text-[10px] text-muted-foreground">Tin nhắn cũ là nội dung đã trao đổi; hỏi lại để kiểm tra trạng thái hiện tại.</p>}
         {messages.map(m=><div key={m.id} className={`flex ${m.role==='user'?'justify-end':'justify-start'}`}>
           <div className={`max-w-[94%] space-y-2 rounded-2xl px-3.5 py-3 text-[13px] leading-6 shadow-sm ${m.role==='user'?'rounded-br-md bg-blue-700 text-white':'rounded-bl-md border bg-card text-foreground'}`}>
             <p className="whitespace-pre-wrap break-words">{m.text}</p>
@@ -116,7 +128,7 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
           <Textarea rows={1} maxLength={900} value={input} onChange={e=>setInput(e.target.value)}
             className="min-h-12 max-h-28 flex-1 resize-none rounded-xl text-base" placeholder="Hỏi Chipi điều gì đó…"
             onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&window.innerWidth>=768){e.preventDefault();e.currentTarget.form?.requestSubmit();}}}/>
-          <Button type="submit" size="icon" className="h-12 w-12 shrink-0 rounded-xl bg-blue-700 hover:bg-blue-800" disabled={!input.trim()||busy} aria-label="Gửi câu hỏi">
+          <Button type="submit" size="icon" className="h-12 w-12 shrink-0 rounded-xl bg-blue-700 hover:bg-blue-800" disabled={!input.trim()||busy||personal.isPending||personal.isError} aria-label="Gửi câu hỏi">
             {busy?<LoaderCircle className="h-5 w-5 animate-spin"/>:<Send className="h-5 w-5"/>}
           </Button>
         </div>
