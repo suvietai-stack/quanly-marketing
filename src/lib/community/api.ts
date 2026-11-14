@@ -6,6 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 const db = supabase as unknown as SupabaseClient;
 export const COMMUNITY_BUCKET = 'suviet-community';
 
+/** One-purpose internal directory, available to every active employee.
+ * Exposes name and id only; no personnel or private profile records. */
+export async function listCommunityMemberNames(): Promise<{ id: string; full_name: string }[]> {
+  return unwrap(await db.rpc('community_member_names')) as { id: string; full_name: string }[];
+}
+
 export type CommunityMedia = { id: string; path: string; kind: 'image' | 'video'; position: number };
 export type CommunityPost = {
   id: string;
