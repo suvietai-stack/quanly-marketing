@@ -14,6 +14,7 @@ import { AppNavigation } from "@/components/AppNavigation";
 import { visibleNavigation } from "@/lib/navigation";
 import { MobileLauncher } from '@/components/MobileLauncher';
 import { MobileAppChrome } from '@/components/MobileAppChrome';
+import { ChatShortcut } from '@/components/chat/ChatShortcut';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from "@/components/ZaloUi";
 import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
@@ -118,7 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {approvalBadge && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">{approvalBadge}</span>}
             </Link>
           </Button>
-        )}<div className="hidden md:block"><NotificationBell /></div></>}
+        )}<ChatShortcut/><div className="hidden md:block"><NotificationBell /></div></>}
         <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => setCollapsed(v => !v)} title={mini ? 'Mở rộng menu' : 'Thu gọn menu'} aria-label={mini ? 'Mở rộng menu' : 'Thu gọn menu'}>{mini ? <PanelLeftOpen /> : <PanelLeftClose />}</Button>
       </div>
     </aside>
