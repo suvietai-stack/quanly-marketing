@@ -273,8 +273,13 @@ ARRAY['image/jpeg','image/png','image/webp','image/gif',
 'application/vnd.openxmlformats-officedocument.presentationml.presentation'])
 ON CONFLICT(id) DO UPDATE SET public=false,file_size_limit=20971520,
  allowed_mime_types=EXCLUDED.allowed_mime_types;
+-- The uploader may read back its own object immediately (Storage upload
+-- uses INSERT ... RETURNING before the message row exists). Other members
+-- can download only when an unrecalled message references the exact path.
 CREATE POLICY sv_chat_storage_read ON storage.objects FOR SELECT TO authenticated
- USING (bucket_id='suviet-chat' AND public.sv_chat_can_download(name));
+ USING (bucket_id='suviet-chat' AND (
+   public.sv_chat_can_upload(name) OR public.sv_chat_can_download(name)
+ ));
 CREATE POLICY sv_chat_storage_add ON storage.objects FOR INSERT TO authenticated
  WITH CHECK (bucket_id='suviet-chat' AND public.sv_chat_can_upload(name));
 CREATE POLICY sv_chat_storage_remove ON storage.objects FOR DELETE TO authenticated
