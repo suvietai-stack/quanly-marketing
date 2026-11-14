@@ -134,9 +134,9 @@ function ChatCreate({ me, people, close, openThread }: {
   </div>;
 }
 
-function ChatConversation({ thread, me, names, onBack, onSent }: {
+function ChatConversation({ thread, me, names, onBack, onSent, compact=false }: {
   thread:ChatThread;me:string;names:Map<string,string>;
-  onBack:()=>void;onSent:()=>void;
+  onBack:()=>void;onSent:()=>void;compact?:boolean;
 }) {
   const client=useQueryClient();
   const [body,setBody]=useState('');
@@ -201,9 +201,9 @@ function ChatConversation({ thread, me, names, onBack, onSent }: {
       await client.invalidateQueries({queryKey:['chat','inbox',me]});
     }catch(err){toast.error(errorText(err));}
   };
-  return <section className="flex h-[calc(100dvh-var(--mobile-header-height,64px)-var(--mobile-nav-height,72px)-200px)] min-h-[285px] w-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card md:h-[min(78dvh,780px)] md:min-h-[480px]">
+  return <section className={`flex ${compact?'h-[min(74dvh,700px)]':'h-[calc(100dvh-var(--mobile-header-height,64px)-var(--mobile-nav-height,72px)-200px)] md:h-[min(78dvh,780px)]'} min-h-[285px] w-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card ${compact?'':'md:min-h-[480px]'}`}>
     <header className="flex min-h-16 items-center gap-2 border-b bg-card px-3 py-2">
-      <Button type="button" variant="ghost" size="icon" className="h-11 w-10 shrink-0 md:hidden" onClick={onBack} aria-label="Quay lại danh sách chat"><ArrowLeft className="h-5 w-5"/></Button>
+      <Button type="button" variant="ghost" size="icon" className={`h-11 w-10 shrink-0 ${compact?'':'md:hidden'}`} onClick={onBack} aria-label="Quay lại danh sách chat"><ArrowLeft className="h-5 w-5"/></Button>
       <ChatAvatar name={label} group={thread.kind==='group'}/>
       <div className="min-w-0 flex-1">
         <h3 className="truncate text-sm font-bold">{label}</h3>
@@ -260,9 +260,9 @@ function ChatConversation({ thread, me, names, onBack, onSent }: {
   </section>;
 }
 
-export function ChatPanel({ initialThreadId, onThreadChange }: {
+export function ChatPanel({ initialThreadId, onThreadChange, compact=false }: {
   initialThreadId?:string;
-  onThreadChange?:(id:string|undefined)=>void;
+  onThreadChange?:(id:string|undefined)=>void;compact?:boolean;
 }) {
   const {user}=useCurrentUser();
   const uid=user?.id||'';
@@ -301,8 +301,8 @@ export function ChatPanel({ initialThreadId, onThreadChange }: {
   const selected=threads.find(x=>x.thread_id===threadId);
   const filtered=threads.filter(t=>titleOf(t).toLocaleLowerCase('vi').includes(filter.toLocaleLowerCase('vi')));
   if(!active) return <p role="alert" className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Chat chỉ dành cho nhân viên Base đang hoạt động.</p>;
-  return <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-[minmax(240px,310px)_minmax(0,1fr)]">
-    <aside className={`${selected?'hidden md:flex':'flex'} min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border bg-card p-3 shadow-sm`}>
+  return <div className={`grid min-w-0 grid-cols-1 gap-3 ${compact?'':'md:grid-cols-[minmax(240px,310px)_minmax(0,1fr)]'}`}>
+    <aside className={`${selected?(compact?'hidden':'hidden md:flex'):'flex'} min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border bg-card p-3 shadow-sm`}>
       <div className="flex items-center justify-between gap-2">
         <div><h2 className="text-lg font-bold">Tin nhắn</h2><p className="text-xs text-muted-foreground">Trao đổi riêng trong Sứ Việt</p></div>
         <Button type="button" size="icon" aria-label="Tạo cuộc trò chuyện" title="Nhắn tin mới" className="h-11 w-11 rounded-xl bg-blue-700 hover:bg-blue-800" onClick={()=>setNewOpen(v=>!v)}><Plus className="h-5 w-5"/></Button>
@@ -330,9 +330,9 @@ export function ChatPanel({ initialThreadId, onThreadChange }: {
       </>}
       <div className="flex items-center gap-1 border-t pt-3 text-[10px] text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600"/>Chỉ thành viên hội thoại được xem tin nhắn</div>
     </aside>
-    <div className={`${selected?'block':'hidden md:block'} min-w-0`}>
+    <div className={`${selected?'block':compact?'hidden':'hidden md:block'} min-w-0`}>
       {selected
-        ? <ChatConversation key={selected.thread_id} thread={selected} me={uid} names={names} onBack={()=>choose(undefined)} onSent={()=>void inbox.refetch()}/>
+        ? <ChatConversation key={selected.thread_id} thread={selected} me={uid} names={names} compact={compact} onBack={()=>choose(undefined)} onSent={()=>void inbox.refetch()}/>
         : <div className="flex h-[min(74dvh,760px)] flex-col items-center justify-center rounded-2xl border bg-gradient-to-br from-blue-50 to-teal-50 p-6 text-center dark:from-slate-900 dark:to-teal-950">
           <MessagesSquare className="h-12 w-12 text-blue-700"/><h3 className="mt-4 text-base font-bold">Sứ Việt Chat</h3>
           <p className="mt-1 max-w-xs text-sm text-muted-foreground">Chọn một cuộc trò chuyện để trao đổi công việc và chia sẻ tài liệu với đồng nghiệp.</p>
