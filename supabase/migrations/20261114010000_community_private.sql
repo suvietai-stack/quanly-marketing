@@ -25,7 +25,7 @@ GRANT EXECUTE ON FUNCTION public.community_active(), public.community_moderator(
 CREATE OR REPLACE FUNCTION public.community_member_names()
 RETURNS TABLE(id uuid, full_name text)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = ''
-AS $
+AS $$
 BEGIN
  IF NOT public.community_active() THEN
    RAISE EXCEPTION 'Chỉ nhân viên đang hoạt động được xem danh bạ cộng đồng.';
@@ -33,7 +33,7 @@ BEGIN
  RETURN QUERY SELECT p.id,p.full_name::text FROM public.profiles p
  WHERE p.status::text = 'Đang hoạt động' ORDER BY p.full_name;
 END;
-$;
+$$;
 REVOKE ALL ON FUNCTION public.community_member_names() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.community_member_names() TO authenticated;
 
