@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { MessagesSquare } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { chatUnreadTotal } from '@/lib/chat/api';
@@ -20,11 +19,9 @@ export function ChatUnreadBadge(){
   </span>:null;
 }
 
-export function ChatShortcut(){
-  return <Button variant="ghost" size="icon" asChild className="relative hidden shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:inline-flex" title="Sứ Việt Chat">
-    <Link to="/community" search={{tab:'chat',thread:undefined}} aria-label="Mở Chat nội bộ">
-      <MessagesSquare className="h-5 w-5"/>
-      <ChatUnreadBadge/>
-    </Link>
+export function ChatShortcut({onClick}:{onClick:()=>void}){
+  return <Button type="button" variant="ghost" size="icon" onClick={onClick} className="relative hidden shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:inline-flex" title="Mở nhanh Sứ Việt Chat" aria-label="Mở Chat nội bộ">
+    <MessagesSquare className="h-5 w-5"/>
+    <ChatUnreadBadge/>
   </Button>;
 }
