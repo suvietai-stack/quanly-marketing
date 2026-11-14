@@ -36,7 +36,8 @@ export const extractAiPdf=createServerFn({method:'POST'})
    const {data:raw,error:fileError}=await db.storage.from('suviet-ai-knowledge').download(item.storage_path);
    if(fileError||!raw)throw new Error('Không tải được tệp PDF nội bộ.');
    if(raw.size>6*1024*1024)throw new Error('PDF lớn hơn 6 MB.');
-   if(!process.env.OPENAI_API_KEY)throw new Error('Chưa cấu hình OPENAI_API_KEY cho AI Sứ Việt.');
+   const {providerKey}=await import('./providerKey.server');
+   if(!await providerKey())throw new Error('Chưa thêm API Key trong Cài đặt AI.');
    const {callAiProvider}=await import('./assistant.server');
    const base64=Buffer.from(await raw.arrayBuffer()).toString('base64');
    const answer=await callAiProvider(
@@ -64,7 +65,7 @@ export const getAiSuvietAvailability=createServerFn({method:'GET'})
    const db=context.supabase as unknown as SupabaseClient;
    const {data:active,error}=await db.rpc('community_active');
    if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được sử dụng Chipi.');
-   return {available:Boolean(process.env.OPENAI_API_KEY?.trim())};
+   return {available:Boolean(await (await import('./providerKey.server')).providerKey())};
  });
 
 /** Metadata only: never return the API key or any secret. */
@@ -75,7 +76,7 @@ export const getAiSuvietConfiguration=createServerFn({method:'GET'})
    const {data:admin,error}=await db.rpc('community_moderator');
    if(error||!admin)throw new Error('Chỉ quản trị viên được xem cấu hình AI.');
    return {
-     configured:Boolean(process.env.OPENAI_API_KEY?.trim()),
+     configured:Boolean(await (await import('./providerKey.server')).providerKey()),
      model:process.env.SUVIET_AI_MODEL?.trim()||'gpt-6-luna',
      dataMode:'read-only' as const,
      sourceMode:'base-and-approved-documents' as const,
@@ -89,7 +90,7 @@ export const testAiSuvietConnection=createServerFn({method:'POST'})
    const db=context.supabase as unknown as SupabaseClient;
    const {data:admin,error}=await db.rpc('community_moderator');
    if(error||!admin)throw new Error('Chỉ quản trị viên được kiểm tra kết nối AI.');
-   const key=process.env.OPENAI_API_KEY?.trim();
+   const key=await (await import('./providerKey.server')).providerKey();
    if(!key)return {connected:false,message:'Chưa có OPENAI_API_KEY trên máy chủ.'};
    const model=process.env.SUVIET_AI_MODEL?.trim()||'gpt-6-luna';
    const controller=new AbortController();
@@ -113,4 +114,16 @@ export const testAiSuvietConnection=createServerFn({method:'POST'})
    }catch{
      return {connected:false,message:'Chưa kết nối được OpenAI. Hãy kiểm tra mạng máy chủ và thử lại.'};
    }finally{clearTimeout(timeout);}
+ });
+
+
+/** Write-only credential endpoint: authentication and Super Admin checked in SQL. */
+export const saveAiSuvietKey=createServerFn({method:'POST'})
+ .middleware([requireSupabaseAuth])
+ .inputValidator(value=>z.object({key:z.string().trim().min(20).max(500)}).parse(value))
+ .handler(async({data,context})=>{
+   const db=context.supabase as unknown as SupabaseClient;
+   const {error}=await db.rpc('ai_sv_key_save',{_key:data.key});
+   if(error)throw new Error(error.code==='42501'?'Chỉ Super Admin được thay khóa AI.':'Không lưu được API Key. Vui lòng kiểm tra định dạng và thử lại.');
+   return {saved:true};
  });

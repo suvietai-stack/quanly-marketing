@@ -1,3 +1,4 @@
+import { providerKey } from './providerKey.server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { guideFallback, relevantBaseGuides, type BaseGuide } from './guides';
 import { loadBaseFeatureCatalogue, findBaseFeatures, baseFeatureHelp, type PermissionSnapshot } from './featureDiscovery';
@@ -63,7 +64,7 @@ function fromResponse(raw:unknown):string {
   return (r.output??[]).flatMap(o=>o.content??[]).filter(c=>c.type==='output_text'&&c.text).map(c=>c.text).join('\n').trim();
 }
 export async function callAiProvider(instructions:string,input:unknown,maxOutput=700,timeoutMs=25_000):Promise<string|null> {
-  const key=process.env.OPENAI_API_KEY?.trim();
+  const key=await providerKey();
   if(!key)return null;
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),timeoutMs);
@@ -137,7 +138,7 @@ export async function answerAiSuviet(db:SupabaseClient, question:string,history:
     dataSources.push({kind:'document',title:doc.title,href:`/ai-knowledge?doc=${doc.id}`,snippet:doc.excerpt.slice(0,160)});
   }
   const sources=dataSources.slice(0,12);
-  const key=process.env.OPENAI_API_KEY?.trim();
+  const key=await providerKey();
   if(!key){
     if(guides[0]&&procedural)return {mode:'guide',answer:guideFallback(guides[0]),sources};
     const playful=playfulFallback(question);
@@ -179,3 +180,4 @@ QUAN TRỌNG:
   if(!answer)throw new Error('Chưa kết nối được AI.');
   return {mode:'ai',answer,sources};
 }
+

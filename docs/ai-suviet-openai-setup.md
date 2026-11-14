@@ -13,11 +13,11 @@ Ngày tạo nền: 14/11/2026. Không lưu khóa API, mã bí mật hoặc dữ 
 
 ## Khi quản trị viên có OpenAI API Key
 
-1. Mở mục **Secrets/Environment Variables phía máy chủ** trong dự án đang chạy `base.suviet.vn` (Lovable Cloud hoặc hosting backend thực tế). Đừng nhầm GitHub Actions secrets với secrets của runtime website.
-2. Tạo secret tên chính xác `OPENAI_API_KEY` với khóa từ OpenAI Platform. **Không gửi khóa vào chat ChatGPT, không đặt trong `VITE_*`, không tạo bảng database chứa khóa và không commit khóa lên GitHub**.
-3. Tuỳ chọn: `SUVIET_AI_MODEL` để chọn model được cấp quyền trong tài khoản; mặc định source code sử dụng `gpt-6-luna`.
-4. Nếu nền tảng yêu cầu, Publish/redeploy hoặc khởi động lại môi trường server để biến mới được nạp.
-5. Đăng nhập Base bằng tài khoản Super Admin → **Kho kiến thức AI** → **Làm mới trạng thái**. Trạng thái “Đã nhận API Key” chỉ xác nhận server thấy biến môi trường, **chưa xác nhận API hoạt động**.
+1. Đăng nhập Base bằng Super Admin → Hệ thống → Kho kiến thức AI → Kết nối OpenAI.
+2. Nhập key vào ô **OpenAI API Key** rồi bấm **Lưu API Key**. Key được mã hóa bằng kho bí mật máy chủ (Vault), chỉ server được đọc lại. Giao diện không lưu localStorage và không hiển thị lại key.
+3. Không cần Publish lại sau khi lưu hoặc thay key. Biến môi trường `OPENAI_API_KEY` vẫn được hỗ trợ làm cấu hình dự phòng khi chưa có key trong Vault; key lưu trong giao diện được ưu tiên.
+4. Bấm **Kiểm tra kết nối** để xác minh key/model/quota. Việc lưu key chỉ xác nhận đã lưu, không tự gửi yêu cầu có tính phí. Không gửi key vào chat hoặc commit GitHub.
+5. Đăng nhập Base bằng tài khoản Super Admin → **Kho kiến thức AI** → **Làm mới trạng thái**. Trạng thái “Đã nhận API Key” chỉ xác nhận server đọc được khóa cấu hình, **chưa xác nhận API hoạt động**.
 6. Nhấn **Kiểm tra kết nối**. Thao tác này từ server gửi một yêu cầu Responses API rất ngắn (có thể phát sinh mức phí API nhỏ) và trả về thành công hoặc lỗi mà **không lộ khóa**.
 7. Mở Chipi, hỏi: “Cách tạo Job thiết kế?” và “Cho tôi biết các Job thiết kế đang chờ xử lý mà tôi có quyền xem”. Kiểm tra việc trả lời, dẫn nguồn, giới hạn quyền bằng tài khoản nhân viên thường.
 8. Với PDF đã tải trước đó, quay lại Kho kiến thức AI, nhấn **Đọc PDF**, kiểm tra nội dung trích xuất rồi mới bấm **Chia sẻ cho nhân viên**.
