@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, MessageSquare, Package, type LucideIcon } from 'lucide-react';
+import { MessageCircleHeart, LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, MessageSquare, Package, type LucideIcon } from 'lucide-react';
 import type { PermissionKey } from '@/lib/auth';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean; badge?: string; perm?: PermissionKey; anyPerm?: PermissionKey[]; kpi?: boolean; adminOnly?: boolean; comingSoon?: boolean };
@@ -8,6 +8,7 @@ export const navigationGroups: NavGroup[] = [
 { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true, perm: "overview.view" },
       { to: "/tasks", label: "Task To-do List", icon: ListChecks, perm: "task.view" },
 { to: "/approvals", label: "Phê duyệt", icon: ClipboardCheck },
+    { to: "/community", label: "Cộng đồng Sứ Việt", icon: MessageCircleHeart },
     { to: "/biz/3k", label: "3K của tôi", icon: ListChecks },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [

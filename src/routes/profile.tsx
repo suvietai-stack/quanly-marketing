@@ -5,11 +5,14 @@ import { useAuth } from "@/lib/auth";
 import { isFakeEmail } from "@/lib/password";
 import { PageHeader } from "@/components/AppShell";
 import { PersonalProfile } from "@/components/PersonalProfile";
+import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserRound, MessagesSquare } from "lucide-react";
 import { Mail, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -85,16 +88,27 @@ function ProfilePage() {
   return (
     <>
       <PageHeader title="Hồ sơ cá nhân" description="Không gian của bạn: cập nhật hồ sơ, thông tin liên hệ và bảo mật tài khoản." />
-      <div className="mx-auto max-w-3xl space-y-6">
-        {me && <PersonalProfile key={me.id} userId={me.id} fullName={me.fullName} />}
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">Bảo mật — Đổi mật khẩu</h2>
-          <ChangePasswordForm />
-        </section>
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">Khôi phục tài khoản</h2>
-          <RecoveryEmailCard />
-        </section>
+      <div className="mx-auto max-w-3xl">
+        <Tabs defaultValue="profile" className="min-w-0">
+          <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-transparent p-0">
+            <TabsTrigger value="profile" className="min-h-12 gap-2 rounded-xl border bg-card text-xs sm:text-sm"><UserRound className="h-4 w-4" />Hồ sơ & bảo mật</TabsTrigger>
+            <TabsTrigger value="posts" className="min-h-12 gap-2 rounded-xl border bg-card text-xs sm:text-sm"><MessagesSquare className="h-4 w-4" />Bài viết của tôi</TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile" className="space-y-6">
+            {me && <PersonalProfile key={me.id} userId={me.id} fullName={me.fullName} />}
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold">Bảo mật — Đổi mật khẩu</h2>
+              <ChangePasswordForm />
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold">Khôi phục tài khoản</h2>
+              <RecoveryEmailCard />
+            </section>
+          </TabsContent>
+          <TabsContent value="posts">
+            {me && <CommunityFeed mineOnly />}
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );
