@@ -18,7 +18,7 @@ Ngày tạo nền: 14/11/2026. Không lưu khóa API, mã bí mật hoặc dữ 
 3. Tuỳ chọn: `SUVIET_AI_MODEL` để chọn model được cấp quyền trong tài khoản; mặc định source code sử dụng `gpt-6-luna`.
 4. Nếu nền tảng yêu cầu, Publish/redeploy hoặc khởi động lại môi trường server để biến mới được nạp.
 5. Đăng nhập Base bằng tài khoản Super Admin → **Kho kiến thức AI** → **Làm mới trạng thái**. Trạng thái “Đã nhận API Key” chỉ xác nhận server thấy biến môi trường, **chưa xác nhận API hoạt động**.
-6. Nhấn **Kiểm tra kết nối**. Thao tác này từ server gọi OpenAI Model API và trả về thành công hoặc lỗi mà **không lộ khóa**.
+6. Nhấn **Kiểm tra kết nối**. Thao tác này từ server gửi một yêu cầu Responses API rất ngắn (có thể phát sinh mức phí API nhỏ) và trả về thành công hoặc lỗi mà **không lộ khóa**.
 7. Mở Chipi, hỏi: “Cách tạo Job thiết kế?” và “Cho tôi biết các Job thiết kế đang chờ xử lý mà tôi có quyền xem”. Kiểm tra việc trả lời, dẫn nguồn, giới hạn quyền bằng tài khoản nhân viên thường.
 8. Với PDF đã tải trước đó, quay lại Kho kiến thức AI, nhấn **Đọc PDF**, kiểm tra nội dung trích xuất rồi mới bấm **Chia sẻ cho nhân viên**.
 
