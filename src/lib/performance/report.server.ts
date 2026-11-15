@@ -1,3 +1,4 @@
+import {managedTargets,type DashboardContext} from './context';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {readAllPages} from '@/lib/storeRead';
 import {rangeOf,vnToday} from '@/lib/kpi/timeframe';
@@ -9,15 +10,23 @@ const sources:{key:string;label:string;table:string;href:string;perms:string[];o
  {key:'video',label:'Video',table:'videos',href:'/videos',perms:['video.view'],owners:[['ownerId','owner']],due:['deadline','scriptDeadline'],completed:['completedAt']},
  {key:'design',label:'Thiết kế',table:'orders',href:'/orders',perms:['order.view','order.photo.view','order.marketing_design.view','order.order_mockup.view'],owners:[['assigneeId','assignee']],due:['deadline'],completed:['completedAt']},
 ];
+export type DashboardReadAccess={context:DashboardContext;nav:{permissions:{key:string;allowed:boolean}[]};people:{id:string;full_name?:string;username?:string}[]};
 const empty=(state:Extra['state']):Extra=>({state,total:0,done:0,active:0,overdue:0,waiting:0});
-export async function buildMyPerformance(db:SupabaseClient,uid:string,period:Period,now=new Date()):Promise<Report>{
- const [{data:active,error:activeError},{data:nav,error:navError},{data:people,error:peopleError}]=await Promise.all([db.rpc('community_active'),db.rpc('base_permissions_navigation'),db.rpc('get_profiles_directory')]);
+export async function buildMyPerformance(db:SupabaseClient,uid:string,period:Period,now=new Date(),options:{manage?:boolean;withoutExtras?:boolean;access?:DashboardReadAccess}={}):Promise<Report>{
+ const [{data:active,error:activeError},{data:nav,error:navError},{data:people,error:peopleError}]=options.access?[{data:options.access.context.userId===uid,error:null},{data:options.access.nav,error:null},{data:options.access.people,error:null}]:await Promise.all([db.rpc('community_active'),db.rpc('base_permissions_navigation'),db.rpc('get_profiles_directory')]);
  if(activeError||!active)throw new Error('Chỉ tài khoản đang hoạt động được xem báo cáo cá nhân.');
  if(navError||!nav)throw new Error('Chưa kiểm tra được quyền báo cáo.');
  const allowed=new Set((nav.permissions??[]).filter((p:{allowed:boolean})=>p.allowed).map((p:{key:string})=>p.key));
  if(!allowed.has('overview.view'))throw new Error('Bạn chưa có quyền xem Dashboard.');
  if(peopleError)throw new Error('Chưa đọc được định danh nhân viên.');
- const names=uniqueActorNames(people??[],uid);
+ let targets=[uid];
+ if(options.manage){
+  const {data:c,error}=options.access?{data:options.access.context,error:null}:await db.rpc('dashboard_scope_context');
+  if(error||!c||c.userId!==uid||!c.canManage)throw new Error('Bạn không có phạm vi quản lý hợp lệ.');
+  targets=managedTargets(c as DashboardContext);
+ }
+ const aliases=targets.map(id=>({id,names:uniqueActorNames(people??[],id)}));
+ const names=aliases.flatMap(a=>a.names);
  const actor=(people??[]).find((p:{id:string})=>p.id===uid);
  const ambiguous=actor?.full_name&&!names.includes(actor.full_name)?1:0;
  // Every source is read with the verified caller JWT. Bounded pages fail as a whole, never silently count a partial page.
@@ -26,7 +35,11 @@ export async function buildMyPerformance(db:SupabaseClient,uid:string,period:Per
   const base:ModuleResult={key:s.key,label:s.label,href:s.href,state:'unavailable',items:[],ambiguous};
   if(!s.perms.some(p=>allowed.has(p)))return base;
   try{
-   const rows=await read<{id:string;data:Record<string,unknown>}>((from,to,signal)=>db.from(s.table).select('id,data').eq('is_demo',false).or(ownerFilter(s.owners,uid,names)).order('id').range(from,to).abortSignal(signal));
+   if(!targets.length)return {...base,state:'ok' as const};
+   const batches=[];for(let i=0;i<aliases.length;i+=8)batches.push(aliases.slice(i,i+8));
+   const pages=await Promise.all(batches.map(batch=>read<{id:string;data:Record<string,unknown>}>((from,to,signal)=>db.from(s.table).select('id,data').eq('is_demo',false).or(batch.map(a=>ownerFilter(s.owners,a.id,a.names)).join(',')).order('id').range(from,to).abortSignal(signal))));
+   const rows=[...new Map(pages.flat().map(r=>[r.id,r])).values()];
+   if(rows.length>5000)throw new Error('Nguồn vượt giới hạn đọc.');
    const str=(d:Record<string,unknown>,keys:string[])=>keys.map(k=>d[k]).find(v=>typeof v==='string'&&v.length>0) as string|undefined;
    const due=(d:Record<string,unknown>)=>{
     const status=String(d.status||'');
@@ -35,11 +48,11 @@ export async function buildMyPerformance(db:SupabaseClient,uid:string,period:Per
     if(s.key==='video'&&status.toLowerCase().includes('kịch bản'))return str(d,['scriptDeadline','deadline']);
     return str(d,s.due);
    };
-   return {...base,state:'ok' as const,items:rows.filter(r=>ownItem(r.data,s.owners,uid,names)).map(r=>({id:s.key+':'+r.id,module:s.key,title:String(r.data.title||'Chưa có tên'),status:String(r.data.status||'Chưa có trạng thái'),state:stateFor(s.key,String(r.data.status||'')),due:due(r.data),completed:str(r.data,s.completed),href:s.href+(['design','web'].includes(s.key)?'?open='+encodeURIComponent(r.id):'')}))};
+   return {...base,state:'ok' as const,items:rows.filter(r=>aliases.some(a=>ownItem(r.data,s.owners,a.id,a.names))).map(r=>({id:s.key+':'+r.id,module:s.key,title:String(r.data.title||'Chưa có tên'),status:String(r.data.status||'Chưa có trạng thái'),state:stateFor(s.key,String(r.data.status||'')),due:due(r.data),completed:str(r.data,s.completed),href:s.href+(['design','web'].includes(s.key)?'?open='+encodeURIComponent(r.id):'')}))};
   }catch{return {...base,state:'error' as const};}
  }));
  const [start,end]=rangeOf(period,vnToday(now));const lo=instant(start)!,hi=Math.min(now.getTime(),instant(end,true)!);
- const [signal,k3]=await Promise.all([
+ const [signal,k3]=options.withoutExtras||options.manage?[empty('unavailable'),empty('unavailable')]:await Promise.all([
   (async()=>{
    if(!['signal.create','signal.view_all','signal.manage','signal.sale','signal.assign'].some(p=>allowed.has(p)))return empty('unavailable');
    try{

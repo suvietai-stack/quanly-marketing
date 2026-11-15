@@ -1,34 +1,29 @@
-# Dashboard cá nhân và nhận định Chipi
+# Dashboard hiệu suất cá nhân
 
-Mở Dashboard → Của tôi; trên mobile dùng lối vào Dashboard từ màn hình ứng dụng (`/?view=dashboard`). Không đổi launcher, dashboard quản lý hay quyền xem nhân sự.
+Dashboard hiện là bản tóm tắt theo vị trí, dữ liệu và quyền: **Cá nhân tôi** / **Phạm vi quản lý**. Xem [dashboard-modes.md](dashboard-modes.md) cho hợp đồng phạm vi, nguồn gốc và cách hiển thị. Không còn mặc định trang chung là dashboard Marketing hoặc sao chép đầy đủ báo cáo chuyên môn.
 
-## Nguồn và phạm vi
+## Công thức đầu việc chuyên môn
 
-- Task, Content Web, Social, Video, Thiết kế: chỉ đầu việc trực tiếp gán cho tài khoản đang đăng nhập. Không tính việc chỉ tạo/giao/duyệt. Ưu tiên ID ổn định; tên cũ chỉ dùng nếu duy nhất trong danh bạ. Tên trùng bị loại khỏi đối chiếu bằng tên. Loại dữ liệu mẫu.
-- Mỗi nguồn đọc bằng Supabase client JWT của người hỏi, có bộ lọc chủ sở hữu, sau đó kiểm tra chủ sở hữu lần nữa trước khi tổng hợp. Không có tham số user_id từ trình duyệt, không service role, không ghi nghiệp vụ. Quyền Dashboard và quyền nguồn được đọc lại từ máy chủ.
-- Tín hiệu Sale chỉ `assigned_to` của người hỏi, bỏ tín hiệu hủy. Kết thúc kỳ tính cả won/lost; không đánh đồng với doanh thu hay bán thành công.
-- 3K chỉ `user_id` của người hỏi, chưa xóa, ngày kế hoạch trong kỳ đến hôm nay. Trạng thái do nhân viên cập nhật, không coi là KPI đã xác minh. Hai nguồn này trình bày riêng, không cộng vào tổng đầu việc Marketing/Task.
-- Các hồ sơ liên kết giữa module vẫn là đầu việc riêng trong module đó; không quy đổi khối lượng thành một thang năng suất hay so sánh nhân viên.
+Task, Content Web, Social, Video và Thiết kế được đọc theo người trực tiếp phụ trách. Người chỉ giao/duyệt không được cộng vào khối lượng thực hiện. ID ổn định thắng tên cũ; tên trùng không được đoán. Không tính dữ liệu mẫu. Công việc chia sẻ trong nhóm chỉ đếm một lần theo ID hồ sơ.
 
-## Công thức
+Tuần từ thứ Hai, tháng theo lịch; dùng helper thời gian KPI Việt Nam. Đang xử lý/chờ phản hồi/trạng thái khác là tồn hiện tại. Quá hạn xử lý chỉ tính trong việc đang xử lý; chờ phản hồi quá hạn được nhắc riêng và không tự quy lỗi cá nhân.
 
-- Tuần từ thứ Hai; tháng theo lịch. Mọi mốc ngày ở Asia/Ho_Chi_Minh, dùng helper khung thời gian KPI hiện có.
-- Đang xử lý/chờ phản hồi/trạng thái khác là tồn hiện tại. Quá hạn xử lý chỉ nằm trong đang xử lý; hồ sơ chờ phản hồi quá hạn được nhắc riêng, không tự quy lỗi cá nhân.
-- Hoàn thành trong kỳ chỉ có ngày hoàn thành hợp lệ từ đầu kỳ đến thời điểm cập nhật. Không dùng updated_at hay ngày tạo để thay ngày hoàn thành. Web đăng xong vẫn chưa coi hoàn thành toàn quy trình. Social dùng ngày đăng cho mốc hoàn thành.
-- Đúng hạn = số hoàn thành không muộn hơn deadline / số hoàn thành đủ dữ liệu đối chiếu. Deadline chỉ có ngày tính đến hết ngày Việt Nam. Ngày hoàn thành không có giờ không được đem so với deadline có giờ. Không có mẫu số hiển thị —.
-- Dùng phân công và deadline hiện lưu; không hồi suy attribution tại thời điểm hoàn thành hoặc các lần thay hạn. Không thay thế báo cáo KPI đã chốt.
-- Biểu đồ theo ngày, biểu đồ cơ cấu việc mở và biểu đồ hoàn thành theo nhóm có chú giải/số liệu tương ứng. Bảng chi tiết cuộn ngang trên mobile. Các gợi ý ưu tiên sắp deadline, có liên kết về nguồn.
+Hoàn thành trong kỳ cần ngày hoàn thành hợp lệ từ đầu kỳ đến thời điểm cập nhật; không lấy updated_at/ngày tạo thay ngày hoàn thành. Web đã đăng chưa đồng nghĩa hoàn thành toàn quy trình. Social dùng ngày đăng làm mốc hoàn thành.
 
-## Lỗi, tải và AI
+Đúng hạn = số hoàn thành không muộn hơn deadline / số hoàn thành đủ dữ liệu. Deadline có ngày tính hết ngày Việt Nam; ngày hoàn thành không có giờ không đem so với deadline có giờ. Không mẫu số thì không tạo 0% giả. Dùng phân công và deadline hiện lưu, không hồi suy các lần đổi người/đổi hạn; không thay kết quả KPI chính thức.
 
-Mỗi nguồn đọc đủ trang theo chủ sở hữu (250/trang, giới hạn 5.000 bản ghi/nguồn, timeout 12 giây/trang). Nếu một trang lỗi hoặc vượt giới hạn, bỏ toàn bộ nguồn đó và báo chưa tải được; không âm thầm đếm dữ liệu một phần. Nguồn không có quyền/chưa bật hiện —, không phải 0. Không chặn các nguồn đọc thành công.
+## Nguồn chuyên môn khác
 
-Báo cáo lazy-load trong tab Của tôi, cache 60 giây theo tài khoản và kỳ; không polling. Chipi tự phân tích khi có dữ liệu và nguồn đọc thành công; cache nhận định 10 phút theo tài khoản/kỳ/dấu số liệu. Có nút phân tích lại. Máy chủ luôn đọc lại số liệu khi tạo nhận định, không nhận số liệu client. Dữ liệu đổi trong lúc phân tích thì nhận định không hiển thị như khớp báo cáo cũ. Lỗi AI không làm mất số liệu. Dùng giới hạn hỏi AI hiện có và API key server-only; không tạo yêu cầu AI cho báo cáo trống.
+- Sale giữ phạm vi RLS Signal, kết quả thành công/không thành công tách riêng.
+- 3K dùng số liệu đo lường từ `k3_measured_period_read`, không suy KPI từ trạng thái `k3_tasks` cũ. Chỉ tóm tắt số KPI/ghi nhận/chốt, không cộng các phép đo khác đơn vị.
+- Kinh doanh lấy KR tháng chính thức từ `biz_dashboard_data`. Không coi số liệu tháng là tuần hoặc tự cộng chỉ tiêu khác loại.
 
-AI chỉ nhận tổng hợp và tối đa 3 tên việc ưu tiên, không nhận ghi chú riêng/lương/hồ sơ nhân sự. Tên việc là dữ liệu không tin cậy. Nhận định chỉ hỗ trợ cá nhân, không chấm điểm tổng, suy năng lực/thái độ hay đề nghị khen thưởng/kỷ luật. Không so kỳ trước khi chưa có dữ liệu đối chiếu. Chưa có key dùng gợi ý theo công thức và gắn nhãn tương ứng.
+Khối rỗng/ngoài quyền/chưa bật ẩn. Nguồn lỗi báo lỗi riêng. Mỗi khối có lối mở báo cáo gốc; không dựng lại toàn bộ danh sách, bộ lọc, bảng xếp hạng hay báo cáo chi tiết.
 
-## Kiểm tra
+## Tải và AI
 
-`npx vitest run src/lib/performance src/lib/aiSuviet`, `npx tsc --noEmit`, `npm run build`.
+Đầu việc đọc đủ trang (250/trang, giới hạn 5.000/nguồn, timeout 12 giây/trang); lỗi một trang bỏ nguồn đó thay vì âm thầm đếm một phần. Bộ lọc quản lý chia lô, khử trùng hồ sơ. JWT/RLS của người hỏi vẫn áp dụng ở tất cả lần đọc.
 
-Các ca kiểm tra gồm ngày Việt Nam, tách chờ với quá hạn xử lý, ngày hoàn thành thiếu/ngoài kỳ, tránh 0% giả, tên trùng, ID xung đột, chỉ gán bởi mình, lọc actor cho Sale/3K, nguồn lỗi độc lập và chặn khi thiếu quyền Dashboard.
+Dashboard cache theo tài khoản/chế độ/kỳ, nhận định cache theo dấu số liệu. Server đọc lại đúng chế độ trước khi gọi AI, không nhận actor hoặc số liệu client. AI chỉ nhận tổng hợp cần thiết; không ghi nghiệp vụ, không chấm năng lực hay đề nghị thưởng/phạt. Dashboard trống không gọi AI; lỗi AI không làm mất số liệu. Dùng API key và hạn mức hỏi AI hiện có.
+
+Kiểm tra: `npx vitest run src/lib/performance src/lib/aiSuviet`; `npx tsc --noEmit`; `npm run build`; SQL scope tests trong `supabase/tests/dashboard_scope.sql` chạy rollback.

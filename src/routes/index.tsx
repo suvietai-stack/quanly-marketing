@@ -1,3 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
+import { useServerFn } from '@tanstack/react-start';
+import { getDashboardContext } from '@/lib/performance/dashboard.functions';
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore, isOverdue, fmtDate } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
@@ -106,52 +109,19 @@ function isMineByNames(value: string | undefined, mine: Set<string>): boolean {
 // ============ Component ============
 
 function Overview() {
-  const { user, can, isSuperAdmin } = useCurrentUser();
-  const canSeeAllDept = isSuperAdmin || can("overview.all_dept") || can("report.view");
-  const isKpiManager = !!user && (isSuperAdmin || user.roleId === "role-admin");
-  const [tab, setTab] = useState<"mine" | "summary" | "staff" | "ops">("mine");
-
-  const desc = {
-    mine: "Công việc và KPI của bạn — cập nhật tự động từ công việc thực tế.",
-    summary: "Tiến độ triển khai theo thương hiệu và kênh.",
-    staff: "Tiến độ KPI của từng nhân sự.",
-    ops: "Tình hình vận hành phòng Digital Marketing.",
-  }[tab];
-
-  return (
-    <div className="dashboard-page min-w-0 space-y-4 md:space-y-6">
-      {/* The mobile header is intentionally brief: action cards follow immediately. */}
-      <header className="dashboard-hero md:hidden rounded-2xl p-4 shadow-sm">
-        <div className="flex items-start gap-3">
-          <span className="rounded-xl bg-white/15 p-2 text-white"><LayoutGrid className="h-5 w-5" /></span>
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-cyan-100">Bảng điều khiển</p>
-            <h2 className="mt-1 text-[20px] font-bold leading-snug text-white">
-              {tab === "mine" ? "Công việc của tôi" : tab === "ops" ? "Điều hành công việc" : tab === "staff" ? "Hiệu suất nhân sự" : "Tổng hợp tiến độ"}
-            </h2>
-            <p className="mt-1 text-xs leading-relaxed text-blue-100">{desc}</p>
-          </div>
-        </div>
-      </header>
-      <div className="hidden md:block"><PageHeader title={tab === "mine" ? "Tổng quan của tôi" : "Tổng quan"} description={desc} /></div>
-      {canSeeAllDept ? (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "mine" | "summary" | "staff" | "ops")} className="min-w-0">
-          <TabsList className="dashboard-main-tabs grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-transparent p-0 md:flex md:w-fit md:flex-wrap">
-            <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="mine"><Inbox className="h-4 w-4" /> Của tôi</TabsTrigger>
-            {isKpiV2Enabled() && <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="summary"><Globe className="h-4 w-4" /> Tổng hợp</TabsTrigger>}
-            {isKpiV2Enabled() && isKpiManager && <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="staff"><Briefcase className="h-4 w-4" /> Nhân sự</TabsTrigger>}
-            <TabsTrigger className="dashboard-main-tab min-h-11 rounded-xl border bg-card text-xs sm:text-sm" value="ops"><ClipboardCheck className="h-4 w-4" /> Vận hành</TabsTrigger>
-          </TabsList>
-          <TabsContent value="mine" className="mt-4"><MineOverview /></TabsContent>
-          <TabsContent value="summary" className="mt-4"><ManagerSummary /></TabsContent>
-          {isKpiManager && <TabsContent value="staff" className="mt-4"><StaffTable /></TabsContent>}
-          <TabsContent value="ops" className="mt-4"><DeptOverview /></TabsContent>
-        </Tabs>
-      ) : (
-        <MineOverview />
-      )}
-    </div>
-  );
+  const {user}=useCurrentUser();
+  const [mode,setMode]=useState<'personal'|'manage'>('personal');
+  const readContext=useServerFn(getDashboardContext);
+  const context=useQuery({queryKey:['dashboard-context',user?.id],queryFn:()=>readContext(),enabled:!!user?.id,staleTime:30_000,gcTime:30_000,retry:1,refetchOnWindowFocus:true});
+  const c=context.data;
+  const permitted=mode==='manage'&&!!c?.canManage;
+  useEffect(()=>{if(c&&!c.canManage)setMode('personal');},[c]);
+  return <div className="dashboard-page min-w-0 space-y-4 md:space-y-6">
+    <header className="dashboard-hero rounded-2xl bg-gradient-to-br from-[#102b52] via-[#174679] to-[#126c78] p-4 text-white shadow-sm sm:p-5"><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-cyan-100">Dashboard · Base Sứ Việt</p><h1 className="mt-2 text-xl font-bold text-white sm:text-2xl">{permitted?'Phạm vi quản lý':'Cá nhân tôi'}</h1><p className="mt-2 text-sm font-medium text-blue-100">{c?.identity.name??user?.fullName}</p>{c&&c.identity.placements.length>0&&<p className="mt-1 text-xs leading-5 text-blue-100">{c.identity.placements.map(p=>`${p.unit} · ${p.title}`).join(' / ')}</p>}<p className="mt-2 text-xs leading-5 text-blue-100">{permitted?'Tóm tắt trong phạm vi được cấp; mở báo cáo chuyên môn để xem chi tiết.':'Có dữ liệu nào phù hợp với công việc của bạn, hiển thị phần đó.'}</p></header>
+    {context.isPending&&<div role="status" className="h-20 animate-pulse rounded-xl bg-muted" aria-label="Đang xác nhận vị trí và phạm vi"/>}
+    {context.isError&&<div role="alert" className="rounded-xl border p-4 text-sm text-destructive">Chưa đọc được vị trí và phạm vi của bạn. <Button variant="outline" onClick={()=>void context.refetch()}>Thử lại</Button></div>}
+    {c&&<><div className={`grid ${c.canManage?"grid-cols-2":"grid-cols-1"} gap-2 rounded-2xl border bg-muted/30 p-1.5`} role="group" aria-label="Chế độ Dashboard"><Button variant={!permitted?'default':'ghost'} aria-pressed={!permitted} className="min-h-12 rounded-xl" onClick={()=>setMode('personal')}><Inbox className="h-4 w-4"/>Cá nhân tôi</Button>{c.canManage&&<Button variant={permitted?'default':'ghost'} aria-pressed={permitted} className="min-h-12 rounded-xl" onClick={()=>setMode('manage')}><Briefcase className="h-4 w-4"/>Phạm vi quản lý</Button>}</div><Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted"/>}>{permitted?<PersonalPerformance key={`${user?.id}:manage`} mode="manage"/>:<MineOverview key={`${user?.id}:personal`}/>}</Suspense></>}
+  </div>;
 }
 
 // ============ Mine ============
@@ -328,84 +298,12 @@ function useMyWork() {
 type WorkTab = "mine" | "review" | "fix" | "waiting" | "overdue" | "done";
 
 function MineOverview() {
-  const items = useMyWork();
-  const { user } = useCurrentUser();
-  const [tab, setTab] = useState<WorkTab>("mine");
-  const [taskSearch, setTaskSearch] = useState("");
-  const [kpiExpanded, setKpiExpanded] = useState(false);
-  useEffect(() => {
-    // On desktop preserve the old immediately visible KPI panel; on mobile
-    // defer expensive KPI hydration until the user explicitly expands it.
-    const media = window.matchMedia("(max-width: 767px)");
-    const update = () => setKpiExpanded(!media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-  const go = (t: WorkTab) => { setTab(t); document.getElementById("my-work")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
-  const filterWork = (list: WorkItem[]) => {
-    const q = taskSearch.trim().toLocaleLowerCase("vi");
-    return !q ? list : list.filter(it => [it.title, it.brand, it.module, it.status, it.mineAs].some(v => (v ?? "").toLocaleLowerCase("vi").includes(q)));
-  };
-  const emptyMessage = (normal: string) => taskSearch.trim() ? "Không tìm thấy công việc phù hợp. Hãy thử từ khóa khác." : normal;
-  const activeCount = {
-    mine: items.mine.length,
-    review: items.toReview.length,
-    fix: items.needsFix.length,
-    waiting: items.waiting.length,
-    overdue: items.overdue.length,
-    done: items.doneRecent.length,
-  }[tab];
-  const activeShortLabel = { mine: "đang làm", review: "chờ duyệt", fix: "cần sửa", waiting: "đang chờ", overdue: "quá hạn", done: "hoàn thành" }[tab];
-
-  return (
-    <div className="flex min-w-0 flex-col gap-5 md:gap-8">
-      <section className="order-1">{(items.toReview.length>0||items.needsFix.length>0)&&<div className="mb-4 flex flex-wrap gap-2">{items.toReview.length>0&&<Button variant="outline" className="min-h-11 rounded-xl border-violet-200 text-violet-700 dark:border-violet-900 dark:text-violet-300" onClick={()=>go("review")}><ClipboardCheck className="h-4 w-4"/>Chờ tôi duyệt · {items.toReview.length}</Button>}{items.needsFix.length>0&&<Button variant="outline" className="min-h-11 rounded-xl border-amber-200 text-amber-800 dark:border-amber-900 dark:text-amber-300" onClick={()=>go("fix")}><FileEdit className="h-4 w-4"/>Cần sửa · {items.needsFix.length}</Button>}</div>}<Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" aria-label="Đang mở báo cáo cá nhân"/>}><PersonalPerformance /></Suspense></section>
-
-      <section id="my-work" className="order-2 scroll-mt-28 md:order-3">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <SectionTitle>Danh sách cần làm</SectionTitle>
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">{activeCount} {activeShortLabel}</span>
-        </div>
-        <Card className="dashboard-work-panel overflow-hidden rounded-2xl">
-          <CardContent className="p-3 sm:p-5">
-            <div className="relative mb-3 flex items-center">
-              <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <input type="search" value={taskSearch} onChange={e => setTaskSearch(e.target.value)} aria-label="Tìm công việc trong mục đang xem" placeholder="Tìm tên việc, thương hiệu, trạng thái..." className="min-h-11 w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
-            </div>
-            <Tabs value={tab} onValueChange={(v) => setTab(v as WorkTab)}>
-              <TabsList className="dashboard-work-tabs grid h-auto w-full grid-cols-3 gap-1.5 bg-transparent p-0">
-                <TabsTrigger data-tone="info" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="mine">Đang làm ({items.mine.length})</TabsTrigger>
-                <TabsTrigger data-tone="danger" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="overdue">Quá hạn ({items.overdue.length})</TabsTrigger>
-                <TabsTrigger data-tone="warn" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="fix">Cần sửa ({items.needsFix.length})</TabsTrigger>
-                <TabsTrigger data-tone="violet" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="review">Chờ duyệt ({items.toReview.length})</TabsTrigger>
-                <TabsTrigger data-tone="muted" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="waiting">Đang chờ ({items.waiting.length})</TabsTrigger>
-                <TabsTrigger data-tone="success" className="dashboard-work-tab min-h-11 rounded-xl px-1 text-[11px] leading-tight sm:text-xs" value="done">Đã xong ({items.doneRecent.length})</TabsTrigger>
-              </TabsList>
-              <TabsContent value="mine"><WorkTable items={filterWork(sortByDue(items.mine))} empty={emptyMessage("Hiện chưa có việc nào bạn đang thực hiện.")} /></TabsContent>
-              <TabsContent value="review"><WorkTable items={filterWork(items.toReview)} empty={emptyMessage("Không có việc nào đang chờ bạn duyệt.")} /></TabsContent>
-              <TabsContent value="fix"><WorkTable items={filterWork(items.needsFix)} empty={emptyMessage("Không có việc nào cần sửa.")} /></TabsContent>
-              <TabsContent value="waiting"><WorkTable items={filterWork(items.waiting)} empty={emptyMessage("Không có việc nào đang chờ người khác.")} /></TabsContent>
-              <TabsContent value="overdue"><WorkTable items={filterWork(sortByDue(items.overdue))} empty={emptyMessage("Không có việc nào quá hạn.")} /></TabsContent>
-              <TabsContent value="done"><WorkTable items={filterWork(items.doneRecent)} empty={emptyMessage("Chưa có việc hoàn thành trong 7 ngày.")} /></TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </section>
-
-      {isKpiV2Enabled() && user && (
-        <section className="order-3 md:order-2">
-          <div className="dashboard-kpi-panel rounded-2xl border bg-card p-3 md:p-5">
-            <button type="button" className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-1 text-left" aria-expanded={kpiExpanded} onClick={() => setKpiExpanded(v => !v)}>
-              <span className="flex min-w-0 items-center gap-2.5"><span className="rounded-lg bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200"><CheckCircle2 className="h-5 w-5" /></span><span className="min-w-0"><strong className="block text-sm">KPI của tôi</strong><span className="block text-xs text-muted-foreground">Mở xem tiến độ và chỉ tiêu cá nhân</span></span></span>
-              {kpiExpanded ? <ArrowUp className="h-4 w-4 shrink-0 text-primary" /> : <ArrowDown className="h-4 w-4 shrink-0 text-primary" />}
-            </button>
-            {kpiExpanded && <div className="mt-4 border-t pt-4"><PersonalKpi userId={user.id} /></div>}
-          </div>
-        </section>
-      )}
-    </div>
-  );
+  const items=useMyWork();
+  return <div className="min-w-0 space-y-4">
+    {items.toReview.length>0&&<details className="rounded-2xl border bg-card p-4"><summary className="min-h-10 cursor-pointer text-sm font-semibold text-violet-700 dark:text-violet-300">Chờ tôi duyệt · {items.toReview.length}</summary><WorkTable items={items.toReview} empty=""/></details>}
+    {items.needsFix.length>0&&<details className="rounded-2xl border bg-card p-4"><summary className="min-h-10 cursor-pointer text-sm font-semibold text-amber-800 dark:text-amber-300">Cần sửa · {items.needsFix.length}</summary><WorkTable items={items.needsFix} empty=""/></details>}
+    <PersonalPerformance mode="personal"/>
+  </div>;
 }
 
 function sortByDue(list: WorkItem[]) {

@@ -1,0 +1,32 @@
+begin;
+do $$
+declare root text;child text;outside text;r jsonb;person uuid;c jsonb;blocked boolean:=false;
+begin
+ select parent_id,id into root,child from public.org_units where active and parent_id is not null limit 1;
+ select id into outside from public.org_units where active and not private.org_contains(root,id) limit 1;
+ if root is null or outside is null then raise exception 'Need existing separate active units';end if;
+ r:=jsonb_build_array(jsonb_build_object('permission','report.view','effect','ALLOW','scope','native'));
+ if private.dashboard_unit_allowed(r,'{}',child) then raise exception 'Global report view without management scope widened';end if;
+ if not private.dashboard_unit_allowed(r,array[root],child) then raise exception 'Allowed subordinate unit denied';end if;
+ if private.dashboard_unit_allowed(r,array[root],outside) then raise exception 'Escaped assigned management subtree';end if;
+ r:=jsonb_build_array(jsonb_build_object('permission','report.view','effect','ALLOW','scope','native','unit_id',root));
+ if not private.dashboard_unit_allowed(r,'{}',child) or private.dashboard_unit_allowed(r,'{}',outside) then raise exception 'Explicit unit rule escaped';end if;
+ r:=r||jsonb_build_array(jsonb_build_object('permission','report.view','effect','DENY','unit_id',child));
+ if private.dashboard_unit_allowed(r,array[root],child) then raise exception 'DENY was bypassed';end if;
+ r:='[{"permission":"report.view","effect":"ALLOW","scope":"own"}]';
+ if private.dashboard_unit_allowed(r,array[root],child) then raise exception 'Own-only rule promoted to manager';end if;
+ if private.dashboard_unit_allowed('[]',array[root],child) then raise exception 'Title alone granted access';end if;
+ if private.dashboard_unit_allowed('[{"permission":"overview.all_dept","effect":"ALLOW","scope":"native"}]','{}','__missing_unit__') then raise exception 'Missing unit granted';end if;
+ select id into person from public.profiles where status::text='Đang hoạt động' order by id limit 1;
+ perform set_config('request.jwt.claim.sub',person::text,true);
+ c:=public.dashboard_scope_context();
+ if c->>'userId'<>person::text or c::text like '%"email"%' or c::text like '%"salary"%' then raise exception 'Identity or directory field whitelist failed';end if;
+ if exists(select 1 from jsonb_array_elements(c->'people') p where not exists(select 1 from public.org_assignments a join jsonb_array_elements(c->'units') n on n->>'id'=a.unit_id where a.user_id::text=p->>'id' and a.status<>'cancelled' and (a.starts_at is null or a.starts_at<=now()) and (a.ends_at is null or a.ends_at>now()))) then raise exception 'Roster without current authorized membership';end if;
+ perform set_config('request.jwt.claim.sub','',true);
+ begin perform public.dashboard_scope_context();exception when others then blocked:=true;end;
+ if not blocked then raise exception 'Unauthenticated context allowed';end if;
+ if has_function_privilege('anon','public.dashboard_scope_context()','EXECUTE') then raise exception 'Anon execute granted';end if;
+ if has_function_privilege('authenticated','private.dashboard_unit_allowed(jsonb,text[],text)','EXECUTE') then raise exception 'Private scope helper exposed';end if;
+end $$;
+rollback;
+select true as dashboard_scope_tests_passed;
