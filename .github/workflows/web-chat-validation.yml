@@ -1,0 +1,24 @@
+name: Web Chat validation
+on:
+  pull_request:
+    paths: ['src/lib/webChat/**', 'src/components/webChat/**', 'src/routes/web-chat.tsx', 'src/routes/api/public/web-chat/**', 'wordpress/suviet-base-chat/**', 'tests/web-chat/**', 'supabase/migrations/20261115090000_web_chat.sql', '.github/workflows/web-chat-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - run: bun install --frozen-lockfile
+      - run: node --test tests/web-chat/*.test.mjs
+      - run: node --check wordpress/suviet-base-chat/widget.js
+      - run: php -l wordpress/suviet-base-chat/suviet-base-chat.php
+      - run: python3 scripts/package-web-chat.py
+      - run: git diff --exit-code -- public/downloads/suviet-base-chat.zip
+      - run: bun run build
+      - run: bunx tsc --noEmit
