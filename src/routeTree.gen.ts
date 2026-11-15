@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AiKnowledgeRouteImport } from './routes/ai-knowledge'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as GoalsV2RouteImport } from './routes/goals-v2'
 import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as LoginRouteImport } from './routes/login'
@@ -90,6 +92,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiKnowledgeRoute = AiKnowledgeRouteImport.update({
+  id: '/ai-knowledge',
+  path: '/ai-knowledge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApprovalsRoute = ApprovalsRouteImport.update({
   id: '/approvals',
   path: '/approvals',
@@ -103,6 +110,11 @@ const AttendanceRoute = AttendanceRouteImport.update({
 const ChinhSachBaoMatRoute = ChinhSachBaoMatRouteImport.update({
   id: '/chinh-sach-bao-mat',
   path: '/chinh-sach-bao-mat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GoalsV2Route = GoalsV2RouteImport.update({
@@ -469,9 +481,11 @@ const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai-knowledge': typeof AiKnowledgeRoute
   '/approvals': typeof ApprovalsRoute
   '/attendance': typeof AttendanceRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
+  '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
@@ -546,9 +560,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai-knowledge': typeof AiKnowledgeRoute
   '/approvals': typeof ApprovalsRoute
   '/attendance': typeof AttendanceRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
+  '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
@@ -624,9 +640,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ai-knowledge': typeof AiKnowledgeRoute
   '/approvals': typeof ApprovalsRoute
   '/attendance': typeof AttendanceRoute
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
+  '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
@@ -703,9 +721,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ai-knowledge'
     | '/approvals'
     | '/attendance'
     | '/chinh-sach-bao-mat'
+    | '/community'
     | '/goals-v2'
     | '/leave'
     | '/login'
@@ -780,9 +800,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ai-knowledge'
     | '/approvals'
     | '/attendance'
     | '/chinh-sach-bao-mat'
+    | '/community'
     | '/goals-v2'
     | '/leave'
     | '/login'
@@ -857,9 +879,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ai-knowledge'
     | '/approvals'
     | '/attendance'
     | '/chinh-sach-bao-mat'
+    | '/community'
     | '/goals-v2'
     | '/leave'
     | '/login'
@@ -935,9 +959,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AiKnowledgeRoute: typeof AiKnowledgeRoute
   ApprovalsRoute: typeof ApprovalsRoute
   AttendanceRoute: typeof AttendanceRoute
   ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
+  CommunityRoute: typeof CommunityRoute
   GoalsV2Route: typeof GoalsV2Route
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
@@ -1020,6 +1046,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-knowledge': {
+      id: '/ai-knowledge'
+      path: '/ai-knowledge'
+      fullPath: '/ai-knowledge'
+      preLoaderRoute: typeof AiKnowledgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/approvals': {
       id: '/approvals'
       path: '/approvals'
@@ -1039,6 +1072,13 @@ declare module '@tanstack/react-router' {
       path: '/chinh-sach-bao-mat'
       fullPath: '/chinh-sach-bao-mat'
       preLoaderRoute: typeof ChinhSachBaoMatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goals-v2': {
@@ -1543,9 +1583,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AiKnowledgeRoute: AiKnowledgeRoute,
   ApprovalsRoute: ApprovalsRoute,
   AttendanceRoute: AttendanceRoute,
   ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
+  CommunityRoute: CommunityRoute,
   GoalsV2Route: GoalsV2Route,
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
