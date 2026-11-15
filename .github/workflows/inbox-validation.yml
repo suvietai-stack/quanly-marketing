@@ -8,6 +8,7 @@ on:
       - 'src/components/FbLeadsSettings.tsx'
       - 'src/lib/fbLeads/**'
       - 'src/routes/inbox.tsx'
+      - 'src/routes/web-chat.tsx'
       - 'src/lib/navigation.ts'
       - 'src/lib/auth.ts'
       - 'docs/inbox-2026-11-15/**'
@@ -32,7 +33,7 @@ jobs:
       - run: bunx tsc --noEmit
       - name: Semantic lint
         run: >-
-          bunx eslint src/components/inbox src/lib/inbox src/routes/inbox.tsx src/lib/fbLeads/fb.server.ts src/lib/fbLeads/fb.functions.ts src/lib/fbLeads/pageDiscovery.server.ts src/components/FbLeadsSettings.tsx
+          bunx eslint src/components/inbox src/lib/inbox src/routes/inbox.tsx src/routes/web-chat.tsx src/lib/fbLeads/fb.server.ts src/lib/fbLeads/fb.functions.ts src/lib/fbLeads/pageDiscovery.server.ts src/components/FbLeadsSettings.tsx
           --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
       - run: bunx vitest run --config vitest.inbox.config.ts
       - name: Install isolated browser test runner

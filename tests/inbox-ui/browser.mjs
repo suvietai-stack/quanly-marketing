@@ -10,6 +10,7 @@ try {
   const page=await browser.newPage({viewport:{width,height}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:4173/');await page.getByRole('button',{name:/Nguyễn Minh Anh/}).waitFor();
   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error(`${name}: horizontal overflow in list`);
+  if(await page.getByRole('tablist').count())throw new Error('Facebook must not contain channel tabs');
   await page.screenshot({path:`tests/inbox-ui/screenshots/${name}-list.png`,fullPage:true});
   await page.getByRole('button',{name:/Nguyễn Minh Anh/}).click();await page.getByLabel('Nội dung trả lời').waitFor();
   if(!await page.getByLabel('Nội dung trả lời').isEnabled())throw new Error(`${name}: authorized composer disabled`);
@@ -17,7 +18,7 @@ try {
   await page.screenshot({path:`tests/inbox-ui/screenshots/${name}-thread.png`,fullPage:true});
   await page.getByLabel('Nội dung trả lời').fill('Nội dung kiểm thử cục bộ, không gửi khách thật.');await page.getByRole('button',{name:'Gửi tin nhắn',exact:true}).click();
   await page.getByLabel('Nội dung trả lời').waitFor();
-  await page.getByRole('tab',{name:/Chat Web/}).click();await page.getByRole('heading',{name:'Trò chuyện với khách ngay từ website'}).waitFor();
+  await page.getByRole('link',{name:'Chat Web',exact:true}).click();await page.getByRole('heading',{name:'Trò chuyện với khách ngay từ website'}).waitFor();
   await page.screenshot({path:`tests/inbox-ui/screenshots/${name}-chat-web.png`,fullPage:true});
   if(errors.length)throw new Error(`${name}: ${errors.join('; ')}`);await page.close();
  }
