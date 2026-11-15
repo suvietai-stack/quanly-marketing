@@ -4,7 +4,7 @@ import { hmacHex, sha256, timingSafeEq, unseal } from '@/lib/webForms/wf.server'
 import { applyMapping, type Mapping } from '@/lib/webForms/mapping';
 import { catalogs } from '@/lib/webForms/wf.server';
 import { callAiProvider } from '@/lib/aiSuviet/assistant.server';
-import { extractionSchema, guestSchema, phoneFromEvidence, policy, safePage, settingsSchema } from './model';
+import { extractionSchema, guestSchema, resolveContactPhone, phoneCorrectionAnswer, policy, safePage, settingsSchema } from './model';
 
 export const db = supabaseAdmin as any;
 export async function rpc(name: string, args: Record<string, unknown>) {
@@ -70,9 +70,11 @@ export async function processConversation(id: string, website: any, settings: z.
     if(!text)throw new Error('AI not configured');
     const output=extractionSchema.parse(JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g,'')));
     const visitors=rows.filter((m:any)=>m.role==='user').map((m:any)=>m.body);
-    const phone=phoneFromEvidence(output.phone,visitors)||c.contact?.phone||'';
+    const resolvedPhone=resolveContactPhone(output.phone,visitors,c.contact?.phone||'',!!c.contact?.phoneCorrectionPending);
+    const phone=resolvedPhone.phone;
+    const answer=!c.signal_id&&resolvedPhone.correctionPending?phoneCorrectionAnswer:output.answer;
     const need=output.need||c.contact?.need||'';
-    const contact={name:output.name||c.contact?.name||'',phone,need,summary:output.summary,zalo:output.zalo};
+    const contact={name:output.name||c.contact?.name||'',phone,phoneCorrectionPending:resolvedPhone.correctionPending,need,summary:output.summary,zalo:output.zalo};
     let draft=null;
     if(!c.signal_id&&phone&&need.length>=3){
       const cat=await catalogs();
@@ -83,7 +85,7 @@ export async function processConversation(id: string, website: any, settings: z.
       const result=applyMapping(mapping,data,[],cat,website.source,new Date().toISOString());
       if(!result.ok)throw new Error('Lead không hợp lệ'); draft=result.draft;
     }
-    await rpc('wc_finish',{p_conversation:id,p_request:message.request_id,p_lease:lease,p_revision:revision,p_answer:output.answer,p_contact:contact,p_summary:output.summary,p_draft:draft});
+    await rpc('wc_finish',{p_conversation:id,p_request:message.request_id,p_lease:lease,p_revision:revision,p_answer:answer,p_contact:contact,p_summary:output.summary,p_draft:draft});
   }catch{
     await rpc('wc_fail',{p_conversation:id,p_lease:lease,p_request:message.request_id});
   }

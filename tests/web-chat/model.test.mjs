@@ -27,3 +27,21 @@ test('per-website settings are bounded and safe; protocol rejects empty sends',(
  assert.equal(model.DOM_AI_NAME,'Đốm AI');
  assert.notEqual(model.DOM_AI_CREATOR,'00000000-0000-0000-0000-00000000eb01');
 });
+
+test('phone correction blocks malformed numbers, preserves the need and resumes after a valid correction',()=>{
+ for(const raw of ['08882229226','088822292','888222922','0281234567']) {
+  assert.deepEqual(model.resolveContactPhone(raw,[raw]),{phone:'',correctionPending:true});
+ }
+ assert.equal(model.phoneFromEvidence('0888222922',['00888222922']),'');
+ assert.equal(model.phoneFromEvidence('0888222922',['10888222922']),'');
+ assert.deepEqual(model.resolveContactPhone('',['Cần đặt gấp'],'',true),{phone:'',correctionPending:true});
+ assert.deepEqual(model.resolveContactPhone('0888222922',['0888222922','08882229226'],'0888222922'),{phone:'',correctionPending:true});
+ assert.deepEqual(model.resolveContactPhone('0888222922',['08882229226','0888 222 922'],'',true),{phone:'0888222922',correctionPending:false});
+ assert.deepEqual(model.resolveContactPhone('+84888222922',['+84 888 222 922'],'',true),{phone:'0888222922',correctionPending:false});
+ assert.deepEqual(model.resolveContactPhone('',['200 bộ ấm chén'],'0888222922'),{phone:'0888222922',correctionPending:false});
+ assert.deepEqual(model.resolveContactPhone('0888222922',['0888222922','Cần gấp'],'',true),{phone:'',correctionPending:true});
+});
+
+test('standalone valid correction does not depend on model extraction',()=>{
+ assert.deepEqual(model.resolveContactPhone('',['08882229226','0888222922'],'',true),{phone:'0888222922',correctionPending:false});
+});
