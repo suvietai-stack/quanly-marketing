@@ -44,6 +44,8 @@ export function resolveContactPhone(candidate: string, visitorTexts: string[], p
   if (supplied.length && !supplied.some(n => validPhone(normalizePhone(n)))) {
     return { phone: '', correctionPending: true };
   }
+  const invalidCandidate = candidate && !validPhone(normalizePhone(candidate)) && visitorTexts.some(t => numberRuns(t).some(n => normalizePhone(n) === normalizePhone(candidate)));
+  if (!supplied.length && invalidCandidate) return { phone: '', correctionPending: true };
   const direct = standalone && validPhone(normalizePhone(latest)) ? normalizePhone(latest) : '';
   const verified = direct || phoneFromEvidence(candidate, visitorTexts);
   // While correcting a number, only the latest message can resolve the correction.

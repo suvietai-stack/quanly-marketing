@@ -34,6 +34,7 @@ test('phone correction blocks malformed numbers, preserves the need and resumes 
  }
  assert.equal(model.phoneFromEvidence('0888222922',['00888222922']),'');
  assert.equal(model.phoneFromEvidence('0888222922',['10888222922']),'');
+ assert.deepEqual(model.resolveContactPhone('08882229226',['08882229226','Cần đặt gấp']),{phone:'',correctionPending:true});
  assert.deepEqual(model.resolveContactPhone('',['Cần đặt gấp'],'',true),{phone:'',correctionPending:true});
  assert.deepEqual(model.resolveContactPhone('0888222922',['0888222922','08882229226'],'0888222922'),{phone:'',correctionPending:true});
  assert.deepEqual(model.resolveContactPhone('0888222922',['08882229226','0888 222 922'],'',true),{phone:'0888222922',correctionPending:false});
