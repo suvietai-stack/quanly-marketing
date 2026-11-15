@@ -83,9 +83,11 @@ export function validateCommunityFiles(files: File[]) {
     throw new Error('Mỗi bài chỉ được đăng 1 video, không kèm ảnh.');
 }
 
-export async function createCommunityPost(body: string, files: File[], userId: string) {
+export async function createCommunityPost(body: string, files: File[], userId: string, publisher: 'self' | 'dom' = 'self', requestId = crypto.randomUUID()) {
   validateCommunityFiles(files);
-  const created = unwrap(await db.from('community_posts').insert({ body: body.trim() }).select('id').single()) as { id: string };
+  const created = publisher === 'dom'
+    ? { id: unwrap(await db.rpc('community_dom_publish', { p_body: body.trim(), p_request_id: requestId })) as string }
+    : unwrap(await db.from('community_posts').insert({ body: body.trim() }).select('id').single()) as { id: string };
   const uploaded: string[] = [];
   try {
     for (let i = 0; i < files.length; i++) {

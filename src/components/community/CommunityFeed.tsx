@@ -76,8 +76,11 @@ function PrivateMedia({ media }: { media: CommunityMedia }) {
   </div>;
 }
 
-function CommunityComposer({ userId, authorName, onCreated }: { userId: string; authorName: string; onCreated: () => void }) {
+function CommunityComposer({ userId, authorName, moderator, onCreated }: { userId: string; authorName: string; moderator: boolean; onCreated: () => void }) {
   const [body, setBody] = useState('');
+  const [publisher, setPublisher] = useState<'self' | 'dom'>('self');
+  const publication = useRef({ signature: '', id: crypto.randomUUID() });
+  const asDom = moderator && publisher === 'dom';
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const picker = useRef<HTMLInputElement>(null);
@@ -95,17 +98,23 @@ function CommunityComposer({ userId, authorName, onCreated }: { userId: string; 
     if (body.trim().length > 5000) { toast.error('Bài đăng tối đa 5.000 ký tự.'); return; }
     setBusy(true);
     try {
-      await createCommunityPost(body,files,userId);
-      setBody(''); setFiles([]); onCreated();
+      const signature = JSON.stringify([userId, body.trim(), asDom, files.map(f => [f.name, f.size, f.lastModified])]);
+      if (publication.current.signature !== signature) publication.current = { signature, id: crypto.randomUUID() };
+      await createCommunityPost(body, files, userId, asDom ? 'dom' : 'self', publication.current.id);
+      setBody(''); setFiles([]); publication.current = { signature: '', id: crypto.randomUUID() }; onCreated();
       toast.success('Đã chia sẻ với Cộng đồng Sứ Việt.');
     } catch(err) { toast.error(errorText(err)); }
     finally { setBusy(false); }
   };
   return <form onSubmit={publish} className="overflow-hidden rounded-2xl border bg-card p-4 shadow-sm">
     <div className="flex items-start gap-3">
-      <InitialAvatar name={authorName} />
+      {asDom ? <img src={chipiAssets.hello.url} alt="Đốm" width={44} height={44} className="h-11 w-11 shrink-0 object-contain" /> : <InitialAvatar name={authorName} />}
       <div className="min-w-0 flex-1">
-        <p className="mb-2 text-sm font-semibold">{authorName}</p>
+        {moderator ? <label className="mb-2 block text-xs text-muted-foreground">Đăng với tên
+          <select aria-label="Danh tính đăng bài" disabled={busy} value={publisher} onChange={e => setPublisher(e.target.value as 'self' | 'dom')} className="mt-1 min-h-11 w-full rounded-xl border bg-background px-3 text-sm font-semibold text-foreground">
+            <option value="self">{authorName}</option><option value="dom">Đốm - AI Sứ Việt</option>
+          </select>
+        </label> : <p className="mb-2 text-sm font-semibold">{authorName}</p>}
         <Textarea rows={3} maxLength={5000} value={body} onChange={e => setBody(e.target.value)} placeholder="Hôm nay bạn muốn chia sẻ điều gì với Sứ Việt?" className="min-h-24 resize-y rounded-xl border-slate-200 bg-slate-50 text-base dark:bg-slate-900" />
         <span className="mt-1 block text-right text-[11px] text-muted-foreground">{body.length}/5000</span>
       </div>
@@ -120,7 +129,7 @@ function CommunityComposer({ userId, authorName, onCreated }: { userId: string; 
       <input type="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" className="hidden" ref={picker} onChange={e => choose(e.target.files)} aria-label="Chọn ảnh hoặc video" />
       <Button type="button" variant="ghost" className="min-h-11 rounded-xl text-emerald-700 dark:text-emerald-300" onClick={() => picker.current?.click()} disabled={busy}><ImagePlus className="h-4 w-4" />Ảnh / video</Button>
       <Button type="submit" className="min-h-11 rounded-xl bg-blue-700 px-5 text-white hover:bg-blue-800" disabled={busy || !body.trim()}>
-        {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}{busy ? 'Đang đăng…' : 'Đăng bài'}
+        {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}{busy ? 'Đang đăng…' : asDom ? 'Đốm đăng bài' : 'Đăng bài'}
       </Button>
     </div>
   </form>;
@@ -191,8 +200,7 @@ function CommunityPostCard({ post, meId, moderator, nameOf, onChange }: {
     <div className="flex items-start gap-3 p-4 pb-2">
       {mascot ? <img src={chipiAssets.hello.url} alt="Đốm" width={44} height={44} className="h-11 w-11 shrink-0 object-contain" /> : <InitialAvatar name={nameOf(post.author_id)} />}
       <div className="min-w-0 flex-1">
-        <h3 className="break-words text-sm font-bold">{mascot ? 'Đốm · AI Sứ Việt' : nameOf(post.author_id)}</h3>
-        {mascot && <p className="text-[11px] text-muted-foreground">Linh vật Sứ Việt · {nameOf(post.author_id)} đăng thay</p>}
+        <h3 className="break-words text-sm font-bold">{mascot ? 'Đốm - AI Sứ Việt' : nameOf(post.author_id)}</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">{shortTime(post.created_at)} · Nội bộ Sứ Việt</p>
       </div>
       {post.is_pinned && <span className="flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800"><Pin className="h-3 w-3" />Ghim</span>}
@@ -262,7 +270,7 @@ export function CommunityFeed({ mineOnly = false }: { mineOnly?: boolean }) {
       <p className="mt-1 text-sm leading-6 text-blue-100">Chia sẻ chuyện công việc, thành quả và những khoảnh khắc cùng đồng nghiệp.</p>
       <div className="mt-3 flex items-center gap-2 text-[11px] text-white/85"><ShieldCheck className="h-4 w-4" />Bảng tin riêng tư, không công khai ra Internet.</div>
     </section>}
-    {!mineOnly && !!uid && <CommunityComposer userId={uid} authorName={user?.fullName || 'Thành viên Sứ Việt'} onCreated={refresh} />}
+    {!mineOnly && !!uid && <CommunityComposer userId={uid} authorName={user?.fullName || 'Thành viên Sứ Việt'} moderator={isSuperAdmin} onCreated={refresh} />}
     {mineOnly && <div className="flex items-center justify-between gap-2"><h2 className="text-lg font-bold">Bài viết của tôi</h2><Button asChild variant="outline" className="min-h-11 rounded-xl"><Link to="/community" search={{tab:"feed",thread:undefined}}>Đến cộng đồng</Link></Button></div>}
     {feed.isLoading && <div role="status" className="space-y-3"><div className="h-48 animate-pulse rounded-2xl bg-muted" /><div className="h-40 animate-pulse rounded-2xl bg-muted" /></div>}
     {feed.isError && <div role="alert" className="space-y-3 rounded-2xl border bg-card p-5 text-center"><p className="text-sm">Chưa tải được bảng tin nội bộ. Hãy kiểm tra kết nối.</p><Button variant="outline" type="button" onClick={()=>void feed.refetch()}>Thử lại</Button></div>}
