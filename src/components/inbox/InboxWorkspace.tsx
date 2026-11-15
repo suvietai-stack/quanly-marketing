@@ -125,9 +125,9 @@ function Workspace({ userId }: { userId: string }) {
   const expired = current && (!current.window_open || Date.now() - thread.dataUpdatedAt + Date.parse(current.server_now) - Date.parse(current.conversation.last_incoming_at ?? '') >= 86400000);
   return <div className="min-w-0 w-full space-y-4">
     <header className="flex flex-wrap items-start justify-between gap-3">
-      <div><div className="flex items-center gap-2"><div className="rounded-xl bg-primary/10 p-2.5 text-primary"><MessageCircle className="size-6" /></div><h1 className="text-xl sm:text-2xl font-semibold">Facebook Messenger</h1></div><p className="mt-2 text-sm text-muted-foreground">Các Page cùng một nơi, mỗi cuộc trò chuyện đều có người theo sát.</p></div>
+      <div><div className="flex items-center gap-2"><div className="rounded-xl bg-primary/10 p-2.5 text-primary"><MessageCircle className="size-6" /></div><h1 className="text-xl sm:text-2xl font-semibold">Messenger Fanpage</h1></div><p className="mt-2 text-sm text-muted-foreground">Các Page cùng một nơi, mỗi cuộc trò chuyện đều có người theo sát.</p></div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" aria-label="Làm mới Hộp thư" onClick={() => void reload()}><RefreshCw className={cn('size-4',ov.isFetching && 'animate-spin')} /></Button>
+        <Button variant="outline" size="icon" aria-label="Làm mới Messenger Fanpage" onClick={() => void reload()}><RefreshCw className={cn('size-4',ov.isFetching && 'animate-spin')} /></Button>
         {canConnect && <><Button variant="outline" onClick={() => setConnections(true)}><Settings2 className="mr-2 size-4" />Quản lý Page</Button><Suspense fallback={<Button disabled>Kết nối Page</Button>}><ConnectButton disabled={ov.isPending || ov.isError} messaging={ov.data?.available ?? false} /></Suspense></>}
       </div>
     </header>

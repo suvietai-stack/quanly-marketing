@@ -11,9 +11,9 @@ export const navigationGroups: NavGroup[] = [
     { to: "/community", label: "Cộng đồng Sứ Việt", icon: MessageCircleHeart },
     { to: "/biz/3k", label: "3K của tôi", icon: ListChecks },
   ] },
-  { label: "Hộp thư", icon: MessageSquare, items: [
-    { to: "/inbox", label: "Facebook Messenger", icon: MessageSquare, perm: "inbox.view" },
-    { to: "/web-chat", label: "Chat Web", icon: Globe,  },
+  { label: "Trung tâm hội thoại", icon: MessageSquare, items: [
+    { to: "/inbox", label: "Messenger Fanpage", icon: MessageSquare, perm: "inbox.view" },
+    { to: "/web-chat", label: "Tư vấn Website", icon: Globe,  },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
     { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
