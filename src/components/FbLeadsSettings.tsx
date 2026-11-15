@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Facebook, RefreshCw, Link2, Unlink, Settings2, RotateCw, Copy } from "lucide-react";
-import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry, fblBackfill, fblMaintainNow, fblWebhookDiagnostic } from "@/lib/fbLeads/fb.functions";
+import { fblOverview, fblConnectUrl, fblPendingPages, fblConnectPages, fblPageAction, fblSaveForm, fblEvents, fblRetry, fblBackfill, fblMaintainNow, fblWebhookDiagnostic, fblPageFeatures } from "@/lib/fbLeads/fb.functions";
 import { useVisibleRefresh } from "@/hooks/use-visible-refresh";
 import { eventLatency } from "@/lib/fbLeads/latency";
 import { FIELDS, validateMapping, suggestMapping, type FieldKey, type FieldRule, type Mapping, type Question } from "@/lib/fbLeads/mapping";
@@ -47,7 +47,7 @@ export function FbLeadsSettings() {
     <Tabs defaultValue="pages">
       <TabsList><TabsTrigger value="pages">Page & Form</TabsTrigger><TabsTrigger value="history">Lịch sử đồng bộ</TabsTrigger></TabsList>
       <TabsContent value="pages" className="mt-3 space-y-4">
-        <ConnectButton disabled={!ov.secrets.appSecret} />
+        <ConnectButton disabled={!ov.secrets.appSecret} messaging={ov.inboxAvailable} />
         {ov.pages.length === 0 && <p className="text-sm text-muted-foreground">Chưa có Page nào được kết nối.</p>}
         {ov.pages.map((p: any) => <PageCard key={p.page_id} page={p} ov={ov} onChange={load} onEdit={setEditForm} />)}
       </TabsContent>
@@ -86,40 +86,80 @@ function StatusCard({ ov }: { ov: Overview }) {
   </CardContent></Card>;
 }
 
-function ConnectButton({ disabled }: { disabled: boolean }) {
+export function ConnectButton({ disabled, messaging = false }: { disabled: boolean; messaging?: boolean }) {
   const connect = useServerFn(fblConnectUrl);
   const [busy, setBusy] = useState(false);
   return <Button disabled={disabled || busy} onClick={async () => {
     setBusy(true);
-    try { const r = await connect(); window.location.href = r.url; } catch (e: any) { toast.error(e.message); setBusy(false); }
+    try { const r = await connect({ data: { messaging } }); window.location.href = r.url; } catch (e: any) { toast.error(e.message); setBusy(false); }
   }}><Link2 className="h-4 w-4 mr-1.5" />Kết nối Page Facebook</Button>;
 }
 
-function PickPages({ state, onDone }: { state: string; onDone: () => void }) {
+export function PickPages({ state, onDone }: { state: string; onDone: () => void }) {
   const list = useServerFn(fblPendingPages);
   const connect = useServerFn(fblConnectPages);
   const [discovery, setDiscovery] = useState<Awaited<ReturnType<typeof fblPendingPages>> | null>(null);
-  const pages = discovery?.pages;
-  const [sel, setSel] = useState<string[]>([]);
+  const [choices, setChoices] = useState<Record<string, { lead: boolean; messaging: boolean }>>({});
+  const [touched, setTouched] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { list({ data: { state } }).then(setDiscovery).catch((e) => { toast.error(e.message); setDiscovery({ pages: [], diagnostics: [e.message], permissions: [], granular: [] }); }); }, [state]);
-  return <Dialog open onOpenChange={(o) => !o && onDone()}><DialogContent>
-    <DialogHeader><DialogTitle>Chọn Page muốn kết nối</DialogTitle></DialogHeader>
-    {discovery && <div className="space-y-2 text-xs break-words">
-      {discovery.diagnostics.map((d, i) => <p key={i} className="text-destructive">{d}</p>)}
-      {discovery.permissions.length > 0 && <details><summary className="cursor-pointer">Quyền Meta và phạm vi Page</summary><div className="max-h-36 overflow-auto space-y-1 mt-2">{discovery.permissions.map((p) => <div key={p.permission}>{p.permission}: {p.status}</div>)}{discovery.granular.map((g, i) => <div key={i}>{g.scope}: {g.target_ids?.join(", ") ?? "Meta không trả target_ids; không suy ra toàn bộ Page"}</div>)}</div></details>}
-    </div>}
-    {!pages ? <p className="text-sm">Đang tải…</p> : pages.length === 0 ? <p className="text-sm text-muted-foreground">Meta không trả về Page nào cho tài khoản này (hoặc phiên đã hết hạn).</p> :
-      <div className="space-y-3 max-h-80 overflow-auto">{pages.map((p) => <label key={p.id} className="flex items-start gap-2 text-sm">
-        <Checkbox aria-label={`Chọn ${p.name}`} disabled={!p.eligible} checked={sel.includes(p.id)} onCheckedChange={(c) => setSel(c ? [...sel, p.id] : sel.filter((x) => x !== p.id))} />
-        <span className="min-w-0 break-words"><span className="block font-medium">{p.name}</span><span className="block text-xs text-muted-foreground">{p.id} · {p.origins.join("; ")}</span><span className={`block text-xs ${p.eligible ? "text-muted-foreground" : "text-destructive"}`}>{p.message}</span></span></label>)}</div>}
-    <DialogFooter><Button variant="ghost" onClick={onDone}>Hủy</Button>
-      <Button disabled={!sel.length || busy} onClick={async () => {
-        setBusy(true);
-        try { const r = await connect({ data: { state, pageIds: sel } }); r.forEach((x) => (x.ok ? toast.success : toast.error)(`${x.name}: ${x.message}`)); onDone(); }
-        catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
-      }}>Kết nối</Button></DialogFooter>
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    list({ data: { state } }).then(r => { if (!active) return; setDiscovery(r); setChoices(Object.fromEntries(r.pages.map(p => [p.id, { lead: p.selectedLead, messaging: p.selectedMessaging }]))); }).catch(e => { if (active) setError(e.message); });
+    return () => { active = false; };
+  }, [state, list]);
+  const selected = Object.entries(choices).filter(([id, c]) => c.lead || c.messaging || touched.includes(id));
+  return <Dialog open onOpenChange={o => !o && !busy && onDone()}><DialogContent className="max-w-xl max-h-[85dvh] overflow-y-auto">
+    <DialogHeader><DialogTitle>Kết nối Page · Chọn nội dung muốn nhận</DialogTitle></DialogHeader>
+    <p className="text-sm text-muted-foreground">Mỗi Page có thể nhận Lead, nhận tin nhắn hoặc cả hai. Form Lead vẫn có cấu hình riêng.</p>
+    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+    {!discovery && !error && <p role="status">Đang xác minh các Page với Meta…</p>}
+    {discovery && <>
+      {!discovery.inboxAvailable && <p className="text-sm text-muted-foreground">Hộp thư đang chờ kích hoạt dữ liệu. Kết nối Lead hiện tại vẫn sử dụng được.</p>}
+      {discovery.diagnostics.map((d,i) => <p key={i} className="text-xs text-muted-foreground break-words">{d}</p>)}
+      {!discovery.pages.length && <p className="text-sm">Meta chưa trả về Page nào. Kiểm tra quyền quản lý Page hoặc kết nối lại.</p>}
+      <div className="space-y-3">{discovery.pages.map(p => {
+        const value = choices[p.id] ?? { lead: false, messaging: false };
+        const change = (key: 'lead' | 'messaging', enabled: boolean) => { setChoices(old => ({ ...old, [p.id]: { ...value, [key]: enabled } })); setTouched(old => [...new Set([...old, p.id])]); };
+        return <div key={p.id} className="rounded-xl border p-4 space-y-3">
+          <div><p className="font-medium break-words">{p.name}</p><p className="text-xs text-muted-foreground">Page ID {p.id}</p></div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <label className="min-h-11 flex items-center gap-2 text-sm"><Checkbox checked={value.lead} disabled={busy || (!p.eligible && !value.lead)} onCheckedChange={v => change('lead',v === true)} />Nhận Lead</label>
+            <label className="min-h-11 flex items-center gap-2 text-sm"><Checkbox checked={value.messaging} disabled={busy || !discovery.inboxAvailable || (!p.messaging?.eligible && !value.messaging)} onCheckedChange={v => change('messaging',v === true)} />Nhận tin nhắn</label>
+          </div>
+          {!p.eligible && <p className="text-xs text-muted-foreground">Lead: {p.message}</p>}
+          {!p.messaging?.eligible && <p className="text-xs text-muted-foreground">Messenger: {p.messaging?.message ?? 'Chưa xác minh quyền nhắn tin'}</p>}
+        </div>;
+      })}</div>
+    </>}
+    <DialogFooter><Button variant="ghost" disabled={busy} onClick={onDone}>Đóng</Button><Button disabled={!selected.length || busy} onClick={async () => {
+      setBusy(true);setError('');
+      try { const result = await connect({ data: { state, pageIds: selected.map(([id]) => id), ...(discovery?.inboxAvailable ? { choices: selected.map(([pageId,c]) => ({ pageId,...c })) } : {}) } });
+        result.forEach(r => (r.ok ? toast.success : toast.error)(`${r.name}: ${r.message}`));
+        onDone();
+      } catch (e) { setError(e instanceof Error ? e.message : 'Không lưu được kết nối'); } finally { setBusy(false); }
+    }}>{busy ? 'Đang kết nối…' : 'Lưu kết nối Page'}</Button></DialogFooter>
   </DialogContent></Dialog>;
+}
+
+export function PageFeatureSwitches({ page, available, onChange }: { page: { page_id: string; lead_enabled: boolean; messaging_enabled: boolean; messaging_ready: boolean; messaging_reason?: string | null }; available: boolean; onChange: () => void }) {
+  const save = useServerFn(fblPageFeatures);
+  const [busy,setBusy] = useState(false);
+  const update = async (lead: boolean,messaging: boolean) => {
+    setBusy(true);
+    try { await save({ data: { pageId: page.page_id,lead,messaging } }); toast.success('Đã lưu lựa chọn của Page'); onChange(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Chưa lưu được lựa chọn'); }
+    finally { setBusy(false); }
+  };
+  return <div className="rounded-lg bg-muted/40 p-3 space-y-2">
+    <div className="flex flex-wrap gap-x-6 gap-y-1">
+      <label className="flex min-h-11 items-center gap-2 text-sm"><Checkbox disabled={busy || !available} checked={page.lead_enabled} onCheckedChange={v => update(v === true,page.messaging_enabled)} />Nhận Lead</label>
+      <label className="flex min-h-11 items-center gap-2 text-sm"><Checkbox disabled={busy || !available} checked={page.messaging_enabled} onCheckedChange={v => update(page.lead_enabled,v === true)} />Nhận tin nhắn</label>
+    </div>
+    {!available && <p className="text-xs text-muted-foreground">Hộp thư đang chờ kích hoạt dữ liệu; Lead hiện tại được giữ nguyên.</p>}
+    {page.messaging_reason && <p className="text-xs text-destructive">{page.messaging_reason}</p>}
+    {page.messaging_enabled && <p className="text-xs text-muted-foreground">Messenger: {page.messaging_ready ? 'Đã xác minh kết nối' : 'Cần kiểm tra quyền hoặc kết nối lại'}</p>}
+  </div>;
 }
 
 function PageCard({ page, ov, onChange, onEdit }: { page: any; ov: Overview; onChange: () => void; onEdit: (id: string) => void }) {
@@ -147,6 +187,7 @@ function PageCard({ page, ov, onChange, onEdit }: { page: any; ov: Overview; onC
         <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run("disconnect")}><Unlink className="h-3.5 w-3.5 mr-1" />Ngắt</Button>
       </div>
     </div>
+    <PageFeatureSwitches page={page} available={ov.inboxAvailable} onChange={onChange} />
     <div className="flex items-center gap-2 flex-wrap text-sm">
       <span className="text-muted-foreground">Nguồn tín hiệu:</span>
       <Select value={page.source ?? "__none"} onValueChange={(v) => run("source", v === "__none" ? null : v)}>
@@ -306,3 +347,4 @@ function BackfillButton({ form }: { form: any }) {
     </DialogContent></Dialog>}
   </>;
 }
+

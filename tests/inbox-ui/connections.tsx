@@ -1,0 +1,1 @@
+export const ConnectButton=()=> <button className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">Kết nối Page Facebook</button>;export const FbLeadsSettings=()=> <p>Thiết lập kết nối Page · Dữ liệu kiểm thử cục bộ</p>;

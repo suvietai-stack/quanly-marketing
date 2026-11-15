@@ -47,7 +47,8 @@ export type PermissionGroup =
   | "Quản lý 3K"
   | "CRM Khách Hàng"
   | "Sale Work Zalo"
-  | "Cơ cấu tổ chức";
+  | "Cơ cấu tổ chức"
+  | "Hộp thư";
 
 export interface PermissionDef {
   key: PermissionKey;
@@ -65,6 +66,11 @@ const P = (
 ): PermissionDef => ({ key, label, group, subGroup });
 
 export const PERMISSIONS: PermissionDef[] = [
+  P("inbox.view", "Xem Hộp thư theo Page được cấp", "Hộp thư"),
+  P("inbox.send", "Trả lời tin nhắn", "Hộp thư"),
+  P("inbox.assign", "Phân công hội thoại", "Hộp thư"),
+  P("inbox.resolve", "Đóng / mở lại hội thoại", "Hộp thư"),
+  P("inbox.manage", "Quản lý quyền truy cập Page", "Hộp thư"),
   P('biz.crm_use', 'Sử dụng CRM cá nhân', 'CRM Khách Hàng'),
   P('biz.crm_view_scope', 'Xem CRM nhân viên trong phạm vi', 'CRM Khách Hàng'),
   P('biz.crm_edit_other', 'Sửa hộ khách trong phạm vi', 'CRM Khách Hàng'),
@@ -795,7 +801,7 @@ export function allDependents(parentKey: PermissionKey): PermissionKey[] {
 }
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
-  "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
+  "Hộp thư", "Tổng Quan", "Task", "Thương Hiệu", "Dự Án Web", "Social", "Local",
   "Video", "Thiết Kế", "Báo Cáo", "Tín Hiệu Cơ Hội", "KPI / Giao KPI", "Đơn Từ & Phê Duyệt", "Tài Chính Kế Toán", "Quản trị Kinh doanh", "Quản lý 3K", "Cài Đặt", "Tài khoản", "Cơ cấu tổ chức",
 ];
 
@@ -1519,3 +1525,4 @@ export function useCurrentUser() {
     isAdmin,
   };
 }
+

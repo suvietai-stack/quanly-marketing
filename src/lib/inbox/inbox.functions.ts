@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import type { InboxOverview } from "./model";
+import type { InboxOverview, Conversation, InboxThread, InboxStaff } from "./model";
 
 const page = z.string().regex(/^\d{1,40}$/);
 export const inboxOverview = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }): Promise<InboxOverview> => {
@@ -16,7 +16,7 @@ export const inboxRead = createServerFn({ method: "POST" }).middleware([requireS
   const args = data.kind === "list" ? { p_page: data.pageId ?? null, p_filter: data.filter, p_before: data.before ?? null, p_id: data.beforeId ?? null } : data.kind === "thread" ? { p_conversation: data.conversationId, p_before: data.before ?? null, p_id: data.beforeId ?? null } : { p_page: data.pageId };
   const { data: result, error } = await context.supabase.rpc(name as never, args as never);
   if (error) throw new Error("Không đọc được Hộp thư; kiểm tra quyền Page và thử lại");
-  return result as unknown;
+  return result as unknown as Conversation[] | InboxThread | InboxStaff[];
 });
 export const inboxChange = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(d => z.object({ conversationId: z.string().uuid(), action: z.enum(["read", "assign", "resolve", "reopen"]), userId: z.string().uuid().nullable().optional(), version: z.number().int().positive().optional() }).parse(d)).handler(async ({ context, data }) => {
   const { error } = await context.supabase.rpc("inbox_change" as never, { p_conversation: data.conversationId, p_action: data.action, p_user: data.userId ?? null, p_version: data.version ?? null } as never);
@@ -29,10 +29,11 @@ export const inboxAccessSave = createServerFn({ method: "POST" }).middleware([re
   return { ok: true };
 });
 export const inboxSend = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(d => z.object({ conversationId: z.string().uuid(), requestId: z.string().uuid(), text: z.string().trim().min(1).max(2000) }).parse(d)).handler(async ({ context, data }) => {
+  // Module and per-Page access are checked atomically by this RPC.
   const claim = await context.supabase.rpc("inbox_send_claim" as never, { p_conversation: data.conversationId, p_request: data.requestId, p_text: data.text } as never);
   if (claim.error) throw new Error("Không thể gửi: kiểm tra quyền Page, token và cửa sổ 24 giờ");
   const row = claim.data as unknown as { claimed: boolean; page_id: string; customer_id: string; state: string };
-  if (!row.claimed) return { state: row.state };
+  if (!row.claimed) return { state: row.state === "sending" ? "unknown" : row.state };
   const { sendText } = await import("./inbox.server");
   const result = await sendText(row.page_id, row.customer_id, data.text, data.requestId);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

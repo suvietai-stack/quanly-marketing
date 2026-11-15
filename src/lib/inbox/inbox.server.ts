@@ -6,6 +6,10 @@ export async function ingestMessenger(body: unknown) {
   if (!events.length) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const db = supabaseAdmin as unknown as { rpc: (name: string, args: Record<string, unknown>) => Promise<{ error: { code: string } | null }> };
+  // Staged rollout: never break Lead callbacks before the Inbox schema is installed.
+  const installed = await db.rpc("inbox_installed", {});
+  if (installed.error?.code === "PGRST202" || installed.error?.code === "42883") return;
+  if (installed.error) throw new Error("Cannot verify inbox installation");
   for (const event of events) {
     const { error } = await db.rpc("inbox_ingest", { p_event: event });
     if (error) throw new Error("Messenger persistence failed");

@@ -26,6 +26,7 @@ export const fblOverview = createServerFn({ method: "POST" })
       s.catalogs(),
       db.from("fbl_events").select("status"),
     ]);
+    const features = await (await import("../inbox/connections.server")).connectionFeatures();
     const stat: Record<string, number> = {};
     for (const r of counts.data ?? []) stat[r.status] = (stat[r.status] ?? 0) + 1;
     return {
@@ -34,13 +35,15 @@ export const fblOverview = createServerFn({ method: "POST" })
       webhookUrl: `${await s.baseUrl()}/api/public/meta/leads-webhook`,
       redirectUri: await s.redirectUri(),
       state: state.data,
-      pages: pages.data ?? [], forms: forms.data ?? [], catalogs: cat, stats: stat,
+      inboxAvailable: features.installed,
+      pages: (pages.data ?? []).map((p: any) => ({ ...p, lead_enabled: features.rows.find(f => f.page_id === p.page_id)?.lead_enabled ?? true, messaging_enabled: features.rows.find(f => f.page_id === p.page_id)?.enabled ?? false, messaging_ready: features.rows.find(f => f.page_id === p.page_id)?.ready ?? false, messaging_reason: features.rows.find(f => f.page_id === p.page_id)?.reason })), forms: forms.data ?? [], catalogs: cat, stats: stat,
     };
   });
 
 export const fblConnectUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => z.object({ messaging: z.boolean().optional() }).optional().parse(d))
+  .handler(async ({ context, data }) => {
     await assertManage(context);
     const s = await import("./fb.server");
     if (!s.appSecret()) throw new Error("Chưa nhập META_APP_SECRET");
@@ -52,7 +55,7 @@ export const fblConnectUrl = createServerFn({ method: "POST" })
     u.searchParams.set("client_id", s.META_APP_ID);
     u.searchParams.set("redirect_uri", await s.redirectUri());
     u.searchParams.set("state", state);
-    u.searchParams.set("scope", s.OAUTH_SCOPES.join(","));
+    u.searchParams.set("scope", [...s.OAUTH_SCOPES, ...(data?.messaging ? ["pages_messaging"] : [])].join(","));
     u.searchParams.set("auth_type", "rerequest");
     return { url: u.toString() };
   });
@@ -64,12 +67,17 @@ export const fblPendingPages = createServerFn({ method: "POST" })
     await assertManage(context);
     const s = await import("./fb.server");
     const result = await s.sessionDiscovery(data.state, context.userId);
-    return { ...result, pages: result.pages.map(({ token: _token, ...p }) => p) };
+    const features = await (await import("../inbox/connections.server")).connectionFeatures();
+    const { data: existing } = await (await admin()).from("fbl_pages").select("page_id,status").neq("status","disconnected");
+    return { ...result, inboxAvailable: features.installed, pages: result.pages.map(({ token: _token, ...p }) => {
+      const f = features.rows.find(row => row.page_id === p.id);
+      return { ...p, selectedLead: f?.lead_enabled ?? !!existing?.some((row: any) => row.page_id === p.id), selectedMessaging: f?.enabled ?? false };
+    }) };
   });
 
 export const fblConnectPages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ state: z.string().max(100), pageIds: z.array(id).min(1).max(50) }).parse(d))
+  .inputValidator((d) => z.object({ state: z.string().max(100), pageIds: z.array(id).min(1).max(50), choices: z.array(z.object({ pageId: id, lead: z.boolean(), messaging: z.boolean() })).max(50).optional() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertManage(context);
     const s = await import("./fb.server");
@@ -79,7 +87,19 @@ export const fblConnectPages = createServerFn({ method: "POST" })
     const pages = discovered.filter((p) => data.pageIds.includes(p.id));
     const { verifyCandidate } = await import("./pageDiscovery.server");
     const results: { id: string; name: string; ok: boolean; message: string }[] = [];
+    if (data.choices && (new Set(data.choices.map(c => c.pageId)).size !== data.choices.length || data.choices.some(c => !data.pageIds.includes(c.pageId)))) throw new Error("Lựa chọn Page không hợp lệ");
+    const currentFeatures = await (await import("../inbox/connections.server")).connectionFeatures();
     for (const p of pages) {
+      const feature = currentFeatures.rows.find(f => f.page_id === p.id);
+      const choice = data.choices?.find(c => c.pageId === p.id) ?? (currentFeatures.installed ? { lead: feature?.lead_enabled ?? true, messaging: feature?.enabled ?? false } : undefined);
+      if (choice) {
+        try {
+          await (await import("../inbox/connections.server")).configurePage(p, choice.lead, choice.messaging, context.userId, true);
+          results.push({ id: p.id, name: p.name, ok: true, message: "Đã kết nối và lưu lựa chọn" });
+          if (choice.lead) { try { await s.refreshForms(p.id); } catch { /* forms can be refreshed separately */ } }
+        } catch (e: unknown) { results.push({ id: p.id, name: p.name, ok: false, message: e instanceof Error ? e.message : "Không thể kết nối Page" }); }
+        continue;
+      }
       const access = await verifyCandidate(s.graph, s.META_APP_ID, `${s.META_APP_ID}|${s.appSecret()}`, p);
       if (!access.eligible) { results.push({ id: p.id, name: p.name, ok: false, message: access.message }); continue; }
       const subscribed = await s.subscribePage(p.id, p.token);
@@ -105,13 +125,18 @@ export const fblPageAction = createServerFn({ method: "POST" })
     await assertManage(context);
     const s = await import("./fb.server");
     const db = await admin();
-    if (data.action === "check") { const r = await s.checkPage(data.pageId); return { ok: r.ok, message: r.ok ? (r.subscribed ? "Page đã đăng ký leadgen; chưa phải bằng chứng đã nhận Webhook" : "Page chưa đăng ký nhận lead") : (r.message ?? "Kiểm tra thất bại") }; }
+    if (data.action === "check") {
+      const connections = await import("../inbox/connections.server");
+      const features = await connections.connectionFeatures();
+      if (features.installed) { const f = features.rows.find(p => p.page_id === data.pageId); return connections.configureExisting(data.pageId, f?.lead_enabled ?? true, f?.enabled ?? false, context.userId); }
+      const r = await s.checkPage(data.pageId); return { ok: r.ok, message: r.ok ? (r.subscribed ? "Page đã đăng ký leadgen; chưa phải bằng chứng đã nhận Webhook" : "Page chưa đăng ký nhận lead") : (r.message ?? "Kiểm tra thất bại") }; }
     if (data.action === "refresh") {
       try { const r = await s.refreshForms(data.pageId); return { ok: true, message: `Đã cập nhật ${r.total} Form (${r.added} Form mới, mặc định Tắt)` }; }
       catch (e: any) { return { ok: false, message: e.message }; }
     }
     if (data.action === "disconnect") {
       try { const t = await s.pageToken(data.pageId); await s.graph(`/${data.pageId}/subscribed_apps`, t, { method: "DELETE" }); } catch { /* vẫn ngắt phía Base */ }
+      await db.from("inbox_page_capabilities").update({ enabled: false, ready: false, reason: "Page đã ngắt kết nối" }).eq("page_id", data.pageId);
       await db.from("fbl_page_tokens").delete().eq("page_id", data.pageId);
       await db.from("fbl_forms").update({ enabled: false }).eq("page_id", data.pageId);
       await db.from("fbl_pages").update({ status: "disconnected", subscribed: false, updated_at: new Date().toISOString() }).eq("page_id", data.pageId);
@@ -221,4 +246,12 @@ export const fblWebhookDiagnostic = createServerFn({ method: "POST" })
       callbackUrl: expected,
       message: !subscription ? "Meta trả subscriptions rỗng cho đối tượng Page: ứng dụng chưa đăng ký Webhook Page. Trong Meta Developers → Webhooks, chọn Page, nhập Callback URL và Verify Token đã cấu hình, xác minh rồi đăng ký leadgen." : `Meta: Page Webhook ${subscription.active ? "đang bật" : "chưa bật"}; leadgen ${fields.includes("leadgen") ? "đã đăng ký" : "chưa đăng ký"}; Callback ${subscription.callback_url === expected ? "khớp Base" : "không khớp Base"}. Xác minh GET và nhận POST là hai kiểm tra riêng; cần gửi lead thử thật.`,
     };
+  });
+
+
+export const fblPageFeatures = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator(d => z.object({ pageId: id, lead: z.boolean(), messaging: z.boolean() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertManage(context);
+    return (await import("../inbox/connections.server")).configureExisting(data.pageId, data.lead, data.messaging, context.userId);
   });

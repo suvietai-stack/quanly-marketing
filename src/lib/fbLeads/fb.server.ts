@@ -229,6 +229,7 @@ export async function processEvent(id: string): Promise<string> {
   try {
     const { data: page, error: pageError } = await db.from("fbl_pages").select("*").eq("page_id", ev.page_id).maybeSingle();
     if (pageError) throw new Error(`db ${pageError.code}`);
+    if (!(await leadEnabled(ev.page_id, ev.received_at))) { await finish(id, lease, { status: "skipped", error: "Page đang tắt nhận Lead hoặc lead trước lần bật lại" }); return "skipped"; }
     if (!page || page.status === "disconnected") { await finish(id, lease, { status: "skipped", error: "Page chưa kết nối với Base" }); return "skipped"; }
     const { data: form, error: formError } = await db.from("fbl_forms").select("*").eq("form_id", ev.form_id ?? "").eq("page_id", ev.page_id).maybeSingle();
     if (formError) throw new Error(`db ${formError.code}`);
@@ -294,7 +295,7 @@ export async function backfill(formId: string, fromIso: string, toIso: string, a
   const { data: ins, error } = rows.length ? await db.from("fbl_events").upsert(rows, { onConflict: "leadgen_id", ignoreDuplicates: true }).select("id") : { data: [], error: null };
   if (error) throw new Error(`db ${error.code}`);
   let created = 0, failed = 0;
-  for (const r of ins ?? []) (await processEvent(r.id)) === "success" ? created++ : failed++;
+  for (const r of ins ?? []) { if ((await processEvent(r.id)) === "success") created++; else failed++; }
   return { total: leads.length, existing: have.size, missing: missing.length, created, failed };
 }
 
@@ -320,4 +321,13 @@ export async function maintain() {
   }
   await db.from("fbl_state").update({ last_maintain_at: new Date().toISOString() }).eq("id", 1);
   return out;
+}
+
+
+/** Page feature switches do not rewrite existing Form configuration. */
+export async function leadEnabled(pageId: string, receivedAt?: string) {
+  const { data, error } = await (await admin()).from("inbox_page_capabilities").select("lead_enabled,lead_enabled_at").eq("page_id", pageId).maybeSingle();
+  if (error && ["PGRST205", "42P01"].includes(error.code)) return true;
+  if (error) throw new Error("Không đọc được lựa chọn nhận Lead của Page");
+  return !data || (data.lead_enabled && (!receivedAt || !data.lead_enabled_at || receivedAt >= data.lead_enabled_at));
 }

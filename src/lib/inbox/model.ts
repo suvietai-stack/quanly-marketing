@@ -47,5 +47,8 @@ export function parseMessenger(body: unknown): MessengerEvent[] {
 }
 export interface InboxPage { page_id: string; name: string; enabled: boolean; ready: boolean; reason: string | null; checked_at: string | null; last_event_at: string | null }
 export interface Conversation { id: string; page_id: string; customer_id: string; customer_name: string | null; last_at: string; last_text: string; last_incoming_at: string | null; needs_reply: boolean; resolved: boolean; assignee_id: string | null; unread: boolean; version: number }
-export interface InboxMessage { id: string; direction: "in" | "out"; text: string; attachments: Attachment[]; event_at: string; state: string; failure: string | null }
+export interface InboxMessage { request_id?: string | null; id: string; direction: "in" | "out"; text: string; attachments: Attachment[]; event_at: string; state: string; failure: string | null }
 export interface InboxOverview { available: boolean; can_view: boolean; can_send: boolean; can_assign: boolean; can_resolve: boolean; can_manage: boolean; pages: InboxPage[] }
+
+export interface InboxThread { conversation: Conversation; messages: InboxMessage[]; can_send: boolean; can_assign: boolean; can_resolve: boolean; window_open: boolean; server_now: string }
+export interface InboxStaff { id: string; name: string; access: boolean }
