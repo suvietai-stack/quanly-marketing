@@ -15,6 +15,7 @@ before(async()=>{
  CREATE TABLE public.zalo_oa_config(id int,care_cron_token text);
  CREATE TABLE public.opportunity_signals(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),created_at timestamptz DEFAULT now(),customer_name text,phone text,address text,products text[],need_groups text[],need_group text,need_detail text,marketing_note text,source text,detected_on date,created_by uuid);`);
  await db.exec(sql('drizzle/migrations/0063_website_forms_phase1.sql'));
+ await db.exec('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon,authenticated');
  await db.exec(sql('supabase/migrations/20261115090000_web_chat.sql'));
  for(const id of [site,other]){
   await db.query(`INSERT INTO wf_websites(id,name,domain,source) VALUES($1,'Test','shop.vn','Chat Web')`,[id]);

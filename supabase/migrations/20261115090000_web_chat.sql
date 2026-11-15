@@ -157,6 +157,6 @@ BEGIN
  ELSE RAISE EXCEPTION 'Invalid action'; END IF;
  INSERT INTO public.wc_audit(conversation_id,actor,action) VALUES(c.id,p_actor,p_action);
 END $$;
-REVOKE ALL ON FUNCTION public.wc_rate_hit(text,integer),public.wc_receive(uuid,text,uuid,text,text),public.wc_claim(uuid),public.wc_finish(uuid,uuid,uuid,integer,text,jsonb,text,jsonb),public.wc_fail(uuid,uuid,uuid),public.wc_control(uuid,uuid,text,uuid,text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.wc_rate_hit(text,integer),public.wc_receive(uuid,text,uuid,text,text),public.wc_claim(uuid),public.wc_finish(uuid,uuid,uuid,integer,text,jsonb,text,jsonb),public.wc_fail(uuid,uuid,uuid),public.wc_control(uuid,uuid,text,uuid,text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.wc_rate_hit(text,integer),public.wc_receive(uuid,text,uuid,text,text),public.wc_claim(uuid),public.wc_finish(uuid,uuid,uuid,integer,text,jsonb,text,jsonb),public.wc_fail(uuid,uuid,uuid),public.wc_control(uuid,uuid,text,uuid,text) TO service_role;
 COMMIT;
