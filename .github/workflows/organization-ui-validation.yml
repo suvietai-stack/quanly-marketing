@@ -19,8 +19,9 @@ jobs:
         with:
           bun-version: '1.2.19'
       - run: bun install --frozen-lockfile
+      - name: Build and regenerate route types
+        run: bun run build
       - run: bunx tsc --noEmit
       - run: >-
           bunx eslint src/components/OrgChart.tsx src/components/BaseOrganization.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
       - run: bunx vitest run src/lib/orgChart.test.ts
-      - run: bun run build
