@@ -1,0 +1,35 @@
+name: Role 515 verification
+
+on:
+  push:
+    branches:
+      - fix/role-515-safe-cutover-20261116
+  pull_request:
+    paths:
+      - 'src/lib/auth.ts'
+      - 'src/lib/basePermissions/**'
+      - 'src/components/BaseOrganization.tsx'
+      - 'docs/role-515-cutover-20261116/**'
+      - '.github/workflows/role-515-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  role-515:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Test 515 permission registry and Role editor
+        run: bunx vitest run src/lib/basePermissions/permissionRegistry515.test.ts src/lib/basePermissions/permissionEditor.test.ts src/lib/basePermissions/accountApproval515.database.test.ts src/lib/basePermissions/deleteRls515.database.test.ts src/lib/basePermissions/legacyRetirement515.database.test.ts src/lib/basePermissions/dormantReactivation515.database.test.ts src/lib/basePermissions/directStaffGuard515.database.test.ts
+      - name: Production build and route generation
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit
