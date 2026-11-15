@@ -125,7 +125,11 @@ export const fblPageAction = createServerFn({ method: "POST" })
     await assertManage(context);
     const s = await import("./fb.server");
     const db = await admin();
-    if (data.action === "check") { const r = await s.checkPage(data.pageId); return { ok: r.ok, message: r.ok ? (r.subscribed ? "Page đã đăng ký leadgen; chưa phải bằng chứng đã nhận Webhook" : "Page chưa đăng ký nhận lead") : (r.message ?? "Kiểm tra thất bại") }; }
+    if (data.action === "check") {
+      const connections = await import("../inbox/connections.server");
+      const features = await connections.connectionFeatures();
+      if (features.installed) { const f = features.rows.find(p => p.page_id === data.pageId); return connections.configureExisting(data.pageId, f?.lead_enabled ?? true, f?.enabled ?? false, context.userId); }
+      const r = await s.checkPage(data.pageId); return { ok: r.ok, message: r.ok ? (r.subscribed ? "Page đã đăng ký leadgen; chưa phải bằng chứng đã nhận Webhook" : "Page chưa đăng ký nhận lead") : (r.message ?? "Kiểm tra thất bại") }; }
     if (data.action === "refresh") {
       try { const r = await s.refreshForms(data.pageId); return { ok: true, message: `Đã cập nhật ${r.total} Form (${r.added} Form mới, mặc định Tắt)` }; }
       catch (e: any) { return { ok: false, message: e.message }; }

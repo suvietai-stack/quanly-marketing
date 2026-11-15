@@ -97,7 +97,7 @@ BEGIN
  SELECT coalesce(jsonb_agg(to_jsonb(q) ORDER BY q.last_at DESC,q.id DESC),'[]') INTO out_ FROM (
  SELECT c.*,coalesce(c.last_incoming_at>r.read_at,c.last_incoming_at IS NOT NULL) unread
  FROM inbox_conversations c LEFT JOIN inbox_reads r ON r.conversation_id=c.id AND r.user_id=u
- WHERE (p_page IS NULL OR c.page_id=p_page) AND inbox_can(u,'inbox.view',c.page_id)
+ WHERE (c.last_incoming_at IS NOT NULL OR c.last_outgoing_at IS NOT NULL) AND (p_page IS NULL OR c.page_id=p_page) AND inbox_can(u,'inbox.view',c.page_id)
  AND (p_before IS NULL OR (c.last_at,c.id)<(p_before,p_id))
  AND CASE p_filter WHEN 'unread' THEN coalesce(c.last_incoming_at>r.read_at,c.last_incoming_at IS NOT NULL) WHEN 'reply' THEN c.needs_reply AND NOT c.resolved WHEN 'resolved' THEN c.resolved ELSE NOT c.resolved END
  ORDER BY c.last_at DESC,c.id DESC LIMIT 50) q;
@@ -204,7 +204,7 @@ BEGIN
  INSERT INTO inbox_messages(conversation_id,page_id,mid,direction,text,attachments,event_at,state) VALUES(c.id,page_,p_event->>'mid',CASE WHEN incoming_ THEN 'in' ELSE 'out' END,left(p_event->>'text',20000),coalesce(p_event->'attachments','[]'),at_,CASE WHEN incoming_ THEN 'received' WHEN c.read_at>=at_ THEN 'read' WHEN c.delivered_at>=at_ THEN 'delivered' ELSE 'accepted' END) ON CONFLICT(page_id,mid) DO NOTHING;
  END IF;
  UPDATE inbox_conversations SET last_incoming_at=CASE WHEN incoming_ THEN greatest(last_incoming_at,at_) ELSE last_incoming_at END,last_outgoing_at=CASE WHEN NOT incoming_ THEN greatest(last_outgoing_at,at_) ELSE last_outgoing_at END,
- last_text=CASE WHEN at_>=last_at THEN left(p_event->>'text',500) ELSE last_text END,last_at=greatest(last_at,at_),resolved=CASE WHEN incoming_ AND (last_incoming_at IS NULL OR at_>last_incoming_at) THEN false ELSE resolved END,version=version+1 WHERE id=c.id;
+ last_text=CASE WHEN at_>=last_at OR (c.last_incoming_at IS NULL AND c.last_outgoing_at IS NULL) THEN left(p_event->>'text',500) ELSE last_text END,last_at=CASE WHEN c.last_incoming_at IS NULL AND c.last_outgoing_at IS NULL THEN at_ ELSE greatest(last_at,at_) END,resolved=CASE WHEN incoming_ AND (last_incoming_at IS NULL OR at_>last_incoming_at) THEN false ELSE resolved END,version=version+1 WHERE id=c.id;
  UPDATE inbox_conversations SET needs_reply=last_incoming_at IS NOT NULL AND (last_outgoing_at IS NULL OR last_incoming_at>last_outgoing_at) WHERE id=c.id;
  ELSE
  UPDATE inbox_conversations SET delivered_at=CASE WHEN kind_='delivery' THEN greatest(delivered_at,(p_event->>'watermark')::timestamptz) ELSE delivered_at END,read_at=CASE WHEN kind_='read' THEN greatest(read_at,(p_event->>'watermark')::timestamptz) ELSE read_at END WHERE id=c.id;
@@ -245,7 +245,7 @@ DO $$ DECLARE f regprocedure; BEGIN
 END $$;
 DO $$ BEGIN
  IF EXISTS(SELECT 1 FROM pg_publication WHERE pubname='supabase_realtime') THEN
-  ALTER PUBLICATION supabase_realtime ADD TABLE public.inbox_conversations,public.inbox_messages;
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.inbox_conversations,public.inbox_messages,public.inbox_page_capabilities,public.inbox_page_access;
  END IF;
 END $$;
 

@@ -1,0 +1,4 @@
+799b55e0ad6a7bb580370ad7ee18b3cb20b297d48efc27f6dcd341b8db440100  docs/inbox-2026-11-15/preflight.sql
+aa2bdc624ec2fe1e15226e06e55ac96564d094c7a29fa64a4c0e6ed96cbc0bcc  docs/inbox-2026-11-15/implementation.sql
+b459474659ccc4cd466b32ca8967a760fc57380fbc8a01d8866b43fc035f6e64  docs/inbox-2026-11-15/postflight.sql
+1c2c8e8dadb2425ee17832150350b4e40ba6c92071f6cb4aea2a0d807b3d712c  docs/inbox-2026-11-15/rollback.sql

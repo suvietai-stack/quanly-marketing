@@ -47,7 +47,7 @@ function Workspace({ userId }: { userId: string }) {
   const active = tab === 'facebook';
   const canConnect = isSuperAdmin || can('integration.facebook_leads');
   const baseKey = useMemo(() => ['inbox',userId] as const,[userId]);
-  const ov = useQuery({ queryKey: [...baseKey,'overview'], queryFn: () => overview(), retry: false, staleTime: 30000 });
+  const ov = useQuery({ queryKey: [...baseKey,'overview'], queryFn: () => overview(), retry: false, staleTime: 30000, refetchInterval: active ? 30000 : false, refetchIntervalInBackground: false });
   const available = !!ov.data?.available && !!ov.data?.can_view;
   const reload = () => qc.invalidateQueries({ queryKey: baseKey });
   const list = useInfiniteQuery({
@@ -78,6 +78,7 @@ function Workspace({ userId }: { userId: string }) {
     const channel = supabase.channel(`inbox:${userId}:${crypto.randomUUID()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inbox_conversations', ...(pageId !== 'all' ? { filter: `page_id=eq.${pageId}` } : {}) },update)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inbox_page_access', filter: `user_id=eq.${userId}` },update);
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'inbox_page_capabilities', ...(pageId !== 'all' ? { filter: `page_id=eq.${pageId}` } : {}) },update);
     if (selected) channel.on('postgres_changes', { event: '*', schema: 'public', table: 'inbox_messages', filter: `conversation_id=eq.${selected}` },update);
     setLive('connecting');
     channel.subscribe(status => { if (!mounted) return; setLive(status === 'SUBSCRIBED' ? 'live' : status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED' ? 'offline' : 'connecting'); if (status === 'SUBSCRIBED') update(); });
@@ -122,6 +123,7 @@ function Workspace({ userId }: { userId: string }) {
   }, [pending,messages]);
   const pageName = (id: string) => ov.data?.pages.find(p => p.page_id === id)?.name ?? 'Facebook Page';
   const page = current ? ov.data?.pages.find(p => p.page_id === current.conversation.page_id) : undefined;
+  const pageReady = !!page?.ready && !!page.checked_at && Date.now() - Date.parse(page.checked_at) < 86400000;
   const expired = current && (!current.window_open || Date.now() - thread.dataUpdatedAt + Date.parse(current.server_now) - Date.parse(current.conversation.last_incoming_at ?? '') >= 86400000);
   return <div className="min-w-0 w-full space-y-4">
     <header className="flex flex-wrap items-start justify-between gap-3">
@@ -170,9 +172,9 @@ function Workspace({ userId }: { userId: string }) {
               {!messages.length && <p className="m-auto text-sm text-muted-foreground">Hội thoại chưa có nội dung tin nhắn.</p>}
             </div>
             <div className="border-t p-3 sm:p-4 space-y-2">
-              {(!current.can_send || expired || !page?.enabled || !page.ready) && <p className="text-xs leading-5 text-muted-foreground">{!current.can_send ? 'Anh/chị chưa được cấp quyền trả lời Page này.' : !page?.enabled ? 'Page đang tắt nhận tin nhắn.' : !page.ready ? 'Page cần kiểm tra quyền hoặc kết nối lại.' : 'Đã ngoài cửa sổ trả lời 24 giờ. Khách cần nhắn lại trước khi trả lời.'}</p>}
+              {(!current.can_send || expired || !page?.enabled || !pageReady) && <p className="text-xs leading-5 text-muted-foreground">{!current.can_send ? 'Anh/chị chưa được cấp quyền trả lời Page này.' : !page?.enabled ? 'Page đang tắt nhận tin nhắn.' : !pageReady ? 'Page cần kiểm tra quyền hoặc kết nối lại.' : 'Đã ngoài cửa sổ trả lời 24 giờ. Khách cần nhắn lại trước khi trả lời.'}</p>}
               {pending && <div role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-5">Có một yêu cầu gửi đang chờ xác nhận. Không gửi lại nội dung để tránh trùng.<Button size="sm" variant="link" disabled={busy} onClick={() => void sendNow(true)}>Kiểm tra kết quả</Button></div>}
-              <div className="flex items-end gap-2"><Textarea aria-label="Nội dung trả lời" placeholder="Nhập lời nhắn cho khách…" value={draft} maxLength={2000} disabled={busy || !!pending || !current.can_send || !!expired || !page?.enabled || !page.ready} onChange={e => setDraft(e.target.value)} className="min-h-20 resize-none" /><Button aria-label="Gửi tin nhắn" className="h-11 w-11 shrink-0" disabled={!draft.trim() || busy || !!pending || !current.can_send || !!expired || !page?.enabled || !page.ready} onClick={() => void sendNow()}><Send className="size-4" /></Button></div>
+              <div className="flex items-end gap-2"><Textarea aria-label="Nội dung trả lời" placeholder="Nhập lời nhắn cho khách…" value={draft} maxLength={2000} disabled={busy || !!pending || !current.can_send || !!expired || !page?.enabled || !pageReady} onChange={e => setDraft(e.target.value)} className="min-h-20 resize-none" /><Button aria-label="Gửi tin nhắn" className="h-11 w-11 shrink-0" disabled={!draft.trim() || busy || !!pending || !current.can_send || !!expired || !page?.enabled || !pageReady} onClick={() => void sendNow()}><Send className="size-4" /></Button></div>
               <p className="text-[10px] text-muted-foreground">{draft.length}/2000 · Tin nhắn được gửi dưới tên Page.</p>
             </div>
           </>}

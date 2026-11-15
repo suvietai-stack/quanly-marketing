@@ -15,6 +15,8 @@ export async function configurePage(page: DiscoveredPage, lead: boolean, messagi
   const check = (await connectionFeatures());
   if (!check.installed) throw new Error('Hộp thư chưa được kích hoạt dữ liệu; cấu hình Lead hiện tại vẫn được giữ');
   const appToken = `${META_APP_ID}|${appSecret()}`;
+  const { data: identity } = await graph('/debug_token', appToken, { params: { input_token: page.token } });
+  if (!identity?.is_valid || identity.app_id !== META_APP_ID || identity.type !== 'PAGE' || String(identity.profile_id) !== page.id) throw new Error('Token không hợp lệ hoặc không đúng Page; hãy kết nối lại');
   if (lead) { const v = await verifyCandidate(graph, META_APP_ID, appToken, page); if (!v.eligible) throw new Error(v.message); }
   if (messaging) { const v = await verifyMessagingCandidate(graph, META_APP_ID, appToken, page); if (!v.eligible) throw new Error(v.message); }
   // Disabled features stop intake locally; keep subscriptions so the other feature is never removed.

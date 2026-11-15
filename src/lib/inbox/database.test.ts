@@ -62,3 +62,11 @@ it('preserves Form-independent feature toggles and does not expose credentials',
  await uid(users.a);await expect(db.query("SELECT * FROM fbl_page_tokens")).rejects.toThrow();
  await expect(db.query('SELECT inbox_connection_save($1,$2,$3,$4,$5,$6,$7,$8,$9)',['4','Bad',null,true,true,[],true,null,users.a])).rejects.toThrow();
 });
+
+it('reconciles delivery-before-message without ghost threads or stale previews',async()=>{
+ const now=Date.now();await ingest('1','33','receipt','in',null,'read',new Date(now).toISOString());
+ await uid(users.a);const initial=await scalar("SELECT inbox_list('1','all',NULL,NULL) v");expect(initial.some((r:{customer_id:string})=>r.customer_id==='33')).toBe(false);
+ await ingest('1','33','out-late','out',null,'message',new Date(now-1000).toISOString());
+ await uid(users.admin,'service_role');expect(await scalar("SELECT state v FROM inbox_messages WHERE mid='out-late'")).toBe('read');
+ expect(await scalar("SELECT last_text v FROM inbox_conversations WHERE customer_id='33'")).toBe('out-late');
+});
