@@ -1,3 +1,4 @@
+import { DOM_AI_CREATOR, DOM_AI_NAME } from '@/lib/webChat/model';
 import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
@@ -118,7 +119,7 @@ export function SignalCacheGuard() {
 
 export function useUserName() {
   const users = useAuth((s) => s.users);
-  return (id: string | null | undefined) => (id ? users.find((u) => u.id === id)?.fullName || "—" : "—");
+  return (id: string | null | undefined) => (id === DOM_AI_CREATOR ? DOM_AI_NAME : id ? users.find((u) => u.id === id)?.fullName || "—" : "—");
 }
 
 export function StatusPill({ s }: { s: Pick<Signal, "status" | "assigned_to"> }) {
@@ -1018,6 +1019,7 @@ function MultiPick({ scope, value, onChange }: { scope: OptionScope; value: stri
     </div>
   );
 }
+
 
 
 

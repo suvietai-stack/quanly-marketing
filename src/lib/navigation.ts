@@ -13,7 +13,7 @@ export const navigationGroups: NavGroup[] = [
   ] },
   { label: "Hộp thư", icon: MessageSquare, items: [
     { to: "/inbox", label: "Facebook Messenger", icon: MessageSquare, perm: "inbox.view" },
-    { to: "/web-chat", label: "Chat Web", icon: Globe, perm: "inbox.view", badge: "Sắp ra mắt" },
+    { to: "/web-chat", label: "Chat Web", icon: Globe,  },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
     { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
@@ -97,4 +97,5 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
 export function activeNavigationPath(groups: NavGroup[], path: string): string | undefined {
   return groups.flatMap(g => g.items).filter(it => !it.comingSoon && (path === it.to || (!it.exact && path.startsWith(it.to + '/')))).sort((a,b) => b.to.length - a.to.length)[0]?.to;
 }
+
 
