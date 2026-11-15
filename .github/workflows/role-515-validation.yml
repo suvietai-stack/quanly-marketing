@@ -28,7 +28,7 @@ jobs:
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
       - name: Test 515 permission registry and Role editor
-        run: bunx vitest run src/lib/basePermissions/permissionRegistry515.test.ts src/lib/basePermissions/permissionEditor.test.ts src/lib/basePermissions/accountApproval515.database.test.ts src/lib/basePermissions/deleteRls515.database.test.ts src/lib/basePermissions/legacyRetirement515.database.test.ts src/lib/basePermissions/dormantReactivation515.database.test.ts
+        run: bunx vitest run src/lib/basePermissions/permissionRegistry515.test.ts src/lib/basePermissions/permissionEditor.test.ts src/lib/basePermissions/accountApproval515.database.test.ts src/lib/basePermissions/deleteRls515.database.test.ts src/lib/basePermissions/legacyRetirement515.database.test.ts src/lib/basePermissions/dormantReactivation515.database.test.ts src/lib/basePermissions/directStaffGuard515.database.test.ts
       - name: Production build and route generation
         run: bun run build
       - name: Typecheck
