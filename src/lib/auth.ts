@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { EffectiveBizAccess } from '@/lib/biz/access';
 import type { EffectiveAccess } from '@/lib/basePermissions/types';
 import { VERIFIED_APPOINTMENT_PERMISSIONS } from '@/lib/basePermissions/titleRoles';
+import { assertNoDirectRoleAssignment, rejectManualRoleAssignment } from '@/lib/basePermissions/directRoleAssignment';
 import {
   adminResetPassword,
   adminDeleteUser,
@@ -1227,7 +1228,10 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   approve: async (id, roleId) => {
-    const { data, error } = await supabase.rpc('account_approve', { _target: id, ...roleId ? { _role: roleId } : {} });
+    // New staff receive Common rights from their active account and position/task rights from the org chart.
+    // Refuse explicit Role IDs even if an old UI attempts to pass a legacy/default Role.
+    assertNoDirectRoleAssignment(roleId);
+    const { data, error } = await supabase.rpc('account_approve', { _target: id });
     if (error) throw new Error(error.message);
     await get().reload();
     return data as { emailConfirmed: boolean; ready: boolean };
@@ -1245,12 +1249,10 @@ export const useAuth = create<AuthState>((set, get) => ({
     await get().reload();
   },
 
-  setRole: async (id, roleId) => {
-    const { error: deleteError } = await supabase.from("user_roles").delete().eq("user_id", id);
-    if (deleteError) throw new Error(deleteError.message);
-    const { error } = await supabase.from("user_roles").insert({ user_id: id, role_id: roleId });
-    if (error) throw new Error(error.message);
-    await get().reload();
+  setRole: async (_id, _roleId) => {
+    // Retired: the legacy two-step delete/insert can erase protected admin Role assignments.
+    // Position and task rights must be assigned through the audited organization workflow.
+    rejectManualRoleAssignment();
   },
 
   setUseCustom: async (id, useCustom) => {

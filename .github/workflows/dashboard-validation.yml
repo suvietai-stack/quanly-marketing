@@ -1,5 +1,13 @@
 name: Dashboard validation
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/routes/index.tsx'
+      - 'src/styles.css'
+      - 'src/components/kpi/PersonalKpi.tsx'
+      - 'src/lib/performance/**'
+      - '.github/workflows/dashboard-validation.yml'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
@@ -28,6 +36,8 @@ jobs:
       # The existing codebase has a large formatting/no-explicit-any backlog.
       # Keep all other ESLint correctness rules active for this UI change.
       - name: Dashboard semantic lint (baseline exclusions)
-        run: bunx eslint src/routes/index.tsx src/components/kpi/PersonalKpi.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
+        # Folded block is required: ': ' in plain-scalar CLI arguments is invalid YAML.
+        run: >-
+          bunx eslint src/routes/index.tsx src/components/kpi/PersonalKpi.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
       - name: Production build
         run: bun run build
