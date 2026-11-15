@@ -41,6 +41,10 @@ export async function guest(request: Request) {
   if(!parsed.success)return Response.json({error:'Tin nhắn không hợp lệ'},{status:400});
   const input=parsed.data;
   if (!safePage(input.page,auth.website.domain)) return Response.json({error:'Tên miền chưa được kết nối'},{status:403});
+  if(input.action==='config'){
+    const {knowledge:_,tone:__,goals:___,...appearance}=auth.settings;
+    return Response.json({appearance},{headers:{'Cache-Control':'no-store'}});
+  }
   const hash=await sha256(`${auth.website.id}:${input.token}`);
   if(!await rpc('wc_rate_hit',{p_bucket:`visitor:${hash}`,p_limit:40}))return Response.json({error:'Vui lòng chờ một chút rồi thử lại'},{status:429});
   const received=await rpc('wc_receive',{p_site:auth.website.id,p_hash:hash,p_request:input.request,p_text:input.action==='send'?input.text:null,p_page:safePage(input.page,auth.website.domain)});

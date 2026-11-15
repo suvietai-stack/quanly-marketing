@@ -4,6 +4,9 @@ export const DOM_AI_CREATOR = '00000000-0000-0000-0000-00000000dc01';
 export const DOM_AI_NAME = 'Đốm AI';
 export const LEAD_FORM = 'base-web-chat';
 export const settingsSchema = z.object({
+  starters: z.array(z.string().trim().min(1).max(120)).max(6).default(['Tôi muốn xem mẫu sản phẩm', 'Tư vấn quà tặng theo ngân sách', 'Tôi cần đặt số lượng lớn']),
+  greetingDelay: z.number().int().min(3).max(60).default(5),
+  showGreeting: z.boolean().default(true),
   character: z.string().trim().min(1).max(80).default('Đốm'),
   avatar: z.string().max(100000).default('').refine(s => !s || /^https:\/\/.{1,490}$/.test(s) || /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(s), 'Dùng ảnh PNG/JPG/WebP dưới 70 KB hoặc URL HTTPS'),
   greeting: z.string().trim().min(1).max(500).default('Em là Đốm, trợ lý AI. Anh chị cần tư vấn sản phẩm nào ạ?'),
@@ -31,7 +34,7 @@ export function safePage(value: string, domain: string) {
   try { const u = new URL(value); if (u.protocol !== 'https:' || u.hostname.toLowerCase() !== domain.toLowerCase()) return ''; return u.origin + u.pathname.slice(0,350); } catch { return ''; }
 }
 export const guestSchema = z.object({
-  action: z.enum(['open', 'poll', 'send']),
+  action: z.enum(['config', 'open', 'poll', 'send']),
   token: z.string().regex(/^[a-f0-9]{64}$/),
   request: z.string().uuid(), text: z.string().trim().max(2000).default(''),
   page: z.string().max(1000).default(''),
