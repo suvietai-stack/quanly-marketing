@@ -17,6 +17,8 @@ before(async()=>{
  await db.exec(sql('drizzle/migrations/0063_website_forms_phase1.sql'));
  await db.exec('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon,authenticated');
  await db.exec(sql('supabase/migrations/20261115090000_web_chat.sql'));
+ await db.exec(sql('supabase/migrations/20261115140000_web_chat_creator_at_insert.sql'));
+ await db.exec(`CREATE FUNCTION signal_creator_guard_test() RETURNS trigger LANGUAGE plpgsql AS $ BEGIN IF NEW.created_by IS DISTINCT FROM OLD.created_by THEN RAISE EXCEPTION 'Creator is immutable'; END IF; RETURN NEW; END $; CREATE TRIGGER creator_immutable BEFORE UPDATE ON opportunity_signals FOR EACH ROW EXECUTE FUNCTION signal_creator_guard_test();`);
  for(const id of [site,other]){
   await db.query(`INSERT INTO wf_websites(id,name,domain,source) VALUES($1,'Test','shop.vn','Chat Web')`,[id]);
   await db.query(`INSERT INTO wc_sites(id,enabled,settings) VALUES($1,true,'{"closing":"Chờ sale liên hệ"}')`,[id]);
