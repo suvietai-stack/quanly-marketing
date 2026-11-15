@@ -22,7 +22,7 @@ BEGIN
  THEN RAISE EXCEPTION 'STOP: approval function/owner/ACL drift'; END IF;
  IF to_regclass('private.role_515_approval_backup') IS NOT NULL
  THEN RAISE EXCEPTION 'STOP: backup already exists'; END IF;
-END $preflight$;
+END; $preflight$;
 
 CREATE TABLE private.role_515_approval_backup(
  id text PRIMARY KEY,
@@ -69,5 +69,5 @@ BEGIN
    AND new_md5 IS NOT NULL AND new_md5<>old_md5 AND status='applied')<>1
  OR (SELECT count(*) FROM public.user_roles WHERE role_id='role-super-admin')<>2
  THEN RAISE EXCEPTION 'STOP: post-apply check failed'; END IF;
-END $post$;
+END; $post$;
 COMMIT;

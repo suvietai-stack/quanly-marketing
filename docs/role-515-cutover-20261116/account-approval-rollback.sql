@@ -18,5 +18,5 @@ BEGIN
  UPDATE private.role_515_approval_backup
  SET status='rolled_back',rolled_back_at=clock_timestamp()
  WHERE id='role-515-approval-20261116';
-END $restore$;
+END; $restore$;
 COMMIT;
