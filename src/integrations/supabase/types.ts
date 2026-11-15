@@ -101,6 +101,172 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_sv_chat_turns: {
+        Row: {
+          answer: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          mode: string | null
+          question: string
+          revision: number
+          scope: string
+          search: unknown
+          sources: Json
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id: string
+          mode?: string | null
+          question: string
+          revision: number
+          scope: string
+          search?: unknown
+          sources?: Json
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mode?: string | null
+          question?: string
+          revision?: number
+          scope?: string
+          search?: unknown
+          sources?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_sv_documents: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          indexed_at: string | null
+          mime_type: string
+          original_name: string
+          status: string
+          storage_path: string
+          title: string
+          updated_at: string
+          uploaded_by: string
+          visibility: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          indexed_at?: string | null
+          mime_type: string
+          original_name: string
+          status?: string
+          storage_path: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string
+          visibility?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          indexed_at?: string | null
+          mime_type?: string
+          original_name?: string
+          status?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_sv_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_sv_memories: {
+        Row: {
+          content: string
+          id: string
+          key: string
+          origin: string
+          source_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          id?: string
+          key: string
+          origin: string
+          source_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          key?: string
+          origin?: string
+          source_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_sv_memory_state: {
+        Row: {
+          revision: number
+          user_id: string
+        }
+        Insert: {
+          revision?: number
+          user_id: string
+        }
+        Update: {
+          revision?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_sv_usage: {
+        Row: {
+          hour_start: string
+          request_count: number
+          user_id: string
+        }
+        Insert: {
+          hour_start: string
+          request_count?: number
+          user_id: string
+        }
+        Update: {
+          hour_start?: string
+          request_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_sv_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_branding: {
         Row: {
           app_name: string
@@ -2757,6 +2923,171 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      community_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_mascot_posts: {
+        Row: {
+          mascot: string
+          post_id: string
+        }
+        Insert: {
+          mascot: string
+          post_id: string
+        }
+        Update: {
+          mascot?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_mascot_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: true
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_media: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          path: string
+          position: number
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          path: string
+          position?: number
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          path?: string
+          position?: number
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_media_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_notify_settings: {
         Row: {
@@ -9230,6 +9561,218 @@ export type Database = {
         }
         Relationships: []
       }
+      sv_chat_members: {
+        Row: {
+          joined_at: string
+          last_read_at: string
+          role: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          last_read_at?: string
+          role?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          last_read_at?: string
+          role?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sv_chat_members_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "sv_chat_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sv_chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sv_chat_messages: {
+        Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_size: number | null
+          body: string
+          created_at: string
+          id: string
+          recalled_at: string | null
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          body?: string
+          created_at?: string
+          id?: string
+          recalled_at?: string | null
+          sender_id?: string
+          thread_id: string
+        }
+        Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_size?: number | null
+          body?: string
+          created_at?: string
+          id?: string
+          recalled_at?: string | null
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sv_chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sv_chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "sv_chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sv_chat_threads: {
+        Row: {
+          created_at: string
+          created_by: string
+          direct_key: string | null
+          id: string
+          kind: string
+          last_message_at: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          direct_key?: string | null
+          id?: string
+          kind: string
+          last_message_at?: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          direct_key?: string | null
+          id?: string
+          kind?: string
+          last_message_at?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sv_chat_threads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sv_design_job_chat_messages: {
+        Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_path: string | null
+          body: string
+          created_at: string
+          id: string
+          job_id: string
+          sender_id: string
+        }
+        Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          job_id: string
+          sender_id?: string
+        }
+        Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sv_design_job_chat_messages_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sv_design_job_chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sv_design_job_chat_reads: {
+        Row: {
+          job_id: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          job_id: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          job_id?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sv_design_job_chat_reads_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sv_design_job_chat_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sw_credentials: {
         Row: {
           created_at: string
@@ -9990,6 +10533,53 @@ export type Database = {
         Args: { _username: string }
         Returns: string
       }
+      ai_sv_base_search: {
+        Args: { p_category?: string; p_limit?: number; p_query?: string }
+        Returns: {
+          last_updated: string
+          record_id: string
+          source_type: string
+          source_url: string
+          summary: string
+          title: string
+        }[]
+      }
+      ai_sv_chat_begin: {
+        Args: { _id: string; _question: string; _scope: string }
+        Returns: Json
+      }
+      ai_sv_chat_finish: {
+        Args: {
+          _answer: string
+          _id: string
+          _memories?: Json
+          _mode: string
+          _sources: Json
+        }
+        Returns: boolean
+      }
+      ai_sv_directory: { Args: never; Returns: Json }
+      ai_sv_key_save: { Args: { _key: string }; Returns: undefined }
+      ai_sv_key_server_read: { Args: never; Returns: string }
+      ai_sv_knowledge_search: {
+        Args: { p_limit?: number; p_query?: string }
+        Returns: {
+          excerpt: string
+          id: string
+          title: string
+          updated_at: string
+        }[]
+      }
+      ai_sv_memory_edit: {
+        Args: { _content: string; _id: string }
+        Returns: undefined
+      }
+      ai_sv_memory_forget: { Args: { _id?: string }; Returns: undefined }
+      ai_sv_recall: {
+        Args: { _question?: string; _scope?: string }
+        Returns: Json
+      }
+      ai_sv_reserve_question: { Args: never; Returns: boolean }
       approval_center_read: { Args: never; Returns: Json }
       att_note: { Args: { _id: string; _note: string }; Returns: undefined }
       att_recall: { Args: { _id: string }; Returns: undefined }
@@ -10073,6 +10663,7 @@ export type Database = {
         Returns: undefined
       }
       base_permissions_effective: { Args: { _user?: string }; Returns: Json }
+      base_permissions_navigation: { Args: never; Returns: Json }
       base_title_roles_read: { Args: never; Returns: Json }
       base_title_roles_save: {
         Args: {
@@ -10562,6 +11153,23 @@ export type Database = {
         Returns: undefined
       }
       can_edit_signal_catalog: { Args: { _uid: string }; Returns: boolean }
+      community_active: { Args: never; Returns: boolean }
+      community_dom_publish: {
+        Args: { p_body: string; p_request_id: string }
+        Returns: string
+      }
+      community_member_names: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
+      community_moderator: { Args: never; Returns: boolean }
+      community_set_pin: {
+        Args: { p_pinned: boolean; p_post_id: string }
+        Returns: boolean
+      }
       content_notify_save: { Args: { _data: Json }; Returns: undefined }
       content_remind_run: { Args: never; Returns: number }
       crm_access_list: { Args: never; Returns: Json }
@@ -10696,6 +11304,7 @@ export type Database = {
       crm_template_save: { Args: { _data: Json }; Returns: string }
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
+      dashboard_scope_context: { Args: never; Returns: Json }
       design_can: {
         Args: { _action: string; _flow: string; _uid: string }
         Returns: boolean
@@ -11868,6 +12477,48 @@ export type Database = {
       signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
       standard_role_catalog_consolidate: { Args: never; Returns: Json }
       standard_role_catalog_setup: { Args: never; Returns: Json }
+      sv_chat_can_download: { Args: { p_path: string }; Returns: boolean }
+      sv_chat_can_upload: { Args: { p_path: string }; Returns: boolean }
+      sv_chat_create_group: {
+        Args: { p_title: string; p_users: string[] }
+        Returns: string
+      }
+      sv_chat_inbox: {
+        Args: never
+        Returns: {
+          kind: string
+          last_at: string
+          last_message: string
+          last_sender: string
+          member_ids: string[]
+          my_last_read: string
+          thread_id: string
+          title: string
+          unread_count: number
+        }[]
+      }
+      sv_chat_is_member: { Args: { p_thread: string }; Returns: boolean }
+      sv_chat_mark_read: { Args: { p_thread: string }; Returns: undefined }
+      sv_chat_open_direct: { Args: { p_other: string }; Returns: string }
+      sv_chat_recall: { Args: { p_message: string }; Returns: boolean }
+      sv_chat_unread_total: { Args: never; Returns: number }
+      sv_design_job_chat_access: {
+        Args: { p_job_id: string }
+        Returns: boolean
+      }
+      sv_design_job_chat_can_download: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
+      sv_design_job_chat_can_upload: {
+        Args: { p_path: string }
+        Returns: boolean
+      }
+      sv_design_job_chat_mark_read: {
+        Args: { p_job_id: string }
+        Returns: undefined
+      }
+      sv_design_job_chat_unread: { Args: { p_job_id: string }; Returns: number }
       sw_audit: { Args: { _limit?: number }; Returns: Json }
       sw_config: { Args: never; Returns: Json }
       sw_config_save: {
