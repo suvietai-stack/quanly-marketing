@@ -1,0 +1,25 @@
+name: Organization UI validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/components/OrgChart.tsx'
+      - 'src/components/BaseOrganization.tsx'
+      - '.github/workflows/organization-ui-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  organization-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit
+      - run: bunx eslint src/components/OrgChart.tsx src/components/BaseOrganization.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
+      - run: bunx vitest run src/lib/orgChart.test.ts
+      - run: bun run build
