@@ -56,7 +56,7 @@ AS $function$ DECLARE p profiles;confirmed boolean;has_password boolean;banned b
  END IF;
  UPDATE profiles SET status='Đang hoạt động' WHERE id=_target;
  INSERT INTO account_security_logs(actor_id,target_id,action) VALUES(auth.uid(),_target,'approve_account');
- RETURN jsonb_build_object('ok',true,'emailConfirmed',confirmed,'ready',confirmed);END;$function$
+ RETURN jsonb_build_object('ok',true,'emailConfirmed',confirmed,'ready',confirmed);END;$function$;
 
 
 UPDATE private.role_515_approval_backup SET
