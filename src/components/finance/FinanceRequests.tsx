@@ -497,7 +497,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
           </SheetTitle>
         </SheetHeader>
         <div className="space-y-4 py-4">
-          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Chipi về hồ sơ này</Button>
+          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Đốm về hồ sơ này</Button>
           <div className="rounded-lg border p-3 space-y-2">
             <div className="text-2xl font-bold">{vnd(r.amount)}</div>
             <div className="font-medium">{r.title}</div>

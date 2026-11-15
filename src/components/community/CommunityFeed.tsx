@@ -1,3 +1,4 @@
+import { chipiAssets } from '@/assets/chipi/states';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
@@ -178,6 +179,7 @@ function CommunityPostCard({ post, meId, moderator, nameOf, onChange }: {
   const [busy,setBusy] = useState(false);
   const liked = post.community_likes.some(l => l.user_id === meId);
   const owner = post.author_id === meId;
+  const mascot = post.community_mascot_posts?.mascot === 'dom';
   const doAction = async (action:()=>Promise<unknown>,success?:string) => {
     if (busy) return;
     setBusy(true);
@@ -187,9 +189,10 @@ function CommunityPostCard({ post, meId, moderator, nameOf, onChange }: {
   };
   return <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
     <div className="flex items-start gap-3 p-4 pb-2">
-      <InitialAvatar name={nameOf(post.author_id)} />
+      {mascot ? <img src={chipiAssets.hello.url} alt="Đốm" width={44} height={44} className="h-11 w-11 shrink-0 object-contain" /> : <InitialAvatar name={nameOf(post.author_id)} />}
       <div className="min-w-0 flex-1">
-        <h3 className="break-words text-sm font-bold">{nameOf(post.author_id)}</h3>
+        <h3 className="break-words text-sm font-bold">{mascot ? 'Đốm · AI Sứ Việt' : nameOf(post.author_id)}</h3>
+        {mascot && <p className="text-[11px] text-muted-foreground">Linh vật Sứ Việt · {nameOf(post.author_id)} đăng thay</p>}
         <p className="mt-0.5 text-xs text-muted-foreground">{shortTime(post.created_at)} · Nội bộ Sứ Việt</p>
       </div>
       {post.is_pinned && <span className="flex items-center gap-1 rounded-lg bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-800"><Pin className="h-3 w-3" />Ghim</span>}

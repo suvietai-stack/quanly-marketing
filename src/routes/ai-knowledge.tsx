@@ -95,7 +95,7 @@ function KnowledgePage(){
     <header className="rounded-2xl border bg-gradient-to-br from-blue-50 to-teal-50 p-5 dark:from-slate-900 dark:to-teal-950">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300"><BookOpenText className="h-5 w-5"/> AI Sứ Việt</div>
       <h1 className="mt-2 text-xl font-bold">Kho kiến thức AI</h1>
-      <p className="mt-1 text-sm leading-6 text-muted-foreground">Tài liệu hướng dẫn và quy trình để Chipi trả lời đúng thông tin. Tệp gốc luôn riêng tư; chỉ nội dung được quản trị viên chia sẻ mới được nhân viên dùng để hỏi đáp.</p>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">Tài liệu hướng dẫn và quy trình để Đốm trả lời đúng thông tin. Tệp gốc luôn riêng tư; chỉ nội dung được quản trị viên chia sẻ mới được nhân viên dùng để hỏi đáp.</p>
     </header>
     {isSuperAdmin&&<section className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm" aria-label="Trạng thái kết nối AI">
       <div className="flex items-start gap-3">

@@ -240,7 +240,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
           </div>
         </DialogHeader>
 
-        <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Chipi về hồ sơ này</Button>
+        <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Đốm về hồ sơ này</Button>
         <DesignWorkflowSummary order={order} />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">

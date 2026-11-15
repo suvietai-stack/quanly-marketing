@@ -33,7 +33,7 @@ export function SaoNav() {
 function Balance({ data }: { data: SaoData }) {
   return <section className="sao-wallet-band flex items-center justify-between gap-4 p-5 sm:p-8 mb-6 rounded-2xl">
     <div><p className="text-sm text-muted-foreground mb-2">Sao Sứ Việt của bạn</p><div className="flex items-center gap-3 text-4xl font-bold text-primary"><Star className="h-9 w-9 text-warning fill-warning" />{fmt(data.balance)}</div><div className="flex flex-wrap gap-x-5 gap-y-1 mt-4 text-sm"><span>Khả dụng <strong>{fmt(availableStars(data.balance, data.held))}</strong></span><span className="text-muted-foreground">Đang giữ {fmt(data.held)}</span></div></div>
-    <img src={chipiAssets.thankyou.url} className="w-24 h-28 sm:w-36 sm:h-40 object-contain shrink-0" alt="Chipi và Sao Sứ Việt" />
+    <img src={chipiAssets.thankyou.url} className="w-24 h-28 sm:w-36 sm:h-40 object-contain shrink-0" alt="Đốm và Sao Sứ Việt" />
   </section>;
 }
 function Empty({ text }: { text: string }) { return <div className="py-10 text-center text-muted-foreground"><GiftIcon className="h-9 w-9 mx-auto mb-3 text-chipi-orange" /><p>{text}</p></div>; }

@@ -36,7 +36,7 @@ export function RewardPopup({ userId }: { userId: string }) {
   return <Dialog open={Boolean(reward)} onOpenChange={(open) => { if (!open) setReward(null); }}>
     <DialogContent className="sao-reward-popup w-[calc(100%-32px)] max-w-md rounded-2xl bg-card text-center max-h-[calc(100dvh-32px)] overflow-y-auto gap-3 p-6">
       <div className="relative mx-auto h-52 w-52 sm:h-60 sm:w-60">
-        <img src={chipiAssets.celebrate.url} alt="Chipi chúc mừng" className="sao-celebrate h-full w-full object-contain" />
+        <img src={chipiAssets.celebrate.url} alt="Đốm chúc mừng" className="sao-celebrate h-full w-full object-contain" />
         <Star className="sao-spark sao-spark-one absolute left-0 top-9 h-7 w-7 text-warning fill-warning" aria-hidden />
         <Star className="sao-spark sao-spark-two absolute right-0 top-20 h-5 w-5 text-warning fill-warning" aria-hidden />
         <Sparkles className="sao-spark absolute right-5 top-3 h-7 w-7 text-chipi-orange" aria-hidden />

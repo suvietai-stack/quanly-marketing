@@ -28,9 +28,9 @@ export type MemoryFact={key:string;content:string};
 /** Restrict model-produced memory to personal preferences and conversation topics; never identity, permissions or business conclusions. */
 export function parsePersonalReply(raw:string):{answer:string;memories:MemoryFact[]} {
  let value:unknown;
- try{value=JSON.parse(raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,''));}catch{throw new Error('Chipi chưa định dạng được câu trả lời. Bạn thử lại nhé.');}
+ try{value=JSON.parse(raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,''));}catch{throw new Error('Đốm chưa định dạng được câu trả lời. Bạn thử lại nhé.');}
  const v=value as {answer?:unknown;memories?:unknown};
- if(!v||typeof v.answer!=='string'||!v.answer.trim())throw new Error('Chipi chưa tạo được câu trả lời.');
+ if(!v||typeof v.answer!=='string'||!v.answer.trim())throw new Error('Đốm chưa tạo được câu trả lời.');
  const facts=Array.isArray(v.memories)?v.memories:[];
  const memories=facts.filter((f):f is MemoryFact=>!!f&&typeof f==='object'&&typeof f.key==='string'&&/^(preference|topic):[a-z0-9_-]{1,50}$/.test(f.key)&&typeof f.content==='string'&&f.content.trim().length>0&&f.content.length<=600).slice(0,3);
  return {answer:v.answer.trim().slice(0,5500),memories};

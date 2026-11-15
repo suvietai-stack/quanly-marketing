@@ -78,7 +78,7 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
         <div className="flex items-center gap-2">
           <span className="rounded-xl bg-white/15 p-2"><Bot className="h-5 w-5 text-white"/></span>
           <div>
-            <SheetTitle className="text-base font-bold text-white">Chipi · AI Sứ Việt</SheetTitle>
+            <SheetTitle className="text-base font-bold text-white">Đốm · AI Sứ Việt</SheetTitle>
             <SheetDescription className="mt-1 text-xs text-blue-100">Giải đáp Base, hướng dẫn quy trình và trò chuyện vui 🧡</SheetDescription>
           </div>
         </div>
@@ -87,12 +87,12 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
       {personal.isPending&&<p className="px-4 py-2 text-xs text-muted-foreground">Đang mở lại cuộc trò chuyện…</p>}
       {personal.isError&&<div role="alert" className="px-4 py-2 text-xs text-rose-600">Chưa tải được bộ nhớ riêng. <Button size="sm" variant="ghost" onClick={()=>void personal.refetch()}>Thử lại</Button></div>}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50/75 p-4 dark:bg-slate-950/70" aria-label="Lịch sử hỏi đáp AI" role="log">
-        {recordContext&&<section className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"><p className="text-xs font-semibold">Đang hỗ trợ: {RECORD_LABELS[recordContext.kind]} đang mở</p><p className="mt-1 text-xs leading-5">Chipi đọc lại hồ sơ theo quyền của bạn. Trò chuyện được lưu riêng; dữ liệu hồ sơ luôn được đọc lại theo quyền hiện tại.</p><div className="mt-3 grid gap-2">{['Hồ sơ này đang chờ ai?','Tiếp theo tôi cần làm gì?','Tóm tắt hồ sơ đang mở'].map(q=><Button key={q} type="button" variant="outline" className="min-h-11 justify-start whitespace-normal text-left text-xs" disabled={busy||personal.isPending||personal.isError} onClick={()=>void send(q)}>{q}</Button>)}</div></section>}
+        {recordContext&&<section className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100"><p className="text-xs font-semibold">Đang hỗ trợ: {RECORD_LABELS[recordContext.kind]} đang mở</p><p className="mt-1 text-xs leading-5">Đốm đọc lại hồ sơ theo quyền của bạn. Trò chuyện được lưu riêng; dữ liệu hồ sơ luôn được đọc lại theo quyền hiện tại.</p><div className="mt-3 grid gap-2">{['Hồ sơ này đang chờ ai?','Tiếp theo tôi cần làm gì?','Tóm tắt hồ sơ đang mở'].map(q=><Button key={q} type="button" variant="outline" className="min-h-11 justify-start whitespace-normal text-left text-xs" disabled={busy||personal.isPending||personal.isError} onClick={()=>void send(q)}>{q}</Button>)}</div></section>}
         {messages.length===0&&!recordContext&&<div className="space-y-4">
-          {availability.data?.available===false&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">Chipi đang ở chế độ hướng dẫn có sẵn. Bạn vẫn có thể hỏi cách dùng Base; phần hỏi đáp AI tự nhiên và đọc tài liệu chuyên sâu sẽ hoạt động sau khi quản trị viên kết nối OpenAI.</p>}
-          {availability.data?.available===true&&<p className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-xs leading-5 text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Máy chủ đã nhận cấu hình OpenAI. Chipi sẽ thử trả lời từ dữ liệu mà bạn được phép xem; quản trị viên có thể kiểm tra kết nối trong Kho kiến thức AI.</p>}
+          {availability.data?.available===false&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">Đốm đang ở chế độ hướng dẫn có sẵn. Bạn vẫn có thể hỏi cách dùng Base; phần hỏi đáp AI tự nhiên và đọc tài liệu chuyên sâu sẽ hoạt động sau khi quản trị viên kết nối OpenAI.</p>}
+          {availability.data?.available===true&&<p className="rounded-xl border border-sky-100 bg-sky-50 p-3 text-xs leading-5 text-sky-900 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-100">Máy chủ đã nhận cấu hình OpenAI. Đốm sẽ thử trả lời từ dữ liệu mà bạn được phép xem; quản trị viên có thể kiểm tra kết nối trong Kho kiến thức AI.</p>}
           <div className="rounded-2xl border bg-card p-4">
-            <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-amber-500"/><strong className="text-sm">Xin chào! Chipi đây!</strong></div>
+            <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-amber-500"/><strong className="text-sm">Xin chào! Đốm đây!</strong></div>
             <p className="mt-2 text-sm leading-6">Bạn muốn biết cách dùng Base, tìm thông tin công việc hay chỉ muốn tâm sự một chút? Cứ hỏi mình nhé. 🌼</p>
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"><Database className="h-3 w-3"/>Dữ liệu Base</span>
@@ -100,7 +100,7 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
             </div>
           </div>
           <div className="space-y-2">
-            <p className="px-1 text-xs font-semibold text-muted-foreground">Thử hỏi Chipi</p>
+            <p className="px-1 text-xs font-semibold text-muted-foreground">Thử hỏi Đốm</p>
             {sampleQuestions.map(q=><button type="button" key={q} onClick={()=>void send(q)}
               className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border bg-card px-3 py-2 text-left text-sm hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-slate-800">
               <span>{q}</span><ArrowUpRight className="h-4 w-4 shrink-0 text-blue-600"/>
@@ -120,19 +120,19 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
             </div>}
           </div>
         </div>)}
-        {busy&&<div className="flex items-center gap-2 text-xs text-muted-foreground"><LoaderCircle className="h-4 w-4 animate-spin"/>Chipi đang tìm thông tin…</div>}
+        {busy&&<div className="flex items-center gap-2 text-xs text-muted-foreground"><LoaderCircle className="h-4 w-4 animate-spin"/>Đốm đang tìm thông tin…</div>}
         <div ref={bottom}/>
       </div>
       <form onSubmit={e=>{e.preventDefault();void send(input);}} className="shrink-0 space-y-2 border-t bg-card p-3">
         <div className="flex items-end gap-2">
           <Textarea rows={1} maxLength={900} value={input} onChange={e=>setInput(e.target.value)}
-            className="min-h-12 max-h-28 flex-1 resize-none rounded-xl text-base" placeholder="Hỏi Chipi điều gì đó…"
+            className="min-h-12 max-h-28 flex-1 resize-none rounded-xl text-base" placeholder="Hỏi Đốm điều gì đó…"
             onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&window.innerWidth>=768){e.preventDefault();e.currentTarget.form?.requestSubmit();}}}/>
           <Button type="submit" size="icon" className="h-12 w-12 shrink-0 rounded-xl bg-blue-700 hover:bg-blue-800" disabled={!input.trim()||busy||personal.isPending||personal.isError} aria-label="Gửi câu hỏi">
             {busy?<LoaderCircle className="h-5 w-5 animate-spin"/>:<Send className="h-5 w-5"/>}
           </Button>
         </div>
-        <p className="flex items-center justify-center gap-1 text-center text-[10px] text-muted-foreground"><ShieldCheck className="h-3 w-3"/>Chipi chỉ xem dữ liệu trong quyền của bạn; không tự sửa Base.</p>
+        <p className="flex items-center justify-center gap-1 text-center text-[10px] text-muted-foreground"><ShieldCheck className="h-3 w-3"/>Đốm chỉ xem dữ liệu trong quyền của bạn; không tự sửa Base.</p>
       </form>
     </SheetContent>
   </Sheet>;

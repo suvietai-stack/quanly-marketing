@@ -16,6 +16,7 @@ export type CommunityMedia = { id: string; path: string; kind: 'image' | 'video'
 export type CommunityPost = {
   id: string;
   author_id: string;
+  community_mascot_posts?: { mascot: 'dom' } | null;
   body: string;
   is_pinned: boolean;
   created_at: string;
@@ -26,7 +27,7 @@ export type CommunityPost = {
 };
 export type CommunityComment = { id: string; post_id: string; author_id: string; body: string; created_at: string };
 
-const FIELDS = 'id,author_id,body,is_pinned,created_at,updated_at,community_media(id,path,kind,position),community_likes(user_id),community_comments(id)';
+const FIELDS = 'id,author_id,body,is_pinned,created_at,updated_at,community_mascot_posts(mascot),community_media(id,path,kind,position),community_likes(user_id),community_comments(id)';
 function unwrap<T>(value: { data: T | null; error: { message: string } | null }): T {
   if (value.error) throw new Error(value.error.message);
   return value.data as T;

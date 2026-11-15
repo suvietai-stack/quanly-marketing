@@ -15,7 +15,7 @@ export const BASE_GUIDES:BaseGuide[] = [
    'Trong tab Xử lý công việc, xem trạng thái và các hành động đang được phép.',
    'Người phụ trách cập nhật bản nháp hoặc file bàn giao trước khi gửi duyệt.',
    'Người có quyền duyệt chọn nút duyệt hoặc yêu cầu sửa; nhập ghi chú chỉnh sửa khi cần.'
-  ],note:'Các nút được hiển thị theo trạng thái Job và quyền tài khoản; Chipi không tự duyệt.'},
+  ],note:'Các nút được hiển thị theo trạng thái Job và quyền tài khoản; Đốm không tự duyệt.'},
  {id:'design-chat',title:'Trao đổi riêng trong một Job thiết kế',keywords:['chat job','trao đổi job','nhắn thiết kế','tin nhắn thiết kế','chat thiết kế'],
   path:'/orders',steps:[
    'Mở Job cần trao đổi ở mục Thiết kế.',
@@ -84,7 +84,7 @@ export const BASE_GUIDES:BaseGuide[] = [
    'Đăng nhập tài khoản Super Admin rồi mở Hệ thống → Kho kiến thức AI.',
    'Chọn tài liệu Word, Excel, PDF hoặc tệp văn bản; đặt tên và tải lên.',
    'Với PDF, chọn Đọc PDF sau khi dịch vụ AI trên máy chủ được cấu hình.',
-   'Khi nội dung đã đọc xong, chọn Chia sẻ cho nhân viên để Chipi có thể sử dụng làm căn cứ.'
+   'Khi nội dung đã đọc xong, chọn Chia sẻ cho nhân viên để Đốm có thể sử dụng làm căn cứ.'
   ],note:'Tài liệu mặc định chỉ quản trị viên được xem. File gốc không công khai.'},
  {id:'account',title:'Cập nhật hồ sơ cá nhân',keywords:['cá nhân','đổi mật khẩu','hồ sơ','tài khoản của tôi'],
   path:'/profile',steps:[

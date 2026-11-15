@@ -743,7 +743,7 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="px-4 pt-4 pr-12"><Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Chipi về hồ sơ này</Button></div>
+      <div className="px-4 pt-4 pr-12"><Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Đốm về hồ sơ này</Button></div>
       <div className="p-4 border-b space-y-2">
         <div className="flex items-start justify-between gap-2 pr-8">
           <h2 className="text-lg font-semibold leading-tight">{s.customer_name}</h2>

@@ -30,7 +30,7 @@ export const askAiSuviet=createServerFn({method:'POST'})
    const personal={...await loadPersonalContext(db,data.question,scope),facts:[] as import('./personalContext.server').MemoryFact[]};
    const reply=await answerAiSuviet(db,data.question,[],data.context,personal);
    const {data:saved,error:saveError}=await db.rpc('ai_sv_chat_finish',{_id:data.requestId,_answer:reply.answer,_mode:reply.mode,_sources:reply.sources,_memories:personal.facts});
-   if(saveError)throw new Error('Chipi đã trả lời nhưng chưa lưu được bộ nhớ. Bạn thử lại nhé.');
+   if(saveError)throw new Error('Đốm đã trả lời nhưng chưa lưu được bộ nhớ. Bạn thử lại nhé.');
    if(!saved)throw new Error('Cuộc trò chuyện này đã được xóa trong lúc xử lý.');
    return reply;
  });
@@ -72,14 +72,14 @@ export const extractAiPdf=createServerFn({method:'POST'})
  });
 
 
-/** Employee-visible mode indicator, checked only when the Chipi panel opens.
+/** Employee-visible mode indicator, checked only when the Đốm panel opens.
  * Never sends API Key, model credentials or private files to the browser. */
 export const getAiSuvietAvailability=createServerFn({method:'GET'})
  .middleware([requireSupabaseAuth])
  .handler(async({context})=>{
    const db=context.supabase as unknown as SupabaseClient;
    const {data:active,error}=await db.rpc('community_active');
-   if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được sử dụng Chipi.');
+   if(error||!active)throw new Error('Chỉ nhân viên Base đang hoạt động mới được sử dụng Đốm.');
    return {available:Boolean(await (await import('./providerKey.server')).providerKey())};
  });
 

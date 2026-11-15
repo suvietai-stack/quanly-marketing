@@ -65,7 +65,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
   const { data: notifications } = useQuery({
     queryKey: ["notifications", uid],
     enabled: !!uid,
-    // Chipi observes the same cache; existing header/sidebar bells own polling.
+    // Đốm observes the same cache; existing header/sidebar bells own polling.
     refetchInterval: onNotifications ? false : 60_000,
     staleTime: onNotifications ? 60_000 : 0,
     queryFn: async () => {
@@ -102,7 +102,7 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" className={trigger ? "chipi-trigger relative h-auto p-0 hover:bg-transparent" : "relative h-auto p-2"} aria-label={trigger ? "Chipi — mở thông báo" : "Thông báo"}>
+        <Button variant="ghost" className={trigger ? "chipi-trigger relative h-auto p-0 hover:bg-transparent" : "relative h-auto p-2"} aria-label={trigger ? "Đốm — mở thông báo" : "Thông báo"}>
           {trigger ?? <Bell className="h-5 w-5" />}
           {unread > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] leading-4 text-center">{unread > 9 ? "9+" : unread}</span>}
         </Button>
@@ -110,12 +110,12 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
       <PopoverContent align="end" collisionPadding={12} className={trigger ? "chipi-notifications w-80 max-w-[calc(100vw-24px)] max-h-[70dvh] overflow-auto p-0" : "w-80 max-w-[calc(100vw-24px)] max-h-[70dvh] overflow-auto p-0"}>
         {trigger ? <>
           <div className="chipi-panel-header flex items-center gap-2 px-4 py-3">
-            <Bell className="h-4 w-4 text-chipi-orange" /><span className="font-semibold text-sm flex-1">Chipi nhắc bạn</span>
+            <Bell className="h-4 w-4 text-chipi-orange" /><span className="font-semibold text-sm flex-1">Đốm nhắc bạn</span>
             {unread > 0 && <Button variant="ghost" size="icon" title="Đánh dấu tất cả đã đọc" aria-label="Đánh dấu tất cả đã đọc" onClick={readAll}><CheckCheck /></Button>}
-            <Button variant="ghost" size="icon" aria-label="Đóng bảng thông báo Chipi" onClick={() => setOpen(false)}><X /></Button>
+            <Button variant="ghost" size="icon" aria-label="Đóng bảng thông báo Đốm" onClick={() => setOpen(false)}><X /></Button>
           </div>
           <div className="max-h-96 overflow-auto p-3 space-y-2">
-            {data.length === 0 && <div className="py-8 text-center"><Bell className="h-6 w-6 mx-auto mb-3 text-chipi-orange" /><p className="text-sm font-medium">Bạn đã xem hết rồi!</p><p className="text-xs text-muted-foreground mt-1">Chipi sẽ nhắc khi có thông báo mới.</p></div>}
+            {data.length === 0 && <div className="py-8 text-center"><Bell className="h-6 w-6 mx-auto mb-3 text-chipi-orange" /><p className="text-sm font-medium">Bạn đã xem hết rồi!</p><p className="text-xs text-muted-foreground mt-1">Đốm sẽ nhắc khi có thông báo mới.</p></div>}
             {data.map((n) => <Button key={n.id} variant="ghost" onClick={() => openOne(n)} className={`chipi-notice-card ${n.read_at ? "" : "chipi-unread"} h-auto w-full items-start justify-start whitespace-normal text-left p-3 gap-3`}>
               <span className="chipi-notice-icon"><ChipiNoticeIcon kind={n.kind} className="h-4 w-4" /></span>
               <span className="min-w-0 flex-1"><span className={`block text-sm break-words ${n.read_at ? "font-normal" : "font-semibold"}`}>{notificationText(n)}</span><span className="block text-xs text-muted-foreground mt-1.5">{ago(n.created_at)}</span></span>
