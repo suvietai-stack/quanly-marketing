@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
-import { ArrowLeft, Check, CheckCheck, CheckCircle2, Globe, Inbox, Info, MessageCircle, RefreshCw, Send, Settings2, ShieldCheck, UserRound, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Check, CheckCheck, CheckCircle2, Inbox, Info, MessageCircle, RefreshCw, Send, Settings2, ShieldCheck, UserRound, Wifi, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +11,6 @@ import { safeAttachmentUrl } from '@/lib/inbox/model';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -32,7 +31,6 @@ function Workspace({ userId }: { userId: string }) {
   const { can, isSuperAdmin } = useCurrentUser();
   const qc = useQueryClient();
   const overview = useServerFn(inboxOverview), read = useServerFn(inboxRead), change = useServerFn(inboxChange), send = useServerFn(inboxSend), accessSave = useServerFn(inboxAccessSave);
-  const [tab,setTab] = useState<'facebook'|'web'>('facebook');
   const [pageId,setPageId] = useState('all');
   const [filter,setFilter] = useState<Filter>('all');
   const [selected,setSelected] = useState<string | null>(null);
@@ -44,7 +42,7 @@ function Workspace({ userId }: { userId: string }) {
   const [pending,setPending] = useState<{ requestId: string; conversationId: string; text: string } | null>(null);
   const [live,setLive] = useState<'connecting'|'live'|'offline'>('connecting');
   const listRef = useRef<HTMLDivElement>(null);
-  const active = tab === 'facebook';
+  const active = true;
   const canConnect = isSuperAdmin || can('integration.facebook_leads');
   const baseKey = useMemo(() => ['inbox',userId] as const,[userId]);
   const ov = useQuery({ queryKey: [...baseKey,'overview'], queryFn: () => overview(), retry: false, staleTime: 30000, refetchInterval: active ? 30000 : false, refetchIntervalInBackground: false });
@@ -127,19 +125,13 @@ function Workspace({ userId }: { userId: string }) {
   const expired = current && (!current.window_open || Date.now() - thread.dataUpdatedAt + Date.parse(current.server_now) - Date.parse(current.conversation.last_incoming_at ?? '') >= 86400000);
   return <div className="min-w-0 w-full space-y-4">
     <header className="flex flex-wrap items-start justify-between gap-3">
-      <div><div className="flex items-center gap-2"><div className="rounded-xl bg-primary/10 p-2.5 text-primary"><MessageCircle className="size-6" /></div><h1 className="text-xl sm:text-2xl font-semibold">Hộp thư</h1></div><p className="mt-2 text-sm text-muted-foreground">Các Page cùng một nơi, mỗi cuộc trò chuyện đều có người theo sát.</p></div>
+      <div><div className="flex items-center gap-2"><div className="rounded-xl bg-primary/10 p-2.5 text-primary"><MessageCircle className="size-6" /></div><h1 className="text-xl sm:text-2xl font-semibold">Facebook Messenger</h1></div><p className="mt-2 text-sm text-muted-foreground">Các Page cùng một nơi, mỗi cuộc trò chuyện đều có người theo sát.</p></div>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" aria-label="Làm mới Hộp thư" onClick={() => void reload()}><RefreshCw className={cn('size-4',ov.isFetching && 'animate-spin')} /></Button>
         {canConnect && <><Button variant="outline" onClick={() => setConnections(true)}><Settings2 className="mr-2 size-4" />Quản lý Page</Button><Suspense fallback={<Button disabled>Kết nối Page</Button>}><ConnectButton disabled={ov.isPending || ov.isError} messaging={ov.data?.available ?? false} /></Suspense></>}
       </div>
     </header>
-    <div role="tablist" aria-label="Kênh trò chuyện" className="flex gap-2 border-b pb-3">
-      <Button role="tab" aria-selected={tab === 'facebook'} variant={tab === 'facebook' ? 'default' : 'ghost'} onClick={() => setTab('facebook')}><MessageCircle className="mr-2 size-4" />Facebook</Button>
-      <Button role="tab" aria-selected={tab === 'web'} variant={tab === 'web' ? 'secondary' : 'ghost'} onClick={() => setTab('web')}><Globe className="mr-2 size-4" />Chat Web<Badge variant="outline" className="ml-2 text-[10px]">Sắp ra mắt</Badge></Button>
-    </div>
-    {tab === 'web' ? <section className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border bg-card px-5 text-center">
-      <div className="rounded-3xl bg-primary/10 p-6 text-primary"><Globe className="size-12" /></div><Badge className="mt-6" variant="secondary">Sắp ra mắt</Badge><h2 className="mt-4 text-xl font-semibold">Trò chuyện với khách ngay từ website</h2><p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">Một nơi tiếp nhận các cuộc trò chuyện từ website của Sứ Việt, bên cạnh tin nhắn Facebook. Chức năng đang được chuẩn bị.</p>
-    </section> : ov.isPending ? <div aria-busy="true" className="grid gap-4 sm:grid-cols-[300px_1fr]"><Skeleton className="h-96" /><Skeleton className="h-96" /></div> : ov.isError ? <ErrorBox message="Chưa tải được Hộp thư. Kiểm tra kết nối và thử lại." onRetry={() => void ov.refetch()} /> : !ov.data?.available ? <Empty icon="setup" title="Hộp thư đang chờ kích hoạt" text="Khu vực Hộp thư đã sẵn sàng về giao diện. Phần dữ liệu và quyền truy cập cần được kích hoạt trước khi nhận tin nhắn thật." /> : !ov.data.can_view ? <Empty icon="setup" title="Chưa có quyền Hộp thư" text="Nhờ quản trị cấp quyền Hộp thư và phân các Page anh/chị phụ trách." /> : <>
+    {ov.isPending ? <div aria-busy="true" className="grid gap-4 sm:grid-cols-[300px_1fr]"><Skeleton className="h-96" /><Skeleton className="h-96" /></div> : ov.isError ? <ErrorBox message="Chưa tải được Hộp thư. Kiểm tra kết nối và thử lại." onRetry={() => void ov.refetch()} /> : !ov.data?.available ? <Empty icon="setup" title="Hộp thư đang chờ kích hoạt" text="Khu vực Hộp thư đã sẵn sàng về giao diện. Phần dữ liệu và quyền truy cập cần được kích hoạt trước khi nhận tin nhắn thật." /> : !ov.data.can_view ? <Empty icon="setup" title="Chưa có quyền Hộp thư" text="Nhờ quản trị cấp quyền Hộp thư và phân các Page anh/chị phụ trách." /> : <>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">{live === 'live' ? <Wifi className="size-3.5 text-emerald-600" /> : <WifiOff className="size-3.5" />}{live === 'live' ? 'Đang nhận cập nhật trực tiếp' : live === 'connecting' ? 'Đang kết nối cập nhật trực tiếp…' : 'Kết nối trực tiếp gián đoạn · đang đối chiếu định kỳ'}</span><span>{ov.data.pages.length} Page được cấp quyền</span>
       </div>

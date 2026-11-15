@@ -12,7 +12,8 @@ export const navigationGroups: NavGroup[] = [
     { to: "/biz/3k", label: "3K của tôi", icon: ListChecks },
   ] },
   { label: "Hộp thư", icon: MessageSquare, items: [
-    { to: "/inbox", label: "Hộp thư đa Page", icon: MessageSquare, perm: "inbox.view" },
+    { to: "/inbox", label: "Facebook Messenger", icon: MessageSquare, perm: "inbox.view" },
+    { to: "/web-chat", label: "Chat Web", icon: Globe, perm: "inbox.view", badge: "Sắp ra mắt" },
   ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
     { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
