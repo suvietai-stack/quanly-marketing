@@ -25,6 +25,8 @@ export const Route = createFileRoute("/api/public/meta/leads-webhook")({
         try { changes = s.parseWebhook(body); } catch { return new Response("Invalid payload", { status: 400 }); }
         try { await s.recordEvents(changes, "webhook"); }
         catch (e: any) { console.error("[fbl] store failed", e?.message); return new Response("Store failed", { status: 500 }); }
+        try { await (await import("@/lib/inbox/inbox.server")).ingestMessenger(body); }
+        catch { return new Response("Messenger store failed", { status: 500 }); }
         return new Response("EVENT_RECEIVED", { status: 200 });
       },
     },

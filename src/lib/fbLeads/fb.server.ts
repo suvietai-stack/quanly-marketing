@@ -120,9 +120,21 @@ export async function sessionDiscovery(state: string, userId: string): Promise<i
 
 // ---------- Pages & forms ----------
 export async function subscribePage(pageId: string, token: string) {
-  await graph(`/${pageId}/subscribed_apps`, token, { method: "POST", params: { subscribed_fields: "leadgen" } });
+  await subscribeCapabilities(pageId, token, true, false);
   const j = await graph(`/${pageId}/subscribed_apps`, token);
-  return (j.data ?? []).some((a: any) => String(a.id) === META_APP_ID && (a.subscribed_fields ?? ["leadgen"]).includes("leadgen"));
+  return (j.data ?? []).some((a: any) => String(a.id) === META_APP_ID && (a.subscribed_fields ?? []).includes("leadgen"));
+}
+
+export async function subscribeCapabilities(pageId: string, token: string, lead: boolean, messaging: boolean) {
+  const { subscriptionUnion } = await import("../inbox/model");
+  const old = await graph(`/${pageId}/subscribed_apps`, token);
+  const app = (old.data ?? []).find((a: any) => String(a.id) === META_APP_ID);
+  const fields = subscriptionUnion(app?.subscribed_fields ?? [], lead, messaging);
+  if (fields.length) await graph(`/${pageId}/subscribed_apps`, token, { method: "POST", params: { subscribed_fields: fields.join(",") } });
+  const checked = await graph(`/${pageId}/subscribed_apps`, token);
+  const current = (checked.data ?? []).find((a: any) => String(a.id) === META_APP_ID)?.subscribed_fields ?? [];
+  if (!fields.every(f => current.includes(f))) throw new Error("Meta chưa xác nhận đủ trường Webhook; giữ lựa chọn hiện tại");
+  return current as string[];
 }
 
 export async function checkPage(pageId: string) {

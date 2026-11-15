@@ -2,6 +2,7 @@ type Graph = (path: string, token: string, init?: { params?: Record<string, stri
 export interface DiscoveredPage {
   id: string; name: string; token: string; tasks: string[]; origins: string[];
   eligible: boolean; message: string;
+  messaging?: { eligible: boolean; message: string };
 }
 export interface Discovery {
   pages: DiscoveredPage[];
@@ -84,6 +85,22 @@ export async function discoverPages(graph: Graph, userToken: string, appId: stri
       catch (e: any) { p.message = e.message; return; }
     }
     Object.assign(p, await verifyCandidate(graph, appId, appToken, p));
+    p.messaging = await verifyMessagingCandidate(graph, appId, appToken, p);
   }));
   return { pages: rows, diagnostics, permissions: permissions.map((p) => ({ permission: p.permission, status: p.status })), granular };
+}
+
+export async function verifyMessagingCandidate(graph: Graph, appId: string, appToken: string, page: DiscoveredPage) {
+  try {
+    if (!page.token) return { eligible: false, message: "Cần kết nối lại để lấy token Page" };
+    const { data: debug } = await graph("/debug_token", appToken, { params: { input_token: page.token } });
+    if (!debug?.is_valid || debug.app_id !== appId || debug.type !== "PAGE" || String(debug.profile_id) !== page.id) return { eligible: false, message: "Token hết hạn hoặc không đúng Page/App; kết nối lại" };
+    const required = ["pages_messaging", "pages_manage_metadata"];
+    const missing = required.filter(s => !(debug.scopes ?? []).includes(s));
+    if (missing.length) return { eligible: false, message: `Cần kết nối lại và cấp ${missing.join(", ")}; có thể cần Meta App Review/Advanced Access` };
+    if (!page.tasks.includes("MESSAGING") && !page.tasks.includes("MESSAGE")) return { eligible: false, message: "Meta chưa xác nhận nhiệm vụ MESSAGING của người kết nối; cần cấp quyền Page và kết nối lại" };
+    const identity = await graph(`/${page.id}`, page.token, { params: { fields: "id" } });
+    if (String(identity.id) !== page.id) return { eligible: false, message: "Danh tính Page không khớp" };
+    return { eligible: true, message: "Token đúng Page; có pages_messaging và nhiệm vụ MESSAGING. Gửi vẫn cần cửa sổ và quyền Meta hợp lệ." };
+  } catch { return { eligible: false, message: "Không xác minh được Messenger; kiểm tra quyền Page hoặc kết nối lại" }; }
 }
