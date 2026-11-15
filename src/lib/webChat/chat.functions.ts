@@ -52,10 +52,10 @@ export const chatRotateKey=createServerFn({method:'POST'}).middleware([requireSu
 export const chatAccess=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({site:z.string().uuid(),user:z.string().uuid().optional(),enabled:z.boolean().optional()}).parse(v)).handler(async({context,data})=>{
   await access(context,data.site,true); const {db}=await import('./chat.server');
   if(data.user){
-    const p=await db.from('profiles').select('id').eq('id',data.user).eq('status','active').maybeSingle();if(p.error||!p.data)throw new Error('Nhân viên không hoạt động');
+    const p=await db.from('profiles').select('id').eq('id',data.user).eq('status','Đang hoạt động').maybeSingle();if(p.error||!p.data)throw new Error('Nhân viên không hoạt động');
     const r=data.enabled?await db.from('wc_access').upsert({site_id:data.site,user_id:data.user}):await db.from('wc_access').delete().eq('site_id',data.site).eq('user_id',data.user);if(r.error)throw new Error('Không lưu được quyền website');
   }
-  const [p,a]=await Promise.all([db.from('profiles').select('id,full_name').eq('status','active').order('full_name'),db.from('wc_access').select('user_id').eq('site_id',data.site)]);if(p.error||a.error)throw new Error('Không tải được nhân viên');return {staff:p.data,allowed:a.data.map((x:any)=>x.user_id)};
+  const [p,a]=await Promise.all([db.from('profiles').select('id,full_name').eq('status','Đang hoạt động').order('full_name'),db.from('wc_access').select('user_id').eq('site_id',data.site)]);if(p.error||a.error)throw new Error('Không tải được nhân viên');return {staff:p.data,allowed:a.data.map((x:any)=>x.user_id)};
 });
 export const chatThreads=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({site:z.string().uuid(),before:z.string().datetime().optional()}).parse(v)).handler(async({context,data})=>{
   await access(context,data.site);const {db}=await import('./chat.server');let q=db.from('wc_conversations').select('id,mode,summary,contact,signal_id,created_at,updated_at,read_at,error,taken_by').eq('site_id',data.site).order('updated_at',{ascending:false}).limit(100);if(data.before)q=q.lt('updated_at',data.before);const r=await q;if(r.error)throw new Error('Không tải được hội thoại');return r.data;
