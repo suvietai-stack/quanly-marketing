@@ -11,6 +11,9 @@ export const navigationGroups: NavGroup[] = [
     { to: "/community", label: "Cộng đồng Sứ Việt", icon: MessageCircleHeart },
     { to: "/biz/3k", label: "3K của tôi", icon: ListChecks },
   ] },
+  { label: "Hộp thư", icon: MessageSquare, items: [
+    { to: "/inbox", label: "Hộp thư đa Page", icon: MessageSquare, perm: "inbox.view" },
+  ] },
   { label: "Kinh doanh", icon: Briefcase, items: [
     { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
     { to: "/biz", label: "Tổng quan Kinh doanh", icon: Briefcase, exact: true, anyPerm: ["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"] },
@@ -93,3 +96,4 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
 export function activeNavigationPath(groups: NavGroup[], path: string): string | undefined {
   return groups.flatMap(g => g.items).filter(it => !it.comingSoon && (path === it.to || (!it.exact && path.startsWith(it.to + '/')))).sort((a,b) => b.to.length - a.to.length)[0]?.to;
 }
+

@@ -1,6 +1,8 @@
 -- Additive, staged only. No defaults, Role assignments, Lead rows or employee data changed.
 CREATE TABLE public.inbox_page_capabilities (
  page_id text PRIMARY KEY REFERENCES public.fbl_pages(page_id), enabled boolean NOT NULL DEFAULT false,
+ tasks text[] NOT NULL DEFAULT '{}',
+ lead_enabled boolean NOT NULL DEFAULT true, lead_enabled_at timestamptz,
  ready boolean NOT NULL DEFAULT false, reason text, checked_at timestamptz, last_event_at timestamptz
 );
 GRANT SELECT ON public.inbox_page_capabilities TO authenticated;
@@ -68,9 +70,7 @@ DECLARE r jsonb; allowed_ boolean;
 BEGIN
  IF u IS NULL OR NOT private.is_active(u) OR p NOT IN ('inbox.view','inbox.send','inbox.assign','inbox.resolve','inbox.manage') THEN RETURN false; END IF;
  IF private.is_super_admin(u) THEN RETURN true; END IF;
- r:=private.base_rules(u,private.base_config());
- SELECT coalesce(bool_or(x->>'effect'='ALLOW'),false) AND NOT coalesce(bool_or(x->>'effect'='DENY'),false)
- INTO allowed_ FROM jsonb_array_elements(r) x WHERE x->>'permission'=p;
+ allowed_:=private.has_permission(u,p);
  RETURN allowed_ AND (p_page IS NULL OR EXISTS(SELECT 1 FROM inbox_page_access WHERE page_id=p_page AND user_id=u));
 END $$;
 REVOKE ALL ON FUNCTION public.inbox_can(uuid,text,text) FROM PUBLIC,anon;
@@ -84,9 +84,9 @@ CREATE FUNCTION public.inbox_overview() RETURNS jsonb LANGUAGE plpgsql STABLE SE
 DECLARE u uuid:=auth.uid(); pages_ jsonb;
 BEGIN
  IF u IS NULL OR NOT private.is_active(u) THEN RAISE EXCEPTION 'Không có quyền Hộp thư' USING ERRCODE='42501'; END IF;
- SELECT coalesce(jsonb_agg(jsonb_build_object('page_id',p.page_id,'name',p.name,'enabled',coalesce(c.enabled,false),'ready',coalesce(c.ready,false),'reason',c.reason,'checked_at',c.checked_at,'last_event_at',c.last_event_at) ORDER BY p.name),'[]') INTO pages_
+ SELECT coalesce(jsonb_agg(jsonb_build_object('page_id',p.page_id,'name',p.name,'enabled',coalesce(c.enabled,false) AND p.status<>'disconnected','ready',coalesce(c.ready,false) AND p.status<>'disconnected','reason',CASE WHEN p.status='disconnected' THEN 'Page đã ngắt kết nối' ELSE c.reason END,'checked_at',c.checked_at,'last_event_at',c.last_event_at) ORDER BY p.name),'[]') INTO pages_
  FROM fbl_pages p LEFT JOIN inbox_page_capabilities c USING(page_id)
- WHERE p.status<>'disconnected' AND inbox_can(u,'inbox.view',p.page_id);
+ WHERE inbox_can(u,'inbox.view',p.page_id);
  RETURN jsonb_build_object('available',true,'can_view',inbox_can(u,'inbox.view'),'can_send',inbox_can(u,'inbox.send'),'can_assign',inbox_can(u,'inbox.assign'),'can_resolve',inbox_can(u,'inbox.resolve'),'can_manage',inbox_can(u,'inbox.manage'),'pages',pages_);
 END $$;
 CREATE FUNCTION public.inbox_list(p_page text DEFAULT NULL,p_filter text DEFAULT 'all',p_before timestamptz DEFAULT NULL,p_id uuid DEFAULT NULL) RETURNS jsonb
@@ -110,9 +110,9 @@ BEGIN
  SELECT * INTO c FROM inbox_conversations WHERE id=p_conversation;
  IF c.id IS NULL OR NOT inbox_can(auth.uid(),'inbox.view',c.page_id) THEN RAISE EXCEPTION 'Không có quyền hội thoại' USING ERRCODE='42501'; END IF;
  SELECT coalesce(jsonb_agg(to_jsonb(q) ORDER BY q.event_at,q.id),'[]') INTO rows_ FROM (
- SELECT id,direction,text,attachments,event_at,CASE WHEN state='sending' AND claimed_at<now()-interval '1 minute' THEN 'unknown' ELSE state END state,failure FROM inbox_messages
+ SELECT id,request_id,direction,text,attachments,event_at,CASE WHEN state='sending' AND claimed_at<now()-interval '1 minute' THEN 'unknown' ELSE state END state,failure FROM inbox_messages
  WHERE conversation_id=c.id AND (p_before IS NULL OR (event_at,id)<(p_before,p_id)) ORDER BY event_at DESC,id DESC LIMIT 50) q;
- RETURN jsonb_build_object('conversation',to_jsonb(c),'messages',rows_,'can_send',inbox_can(auth.uid(),'inbox.send',c.page_id),'can_assign',inbox_can(auth.uid(),'inbox.assign',c.page_id),'can_resolve',inbox_can(auth.uid(),'inbox.resolve',c.page_id),'window_open',c.last_incoming_at>now()-interval '24 hours' AND c.last_incoming_at<=now());
+ RETURN jsonb_build_object('conversation',to_jsonb(c),'messages',rows_,'can_send',inbox_can(auth.uid(),'inbox.send',c.page_id),'can_assign',inbox_can(auth.uid(),'inbox.assign',c.page_id),'can_resolve',inbox_can(auth.uid(),'inbox.resolve',c.page_id),'server_now',now(),'window_open',c.last_incoming_at>now()-interval '24 hours' AND c.last_incoming_at<=now());
 END $$;
 CREATE FUNCTION public.inbox_staff(p_page text) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 BEGIN
@@ -167,12 +167,14 @@ CREATE FUNCTION public.inbox_send_finish(p_request uuid,p_mid text,p_state text,
 DECLARE m inbox_messages; echo_ inbox_messages;
 BEGIN
  IF p_state NOT IN ('accepted','failed','unknown') THEN RAISE EXCEPTION 'Invalid send state'; END IF;
- SELECT * INTO m FROM inbox_messages WHERE request_id=p_request FOR UPDATE;
+ SELECT * INTO m FROM inbox_messages WHERE request_id=p_request;
  IF m.id IS NULL THEN RAISE EXCEPTION 'Unknown request'; END IF;
+ PERFORM 1 FROM inbox_conversations WHERE id=m.conversation_id FOR UPDATE;
+ SELECT * INTO m FROM inbox_messages WHERE request_id=p_request FOR UPDATE;
  IF p_mid IS NOT NULL THEN
  SELECT * INTO echo_ FROM inbox_messages WHERE page_id=m.page_id AND mid=p_mid AND id<>m.id FOR UPDATE;
  IF echo_.id IS NOT NULL THEN
- UPDATE inbox_messages SET event_at=echo_.event_at,attachments=echo_.attachments WHERE id=m.id;
+ UPDATE inbox_messages SET event_at=echo_.event_at,attachments=echo_.attachments,state=echo_.state WHERE id=m.id;
  DELETE FROM inbox_messages WHERE id=echo_.id;
  END IF;
  END IF;
@@ -184,7 +186,7 @@ END $$;
 -- Each event is stored and processed atomically; retrying acknowledgment is idempotent.
 CREATE FUNCTION public.inbox_ingest(p_event jsonb) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE c inbox_conversations; page_ text:=p_event->>'page_id'; customer_ text:=p_event->>'customer_id'; at_ timestamptz:=(p_event->>'at')::timestamptz;
- kind_ text:=p_event->>'kind'; key_ text; inserted_ uuid; m inbox_messages; incoming_ boolean:=p_event->>'direction'='in'; request_ uuid:=nullif(p_event->>'request_id','')::uuid;
+ kind_ text:=p_event->>'kind'; key_ text; inserted_ uuid; m inbox_messages; incoming_ boolean:=p_event->>'direction'='in'; request_ uuid:=CASE WHEN p_event->>'direction'='out' THEN nullif(p_event->>'request_id','')::uuid ELSE NULL END;
 BEGIN
  IF NOT EXISTS(SELECT 1 FROM inbox_page_capabilities k JOIN fbl_pages p USING(page_id) WHERE k.page_id=page_ AND k.enabled AND p.status<>'disconnected') THEN RETURN; END IF;
  IF page_!~'^\d{1,40}$' OR customer_!~'^\d{1,40}$' OR at_>now()+interval '5 minutes' OR kind_ NOT IN ('message','delivery','read') THEN RAISE EXCEPTION 'Invalid event'; END IF;
@@ -197,7 +199,7 @@ BEGIN
  IF nullif(p_event->>'mid','') IS NULL THEN RAISE EXCEPTION 'Missing mid'; END IF;
  SELECT * INTO m FROM inbox_messages WHERE request_id=request_ AND page_id=page_ AND conversation_id=c.id AND direction='out' FOR UPDATE;
  IF m.id IS NOT NULL THEN
- UPDATE inbox_messages SET mid=p_event->>'mid',event_at=at_,state=CASE WHEN state IN ('delivered','read') THEN state ELSE 'accepted' END WHERE id=m.id;
+ UPDATE inbox_messages SET mid=p_event->>'mid',event_at=at_,state=CASE WHEN state='read' OR c.read_at>=at_ THEN 'read' WHEN state='delivered' OR c.delivered_at>=at_ THEN 'delivered' ELSE 'accepted' END WHERE id=m.id;
  ELSE
  INSERT INTO inbox_messages(conversation_id,page_id,mid,direction,text,attachments,event_at,state) VALUES(c.id,page_,p_event->>'mid',CASE WHEN incoming_ THEN 'in' ELSE 'out' END,left(p_event->>'text',20000),coalesce(p_event->'attachments','[]'),at_,CASE WHEN incoming_ THEN 'received' WHEN c.read_at>=at_ THEN 'read' WHEN c.delivered_at>=at_ THEN 'delivered' ELSE 'accepted' END) ON CONFLICT(page_id,mid) DO NOTHING;
  END IF;
@@ -206,16 +208,44 @@ BEGIN
  UPDATE inbox_conversations SET needs_reply=last_incoming_at IS NOT NULL AND (last_outgoing_at IS NULL OR last_incoming_at>last_outgoing_at) WHERE id=c.id;
  ELSE
  UPDATE inbox_conversations SET delivered_at=CASE WHEN kind_='delivery' THEN greatest(delivered_at,(p_event->>'watermark')::timestamptz) ELSE delivered_at END,read_at=CASE WHEN kind_='read' THEN greatest(read_at,(p_event->>'watermark')::timestamptz) ELSE read_at END WHERE id=c.id;
- UPDATE inbox_messages SET state=CASE WHEN kind_='read' THEN 'read' WHEN state='read' THEN state ELSE 'delivered' END WHERE conversation_id=c.id AND direction='out' AND (event_at<=(p_event->>'watermark')::timestamptz OR mid IN (SELECT jsonb_array_elements_text(p_event->'mids')));
+ UPDATE inbox_messages SET state=CASE WHEN kind_='read' THEN 'read' WHEN state='read' THEN state ELSE 'delivered' END WHERE conversation_id=c.id AND direction='out' AND mid IS NOT NULL AND state IN ('accepted','delivered','read','sending','unknown') AND (event_at<=(p_event->>'watermark')::timestamptz OR mid IN (SELECT jsonb_array_elements_text(p_event->'mids')));
  END IF;
  UPDATE inbox_events SET processed_at=now() WHERE id=inserted_;
  UPDATE inbox_page_capabilities SET last_event_at=greatest(last_event_at,at_) WHERE page_id=page_;
+END $$;
+CREATE FUNCTION public.inbox_installed() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT true $$;
+CREATE FUNCTION public.inbox_capabilities_save(p_page text,p_lead boolean,p_messaging boolean,p_ready boolean,p_reason text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ INSERT INTO inbox_page_capabilities(page_id,lead_enabled,lead_enabled_at,enabled,ready,reason,checked_at)
+ VALUES(p_page,p_lead,CASE WHEN p_lead THEN now() ELSE NULL END,p_messaging,p_ready,left(p_reason,300),now())
+ ON CONFLICT(page_id) DO UPDATE SET lead_enabled=excluded.lead_enabled,
+ lead_enabled_at=CASE WHEN NOT inbox_page_capabilities.lead_enabled AND p_lead THEN now() ELSE inbox_page_capabilities.lead_enabled_at END,
+ enabled=excluded.enabled,ready=excluded.ready,reason=excluded.reason,checked_at=excluded.checked_at;
+END $$;
+CREATE FUNCTION public.inbox_connection_save(p_page text,p_name text,p_token text,p_lead boolean,p_messaging boolean,p_tasks text[],p_ready boolean,p_reason text,p_actor uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ IF NOT private.is_active(p_actor) THEN RAISE EXCEPTION 'Inactive actor'; END IF;
+ INSERT INTO fbl_pages(page_id,name,status,connected_by,subscribed,checked_at,updated_at) VALUES(p_page,p_name,'connected',p_actor,p_lead,now(),now())
+ ON CONFLICT(page_id) DO UPDATE SET name=excluded.name,status='connected',status_detail=NULL,subscribed=excluded.subscribed,checked_at=now(),updated_at=now();
+ IF p_token IS NOT NULL THEN
+ INSERT INTO fbl_page_tokens(page_id,token_enc,updated_at) VALUES(p_page,p_token,now()) ON CONFLICT(page_id) DO UPDATE SET token_enc=excluded.token_enc,updated_at=now();
+ END IF;
+ PERFORM inbox_capabilities_save(p_page,p_lead,p_messaging,p_ready,p_reason);
+ UPDATE inbox_page_capabilities SET tasks=p_tasks WHERE page_id=p_page;
+ INSERT INTO inbox_audit(actor_id,page_id,action,after_data) VALUES(p_actor,p_page,'features',jsonb_build_object('lead',p_lead,'messaging',p_messaging));
 END $$;
 DO $$ DECLARE f regprocedure; BEGIN
  FOR f IN SELECT p.oid::regprocedure FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE 'inbox_%' LOOP
  EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,anon,authenticated',f);
  EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO service_role',f);
- IF f::text NOT LIKE '%inbox_ingest(%' AND f::text NOT LIKE '%inbox_send_finish(%' THEN EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated',f); END IF;
+ IF f::text NOT LIKE '%inbox_ingest(%' AND f::text NOT LIKE '%inbox_send_finish(%' AND f::text NOT LIKE '%inbox_capabilities_save(%' AND f::text NOT LIKE '%inbox_connection_save(%' THEN EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO authenticated',f); END IF;
  END LOOP;
 END $$;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.inbox_conversations,public.inbox_messages;
+DO $$ BEGIN
+ IF EXISTS(SELECT 1 FROM pg_publication WHERE pubname='supabase_realtime') THEN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.inbox_conversations,public.inbox_messages;
+ END IF;
+END $$;
+

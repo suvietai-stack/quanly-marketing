@@ -29,10 +29,11 @@ export const inboxAccessSave = createServerFn({ method: "POST" }).middleware([re
   return { ok: true };
 });
 export const inboxSend = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(d => z.object({ conversationId: z.string().uuid(), requestId: z.string().uuid(), text: z.string().trim().min(1).max(2000) }).parse(d)).handler(async ({ context, data }) => {
+  // Module and per-Page access are checked atomically by this RPC.
   const claim = await context.supabase.rpc("inbox_send_claim" as never, { p_conversation: data.conversationId, p_request: data.requestId, p_text: data.text } as never);
   if (claim.error) throw new Error("Không thể gửi: kiểm tra quyền Page, token và cửa sổ 24 giờ");
   const row = claim.data as unknown as { claimed: boolean; page_id: string; customer_id: string; state: string };
-  if (!row.claimed) return { state: row.state };
+  if (!row.claimed) return { state: row.state === "sending" ? "unknown" : row.state };
   const { sendText } = await import("./inbox.server");
   const result = await sendText(row.page_id, row.customer_id, data.text, data.requestId);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
