@@ -11,6 +11,7 @@ on:
       - 'src/lib/navigation.ts'
       - 'src/lib/auth.ts'
       - 'docs/inbox-2026-11-15/**'
+      - 'tests/inbox-ui/**'
       - 'vitest.inbox.config.ts'
       - '.github/workflows/inbox-validation.yml'
   workflow_dispatch:
@@ -34,3 +35,16 @@ jobs:
           bunx eslint src/components/inbox src/lib/inbox src/routes/inbox.tsx src/lib/fbLeads/fb.server.ts src/lib/fbLeads/fb.functions.ts src/lib/fbLeads/pageDiscovery.server.ts src/components/FbLeadsSettings.tsx
           --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
       - run: bunx vitest run --config vitest.inbox.config.ts
+      - name: Install isolated browser test runner
+        run: |
+          npm install --prefix "$RUNNER_TEMP/inbox-browser" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/inbox-browser/node_modules/.bin/playwright" install chromium
+      - name: Test responsive Inbox with mocked I/O
+        run: |
+          bunx vite --config tests/inbox-ui/vite.config.mjs > /tmp/inbox-vite.log 2>&1 &
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/inbox-browser/node_modules/playwright/index.mjs" node tests/inbox-ui/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inbox-ui-checks
+          path: tests/inbox-ui/screenshots/
