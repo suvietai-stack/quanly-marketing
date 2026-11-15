@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sứ Việt — Base Chat
  * Description: Chat AI trên website, chuyển nhu cầu và liên hệ về Base Sứ Việt.
- * Version: 1.2.0
+ * Version: 1.4.0
  * Requires PHP: 7.4
  */
 if (!defined('ABSPATH')) exit;
@@ -74,7 +74,7 @@ function svwc_proxy(WP_REST_Request $request) {
 add_action('wp_enqueue_scripts', function () {
     $c = get_option('svwc_config', array());
     if (empty($c['enabled']) || empty($c['key'])) return;
-    wp_enqueue_style('svwc', plugins_url('widget.css',__FILE__),array(),'1.2.0');
-    wp_enqueue_script('svwc',plugins_url('widget.js',__FILE__),array(),'1.2.0',true);
+    wp_enqueue_style('svwc', plugins_url('widget.css',__FILE__),array(),'1.4.0');
+    wp_enqueue_script('svwc',plugins_url('widget.js',__FILE__),array(),'1.4.0',true);
     wp_add_inline_script('svwc','window.SVBaseChat='.wp_json_encode(array('endpoint'=>rest_url('suviet-chat/v1/message'))).';','before');
 });

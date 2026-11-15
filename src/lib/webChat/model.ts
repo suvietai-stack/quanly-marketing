@@ -5,7 +5,7 @@ export const DOM_AI_NAME = 'Đốm AI';
 export const LEAD_FORM = 'base-web-chat';
 export const settingsSchema = z.object({
   starters: z.array(z.string().trim().min(1).max(120)).max(6).default(['Tôi muốn xem mẫu sản phẩm', 'Tư vấn quà tặng theo ngân sách', 'Tôi cần đặt số lượng lớn']),
-  greetingDelay: z.number().int().min(3).max(60).default(5),
+  greetingDelay: z.number().int().min(3).max(60).default(3),
   showGreeting: z.boolean().default(true),
   character: z.string().trim().min(1).max(80).default('Đốm'),
   avatar: z.string().max(100000).default('').refine(s => !s || /^https:\/\/.{1,490}$/.test(s) || /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(s), 'Dùng ảnh PNG/JPG/WebP dưới 70 KB hoặc URL HTTPS'),
