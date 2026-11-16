@@ -1,10 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Showroom3K } from '@/components/showroom/Showroom3K';
+import { K3CommonWorkspace } from '@/components/k3Hub/K3CommonWorkspace';
 
 export const Route = createFileRoute('/showroom_/3k')({
-  head: () => ({ meta: [
-    { title: '3K Showroom — Base Sứ Việt' },
-    { name: 'description', content: 'Mục tiêu KG, việc KF, kết quả KPI và theo dõi nhân sự Khối Showroom.' },
-  ] }),
-  component: Showroom3K,
+  head: () => ({ meta: [{ title: '3K Showroom — Base Sứ Việt' }] }),
+  component: () => <K3CommonWorkspace title="3K Showroom" initialUnit="showroom-block" />,
 });
