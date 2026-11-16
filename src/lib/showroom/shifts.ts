@@ -34,6 +34,11 @@ export const SHIFT_OPTIONS:{value:ShowroomShift;label:string}[]=[
   {value:'full',label:'Ca Full'},{value:'off',label:'Nghỉ'}
 ];
 const db=supabase as typeof supabase & {rpc: (name:string,args:Record<string,unknown>)=>Promise<{data:unknown;error:{message:string}|null}>};
+export async function readShowroomRosterStores():Promise<{stores:{id:string;name:string}[]}>{
+  const {data,error}=await db.rpc('showroom_roster_stores_read',{});
+  if(error)throw new Error(error.message);
+  return data as {stores:{id:string;name:string}[]};
+}
 export async function readShowroomRoster(store:string,week:string):Promise<ShiftRoster>{
   const {data,error}=await db.rpc('showroom_roster_read',{_store:store,_week:week});
   if(error)throw new Error(error.message);
