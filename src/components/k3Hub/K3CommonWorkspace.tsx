@@ -57,8 +57,9 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
       (unitOverride==='org-company' && data?.can_company || options.some(x => x.id===unitOverride))
     ? unitOverride : initial;
   const visibleTab = tab === 'policy' && !data?.can_config ? 'report'
+    : tab === 'mine' && !data?.can_personal && canReport ? 'report'
     : tab === 'report' && !canReport ? 'mine' : tab;
-  const hasArea = central || !!data?.can_personal || canReport;
+  const hasArea = central ? canReport : (!!data?.can_personal || canReport);
 
   if (user?.status !== 'Đang hoạt động') return <p className="p-6 text-sm text-muted-foreground">Cần đăng nhập tài khoản đang hoạt động.</p>;
 
