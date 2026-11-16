@@ -87,6 +87,19 @@ describe('Presentation-only navigation', () => {
     expect(paths(access(['showroom.view']))).not.toContain('/showroom/3k');
     expect(activeNavigationPath(navigationGroups, '/showroom/3k')).toBe('/showroom/3k');
   });
+  it('keeps central 3K and area-specific 3K scoped to actual role keys', () => {
+    expect(paths(access(['k3hub.center']))).toContain('/k3-center');
+    expect(paths(access(['k3hub.biz']))).toContain('/biz/3k-area');
+    expect(paths(access(['k3hub.ops']))).toContain('/operations/3k');
+    expect(paths(access(['k3hub.ops_accounting']))).toContain('/operations/3k-accounting');
+    expect(paths(access(['k3hub.ops_hr']))).toContain('/operations/3k-hr');
+    expect(paths(access(['showroom.k3.use']))).toContain('/showroom/3k');
+    expect(paths(access())).not.toContain('/k3-center');
+    expect(paths(access(['k3hub.biz']))).not.toContain('/k3-center');
+    expect(paths(access(['k3hub.ops']))).not.toContain('/showroom/3k');
+    expect(navigationGroups.find(g => g.label === 'Marketing')?.items.some(it =>
+      it.to.includes('/3k') || it.to.includes('k3-center'))).toBe(false);
+  });
   it('shows the Approval Center entry only when the user has approval capability', () => {
     expect(paths(access())).not.toContain('/approvals');
     const groups = visibleNavigation(access([], { approvalsEligible: true }));
