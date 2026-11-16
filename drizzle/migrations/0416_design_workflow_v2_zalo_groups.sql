@@ -213,6 +213,32 @@ BEGIN
  NEW.data:=d||jsonb_build_object('status',st); NEW.updated_at:=now(); RETURN NEW;
 END $function$
 
+-- Idempotent linked-source Job creation. Historical duplicates are preserved;
+-- newly created Content/Video linked Jobs may not duplicate a source even under concurrent clicks.
+CREATE OR REPLACE FUNCTION private.design_linked_source_unique() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,private AS $
+DECLARE src text; mode text;
+BEGIN
+ IF coalesce(NEW.workflow_kind,NEW.data->>'workflowKind') <> 'marketing_design' THEN RETURN NEW; END IF;
+ IF nullif(NEW.data->>'contentId','') IS NOT NULL THEN
+   src:=NEW.data->>'contentId';mode:='content';
+ ELSIF nullif(NEW.data->>'videoId','') IS NOT NULL AND NEW.data->>'type'='Thumbnail video' THEN
+   src:=NEW.data->>'videoId';mode:='video';
+ ELSE RETURN NEW; END IF;
+ IF TG_OP='UPDATE' AND src=CASE WHEN mode='content' THEN OLD.data->>'contentId' ELSE OLD.data->>'videoId' END
+    AND coalesce(OLD.workflow_kind,OLD.data->>'workflowKind')='marketing_design' THEN RETURN NEW; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('design-link:'||mode||':'||src,0));
+ IF EXISTS(
+   SELECT 1 FROM public.orders o
+   WHERE o.id<>NEW.id AND o.workflow_kind='marketing_design' AND
+    CASE WHEN mode='content' THEN o.data->>'contentId'=src
+      ELSE o.data->>'videoId'=src AND o.data->>'type'='Thumbnail video' END
+ ) THEN RAISE EXCEPTION 'Đã có Job Thiết kế liên kết với nội dung này. Mở Job cũ thay vì tạo trùng.' USING ERRCODE='23505'; END IF;
+ RETURN NEW;
+END $;
+CREATE TRIGGER design_order_duplicate_guard BEFORE INSERT OR UPDATE OF data ON public.orders
+ FOR EACH ROW EXECUTE FUNCTION private.design_linked_source_unique();
+
 -- Existing unassigned, active v1 Jobs become explicit exception queue, never auto-given to an arbitrary employee.
 -- No past event triggers Zalo because three configurations are OFF by default.
 UPDATE public.orders
