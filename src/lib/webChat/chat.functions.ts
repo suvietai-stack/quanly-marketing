@@ -60,6 +60,30 @@ export const chatAccess=createServerFn({method:'POST'}).middleware([requireSupab
 export const chatThreads=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({site:z.string().uuid(),before:z.string().datetime().optional()}).parse(v)).handler(async({context,data})=>{
   await access(context,data.site);const {db}=await import('./chat.server');let q=db.from('wc_conversations').select('id,mode,summary,contact,signal_id,created_at,updated_at,read_at,error,taken_by').eq('site_id',data.site).order('updated_at',{ascending:false}).limit(100);if(data.before)q=q.lt('updated_at',data.before);const r=await q;if(r.error)throw new Error('Không tải được hội thoại');return r.data;
 });
+// One permission-scoped, globally ordered feed for the overview. A selected site
+// is checked independently; an all-sites feed never exposes unassigned sites.
+export const chatThreadsFeed=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({site:z.string().uuid().optional()}).parse(v)).handler(async({context,data})=>{
+  await active(context);
+  const {db}=await import('./chat.server');
+  let allowed:string[]|null=null;
+  if(data.site){
+    await access(context,data.site);
+  }else if(!await manage(context)){
+    const r=await db.from('wc_access').select('site_id').eq('user_id',context.userId);
+    if(r.error)throw new Error('Không đọc được quyền Chat Web');
+    allowed=[...new Set((r.data??[]).map((x:any)=>String(x.site_id)))];
+    if(!allowed.length)return [];
+  }
+  let q=db.from('wc_conversations')
+    .select('id,site_id,mode,summary,contact,signal_id,created_at,updated_at,read_at,error,taken_by')
+    .order('updated_at',{ascending:false}).limit(100);
+  if(data.site)q=q.eq('site_id',data.site);
+  else if(allowed)q=q.in('site_id',allowed);
+  const r=await q;
+  if(r.error)throw new Error('Không tải được danh sách hội thoại');
+  return r.data??[];
+});
+
 export const chatLocate=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({id:z.string().uuid()}).parse(v)).handler(async({context,data})=>{
   await active(context);const {db}=await import('./chat.server');const r=await db.from('wc_conversations').select('site_id').eq('id',data.id).maybeSingle();if(r.error||!r.data)throw new Error('Không mở được hội thoại');await access(context,r.data.site_id);return {site:r.data.site_id as string};
 });
