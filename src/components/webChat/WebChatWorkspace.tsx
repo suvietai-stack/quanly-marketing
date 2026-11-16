@@ -30,7 +30,7 @@ export function WebChatWorkspace(){
  useEffect(()=>{if(selected&&site)void chatControl({data:{site,id:selected,action:'read',request:crypto.randomUUID()}}).catch(()=>{});},[selected,site]);
  const rows:any[]=list.data??[];const shown=rows.filter(c=>(filter==='all'||c.mode===filter)&&(presenceFilter==='all'||(presenceFilter==='active'?c.presence==='chat'||c.presence==='website':c.presence===presenceFilter))&&((c.summary||'')+' '+JSON.stringify(c.contact||{})).toLowerCase().includes(search.trim().toLowerCase()));const c:any=thread.data;
  const siteName=(id:string)=>sites.find(s=>s.id===id)?.name||'Website';
- async function save(){setBusy(true);try{const r=await chatSaveSite({data:config});setConfig(null);if(r.key){setKey(r.key);setKeySite(r.id!);}await reload();toast.success('Đã lưu');}catch(e){toast.error(e instanceof Error?e.message:'Không lưu được');}finally{setBusy(false);}}
+ async function save(){setBusy(true);try{const data={...config,settings:{...config.settings,starters:config.settings.starters.map((x:string)=>x.trim()).filter(Boolean).slice(0,6)}};const r=await chatSaveSite({data});setConfig(null);if(r.key){setKey(r.key);setKeySite(r.id!);}await reload();toast.success('Đã lưu');}catch(e){toast.error(e instanceof Error?e.message:'Không lưu được');}finally{setBusy(false);}}
  return <div className={`wc-workspace min-w-0 ${selected&&view==='overview'?'wc-thread-open':''}`}>
   <header className="wc-page-head">
    <div className="wc-page-heading">
@@ -99,7 +99,7 @@ export function WebChatWorkspace(){
           {(!r.read_at||r.read_at<r.updated_at)&&<span className="wc-unread" aria-label="Tin chưa đọc"/>}
          </span>
          <span className="wc-contact-preview">{r.summary||'Khách đang trao đổi nhu cầu'}</span>
-         <span className="wc-contact-tags"><span className="wc-site-tag">{siteName(r.site_id)}</span><span className={`wc-presence wc-presence-${r.presence||'offline'}`}>{presenceLabels[r.presence]||'Đã rời'}</span></span>
+         <span className="wc-contact-tags"><span className="wc-site-tag">{siteName(r.site_id)}</span><span className={`wc-presence wc-presence-${r.presence||'offline'}`}>{presenceLabels[r.presence]||'Đã rời'}</span><span className={`wc-mode wc-mode-${r.mode}`}>{r.mode==='human'?'Sale':r.mode==='captured'?'Đã chuyển':'AI'}</span></span>
         </span>
        </div>
        {r.error&&<span className="wc-warning">AI cần kiểm tra</span>}
