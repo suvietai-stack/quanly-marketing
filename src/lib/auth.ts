@@ -584,6 +584,10 @@ export const PERMISSIONS: PermissionDef[] = [
   P("showroom.view", "Xem phân hệ Showroom", "Showroom", "Xem"),
   P("showroom.view_unit", "Xem nhân sự cửa hàng mình phụ trách", "Showroom", "Xem"),
   P("showroom.view_all", "Xem toàn bộ hệ thống Showroom", "Showroom", "Xem"),
+  P("showroom.k3.use", "Mở 3K Showroom cá nhân", "Showroom", "3K"),
+  P("showroom.k3.view_team", "Theo dõi 3K nhân sự cửa hàng", "Showroom", "3K"),
+  P("showroom.k3.view_all", "Xem 3K toàn Khối Showroom", "Showroom", "3K"),
+  P("showroom.k3.comment", "Nhận xét 3K nhân viên Showroom", "Showroom", "3K"),
 
   // ===== Cơ cấu tổ chức (quản trị tại Hành chính & Nhân sự → Cơ cấu tổ chức) =====
   P("org.view", "Xem sơ đồ cơ cấu tổ chức", "Cơ cấu tổ chức", "Cơ cấu"),
