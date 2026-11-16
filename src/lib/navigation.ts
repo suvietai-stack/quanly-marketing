@@ -98,7 +98,7 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
       (!['/orders','/design/reports'].includes(it.to) || !!access.designTeam) &&
       (it.to !== '/approvals' || canOpenApprovalCenter) &&
       (!it.to.startsWith('/design/') || !['/design/photo','/design/marketing','/design/mockups'].includes(it.to) ||
-        (!['photo','marketing_design','order_mockup'].some(f=>can(`order.${f}.view`)) || can(`order.${it.to==='/design/photo'?'photo':it.to==='/design/marketing'?'marketing_design':'order_mockup'}.view`))) &&
+        (!['photo','marketing_design','order_mockup'].some(f=>can(`order.${f}.view`) || can(`order.${f}.create`)) || ['view','create'].some(action=>can(`order.${it.to==='/design/photo'?'photo':it.to==='/design/marketing'?'marketing_design':'order_mockup'}.${action}`)))) &&
       (!it.perm || can(it.perm)) &&
       (!it.anyPerm || (isSuperAdmin && it.to.startsWith('/biz')) ||
         (it.to === '/biz/approvals' && access.hasAssignedApprovals) ||
