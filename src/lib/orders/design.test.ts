@@ -1,7 +1,7 @@
 import { expect,it } from 'vitest';
 import { designCan,designStats,designRange,designOverdue,statusAt,formatSeconds } from './design';
 import type { DesignOrder } from '../store';
-const order=(patch:Partial<DesignOrder>={}):DesignOrder=>({id:'1',title:'Job',brandId:'b',type:'Banner website',source:'Web',status:'Hoàn thành',deadline:'2026-11-07',history:[{at:'2026-11-01T01:00:00Z',byName:'A',action:'Tạo',toStatus:'Chờ phân công'},{at:'2026-11-07T01:00:00Z',byName:'B',action:'Nhận',toStatus:'Đang thực hiện'},{at:'2026-11-07T01:01:03Z',byName:'A',action:'Xong',toStatus:'Hoàn thành'}],...patch});
+const order=(patch:Partial<DesignOrder>={}):DesignOrder=>({id:'1',title:'Job',brandId:'b',type:'Banner website',source:'Web',status:'Hoàn thành',deadline:'2026-11-07',history:[{at:'2026-11-01T01:00:00Z',byName:'A',action:'Tạo',toStatus:'Cần giao người'},{at:'2026-11-07T01:00:00Z',byName:'B',action:'Nhận',toStatus:'Đang thực hiện'},{at:'2026-11-07T01:01:03Z',byName:'A',action:'Xong',toStatus:'Hoàn thành'}],...patch});
 const range={from:Date.parse('2026-11-07T00:00:00+07:00'),to:Date.parse('2026-11-07T23:59:59.999+07:00')};
 it('one original Order is counted once across all three flow projections',()=>{const a=order({workflowKind:'photo'});const stats=designStats([a,a,order({id:'2',workflowKind:'marketing_design'}),order({id:'3',workflowKind:'order_mockup'})],range);expect(stats.existing).toHaveLength(3);expect(stats.completed).toHaveLength(3);});
 it('legacy completion uses real history without changing timestamps',()=>{const a=order();const before=JSON.stringify(a);const stats=designStats([a],range);expect(stats.completed).toHaveLength(1);expect(stats.averageSeconds).toBe(63);expect(JSON.stringify(a)).toBe(before);});
