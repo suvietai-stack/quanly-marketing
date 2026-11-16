@@ -158,6 +158,9 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
   const personName=(id:string|null)=>roster.staff.find(p=>p.id===id)?.name??'Nhân viên';
   const currentChanges=roster.changes;
   const send=async()=>{
+    if(date<week||date>dateAdd(week,6)||(kind!=='emergency'&&(partnerDate<week||partnerDate>dateAdd(week,6)))){
+      toast.error('Hãy chọn ngày trong đúng tuần đang xem.');return;
+    }
     if(kind!=='emergency'&&!partner){toast.error('Hãy chọn đồng nghiệp nhận ca.');return;}
     if(kind==='rest_exchange'&&date===partnerDate){toast.error('Hai người phải nghỉ vào hai ngày khác nhau.');return;}
     if(kind==='emergency'&&!reason.trim()){toast.error('Cần ghi lý do nghỉ khẩn cấp.');return;}
@@ -188,19 +191,19 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
     })}
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85dvh] max-w-[min(95vw,440px)] overflow-y-auto">
-        <DialogHeader><DialogTitle>Đề nghị đổi ca</DialogTitle><DialogDescription>Sau khi được duyệt, lịch mới mới có hiệu lực.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Đề nghị đổi ca</DialogTitle><DialogDescription>Sau khi được quản lý duyệt, lịch đổi ca mới có hiệu lực.</DialogDescription></DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-1.5">
             <Button size="sm" className="h-12 whitespace-normal px-1 text-xs" variant={kind==='swap'?'default':'outline'} onClick={()=>setKind('swap')}>Đổi ca</Button>
             <Button size="sm" className="h-12 whitespace-normal px-1 text-xs" variant={kind==='rest_exchange'?'default':'outline'} onClick={()=>setKind('rest_exchange')}>Đổi ngày nghỉ</Button>
             <Button size="sm" className="h-12 whitespace-normal px-1 text-xs" variant={kind==='emergency'?'default':'outline'} onClick={()=>setKind('emergency')}>Báo khẩn</Button>
           </div>
-          <div><Label>{kind==='rest_exchange'?'Ngày bạn đang nghỉ':'Ngày của bạn'}</Label><Input className="mt-1 min-h-11" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+          <div><Label>{kind==='rest_exchange'?'Ngày bạn đang nghỉ':'Ngày của bạn'}</Label><Input className="mt-1 min-h-11" type="date" min={week} max={dateAdd(week,6)} value={date} onChange={e=>setDate(e.target.value)}/></div>
           {kind!=='emergency'&&<>
             <div><Label>Đồng nghiệp nhận / đổi ca</Label><select className={classSelect+' mt-1'} value={partner} onChange={e=>setPartner(e.target.value)}>
               <option value="">Chọn đồng nghiệp</option>{roster.staff.filter(p=>p.id!==roster.actor_id).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
             </select></div>
-            <div><Label>{kind==='rest_exchange'?'Ngày đồng nghiệp đang nghỉ':'Ngày ca của đồng nghiệp'}</Label><Input className="mt-1 min-h-11" type="date" value={partnerDate} onChange={e=>setPartnerDate(e.target.value)}/></div>
+            <div><Label>{kind==='rest_exchange'?'Ngày đồng nghiệp đang nghỉ':'Ngày ca của đồng nghiệp'}</Label><Input className="mt-1 min-h-11" type="date" min={week} max={dateAdd(week,6)} value={partnerDate} onChange={e=>setPartnerDate(e.target.value)}/></div>
           </>}
           {kind==='rest_exchange'&&<p className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-900 dark:bg-sky-950 dark:text-sky-100">Đổi hai ngày nghỉ khác nhau <strong>trong cùng một tuần</strong>. Hai người giữ đủ số ngày nghỉ; đồng nghiệp xác nhận, quản lý duyệt.</p>}
           {kind==='emergency'&&<p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">Báo khẩn không cần người nhận trước. Quản lý phải xử lý thiếu ca; nếu xin nghỉ phép, vẫn làm đơn nghỉ theo quy định.</p>}
@@ -336,7 +339,7 @@ export function ShiftRosterPage(){
     return base;
   },[roster?.can_approve,roster?.can_settings]);
   const currentView=sections.some(s=>s.id===view)?view:'mine';
-  const showSwap=(o:boolean,date?:string)=>{if(date)setPickDate(date);setDialog(o);if(o)setView('changes');};
+  const showSwap=(o:boolean,date?:string)=>{if(o)setPickDate(date??week);setDialog(o);if(o)setView('changes');};
   return <div className="mx-auto min-w-0 max-w-5xl space-y-4 pb-14">
     <PageHeader title="Lịch trực Showroom" description="Tự đăng ký · Cùng cân ca · Quản lý chốt lịch" />
     {!active&&<div role="alert" className="rounded-xl border p-5 text-sm">Tài khoản chưa được cấp quyền Lịch trực Showroom. Kiểm tra Role vị trí trong Cơ cấu tổ chức.</div>}
