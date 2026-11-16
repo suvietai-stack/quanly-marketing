@@ -1,0 +1,39 @@
+name: Production 3K route smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/k3-production-smoke.yml'
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Inspect published route and assets
+        env:
+          APP_ORIGIN: https://base.suviet.vn
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/k3-smoke
+          for attempt in 1 2 3 4; do
+            curl -fsSL --max-time 35 -D /tmp/k3-smoke/headers               "${APP_ORIGIN}/k3-center" -o /tmp/k3-smoke/index.html
+            echo "Published response headers:"
+            grep -iE '^(HTTP/|x-deployment-id:|location:)' /tmp/k3-smoke/headers || true
+            grep -oE '/assets/[^" ]+\.js' /tmp/k3-smoke/index.html               | sort -u > /tmp/k3-smoke/assets.txt || true
+            found=0
+            while IFS= read -r asset; do
+              curl -fsSL --max-time 30 "${APP_ORIGIN}${asset}" -o /tmp/k3-smoke/asset.js || continue
+              if grep -Fq '/k3-center' /tmp/k3-smoke/asset.js                   && grep -Fq '3K Showroom' /tmp/k3-smoke/asset.js; then
+                found=1
+                break
+              fi
+            done < /tmp/k3-smoke/assets.txt
+            if [ "$found" -eq 1 ]; then
+              echo 'PASS: live production JavaScript contains unified 3K hub and Showroom menu'
+              exit 0
+            fi
+            echo "Still waiting for newly published JS (attempt $attempt)"
+            sleep 15
+          done
+          echo "FAIL: 3K navigation was not verified in live assets"
+          exit 1
