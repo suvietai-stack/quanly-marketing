@@ -1,0 +1,40 @@
+name: Distribution independent area validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/lib/distribution/**'
+      - 'src/components/distribution/**'
+      - 'src/routes/distribution*.tsx'
+      - 'src/lib/navigation.ts'
+      - 'src/lib/navigation.test.ts'
+      - 'src/components/AppShell.tsx'
+      - 'src/components/k3Hub/K3CommonWorkspace.tsx'
+      - 'drizzle/migrations/0441_distribution_area_access.sql'
+      - 'drizzle/migrations/0442_distribution_canonical_cutover.sql'
+      - '.github/workflows/distribution-validation.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - run: bun install --frozen-lockfile
+      - name: Compile TypeScript
+        run: bunx tsc --noEmit
+      - name: Navigation, Organization and 3K regressions
+        run: bunx vitest run src/lib/navigation.test.ts src/lib/biz/organization.test.ts src/lib/biz/k3.test.ts
+      - name: Production build
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: bun run build
+      - name: Ensure migration is append-only and keeps source identifiers
+        run: |
+          grep -q 'CREATE OR REPLACE FUNCTION public.biz_area_access' drizzle/migrations/0441_distribution_area_access.sql
+          grep -q 'distribution-block' drizzle/migrations/0442_distribution_canonical_cutover.sql
+          ! grep -Eqi '^\\s*(DELETE FROM|TRUNCATE|DROP TABLE)' drizzle/migrations/0441_distribution_area_access.sql drizzle/migrations/0442_distribution_canonical_cutover.sql
