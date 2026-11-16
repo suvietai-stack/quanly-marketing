@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 // Canonical supplier master = ot_suppliers (also consumed by Order Tracking).
 export type SupplierStatus = 'potential' | 'active' | 'paused' | 'archived';
 export type SupplierContactChannel = 'call' | 'zalo' | 'email' | 'meeting' | 'other';
+export type SupplierProductGroup = { code:string; name:string };
+
 
 export type MasterSupplier = {
   id: string; code: string; name: string;
@@ -33,6 +35,7 @@ export type SupplierContact = {
 export type SupplierList = {
   suppliers: MasterSupplier[]; limit: number; server_now: string;
   can_create: boolean; can_manage: boolean; can_view_cost: boolean;
+  can_manage_groups: boolean; groups: SupplierProductGroup[];
 };
 export type SupplierDetail = {
   supplier: SupplierFull; can_edit: boolean; can_manage: boolean;
@@ -56,8 +59,12 @@ async function rpc<T>(name:string,args:Record<string,unknown>):Promise<T>{
   if(error) throw new Error(error.message);
   return data as unknown as T;
 }
-export const supplierListRead = (search?:string,status?:string) =>
-  rpc<SupplierList>('supplier_master_list_read',{_search:search||null,_status:status||null});
+export const supplierListRead = (search?:string,status?:string,category?:string) =>
+  rpc<SupplierList>('supplier_master_list_read',{
+    _search:search||null,_status:status||null,_category:category||null,
+  });
+export const supplierProductGroupAdd = (name:string) =>
+  rpc<SupplierProductGroup>('supplier_product_group_add',{_name:name});
 export const supplierDetailRead = (id:string) =>
   rpc<SupplierDetail>('supplier_master_detail_read',{_id:id});
 export const supplierSave = (id:string|null,data:SupplierSavePayload) =>
@@ -68,6 +75,8 @@ export const supplierContactAdd = (supplierId:string,channel:SupplierContactChan
   rpc<string>('supplier_master_contact_add',{
     _supplier_id:supplierId,_channel:channel,_summary:summary,_next_follow_up:date||null,
   });
+export const supplierGroupNames = (codes:string[],groups:SupplierProductGroup[]) =>
+  codes.map(code=>groups.find(g=>g.code===code)?.name??code);
 export const supplierStatusLabels:Record<SupplierStatus,string> = {
   potential:'Đang tìm hiểu',active:'Đang hợp tác',paused:'Tạm dừng',archived:'Đã lưu trữ',
 };
