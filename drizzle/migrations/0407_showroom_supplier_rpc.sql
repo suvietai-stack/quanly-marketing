@@ -26,7 +26,7 @@ BEGIN
        ) ORDER BY u.name)
        FROM public.org_units u WHERE private.showroom_supplier_can_view(who,u.id)
          AND u.kind='department' AND u.active),'[]'::jsonb),
-    'suppliers',coalesce((SELECT jsonb_agg(to_jsonb(r) ORDER BY r.name),'[]'::jsonb)
+    'suppliers',coalesce((SELECT jsonb_agg(to_jsonb(r) ORDER BY r.name)
       FROM (
         SELECT s.id,s.code,s.name,s.store_id,
           replace(u.name,'Showrom ','Showroom ') store_name,
