@@ -16,7 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
+import { DesignAssigneePicker } from "@/components/DesignAssigneePicker";
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan } from '@/lib/orders/design';
 
@@ -37,13 +37,10 @@ export function DesignOrderFormFromContent({
 }) {
   const s = useStore();
   const { user, can } = useCurrentUser();
-  const canAssign = can("order.assign");
+
 
   const brand = s.brands.find((b) => b.id === content.brandId);
-  const activePeople = useMemo(
-    () => s.people.filter((p) => p.accountStatus === "Đang hoạt động" || p.status === "Đang làm"),
-    [s.people],
-  );
+
 
   const defaultCreator = user?.fullName || user?.username || "";
   const defaultReviewer = content.draftReviewer || defaultCreator;
@@ -91,8 +88,10 @@ export function DesignOrderFormFromContent({
       (outlineLinkRef ? `\n\nLink outline: ${outlineLinkRef}` : "") +
       (draftLink ? `\nLink bài viết: ${draftLink}` : "");
 
-    const finalAssignee = canAssign ? (assignee || undefined) : undefined;
-    const status = finalAssignee ? "Chờ nhận việc" : "Chờ phân công";
+    if (!assignee || !assigneeId) {toast.error('Bắt buộc chọn nhân viên Thiết kế thực hiện.');return;}
+    if (reviewer.trim() === assignee) {toast.error('Người duyệt phải khác người thực hiện.');return;}
+    const finalAssignee = assignee;
+    const status = "Chờ nhận việc";
 
     const order: DesignOrder = {
       id: uid(),
@@ -262,14 +261,7 @@ export function DesignOrderFormFromContent({
                 <Input value={reviewer} onChange={(e) => setReviewer(e.target.value)} />
               </div>
               <div>
-                <Label>
-                  Người phụ trách thiết kế {canAssign ? "" : "(cần quyền order.assign)"}
-                </Label>
-                {canAssign ? (
-                  <SpecialtyStaffPicker specialty="design" value={assignee || undefined} valueId={assigneeId || undefined} onChange={(v, id) => { setAssignee(v ?? ""); setAssigneeId(id ?? ""); }} people={activePeople} placeholder="— Chưa phân công —" />
-                ) : (
-                  <Input value="Sẽ ở trạng thái Chờ phân công" disabled />
-                )}
+                <DesignAssigneePicker flow="marketing_design" value={assignee} valueId={assigneeId} onChange={(v,id)=>{setAssignee(v||'');setAssigneeId(id||'');}} required disabled={saving} />
               </div>
               <div>
                 <Label>Deadline</Label>
@@ -286,7 +278,7 @@ export function DesignOrderFormFromContent({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Hủy</Button>
-          <Button disabled={saving} onClick={handleSubmit}>{saving?'Đang lưu…':'Tạo order'}</Button>
+          <Button disabled={saving || !assigneeId} onClick={handleSubmit}>{saving?'Đang lưu…':'Tạo order'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
