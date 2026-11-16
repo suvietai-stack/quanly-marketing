@@ -12,6 +12,15 @@ describe('Presentation-only navigation', () => {
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.to === path)).toHaveLength(1);
     expect(mobilePage(navigationGroups, path).area).toBe('Marketing');
   });
+  it('only Design staff have the overview, ordinary staff see three work areas',()=>{
+    const ordinary=paths(access(['order.view']));
+    expect(ordinary).toContain('/design/photo');
+    expect(ordinary).toContain('/design/marketing');
+    expect(ordinary).toContain('/design/mockups');
+    expect(ordinary).not.toContain('/orders');
+    expect(ordinary).not.toContain('/design/reports');
+    expect(paths(access(['order.view'],{designTeam:true}))).toContain('/orders');
+  });
   it('keeps existing KPI pins and search valid in Marketing, and personal 3K in Operations', () => {
     const groups = visibleNavigation(access(['kpi.view_own', 'kpi.report', 'k3.use', 'biz.goal_submit']));
     expect(allowedPins(['/settings/kpi-v2', '/reports-v2'], groups)).toEqual(['/settings/kpi-v2', '/reports-v2']);
@@ -43,7 +52,7 @@ describe('Presentation-only navigation', () => {
   });
   it.each([
     ['ot.view_own','Mua Hàng & Giao Vận','/order-tracking'],
-    ['order.view','Thiết Kế','/orders'],
+    ['order.view','Thiết Kế','/design/photo'],
     ['leave.create','Hành Chính & Nhân Sự','/leave'],
     ['finance.incoming.view','Kế Toán & Tài Chính','/finance/incoming'],
     
@@ -54,7 +63,7 @@ describe('Presentation-only navigation', () => {
   it('preserves every declared item permission as an independent visibility path', () => {
     for (const item of navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon)) {
       for (const permission of [...(item.anyPerm ?? []), ...(item.perm ? [item.perm] : [])]) {
-        expect(paths(access([permission])), permission).toContain(item.to);
+        expect(paths(access([permission], ['/orders','/design/reports'].includes(item.to)?{designTeam:true}:{})), permission).toContain(item.to);
       }
     }
   });
