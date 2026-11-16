@@ -8,7 +8,12 @@ SET LOCAL statement_timeout='60s';
 DO $scope$
 DECLARE fn text; def text; needle text; replacement text;
 BEGIN
-  IF NOT private.executive_v2_read_scope('f2ad667f-af07-4bad-be3c-6da39bc2e8f0'::uuid) THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.org_assignments a
+    JOIN public.org_position_roles b ON b.unit_id=a.unit_id AND b.title_id=a.title_id
+    WHERE a.unit_id='org-company' AND b.role_id='role-v2-executive'
+      AND private.executive_v2_read_scope(a.user_id)
+  ) THEN
     RAISE EXCEPTION 'Executive V2 read scope is not active; refuse patch';
   END IF;
 
