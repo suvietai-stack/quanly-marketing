@@ -79,9 +79,17 @@ export const navigationGroups: NavGroup[] = [
 export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
 export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   const { can, isSuperAdmin, isKpiAdmin } = access;
+  // The cross-module approval aggregation may be slow/unavailable; capability to
+  // enter the center must come from effective server permissions, not its item count.
+  const canOpenApprovalCenter = !!access.approvalsEligible || isSuperAdmin || [
+    'leave.approve','leave.cancel_handle','biz.approval_view',
+    'biz.goal_approve','biz.report_approve',
+    'fr.advance.approve','fr.payment.approve','fr.salary.approve',
+    'att.witness','ot.reschedule_reply','task.approve_completion',
+  ].some(can);
   return navigationGroups.map(group => {
     const items = group.items.filter(it => !it.comingSoon &&
-      (it.to !== '/approvals' || !!access.approvalsEligible) &&
+      (it.to !== '/approvals' || canOpenApprovalCenter) &&
       (!it.to.startsWith('/design/') || !['/design/photo','/design/marketing','/design/mockups'].includes(it.to) ||
         (!['photo','marketing_design','order_mockup'].some(f=>can(`order.${f}.view`)) || can(`order.${it.to==='/design/photo'?'photo':it.to==='/design/marketing'?'marketing_design':'order_mockup'}.view`))) &&
       (!it.perm || can(it.perm)) &&
