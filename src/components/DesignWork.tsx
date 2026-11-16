@@ -217,11 +217,11 @@ export function DesignWork({
     },
     {
       key: "unassigned" as const,
-      label: "Chưa phân công",
+      label: "Cần giao người",
       count: base.filter((o) => designQueueMatches(o, "unassigned", actor))
         .length,
       icon: Inbox,
-      note: "Chưa có người thực hiện",
+      note: "Job cũ cần bổ sung nhân viên Thiết kế",
     },
   ];
   const controls = (
@@ -387,7 +387,7 @@ export function DesignWork({
       <div className="space-y-2 text-xs">
         <p className="flex items-center gap-2">
           <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{o.assignee || "Chưa phân công"}</span>
+          <span className="truncate">{o.assignee || "Cần giao người"}</span>
         </p>
         <p
           className={`flex items-center gap-2 ${designOverdue(o) ? "font-medium text-destructive" : "text-muted-foreground"}`}
@@ -626,7 +626,7 @@ export function DesignWork({
                         ? "Đang mở"
                         : queue === "overdue"
                           ? "Quá hạn"
-                          : "Chưa phân công"}
+                          : "Cần giao người"}
                     </span>
                   )}
                   {hasFilters && (
