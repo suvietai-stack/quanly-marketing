@@ -13,6 +13,7 @@ import {
   type SupplierFull, type SupplierProduct, type SupplierSavePayload,
   type ProductSavePayload, type SupplierContactChannel, type SupplierProductGroup,
   supplierStatusLabels, supplierChannelLabels, supplierGroupNames,
+  supplierServiceGroups, supplierServiceNames,
 } from '@/lib/procurement/suppliers';
 
 function FormField({id,label,children,description}:{
@@ -40,6 +41,7 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
     name:supplier?.name ?? '',
     status:supplier?.status ?? 'potential',
     category:supplier?.category ?? [],
+    service_groups:supplier?.service_groups ?? [],
     contact_name:supplier?.contact_name ?? '',
     phone:supplier?.phone ?? '',
     email:supplier?.email ?? '',
@@ -51,9 +53,17 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
     revision:supplier?.revision,
   }));
   const [categories,setCategories] = useState<string[]>(supplier?.category ?? []);
+  const [services,setServices] = useState<string[]>(supplier?.service_groups ?? []);
+  const [groupSearch,setGroupSearch] = useState('');
+  const selectService=(code:string,checked:boolean) =>
+    setServices(current=>checked
+      ? [...new Set([...current,code])]
+      : current.filter(x=>x!==code));
   const [newGroupName,setNewGroupName] = useState('');
   const [addedGroups,setAddedGroups] = useState<SupplierProductGroup[]>([]);
   const allGroups = [...groups, ...addedGroups.filter(g=>!groups.some(item=>item.code===g.code))];
+  const visibleGroups = allGroups.filter(g=>g.name.toLocaleLowerCase('vi')
+    .includes(groupSearch.trim().toLocaleLowerCase('vi')));
   const addGroup = useMutation({
     mutationFn:()=>supplierProductGroupAdd(newGroupName.trim()),
     onSuccess:group=>{
@@ -73,7 +83,7 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
     setState(current=>({...current,[field]:value}));
   const save=useMutation({
     mutationFn:()=>supplierSave(supplier?.id ?? null,{
-      ...state, category:categories,
+      ...state, category:categories, service_groups:services,
     }),
     onSuccess:id=>{
       toast.success(supplier?'Đã cập nhật nhà cung cấp.':'Đã tạo hồ sơ nhà cung cấp.');
@@ -96,21 +106,41 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
               placeholder="Ví dụ: Xưởng gốm, nhà nhập khẩu…"/>
           </FormField>
           <div className="space-y-2 sm:col-span-2">
-            <Label>Nhóm sản phẩm (tích chọn nhiều nhóm)</Label>
-            <div className="grid max-h-52 grid-cols-2 gap-2 overflow-y-auto rounded-lg border bg-muted/15 p-3 sm:grid-cols-3">
-              {allGroups.map(group=><label key={group.code}
+            <Label>1. Loại hình cung ứng (6 nghiệp vụ, tích chọn nhiều)</Label>
+            <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/15 p-3 sm:grid-cols-3">
+              {supplierServiceGroups.map(group=><label key={group.code}
+                className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 text-sm hover:bg-muted/60">
+                <Checkbox checked={services.includes(group.code)}
+                  aria-label={`Loại hình: ${group.name}`}
+                  onCheckedChange={checked=>selectService(group.code,checked===true)}/>
+                <span>{group.name}</span>
+              </label>)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {services.length} loại đã chọn.
+              {services.length>0&&` ${supplierServiceNames(services).join(' · ')}`}
+              {' '}Dữ liệu này cũng dùng trong Theo Dõi Đơn Hàng.
+            </p>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="supplier-group-search">2. Nhóm sản phẩm (danh mục mở rộng)</Label>
+            <Input id="supplier-group-search" value={groupSearch}
+              onChange={e=>setGroupSearch(e.target.value)}
+              placeholder={`Tìm trong ${allGroups.length} nhóm sản phẩm…`}/>
+            <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto rounded-lg border bg-muted/15 p-3 sm:grid-cols-3">
+              {visibleGroups.map(group=><label key={group.code}
                 className="flex cursor-pointer items-start gap-2 rounded-md p-1.5 text-sm hover:bg-muted/60">
                 <Checkbox checked={categories.includes(group.code)}
                   onCheckedChange={checked=>toggleGroup(group.code,checked===true)}
-                  aria-label={group.name}/>
+                  aria-label={`Sản phẩm: ${group.name}`}/>
                 <span>{group.name}</span>
               </label>)}
-              {!allGroups.length && <p className="col-span-full text-xs text-muted-foreground">
-                Chưa có nhóm sản phẩm trong danh mục.
+              {!visibleGroups.length && <p className="col-span-full text-xs text-muted-foreground">
+                Không có nhóm sản phẩm khớp tìm kiếm. Quản lý Mua hàng có thể thêm nhóm mới.
               </p>}
             </div>
             <p className="text-xs text-muted-foreground">
-              Đã chọn {categories.length}/12 nhóm.
+              Đã chọn {categories.length} nhóm sản phẩm.
               {categories.length>0&&` ${supplierGroupNames(categories,allGroups).join(' · ')}`}
             </p>
             {canManageGroups && <div className="flex flex-wrap gap-2">
@@ -175,7 +205,7 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
         </p>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={()=>onOpenChange(false)}>Hủy</Button>
-          <Button type="submit" disabled={save.isPending||categories.length>12||!state.name.trim()}>
+          <Button type="submit" disabled={save.isPending||!state.name.trim()}>
             {save.isPending?<LoaderCircle className="mr-2 h-4 w-4 animate-spin"/>:<Save className="mr-2 h-4 w-4"/>}
             Lưu hồ sơ
           </Button>
