@@ -146,15 +146,20 @@ function TeamSchedule({roster,week}:{roster:ShiftRoster;week:string}){
 }
 function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<boolean>;loading:boolean;open:boolean;onOpenChange:(o:boolean)=>void;pickDate:string}){
   const [date,setDate]=useState(pickDate);
-  const [kind,setKind]=useState<'swap'|'emergency'>('swap');
+  const [kind,setKind]=useState<'swap'|'rest_exchange'|'emergency'>('swap');
   const [partner,setPartner]=useState('');
   const [partnerDate,setPartnerDate]=useState(pickDate);
   const [reason,setReason]=useState('');
-  useEffect(()=>{if(open){setDate(pickDate);setPartnerDate(pickDate);setKind('swap');setReason('');setPartner('');}},[open,pickDate]);
+  useEffect(()=>{if(open){
+    const mine=roster.entries.find(e=>e.date===pickDate&&e.staff_id===roster.actor_id);
+    setDate(pickDate);setPartnerDate(pickDate);
+    setKind(mine?.shift==='off'?'rest_exchange':'swap');setReason('');setPartner('');
+  }},[open,pickDate,roster]);
   const personName=(id:string|null)=>roster.staff.find(p=>p.id===id)?.name??'Nhân viên';
   const currentChanges=roster.changes;
   const send=async()=>{
-    if(kind==='swap'&&!partner){toast.error('Hãy chọn đồng nghiệp nhận ca.');return;}
+    if(kind!=='emergency'&&!partner){toast.error('Hãy chọn đồng nghiệp nhận ca.');return;}
+    if(kind==='rest_exchange'&&date===partnerDate){toast.error('Hai người phải nghỉ vào hai ngày khác nhau.');return;}
     if(kind==='emergency'&&!reason.trim()){toast.error('Cần ghi lý do nghỉ khẩn cấp.');return;}
     if(await mutate('change_create',{date,kind,partner_id:partner,partner_date:partnerDate,reason}))onOpenChange(false);
   };
@@ -168,10 +173,10 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
       const pending=change.status==='pending_peer'||change.status==='pending_manager';
       return <div key={change.id} className="space-y-2 rounded-xl border bg-card p-3">
         <div className="flex items-start justify-between gap-2">
-          <div><p className="text-sm font-semibold">{change.kind==='emergency'?'Báo nghỉ khẩn cấp':'Yêu cầu đổi ca'}</p><p className="text-xs text-muted-foreground">{personName(change.requester_id)} · {shiftDateLabel(change.work_date)}</p></div>
+          <div><p className="text-sm font-semibold">{change.kind==='emergency'?'Báo nghỉ khẩn cấp':change.kind==='rest_exchange'?'Đổi ngày nghỉ':'Yêu cầu đổi ca'}</p><p className="text-xs text-muted-foreground">{personName(change.requester_id)} · {shiftDateLabel(change.work_date)}</p></div>
           <Badge variant={change.status==='approved'?'default':'secondary'}>{statusLabel[change.status]}</Badge>
         </div>
-        <div className="text-sm"><ShiftTag code={change.original_shift}/>{change.partner_id&&<span className="ml-2 text-muted-foreground">↔ {personName(change.partner_id)} · {change.partner_date&&shiftDateLabel(change.partner_date)} ({change.partner_shift&&SHIFT_LABELS[change.partner_shift]})</span>}</div>
+        <div className="text-sm">{change.kind==='rest_exchange'?<span className="font-medium">Hoán đổi ngày nghỉ</span>:<ShiftTag code={change.original_shift}/> }{change.partner_id&&<span className="ml-2 text-muted-foreground">↔ {personName(change.partner_id)} · {change.partner_date&&shiftDateLabel(change.partner_date)} ({change.partner_shift&&SHIFT_LABELS[change.partner_shift]})</span>}</div>
         {change.reason&&<p className="text-xs text-muted-foreground">Lý do: {change.reason}</p>}
         {change.decision_note&&<p className="text-xs text-muted-foreground">Phản hồi: {change.decision_note}</p>}
         {(isPeer||canApprove||(mine&&pending))&&<div className="flex flex-wrap gap-2 pt-1">
@@ -185,17 +190,19 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
       <DialogContent className="max-h-[85dvh] max-w-[min(95vw,440px)] overflow-y-auto">
         <DialogHeader><DialogTitle>Đề nghị đổi ca</DialogTitle><DialogDescription>Sau khi được duyệt, lịch mới mới có hiệu lực.</DialogDescription></DialogHeader>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant={kind==='swap'?'default':'outline'} onClick={()=>setKind('swap')}>Đổi với đồng nghiệp</Button>
-            <Button variant={kind==='emergency'?'default':'outline'} onClick={()=>setKind('emergency')}>Báo khẩn</Button>
+          <div className="grid grid-cols-3 gap-1.5">
+            <Button size="sm" className="h-12 whitespace-normal px-1 text-xs" variant={kind==='swap'?'default':'outline'} onClick={()=>setKind('swap')}>Đổi ca</Button>
+            <Button size="sm" className="h-12 whitespace-normal px-1 text-xs" variant={kind==='rest_exchange'?'default':'outline'} onClick={()=>setKind('rest_exchange')}>Đổi ngày nghỉ</Button>
+            <Button size="sm" className="h-12 whitespace-normal px-1 text-xs" variant={kind==='emergency'?'default':'outline'} onClick={()=>setKind('emergency')}>Báo khẩn</Button>
           </div>
-          <div><Label>Ngày của bạn</Label><Input className="mt-1 min-h-11" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-          {kind==='swap'&&<>
+          <div><Label>{kind==='rest_exchange'?'Ngày bạn đang nghỉ':'Ngày của bạn'}</Label><Input className="mt-1 min-h-11" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+          {kind!=='emergency'&&<>
             <div><Label>Đồng nghiệp nhận / đổi ca</Label><select className={classSelect+' mt-1'} value={partner} onChange={e=>setPartner(e.target.value)}>
               <option value="">Chọn đồng nghiệp</option>{roster.staff.filter(p=>p.id!==roster.actor_id).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
             </select></div>
-            <div><Label>Ngày ca của đồng nghiệp</Label><Input className="mt-1 min-h-11" type="date" value={partnerDate} onChange={e=>setPartnerDate(e.target.value)}/></div>
+            <div><Label>{kind==='rest_exchange'?'Ngày đồng nghiệp đang nghỉ':'Ngày ca của đồng nghiệp'}</Label><Input className="mt-1 min-h-11" type="date" value={partnerDate} onChange={e=>setPartnerDate(e.target.value)}/></div>
           </>}
+          {kind==='rest_exchange'&&<p className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-5 text-sky-900 dark:bg-sky-950 dark:text-sky-100">Đổi hai ngày nghỉ khác nhau <strong>trong cùng một tuần</strong>. Hai người giữ đủ số ngày nghỉ; đồng nghiệp xác nhận, quản lý duyệt.</p>}
           {kind==='emergency'&&<p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">Báo khẩn không cần người nhận trước. Quản lý phải xử lý thiếu ca; nếu xin nghỉ phép, vẫn làm đơn nghỉ theo quy định.</p>}
           <div><Label>Lý do {kind==='emergency'?'(bắt buộc)':'(tùy chọn)'}</Label><Input className="mt-1 min-h-11" value={reason} maxLength={400} onChange={e=>setReason(e.target.value)} placeholder="Nhập ngắn gọn..." /></div>
           <Button className="h-12 w-full" disabled={loading} onClick={()=>void send()}>Gửi yêu cầu</Button>
