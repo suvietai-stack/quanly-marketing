@@ -1,14 +1,17 @@
 import { supabase } from '@/integrations/supabase/client';
+import { SUPPLIER_GROUPS } from '@/lib/orderTracking/logic';
 
 // Canonical supplier master = ot_suppliers (also consumed by Order Tracking).
 export type SupplierStatus = 'potential' | 'active' | 'paused' | 'archived';
 export type SupplierContactChannel = 'call' | 'zalo' | 'email' | 'meeting' | 'other';
 export type SupplierProductGroup = { code:string; name:string };
+export const supplierServiceGroups = Object.entries(SUPPLIER_GROUPS)
+  .map(([code,name]) => ({code,name}));
 
 
 export type MasterSupplier = {
   id: string; code: string; name: string;
-  category: string[];
+  category: string[]; service_groups: string[];
   contact_name: string | null; phone: string | null; email: string | null;
   website: string | null; address: string | null;
   status: SupplierStatus; active: boolean;
@@ -43,7 +46,7 @@ export type SupplierDetail = {
   products: SupplierProduct[]; contacts: SupplierContact[];
 };
 export type SupplierSavePayload = {
-  name: string; status?: SupplierStatus; category: string[];
+  name: string; status?: SupplierStatus; category: string[]; service_groups: string[];
   contact_name: string; phone: string; email: string; website: string;
   address: string; tax_code: string; notes: string; next_follow_up: string;
   revision?: number;
@@ -59,9 +62,10 @@ async function rpc<T>(name:string,args:Record<string,unknown>):Promise<T>{
   if(error) throw new Error(error.message);
   return data as unknown as T;
 }
-export const supplierListRead = (search?:string,status?:string,category?:string) =>
+export const supplierListRead = (search?:string,status?:string,category?:string,service?:string) =>
   rpc<SupplierList>('supplier_master_list_read',{
-    _search:search||null,_status:status||null,_category:category||null,
+    _search:search||null,_status:status||null,
+    _category:category||null,_service:service||null,
   });
 export const supplierProductGroupAdd = (name:string) =>
   rpc<SupplierProductGroup>('supplier_product_group_add',{_name:name});
@@ -77,6 +81,8 @@ export const supplierContactAdd = (supplierId:string,channel:SupplierContactChan
   });
 export const supplierGroupNames = (codes:string[],groups:SupplierProductGroup[]) =>
   codes.map(code=>groups.find(g=>g.code===code)?.name??code);
+export const supplierServiceNames = (codes:string[]) =>
+  codes.map(code=>SUPPLIER_GROUPS[code]??code);
 export const supplierStatusLabels:Record<SupplierStatus,string> = {
   potential:'Đang tìm hiểu',active:'Đang hợp tác',paused:'Tạm dừng',archived:'Đã lưu trữ',
 };
