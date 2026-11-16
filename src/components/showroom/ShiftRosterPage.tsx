@@ -214,8 +214,10 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
 function Approvals({roster,week,mutate,loading}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<boolean>;loading:boolean}){
   const [day,setDay]=useState(0);
   const [reason,setReason]=useState('');
+  const [lunchConfirmed,setLunchConfirmed]=useState(false);
+  const [lunchPlan,setLunchPlan]=useState<'staggered'|'backup'|'mixed'>('staggered');
   const date=dateAdd(week,day);
-  useEffect(()=>setDay(0),[week,roster.store_id]);
+  useEffect(()=>{setDay(0);setLunchConfirmed(false);setLunchPlan('staggered');},[week,roster.store_id]);
   const pending=roster.changes.filter(c=>c.status==='pending_manager');
   return <div className="space-y-4">
     {pending.length>0&&<div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{pending.length} yêu cầu đổi ca đang chờ duyệt. Mở mục <strong>Đổi ca</strong> để xử lý.</div>}
@@ -243,8 +245,21 @@ function Approvals({roster,week,mutate,loading}:{roster:ShiftRoster;week:string;
       <div className="space-y-2"><Label htmlFor="roster-publish-note">Lý do nếu có ngày phải dùng Ca Full / ngoại lệ</Label>
         <Input id="roster-publish-note" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Ghi rõ phương án xử lý thiếu ca..." maxLength={500}/>
       </div>
-      <Button className="h-12 w-full" disabled={loading} onClick={()=>void mutate('publish',{reason})}><ClipboardCheck className="mr-2 h-4 w-4"/>Chốt & công bố lịch tuần</Button>
-      <p className="text-xs leading-5 text-muted-foreground">Cần đủ lịch 7 ngày của mọi nhân viên và đúng định mức nghỉ. Nếu thiếu Ca 1/Ca 2, quản lý phải xử lý hoặc ghi rõ lý do ngoại lệ Ca Full. Chú ý bố trí người trực giờ nghỉ trưa.</p>
+      <div className="space-y-3 rounded-xl border bg-card p-3">
+        <Label className="text-sm font-semibold">Bố trí trực trưa {roster.policy.noon_break_start}–{roster.policy.noon_break_end}</Label>
+        <select className={classSelect} value={lunchPlan} onChange={e=>{setLunchPlan(e.target.value as typeof lunchPlan);setLunchConfirmed(false);}}>
+          <option value="staggered">Hai người nghỉ trưa luân phiên</option>
+          <option value="backup">Có người hỗ trợ trực thay</option>
+          <option value="mixed">Kết hợp luân phiên và người hỗ trợ</option>
+        </select>
+        <label className="flex items-start gap-3 text-sm leading-5">
+          <Checkbox checked={lunchConfirmed} onCheckedChange={v=>setLunchConfirmed(v===true)} className="mt-0.5"/>
+          <span>Tôi xác nhận đã bố trí người trực giờ trưa cho mọi ngày mở cửa trong tuần.</span>
+        </label>
+        <p className="text-xs leading-5 text-muted-foreground">Nếu có ngày chỉ một người làm Ca Full, phải bố trí người hỗ trợ lúc nghỉ, không chọn nghỉ luân phiên. Hệ thống lưu xác nhận của quản lý.</p>
+      </div>
+      <Button className="h-12 w-full" disabled={loading||!lunchConfirmed} onClick={()=>void mutate('publish',{reason,lunch_confirmed:lunchConfirmed,lunch_plan:lunchPlan})}><ClipboardCheck className="mr-2 h-4 w-4"/>Chốt & công bố lịch tuần</Button>
+      <p className="text-xs leading-5 text-muted-foreground">Cần đủ lịch 7 ngày của mọi nhân viên, đúng định mức nghỉ và người trực giờ trưa. Nếu thiếu Ca 1/Ca 2 phải xử lý hoặc ghi rõ lý do ngoại lệ Ca Full.</p>
     </>}
   </div>;
 }
