@@ -53,7 +53,7 @@ BEGIN
 END $fn$;
 
 CREATE OR REPLACE FUNCTION public.supplier_master_list_read(
-  _search text DEFAULT NULL,_status text DEFAULT NULL,_category text DEFAULT NULL)
+  _search text,_status text,_category text)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $fn$
 DECLARE who uuid:=auth.uid(); key_ text:=left(btrim(coalesce(_search,'')),100); result_ jsonb;
 BEGIN
@@ -171,7 +171,8 @@ REVOKE ALL ON FUNCTION public.supplier_product_group_add(text),
 GRANT EXECUTE ON FUNCTION public.supplier_product_group_add(text),
  public.supplier_master_list_read(text,text,text) TO authenticated;
 -- Compatibility for old clients, no parallel source or duplicated data.
-CREATE OR REPLACE FUNCTION public.supplier_master_list_read(_search text,_status text)
+CREATE OR REPLACE FUNCTION public.supplier_master_list_read(
+ _search text DEFAULT NULL,_status text DEFAULT NULL)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $fn$
  SELECT public.supplier_master_list_read(_search,_status,NULL::text)
 $fn$;
