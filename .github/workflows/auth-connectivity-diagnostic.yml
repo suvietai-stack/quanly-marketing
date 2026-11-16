@@ -42,4 +42,20 @@ jobs:
             echo 'Google DNS:'
             dig +time=5 +tries=1 @8.8.8.8 "${name}" A +short || true
           done
+          echo '=== PUBLISHED LOGIN JS SUPABASE HOST CHECK ==='
+          curl -fsSL --compressed --max-time 40 https://base.suviet.vn/login -o /tmp/live-login.html
+          if grep -aFq 'vipbucgcgkvuvzgqpftp.supabase.co' /tmp/live-login.html; then
+            echo 'FOUND: dead Supabase hostname embedded in published HTML'
+          fi
+          grep -aoE '/assets/[^" ]+\\.js' /tmp/live-login.html | sort -u > /tmp/login-js-paths || true
+          echo "JavaScript asset count: $(wc -l </tmp/login-js-paths)"
+          hit=0
+          while IFS= read -r js; do
+            curl -fsSL --compressed --max-time 15 "https://base.suviet.vn${js}" -o /tmp/live-asset.js || continue
+            if grep -aFq 'vipbucgcgkvuvzgqpftp.supabase.co' /tmp/live-asset.js; then
+              echo "FOUND: published JavaScript points to dead Supabase hostname in ${js}"
+              hit=1
+            fi
+          done </tmp/login-js-paths
+          echo "live_compiled_hostname_found=${hit}"
           echo 'Diagnostic only: no credentials, no authentication attempt, no database writes, no deployment.'
