@@ -1,7 +1,7 @@
 import type { OrgConfig, Title } from "./types";
 import type { OrgCommand } from "./commands";
 import type { CatalogRole } from "./roleCatalog";
-import { areaUnitIds } from "@/lib/k3Hub/area";
+import { areaUnitIds, DISTRIBUTION_UNIT } from "@/lib/k3Hub/area";
 import { B2B_CENTER, BTC_CENTER, RETAIL_SYSTEM } from "@/lib/orgCenters";
 
 export const B2B_POSITIONS = [
@@ -38,6 +38,40 @@ export const B2B_POSITIONS = [
     capacity: 0,
   },
 ] as const;
+export const DISTRIBUTION_POSITION_ROLES = [
+  {
+    name: "Giám đốc Kinh doanh Phân Phối",
+    roleId: "role-v2-distribution-director",
+    code: "distribution-director",
+    kind: "manager",
+    level: 3,
+    capacity: 0,
+  },
+  {
+    name: "Trưởng phòng Phân phối",
+    roleId: "role-v2-distribution-head",
+    code: "distribution-head",
+    kind: "manager",
+    level: 2,
+    capacity: 0,
+  },
+  {
+    name: "Trưởng nhóm Phân phối",
+    roleId: "role-v2-distribution-team",
+    code: "distribution-team",
+    kind: "manager",
+    level: 1,
+    capacity: 0,
+  },
+  {
+    name: "Nhân viên phân phối",
+    roleId: "role-v2-distribution-staff",
+    code: "distribution-staff",
+    kind: "staff",
+    level: 0,
+    capacity: 0,
+  },
+] as const;
 const BTC_DIRECTOR = {
   name: "Giám đốc Trung tâm Kinh doanh BTC",
   code: "btc-director",
@@ -69,6 +103,13 @@ export function centerPositionDefinitions(config: OrgConfig, unitId: string) {
   const unit = config.units.find((u) => u.id === unitId && u.active);
   if (!unit) return [];
   if (unitId === BTC_CENTER) return [BTC_DIRECTOR];
+  if (areaUnitIds(config.units, DISTRIBUTION_UNIT).has(unitId))
+    return DISTRIBUTION_POSITION_ROLES.filter(
+      (p) =>
+        (unitId === DISTRIBUTION_UNIT && p.level === 3) ||
+        (unit.kind === "department" && [2, 0].includes(p.level)) ||
+        (unit.kind === "team" && [1, 0].includes(p.level)),
+    );
   if (areaUnitIds(config.units, B2B_CENTER).has(unitId))
     return B2B_POSITIONS.filter(
       (p) =>
@@ -98,7 +139,7 @@ export function centerPositionSetup(
   mapping: { unit_id: string | null; title_id: string; roles: string[] }[],
 ) {
   const definitions = centerPositionDefinitions(config, unitId);
-  if (!definitions.length) throw new Error("Đơn vị không thuộc vị trí B2B/BTC hợp lệ.");
+  if (!definitions.length) throw new Error("Đơn vị không thuộc vị trí trung tâm hợp lệ.");
   const titles: Title[] = [...config.titles];
   const commands: OrgCommand[] = [];
   for (const p of definitions) {
@@ -116,20 +157,49 @@ export function centerPositionSetup(
     );
     const old = matches[0];
     if (
+      mapping.some(
+        (b) => b.unit_id === unitId && b.roles.includes(p.roleId) && b.title_id !== old?.id,
+      )
+    )
+      throw new Error(
+        `Role ${p.name} đã gắn vị trí khác trong đơn vị; cần kiểm toán để tránh trùng ô.`,
+      );
+    if (
       matches.length > 1 ||
       (old &&
         (!old.active ||
           old.name !== p.name ||
           old.kind !== p.kind ||
           old.level !== p.level ||
-          old.capacity !== p.capacity ||
+          (old.capacity !== undefined && old.capacity < 0) ||
           old.source === "biz_positions"))
     )
       throw new Error(`Vị trí ${p.name} có cấu hình khác; cần kiểm toán.`);
     if (old) {
-      const binding = mapping.find((b) => b.unit_id === unitId && b.title_id === old.id);
-      if (binding && binding.roles.length === 1 && binding.roles[0] === p.roleId) continue;
-      throw new Error(`Vị trí ${p.name} đã tồn tại; không tự đổi mapping hoặc lịch sử bổ nhiệm.`);
+      const bindings = mapping.filter((b) => b.unit_id === unitId && b.title_id === old.id);
+      if (
+        bindings.length === 1 &&
+        bindings[0].roles.length === 1 &&
+        bindings[0].roles[0] === p.roleId
+      )
+        continue;
+      if (
+        bindings.length ||
+        config.memberships.some((m) => m.unit_id === unitId && m.title_id === old.id) ||
+        config.position_slots?.some((s) => s.unit_id === unitId && s.title_id === old.id)
+      ) {
+        throw new Error(`Vị trí ${p.name} đã tồn tại; không tự đổi mapping hoặc lịch sử bổ nhiệm.`);
+      }
+      commands.push({
+        action: "position_role",
+        data: {
+          unit_id: unitId,
+          title_id: old.id,
+          role_id: p.roleId,
+          reason: "Gắn Role cho vị trí trống đã kiểm chứng",
+        },
+      });
+      continue;
     }
     const id = crypto.randomUUID();
     titles.push({

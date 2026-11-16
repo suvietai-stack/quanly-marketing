@@ -61,7 +61,7 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
           ? <ul className="space-y-1">{holders.map(p => (
             <li key={p.id}><Button variant="link" className="min-h-9 h-auto max-w-full justify-start p-0 text-left text-sm whitespace-normal break-words" onClick={() => onOpen(p)}>{p.name}</Button></li>
           ))}</ul>
-          : <p className="text-xs italic text-muted-foreground">{slot.manager ? 'Chưa bổ nhiệm' : 'Chưa có nhân sự'}</p>}
+          : <p className="text-xs italic text-muted-foreground">Chưa bổ nhiệm</p>}
       </div>
       {actions.canManage && (actions.onAssign || actions.onUnassign || actions.onSlotHistory) && (
         <DropdownMenu>
@@ -118,7 +118,13 @@ function UnitCard({ node, query, actions, onOpen, open, onToggle, horizontal }: 
       </div>
       {open && (
         <div className="space-y-0.5 px-1.5 py-2">
-          {(node.slots ?? []).map(s => <SlotRow key={s.id} unitId={node.id} unitName={node.name} slot={s} query={query} actions={actions} onOpen={onOpen} />)}
+          {[true, false].map(manager => {
+            const slots = (node.slots ?? []).filter(s => s.manager === manager);
+            return slots.length ? <div key={String(manager)} className="min-w-0 border-b last:border-b-0 pb-2">
+              <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">{manager ? 'Vị trí quản lý' : 'Vị trí nhân viên'}</p>
+              {slots.map(s => <SlotRow key={s.id} unitId={node.id} unitName={node.name} slot={s} query={query} actions={actions} onOpen={onOpen} />)}
+            </div> : null;
+          })}
           {people.map(p => <PersonButton key={p.id} person={p} onOpen={onOpen} />)}
           {!people.length && !(node.slots ?? []).length && <p className="px-2 py-1 text-xs text-muted-foreground">Chưa có nhân sự.</p>}
         </div>

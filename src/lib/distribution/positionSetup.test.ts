@@ -119,7 +119,17 @@ describe("Distribution empty-position setup", () => {
     const once = distributionPositionSetup(setup(), DISTRIBUTION_UNIT, roles);
     const twice = distributionPositionSetup(once.next, DISTRIBUTION_UNIT, roles);
     expect(twice.next.titles).toEqual(once.next.titles);
-    expect(twice.commands).toEqual(once.commands);
+    expect(twice.commands.map((c) => c.data.title_id)).toEqual(
+      once.commands.map((c) => c.data.title_id),
+    );
+    const mapping = once.commands.map((c) => ({
+      unit_id: DISTRIBUTION_UNIT,
+      title_id: String(c.data.title_id),
+      roles: [String(c.data.role_id)],
+    }));
+    expect(
+      distributionPositionSetup(once.next, DISTRIBUTION_UNIT, roles, mapping).commands,
+    ).toEqual([]);
     expect(missingDistributionPositions(twice.next, DISTRIBUTION_UNIT)).toBe(false);
   });
   it("refuses even ended history on an existing position", () => {

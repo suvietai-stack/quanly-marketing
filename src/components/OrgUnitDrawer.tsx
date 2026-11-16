@@ -4,7 +4,6 @@ import { Link } from '@tanstack/react-router';
 import { useCurrentUser } from '@/lib/auth';
 import { k3HubAccess } from '@/lib/k3Hub/api';
 import { missingCenterPositions } from '@/lib/basePermissions/centerPositions';
-import { missingDistributionPositions } from '@/lib/distribution/positionSetup';
 import { TitleRoleDefaults } from '@/components/TitleRoleDefaults';
 import { ArrowRightLeft, History, Plus, UserPlus, Users, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +26,6 @@ interface DrawerProps {
   onAppoint: (titleId?: string, mode?: 'primary' | 'concurrent' | 'transfer') => void;
   onEnd: (id:string)=>void;
   onSetupCenterRoles?: (unitId: string) => void;
-  onSetupDistributionRoles?: (unitId: string) => void;
   onEdit: (fn: (c: OrgConfig) => OrgConfig) => void;
   onClose: () => void;
 }
@@ -46,7 +44,7 @@ function unitRights(config: OrgConfig, unitId: string, actor: OrgActor) {
 }
 
 /** Drawer quản lý một đơn vị: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị. */
-export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onSetupCenterRoles, onSetupDistributionRoles, onClose }: DrawerProps) {
+export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onSetupCenterRoles, onClose }: DrawerProps) {
   const { user } = useCurrentUser();
   const unit = config.units.find(u => u.id === unitId);
   const k3Access = useQuery({
@@ -156,16 +154,9 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
           </TabsContent>
 
           <TabsContent value="titles" className="space-y-3 pt-3">
-            {actor.super && missingDistributionPositions(config, unitId) && onSetupDistributionRoles && (
-              <div className="border-b pb-3 space-y-2">
-                <p className="text-sm font-semibold">Vị trí Phân Phối</p>
-                <p className="text-xs text-muted-foreground">Chỉ chuẩn bị vị trí trống với Role Phân Phối riêng. Bổ nhiệm hiện hữu giữ nguyên, chờ chuyển nguồn có kiểm toán.</p>
-                <Button size="sm" className="h-auto whitespace-normal text-left" onClick={() => onSetupDistributionRoles(unitId)}>Xem trước vị trí Phân Phối</Button>
-              </div>
-            )}
             {actor.super && missingCenterPositions(config, unitId) && onSetupCenterRoles && (
               <div className="border-b pb-3 space-y-2">
-                <p className="text-sm font-semibold">Vị trí B2B / BTC</p>
+                <p className="text-sm font-semibold">Ô vị trí theo Role</p>
                 <p className="text-xs text-muted-foreground">Chỉ thêm vị trí trống đúng cấp. Giữ Role và bổ nhiệm hiện hữu; không tự chuyển người từ Role Sales.</p>
                 <Button size="sm" className="h-auto whitespace-normal text-left" onClick={() => onSetupCenterRoles(unitId)}>Xem trước vị trí &amp; Role trung tâm</Button>
               </div>
