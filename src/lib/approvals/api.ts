@@ -33,14 +33,31 @@ export interface ApprovalCenterData {
   errors?: { source: string; message: string }[];
 }
 
-export const approvalCenterQuery = (uid: string) => queryOptions({
-  queryKey: ['approval_center', uid],
+export const approvalCenterQuery = (uid: string, executiveFallback = false) => queryOptions({
+  queryKey: ['approval_center', uid, executiveFallback],
   staleTime: 0,
   refetchInterval: 30000,
-  queryFn: async () => {
-    const { data, error } = await supabase.rpc('approval_center_read');
-    if (error) throw error;
-    return data as unknown as ApprovalCenterData;
+  queryFn: async ({ signal }) => {
+    // Full cross-module aggregation is authoritative. When it is too slow,
+    // executives can still act on their assigned HR/finance cases through a
+    // deliberately partial server-side fallback with the same decision guards.
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    signal.addEventListener('abort', onAbort, { once: true });
+    const timeout = executiveFallback ? setTimeout(() => controller.abort(), 8000) : null;
+    try {
+      const full = await supabase.rpc('approval_center_read').abortSignal(controller.signal)
+        .catch(error => ({ data: null, error }));
+      if (!full.error) return full.data as unknown as ApprovalCenterData;
+      if (!executiveFallback || signal.aborted) throw full.error;
+      const backup = await supabase.rpc('approval_center_executive_fallback' as never)
+        .abortSignal(signal);
+      if (backup.error) throw full.error;
+      return backup.data as unknown as ApprovalCenterData;
+    } finally {
+      if (timeout !== null) clearTimeout(timeout);
+      signal.removeEventListener('abort', onAbort);
+    }
   },
 });
 
