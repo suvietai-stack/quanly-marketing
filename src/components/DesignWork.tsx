@@ -42,6 +42,9 @@ import {
 import { OrderDetailDialog } from "@/components/OrderDetail";
 import { OrderReport } from "@/components/OrderReport";
 import { DesignCatalogSettings } from "./DesignCatalogSettings";
+import { DesignZaloSettings } from './DesignZaloSettings';
+import {supabase} from '@/integrations/supabase/client';
+import {useQuery} from '@tanstack/react-query';
 import { useDesignCatalogs, workLabel } from "@/lib/orders/catalogs";
 import { DesignWorkForm } from "@/components/DesignWorkForm";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -104,6 +107,9 @@ export function DesignWork({
   const [limit, setLimit] = useState(PAGE_SIZE);
   const catalogs = useDesignCatalogs();
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [settingsTab,setSettingsTab]=useState<'catalogs'|'zalo'>('catalogs');
+  const designTeam=useQuery({queryKey:['design-team-access',user?.id],enabled:!!user?.id,
+    queryFn:async()=>{const {data,error}=await (supabase as any).rpc('design_team_access');if(error)throw error;return !!data;},staleTime:60000,retry:1});
   const [category, setCategory] = useState("all");
   const [product, setProduct] = useState("all");
   const actor = user ?? {};
@@ -129,7 +135,8 @@ export function DesignWork({
       setQueue("all");
       setSearch("");
     });
-  if (!designAny(can, "view") && !designAny(can, "report_view"))
+  if (!flow && !designTeam.data) return openId ? <div className="p-4"><OrderDetailDialog orderId={openId} open onOpenChange={v=>{if(!v)onCloseDeepLink?.();}}/></div> : <p className="p-4 text-sm text-muted-foreground">Trang Tất cả thiết kế dành riêng cho bộ phận Thiết kế.</p>;
+  if (!designAny(can, "view") && !designAny(can, "report_view") && !designAny(can,"create"))
     return (
       <p className="text-muted-foreground">
         Bạn không có quyền truy cập Thiết Kế.
@@ -138,7 +145,8 @@ export function DesignWork({
   if (
     flow &&
     !designCan(can, flow, "view") &&
-    !designCan(can, flow, "report_view")
+    !designCan(can, flow, "report_view") &&
+    !designCan(can, flow, "create")
   )
     return (
       <p className="text-muted-foreground">
@@ -429,7 +437,7 @@ export function DesignWork({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Cài đặt danh mục Thiết kế"
+              aria-label="Cài đặt Thiết kế"
               onClick={() => setCatalogOpen(true)}
             >
               <Settings className="size-4" />
@@ -826,9 +834,10 @@ export function DesignWork({
       <Dialog open={catalogOpen} onOpenChange={setCatalogOpen}>
         <DialogContent className="design-mobile-dialog max-h-[85dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Cài đặt danh mục Thiết Kế</DialogTitle>
+            <DialogTitle>Cài đặt Thiết kế</DialogTitle>
           </DialogHeader>
-          <DesignCatalogSettings />
+          <div className="flex gap-2 border-b pb-3"><Button size="sm" variant={settingsTab==='catalogs'?'secondary':'outline'} onClick={()=>setSettingsTab('catalogs')}>Danh mục</Button><Button size="sm" variant={settingsTab==='zalo'?'secondary':'outline'} onClick={()=>setSettingsTab('zalo')}>Thông báo Zalo Group</Button></div>
+          {settingsTab==='catalogs'?<DesignCatalogSettings/>:<DesignZaloSettings/>}
         </DialogContent>
       </Dialog>
       <Sheet open={filters} onOpenChange={setFilters}>
