@@ -17,6 +17,9 @@ permissions:
 jobs:
   organization-ui:
     runs-on: ubuntu-latest
+    env:
+      # Vite/React production bundle exceeds Node's default ~2GiB heap on GitHub runners.
+      NODE_OPTIONS: --max-old-space-size=4096
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
