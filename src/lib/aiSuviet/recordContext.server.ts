@@ -17,7 +17,7 @@ export async function readRecordContext(db: SupabaseClient, context: RecordConte
     if(error||!data)throw new Error('Không đọc được hồ sơ này trong quyền hiện tại của bạn.');
     const o=data.data as DesignOrder;
     title=o.title;status=o.status;href=`/orders?open=${encodeURIComponent(context.id)}`;
-    waiting=o.status==='Chờ phân công' ? 'Người có quyền phân công hoặc nhận việc' : o.status==='Chờ duyệt' ? o.reviewer || o.requester || 'Chưa xác định người duyệt' : o.assignee || 'Chưa phân công';
+    waiting=o.status==='Cần giao người' ? 'Người có quyền phân công hoặc nhận việc' : o.status==='Chờ duyệt' ? o.reviewer || o.requester || 'Chưa xác định người duyệt' : o.assignee || 'Chưa phân công';
     if(o.status==='Đã bàn giao')waiting=o.requester || 'Người yêu cầu';
     next=designNextStep(o)||'Mở hồ sơ để xem thao tác được cấp quyền.';
     if(['Hoàn thành','Đã hủy'].includes(o.status))waiting='Không còn bước xử lý đang chờ';
