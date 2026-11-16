@@ -1,0 +1,35 @@
+name: Executive access validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/navigation.ts'
+      - 'src/lib/navigation.test.ts'
+      - 'src/components/AppShell.tsx'
+      - 'src/lib/approvals/**'
+      - 'src/components/approvals/**'
+      - 'drizzle/migrations/0392_executive_companywide_read_and_approval.sql'
+      - 'drizzle/migrations/0393_executive_approval_center_fallback.sql'
+      - 'drizzle/migrations/0394_executive_biz_read_scope.sql'
+      - 'drizzle/migrations/0395_executive_detailed_business_reports.sql'
+      - '.github/workflows/executive-access-validation.yml'
+  pull_request:
+    paths:
+      - 'src/lib/navigation.ts'
+      - 'src/lib/navigation.test.ts'
+      - 'src/components/AppShell.tsx'
+      - 'src/lib/approvals/**'
+      - 'src/components/approvals/**'
+      - 'drizzle/migrations/039*_executive_*.sql'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/navigation.test.ts src/lib/approvals/api.test.ts
+      - run: bunx tsc --noEmit
