@@ -23,6 +23,7 @@ import {Tabs,TabsList,TabsTrigger} from '@/components/ui/tabs';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dialog';
 import {supabase} from '@/integrations/supabase/client';
 import {BizQuarterSummary} from './BizQuarterSummary';
+import {scopeDepartmentRows} from '@/lib/distribution/scope';
 import {BizPlans,LateStats} from './BizPlans';
 import {MyDocCard,MyWorkSection,StatusBadges,dateText,useOpenDocument} from './BizMyWork';
 export function BizDocuments({kind,scopeDepartmentIds}:{kind:DocKind;scopeDepartmentIds?:string[]}){return kind==='plan'?<BizPlans scopeDepartmentIds={scopeDepartmentIds}/>:<BizDocumentsClassic kind={kind} scopeDepartmentIds={scopeDepartmentIds}/>;}
@@ -34,7 +35,7 @@ function krProgress(row:DocRow){const items=row.document?.versions.find(v=>v.id=
 
 function BizDocumentsClassic({kind,scopeDepartmentIds}:{kind:DocKind;scopeDepartmentIds?:string[]}){
  const uid=useAuth(s=>s.currentUserId)??'';const {can}=useCurrentUser();const [periodKind,setPeriodKind]=useState<PeriodKind>('month');const [year,setYear]=useState(new Date().getFullYear());const [period,setPeriod]=useState(new Date().getMonth()+1);const [quick,setQuick]=useState<RQuick>('all');const [dept,setDept]=useState('all');const [employee,setEmployee]=useState('all');const [time,setTime]=useState('all');const [status,setStatus]=useState('all');const [search,setSearch]=useState('');const [selected,setSelected]=useState<string|null>(null);
- const query=useQuery({...documentsQuery(uid,kind,periodKind,year,period),enabled:!!uid});const rows=(query.data??[]).filter(r=>!scopeDepartmentIds || scopeDepartmentIds.includes(r.department_id));
+ const query=useQuery({...documentsQuery(uid,kind,periodKind,year,period),enabled:!!uid});const rows=scopeDepartmentRows(query.data??[],scopeDepartmentIds);
  const myRow=rows.find(r=>r.user_id===uid);const teamRows=rows.filter(r=>r.user_id!==uid);
  const canManage=can('biz.view_all')||can('biz.view_dept')||can('biz.report_approve');
  const showTeam=canManage&&teamRows.length>0;
