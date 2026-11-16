@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'src/components/k3Hub/**'
+      - 'src/lib/k3Hub/**'
+      - 'src/routes/k3-center.tsx'
+      - 'src/lib/navigation.ts'
       - '.github/workflows/k3-production-smoke.yml'
 jobs:
   production:
