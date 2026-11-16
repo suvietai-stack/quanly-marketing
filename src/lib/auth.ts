@@ -596,6 +596,8 @@ export const PERMISSIONS: PermissionDef[] = [
   P("k3hub.config", "Cấu hình phạm vi áp dụng 3K", "Trung tâm 3K", "Cấu hình"),
   P("k3hub.biz", "Mở 3K khu vực Kinh doanh", "Trung tâm 3K", "Khu vực"),
   P("k3hub.ops", "Mở 3K khu vực Vận hành", "Trung tâm 3K", "Khu vực"),
+  P("k3hub.ops_accounting", "Mở 3K Kế toán", "Trung tâm 3K", "Khu vực"),
+  P("k3hub.ops_hr", "Mở 3K Hành chính và Nhân sự", "Trung tâm 3K", "Khu vực"),
 
   // ===== Cơ cấu tổ chức (quản trị tại Hành chính & Nhân sự → Cơ cấu tổ chức) =====
   P("org.view", "Xem sơ đồ cơ cấu tổ chức", "Cơ cấu tổ chức", "Cơ cấu"),
