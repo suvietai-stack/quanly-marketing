@@ -60,6 +60,8 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
   const [childKind,setChildKind]=useState<'system'|'department'|'team'>('department');
   const rights = useMemo(() => unitRights(config, unitId, actor), [config, unitId, actor]);
   const titles = useMemo(() => unitTitles(config, unitId), [config, unitId]);
+  const standardTitles = titles.filter(t => t.source !== 'biz_positions');
+  const oldBizTitles = titles.filter(t => t.source === 'biz_positions');
   const memberships = useMemo(() => config.memberships.filter(m => membershipEffective(m) && m.unit_id === unitId), [config, unitId]);
   const history = useMemo(
     () => config.memberships.filter(m => m.unit_id === unitId).sort((a, b) => Date.parse(b.starts_at ?? '') - Date.parse(a.starts_at ?? '')),
@@ -67,7 +69,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
   );
   const nameOf = (id: string) => staff.find(s => s.id === id)?.name ?? 'Nhân sự';
   const titleOf = (id?: string) => config.titles.find(t => t.id === id);
-  const managerSlots = titles.filter(t => slotCapacity(t) === 1);
+  const managerSlots = standardTitles.filter(t => slotCapacity(t) === 1);
   const concurrentCount = memberships.filter(m => membershipKind(m) === 'concurrent').length;
   const peopleCount = new Set(memberships.map(m => m.user_id)).size;
 
@@ -162,7 +164,7 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
               </div>
             )}
             {rights.structure && <div className="space-y-2 border-b pb-3"><Label>Chức vụ mới tại {unit.name}</Label><Input aria-label="Tên chức vụ mới" value={titleName} onChange={e=>setTitleName(e.target.value)} /><Select value={titleKindNew} onValueChange={v=>setTitleKindNew(v as 'staff'|'manager')}><SelectTrigger aria-label="Loại chức vụ mới"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="staff">Nhân viên</SelectItem><SelectItem value="manager">Quản lý</SelectItem></SelectContent></Select><Button disabled={!titleName.trim()} onClick={()=>{onEdit(c=>({...c,titles:[...c.titles,{id:crypto.randomUUID(),unit_id:unitId,name:titleName.trim(),kind:titleKindNew,capacity:titleKindNew==='manager'?1:0,level:titleKindNew==='manager'?(unit.kind==='team'?1:2):0,active:true}]}));setTitleName('');}}><Plus className="mr-2 h-4 w-4" />Thêm chức vụ</Button></div>}
-            {titles.map(t => (
+            {standardTitles.map(t => (
               <div key={t.id} className="rounded-xl border p-3">
                 <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium">
                   {rights.structure ? <Input aria-label={`Tên chức vụ ${t.name}`} value={t.name} onChange={e=>onEdit(c=>({...c,titles:c.titles.map(x=>x.id===t.id?{...x,name:e.target.value}:x)}))} /> : t.name}
@@ -176,7 +178,14 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
                 <p className="mt-1 text-xs text-muted-foreground">Đang giữ: {titleHoldersCount(config, t.id)} người</p>{(canAssign || canAppoint) && <Button size="sm" variant="outline" className="mt-2" onClick={()=>onAppoint(t.id)}>Bổ nhiệm / Thêm nhân sự</Button>}
               </div>
             ))}
-            {!titles.length && <p className="py-4 text-sm text-muted-foreground">Chưa có chức vụ.</p>}
+            {oldBizTitles.length > 0 && (
+              <details className="rounded-lg border border-dashed p-3">
+                <summary className="cursor-pointer text-sm font-medium">Vị trí Kinh doanh cũ cần chuyển đổi ({oldBizTitles.length})</summary>
+                <p className="mt-2 text-xs text-muted-foreground">Chức danh cũ dùng chung nhiều đơn vị. Không sửa tên, ngừng hoặc bổ nhiệm mới ở đây; chuyển sang đúng Role trung tâm qua quy trình có kiểm toán.</p>
+                {oldBizTitles.map(t => <p key={t.id} className="mt-1 text-sm">{t.name} · {titleHoldersCount(config, t.id)} người giữ (toàn hệ thống)</p>)}
+              </details>
+            )}
+            {!standardTitles.length && <p className="py-4 text-sm text-muted-foreground">Đơn vị chưa có ô vị trí chuẩn.</p>}
           </TabsContent>
 
           <TabsContent value="history" className="space-y-2 pt-3">
