@@ -1,0 +1,34 @@
+name: Read-only Base authentication connectivity diagnostic
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/auth-connectivity-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check public web and Supabase health endpoints without credentials
+        shell: bash
+        run: |
+          set -u
+          urls=(
+            'https://base.suviet.vn/login'
+            'https://quanly-suviet.lovable.app/login'
+            'https://vipbucgcgkvuvzgqpftp.supabase.co/auth/v1/health'
+            'https://vipbucgcgkvuvzgqpftp.supabase.co/rest/v1/'
+          )
+          for url in "${urls[@]}"; do
+            echo "=== PROBE: ${url} ==="
+            outcome=$(curl --compressed --silent --show-error --location \
+              --connect-timeout 10 --max-time 35 --retry 1 \
+              --output /dev/null --write-out \
+              'http=%{http_code} ip=%{remote_ip} tls=%{ssl_verify_result} seconds=%{time_total} redirect=%{url_effective}' \
+              "${url}" 2>&1)
+            ec=$?
+            echo "curl_exit=${ec} ${outcome}"
+            echo
+          done
+          echo 'Diagnostic only: no credentials, no authentication attempt, no database writes, no deployment.'
