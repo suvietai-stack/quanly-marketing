@@ -598,15 +598,6 @@ export const PERMISSIONS: PermissionDef[] = [
   P("showroom.k3.view_team", "Theo dõi 3K nhân sự cửa hàng", "Showroom", "3K"),
   P("showroom.k3.view_all", "Xem 3K toàn Khối Showroom", "Showroom", "3K"),
   P("showroom.k3.comment", "Nhận xét 3K nhân viên Showroom", "Showroom", "3K"),
-  P("showroom.supplier.view", "Xem Nhà cung cấp Showroom", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.create", "Thêm nhà cung cấp Showroom", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.edit_own", "Sửa nhà cung cấp mình nhập", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.product_edit", "Nhập và sửa sản phẩm cung ứng", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.contact_log", "Ghi lịch sử liên hệ nhà cung cấp", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.manage", "Quản lý nhà cung cấp cửa hàng", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.view_cost", "Xem và sửa giá nhập sản phẩm", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.view_all", "Xem nhà cung cấp toàn Khối Showroom", "Showroom", "Nhà cung cấp"),
-  P("showroom.supplier.manage_all", "Quản lý nhà cung cấp toàn Khối Showroom", "Showroom", "Nhà cung cấp"),
 
   // ===== Trung tâm 3K chung — hiển thị menu theo Role vị trí, phạm vi do server kiểm soát =====
   P("k3hub.use", "3K theo khu vực tổ chức", "Trung tâm 3K", "Sử dụng"),
