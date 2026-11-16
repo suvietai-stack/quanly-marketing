@@ -17,6 +17,7 @@ before(async()=>{
  await db.exec(sql('drizzle/migrations/0063_website_forms_phase1.sql'));
  await db.exec('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon,authenticated');
  await db.exec(sql('supabase/migrations/20261115090000_web_chat.sql'));
+ await db.exec(sql('supabase/migrations/20261116100000_web_chat_presence.sql'));
  await db.exec(sql('supabase/migrations/20261115140000_web_chat_creator_at_insert.sql'));
  await db.exec(`CREATE FUNCTION signal_creator_guard_test() RETURNS trigger LANGUAGE plpgsql AS $guard$ BEGIN IF NEW.created_by IS DISTINCT FROM OLD.created_by THEN RAISE EXCEPTION 'Creator is immutable'; END IF; RETURN NEW; END $guard$; CREATE TRIGGER creator_immutable BEFORE UPDATE ON opportunity_signals FOR EACH ROW EXECUTE FUNCTION signal_creator_guard_test();`);
  for(const id of [site,other]){
@@ -48,6 +49,28 @@ test('takeover fences a running AI response and only stops that customer',async(
  await assert.rejects(()=>call('wc_control',[a.id,randomUUID(),'send',randomUUID(),'Wrong employee']));
  await call('wc_control',[a.id,actor,'resume',randomUUID(),'']);const r=await db.query('select mode from wc_conversations where id=$1',[a.id]);assert.equal(r.rows[0].mode,'ai');
 });
+test('presence distinguishes chat, browsing and offline without phantom conversations or cross-tab false offline',async()=>{
+ const hash=randomUUID(),tabA=randomUUID(),tabB=randomUUID();
+ assert.equal(await call('wc_presence_ping',[site,hash,tabA,true,false]),false);
+ assert.equal((await db.query('select count(*)::int n from wc_conversations where site_id=$1 and visitor_hash=$2',[site,hash])).rows[0].n,0);
+ const c=await receive(site,hash);
+ const get=async()=>(await db.query('select presence,last_seen_at from wc_presence_summary(ARRAY[$1::uuid])',[c.id])).rows[0];
+ assert.equal((await get()).presence,'offline');
+ assert.equal(await call('wc_presence_ping',[site,hash,tabA,true,false]),true);
+ assert.equal((await get()).presence,'chat');
+ await call('wc_presence_ping',[site,hash,tabA,false,false]);
+ assert.equal((await get()).presence,'website');
+ await call('wc_presence_ping',[site,hash,tabB,true,false]);
+ assert.equal((await get()).presence,'chat');
+ await call('wc_presence_ping',[site,hash,tabA,false,true]);
+ assert.equal((await get()).presence,'chat');
+ await call('wc_presence_ping',[site,hash,tabB,true,true]);
+ assert.equal((await get()).presence,'offline');
+ assert.ok((await get()).last_seen_at);
+ await call('wc_presence_ping',[site,hash,tabB,true,false]);
+ await db.query("update wc_presence_sessions set last_seen_at=now()-interval '46 seconds' where conversation_id=$1",[c.id]);
+ assert.equal((await get()).presence,'offline');
+});
 test('lead uses existing Website Forms transaction, is unique and attributed to Đốm AI',async()=>{
  const c=await receive();const cl=await call('wc_claim',[c.id]);
  const draft={customer_name:'Khách website',phone:'0912345678',address:null,products:[],need_groups:[],need_group:null,need_detail:'100 bộ trà',marketing_note:'Đốm AI',source:'Chat Web',detected_on:'2026-11-15'};
@@ -68,6 +91,8 @@ test('anonymous/authenticated roles cannot read private chat or call service RPC
  for(const role of ['anon','authenticated']){
   await db.exec('SET ROLE '+role);
   await assert.rejects(()=>db.query('select * from public.wc_messages'));
+  await assert.rejects(()=>db.query('select * from public.wc_presence_sessions'));
+  await assert.rejects(()=>call('wc_presence_ping',[site,randomUUID(),randomUUID(),true,false]));
   await assert.rejects(()=>call('wc_claim',[randomUUID()]));
   await db.exec('RESET ROLE');
  }
