@@ -52,6 +52,7 @@ import { Route as DesignMarketingRouteImport } from './routes/design.marketing'
 import { Route as DesignMockupsRouteImport } from './routes/design.mockups'
 import { Route as DesignPhotoRouteImport } from './routes/design.photo'
 import { Route as DesignReportsRouteImport } from './routes/design.reports'
+import { Route as Distribution3kRouteImport } from './routes/distribution.3k'
 import { Route as FinanceAdvanceRouteImport } from './routes/finance.advance'
 import { Route as FinancePaymentRouteImport } from './routes/finance.payment'
 import { Route as FinanceSalaryRouteImport } from './routes/finance.salary'
@@ -314,6 +315,11 @@ const DesignPhotoRoute = DesignPhotoRouteImport.update({
 const DesignReportsRoute = DesignReportsRouteImport.update({
   id: '/design/reports',
   path: '/design/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Distribution3kRoute = Distribution3kRouteImport.update({
+  id: '/distribution/3k',
+  path: '/distribution/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceAdvanceRoute = FinanceAdvanceRouteImport.update({
@@ -605,6 +611,7 @@ export interface FileRoutesByFullPath {
   '/design/mockups': typeof DesignMockupsRoute
   '/design/photo': typeof DesignPhotoRoute
   '/design/reports': typeof DesignReportsRoute
+  '/distribution/3k': typeof Distribution3kRoute
   '/finance/advance': typeof FinanceAdvanceRoute
   '/finance/payment': typeof FinancePaymentRoute
   '/finance/salary': typeof FinanceSalaryRoute
@@ -698,6 +705,7 @@ export interface FileRoutesByTo {
   '/design/mockups': typeof DesignMockupsRoute
   '/design/photo': typeof DesignPhotoRoute
   '/design/reports': typeof DesignReportsRoute
+  '/distribution/3k': typeof Distribution3kRoute
   '/finance/advance': typeof FinanceAdvanceRoute
   '/finance/payment': typeof FinancePaymentRoute
   '/finance/salary': typeof FinanceSalaryRoute
@@ -792,6 +800,7 @@ export interface FileRoutesById {
   '/design/mockups': typeof DesignMockupsRoute
   '/design/photo': typeof DesignPhotoRoute
   '/design/reports': typeof DesignReportsRoute
+  '/distribution/3k': typeof Distribution3kRoute
   '/finance/advance': typeof FinanceAdvanceRoute
   '/finance/payment': typeof FinancePaymentRoute
   '/finance/salary': typeof FinanceSalaryRoute
@@ -887,6 +896,7 @@ export interface FileRouteTypes {
     | '/design/mockups'
     | '/design/photo'
     | '/design/reports'
+    | '/distribution/3k'
     | '/finance/advance'
     | '/finance/payment'
     | '/finance/salary'
@@ -980,6 +990,7 @@ export interface FileRouteTypes {
     | '/design/mockups'
     | '/design/photo'
     | '/design/reports'
+    | '/distribution/3k'
     | '/finance/advance'
     | '/finance/payment'
     | '/finance/salary'
@@ -1073,6 +1084,7 @@ export interface FileRouteTypes {
     | '/design/mockups'
     | '/design/photo'
     | '/design/reports'
+    | '/distribution/3k'
     | '/finance/advance'
     | '/finance/payment'
     | '/finance/salary'
@@ -1167,6 +1179,7 @@ export interface RootRouteChildren {
   DesignMockupsRoute: typeof DesignMockupsRoute
   DesignPhotoRoute: typeof DesignPhotoRoute
   DesignReportsRoute: typeof DesignReportsRoute
+  Distribution3kRoute: typeof Distribution3kRoute
   FinanceAdvanceRoute: typeof FinanceAdvanceRoute
   FinancePaymentRoute: typeof FinancePaymentRoute
   FinanceSalaryRoute: typeof FinanceSalaryRoute
@@ -1520,6 +1533,13 @@ declare module '@tanstack/react-router' {
       path: '/design/reports'
       fullPath: '/design/reports'
       preLoaderRoute: typeof DesignReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/distribution/3k': {
+      id: '/distribution/3k'
+      path: '/distribution/3k'
+      fullPath: '/distribution/3k'
+      preLoaderRoute: typeof Distribution3kRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/finance/advance': {
@@ -1903,6 +1923,7 @@ const rootRouteChildren: RootRouteChildren = {
   DesignMockupsRoute: DesignMockupsRoute,
   DesignPhotoRoute: DesignPhotoRoute,
   DesignReportsRoute: DesignReportsRoute,
+  Distribution3kRoute: Distribution3kRoute,
   FinanceAdvanceRoute: FinanceAdvanceRoute,
   FinancePaymentRoute: FinancePaymentRoute,
   FinanceSalaryRoute: FinanceSalaryRoute,

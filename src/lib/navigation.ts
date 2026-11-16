@@ -29,6 +29,9 @@ export const navigationGroups: NavGroup[] = [
     { to: "/biz/products", label: "Kho Sản Phẩm", icon: Package, comingSoon: true },
     { to: "/biz/settings", label: "Cài đặt Kinh doanh", icon: Settings, anyPerm: ["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
   ] },
+  { label: "Phân Phối", icon: Package, items: [
+    { to: "/distribution/3k", label: "3K Phân Phối", icon: ClipboardCheck, anyPerm: ["k3hub.biz", "k3hub.use"] },
+  ] },
   { label: "Showroom", icon: Store, items: [
     { to: "/showroom", label: "Tổng quan Showroom", icon: Store, perm: "showroom.view" },
     { to: "/showroom/3k", label: "3K Showroom", icon: ClipboardCheck, perm: "showroom.k3.use" },

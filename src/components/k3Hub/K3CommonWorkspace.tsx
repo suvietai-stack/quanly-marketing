@@ -3,11 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Building2, CheckCircle2, ClipboardList, MessageSquareText, RefreshCw, Settings2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/lib/auth';
+import { areaUnitIds, hasAreaAppointment, selectAreaUnit } from '@/lib/k3Hub/area';
 import { Biz3K } from '@/components/biz/Biz3K';
 import { K3HubTimingDashboard } from '@/components/k3Hub/K3HubTimingDashboard';
 import { PageHeader } from '@/components/AppShell';
 import {
-  K3_HUB_STATES, k3HubAccess, k3HubReport, k3HubDetails, k3HubFeedbackSave,
+  K3_HUB_STATES, k3HubAccess, k3HubAreaChart, k3HubReport, k3HubDetails, k3HubFeedbackSave,
   k3HubPolicyRead, k3HubPolicySave, k3HubTotals,
   type K3HubPerson, type K3HubPolicy, type K3HubState,
 } from '@/lib/k3Hub/api';
@@ -30,12 +31,13 @@ const vietnamToday = () => {
 const statusBadge = (s: K3HubState): 'secondary' | 'outline' | 'default' =>
   s === 'confirmed' ? 'default' : s === 'none' ? 'outline' : 'secondary';
 
-export function K3CommonWorkspace({ title, initialUnit, central = false }: {
+export function K3CommonWorkspace({ title, initialUnit, central = false, restrictToArea = false }: {
   title: string;
   initialUnit: string;
   central?: boolean;
+  restrictToArea?: boolean;
 }) {
-  const { user } = useCurrentUser();
+  const { user, can } = useCurrentUser();
   const [tab, setTab] = useState<'mine' | 'report' | 'policy'>(central ? 'report' : 'mine');
   const [unitOverride, setUnitOverride] = useState<string | null>(null);
   const access = useQuery({
@@ -46,20 +48,33 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
     retry: 1,
   });
   const data = access.data;
-  const canReport = !!(data?.can_manage || data?.can_company);
-  const options = data?.units ?? [];
+  const chart = useQuery({
+    queryKey: ['k3hub-area-chart', user?.id],
+    queryFn: k3HubAreaChart,
+    enabled: restrictToArea && !!user?.id && user.status === 'Đang hoạt động',
+    staleTime: 30_000, retry: 1,
+  });
+  const areaIds = useMemo(() => areaUnitIds(chart.data?.units ?? [], initialUnit), [chart.data, initialUnit]);
+  const options = (data?.units ?? []).filter(u => !restrictToArea || areaIds.has(u.id));
+  const canReport = !!(data?.can_manage || data?.can_company) && (!restrictToArea || options.length > 0);
+  const hasPersonalArea = !restrictToArea || !!data?.can_company || (!!user && !!chart.data &&
+    hasAreaAppointment(chart.data.members, user.id, areaIds, Date.parse(chart.data.server_now)));
+  const canPersonal = !!data?.can_personal && hasPersonalArea;
   const initial = central
     ? (data?.can_company ? 'org-company' : options[0]?.id ?? '')
     : (data?.can_company ? initialUnit
       : options.find(x => x.id===initialUnit)?.id
         ?? options.find(x => x.block_id===initialUnit)?.id ?? '');
-  const selectedUnit = unitOverride !== null &&
+  const selectedUnit = restrictToArea ? selectAreaUnit(options, initialUnit, unitOverride) : unitOverride !== null &&
       (unitOverride==='org-company' && data?.can_company || options.some(x => x.id===unitOverride))
     ? unitOverride : initial;
   const visibleTab = tab === 'policy' && !data?.can_config ? 'report'
-    : tab === 'mine' && !data?.can_personal && canReport ? 'report'
+    : tab === 'mine' && !canPersonal && canReport ? 'report'
     : tab === 'report' && !canReport ? 'mine' : tab;
-  const hasArea = central ? canReport : (!!data?.can_personal || canReport);
+  const hasArea = (central ? canReport : (canPersonal || canReport)) &&
+    (!restrictToArea || can('k3hub.biz') || can('k3hub.use'));
+  const pending = access.isPending || (restrictToArea && chart.isPending);
+  const error = access.error ?? (restrictToArea ? chart.error : null);
 
   if (user?.status !== 'Đang hoạt động') return <p className="p-6 text-sm text-muted-foreground">Cần đăng nhập tài khoản đang hoạt động.</p>;
 
@@ -67,24 +82,24 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
     <PageHeader title={title} description={central
       ? 'Dashboard phân tích giờ lập · giờ tổng kết · đúng hạn / trễ hạn theo cơ cấu tổ chức'
       : '3K theo phạm vi vị trí · Dùng chung dữ liệu với Trung tâm 3K'} />
-    {access.isPending && <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Đang xác minh phạm vi 3K theo sơ đồ tổ chức…</div>}
-    {access.error && <div role="alert" className="space-y-2 rounded-xl border p-4 text-sm text-destructive">
-      Không tải được quyền 3K: {access.error.message}
-      <Button variant="outline" onClick={() => access.refetch()}>Tải lại</Button>
+    {pending && <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Đang xác minh phạm vi 3K theo sơ đồ tổ chức…</div>}
+    {error && <div role="alert" className="space-y-2 rounded-xl border p-4 text-sm text-destructive">
+      Không tải được quyền 3K: {error.message}
+      <Button variant="outline" onClick={() => { void access.refetch(); if (restrictToArea) void chart.refetch(); }}>Tải lại</Button>
     </div>}
-    {data && !hasArea && <div role="alert" className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
-      Chưa được phân công vào khu vực đang áp dụng 3K. Khối Marketing không nằm trong phạm vi áp dụng mặc định; dữ liệu 3K lịch sử không bị xóa.
+    {data && !pending && !error && !hasArea && <div role="alert" className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+      Chưa có phân công hoặc quyền 3K hợp lệ trong khu vực này.
     </div>}
-    {data && hasArea && <>
+    {data && !pending && !error && hasArea && <>
       <div className="flex flex-wrap gap-2 border-b pb-3">
-        {!central && data.can_personal && <Button variant={visibleTab==='mine'?'default':'outline'}
+        {!central && canPersonal && <Button variant={visibleTab==='mine'?'default':'outline'}
           onClick={() => setTab('mine')}><ClipboardList className="mr-2 h-4 w-4"/>3K của tôi</Button>}
         {canReport && <Button variant={visibleTab==='report'?'default':'outline'}
           onClick={() => setTab('report')}><Users className="mr-2 h-4 w-4"/>Theo dõi {central?'toàn hệ thống':'khu vực'}</Button>}
         {central && data.can_config && <Button variant={visibleTab==='policy'?'default':'outline'}
           onClick={() => setTab('policy')}><Settings2 className="mr-2 h-4 w-4"/>Phạm vi áp dụng</Button>}
       </div>
-      {visibleTab === 'mine' && data.can_personal && <div className="space-y-3">
+      {visibleTab === 'mine' && canPersonal && <div className="space-y-3">
         <div className="rounded-xl border bg-muted/25 p-4 text-sm text-muted-foreground">
           Lập KG, KF và cập nhật KPI cá nhân tại đây. Dữ liệu được ghi vào 3K chung;
           không có bản sao theo từng khối. Quy tắc hạn chốt vẫn lấy từ cấu hình 3K hiện hành.
@@ -93,9 +108,9 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
       </div>}
       {visibleTab === 'report' && canReport && (central
         ? <K3HubTimingDashboard unit={selectedUnit} units={options}
-            canCompany={data.can_company} onUnitChange={setUnitOverride} />
+            canCompany={data.can_company && !restrictToArea} onUnitChange={setUnitOverride} />
         : <K3HubReportPanel unit={selectedUnit} units={options}
-            canCompany={data.can_company} onUnitChange={setUnitOverride} />
+            canCompany={data.can_company && !restrictToArea} onUnitChange={setUnitOverride} />
       )}
       {visibleTab === 'policy' && data.can_config && <K3HubPolicyPanel />}
       {central && <p className="text-xs text-muted-foreground">
@@ -205,11 +220,11 @@ function K3HubMemberDialog({person,unit,date,onClose}:{
   const [body,setBody] = useState('');
   const details = useQuery({
     queryKey:['k3hub-member',user?.id,person?.user_id,date,unit],
-    queryFn:()=>k3HubDetails(person!.user_id,date,unit),
+    queryFn:()=>{ if (!person) throw new Error('Chưa chọn nhân sự.'); return k3HubDetails(person.user_id,date,unit); },
     enabled:!!person, retry:1, staleTime:15_000,
   });
   const save = useMutation({
-    mutationFn:()=>k3HubFeedbackSave(person!.user_id,date,unit,body),
+    mutationFn:()=>{ if (!person) throw new Error('Chưa chọn nhân sự.'); return k3HubFeedbackSave(person.user_id,date,unit,body); },
     onSuccess:async()=>{setBody('');toast.success('Đã ghi nhận nhận xét.');await qc.invalidateQueries({queryKey:['k3hub-member']});},
     onError:e=>toast.error(e instanceof Error?e.message:'Không thể lưu nhận xét.'),
   });

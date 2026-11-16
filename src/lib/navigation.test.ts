@@ -7,6 +7,17 @@ import { mobilePage } from './mobileShell';
 const access = (permissions: string[] = [], extra: Partial<NavigationAccess> = {}): NavigationAccess => ({ can: p => permissions.includes(p), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0, ...extra });
 const paths = (a: NavigationAccess) => visibleNavigation(a).flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
 describe('Presentation-only navigation', () => {
+  it('keeps Distribution separate with authorized pins, search and deep links', () => {
+    const groups = visibleNavigation(access(['k3hub.biz']));
+    expect(groups.find(g => g.label === 'Phân Phối')?.items.map(i => i.to)).toEqual(['/distribution/3k']);
+    expect(groups.find(g => g.label === 'Kinh doanh')?.items.some(i => i.to.startsWith('/distribution'))).toBe(false);
+    expect(allowedPins(['/distribution/3k'], groups)).toEqual(['/distribution/3k']);
+    expect(allowedPins(['/distribution/3k'], visibleNavigation(access()))).toEqual([]);
+    expect(searchLauncher(groups, 'Phân Phối').map(i => i.to)).toContain('/distribution/3k');
+    expect(mobilePage(groups, '/distribution/3k').area).toBe('Phân Phối');
+    expect(activeNavigationPath(groups, '/distribution/3k')).toBe('/distribution/3k');
+    expect(paths(access(['k3hub.ops']))).not.toContain('/distribution/3k');
+  });
   it.each(['/settings/kpi-v2', '/reports-v2'])('places KPI %s only in Marketing with its original destination', path => {
     expect(navigationGroups.filter(g => g.items.some(i => i.to === path)).map(g => g.label)).toEqual(['Marketing']);
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.to === path)).toHaveLength(1);
@@ -48,7 +59,7 @@ describe('Presentation-only navigation', () => {
     expect(paths(access(['showroom.k3.use']))).toContain('/showroom/3k');
   });
   it('keeps all navigation areas in the mandated order', () => {
-    expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
+    expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Phân Phối','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
   });
   it.each([
     ['ot.view_own','Mua Hàng & Giao Vận','/order-tracking'],

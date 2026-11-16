@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { AreaMember, AreaUnit } from './area';
 
 export type K3HubState = 'none' | 'planned' | 'updated' | 'confirmed';
 export type K3HubBlock = { id: string; name: string; enabled: boolean };
@@ -60,6 +61,7 @@ async function rpc<T>(name: string, args?: Record<string, unknown>): Promise<T> 
 }
 
 export const k3HubAccess = () => rpc<K3HubAccess>('k3hub_access_read');
+export const k3HubAreaChart = () => rpc<{ server_now: string; units: AreaUnit[]; members: AreaMember[] }>('base_org_chart_read');
 export const k3HubReport = (date: string, unit: string) =>
   rpc<K3HubReport>('k3hub_read', { _date: date, _unit: unit });
 export const k3HubDetails = (user: string, date: string, unit: string) =>

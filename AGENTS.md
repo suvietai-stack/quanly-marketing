@@ -1,4 +1,5 @@
 # Architecture rules
+- Area-restricted 3K intersects server-authorized report units with the existing chart subtree and validates own active appointments at server time; never falls back to the parent block or company — keeps shared RPC enforcement and historical data intact.
 - SW crypto uses extensions; Order locks equate known status aliases only, preserving guards.
 - Signal reads use invoker pages, history-free counts, statement permission initplans and four ranks before pagination; bounded cancellation and independent errors prevent retry storms; legacy sorts/RLS/history remain intact.
 - Mobile Launcher filters displayed pins by live navigation but reconciles/persists them only after user-matched business access and successful approval reads; unresolved/error reads cannot delete preferences — prevents transient permission gaps from becoming permanent pin loss.
