@@ -20,6 +20,7 @@ const sampleQuestions=[
   'Gửi duyệt Job ở đâu?',
   'Phân công tín hiệu cho Sale thế nào?',
   'Hướng dẫn lập 3K của tôi',
+  'Cách đăng ký lịch trực Showroom tuần sau?',
 ];
 function errorText(e:unknown){return e instanceof Error?e.message:'AI chưa trả lời được. Hãy thử lại.';}
 export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(open:boolean)=>void}){
@@ -42,6 +43,15 @@ export function ChipiAiPanel({open,onOpenChange}:{open:boolean;onOpenChange:(ope
   });
   const personal=useQuery({queryKey:['ai-suviet','personal',user?.id,scope],queryFn:()=>readPersonal({data:{scope}}),enabled:open&&!!user?.id&&user?.status==='Đang hoạt động',staleTime:0,gcTime:0,retry:1});
   const [input,setInput]=useState('');
+  useEffect(()=>{
+    const onGuide=(event:Event)=>{
+      const question=(event as CustomEvent<{question?:string}>).detail?.question;
+      if(typeof question==='string'&&question.trim())setInput(question.slice(0,900));
+    };
+    window.addEventListener('suviet-ai-open',onGuide);
+    return ()=>window.removeEventListener('suviet-ai-open',onGuide);
+  },[]);
+
   const [messages,setMessages]=useState<Bubble[]>([]);
   const [busy,setBusy]=useState(false);
   const bottom=useRef<HTMLDivElement>(null);
