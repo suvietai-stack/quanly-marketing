@@ -11,9 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { showroomOverviewRead } from '@/lib/showroom/api';
 import {
-  readShowroomRoster, showroomRosterAction, SHIFT_LABELS, SHIFT_OPTIONS,
+  readShowroomRoster, readShowroomRosterStores, showroomRosterAction, SHIFT_LABELS, SHIFT_OPTIONS,
   upcomingWeek, mondayOf, vnToday, dateAdd, weekLabel, restCount, shiftDateLabel,
   type ShiftRoster, type ShiftPolicy, type ShowroomShift, type ShiftPerson, type ShiftChange,
 } from '@/lib/showroom/shifts';
@@ -291,7 +290,7 @@ export function ShiftRosterPage(){
   const [dialog,setDialog]=useState(false);
   const [pickDate,setPickDate]=useState(dateAdd(upcomingWeek(),0));
   const active=!!user&&user.status==='Đang hoạt động'&&(isSuperAdmin||can('showroom.shift.view')||can('showroom.shift.view_all'));
-  const overview=useQuery({queryKey:['showroom-roster-stores',user?.id],queryFn:showroomOverviewRead,enabled:active,staleTime:60_000,retry:1});
+  const overview=useQuery({queryKey:['showroom-roster-stores',user?.id],queryFn:readShowroomRosterStores,enabled:active,staleTime:60_000,retry:1});
   useEffect(()=>{const stores=overview.data?.stores??[];if(stores.length&&!stores.some(s=>s.id===store))setStore(stores[0].id);},[overview.data,store]);
   const data=useQuery({queryKey:['showroom-roster',user?.id,store,week],queryFn:()=>readShowroomRoster(store,week),enabled:active&&!!store,staleTime:10_000,retry:1,refetchOnWindowFocus:true});
   const mutation=useMutation({mutationFn:({action,payload}:{action:string;payload:Record<string,unknown>})=>showroomRosterAction(store,week,action,payload)});
