@@ -51,7 +51,8 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
   const initial = central
     ? (data?.can_company ? 'org-company' : options[0]?.id ?? '')
     : (data?.can_company ? initialUnit
-      : options.find(x => x.block_id===initialUnit)?.id ?? '');
+      : options.find(x => x.id===initialUnit)?.id
+        ?? options.find(x => x.block_id===initialUnit)?.id ?? '');
   const selectedUnit = unitOverride !== null &&
       (unitOverride==='org-company' && data?.can_company || options.some(x => x.id===unitOverride))
     ? unitOverride : initial;
