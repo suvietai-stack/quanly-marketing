@@ -79,8 +79,10 @@ describe('Presentation-only navigation', () => {
     // Kho Sản Phẩm đã có route placeholder an toàn; các mục tương lai khác chưa có đường dẫn.
     expect(navigationGroups.flatMap(g => g.items).filter(i => i.comingSoon && i.to !== '/biz/products').every(i => i.to === '')).toBe(true);
     // Nhóm Kế Toán & Tài Chính có các mục không gắn quyền menu (trang tự kiểm tra quyền bên trong).
-    expect(visibleNavigation(access()).find(g => g.label === 'Showroom')?.items ?? []).toHaveLength(0);
-    expect(visibleNavigation(access()).some(g => g.label === 'Showroom' && g.comingSoon)).toBe(true);
+    expect(paths(access())).not.toContain('/showroom');
+    expect(visibleNavigation(access()).some(g => g.label === 'Showroom')).toBe(false);
+    expect(paths(access(['showroom.view']))).toContain('/showroom');
+    expect(visibleNavigation(access(['showroom.view'])).find(g => g.label === 'Showroom')?.comingSoon).toBeFalsy();
   });
   it('shows the Approval Center entry only when the user has approval capability', () => {
     expect(paths(access())).not.toContain('/approvals');
