@@ -48,8 +48,14 @@ export const NOTIFICATION_LABEL: Record<string, string> = {
   ...OQ_LABEL,
   ot_reschedule: "Có đề xuất điều chỉnh ngày khách nhận cần bạn phản hồi.",
   ot_reschedule_result: "Đề xuất điều chỉnh ngày khách nhận của bạn đã có phản hồi.",
+  shift_open: "Đã mở đăng ký lịch trực tuần tới.",
+  shift_deadline: "Sắp hết hạn đăng ký ca trực.",
+  shift_published: "Lịch trực đã được công bố.",
+  shift_peer: "Có yêu cầu đổi ca đang chờ bạn.",
+  shift_manager: "Có lịch trực đang chờ duyệt.",
+  shift_result: "Có kết quả đổi ca mới.",
 };
-export const notificationText=(n:ChipiNotice)=>(n.kind.startsWith('biz_') || (n.kind==='signal_care' && n.payload?.progression===true)) && typeof n.payload?.message==='string' ? n.payload.message : NOTIFICATION_LABEL[n.kind] ?? 'Thông báo mới';
+export const notificationText=(n:ChipiNotice)=>(n.kind.startsWith('biz_') || n.kind.startsWith('shift_') || (n.kind==='signal_care' && n.payload?.progression===true)) && typeof n.payload?.message==='string' ? n.payload.message : NOTIFICATION_LABEL[n.kind] ?? 'Thông báo mới';
 const ago = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   return m < 1 ? "vừa xong" : m < 60 ? `${m} phút trước` : m < 1440 ? `${Math.round(m / 60)} giờ trước` : `${Math.round(m / 1440)} ngày trước`;
@@ -69,9 +75,23 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
     refetchInterval: onNotifications ? false : 60_000,
     staleTime: onNotifications ? 60_000 : 0,
     queryFn: async () => {
-      const { data } = await (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,ot_order_id,bank_tx_id,payload,read_at,created_at")
-        .eq("recipient_id", uid).order("created_at", { ascending: false }).limit(30);
-      return (data ?? []) as { id: string; kind: string; signal_id: string; leave_request_id: string | null; attendance_id: string | null; content_id: string | null; order_id: string | null; oq_flow_id: string | null; ot_order_id: string | null; bank_tx_id: string | null; payload: any; read_at: string | null; created_at: string }[];
+      type AlertRow = {id:string;kind:string;signal_id:string|null;leave_request_id:string|null;attendance_id:string|null;content_id:string|null;order_id:string|null;oq_flow_id:string|null;ot_order_id:string|null;bank_tx_id:string|null;payload:any;read_at:string|null;created_at:string;source?:'shift'};
+      // Shift reminders use their own RLS-protected outbox. Keep the global
+      // notifications schema untouched and merge both feeds at presentation.
+      const [regular, shifts] = await Promise.all([
+        (supabase as any).from("notifications").select("id,kind,signal_id,leave_request_id,attendance_id,content_id,order_id,oq_flow_id,ot_order_id,bank_tx_id,payload,read_at,created_at")
+          .eq("recipient_id", uid).order("created_at", { ascending: false }).limit(30),
+        (supabase as any).from("showroom_shift_alerts").select("id,kind,store_id,week_start,message,read_at,created_at")
+          .eq("recipient_id",uid).order("created_at",{ascending:false}).limit(30),
+      ]);
+      const base=(regular.data??[]) as AlertRow[];
+      const roster:AlertRow[]=(shifts.data??[]).map((item:{id:string;kind:string;store_id:string;week_start:string;message:string;read_at:string|null;created_at:string})=>({
+        id:'shift:'+item.id,kind:item.kind,source:'shift' as const,signal_id:null,leave_request_id:null,attendance_id:null,
+        content_id:null,order_id:null,oq_flow_id:null,ot_order_id:null,bank_tx_id:null,
+        payload:{message:item.message,store_id:item.store_id,week_start:item.week_start},
+        read_at:item.read_at,created_at:item.created_at,
+      }));
+      return [...base,...roster].sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,30);
     },
   });
   const data = notifications ?? [];
@@ -81,9 +101,11 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
   const openOne = async (n: (typeof data)[number]) => {
     setOpen(false);
     if (!n.read_at) {
-      await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
+      if(n.source==='shift')await (supabase as any).from("showroom_shift_alerts").update({read_at:new Date().toISOString()}).eq("id",n.id.slice(6));
+      else await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       qc.invalidateQueries({ queryKey: ["notifications", uid] });
     }
+    if (n.source==='shift') { window.location.href='/showroom/shifts'; return; }
     if (n.kind.startsWith('biz_')) {
       if (n.payload?.module === 'crm') { window.location.href = '/biz/crm'; return; }
       if (n.payload?.module === 'k3') { window.location.href = '/biz/3k'; return; }
@@ -95,7 +117,10 @@ export function NotificationBell({ trigger, onNotifications }: { trigger?: React
     window.location.href = n.kind==='signal_care' && n.payload?.progression===true ? deadlineLink(n.payload.deadline,n.payload.sale_id) : n.kind.startsWith("fin_") ? `/finance/incoming/${n.bank_tx_id ?? ""}` : n.kind.startsWith("ot_") ? `/order-tracking/${n.ot_order_id ?? ""}` : n.kind.startsWith("oq_") ? oqLink(n.payload?.request_id ?? "", n.payload?.both ? null : n.oq_flow_id) : n.kind.startsWith("order_") ? orderLink(n.order_id ?? "") : n.kind.startsWith("content_") ? contentLink(n.content_id ?? "") : n.kind.startsWith("att_") ? `/attendance?att=${n.attendance_id}` : n.kind === "leave_remind" ? "/leave?tab=approve" : n.kind.startsWith("leave_") ? `/leave?open=${n.leave_request_id}` : n.kind === "signal_care" || !n.signal_id ? "/signals?care=1" : `/signals?open=${n.signal_id}`;
   };
   const readAll = async () => {
-    await (supabase as any).from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", uid).is("read_at", null);
+    await Promise.all([
+      (supabase as any).from("notifications").update({read_at:new Date().toISOString()}).eq("recipient_id",uid).is("read_at",null),
+      (supabase as any).from("showroom_shift_alerts").update({read_at:new Date().toISOString()}).eq("recipient_id",uid).is("read_at",null),
+    ]);
     qc.invalidateQueries({ queryKey: ["notifications", uid] });
   };
   void nav;
