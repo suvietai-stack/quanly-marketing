@@ -72,7 +72,10 @@ async def run():
             await page.get_by_role("button", name="Mở Job").first.click()
             detail = page.get_by_role("dialog")
             await expect(detail).to_be_visible()
-            await expect(detail.get_by_role("tab")).to_have_count(4)
+            for tab in ("Thông tin", "Xử lý", "Lịch sử"):
+                await expect(detail.get_by_role("tab", name=re.compile(tab))).to_be_visible()
+            # Trao đổi is only shown if the backend grants job-chat access.
+            assert await detail.get_by_role("tab").count() in (3, 4)
             await expect(detail.get_by_text(re.compile(r"Bước [1-5]/5"))).to_be_visible()
             await no_horizontal_overflow(page, f"{width} detail")
             await page.screenshot(path=str(OUT / f"{width}-detail.png"))
