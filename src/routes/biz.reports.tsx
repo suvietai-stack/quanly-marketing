@@ -15,11 +15,11 @@ export const Route = createFileRoute("/biz/reports")({
     { name: "twitter:card", content: "summary" },
   ] }),
   component: () => (
-    <CommercialAreaGate area="orders"><RequirePermission perm={["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"]}>
+    <CommercialAreaGate area="orders">{scope => <><RequirePermission perm={["biz.report_submit", "biz.report_approve", "biz.view_dept", "biz.view_all"]}>
       <div>
         <PageHeader title="Báo cáo kinh doanh" actions={<BizReportSettings/>} />
-        <BizDocuments kind="report" />
+        <BizDocuments kind="report" scopeDepartmentIds={scope.orders_units}/>
       </div>
-    </RequirePermission></CommercialAreaGate>
+    </RequirePermission></>}</CommercialAreaGate>
   ),
 });
