@@ -3,7 +3,7 @@ import { emptyConfig, type OrgConfig } from "./types";
 import type { CatalogRole } from "./roleCatalog";
 import { B2B_CENTER, BTC_CENTER, RETAIL_SYSTEM } from "@/lib/orgCenters";
 import { DISTRIBUTION_UNIT } from "@/lib/k3Hub/area";
-import { B2B_POSITIONS, centerPositionDefinitions, centerPositionSetup } from "./centerPositions";
+import { B2B_POSITIONS, centerPositionDefinitions, centerPositionSetup, setupAllMissingCenterPositions } from "./centerPositions";
 const config = (): OrgConfig => ({
   ...emptyConfig(),
   units: [
@@ -180,4 +180,31 @@ it("preserves configured capacity and refuses duplicate or conflicting mappings"
   );
   result.next.titles.push({ ...result.next.titles[0], id: "duplicate" });
   expect(() => centerPositionSetup(result.next, "store", roles, mapping)).toThrow(/cấu hình khác/);
+});
+
+it("batch setup creates only missing center titles, one manager seat, and no fake groups/people", () => {
+  const c = config();
+  c.units.push(
+    { id: DISTRIBUTION_UNIT, name: "Phân Phối", kind: "system", active: true },
+    { id: "distribution-department", name: "Phòng Phân Phối", kind: "department", parent_id: DISTRIBUTION_UNIT, active: true },
+  );
+  const needed: { roleId: string; name: string }[] = c.units.flatMap(u =>
+    centerPositionDefinitions(c, u.id).map(p => ({ roleId: p.roleId, name: p.name })),
+  );
+  const catalog = [...new Map(needed.map(p => [p.roleId, {
+    id: p.roleId, name: p.name, role_kind: "position", catalog_state: "standard", is_system: false,
+  }])).values()] as CatalogRole[];
+  const r = setupAllMissingCenterPositions(c, catalog, []);
+  expect(r.units).toEqual([B2B_CENTER, "dept", "team", BTC_CENTER, "store", DISTRIBUTION_UNIT, "distribution-department"]);
+  expect(r.next.units).toEqual(c.units);
+  expect(r.next.memberships).toEqual(c.memberships);
+  expect(r.next.titles.filter(t => t.kind === "manager").every(t => t.capacity === 1)).toBe(true);
+  expect(r.next.titles.filter(t => t.kind === "staff").every(t => t.capacity === 0)).toBe(true);
+  expect(r.commands.length).toBe(r.next.titles.length);
+  const same = setupAllMissingCenterPositions(r.next, catalog, r.commands.map(command => ({
+    unit_id: String(command.data.unit_id),
+    title_id: String(command.data.title_id),
+    roles: [String(command.data.role_id)],
+  })));
+  expect(same.commands).toEqual([]);
 });

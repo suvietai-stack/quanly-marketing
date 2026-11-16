@@ -10,10 +10,10 @@ BEGIN
     RAISE EXCEPTION 'Distribution source changed; audit again';
   END IF;
   FOR r IN SELECT * FROM (VALUES
-    ('role-v2-distribution-director','Giám đốc Kinh doanh Phân Phối',true),
-    ('role-v2-distribution-head','Trưởng phòng Phân phối',true),
-    ('role-v2-distribution-team','Trưởng nhóm Phân phối',true),
-    ('role-v2-distribution-staff','Nhân viên phân phối',false)
+    ('role-v2-distribution-director','Giám đốc Trung tâm Kinh doanh Phân Phối',true),
+    ('role-v2-distribution-head','Trưởng phòng Kinh doanh Phân Phối',true),
+    ('role-v2-distribution-team','Trưởng nhóm Kinh doanh Phân Phối',true),
+    ('role-v2-distribution-staff','Nhân viên Kinh doanh Phân Phối',false)
   ) v(id,name,manager) LOOP
     perms:=ARRAY['att.create','att.view_own','k3.use','k3hub.use','leave.create','leave.recall','leave.view_own'];
     IF r.manager THEN perms:=perms||ARRAY['k3hub.center']; END IF;

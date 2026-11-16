@@ -11,7 +11,7 @@ export const B2B_POSITIONS = [
     roleId: "role-v2-b2b-director",
     kind: "manager",
     level: 3,
-    capacity: 0,
+    capacity: 1,
   },
   {
     name: "Trưởng phòng Kinh doanh B2B",
@@ -19,7 +19,7 @@ export const B2B_POSITIONS = [
     roleId: "role-v2-b2b-head",
     kind: "manager",
     level: 2,
-    capacity: 0,
+    capacity: 1,
   },
   {
     name: "Trưởng nhóm Kinh doanh B2B",
@@ -27,7 +27,7 @@ export const B2B_POSITIONS = [
     roleId: "role-v2-b2b-team",
     kind: "manager",
     level: 1,
-    capacity: 0,
+    capacity: 1,
   },
   {
     name: "Nhân viên Kinh doanh B2B",
@@ -40,31 +40,31 @@ export const B2B_POSITIONS = [
 ] as const;
 export const DISTRIBUTION_POSITION_ROLES = [
   {
-    name: "Giám đốc Kinh doanh Phân Phối",
+    name: "Giám đốc Trung tâm Kinh doanh Phân Phối",
     roleId: "role-v2-distribution-director",
     code: "distribution-director",
     kind: "manager",
     level: 3,
-    capacity: 0,
+    capacity: 1,
   },
   {
-    name: "Trưởng phòng Phân phối",
+    name: "Trưởng phòng Kinh doanh Phân Phối",
     roleId: "role-v2-distribution-head",
     code: "distribution-head",
     kind: "manager",
     level: 2,
-    capacity: 0,
+    capacity: 1,
   },
   {
-    name: "Trưởng nhóm Phân phối",
+    name: "Trưởng nhóm Kinh doanh Phân Phối",
     roleId: "role-v2-distribution-team",
     code: "distribution-team",
     kind: "manager",
     level: 1,
-    capacity: 0,
+    capacity: 1,
   },
   {
-    name: "Nhân viên phân phối",
+    name: "Nhân viên Kinh doanh Phân Phối",
     roleId: "role-v2-distribution-staff",
     code: "distribution-staff",
     kind: "staff",
@@ -78,7 +78,7 @@ const BTC_DIRECTOR = {
   roleId: "role-v2-btc-director",
   kind: "manager",
   level: 3,
-  capacity: 0,
+  capacity: 1,
 } as const;
 const SHOWROOM = [
   {
@@ -235,4 +235,26 @@ export function centerPositionSetup(
     });
   }
   return { next: { ...config, titles }, commands };
+}
+
+/** Atomically prepare only missing canonical position titles across the three centers.
+ * Existing legacy Biz/Showroom appointments and Roles are left untouched. The
+ * caller must use org_change preview/apply, never direct table writes.
+ */
+export function setupAllMissingCenterPositions(
+  config: OrgConfig,
+  roles: CatalogRole[],
+  mapping: Parameters<typeof centerPositionSetup>[3],
+) {
+  let next = config;
+  const commands: OrgCommand[] = [];
+  const units: string[] = [];
+  for (const unit of config.units) {
+    if (!centerPositionDefinitions(next, unit.id).length || !missingCenterPositions(next, unit.id)) continue;
+    const prepared = centerPositionSetup(next, unit.id, roles, mapping);
+    next = prepared.next;
+    commands.push(...prepared.commands);
+    if (prepared.commands.length) units.push(unit.id);
+  }
+  return { next, commands, units };
 }
