@@ -31,7 +31,6 @@ export const navigationGroups: NavGroup[] = [
   ] },
   { label: "Showroom", icon: Store, items: [
     { to: "/showroom", label: "Tổng quan Showroom", icon: Store, perm: "showroom.view" },
-    { to: "/showroom/suppliers", label: "Nhà cung cấp", icon: Truck, perm: "showroom.supplier.view" },
     { to: "/showroom/3k", label: "3K Showroom", icon: ClipboardCheck, perm: "showroom.k3.use" },
   ] },
   { label: "Marketing", icon: Megaphone, items: [
@@ -53,6 +52,7 @@ export const navigationGroups: NavGroup[] = [
   ] },
   { label: "Mua Hàng & Giao Vận", icon: Truck, items: [
 { to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"] },
+{ to: "/procurement/suppliers", label: "Nhà cung cấp", icon: PackageSearch, perm: "supplier.master.view" },
 { to: "/order-tracking", label: "Theo Dõi Đơn Hàng", icon: Truck, anyPerm: ["ot.view_own", "ot.view_all", "ot.create", "ot.task_view", "ot.supplier", "ot.manage"] },
 { to: "/operations/3k", label: "3K Vận hành", icon: ClipboardCheck, perm: "k3hub.ops" },
 { to: "", label: "Quản Lý Mua Hàng", icon: PackageSearch, comingSoon: true },
