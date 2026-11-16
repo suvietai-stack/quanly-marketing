@@ -10,6 +10,7 @@ export const navigationGroups: NavGroup[] = [
 { to: "/approvals", label: "Phê duyệt", icon: ClipboardCheck },
     { to: "/community", label: "Cộng đồng Sứ Việt", icon: MessageCircleHeart },
     { to: "/biz/3k", label: "3K của tôi", icon: ListChecks },
+    { to: "/k3-center", label: "Trung tâm 3K", icon: ClipboardCheck, perm: "k3hub.center" },
   ] },
   { label: "Trung tâm hội thoại", icon: MessageSquare, items: [
     { to: "/inbox", label: "Messenger Fanpage", icon: MessageSquare, perm: "inbox.view" },
@@ -18,6 +19,7 @@ export const navigationGroups: NavGroup[] = [
   { label: "Kinh doanh", icon: Briefcase, items: [
     { to: "/biz/crm", label: "CRM Khách Hàng", icon: Users, perm: "biz.crm_use" },
     { to: "/biz", label: "Tổng quan Kinh doanh", icon: Briefcase, exact: true, anyPerm: ["biz.dashboard_public", "biz.view_own", "biz.view_dept", "biz.view_all"] },
+    { to: "/biz/3k-area", label: "3K Kinh doanh", icon: ClipboardCheck, perm: "k3hub.biz" },
     { to: "/signals", label: "Danh sách tín hiệu", icon: Radar, anyPerm: ["signal.create", "signal.view_all", "signal.manage", "signal.sale", "signal.assign"] },
     { to: "/signals/report", label: "Báo cáo tín hiệu", icon: FileText, anyPerm: ["signal.report", "signal.manage"] },
     { to: "/biz/plans", label: "Kế hoạch", icon: FileText, anyPerm: ["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"] },
@@ -52,6 +54,7 @@ export const navigationGroups: NavGroup[] = [
   { label: "Mua Hàng & Giao Vận", icon: Truck, items: [
 { to: "/order-quotes", label: "Hỏi Giá & Tiến Độ", icon: PackageSearch, anyPerm: ["oq.create", "oq.view_own", "oq.view_all", "oq.accept", "oq.reply_price", "oq.reply_progress", "oq.manage"] },
 { to: "/order-tracking", label: "Theo Dõi Đơn Hàng", icon: Truck, anyPerm: ["ot.view_own", "ot.view_all", "ot.create", "ot.task_view", "ot.supplier", "ot.manage"] },
+{ to: "/operations/3k", label: "3K Vận hành", icon: ClipboardCheck, perm: "k3hub.ops" },
 { to: "", label: "Quản Lý Mua Hàng", icon: PackageSearch, comingSoon: true },
 { to: "", label: "Quản Lý Giao Vận", icon: Truck, comingSoon: true },
   ] },
