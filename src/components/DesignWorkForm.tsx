@@ -75,21 +75,23 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
     }catch(e){setError(e instanceof Error?e.message:'Không lưu được Job.');}
     finally{setBusy(false);}
   }
-  return <div className="min-w-0 space-y-4">
-    <nav aria-label="Các bước tạo Job">
+  return <div className="design-create-form min-w-0 space-y-4">
+    <nav aria-label="Các bước tạo Job" className="shrink-0">
+      <p className="mb-2 text-sm font-semibold sm:hidden">Bước {step+1}/3 · {STEPS[step]}</p>
       <ol className="grid grid-cols-3 gap-1.5 sm:gap-3">
         {STEPS.map((label,i)=><li key={label}>
           <button type="button" disabled={busy||uploading||i>step} onClick={()=>{setError('');setStep(i as FormStep);}}
             aria-current={i===step?'step':undefined}
-            className={`flex min-h-12 w-full items-center gap-1.5 rounded-lg border p-2 text-left text-xs sm:text-sm ${i===step?'border-primary bg-primary/10 font-semibold':i<step?'border-primary/40 text-foreground':'text-muted-foreground'}`}>
+            aria-label={`Bước ${i+1}: ${label}`}
+            className={`flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border p-2 text-left text-sm sm:justify-start ${i===step?'border-primary bg-primary/10 font-semibold':i<step?'border-primary/40 text-foreground':'text-muted-foreground'}`}>
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-current/30">{i<step?<Check className="size-4"/>:i+1}</span>
-            <span className="min-w-0 leading-tight">{label}</span>
+            <span className="hidden min-w-0 leading-tight sm:inline">{label}</span>
           </button>
         </li>)}
       </ol>
     </nav>
 
-    {step===0&&<section className="space-y-4" aria-label="Bước 1: Loại công việc">
+    {step===0&&<section className="design-step-body space-y-4" aria-label="Bước 1: Loại công việc">
       {!flow&&<div className="space-y-1.5">
         <Label>Hệ Thiết kế *</Label>
         <Select disabled={uploading||!!classification.inputAttachments?.length} value={kind||''}
@@ -107,7 +109,7 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
       </>}
     </section>}
 
-    {step===1&&kind&&<section className="space-y-4" aria-label="Bước 2: Giao người thực hiện">
+    {step===1&&kind&&<section className="design-step-body space-y-4" aria-label="Bước 2: Giao người thực hiện">
       <p className="text-sm text-muted-foreground">Chọn người làm ngay khi tạo Job. Nhân viên Thiết kế có thể chuyển việc cho nhau sau đó.</p>
       <DesignAssigneePicker flow={kind} value={assignee} valueId={assigneeId}
         onChange={(name,id)=>{setAssignee(name||'');setAssigneeId(id||'');}}
@@ -125,7 +127,7 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
       </div>
     </section>}
 
-    {step===2&&kind&&<section className="space-y-4" aria-label="Bước 3: Tài liệu và xác nhận">
+    {step===2&&kind&&<section className="design-step-body space-y-4" aria-label="Bước 3: Tài liệu và xác nhận">
       <div className="rounded-lg border bg-muted/20 p-3 space-y-1.5">
         <h3 className="text-sm font-semibold">Kiểm tra trước khi tạo</h3>
         <p className="text-sm"><span className="text-muted-foreground">Hệ:</span> {designLabel(kind)}</p>
@@ -155,15 +157,15 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
     </section>}
 
     {error&&<p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-    <div className="sticky bottom-0 z-10 flex items-center justify-between gap-2 border-t bg-background pt-3 pb-1">
-      <Button variant="outline" disabled={busy||uploading} onClick={()=>step===0?onClose():(setStep((step-1) as FormStep),setError(''))}>
+    <div className="design-create-footer sticky bottom-0 z-10 flex shrink-0 items-center justify-between gap-2 border-t bg-background pt-3 pb-1">
+      <Button className="min-h-11 flex-1 sm:flex-none" variant="outline" disabled={busy||uploading} onClick={()=>step===0?onClose():(setStep((step-1) as FormStep),setError(''))}>
         {step===0?'Hủy':<><ArrowLeft className="mr-1 size-4"/>Quay lại</>}
       </Button>
       {step<2
-        ? <Button disabled={busy||uploading||(step===0?!firstReady:!reviewerReady)} onClick={goNext}>
+        ? <Button className="min-h-11 flex-1 sm:flex-none" disabled={busy||uploading||(step===0?!firstReady:!reviewerReady)} onClick={goNext}>
             Tiếp tục <ArrowRight className="ml-1 size-4"/>
           </Button>
-        : <Button disabled={busy||uploading||!firstReady||!reviewerReady} onClick={save}>
+        : <Button className="min-h-11 flex-1 sm:flex-none" disabled={busy||uploading||!firstReady||!reviewerReady} onClick={save}>
             {busy?'Đang lưu…':'Tạo Job & giao việc'}
           </Button>}
     </div>

@@ -700,3 +700,86 @@ body:has([role="alertdialog"]) .chipi-assistant { visibility: hidden; pointer-ev
 @media (prefers-reduced-motion:reduce) {
   .dashboard-page .dashboard-stat,.dashboard-page .dashboard-shortcut { transition:none; transform:none; }
 }
+
+
+/* Design mobile usability pass: keep the Job editor, actions and readable labels in one viewport. */
+@media (max-width: 767px) {
+  .design-create-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding-top: max(22px,calc(env(safe-area-inset-top) + 12px));
+    padding-bottom: max(12px,env(safe-area-inset-bottom));
+  }
+  .design-create-dialog > button.absolute,
+  .design-mobile-dialog > button.absolute {
+    top: max(16px,calc(env(safe-area-inset-top) + 4px));
+    right: 12px;
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+  }
+  .design-create-dialog > [data-slot="dialog-header"],
+  .design-create-dialog > .flex.flex-col {
+    flex-shrink: 0;
+  }
+  .design-create-form {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .design-create-form .design-step-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 0 2px 12px 0;
+  }
+  .design-create-form .design-create-footer {
+    position: relative;
+    bottom: auto;
+    margin-top: auto;
+    padding-bottom: 4px;
+  }
+  .design-mobile-dialog .design-job-tabs {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 4px;
+    overflow: visible;
+  }
+  .design-mobile-dialog .design-job-tabs [role="tab"] {
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+    line-height: 1.3;
+    font-size: 13px;
+    text-align: center;
+    padding: 8px 5px;
+  }
+  .design-mobile-dialog .design-dialog-title {
+    overflow-wrap: anywhere;
+    padding-right: 30px;
+    font-size: 18px;
+    line-height: 1.45;
+  }
+  .design-mobile-dialog .design-dialog-meta {
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .design-workspace .design-work-card {
+    padding: 14px;
+  }
+  .design-workspace .design-work-card .design-work-card-title {
+    font-size: 16px;
+    line-height: 1.55;
+  }
+}

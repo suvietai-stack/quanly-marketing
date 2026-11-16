@@ -7,6 +7,13 @@ on:
       - 'src/components/OrderDetail.tsx'
       - 'src/components/PermissionChecklist.tsx'
       - 'src/components/AppShell.tsx'
+      - 'src/components/AppNavigation.tsx'
+      - 'src/components/MobileAppChrome.tsx'
+      - 'src/components/MobileLauncher.tsx'
+      - 'src/components/DesignWorkflowSummary.tsx'
+      - 'src/styles.css'
+      - 'tests/design.browser.tsx'
+      - 'tests/designMobile.browser.py'
       - 'src/components/VideoDetail.tsx'
       - 'src/lib/orders/**'
       - 'src/lib/navigation*'
@@ -34,3 +41,25 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=6144
         run: bun run build
+      - name: Install Playwright for real mobile viewports
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+      - name: Start isolated Design UI test server
+        run: |
+          (bun run dev -- --host 0.0.0.0 --port 8080 > /tmp/design-vite.log 2>&1 &)
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://localhost:8080/ >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/design-vite.log
+          exit 1
+      - name: Mobile viewport check 320-430px (no live Job writes)
+        run: python tests/designMobile.browser.py
+      - name: Attach mobile screenshots if browser test fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-mobile-screenshots
+          path: /tmp/browser/design-mobile/
+          if-no-files-found: ignore
