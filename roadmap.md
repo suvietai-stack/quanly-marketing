@@ -1,4 +1,7 @@
 # Roadmap — Role/personal permissions 510/510
+- [x] Distribution four exact-name Position Roles: catalog seed SQL staged with preflight/SHA/guarded rollback; empty-position preview/apply implemented with live catalog verification, zero assignment changes; no live apply.
+- [ ] Distribution Role seed and signed-in position QA: requires separate exact-SHA approval and a valid Super Admin session; no live Roles/titles created.
+- [ ] Distribution occupied-position cutover: reconcile Biz source/title/slot linkage, historical attribution and permission reductions before separately approved transactional mapping; never rewrite historical appointments.
 - [x] Distribution code: independent navigation and fail-closed subtree selection; shared data; 33 regression tests and automatic build pass; no publish.
 - [ ] Distribution signed-in employee/manager desktop/mobile E2E: requires an existing user session; self-session mint found no matching account, no test account created.
 - [ ] Distribution live organization cutover: blocked by Biz source reparent guard and historical policy/scope compatibility audit; no live writes.
