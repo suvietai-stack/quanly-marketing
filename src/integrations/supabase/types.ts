@@ -3795,6 +3795,89 @@ export type Database = {
         }
         Relationships: []
       }
+      design_zalo_group_config: {
+        Row: {
+          enabled: boolean
+          flow: string
+          group_id: string | null
+          group_name: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          flow: string
+          group_id?: string | null
+          group_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          flow?: string
+          group_id?: string | null
+          group_name?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      design_zalo_group_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          dedup_key: string
+          error: string | null
+          event: string
+          flow: string
+          group_id: string
+          id: string
+          order_id: string
+          sent_at: string | null
+          snapshot: Json
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          dedup_key: string
+          error?: string | null
+          event: string
+          flow: string
+          group_id: string
+          id?: string
+          order_id: string
+          sent_at?: string | null
+          snapshot?: Json
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          dedup_key?: string
+          error?: string | null
+          event?: string
+          flow?: string
+          group_id?: string
+          id?: string
+          order_id?: string
+          sent_at?: string | null
+          snapshot?: Json
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_zalo_group_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_kpi_adjustments: {
         Row: {
           created_at: string
@@ -6780,6 +6863,88 @@ export type Database = {
         }
         Relationships: []
       }
+      k3hub_feedback: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          review_date: string
+          unit_id: string
+          user_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          review_date: string
+          unit_id: string
+          user_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          review_date?: string
+          unit_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k3hub_feedback_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3hub_feedback_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k3hub_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      k3hub_policy_versions: {
+        Row: {
+          actor_id: string | null
+          applied_block_ids: string[]
+          created_at: string
+          effective_from: string
+          include_unassigned: boolean
+          reason: string
+          revision: number
+        }
+        Insert: {
+          actor_id?: string | null
+          applied_block_ids: string[]
+          created_at?: string
+          effective_from: string
+          include_unassigned?: boolean
+          reason: string
+          revision?: number
+        }
+        Update: {
+          actor_id?: string | null
+          applied_block_ids?: string[]
+          created_at?: string
+          effective_from?: string
+          include_unassigned?: boolean
+          reason?: string
+          revision?: number
+        }
+        Relationships: []
+      }
       keywords: {
         Row: {
           created_at: string
@@ -8783,41 +8948,68 @@ export type Database = {
         Row: {
           active: boolean
           address: string | null
+          category: string[]
           contact: string | null
           created_at: string
           created_by: string | null
+          email: string | null
           groups: string[]
           id: string
+          last_contact_at: string | null
+          master_code: string
           name: string
+          next_follow_up: string | null
           note: string | null
           phone: string | null
+          revision: number
+          status: string
+          tax_code: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
           active?: boolean
           address?: string | null
+          category?: string[]
           contact?: string | null
           created_at?: string
           created_by?: string | null
+          email?: string | null
           groups?: string[]
           id?: string
+          last_contact_at?: string | null
+          master_code?: string
           name: string
+          next_follow_up?: string | null
           note?: string | null
           phone?: string | null
+          revision?: number
+          status?: string
+          tax_code?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
           active?: boolean
           address?: string | null
+          category?: string[]
           contact?: string | null
           created_at?: string
           created_by?: string | null
+          email?: string | null
           groups?: string[]
           id?: string
+          last_contact_at?: string | null
+          master_code?: string
           name?: string
+          next_follow_up?: string | null
           note?: string | null
           phone?: string | null
+          revision?: number
+          status?: string
+          tax_code?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -9605,6 +9797,591 @@ export type Database = {
           },
         ]
       }
+      showroom_shift_alerts: {
+        Row: {
+          created_at: string
+          dedup_key: string
+          id: string
+          kind: string
+          message: string
+          read_at: string | null
+          recipient_id: string
+          store_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          dedup_key: string
+          id?: string
+          kind: string
+          message: string
+          read_at?: string | null
+          recipient_id: string
+          store_id: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          dedup_key?: string
+          id?: string
+          kind?: string
+          message?: string
+          read_at?: string | null
+          recipient_id?: string
+          store_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      showroom_shift_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          id: string
+          store_id: string
+          week_start: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          store_id: string
+          week_start?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          store_id?: string
+          week_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_shift_audit_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_shift_changes: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          kind: string
+          original_shift: string
+          partner_date: string | null
+          partner_id: string | null
+          partner_shift: string | null
+          reason: string
+          requester_id: string
+          snapshot: Json
+          status: string
+          store_id: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          kind: string
+          original_shift: string
+          partner_date?: string | null
+          partner_id?: string | null
+          partner_shift?: string | null
+          reason?: string
+          requester_id: string
+          snapshot?: Json
+          status: string
+          store_id: string
+          updated_at?: string
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          kind?: string
+          original_shift?: string
+          partner_date?: string | null
+          partner_id?: string | null
+          partner_shift?: string | null
+          reason?: string
+          requester_id?: string
+          snapshot?: Json
+          status?: string
+          store_id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_shift_changes_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_shift_changes_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_shift_changes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_shift_entries: {
+        Row: {
+          assigned_shift: string | null
+          requested_shift: string | null
+          staff_id: string
+          store_id: string
+          updated_at: string
+          updated_by: string | null
+          work_date: string
+        }
+        Insert: {
+          assigned_shift?: string | null
+          requested_shift?: string | null
+          staff_id: string
+          store_id: string
+          updated_at?: string
+          updated_by?: string | null
+          work_date: string
+        }
+        Update: {
+          assigned_shift?: string | null
+          requested_shift?: string | null
+          staff_id?: string
+          store_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_shift_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_shift_entries_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_shift_policies: {
+        Row: {
+          config: Json
+          store_id: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          config?: Json
+          store_id: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          config?: Json
+          store_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_shift_policies_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_shift_policy_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          config: Json
+          id: string
+          reason: string
+          store_id: string
+          version: number
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          config: Json
+          id?: string
+          reason?: string
+          store_id: string
+          version: number
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          config?: Json
+          id?: string
+          reason?: string
+          store_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_shift_policy_history_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_shift_weeks: {
+        Row: {
+          closes_at: string | null
+          opens_at: string | null
+          publish_note: string | null
+          published_at: string | null
+          published_by: string | null
+          revision: number
+          status: string
+          store_id: string
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          closes_at?: string | null
+          opens_at?: string | null
+          publish_note?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          revision?: number
+          status?: string
+          store_id: string
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          closes_at?: string | null
+          opens_at?: string | null
+          publish_note?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          revision?: number
+          status?: string
+          store_id?: string
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_shift_weeks_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_supplier_contacts: {
+        Row: {
+          actor_id: string
+          channel: string
+          created_at: string
+          id: string
+          next_follow_up: string | null
+          summary: string
+          supplier_id: string
+        }
+        Insert: {
+          actor_id: string
+          channel: string
+          created_at?: string
+          id?: string
+          next_follow_up?: string | null
+          summary: string
+          supplier_id: string
+        }
+        Update: {
+          actor_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          next_follow_up?: string | null
+          summary?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_supplier_contacts_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_supplier_contacts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "showroom_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_supplier_products: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          lead_days: number | null
+          min_order_qty: number | null
+          name: string
+          note: string | null
+          origin: string | null
+          purchase_price: number | null
+          revision: number
+          sku: string | null
+          specification: string | null
+          supplier_id: string
+          unit: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          lead_days?: number | null
+          min_order_qty?: number | null
+          name: string
+          note?: string | null
+          origin?: string | null
+          purchase_price?: number | null
+          revision?: number
+          sku?: string | null
+          specification?: string | null
+          supplier_id: string
+          unit?: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          lead_days?: number | null
+          min_order_qty?: number | null
+          name?: string
+          note?: string | null
+          origin?: string | null
+          purchase_price?: number | null
+          revision?: number
+          sku?: string | null
+          specification?: string | null
+          supplier_id?: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_supplier_products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "showroom_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_supplier_products_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showroom_suppliers: {
+        Row: {
+          address: string | null
+          category: string[]
+          code: string
+          contact_name: string | null
+          created_at: string
+          created_by: string
+          email: string | null
+          id: string
+          last_contact_at: string | null
+          name: string
+          next_follow_up: string | null
+          notes: string | null
+          phone: string | null
+          revision: number
+          status: string
+          store_id: string
+          tax_code: string | null
+          updated_at: string
+          updated_by: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string[]
+          code?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by: string
+          email?: string | null
+          id?: string
+          last_contact_at?: string | null
+          name: string
+          next_follow_up?: string | null
+          notes?: string | null
+          phone?: string | null
+          revision?: number
+          status?: string
+          store_id: string
+          tax_code?: string | null
+          updated_at?: string
+          updated_by: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string[]
+          code?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          id?: string
+          last_contact_at?: string | null
+          name?: string
+          next_follow_up?: string | null
+          notes?: string | null
+          phone?: string | null
+          revision?: number
+          status?: string
+          store_id?: string
+          tax_code?: string | null
+          updated_at?: string
+          updated_by?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_suppliers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_suppliers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_suppliers_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal_crm_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          customer_id: string
+          signal_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          customer_id: string
+          signal_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          customer_id?: string
+          signal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_crm_links_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "crm_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_crm_links_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: true
+            referencedRelation: "opportunity_signals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signal_crm_links_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: true
+            referencedRelation: "signal_list_priority"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signal_enrichment_events: {
         Row: {
           actor_id: string
@@ -9896,6 +10673,174 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      supplier_master_contacts: {
+        Row: {
+          actor_id: string
+          channel: string
+          created_at: string
+          id: string
+          next_follow_up: string | null
+          summary: string
+          supplier_id: string
+        }
+        Insert: {
+          actor_id: string
+          channel: string
+          created_at?: string
+          id?: string
+          next_follow_up?: string | null
+          summary: string
+          supplier_id: string
+        }
+        Update: {
+          actor_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          next_follow_up?: string | null
+          summary?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_master_contacts_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_master_contacts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "ot_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_master_products: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          lead_days: number | null
+          min_order_qty: number | null
+          name: string
+          note: string | null
+          origin: string | null
+          purchase_price: number | null
+          revision: number
+          sku: string | null
+          specification: string | null
+          supplier_id: string
+          unit: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          lead_days?: number | null
+          min_order_qty?: number | null
+          name: string
+          note?: string | null
+          origin?: string | null
+          purchase_price?: number | null
+          revision?: number
+          sku?: string | null
+          specification?: string | null
+          supplier_id: string
+          unit?: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          lead_days?: number | null
+          min_order_qty?: number | null
+          name?: string
+          note?: string | null
+          origin?: string | null
+          purchase_price?: number | null
+          revision?: number
+          sku?: string | null
+          specification?: string | null
+          supplier_id?: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_master_products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_master_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "ot_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_master_products_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_product_groups: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_product_groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sv_chat_members: {
         Row: {
@@ -10463,6 +11408,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "wc_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "wc_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wc_presence_sessions: {
+        Row: {
+          chat_open: boolean
+          conversation_id: string
+          last_seen_at: string
+          left_at: string | null
+          session_id: string
+        }
+        Insert: {
+          chat_open?: boolean
+          conversation_id: string
+          last_seen_at?: string
+          left_at?: string | null
+          session_id: string
+        }
+        Update: {
+          chat_open?: boolean
+          conversation_id?: string
+          last_seen_at?: string
+          left_at?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_presence_sessions_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "wc_conversations"
@@ -11879,6 +12856,13 @@ export type Database = {
       cw_reviewer: { Args: { d: Json; st: string }; Returns: string }
       cw_uid: { Args: { _name: string }; Returns: string }
       dashboard_scope_context: { Args: never; Returns: Json }
+      design_assignable_staff: {
+        Args: { _flow: string }
+        Returns: {
+          name: string
+          user_id: string
+        }[]
+      }
       design_can: {
         Args: { _action: string; _flow: string; _uid: string }
         Returns: boolean
@@ -11912,6 +12896,17 @@ export type Database = {
       design_order_save: {
         Args: { _expected?: Json; _id: string; _patch: Json }
         Returns: Json
+      }
+      design_team_access: { Args: never; Returns: boolean }
+      design_zalo_group_can_manage: { Args: never; Returns: boolean }
+      design_zalo_group_save: {
+        Args: {
+          _enabled: boolean
+          _flow: string
+          _group_id: string
+          _group_name: string
+        }
+        Returns: undefined
       }
       fbl_can_manage: { Args: never; Returns: boolean }
       fbl_claim_event: { Args: { p_id: string }; Returns: Json }
@@ -12457,6 +13452,30 @@ export type Database = {
       }
       k3_zalo_report_preview: { Args: { _date: string }; Returns: Json }
       k3_zalo_report_queue: { Args: never; Returns: number }
+      k3hub_access_read: { Args: never; Returns: Json }
+      k3hub_feedback_save: {
+        Args: { _body: string; _date: string; _unit: string; _user: string }
+        Returns: Json
+      }
+      k3hub_member_read: {
+        Args: { _date: string; _unit: string; _user: string }
+        Returns: Json
+      }
+      k3hub_policy_read: { Args: never; Returns: Json }
+      k3hub_policy_save: {
+        Args: {
+          _blocks: string[]
+          _date: string
+          _reason: string
+          _revision: number
+        }
+        Returns: Json
+      }
+      k3hub_read: { Args: { _date: string; _unit?: string }; Returns: Json }
+      k3hub_timing_read: {
+        Args: { _end: string; _start: string; _unit?: string }
+        Returns: Json
+      }
       leave_approvers: {
         Args: never
         Returns: {
@@ -12889,6 +13908,38 @@ export type Database = {
       }
       showroom_k3_team_read: { Args: { _date: string }; Returns: Json }
       showroom_overview_read: { Args: never; Returns: Json }
+      showroom_roster_action: {
+        Args: { _action: string; _data?: Json; _store: string; _week: string }
+        Returns: Json
+      }
+      showroom_roster_read: {
+        Args: { _store: string; _week: string }
+        Returns: Json
+      }
+      showroom_roster_stores_read: { Args: never; Returns: Json }
+      showroom_shift_reminder_run: { Args: never; Returns: number }
+      showroom_supplier_contact_add: {
+        Args: {
+          _channel: string
+          _next_follow_up?: string
+          _summary: string
+          _supplier_id: string
+        }
+        Returns: string
+      }
+      showroom_supplier_detail_read: { Args: { _id: string }; Returns: Json }
+      showroom_supplier_list_read: {
+        Args: { _search?: string; _status?: string; _store?: string }
+        Returns: Json
+      }
+      showroom_supplier_product_save: {
+        Args: { _data: Json; _id: string; _supplier_id: string }
+        Returns: string
+      }
+      showroom_supplier_save: {
+        Args: { _data: Json; _id: string }
+        Returns: string
+      }
       signal_assessment_save: {
         Args: {
           _id: string
@@ -12954,6 +14005,7 @@ export type Database = {
         Returns: number
       }
       signal_change_token: { Args: never; Returns: string }
+      signal_crm_register: { Args: { _signal_id: string }; Returns: Json }
       signal_delete: { Args: { _id: string }; Returns: boolean }
       signal_enrichment_save: {
         Args: {
@@ -13132,6 +14184,40 @@ export type Database = {
       signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
       standard_role_catalog_consolidate: { Args: never; Returns: Json }
       standard_role_catalog_setup: { Args: never; Returns: Json }
+      supplier_master_contact_add: {
+        Args: {
+          _channel: string
+          _next_follow_up?: string
+          _summary: string
+          _supplier_id: string
+        }
+        Returns: string
+      }
+      supplier_master_detail_read: { Args: { _id: string }; Returns: Json }
+      supplier_master_list_read:
+        | { Args: { _search?: string; _status?: string }; Returns: Json }
+        | {
+            Args: { _category: string; _search: string; _status: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _category: string
+              _search: string
+              _service: string
+              _status: string
+            }
+            Returns: Json
+          }
+      supplier_master_product_save: {
+        Args: { _data: Json; _id: string; _supplier_id: string }
+        Returns: string
+      }
+      supplier_master_save: {
+        Args: { _data: Json; _id: string }
+        Returns: string
+      }
+      supplier_product_group_add: { Args: { _name: string }; Returns: Json }
       sv_chat_can_download: { Args: { p_path: string }; Returns: boolean }
       sv_chat_can_upload: { Args: { p_path: string }; Returns: boolean }
       sv_chat_create_group: {
@@ -13225,6 +14311,24 @@ export type Database = {
           p_summary: string
         }
         Returns: boolean
+      }
+      wc_presence_ping: {
+        Args: {
+          p_chat_open: boolean
+          p_hash: string
+          p_leaving?: boolean
+          p_session: string
+          p_site: string
+        }
+        Returns: boolean
+      }
+      wc_presence_summary: {
+        Args: { p_conversations: string[] }
+        Returns: {
+          conversation_id: string
+          last_seen_at: string
+          presence: string
+        }[]
       }
       wc_rate_hit: {
         Args: { p_bucket: string; p_limit: number }
