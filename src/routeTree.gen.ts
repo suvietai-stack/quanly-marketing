@@ -73,6 +73,7 @@ import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
 import { Route as Operations3kAccountingRouteImport } from './routes/operations_.3k-accounting'
 import { Route as Operations3kHrRouteImport } from './routes/operations_.3k-hr'
 import { Route as Operations3kRouteImport } from './routes/operations_.3k'
+import { Route as ProcurementSuppliersRouteImport } from './routes/procurement_.suppliers'
 import { Route as ShowroomSuppliersRouteImport } from './routes/showroom_.suppliers'
 import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
@@ -419,6 +420,11 @@ const Operations3kRoute = Operations3kRouteImport.update({
   path: '/operations/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProcurementSuppliersRoute = ProcurementSuppliersRouteImport.update({
+  id: '/procurement_/suppliers',
+  path: '/procurement/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShowroomSuppliersRoute = ShowroomSuppliersRouteImport.update({
   id: '/showroom_/suppliers',
   path: '/showroom/suppliers',
@@ -610,6 +616,7 @@ export interface FileRoutesByFullPath {
   '/operations/3k-accounting': typeof Operations3kAccountingRoute
   '/operations/3k-hr': typeof Operations3kHrRoute
   '/operations/3k': typeof Operations3kRoute
+  '/procurement/suppliers': typeof ProcurementSuppliersRoute
   '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
@@ -701,6 +708,7 @@ export interface FileRoutesByTo {
   '/operations/3k-accounting': typeof Operations3kAccountingRoute
   '/operations/3k-hr': typeof Operations3kHrRoute
   '/operations/3k': typeof Operations3kRoute
+  '/procurement/suppliers': typeof ProcurementSuppliersRoute
   '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
@@ -793,6 +801,7 @@ export interface FileRoutesById {
   '/operations_/3k-accounting': typeof Operations3kAccountingRoute
   '/operations_/3k-hr': typeof Operations3kHrRoute
   '/operations_/3k': typeof Operations3kRoute
+  '/procurement_/suppliers': typeof ProcurementSuppliersRoute
   '/showroom_/suppliers': typeof ShowroomSuppliersRoute
   '/showroom_/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
@@ -886,6 +895,7 @@ export interface FileRouteTypes {
     | '/operations/3k-accounting'
     | '/operations/3k-hr'
     | '/operations/3k'
+    | '/procurement/suppliers'
     | '/showroom/suppliers'
     | '/showroom/3k'
     | '/signals/report'
@@ -977,6 +987,7 @@ export interface FileRouteTypes {
     | '/operations/3k-accounting'
     | '/operations/3k-hr'
     | '/operations/3k'
+    | '/procurement/suppliers'
     | '/showroom/suppliers'
     | '/showroom/3k'
     | '/signals/report'
@@ -1068,6 +1079,7 @@ export interface FileRouteTypes {
     | '/operations_/3k-accounting'
     | '/operations_/3k-hr'
     | '/operations_/3k'
+    | '/procurement_/suppliers'
     | '/showroom_/suppliers'
     | '/showroom_/3k'
     | '/signals/report'
@@ -1160,6 +1172,7 @@ export interface RootRouteChildren {
   Operations3kAccountingRoute: typeof Operations3kAccountingRoute
   Operations3kHrRoute: typeof Operations3kHrRoute
   Operations3kRoute: typeof Operations3kRoute
+  ProcurementSuppliersRoute: typeof ProcurementSuppliersRoute
   ShowroomSuppliersRoute: typeof ShowroomSuppliersRoute
   Showroom3kRoute: typeof Showroom3kRoute
   SignalsReportRoute: typeof SignalsReportRoute
@@ -1643,6 +1656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Operations3kRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/procurement_/suppliers': {
+      id: '/procurement_/suppliers'
+      path: '/procurement/suppliers'
+      fullPath: '/procurement/suppliers'
+      preLoaderRoute: typeof ProcurementSuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/showroom_/suppliers': {
       id: '/showroom_/suppliers'
       path: '/showroom/suppliers'
@@ -1880,6 +1900,7 @@ const rootRouteChildren: RootRouteChildren = {
   Operations3kAccountingRoute: Operations3kAccountingRoute,
   Operations3kHrRoute: Operations3kHrRoute,
   Operations3kRoute: Operations3kRoute,
+  ProcurementSuppliersRoute: ProcurementSuppliersRoute,
   ShowroomSuppliersRoute: ShowroomSuppliersRoute,
   Showroom3kRoute: Showroom3kRoute,
   SignalsReportRoute: SignalsReportRoute,
