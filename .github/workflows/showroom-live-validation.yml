@@ -5,19 +5,27 @@ on:
     paths:
       - 'src/lib/showroom/**'
       - 'src/routes/showroom.tsx'
+      - 'src/routes/showroom_.3k.tsx'
+      - 'src/components/showroom/**'
+      - 'src/components/biz/Biz3K.tsx'
       - 'src/lib/auth.ts'
       - 'src/lib/navigation.ts'
       - 'src/lib/navigation.test.ts'
       - 'src/routeTree.gen.ts'
       - 'drizzle/migrations/0397_showroom_module_read.sql'
+      - 'drizzle/migrations/0398_showroom_3k_scope.sql'
       - '.github/workflows/showroom-live-validation.yml'
   pull_request:
     paths:
       - 'src/lib/showroom/**'
       - 'src/routes/showroom.tsx'
+      - 'src/routes/showroom_.3k.tsx'
+      - 'src/components/showroom/**'
+      - 'src/components/biz/Biz3K.tsx'
       - 'src/lib/navigation.ts'
       - 'src/routeTree.gen.ts'
       - 'drizzle/migrations/0397_showroom_module_read.sql'
+      - 'drizzle/migrations/0398_showroom_3k_scope.sql'
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -26,6 +34,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bunx vitest run src/lib/navigation.test.ts src/lib/showroom/positionSetup.test.ts
+      - run: bunx vitest run src/lib/navigation.test.ts src/lib/showroom/positionSetup.test.ts src/lib/showroom/k3.test.ts
       - run: bunx tsc --noEmit
       - run: bun run build
