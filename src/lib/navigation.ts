@@ -29,6 +29,13 @@ export const navigationGroups: NavGroup[] = [
     { to: "/biz/products", label: "Kho Sản Phẩm", icon: Package, comingSoon: true },
     { to: "/biz/settings", label: "Cài đặt Kinh doanh", icon: Settings, anyPerm: ["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
   ] },
+  { label: "Phân Phối", icon: Package, items: [
+    { to: "/distribution", label: "Tổng quan Phân Phối", icon: Package, exact: true, anyPerm: ["biz.dashboard_public","biz.view_own","biz.view_dept","biz.view_all"] },
+    { to: "/distribution/3k", label: "3K Phân Phối", icon: ClipboardCheck, anyPerm: ["k3.use","k3hub.biz","k3hub.center"] },
+    { to: "/distribution/goals", label: "Mục tiêu KR Phân Phối", icon: Target, anyPerm: ["biz.goal_submit","biz.goal_approve","biz.view_dept","biz.view_all"] },
+    { to: "/distribution/plans", label: "Kế hoạch Phân Phối", icon: FileText, anyPerm: ["biz.plan_submit","biz.plan_request_revision","biz.plan_approve","biz.view_dept","biz.view_all"] },
+    { to: "/distribution/reports", label: "Báo cáo Phân Phối", icon: ClipboardCheck, anyPerm: ["biz.report_submit","biz.report_approve","biz.view_dept","biz.view_all"] },
+  ] },
   { label: "Showroom", icon: Store, items: [
     { to: "/showroom", label: "Tổng quan Showroom", icon: Store, perm: "showroom.view" },
     { to: "/showroom/3k", label: "3K Showroom", icon: ClipboardCheck, perm: "showroom.k3.use" },
@@ -83,7 +90,7 @@ export const navigationGroups: NavGroup[] = [
     { to: "/ai-knowledge", label: "Kho kiến thức AI", icon: BookOpenText, adminOnly: true },
   ] },
 ];
-export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; designTeam?: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
+export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; designTeam?: boolean; commercialAreas?: { orders: boolean; distribution: boolean }; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
 export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   const { can, isSuperAdmin, isKpiAdmin } = access;
   // The cross-module approval aggregation may be slow/unavailable; capability to
@@ -96,6 +103,11 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   ].some(can);
   return navigationGroups.map(group => {
     const items = group.items.filter(it => !it.comingSoon &&
+      // The same biz_* source serves both commercial areas, but their workspaces
+      // are separately visible only to currently assigned personnel.
+      (group.label !== 'Phân Phối' || !!access.commercialAreas?.distribution) &&
+      (group.label !== 'Kinh doanh' || access.commercialAreas?.orders !== false ||
+        !['/biz','/biz/3k-area','/biz/plans','/biz/goals','/biz/reports','/biz/approvals','/biz/settings'].includes(it.to)) &&
       (!['/orders','/design/reports'].includes(it.to) || !!access.designTeam) &&
       (it.to !== '/approvals' || canOpenApprovalCenter) &&
       (!it.to.startsWith('/design/') || !['/design/photo','/design/marketing','/design/mockups'].includes(it.to) ||
