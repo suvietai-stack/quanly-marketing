@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { useCurrentUser } from '@/lib/auth';
+import { k3HubAccess } from '@/lib/k3Hub/api';
 import { missingShowroomPositions } from '@/lib/showroom/positionSetup';
 import { TitleRoleDefaults } from '@/components/TitleRoleDefaults';
 import { ArrowRightLeft, History, Plus, UserPlus, Users, X } from 'lucide-react';
@@ -41,7 +45,15 @@ function unitRights(config: OrgConfig, unitId: string, actor: OrgActor) {
 
 /** Drawer quản lý một đơn vị: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị. */
 export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onSetupShowroomRoles, onClose }: DrawerProps) {
+  const { user } = useCurrentUser();
   const unit = config.units.find(u => u.id === unitId);
+  const k3Access = useQuery({
+    queryKey: ['k3hub-access',user?.id],
+    queryFn: k3HubAccess,
+    enabled: !!user && user.status === 'Đang hoạt động',
+    staleTime: 30000,
+  });
+  const hasUnitK3 = k3Access.data?.units.some(x=>x.id===unitId) ?? false;
   const [titleName,setTitleName]=useState('');
   const [titleKindNew,setTitleKindNew]=useState<'staff'|'manager'>('staff');
   const [childName,setChildName]=useState('');
@@ -91,6 +103,11 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
         <SheetHeader>
           <SheetTitle>{unit.name}</SheetTitle>
           <p className="text-xs text-muted-foreground">{unitPath(config, unitId)}</p>
+          {hasUnitK3 && <Button asChild variant="outline" size="sm" className="w-fit mt-2">
+            <Link to="/k3/unit/$unit" params={{ unit: unitId }} onClick={onClose}>
+              <span className="mr-1.5">3K đơn vị</span> <ArrowRightLeft className="h-4 w-4" />
+            </Link>
+          </Button>}
         </SheetHeader>
         <Tabs defaultValue="staff" className="mt-4">
           <TabsList className="flex h-auto flex-wrap">
