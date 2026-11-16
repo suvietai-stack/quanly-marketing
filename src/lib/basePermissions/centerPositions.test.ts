@@ -188,7 +188,9 @@ it("batch setup creates only missing center titles, one manager seat, and no fak
     { id: DISTRIBUTION_UNIT, name: "Phân Phối", kind: "system", active: true },
     { id: "distribution-department", name: "Phòng Phân Phối", kind: "department", parent_id: DISTRIBUTION_UNIT, active: true },
   );
-  const needed = c.units.flatMap(u => centerPositionDefinitions(c, u.id));
+  const needed: { roleId: string; name: string }[] = c.units.flatMap(u =>
+    centerPositionDefinitions(c, u.id).map(p => ({ roleId: p.roleId, name: p.name })),
+  );
   const catalog = [...new Map(needed.map(p => [p.roleId, {
     id: p.roleId, name: p.name, role_kind: "position", catalog_state: "standard", is_system: false,
   }])).values()] as CatalogRole[];
