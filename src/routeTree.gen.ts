@@ -17,6 +17,7 @@ import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as GoalsV2RouteImport } from './routes/goals-v2'
 import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as K3CenterRouteImport } from './routes/k3-center'
 import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OkrsRouteImport } from './routes/okrs'
@@ -36,6 +37,7 @@ import { Route as WebChatRouteImport } from './routes/web-chat'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as BizIndexRouteImport } from './routes/biz.index'
 import { Route as Biz3kRouteImport } from './routes/biz.3k'
+import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
 import { Route as BizApprovalsRouteImport } from './routes/biz.approvals'
 import { Route as BizCrmRouteImport } from './routes/biz.crm'
 import { Route as BizGoalsRouteImport } from './routes/biz.goals'
@@ -55,28 +57,25 @@ import { Route as FinancePaymentRouteImport } from './routes/finance.payment'
 import { Route as FinanceSalaryRouteImport } from './routes/finance.salary'
 import { Route as LocalIndexRouteImport } from './routes/local.index'
 import { Route as LocalIdRouteImport } from './routes/local.$id'
+import { Route as Operations3kRouteImport } from './routes/operations_.3k'
+import { Route as Operations3kAccountingRouteImport } from './routes/operations_.3k-accounting'
+import { Route as Operations3kHrRouteImport } from './routes/operations_.3k-hr'
 import { Route as OrderQuotesIndexRouteImport } from './routes/order-quotes.index'
 import { Route as OrderQuotesIdRouteImport } from './routes/order-quotes.$id'
 import { Route as OrderQuotesNewRouteImport } from './routes/order-quotes.new'
 import { Route as OrderQuotesReportRouteImport } from './routes/order-quotes.report'
 import { Route as OrderTrackingIndexRouteImport } from './routes/order-tracking.index'
 import { Route as OrderTrackingIdRouteImport } from './routes/order-tracking.$id'
+import { Route as ProcurementSuppliersRouteImport } from './routes/procurement_.suppliers'
 import { Route as SaoIndexRouteImport } from './routes/sao.index'
 import { Route as SaoAdminRouteImport } from './routes/sao.admin'
 import { Route as SaoEarnRouteImport } from './routes/sao.earn'
 import { Route as SaoLeaderboardRouteImport } from './routes/sao.leaderboard'
 import { Route as SaoShopRouteImport } from './routes/sao.shop'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
-import { Route as K3UnitRouteImport } from './routes/k3_.unit.$unit'
-import { Route as K3CenterRouteImport } from './routes/k3-center'
-import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
-import { Route as Operations3kAccountingRouteImport } from './routes/operations_.3k-accounting'
-import { Route as Operations3kHrRouteImport } from './routes/operations_.3k-hr'
-import { Route as Operations3kRouteImport } from './routes/operations_.3k'
-import { Route as ProcurementSuppliersRouteImport } from './routes/procurement_.suppliers'
-import { Route as ShowroomSuppliersRouteImport } from './routes/showroom_.suppliers'
 import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as ShowroomShiftsRouteImport } from './routes/showroom_.shifts'
+import { Route as ShowroomSuppliersRouteImport } from './routes/showroom_.suppliers'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
@@ -85,6 +84,7 @@ import { Route as WebsitesIndexRouteImport } from './routes/websites.index'
 import { Route as WebsitesIdRouteImport } from './routes/websites.$id'
 import { Route as FinanceIncomingIndexRouteImport } from './routes/finance.incoming.index'
 import { Route as FinanceIncomingIdRouteImport } from './routes/finance.incoming.$id'
+import { Route as K3UnitUnitRouteImport } from './routes/k3_.unit.$unit'
 import { Route as ApiPublicCassoWebhookRouteImport } from './routes/api/public/casso/webhook'
 import { Route as ApiPublicMetaDispatchRouteImport } from './routes/api/public/meta/dispatch'
 import { Route as ApiPublicMetaLeadsWebhookRouteImport } from './routes/api/public/meta/leads-webhook'
@@ -139,6 +139,11 @@ const GoalsV2Route = GoalsV2RouteImport.update({
 const InboxRoute = InboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const K3CenterRoute = K3CenterRouteImport.update({
+  id: '/k3-center',
+  path: '/k3-center',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeaveRoute = LeaveRouteImport.update({
@@ -236,6 +241,11 @@ const Biz3kRoute = Biz3kRouteImport.update({
   path: '/biz/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Biz3kAreaRoute = Biz3kAreaRouteImport.update({
+  id: '/biz/3k-area',
+  path: '/biz/3k-area',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BizApprovalsRoute = BizApprovalsRouteImport.update({
   id: '/biz/approvals',
   path: '/biz/approvals',
@@ -331,6 +341,21 @@ const LocalIdRoute = LocalIdRouteImport.update({
   path: '/local/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Operations3kRoute = Operations3kRouteImport.update({
+  id: '/operations_/3k',
+  path: '/operations/3k',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Operations3kAccountingRoute = Operations3kAccountingRouteImport.update({
+  id: '/operations_/3k-accounting',
+  path: '/operations/3k-accounting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Operations3kHrRoute = Operations3kHrRouteImport.update({
+  id: '/operations_/3k-hr',
+  path: '/operations/3k-hr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderQuotesIndexRoute = OrderQuotesIndexRouteImport.update({
   id: '/order-quotes/',
   path: '/order-quotes/',
@@ -359,6 +384,11 @@ const OrderTrackingIndexRoute = OrderTrackingIndexRouteImport.update({
 const OrderTrackingIdRoute = OrderTrackingIdRouteImport.update({
   id: '/order-tracking/$id',
   path: '/order-tracking/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProcurementSuppliersRoute = ProcurementSuppliersRouteImport.update({
+  id: '/procurement_/suppliers',
+  path: '/procurement/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SaoIndexRoute = SaoIndexRouteImport.update({
@@ -391,46 +421,6 @@ const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   path: '/settings/kpi-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
-const K3UnitRoute = K3UnitRouteImport.update({
-  id: '/k3_/unit/$unit',
-  path: '/k3/unit/$unit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const K3CenterRoute = K3CenterRouteImport.update({
-  id: '/k3-center',
-  path: '/k3-center',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Biz3kAreaRoute = Biz3kAreaRouteImport.update({
-  id: '/biz/3k-area',
-  path: '/biz/3k-area',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Operations3kAccountingRoute = Operations3kAccountingRouteImport.update({
-  id: '/operations_/3k-accounting',
-  path: '/operations/3k-accounting',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Operations3kHrRoute = Operations3kHrRouteImport.update({
-  id: '/operations_/3k-hr',
-  path: '/operations/3k-hr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Operations3kRoute = Operations3kRouteImport.update({
-  id: '/operations_/3k',
-  path: '/operations/3k',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProcurementSuppliersRoute = ProcurementSuppliersRouteImport.update({
-  id: '/procurement_/suppliers',
-  path: '/procurement/suppliers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShowroomSuppliersRoute = ShowroomSuppliersRouteImport.update({
-  id: '/showroom_/suppliers',
-  path: '/showroom/suppliers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const Showroom3kRoute = Showroom3kRouteImport.update({
   id: '/showroom_/3k',
   path: '/showroom/3k',
@@ -439,6 +429,11 @@ const Showroom3kRoute = Showroom3kRouteImport.update({
 const ShowroomShiftsRoute = ShowroomShiftsRouteImport.update({
   id: '/showroom_/shifts',
   path: '/showroom/shifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowroomSuppliersRoute = ShowroomSuppliersRouteImport.update({
+  id: '/showroom_/suppliers',
+  path: '/showroom/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignalsIndexRoute = SignalsIndexRouteImport.update({
@@ -479,6 +474,11 @@ const FinanceIncomingIndexRoute = FinanceIncomingIndexRouteImport.update({
 const FinanceIncomingIdRoute = FinanceIncomingIdRouteImport.update({
   id: '/finance/incoming/$id',
   path: '/finance/incoming/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const K3UnitUnitRoute = K3UnitUnitRouteImport.update({
+  id: '/k3_/unit/$unit',
+  path: '/k3/unit/$unit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCassoWebhookRoute = ApiPublicCassoWebhookRouteImport.update({
@@ -572,6 +572,7 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
   '/inbox': typeof InboxRoute
+  '/k3-center': typeof K3CenterRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
@@ -590,6 +591,7 @@ export interface FileRoutesByFullPath {
   '/web-chat': typeof WebChatRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
+  '/biz/3k-area': typeof Biz3kAreaRoute
   '/biz/approvals': typeof BizApprovalsRoute
   '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
@@ -607,25 +609,22 @@ export interface FileRoutesByFullPath {
   '/finance/payment': typeof FinancePaymentRoute
   '/finance/salary': typeof FinanceSalaryRoute
   '/local/$id': typeof LocalIdRoute
+  '/operations/3k': typeof Operations3kRoute
+  '/operations/3k-accounting': typeof Operations3kAccountingRoute
+  '/operations/3k-hr': typeof Operations3kHrRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
   '/order-tracking/$id': typeof OrderTrackingIdRoute
+  '/procurement/suppliers': typeof ProcurementSuppliersRoute
   '/sao/admin': typeof SaoAdminRoute
   '/sao/earn': typeof SaoEarnRoute
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
-  '/k3/unit/$unit': typeof K3UnitRoute
-  '/k3-center': typeof K3CenterRoute
-  '/biz/3k-area': typeof Biz3kAreaRoute
-  '/operations/3k-accounting': typeof Operations3kAccountingRoute
-  '/operations/3k-hr': typeof Operations3kHrRoute
-  '/operations/3k': typeof Operations3kRoute
-  '/procurement/suppliers': typeof ProcurementSuppliersRoute
-  '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/showroom/shifts': typeof ShowroomShiftsRoute
+  '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -639,6 +638,7 @@ export interface FileRoutesByFullPath {
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
+  '/k3/unit/$unit': typeof K3UnitUnitRoute
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
@@ -665,6 +665,7 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
   '/inbox': typeof InboxRoute
+  '/k3-center': typeof K3CenterRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
@@ -683,6 +684,7 @@ export interface FileRoutesByTo {
   '/web-chat': typeof WebChatRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
+  '/biz/3k-area': typeof Biz3kAreaRoute
   '/biz/approvals': typeof BizApprovalsRoute
   '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
@@ -700,25 +702,22 @@ export interface FileRoutesByTo {
   '/finance/payment': typeof FinancePaymentRoute
   '/finance/salary': typeof FinanceSalaryRoute
   '/local/$id': typeof LocalIdRoute
+  '/operations/3k': typeof Operations3kRoute
+  '/operations/3k-accounting': typeof Operations3kAccountingRoute
+  '/operations/3k-hr': typeof Operations3kHrRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
   '/order-tracking/$id': typeof OrderTrackingIdRoute
+  '/procurement/suppliers': typeof ProcurementSuppliersRoute
   '/sao/admin': typeof SaoAdminRoute
   '/sao/earn': typeof SaoEarnRoute
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
-  '/k3/unit/$unit': typeof K3UnitRoute
-  '/k3-center': typeof K3CenterRoute
-  '/biz/3k-area': typeof Biz3kAreaRoute
-  '/operations/3k-accounting': typeof Operations3kAccountingRoute
-  '/operations/3k-hr': typeof Operations3kHrRoute
-  '/operations/3k': typeof Operations3kRoute
-  '/procurement/suppliers': typeof ProcurementSuppliersRoute
-  '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/showroom/shifts': typeof ShowroomShiftsRoute
+  '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -732,6 +731,7 @@ export interface FileRoutesByTo {
   '/social': typeof SocialIndexRoute
   '/websites': typeof WebsitesIndexRoute
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
+  '/k3/unit/$unit': typeof K3UnitUnitRoute
   '/finance/incoming': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
@@ -759,6 +759,7 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
   '/inbox': typeof InboxRoute
+  '/k3-center': typeof K3CenterRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
@@ -777,6 +778,7 @@ export interface FileRoutesById {
   '/web-chat': typeof WebChatRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
+  '/biz/3k-area': typeof Biz3kAreaRoute
   '/biz/approvals': typeof BizApprovalsRoute
   '/biz/crm': typeof BizCrmRoute
   '/biz/goals': typeof BizGoalsRoute
@@ -794,25 +796,22 @@ export interface FileRoutesById {
   '/finance/payment': typeof FinancePaymentRoute
   '/finance/salary': typeof FinanceSalaryRoute
   '/local/$id': typeof LocalIdRoute
+  '/operations_/3k': typeof Operations3kRoute
+  '/operations_/3k-accounting': typeof Operations3kAccountingRoute
+  '/operations_/3k-hr': typeof Operations3kHrRoute
   '/order-quotes/$id': typeof OrderQuotesIdRoute
   '/order-quotes/new': typeof OrderQuotesNewRoute
   '/order-quotes/report': typeof OrderQuotesReportRoute
   '/order-tracking/$id': typeof OrderTrackingIdRoute
+  '/procurement_/suppliers': typeof ProcurementSuppliersRoute
   '/sao/admin': typeof SaoAdminRoute
   '/sao/earn': typeof SaoEarnRoute
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
-  '/k3_/unit/$unit': typeof K3UnitRoute
-  '/k3-center': typeof K3CenterRoute
-  '/biz/3k-area': typeof Biz3kAreaRoute
-  '/operations_/3k-accounting': typeof Operations3kAccountingRoute
-  '/operations_/3k-hr': typeof Operations3kHrRoute
-  '/operations_/3k': typeof Operations3kRoute
-  '/procurement_/suppliers': typeof ProcurementSuppliersRoute
-  '/showroom_/suppliers': typeof ShowroomSuppliersRoute
   '/showroom_/3k': typeof Showroom3kRoute
   '/showroom_/shifts': typeof ShowroomShiftsRoute
+  '/showroom_/suppliers': typeof ShowroomSuppliersRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -826,6 +825,7 @@ export interface FileRoutesById {
   '/social/': typeof SocialIndexRoute
   '/websites/': typeof WebsitesIndexRoute
   '/finance/incoming/$id': typeof FinanceIncomingIdRoute
+  '/k3_/unit/$unit': typeof K3UnitUnitRoute
   '/finance/incoming/': typeof FinanceIncomingIndexRoute
   '/api/public/casso/webhook': typeof ApiPublicCassoWebhookRoute
   '/api/public/meta/dispatch': typeof ApiPublicMetaDispatchRoute
@@ -854,6 +854,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/goals-v2'
     | '/inbox'
+    | '/k3-center'
     | '/leave'
     | '/login'
     | '/okrs'
@@ -872,6 +873,7 @@ export interface FileRouteTypes {
     | '/web-chat'
     | '/web-contents'
     | '/biz/3k'
+    | '/biz/3k-area'
     | '/biz/approvals'
     | '/biz/crm'
     | '/biz/goals'
@@ -889,25 +891,22 @@ export interface FileRouteTypes {
     | '/finance/payment'
     | '/finance/salary'
     | '/local/$id'
+    | '/operations/3k'
+    | '/operations/3k-accounting'
+    | '/operations/3k-hr'
     | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/order-quotes/report'
     | '/order-tracking/$id'
+    | '/procurement/suppliers'
     | '/sao/admin'
     | '/sao/earn'
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
-    | '/k3/unit/$unit'
-    | '/k3-center'
-    | '/biz/3k-area'
-    | '/operations/3k-accounting'
-    | '/operations/3k-hr'
-    | '/operations/3k'
-    | '/procurement/suppliers'
-    | '/showroom/suppliers'
     | '/showroom/3k'
     | '/showroom/shifts'
+    | '/showroom/suppliers'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -921,6 +920,7 @@ export interface FileRouteTypes {
     | '/social/'
     | '/websites/'
     | '/finance/incoming/$id'
+    | '/k3/unit/$unit'
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
     | '/api/public/meta/dispatch'
@@ -947,6 +947,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/goals-v2'
     | '/inbox'
+    | '/k3-center'
     | '/leave'
     | '/login'
     | '/okrs'
@@ -965,6 +966,7 @@ export interface FileRouteTypes {
     | '/web-chat'
     | '/web-contents'
     | '/biz/3k'
+    | '/biz/3k-area'
     | '/biz/approvals'
     | '/biz/crm'
     | '/biz/goals'
@@ -982,25 +984,22 @@ export interface FileRouteTypes {
     | '/finance/payment'
     | '/finance/salary'
     | '/local/$id'
+    | '/operations/3k'
+    | '/operations/3k-accounting'
+    | '/operations/3k-hr'
     | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/order-quotes/report'
     | '/order-tracking/$id'
+    | '/procurement/suppliers'
     | '/sao/admin'
     | '/sao/earn'
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
-    | '/k3/unit/$unit'
-    | '/k3-center'
-    | '/biz/3k-area'
-    | '/operations/3k-accounting'
-    | '/operations/3k-hr'
-    | '/operations/3k'
-    | '/procurement/suppliers'
-    | '/showroom/suppliers'
     | '/showroom/3k'
     | '/showroom/shifts'
+    | '/showroom/suppliers'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -1014,6 +1013,7 @@ export interface FileRouteTypes {
     | '/social'
     | '/websites'
     | '/finance/incoming/$id'
+    | '/k3/unit/$unit'
     | '/finance/incoming'
     | '/api/public/casso/webhook'
     | '/api/public/meta/dispatch'
@@ -1040,6 +1040,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/goals-v2'
     | '/inbox'
+    | '/k3-center'
     | '/leave'
     | '/login'
     | '/okrs'
@@ -1058,6 +1059,7 @@ export interface FileRouteTypes {
     | '/web-chat'
     | '/web-contents'
     | '/biz/3k'
+    | '/biz/3k-area'
     | '/biz/approvals'
     | '/biz/crm'
     | '/biz/goals'
@@ -1075,24 +1077,22 @@ export interface FileRouteTypes {
     | '/finance/payment'
     | '/finance/salary'
     | '/local/$id'
+    | '/operations_/3k'
+    | '/operations_/3k-accounting'
+    | '/operations_/3k-hr'
     | '/order-quotes/$id'
     | '/order-quotes/new'
     | '/order-quotes/report'
     | '/order-tracking/$id'
+    | '/procurement_/suppliers'
     | '/sao/admin'
     | '/sao/earn'
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings_/kpi-v2'
-    | '/k3_/unit/$unit'
-    | '/k3-center'
-    | '/biz/3k-area'
-    | '/operations_/3k-accounting'
-    | '/operations_/3k-hr'
-    | '/operations_/3k'
-    | '/procurement_/suppliers'
-    | '/showroom_/suppliers'
     | '/showroom_/3k'
+    | '/showroom_/shifts'
+    | '/showroom_/suppliers'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -1106,6 +1106,7 @@ export interface FileRouteTypes {
     | '/social/'
     | '/websites/'
     | '/finance/incoming/$id'
+    | '/k3_/unit/$unit'
     | '/finance/incoming/'
     | '/api/public/casso/webhook'
     | '/api/public/meta/dispatch'
@@ -1133,6 +1134,7 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   GoalsV2Route: typeof GoalsV2Route
   InboxRoute: typeof InboxRoute
+  K3CenterRoute: typeof K3CenterRoute
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
@@ -1151,6 +1153,7 @@ export interface RootRouteChildren {
   WebChatRoute: typeof WebChatRoute
   WebContentsRoute: typeof WebContentsRoute
   Biz3kRoute: typeof Biz3kRoute
+  Biz3kAreaRoute: typeof Biz3kAreaRoute
   BizApprovalsRoute: typeof BizApprovalsRoute
   BizCrmRoute: typeof BizCrmRoute
   BizGoalsRoute: typeof BizGoalsRoute
@@ -1168,25 +1171,22 @@ export interface RootRouteChildren {
   FinancePaymentRoute: typeof FinancePaymentRoute
   FinanceSalaryRoute: typeof FinanceSalaryRoute
   LocalIdRoute: typeof LocalIdRoute
+  Operations3kRoute: typeof Operations3kRoute
+  Operations3kAccountingRoute: typeof Operations3kAccountingRoute
+  Operations3kHrRoute: typeof Operations3kHrRoute
   OrderQuotesIdRoute: typeof OrderQuotesIdRoute
   OrderQuotesNewRoute: typeof OrderQuotesNewRoute
   OrderQuotesReportRoute: typeof OrderQuotesReportRoute
   OrderTrackingIdRoute: typeof OrderTrackingIdRoute
+  ProcurementSuppliersRoute: typeof ProcurementSuppliersRoute
   SaoAdminRoute: typeof SaoAdminRoute
   SaoEarnRoute: typeof SaoEarnRoute
   SaoLeaderboardRoute: typeof SaoLeaderboardRoute
   SaoShopRoute: typeof SaoShopRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
-  K3UnitRoute: typeof K3UnitRoute
-  K3CenterRoute: typeof K3CenterRoute
-  Biz3kAreaRoute: typeof Biz3kAreaRoute
-  Operations3kAccountingRoute: typeof Operations3kAccountingRoute
-  Operations3kHrRoute: typeof Operations3kHrRoute
-  Operations3kRoute: typeof Operations3kRoute
-  ProcurementSuppliersRoute: typeof ProcurementSuppliersRoute
-  ShowroomSuppliersRoute: typeof ShowroomSuppliersRoute
   Showroom3kRoute: typeof Showroom3kRoute
   ShowroomShiftsRoute: typeof ShowroomShiftsRoute
+  ShowroomSuppliersRoute: typeof ShowroomSuppliersRoute
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
@@ -1200,6 +1200,7 @@ export interface RootRouteChildren {
   SocialIndexRoute: typeof SocialIndexRoute
   WebsitesIndexRoute: typeof WebsitesIndexRoute
   FinanceIncomingIdRoute: typeof FinanceIncomingIdRoute
+  K3UnitUnitRoute: typeof K3UnitUnitRoute
   FinanceIncomingIndexRoute: typeof FinanceIncomingIndexRoute
   ApiPublicCassoWebhookRoute: typeof ApiPublicCassoWebhookRoute
   ApiPublicMetaDispatchRoute: typeof ApiPublicMetaDispatchRoute
@@ -1274,6 +1275,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/k3-center': {
+      id: '/k3-center'
+      path: '/k3-center'
+      fullPath: '/k3-center'
+      preLoaderRoute: typeof K3CenterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leave': {
@@ -1409,6 +1417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Biz3kRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/biz/3k-area': {
+      id: '/biz/3k-area'
+      path: '/biz/3k-area'
+      fullPath: '/biz/3k-area'
+      preLoaderRoute: typeof Biz3kAreaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/biz/approvals': {
       id: '/biz/approvals'
       path: '/biz/approvals'
@@ -1542,6 +1557,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocalIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operations_/3k': {
+      id: '/operations_/3k'
+      path: '/operations/3k'
+      fullPath: '/operations/3k'
+      preLoaderRoute: typeof Operations3kRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations_/3k-accounting': {
+      id: '/operations_/3k-accounting'
+      path: '/operations/3k-accounting'
+      fullPath: '/operations/3k-accounting'
+      preLoaderRoute: typeof Operations3kAccountingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations_/3k-hr': {
+      id: '/operations_/3k-hr'
+      path: '/operations/3k-hr'
+      fullPath: '/operations/3k-hr'
+      preLoaderRoute: typeof Operations3kHrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order-quotes/': {
       id: '/order-quotes/'
       path: '/order-quotes'
@@ -1582,6 +1618,13 @@ declare module '@tanstack/react-router' {
       path: '/order-tracking/$id'
       fullPath: '/order-tracking/$id'
       preLoaderRoute: typeof OrderTrackingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/procurement_/suppliers': {
+      id: '/procurement_/suppliers'
+      path: '/procurement/suppliers'
+      fullPath: '/procurement/suppliers'
+      preLoaderRoute: typeof ProcurementSuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sao/': {
@@ -1626,62 +1669,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsKpiV2RouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/k3_/unit/$unit': {
-      id: '/k3_/unit/$unit'
-      path: '/k3/unit/$unit'
-      fullPath: '/k3/unit/$unit'
-      preLoaderRoute: typeof K3UnitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/k3-center': {
-      id: '/k3-center'
-      path: '/k3-center'
-      fullPath: '/k3-center'
-      preLoaderRoute: typeof K3CenterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/biz/3k-area': {
-      id: '/biz/3k-area'
-      path: '/biz/3k-area'
-      fullPath: '/biz/3k-area'
-      preLoaderRoute: typeof Biz3kAreaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operations_/3k-accounting': {
-      id: '/operations_/3k-accounting'
-      path: '/operations/3k-accounting'
-      fullPath: '/operations/3k-accounting'
-      preLoaderRoute: typeof Operations3kAccountingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operations_/3k-hr': {
-      id: '/operations_/3k-hr'
-      path: '/operations/3k-hr'
-      fullPath: '/operations/3k-hr'
-      preLoaderRoute: typeof Operations3kHrRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operations_/3k': {
-      id: '/operations_/3k'
-      path: '/operations/3k'
-      fullPath: '/operations/3k'
-      preLoaderRoute: typeof Operations3kRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/procurement_/suppliers': {
-      id: '/procurement_/suppliers'
-      path: '/procurement/suppliers'
-      fullPath: '/procurement/suppliers'
-      preLoaderRoute: typeof ProcurementSuppliersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/showroom_/suppliers': {
-      id: '/showroom_/suppliers'
-      path: '/showroom/suppliers'
-      fullPath: '/showroom/suppliers'
-      preLoaderRoute: typeof ShowroomSuppliersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/showroom_/3k': {
       id: '/showroom_/3k'
       path: '/showroom/3k'
@@ -1694,6 +1681,13 @@ declare module '@tanstack/react-router' {
       path: '/showroom/shifts'
       fullPath: '/showroom/shifts'
       preLoaderRoute: typeof ShowroomShiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showroom_/suppliers': {
+      id: '/showroom_/suppliers'
+      path: '/showroom/suppliers'
+      fullPath: '/showroom/suppliers'
+      preLoaderRoute: typeof ShowroomSuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signals/': {
@@ -1750,6 +1744,13 @@ declare module '@tanstack/react-router' {
       path: '/finance/incoming/$id'
       fullPath: '/finance/incoming/$id'
       preLoaderRoute: typeof FinanceIncomingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/k3_/unit/$unit': {
+      id: '/k3_/unit/$unit'
+      path: '/k3/unit/$unit'
+      fullPath: '/k3/unit/$unit'
+      preLoaderRoute: typeof K3UnitUnitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/casso/webhook': {
@@ -1869,6 +1870,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   GoalsV2Route: GoalsV2Route,
   InboxRoute: InboxRoute,
+  K3CenterRoute: K3CenterRoute,
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
@@ -1887,6 +1889,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebChatRoute: WebChatRoute,
   WebContentsRoute: WebContentsRoute,
   Biz3kRoute: Biz3kRoute,
+  Biz3kAreaRoute: Biz3kAreaRoute,
   BizApprovalsRoute: BizApprovalsRoute,
   BizCrmRoute: BizCrmRoute,
   BizGoalsRoute: BizGoalsRoute,
@@ -1904,25 +1907,22 @@ const rootRouteChildren: RootRouteChildren = {
   FinancePaymentRoute: FinancePaymentRoute,
   FinanceSalaryRoute: FinanceSalaryRoute,
   LocalIdRoute: LocalIdRoute,
+  Operations3kRoute: Operations3kRoute,
+  Operations3kAccountingRoute: Operations3kAccountingRoute,
+  Operations3kHrRoute: Operations3kHrRoute,
   OrderQuotesIdRoute: OrderQuotesIdRoute,
   OrderQuotesNewRoute: OrderQuotesNewRoute,
   OrderQuotesReportRoute: OrderQuotesReportRoute,
   OrderTrackingIdRoute: OrderTrackingIdRoute,
+  ProcurementSuppliersRoute: ProcurementSuppliersRoute,
   SaoAdminRoute: SaoAdminRoute,
   SaoEarnRoute: SaoEarnRoute,
   SaoLeaderboardRoute: SaoLeaderboardRoute,
   SaoShopRoute: SaoShopRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
-  K3UnitRoute: K3UnitRoute,
-  K3CenterRoute: K3CenterRoute,
-  Biz3kAreaRoute: Biz3kAreaRoute,
-  Operations3kAccountingRoute: Operations3kAccountingRoute,
-  Operations3kHrRoute: Operations3kHrRoute,
-  Operations3kRoute: Operations3kRoute,
-  ProcurementSuppliersRoute: ProcurementSuppliersRoute,
-  ShowroomSuppliersRoute: ShowroomSuppliersRoute,
   Showroom3kRoute: Showroom3kRoute,
   ShowroomShiftsRoute: ShowroomShiftsRoute,
+  ShowroomSuppliersRoute: ShowroomSuppliersRoute,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
@@ -1936,6 +1936,7 @@ const rootRouteChildren: RootRouteChildren = {
   SocialIndexRoute: SocialIndexRoute,
   WebsitesIndexRoute: WebsitesIndexRoute,
   FinanceIncomingIdRoute: FinanceIncomingIdRoute,
+  K3UnitUnitRoute: K3UnitUnitRoute,
   FinanceIncomingIndexRoute: FinanceIncomingIndexRoute,
   ApiPublicCassoWebhookRoute: ApiPublicCassoWebhookRoute,
   ApiPublicMetaDispatchRoute: ApiPublicMetaDispatchRoute,
