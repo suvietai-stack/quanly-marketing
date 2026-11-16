@@ -102,7 +102,7 @@ BEGIN
     'Tạo từ Tín hiệu cơ hội',
     'Nguồn tín hiệu: ' || nullif(sig.source,''),
     'Sản phẩm: ' || nullif(array_to_string(sig.products,', '),''),
-    'Nhóm nhu cầu: ' || nullif(array_to_string(sig.need_groups,', '),''),
+    'Nhóm nhu cầu: ' || coalesce(nullif(array_to_string(sig.need_groups,', '),''),nullif(sig.need_group,'')),
     'Nhu cầu: ' || nullif(sig.need_detail,''),
     'Ghi chú Marketing: ' || nullif(sig.marketing_note,'')
   );
@@ -130,4 +130,5 @@ $fn$;
 
 REVOKE ALL ON FUNCTION public.signal_crm_register(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.signal_crm_register(uuid) TO authenticated;
+NOTIFY pgrst, 'reload schema';
 COMMIT;
