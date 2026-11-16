@@ -49,6 +49,7 @@ export type PermissionGroup =
   | "Sale Work Zalo"
   | "Cơ cấu tổ chức"
   | "Showroom"
+  | "Trung tâm 3K"
   | "Hộp thư";
 
 export interface PermissionDef {
@@ -588,6 +589,13 @@ export const PERMISSIONS: PermissionDef[] = [
   P("showroom.k3.view_team", "Theo dõi 3K nhân sự cửa hàng", "Showroom", "3K"),
   P("showroom.k3.view_all", "Xem 3K toàn Khối Showroom", "Showroom", "3K"),
   P("showroom.k3.comment", "Nhận xét 3K nhân viên Showroom", "Showroom", "3K"),
+
+  // ===== Trung tâm 3K chung — hiển thị menu theo Role vị trí, phạm vi do server kiểm soát =====
+  P("k3hub.use", "3K theo khu vực tổ chức", "Trung tâm 3K", "Sử dụng"),
+  P("k3hub.center", "Theo dõi 3K theo cơ cấu quản lý", "Trung tâm 3K", "Quản lý"),
+  P("k3hub.config", "Cấu hình phạm vi áp dụng 3K", "Trung tâm 3K", "Cấu hình"),
+  P("k3hub.biz", "Mở 3K khu vực Kinh doanh", "Trung tâm 3K", "Khu vực"),
+  P("k3hub.ops", "Mở 3K khu vực Vận hành", "Trung tâm 3K", "Khu vực"),
 
   // ===== Cơ cấu tổ chức (quản trị tại Hành chính & Nhân sự → Cơ cấu tổ chức) =====
   P("org.view", "Xem sơ đồ cơ cấu tổ chức", "Cơ cấu tổ chức", "Cơ cấu"),
