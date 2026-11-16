@@ -33,7 +33,7 @@ BEGIN
   DELETE FROM public.wc_presence_sessions
     WHERE conversation_id=v_conversation AND last_seen_at<now()-interval '7 days';
   RETURN true;
-END $;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.wc_presence_summary(p_conversations uuid[])
 RETURNS TABLE(conversation_id uuid,presence text,last_seen_at timestamptz)
