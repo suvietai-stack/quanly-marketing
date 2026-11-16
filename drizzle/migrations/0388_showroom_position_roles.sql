@@ -16,7 +16,7 @@ DECLARE
     'overview.own_only','overview.view','signal.sale'
   ];
   candidate record;
-  current_role public.app_roles%ROWTYPE;
+  existing_role public.app_roles%ROWTYPE;
 BEGIN
   -- Mua Lẻ is the existing bounded Zalo/signal group; do not expand to all groups.
   FOR candidate IN SELECT * FROM (VALUES
@@ -34,15 +34,15 @@ BEGIN
          OR NOT private.grant_source_ready('position',perm)
          OR NOT private.org_role_permission_ready(perm)
     ) THEN RAISE EXCEPTION 'Unsafe showroom role permission in %', candidate.role_id; END IF;
-    SELECT * INTO current_role FROM public.app_roles WHERE id=candidate.role_id;
+    SELECT * INTO existing_role FROM public.app_roles WHERE id=candidate.role_id;
     IF FOUND THEN
-      IF current_role.name IS DISTINCT FROM candidate.role_name
-         OR current_role.role_kind IS DISTINCT FROM 'position'
-         OR current_role.catalog_generation IS DISTINCT FROM 2
-         OR current_role.catalog_state IS DISTINCT FROM 'standard'
-         OR current_role.permissions IS DISTINCT FROM candidate.permissions
-         OR current_role.signal_scope_all IS DISTINCT FROM false
-         OR current_role.signal_scope IS DISTINCT FROM ARRAY['Mua Lẻ']::text[]
+      IF existing_role.name IS DISTINCT FROM candidate.role_name
+         OR existing_role.role_kind IS DISTINCT FROM 'position'
+         OR existing_role.catalog_generation IS DISTINCT FROM 2
+         OR existing_role.catalog_state IS DISTINCT FROM 'standard'
+         OR existing_role.permissions IS DISTINCT FROM candidate.permissions
+         OR existing_role.signal_scope_all IS DISTINCT FROM false
+         OR existing_role.signal_scope IS DISTINCT FROM ARRAY['Mua Lẻ']::text[]
       THEN RAISE EXCEPTION 'Role % already exists with different data; review instead of overwrite', candidate.role_id; END IF;
     ELSE
       IF EXISTS(SELECT 1 FROM public.app_roles
