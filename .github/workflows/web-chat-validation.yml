@@ -1,7 +1,7 @@
 name: Web Chat validation
 on:
   pull_request:
-    paths: ['src/lib/webChat/**', 'src/components/webChat/**', 'src/routes/web-chat.tsx', 'src/routes/api/public/web-chat/**', 'wordpress/suviet-base-chat/**', 'tests/web-chat/**', 'supabase/migrations/20261115090000_web_chat.sql', '.github/workflows/web-chat-validation.yml']
+    paths: ['src/lib/webChat/**', 'src/components/webChat/**', 'src/routes/web-chat.tsx', 'src/routes/api/public/web-chat/**', 'wordpress/suviet-base-chat/**', 'tests/web-chat/**', 'supabase/migrations/20261115090000_web_chat.sql', 'supabase/migrations/20261116100000_web_chat_presence.sql', 'public/downloads/suviet-base-chat.zip', 'scripts/package-web-chat.py', '.github/workflows/web-chat-validation.yml']
   workflow_dispatch:
 permissions:
   contents: read
