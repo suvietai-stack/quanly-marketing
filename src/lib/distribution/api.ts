@@ -5,6 +5,7 @@ export type CommercialAreaAccess = {
   orders: boolean;
   distribution: boolean;
   distribution_units: string[];
+  orders_units: string[];
 };
 export type CommercialOverview = {
   area: 'orders' | 'distribution';
