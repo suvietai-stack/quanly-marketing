@@ -63,11 +63,13 @@ export const navigationGroups: NavGroup[] = [
 { to: "/finance/advance", label: "Đề Nghị Tạm Ứng", icon: Wallet },
 { to: "/finance/payment", label: "Đề Nghị Thanh Toán", icon: FileText },
 { to: "/finance/salary", label: "Tạm Ứng Lương", icon: BanknoteArrowDown },
+{ to: "/operations/3k-accounting", label: "3K Kế toán", icon: ClipboardCheck, perm: "k3hub.ops_accounting" },
   ] },
   { label: "Hành Chính & Nhân Sự", icon: Users, items: [
 { to: "/organization", label: "Cơ cấu tổ chức", icon: Building2 },
 { to: "/leave", label: "Nghỉ phép & Đi sớm muộn", icon: ClipboardCheck, anyPerm: ["leave.view_own", "leave.create", "leave.view_assigned", "leave.approve", "leave.view_all", "leave.report"] },
 { to: "/attendance", label: "Giải trình chấm công", icon: Fingerprint, anyPerm: ["att.create", "att.view_own", "att.witness", "att.view_all", "att.reconcile", "att.report", "att.manage"] },
+{ to: "/operations/3k-hr", label: "3K Hành chính & Nhân sự", icon: ClipboardCheck, perm: "k3hub.ops_hr" },
   ] },
   { label: "Sao Sứ Việt", icon: Star, items: [
 { to: '/sao', label: 'Ví Sao của tôi', icon: Wallet },
