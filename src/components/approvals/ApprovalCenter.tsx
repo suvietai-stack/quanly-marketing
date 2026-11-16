@@ -98,8 +98,11 @@ function ItemRow({ item, now, tab }: { item: ApprovalItem; now: string; tab: Tab
 }
 
 export function ApprovalCenter() {
-  const { user } = useCurrentUser();
-  const query = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id });
+  const { user, can } = useCurrentUser();
+  // Only executives with cross-business visibility and HR approval capability
+  // request the server-verified partial fallback. Other roles retain the full feed.
+  const executiveFallback = can('leave.approve') && can('biz.view_all');
+  const query = useQuery({ ...approvalCenterQuery(user?.id ?? '', executiveFallback), enabled: !!user?.id });
   const [tab, setTab] = useState<Tab>('todo');
   const [search, setSearch] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
