@@ -12,6 +12,7 @@ on:
       - 'src/lib/navigation*'
       - 'src/lib/store.ts'
       - 'drizzle/migrations/0420_design_workflow_v2_zalo_groups.sql'
+      - 'drizzle/migrations/0423_design_notification_performance.sql'
       - '.github/workflows/design-workflow-validation.yml'
 permissions:
   contents: read
