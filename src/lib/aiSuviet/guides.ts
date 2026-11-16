@@ -2,6 +2,43 @@
  * not permission grants or automatically executed business actions. */
 export type BaseGuide = { id:string; title:string; keywords:string[]; path:string; steps:string[]; note?:string };
 export const BASE_GUIDES:BaseGuide[] = [
+ {id:'showroom-roster-register',title:'Đăng ký lịch trực Showroom tuần sau trên điện thoại',
+  keywords:['đăng ký lịch trực','đăng kí lịch trực','đăng ký ca showroom','lịch trực tuần sau','chọn ngày nghỉ showroom','xếp ca showroom'],
+  path:'/showroom/shifts',steps:[
+   'Mở Showroom → Lịch trực Showroom, chọn tuần kế tiếp tại hàng chọn tuần.',
+   'Trong tab Lịch của tôi, chọn Ca 1, Ca 2, Ca Full hoặc Nghỉ ở từng ngày. Có thể bấm Tuần trước để sao chép rồi chỉnh.',
+   'Chọn đúng số ngày nghỉ theo chính sách (mặc định 1 ngày/tuần), xem ca đồng nghiệp ở tab Lịch cửa hàng và cùng cân đối Ca 1/Ca 2.',
+   'Bấm Gửi đăng ký trong thời gian mở. Bạn được chỉnh trước giờ khóa; sau giờ khóa phải liên hệ quản lý.',
+   'Sau khi quản lý công bố, mở Lịch của tôi để xem ca chính thức.'
+  ],note:'Lịch đăng ký chỉ là nguyện vọng. Base không tự phân ca; quản lý chốt dựa trên định mức và tình hình cửa hàng.'},
+ {id:'showroom-roster-swap',title:'Đổi ca hoặc đổi ngày nghỉ sau khi lịch trực đã chốt',
+  keywords:['đổi ca trực','đổi lịch showroom','nhận ca thay','đổi ngày nghỉ','nhờ đồng nghiệp trực thay','đổi ca showroom'],
+  path:'/showroom/shifts',steps:[
+   'Vào Showroom → Lịch trực, chọn đúng tuần có ca đã công bố.',
+   'Ở Lịch của tôi bấm Đổi trên ngày cần đổi (hoặc mở tab Đổi ca rồi chọn Đề nghị).',
+   'Chọn đồng nghiệp và ngày ca cần hoán đổi, ghi lý do nếu cần rồi bấm Gửi yêu cầu.',
+   'Đồng nghiệp vào tab Đổi ca bấm Đồng ý nhận ca; quản lý nhận yêu cầu và duyệt hoặc từ chối.',
+   'Chỉ sau khi được duyệt lịch mới thay đổi. Khi khẩn cấp, chọn Báo khẩn và nhập lý do để quản lý bố trí người hỗ trợ.'
+  ],note:'Yêu cầu đổi giữa hai tuần phải đảm bảo chính sách nghỉ hằng tuần. Báo khẩn không thay thế đơn nghỉ phép chính thức.'},
+ {id:'showroom-roster-manager',title:'Quản lý duyệt và công bố lịch trực Showroom',
+  keywords:['duyệt lịch trực','chốt lịch trực','công bố ca showroom','cân ca showroom','phân ca showroom','duyệt đổi ca showroom'],
+  path:'/showroom/shifts',steps:[
+   'Đăng nhập với Role Cửa hàng trưởng hoặc quyền showroom.shift.approve, mở Showroom → Lịch trực.',
+   'Chọn tuần và tab Lịch cửa hàng để kiểm tra mọi ngày có Ca 1, Ca 2 và phương án trực trưa.',
+   'Mở tab Duyệt lịch, chọn từng ngày và điều chỉnh lựa chọn của nhân viên nếu cần. Base không tự chia ca.',
+   'Nếu cần Ca Full ngoại lệ, ghi rõ lý do xử lý giờ nghỉ / thiếu người. Bấm Chốt & công bố khi đã đạt quy tắc.',
+   'Sau công bố, vào tab Đổi ca để duyệt yêu cầu đã có đồng nghiệp đồng ý hoặc tiếp nhận báo khẩn.'
+  ],note:'Chỉ người được cấp quyền duyệt mới thấy tab Duyệt. Chưa có Cửa hàng trưởng thì cần bổ nhiệm hoặc cấp quyền hợp lệ.'},
+ {id:'showroom-roster-settings',title:'Cài đặt chính sách lịch trực Showroom',
+  keywords:['cài đặt lịch trực','chính sách ca trực','giờ đăng ký trực','thời hạn đăng ký ca','số người tối thiểu ca','ngày nghỉ lễ showroom'],
+  path:'/showroom/shifts',steps:[
+   'Dùng tài khoản có quyền showroom.shift.settings, mở Showroom → Lịch trực → Cài đặt.',
+   'Chọn thời điểm mở, khóa đăng ký và hạn công bố lịch tuần kế tiếp.',
+   'Đặt số người tối thiểu Ca 1/Ca 2, ngày nghỉ mỗi tuần và bật/tắt ngoại lệ Ca Full.',
+   'Chỉnh giờ ca và nhập lịch nghỉ lễ theo từng năm. Kiểm tra giờ mở cửa và phương án trực trưa.',
+   'Nhập lý do thay đổi rồi bấm Lưu chính sách. Base lưu phiên bản; lịch cũ đã công bố không tự bị sửa.'
+  ],note:'Không thay đổi chính sách tiền lương hoặc tự xác nhận giờ làm thêm; phải đối chiếu riêng với nhân sự.'},
+
  {id:'design-create',title:'Tạo Job thiết kế',keywords:['tạo job','tạo công việc thiết kế','giao job','tạo thiết kế','brief thiết kế'],
   path:'/orders',steps:[
    'Vào Thiết kế → Tất cả công việc, hoặc chọn một luồng Chụp ảnh / Ấn phẩm Marketing / Ma-két đơn hàng.',
