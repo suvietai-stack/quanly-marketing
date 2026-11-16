@@ -12,6 +12,9 @@ on:
       - 'src/lib/basePermissions/centerRoleDefaults.ts'
       - 'src/lib/basePermissions/completeCenterRoles.database.test.ts'
       - 'docs/center-roles-2026-11-17/**'
+      - 'src/components/RoleCatalog.tsx'
+      - 'src/components/OrgUnitDrawer.tsx'
+      - 'docs/center-roles-2026-11-17/**'
       - 'src/lib/distribution/**'
       - '.github/workflows/organization-ui-validation.yml'
   workflow_dispatch:
@@ -41,3 +44,4 @@ jobs:
           src/lib/basePermissions/completeCenterRoles.database.test.ts
           src/lib/distribution/hierarchy.test.ts
           src/lib/distribution/centersHierarchy.test.ts
+          src/lib/distribution/centerLegacyPresentation.test.ts

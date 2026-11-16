@@ -1,4 +1,6 @@
 # Base organization permissions
+- Three-center titles must be explicit B2B/Phân Phối/BTC/Showroom names. Legacy Biz titles/Role IDs used by people are shown in a collapsed historical section, not offered for fresh chart appointments. Only the audited Super Admin org_change preview/apply may add missing empty canonical positions; never silently rebind or rewrite occupied appointments.
+
 - Chart rows are shared (unit,title) groups with distinct effective holders; new chart appointments omit historical slot IDs and title history includes every former slot — prevents per-person positions without erasing history.
 - RoleCatalog is the sole inline Role editor; reductions use the existing actor-bound preview/apply and server obligation guard, never a blanket client prohibition. Shared checklists use explicit server policy keys and dependency hints, preserving native scope gates.
 - Common is one active-account source in the existing Role rules/provenance pipeline, never per-user Role links; its checkbox readiness is explicit and own-only, with K3 unavailable until application-scope enforcement is accepted.

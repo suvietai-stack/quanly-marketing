@@ -3,6 +3,8 @@
 - Keep preview/production, database changes and publish separate from code review. This rule is about editing workflow, not a license to loosen scoped permissions.
 
 # Architecture rules
+- Three center Role tabs separate canonical 11 B2B/Phân Phối/BTC/Showroom positions from legacy shared Business Roles. Inactive unused custom aliases may be archived only after strict reference preflight; retain audit and reference-bearing roles for rights continuity.
+
 - Center Role presets only insert missing IDs with ready-by-default work permissions. Existing B2B, Distribution, BTC and Showroom Roles never get overwritten, especially custom grants; catalog Role creation never grants users access until audited positions and appointments.
 - Organization chart flattens Showroom visually while keeping the historical Bán Lẻ wrapper as a separate sibling, and hides only fully empty legacy Khối Kinh doanh. IDs, original parent links, history and all permission scopes are unchanged.
 
