@@ -30,10 +30,12 @@ const vietnamToday = () => {
 const statusBadge = (s: K3HubState): 'secondary' | 'outline' | 'default' =>
   s === 'confirmed' ? 'default' : s === 'none' ? 'outline' : 'secondary';
 
-export function K3CommonWorkspace({ title, initialUnit, central = false }: {
+export function K3CommonWorkspace({ title, initialUnit, central = false, areaBlock }: {
   title: string;
   initialUnit: string;
   central?: boolean;
+  /** Limits this area's monitor to the configured block; keeps the shared 3K source. */
+  areaBlock?: string;
 }) {
   const { user } = useCurrentUser();
   const [tab, setTab] = useState<'mine' | 'report' | 'policy'>(central ? 'report' : 'mine');
@@ -46,11 +48,11 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
     retry: 1,
   });
   const data = access.data;
-  const canReport = !!(data?.can_manage || data?.can_company);
-  const options = data?.units ?? [];
+  const options = areaBlock ? (data?.units ?? []).filter(u => u.block_id===areaBlock || u.id===areaBlock) : (data?.units ?? []);
+  const canReport = !!(data?.can_manage || data?.can_company) && (!areaBlock || options.length>0);
   const initial = central
     ? (data?.can_company ? 'org-company' : options[0]?.id ?? '')
-    : (data?.can_company ? initialUnit
+    : (data?.can_company && !areaBlock ? initialUnit
       : options.find(x => x.id===initialUnit)?.id
         ?? options.find(x => x.block_id===initialUnit)?.id ?? '');
   const selectedUnit = unitOverride !== null &&
@@ -93,9 +95,9 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
       </div>}
       {visibleTab === 'report' && canReport && (central
         ? <K3HubTimingDashboard unit={selectedUnit} units={options}
-            canCompany={data.can_company} onUnitChange={setUnitOverride} />
+            canCompany={data.can_company && !areaBlock} onUnitChange={setUnitOverride} />
         : <K3HubReportPanel unit={selectedUnit} units={options}
-            canCompany={data.can_company} onUnitChange={setUnitOverride} />
+            canCompany={data.can_company && !areaBlock} onUnitChange={setUnitOverride} />
       )}
       {visibleTab === 'policy' && data.can_config && <K3HubPolicyPanel />}
       {central && <p className="text-xs text-muted-foreground">
