@@ -19,8 +19,10 @@ describe('Presentation-only navigation', () => {
     expect(groups.find(g => g.label === 'Marketing')?.items.find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
     expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/products']);
   });
-  it('personal K3 is a single common entry independent of Biz permissions', () => {
-    expect(visibleNavigation(access()).filter(g => g.items.some(i => i.to === '/biz/3k')).map(g => g.label)).toEqual(['Điều hành']);
+  it('personal 3K is a single shared entry for eligible roles, not a Marketing obligation', () => {
+    expect(visibleNavigation(access(['k3hub.use'])).filter(g =>
+      g.items.some(i => i.to === '/biz/3k')).map(g => g.label)).toEqual(['Điều hành']);
+    expect(paths(access())).not.toContain('/biz/3k');
   });
   it('keeps all navigation areas in the mandated order', () => {
     expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
@@ -49,7 +51,7 @@ describe('Presentation-only navigation', () => {
     expect(visibleNavigation(access(['kpi.view_own'])).flatMap(g => g.items).find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
   });
   it('preserves super admin business bypass without inventing grants', () => {
-    expect(paths(access([], { isSuperAdmin: true }))).toContain('/biz/3k');
+    expect(paths(access(['k3hub.use'], { isSuperAdmin: true }))).toContain('/biz/3k');
     expect(paths(access([], { isSuperAdmin: true }))).not.toContain('/orders');
   });
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
