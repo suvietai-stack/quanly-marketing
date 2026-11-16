@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, ClipboardList, CalendarDays, MessageSquareText, RefreshCw, Store, Users, Target } from 'lucide-react';
+import { CheckCircle2, ClipboardList, MessageSquareText, RefreshCw, Store, Users, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/lib/auth';
 import { Biz3K } from '@/components/biz/Biz3K';
@@ -142,7 +142,7 @@ function ShowroomK3Team() {
   </div>;
 }
 
-function K3Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function K3Stat({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
   return <Card><CardContent className="space-y-2 p-3 sm:p-4">
     <div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div>
     <p className="text-2xl font-semibold tabular-nums">{value}</p>
