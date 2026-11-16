@@ -30,7 +30,6 @@ import { Route as ReportsV2RouteImport } from './routes/reports-v2'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ShowroomRouteImport } from './routes/showroom'
-import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebChatRouteImport } from './routes/web-chat'
@@ -68,6 +67,7 @@ import { Route as SaoEarnRouteImport } from './routes/sao.earn'
 import { Route as SaoLeaderboardRouteImport } from './routes/sao.leaderboard'
 import { Route as SaoShopRouteImport } from './routes/sao.shop'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
+import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
@@ -195,11 +195,6 @@ const SettingsRoute = SettingsRouteImport.update({
 const ShowroomRoute = ShowroomRouteImport.update({
   id: '/showroom',
   path: '/showroom',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Showroom3kRoute = Showroom3kRouteImport.update({
-  id: '/showroom_/3k',
-  path: '/showroom/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksRoute = TasksRouteImport.update({
@@ -387,6 +382,11 @@ const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   path: '/settings/kpi-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Showroom3kRoute = Showroom3kRouteImport.update({
+  id: '/showroom_/3k',
+  path: '/showroom/3k',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignalsIndexRoute = SignalsIndexRouteImport.update({
   id: '/signals/',
   path: '/signals/',
@@ -531,7 +531,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/showroom': typeof ShowroomRoute
-  '/showroom/3k': typeof Showroom3kRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-chat': typeof WebChatRoute
@@ -563,6 +562,7 @@ export interface FileRoutesByFullPath {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -615,7 +615,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/showroom': typeof ShowroomRoute
-  '/showroom/3k': typeof Showroom3kRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-chat': typeof WebChatRoute
@@ -647,6 +646,7 @@ export interface FileRoutesByTo {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -700,7 +700,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/showroom': typeof ShowroomRoute
-  '/showroom_/3k': typeof Showroom3kRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-chat': typeof WebChatRoute
@@ -732,6 +731,7 @@ export interface FileRoutesById {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
+  '/showroom_/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -786,7 +786,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/showroom'
-    | '/showroom/3k'
     | '/tasks'
     | '/videos'
     | '/web-chat'
@@ -818,6 +817,7 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
+    | '/showroom/3k'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -870,7 +870,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/showroom'
-    | '/showroom/3k'
     | '/tasks'
     | '/videos'
     | '/web-chat'
@@ -902,6 +901,7 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
+    | '/showroom/3k'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -954,7 +954,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/showroom'
-    | '/showroom_/3k'
     | '/tasks'
     | '/videos'
     | '/web-chat'
@@ -986,6 +985,7 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings_/kpi-v2'
+    | '/showroom_/3k'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -1039,7 +1039,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   ShowroomRoute: typeof ShowroomRoute
-  Showroom3kRoute: typeof Showroom3kRoute
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebChatRoute: typeof WebChatRoute
@@ -1071,6 +1070,7 @@ export interface RootRouteChildren {
   SaoLeaderboardRoute: typeof SaoLeaderboardRoute
   SaoShopRoute: typeof SaoShopRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
+  Showroom3kRoute: typeof Showroom3kRoute
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
@@ -1249,13 +1249,6 @@ declare module '@tanstack/react-router' {
       path: '/showroom'
       fullPath: '/showroom'
       preLoaderRoute: typeof ShowroomRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/showroom_/3k': {
-      id: '/showroom_/3k'
-      path: '/showroom/3k'
-      fullPath: '/showroom/3k'
-      preLoaderRoute: typeof Showroom3kRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks': {
@@ -1517,6 +1510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsKpiV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/showroom_/3k': {
+      id: '/showroom_/3k'
+      path: '/showroom/3k'
+      fullPath: '/showroom/3k'
+      preLoaderRoute: typeof Showroom3kRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signals/': {
       id: '/signals/'
       path: '/signals'
@@ -1703,7 +1703,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   ShowroomRoute: ShowroomRoute,
-  Showroom3kRoute: Showroom3kRoute,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebChatRoute: WebChatRoute,
@@ -1735,6 +1734,7 @@ const rootRouteChildren: RootRouteChildren = {
   SaoLeaderboardRoute: SaoLeaderboardRoute,
   SaoShopRoute: SaoShopRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
+  Showroom3kRoute: Showroom3kRoute,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,
