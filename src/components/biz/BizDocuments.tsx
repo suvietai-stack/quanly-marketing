@@ -25,16 +25,16 @@ import {supabase} from '@/integrations/supabase/client';
 import {BizQuarterSummary} from './BizQuarterSummary';
 import {BizPlans,LateStats} from './BizPlans';
 import {MyDocCard,MyWorkSection,StatusBadges,dateText,useOpenDocument} from './BizMyWork';
-export function BizDocuments({kind}:{kind:DocKind}){return kind==='plan'?<BizPlans/>:<BizDocumentsClassic kind={kind}/>;}
+export function BizDocuments({kind,scopeDepartmentIds}:{kind:DocKind;scopeDepartmentIds?:string[]}){return kind==='plan'?<BizPlans scopeDepartmentIds={scopeDepartmentIds}/>:<BizDocumentsClassic kind={kind} scopeDepartmentIds={scopeDepartmentIds}/>;}
 type RQuick='all'|'submitted'|'unsubmitted'|'ontime'|'late'|'overdue'|'adjusting'|'adjusted';
 const RQUICK_LABEL:Record<RQuick,string>={all:'Tổng cần nộp',submitted:'Đã nộp',unsubmitted:'Chưa nộp',ontime:'Đúng hạn',late:'Nộp muộn',overdue:'Quá hạn chưa nộp',adjusting:'Đề nghị điều chỉnh',adjusted:'Điều chỉnh đã duyệt'};
 function reportQuickMatch(row:DocRow,quick:RQuick){const time=deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now);const status=row.document?.versions.at(-1)?.status;switch(quick){case 'all':return true;case 'submitted':return !!row.document?.first_submitted_at;case 'unsubmitted':return !row.document?.first_submitted_at;case 'ontime':return time==='ontime';case 'late':return time==='late';case 'overdue':return time==='overdue';case 'adjusting':return status==='pending';case 'adjusted':return !!row.document?.versions.some(v=>v.status==='approved'&&v.version>1);}}
 /** Số KR đã có kết quả / tổng KR của phiên bản mới nhất. */
 function krProgress(row:DocRow){const items=row.document?.versions.find(v=>v.id===row.document?.official_version_id)?.items??[];if(!items.length)return null;return `${items.filter(i=>i.actual!==null).length}/${items.length} KR`;}
 
-function BizDocumentsClassic({kind}:{kind:DocKind}){
+function BizDocumentsClassic({kind,scopeDepartmentIds}:{kind:DocKind;scopeDepartmentIds?:string[]}){
  const uid=useAuth(s=>s.currentUserId)??'';const {can}=useCurrentUser();const [periodKind,setPeriodKind]=useState<PeriodKind>('month');const [year,setYear]=useState(new Date().getFullYear());const [period,setPeriod]=useState(new Date().getMonth()+1);const [quick,setQuick]=useState<RQuick>('all');const [dept,setDept]=useState('all');const [employee,setEmployee]=useState('all');const [time,setTime]=useState('all');const [status,setStatus]=useState('all');const [search,setSearch]=useState('');const [selected,setSelected]=useState<string|null>(null);
- const query=useQuery({...documentsQuery(uid,kind,periodKind,year,period),enabled:!!uid});const rows=query.data??[];
+ const query=useQuery({...documentsQuery(uid,kind,periodKind,year,period),enabled:!!uid});const rows=(query.data??[]).filter(r=>!scopeDepartmentIds || scopeDepartmentIds.includes(r.department_id));
  const myRow=rows.find(r=>r.user_id===uid);const teamRows=rows.filter(r=>r.user_id!==uid);
  const canManage=can('biz.view_all')||can('biz.view_dept')||can('biz.report_approve');
  const showTeam=canManage&&teamRows.length>0;
@@ -48,15 +48,15 @@ function BizDocumentsClassic({kind}:{kind:DocKind}){
  const shown=teamRows.filter(r=>reportQuickMatch(r,quick)&&(dept==='all'||r.department_id===dept)&&(employee==='all'||r.user_id===employee)&&(time==='all'||deadlineStatus(r.deadline,r.document?.first_submitted_at??null,r.server_now)===time)&&(status==='all'||(r.document?.versions.at(-1)?.status??'missing')===status)&&(!search.trim()||r.employee_name.toLowerCase().includes(search.trim().toLowerCase()))).sort((a,b)=>manageRank(a)-manageRank(b)||a.employee_name.localeCompare(b.employee_name,'vi'));
  const jump=(pk:PeriodKind,y:number,p:number,openDialog:boolean)=>{setPeriodKind(pk);setYear(y);setPeriod(p);setSelected(openDialog?uid:null);};
  return <div className="space-y-6 pb-32 sm:pb-8">
-  <MyWorkSection kind="report" onOpen={jump}/>
+  {!scopeDepartmentIds && <MyWorkSection kind="report" onOpen={jump}/>}
   <h2 className="text-lg font-semibold">Xem kết quả báo cáo</h2><div className="flex flex-wrap gap-3 items-center border-b pb-4"><Tabs value={periodKind} onValueChange={v=>{const pk=v as PeriodKind;const current=periodOfDate(pk==='year'?'month':pk,at);setPeriodKind(pk);setYear(current.year);setPeriod(pk==='year'?1:current.period);setSelected(null);}}><TabsList className="flex-wrap h-auto"><TabsTrigger value="day">Ngày</TabsTrigger><TabsTrigger value="week">Tuần</TabsTrigger><TabsTrigger value="month">Tháng</TabsTrigger><TabsTrigger value="quarter">Quý</TabsTrigger><TabsTrigger value="year">Năm</TabsTrigger></TabsList></Tabs><Input aria-label="Năm" className="w-28" type="number" min={2000} max={2200} value={year} onChange={e=>{const n=Number(e.target.value);if(n>=2000&&n<=2200){setYear(n);setSelected(null);}}}/>{periodKind==='day'?<Input aria-label="Ngày báo cáo" type="date" className="w-44" value={storedRange(periodKind,year,period).start} onChange={e=>{if(!e.target.value)return;const p=dayPeriod(e.target.value);setYear(p.year);setPeriod(p.period);setSelected(null);}}/>:max>1&&<Select value={String(period)} onValueChange={v=>{setPeriod(Number(v));setSelected(null);}}><SelectTrigger className="w-32"><SelectValue/></SelectTrigger><SelectContent>{Array.from({length:max},(_,i)=><SelectItem key={i} value={String(i+1)}>{CYCLE_LABEL[periodKind]} {i+1}</SelectItem>)}</SelectContent></Select>}<Button variant="ghost" size="icon" aria-label="Làm mới" onClick={()=>query.refetch()}><RefreshCw className="h-4 w-4"/></Button></div>
   {query.isPending&&<p>Đang tải…</p>}{query.error&&<p role="alert" className="text-destructive">Không tải được: {query.error.message}</p>}
   {!query.isPending&&myRow&&(canCreate||myRow.document)&&<MyDocCard row={myRow} kind="report" periodKind={periodKind} year={year} period={period} onOpen={()=>setSelected(uid)}/>}
   {!query.isPending&&!myRow&&!showTeam&&<div className="py-10 border-y space-y-3"><FileText className="h-8 w-8 text-muted-foreground"/><p>Chưa có hồ sơ nguồn ở kỳ đang chọn.</p></div>}
-  {!query.isPending&&!canCreate&&<ReportSummary uid={uid} user={uid} year={year} periodKind={periodKind} period={period}/>}
+  {!query.isPending&&!canCreate&&(!scopeDepartmentIds || !!myRow)&&<ReportSummary uid={uid} user={uid} year={year} periodKind={periodKind} period={period}/>}
   {showTeam&&<section className="space-y-4">
    <h2 className="text-lg font-semibold">Báo cáo trong phạm vi quản lý</h2>
-   <LateStats kind="report" periodKind={periodKind} year={year} period={period}/>
+   {!scopeDepartmentIds && <LateStats kind="report" periodKind={periodKind} year={year} period={period}/>}
    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">{(Object.keys(RQUICK_LABEL) as RQuick[]).map(key=>{const count=teamRows.filter(r=>reportQuickMatch(r,key)).length;return <button key={key} type="button" onClick={()=>setQuick(quick===key?'all':key)} className={`border rounded-lg p-3 text-left transition-colors ${quick===key?'border-primary bg-primary/5':'bg-card hover:border-primary/40'}`}><p className="text-xs text-muted-foreground">{RQUICK_LABEL[key]}</p><strong className="text-xl tabular-nums">{count}</strong></button>;})}</div>
    <div className="flex flex-wrap gap-2 items-center">
     <div className="relative"><Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><Input aria-label="Tìm nhân sự" placeholder="Tìm theo tên…" className="pl-9 w-52" value={search} onChange={e=>setSearch(e.target.value)}/></div>
