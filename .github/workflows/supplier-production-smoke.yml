@@ -1,0 +1,43 @@
+name: Production shared supplier master smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/supplier-production-smoke.yml'
+      - 'src/components/procurement/**'
+      - 'src/routes/procurement_.suppliers.tsx'
+      - 'src/lib/navigation.ts'
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Confirm live procurement route and published assets
+        env:
+          ORIGIN: https://base.suviet.vn
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/supplier-smoke
+          for attempt in 1 2 3 4 5; do
+            curl --compressed -fsSL --max-time 30 -D /tmp/supplier-smoke/headers               "${ORIGIN}/procurement/suppliers" -o /tmp/supplier-smoke/index.html
+            grep -iE '^(HTTP/|x-deployment-id:)' /tmp/supplier-smoke/headers || true
+            grep -aoE '/assets/[^" ]+\.js' /tmp/supplier-smoke/index.html               | sort -u > /tmp/supplier-smoke/assets.txt || true
+            count=$(wc -l < /tmp/supplier-smoke/assets.txt)
+            echo "Assets to inspect: $count"
+            found=0
+            while IFS= read -r asset; do
+              curl --compressed -fsSL --max-time 35 "${ORIGIN}${asset}"                 -o /tmp/supplier-smoke/app.js || continue
+              if grep -aFq '/procurement/suppliers' /tmp/supplier-smoke/app.js; then
+                found=1
+                break
+              fi
+            done < /tmp/supplier-smoke/assets.txt
+            if [ "$found" -eq 1 ]; then
+              echo 'PASS: published Base serves the shared procurement supplier route'
+              exit 0
+            fi
+            echo "New supplier route not yet confirmed in live JS (attempt $attempt)"
+            sleep 15
+          done
+          echo 'FAIL: live assets do not yet expose procurement supplier route'
+          exit 1
