@@ -12,6 +12,22 @@ $$;
 REVOKE ALL ON FUNCTION private.design_team_member(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION private.design_team_member(uuid) TO authenticated,service_role;
 
+-- Selected designer must be an active Design/Photography team member with permission to take this flow.
+CREATE OR REPLACE FUNCTION public.design_assignable_staff(_flow text)
+RETURNS TABLE(user_id uuid,name text) LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $
+ SELECT DISTINCT p.id,p.full_name
+ FROM public.profiles p
+ JOIN public.mkt_staff_specialties s ON s.user_id=p.id AND s.state='active'
+    AND s.specialty_id IN ('design','photography')
+ WHERE _flow IN ('photo','marketing_design','order_mockup')
+   AND private.is_active(auth.uid())
+   AND (public.design_can(auth.uid(),_flow,'create') OR private.design_team_member(auth.uid()))
+   AND p.status='Đang hoạt động' AND public.design_can(p.id,_flow,'take')
+ ORDER BY 2,1;
+$;
+REVOKE ALL ON FUNCTION public.design_assignable_staff(text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.design_assignable_staff(text) TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.design_team_access() RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $$
  SELECT private.design_team_member(auth.uid());
