@@ -2,10 +2,11 @@ import type { OrgConfig, Unit } from '@/lib/basePermissions/types';
 import { titleKind, titleLevel, unitTitles } from '@/lib/orgStructure';
 import { effectivePositionHolders } from '@/lib/basePermissions/positionHolders';
 import { distributionVisualHierarchy } from '@/lib/distribution/hierarchy';
+import { centerPositionDefinitions } from '@/lib/basePermissions/centerPositions';
 
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
-export interface ChartSlot { id: string; titleId?: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
+export interface ChartSlot { id: string; titleId?: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[]; legacy?: boolean; targetTitle?: string }
 export interface ChartNode { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean; visualHierarchy?: boolean; wrapperProtected?: boolean; hierarchyWarning?: string }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
@@ -17,7 +18,11 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
   const make = (u: Unit, path: Set<string>): ChartNode => {
     const next = new Set([...path, u.id]);
     const titles = unitTitles(config, u.id);
-    const slots = [...new Map(titles.map(t => [t.id, t])).values()].map(t => ({ id: t.id, titleId: t.id, title: t.name, manager: titleKind(t) === 'manager', level: titleLevel(t), capacity: titleKind(t) === 'manager' ? t.capacity ?? 0 : 0, holders: effectivePositionHolders(config.memberships, u.id, t.id, Date.parse(now)).map(id => {
+    const expectedPositions = centerPositionDefinitions(config, u.id);
+    const slots = [...new Map(titles.map(t => [t.id, t])).values()].map(t => ({ id: t.id, titleId: t.id, title: t.name, manager: titleKind(t) === 'manager', level: titleLevel(t), capacity: titleKind(t) === 'manager' ? t.capacity ?? 0 : 0,
+      legacy: t.source === 'biz_positions' && expectedPositions.length > 0,
+      targetTitle: t.source === 'biz_positions' ? expectedPositions.find(p => p.level === titleLevel(t))?.name : undefined,
+      holders: effectivePositionHolders(config.memberships, u.id, t.id, Date.parse(now)).map(id => {
       const membership = current.find(m => m.user_id === id && m.unit_id === u.id && m.title_id === t.id);
       return membership ? personOf(membership) : { id, name: names.get(id) ?? 'Nhân sự', title: t.name };
     }) })).sort((a,b) => b.level-a.level || Number(b.manager)-Number(a.manager));
