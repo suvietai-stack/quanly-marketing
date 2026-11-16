@@ -31,64 +31,124 @@ export function WebChatWorkspace(){
  const rows:any[]=list.data??[];const shown=rows.filter(c=>(filter==='all'||c.mode===filter)&&(presenceFilter==='all'||(presenceFilter==='active'?c.presence==='chat'||c.presence==='website':c.presence===presenceFilter))&&((c.summary||'')+' '+JSON.stringify(c.contact||{})).toLowerCase().includes(search.trim().toLowerCase()));const c:any=thread.data;
  const siteName=(id:string)=>sites.find(s=>s.id===id)?.name||'Website';
  async function save(){setBusy(true);try{const r=await chatSaveSite({data:config});setConfig(null);if(r.key){setKey(r.key);setKeySite(r.id!);}await reload();toast.success('Đã lưu');}catch(e){toast.error(e instanceof Error?e.message:'Không lưu được');}finally{setBusy(false);}}
- return <div className={`wc-workspace min-w-0 space-y-4 ${selected&&view==='overview'?'wc-thread-open':''}`}>
-  <header className="wc-hero flex flex-wrap items-center justify-between gap-4">
-   <div><span className="wc-eyebrow">TRUNG TÂM TƯ VẤN WEBSITE</span><h1 className="text-2xl font-semibold">Tư vấn Website</h1><p className="mt-1 text-sm text-muted-foreground">AI tiếp nhận nhu cầu · Đốm AI tạo tín hiệu · Sale quan sát và can thiệp</p></div>
-   {overview.data?.canManage&&<Button variant="outline" onClick={()=>{setView('manage');setAdminTab('sites');setSelected('');setSite('');}}>Quản lý website</Button>}
+ return <div className={`wc-workspace min-w-0 ${selected&&view==='overview'?'wc-thread-open':''}`}>
+  <header className="wc-page-head">
+   <div className="wc-page-heading">
+    <span className="wc-eyebrow">TRUNG TÂM TƯ VẤN WEBSITE</span>
+    <h1>Tư vấn Website</h1>
+    <p>Đốm AI tiếp nhận nhu cầu · Sale theo dõi và hỗ trợ khách</p>
+   </div>
+   {overview.data?.canManage&&<Button className="wc-head-action" variant="outline" onClick={()=>{setView(view==='overview'?'manage':'overview');setSelected('');setSite('');}}>
+    {view==='overview'?'Quản trị website':'← Về hội thoại'}
+   </Button>}
   </header>
-  <nav className="wc-tabs" aria-label="Khu vực Tư vấn Website">
-   <button type="button" aria-current={view==='overview'?'page':undefined} onClick={()=>setView('overview')}>Tổng hợp hội thoại</button>
-   {overview.data?.canManage&&<button type="button" aria-current={view==='manage'?'page':undefined} onClick={()=>{setView('manage');setSelected('');setSite('');}}>Quản trị website</button>}
-  </nav>
   {(overview.error||overview.data?.installed===false)&&<p role="alert" className="rounded-lg border p-4 text-sm text-destructive">{overview.error instanceof Error?overview.error.message:'Chat Web chưa được kích hoạt dữ liệu. Cần áp dụng migration phiên bản này.'}</p>}
   {view==='overview'?<>
-   <div className="wc-filterbar">
-    <label className="wc-filter-label" htmlFor="wc-site-filter">Website
-     <select id="wc-site-filter" value={siteFilter} onChange={e=>{setSiteFilter(e.target.value);setSelected('');setSite('');}}>
-      <option value="all">Tất cả website</option>{sites.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-     </select>
-    </label>
-    <span className="wc-filter-summary">{siteFilter==='all'?`Đang tổng hợp ${sites.length} website`:siteName(siteFilter)}</span>
-   </div>
-   {!sites.length&&!overview.isPending&&!overview.error&&overview.data?.installed&&<div className="rounded-xl border p-8 text-center text-sm">{overview.data.canManage?'Chưa có website. Vào Quản trị website để thêm và cấu hình.':'Anh chị chưa được cấp website. Nhờ quản trị viên thêm quyền Chat Web.'}</div>}
-   {!!sites.length&&<>
-    <div className="wc-metrics" aria-label="Thống kê 100 hội thoại gần đây theo bộ lọc website">
-     {([{kind:'mode',key:'all',label:'Hội thoại gần đây',value:rows.length},{kind:'mode',key:'ai',label:'AI tiếp nhận',value:rows.filter(r=>r.mode==='ai').length},{kind:'mode',key:'captured',label:'Đã chuyển tín hiệu',value:rows.filter(r=>r.mode==='captured').length},{kind:'mode',key:'human',label:'Sale can thiệp',value:rows.filter(r=>r.mode==='human').length},{kind:'presence',key:'active',label:'Khách đang online',value:rows.filter(r=>r.presence==='chat'||r.presence==='website').length},{kind:'presence',key:'chat',label:'Đang chat trực tiếp',value:rows.filter(r=>r.presence==='chat').length}] as const).map(m=><button type="button" key={m.key} className={`wc-metric wc-metric-${m.key} ${m.kind==='mode'?(filter===m.key&&presenceFilter==='all'?'wc-metric-active':''):(presenceFilter===m.key&&filter==='all'?'wc-metric-active':'')}`} aria-pressed={m.kind==='mode'?filter===m.key&&presenceFilter==='all':presenceFilter===m.key&&filter==='all'} onClick={()=>{if(m.kind==='mode'){setFilter(m.key);setPresenceFilter('all');}else{setFilter('all');setPresenceFilter(m.key);}setSelected('');setSite('');}}><span>{m.label}</span><strong>{m.value}</strong></button>)}
+   <section className="wc-overview-controls" aria-label="Tổng hợp và bộ lọc">
+    <div className="wc-overview-filter">
+     <label className="wc-filter-label" htmlFor="wc-site-filter">Theo dõi website
+      <select id="wc-site-filter" value={siteFilter} onChange={e=>{setSiteFilter(e.target.value);setSelected('');setSite('');}}>
+       <option value="all">Tất cả website</option>{sites.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+      </select>
+     </label>
+     <span className="wc-filter-summary">{siteFilter==='all'?`${sites.length} website được theo dõi`:siteName(siteFilter)} · Tự cập nhật</span>
     </div>
-    <div className="wc-columns grid min-h-[560px] gap-4 lg:grid-cols-[340px_1fr]">
-     <section className={`wc-list space-y-3 rounded-xl border bg-card p-3 ${selected?'hidden lg:block':''}`}>
-      <div className="wc-section-heading"><strong>Cuộc trò chuyện</strong><span>{shown.length} hiển thị</span></div>
-      <Input aria-label="Tìm khách" placeholder="Tìm số điện thoại, nhu cầu…" value={search} onChange={e=>setSearch(e.target.value)}/>
-      <select aria-label="Trạng thái hội thoại" className="w-full rounded-md border bg-background p-2" value={filter} onChange={e=>{setFilter(e.target.value);setSelected('');setSite('');}}><option value="all">Tất cả trạng thái hội thoại</option>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
-      <select aria-label="Trạng thái trực tuyến của khách" className="w-full rounded-md border bg-background p-2" value={presenceFilter} onChange={e=>{setPresenceFilter(e.target.value);setSelected('');setSite('');}}><option value="all">Tất cả trạng thái khách</option><option value="active">Đang online (chat hoặc xem web)</option><option value="chat">Đang chat</option><option value="website">Đang xem website</option><option value="offline">Đã rời</option></select>
-      {list.error&&<p role="alert" className="text-sm text-destructive">Không tải được danh sách. <button type="button" className="underline" onClick={()=>list.refetch()}>Thử lại</button></p>}
-      <div className="wc-conversation-list max-h-[65vh] space-y-2 overflow-y-auto">
-       {shown.map(r=><button type="button" key={r.id} aria-current={selected===r.id} onClick={()=>{setSite(r.site_id);setSelected(r.id);}} className={`wc-contact w-full rounded-lg border p-3 text-left ${selected===r.id?'bg-primary/10':''}`}>
-        <div className="wc-contact-heading"><span className="wc-contact-avatar" aria-hidden="true">{(r.contact?.name||'K').slice(0,1).toUpperCase()}</span><strong className="text-sm">{r.contact?.name||r.contact?.phone||'Khách website'}</strong>{(!r.read_at||r.read_at<r.updated_at)&&<span className="wc-new">● Mới</span>}</div>
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{r.summary||'Đang tiếp nhận nhu cầu'}</p>
-        <div className="wc-contact-footer"><span className="wc-site-tag">{siteName(r.site_id)}</span><span className={`wc-presence wc-presence-${r.presence||'offline'}`}>{presenceLabels[r.presence]||'Đã rời'}</span><span className={`wc-mode wc-mode-${r.mode}`}>{labels[r.mode]||'Đang xử lý'}</span>{r.error&&<span className="wc-warning">Cần kiểm tra</span>}</div>
-        {r.presence==='offline'&&r.last_seen_at&&<span className="wc-last-seen">Hoạt động lần cuối: {new Date(r.last_seen_at).toLocaleString('vi-VN')}</span>}
-       </button>)}
-       {!shown.length&&!list.isPending&&<p className="p-4 text-sm text-muted-foreground">Chưa có cuộc chat phù hợp.</p>}
-       {list.isPending&&<p className="p-4 text-sm text-muted-foreground">Đang tải hội thoại…</p>}
+    {!sites.length&&!overview.isPending&&!overview.error&&overview.data?.installed&&<div className="rounded-xl border p-8 text-center text-sm">{overview.data.canManage?'Chưa có website. Vào Quản trị website để thêm và cấu hình.':'Anh chị chưa được cấp website. Nhờ quản trị viên thêm quyền Chat Web.'}</div>}
+    {!!sites.length&&<>
+     <div className="wc-stats" aria-label="Thống kê hội thoại gần đây">
+      {([
+       {key:'all',label:'Hội thoại',value:rows.length,kind:'all'},
+       {key:'active',label:'Đang online',value:rows.filter(r=>r.presence==='chat'||r.presence==='website').length,kind:'presence'},
+       {key:'chat',label:'Đang chat',value:rows.filter(r=>r.presence==='chat').length,kind:'presence'}
+      ] as const).map(stat=><button key={stat.key} type="button" className={`wc-stat wc-stat-${stat.key}`} aria-pressed={stat.kind==='all'?filter==='all'&&presenceFilter==='all':filter==='all'&&presenceFilter===stat.key} onClick={()=>{
+       setFilter('all');setPresenceFilter(stat.kind==='all'?'all':stat.key);setSelected('');setSite('');
+      }}>
+       <strong>{stat.value}</strong><span>{stat.label}</span>
+      </button>)}
+     </div>
+     <div className="wc-queue-toolbar">
+      <div className="wc-queue-filters" role="group" aria-label="Lọc theo người phụ trách">
+       {([
+        {key:'all',label:'Tất cả',value:rows.length},
+        {key:'ai',label:'Đốm AI',value:rows.filter(r=>r.mode==='ai').length},
+        {key:'captured',label:'Đã có tín hiệu',value:rows.filter(r=>r.mode==='captured').length},
+        {key:'human',label:'Sale can thiệp',value:rows.filter(r=>r.mode==='human').length}
+       ] as const).map(m=><button type="button" key={m.key} aria-pressed={filter===m.key} onClick={()=>{setFilter(m.key);setSelected('');setSite('');}}>{m.label}<span>{m.value}</span></button>)}
       </div>
-      <p className="text-xs text-muted-foreground">Tối đa 100 hội thoại gần nhất theo website đã chọn · tự cập nhật khi mở</p>
-     </section>
-     <section className={`wc-thread flex min-w-0 flex-col rounded-xl border bg-card ${!selected?'hidden lg:flex':''}`}>
-      {!selected?<div className="wc-empty"><span aria-hidden="true">✦</span><h2>Theo dõi cuộc trò chuyện</h2><p>AI đón khách và thu nhu cầu. Anh chị có thể quan sát hoặc can thiệp khi cần.</p><small>Chọn một khách ở danh sách để bắt đầu.</small></div>:<>
-       <div className="wc-thread-header flex flex-wrap items-center justify-between gap-2 border-b p-3">
-        <Button className="lg:hidden" variant="ghost" onClick={()=>{setSelected('');setSite('');}} aria-label="Quay lại danh sách">← Danh sách</Button>
-        <div><strong>{c?.contact?.name||c?.contact?.phone||'Khách website'}</strong><div className="wc-thread-labels"><span className="wc-site-tag">{siteName(site)}</span><span className={`wc-presence wc-presence-${c?.presence||'offline'}`}>{c?presenceLabels[c.presence]||'Đã rời':'Đang tải…'}</span><span className={`wc-mode wc-mode-${c?.mode}`}>{labels[c?.mode]||'Đang tải…'}</span></div>{c?.presence==='offline'&&c.last_seen_at&&<p className="wc-last-seen">Hoạt động lần cuối: {new Date(c.last_seen_at).toLocaleString('vi-VN')}</p>}</div>
-        <Button variant="outline" disabled={busy||!c} onClick={()=>control(c?.mode==='human'?'resume':'takeover')}>{c?.mode==='human'?'Bật lại AI':'Can thiệp · Dừng AI'}</Button>
+      <div className="wc-search-tools">
+       <Input className="wc-search" aria-label="Tìm hội thoại" placeholder="Tên, SĐT hoặc nhu cầu…" value={search} onChange={e=>setSearch(e.target.value)}/>
+       <select aria-label="Tình trạng khách trực tuyến" value={presenceFilter} onChange={e=>{setPresenceFilter(e.target.value);setSelected('');setSite('');}}>
+        <option value="all">Mọi khách</option><option value="active">Đang online</option><option value="chat">Đang chat</option><option value="website">Đang xem web</option><option value="offline">Đã rời</option>
+       </select>
+       {(search||filter!=='all'||presenceFilter!=='all')&&<button type="button" className="wc-clear" onClick={()=>{setSearch('');setFilter('all');setPresenceFilter('all');}}>Xóa lọc</button>}
+      </div>
+     </div>
+    </>}
+   </section>
+   {!!sites.length&&<div className="wc-columns">
+    <section className={`wc-list ${selected?'wc-mobile-list-hidden':''}`} aria-label="Danh sách hội thoại">
+     <div className="wc-section-heading"><strong>Cuộc trò chuyện</strong><span>{shown.length} hiển thị</span></div>
+     {list.error&&<p role="alert" className="wc-list-note text-destructive">Không tải được hội thoại. <button type="button" className="underline" onClick={()=>list.refetch()}>Thử lại</button></p>}
+     <div className="wc-conversation-list">
+      {shown.map(r=><button type="button" key={r.id} aria-current={selected===r.id} onClick={()=>{setSite(r.site_id);setSelected(r.id);}} className="wc-contact">
+       <div className="wc-contact-main">
+        <span className="wc-contact-avatar" aria-hidden="true">{(r.contact?.name||'K').slice(0,1).toUpperCase()}</span>
+        <span className="wc-contact-body">
+         <span className="wc-contact-first">
+          <strong>{r.contact?.name||r.contact?.phone||'Khách website'}</strong>
+          {(!r.read_at||r.read_at<r.updated_at)&&<span className="wc-unread" aria-label="Tin chưa đọc"/>}
+         </span>
+         <span className="wc-contact-preview">{r.summary||'Khách đang trao đổi nhu cầu'}</span>
+         <span className="wc-contact-tags"><span className="wc-site-tag">{siteName(r.site_id)}</span><span className={`wc-presence wc-presence-${r.presence||'offline'}`}>{presenceLabels[r.presence]||'Đã rời'}</span></span>
+        </span>
        </div>
-       {thread.error&&<p role="alert" className="p-4 text-destructive">Không tải được cuộc chat.</p>}
-       {!!c?.summary&&<div className="wc-summary border-b bg-muted/30 p-3 text-sm"><strong>Nhu cầu:</strong> {c.summary}<p>SĐT: {c.contact?.phone||'Chưa có'} · Zalo: {c.contact?.zalo==='confirmed'?'Khách xác nhận':'Chưa xác nhận'}</p>{c.page_url&&<a className="break-all text-xs underline" href={c.page_url} target="_blank" rel="noreferrer">Trang khách đang xem</a>}{c.signal_id&&<p className="mt-1 text-xs">Đã chuyển Tín hiệu · Người tạo: Đốm AI · Mã {c.signal_id}</p>}</div>}
-       <div className="wc-messages max-h-[55vh] min-h-[260px] flex-1 space-y-3 overflow-y-auto p-4">{c?.messages?.map((m:any)=><div key={m.id} className={`wc-bubble wc-bubble-${m.role} max-w-[90%] whitespace-pre-wrap break-words rounded-xl p-3 text-sm ${m.role==='user'?'ml-auto bg-primary/10':'bg-muted'}`}><p className="mb-1 text-xs text-muted-foreground">{m.role==='user'?'Khách':m.role==='staff'?'Nhân viên':'AI'} · {new Date(m.created_at).toLocaleString('vi-VN')}</p>{m.body}{m.state==='error'&&<p className="mt-2 text-xs text-destructive">AI chưa xử lý được tin này.</p>}</div>)}</div>
-       {c?.mode==='human'?<form className="wc-compose flex gap-2 border-t p-3" onSubmit={e=>{e.preventDefault();void control('send');}}><Textarea aria-label="Trả lời khách" maxLength={2000} value={text} onChange={e=>setText(e.target.value)} placeholder={c.taken_by===c.userId?'Nhân viên trả lời — AI đang dừng':'Nhân viên khác đang can thiệp'} disabled={c.taken_by!==c.userId}/><Button type="submit" disabled={busy||!text.trim()||c.taken_by!==c.userId}>Gửi</Button></form>:<p className="border-t p-3 text-xs text-muted-foreground">AI đang phụ trách. Can thiệp sẽ dừng AI riêng cuộc chat này.</p>}
-      </>}
-     </section>
-    </div>
-   </>}
+       {r.error&&<span className="wc-warning">AI cần kiểm tra</span>}
+      </button>)}
+      {!shown.length&&!list.isPending&&<p className="wc-list-note">Không có hội thoại phù hợp với bộ lọc.</p>}
+      {list.isPending&&<p className="wc-list-note">Đang tải hội thoại…</p>}
+     </div>
+     <p className="wc-list-footnote">100 hội thoại gần nhất · Cập nhật khi mở trang</p>
+    </section>
+    <section className={`wc-thread ${!selected?'wc-mobile-thread-hidden':''}`} aria-label="Chi tiết hội thoại">
+     {!selected?<div className="wc-empty"><span aria-hidden="true">✦</span><h2>Chọn một cuộc trò chuyện</h2><p>Quan sát Đốm AI tư vấn, xem nhu cầu hoặc tiếp nhận để phản hồi khách ngay.</p></div>:<>
+      <div className="wc-thread-header">
+       <Button className="wc-back" variant="ghost" onClick={()=>{setSelected('');setSite('');}}>← Hội thoại</Button>
+       <div className="wc-thread-identity">
+        <strong>{c?.contact?.name||c?.contact?.phone||'Khách website'}</strong>
+        <div className="wc-thread-labels">
+         <span className="wc-site-tag">{siteName(site)}</span>
+         <span className={`wc-presence wc-presence-${c?.presence||'offline'}`}>{c?presenceLabels[c.presence]||'Đã rời':'Đang tải…'}</span>
+         <span className={`wc-mode wc-mode-${c?.mode}`}>{labels[c?.mode]||'Đang tải…'}</span>
+        </div>
+       </div>
+       <Button className="wc-takeover" variant="outline" disabled={busy||!c} onClick={()=>control(c?.mode==='human'?'resume':'takeover')}>{c?.mode==='human'?'Bật lại AI':'Can thiệp chat'}</Button>
+      </div>
+      {thread.error&&<p role="alert" className="wc-list-note text-destructive">Không tải được nội dung cuộc trò chuyện.</p>}
+      {!!c&&<details className="wc-thread-info">
+       <summary><span>Thông tin khách và nhu cầu</span><span className="wc-info-hint">{c.contact?.phone?'Đã có SĐT':'Xem chi tiết'}</span></summary>
+       <div className="wc-info-body">
+        <p><strong>Nhu cầu:</strong> {c.summary||'Chưa ghi nhận'}</p>
+        <p><strong>SĐT:</strong> {c.contact?.phone||'Chưa có'} · <strong>Zalo:</strong> {c.contact?.zalo==='confirmed'?'Khách xác nhận':'Chưa xác nhận'}</p>
+        {c.page_url&&<a className="underline break-all" href={c.page_url} target="_blank" rel="noreferrer">Trang khách đang xem</a>}
+        {c.signal_id&&<p>Đã chuyển tín hiệu · Đốm AI · Mã {c.signal_id}</p>}
+        {c.presence==='offline'&&c.last_seen_at&&<p>Hoạt động cuối: {new Date(c.last_seen_at).toLocaleString('vi-VN')}</p>}
+       </div>
+      </details>}
+      <div className="wc-messages">
+       {thread.isPending&&<p className="wc-list-note">Đang tải tin nhắn…</p>}
+       {c?.messages?.map((m:any)=><div key={m.id} className={`wc-bubble wc-bubble-${m.role}`}>
+        <p className="wc-bubble-meta">{m.role==='user'?'Khách':m.role==='staff'?'Nhân viên':'Đốm AI'} · {new Date(m.created_at).toLocaleString('vi-VN')}</p>
+        <p className="whitespace-pre-wrap break-words">{m.body}</p>
+        {m.state==='error'&&<p className="mt-2 text-xs text-destructive">AI chưa xử lý được tin này.</p>}
+       </div>)}
+      </div>
+      {c?.mode==='human'?<form className="wc-compose" onSubmit={e=>{e.preventDefault();void control('send');}}>
+       <Textarea aria-label="Trả lời khách" maxLength={2000} value={text} onChange={e=>setText(e.target.value)} placeholder={c.taken_by===c.userId?'Nhập lời nhắn cho khách…':'Nhân viên khác đang can thiệp'} disabled={c.taken_by!==c.userId}/>
+       <Button type="submit" disabled={busy||!text.trim()||c.taken_by!==c.userId}>Gửi</Button>
+      </form>:<div className="wc-ai-notice">Đốm AI đang phụ trách · Bấm “Can thiệp chat” để trả lời khách.</div>}
+     </>}
+    </section>
+   </div>}
   </>:overview.data?.canManage&&<section className="wc-admin rounded-xl border bg-card p-4">
    <div className="wc-admin-top"><div><h2 className="text-lg font-semibold">Quản trị website</h2><p className="text-sm text-muted-foreground">Thêm website, cài đặt AI và cấp quyền nhân viên tại một nơi.</p></div><Button onClick={()=>setConfig(defaults())}>Thêm website</Button></div>
    <div className="wc-admin-tabs" role="group" aria-label="Quản trị website">
