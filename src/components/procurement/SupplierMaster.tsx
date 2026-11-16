@@ -169,7 +169,8 @@ export function SupplierMaster() {
       Giá nhập được phân quyền độc lập phía máy chủ.
     </div>
 
-    <SupplierDetail id={selected} onClose={()=>setSelected(null)} onEdit={editExisting}/>
+    <SupplierDetail id={selected} onClose={()=>setSelected(null)}
+      onEdit={editExisting} groups={query.data?.groups??[]}/>
     {editOpen && <SupplierEditDialog
       key={editSupplier?.id??'new'}
       open={editOpen} onOpenChange={setEditOpen}
