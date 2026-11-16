@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { DesignAssigneePicker } from "@/components/DesignAssigneePicker";
+import {useDesignCatalogs} from '@/lib/orders/catalogs';
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan } from '@/lib/orders/design';
 
@@ -40,6 +41,7 @@ export function DesignOrderFormFromContent({
 
 
   const brand = s.brands.find((b) => b.id === content.brandId);
+  const designCatalogs=useDesignCatalogs();
 
 
   const defaultCreator = user?.fullName || user?.username || "";
@@ -90,6 +92,9 @@ export function DesignOrderFormFromContent({
 
     if (!assignee || !assigneeId) {toast.error('Bắt buộc chọn nhân viên Thiết kế thực hiện.');return;}
     if (reviewer.trim() === assignee) {toast.error('Người duyệt phải khác người thực hiện.');return;}
+    const categoryName:Record<string,string>={'Banner website':'Banner Website','Ảnh bài web':'Ảnh bài Web','Ảnh social':'Ảnh Social','Thumbnail video':'Thumbnail Video','Ảnh sản phẩm':'Ảnh sản phẩm','Catalogue / profile':'Catalogue / Profile','Ảnh Google Map':'Ảnh Google Map'};
+    const cat=designCatalogs.data?.find(c=>c.workflow_kind==='marketing_design'&&c.kind==='work'&&c.active&&c.name===(categoryName[type]||'Khác'));
+    if(!cat){toast.error('Không tải được loại ấn phẩm phù hợp.');return;}
     const finalAssignee = assignee;
     const status = "Chờ nhận việc";
 
@@ -98,6 +103,7 @@ export function DesignOrderFormFromContent({
       title: title.trim(),
       brandId: content.brandId,
       type,
+      workCategoryId:cat.id,workCategoryName:cat.name,
       source: "Web",
       sourceModule: "Content Web",
       workflowKind: 'marketing_design',
