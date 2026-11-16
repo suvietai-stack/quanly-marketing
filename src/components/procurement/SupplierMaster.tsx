@@ -164,7 +164,7 @@ export function SupplierMaster() {
           </p>}
           {!!s.category.length && <p className="line-clamp-2">
             Sản phẩm: {supplierGroupNames(s.category,query.data?.groups??[]).join(', ')}
-          </p>
+          </p>}
           {s.next_follow_up && <p className={`flex items-center gap-1 ${supplierFollowUpOverdue(s)?'font-semibold text-amber-600':''}`}>
             <CalendarClock className="h-3.5 w-3.5 shrink-0"/>
             Liên hệ tiếp: {s.next_follow_up.split('-').reverse().join('/')}
