@@ -4959,6 +4959,287 @@ export type Database = {
         }
         Relationships: []
       }
+      inbox_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_data: Json | null
+          at: string
+          before_data: Json | null
+          conversation_id: string | null
+          id: string
+          page_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_data?: Json | null
+          at?: string
+          before_data?: Json | null
+          conversation_id?: string | null
+          id?: string
+          page_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_data?: Json | null
+          at?: string
+          before_data?: Json | null
+          conversation_id?: string | null
+          id?: string
+          page_id?: string
+        }
+        Relationships: []
+      }
+      inbox_conversations: {
+        Row: {
+          assignee_id: string | null
+          customer_id: string
+          customer_name: string | null
+          delivered_at: string | null
+          id: string
+          last_at: string
+          last_incoming_at: string | null
+          last_outgoing_at: string | null
+          last_text: string
+          needs_reply: boolean
+          page_id: string
+          read_at: string | null
+          resolved: boolean
+          version: number
+        }
+        Insert: {
+          assignee_id?: string | null
+          customer_id: string
+          customer_name?: string | null
+          delivered_at?: string | null
+          id?: string
+          last_at: string
+          last_incoming_at?: string | null
+          last_outgoing_at?: string | null
+          last_text?: string
+          needs_reply?: boolean
+          page_id: string
+          read_at?: string | null
+          resolved?: boolean
+          version?: number
+        }
+        Update: {
+          assignee_id?: string | null
+          customer_id?: string
+          customer_name?: string | null
+          delivered_at?: string | null
+          id?: string
+          last_at?: string
+          last_incoming_at?: string | null
+          last_outgoing_at?: string | null
+          last_text?: string
+          needs_reply?: boolean
+          page_id?: string
+          read_at?: string | null
+          resolved?: boolean
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_conversations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "fbl_pages"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      inbox_events: {
+        Row: {
+          event_key: string
+          id: string
+          page_id: string
+          payload: Json
+          processed_at: string | null
+          received_at: string
+        }
+        Insert: {
+          event_key: string
+          id?: string
+          page_id: string
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+        }
+        Update: {
+          event_key?: string
+          id?: string
+          page_id?: string
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
+      inbox_messages: {
+        Row: {
+          actor_id: string | null
+          attachments: Json
+          claimed_at: string | null
+          conversation_id: string
+          direction: string
+          event_at: string
+          failure: string | null
+          id: string
+          mid: string | null
+          page_id: string
+          request_id: string | null
+          state: string
+          text: string
+        }
+        Insert: {
+          actor_id?: string | null
+          attachments?: Json
+          claimed_at?: string | null
+          conversation_id: string
+          direction: string
+          event_at: string
+          failure?: string | null
+          id?: string
+          mid?: string | null
+          page_id: string
+          request_id?: string | null
+          state: string
+          text?: string
+        }
+        Update: {
+          actor_id?: string | null
+          attachments?: Json
+          claimed_at?: string | null
+          conversation_id?: string
+          direction?: string
+          event_at?: string
+          failure?: string | null
+          id?: string
+          mid?: string | null
+          page_id?: string
+          request_id?: string | null
+          state?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "inbox_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbox_messages_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "fbl_pages"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      inbox_page_access: {
+        Row: {
+          created_at: string
+          created_by: string
+          page_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          page_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          page_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_page_access_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "fbl_pages"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      inbox_page_capabilities: {
+        Row: {
+          checked_at: string | null
+          enabled: boolean
+          last_event_at: string | null
+          lead_enabled: boolean
+          lead_enabled_at: string | null
+          page_id: string
+          ready: boolean
+          reason: string | null
+          tasks: string[]
+        }
+        Insert: {
+          checked_at?: string | null
+          enabled?: boolean
+          last_event_at?: string | null
+          lead_enabled?: boolean
+          lead_enabled_at?: string | null
+          page_id: string
+          ready?: boolean
+          reason?: string | null
+          tasks?: string[]
+        }
+        Update: {
+          checked_at?: string | null
+          enabled?: boolean
+          last_event_at?: string | null
+          lead_enabled?: boolean
+          lead_enabled_at?: string | null
+          page_id?: string
+          ready?: boolean
+          reason?: string | null
+          tasks?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_page_capabilities_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: true
+            referencedRelation: "fbl_pages"
+            referencedColumns: ["page_id"]
+          },
+        ]
+      }
+      inbox_reads: {
+        Row: {
+          conversation_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          read_at: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_reads_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "inbox_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       k3_action_collaborators: {
         Row: {
           action_id: string
@@ -6781,6 +7062,7 @@ export type Database = {
           id: string
           request_id: string
           sent_at: string | null
+          started_at: string | null
           status: string
           summary: string | null
         }
@@ -6794,6 +7076,7 @@ export type Database = {
           id?: string
           request_id: string
           sent_at?: string | null
+          started_at?: string | null
           status?: string
           summary?: string | null
         }
@@ -6807,6 +7090,7 @@ export type Database = {
           id?: string
           request_id?: string
           sent_at?: string | null
+          started_at?: string | null
           status?: string
           summary?: string | null
         }
@@ -9970,6 +10254,243 @@ export type Database = {
         }
         Relationships: []
       }
+      wc_access: {
+        Row: {
+          site_id: string
+          user_id: string
+        }
+        Insert: {
+          site_id: string
+          user_id: string
+        }
+        Update: {
+          site_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_access_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "wc_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wc_audit: {
+        Row: {
+          action: string
+          actor: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_audit_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "wc_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wc_conversations: {
+        Row: {
+          contact: Json
+          created_at: string
+          error: string | null
+          id: string
+          lease: string | null
+          lease_until: string | null
+          mode: string
+          page_url: string
+          read_at: string | null
+          revision: number
+          signal_id: string | null
+          site_id: string
+          summary: string
+          taken_by: string | null
+          updated_at: string
+          visitor_hash: string
+        }
+        Insert: {
+          contact?: Json
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease?: string | null
+          lease_until?: string | null
+          mode?: string
+          page_url?: string
+          read_at?: string | null
+          revision?: number
+          signal_id?: string | null
+          site_id: string
+          summary?: string
+          taken_by?: string | null
+          updated_at?: string
+          visitor_hash: string
+        }
+        Update: {
+          contact?: Json
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease?: string | null
+          lease_until?: string | null
+          mode?: string
+          page_url?: string
+          read_at?: string | null
+          revision?: number
+          signal_id?: string | null
+          site_id?: string
+          summary?: string
+          taken_by?: string | null
+          updated_at?: string
+          visitor_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_conversations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "wc_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wc_messages: {
+        Row: {
+          attempts: number
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          request_id: string
+          retry_at: string | null
+          role: string
+          state: string
+        }
+        Insert: {
+          attempts?: number
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          request_id: string
+          retry_at?: string | null
+          role: string
+          state?: string
+        }
+        Update: {
+          attempts?: number
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          retry_at?: string | null
+          role?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "wc_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wc_rate: {
+        Row: {
+          bucket: string
+          count: number
+          started_at: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          started_at?: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
+      wc_requests: {
+        Row: {
+          created_at: string
+          nonce: string
+          site_id: string
+        }
+        Insert: {
+          created_at?: string
+          nonce: string
+          site_id: string
+        }
+        Update: {
+          created_at?: string
+          nonce?: string
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_requests_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "wc_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wc_sites: {
+        Row: {
+          enabled: boolean
+          id: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_sites_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "wf_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       web_contents: {
         Row: {
           created_at: string
@@ -10580,6 +11101,7 @@ export type Database = {
         Returns: Json
       }
       ai_sv_reserve_question: { Args: never; Returns: boolean }
+      approval_center_executive_fallback: { Args: never; Returns: Json }
       approval_center_read: { Args: never; Returns: Json }
       att_note: { Args: { _id: string; _note: string }; Returns: undefined }
       att_recall: { Args: { _id: string }; Returns: undefined }
@@ -11581,6 +12103,77 @@ export type Database = {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
       }
+      inbox_access_save: {
+        Args: { p_enabled: boolean; p_page: string; p_user: string }
+        Returns: undefined
+      }
+      inbox_can: {
+        Args: { p: string; p_page?: string; u: string }
+        Returns: boolean
+      }
+      inbox_capabilities_save: {
+        Args: {
+          p_lead: boolean
+          p_messaging: boolean
+          p_page: string
+          p_ready: boolean
+          p_reason: string
+        }
+        Returns: undefined
+      }
+      inbox_change: {
+        Args: {
+          p_action: string
+          p_conversation: string
+          p_user?: string
+          p_version?: number
+        }
+        Returns: undefined
+      }
+      inbox_connection_save: {
+        Args: {
+          p_actor: string
+          p_lead: boolean
+          p_messaging: boolean
+          p_name: string
+          p_page: string
+          p_ready: boolean
+          p_reason: string
+          p_tasks: string[]
+          p_token: string
+        }
+        Returns: undefined
+      }
+      inbox_ingest: { Args: { p_event: Json }; Returns: undefined }
+      inbox_installed: { Args: never; Returns: boolean }
+      inbox_list: {
+        Args: {
+          p_before?: string
+          p_filter?: string
+          p_id?: string
+          p_page?: string
+        }
+        Returns: Json
+      }
+      inbox_overview: { Args: never; Returns: Json }
+      inbox_send_claim: {
+        Args: { p_conversation: string; p_request: string; p_text: string }
+        Returns: Json
+      }
+      inbox_send_finish: {
+        Args: {
+          p_failure?: string
+          p_mid: string
+          p_request: string
+          p_state: string
+        }
+        Returns: undefined
+      }
+      inbox_staff: { Args: { p_page: string }; Returns: Json }
+      inbox_thread: {
+        Args: { p_before?: string; p_conversation: string; p_id?: string }
+        Returns: Json
+      }
       is_active: { Args: { _user_id: string }; Returns: boolean }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
@@ -12234,6 +12827,7 @@ export type Database = {
         Args: { _enabled: boolean; _source: string; _stars: number }
         Returns: undefined
       }
+      showroom_overview_read: { Args: never; Returns: Json }
       signal_assessment_save: {
         Args: {
           _id: string
@@ -12543,6 +13137,48 @@ export type Database = {
       sw_my_credential: { Args: never; Returns: Json }
       sw_reveal_password: { Args: never; Returns: string }
       sw_staff_list: { Args: { _q?: string }; Returns: Json }
+      wc_claim: { Args: { p_conversation: string }; Returns: Json }
+      wc_control: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_conversation: string
+          p_request: string
+          p_text: string
+        }
+        Returns: undefined
+      }
+      wc_fail: {
+        Args: { p_conversation: string; p_lease: string; p_request: string }
+        Returns: undefined
+      }
+      wc_finish: {
+        Args: {
+          p_answer: string
+          p_contact: Json
+          p_conversation: string
+          p_draft: Json
+          p_lease: string
+          p_request: string
+          p_revision: number
+          p_summary: string
+        }
+        Returns: boolean
+      }
+      wc_rate_hit: {
+        Args: { p_bucket: string; p_limit: number }
+        Returns: boolean
+      }
+      wc_receive: {
+        Args: {
+          p_hash: string
+          p_page: string
+          p_request: string
+          p_site: string
+          p_text: string
+        }
+        Returns: Json
+      }
       wf_can_manage: { Args: never; Returns: boolean }
       wf_claim_event: { Args: { p_id: string }; Returns: Json }
       wf_complete_event: {
