@@ -67,6 +67,7 @@ import { Route as SaoEarnRouteImport } from './routes/sao.earn'
 import { Route as SaoLeaderboardRouteImport } from './routes/sao.leaderboard'
 import { Route as SaoShopRouteImport } from './routes/sao.shop'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
+import { Route as K3UnitRouteImport } from './routes/k3_.unit.$unit'
 import { Route as K3CenterRouteImport } from './routes/k3-center'
 import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
 import { Route as Operations3kRouteImport } from './routes/operations_.3k'
@@ -385,6 +386,11 @@ const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   path: '/settings/kpi-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const K3UnitRoute = K3UnitRouteImport.update({
+  id: '/k3_/unit/$unit',
+  path: '/k3/unit/$unit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const K3CenterRoute = K3CenterRouteImport.update({
   id: '/k3-center',
   path: '/k3-center',
@@ -580,6 +586,7 @@ export interface FileRoutesByFullPath {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/k3/unit/$unit': typeof K3UnitRoute
   '/k3-center': typeof K3CenterRoute
   '/biz/3k-area': typeof Biz3kAreaRoute
   '/operations/3k': typeof Operations3kRoute
@@ -667,6 +674,7 @@ export interface FileRoutesByTo {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/k3/unit/$unit': typeof K3UnitRoute
   '/k3-center': typeof K3CenterRoute
   '/biz/3k-area': typeof Biz3kAreaRoute
   '/operations/3k': typeof Operations3kRoute
@@ -755,6 +763,7 @@ export interface FileRoutesById {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
+  '/k3_/unit/$unit': typeof K3UnitRoute
   '/k3-center': typeof K3CenterRoute
   '/biz/3k-area': typeof Biz3kAreaRoute
   '/operations_/3k': typeof Operations3kRoute
@@ -844,6 +853,7 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
+    | '/k3/unit/$unit'
     | '/k3-center'
     | '/biz/3k-area'
     | '/operations/3k'
@@ -931,6 +941,7 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
+    | '/k3/unit/$unit'
     | '/k3-center'
     | '/biz/3k-area'
     | '/operations/3k'
@@ -1018,6 +1029,7 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings_/kpi-v2'
+    | '/k3_/unit/$unit'
     | '/k3-center'
     | '/biz/3k-area'
     | '/operations_/3k'
@@ -1106,6 +1118,7 @@ export interface RootRouteChildren {
   SaoLeaderboardRoute: typeof SaoLeaderboardRoute
   SaoShopRoute: typeof SaoShopRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
+  K3UnitRoute: typeof K3UnitRoute
   K3CenterRoute: typeof K3CenterRoute
   Biz3kAreaRoute: typeof Biz3kAreaRoute
   Operations3kRoute: typeof Operations3kRoute
@@ -1549,6 +1562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsKpiV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/k3_/unit/$unit': {
+      id: '/k3_/unit/$unit'
+      path: '/k3/unit/$unit'
+      fullPath: '/k3/unit/$unit'
+      preLoaderRoute: typeof K3UnitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/k3-center': {
       id: '/k3-center'
       path: '/k3-center'
@@ -1794,6 +1814,7 @@ const rootRouteChildren: RootRouteChildren = {
   SaoLeaderboardRoute: SaoLeaderboardRoute,
   SaoShopRoute: SaoShopRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
+  K3UnitRoute: K3UnitRoute,
   K3CenterRoute: K3CenterRoute,
   Biz3kAreaRoute: Biz3kAreaRoute,
   Operations3kRoute: Operations3kRoute,
