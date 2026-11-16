@@ -13,7 +13,7 @@ export type ShiftPerson = {id:string;name:string;position:string;is_manager:bool
 export type ShiftEntry = {date:string;staff_id:string;requested:ShowroomShift|null;assigned:ShowroomShift|null;shift:ShowroomShift;updated_at:string};
 export type ShiftDay = {date:string;holiday:boolean;early:number;late:number;full:number;working:number;missing_early:number;missing_late:number;has_full_exception:boolean;lunch_needs_confirmation:boolean};
 export type ShiftChange = {
-  id:string;kind:'swap'|'emergency';requester_id:string;work_date:string;original_shift:ShowroomShift;
+  id:string;kind:'swap'|'rest_exchange'|'emergency';requester_id:string;work_date:string;original_shift:ShowroomShift;
   partner_id:string|null;partner_date:string|null;partner_shift:ShowroomShift|null;
   reason:string;status:'pending_peer'|'pending_manager'|'approved'|'rejected'|'cancelled';
   decision_note:string|null;created_at:string;decided_at:string|null;
