@@ -1,4 +1,4 @@
-import { BookOpenText, MessageCircleHeart, LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, MessageSquare, Package, type LucideIcon } from 'lucide-react';
+import { BookOpenText, MessageCircleHeart, LayoutDashboard, ListChecks, Building2, Globe, Share2, MapPin, Video, Palette, Camera, BarChart3, Target, Settings, FileText, Radar, ClipboardCheck, PackageSearch, Truck, BanknoteArrowDown, Star, Gift, Wallet, Fingerprint, Trophy, Briefcase, Store, Megaphone, Users, MessageSquare, Package, CalendarDays, type LucideIcon } from 'lucide-react';
 import type { PermissionKey } from '@/lib/auth';
 
 export type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean; badge?: string; perm?: PermissionKey; anyPerm?: PermissionKey[]; kpi?: boolean; adminOnly?: boolean; comingSoon?: boolean };
@@ -32,6 +32,7 @@ export const navigationGroups: NavGroup[] = [
   { label: "Showroom", icon: Store, items: [
     { to: "/showroom", label: "Tổng quan Showroom", icon: Store, perm: "showroom.view" },
     { to: "/showroom/3k", label: "3K Showroom", icon: ClipboardCheck, perm: "showroom.k3.use" },
+    { to: "/showroom/shifts", label: "Lịch trực Showroom", icon: CalendarDays, perm: "showroom.shift.view" },
   ] },
   { label: "Marketing", icon: Megaphone, items: [
 { to: "/brands", label: "Thương Hiệu", icon: Building2, perm: "brand.view" },
