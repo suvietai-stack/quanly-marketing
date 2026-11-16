@@ -83,14 +83,19 @@ export const chatThreadsFeed=createServerFn({method:'POST'}).middleware([require
   else if(allowed)q=q.in('site_id',allowed);
   const r=await q;
   if(r.error)throw new Error('Không tải được danh sách hội thoại');
-  return r.data??[];
+  const rows:any[]=r.data??[];
+  if(!rows.length)return [];
+  const presence=await db.rpc('wc_presence_summary',{p_conversations:rows.map(x=>x.id)});
+  if(presence.error)throw new Error('Không tải được trạng thái trực tuyến');
+  const byId=new Map((presence.data??[]).map((x:any)=>[x.conversation_id,x]));
+  return rows.map(x=>({...x,presence:(byId.get(x.id) as any)?.presence||'offline',last_seen_at:(byId.get(x.id) as any)?.last_seen_at||null}));
 });
 
 export const chatLocate=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({id:z.string().uuid()}).parse(v)).handler(async({context,data})=>{
   await active(context);const {db}=await import('./chat.server');const r=await db.from('wc_conversations').select('site_id').eq('id',data.id).maybeSingle();if(r.error||!r.data)throw new Error('Không mở được hội thoại');await access(context,r.data.site_id);return {site:r.data.site_id as string};
 });
 export const chatThread=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({site:z.string().uuid(),id:z.string().uuid()}).parse(v)).handler(async({context,data})=>{
-  await access(context,data.site);const {db}=await import('./chat.server');const c=await db.from('wc_conversations').select('id,site_id,mode,summary,contact,signal_id,page_url,error,taken_by').eq('id',data.id).eq('site_id',data.site).single();if(c.error)throw new Error('Không có quyền xem hội thoại');const r=await db.from('wc_messages').select('id,role,body,state,created_at').eq('conversation_id',data.id).order('created_at').order('id').limit(500);if(r.error)throw new Error('Không tải được tin nhắn');return {...c.data,messages:r.data,userId:context.userId};
+  await access(context,data.site);const {db}=await import('./chat.server');const c=await db.from('wc_conversations').select('id,site_id,mode,summary,contact,signal_id,page_url,error,taken_by').eq('id',data.id).eq('site_id',data.site).single();if(c.error)throw new Error('Không có quyền xem hội thoại');const r=await db.from('wc_messages').select('id,role,body,state,created_at').eq('conversation_id',data.id).order('created_at').order('id').limit(500);if(r.error)throw new Error('Không tải được tin nhắn');const p=await db.rpc('wc_presence_summary',{p_conversations:[data.id]});if(p.error)throw new Error('Không tải được trạng thái trực tuyến');const live=p.data?.[0];return {...c.data,messages:r.data,userId:context.userId,presence:live?.presence||'offline',last_seen_at:live?.last_seen_at||null};
 });
 export const chatControl=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(v=>z.object({site:z.string().uuid(),id:z.string().uuid(),action:z.enum(['takeover','resume','send','read']),request:z.string().uuid(),text:z.string().trim().max(2000).default('')}).parse(v)).handler(async({context,data})=>{
   await access(context,data.site); const {db,rpc}=await import('./chat.server');const c=await db.from('wc_conversations').select('id').eq('id',data.id).eq('site_id',data.site).single();if(c.error)throw new Error('Không có quyền hội thoại');
