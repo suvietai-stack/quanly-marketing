@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { EffectivePermission } from '@/lib/basePermissions/types';
 import { mergePermissionCatalog, type CatalogPermission } from '@/lib/basePermissions/permissionCatalog';
+import { DesignRolePermissionGroups } from './DesignRolePermissionGroups';
 
 export function PermissionChecklist(props: {
   value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; source?: string; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
@@ -32,7 +33,7 @@ function RolePermissionChecklist({ value, onChange, policy, source = 'position',
   const lookup = new Map(available.map(p => [p.key, p]));
   const merged = mergePermissionCatalog(catalog, PERMISSIONS);
   const definitions = [...merged, ...baseline.filter(k => !merged.some(p => p.key === k)).map(key => ({ key, label: key, group: 'Quyền đang giữ' }))];
-  const permitted = definitions;
+  const permitted = personal ? definitions : definitions.filter(p => !p.key.startsWith('order.'));
   const rows = permitted.filter(p => `${p.label} ${p.group} ${p.key}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')) && (filter === 'all' || (filter === 'sensitive' ? !!permissionRisk(p.key) : filter === 'selected' ? value.includes(p.key) || deny.includes(p.key) : filter === 'denied' ? deny.includes(p.key) : !value.includes(p.key) && !deny.includes(p.key))));
   const groups = [...new Set(rows.map(p => p.group))];
   const missing = value.flatMap(key => { const parents = allDependencies(key).filter(k => !value.includes(k)); return parents.length ? [{ key, parents }] : []; });
@@ -47,6 +48,7 @@ function RolePermissionChecklist({ value, onChange, policy, source = 'position',
       <Badge variant="outline">{definitions.filter(p=>lookup.has(p.key)).length} có thể cấp · {definitions.filter(p=>!lookup.has(p.key)).length} chưa khả dụng</Badge>
     </div>
     {missing.length > 0 && <details open className="border-l-2 border-warning bg-warning/10 px-3 py-2 text-sm"><summary className="cursor-pointer font-medium">{missing.length} quyền cần quyền truy cập đi kèm</summary><div className="space-y-2 pt-2">{missing.map(m => <div key={m.key}><p>{label(m.key)}: cần {m.parents.map(label).join(', ')}.</p><p className="text-xs text-muted-foreground">Có thể không dùng được chức năng nếu thiếu quyền truy cập. Điều kiện nghiệp vụ vẫn được kiểm tra riêng.</p><Button size="sm" variant="ghost" disabled={disabled || m.parents.some(k => !lookup.has(k))} onClick={() => onChange([...new Set([...value, ...m.parents])])}><Plus className="mr-1 size-3"/>Chọn quyền đi kèm</Button>{m.parents.some(k => !lookup.has(k)) && <p className="text-xs text-muted-foreground">Quyền đi kèm cần cấu hình an toàn trước.</p>}</div>)}</div></details>}
+    {!personal && <DesignRolePermissionGroups value={value} onChange={onChange} policy={policy} source={source} baseline={baseline} disabled={disabled}/>}
     <div className="divide-y border-y">{groups.map(group => {
       const groupAll = permitted.filter(p => p.group === group);
       const bulkSafe = groupAll.length > 0 && groupAll.every(p => lookup.has(p.key) && lookup.get(p.key)?.scope !== 'unit' && !permissionRisk(p.key));
