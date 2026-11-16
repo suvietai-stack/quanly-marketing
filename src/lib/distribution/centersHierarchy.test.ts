@@ -47,17 +47,28 @@ it("retains history-bearing wrapper with warning and original holders", () => {
     { id: "old", unit_id: RETAIL_SYSTEM, user_id: "past", active: false },
     { id: "real", unit_id: HANOI_SHOWROOM, user_id: "current", active: true },
   ];
-  const wrapper = buildOrganizationTree(c, [])[0].children.find((n) => n.id === BTC_CENTER)
-    ?.children[0];
-  expect(wrapper?.id).toBe(RETAIL_SYSTEM);
-  expect(wrapper?.hierarchyWarning).toBeTruthy();
-  expect(wrapper?.children[0].people.map((p) => p.id)).toEqual(["current"]);
+  const children = buildOrganizationTree(c, [])[0].children.find((n) => n.id === BTC_CENTER)
+    ?.children ?? [];
+  expect(children.map((n) => n.id)).toEqual([HANOI_SHOWROOM, RETAIL_SYSTEM]);
+  expect(children[0].people.map((p) => p.id)).toEqual(["current"]);
+  expect(children[1].hierarchyWarning).toBeTruthy();
+  expect(children[1].children).toEqual([]);
 });
 it("never discards empty configured slots or nonstructural metadata", () => {
   const c = config();
   c.titles = [{ id: "slot", unit_id: RETAIL_SYSTEM, name: "Empty position", active: true }];
-  const wrapper = buildOrganizationTree(c, [])[0].children.find((n) => n.id === BTC_CENTER)
-    ?.children[0];
-  expect(wrapper?.slots?.[0].id).toBe("slot");
-  expect(wrapper?.id).toBe(RETAIL_SYSTEM);
+  const children = buildOrganizationTree(c, [])[0].children.find((n) => n.id === BTC_CENTER)
+    ?.children ?? [];
+  expect(children.map((n) => n.id)).toEqual([HANOI_SHOWROOM, RETAIL_SYSTEM]);
+  expect(children[1].slots?.[0].id).toBe("slot");
+});
+
+it("hides only empty redundant Khối Kinh doanh after promoting both centers", () => {
+  const c = config();
+  expect(buildOrganizationTree(c, [])[0].children.map(n => n.id)).toEqual([
+    B2B_CENTER, DISTRIBUTION_UNIT, BTC_CENTER,
+  ]);
+  c.memberships.push({ id: "old-biz", unit_id: "biz-block", user_id: "old-person", active: false });
+  const guarded = buildOrganizationTree(c, [])[0];
+  expect(guarded.children.some(n => n.id === "biz-block")).toBe(true);
 });
