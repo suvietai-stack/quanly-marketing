@@ -271,6 +271,7 @@ function PolicySettings({roster,mutate,loading}:{roster:ShiftRoster;mutate:(acti
         {([{key:'min_early',label:'Tối thiểu Ca 1',max:10},{key:'min_late',label:'Tối thiểu Ca 2',max:10},{key:'rest_days',label:'Nghỉ / tuần',max:3}] as const).map(x=><div key={x.key} className="space-y-1.5"><Label className="text-xs">{x.label}</Label><Input className="h-11" type="number" min={x.key==='rest_days'?0:1} max={x.max} value={form[x.key]} onChange={e=>update(x.key,Number(e.target.value))}/></div>)}
       </div>
       <label className="flex items-center gap-3 rounded-lg border p-3 text-sm"><Checkbox checked={form.allow_full_exception} onCheckedChange={v=>update('allow_full_exception',v===true)}/>Cho xét ngoại lệ Ca Full khi thiếu người (phải ghi lý do)</label>
+      <label className="flex items-center gap-3 rounded-lg border p-3 text-sm"><Checkbox checked={form.remind} onCheckedChange={v=>update('remind',v===true)}/>Đốm nhắc đăng ký ca khi mở và trước hạn khóa</label>
     </section>
     <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">Khung giờ ca (24 giờ)</h3>
       <div className="grid grid-cols-2 gap-3">
