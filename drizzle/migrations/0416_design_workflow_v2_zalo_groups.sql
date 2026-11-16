@@ -130,6 +130,16 @@ END $$;
 CREATE TRIGGER design_zalo_enqueue AFTER INSERT OR UPDATE OF data ON public.orders
  FOR EACH ROW EXECUTE FUNCTION private.design_zalo_enqueue();
 
+-- Server-side scope: only Design team has a whole-workspace read. Others can read own/assigned/reviewed Jobs.
+CREATE OR REPLACE FUNCTION private.design_read(_uid uuid, _creator uuid, _data jsonb, _flow text)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public', 'private'
+AS $function$
+ SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR private.design_team_member(_uid) OR (public.design_can(_uid,_flow,'view') AND (_creator=_uid OR private.design_person(_uid,_data->>'requester') OR private.design_person(_uid,_data->>'assignee') OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')))));
+$function$
+
 -- Safely extend existing guarded Order writer; preserves field-level authorization/audit and historic status aliases.
 CREATE OR REPLACE FUNCTION private.design_guard()
  RETURNS trigger
@@ -178,8 +188,8 @@ BEGIN
      IF jsonb_array_length(h)<=jsonb_array_length(oh) THEN RAISE EXCEPTION 'Chuyển trạng thái cần thêm lịch sử'; END IF;
      IF admin OR (mgr AND public.design_can(u,f,'force_status')) THEN NULL;
      ELSIF (d->>'assignee' IS DISTINCT FROM od->>'assignee' OR d->>'assigneeId' IS DISTINCT FROM od->>'assigneeId') AND st='Chờ nhận việc' AND (mgr OR (coalesce(od->>'assignee','')='' AND req) OR (own AND private.design_team_member(u))) THEN NULL;
-     ELSIF os IN ('Cần giao người','Chờ nhận việc') AND st='Đang thực hiện' AND public.design_can(u,f,'take') AND (own OR (coalesce(od->>'assignee','')='' AND d->>'assignee'=nm)) THEN NULL;
-     ELSIF os='Chờ phân công' AND st='Chờ nhận việc' AND req AND public.design_can(u,f,'send_request') AND coalesce(d->>'assignee','')<>'' THEN NULL;
+     ELSIF os='Chờ nhận việc' AND st='Đang thực hiện' AND public.design_can(u,f,'take') AND own THEN NULL;
+     
      ELSIF os='Đang thực hiện' AND st='Chờ duyệt' AND own AND public.design_can(u,f,'submit') THEN NULL;
      ELSIF os='Cần sửa' AND st='Chờ duyệt' AND own AND public.design_can(u,f,'resubmit') THEN NULL;
      ELSIF os='Chờ duyệt' AND st='Đã duyệt' AND rev AND public.design_can(u,f,'approve') THEN NULL;
