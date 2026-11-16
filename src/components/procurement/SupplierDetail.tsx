@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supplierDetailRead, supplierStatusLabels, supplierStatusTone,
   supplierChannelLabels, supplierFollowUpOverdue, formatSupplierPrice,
+  supplierServiceNames, supplierGroupNames,
   type SupplierFull, type SupplierProduct, type SupplierProductGroup,
 } from '@/lib/procurement/suppliers';
 import { SupplierProductDialog, SupplierContactDialog } from './SupplierForms';
@@ -41,7 +42,7 @@ export function SupplierDetail({id,onClose,onEdit,groups}:{
   const [productOpen,setProductOpen]=useState(false);
   const [contactOpen,setContactOpen]=useState(false);
   const query=useQuery({
-    queryKey:['showroom-supplier-detail',user?.id,id],
+    queryKey:['supplier-detail',user?.id,id],
     queryFn:()=>supplierDetailRead(id!),
     enabled:!!id && user?.status==='Đang hoạt động',
     retry:1,staleTime:20_000,
@@ -52,8 +53,8 @@ export function SupplierDetail({id,onClose,onEdit,groups}:{
 
   const invalidate=async()=>{
     await Promise.all([
-      qc.invalidateQueries({queryKey:['showroom-supplier-detail']}),
-      qc.invalidateQueries({queryKey:['showroom-suppliers']}),
+      qc.invalidateQueries({queryKey:['supplier-detail']}),
+      qc.invalidateQueries({queryKey:['supplier-master']}),
     ]);
   };
   const onProductSaved=()=>{setProductOpen(false);setProduct(null);void invalidate();};
@@ -126,7 +127,10 @@ export function SupplierDetail({id,onClose,onEdit,groups}:{
               <div className="space-y-3 rounded-xl border bg-card p-4">
                 <h3 className="font-semibold">Năng lực & hợp tác</h3>
                 <Info label="Hồ sơ" value="Nhà cung cấp dùng chung cho các hệ kinh doanh"/>
-                <Info label="Nhóm hàng" value={s.category.length ? s.category.join(' · ') : 'Chưa phân nhóm'}/>
+                <Info label="Loại hình cung ứng" value={s.service_groups?.length
+                  ? supplierServiceNames(s.service_groups).join(' · ') : 'Chưa chọn'}/>
+                <Info label="Nhóm sản phẩm" value={s.category.length
+                  ? supplierGroupNames(s.category,groups).join(' · ') : 'Chưa chọn'}/>
                 <Info label="Trạng thái" value={supplierStatusLabels[s.status]}/>
                 <Info label="Liên hệ gần nhất" value={dateTimeLabel(s.last_contact_at)}/>
                 <Info label="Liên hệ tiếp" value={<span className={supplierFollowUpOverdue(s)?'font-medium text-amber-600':''}>
@@ -153,7 +157,8 @@ export function SupplierDetail({id,onClose,onEdit,groups}:{
                     <div className="min-w-0">
                       <p className="break-words font-semibold">{p.name}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {p.sku || 'Chưa có SKU'} · {p.category || 'Chưa phân nhóm'}
+                        {p.sku || 'Chưa có SKU'} · {p.category
+                          ? supplierGroupNames([p.category],groups)[0] : 'Chưa phân nhóm'}
                       </p>
                     </div>
                     <Badge variant={p.active?'secondary':'outline'}>{p.active?'Đang cung ứng':'Ngừng cung ứng'}</Badge>
