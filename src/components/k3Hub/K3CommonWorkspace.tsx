@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { ArrowUpRight, Building2, CheckCircle2, ClipboardList, MessageSquareText, RefreshCw, Settings2, Users } from 'lucide-react';
+import { Building2, CheckCircle2, ClipboardList, MessageSquareText, RefreshCw, Settings2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser } from '@/lib/auth';
 import { Biz3K } from '@/components/biz/Biz3K';
+import { K3HubTimingDashboard } from '@/components/k3Hub/K3HubTimingDashboard';
 import { PageHeader } from '@/components/AppShell';
 import {
   K3_HUB_STATES, k3HubAccess, k3HubReport, k3HubDetails, k3HubFeedbackSave,
@@ -65,7 +65,7 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
 
   return <div className="min-w-0 space-y-5 pb-10">
     <PageHeader title={title} description={central
-      ? 'Tổng hợp 3K theo cơ cấu tổ chức · Một nguồn dữ liệu KG, KF, KPI'
+      ? 'Dashboard phân tích giờ lập · giờ tổng kết · đúng hạn / trễ hạn theo cơ cấu tổ chức'
       : '3K theo phạm vi vị trí · Dùng chung dữ liệu với Trung tâm 3K'} />
     {access.isPending && <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Đang xác minh phạm vi 3K theo sơ đồ tổ chức…</div>}
     {access.error && <div role="alert" className="space-y-2 rounded-xl border p-4 text-sm text-destructive">
@@ -91,17 +91,17 @@ export function K3CommonWorkspace({ title, initialUnit, central = false }: {
         </div>
         <Biz3K personalOnly />
       </div>}
-      {visibleTab === 'report' && canReport && <K3HubReportPanel
-        unit={selectedUnit} units={options} canCompany={data.can_company}
-        onUnitChange={setUnitOverride} />}
+      {visibleTab === 'report' && canReport && (central
+        ? <K3HubTimingDashboard unit={selectedUnit} units={options}
+            canCompany={data.can_company} onUnitChange={setUnitOverride} />
+        : <K3HubReportPanel unit={selectedUnit} units={options}
+            canCompany={data.can_company} onUnitChange={setUnitOverride} />
+      )}
       {visibleTab === 'policy' && data.can_config && <K3HubPolicyPanel />}
-      {central && <div className="text-xs text-muted-foreground">
-        Báo cáo chỉ hiển thị các đơn vị được quyền xem. Nhân viên làm 3K một lần;
-        kết quả được tổng hợp lên các cấp, không nhân bản công việc.
-        <Link to="/biz/3k" className="ml-1 inline-flex items-center gap-1 text-primary">
-          Mở 3K của tôi <ArrowUpRight className="h-3 w-3" />
-        </Link>
-      </div>}
+      {central && <p className="text-xs text-muted-foreground">
+        Trung tâm 3K dành cho quản lý xem số liệu, giờ lập, giờ tổng kết và phân tích theo cây tổ chức.
+        Nhân viên làm 3K trong khu vực của mình; dữ liệu chỉ được lập một lần và tổng hợp lên cấp quản lý.
+      </p>}
     </>}
   </div>;
 }
