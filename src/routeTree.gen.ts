@@ -73,6 +73,7 @@ import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
 import { Route as Operations3kAccountingRouteImport } from './routes/operations_.3k-accounting'
 import { Route as Operations3kHrRouteImport } from './routes/operations_.3k-hr'
 import { Route as Operations3kRouteImport } from './routes/operations_.3k'
+import { Route as ShowroomSuppliersRouteImport } from './routes/showroom_.suppliers'
 import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
@@ -418,6 +419,11 @@ const Operations3kRoute = Operations3kRouteImport.update({
   path: '/operations/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShowroomSuppliersRoute = ShowroomSuppliersRouteImport.update({
+  id: '/showroom_/suppliers',
+  path: '/showroom/suppliers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Showroom3kRoute = Showroom3kRouteImport.update({
   id: '/showroom_/3k',
   path: '/showroom/3k',
@@ -604,6 +610,7 @@ export interface FileRoutesByFullPath {
   '/operations/3k-accounting': typeof Operations3kAccountingRoute
   '/operations/3k-hr': typeof Operations3kHrRoute
   '/operations/3k': typeof Operations3kRoute
+  '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -694,6 +701,7 @@ export interface FileRoutesByTo {
   '/operations/3k-accounting': typeof Operations3kAccountingRoute
   '/operations/3k-hr': typeof Operations3kHrRoute
   '/operations/3k': typeof Operations3kRoute
+  '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -785,6 +793,7 @@ export interface FileRoutesById {
   '/operations_/3k-accounting': typeof Operations3kAccountingRoute
   '/operations_/3k-hr': typeof Operations3kHrRoute
   '/operations_/3k': typeof Operations3kRoute
+  '/showroom_/suppliers': typeof ShowroomSuppliersRoute
   '/showroom_/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -877,6 +886,7 @@ export interface FileRouteTypes {
     | '/operations/3k-accounting'
     | '/operations/3k-hr'
     | '/operations/3k'
+    | '/showroom/suppliers'
     | '/showroom/3k'
     | '/signals/report'
     | '/social/$id'
@@ -967,6 +977,7 @@ export interface FileRouteTypes {
     | '/operations/3k-accounting'
     | '/operations/3k-hr'
     | '/operations/3k'
+    | '/showroom/suppliers'
     | '/showroom/3k'
     | '/signals/report'
     | '/social/$id'
@@ -1057,6 +1068,7 @@ export interface FileRouteTypes {
     | '/operations_/3k-accounting'
     | '/operations_/3k-hr'
     | '/operations_/3k'
+    | '/showroom_/suppliers'
     | '/showroom_/3k'
     | '/signals/report'
     | '/social/$id'
@@ -1148,6 +1160,7 @@ export interface RootRouteChildren {
   Operations3kAccountingRoute: typeof Operations3kAccountingRoute
   Operations3kHrRoute: typeof Operations3kHrRoute
   Operations3kRoute: typeof Operations3kRoute
+  ShowroomSuppliersRoute: typeof ShowroomSuppliersRoute
   Showroom3kRoute: typeof Showroom3kRoute
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
@@ -1630,6 +1643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Operations3kRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/showroom_/suppliers': {
+      id: '/showroom_/suppliers'
+      path: '/showroom/suppliers'
+      fullPath: '/showroom/suppliers'
+      preLoaderRoute: typeof ShowroomSuppliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/showroom_/3k': {
       id: '/showroom_/3k'
       path: '/showroom/3k'
@@ -1860,6 +1880,7 @@ const rootRouteChildren: RootRouteChildren = {
   Operations3kAccountingRoute: Operations3kAccountingRoute,
   Operations3kHrRoute: Operations3kHrRoute,
   Operations3kRoute: Operations3kRoute,
+  ShowroomSuppliersRoute: ShowroomSuppliersRoute,
   Showroom3kRoute: Showroom3kRoute,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
