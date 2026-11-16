@@ -13,6 +13,7 @@ import {Badge} from '@/components/ui/badge';
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
 import {Tabs,TabsList,TabsTrigger} from '@/components/ui/tabs';
 import {DocumentDialog} from './BizDocuments';
+import {scopeDepartmentRows} from '@/lib/distribution/scope';
 import {MyDocCard,MyWorkSection,StatusBadges,dateText,useOpenDocument} from './BizMyWork';
 
 type Quick='all'|'submitted'|'unsubmitted'|'ontime'|'late'|'overdue'|'changes'|'unviewed';
@@ -23,7 +24,7 @@ export function BizPlans({scopeDepartmentIds}:{scopeDepartmentIds?:string[]}={})
  const uid=useAuth(s=>s.currentUserId)??'';const {can}=useCurrentUser();
  const [periodKind,setPeriodKind]=useState<PeriodKind>('month');const [year,setYear]=useState(new Date().getFullYear());const [period,setPeriod]=useState(new Date().getMonth()+1);
  const [quick,setQuick]=useState<Quick>('all');const [dept,setDept]=useState('all');const [employee,setEmployee]=useState('all');const [status,setStatus]=useState('all');const [view,setView]=useState('all');const [search,setSearch]=useState('');const [selected,setSelected]=useState<string|null>(null);
- const query=useQuery({...documentsQuery(uid,'plan',periodKind,year,period),enabled:!!uid});const rows=useMemo(()=>(query.data??[]).filter(r=>!scopeDepartmentIds || scopeDepartmentIds.includes(r.department_id)),[query.data,scopeDepartmentIds]);
+ const query=useQuery({...documentsQuery(uid,'plan',periodKind,year,period),enabled:!!uid});const rows=useMemo(()=>scopeDepartmentRows(query.data??[],scopeDepartmentIds),[query.data,scopeDepartmentIds]);
  const milestones=useQuery(bizMilestonesQuery(`plan_${periodKind}`,year,period));const phase=milestones.data?phaseFromIso(milestones.data,rows[0]?.server_now??new Date().toISOString()):null;
  const myRow=rows.find(r=>r.user_id===uid);const teamRows=useMemo(()=>rows.filter(r=>r.user_id!==uid),[rows,uid]);
  const canManage=can('biz.view_all')||can('biz.view_dept')||can('biz.plan_approve')||can('biz.plan_request_revision');
