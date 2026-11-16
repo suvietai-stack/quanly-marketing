@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { missingShowroomPositions } from '@/lib/showroom/positionSetup';
 import { TitleRoleDefaults } from '@/components/TitleRoleDefaults';
 import { ArrowRightLeft, History, Plus, UserPlus, Users, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ interface DrawerProps {
   actor: OrgActor;
   onAppoint: (titleId?: string, mode?: 'primary' | 'concurrent' | 'transfer') => void;
   onEnd: (id:string)=>void;
+  onSetupShowroomRoles?: (unitId: string) => void;
   onEdit: (fn: (c: OrgConfig) => OrgConfig) => void;
   onClose: () => void;
 }
@@ -38,7 +40,7 @@ function unitRights(config: OrgConfig, unitId: string, actor: OrgActor) {
 }
 
 /** Drawer quản lý một đơn vị: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị. */
-export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onClose }: DrawerProps) {
+export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onSetupShowroomRoles, onClose }: DrawerProps) {
   const unit = config.units.find(u => u.id === unitId);
   const [titleName,setTitleName]=useState('');
   const [titleKindNew,setTitleKindNew]=useState<'staff'|'manager'>('staff');
@@ -135,6 +137,13 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
           </TabsContent>
 
           <TabsContent value="titles" className="space-y-3 pt-3">
+            {actor.super && missingShowroomPositions(config, unitId) && onSetupShowroomRoles && (
+              <div className="rounded-lg border p-3 space-y-2">
+                <p className="text-sm font-semibold">Chuẩn bị vị trí Showroom</p>
+                <p className="text-xs text-muted-foreground">Thêm Nhân viên Showroom và Cửa hàng trưởng, gắn hai Role chuẩn V2. Không đổi phân công hay quyền của nhân viên hiện hữu. Thao tác sẽ có bước xem trước và xác nhận.</p>
+                <Button size="sm" onClick={() => onSetupShowroomRoles(unitId)}>Xem trước tạo vị trí &amp; gắn Role</Button>
+              </div>
+            )}
             {rights.structure && <div className="space-y-2 border-b pb-3"><Label>Chức vụ mới tại {unit.name}</Label><Input aria-label="Tên chức vụ mới" value={titleName} onChange={e=>setTitleName(e.target.value)} /><Select value={titleKindNew} onValueChange={v=>setTitleKindNew(v as 'staff'|'manager')}><SelectTrigger aria-label="Loại chức vụ mới"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="staff">Nhân viên</SelectItem><SelectItem value="manager">Quản lý</SelectItem></SelectContent></Select><Button disabled={!titleName.trim()} onClick={()=>{onEdit(c=>({...c,titles:[...c.titles,{id:crypto.randomUUID(),unit_id:unitId,name:titleName.trim(),kind:titleKindNew,capacity:titleKindNew==='manager'?1:0,level:titleKindNew==='manager'?(unit.kind==='team'?1:2):0,active:true}]}));setTitleName('');}}><Plus className="mr-2 h-4 w-4" />Thêm chức vụ</Button></div>}
             {titles.map(t => (
               <div key={t.id} className="rounded-xl border p-3">
