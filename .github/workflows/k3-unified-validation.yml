@@ -20,6 +20,7 @@ on:
       - 'drizzle/migrations/0401_k3_hub_access_options.sql'
       - 'drizzle/migrations/0402_k3_hub_area_navigation_roles.sql'
       - 'drizzle/migrations/0403_k3_operations_department_entries.sql'
+      - 'drizzle/migrations/0404_k3_hub_timing_analytics.sql'
       - '.github/workflows/k3-unified-validation.yml'
   pull_request:
     paths:
@@ -39,6 +40,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bunx vitest run src/lib/navigation.test.ts src/lib/k3Hub/api.test.ts src/lib/showroom/k3.test.ts
+      - run: bunx vitest run src/lib/navigation.test.ts src/lib/launcher.test.ts src/lib/mobileShell.test.ts src/lib/k3Hub/api.test.ts src/lib/k3Hub/timing.test.ts src/lib/showroom/k3.test.ts
       - run: bunx tsc --noEmit
       - run: bun run build
