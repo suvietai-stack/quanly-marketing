@@ -11,7 +11,7 @@ describe('Safe mobile navigation', () => {
     expect(safeMobilePrevious({ key: 'known', href: '/?area=Kinh%20doanh' }, 'known')).toBe(true);
   });
   it('uses existing names and parent fallback for deep links', () => {
-    expect(mobilePage(navigationGroups, '/biz/3k')).toEqual({ title: '3K của tôi', area: 'Điều hành' });
+    expect(mobilePage(navigationGroups, '/showroom/3k')).toEqual({ title: '3K Showroom', area: 'Showroom' });
     expect(mobilePage(navigationGroups, '/order-tracking/order-id')).toEqual({ title: 'Theo Dõi Đơn Hàng', area: 'Mua Hàng & Giao Vận' });
   });
 });
