@@ -76,6 +76,7 @@ import { Route as Operations3kRouteImport } from './routes/operations_.3k'
 import { Route as ProcurementSuppliersRouteImport } from './routes/procurement_.suppliers'
 import { Route as ShowroomSuppliersRouteImport } from './routes/showroom_.suppliers'
 import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
+import { Route as ShowroomShiftsRouteImport } from './routes/showroom_.shifts'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
 import { Route as SocialIndexRouteImport } from './routes/social.index'
@@ -435,6 +436,11 @@ const Showroom3kRoute = Showroom3kRouteImport.update({
   path: '/showroom/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShowroomShiftsRoute = ShowroomShiftsRouteImport.update({
+  id: '/showroom_/shifts',
+  path: '/showroom/shifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignalsIndexRoute = SignalsIndexRouteImport.update({
   id: '/signals/',
   path: '/signals/',
@@ -619,6 +625,7 @@ export interface FileRoutesByFullPath {
   '/procurement/suppliers': typeof ProcurementSuppliersRoute
   '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
+  '/showroom/shifts': typeof ShowroomShiftsRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -711,6 +718,7 @@ export interface FileRoutesByTo {
   '/procurement/suppliers': typeof ProcurementSuppliersRoute
   '/showroom/suppliers': typeof ShowroomSuppliersRoute
   '/showroom/3k': typeof Showroom3kRoute
+  '/showroom/shifts': typeof ShowroomShiftsRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -804,6 +812,7 @@ export interface FileRoutesById {
   '/procurement_/suppliers': typeof ProcurementSuppliersRoute
   '/showroom_/suppliers': typeof ShowroomSuppliersRoute
   '/showroom_/3k': typeof Showroom3kRoute
+  '/showroom_/shifts': typeof ShowroomShiftsRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
   '/websites/$id': typeof WebsitesIdRoute
@@ -898,6 +907,7 @@ export interface FileRouteTypes {
     | '/procurement/suppliers'
     | '/showroom/suppliers'
     | '/showroom/3k'
+    | '/showroom/shifts'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -990,6 +1000,7 @@ export interface FileRouteTypes {
     | '/procurement/suppliers'
     | '/showroom/suppliers'
     | '/showroom/3k'
+    | '/showroom/shifts'
     | '/signals/report'
     | '/social/$id'
     | '/websites/$id'
@@ -1175,6 +1186,7 @@ export interface RootRouteChildren {
   ProcurementSuppliersRoute: typeof ProcurementSuppliersRoute
   ShowroomSuppliersRoute: typeof ShowroomSuppliersRoute
   Showroom3kRoute: typeof Showroom3kRoute
+  ShowroomShiftsRoute: typeof ShowroomShiftsRoute
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
   WebsitesIdRoute: typeof WebsitesIdRoute
@@ -1677,6 +1689,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Showroom3kRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/showroom_/shifts': {
+      id: '/showroom_/shifts'
+      path: '/showroom/shifts'
+      fullPath: '/showroom/shifts'
+      preLoaderRoute: typeof ShowroomShiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signals/': {
       id: '/signals/'
       path: '/signals'
@@ -1903,6 +1922,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProcurementSuppliersRoute: ProcurementSuppliersRoute,
   ShowroomSuppliersRoute: ShowroomSuppliersRoute,
   Showroom3kRoute: Showroom3kRoute,
+  ShowroomShiftsRoute: ShowroomShiftsRoute,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
   WebsitesIdRoute: WebsitesIdRoute,

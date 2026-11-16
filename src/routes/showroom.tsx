@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, ClipboardList, RefreshCw, ShieldCheck, Store, Users } from 'lucide-react';
+import { Building2, CalendarDays, ClipboardList, RefreshCw, ShieldCheck, Store, Users } from 'lucide-react';
 import { useCurrentUser } from '@/lib/auth';
 import { PageHeader } from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ function ShowroomPage() {
   const overview = query.data;
   const canEditOrg = isSuperAdmin || can('org.assign_staff') || can('org.appoint_manager') || can('org.manage_structure');
   const canUseK3 = isSuperAdmin || can('showroom.k3.use');
+  const canUseShifts = isSuperAdmin || can('showroom.shift.view');
 
   if (!authorized) {
     return <div className="space-y-5">
@@ -42,6 +43,9 @@ function ShowroomPage() {
   return <div className="min-w-0 space-y-6 pb-10">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <PageHeader title="Khối Showroom" description="Phân hệ bán lẻ độc lập với Khối Kinh doanh" />
+      {canUseShifts && <Button asChild size="sm"><Link to="/showroom/shifts">
+        <CalendarDays className="mr-2 h-4 w-4" />Lịch trực
+      </Link></Button>}
       {canUseK3 && <Button asChild size="sm"><Link to="/showroom/3k">
         <ClipboardList className="mr-2 h-4 w-4" />Mở 3K Showroom
       </Link></Button>}

@@ -1,0 +1,32 @@
+name: Showroom production smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/showroom-production-smoke.yml'
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify published frontend contains showroom shifts
+        run: |
+          set -euo pipefail
+          origin=https://base.suviet.vn
+          echo "Checking ${origin}/showroom/shifts"
+          curl -sSL --compressed --max-time 45 -D /tmp/shift-headers -o /tmp/shift-page \
+            -w 'Route HTTP=%{http_code}\n' "${origin}/showroom/shifts"
+          grep -iE '^(HTTP/|x-deployment-id:)' /tmp/shift-headers || true
+          test -s /tmp/shift-page
+          curl -sSL --compressed --max-time 45 -o /tmp/shift-home "${origin}/"
+          grep -aoE '/assets/[^" ]+\.js' /tmp/shift-home | sort -u > /tmp/shift-assets || true
+          while IFS= read -r path; do
+            curl -sSL --compressed --max-time 30 -o /tmp/shift-js "${origin}${path}" || continue
+            if grep -aFq '/showroom/shifts' /tmp/shift-js; then
+              echo 'PASS: published frontend contains showroom shifts navigation'
+              exit 0
+            fi
+          done < /tmp/shift-assets
+          echo 'FAIL: published frontend does not yet contain showroom shifts'
+          exit 1
