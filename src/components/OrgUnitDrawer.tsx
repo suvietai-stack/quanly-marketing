@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useCurrentUser } from '@/lib/auth';
 import { k3HubAccess } from '@/lib/k3Hub/api';
-import { missingShowroomPositions } from '@/lib/showroom/positionSetup';
+import { missingCenterPositions } from '@/lib/basePermissions/centerPositions';
 import { missingDistributionPositions } from '@/lib/distribution/positionSetup';
 import { TitleRoleDefaults } from '@/components/TitleRoleDefaults';
 import { ArrowRightLeft, History, Plus, UserPlus, Users, X } from 'lucide-react';
@@ -26,7 +26,7 @@ interface DrawerProps {
   actor: OrgActor;
   onAppoint: (titleId?: string, mode?: 'primary' | 'concurrent' | 'transfer') => void;
   onEnd: (id:string)=>void;
-  onSetupShowroomRoles?: (unitId: string) => void;
+  onSetupCenterRoles?: (unitId: string) => void;
   onSetupDistributionRoles?: (unitId: string) => void;
   onEdit: (fn: (c: OrgConfig) => OrgConfig) => void;
   onClose: () => void;
@@ -46,7 +46,7 @@ function unitRights(config: OrgConfig, unitId: string, actor: OrgActor) {
 }
 
 /** Drawer quản lý một đơn vị: Nhân sự / Chức vụ & Cấp bậc / Phân quyền / Lịch sử / Cài đặt đơn vị. */
-export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onSetupShowroomRoles, onSetupDistributionRoles, onClose }: DrawerProps) {
+export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit, onEnd, onSetupCenterRoles, onSetupDistributionRoles, onClose }: DrawerProps) {
   const { user } = useCurrentUser();
   const unit = config.units.find(u => u.id === unitId);
   const k3Access = useQuery({
@@ -163,11 +163,11 @@ export function OrgUnitDrawer({ unitId, config, staff, actor, onAppoint, onEdit,
                 <Button size="sm" className="h-auto whitespace-normal text-left" onClick={() => onSetupDistributionRoles(unitId)}>Xem trước vị trí Phân Phối</Button>
               </div>
             )}
-            {actor.super && missingShowroomPositions(config, unitId) && onSetupShowroomRoles && (
-              <div className="rounded-lg border p-3 space-y-2">
-                <p className="text-sm font-semibold">Chuẩn bị vị trí Showroom</p>
-                <p className="text-xs text-muted-foreground">Thêm Nhân viên Showroom và Cửa hàng trưởng, gắn hai Role chuẩn V2. Không đổi phân công hay quyền của nhân viên hiện hữu. Thao tác sẽ có bước xem trước và xác nhận.</p>
-                <Button size="sm" onClick={() => onSetupShowroomRoles(unitId)}>Xem trước tạo vị trí &amp; gắn Role</Button>
+            {actor.super && missingCenterPositions(config, unitId) && onSetupCenterRoles && (
+              <div className="border-b pb-3 space-y-2">
+                <p className="text-sm font-semibold">Vị trí B2B / BTC</p>
+                <p className="text-xs text-muted-foreground">Chỉ thêm vị trí trống đúng cấp. Giữ Role và bổ nhiệm hiện hữu; không tự chuyển người từ Role Sales.</p>
+                <Button size="sm" className="h-auto whitespace-normal text-left" onClick={() => onSetupCenterRoles(unitId)}>Xem trước vị trí &amp; Role trung tâm</Button>
               </div>
             )}
             {rights.structure && <div className="space-y-2 border-b pb-3"><Label>Chức vụ mới tại {unit.name}</Label><Input aria-label="Tên chức vụ mới" value={titleName} onChange={e=>setTitleName(e.target.value)} /><Select value={titleKindNew} onValueChange={v=>setTitleKindNew(v as 'staff'|'manager')}><SelectTrigger aria-label="Loại chức vụ mới"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="staff">Nhân viên</SelectItem><SelectItem value="manager">Quản lý</SelectItem></SelectContent></Select><Button disabled={!titleName.trim()} onClick={()=>{onEdit(c=>({...c,titles:[...c.titles,{id:crypto.randomUUID(),unit_id:unitId,name:titleName.trim(),kind:titleKindNew,capacity:titleKindNew==='manager'?1:0,level:titleKindNew==='manager'?(unit.kind==='team'?1:2):0,active:true}]}));setTitleName('');}}><Plus className="mr-2 h-4 w-4" />Thêm chức vụ</Button></div>}

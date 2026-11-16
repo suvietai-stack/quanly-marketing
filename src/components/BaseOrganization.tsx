@@ -18,7 +18,7 @@ import { StaffPermissionEditor } from '@/components/StaffPermissionEditor';
 import { StaffSpecialties } from '@/components/MarketingSpecialties';
 const StaffRoleSources = lazy(() => import('@/components/TitleRoleDefaults').then(m => ({ default: m.StaffRoleSources })));
 import { orgConfigDiff, slotHistory } from '@/lib/orgStructure';
-import { showroomPositionSetup } from '@/lib/showroom/positionSetup';
+import { centerPositionSetup } from '@/lib/basePermissions/centerPositions';
 import { distributionPositionSetup } from '@/lib/distribution/positionSetup';
 import { roleCatalogApi } from '@/lib/basePermissions/roleCatalog';
 import type { ChartNode } from '@/lib/orgChart';
@@ -113,6 +113,19 @@ function OrganizationWorkspace() {
       setPreview(p);
     });
   };
+  const setupCenter = (unitId: string) => {
+    setManageUnit(null);
+    void run(async () => {
+      if (!isSA || !actor.super || dirty || !original) throw new Error('Cần Super Admin và cơ cấu chưa có bản nháp.');
+      const catalog = await roleCatalogApi.read();
+      const { next, commands } = centerPositionSetup(original, unitId, catalog.roles, catalog.mapping);
+      if (!commands.length) throw new Error('Các vị trí đã gắn đúng Role; không có thay đổi.');
+      const p = await baseOrgApi.preview(data.data?.revision ?? 0, next, original, commands);
+      setShowroomRolePreview(true); setMembershipMode(false);
+      setReason('Thiết lập vị trí trống B2B/BTC; giữ nguồn nhân sự hiện hữu');
+      setPreview(p);
+    });
+  };
   if (!user || user.status !== 'Đang hoạt động') return <p role="alert" className="p-6 text-destructive">Vui lòng đăng nhập lại.</p>;
   if (data.isPending) return <div aria-busy="true" aria-label="Đang tải cơ cấu tổ chức" className="space-y-5 p-6"><PageHeader title="Cơ cấu tổ chức" /><Skeleton className="h-10 w-64" /><Skeleton className="h-64 w-full" /></div>;
   if (data.error) return <div className="space-y-3"><PageHeader title="Cơ cấu tổ chức" /><p role="alert" className="text-destructive">Không tải được cơ cấu tổ chức. {data.error instanceof Error ? data.error.message : 'Vui lòng thử lại sau.'}</p><Button variant="outline" disabled={data.isFetching} onClick={() => data.refetch()}>{data.isFetching ? 'Đang tải lại…' : 'Thử lại'}</Button></div>;
@@ -133,7 +146,7 @@ function OrganizationWorkspace() {
   <Button disabled={busy || !reason.trim()} onClick={apply}>{busy ? 'Đang áp dụng…' : 'Xác nhận áp dụng'}</Button>
 </>; })()}</DialogContent></Dialog>
   {assigning && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrganizationAppointment target={assigning} config={config} staff={staff} onClose={()=>setAssigning(null)} onPreview={async next=>{if(dirty)throw new Error('Áp dụng hoặc hủy bản nháp hiện tại trước khi bổ nhiệm.');if(!original)throw new Error('Chưa tải cơ cấu.');return baseOrgApi.preview(data.data?.revision??0,next,original);}} onApply={async(p,reason)=>{await baseOrgApi.apply(p.id,'ÁP DỤNG CƠ CẤU',reason);const fresh=await data.refetch();if(fresh.error)throw fresh.error;if(fresh.data)setConfig(structuredClone(fresh.data.config));await qc.invalidateQueries({queryKey:['base-effective']});await qc.invalidateQueries({queryKey:['title-role-links']});await useAuth.getState().reload();}} /></Suspense>}
-  {manageUnit && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrgUnitDrawer unitId={manageUnit.id} config={config} staff={staff} actor={actor} onAppoint={(titleId,mode)=>{setAssigning({unitId:manageUnit.id,titleId,mode});setManageUnit(null);}} onEnd={id=>{setChanging({id});setManageUnit(null);}} onEdit={edit} onSetupDistributionRoles={setupDistribution} onSetupShowroomRoles={unitId=>{setManageUnit(null);void run(async()=>{if(!isSA||dirty||!original)throw new Error('Cần Super Admin và cơ cấu chưa có bản nháp để khởi tạo vị trí Showroom.');const {next,commands}=showroomPositionSetup(original,unitId);const p=await baseOrgApi.preview(data.data?.revision??0,next,original,commands);setShowroomRolePreview(true);setMembershipMode(false);setReason('Khởi tạo vị trí Nhân viên Showroom và Cửa hàng trưởng');setPreview(p);});}} onClose={()=>setManageUnit(null)} /></Suspense>}
+  {manageUnit && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrgUnitDrawer unitId={manageUnit.id} config={config} staff={staff} actor={actor} onAppoint={(titleId,mode)=>{setAssigning({unitId:manageUnit.id,titleId,mode});setManageUnit(null);}} onEnd={id=>{setChanging({id});setManageUnit(null);}} onEdit={edit} onSetupDistributionRoles={setupDistribution} onSetupCenterRoles={setupCenter} onClose={()=>setManageUnit(null)} /></Suspense>}
   {changing && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrganizationChange config={config} id={changing.id} specialty={changing.specialty} onClose={()=>setChanging(null)} onPreview={async next=>{if(dirty)throw new Error('Áp dụng bản nháp cơ cấu trước.');if(!original)throw new Error('Chưa tải cơ cấu.');return baseOrgApi.preview(data.data?.revision??0,next,original);}} onApply={async(p,reason)=>{await baseOrgApi.apply(p.id,'ÁP DỤNG CƠ CẤU',reason);await data.refetch();await qc.invalidateQueries({queryKey:['base-effective']});await useAuth.getState().reload();}} /></Suspense>}
   <Dialog open={!!historySlot} onOpenChange={v => !v && setHistorySlot(null)}><DialogContent className="max-w-md max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử — {historySlot?.slot.title}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">{historySlot?.unitName}</p>{historySlot && (slotHistory(config, historySlot.unitId, historySlot.slot.id).length ? slotHistory(config, historySlot.unitId, historySlot.slot.id).map(m => <div key={m.id} className="border-b py-2 text-sm"><p className="font-medium">{staff.find(s => s.id === m.user_id)?.name ?? 'Nhân sự'}</p><p className="text-xs text-muted-foreground">{m.starts_at ? new Date(m.starts_at).toLocaleString('vi-VN') : '—'} → {m.ends_at ? new Date(m.ends_at).toLocaleString('vi-VN') : 'Hiện tại'} · {m.active ? 'Đang áp dụng' : 'Đã kết thúc'}</p></div>) : <p className="py-4 text-sm text-muted-foreground">Chưa từng có người giữ vị trí này.</p>)}</DialogContent></Dialog></div>;
 }

@@ -1,4 +1,6 @@
 # Roadmap — Role/personal permissions 510/510
+- [x] B2B/BTC: shared center visual projection preserving Distribution/populated wrappers; guarded empty-position setup; five new Role seed SQL/preflight/rollback; 98 tests and automatic build pass, no live writes/publish.
+- [ ] B2B/BTC live rollout and signed-in responsive QA: exact-SHA approval + valid Super Admin session required; Bán Lẻ has assignment history, occupied Sales mappings need separate audited cutover.
 - [x] Distribution four-level visual hierarchy: existing stable-ID center is a company peer in chart only; director at center, head at department, lead at real team, staff at actual department/team; 90 regression tests pass, no live reparent.
 - [x] Distribution four exact-name Position Roles: catalog seed SQL staged with preflight/SHA/guarded rollback; empty-position preview/apply implemented with live catalog verification, zero assignment changes; no live apply.
 - [ ] Distribution Role seed and signed-in position QA: requires separate exact-SHA approval and a valid Super Admin session; no live Roles/titles created.

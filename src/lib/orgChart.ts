@@ -6,7 +6,7 @@ import { distributionVisualHierarchy } from '@/lib/distribution/hierarchy';
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
 export interface ChartSlot { id: string; titleId?: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
-export interface ChartNode { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean; visualHierarchy?: boolean }
+export interface ChartNode { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean; visualHierarchy?: boolean; wrapperProtected?: boolean; hierarchyWarning?: string }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
 /** One recursive tree for every organizational category; source is never a UI branch. */
@@ -24,7 +24,11 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
     const slotted = new Set(titles.map(t => t.id));
     const holderIds = new Set(slots.flatMap(slot => slot.holders.map(person => person.id)));
     const people = [...new Map(current.filter(m => m.unit_id === u.id && !holderIds.has(m.user_id) && (!m.title_id || !slotted.has(m.title_id))).map(m => [m.user_id, personOf(m)])).values()];
-    return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
+    const wrapperProtected = config.memberships.some(m => m.unit_id === u.id)
+      || config.titles.some(t => t.unit_id === u.id)
+      || config.position_slots?.some(s => s.unit_id === u.id)
+      || Object.keys(('data' in u && u.data && typeof u.data === 'object') ? u.data : {}).some(key => !['id','name','parent_id','active','created_at','updated_at'].includes(key));
+    return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, wrapperProtected: !!wrapperProtected, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
   };
   const roots = config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id));
   // Hiển thị: nếu có đúng một Công ty gốc và mọi gốc còn lại đều là Khối chưa gắn cha,

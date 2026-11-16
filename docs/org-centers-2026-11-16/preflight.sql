@@ -1,0 +1,6 @@
+-- READ ONLY: store full personnel snapshots privately, not in Git.
+SELECT id,parent_id,kind,name,data FROM org_units WHERE id IN ('624e6e56-eeab-42d5-85af-6af284e72f34','showroom-block','76fcf3a9-8561-4e2a-be3c-c6724a6310fb','d970fba4-4b4c-48e4-9b15-89e05312afc1');
+SELECT id,name,permissions,role_kind,catalog_state FROM app_roles WHERE id LIKE 'role-v2-b2b-%' OR id='role-v2-btc-director' OR id IN ('role-v2-showroom-manager','role-v2-showroom-staff','role-v2-sales-director','role-v2-sales-head','role-v2-sales-team','role-v2-sales-staff');
+SELECT * FROM org_position_roles WHERE unit_id IN ('showroom-block','d970fba4-4b4c-48e4-9b15-89e05312afc1');
+SELECT id,title_id,role_id,active FROM org_position_slots WHERE unit_id='d970fba4-4b4c-48e4-9b15-89e05312afc1';
+SELECT unit_id,title_id,status,count(*) rows,count(*) FILTER(WHERE status='active' AND starts_at<=now() AND (ends_at IS NULL OR ends_at>now())) effective FROM org_assignments WHERE unit_id IN ('showroom-block','76fcf3a9-8561-4e2a-be3c-c6724a6310fb','d970fba4-4b4c-48e4-9b15-89e05312afc1') GROUP BY 1,2,3;

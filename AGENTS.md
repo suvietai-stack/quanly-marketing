@@ -1,6 +1,6 @@
 # Architecture rules
 - Distribution position setup uses catalog-verified dedicated Role IDs and org_change preview/apply for empty canonical titles only; occupied Biz projections remain untouched pending a historical cutover — avoids duplicate appointments and silent rights loss.
-- Distribution chart promotion is a post-build display projection with unchanged IDs/holders/action targets, never a mutation of OrgConfig; empty setup follows center/department/real-team levels — preserves live scope until approved reparent.
+- Center chart promotion shares one post-build projection with unchanged IDs/holders/action targets; retail wrappers collapse only with no historical/configured data, guarded center setup never rebinds existing titles — preserves live scope until approved cutover.
 - Area-restricted 3K intersects server-authorized report units with the existing chart subtree and validates own active appointments at server time; never falls back to the parent block or company — keeps shared RPC enforcement and historical data intact.
 - SW crypto uses extensions; Order locks equate known status aliases only, preserving guards.
 - Signal reads use invoker pages, history-free counts, statement permission initplans and four ranks before pagination; bounded cancellation and independent errors prevent retry storms; legacy sorts/RLS/history remain intact.
