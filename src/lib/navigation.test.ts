@@ -87,6 +87,12 @@ describe('Presentation-only navigation', () => {
     const groups = visibleNavigation(access([], { approvalsEligible: true }));
     expect(groups.find(g => g.label === 'Điều hành')?.items.map(i => i.to)).toContain('/approvals');
   });
+  it('keeps the executive approval center visible even when its heavy summary is unavailable', () => {
+    expect(paths(access(['leave.approve']))).toContain('/approvals');
+    expect(paths(access(['biz.approval_view']))).toContain('/approvals');
+    expect(paths(access(['fr.advance.approve']))).toContain('/approvals');
+    expect(paths(access(['report.view','biz.view_all']))).not.toContain('/approvals');
+  });
   it('highlights only the most specific route for existing deep links', () => {
     expect(activeNavigationPath(navigationGroups, '/signals/report')).toBe('/signals/report');
     expect(activeNavigationPath(navigationGroups, '/orders/order-123')).toBe('/orders');
