@@ -28,3 +28,23 @@ BEGIN
   INSERT INTO notifications(recipient_id,kind,order_id,payload,dedup_key) VALUES(_rev,'order_delivered',NEW.id,_p,'od:delivered:'||NEW.id||':'||rnd||':'||_rev) ON CONFLICT(dedup_key) DO NOTHING;
  END IF; RETURN NEW;
 END $function$;
+
+-- Order RLS: cheap ownership/assignment checks come before the costly effective Role resolver.
+-- Semantics unchanged: Admin/Design overview; creator with create/view; related staff with view.
+-- PL/pgSQL branches guarantee non-matching records never invoke design_can().
+CREATE OR REPLACE FUNCTION private.design_read(_uid uuid, _creator uuid, _data jsonb, _flow text)
+RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path TO 'public','private'
+AS $function$
+BEGIN
+ IF _uid IS NULL OR NOT private.is_active(_uid) THEN RETURN false; END IF;
+ IF private.is_admin(_uid) OR private.design_overview_member(_uid) THEN RETURN true; END IF;
+ IF _creator=_uid THEN RETURN public.design_can(_uid,_flow,'view') OR public.design_can(_uid,_flow,'create'); END IF;
+ IF _data->>'assigneeId'=_uid::text
+   OR private.design_person(_uid,_data->>'requester')
+   OR private.design_person(_uid,_data->>'assignee')
+   OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester'))
+ THEN RETURN public.design_can(_uid,_flow,'view'); END IF;
+ RETURN false;
+END
+$function$;
