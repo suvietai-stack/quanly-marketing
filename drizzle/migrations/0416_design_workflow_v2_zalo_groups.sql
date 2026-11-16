@@ -226,8 +226,7 @@ BEGIN
  ELSIF nullif(NEW.data->>'videoId','') IS NOT NULL AND NEW.data->>'type'='Thumbnail video' THEN
    src:=NEW.data->>'videoId';mode:='video';
  ELSE RETURN NEW; END IF;
- IF TG_OP='UPDATE' AND src=(CASE WHEN mode='content' THEN OLD.data->>'contentId' ELSE OLD.data->>'videoId' END)
-    AND coalesce(OLD.workflow_kind,OLD.data->>'workflowKind')='marketing_design' THEN RETURN NEW; END IF;
+ IF TG_OP='UPDATE' AND src=(CASE WHEN mode='content' THEN OLD.data->>'contentId' ELSE OLD.data->>'videoId' END) THEN RETURN NEW; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('design-link:'||mode||':'||src,0));
  IF EXISTS(
    SELECT 1 FROM public.orders o
@@ -254,6 +253,46 @@ UPDATE public.orders
            'action','Chuyển Job chưa phân loại vào Ấn phẩm Marketing theo cấu hình mới',
            'note','Giữ nguyên trạng thái, người phụ trách và toàn bộ lịch sử trước đó')))
  WHERE workflow_kind IS NULL;
+
+-- Với Job Marketing chưa có loại ấn phẩm: điền từ loại lịch sử nếu khớp
+-- danh mục hiện tại, nếu không thì "Khác". Không sửa lựa chọn đã có.
+WITH category_for_job AS (
+ SELECT o.id, dc.id category_id,dc.name category_name
+ FROM public.orders o
+ JOIN LATERAL (
+   SELECT cat.id, cat.name
+   FROM public.design_catalogs cat
+   WHERE cat.workflow_kind='marketing_design' AND cat.kind='work' AND cat.active
+     AND (lower(btrim(cat.name))=lower(btrim(
+       CASE lower(btrim(coalesce(o.data->>'type','')))
+         WHEN 'banner website' THEN 'Banner Website'
+         WHEN 'ảnh bài web' THEN 'Ảnh bài Web'
+         WHEN 'ảnh social' THEN 'Ảnh Social'
+         WHEN 'thumbnail video' THEN 'Thumbnail Video'
+         WHEN 'ảnh sản phẩm' THEN 'Ảnh sản phẩm'
+         WHEN 'catalogue / profile' THEN 'Catalogue / Profile'
+         WHEN 'ảnh google map' THEN 'Ảnh Google Map'
+         ELSE 'Khác'
+       END
+     )) OR cat.name='Khác')
+   ORDER BY CASE WHEN cat.name='Khác' THEN 1 ELSE 0 END,cat.id
+   LIMIT 1
+ ) dc ON true
+ WHERE o.workflow_kind='marketing_design'
+   AND nullif(btrim(o.data->>'workCategoryId'),'') IS NULL
+)
+UPDATE public.orders o SET
+ data=o.data||jsonb_build_object(
+  'workCategoryId',c.category_id,
+  'workCategoryName',c.category_name,
+  'history',coalesce(o.data->'history','[]'::jsonb) ||
+    jsonb_build_array(jsonb_build_object(
+      'at',to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+      'byName','Hệ thống',
+      'action','Bổ sung loại ấn phẩm cho Job lịch sử',
+      'note','Tạm phân loại: '||c.category_name))
+ )
+FROM category_for_job c WHERE o.id=c.id;
 
 -- Existing unassigned, active v1 Jobs become explicit exception queue, never auto-given to an arbitrary employee.
 -- No past event triggers Zalo because three configurations are OFF by default.
