@@ -101,7 +101,7 @@ function UnitCard({ node, query, actions, onOpen, open, onToggle, horizontal }: 
       <div className={`flex items-center justify-between gap-2 px-3 py-2 ${tone}`}>
         <div className="min-w-0">
           <p className="break-words text-sm font-semibold">{node.name} {node.inactive && <Badge variant="secondary">Ngừng</Badge>}</p>
-          <p className="text-[11px] opacity-80">{KIND_LABELS[node.kind] ?? node.kind} · {count} nhân sự trong nhánh{node.children.length > 0 ? ` · ${node.children.length} đơn vị trực thuộc` : ''}</p>
+          <p className="text-[11px] opacity-80">{node.visualHierarchy ? 'Trung tâm' : (KIND_LABELS[node.kind] ?? node.kind)} · {count} nhân sự trong nhánh{node.children.length > 0 ? ` · ${node.children.length} đơn vị trực thuộc` : ''}</p>
           {node.visualHierarchy && <Badge variant="outline" className="mt-1 whitespace-normal">Cơ cấu live chờ chuyển đổi</Badge>}
           {node.hierarchyWarning && <p role="status" className="mt-1 break-words text-xs">{node.hierarchyWarning}</p>}
         </div>

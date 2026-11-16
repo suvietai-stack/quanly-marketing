@@ -9,6 +9,9 @@ on:
       - 'src/lib/orgCenters.ts'
       - 'src/lib/basePermissions/centerPositions.ts'
       - 'src/lib/basePermissions/centerPositions.test.ts'
+      - 'src/lib/basePermissions/centerRoleDefaults.ts'
+      - 'src/lib/basePermissions/completeCenterRoles.database.test.ts'
+      - 'docs/center-roles-2026-11-17/**'
       - 'src/lib/distribution/**'
       - '.github/workflows/organization-ui-validation.yml'
   workflow_dispatch:
@@ -35,5 +38,6 @@ jobs:
       - run: >-
           bunx vitest run src/lib/orgChart.test.ts
           src/lib/basePermissions/centerPositions.test.ts
+          src/lib/basePermissions/completeCenterRoles.database.test.ts
           src/lib/distribution/hierarchy.test.ts
           src/lib/distribution/centersHierarchy.test.ts

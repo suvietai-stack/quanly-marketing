@@ -26,14 +26,17 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
             child.leader ||
             child.people.length ||
             child.slots?.length;
-          return occupied
-            ? [
-                {
-                  ...child,
-                  hierarchyWarning: "Giữ Hệ Bán Lẻ: còn dữ liệu hoặc lịch sử, chưa thể bỏ tầng.",
-                },
-              ]
-            : child.children;
+          // Showroom is a direct child of BTC; history remains accessible as
+          // a separate sibling with the original unit ID and action target.
+          const legacy: ChartNode[] = occupied
+            ? [{
+                ...child,
+                name: "Bán Lẻ · Đơn vị lịch sử",
+                children: [],
+                hierarchyWarning: "Giữ đơn vị cũ để tra lịch sử/bổ nhiệm; không phải tầng trung gian.",
+              }]
+            : [];
+          return [...child.children, ...legacy];
         });
       if (centers.has(node.id)) {
         promoted.push({
@@ -47,7 +50,18 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
       }
       return [{ ...node, name: names[node.id] ?? node.name, children }];
     });
-  const remaining = detach(roots);
+  const detached = detach(roots);
+  // Remove only an entirely empty old Business wrapper from the *display*.
+  // Never remove units with assigned people, titles, slots, other children or history.
+  const prune = (nodes: ChartNode[]): ChartNode[] =>
+    nodes.flatMap((node) => {
+      const children = prune(node.children);
+      if (node.id === "biz-block" && !children.length && !node.wrapperProtected &&
+          !node.inactive && !node.leader && !node.people.length && !node.slots?.length)
+        return [];
+      return [{ ...node, children }];
+    });
+  const remaining = prune(detached);
   if (!promoted.length) return roots;
   const company = remaining.find((node) => node.kind === "company");
   return company

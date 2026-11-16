@@ -27,7 +27,7 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
     const wrapperProtected = config.memberships.some(m => m.unit_id === u.id)
       || config.titles.some(t => t.unit_id === u.id)
       || config.position_slots?.some(s => s.unit_id === u.id)
-      || Object.keys(('data' in u && u.data && typeof u.data === 'object') ? u.data : {}).some(key => !['id','name','parent_id','active','created_at','updated_at'].includes(key));
+      || Object.keys(('data' in u && u.data && typeof u.data === 'object') ? u.data : {}).some(key => !['id','name','kind','source','source_id','parent_id','active','created_at','updated_at'].includes(key));
     return { id: u.id, name: u.name, kind: u.kind, inactive: !u.active, slots, people, wrapperProtected: !!wrapperProtected, children: config.units.filter(x => x.parent_id === u.id && !next.has(x.id)).map(x => make(x,next)) };
   };
   const roots = config.units.filter(u => !u.parent_id || !config.units.some(x => x.id === u.parent_id));

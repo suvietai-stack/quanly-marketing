@@ -3,6 +3,9 @@
 - Keep preview/production, database changes and publish separate from code review. This rule is about editing workflow, not a license to loosen scoped permissions.
 
 # Architecture rules
+- Center Role presets only insert missing IDs with ready-by-default work permissions. Existing B2B, Distribution, BTC and Showroom Roles never get overwritten, especially custom grants; catalog Role creation never grants users access until audited positions and appointments.
+- Organization chart flattens Showroom visually while keeping the historical Bán Lẻ wrapper as a separate sibling, and hides only fully empty legacy Khối Kinh doanh. IDs, original parent links, history and all permission scopes are unchanged.
+
 - All three centers use centerPositionSetup with catalog-verified Role IDs and one org_change preview/apply; existing correct bindings/capacity remain unchanged, conflicting/history-bearing unbound positions fail closed — avoids duplicate staff positions and silent rights loss.
 - Center chart promotion shares one post-build projection with unchanged IDs/holders/action targets; retail wrappers collapse only with no historical/configured data, guarded center setup never rebinds existing titles — preserves live scope until approved cutover.
 - Area-restricted 3K intersects server-authorized report units with the existing chart subtree and validates own active appointments at server time; never falls back to the parent block or company — keeps shared RPC enforcement and historical data intact.
