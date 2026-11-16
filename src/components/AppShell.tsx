@@ -41,9 +41,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
+  const approvalAccessByPermission = isSuperAdmin || [
+    'leave.approve','leave.cancel_handle','biz.approval_view',
+    'biz.goal_approve','biz.report_approve',
+    'fr.advance.approve','fr.payment.approve','fr.salary.approve',
+    'att.witness','ot.reschedule_reply','task.approve_completion',
+  ].some(can);
   const approvals = useQuery({ ...approvalsQuery(user?.id ?? ''), enabled: !!user?.id, staleTime: 60_000, refetchInterval: 120_000, retry: 1, refetchOnWindowFocus: false });
-  const approvalCenter = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id, staleTime: 60_000, refetchInterval: 120_000, retry: 1, refetchOnWindowFocus: false });
-  const approvalsEligible = !!approvalCenter.data?.eligible;
+  // Loading all cross-module approvals is too expensive to gate navigation.
+  // Confirmed approvers can enter immediately; the actual lists still enforce RLS/RPC authorization.
+  const approvalCenter = useQuery({ ...approvalCenterQuery(user?.id ?? ''), enabled: !!user?.id && !approvalAccessByPermission, staleTime: 60_000, refetchInterval: 120_000, retry: 1, refetchOnWindowFocus: false });
+  const approvalsEligible = approvalAccessByPermission || !!approvalCenter.data?.eligible;
   const approvalBadge = badgeText(approvalCenter.data?.todo.length ?? 0);
   const bizAccess = useAuth(s => s.bizAccess);
   const baseAccess = useAuth(s => s.baseAccess);
