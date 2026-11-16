@@ -18,7 +18,9 @@ import { permissionEditorApi, permissionPresets, presetPermissions, permissionDe
 import { defaultRoleImpact, defaultRolePresets, isCanonicalRole, salesBusinessDraft } from '@/lib/basePermissions/defaultRolePresets';
 import { PositionRoles } from '@/components/PositionRoles';
 import { canonicalRoleDrafts } from '@/lib/basePermissions/canonicalMapping';
-const groups=['Quản trị & Điều hành','Kinh doanh','Marketing','Thiết kế','Vận hành','Nhiệm vụ Marketing'];
+import { CENTER_ROLE_PRESETS } from '@/lib/basePermissions/centerRoleDefaults';
+const groups=['Quản trị & Điều hành','B2B','Phân Phối','BTC','Showroom','Kinh doanh','Marketing','Thiết kế','Vận hành','Nhiệm vụ Marketing'];
+const centerRoleIds = new Set(CENTER_ROLE_PRESETS.map(p => p.id));
 export function RoleCatalog({canManage}:{canManage:boolean}) {
  const {user,isSuperAdmin}=useCurrentUser(); const qc=useQueryClient(); const users=useAuth(s=>s.users);
  const q=useQuery({queryKey:['role-catalog',user?.id],queryFn:roleCatalogApi.read,retry:false,staleTime:30000});
@@ -28,6 +30,7 @@ export function RoleCatalog({canManage}:{canManage:boolean}) {
  const policy=useQuery({queryKey:['permission-editor-policy',user?.id],queryFn:permissionEditorApi.read,retry:false});
  const [activeId,setActiveId]=useState(''); const [preset,setPreset]=useState('');
  const [filter,setFilter]=useState('position'); const [search,setSearch]=useState('');
+ const [roleArea,setRoleArea]=useState<'centers'|'other'|'legacy'>('centers');
  const [editor,setEditor]=useState<{role?:CatalogRole;proposal:RoleProposal}|null>(null);
  const [preview,setPreview]=useState<RolePreview|null>(null); const [conversion,setConversion]=useState<Preview|null>(null);
  const [reason,setReason]=useState(''); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
@@ -37,11 +40,19 @@ export function RoleCatalog({canManage}:{canManage:boolean}) {
  if(q.isPending)return <p className="py-5 text-muted-foreground">Đang tải kho Role…</p>;
  if(q.error)return <div role="alert"><p className="text-destructive">{q.error.message}</p><Button variant="outline" onClick={()=>q.refetch()}>Thử lại</Button></div>;
  const catalog=q.data; const editAllowed=canManage&&isSuperAdmin&&user?.status==='Đang hoạt động';
- const roles=catalog.roles.filter(r=>r.role_kind===filter&&r.catalog_state!=='archived'&&(isCanonicalRole(r)||r.role_code===r.id&&(r.id.startsWith('role-v2-')||r.id.startsWith('role-custom-')))&&`${r.name} ${r.id}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')));
+ const roles=catalog.roles.filter(r=>r.role_kind===filter&&r.catalog_state!=='archived'&&(isCanonicalRole(r)||r.role_code===r.id&&(r.id.startsWith('role-v2-')||r.id.startsWith('role-custom-')))&&
+    (filter!=='position'||(roleArea==='centers'?centerRoleIds.has(r.id):roleArea==='legacy'?r.catalog_group==='Kinh doanh':!centerRoleIds.has(r.id)&&r.catalog_group!=='Kinh doanh'))&&`${r.name} ${r.id}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')));
  const label=(key:string)=>PERMISSIONS.find(p=>p.key===key)?.label??key;
  const patch=(value:Partial<RoleProposal>)=>{setPreview(null);setEditor(e=>e?{...e,proposal:{...e.proposal,...value}}:e);};
  return <div className="space-y-4">
   <div className="flex flex-wrap gap-2"><Input className="sm:max-w-xs" aria-label="Tìm Role" placeholder="Tìm Role" value={search} onChange={e=>setSearch(e.target.value)}/><div className="flex flex-wrap gap-2" role="group" aria-label="Ba nhóm Role">{[{key:'common',label:'Quyền chung'},{key:'position',label:'Role vị trí'},{key:'marketing_task',label:'Role nhiệm vụ'}].map(g=><Button key={g.key} variant={filter===g.key?'default':'outline'} disabled={busy} onClick={()=>{setFilter(g.key);setActiveId('');setEditor(null);setPreview(null);setSearch('');}}>{g.label}</Button>)}</div>{editAllowed&&filter!=='common'&&<Button onClick={()=>{openEditor();setEditor(e=>e?{...e,proposal:{...e.proposal,role_kind:filter==='marketing_task'?'marketing_task':'position'}}:e);}}><Plus className="mr-2 size-4"/>Tạo Role</Button>}</div>
+  {filter==='position' && <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc nhóm Role vị trí">
+    {([
+      ['centers','B2B · Phân Phối · BTC / Showroom'],
+      ['other','Các phòng ban khác'],
+      ['legacy','Role Kinh doanh cũ cần chuyển đổi'],
+    ] as const).map(([value,label])=><Button key={value} size="sm" variant={roleArea===value?'secondary':'outline'} disabled={busy} onClick={()=>{setRoleArea(value);setActiveId('');setEditor(null);setPreview(null);setSearch('');}}>{label}</Button>)}
+  </div>}
   {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   {policy.data&&<details className="border-y py-3"><summary className="cursor-pointer font-medium">Bộ Role chuẩn mới · 25 Role</summary><div className="divide-y pt-3">{canonicalRoleDrafts(catalog,policy.data).map(({preset:p,stored,permissions})=><div key={p.roleId} className="flex flex-wrap items-center gap-2 py-3 text-sm"><span className="min-w-0 flex-1 break-words font-medium">{p.name}<span className="block text-xs text-muted-foreground">{p.group} · {stored?'Đã tạo':'Chưa tạo'} · {catalog.slots.filter(s=>s.role_id===p.roleId).length} ô</span></span><span>{permissions.length} quyền gợi ý</span>{editAllowed&&<Button size="sm" variant="outline" disabled={!!stored} onClick={()=>{setError('');setReason('');setPreset('');setEditor({proposal:{canonical_id:p.roleId,name:`${p.name} · Chuẩn v1`,description:`Bộ chuẩn mới: ${p.roleId}. Role cũ giữ nguyên.`,role_kind:p.kind,catalog_group:p.group,permissions,signal_scope_all:false,signal_scope:[]}});}}>Soạn Role mới</Button>}</div>)}</div></details>}
   <div className="grid gap-5 md:grid-cols-[240px_minmax(0,1fr)]">
