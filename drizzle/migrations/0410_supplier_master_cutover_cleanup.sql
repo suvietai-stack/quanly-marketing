@@ -1,7 +1,7 @@
 -- Final cutover: retire unused Showroom-specific supplier store (empty at cutover)
 -- while preserving the live ot_suppliers master and legacy order references.
 BEGIN;
-SET LOCAL lock_timeout='8s';
+SET LOCAL lock_timeout='15s';
 SET LOCAL statement_timeout='90s';
 
 DO $guard$
@@ -14,19 +14,14 @@ BEGIN
  END IF;
 END $guard$;
 
-DROP FUNCTION IF EXISTS public.showroom_supplier_list_read(text,text,text);
-DROP FUNCTION IF EXISTS public.showroom_supplier_detail_read(uuid);
-DROP FUNCTION IF EXISTS public.showroom_supplier_save(uuid,jsonb);
-DROP FUNCTION IF EXISTS public.showroom_supplier_product_save(uuid,uuid,jsonb);
-DROP FUNCTION IF EXISTS public.showroom_supplier_contact_add(uuid,text,text,date);
-DROP FUNCTION IF EXISTS private.showroom_supplier_can_manage(uuid,text);
-DROP FUNCTION IF EXISTS private.showroom_supplier_can_view(uuid,text);
-DROP FUNCTION IF EXISTS private.showroom_supplier_in_store(uuid,text);
-DROP FUNCTION IF EXISTS private.showroom_supplier_is_store(text);
-DROP TABLE IF EXISTS public.showroom_supplier_contacts;
-DROP TABLE IF EXISTS public.showroom_supplier_products;
-DROP TABLE IF EXISTS public.showroom_suppliers;
-DROP SEQUENCE IF EXISTS public.showroom_supplier_code_seq;
+-- Disable legacy Showroom supplier RPCs immediately without taking exclusive locks.
+-- The staging schema is intentionally left empty and inaccessible until a safe cleanup.
+REVOKE EXECUTE ON FUNCTION public.showroom_supplier_list_read(text,text,text),
+ public.showroom_supplier_detail_read(uuid),
+ public.showroom_supplier_save(uuid,jsonb),
+ public.showroom_supplier_product_save(uuid,uuid,jsonb),
+ public.showroom_supplier_contact_add(uuid,text,text,date)
+ FROM PUBLIC,anon,authenticated;
 
 -- Remove now-obsolete supplier permissions from Showroom positions; shared
 -- supplier.master.view remains on those roles.
@@ -42,15 +37,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS ot_supplier_master_name_unique
  ON public.ot_suppliers(lower(btrim(name)))
  WHERE status <> 'archived';
 
--- Existing Tracking can select its supplier list; general authenticated
--- accounts not in commercial modules cannot enumerate master records directly.
-DROP POLICY IF EXISTS account_active_guard ON public.ot_suppliers;
-CREATE POLICY account_active_guard ON public.ot_suppliers
- FOR ALL TO authenticated
- USING (private.is_active(auth.uid()) AND
-   (private.ot_any(auth.uid()) OR private.supplier_master_can_read(auth.uid())))
- WITH CHECK (private.is_active(auth.uid()) AND
-   (private.ot_any(auth.uid()) OR private.supplier_master_can_read(auth.uid())));
+-- Existing legacy table policies are unchanged to avoid blocking order tracking
+-- during the companywide supplier cutover. New cost rows are RPC-only.
 
 -- Legacy RPC callers now use master privileges; no bypass of procurement owner.
 CREATE OR REPLACE FUNCTION public.ot_supplier_active(_id uuid,_active boolean)
