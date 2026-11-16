@@ -13,12 +13,14 @@ jobs:
       - name: Check public web and Supabase health endpoints without credentials
         shell: bash
         run: |
+          set +e
           set -u
           urls=(
             'https://base.suviet.vn/login'
             'https://quanly-suviet.lovable.app/login'
             'https://vipbucgcgkvuvzgqpftp.supabase.co/auth/v1/health'
             'https://vipbucgcgkvuvzgqpftp.supabase.co/rest/v1/'
+            'https://supabase.co/'
           )
           for url in "${urls[@]}"; do
             echo "=== PROBE: ${url} ==="
@@ -30,5 +32,14 @@ jobs:
             ec=$?
             echo "curl_exit=${ec} ${outcome}"
             echo
+          done
+          echo '=== DNS CROSS-CHECK ==='
+          for name in base.suviet.vn supabase.co vipbucgcgkvuvzgqpftp.supabase.co; do
+            echo "Name: ${name}"
+            getent ahostsv4 "${name}" | head -n 2 || true
+            echo 'Cloudflare:'
+            dig +time=5 +tries=1 @1.1.1.1 "${name}" A +short || true
+            echo 'Google DNS:'
+            dig +time=5 +tries=1 @8.8.8.8 "${name}" A +short || true
           done
           echo 'Diagnostic only: no credentials, no authentication attempt, no database writes, no deployment.'
