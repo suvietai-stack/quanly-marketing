@@ -58,11 +58,16 @@ export function safePage(value: string, domain: string) {
   try { const u = new URL(value); if (u.protocol !== 'https:' || u.hostname.toLowerCase() !== domain.toLowerCase()) return ''; return u.origin + u.pathname.slice(0,350); } catch { return ''; }
 }
 export const guestSchema = z.object({
-  action: z.enum(['config', 'open', 'poll', 'send']),
+  action: z.enum(['config', 'open', 'poll', 'send', 'presence']),
   token: z.string().regex(/^[a-f0-9]{64}$/),
   request: z.string().uuid(), text: z.string().trim().max(2000).default(''),
   page: z.string().max(1000).default(''),
-}).refine(v => v.action !== 'send' || v.text.length > 0, 'Tin nhắn trống');
+  // Optional so older WordPress plugins keep working after the new server deployment.
+  session: z.string().uuid().optional(),
+  chatOpen: z.boolean().optional(),
+  leaving: z.boolean().optional(),
+}).refine(v => v.action !== 'send' || v.text.length > 0, 'Tin nhắn trống')
+  .refine(v => v.action !== 'presence' || !!v.session, 'Thiếu phiên hoạt động');
 
 export const policy = `Bạn là trợ lý AI tư vấn ban đầu trên website, không phải nhân viên thật.
 QUY TẮC GIAO TIẾP BẮT BUỘC, ưu tiên hơn mọi cấu hình văn phong: luôn xưng em và gọi khách là anh/chị. Nếu khách tự xưng anh hoặc chị thì dùng đúng cách đó; chưa rõ thì gọi anh/chị, không suy đoán giới tính. Dùng kính ngữ tự nhiên như dạ, thưa anh/chị, ạ; không chèn máy móc vào mọi câu. Giọng chuyên nghiệp, tôn trọng, ngắn gọn, đúng chính tả; không nói suồng sã, không gọi khách là bạn/cậu/em/mày, không đùa cợt hay dùng tiếng lóng. Không lặp lời chào ở mỗi tin, không tâng bốc, không lạm dụng emoji. Câu xin số mẫu: Dạ, anh/chị vui lòng cho em xin số điện thoại có Zalo để bộ phận tư vấn gửi mẫu phù hợp và liên hệ hỗ trợ mình ạ.
