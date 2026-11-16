@@ -70,6 +70,8 @@ import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
 import { Route as K3UnitRouteImport } from './routes/k3_.unit.$unit'
 import { Route as K3CenterRouteImport } from './routes/k3-center'
 import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
+import { Route as Operations3kAccountingRouteImport } from './routes/operations_.3k-accounting'
+import { Route as Operations3kHrRouteImport } from './routes/operations_.3k-hr'
 import { Route as Operations3kRouteImport } from './routes/operations_.3k'
 import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
@@ -401,6 +403,16 @@ const Biz3kAreaRoute = Biz3kAreaRouteImport.update({
   path: '/biz/3k-area',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Operations3kAccountingRoute = Operations3kAccountingRouteImport.update({
+  id: '/operations_/3k-accounting',
+  path: '/operations/3k-accounting',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Operations3kHrRoute = Operations3kHrRouteImport.update({
+  id: '/operations_/3k-hr',
+  path: '/operations/3k-hr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Operations3kRoute = Operations3kRouteImport.update({
   id: '/operations_/3k',
   path: '/operations/3k',
@@ -589,6 +601,8 @@ export interface FileRoutesByFullPath {
   '/k3/unit/$unit': typeof K3UnitRoute
   '/k3-center': typeof K3CenterRoute
   '/biz/3k-area': typeof Biz3kAreaRoute
+  '/operations/3k-accounting': typeof Operations3kAccountingRoute
+  '/operations/3k-hr': typeof Operations3kHrRoute
   '/operations/3k': typeof Operations3kRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
@@ -677,6 +691,8 @@ export interface FileRoutesByTo {
   '/k3/unit/$unit': typeof K3UnitRoute
   '/k3-center': typeof K3CenterRoute
   '/biz/3k-area': typeof Biz3kAreaRoute
+  '/operations/3k-accounting': typeof Operations3kAccountingRoute
+  '/operations/3k-hr': typeof Operations3kHrRoute
   '/operations/3k': typeof Operations3kRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
@@ -766,6 +782,8 @@ export interface FileRoutesById {
   '/k3_/unit/$unit': typeof K3UnitRoute
   '/k3-center': typeof K3CenterRoute
   '/biz/3k-area': typeof Biz3kAreaRoute
+  '/operations_/3k-accounting': typeof Operations3kAccountingRoute
+  '/operations_/3k-hr': typeof Operations3kHrRoute
   '/operations_/3k': typeof Operations3kRoute
   '/showroom_/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
@@ -856,6 +874,8 @@ export interface FileRouteTypes {
     | '/k3/unit/$unit'
     | '/k3-center'
     | '/biz/3k-area'
+    | '/operations/3k-accounting'
+    | '/operations/3k-hr'
     | '/operations/3k'
     | '/showroom/3k'
     | '/signals/report'
@@ -944,6 +964,8 @@ export interface FileRouteTypes {
     | '/k3/unit/$unit'
     | '/k3-center'
     | '/biz/3k-area'
+    | '/operations/3k-accounting'
+    | '/operations/3k-hr'
     | '/operations/3k'
     | '/showroom/3k'
     | '/signals/report'
@@ -1032,6 +1054,8 @@ export interface FileRouteTypes {
     | '/k3_/unit/$unit'
     | '/k3-center'
     | '/biz/3k-area'
+    | '/operations_/3k-accounting'
+    | '/operations_/3k-hr'
     | '/operations_/3k'
     | '/showroom_/3k'
     | '/signals/report'
@@ -1121,6 +1145,8 @@ export interface RootRouteChildren {
   K3UnitRoute: typeof K3UnitRoute
   K3CenterRoute: typeof K3CenterRoute
   Biz3kAreaRoute: typeof Biz3kAreaRoute
+  Operations3kAccountingRoute: typeof Operations3kAccountingRoute
+  Operations3kHrRoute: typeof Operations3kHrRoute
   Operations3kRoute: typeof Operations3kRoute
   Showroom3kRoute: typeof Showroom3kRoute
   SignalsReportRoute: typeof SignalsReportRoute
@@ -1583,6 +1609,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Biz3kAreaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operations_/3k-accounting': {
+      id: '/operations_/3k-accounting'
+      path: '/operations/3k-accounting'
+      fullPath: '/operations/3k-accounting'
+      preLoaderRoute: typeof Operations3kAccountingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations_/3k-hr': {
+      id: '/operations_/3k-hr'
+      path: '/operations/3k-hr'
+      fullPath: '/operations/3k-hr'
+      preLoaderRoute: typeof Operations3kHrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operations_/3k': {
       id: '/operations_/3k'
       path: '/operations/3k'
@@ -1817,6 +1857,8 @@ const rootRouteChildren: RootRouteChildren = {
   K3UnitRoute: K3UnitRoute,
   K3CenterRoute: K3CenterRoute,
   Biz3kAreaRoute: Biz3kAreaRoute,
+  Operations3kAccountingRoute: Operations3kAccountingRoute,
+  Operations3kHrRoute: Operations3kHrRoute,
   Operations3kRoute: Operations3kRoute,
   Showroom3kRoute: Showroom3kRoute,
   SignalsReportRoute: SignalsReportRoute,
