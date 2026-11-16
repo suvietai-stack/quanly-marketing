@@ -31,14 +31,14 @@ GRANT EXECUTE ON FUNCTION public.design_assignable_staff(text) TO authenticated;
 -- Chỉ chuyên môn Thiết kế xem được bảng Tất cả thiết kế.
 -- Nhân sự chỉ có chuyên môn Chụp ảnh vẫn có thể làm Job được giao nhưng không đọc toàn bộ.
 CREATE OR REPLACE FUNCTION private.design_overview_member(_uid uuid) RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $design_overview$
  SELECT _uid IS NOT NULL AND private.is_active(_uid) AND (
    private.is_super_admin(_uid) OR EXISTS(
      SELECT 1 FROM public.mkt_staff_specialties m
      WHERE m.user_id=_uid AND m.state='active' AND m.specialty_id='design'
    )
  );
-$;
+$design_overview$;
 REVOKE ALL ON FUNCTION private.design_overview_member(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION private.design_overview_member(uuid) TO authenticated,service_role;
 
