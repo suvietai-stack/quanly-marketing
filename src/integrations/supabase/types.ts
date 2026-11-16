@@ -9553,6 +9553,58 @@ export type Database = {
         }
         Relationships: []
       }
+      showroom_k3_feedback: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          review_date: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          review_date: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          review_date?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showroom_k3_feedback_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_k3_feedback_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "org_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showroom_k3_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signal_enrichment_events: {
         Row: {
           actor_id: string
@@ -12827,6 +12879,15 @@ export type Database = {
         Args: { _enabled: boolean; _source: string; _stars: number }
         Returns: undefined
       }
+      showroom_k3_comment_save: {
+        Args: { _body: string; _date: string; _user: string }
+        Returns: Json
+      }
+      showroom_k3_member_read: {
+        Args: { _date: string; _user: string }
+        Returns: Json
+      }
+      showroom_k3_team_read: { Args: { _date: string }; Returns: Json }
       showroom_overview_read: { Args: never; Returns: Json }
       signal_assessment_save: {
         Args: {
