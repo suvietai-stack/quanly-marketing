@@ -76,6 +76,7 @@ const map: Record<string, string> = {
   "Mới tạo": "bg-accent text-accent-foreground border-border",
   "Đã tạo": "bg-accent text-accent-foreground border-border",
   "Chờ phân công": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
+  "Cần giao người": "bg-warning/20 text-[oklch(0.45_0.13_75)] border-warning/40",
   "Ý tưởng": "bg-accent text-accent-foreground border-border",
   "Kế hoạch": "bg-accent text-accent-foreground border-border",
 

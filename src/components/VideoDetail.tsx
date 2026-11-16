@@ -16,6 +16,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SpecialtyStaffPicker } from "@/components/SpecialtyStaffPicker";
 import { toast } from "sonner";
 import { saveDesignOrder } from '@/lib/orders/api';
+import { DesignAssigneePicker } from '@/components/DesignAssigneePicker';
+import { useDesignCatalogs } from '@/lib/orders/catalogs';
 import { designCan } from '@/lib/orders/design';
 import { Send, Check, X, RotateCcw, CheckCheck, Play, Undo2, AlertTriangle, History as HistoryIcon, Camera, Scissors, Package, Palette } from "lucide-react";
 
@@ -156,6 +158,9 @@ export function VideoDetailDialog({
   const [reviewNote, setReviewNote] = useState("");
   const [forceTo, setForceTo] = useState<VideoStatus>(video.status);
   const [forceReason, setForceReason] = useState("");
+  const [designAssignee,setDesignAssignee]=useState('');
+  const [designAssigneeId,setDesignAssigneeId]=useState('');
+  const designCatalogs=useDesignCatalogs();
 
   const userName = user?.fullName || user?.username || "Hệ thống";
   const isOwner = !!user && (video.ownerId === user.id || video.owner === userName);
@@ -191,19 +196,25 @@ export function VideoDetailDialog({
   async function createDesignOrderForThumbnail() {
     if (!designCan(can,'marketing_design','create')) {toast.error('Không có quyền tạo Ấn phẩm Marketing');return;}
     if (s.orders.some(o=>o.videoId===video.id && o.type==='Thumbnail video')) {toast.info('Video đã có yêu cầu Thumbnail');return;}
+    if(!designAssignee||!designAssigneeId){toast.error('Chọn nhân viên Thiết kế thực hiện.');return;}
+    if(designAssignee===userName){toast.error('Người duyệt phải khác người thực hiện.');return;}
+    const category=designCatalogs.data?.find(c=>c.workflow_kind==='marketing_design'&&c.kind==='work'&&c.active&&c.name==='Thumbnail Video');
+    if(!category){toast.error('Chưa cấu hình loại ấn phẩm Thumbnail Video.');return;}
     const brand = s.brands.find((b) => b.id === video.brandId);
     try { await saveDesignOrder(uid(), {
       title: `Thumbnail / ảnh cho video ${video.title}`,
       brandId: video.brandId,
       type: "Thumbnail video",
+      workCategoryId:category.id,workCategoryName:category.name,
       source: "Video",
       workflowKind: 'marketing_design',
       videoId: video.id,
       reviewer: userName,
       requester: userName,
+      assignee:designAssignee,assigneeId:designAssigneeId,
       refLink: video.finalLink || video.editLink,
-      status: "Chờ phân công",
-      history: [{at:new Date().toISOString(),byId:user?.id,byName:userName,action:'Tạo Order Thumbnail từ Video',toStatus:'Chờ phân công'}],
+      status: "Chờ nhận việc",
+      history: [{at:new Date().toISOString(),byId:user?.id,byName:userName,action:'Tạo Job Thumbnail từ Video',toStatus:'Chờ nhận việc'}],
       brief: `Cần thumbnail / ảnh cho video "${video.title}"${brand ? ` của ${brand.name}` : ""}.`,
     }); await s.reload();
     toast.success("Đã tạo Order Thiết Kế cho video");
@@ -230,8 +241,9 @@ export function VideoDetailDialog({
 
           <TabsContent value="info" className="mt-3">
             <VideoFormFields value={draft} onChange={setDraft} />
+            <div className="mt-3 max-w-sm"><DesignAssigneePicker flow="marketing_design" value={designAssignee} valueId={designAssigneeId} onChange={(name,id)=>{setDesignAssignee(name||'');setDesignAssigneeId(id||'');}} required /></div>
             <div className="flex justify-between mt-3">
-              <Button variant="outline" onClick={createDesignOrderForThumbnail}>
+              <Button variant="outline" disabled={!designAssigneeId} onClick={createDesignOrderForThumbnail}>
                 <Palette className="h-4 w-4 mr-1" />+ Tạo Order Thiết Kế
               </Button>
               <Button onClick={saveDraft} variant="outline">Lưu thay đổi</Button>

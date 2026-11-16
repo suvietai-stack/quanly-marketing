@@ -4,10 +4,10 @@ import { deadlineTime, designOverdue, createdTime } from "./design";
 export const DESIGN_STAGES = [
   {
     key: "intake",
-    label: "Tiếp nhận",
-    statuses: ["Chờ phân công", "Chờ nhận việc"],
+    label: "Nhận việc",
+    statuses: ["Cần giao người", "Chờ nhận việc"],
   },
-  { key: "doing", label: "Thực hiện", statuses: ["Đang thực hiện", "Cần sửa"] },
+  { key: "doing", label: "Thiết kế", statuses: ["Đang thực hiện", "Cần sửa"] },
   { key: "review", label: "Chờ duyệt", statuses: ["Chờ duyệt"] },
   { key: "delivery", label: "Bàn giao", statuses: ["Đã duyệt", "Đã bàn giao"] },
   { key: "done", label: "Hoàn tất", statuses: ["Hoàn thành"] },
@@ -77,7 +77,7 @@ export function sortDesignOrders(
 }
 export function designNextStep(o: DesignOrder) {
   const steps: Record<OrderStatus, string> = {
-    "Chờ phân công": "Phân công người thực hiện hoặc nhận việc từ hàng đợi.",
+    "Cần giao người": "Job chuyển từ quy trình cũ: cần chọn nhân viên Thiết kế để tiếp tục.",
     "Chờ nhận việc": "Người được giao xác nhận nhận việc để bắt đầu.",
     "Đang thực hiện": "Hoàn thiện bản nháp và gửi người duyệt.",
     "Chờ duyệt": "Người duyệt kiểm tra kết quả, duyệt hoặc yêu cầu sửa.",

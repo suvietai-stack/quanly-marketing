@@ -1,5 +1,6 @@
 import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useState } from "react";
+import {useQuery} from '@tanstack/react-query';
 import { useStore, fmtDate, type DesignOrder, type OrderStatus, type OrderHistoryEntry, ORDER_STATUSES, ORDER_TYPES, ORDER_SOURCES, ORDER_PRIORITIES } from "@/lib/store";
 import { useCurrentUser, type PermissionKey } from "@/lib/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,6 +19,7 @@ import { designCan, designLabel, DESIGN_FLOWS } from '@/lib/orders/design';
 import { DesignWorkflowSummary } from './DesignWorkflowSummary';
 import {DesignClassification} from './DesignClassification';
 import {DesignAttachments} from './DesignAttachments';
+import {DesignAssigneePicker} from './DesignAssigneePicker';
 import { DesignJobChat, DesignJobChatTab } from '@/components/design/DesignJobChat';
 import {validDocumentUrl} from '@/lib/orders/catalogs';
 
@@ -32,6 +34,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const [saveError, setSaveError] = useState('');
   const [uploading,setUploading]=useState(false);
   const [activeTab, setActiveTab] = useState("workflow");
+  const team=useQuery({queryKey:['design-team-access',user?.id],enabled:!!user?.id,
+    queryFn:async()=>{const {data,error}=await (supabase as any).rpc('design_team_access');if(error)throw error;return !!data;},staleTime:60000,retry:1});
 
   if (!found) return null;
   const order: DesignOrder = found;
@@ -39,7 +43,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const o: DesignOrder = { ...order, ...draft };
   const setField = (patch: Partial<DesignOrder>) => setDraft((d) => ({ ...d, ...patch }));
   const userName = user?.fullName || user?.username || "—";
-  const isOwner = !!user && (o.assignee === userName || o.assignee === user.username);
+  const isOwner = !!user && (o.assigneeId ? o.assigneeId === user.id : (o.assignee === userName || o.assignee === user.username));
   const isReviewer = !!user && (o.reviewer === userName || o.reviewer === user.username);
   const isRequester = !!user && (o.requester === userName || o.requester === user.username);
   // Default reviewer = requester if no reviewer specified
@@ -106,27 +110,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const status = order.status;
   const actions: { label: string; onClick: () => void; variant?: "default" | "outline" | "destructive" | "secondary"; show: boolean }[] = [];
 
-  if (status === "Chờ phân công") {
+  if (status === "Cần giao người") {
     actions.push({
-      label: "Nhận việc",
-      onClick: async () => {
-        if (saving || uploading) return;
-        setSaving(true); setSaveError('');
-        try {
-          const { error } = await (supabase as any).rpc("order_take_job", { _id: order.id });
-          if (error) throw new Error(error.message);
-          setDraft({});
-          await s.reload();
-          toast.success("Bạn đã nhận việc");
-        } catch (error) { setSaveError(error instanceof Error ? error.message : 'Không nhận được việc.'); }
-        finally { setSaving(false); }
-      },
-      show: !order.assignee && designCan(can,order.workflowKind,'take'),
-    });
-    actions.push({
-      label: "Gửi yêu cầu",
-      onClick: () => transition("Chờ nhận việc", "Gửi yêu cầu"),
-      show: allow("order.send_request", isRequester) && !!o.assignee,
+      label: "Chọn người thực hiện để tiếp tục",
+      onClick: () => setActiveTab("info"),
+      show: isRequester || !!team.data || isAdmin,
     });
   }
   if (status === "Chờ nhận việc") {
@@ -204,7 +192,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
       label: "Hủy order",
       variant: "destructive",
       onClick: () => {
-        const earlyStages = status === "Chờ phân công" || status === "Chờ nhận việc";
+        const earlyStages = status === "Cần giao người" || status === "Chờ nhận việc";
         if (!earlyStages && !reviewNote.trim()) {
           toast.error("Nhập lý do hủy ở ô ghi chú trước");
           return;
@@ -217,13 +205,14 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   if (status === "Đã hủy") {
     actions.push({
       label: "Khôi phục",
-      onClick: () => transition(order.assignee ? "Chờ nhận việc" : "Chờ phân công", "Khôi phục order"),
+      onClick: () => {if(!order.assignee){toast.error("Cần người thực hiện trước khi khôi phục Job");return;}transition("Chờ nhận việc", "Khôi phục Job");},
       show: allow("order.restore", isRequester || designCan(can,order.workflowKind,'assign')),
     });
   }
 
   const canEdit = isAdmin || (designCan(can,order.workflowKind,'edit') && (isRequester || isOwner || designCan(can,order.workflowKind,'assign')));
   const canForce = isAdmin || (designCan(can,order.workflowKind,'force_status') && designCan(can,order.workflowKind,'assign'));
+  const canTransfer = isAdmin || designCan(can,order.workflowKind,'assign') || (!!team.data && isOwner) || (!order.assignee && isRequester);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -274,35 +263,23 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 <Input type="number" value={o.quantity ?? ""} disabled={!canEdit} onChange={(e) => setField({ quantity: e.target.value ? Number(e.target.value) : undefined })} /></div>
 
               <PersonSelect label="Người yêu cầu" value={o.requester} onChange={(v) => setField({ requester: v })} disabled={!canEdit} />
-              <PersonSelect label="Người phụ trách" value={o.assignee} onChange={(v) => {
-                if (v && o.reviewer && v === o.reviewer) {
-                  toast.error("Người phụ trách không thể đồng thời là người duyệt Order. Vui lòng chọn người duyệt khác.");
-                  return;
-                }
-                if (order.assignee !== v) {
-                  const now = new Date().toISOString();
-                  let newStatus: OrderStatus = order.status;
-                  let actionLabel: string;
-                  if (!order.assignee && v) {
-                    actionLabel = `${userName} đã phân công order cho ${v}`;
-                    if (order.status === "Chờ phân công") newStatus = "Chờ nhận việc";
-                  } else if (order.assignee && v && order.assignee !== v) {
-                    actionLabel = `Đổi người phụ trách: ${order.assignee} → ${v}`;
-                    if (order.status === "Đang thực hiện") newStatus = "Chờ nhận việc";
-                  } else if (order.assignee && !v) {
-                    actionLabel = `Gỡ phân công (trước: ${order.assignee})`;
-                    if (order.status === "Chờ nhận việc" || order.status === "Đang thực hiện") newStatus = "Chờ phân công";
-                  } else {
-                    actionLabel = `Cập nhật người phụ trách: ${v || "—"}`;
-                  }
-                  const history = pushHistory(actionLabel, order.status, newStatus !== order.status ? newStatus : undefined);
-                  const patch: Partial<DesignOrder> = { assignee: v, history };
-                  if (v && order.assignee !== v) { patch.assignedBy = userName; patch.assignedAt = now; }
-                  if (newStatus !== order.status) patch.status = newStatus;
-                  void persist(patch);
-                }
-                setField({ assignee: v });
-              }} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} />
+              <div className="sm:col-span-2 rounded-md border p-3 space-y-2">
+                <DesignAssigneePicker flow={o.workflowKind} value={order.assignee} valueId={order.assigneeId}
+                  onChange={(name,id)=>{
+                    if(!name||!id)return;
+                    if(name === (o.reviewer||o.requester)){toast.error('Người thực hiện phải khác người duyệt.');return;}
+                    if(name===order.assignee && id===order.assigneeId)return;
+                    const now=new Date().toISOString();
+                    const action=order.assignee
+                      ? 'Chuyển Job: '+order.assignee+' → '+name
+                      : 'Bổ sung người thực hiện: '+name;
+                    const next='Chờ nhận việc' as OrderStatus;
+                    const history=pushHistory(action,order.status,next);
+                    void persist({assignee:name,assigneeId:id,assignedBy:userName,assignedAt:now,status:next,history});
+                  }}
+                  required disabled={saving||uploading||!canTransfer} label={order.assignee?'Chuyển người thực hiện':'Chọn người thực hiện'}/>
+                <p className="text-xs text-muted-foreground">Người tạo phải chọn nhân viên khi tạo Job. Sau đó, nhân viên Thiết kế đang thực hiện được chuyển Job cho đồng nghiệp. Mọi lần chuyển đều lưu lịch sử.</p>
+              </div>
               <PersonSelect
                 label="Người duyệt"
                 value={o.reviewer || o.requester}
@@ -313,7 +290,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   }
                   setField({ reviewer: v });
                 }}
-                disabled={!(isAdmin || designCan(can,order.workflowKind,'edit_reviewer') || (isRequester && (order.status === "Chờ phân công" || order.status === "Chờ nhận việc")))}
+                disabled={!(isAdmin || designCan(can,order.workflowKind,'edit_reviewer') || (isRequester && (order.status === "Cần giao người" || order.status === "Chờ nhận việc")))}
               />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
@@ -356,7 +333,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               <div className="text-sm text-muted-foreground">
                 Trạng thái hiện tại: <StatusBadge value={order.status} />
               </div>
-              {!order.assignee && (isAdmin || designCan(can,order.workflowKind,'assign')) && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed p-3"><p className="text-sm text-muted-foreground">Công việc chưa có người thực hiện.</p><Button variant="outline" size="sm" onClick={() => setActiveTab('info')}>Phân công công việc</Button></div>}
+              {!order.assignee && (isAdmin || isRequester || !!team.data) && <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed p-3"><p className="text-sm text-muted-foreground">Công việc chưa có người thực hiện.</p><Button variant="outline" size="sm" onClick={() => setActiveTab('info')}>Phân công công việc</Button></div>}
               <div className="flex flex-wrap gap-2">{[{label:'Mở bản nháp',url:order.draftLink},{label:'Mở bản chỉnh sửa',url:order.reviseLink},{label:'Mở file bàn giao',url:order.deliverLink}].filter(item=>item.url && validDocumentUrl(item.url)).map(item=><a key={item.label} href={item.url} target="_blank" rel="noopener noreferrer" className="rounded-md border px-3 py-2 text-sm font-medium text-primary hover:bg-muted">{item.label} ↗</a>)}</div>
               {order.reviewNotes && (
                 <div className="rounded-md bg-destructive/10 border border-destructive/30 p-3 text-sm">
@@ -369,7 +346,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   <Textarea rows={2} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Mô tả phần cần chỉnh sửa..." />
                 </div>
               )}
-              {(status === "Chờ phân công" || status === "Chờ nhận việc") && (
+              {(status === "Cần giao người" || status === "Chờ nhận việc") && (
                 <div>
                   <Label>Lý do hủy (nếu hủy)</Label>
                   <Input value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Lý do..." />
@@ -387,7 +364,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
               {canForce && (
                 <div className="border-t pt-3">
-                  <Label className="text-xs">Ép chuyển trạng thái (Admin)</Label>
+                  <Label className="text-xs">Khôi phục nghiệp vụ (quản trị đặc biệt)</Label>
                   <div className="flex gap-2 mt-1">
                     <Select value={order.status} onValueChange={(v) => transition(v as OrderStatus, "Ép chuyển trạng thái", {}, undefined, true)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>

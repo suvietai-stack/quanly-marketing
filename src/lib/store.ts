@@ -771,7 +771,7 @@ export function normalizeVideoStatus(s?: string): VideoStatus {
 }
 
 export const ORDER_STATUSES = [
-  "Chờ phân công",
+  "Cần giao người",
   "Chờ nhận việc",
   "Đang thực hiện",
   "Chờ duyệt",
@@ -866,9 +866,9 @@ export interface DesignOrder {
 
 export function normalizeOrderStatus(s: any): OrderStatus {
   if (s === "Đang làm") return "Đang thực hiện";
-  if (s === "Mới tạo") return "Chờ phân công";
+  if (s === "Mới tạo" || s === "Chờ phân công") return "Cần giao người";
   if ((ORDER_STATUSES as readonly string[]).includes(s)) return s as OrderStatus;
-  return "Chờ phân công";
+  return "Cần giao người";
 }
 
 export interface Person {

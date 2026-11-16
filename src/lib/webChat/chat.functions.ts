@@ -71,9 +71,10 @@ export const chatThreadsFeed=createServerFn({method:'POST'}).middleware([require
   }else if(!await manage(context)){
     const r=await db.from('wc_access').select('site_id').eq('user_id',context.userId);
     if(r.error)throw new Error('Không đọc được quyền Chat Web');
-    const siteIds=(Array.isArray(r.data)?r.data:[]).map((x:{site_id:string})=>String(x.site_id));
-    allowed=Array.from(new Set<string>(siteIds));
-    if(allowed.length===0)return [];
+    const rows=(r.data??[]) as Array<{site_id:string}>;
+    const siteIds:string[]=Array.from(new Set<string>(rows.map((x)=>String(x.site_id))));
+    if(!siteIds.length)return [];
+    allowed=siteIds;
   }
   let q=db.from('wc_conversations')
     .select('id,site_id,mode,summary,contact,signal_id,created_at,updated_at,read_at,error,taken_by')
