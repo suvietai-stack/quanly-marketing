@@ -248,8 +248,7 @@ export const CENTER_ROLE_PRESETS: readonly CenterRolePreset[] = [
       "showroom.shift.view",
       "showroom.shift.view_all",
       "showroom.shift.approve",
-      "showroom.shift.settings",
-      "showroom.shift.swap",
+        "showroom.shift.swap",
       "showroom.shift.register",
       "signal.sale"
     ]
