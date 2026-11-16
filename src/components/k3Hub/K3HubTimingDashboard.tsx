@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart3, CalendarClock, CheckCircle2, Clock3, RefreshCw, Users, AlertCircle, ClipboardList } from 'lucide-react';
 import { useCurrentUser } from '@/lib/auth';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   k3TimingRead, timingDaily, timingTotals, uniqueEmployeeDays,
-  timeInVietnam, dateInVietnam, type K3TimeStatus, type K3TimingEntry,
+  timeInVietnam, dateInVietnam, type K3TimingEntry,
 } from '@/lib/k3Hub/timing';
 
 const vnToday = () => {
@@ -81,7 +81,7 @@ export function K3HubTimingDashboard({unit,units,canCompany,onUnitChange}: {
       <div className="space-y-1">
         <Label htmlFor="k3-timing-end-date">Ngày kết thúc</Label>
         <Input id="k3-timing-end-date" type="date" max={vnToday()} value={endDate}
-          onChange={e=>setEndDate(e.target.value)} className="w-44" />
+          onChange={e=>setEndDate(e.target.value || vnToday())} className="w-44" />
       </div>
       <div className="space-y-1">
         <Label htmlFor="k3-timing-window">Khoảng thống kê</Label>
@@ -213,7 +213,7 @@ export function K3HubTimingDashboard({unit,units,canCompany,onUnitChange}: {
   </div>;
 }
 
-function Metric({icon,label,value,note}:{icon:React.ReactNode;label:string;value:number;note:string}) {
+function Metric({icon,label,value,note}:{icon:ReactNode;label:string;value:number;note:string}) {
   return <Card>
     <CardContent className="space-y-2 p-3 sm:p-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div>
