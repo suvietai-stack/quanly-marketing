@@ -27,11 +27,11 @@ const PHASE_BADGE: Record<DeadlinePhase, { label: string; className: string }> =
 };
 
 /** Khu vực "Công việc của tôi": tự hiện các kỳ đang mở nộp/quá hạn/sắp mở/đang sửa — không phụ thuộc bộ lọc kỳ. */
-export function MyWorkSection({ kind, onOpen }: { kind: DocKind; onOpen: (periodKind: PeriodKind, year: number, period: number, openDialog: boolean) => void }) {
+export function MyWorkSection({ kind, onOpen, scopeDepartmentIds }: { kind: DocKind; onOpen: (periodKind: PeriodKind, year: number, period: number, openDialog: boolean) => void; scopeDepartmentIds?: readonly string[] }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const query = useQuery({ ...myWorkQuery(uid, kind), enabled: !!uid });
   const [askLate, setAskLate] = useState<MyWorkRow | null>(null);
-  const rows = (query.data?.rows ?? []).slice().sort((a, b) => myWorkRank(a) - myWorkRank(b) || Date.parse(a.due_at ?? '') - Date.parse(b.due_at ?? ''));
+  const rows = (query.data?.rows ?? []).filter(r => !scopeDepartmentIds || (!!r.department_id && scopeDepartmentIds.includes(r.department_id))).slice().sort((a, b) => myWorkRank(a) - myWorkRank(b) || Date.parse(a.due_at ?? '') - Date.parse(b.due_at ?? ''));
   const label = kind === 'plan' ? 'Kế hoạch' : 'Báo cáo';
   if (query.error) return <section className="space-y-3"><h2 className="text-lg font-semibold">Công việc của tôi</h2><div role="alert" className="border border-destructive/40 rounded-lg p-4 space-y-2"><p className="text-sm text-destructive">Không tải được danh sách công việc: {query.error.message}</p><Button size="sm" variant="outline" onClick={() => query.refetch()}>Thử lại</Button></div></section>;
   if (query.isPending || !rows.length) return null;
