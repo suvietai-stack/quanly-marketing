@@ -16,7 +16,7 @@ export const BASE_GUIDES:BaseGuide[] = [
   path:'/showroom/shifts',steps:[
    'Vào Showroom → Lịch trực, chọn đúng tuần có ca đã công bố.',
    'Ở Lịch của tôi bấm Đổi trên ngày cần đổi (hoặc mở tab Đổi ca rồi chọn Đề nghị).',
-   'Chọn đồng nghiệp và ngày ca cần hoán đổi, ghi lý do nếu cần rồi bấm Gửi yêu cầu.',
+   'Chọn Đổi ca để trao Ca 1/Ca 2; hoặc Đổi ngày nghỉ để hai người hoán đổi ngày nghỉ khác nhau trong cùng một tuần. Chọn đồng nghiệp và ngày, rồi gửi yêu cầu.',
    'Đồng nghiệp vào tab Đổi ca bấm Đồng ý nhận ca; quản lý nhận yêu cầu và duyệt hoặc từ chối.',
    'Chỉ sau khi được duyệt lịch mới thay đổi. Khi khẩn cấp, chọn Báo khẩn và nhập lý do để quản lý bố trí người hỗ trợ.'
   ],note:'Yêu cầu đổi giữa hai tuần phải đảm bảo chính sách nghỉ hằng tuần. Báo khẩn không thay thế đơn nghỉ phép chính thức.'},
