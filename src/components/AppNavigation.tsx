@@ -43,7 +43,7 @@ export function AppNavigation({ groups, path, userId, collapsed = false, onNavig
           aria-expanded={group.comingSoon ? undefined : isOpen}
           aria-controls={group.comingSoon ? undefined : panelId}
           onClick={() => setExpanded(previous => ({ ...previous, [group.label]: !previous[group.label] }))}
-          className={cn('w-full h-auto min-h-10 px-2.5 py-2 text-left text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', collapsed ? 'justify-center' : 'justify-start', activeGroup === group.label && 'bg-sidebar-accent')}>
+          className={cn('w-full h-auto min-h-11 px-2.5 py-2 text-left text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', collapsed ? 'justify-center' : 'justify-start', activeGroup === group.label && 'bg-sidebar-accent')}>
           {Icon && <Icon className="h-4 w-4 shrink-0" />}
           {!collapsed && <><span className="flex-1 whitespace-normal leading-5 text-[13px]">{group.label}</span>
             {group.comingSoon ? <span className="text-[9px] font-normal text-sidebar-foreground/70">Sắp ra mắt</span> : <ChevronDown className={cn('transition-transform motion-reduce:transition-none', isOpen && 'rotate-180')} />}</>}
@@ -51,7 +51,7 @@ export function AppNavigation({ groups, path, userId, collapsed = false, onNavig
         {!group.comingSoon && <div id={panelId} hidden={!isOpen} className={cn('space-y-0.5 py-1', !collapsed && 'ml-3 border-l border-sidebar-border pl-2')}>
           {group.items.map(item => {
             const ItemIcon = item.icon;
-            const itemClass = cn('w-full h-auto min-h-9 rounded-md px-2 py-2 text-[13px] justify-start text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', collapsed && 'justify-center', item.to === activePath && 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground');
+            const itemClass = cn('w-full h-auto min-h-11 rounded-md px-2 py-2 text-sm md:text-[13px] justify-start text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground', collapsed && 'justify-center', item.to === activePath && 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground');
             return item.comingSoon ? <Button key={item.label} variant="ghost" disabled aria-label={`${item.label} — Sắp ra mắt`} title={collapsed ? `${item.label} — Sắp ra mắt` : undefined} className={itemClass}>
               <ItemIcon />{!collapsed && <span className="min-w-0 whitespace-normal leading-5">{item.label}<span className="block text-[10px] font-normal">Sắp ra mắt</span></span>}
             </Button> : <Button key={item.to} variant="ghost" asChild className={itemClass}>
