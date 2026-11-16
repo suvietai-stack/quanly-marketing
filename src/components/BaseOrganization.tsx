@@ -18,6 +18,7 @@ import { StaffPermissionEditor } from '@/components/StaffPermissionEditor';
 import { StaffSpecialties } from '@/components/MarketingSpecialties';
 const StaffRoleSources = lazy(() => import('@/components/TitleRoleDefaults').then(m => ({ default: m.StaffRoleSources })));
 import { orgConfigDiff, slotHistory } from '@/lib/orgStructure';
+import { showroomPositionSetup } from '@/lib/showroom/positionSetup';
 import type { ChartNode } from '@/lib/orgChart';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,7 @@ function OrganizationWorkspace() {
   const [changing,setChanging]=useState<{id:string;specialty?:boolean}|null>(null);
   const [manageUnit, setManageUnit] = useState<ChartNode | null>(null);
   const [membershipMode, setMembershipMode] = useState(false);
+  const [showroomRolePreview, setShowroomRolePreview] = useState(false);
   const [reason, setReason] = useState('');
   useEffect(() => { const timer = setInterval(() => { if (section !== 'settings' && !dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 60000); return () => clearInterval(timer); }, [qc,user?.id,dirty,section]);
   const effective = useQuery({ queryKey: effectiveReadKey(user?.id, staffId, accessRevision), queryFn: ({ signal }) => baseOrgApi.effective(staffId, signal), enabled: shouldReadStaffEffective(section, staffTab, staffId), retry: false, staleTime: 30000, gcTime: 60000 });
@@ -85,14 +87,14 @@ function OrganizationWorkspace() {
   const permissionChanged = legacyPermissionChanged || roleChanged;
   const showPreview = () => run(async () => {
     if (!original) return;
-    setReason(''); setMembershipMode(!permissionChanged);
+    setReason(''); setMembershipMode(!permissionChanged); setShowroomRolePreview(false);
     if (legacyPermissionChanged) throw new Error('Quyền bổ sung chưa thể áp dụng trong lượt chuyển đổi này; không thay đổi quyền hiện có.');
     setPreview(await baseOrgApi.preview(data.data?.revision ?? 0, config, original));
   });
   const apply = () => run(async () => {
     if (!preview) return;
-    await baseOrgApi.apply(preview.id, 'ÁP DỤNG CƠ CẤU', roleChanged ? `ÁP DỤNG PHÂN QUYỀN:${reason}` : reason);
-    setPreview(null); setDirty(false);
+    await baseOrgApi.apply(preview.id, 'ÁP DỤNG CƠ CẤU', (roleChanged || showroomRolePreview) ? `ÁP DỤNG PHÂN QUYỀN:${reason}` : reason);
+    setPreview(null); setDirty(false); setShowroomRolePreview(false);
     await qc.invalidateQueries();
     await useAuth.getState().reload();
   });
@@ -116,7 +118,7 @@ function OrganizationWorkspace() {
   <Button disabled={busy || !reason.trim()} onClick={apply}>{busy ? 'Đang áp dụng…' : 'Xác nhận áp dụng'}</Button>
 </>; })()}</DialogContent></Dialog>
   {assigning && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrganizationAppointment target={assigning} config={config} staff={staff} onClose={()=>setAssigning(null)} onPreview={async next=>{if(dirty)throw new Error('Áp dụng hoặc hủy bản nháp hiện tại trước khi bổ nhiệm.');if(!original)throw new Error('Chưa tải cơ cấu.');return baseOrgApi.preview(data.data?.revision??0,next,original);}} onApply={async(p,reason)=>{await baseOrgApi.apply(p.id,'ÁP DỤNG CƠ CẤU',reason);const fresh=await data.refetch();if(fresh.error)throw fresh.error;if(fresh.data)setConfig(structuredClone(fresh.data.config));await qc.invalidateQueries({queryKey:['base-effective']});await qc.invalidateQueries({queryKey:['title-role-links']});await useAuth.getState().reload();}} /></Suspense>}
-  {manageUnit && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrgUnitDrawer unitId={manageUnit.id} config={config} staff={staff} actor={actor} onAppoint={(titleId,mode)=>{setAssigning({unitId:manageUnit.id,titleId,mode});setManageUnit(null);}} onEnd={id=>{setChanging({id});setManageUnit(null);}} onEdit={edit} onClose={()=>setManageUnit(null)} /></Suspense>}
+  {manageUnit && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrgUnitDrawer unitId={manageUnit.id} config={config} staff={staff} actor={actor} onAppoint={(titleId,mode)=>{setAssigning({unitId:manageUnit.id,titleId,mode});setManageUnit(null);}} onEnd={id=>{setChanging({id});setManageUnit(null);}} onEdit={edit} onSetupShowroomRoles={unitId=>{setManageUnit(null);void run(async()=>{if(!isSA||dirty||!original)throw new Error('Cần Super Admin và cơ cấu chưa có bản nháp để khởi tạo vị trí Showroom.');const {next,commands}=showroomPositionSetup(original,unitId);const p=await baseOrgApi.preview(data.data?.revision??0,next,original,commands);setShowroomRolePreview(true);setMembershipMode(false);setReason('Khởi tạo vị trí Nhân viên Showroom và Cửa hàng trưởng');setPreview(p);});}} onClose={()=>setManageUnit(null)} /></Suspense>}
   {changing && <Suspense fallback={<Skeleton className="h-32 w-full" />}><OrganizationChange config={config} id={changing.id} specialty={changing.specialty} onClose={()=>setChanging(null)} onPreview={async next=>{if(dirty)throw new Error('Áp dụng bản nháp cơ cấu trước.');if(!original)throw new Error('Chưa tải cơ cấu.');return baseOrgApi.preview(data.data?.revision??0,next,original);}} onApply={async(p,reason)=>{await baseOrgApi.apply(p.id,'ÁP DỤNG CƠ CẤU',reason);await data.refetch();await qc.invalidateQueries({queryKey:['base-effective']});await useAuth.getState().reload();}} /></Suspense>}
   <Dialog open={!!historySlot} onOpenChange={v => !v && setHistorySlot(null)}><DialogContent className="max-w-md max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Lịch sử — {historySlot?.slot.title}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">{historySlot?.unitName}</p>{historySlot && (slotHistory(config, historySlot.unitId, historySlot.slot.id).length ? slotHistory(config, historySlot.unitId, historySlot.slot.id).map(m => <div key={m.id} className="border-b py-2 text-sm"><p className="font-medium">{staff.find(s => s.id === m.user_id)?.name ?? 'Nhân sự'}</p><p className="text-xs text-muted-foreground">{m.starts_at ? new Date(m.starts_at).toLocaleString('vi-VN') : '—'} → {m.ends_at ? new Date(m.ends_at).toLocaleString('vi-VN') : 'Hiện tại'} · {m.active ? 'Đang áp dụng' : 'Đã kết thúc'}</p></div>) : <p className="py-4 text-sm text-muted-foreground">Chưa từng có người giữ vị trí này.</p>)}</DialogContent></Dialog></div>;
 }
