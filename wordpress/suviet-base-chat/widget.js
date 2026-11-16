@@ -15,6 +15,8 @@
   const launcher=document.createElement('button');launcher.className='svwc-launcher';launcher.setAttribute('aria-label','Mở trò chuyện tư vấn');const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','M4 4h16v12H9l-5 4V4zm4 5h8M8 12h5');icon.append(path);const launcherLabel=document.createElement('span');launcherLabel.textContent='Chat 24/7';launcher.append(icon,launcherLabel);launcher.setAttribute('aria-label','Chat tư vấn AI 24/7');launcher.setAttribute('aria-expanded','false');const teaser=document.createElement('aside');teaser.className='svwc-teaser';teaser.hidden=true;const teaserClose=document.createElement('button');teaserClose.textContent='×';teaserClose.setAttribute('aria-label','Ẩn lời chào');const teaserText=document.createElement('button');const teaserHeading=document.createElement('strong');teaserHeading.className='svwc-teaser-heading';teaserHeading.textContent='Anh/chị cần tư vấn?';teaserText.className='svwc-teaser-copy';const teaserCTA=document.createElement('button');teaserCTA.className='svwc-teaser-cta';teaserCTA.type='button';teaserCTA.textContent='Bắt đầu trò chuyện →';teaserCTA.onclick=()=>launcher.click();teaser.append(teaserClose,teaserHeading,teaserText,teaserCTA);const starters=document.createElement('div');starters.className='svwc-starters';box.insertBefore(starters,status);root.append(box,teaser,launcher);let greetingTimer;teaserText.textContent='Dạ, anh/chị cần tư vấn sản phẩm nào ạ? Em hỗ trợ mình 24/7.';greetingTimer=setTimeout(()=>{let dismissed=false;try{dismissed=sessionStorage.getItem('svwc-greeted')==='1';}catch{}if(box.hidden&&!dismissed){teaser.hidden=false;launcher.classList.add('svwc-pulse');}},3000);teaserClose.onclick=()=>{teaser.hidden=true;try{sessionStorage.setItem('svwc-greeted','1');}catch{}};teaserText.onclick=()=>launcher.click();
   const random=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
   let token;try{token=localStorage.getItem('svwc-token');if(!/^[a-f0-9]{64}$/.test(token||'')){token=random();localStorage.setItem('svwc-token',token);}}catch{token=random();}
+  // Random per-page session: a visitor may keep chatting in another browser tab.
+  const session=uuid();let tracked=false,lastContactAt=0;
   let busy=false,pending=null,timer=null,appearance=null,lastSignature='';
   status.setAttribute('role','status');const setStatus=t=>{status.textContent=t;status.classList.toggle('svwc-working',busy);};
   const render=data=>{
@@ -28,16 +30,29 @@
     if(data.error)setStatus(data.error+' Bấm Gửi để thử lại nếu cần.');
     else setStatus(data.mode==='human'?'Nhân viên đang tiếp nhận cuộc trò chuyện.':data.mode==='captured'?'Đã chuyển thông tin — bộ phận tư vấn sẽ liên hệ.':rows.some(m=>m.state==='pending')?'AI đang phản hồi…':'AI hỗ trợ tiếp nhận nhu cầu');
   };
-  async function request(action,text='',id=uuid()){
+  async function request(action,text='',id=uuid(),leaving=false){
     const page=location.origin+location.pathname;
-    const response=await fetch(window.SVBaseChat.endpoint,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token,request:id,text,page}),signal:typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function'?AbortSignal.timeout(55000):undefined});
-    const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Chưa kết nối được');render(data);return data;
+    lastContactAt=Date.now();
+    const response=await fetch(window.SVBaseChat.endpoint,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token,request:id,text,page,session,chatOpen:!box.hidden&&!document.hidden,leaving}),keepalive:leaving,signal:!leaving&&typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function'?AbortSignal.timeout(55000):undefined});
+    const data=await response.json();if(!response.ok)throw new Error(data.error||data.message||'Chưa kết nối được');
+    if(data.tracked)tracked=true;
+    if(action!=='presence')render(data);
+    return data;
   }
+  function presence(leaving=false){if(tracked)void request('presence','',uuid(),leaving).catch(()=>{});}
   async function poll(){if(box.hidden||document.hidden||busy)return;schedule(false);busy=true;try{await request('poll');}catch{setStatus('Kết nối gián đoạn. Mở lại khung chat để thử lại.');}finally{busy=false;schedule();}}
   function schedule(start=true){if(timer)clearTimeout(timer);if(start&&!box.hidden)timer=setTimeout(poll,10000);}
-  launcher.onclick=()=>{teaser.hidden=true;launcher.classList.remove('svwc-pulse');try{sessionStorage.setItem('svwc-greeted','1');}catch{}box.hidden=!box.hidden;launcher.setAttribute('aria-expanded',String(!box.hidden));if(!box.hidden){input.focus();poll();}else schedule(false);};
-  close.onclick=()=>{box.hidden=true;launcher.setAttribute('aria-expanded','false');schedule(false);launcher.focus();};
+  launcher.onclick=()=>{teaser.hidden=true;launcher.classList.remove('svwc-pulse');try{sessionStorage.setItem('svwc-greeted','1');}catch{}box.hidden=!box.hidden;launcher.setAttribute('aria-expanded',String(!box.hidden));if(!box.hidden){input.focus();poll();}else{schedule(false);presence();}};
+  close.onclick=()=>{box.hidden=true;launcher.setAttribute('aria-expanded','false');schedule(false);presence();launcher.focus();};
   form.onsubmit=async event=>{event.preventDefault();if(busy)return;if(!pending){const text=input.value.trim();if(!text)return;pending={text,id:uuid()};}busy=true;send.disabled=true;setStatus('Đang gửi…');try{await request('send',pending.text,pending.id);pending=null;input.value='';send.textContent='Gửi';}catch(e){setStatus(e.message+' · Bấm Thử lại để gửi lại an toàn.');send.textContent='Thử lại';}finally{busy=false;send.disabled=false;schedule();}};
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(typeof form.requestSubmit==='function')form.requestSubmit();else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));}});
-request('config').catch(()=>{setStatus('Chat chưa kết nối. Vui lòng thử lại sau.');});
+// A heartbeat is necessary only for a visitor with an existing conversation.
+  // Poll responses already count as activity while the chat panel stays open.
+  setInterval(()=>{if(document.hidden)return;if(box.hidden||Date.now()-lastContactAt>13000)presence();},15000);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)presence(true);
+    else{presence();if(!box.hidden)poll();}
+  });
+  window.addEventListener('pagehide',()=>presence(true));
+  request('config').catch(()=>{setStatus('Chat chưa kết nối. Vui lòng thử lại sau.');});
 })();
