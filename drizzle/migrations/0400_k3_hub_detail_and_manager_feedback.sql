@@ -43,7 +43,7 @@ BEGIN
    FROM public.k3_goals g WHERE g.user_id=_user AND g.deleted_at IS NULL
     AND g.period_start<=_date AND g.period_end>=_date
     AND (g.org_unit_id=ANY(units) OR
-     (g.org_unit_id IS NULL AND g.department_id::text=ANY(units))), '[]'::jsonb),
+     (g.org_unit_id IS NULL AND g.department_id::text=ANY(units)))), '[]'::jsonb),
   'actions',coalesce((SELECT jsonb_agg(jsonb_build_object(
    'id',a.id,'name',a.name,'status',a.status,
    'goal_name',g.name,'due_date',a.due_date) ORDER BY a.is_key DESC,a.due_date)
@@ -51,7 +51,7 @@ BEGIN
     WHERE a.assignee_id=_user AND a.deleted_at IS NULL AND g.deleted_at IS NULL
      AND coalesce(a.start_date,g.period_start)<=_date AND coalesce(a.due_date,g.period_end)>=_date
      AND (g.org_unit_id=ANY(units) OR
-      (g.org_unit_id IS NULL AND g.department_id::text=ANY(units))), '[]'::jsonb),
+      (g.org_unit_id IS NULL AND g.department_id::text=ANY(units)))), '[]'::jsonb),
   'results',coalesce((SELECT jsonb_agg(jsonb_build_object(
      'name',k.name,'value',r.value,'target',k.target,'unit',k.unit,'note',r.note)
      ORDER BY k.name)
@@ -62,7 +62,7 @@ BEGIN
      WHERE r.user_id=_user AND r.work_date=_date
        AND r.deleted_at IS NULL AND r.review_reason IS NULL
        AND (g.org_unit_id=ANY(units) OR
-        (g.org_unit_id IS NULL AND g.department_id::text=ANY(units))), '[]'::jsonb),
+        (g.org_unit_id IS NULL AND g.department_id::text=ANY(units)))), '[]'::jsonb),
   'day',coalesce((SELECT jsonb_build_object('kg',d.kg,'summary_note',d.summary_note,
     'planned_at',d.planned_at,'summarized_at',d.summarized_at)
     FROM public.k3_days d WHERE d.user_id=_user AND d.work_date=_date
