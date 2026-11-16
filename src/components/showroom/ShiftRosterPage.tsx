@@ -56,7 +56,7 @@ function WeekButtons({week,setWeek}:{week:string;setWeek:(week:string)=>void}){
   </div>;
 }
 
-function Registration({roster,week,mutate,loading,onChange}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<void>;loading:boolean;onChange:(open:boolean,day?:string)=>void}){
+function Registration({roster,week,mutate,loading,onChange}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<boolean>;loading:boolean;onChange:(open:boolean,day?:string)=>void}){
   const mine=roster.entries.filter(e=>e.staff_id===roster.actor_id);
   const [draft,setDraft]=useState<ShowroomShift[]>(Array(7).fill('early'));
   const saved=Array.from({length:7},(_,i)=>mine.find(e=>e.date===dateAdd(week,i)));
@@ -110,7 +110,7 @@ function Registration({roster,week,mutate,loading,onChange}:{roster:ShiftRoster;
       </Button>
     </>}
     {!open&&roster.week_status!=='published'&&<p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100">Đã ngoài thời gian đăng ký trực tiếp. Bạn có thể liên hệ quản lý để xử lý thay đổi.</p>}
-    <p className="text-xs leading-5 text-muted-foreground">Ca 1: {roster.policy.early_start}–12:00, 13:15–{roster.policy.early_end} · Ca 2: {roster.policy.late_start}–12:00, 13:15–{roster.policy.late_end}. Ca Full phải được quản lý kiểm tra thời giờ làm việc và nghỉ giữa giờ.</p>
+    <p className="text-xs leading-5 text-muted-foreground">Ca 1: {roster.policy.early_start}–{roster.policy.noon_break_start}, {roster.policy.noon_break_end}–{roster.policy.early_end} · Ca 2: {roster.policy.late_start}–{roster.policy.noon_break_start}, {roster.policy.noon_break_end}–{roster.policy.late_end}. Ca Full phải được quản lý kiểm tra thời giờ làm việc và nghỉ giữa giờ.</p>
   </div>;
 }
 
@@ -145,7 +145,7 @@ function TeamSchedule({roster,week}:{roster:ShiftRoster;week:string}){
     </Card>
   </div>;
 }
-function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<void>;loading:boolean;open:boolean;onOpenChange:(o:boolean)=>void;pickDate:string}){
+function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<boolean>;loading:boolean;open:boolean;onOpenChange:(o:boolean)=>void;pickDate:string}){
   const [date,setDate]=useState(pickDate);
   const [kind,setKind]=useState<'swap'|'emergency'>('swap');
   const [partner,setPartner]=useState('');
@@ -157,7 +157,7 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
   const send=async()=>{
     if(kind==='swap'&&!partner){toast.error('Hãy chọn đồng nghiệp nhận ca.');return;}
     if(kind==='emergency'&&!reason.trim()){toast.error('Cần ghi lý do nghỉ khẩn cấp.');return;}
-    try{await mutate('change_create',{date,kind,partner_id:partner,partner_date:partnerDate,reason});onOpenChange(false);}catch{/* mutation already shows error */}
+    if(await mutate('change_create',{date,kind,partner_id:partner,partner_date:partnerDate,reason}))onOpenChange(false);
   };
   return <div className="space-y-3">
     <div className="flex items-start justify-between gap-2"><p className="text-sm text-muted-foreground">Đổi ca sau chốt: đồng nghiệp xác nhận, quản lý duyệt thì lịch mới có hiệu lực.</p>{roster.can_swap&&<Button size="sm" onClick={()=>onOpenChange(true)}>+ Đề nghị</Button>}</div>
@@ -205,7 +205,7 @@ function ChangePanel({roster,week,mutate,loading,open,onOpenChange,pickDate}:{ro
     </Dialog>
   </div>;
 }
-function Approvals({roster,week,mutate,loading}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<void>;loading:boolean}){
+function Approvals({roster,week,mutate,loading}:{roster:ShiftRoster;week:string;mutate:(action:string,payload:Record<string,unknown>)=>Promise<boolean>;loading:boolean}){
   const [day,setDay]=useState(0);
   const [reason,setReason]=useState('');
   const date=dateAdd(week,day);
@@ -242,7 +242,7 @@ function Approvals({roster,week,mutate,loading}:{roster:ShiftRoster;week:string;
     </>}
   </div>;
 }
-function PolicySettings({roster,mutate,loading}:{roster:ShiftRoster;mutate:(action:string,payload:Record<string,unknown>)=>Promise<void>;loading:boolean}){
+function PolicySettings({roster,mutate,loading}:{roster:ShiftRoster;mutate:(action:string,payload:Record<string,unknown>)=>Promise<boolean>;loading:boolean}){
   const [form,setForm]=useState<ShiftPolicy>(roster.policy);
   const [holidays,setHolidays]=useState(roster.policy.holidays.join(', '));
   const [reason,setReason]=useState('Điều chỉnh chính sách lịch trực');
@@ -265,7 +265,6 @@ function PolicySettings({roster,mutate,loading}:{roster:ShiftRoster;mutate:(acti
         {([{key:'min_early',label:'Tối thiểu Ca 1',max:10},{key:'min_late',label:'Tối thiểu Ca 2',max:10},{key:'rest_days',label:'Nghỉ / tuần',max:3}] as const).map(x=><div key={x.key} className="space-y-1.5"><Label className="text-xs">{x.label}</Label><Input className="h-11" type="number" min={x.key==='rest_days'?0:1} max={x.max} value={form[x.key]} onChange={e=>update(x.key,Number(e.target.value))}/></div>)}
       </div>
       <label className="flex items-center gap-3 rounded-lg border p-3 text-sm"><Checkbox checked={form.allow_full_exception} onCheckedChange={v=>update('allow_full_exception',v===true)}/>Cho xét ngoại lệ Ca Full khi thiếu người (phải ghi lý do)</label>
-      <label className="flex items-center gap-3 rounded-lg border p-3 text-sm"><Checkbox checked={form.remind} onCheckedChange={v=>update('remind',v===true)}/>Bật chính sách nhắc đăng ký trước hạn</label>
     </section>
     <section className="space-y-3 border-t pt-4"><h3 className="text-sm font-bold">Khung giờ ca (24 giờ)</h3>
       <div className="grid grid-cols-2 gap-3">
@@ -301,7 +300,8 @@ export function ShiftRosterPage(){
       const result=await mutation.mutateAsync({action,payload});
       toast.success(result.message||'Đã cập nhật.');
       await queryClient.invalidateQueries({queryKey:['showroom-roster',user?.id,store]});
-    }catch(e){toast.error(e instanceof Error?e.message:'Chưa cập nhật được lịch.');throw e;}
+      return true;
+    }catch(e){toast.error(e instanceof Error?e.message:'Chưa cập nhật được lịch.');return false;}
   };
   const roster=data.data;
   const sections=useMemo(()=>{
