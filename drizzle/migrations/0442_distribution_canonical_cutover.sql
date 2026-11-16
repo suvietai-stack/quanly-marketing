@@ -144,4 +144,32 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $
     u.kind='system' AND u.parent_id IN ('biz-block','distribution-block') AND u.active)
 $fn$;
 REVOKE ALL ON FUNCTION private.biz_owned_system(uuid) FROM PUBLIC,anon,authenticated;
+
+-- Preserve historical 3K read access without editing any old policy row.
+-- Previously Distribution was inside biz-block, so policy dates before this
+-- cutover must continue to see the same Distribution people and results.
+-- The read resolver follows the new canonical parent, therefore append the
+-- extracted block only in the returned historical policy (never in storage).
+CREATE OR REPLACE FUNCTION private.k3hub_policy_at(_date date)
+RETURNS text[] LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $fn$
+ WITH historic AS (
+   SELECT coalesce((SELECT applied_block_ids
+     FROM public.k3hub_policy_versions WHERE effective_from<=_date
+     ORDER BY effective_from DESC,revision DESC LIMIT 1),'{}'::text[]) ids
+ ), cutover AS (
+   SELECT (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date day
+   FROM private.distribution_cutover_audit
+   WHERE id='distribution-a1-20261116'
+   LIMIT 1
+ )
+ SELECT CASE
+  WHEN _date < (SELECT day FROM cutover)
+    AND 'biz-block'=ANY(historic.ids)
+    AND NOT 'distribution-block'=ANY(historic.ids)
+  THEN array_append(historic.ids,'distribution-block')
+  ELSE historic.ids END
+ FROM historic
+$fn$;
+REVOKE ALL ON FUNCTION private.k3hub_policy_at(date) FROM PUBLIC,anon,authenticated;
+
 COMMIT;
