@@ -37,6 +37,7 @@ import { suggestedProgressionStatus } from '@/lib/signals/deadlines';
 import { appliedSignalFilters, MOBILE_SIGNAL_BATCH } from '@/lib/signals/mobileList';
 import { SignalMobileCard } from './SignalMobileCard';
 import { SignalAssignmentDialog } from './SignalAssignmentDialog';
+import { SignalToCrm } from './SignalToCrm';
 import { signalPage, signalCounts, signalById, listParams, changeToken } from '@/lib/signals/paged';
 import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
 import { observedSignalChange } from '@/lib/signals/polling';
@@ -647,6 +648,7 @@ function Pick({ value, onChange, opts }: { value?: string; onChange: (v: string)
 function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDeleted?: () => void }) {
   useRegisterAiRecord('signal',s.id);
   const p = useSignalPerms();
+  const { can } = useCurrentUser();
   const name = useUserName();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -734,6 +736,7 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
             : e.kind === "reopen" ? `Mở lại tín hiệu (trước: ${statusLabel(e.detail?.prev_status)}${e.detail?.prev_revenue ? ` · ${fmtVnd(e.detail.prev_revenue)}` : ""}${e.detail?.prev_lost_reason ? ` · ${e.detail.prev_lost_reason}` : ""}). Lý do: ${e.detail?.reason}`
             : e.kind === "cancel" ? `Hủy tín hiệu. Lý do: ${e.detail?.reason ?? ""}`
             : e.kind === "uncancel" ? `Bỏ hủy tín hiệu${e.detail?.prev_reason ? ` (lý do hủy trước: ${e.detail.prev_reason})` : ""}`
+            : e.kind === 'crm_import' ? "Đã lưu khách vào CRM để Sale chăm sóc dài hạn"
             : e.kind === 'enrichment' ? `Tiềm năng: ${POTENTIAL_LABEL[e.detail?.potential_from as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'} → ${POTENTIAL_LABEL[e.detail?.potential_to as keyof typeof POTENTIAL_LABEL]??'Chưa đánh giá'}${e.detail && ('next_from' in e.detail || 'next_to' in e.detail) ? ` · Theo dõi: ${fmtDate(e.detail.next_from)} → ${fmtDate(e.detail.next_to)}` : ''}`
             : "Cập nhật thông tin khách hàng"}
         </div>
@@ -777,6 +780,7 @@ function SignalDetail({ s, last, onDeleted }: { s: Signal; last?: LastNote; onDe
           <Button asChild size="lg" variant="outline" className="h-12 px-2"><a href={`tel:${s.phone}`}><Phone className="h-4 w-4 mr-1" />Gọi</a></Button>
         </div>
         <p className="text-[11px] text-muted-foreground">Nút Zalo mở trang Zalo theo số điện thoại; tùy thiết lập của khách, có thể không mở thẳng được cuộc trò chuyện.</p>
+        <SignalToCrm signal={s} canOpenCrm={can("biz.crm_use")} canPush={!cancelled && !!s.assigned_to && ((p.sale && s.assigned_to === p.userId) || (p.create && s.created_by === p.userId) || p.manage)} />
         {canConsult && s.status === "waiting" && <Button size="lg" className="w-full" onClick={accept}>Tiếp nhận tín hiệu</Button>}
       </div>
 
