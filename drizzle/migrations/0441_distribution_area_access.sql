@@ -54,42 +54,58 @@ $function$;
 REVOKE ALL ON FUNCTION public.biz_area_access() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.biz_area_access() TO authenticated;
 
--- The dashboard RPC returns only one permitted system, never the all-Khối group.
--- Reuses the authoritative published aggregation and all its existing permission checks.
-CREATE OR REPLACE FUNCTION public.biz_area_dashboard_read(
-  _area text, _year integer, _period_kind text DEFAULT 'year', _period integer DEFAULT 1
-)
+-- Lightweight system-only overview. No full-block published materialization
+-- and no staff PII; staff totals are aggregated within the single system.
+CREATE OR REPLACE FUNCTION public.biz_area_overview_read(_area text, _year integer DEFAULT (EXTRACT(YEAR FROM NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh'))::integer)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path TO 'public','private'
 AS $function$
 DECLARE
-  target_id text;
-  scoped boolean;
-  result jsonb;
-  target_group jsonb;
-  rights jsonb;
+  target_id uuid;
+  access_ jsonb;
+  label_ text;
+  departments_ integer;
+  staff_ integer;
+  goals_ integer;
+  plans_ integer;
+  reports_ integer;
 BEGIN
-  IF _area NOT IN ('orders','distribution') THEN
-    RAISE EXCEPTION 'Khu vực không hợp lệ.' USING ERRCODE='22023';
+  IF _area NOT IN ('orders','distribution') OR _year NOT BETWEEN 2020 AND 2200 THEN
+    RAISE EXCEPTION 'Khu vực hoặc năm không hợp lệ.' USING ERRCODE='22023';
   END IF;
-  rights := public.biz_area_access();
-  scoped := coalesce((rights->>_area)::boolean,false);
-  IF NOT scoped THEN
-    RAISE EXCEPTION 'Không có quyền xem khu vực này.' USING ERRCODE='42501';
+  access_ := public.biz_area_access();
+  IF NOT coalesce((access_->>_area)::boolean,false) THEN
+    RAISE EXCEPTION 'Không có quyền vào khu vực này.' USING ERRCODE='42501';
   END IF;
   target_id := CASE _area
-    WHEN 'orders' THEN '624e6e56-eeab-42d5-85af-6af284e72f34'
-    ELSE '3df93c75-8a46-4c2f-bc09-7583aa672b52'
+    WHEN 'orders' THEN '624e6e56-eeab-42d5-85af-6af284e72f34'::uuid
+    ELSE '3df93c75-8a46-4c2f-bc09-7583aa672b52'::uuid
   END;
-  result := public.biz_dashboard_published(_year,_period_kind,_period);
-  SELECT g INTO target_group FROM jsonb_array_elements(result->'groups') g
-  WHERE g->>'id'=target_id AND g->>'level'='system' LIMIT 1;
-  RETURN jsonb_set(result,'{groups}',
-    CASE WHEN target_group IS NULL THEN '[]'::jsonb ELSE jsonb_build_array(target_group) END,true)
-    || jsonb_build_object('area',_area,'system_id',target_id);
+  SELECT name INTO label_ FROM public.biz_systems WHERE id=target_id AND active;
+  IF label_ IS NULL THEN RAISE EXCEPTION 'Hệ chưa hoạt động.'; END IF;
+  SELECT count(*) INTO departments_ FROM public.biz_departments WHERE system_id=target_id AND active;
+  SELECT count(DISTINCT m.user_id) INTO staff_
+    FROM public.biz_department_members m
+    JOIN public.biz_departments d ON d.id=m.department_id AND d.active AND d.system_id=target_id
+    JOIN public.profiles p ON p.id=m.user_id AND p.status='Đang hoạt động'
+    WHERE m.started_at<=now() AND (m.ended_at IS NULL OR m.ended_at>now());
+  SELECT count(*) INTO goals_
+    FROM public.biz_annual_goals g
+    JOIN public.biz_departments d ON d.id=g.department_id AND d.system_id=target_id
+    WHERE g.year=_year;
+  SELECT count(*) FILTER(WHERE docs.kind='plan'),
+         count(*) FILTER(WHERE docs.kind='report')
+    INTO plans_,reports_
+    FROM public.biz_documents docs
+    JOIN public.biz_departments d ON d.id=docs.department_id AND d.system_id=target_id
+    WHERE docs.year=_year AND docs.official_version_id IS NOT NULL;
+  RETURN jsonb_build_object('area',_area,'system_id',target_id::text,'system_name',label_,
+    'year',_year,'departments',departments_,'staff',staff_,
+    'goals',goals_,'submitted_plans',plans_,'official_reports',reports_,
+    'server_now',now());
 END
 $function$;
-REVOKE ALL ON FUNCTION public.biz_area_dashboard_read(text,integer,text,integer) FROM PUBLIC,anon;
-GRANT EXECUTE ON FUNCTION public.biz_area_dashboard_read(text,integer,text,integer) TO authenticated;
+REVOKE ALL ON FUNCTION public.biz_area_overview_read(text,integer) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.biz_area_overview_read(text,integer) TO authenticated;
 
 COMMIT;
