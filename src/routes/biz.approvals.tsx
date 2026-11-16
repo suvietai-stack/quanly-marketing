@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { CommercialAreaGate } from '@/components/distribution/AreaAccessGate';
 import { PageHeader } from '@/components/AppShell';
 import { BizApprovals } from '@/components/biz/BizApprovals';
 export const Route = createFileRoute('/biz/approvals')({
@@ -9,5 +10,5 @@ export const Route = createFileRoute('/biz/approvals')({
   { property: 'og:description', content: 'Trung tâm xử lý hồ sơ KR và Báo cáo Kinh doanh của Base Sứ Việt.' },
   { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' },
  ] }),
- component: () => <div><PageHeader title="Phê duyệt" description="Quản trị Kinh doanh" /><BizApprovals /></div>,
+ component: () => <CommercialAreaGate area="orders"><div><PageHeader title="Phê duyệt" description="Quản trị Kinh doanh" /><BizApprovals /></div></CommercialAreaGate>,
 });
