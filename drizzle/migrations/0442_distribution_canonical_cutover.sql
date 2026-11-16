@@ -68,13 +68,23 @@ BEGIN
     'department',(SELECT to_jsonb(u) FROM public.org_units u WHERE u.id=dept_id),
     'org_assignments',(SELECT coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb)
        FROM public.org_assignments a WHERE a.unit_id IN (dist_system,dept_id)),
+    'position_roles',(SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.unit_id,r.title_id,r.role_id),'[]'::jsonb)
+       FROM public.org_position_roles r WHERE r.unit_id IN (dist_system,dept_id)),
+    'titles',(SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id),'[]'::jsonb)
+       FROM public.org_titles t WHERE t.unit_id IN (dist_system,dept_id)),
     'biz_members',(SELECT coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb)
        FROM public.biz_department_members m WHERE m.department_id=dept_id::uuid),
     'biz_appointments',(SELECT coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb)
        FROM public.biz_appointments a WHERE a.system_id=dist_system::uuid OR a.department_id=dept_id::uuid),
     'kr_goals',(SELECT count(*) FROM public.biz_annual_goals WHERE department_id=dept_id::uuid),
     'biz_documents',(SELECT count(*) FROM public.biz_documents WHERE department_id=dept_id::uuid),
-    'k3_goals',(SELECT count(*) FROM public.k3_goals WHERE org_unit_id=dept_id OR department_id=dept_id::uuid)
+    'k3_goals',(SELECT count(*) FROM public.k3_goals WHERE org_unit_id=dept_id OR department_id=dept_id::uuid),
+    'k3_days',(SELECT count(*) FROM public.k3_days WHERE org_unit_id=dept_id OR department_id=dept_id::uuid),
+    'k3_actions',(SELECT count(*) FROM public.k3_actions a JOIN public.k3_goals g ON g.id=a.goal_id
+       WHERE g.org_unit_id=dept_id OR g.department_id=dept_id::uuid),
+    'k3_results',(SELECT count(*) FROM public.k3_kpi_results r JOIN public.k3_kpis k ON k.id=r.kpi_id
+       JOIN public.k3_actions a ON a.id=k.action_id JOIN public.k3_goals g ON g.id=a.goal_id
+       WHERE g.org_unit_id=dept_id OR g.department_id=dept_id::uuid)
   );
   INSERT INTO private.distribution_cutover_audit(id,reason,before_data)
     VALUES(cutoff_id,'Tách Khối Phân Phối ngang Khối Kinh Doanh, bảo toàn toàn bộ nguồn dữ liệu',before_snapshot);
@@ -115,15 +125,30 @@ BEGIN
     'distribution_block',(SELECT to_jsonb(u) FROM public.org_units u WHERE id=distribution_block),
     'org_assignments',(SELECT coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb)
        FROM public.org_assignments a WHERE a.unit_id IN (dist_system,dept_id)),
+    'position_roles',(SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.unit_id,r.title_id,r.role_id),'[]'::jsonb)
+       FROM public.org_position_roles r WHERE r.unit_id IN (dist_system,dept_id)),
+    'titles',(SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id),'[]'::jsonb)
+       FROM public.org_titles t WHERE t.unit_id IN (dist_system,dept_id)),
     'biz_members',(SELECT coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb)
        FROM public.biz_department_members m WHERE m.department_id=dept_id::uuid),
     'biz_appointments',(SELECT coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb)
        FROM public.biz_appointments a WHERE a.system_id=dist_system::uuid OR a.department_id=dept_id::uuid),
     'kr_goals',(SELECT count(*) FROM public.biz_annual_goals WHERE department_id=dept_id::uuid),
     'biz_documents',(SELECT count(*) FROM public.biz_documents WHERE department_id=dept_id::uuid),
-    'k3_goals',(SELECT count(*) FROM public.k3_goals WHERE org_unit_id=dept_id OR department_id=dept_id::uuid)
+    'k3_goals',(SELECT count(*) FROM public.k3_goals WHERE org_unit_id=dept_id OR department_id=dept_id::uuid),
+    'k3_days',(SELECT count(*) FROM public.k3_days WHERE org_unit_id=dept_id OR department_id=dept_id::uuid),
+    'k3_actions',(SELECT count(*) FROM public.k3_actions a JOIN public.k3_goals g ON g.id=a.goal_id
+       WHERE g.org_unit_id=dept_id OR g.department_id=dept_id::uuid),
+    'k3_results',(SELECT count(*) FROM public.k3_kpi_results r JOIN public.k3_kpis k ON k.id=r.kpi_id
+       JOIN public.k3_actions a ON a.id=k.action_id JOIN public.k3_goals g ON g.id=a.goal_id
+       WHERE g.org_unit_id=dept_id OR g.department_id=dept_id::uuid)
   );
-  IF before_snapshot->'org_assignments' IS DISTINCT FROM after_snapshot->'org_assignments'
+  IF before_snapshot->'position_roles' IS DISTINCT FROM after_snapshot->'position_roles'
+     OR before_snapshot->'titles' IS DISTINCT FROM after_snapshot->'titles'
+     OR before_snapshot->'k3_days' IS DISTINCT FROM after_snapshot->'k3_days'
+     OR before_snapshot->'k3_actions' IS DISTINCT FROM after_snapshot->'k3_actions'
+     OR before_snapshot->'k3_results' IS DISTINCT FROM after_snapshot->'k3_results'
+     OR before_snapshot->'org_assignments' IS DISTINCT FROM after_snapshot->'org_assignments'
      OR before_snapshot->'biz_members' IS DISTINCT FROM after_snapshot->'biz_members'
      OR before_snapshot->'biz_appointments' IS DISTINCT FROM after_snapshot->'biz_appointments'
      OR before_snapshot->'kr_goals' IS DISTINCT FROM after_snapshot->'kr_goals'
