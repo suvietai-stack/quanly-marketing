@@ -129,6 +129,7 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
       <div className="rounded-lg border bg-muted/20 p-3 space-y-1.5">
         <h3 className="text-sm font-semibold">Kiểm tra trước khi tạo</h3>
         <p className="text-sm"><span className="text-muted-foreground">Hệ:</span> {designLabel(kind)}</p>
+        <p className="text-sm"><span className="text-muted-foreground">Loại công việc:</span> {classification.workCategoryName||'—'}</p>
         <p className="text-sm"><span className="text-muted-foreground">Tên:</span> {title.trim()}</p>
         <p className="text-sm"><span className="text-muted-foreground">Người thực hiện:</span> <strong>{assignee}</strong></p>
         <p className="text-sm"><span className="text-muted-foreground">Người duyệt:</span> {reviewer}</p>
