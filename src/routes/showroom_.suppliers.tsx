@@ -1,10 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { ShowroomSuppliers } from '@/components/showroom/ShowroomSuppliers';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
+// Historical entrypoint: suppliers are now a single global master in Procurement.
 export const Route = createFileRoute('/showroom_/suppliers')({
-  head: () => ({ meta: [
-    { title: 'Nhà cung cấp Showroom — Base Sứ Việt' },
-    { name: 'description', content: 'Hồ sơ nhà cung cấp sản phẩm, danh mục nguồn hàng và lịch sử liên hệ của Khối Showroom.' },
-  ] }),
-  component: ShowroomSuppliers,
+  beforeLoad: () => { throw redirect({to:'/procurement/suppliers'}); },
+  component: () => null,
 });
