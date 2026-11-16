@@ -49,6 +49,7 @@ export type PermissionGroup =
   | "Sale Work Zalo"
   | "Cơ cấu tổ chức"
   | "Showroom"
+  | "Nhà cung cấp"
   | "Trung tâm 3K"
   | "Hộp thư";
 
@@ -517,6 +518,14 @@ export const PERMISSIONS: PermissionDef[] = [
   P("ot.reschedule_propose", "Đề xuất điều chỉnh lịch", "Theo Dõi Đơn Hàng", "Điều chỉnh lịch"),
   P("ot.reschedule_reply", "Phản hồi điều chỉnh lịch", "Theo Dõi Đơn Hàng", "Điều chỉnh lịch"),
   P("ot.supplier", "Quản lý nhà cung cấp", "Theo Dõi Đơn Hàng", "Quản lý"),
+  // Nhà cung cấp gốc toàn công ty, đặt tại Mua Hàng & Giao Vận.
+  P("supplier.master.view", "Tra cứu Nhà cung cấp chung", "Nhà cung cấp", "Xem"),
+  P("supplier.master.create", "Thêm Nhà cung cấp chung", "Nhà cung cấp", "Tạo"),
+  P("supplier.master.edit", "Cập nhật hồ sơ Nhà cung cấp", "Nhà cung cấp", "Sửa"),
+  P("supplier.master.product_edit", "Cập nhật sản phẩm cung ứng", "Nhà cung cấp", "Sản phẩm"),
+  P("supplier.master.contact_log", "Ghi lịch sử liên hệ", "Nhà cung cấp", "Lịch sử"),
+  P("supplier.master.view_cost", "Xem và cập nhật giá nhập", "Nhà cung cấp", "Giá vốn"),
+  P("supplier.master.manage", "Quản lý trạng thái Nhà cung cấp", "Nhà cung cấp", "Quản lý"),
   P("ot.manage", "Quản lý đơn hàng", "Theo Dõi Đơn Hàng", "Quản lý"),
   P("ot.report", "Xem báo cáo", "Theo Dõi Đơn Hàng", "Báo cáo"),
   P("ot.report_export", "Xuất báo cáo", "Theo Dõi Đơn Hàng", "Báo cáo"),
