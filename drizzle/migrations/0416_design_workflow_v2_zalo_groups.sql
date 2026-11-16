@@ -14,7 +14,7 @@ GRANT EXECUTE ON FUNCTION private.design_team_member(uuid) TO authenticated,serv
 
 -- Selected designer must be an active Design/Photography team member with permission to take this flow.
 CREATE OR REPLACE FUNCTION public.design_assignable_staff(_flow text)
-RETURNS TABLE(user_id uuid,name text) LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $
+RETURNS TABLE(user_id uuid,name text) LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $$
  SELECT DISTINCT p.id,p.full_name
  FROM public.profiles p
  JOIN public.mkt_staff_specialties s ON s.user_id=p.id AND s.state='active'
@@ -24,7 +24,7 @@ RETURNS TABLE(user_id uuid,name text) LANGUAGE sql STABLE SECURITY DEFINER SET s
    AND (public.design_can(auth.uid(),_flow,'create') OR private.design_team_member(auth.uid()))
    AND p.status='Đang hoạt động' AND public.design_can(p.id,_flow,'take')
  ORDER BY 2,1;
-$;
+$$;
 REVOKE ALL ON FUNCTION public.design_assignable_staff(text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.design_assignable_staff(text) TO authenticated;
 
@@ -138,7 +138,7 @@ CREATE OR REPLACE FUNCTION private.design_read(_uid uuid, _creator uuid, _data j
  SET search_path TO 'public', 'private'
 AS $function$
  SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR private.design_team_member(_uid) OR (public.design_can(_uid,_flow,'view') AND (_creator=_uid OR private.design_person(_uid,_data->>'requester') OR private.design_person(_uid,_data->>'assignee') OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')))));
-$function$
+$function$;
 
 -- Safely extend existing guarded Order writer; preserves field-level authorization/audit and historic status aliases.
 CREATE OR REPLACE FUNCTION private.design_guard()
@@ -211,12 +211,12 @@ BEGIN
  IF coalesce(d->>'assignee','')<>'' AND (TG_OP='INSERT' OR d->>'assignee' IS DISTINCT FROM od->>'assignee' OR d->>'assigneeId' IS DISTINCT FROM od->>'assigneeId') AND NOT EXISTS(SELECT 1 FROM profiles p WHERE p.status='Đang hoạt động' AND (p.full_name=d->>'assignee' OR p.username=d->>'assignee') AND p.id::text=coalesce(d->>'assigneeId','') AND private.design_team_member(p.id) AND public.design_can(p.id,f,'take')) THEN RAISE EXCEPTION 'Chỉ chọn nhân viên Thiết kế/Chụp ảnh đang hoạt động và đủ quyền thực hiện'; END IF;
  IF st IN ('Chờ duyệt','Đã duyệt') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester') THEN RAISE EXCEPTION 'Người thực hiện không được đồng thời là người duyệt'; END IF;
  NEW.data:=d||jsonb_build_object('status',st); NEW.updated_at:=now(); RETURN NEW;
-END $function$
+END $function$;
 
 -- Idempotent linked-source Job creation. Historical duplicates are preserved;
 -- newly created Content/Video linked Jobs may not duplicate a source even under concurrent clicks.
 CREATE OR REPLACE FUNCTION private.design_linked_source_unique() RETURNS trigger
-LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,private AS $
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,private AS $$
 DECLARE src text; mode text;
 BEGIN
  IF coalesce(NEW.workflow_kind,NEW.data->>'workflowKind') <> 'marketing_design' THEN RETURN NEW; END IF;
@@ -235,7 +235,7 @@ BEGIN
       ELSE o.data->>'videoId'=src AND o.data->>'type'='Thumbnail video' END
  ) THEN RAISE EXCEPTION 'Đã có Job Thiết kế liên kết với nội dung này. Mở Job cũ thay vì tạo trùng.' USING ERRCODE='23505'; END IF;
  RETURN NEW;
-END $;
+END $$;
 CREATE TRIGGER design_order_duplicate_guard BEFORE INSERT OR UPDATE OF data ON public.orders
  FOR EACH ROW EXECUTE FUNCTION private.design_linked_source_unique();
 
