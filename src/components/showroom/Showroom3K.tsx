@@ -18,9 +18,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent } from '@/components/ui/card';
 
 type Tab = 'personal' | 'team';
-const todayInVietnam = () => new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit',
-}).format(new Date());
+const todayInVietnam = () => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const value = (part: string) => parts.find(p => p.type === part)?.value ?? '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+};
 
 const stateVariant = (state: ShowroomK3State): 'secondary' | 'outline' | 'default' =>
   state === 'confirmed' ? 'default' : state === 'none' ? 'outline' : 'secondary';
