@@ -177,18 +177,46 @@ export function WebChatWorkspace(){
     </>}
    </div>}
   </section>}
-  <Dialog open={!!config} onOpenChange={v=>!v&&setConfig(null)}><DialogContent className="wc-settings max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{config?.id?'Cài đặt website':'Thêm website'}</DialogTitle></DialogHeader>{config&&<form className="space-y-3" onSubmit={e=>{e.preventDefault();void save();}}>
-   {(['name','domain'] as const).map(k=><label className="block text-sm" key={k}>{k==='name'?'Tên website':'Tên miền chính xác (không https://)'}<Input required value={config[k]} onChange={e=>setConfig({...config,[k]:e.target.value})}/></label>)}
-   <label className="block text-sm">Nguồn tín hiệu<select required className="mt-1 w-full rounded-md border bg-background p-2" value={config.source} onChange={e=>setConfig({...config,source:e.target.value})}><option value="">Chọn trong Kho nguồn</option>{overview.data?.sources.map((s:string)=><option key={s}>{s}</option>)}</select></label>
-   {Object.entries({character:'Tên nhân vật',avatar:'URL ảnh đại diện HTTPS',greeting:'Lời chào',invitation:'Câu mời trên bong bóng',color:'Màu giao diện (#RRGGBB)',tone:'Văn phong, xưng hô, emoji',goals:'Nhu cầu muốn thu thập thêm — luôn ưu tiên SĐT/Zalo',knowledge:'Kiến thức được duyệt riêng website này',closing:'Lời báo khách chờ sale liên hệ'}).map(([k,label])=><label className="block text-sm" key={k}>{label}{['tone','goals','knowledge','greeting','closing'].includes(k)?<Textarea rows={k==='knowledge'?6:2} value={config.settings[k]} onChange={e=>setConfig({...config,settings:{...config.settings,[k]:e.target.value}})}/>:<Input value={config.settings[k]} onChange={e=>setConfig({...config,settings:{...config.settings,[k]:e.target.value}})}/>}</label>)}
-   <label className="block text-sm">Câu hỏi bấm nhanh (mỗi dòng một câu, tối đa 6)<Textarea rows={4} value={config.settings.starters.join('\n')} onChange={e=>setConfig({...config,settings:{...config.settings,starters:e.target.value.split('\n')}})}/></label>
-   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={config.settings.showGreeting} onChange={e=>setConfig({...config,settings:{...config.settings,showGreeting:e.target.checked}})}/>Hiện lời chào bên ngoài biểu tượng chat</label>
-   <label className="block text-sm">Hiện sau bao nhiêu giây (3–60)<Input type="number" min={3} max={60} value={config.settings.greetingDelay} onChange={e=>setConfig({...config,settings:{...config.settings,greetingDelay:Number(e.target.value)}})}/></label>
-   <label className="block text-sm">Tải ảnh đại diện PNG/JPG/WebP (dưới 70 KB)<input className="mt-1 block w-full text-sm" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>70000||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast.error('Chọn PNG/JPG/WebP dưới 70 KB');return;}const reader=new FileReader();reader.onload=()=>setConfig((current:any)=>current?{...current,settings:{...current.settings,avatar:String(reader.result)}}:current);reader.readAsDataURL(file);}}/></label>
-   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={config.enabled} onChange={e=>setConfig({...config,enabled:e.target.checked})}/>Bật Chat Web</label><p className="text-xs text-muted-foreground">Chỉ nhập kiến thức được phép trả lời khách. AI không đọc dữ liệu nội bộ Base. Người tạo tín hiệu: Đốm AI.</p>
-   {config.id&&<div className="rounded border p-3 text-xs"><p className="break-all">ID website: {config.id}</p><Button type="button" variant="outline" className="mt-2" disabled={busy} onClick={async()=>{setBusy(true);try{const r=await chatRotateKey({data:{site:config.id}});setKey(r.key);setKeySite(config.id);setConfig(null);}catch{toast.error('Không cấp được mã');}finally{setBusy(false);}}}>Cấp mã kết nối mới — mã cũ hết hiệu lực</Button></div>}<Button disabled={busy} type="submit">{busy?'Đang lưu…':'Lưu cấu hình'}</Button>
-  </form>}</DialogContent></Dialog>
-  <Dialog open={!!key} onOpenChange={v=>!v&&setKey('')}><DialogContent><DialogHeader><DialogTitle>Kết nối plugin WordPress</DialogTitle></DialogHeader><p className="text-sm">Tải, cài và kích hoạt plugin. Vào WordPress → Cài đặt → Base Chat, nhập hai giá trị rồi bật chat.</p><label className="text-sm">ID website<Input readOnly value={keySite}/></label><label className="text-sm">Mã kết nối — chỉ hiện lần này<Input readOnly value={key}/></label><p className="text-xs text-muted-foreground">Không chèn mã vào JavaScript hoặc bài viết. Mất mã: cấp mã mới trong cài đặt website.</p></DialogContent></Dialog>
+  <Dialog open={!!config} onOpenChange={v=>!v&&setConfig(null)}>
+   <DialogContent className="wc-settings sm:max-w-2xl">
+    <DialogHeader><DialogTitle>{config?.id?'Cài đặt website':'Thêm website'}</DialogTitle></DialogHeader>
+    {config&&<form className="wc-settings-form" onSubmit={e=>{e.preventDefault();void save();}}>
+     <section className="wc-settings-group">
+      <h3>Website & kết nối</h3>
+      <div className="wc-settings-fields">
+       {(['name','domain'] as const).map(k=><label className="wc-settings-field" key={k}>{k==='name'?'Tên website':'Tên miền (không có https://)'}<Input required value={config[k]} onChange={e=>setConfig({...config,[k]:e.target.value})}/></label>)}
+       <label className="wc-settings-field">Nguồn tín hiệu<select required className="w-full rounded-md border bg-background p-2" value={config.source} onChange={e=>setConfig({...config,source:e.target.value})}><option value="">Chọn trong Kho nguồn</option>{overview.data?.sources.map((s:string)=><option key={s}>{s}</option>)}</select></label>
+       <label className="wc-switch"><input type="checkbox" checked={config.enabled} onChange={e=>setConfig({...config,enabled:e.target.checked})}/><span><strong>Bật Chat Web</strong><small>Khách có thể trò chuyện và gửi nhu cầu về Base</small></span></label>
+      </div>
+     </section>
+     <details className="wc-settings-group">
+      <summary>Giao diện và lời chào <span>Nhân vật, màu sắc, hình ảnh</span></summary>
+      <div className="wc-settings-fields">
+       {Object.entries({character:'Tên nhân vật',greeting:'Lời chào',invitation:'Câu mời trên bong bóng',color:'Màu giao diện (#RRGGBB)',avatar:'URL ảnh đại diện HTTPS'}).map(([k,label])=><label key={k} className="wc-settings-field">{label}{k==='greeting'?<Textarea rows={2} value={config.settings[k]} onChange={e=>setConfig({...config,settings:{...config.settings,[k]:e.target.value}})}/>:<Input value={config.settings[k]} onChange={e=>setConfig({...config,settings:{...config.settings,[k]:e.target.value}})}/>}</label>)}
+       <label className="wc-settings-field">Câu hỏi bấm nhanh (mỗi dòng một câu, tối đa 6)<Textarea rows={3} value={config.settings.starters.join('\n')} onChange={e=>setConfig({...config,settings:{...config.settings,starters:e.target.value.split('\n')}})}/></label>
+       <label className="wc-switch"><input type="checkbox" checked={config.settings.showGreeting} onChange={e=>setConfig({...config,settings:{...config.settings,showGreeting:e.target.checked}})}/><span>Hiện lời chào bên ngoài biểu tượng chat</span></label>
+       <label className="wc-settings-field">Hiện sau bao nhiêu giây (3–60)<Input type="number" min={3} max={60} value={config.settings.greetingDelay} onChange={e=>setConfig({...config,settings:{...config.settings,greetingDelay:Number(e.target.value)}})}/></label>
+       <label className="wc-settings-field">Tải ảnh đại diện PNG/JPG/WebP (dưới 70 KB)<input className="wc-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>70000||!['image/png','image/jpeg','image/webp'].includes(file.type)){toast.error('Chọn PNG/JPG/WebP dưới 70 KB');return;}const reader=new FileReader();reader.onload=()=>setConfig((current:any)=>current?{...current,settings:{...current.settings,avatar:String(reader.result)}}:current);reader.readAsDataURL(file);}}/></label>
+      </div>
+     </details>
+     <details className="wc-settings-group">
+      <summary>Hướng dẫn Đốm AI <span>Văn phong, mục tiêu và kiến thức</span></summary>
+      <div className="wc-settings-fields">
+       {Object.entries({tone:'Văn phong, xưng hô',goals:'Mục tiêu tiếp nhận nhu cầu',knowledge:'Kiến thức được phép tư vấn',closing:'Lời nhắn sau khi chuyển tín hiệu'}).map(([k,label])=><label className="wc-settings-field" key={k}>{label}<Textarea rows={k==='knowledge'?6:3} value={config.settings[k]} onChange={e=>setConfig({...config,settings:{...config.settings,[k]:e.target.value}})}/></label>)}
+       <p className="text-xs text-muted-foreground">Chỉ nhập kiến thức công khai, được phép trả lời khách. Đốm AI không đọc dữ liệu nội bộ Base.</p>
+      </div>
+     </details>
+     {config.id&&<details className="wc-settings-group wc-settings-key">
+      <summary>Mã kết nối WordPress <span>Chỉ đổi khi cần thiết</span></summary>
+      <div className="wc-settings-fields">
+       <p className="break-all text-xs">ID website: {config.id}</p>
+       <Button type="button" variant="outline" disabled={busy} onClick={async()=>{setBusy(true);try{const r=await chatRotateKey({data:{site:config.id}});setKey(r.key);setKeySite(config.id);setConfig(null);}catch{toast.error('Không cấp được mã');}finally{setBusy(false);}}}>Cấp mã mới (mã cũ sẽ hết hiệu lực)</Button>
+      </div>
+     </details>}
+     <div className="wc-settings-save"><Button disabled={busy} type="submit">{busy?'Đang lưu…':'Lưu cấu hình'}</Button></div>
+    </form>}
+   </DialogContent>
+  </Dialog>  <Dialog open={!!key} onOpenChange={v=>!v&&setKey('')}><DialogContent><DialogHeader><DialogTitle>Kết nối plugin WordPress</DialogTitle></DialogHeader><p className="text-sm">Tải, cài và kích hoạt plugin. Vào WordPress → Cài đặt → Base Chat, nhập hai giá trị rồi bật chat.</p><label className="text-sm">ID website<Input readOnly value={keySite}/></label><label className="text-sm">Mã kết nối — chỉ hiện lần này<Input readOnly value={key}/></label><p className="text-xs text-muted-foreground">Không chèn mã vào JavaScript hoặc bài viết. Mất mã: cấp mã mới trong cài đặt website.</p></DialogContent></Dialog>
  </div>;
 }
 
