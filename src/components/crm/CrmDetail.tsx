@@ -9,6 +9,7 @@ import {
   Pencil,
   Archive,
   ArrowRightLeft,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,19 @@ export function CrmDetail({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("overview");
+  const origin = useQuery({
+    queryKey: ["crm_signal_origin", uid, id],
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await (supabase as any)
+        .from("signal_crm_links")
+        .select("signal_id")
+        .eq("customer_id", id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return data?.signal_id ?? null;
+    },
+    retry: false,
+  });
   const files = useQuery({
     queryKey: ["crm_files", uid, id],
     queryFn: async () => {
@@ -197,6 +211,16 @@ export function CrmDetail({
           ))}
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
+          {origin.data && <div className="rounded-md border p-3 text-sm space-y-1">
+            <p>Khách được lưu từ Tín hiệu cơ hội.</p>
+            {(can("signal.sale") || can("signal.view_all") || can("signal.manage") || can("signal.create")) && (
+              <Button asChild variant="outline" size="sm">
+                <a href={`/signals?open=${origin.data}`}>
+                  <ExternalLink className="mr-2 h-4 w-4" />Xem tín hiệu gốc
+                </a>
+              </Button>
+            )}
+          </div>}
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{label(c.group_id)}</Badge>
             <Badge variant="outline">{label(c.segment_id)}</Badge>
