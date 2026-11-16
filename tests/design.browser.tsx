@@ -11,6 +11,7 @@ const queryClient=new QueryClient();
 const catalogRows=[...['Chụp sản phẩm','Chụp bộ sưu tập','Khác'].map((name,i)=>({id:`photo-${i}`,name,workflow_kind:'photo',kind:'work',active:true,position:i,is_other:name==='Khác'})),...['Banner Website','Thumbnail Video','Khác'].map((name,i)=>({id:`marketing-${i}`,name,workflow_kind:'marketing_design',kind:'work',active:true,position:i,is_other:name==='Khác'})),...['Thiết kế in logo','Ma-két bộ quà tặng','Khác'].map((name,i)=>({id:`mockup-${i}`,name,workflow_kind:'order_mockup',kind:'work',active:true,position:i,is_other:name==='Khác'})),...['Ấm chén','Hộp quà / Bao bì','Khác'].map((name,i)=>({id:`product-${i}`,name,workflow_kind:'order_mockup',kind:'product',active:true,position:i,is_other:name==='Khác'}))];
 queryClient.setQueryData(['design-catalogs','fixture-user'],catalogRows);
 queryClient.setQueryDefaults(['design-catalogs'],{staleTime:Infinity});
+for(const flow of ['photo','marketing_design','order_mockup'])queryClient.setQueryData(['design-assignable-staff',flow],[{user_id:'fixture-designer',name:'Designer'}]);
 const permissions=['order.view','order.view_all','order.create','order.edit','order.assign','order.report_view','order.take'];
 useAuth.setState({loaded:true,currentUserId:'fixture-user',users:[{id:'fixture-user',username:'fixture',fullName:'Quản lý',status:'Đang hoạt động',roleId:'role-super-admin',system:true}],roles:[{id:'role-super-admin',name:'Fixture Admin',permissions}] } as never);
 const history=[{at:'2026-11-01T01:00:00Z',byName:'Quản lý',action:'Tạo',toStatus:'Chờ phân công' as const}];
