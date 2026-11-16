@@ -21,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OrganizationRouteImport } from './routes/organization'
+import { Route as ShowroomRouteImport } from './routes/showroom'
 import { Route as OverviewV2RouteImport } from './routes/overview-v2'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -145,6 +146,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const OrganizationRoute = OrganizationRouteImport.update({
   id: '/organization',
   path: '/organization',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowroomRoute = ShowroomRouteImport.update({
+  id: '/showroom',
+  path: '/showroom',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OverviewV2Route = OverviewV2RouteImport.update({
@@ -492,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/organization': typeof OrganizationRoute
+  '/showroom': typeof ShowroomRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
   '/profile': typeof ProfileRoute
@@ -571,6 +578,7 @@ export interface FileRoutesByTo {
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/organization': typeof OrganizationRoute
+  '/showroom': typeof ShowroomRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
   '/profile': typeof ProfileRoute
@@ -651,6 +659,7 @@ export interface FileRoutesById {
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/organization': typeof OrganizationRoute
+  '/showroom': typeof ShowroomRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
   '/profile': typeof ProfileRoute
@@ -732,6 +741,7 @@ export interface FileRouteTypes {
     | '/okrs'
     | '/orders'
     | '/organization'
+    | '/showroom'
     | '/overview-v2'
     | '/pending'
     | '/profile'
@@ -811,6 +821,7 @@ export interface FileRouteTypes {
     | '/okrs'
     | '/orders'
     | '/organization'
+    | '/showroom'
     | '/overview-v2'
     | '/pending'
     | '/profile'
@@ -890,6 +901,7 @@ export interface FileRouteTypes {
     | '/okrs'
     | '/orders'
     | '/organization'
+    | '/showroom'
     | '/overview-v2'
     | '/pending'
     | '/profile'
@@ -970,6 +982,7 @@ export interface RootRouteChildren {
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
   OrganizationRoute: typeof OrganizationRoute
+  ShowroomRoute: typeof ShowroomRoute
   OverviewV2Route: typeof OverviewV2Route
   PendingRoute: typeof PendingRoute
   ProfileRoute: typeof ProfileRoute
@@ -1121,6 +1134,13 @@ declare module '@tanstack/react-router' {
       path: '/organization'
       fullPath: '/organization'
       preLoaderRoute: typeof OrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showroom': {
+      id: '/showroom'
+      path: '/showroom'
+      fullPath: '/showroom'
+      preLoaderRoute: typeof ShowroomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/overview-v2': {
@@ -1594,6 +1614,7 @@ const rootRouteChildren: RootRouteChildren = {
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
   OrganizationRoute: OrganizationRoute,
+  ShowroomRoute: ShowroomRoute,
   OverviewV2Route: OverviewV2Route,
   PendingRoute: PendingRoute,
   ProfileRoute: ProfileRoute,
