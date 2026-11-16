@@ -1,3 +1,7 @@
+# GitHub-only coding (owner decision, 2026-11-16)
+- Implement future application source changes in GitHub branches/commits or pull requests only; do not use the Lovable agent/editor to author code or trigger Publish unless the owner explicitly changes this instruction.
+- Keep preview/production, database changes and publish separate from code review. This rule is about editing workflow, not a license to loosen scoped permissions.
+
 # Architecture rules
 - All three centers use centerPositionSetup with catalog-verified Role IDs and one org_change preview/apply; existing correct bindings/capacity remain unchanged, conflicting/history-bearing unbound positions fail closed — avoids duplicate staff positions and silent rights loss.
 - Center chart promotion shares one post-build projection with unchanged IDs/holders/action targets; retail wrappers collapse only with no historical/configured data, guarded center setup never rebinds existing titles — preserves live scope until approved cutover.

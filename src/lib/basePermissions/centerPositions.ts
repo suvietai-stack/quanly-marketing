@@ -117,10 +117,21 @@ export function centerPositionDefinitions(config: OrgConfig, unitId: string) {
         (unit.kind === "department" && [2, 0].includes(p.level)) ||
         (unit.kind === "team" && [1, 0].includes(p.level)),
     );
+  // A Bán Lẻ child is not automatically a showroom (e.g. logistics or storage).
+  // Check the real active parent and a showroom label; role scope must never be
+  // inferred from chart-only hierarchy projections.
+  const btcActive = config.units.some(
+    (u) => u.id === BTC_CENTER && u.active && u.kind === "block",
+  );
+  const parent = config.units.find((u) => u.id === unit.parent_id && u.active);
   if (
+    btcActive &&
     unit.kind === "department" &&
-    areaUnitIds(config.units, BTC_CENTER).has(unitId) &&
-    (unit.parent_id === BTC_CENTER || unit.parent_id === RETAIL_SYSTEM)
+    /showroom|showrom/i.test(unit.name) &&
+    (parent?.id === BTC_CENTER ||
+      (parent?.id === RETAIL_SYSTEM &&
+        parent.kind === "system" &&
+        parent.parent_id === BTC_CENTER))
   )
     return [...SHOWROOM];
   return [];
