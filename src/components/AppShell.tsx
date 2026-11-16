@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from '@tanstack/react-query';
+import {supabase} from '@/integrations/supabase/client';
 import { approvalsQuery } from '@/lib/biz/organizationQueries';
 import { approvalCenterQuery, badgeText } from '@/lib/approvals/api';
 import { cn } from "@/lib/utils";
@@ -73,8 +74,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isKpiAdmin = isSuperAdmin || user?.roleId === "role-admin";
   const isKpiManager = isKpiAdmin || ["kpi.view_all", "kpi.goal_create", "kpi.kr_assign", "kpi.kr_adjust", "kpi.period_manage"].some((k) => can(k));
   const canApprove = isSuperAdmin || can("settings.account_approve");
+  const designTeamQuery=useQuery({queryKey:['design-team-access',user?.id],enabled:!!user?.id,
+    queryFn:async()=>{const {data,error}=await (supabase as any).rpc('design_team_access');if(error)throw error;return !!data;},staleTime:60000,retry:1});
 
-  const visibleGroups = visibleNavigation({ can, isSuperAdmin, isKpiAdmin, isKpiManager,
+  const visibleGroups = visibleNavigation({ can, isSuperAdmin, designTeam:isSuperAdmin || !!designTeamQuery.data, isKpiAdmin, isKpiManager,
     kpiEnabled: isKpiV2Enabled(), hasAssignedApprovals: !!approvals.data?.has_assigned,
     canApprove, pendingCount, approvalsEligible });
 
