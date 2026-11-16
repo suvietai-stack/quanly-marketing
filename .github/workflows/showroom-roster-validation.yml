@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/components/showroom/ShiftRosterPage.tsx'
       - 'src/lib/showroom/shifts*'
+      - 'src/lib/webChat/chat.functions.ts'
       - 'src/routes/showroom_.shifts.tsx'
       - 'src/lib/aiSuviet/guides*'
       - 'src/components/ai/ChipiAiPanel.tsx'
