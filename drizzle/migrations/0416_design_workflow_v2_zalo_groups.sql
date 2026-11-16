@@ -225,7 +225,7 @@ BEGIN
  ELSIF nullif(NEW.data->>'videoId','') IS NOT NULL AND NEW.data->>'type'='Thumbnail video' THEN
    src:=NEW.data->>'videoId';mode:='video';
  ELSE RETURN NEW; END IF;
- IF TG_OP='UPDATE' AND src=CASE WHEN mode='content' THEN OLD.data->>'contentId' ELSE OLD.data->>'videoId' END
+ IF TG_OP='UPDATE' AND src=(CASE WHEN mode='content' THEN OLD.data->>'contentId' ELSE OLD.data->>'videoId' END)
     AND coalesce(OLD.workflow_kind,OLD.data->>'workflowKind')='marketing_design' THEN RETURN NEW; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('design-link:'||mode||':'||src,0));
  IF EXISTS(
