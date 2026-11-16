@@ -158,4 +158,30 @@
 .dark .wc-messages{background:#111c2b}.dark .wc-bubble{background:#23344a;color:#e2e8f0;border-color:#344864}
 .dark .wc-bubble-user{background:#234879;color:#e2e8f0;border-color:#335c91}
 .dark .wc-presence-offline{background:#334155;color:#cbd5e1}
+
+/* Website settings: progressive disclosure keeps the first form short on mobile. */
+.wc-settings-form{display:flex;flex-direction:column;gap:10px;padding-bottom:2px}
+.wc-settings-group{display:block;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.wc-settings-group>h3,.wc-settings-group>summary{font-size:13px;font-weight:700}
+.wc-settings-group>h3{padding:14px 15px 0}
+.wc-settings-group>summary{position:relative;list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:7px;min-height:48px;padding:12px 36px 12px 15px;cursor:pointer}
+.wc-settings-group>summary::-webkit-details-marker{display:none}
+.wc-settings-group>summary:after{content:'⌄';position:absolute;right:15px;top:11px;font-size:18px;color:var(--muted-foreground)}
+.wc-settings-group[open]>summary:after{transform:rotate(180deg)}
+.wc-settings-group>summary span{font-size:11px;font-weight:450;color:var(--muted-foreground)}
+.wc-settings-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px 15px 15px}
+.wc-settings-field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:12px;font-weight:600;line-height:1.5;color:var(--foreground)}
+.wc-settings-field input,.wc-settings-field textarea,.wc-settings-field select{width:100%;margin:0!important;min-width:0;background:var(--background);border-radius:9px;font-weight:400}
+.wc-settings-field input,.wc-settings-field select{min-height:42px}
+.wc-settings-field textarea{resize:vertical;min-height:76px}
+.wc-settings-field .wc-file-input{min-height:44px;padding:8px;border:1px solid var(--border)}
+.wc-switch{display:flex;align-items:center;gap:11px;min-height:49px;font-size:12px;line-height:1.5}
+.wc-switch input{width:18px;height:18px;flex-shrink:0;accent-color:var(--primary)}
+.wc-switch span{display:flex;flex-direction:column;gap:2px}
+.wc-switch small{color:var(--muted-foreground);font-size:11px}
+.wc-settings-save{position:sticky;bottom:-2px;z-index:2;padding:9px 0 2px;background:var(--background)}
+.wc-settings-save button{min-height:46px;width:100%;border-radius:10px}
+.wc-settings-key button{min-height:42px;white-space:normal}
+@media(max-width:767px){.wc-settings-group>summary{align-items:flex-start;flex-direction:column;gap:3px}.wc-settings-fields{padding:12px}.wc-settings-group>h3{padding:12px 12px 0}}
+
 @media(prefers-reduced-motion:reduce){.wc-workspace *{transition:none!important}}
