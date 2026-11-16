@@ -44,10 +44,10 @@ export const navigationGroups: NavGroup[] = [
     { to: "/reports-v2", label: "Báo cáo KPI", icon: FileText, kpi: true, anyPerm: ["kpi.report"] },
   ] },
   { label: "Thiết Kế", icon: Palette, items: [
-    { to: '/orders', label: 'Tất cả công việc', icon: ListChecks, anyPerm: ['order.view','order.photo.view','order.marketing_design.view','order.order_mockup.view'] },
-    { to: '/design/photo', label: 'Chụp ảnh', icon: Camera, anyPerm: ['order.view','order.photo.view'] },
-    { to: '/design/marketing', label: 'Ấn phẩm Marketing', icon: Palette, anyPerm: ['order.view','order.marketing_design.view'] },
-    { to: '/design/mockups', label: 'Ma-két đơn hàng', icon: FileText, anyPerm: ['order.view','order.order_mockup.view'] },
+    { to: '/orders', label: 'Tất cả thiết kế', icon: ListChecks, anyPerm: ['order.view','order.photo.view','order.marketing_design.view','order.order_mockup.view'] },
+    { to: '/design/photo', label: 'Chụp ảnh', icon: Camera, anyPerm: ['order.view','order.photo.view','order.photo.create','order.create'] },
+    { to: '/design/marketing', label: 'Ấn phẩm Marketing', icon: Palette, anyPerm: ['order.view','order.marketing_design.view','order.marketing_design.create','order.create'] },
+    { to: '/design/mockups', label: 'Ma-két đơn hàng', icon: FileText, anyPerm: ['order.view','order.order_mockup.view','order.order_mockup.create','order.create'] },
     { to: '/design/reports', label: 'Báo cáo & Phân tích', icon: BarChart3, anyPerm: ['order.report_view','order.photo.report_view','order.marketing_design.report_view','order.order_mockup.report_view'] },
   ] },
   { label: "Mua Hàng & Giao Vận", icon: Truck, items: [
@@ -82,7 +82,7 @@ export const navigationGroups: NavGroup[] = [
     { to: "/ai-knowledge", label: "Kho kiến thức AI", icon: BookOpenText, adminOnly: true },
   ] },
 ];
-export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
+export type NavigationAccess = { can: (permission: PermissionKey) => boolean; isSuperAdmin: boolean; designTeam?: boolean; isKpiAdmin: boolean; isKpiManager: boolean; kpiEnabled: boolean; hasAssignedApprovals: boolean; canApprove: boolean; pendingCount: number; approvalsEligible?: boolean };
 export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   const { can, isSuperAdmin, isKpiAdmin } = access;
   // The cross-module approval aggregation may be slow/unavailable; capability to
@@ -95,6 +95,7 @@ export function visibleNavigation(access: NavigationAccess): NavGroup[] {
   ].some(can);
   return navigationGroups.map(group => {
     const items = group.items.filter(it => !it.comingSoon &&
+      (!['/orders','/design/reports'].includes(it.to) || !!access.designTeam) &&
       (it.to !== '/approvals' || canOpenApprovalCenter) &&
       (!it.to.startsWith('/design/') || !['/design/photo','/design/marketing','/design/mockups'].includes(it.to) ||
         (!['photo','marketing_design','order_mockup'].some(f=>can(`order.${f}.view`)) || can(`order.${it.to==='/design/photo'?'photo':it.to==='/design/marketing'?'marketing_design':'order_mockup'}.view`))) &&
