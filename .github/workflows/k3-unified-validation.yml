@@ -1,0 +1,44 @@
+name: Unified 3K hub validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/k3Hub/**'
+      - 'src/components/k3Hub/**'
+      - 'src/components/OrgUnitDrawer.tsx'
+      - 'src/lib/auth.ts'
+      - 'src/lib/navigation.ts'
+      - 'src/lib/navigation.test.ts'
+      - 'src/routes/k3-center.tsx'
+      - 'src/routes/k3_.unit.$unit.tsx'
+      - 'src/routes/biz.3k-area.tsx'
+      - 'src/routes/operations_.3k*.tsx'
+      - 'src/routes/showroom_.3k.tsx'
+      - 'src/routeTree.gen.ts'
+      - 'drizzle/migrations/0399_k3_unified_hub_and_area_scope.sql'
+      - 'drizzle/migrations/0400_k3_hub_detail_and_manager_feedback.sql'
+      - 'drizzle/migrations/0401_k3_hub_access_options.sql'
+      - 'drizzle/migrations/0402_k3_hub_area_navigation_roles.sql'
+      - 'drizzle/migrations/0403_k3_operations_department_entries.sql'
+      - '.github/workflows/k3-unified-validation.yml'
+  pull_request:
+    paths:
+      - 'src/lib/k3Hub/**'
+      - 'src/components/k3Hub/**'
+      - 'src/lib/navigation.ts'
+      - 'src/routes/k3-center.tsx'
+      - 'src/routes/k3_.unit.$unit.tsx'
+      - 'src/routes/biz.3k-area.tsx'
+      - 'src/routes/operations_.3k*.tsx'
+      - 'src/routeTree.gen.ts'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/navigation.test.ts src/lib/k3Hub/api.test.ts src/lib/showroom/k3.test.ts
+      - run: bunx tsc --noEmit
+      - run: bun run build
