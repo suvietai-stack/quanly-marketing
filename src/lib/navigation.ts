@@ -9,7 +9,7 @@ export const navigationGroups: NavGroup[] = [
       { to: "/tasks", label: "Task To-do List", icon: ListChecks, perm: "task.view" },
 { to: "/approvals", label: "Phê duyệt", icon: ClipboardCheck },
     { to: "/community", label: "Cộng đồng Sứ Việt", icon: MessageCircleHeart },
-    { to: "/biz/3k", label: "3K của tôi", icon: ListChecks },
+    { to: "/biz/3k", label: "3K của tôi", icon: ListChecks, perm: "k3hub.use" },
     { to: "/k3-center", label: "Trung tâm 3K", icon: ClipboardCheck, perm: "k3hub.center" },
   ] },
   { label: "Trung tâm hội thoại", icon: MessageSquare, items: [
