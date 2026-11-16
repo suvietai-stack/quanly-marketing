@@ -1,0 +1,33 @@
+name: Design workflow v2 validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/components/Design*.tsx'
+      - 'src/components/OrderDetail.tsx'
+      - 'src/components/PermissionChecklist.tsx'
+      - 'src/components/AppShell.tsx'
+      - 'src/components/VideoDetail.tsx'
+      - 'src/lib/orders/**'
+      - 'src/lib/navigation*'
+      - 'src/lib/store.ts'
+      - 'drizzle/migrations/0416_design_workflow_v2_zalo_groups.sql'
+      - '.github/workflows/design-workflow-validation.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.19'
+      - run: bun install --frozen-lockfile
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Design and navigation regression
+        run: bunx vitest run src/lib/orders/design.test.ts src/lib/orders/workboard.test.ts src/lib/orders/zaloGroupMessage.test.ts src/lib/navigation.test.ts
+      - name: Production build
+        run: bun run build
