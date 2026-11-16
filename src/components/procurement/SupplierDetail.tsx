@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supplierDetailRead, supplierStatusLabels, supplierStatusTone,
   supplierChannelLabels, supplierFollowUpOverdue, formatSupplierPrice,
-  type SupplierFull, type SupplierProduct,
+  type SupplierFull, type SupplierProduct, type SupplierProductGroup,
 } from '@/lib/procurement/suppliers';
 import { SupplierProductDialog, SupplierContactDialog } from './SupplierForms';
 
@@ -28,10 +28,11 @@ const safeWebsite = (value:string|null) => {
   } catch { return null; }
 };
 
-export function SupplierDetail({id,onClose,onEdit}:{
+export function SupplierDetail({id,onClose,onEdit,groups}:{
   id:string|null;
   onClose:()=>void;
   onEdit:(supplier:SupplierFull,canManage:boolean)=>void;
+  groups:SupplierProductGroup[];
 }) {
   const { user } = useCurrentUser();
   const qc=useQueryClient();
@@ -204,6 +205,7 @@ export function SupplierDetail({id,onClose,onEdit}:{
       open={productOpen} onOpenChange={setProductOpen}
       supplierId={s.id} product={product}
       canManage={!!detail?.can_manage} canViewCost={!!detail?.can_view_cost}
+      groups={groups}
       onSaved={onProductSaved}/>}
     {s && contactOpen && <SupplierContactDialog
       key={s.id}
