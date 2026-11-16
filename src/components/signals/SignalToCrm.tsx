@@ -51,7 +51,7 @@ export function SignalToCrm({
       }
       if ((result.status === "created" || result.status === "linked") && result.customer_id) {
         qc.setQueryData(["signal-crm-link", signal.id], result.customer_id);
-        await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith("crm_") });
+        await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith("crm_") || q.queryKey[0] === "sig:hist" });
         toast.success(result.status === "created" ? "Đã lưu khách vào CRM" : "Khách đã được lưu vào CRM");
         return;
       }
