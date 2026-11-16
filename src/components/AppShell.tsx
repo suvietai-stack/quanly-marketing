@@ -152,7 +152,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={<NotificationBell />} approvals={approvalsEligible ? { count: approvalCenter.data?.todo.length ?? 0 } : undefined} onMenu={() => setOpen(true)} />
-        <main className="base-app-content flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
+        <main className="base-app-content min-w-0 flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 max-w-[1600px] w-full mx-auto">
           {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
           {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} name={user.fullName} area={search.area} accessReady={launcherAccessReady} /> : children}
         </main>
