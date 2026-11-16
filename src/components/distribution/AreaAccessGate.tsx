@@ -1,14 +1,15 @@
 import { type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/lib/auth';
-import { commercialAreaAccessQuery } from '@/lib/distribution/api';
+import { commercialAreaAccessQuery, type CommercialAreaAccess } from '@/lib/distribution/api';
 import { Button } from '@/components/ui/button';
 
 type Area = 'orders' | 'distribution';
+type GateChildren = ReactNode | ((scope: CommercialAreaAccess) => ReactNode);
 const names: Record<Area,string> = {orders:'Kinh doanh Đơn Hàng',distribution:'Phân Phối'};
 
 /** Actor-matched server membership. The existing specialized RPCs still guard data. */
-export function CommercialAreaGate({ area, children }: { area: Area; children: ReactNode }) {
+export function CommercialAreaGate({ area, children }: { area: Area; children: GateChildren }) {
   const { user } = useCurrentUser();
   const query = useQuery(commercialAreaAccessQuery(user?.id ?? ''));
   if (!user || user.status !== 'Đang hoạt động') {
@@ -28,9 +29,9 @@ export function CommercialAreaGate({ area, children }: { area: Area; children: R
       Tài khoản không có quyền vào {names[area]}. Phạm vi được cấp theo bổ nhiệm trên sơ đồ tổ chức.
     </div>;
   }
-  return <>{children}</>;
+  return <>{typeof children === 'function' ? children(query.data) : children}</>;
 }
 
-export function DistributionAccessGate({children}:{children:ReactNode}){
+export function DistributionAccessGate({children}:{children:GateChildren}){
   return <CommercialAreaGate area="distribution">{children}</CommercialAreaGate>;
 }
