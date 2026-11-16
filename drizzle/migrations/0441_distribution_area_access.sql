@@ -15,11 +15,20 @@ DECLARE
   orders_access boolean;
   distribution_access boolean;
   distribution_depts jsonb := '[]'::jsonb;
+  orders_depts jsonb := '[]'::jsonb;
 BEGIN
   IF actor IS NULL OR NOT private.is_active(actor) THEN
-    RETURN jsonb_build_object('orders',false,'distribution',false,'distribution_units','[]'::jsonb);
+    RETURN jsonb_build_object('orders',false,'distribution',false,'orders_units','[]'::jsonb,'distribution_units','[]'::jsonb);
   END IF;
-  elevated := private.is_super_admin(actor);
+  -- Executive position at the company root has scope across both commercial areas.
+  -- Use indexed canonical assignments rather than expensive global Role resolution.
+  elevated := private.is_super_admin(actor) OR EXISTS(
+    SELECT 1 FROM public.org_assignments a
+    JOIN public.org_position_roles pr ON pr.unit_id=a.unit_id AND pr.title_id=a.title_id
+    WHERE a.user_id=actor AND a.status='active' AND a.unit_id='org-company'
+      AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now())
+      AND pr.role_id='role-v2-executive'
+  );
 
   SELECT elevated OR EXISTS (
     SELECT 1 FROM public.org_assignments a
@@ -44,6 +53,15 @@ BEGIN
         OR d.system_id='3df93c75-8a46-4c2f-bc09-7583aa672b52'::uuid)
   ) INTO distribution_access;
 
+  IF orders_access THEN
+    SELECT coalesce(jsonb_agg(d.id::text ORDER BY d.sort_order,d.name),'[]'::jsonb)
+      INTO orders_depts
+    FROM public.biz_departments d
+    JOIN public.org_units u ON u.id=d.system_id::text AND u.kind='system'
+      AND u.parent_id='biz-block' AND u.active
+    WHERE d.active AND d.system_id<>'3df93c75-8a46-4c2f-bc09-7583aa672b52'::uuid;
+  END IF;
+
   IF distribution_access THEN
     SELECT coalesce(jsonb_agg(id::text ORDER BY sort_order,name),'[]'::jsonb)
       INTO distribution_depts
@@ -53,6 +71,7 @@ BEGIN
 
   RETURN jsonb_build_object(
     'orders',orders_access,
+    'orders_units',orders_depts,
     'distribution',distribution_access,
     'distribution_units',distribution_depts
   );
