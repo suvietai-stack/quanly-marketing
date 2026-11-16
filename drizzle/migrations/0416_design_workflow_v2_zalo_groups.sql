@@ -137,7 +137,7 @@ CREATE OR REPLACE FUNCTION private.design_read(_uid uuid, _creator uuid, _data j
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'private'
 AS $function$
- SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR private.design_team_member(_uid) OR (public.design_can(_uid,_flow,'view') AND (_creator=_uid OR private.design_person(_uid,_data->>'requester') OR private.design_person(_uid,_data->>'assignee') OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')))));
+ SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR private.design_team_member(_uid) OR (public.design_can(_uid,_flow,'view') AND (_creator=_uid OR private.design_person(_uid,_data->>'requester') OR private.design_person(_uid,_data->>'assignee') OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')))) OR (public.design_can(_uid,_flow,'create') AND _creator=_uid));
 $function$;
 
 -- Safely extend existing guarded Order writer; preserves field-level authorization/audit and historic status aliases.
@@ -209,6 +209,7 @@ BEGIN
    IF (d-ARRAY['status','history','takenAt','submittedAt','deliveredAt','completedAt','revisions','reviewNotes','cancelReason','assignee','assigneeId','assignedAt','assignedBy','reviewer','workflowKind','draftLink','reviseLink','deliverLink']) IS DISTINCT FROM (od-ARRAY['status','history','takenAt','submittedAt','deliveredAt','completedAt','revisions','reviewNotes','cancelReason','assignee','assigneeId','assignedAt','assignedBy','reviewer','workflowKind','draftLink','reviseLink','deliverLink']) AND NOT admin AND NOT ((req OR own OR mgr) AND public.design_can(u,f,'edit')) THEN RAISE EXCEPTION 'Không có quyền sửa thông tin' USING ERRCODE='42501'; END IF;
  END IF;
  IF coalesce(d->>'assignee','')<>'' AND (TG_OP='INSERT' OR d->>'assignee' IS DISTINCT FROM od->>'assignee' OR d->>'assigneeId' IS DISTINCT FROM od->>'assigneeId') AND NOT EXISTS(SELECT 1 FROM profiles p WHERE p.status='Đang hoạt động' AND (p.full_name=d->>'assignee' OR p.username=d->>'assignee') AND p.id::text=coalesce(d->>'assigneeId','') AND private.design_team_member(p.id) AND public.design_can(p.id,f,'take')) THEN RAISE EXCEPTION 'Chỉ chọn nhân viên Thiết kế/Chụp ảnh đang hoạt động và đủ quyền thực hiện'; END IF;
+ IF (TG_OP='INSERT' OR d->>'assignee' IS DISTINCT FROM od->>'assignee') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester') THEN RAISE EXCEPTION 'Người thực hiện phải khác người duyệt Job' USING ERRCODE='22023'; END IF;
  IF st IN ('Chờ duyệt','Đã duyệt') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester') THEN RAISE EXCEPTION 'Người thực hiện không được đồng thời là người duyệt'; END IF;
  NEW.data:=d||jsonb_build_object('status',st); NEW.updated_at:=now(); RETURN NEW;
 END $function$;
