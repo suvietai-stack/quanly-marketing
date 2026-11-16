@@ -1,0 +1,29 @@
+name: Verify published supplier group picker
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/supplier-group-live-check.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Check live procurement route and current deployment
+        env:
+          TARGET_DEPLOYMENT: cc7a02a8-d8ba-417c-948f-ff390b9dd7a6
+          HOST: https://base.suviet.vn
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6 7 8; do
+            curl --compressed -sSL --max-time 30 -D /tmp/headers               -o /tmp/page -w 'HTTP=%{http_code}\n' "${HOST}/procurement/suppliers"
+            deployed=$(grep -i '^x-deployment-id:' /tmp/headers | tail -1 | tr -d '\r')
+            echo "Deployment header: ${deployed}"
+            if grep -Fq "${TARGET_DEPLOYMENT}" <<< "${deployed}"; then
+              echo "PASS: current supplier group-picker deployment is serving the procurement URL"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo 'FAIL: target deployment has not reached production'
+          exit 1
