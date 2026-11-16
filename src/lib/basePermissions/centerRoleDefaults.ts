@@ -145,7 +145,7 @@ export const CENTER_ROLE_PRESETS: readonly CenterRolePreset[] = [
   },
   {
     "id": "role-v2-distribution-director",
-    "name": "Giám đốc Kinh doanh Phân Phối",
+    "name": "Giám đốc Trung tâm Kinh doanh Phân Phối",
     "group": "Phân Phối",
     "permissions": [
       "att.create",
@@ -166,7 +166,7 @@ export const CENTER_ROLE_PRESETS: readonly CenterRolePreset[] = [
   },
   {
     "id": "role-v2-distribution-head",
-    "name": "Trưởng phòng Phân phối",
+    "name": "Trưởng phòng Kinh doanh Phân Phối",
     "group": "Phân Phối",
     "permissions": [
       "att.create",
@@ -187,7 +187,7 @@ export const CENTER_ROLE_PRESETS: readonly CenterRolePreset[] = [
   },
   {
     "id": "role-v2-distribution-team",
-    "name": "Trưởng nhóm Phân phối",
+    "name": "Trưởng nhóm Kinh doanh Phân Phối",
     "group": "Phân Phối",
     "permissions": [
       "att.create",
@@ -206,7 +206,7 @@ export const CENTER_ROLE_PRESETS: readonly CenterRolePreset[] = [
   },
   {
     "id": "role-v2-distribution-staff",
-    "name": "Nhân viên phân phối",
+    "name": "Nhân viên Kinh doanh Phân Phối",
     "group": "Phân Phối",
     "permissions": [
       "att.create",
