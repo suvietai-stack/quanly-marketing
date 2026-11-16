@@ -1,7 +1,7 @@
 import { describe,expect,it } from 'vitest';
 import {
   supplierStats,supplierFollowUpOverdue,supplierStatusLabels,
-  formatSupplierPrice,type MasterSupplier,
+  formatSupplierPrice,supplierGroupNames,type MasterSupplier,
 } from './suppliers';
 
 function supplier(changes:Partial<MasterSupplier>={}):MasterSupplier {
@@ -26,6 +26,15 @@ describe('shared procurement supplier master',()=>{
       supplier({id:'s3',status:'archived',next_follow_up:'2026-11-10'}),
     ],'2026-11-16')).toMatchObject({total:3,active:1,potential:1,overdue:1,products:5});
     expect(supplierFollowUpOverdue(supplier({status:'archived',next_follow_up:'2026-11-11'}),'2026-11-16')).toBe(false);
+  });
+  it('renders standardized group codes as shared labels without changing stored keys',()=>{
+    const groups=[
+      {code:'blank',name:'Phôi'},{code:'print',name:'In ấn'},
+      {code:'process',name:'Gia công'},
+    ];
+    expect(supplierGroupNames(['blank','print','process'],groups))
+      .toEqual(['Phôi','In ấn','Gia công']);
+    expect(supplierGroupNames(['unknown'],groups)).toEqual(['unknown']);
   });
   it('keeps price formatting separate from unprivileged product views',()=>{
     expect(formatSupplierPrice(null,'VND')).toBe('—');
