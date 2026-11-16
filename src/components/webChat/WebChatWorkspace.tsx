@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { chatAccess, chatControl, chatLocate, chatOverview, chatRotateKey, chatSaveSite, chatThread, chatThreadsFeed } from '@/lib/webChat/chat.functions';
 import { settingsSchema } from '@/lib/webChat/model';
 const labels:Record<string,string>={ai:'AI tiếp nhận',human:'Sale can thiệp',captured:'Đã chuyển tín hiệu'};
+const presenceLabels:Record<string,string>={chat:'Đang chat',website:'Đang xem website',offline:'Đã rời'};
 const defaults=()=>({name:'',domain:'',source:'',enabled:false,settings:settingsSchema.parse({})});
 export function WebChatWorkspace(){
  const {user}=useCurrentUser();const uid=user?.id;const qc=useQueryClient();
- const [site,setSite]=useState(''),[selected,setSelected]=useState(''),[siteFilter,setSiteFilter]=useState('all'),[filter,setFilter]=useState('all'),[search,setSearch]=useState('');
+ const [site,setSite]=useState(''),[selected,setSelected]=useState(''),[siteFilter,setSiteFilter]=useState('all'),[filter,setFilter]=useState('all'),[presenceFilter,setPresenceFilter]=useState('all'),[search,setSearch]=useState('');
  const [view,setView]=useState<'overview'|'manage'>('overview'),[adminTab,setAdminTab]=useState<'sites'|'permissions'>('sites'),[accessBusy,setAccessBusy]=useState('');
  const [config,setConfig]=useState<any>(null),[key,setKey]=useState(''),[keySite,setKeySite]=useState(''),[busy,setBusy]=useState(false),[text,setText]=useState(''),[accessSite,setAccessSite]=useState('');
  const overview=useQuery({queryKey:['wc',uid,'overview'],queryFn:()=>chatOverview(),enabled:!!uid,retry:1});
@@ -27,7 +28,7 @@ export function WebChatWorkspace(){
   if(busy)return;setBusy(true);try{await chatControl({data:{site,id:selected,action,request:crypto.randomUUID(),text}});if(action==='send')setText('');await reload();}catch(e){toast.error(e instanceof Error?e.message:'Không cập nhật được');}finally{setBusy(false);}
  }
  useEffect(()=>{if(selected&&site)void chatControl({data:{site,id:selected,action:'read',request:crypto.randomUUID()}}).catch(()=>{});},[selected,site]);
- const rows:any[]=list.data??[];const shown=rows.filter(c=>(filter==='all'||c.mode===filter)&&((c.summary||'')+' '+JSON.stringify(c.contact||{})).toLowerCase().includes(search.trim().toLowerCase()));const c:any=thread.data;
+ const rows:any[]=list.data??[];const shown=rows.filter(c=>(filter==='all'||c.mode===filter)&&(presenceFilter==='all'||(presenceFilter==='active'?c.presence==='chat'||c.presence==='website':c.presence===presenceFilter))&&((c.summary||'')+' '+JSON.stringify(c.contact||{})).toLowerCase().includes(search.trim().toLowerCase()));const c:any=thread.data;
  const siteName=(id:string)=>sites.find(s=>s.id===id)?.name||'Website';
  async function save(){setBusy(true);try{const r=await chatSaveSite({data:config});setConfig(null);if(r.key){setKey(r.key);setKeySite(r.id!);}await reload();toast.success('Đã lưu');}catch(e){toast.error(e instanceof Error?e.message:'Không lưu được');}finally{setBusy(false);}}
  return <div className={`wc-workspace min-w-0 space-y-4 ${selected&&view==='overview'?'wc-thread-open':''}`}>
@@ -52,19 +53,21 @@ export function WebChatWorkspace(){
    {!sites.length&&!overview.isPending&&!overview.error&&overview.data?.installed&&<div className="rounded-xl border p-8 text-center text-sm">{overview.data.canManage?'Chưa có website. Vào Quản trị website để thêm và cấu hình.':'Anh chị chưa được cấp website. Nhờ quản trị viên thêm quyền Chat Web.'}</div>}
    {!!sites.length&&<>
     <div className="wc-metrics" aria-label="Thống kê 100 hội thoại gần đây theo bộ lọc website">
-     {([{key:'all',label:'Hội thoại gần đây',value:rows.length},{key:'ai',label:'AI tiếp nhận',value:rows.filter(r=>r.mode==='ai').length},{key:'captured',label:'Đã chuyển tín hiệu',value:rows.filter(r=>r.mode==='captured').length},{key:'human',label:'Sale can thiệp',value:rows.filter(r=>r.mode==='human').length}] as const).map(m=><button type="button" key={m.key} className={`wc-metric wc-metric-${m.key} ${filter===m.key?'wc-metric-active':''}`} aria-pressed={filter===m.key} onClick={()=>{setFilter(m.key);setSelected('');setSite('');}}><span>{m.label}</span><strong>{m.value}</strong></button>)}
+     {([{kind:'mode',key:'all',label:'Hội thoại gần đây',value:rows.length},{kind:'mode',key:'ai',label:'AI tiếp nhận',value:rows.filter(r=>r.mode==='ai').length},{kind:'mode',key:'captured',label:'Đã chuyển tín hiệu',value:rows.filter(r=>r.mode==='captured').length},{kind:'mode',key:'human',label:'Sale can thiệp',value:rows.filter(r=>r.mode==='human').length},{kind:'presence',key:'active',label:'Khách đang online',value:rows.filter(r=>r.presence==='chat'||r.presence==='website').length},{kind:'presence',key:'chat',label:'Đang chat trực tiếp',value:rows.filter(r=>r.presence==='chat').length}] as const).map(m=><button type="button" key={m.key} className={`wc-metric wc-metric-${m.key} ${m.kind==='mode'?(filter===m.key&&presenceFilter==='all'?'wc-metric-active':''):(presenceFilter===m.key&&filter==='all'?'wc-metric-active':'')}`} aria-pressed={m.kind==='mode'?filter===m.key&&presenceFilter==='all':presenceFilter===m.key&&filter==='all'} onClick={()=>{if(m.kind==='mode'){setFilter(m.key);setPresenceFilter('all');}else{setFilter('all');setPresenceFilter(m.key);}setSelected('');setSite('');}}><span>{m.label}</span><strong>{m.value}</strong></button>)}
     </div>
     <div className="wc-columns grid min-h-[560px] gap-4 lg:grid-cols-[340px_1fr]">
      <section className={`wc-list space-y-3 rounded-xl border bg-card p-3 ${selected?'hidden lg:block':''}`}>
       <div className="wc-section-heading"><strong>Cuộc trò chuyện</strong><span>{shown.length} hiển thị</span></div>
       <Input aria-label="Tìm khách" placeholder="Tìm số điện thoại, nhu cầu…" value={search} onChange={e=>setSearch(e.target.value)}/>
-      <select aria-label="Trạng thái hội thoại" className="w-full rounded-md border bg-background p-2" value={filter} onChange={e=>{setFilter(e.target.value);setSelected('');setSite('');}}><option value="all">Tất cả trạng thái</option>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
+      <select aria-label="Trạng thái hội thoại" className="w-full rounded-md border bg-background p-2" value={filter} onChange={e=>{setFilter(e.target.value);setSelected('');setSite('');}}><option value="all">Tất cả trạng thái hội thoại</option>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
+      <select aria-label="Trạng thái trực tuyến của khách" className="w-full rounded-md border bg-background p-2" value={presenceFilter} onChange={e=>{setPresenceFilter(e.target.value);setSelected('');setSite('');}}><option value="all">Tất cả trạng thái khách</option><option value="active">Đang online (chat hoặc xem web)</option><option value="chat">Đang chat</option><option value="website">Đang xem website</option><option value="offline">Đã rời</option></select>
       {list.error&&<p role="alert" className="text-sm text-destructive">Không tải được danh sách. <button type="button" className="underline" onClick={()=>list.refetch()}>Thử lại</button></p>}
       <div className="wc-conversation-list max-h-[65vh] space-y-2 overflow-y-auto">
        {shown.map(r=><button type="button" key={r.id} aria-current={selected===r.id} onClick={()=>{setSite(r.site_id);setSelected(r.id);}} className={`wc-contact w-full rounded-lg border p-3 text-left ${selected===r.id?'bg-primary/10':''}`}>
         <div className="wc-contact-heading"><span className="wc-contact-avatar" aria-hidden="true">{(r.contact?.name||'K').slice(0,1).toUpperCase()}</span><strong className="text-sm">{r.contact?.name||r.contact?.phone||'Khách website'}</strong>{(!r.read_at||r.read_at<r.updated_at)&&<span className="wc-new">● Mới</span>}</div>
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{r.summary||'Đang tiếp nhận nhu cầu'}</p>
-        <div className="wc-contact-footer"><span className="wc-site-tag">{siteName(r.site_id)}</span><span className={`wc-mode wc-mode-${r.mode}`}>{labels[r.mode]||'Đang xử lý'}</span>{r.error&&<span className="wc-warning">Cần kiểm tra</span>}</div>
+        <div className="wc-contact-footer"><span className="wc-site-tag">{siteName(r.site_id)}</span><span className={`wc-presence wc-presence-${r.presence||'offline'}`}>{presenceLabels[r.presence]||'Đã rời'}</span><span className={`wc-mode wc-mode-${r.mode}`}>{labels[r.mode]||'Đang xử lý'}</span>{r.error&&<span className="wc-warning">Cần kiểm tra</span>}</div>
+        {r.presence==='offline'&&r.last_seen_at&&<span className="wc-last-seen">Hoạt động lần cuối: {new Date(r.last_seen_at).toLocaleString('vi-VN')}</span>}
        </button>)}
        {!shown.length&&!list.isPending&&<p className="p-4 text-sm text-muted-foreground">Chưa có cuộc chat phù hợp.</p>}
        {list.isPending&&<p className="p-4 text-sm text-muted-foreground">Đang tải hội thoại…</p>}
@@ -75,7 +78,7 @@ export function WebChatWorkspace(){
       {!selected?<div className="wc-empty"><span aria-hidden="true">✦</span><h2>Theo dõi cuộc trò chuyện</h2><p>AI đón khách và thu nhu cầu. Anh chị có thể quan sát hoặc can thiệp khi cần.</p><small>Chọn một khách ở danh sách để bắt đầu.</small></div>:<>
        <div className="wc-thread-header flex flex-wrap items-center justify-between gap-2 border-b p-3">
         <Button className="lg:hidden" variant="ghost" onClick={()=>{setSelected('');setSite('');}} aria-label="Quay lại danh sách">← Danh sách</Button>
-        <div><strong>{c?.contact?.name||c?.contact?.phone||'Khách website'}</strong><div className="wc-thread-labels"><span className="wc-site-tag">{siteName(site)}</span><span className={`wc-mode wc-mode-${c?.mode}`}>{labels[c?.mode]||'Đang tải…'}</span></div></div>
+        <div><strong>{c?.contact?.name||c?.contact?.phone||'Khách website'}</strong><div className="wc-thread-labels"><span className="wc-site-tag">{siteName(site)}</span><span className={`wc-presence wc-presence-${c?.presence||'offline'}`}>{c?presenceLabels[c.presence]||'Đã rời':'Đang tải…'}</span><span className={`wc-mode wc-mode-${c?.mode}`}>{labels[c?.mode]||'Đang tải…'}</span></div>{c?.presence==='offline'&&c.last_seen_at&&<p className="wc-last-seen">Hoạt động lần cuối: {new Date(c.last_seen_at).toLocaleString('vi-VN')}</p>}</div>
         <Button variant="outline" disabled={busy||!c} onClick={()=>control(c?.mode==='human'?'resume':'takeover')}>{c?.mode==='human'?'Bật lại AI':'Can thiệp · Dừng AI'}</Button>
        </div>
        {thread.error&&<p role="alert" className="p-4 text-destructive">Không tải được cuộc chat.</p>}
