@@ -30,7 +30,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({
         eq: (key: string, value: unknown) => {
           predicates.push((row) => row[key] === value); return q;
         },
-        lt: (key: string, value: unknown) => {
+        lt: (key: string, value: string | number) => {
           predicates.push((row) => row[key] != null && row[key] < value); return q;
         },
         is: (key: string, value: unknown) => {
