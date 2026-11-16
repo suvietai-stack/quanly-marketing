@@ -17,9 +17,10 @@ const fmtTime = (iso: string | null) => iso
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   sent: { label: "Thành công", cls: "text-emerald-600" },
+  sending: { label: "Đang gửi", cls: "text-amber-600" },
   pending: { label: "Chờ gửi", cls: "text-amber-600" },
   failed: { label: "Thất bại", cls: "text-destructive" },
-  unknown: { label: "Chưa rõ", cls: "text-destructive" },
+  unknown: { label: "Chưa rõ đã gửi — kiểm tra nhóm", cls: "text-destructive" },
   skipped: { label: "Bỏ qua", cls: "text-muted-foreground" },
 };
 
@@ -64,6 +65,8 @@ export function LeaveZaloGroup() {
     } finally { setBusy(false); }
   };
   const retry = async (id: string) => {
+    const event = hist.data?.events?.find((e: any) => e.id === id);
+    if (event?.status === "unknown" && !window.confirm("Zalo có thể đã nhận tin này. Hãy kiểm tra nhóm trước khi gửi lại để tránh trùng. Bạn chắc chắn muốn gửi lại?")) return;
     const r = await leaveGroupRetry({ data: { id } });
     r.ok ? toast.success(r.message) : toast.error(r.message);
     qc.invalidateQueries({ queryKey: ["leave", "zalo-group-history"] });
