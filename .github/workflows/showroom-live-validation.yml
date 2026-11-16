@@ -37,3 +37,5 @@ jobs:
       - run: bunx vitest run src/lib/navigation.test.ts src/lib/showroom/positionSetup.test.ts src/lib/showroom/k3.test.ts
       - run: bunx tsc --noEmit
       - run: bun run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=5120
