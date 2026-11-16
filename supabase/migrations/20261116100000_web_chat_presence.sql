@@ -15,14 +15,14 @@ GRANT ALL ON public.wc_presence_sessions TO service_role;
 
 CREATE OR REPLACE FUNCTION public.wc_presence_ping(
   p_site uuid, p_hash text, p_session uuid, p_chat_open boolean, p_leaving boolean DEFAULT false
-) RETURNS void
+) RETURNS boolean
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE v_conversation uuid;
 BEGIN
   SELECT id INTO v_conversation FROM public.wc_conversations
     WHERE site_id=p_site AND visitor_hash=p_hash;
   -- A website visit alone must never create an empty conversation.
-  IF v_conversation IS NULL THEN RETURN; END IF;
+  IF v_conversation IS NULL THEN RETURN false; END IF;
   INSERT INTO public.wc_presence_sessions(conversation_id,session_id,chat_open,last_seen_at,left_at)
     VALUES(v_conversation,p_session,p_chat_open AND NOT p_leaving,now(),CASE WHEN p_leaving THEN now() ELSE NULL END)
     ON CONFLICT(conversation_id,session_id) DO UPDATE SET
@@ -32,7 +32,8 @@ BEGIN
   -- Reclaim only stale sessions for this particular conversation.
   DELETE FROM public.wc_presence_sessions
     WHERE conversation_id=v_conversation AND last_seen_at<now()-interval '7 days';
-END $$;
+  RETURN true;
+END $;
 
 CREATE OR REPLACE FUNCTION public.wc_presence_summary(p_conversations uuid[])
 RETURNS TABLE(conversation_id uuid,presence text,last_seen_at timestamptz)
