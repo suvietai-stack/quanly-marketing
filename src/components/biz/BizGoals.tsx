@@ -16,15 +16,17 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { BizRollingPlan } from './BizRollingPlan';
+import {scopeDepartmentRows} from '@/lib/distribution/scope';
 const dateText = (v: string) => new Date(v).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 const STATE_BADGE: Record<GoalState, 'default' | 'secondary' | 'outline' | 'destructive'> = { none: 'outline', draft: 'outline', pending: 'secondary', changes: 'secondary', approved: 'default', adjusting: 'secondary' };
 
-export function BizGoals() {
+export function BizGoals({scopeDepartmentIds}:{scopeDepartmentIds?:string[]}={}) {
  const uid = useAuth(s => s.currentUserId) ?? ''; const me = useAuth(s => s.users.find(u => u.id === s.currentUserId));
  const { can } = useCurrentUser(); const [year, setYear] = useState(() => Number(new Intl.DateTimeFormat('en', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' }).format(new Date())));
  const goals = useQuery({ ...bizGoalsQuery(uid, year), enabled: !!uid }); const members = useQuery(bizMembersQuery); const departments = useQuery(bizDepartmentsQuery); const deadline = useQuery({ ...bizGoalDeadlineQuery(uid, year), enabled: !!uid }); const action = useGoalAction();
- const own = goals.data?.find(g => g.user_id === uid);
- const membership = members.data?.find(m => m.user_id === uid && !m.ended_at); const dept = departments.data?.find(d => d.id === membership?.department_id);
+ const scopedGoals=scopeDepartmentRows(goals.data??[],scopeDepartmentIds);
+ const own = scopedGoals.find(g => g.user_id === uid);
+ const membership = members.data?.find(m => m.user_id === uid && !m.ended_at); const dept = departments.data?.find(d => d.id === membership?.department_id && (!scopeDepartmentIds || scopeDepartmentIds.includes(d.id)));
  const canManage = can('biz.view_dept') || can('biz.view_all') || can('biz.goal_approve');
  const start = async () => { try { await action.mutateAsync({ kind: 'start', year }); toast.success('Đã tạo bản nháp mục tiêu năm.'); } catch (e) { toast.error(e instanceof Error ? e.message : String(e)); } };
  return <div className="space-y-6 pb-32 sm:pb-8">
@@ -37,7 +39,7 @@ export function BizGoals() {
    <h2 className="text-base font-semibold">Mục tiêu KR của tôi</h2>
    {own ? <MyGoalCard goal={own} uid={uid} /> : <div className="rounded-xl border bg-card p-6 space-y-3"><Target className="h-9 w-9 text-primary" /><h3 className="text-lg font-semibold">{me?.fullName} · Mục tiêu {year}</h3><p className="text-muted-foreground text-sm">{dept ? dept.name : 'Chưa được phân vào phòng kinh doanh đang hoạt động.'}</p>{can('biz.goal_submit') && <Button onClick={start} disabled={!dept?.active || action.isPending}><Target className="h-4 w-4 mr-2" />Lập mục tiêu năm</Button>}</div>}
   </section>}
-  {canManage && !goals.isPending && <ManageSection goals={goals.data ?? []} year={year} uid={uid} memberCount={new Set((members.data ?? []).filter(m => !m.ended_at).map(m => m.user_id)).size} />}
+  {canManage && !goals.isPending && <ManageSection goals={scopedGoals} year={year} uid={uid} memberCount={new Set((members.data ?? []).filter(m => !m.ended_at && (!scopeDepartmentIds || scopeDepartmentIds.includes(m.department_id))).map(m => m.user_id)).size} />}
  </div>;
 }
 

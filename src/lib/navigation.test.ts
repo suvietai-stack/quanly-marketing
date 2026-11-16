@@ -48,7 +48,7 @@ describe('Presentation-only navigation', () => {
     expect(paths(access(['showroom.k3.use']))).toContain('/showroom/3k');
   });
   it('keeps all navigation areas in the mandated order', () => {
-    expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
+    expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Phân Phối','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
   });
   it.each([
     ['ot.view_own','Mua Hàng & Giao Vận','/order-tracking'],
@@ -63,7 +63,10 @@ describe('Presentation-only navigation', () => {
   it('preserves every declared item permission as an independent visibility path', () => {
     for (const item of navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon)) {
       for (const permission of [...(item.anyPerm ?? []), ...(item.perm ? [item.perm] : [])]) {
-        expect(paths(access([permission], ['/orders','/design/reports'].includes(item.to)?{designTeam:true}:{})), permission).toContain(item.to);
+        expect(paths(access([permission], {
+          ...(['/orders','/design/reports'].includes(item.to)?{designTeam:true}:{}),
+          commercialAreas: {orders:true,distribution:true}
+        })), permission).toContain(item.to);
       }
     }
   });
@@ -86,6 +89,31 @@ describe('Presentation-only navigation', () => {
     for (const path of destinations) {
       expect(declaredPaths, path).toContain(path);
     }
+  });
+  it('shows Phân Phối as a sibling area and preserves independent 3K/goal/plan/report paths', () => {
+    const user=access(['biz.view_own','biz.goal_submit','biz.plan_submit','biz.report_submit','k3.use'],{
+      commercialAreas:{orders:false,distribution:true}
+    });
+    const groups=visibleNavigation(user);
+    expect(groups.map(x=>x.label)).toContain('Phân Phối');
+    expect(groups.find(x=>x.label==='Phân Phối')?.items.map(i=>i.to)).toEqual([
+      '/distribution','/distribution/3k','/distribution/goals','/distribution/plans','/distribution/reports'
+    ]);
+    for(const path of ['/biz','/biz/3k-area','/biz/goals','/biz/plans','/biz/reports'])expect(paths(user)).not.toContain(path);
+    expect(searchLauncher(groups,'3K Phân Phối').map(i=>i.to)).toContain('/distribution/3k');
+    expect(allowedPins(['/distribution/3k','/distribution/goals'],groups))
+      .toEqual(['/distribution/3k','/distribution/goals']);
+    expect(mobilePage(groups,'/distribution/3k').area).toBe('Phân Phối');
+    expect(activeNavigationPath(groups,'/distribution/3k')).toBe('/distribution/3k');
+  });
+  it('keeps Kinh doanh separate from Phân Phối',()=>{
+    const pathsSales=paths(access(['biz.view_own','biz.goal_submit','k3.use'],{
+      commercialAreas:{orders:true,distribution:false}
+    }));
+    expect(pathsSales).toContain('/biz');
+    expect(pathsSales).toContain('/biz/goals');
+    expect(pathsSales).not.toContain('/distribution');
+    expect(pathsSales).not.toContain('/distribution/3k');
   });
   it('CRM is permission scoped, searchable and pinnable only within Kinh doanh', () => {
     const groups = visibleNavigation(access(['biz.crm_use']));

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CommercialAreaGate } from '@/components/distribution/AreaAccessGate';
 import { BizGoals } from "@/components/biz/BizGoals";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
@@ -13,11 +14,11 @@ export const Route = createFileRoute("/biz/goals")({
     { name: "twitter:card", content: "summary" },
   ] }),
   component: () => (
-    <RequirePermission perm={["biz.view_own", "biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"]}>
+    <CommercialAreaGate area="orders">{scope => <><RequirePermission perm={["biz.view_own", "biz.goal_submit", "biz.goal_approve", "biz.view_dept", "biz.view_all"]}>
       <div>
         <PageHeader title="Mục tiêu KR" description="Lập mục tiêu năm, tự phân bổ xuống từng tháng, gửi lãnh đạo duyệt." />
-        <BizGoals />
+        <BizGoals scopeDepartmentIds={scope.orders_units}/>
       </div>
-    </RequirePermission>
+    </RequirePermission></>}</CommercialAreaGate>
   ),
 });

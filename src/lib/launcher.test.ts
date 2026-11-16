@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { visibleNavigation } from './navigation';
+import { visibleNavigation, type NavigationAccess } from './navigation';
 import { allowedPins, launcherApps, movePin, pinStorageKey, reconcilePins, searchLauncher, storedPins } from './launcher';
-const groups = (perms: string[]) => visibleNavigation({ can: p => perms.includes(p), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0 });
+const groups = (perms: string[],extra:Partial<NavigationAccess>={}) => visibleNavigation({ can: p => perms.includes(p), isSuperAdmin: false, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0, ...extra });
 describe('Mobile launcher shares live navigation visibility', () => {
   it('retains ordered CRM, 3K and approval pins while access is unresolved', () => {
     const pins = ['/biz/crm', '/showroom/3k', '/biz/approvals', '/leave'];
@@ -43,7 +43,7 @@ describe('Mobile launcher shares live navigation visibility', () => {
   });
   it('keeps existing saved applications and their order when opening customization', () => {
     const saved = ['/leave', '/showroom/3k', '/orders'];
-    const draft = allowedPins(saved, groups(['leave.create', 'showroom.k3.use', 'order.view']));
+    const draft = allowedPins(saved, groups(['leave.create', 'showroom.k3.use', 'order.view'],{designTeam:true}));
     expect(draft).toEqual(['/leave', '/showroom/3k', '/orders']);
     const changed = movePin(draft, '/orders', -1);
     expect(changed).toEqual(['/leave', '/orders', '/showroom/3k']);

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AppNavigation } from "@/components/AppNavigation";
 import { visibleNavigation } from "@/lib/navigation";
+import { commercialAreaAccessQuery } from '@/lib/distribution/api';
 import { MobileLauncher } from '@/components/MobileLauncher';
 import { MobileAppChrome } from '@/components/MobileAppChrome';
 import { ChatShortcut } from '@/components/chat/ChatShortcut';
@@ -67,6 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const transition = boundary !== null && boundary < 2147483647 ? setTimeout(() => void useAuth.getState().refreshBaseAccess(true), boundary) : null;
     return () => { clearInterval(timer); if (transition !== null) clearTimeout(transition); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
   }, [user?.id, baseAccess?.next_transition_at]);
+  const commercialAreasQuery = useQuery(commercialAreaAccessQuery(user?.id ?? ''));
   const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data;
   const logout = useAuth((s) => s.logout);
   const brand = useBranding();
@@ -77,7 +79,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const designTeamQuery=useQuery({queryKey:['design-team-access',user?.id],enabled:!!user?.id,
     queryFn:async()=>{const {data,error}=await (supabase as any).rpc('design_team_access');if(error)throw error;return !!data;},staleTime:60000,retry:1});
 
-  const visibleGroups = visibleNavigation({ can, isSuperAdmin, designTeam:isSuperAdmin || !!designTeamQuery.data, isKpiAdmin, isKpiManager,
+  const visibleGroups = visibleNavigation({ can, isSuperAdmin, designTeam:isSuperAdmin || !!designTeamQuery.data,
+    commercialAreas: commercialAreasQuery.data ? { orders: commercialAreasQuery.data.orders, distribution: commercialAreasQuery.data.distribution } : undefined,
+    isKpiAdmin, isKpiManager,
     kpiEnabled: isKpiV2Enabled(), hasAssignedApprovals: !!approvals.data?.has_assigned,
     canApprove, pendingCount, approvalsEligible });
 

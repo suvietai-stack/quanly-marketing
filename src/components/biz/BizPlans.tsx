@@ -13,17 +13,18 @@ import {Badge} from '@/components/ui/badge';
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
 import {Tabs,TabsList,TabsTrigger} from '@/components/ui/tabs';
 import {DocumentDialog} from './BizDocuments';
+import {scopeDepartmentRows} from '@/lib/distribution/scope';
 import {MyDocCard,MyWorkSection,StatusBadges,dateText,useOpenDocument} from './BizMyWork';
 
 type Quick='all'|'submitted'|'unsubmitted'|'ontime'|'late'|'overdue'|'changes'|'unviewed';
 const QUICK_LABEL:Record<Quick,string>={all:'Tổng cần nộp',submitted:'Đã nộp',unsubmitted:'Chưa nộp',ontime:'Đúng hạn',late:'Nộp muộn',overdue:'Quá hạn chưa nộp',changes:'Cần chỉnh sửa',unviewed:'Mới chưa xem'};
 function quickMatch(row:DocRow,quick:Quick){const time=deadlineStatus(row.deadline,row.document?.first_submitted_at??null,row.server_now);const status=row.document?.versions.at(-1)?.status;switch(quick){case 'all':return true;case 'submitted':return !!row.document?.first_submitted_at;case 'unsubmitted':return !row.document?.first_submitted_at;case 'ontime':return time==='ontime';case 'late':return time==='late';case 'overdue':return time==='overdue';case 'changes':return status==='changes';case 'unviewed':return !!row.document?.first_submitted_at&&(row.my_view==='unopened'||row.my_view==='new_version');}}
 
-export function BizPlans(){
+export function BizPlans({scopeDepartmentIds}:{scopeDepartmentIds?:string[]}={}){
  const uid=useAuth(s=>s.currentUserId)??'';const {can}=useCurrentUser();
  const [periodKind,setPeriodKind]=useState<PeriodKind>('month');const [year,setYear]=useState(new Date().getFullYear());const [period,setPeriod]=useState(new Date().getMonth()+1);
  const [quick,setQuick]=useState<Quick>('all');const [dept,setDept]=useState('all');const [employee,setEmployee]=useState('all');const [status,setStatus]=useState('all');const [view,setView]=useState('all');const [search,setSearch]=useState('');const [selected,setSelected]=useState<string|null>(null);
- const query=useQuery({...documentsQuery(uid,'plan',periodKind,year,period),enabled:!!uid});const rows=useMemo(()=>query.data??[],[query.data]);
+ const query=useQuery({...documentsQuery(uid,'plan',periodKind,year,period),enabled:!!uid});const rows=useMemo(()=>scopeDepartmentRows(query.data??[],scopeDepartmentIds),[query.data,scopeDepartmentIds]);
  const milestones=useQuery(bizMilestonesQuery(`plan_${periodKind}`,year,period));const phase=milestones.data?phaseFromIso(milestones.data,rows[0]?.server_now??new Date().toISOString()):null;
  const myRow=rows.find(r=>r.user_id===uid);const teamRows=useMemo(()=>rows.filter(r=>r.user_id!==uid),[rows,uid]);
  const canManage=can('biz.view_all')||can('biz.view_dept')||can('biz.plan_approve')||can('biz.plan_request_revision');
@@ -35,14 +36,14 @@ export function BizPlans(){
  const selectedRow=rows.find(r=>r.user_id===selected);
  const jump=(pk:PeriodKind,y:number,p:number,openDialog:boolean)=>{setPeriodKind(pk);setYear(y);setPeriod(p);setSelected(openDialog?uid:null);};
  return <div className="space-y-6 pb-32 sm:pb-8">
-  <MyWorkSection kind="plan" onOpen={jump}/>
+  {!scopeDepartmentIds && <MyWorkSection kind="plan" onOpen={jump}/>}
   <div className="flex flex-wrap gap-3 items-center border-b pb-4"><Tabs value={periodKind} onValueChange={v=>{setPeriodKind(v as PeriodKind);setPeriod(1);setSelected(null);}}><TabsList><TabsTrigger value="month">Tháng</TabsTrigger><TabsTrigger value="quarter">Quý</TabsTrigger><TabsTrigger value="year">Năm</TabsTrigger></TabsList></Tabs><Input aria-label="Năm" className="w-28" type="number" min={2000} max={2200} value={year} onChange={e=>{const n=Number(e.target.value);if(n>=2000&&n<=2200){setYear(n);setSelected(null);}}}/>{max>1&&<Select value={String(period)} onValueChange={v=>{setPeriod(Number(v));setSelected(null);}}><SelectTrigger className="w-32"><SelectValue/></SelectTrigger><SelectContent>{Array.from({length:max},(_,i)=><SelectItem key={i} value={String(i+1)}>{periodKind==='month'?'Tháng':'Quý'} {i+1}</SelectItem>)}</SelectContent></Select>}<Button variant="ghost" size="icon" aria-label="Làm mới" onClick={()=>query.refetch()}><RefreshCw className="h-4 w-4"/></Button></div>
   {query.isPending&&<p>Đang tải…</p>}{query.error&&<p role="alert" className="text-destructive">Không tải được: {query.error.message}</p>}
   {!query.isPending&&myRow&&<MyDocCard row={myRow} kind="plan" periodKind={periodKind} year={year} period={period} onOpen={()=>setSelected(uid)}/>}
   {!query.isPending&&!myRow&&!showTeam&&<div className="py-10 border-y space-y-3"><FileText className="h-8 w-8 text-muted-foreground"/><p>Bạn không thuộc diện nộp kế hoạch trong kỳ đang chọn.</p></div>}
   {showTeam&&<section className="space-y-4">
    <h2 className="text-lg font-semibold">Kế hoạch trong phạm vi quản lý</h2>
-   <LateStats kind="plan" periodKind={periodKind} year={year} period={period}/>
+   {!scopeDepartmentIds && <LateStats kind="plan" periodKind={periodKind} year={year} period={period}/>}
    <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">{(Object.keys(QUICK_LABEL) as Quick[]).map(key=>{const count=teamRows.filter(r=>quickMatch(r,key)).length;return <button key={key} type="button" onClick={()=>setQuick(quick===key?'all':key)} className={`border rounded-lg p-3 text-left transition-colors ${quick===key?'border-primary bg-primary/5':'bg-card hover:border-primary/40'}`}><p className="text-xs text-muted-foreground">{QUICK_LABEL[key]}</p><strong className="text-xl tabular-nums">{count}</strong></button>;})}</div>
    <div className="flex flex-wrap gap-2 items-center">
     <div className="relative"><Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/><Input aria-label="Tìm nhân sự" placeholder="Tìm theo tên…" className="pl-9 w-52" value={search} onChange={e=>setSearch(e.target.value)}/></div>
