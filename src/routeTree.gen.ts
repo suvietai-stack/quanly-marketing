@@ -30,6 +30,7 @@ import { Route as ReportsV2RouteImport } from './routes/reports-v2'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ShowroomRouteImport } from './routes/showroom'
+import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as WebChatRouteImport } from './routes/web-chat'
@@ -194,6 +195,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ShowroomRoute = ShowroomRouteImport.update({
   id: '/showroom',
   path: '/showroom',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Showroom3kRoute = Showroom3kRouteImport.update({
+  id: '/showroom_/3k',
+  path: '/showroom/3k',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksRoute = TasksRouteImport.update({
@@ -525,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/showroom': typeof ShowroomRoute
+  '/showroom/3k': typeof Showroom3kRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-chat': typeof WebChatRoute
@@ -608,6 +615,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/showroom': typeof ShowroomRoute
+  '/showroom/3k': typeof Showroom3kRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-chat': typeof WebChatRoute
@@ -692,6 +700,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/showroom': typeof ShowroomRoute
+  '/showroom_/3k': typeof Showroom3kRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
   '/web-chat': typeof WebChatRoute
@@ -777,6 +786,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/showroom'
+    | '/showroom/3k'
     | '/tasks'
     | '/videos'
     | '/web-chat'
@@ -860,6 +870,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/showroom'
+    | '/showroom/3k'
     | '/tasks'
     | '/videos'
     | '/web-chat'
@@ -943,6 +954,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/showroom'
+    | '/showroom_/3k'
     | '/tasks'
     | '/videos'
     | '/web-chat'
@@ -1027,6 +1039,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   ShowroomRoute: typeof ShowroomRoute
+  Showroom3kRoute: typeof Showroom3kRoute
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
   WebChatRoute: typeof WebChatRoute
@@ -1236,6 +1249,13 @@ declare module '@tanstack/react-router' {
       path: '/showroom'
       fullPath: '/showroom'
       preLoaderRoute: typeof ShowroomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showroom_/3k': {
+      id: '/showroom_/3k'
+      path: '/showroom/3k'
+      fullPath: '/showroom/3k'
+      preLoaderRoute: typeof Showroom3kRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks': {
@@ -1683,6 +1703,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   ShowroomRoute: ShowroomRoute,
+  Showroom3kRoute: Showroom3kRoute,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
   WebChatRoute: WebChatRoute,
