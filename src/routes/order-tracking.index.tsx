@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Search, Filter, CalendarClock, AlertTriangle, Phone } from "lucide-react";
+import { Plus, Search, Filter, CalendarClock, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { RequirePermission } from "@/components/PermissionGate";
 import { useCurrentUser } from "@/lib/auth";
@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { otApi, fmtDate, type OtSupplier, type OtPerson } from "@/lib/orderTracking/api";
-import { ORDER_STATUS, ORDER_TYPE, SUPPLIER_GROUPS, journey, daysLeft, isOverdue, taskDue, todayVN } from "@/lib/orderTracking/logic";
+import { otApi, fmtDate, type OtPerson } from "@/lib/orderTracking/api";
+import { ORDER_STATUS, ORDER_TYPE, journey, daysLeft, isOverdue, taskDue, todayVN } from "@/lib/orderTracking/logic";
 import { cn } from "@/lib/utils";
 import { usePeople } from "@/lib/orderTracking/hooks";
 import { Board, Reminders, SupplyCalendar } from "@/components/orderTracking/Workboard";
@@ -54,7 +54,16 @@ function OrderTracking() {
         {canOrders && <TabsContent value="board" className="mt-4"><Board /></TabsContent>}
         {canOrders && <TabsContent value="calendar" className="mt-4"><SupplyCalendar /></TabsContent>}
         {canOrders && <TabsContent value="orders" className="mt-4"><OrderList /></TabsContent>}
-        <TabsContent value="suppliers" className="mt-4"><Suppliers /></TabsContent>
+        <TabsContent value="suppliers" className="mt-4">
+          <div className="space-y-3 rounded-xl border bg-card p-6">
+            <h3 className="font-semibold">Danh mục Nhà cung cấp chung</h3>
+            <p className="text-sm text-muted-foreground">
+              Dữ liệu nhà cung cấp phục vụ Theo Dõi Đơn Hàng hiện được quản lý tập trung tại
+              Mua Hàng & Giao Vận; Showroom, Kinh doanh tra cứu cùng một danh mục theo quyền.
+            </p>
+            <Button asChild><Link to="/procurement/suppliers">Mở Nhà cung cấp</Link></Button>
+          </div>
+        </TabsContent>
       </Tabs>
     </>
   );
@@ -202,82 +211,3 @@ function CreateOrder({ people, onClose }: { people: OtPerson[]; onClose: () => v
   );
 }
 
-function Suppliers() {
-  const { can } = useCurrentUser();
-  const qc = useQueryClient();
-  const { data = [], isLoading } = useQuery({ queryKey: ["ot", "suppliers"], queryFn: otApi.suppliers });
-  const [edit, setEdit] = useState<Partial<OtSupplier> | null>(null);
-  const [showOff, setShowOff] = useState(false);
-  const manage = can("ot.supplier");
-  const toggle = async (s: OtSupplier) => {
-    try { await otApi.setSupplierActive(s.id, !s.active); await qc.invalidateQueries({ queryKey: ["ot", "suppliers"] }); } catch (e: any) { toast.error(e.message); }
-  };
-  const rows = data.filter((s) => showOff || s.active);
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-sm"><Checkbox checked={showOff} onCheckedChange={(v) => setShowOff(!!v)} />Hiện cả nhà cung cấp ngừng sử dụng</label>
-        {manage && <Button className="ml-auto" onClick={() => setEdit({ groups: [] })}><Plus className="h-4 w-4 mr-1" />Thêm nhà cung cấp</Button>}
-      </div>
-      {isLoading ? <p className="text-sm text-muted-foreground">Đang tải…</p> : rows.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Chưa có nhà cung cấp.</p> :
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map((s) => (
-            <div key={s.id} className={cn("rounded-lg border bg-card p-4", !s.active && "opacity-60")}>
-              <div className="flex items-start gap-2">
-                <div className="font-medium flex-1">{s.name}</div>
-                {!s.active && <Badge variant="outline">Ngừng sử dụng</Badge>}
-              </div>
-              <div className="mt-1 flex flex-wrap gap-1">{s.groups.map((g) => <Badge key={g} variant="secondary">{SUPPLIER_GROUPS[g] ?? g}</Badge>)}</div>
-              <div className="mt-2 space-y-0.5 text-sm text-muted-foreground">
-                {s.contact && <div>{s.contact}</div>}
-                {s.phone && <a href={`tel:${s.phone}`} className="flex items-center gap-1 hover:text-foreground"><Phone className="h-3 w-3" />{s.phone}</a>}
-                {s.address && <div>{s.address}</div>}
-                {s.note && <div className="text-xs">{s.note}</div>}
-              </div>
-              {manage && <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setEdit(s)}>Sửa</Button>
-                <Button size="sm" variant="ghost" onClick={() => toggle(s)}>{s.active ? "Ngừng sử dụng" : "Kích hoạt lại"}</Button>
-              </div>}
-            </div>
-          ))}
-        </div>}
-      {edit && <SupplierForm value={edit} onClose={() => setEdit(null)} />}
-    </div>
-  );
-}
-
-function SupplierForm({ value, onClose }: { value: Partial<OtSupplier>; onClose: () => void }) {
-  const qc = useQueryClient();
-  const [f, setF] = useState<Partial<OtSupplier>>(value);
-  const set = (k: keyof OtSupplier, v: any) => setF((p) => ({ ...p, [k]: v }));
-  const save = async () => {
-    try {
-      await otApi.saveSupplier(f.id ?? null, f);
-      await qc.invalidateQueries({ queryKey: ["ot", "suppliers"] });
-      toast.success("Đã lưu nhà cung cấp."); onClose();
-    } catch (e: any) { toast.error(e.message); }
-  };
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{f.id ? "Sửa nhà cung cấp" : "Thêm nhà cung cấp"}</DialogTitle></DialogHeader>
-        <div className="grid gap-3">
-          <div className="space-y-1"><Label>Tên nhà cung cấp *</Label><Input value={f.name ?? ""} onChange={(e) => set("name", e.target.value)} /></div>
-          <div className="space-y-1"><Label>Nhóm cung cấp</Label>
-            <div className="flex flex-wrap gap-2">{Object.entries(SUPPLIER_GROUPS).map(([k, l]) => {
-              const on = (f.groups ?? []).includes(k);
-              return <button key={k} type="button" onClick={() => set("groups", on ? f.groups!.filter((g) => g !== k) : [...(f.groups ?? []), k])} className={cn("rounded-md border px-2.5 py-1 text-sm", on && "border-primary bg-primary/10")}>{l}</button>;
-            })}</div>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="space-y-1"><Label>Người liên hệ</Label><Input value={f.contact ?? ""} onChange={(e) => set("contact", e.target.value)} /></div>
-            <div className="space-y-1"><Label>Số điện thoại</Label><Input value={f.phone ?? ""} onChange={(e) => set("phone", e.target.value)} /></div>
-          </div>
-          <div className="space-y-1"><Label>Địa chỉ</Label><Input value={f.address ?? ""} onChange={(e) => set("address", e.target.value)} /></div>
-          <div className="space-y-1"><Label>Ghi chú</Label><Textarea rows={2} value={f.note ?? ""} onChange={(e) => set("note", e.target.value)} /></div>
-        </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button onClick={save}>Lưu</Button></DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
