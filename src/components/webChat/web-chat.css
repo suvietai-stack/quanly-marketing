@@ -47,7 +47,7 @@
 @media(max-width:767px){
  .wc-tabs{gap:6px}.wc-tabs button{font-size:12px;padding:8px 12px}
  .wc-filterbar{align-items:stretch;flex-direction:column;gap:6px}
- .wc-filter-label{width:100%}.wc-filter-summary{max-width:100%;padding:0 2px 2px}
+ .wc-filter-label{width:100%}.wc-filter-label select,.wc-list input,.wc-list select{font-size:16px}.wc-filter-summary{max-width:100%;padding:0 2px 2px}
  .wc-metric{min-height:72px;align-items:flex-start}.wc-metric span{max-width:120px;line-height:1.45}
  .wc-admin{padding:14px!important}.wc-admin-top button{width:100%}
  .wc-admin-site{grid-template-columns:minmax(0,1fr);gap:10px;padding:14px}
