@@ -240,22 +240,20 @@ END $$;
 CREATE TRIGGER design_order_duplicate_guard BEFORE INSERT OR UPDATE OF data ON public.orders
  FOR EACH ROW EXECUTE FUNCTION private.design_linked_source_unique();
 
--- Classify ACTIVE legacy Jobs only if the existing type identifies the workstream unambiguously.
--- Keep finished and ambiguous legacy Jobs untouched; the team can classify exceptions manually.
+-- Business rule: ALL historic unclassified Jobs belong to Marketing Design provisionally.
+-- Includes completed/cancelled records, avoids an orphan legacy workspace. Preserve state,
+-- assignee, attachments, timestamps and every existing history entry.
 UPDATE public.orders
  SET workflow_kind='marketing_design',
      data=data || jsonb_build_object(
-        'workflowKind','marketing_design',
-        'history',coalesce(data->'history','[]'::jsonb) || jsonb_build_array(jsonb_build_object(
-          'at',to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-          'byName','Hệ thống','action','Phân loại Job đang mở theo loại ấn phẩm lịch sử',
-          'note',data->>'type')))
- WHERE workflow_kind IS NULL
-   AND data->>'status' NOT IN ('Hoàn thành','Đã hủy')
-   AND lower(btrim(coalesce(data->>'type',''))) IN (
-     'banner website','ảnh bài web','ảnh social','thumbnail video',
-     'ảnh sản phẩm','catalogue / profile','ảnh google map'
-   );
+       'workflowKind','marketing_design',
+       'history',coalesce(data->'history','[]'::jsonb) ||
+         jsonb_build_array(jsonb_build_object(
+           'at',to_char(now() AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+           'byName','Hệ thống',
+           'action','Chuyển Job chưa phân loại vào Ấn phẩm Marketing theo cấu hình mới',
+           'note','Giữ nguyên trạng thái, người phụ trách và toàn bộ lịch sử trước đó')))
+ WHERE workflow_kind IS NULL;
 
 -- Existing unassigned, active v1 Jobs become explicit exception queue, never auto-given to an arbitrary employee.
 -- No past event triggers Zalo because three configurations are OFF by default.
