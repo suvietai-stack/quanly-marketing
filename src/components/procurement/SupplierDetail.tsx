@@ -68,7 +68,7 @@ export function SupplierDetail({id,onClose,onEdit}:{
             {s && <Badge variant={supplierStatusTone(s.status)}>{supplierStatusLabels[s.status]}</Badge>}
           </DialogTitle>
           <DialogDescription>
-            {s ? `${s.code} · ${detail?.store_name}` : 'Đang tải hồ sơ nhà cung cấp…'}
+            {s ? `${s.code} · Danh mục chung Sứ Việt` : 'Đang tải hồ sơ nhà cung cấp…'}
           </DialogDescription>
         </DialogHeader>
 
