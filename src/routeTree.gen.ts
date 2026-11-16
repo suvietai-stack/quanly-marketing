@@ -16,12 +16,12 @@ import { Route as AttendanceRouteImport } from './routes/attendance'
 import { Route as ChinhSachBaoMatRouteImport } from './routes/chinh-sach-bao-mat'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as GoalsV2RouteImport } from './routes/goals-v2'
+import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OkrsRouteImport } from './routes/okrs'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OrganizationRouteImport } from './routes/organization'
-import { Route as ShowroomRouteImport } from './routes/showroom'
 import { Route as OverviewV2RouteImport } from './routes/overview-v2'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -29,8 +29,10 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ReportsV2RouteImport } from './routes/reports-v2'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ShowroomRouteImport } from './routes/showroom'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as VideosRouteImport } from './routes/videos'
+import { Route as WebChatRouteImport } from './routes/web-chat'
 import { Route as WebContentsRouteImport } from './routes/web-contents'
 import { Route as BizIndexRouteImport } from './routes/biz.index'
 import { Route as Biz3kRouteImport } from './routes/biz.3k'
@@ -79,6 +81,7 @@ import { Route as ApiPublicMetaLeadsWebhookRouteImport } from './routes/api/publ
 import { Route as ApiPublicMetaMaintainCronRouteImport } from './routes/api/public/meta/maintain-cron'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth-callback'
 import { Route as ApiPublicPushDispatchRouteImport } from './routes/api/public/push/dispatch'
+import { Route as ApiPublicWebChatGuestRouteImport } from './routes/api/public/web-chat/guest'
 import { Route as ApiPublicWfPingRouteImport } from './routes/api/public/wf/ping'
 import { Route as ApiPublicWfRecoverCronRouteImport } from './routes/api/public/wf/recover-cron'
 import { Route as ApiPublicWfRegisterFormsRouteImport } from './routes/api/public/wf/register-forms'
@@ -123,6 +126,11 @@ const GoalsV2Route = GoalsV2RouteImport.update({
   path: '/goals-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeaveRoute = LeaveRouteImport.update({
   id: '/leave',
   path: '/leave',
@@ -146,11 +154,6 @@ const OrdersRoute = OrdersRouteImport.update({
 const OrganizationRoute = OrganizationRouteImport.update({
   id: '/organization',
   path: '/organization',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShowroomRoute = ShowroomRouteImport.update({
-  id: '/showroom',
-  path: '/showroom',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OverviewV2Route = OverviewV2RouteImport.update({
@@ -188,6 +191,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShowroomRoute = ShowroomRouteImport.update({
+  id: '/showroom',
+  path: '/showroom',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -196,6 +204,11 @@ const TasksRoute = TasksRouteImport.update({
 const VideosRoute = VideosRouteImport.update({
   id: '/videos',
   path: '/videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebChatRoute = WebChatRouteImport.update({
+  id: '/web-chat',
+  path: '/web-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WebContentsRoute = WebContentsRouteImport.update({
@@ -441,6 +454,11 @@ const ApiPublicPushDispatchRoute = ApiPublicPushDispatchRouteImport.update({
   path: '/api/public/push/dispatch',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWebChatGuestRoute = ApiPublicWebChatGuestRouteImport.update({
+  id: '/api/public/web-chat/guest',
+  path: '/api/public/web-chat/guest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWfPingRoute = ApiPublicWfPingRouteImport.update({
   id: '/api/public/wf/ping',
   path: '/api/public/wf/ping',
@@ -493,12 +511,12 @@ export interface FileRoutesByFullPath {
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
+  '/inbox': typeof InboxRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/organization': typeof OrganizationRoute
-  '/showroom': typeof ShowroomRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
   '/profile': typeof ProfileRoute
@@ -506,8 +524,10 @@ export interface FileRoutesByFullPath {
   '/reports-v2': typeof ReportsV2Route
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/showroom': typeof ShowroomRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
+  '/web-chat': typeof WebChatRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
   '/biz/approvals': typeof BizApprovalsRoute
@@ -556,6 +576,7 @@ export interface FileRoutesByFullPath {
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
+  '/api/public/web-chat/guest': typeof ApiPublicWebChatGuestRoute
   '/api/public/wf/ping': typeof ApiPublicWfPingRoute
   '/api/public/wf/recover-cron': typeof ApiPublicWfRecoverCronRoute
   '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
@@ -573,12 +594,12 @@ export interface FileRoutesByTo {
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
+  '/inbox': typeof InboxRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/organization': typeof OrganizationRoute
-  '/showroom': typeof ShowroomRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
   '/profile': typeof ProfileRoute
@@ -586,8 +607,10 @@ export interface FileRoutesByTo {
   '/reports-v2': typeof ReportsV2Route
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/showroom': typeof ShowroomRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
+  '/web-chat': typeof WebChatRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
   '/biz/approvals': typeof BizApprovalsRoute
@@ -636,6 +659,7 @@ export interface FileRoutesByTo {
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
+  '/api/public/web-chat/guest': typeof ApiPublicWebChatGuestRoute
   '/api/public/wf/ping': typeof ApiPublicWfPingRoute
   '/api/public/wf/recover-cron': typeof ApiPublicWfRecoverCronRoute
   '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
@@ -654,12 +678,12 @@ export interface FileRoutesById {
   '/chinh-sach-bao-mat': typeof ChinhSachBaoMatRoute
   '/community': typeof CommunityRoute
   '/goals-v2': typeof GoalsV2Route
+  '/inbox': typeof InboxRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/okrs': typeof OkrsRoute
   '/orders': typeof OrdersRoute
   '/organization': typeof OrganizationRoute
-  '/showroom': typeof ShowroomRoute
   '/overview-v2': typeof OverviewV2Route
   '/pending': typeof PendingRoute
   '/profile': typeof ProfileRoute
@@ -667,8 +691,10 @@ export interface FileRoutesById {
   '/reports-v2': typeof ReportsV2Route
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/showroom': typeof ShowroomRoute
   '/tasks': typeof TasksRoute
   '/videos': typeof VideosRoute
+  '/web-chat': typeof WebChatRoute
   '/web-contents': typeof WebContentsRoute
   '/biz/3k': typeof Biz3kRoute
   '/biz/approvals': typeof BizApprovalsRoute
@@ -717,6 +743,7 @@ export interface FileRoutesById {
   '/api/public/meta/maintain-cron': typeof ApiPublicMetaMaintainCronRoute
   '/api/public/meta/oauth-callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/push/dispatch': typeof ApiPublicPushDispatchRoute
+  '/api/public/web-chat/guest': typeof ApiPublicWebChatGuestRoute
   '/api/public/wf/ping': typeof ApiPublicWfPingRoute
   '/api/public/wf/recover-cron': typeof ApiPublicWfRecoverCronRoute
   '/api/public/wf/register-forms': typeof ApiPublicWfRegisterFormsRoute
@@ -736,12 +763,12 @@ export interface FileRouteTypes {
     | '/chinh-sach-bao-mat'
     | '/community'
     | '/goals-v2'
+    | '/inbox'
     | '/leave'
     | '/login'
     | '/okrs'
     | '/orders'
     | '/organization'
-    | '/showroom'
     | '/overview-v2'
     | '/pending'
     | '/profile'
@@ -749,8 +776,10 @@ export interface FileRouteTypes {
     | '/reports-v2'
     | '/reset-password'
     | '/settings'
+    | '/showroom'
     | '/tasks'
     | '/videos'
+    | '/web-chat'
     | '/web-contents'
     | '/biz/3k'
     | '/biz/approvals'
@@ -799,6 +828,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
+    | '/api/public/web-chat/guest'
     | '/api/public/wf/ping'
     | '/api/public/wf/recover-cron'
     | '/api/public/wf/register-forms'
@@ -816,12 +846,12 @@ export interface FileRouteTypes {
     | '/chinh-sach-bao-mat'
     | '/community'
     | '/goals-v2'
+    | '/inbox'
     | '/leave'
     | '/login'
     | '/okrs'
     | '/orders'
     | '/organization'
-    | '/showroom'
     | '/overview-v2'
     | '/pending'
     | '/profile'
@@ -829,8 +859,10 @@ export interface FileRouteTypes {
     | '/reports-v2'
     | '/reset-password'
     | '/settings'
+    | '/showroom'
     | '/tasks'
     | '/videos'
+    | '/web-chat'
     | '/web-contents'
     | '/biz/3k'
     | '/biz/approvals'
@@ -879,6 +911,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
+    | '/api/public/web-chat/guest'
     | '/api/public/wf/ping'
     | '/api/public/wf/recover-cron'
     | '/api/public/wf/register-forms'
@@ -896,12 +929,12 @@ export interface FileRouteTypes {
     | '/chinh-sach-bao-mat'
     | '/community'
     | '/goals-v2'
+    | '/inbox'
     | '/leave'
     | '/login'
     | '/okrs'
     | '/orders'
     | '/organization'
-    | '/showroom'
     | '/overview-v2'
     | '/pending'
     | '/profile'
@@ -909,8 +942,10 @@ export interface FileRouteTypes {
     | '/reports-v2'
     | '/reset-password'
     | '/settings'
+    | '/showroom'
     | '/tasks'
     | '/videos'
+    | '/web-chat'
     | '/web-contents'
     | '/biz/3k'
     | '/biz/approvals'
@@ -959,6 +994,7 @@ export interface FileRouteTypes {
     | '/api/public/meta/maintain-cron'
     | '/api/public/meta/oauth-callback'
     | '/api/public/push/dispatch'
+    | '/api/public/web-chat/guest'
     | '/api/public/wf/ping'
     | '/api/public/wf/recover-cron'
     | '/api/public/wf/register-forms'
@@ -977,12 +1013,12 @@ export interface RootRouteChildren {
   ChinhSachBaoMatRoute: typeof ChinhSachBaoMatRoute
   CommunityRoute: typeof CommunityRoute
   GoalsV2Route: typeof GoalsV2Route
+  InboxRoute: typeof InboxRoute
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
   OkrsRoute: typeof OkrsRoute
   OrdersRoute: typeof OrdersRoute
   OrganizationRoute: typeof OrganizationRoute
-  ShowroomRoute: typeof ShowroomRoute
   OverviewV2Route: typeof OverviewV2Route
   PendingRoute: typeof PendingRoute
   ProfileRoute: typeof ProfileRoute
@@ -990,8 +1026,10 @@ export interface RootRouteChildren {
   ReportsV2Route: typeof ReportsV2Route
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
+  ShowroomRoute: typeof ShowroomRoute
   TasksRoute: typeof TasksRoute
   VideosRoute: typeof VideosRoute
+  WebChatRoute: typeof WebChatRoute
   WebContentsRoute: typeof WebContentsRoute
   Biz3kRoute: typeof Biz3kRoute
   BizApprovalsRoute: typeof BizApprovalsRoute
@@ -1040,6 +1078,7 @@ export interface RootRouteChildren {
   ApiPublicMetaMaintainCronRoute: typeof ApiPublicMetaMaintainCronRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicPushDispatchRoute: typeof ApiPublicPushDispatchRoute
+  ApiPublicWebChatGuestRoute: typeof ApiPublicWebChatGuestRoute
   ApiPublicWfPingRoute: typeof ApiPublicWfPingRoute
   ApiPublicWfRecoverCronRoute: typeof ApiPublicWfRecoverCronRoute
   ApiPublicWfRegisterFormsRoute: typeof ApiPublicWfRegisterFormsRoute
@@ -1101,6 +1140,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GoalsV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leave': {
       id: '/leave'
       path: '/leave'
@@ -1134,13 +1180,6 @@ declare module '@tanstack/react-router' {
       path: '/organization'
       fullPath: '/organization'
       preLoaderRoute: typeof OrganizationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/showroom': {
-      id: '/showroom'
-      path: '/showroom'
-      fullPath: '/showroom'
-      preLoaderRoute: typeof ShowroomRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/overview-v2': {
@@ -1192,6 +1231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/showroom': {
+      id: '/showroom'
+      path: '/showroom'
+      fullPath: '/showroom'
+      preLoaderRoute: typeof ShowroomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks': {
       id: '/tasks'
       path: '/tasks'
@@ -1204,6 +1250,13 @@ declare module '@tanstack/react-router' {
       path: '/videos'
       fullPath: '/videos'
       preLoaderRoute: typeof VideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/web-chat': {
+      id: '/web-chat'
+      path: '/web-chat'
+      fullPath: '/web-chat'
+      preLoaderRoute: typeof WebChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/web-contents': {
@@ -1542,6 +1595,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPushDispatchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/web-chat/guest': {
+      id: '/api/public/web-chat/guest'
+      path: '/api/public/web-chat/guest'
+      fullPath: '/api/public/web-chat/guest'
+      preLoaderRoute: typeof ApiPublicWebChatGuestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/wf/ping': {
       id: '/api/public/wf/ping'
       path: '/api/public/wf/ping'
@@ -1609,12 +1669,12 @@ const rootRouteChildren: RootRouteChildren = {
   ChinhSachBaoMatRoute: ChinhSachBaoMatRoute,
   CommunityRoute: CommunityRoute,
   GoalsV2Route: GoalsV2Route,
+  InboxRoute: InboxRoute,
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
   OkrsRoute: OkrsRoute,
   OrdersRoute: OrdersRoute,
   OrganizationRoute: OrganizationRoute,
-  ShowroomRoute: ShowroomRoute,
   OverviewV2Route: OverviewV2Route,
   PendingRoute: PendingRoute,
   ProfileRoute: ProfileRoute,
@@ -1622,8 +1682,10 @@ const rootRouteChildren: RootRouteChildren = {
   ReportsV2Route: ReportsV2Route,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
+  ShowroomRoute: ShowroomRoute,
   TasksRoute: TasksRoute,
   VideosRoute: VideosRoute,
+  WebChatRoute: WebChatRoute,
   WebContentsRoute: WebContentsRoute,
   Biz3kRoute: Biz3kRoute,
   BizApprovalsRoute: BizApprovalsRoute,
@@ -1672,6 +1734,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMetaMaintainCronRoute: ApiPublicMetaMaintainCronRoute,
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicPushDispatchRoute: ApiPublicPushDispatchRoute,
+  ApiPublicWebChatGuestRoute: ApiPublicWebChatGuestRoute,
   ApiPublicWfPingRoute: ApiPublicWfPingRoute,
   ApiPublicWfRecoverCronRoute: ApiPublicWfRecoverCronRoute,
   ApiPublicWfRegisterFormsRoute: ApiPublicWfRegisterFormsRoute,
