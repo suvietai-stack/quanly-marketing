@@ -46,13 +46,20 @@ export const approvalCenterQuery = (uid: string, executiveFallback = false) => q
     signal.addEventListener('abort', onAbort, { once: true });
     const timeout = executiveFallback ? setTimeout(() => controller.abort(), 8000) : null;
     try {
-      const full = await supabase.rpc('approval_center_read').abortSignal(controller.signal)
-        .catch(error => ({ data: null, error }));
-      if (!full.error) return full.data as unknown as ApprovalCenterData;
-      if (!executiveFallback || signal.aborted) throw full.error;
+      let fullData: unknown = null;
+      let fullError: unknown = null;
+      try {
+        const full = await supabase.rpc('approval_center_read').abortSignal(controller.signal);
+        fullData = full.data;
+        fullError = full.error;
+      } catch (error) {
+        fullError = error;
+      }
+      if (!fullError) return fullData as ApprovalCenterData;
+      if (!executiveFallback || signal.aborted) throw fullError;
       const backup = await supabase.rpc('approval_center_executive_fallback' as never)
         .abortSignal(signal);
-      if (backup.error) throw full.error;
+      if (backup.error) throw fullError;
       return backup.data as unknown as ApprovalCenterData;
     } finally {
       if (timeout !== null) clearTimeout(timeout);
