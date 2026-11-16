@@ -28,8 +28,8 @@ export const navigationGroups: NavGroup[] = [
     { to: "/biz/products", label: "Kho Sản Phẩm", icon: Package, comingSoon: true },
     { to: "/biz/settings", label: "Cài đặt Kinh doanh", icon: Settings, anyPerm: ["biz.org_manage", "biz.workflow_manage", "biz.kr_manage", "biz.dept_manage", "biz.deadline_manage", "settings.role"] },
   ] },
-  { label: "Showroom", icon: Store, comingSoon: true, items: [
-
+  { label: "Showroom", icon: Store, items: [
+    { to: "/showroom", label: "Tổng quan Showroom", icon: Store, perm: "showroom.view" },
   ] },
   { label: "Marketing", icon: Megaphone, items: [
 { to: "/brands", label: "Thương Hiệu", icon: Building2, perm: "brand.view" },
