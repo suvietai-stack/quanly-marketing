@@ -30,4 +30,6 @@ jobs:
       - name: Design and navigation regression
         run: bunx vitest run src/lib/orders/design.test.ts src/lib/orders/workboard.test.ts src/lib/orders/zaloGroupMessage.test.ts src/lib/navigation.test.ts
       - name: Production build
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: bun run build
