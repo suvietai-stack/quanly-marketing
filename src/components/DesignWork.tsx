@@ -192,7 +192,7 @@ export function DesignWork({
     ? "Báo cáo & Phân tích"
     : flow
       ? designLabel(flow)
-      : "Tất cả công việc";
+      : "Tất cả thiết kế";
   const metrics = [
     {
       key: "open" as const,
@@ -366,7 +366,7 @@ export function DesignWork({
   const card = (o: DesignOrder) => (
     <article
       key={o.id}
-      className={`min-w-0 rounded-xl border bg-card p-4 shadow-sm ${designOverdue(o) ? "border-l-4 border-l-destructive" : ""}`}
+      className={`design-work-card min-w-0 rounded-xl border bg-card p-3 shadow-sm sm:p-4 ${designOverdue(o) ? "border-l-4 border-l-destructive" : ""}`}
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <StatusBadge value={o.status} />
@@ -376,23 +376,23 @@ export function DesignWork({
       </div>
       <button
         type="button"
-        className="mb-1 block w-full break-words text-left text-sm font-semibold leading-6 hover:text-primary focus-visible:outline-primary"
+        className="design-work-card-title mb-1 block min-h-11 w-full break-words text-left text-base font-semibold leading-6 hover:text-primary focus-visible:outline-primary"
         onClick={() => setSelected(o.id)}
       >
         {o.title || "Công việc chưa đặt tên"}
       </button>
-      <p className="mb-4 text-xs text-muted-foreground">
+      <p className="mb-3 break-words text-[13px] leading-5 text-muted-foreground sm:mb-4">
         {flow ? workLabel(o, catalogs.data || []) : designLabel(o.workflowKind)}
       </p>
-      <div className="space-y-2 text-xs">
+      <div className="space-y-2 text-sm">
         <p className="flex items-center gap-2">
-          <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate">{o.assignee || "Cần giao người"}</span>
+          <UserRound className="size-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 break-words">{o.assignee || "Cần giao người"}</span>
         </p>
         <p
           className={`flex items-center gap-2 ${designOverdue(o) ? "font-medium text-destructive" : "text-muted-foreground"}`}
         >
-          <CalendarDays className="size-3.5 shrink-0" />
+          <CalendarDays className="size-4 shrink-0" />
           {o.deadline ? fmtDate(o.deadline) : "Chưa có deadline"}
           {designOverdue(o) && " · Quá hạn"}
         </p>
@@ -403,16 +403,16 @@ export function DesignWork({
         </p>
       )}
       <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3">
-        <span className="min-w-0 truncate text-xs text-muted-foreground">
+        <span className="min-w-0 truncate text-[13px] text-muted-foreground">
           Yêu cầu: {o.requester || "—"}
         </span>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 shrink-0 text-primary"
+          className="min-h-11 shrink-0 px-3 text-sm font-medium text-primary"
           onClick={() => setSelected(o.id)}
         >
-          Mở việc
+          Mở Job
           <ArrowUpRight className="ml-1 size-3.5" />
         </Button>
       </div>
@@ -420,19 +420,19 @@ export function DesignWork({
   );
   return (
     <div className="design-workspace min-w-0 w-full max-w-full space-y-5 pb-4">
-      <header className="flex items-start justify-between gap-3">
+      <header className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Không gian Thiết kế
           </p>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+          <h1 className="text-xl font-semibold leading-snug tracking-tight md:text-2xl">
             {title}
           </h1>
           <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
             Theo dõi đầu việc, phản hồi và bàn giao trên cùng một luồng.
           </p>
         </div>
-        <div className="flex shrink-0 gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           {can("settings.role") && (
             <Button
               variant="ghost"
@@ -447,10 +447,9 @@ export function DesignWork({
             (flow
               ? designCan(can, flow, "create")
               : designAny(can, "create")) && (
-              <Button onClick={() => setAdding(true)}>
-                <Plus className="size-4 sm:mr-1" />
-                <span className="hidden sm:inline">Tạo công việc</span>
-                <span className="sr-only sm:hidden">Tạo công việc</span>
+              <Button className="min-h-11 gap-1.5 px-3 sm:px-4" onClick={() => setAdding(true)}>
+                <Plus className="size-4 shrink-0" />
+                <span>Tạo Job</span>
               </Button>
             )}
         </div>
@@ -487,7 +486,7 @@ export function DesignWork({
                 className={`min-w-0 rounded-xl border bg-card p-3 text-left transition-colors sm:p-4 hover:border-primary/50 focus-visible:outline-primary ${queue === m.key ? "border-primary/60 ring-1 ring-primary/10" : ""}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="min-w-0 text-xs font-medium leading-5 text-muted-foreground">
+                  <span className="min-w-0 text-sm font-medium leading-5 text-foreground/85">
                     {m.label}
                   </span>
                   <m.icon
@@ -495,7 +494,7 @@ export function DesignWork({
                   />
                 </div>
                 <p
-                  className={`my-2 text-2xl font-semibold tabular-nums ${m.key === "overdue" && m.count ? "text-destructive" : ""}`}
+                  className={`my-1.5 text-2xl font-semibold tabular-nums ${m.key === "overdue" && m.count ? "text-destructive" : ""}`}
                 >
                   {s.loaded ? m.count : "—"}
                 </p>
@@ -531,16 +530,16 @@ export function DesignWork({
             <div className="space-y-3 p-3 md:p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="relative min-w-0 basis-full flex-1 sm:basis-48">
-                  <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     aria-label="Tìm công việc thiết kế"
-                    className="pl-9"
-                    placeholder="Tìm tên việc, người thực hiện…"
+                    className="min-h-11 pl-9 text-base sm:text-sm"
+                    placeholder="Tìm Job, người thực hiện…"
                     value={search}
                     onChange={(e) => update(() => setSearch(e.target.value))}
                   />
                 </div>
-                <Button variant="outline" onClick={() => setFilters(true)}>
+                <Button className="min-h-11" variant="outline" onClick={() => setFilters(true)}>
                   <SlidersHorizontal className="mr-1 size-4" />
                   Bộ lọc
                   {advancedCount > 0 && (
@@ -550,7 +549,7 @@ export function DesignWork({
                   )}
                 </Button>
                 <div
-                  className="ml-auto flex shrink-0 rounded-lg border p-0.5 sm:ml-0"
+                  className="ml-auto hidden shrink-0 rounded-lg border p-0.5 md:flex"
                   aria-label="Cách hiển thị"
                 >
                   <Button
@@ -735,7 +734,7 @@ export function DesignWork({
             </div>
           ) : (
             <>
-              <div className="grid gap-3 md:hidden">{visible.map(card)}</div>
+              <div className="grid min-w-0 gap-3 md:hidden">{visible.map(card)}</div>
               <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
                 <table className="w-full min-w-[780px] text-sm">
                   <thead className="bg-muted/40 text-xs text-muted-foreground">
@@ -849,7 +848,7 @@ export function DesignWork({
         </SheetContent>
       </Sheet>
       <Dialog open={adding} onOpenChange={setAdding}>
-        <DialogContent className="design-mobile-dialog max-h-[85dvh] max-w-2xl overflow-y-auto">
+        <DialogContent className="design-mobile-dialog design-create-dialog max-h-[85dvh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Tạo {flow ? designLabel(flow) : "công việc"}
