@@ -12,6 +12,7 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
     [HANOI_SHOWROOM]: "Showroom Hà Nội",
     "61efa9bf-0de8-43d5-95c8-f0578627a40e": "Phòng Kinh doanh Sứ Quà Tặng 1",
     "28239f0c-0657-4b88-8287-5b715a2387dd": "Phòng Kinh doanh Quà Tặng 2",
+    "cef13ee0-73a8-43c4-bfe5-6bef393248fc": "Phòng Kinh doanh Phân Phối 1",
   };
   const centers = new Set([DISTRIBUTION_UNIT, B2B_CENTER, BTC_CENTER]);
   const detach = (nodes: ChartNode[]): ChartNode[] =>
