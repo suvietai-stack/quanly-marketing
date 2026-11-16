@@ -19,10 +19,11 @@ describe('Presentation-only navigation', () => {
     expect(groups.find(g => g.label === 'Marketing')?.items.find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
     expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/products']);
   });
-  it('personal 3K is a single shared entry for eligible roles, not a Marketing obligation', () => {
-    expect(visibleNavigation(access(['k3hub.use'])).filter(g =>
-      g.items.some(i => i.to === '/biz/3k')).map(g => g.label)).toEqual(['Điều hành']);
-    expect(paths(access())).not.toContain('/biz/3k');
+  it('keeps executive central 3K analytic-only, personal work in area modules', () => {
+    expect(paths(access(['k3hub.use']))).not.toContain('/biz/3k');
+    expect(paths(access(['k3hub.center']))).toContain('/k3-center');
+    expect(paths(access(['k3hub.biz']))).toContain('/biz/3k-area');
+    expect(paths(access(['showroom.k3.use']))).toContain('/showroom/3k');
   });
   it('keeps all navigation areas in the mandated order', () => {
     expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
@@ -51,13 +52,13 @@ describe('Presentation-only navigation', () => {
     expect(visibleNavigation(access(['kpi.view_own'])).flatMap(g => g.items).find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
   });
   it('preserves super admin business bypass without inventing grants', () => {
-    expect(paths(access(['k3hub.use'], { isSuperAdmin: true }))).toContain('/biz/3k');
+    expect(paths(access(['k3hub.use'], { isSuperAdmin: true }))).not.toContain('/biz/3k');
     expect(paths(access([], { isSuperAdmin: true }))).not.toContain('/orders');
   });
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations.length).toBeGreaterThanOrEqual(47);
+    expect(destinations.length).toBeGreaterThanOrEqual(46);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
@@ -116,6 +117,6 @@ describe('Presentation-only navigation', () => {
   it('highlights only the most specific route for existing deep links', () => {
     expect(activeNavigationPath(navigationGroups, '/signals/report')).toBe('/signals/report');
     expect(activeNavigationPath(navigationGroups, '/orders/order-123')).toBe('/orders');
-    expect(activeNavigationPath(navigationGroups, '/biz/3k')).toBe('/biz/3k');
+    expect(activeNavigationPath(navigationGroups, '/biz/3k-area')).toBe('/biz/3k-area');
   });
 });
