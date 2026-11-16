@@ -67,6 +67,9 @@ import { Route as SaoEarnRouteImport } from './routes/sao.earn'
 import { Route as SaoLeaderboardRouteImport } from './routes/sao.leaderboard'
 import { Route as SaoShopRouteImport } from './routes/sao.shop'
 import { Route as SettingsKpiV2RouteImport } from './routes/settings_.kpi-v2'
+import { Route as K3CenterRouteImport } from './routes/k3-center'
+import { Route as Biz3kAreaRouteImport } from './routes/biz.3k-area'
+import { Route as Operations3kRouteImport } from './routes/operations_.3k'
 import { Route as Showroom3kRouteImport } from './routes/showroom_.3k'
 import { Route as SignalsIndexRouteImport } from './routes/signals.index'
 import { Route as SignalsReportRouteImport } from './routes/signals.report'
@@ -382,6 +385,21 @@ const SettingsKpiV2Route = SettingsKpiV2RouteImport.update({
   path: '/settings/kpi-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
+const K3CenterRoute = K3CenterRouteImport.update({
+  id: '/k3-center',
+  path: '/k3-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Biz3kAreaRoute = Biz3kAreaRouteImport.update({
+  id: '/biz/3k-area',
+  path: '/biz/3k-area',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Operations3kRoute = Operations3kRouteImport.update({
+  id: '/operations_/3k',
+  path: '/operations/3k',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Showroom3kRoute = Showroom3kRouteImport.update({
   id: '/showroom_/3k',
   path: '/showroom/3k',
@@ -562,6 +580,9 @@ export interface FileRoutesByFullPath {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/k3-center': typeof K3CenterRoute
+  '/biz/3k-area': typeof Biz3kAreaRoute
+  '/operations/3k': typeof Operations3kRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -646,6 +667,9 @@ export interface FileRoutesByTo {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings/kpi-v2': typeof SettingsKpiV2Route
+  '/k3-center': typeof K3CenterRoute
+  '/biz/3k-area': typeof Biz3kAreaRoute
+  '/operations/3k': typeof Operations3kRoute
   '/showroom/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -731,6 +755,9 @@ export interface FileRoutesById {
   '/sao/leaderboard': typeof SaoLeaderboardRoute
   '/sao/shop': typeof SaoShopRoute
   '/settings_/kpi-v2': typeof SettingsKpiV2Route
+  '/k3-center': typeof K3CenterRoute
+  '/biz/3k-area': typeof Biz3kAreaRoute
+  '/operations_/3k': typeof Operations3kRoute
   '/showroom_/3k': typeof Showroom3kRoute
   '/signals/report': typeof SignalsReportRoute
   '/social/$id': typeof SocialIdRoute
@@ -817,6 +844,9 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
+    | '/k3-center'
+    | '/biz/3k-area'
+    | '/operations/3k'
     | '/showroom/3k'
     | '/signals/report'
     | '/social/$id'
@@ -901,6 +931,9 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings/kpi-v2'
+    | '/k3-center'
+    | '/biz/3k-area'
+    | '/operations/3k'
     | '/showroom/3k'
     | '/signals/report'
     | '/social/$id'
@@ -985,6 +1018,9 @@ export interface FileRouteTypes {
     | '/sao/leaderboard'
     | '/sao/shop'
     | '/settings_/kpi-v2'
+    | '/k3-center'
+    | '/biz/3k-area'
+    | '/operations_/3k'
     | '/showroom_/3k'
     | '/signals/report'
     | '/social/$id'
@@ -1070,6 +1106,9 @@ export interface RootRouteChildren {
   SaoLeaderboardRoute: typeof SaoLeaderboardRoute
   SaoShopRoute: typeof SaoShopRoute
   SettingsKpiV2Route: typeof SettingsKpiV2Route
+  K3CenterRoute: typeof K3CenterRoute
+  Biz3kAreaRoute: typeof Biz3kAreaRoute
+  Operations3kRoute: typeof Operations3kRoute
   Showroom3kRoute: typeof Showroom3kRoute
   SignalsReportRoute: typeof SignalsReportRoute
   SocialIdRoute: typeof SocialIdRoute
@@ -1510,6 +1549,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsKpiV2RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/k3-center': {
+      id: '/k3-center'
+      path: '/k3-center'
+      fullPath: '/k3-center'
+      preLoaderRoute: typeof K3CenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biz/3k-area': {
+      id: '/biz/3k-area'
+      path: '/biz/3k-area'
+      fullPath: '/biz/3k-area'
+      preLoaderRoute: typeof Biz3kAreaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations_/3k': {
+      id: '/operations_/3k'
+      path: '/operations/3k'
+      fullPath: '/operations/3k'
+      preLoaderRoute: typeof Operations3kRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/showroom_/3k': {
       id: '/showroom_/3k'
       path: '/showroom/3k'
@@ -1734,6 +1794,9 @@ const rootRouteChildren: RootRouteChildren = {
   SaoLeaderboardRoute: SaoLeaderboardRoute,
   SaoShopRoute: SaoShopRoute,
   SettingsKpiV2Route: SettingsKpiV2Route,
+  K3CenterRoute: K3CenterRoute,
+  Biz3kAreaRoute: Biz3kAreaRoute,
+  Operations3kRoute: Operations3kRoute,
   Showroom3kRoute: Showroom3kRoute,
   SignalsReportRoute: SignalsReportRoute,
   SocialIdRoute: SocialIdRoute,
