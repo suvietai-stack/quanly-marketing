@@ -27,4 +27,4 @@ BEGIN
  ELSIF st='Đã bàn giao' AND _rev IS NOT NULL AND _rev IS DISTINCT FROM _asg THEN
   INSERT INTO notifications(recipient_id,kind,order_id,payload,dedup_key) VALUES(_rev,'order_delivered',NEW.id,_p,'od:delivered:'||NEW.id||':'||rnd||':'||_rev) ON CONFLICT(dedup_key) DO NOTHING;
  END IF; RETURN NEW;
-END $function$
+END $function$;
