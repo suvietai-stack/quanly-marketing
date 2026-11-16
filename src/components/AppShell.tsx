@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => { clearInterval(timer); if (transition !== null) clearTimeout(transition); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
   }, [user?.id, baseAccess?.next_transition_at]);
   const commercialAreasQuery = useQuery(commercialAreaAccessQuery(user?.id ?? ''));
-  const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data && commercialAreasQuery.isSuccess;
+  const launcherAccessReady = !!user && (isSuperAdmin || (bizAccess?.user_id === user.id && baseAccess?.user_id === user.id)) && approvals.isSuccess && !!approvals.data;
   const logout = useAuth((s) => s.logout);
   const brand = useBranding();
   const pendingCount = useAuth((s) => s.users.filter((u) => u.status === "Chờ duyệt").length);
