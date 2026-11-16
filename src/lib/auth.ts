@@ -48,6 +48,7 @@ export type PermissionGroup =
   | "CRM Khách Hàng"
   | "Sale Work Zalo"
   | "Cơ cấu tổ chức"
+  | "Showroom"
   | "Hộp thư";
 
 export interface PermissionDef {
@@ -578,6 +579,11 @@ export const PERMISSIONS: PermissionDef[] = [
   P("settings.user_custom_perm", "Tùy chỉnh quyền riêng theo user", "Tài khoản", "Role"),
   P("settings.login_history", "Xem lịch sử đăng nhập", "Tài khoản", "Audit"),
   P("settings.activity_log", "Xem log thao tác", "Tài khoản", "Audit"),
+
+  // ===== Showroom — phân hệ bán lẻ riêng, cấp quyền theo ô chức danh V2 =====
+  P("showroom.view", "Xem phân hệ Showroom", "Showroom", "Xem"),
+  P("showroom.view_unit", "Xem nhân sự cửa hàng mình phụ trách", "Showroom", "Xem"),
+  P("showroom.view_all", "Xem toàn bộ hệ thống Showroom", "Showroom", "Xem"),
 
   // ===== Cơ cấu tổ chức (quản trị tại Hành chính & Nhân sự → Cơ cấu tổ chức) =====
   P("org.view", "Xem sơ đồ cơ cấu tổ chức", "Cơ cấu tổ chức", "Cơ cấu"),
