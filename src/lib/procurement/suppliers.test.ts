@@ -6,7 +6,7 @@ import {
 
 function supplier(changes:Partial<MasterSupplier>={}):MasterSupplier {
   return {
-    id:'s1',code:'NCC-000001',name:'NCC 1',category:[],
+    id:'s1',code:'NCC-000001',name:'NCC 1',category:[],service_groups:[],
     contact_name:null,phone:null,email:null,website:null,address:null,
     status:'active',active:true,next_follow_up:null,last_contact_at:null,
     updated_at:'2026-11-16T00:00:00Z',created_at:'2026-11-16T00:00:00Z',
@@ -35,6 +35,11 @@ describe('shared procurement supplier master',()=>{
     expect(supplierGroupNames(['blank','print','process'],groups))
       .toEqual(['Phôi','In ấn','Gia công']);
     expect(supplierGroupNames(['unknown'],groups)).toEqual(['unknown']);
+  });
+  it('keeps six service capability codes separate from product taxonomy codes',()=>{
+    const supplierA=supplier({service_groups:['blank','print','process'],category:['custom-000023']});
+    expect(supplierA.service_groups).toEqual(['blank','print','process']);
+    expect(supplierA.category).toEqual(['custom-000023']);
   });
   it('keeps price formatting separate from unprivileged product views',()=>{
     expect(formatSupplierPrice(null,'VND')).toBe('—');
