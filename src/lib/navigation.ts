@@ -30,6 +30,7 @@ export const navigationGroups: NavGroup[] = [
   ] },
   { label: "Showroom", icon: Store, items: [
     { to: "/showroom", label: "Tổng quan Showroom", icon: Store, perm: "showroom.view" },
+    { to: "/showroom/3k", label: "3K Showroom", icon: ClipboardCheck, perm: "showroom.k3.use" },
   ] },
   { label: "Marketing", icon: Megaphone, items: [
 { to: "/brands", label: "Thương Hiệu", icon: Building2, perm: "brand.view" },
