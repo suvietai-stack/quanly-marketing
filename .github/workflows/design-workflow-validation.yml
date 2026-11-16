@@ -11,7 +11,7 @@ on:
       - 'src/lib/orders/**'
       - 'src/lib/navigation*'
       - 'src/lib/store.ts'
-      - 'drizzle/migrations/0416_design_workflow_v2_zalo_groups.sql'
+      - 'drizzle/migrations/0420_design_workflow_v2_zalo_groups.sql'
       - '.github/workflows/design-workflow-validation.yml'
 permissions:
   contents: read
