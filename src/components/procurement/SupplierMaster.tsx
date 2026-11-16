@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   supplierListRead, supplierStatusLabels, supplierStatusTone,
   supplierStats, supplierFollowUpOverdue, supplierGroupNames,
+  supplierServiceGroups, supplierServiceNames,
   type SupplierFull,
 } from '@/lib/procurement/suppliers';
 import { SupplierEditDialog } from './SupplierForms';
@@ -23,14 +24,15 @@ export function SupplierMaster() {
   const deferredSearch=useDeferredValue(search);
   const [status,setStatus]=useState('');
   const [category,setCategory]=useState('');
+  const [service,setService]=useState('');
   const [selected,setSelected]=useState<string|null>(null);
   const [editOpen,setEditOpen]=useState(false);
   const [editSupplier,setEditSupplier]=useState<SupplierFull|null>(null);
   const [editCanManage,setEditCanManage]=useState(false);
   const qc=useQueryClient();
   const query=useQuery({
-    queryKey:['supplier-master',user?.id,deferredSearch,status,category],
-    queryFn:()=>supplierListRead(deferredSearch,status,category),
+    queryKey:['supplier-master',user?.id,deferredSearch,status,category,service],
+    queryFn:()=>supplierListRead(deferredSearch,status,category,service),
     enabled:authorized,
     retry:1,staleTime:20_000,
   });
@@ -91,6 +93,12 @@ export function SupplierMaster() {
             onChange={e=>setSearch(e.target.value)} className="pl-9"
             placeholder="Tìm tên, mã NCC, liên hệ, số điện thoại…"/>
         </div>
+        <select aria-label="Lọc loại hình cung ứng" value={service}
+          onChange={e=>setService(e.target.value)}
+          className="h-10 max-w-full rounded-md border bg-background px-3 text-sm">
+          <option value="">Tất cả loại hình cung ứng</option>
+          {supplierServiceGroups.map(g=><option key={g.code} value={g.code}>{g.name}</option>)}
+        </select>
         <select aria-label="Lọc nhóm sản phẩm nhà cung cấp" value={category}
           onChange={e=>setCategory(e.target.value)}
           className="h-10 max-w-full rounded-md border bg-background px-3 text-sm">
@@ -121,12 +129,12 @@ export function SupplierMaster() {
     </div>}
     {query.data && suppliers.length===0 && <div className="space-y-3 rounded-xl border border-dashed bg-card px-5 py-10 text-center">
       <Truck className="mx-auto h-8 w-8 text-muted-foreground"/>
-      <p className="font-medium">{search||status||category?'Không tìm thấy nhà cung cấp phù hợp.':'Danh mục nhà cung cấp đang trống.'}</p>
+      <p className="font-medium">{search||status||category||service?'Không tìm thấy nhà cung cấp phù hợp.':'Danh mục nhà cung cấp đang trống.'}</p>
       <p className="text-sm text-muted-foreground">
-        {search||status||category?'Thử thay đổi bộ lọc.':
+        {search||status||category||service?'Thử thay đổi bộ lọc.':
           'Nhập thông tin nhà cung cấp, sau đó thêm sản phẩm và nhật ký làm việc.'}
       </p>
-      {canCreate && !search && !status && !category && <Button className="mx-auto" size="sm" onClick={newSupplier}>
+      {canCreate && !search && !status && !category && !service && <Button className="mx-auto" size="sm" onClick={newSupplier}>
         <Plus className="mr-2 h-4 w-4"/>Thêm nhà cung cấp đầu tiên
       </Button>}
     </div>}
@@ -151,7 +159,12 @@ export function SupplierMaster() {
             <Users className="h-3.5 w-3.5 shrink-0"/>
             {[s.contact_name,s.phone].filter(Boolean).join(' · ')}
           </p>}
-          {!!s.category.length && <p className="line-clamp-2">Nhóm hàng: {supplierGroupNames(s.category,query.data?.groups??[]).join(', ')}</p>}
+          {!!s.service_groups?.length && <p className="line-clamp-2">
+            Cung ứng: {supplierServiceNames(s.service_groups).join(', ')}
+          </p>}
+          {!!s.category.length && <p className="line-clamp-2">
+            Sản phẩm: {supplierGroupNames(s.category,query.data?.groups??[]).join(', ')}
+          </p>
           {s.next_follow_up && <p className={`flex items-center gap-1 ${supplierFollowUpOverdue(s)?'font-semibold text-amber-600':''}`}>
             <CalendarClock className="h-3.5 w-3.5 shrink-0"/>
             Liên hệ tiếp: {s.next_follow_up.split('-').reverse().join('/')}
