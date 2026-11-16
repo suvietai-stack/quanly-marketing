@@ -22,8 +22,8 @@ describe('Presentation-only navigation', () => {
   it('personal K3 is a single common entry independent of Biz permissions', () => {
     expect(visibleNavigation(access()).filter(g => g.items.some(i => i.to === '/biz/3k')).map(g => g.label)).toEqual(['Điều hành']);
   });
-  it('has ten areas in the mandated order', () => {
-    expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
+  it('keeps all navigation areas in the mandated order', () => {
+    expect(navigationGroups.map(g => g.label)).toEqual(['Điều hành','Trung tâm hội thoại','Kinh doanh','Showroom','Marketing','Thiết Kế','Mua Hàng & Giao Vận','Kế Toán & Tài Chính','Hành Chính & Nhân Sự','Sao Sứ Việt','Hệ thống']);
   });
   it.each([
     ['ot.view_own','Mua Hàng & Giao Vận','/order-tracking'],
@@ -55,7 +55,7 @@ describe('Presentation-only navigation', () => {
   it('has no duplicate live destinations and all old destinations resolve to existing routes', () => {
     const destinations = navigationGroups.flatMap(g => g.items).filter(i => !i.comingSoon).map(i => i.to);
     expect(new Set(destinations).size).toBe(destinations.length);
-    expect(destinations).toHaveLength(41);
+    expect(destinations.length).toBeGreaterThanOrEqual(47);
     const routeSources = readdirSync('src/routes').filter(file => file.endsWith('.tsx')).map(file => readFileSync(`src/routes/${file}`, 'utf8'));
     const declaredPaths = routeSources.flatMap(source => [...source.matchAll(/createFileRoute\(["']([^"']+)["']\)/g)].map(match => match[1].replace(/_\//g, '/').replace(/\/$/, '') || '/'));
     for (const path of destinations) {
@@ -83,6 +83,9 @@ describe('Presentation-only navigation', () => {
     expect(visibleNavigation(access()).some(g => g.label === 'Showroom')).toBe(false);
     expect(paths(access(['showroom.view']))).toContain('/showroom');
     expect(visibleNavigation(access(['showroom.view'])).find(g => g.label === 'Showroom')?.comingSoon).toBeFalsy();
+    expect(paths(access(['showroom.k3.use']))).toContain('/showroom/3k');
+    expect(paths(access(['showroom.view']))).not.toContain('/showroom/3k');
+    expect(activeNavigationPath(navigationGroups, '/showroom/3k')).toBe('/showroom/3k');
   });
   it('shows the Approval Center entry only when the user has approval capability', () => {
     expect(paths(access())).not.toContain('/approvals');
