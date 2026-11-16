@@ -28,9 +28,23 @@ $$;
 REVOKE ALL ON FUNCTION public.design_assignable_staff(text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.design_assignable_staff(text) TO authenticated;
 
+-- Chỉ chuyên môn Thiết kế xem được bảng Tất cả thiết kế.
+-- Nhân sự chỉ có chuyên môn Chụp ảnh vẫn có thể làm Job được giao nhưng không đọc toàn bộ.
+CREATE OR REPLACE FUNCTION private.design_overview_member(_uid uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $
+ SELECT _uid IS NOT NULL AND private.is_active(_uid) AND (
+   private.is_super_admin(_uid) OR EXISTS(
+     SELECT 1 FROM public.mkt_staff_specialties m
+     WHERE m.user_id=_uid AND m.state='active' AND m.specialty_id='design'
+   )
+ );
+$;
+REVOKE ALL ON FUNCTION private.design_overview_member(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION private.design_overview_member(uuid) TO authenticated,service_role;
+
 CREATE OR REPLACE FUNCTION public.design_team_access() RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,private AS $$
- SELECT private.design_team_member(auth.uid());
+ SELECT private.design_overview_member(auth.uid());
 $$;
 REVOKE ALL ON FUNCTION public.design_team_access() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.design_team_access() TO authenticated;
@@ -137,7 +151,18 @@ CREATE OR REPLACE FUNCTION private.design_read(_uid uuid, _creator uuid, _data j
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'private'
 AS $function$
- SELECT private.is_active(_uid) AND (private.is_admin(_uid) OR private.design_team_member(_uid) OR (public.design_can(_uid,_flow,'view') AND (_creator=_uid OR private.design_person(_uid,_data->>'requester') OR private.design_person(_uid,_data->>'assignee') OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')))) OR (public.design_can(_uid,_flow,'create') AND _creator=_uid));
+ SELECT private.is_active(_uid) AND (
+   private.is_admin(_uid)
+   OR private.design_overview_member(_uid)
+   OR (_creator=_uid AND (public.design_can(_uid,_flow,'view') OR public.design_can(_uid,_flow,'create')))
+   OR (
+      (private.design_person(_uid,_data->>'requester')
+       OR (_data->>'assigneeId'=_uid::text)
+       OR private.design_person(_uid,_data->>'assignee')
+       OR private.design_person(_uid,coalesce(nullif(_data->>'reviewer',''),_data->>'requester')))
+      AND public.design_can(_uid,_flow,'view')
+   )
+ );
 $function$;
 
 -- Safely extend existing guarded Order writer; preserves field-level authorization/audit and historic status aliases.
