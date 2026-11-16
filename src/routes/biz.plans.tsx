@@ -14,11 +14,11 @@ export const Route = createFileRoute("/biz/plans")({
     { name: "twitter:card", content: "summary" },
   ] }),
   component: () => (
-    <CommercialAreaGate area="orders"><RequirePermission perm={["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"]}>
+    <CommercialAreaGate area="orders">{scope => <><RequirePermission perm={["biz.plan_submit", "biz.plan_request_revision", "biz.plan_approve", "biz.view_dept", "biz.view_all"]}>
       <div>
         <PageHeader title="Kế hoạch kinh doanh" description="Nộp và quản lý kế hoạch Tháng / Quý / Năm bằng đường dẫn Google Docs." />
-        <BizDocuments kind="plan" />
+        <BizDocuments kind="plan" scopeDepartmentIds={scope.orders_units}/>
       </div>
-    </RequirePermission></CommercialAreaGate>
+    </RequirePermission></>}</CommercialAreaGate>
   ),
 });
