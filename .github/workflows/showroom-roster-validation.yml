@@ -28,3 +28,5 @@ jobs:
       - run: bunx vitest run src/lib/showroom/shifts.test.ts src/lib/aiSuviet/guides.test.ts src/lib/navigation.test.ts
       - run: bunx tsc --noEmit
       - run: bun run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=5120
