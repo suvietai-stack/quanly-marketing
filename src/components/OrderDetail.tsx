@@ -216,15 +216,15 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="design-mobile-dialog max-w-4xl max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="design-mobile-dialog max-w-4xl max-h-[90dvh] overflow-x-hidden overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 flex-wrap">
-            <span>{order.title}</span>
+          <DialogTitle className="design-dialog-title flex min-w-0 flex-wrap items-center gap-2 pr-8 text-left sm:gap-3">
+            <span className="min-w-0 break-words">{order.title}</span>
             <StatusBadge value={order.status} />
             {order.priority && <StatusBadge value={order.priority} />}
             {order.revisions ? <span className="text-xs text-muted-foreground">Sửa: {order.revisions} lần</span> : null}
           </DialogTitle>
-          <div className="text-xs text-muted-foreground">
+          <div className="design-dialog-meta text-sm leading-6 text-muted-foreground">
             {designLabel(order.workflowKind)} · {s.brands.find((b) => b.id === order.brandId)?.name || 'Không gắn thương hiệu'} · {order.workCategoryName || order.type} · Nguồn: {order.source}
           </div>
         </DialogHeader>
@@ -232,17 +232,17 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
         <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Đốm về hồ sơ này</Button>
         <DesignWorkflowSummary order={order} />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
-            <TabsTrigger value="info" className="min-h-10 text-xs sm:text-sm">Thông tin</TabsTrigger>
-            <TabsTrigger value="workflow" className="min-h-10 text-xs sm:text-sm">Xử lý công việc</TabsTrigger>
+          <TabsList className="design-job-tabs grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
+            <TabsTrigger value="info" className="min-h-11 text-[13px] sm:text-sm">Thông tin</TabsTrigger>
+            <TabsTrigger value="workflow" className="min-h-11 text-[13px] sm:text-sm">Xử lý</TabsTrigger>
             <DesignJobChatTab jobId={order.id} active={open} />
-            <TabsTrigger value="history" className="min-h-10 text-xs sm:text-sm">Lịch sử ({order.history?.length || 0})</TabsTrigger>
+            <TabsTrigger value="history" className="min-h-11 text-[13px] sm:text-sm">Lịch sử ({order.history?.length || 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
             <div className="grid sm:grid-cols-2 gap-3">
-              <div><Label>Luồng công việc</Label><Select value={o.workflowKind || 'unknown'} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} onValueChange={v=>setField({workflowKind:v as DesignOrder['workflowKind']})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{!o.workflowKind && <SelectItem value="unknown">Chưa phân loại luồng</SelectItem>}{DESIGN_FLOWS.filter(f=>isAdmin || designCan(can,f.key,'assign')).map(f=><SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}</SelectContent></Select></div>
-              <div className="sm:col-span-2"><Label>Tên order</Label>
+              <div><Label>Nhóm Thiết kế</Label><Select value={o.workflowKind || 'unknown'} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} onValueChange={v=>setField({workflowKind:v as DesignOrder['workflowKind']})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{!o.workflowKind && <SelectItem value="unknown">Chưa phân loại luồng</SelectItem>}{DESIGN_FLOWS.filter(f=>isAdmin || designCan(can,f.key,'assign')).map(f=><SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}</SelectContent></Select></div>
+              <div className="sm:col-span-2"><Label>Tên Job</Label>
                 <Input value={o.title} disabled={!canEdit} onChange={(e) => setField({ title: e.target.value })} /></div>
               {o.workflowKind ? <DesignClassification flow={o.workflowKind} value={o} onChange={setField} disabled={!canEdit}/> : <p className="text-sm">Loại lịch sử: {o.type}</p>}
               <div><Label>Nguồn yêu cầu</Label>
@@ -329,7 +329,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
           </TabsContent>
 
           <TabsContent value="workflow" className="space-y-4 mt-4">
-            <Card><CardContent className="p-4 space-y-3">
+            <Card><CardContent className="space-y-4 p-3 sm:p-4">
               <div className="text-sm text-muted-foreground">
                 Trạng thái hiện tại: <StatusBadge value={order.status} />
               </div>
@@ -353,9 +353,9 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-2 sm:flex sm:flex-wrap">
                 {actions.filter((a) => a.show).map((a) => (
-                  <Button key={a.label} disabled={saving || uploading} variant={a.variant || "default"} onClick={a.onClick}>{a.label}</Button>
+                  <Button key={a.label} className="min-h-11 w-full sm:w-auto" disabled={saving || uploading} variant={a.variant || "default"} onClick={a.onClick}>{a.label}</Button>
                 ))}
                 {actions.filter((a) => a.show).length === 0 && (
                   <p className="text-sm text-muted-foreground">Không có hành động khả dụng cho trạng thái này (hoặc bạn không có quyền).</p>
@@ -384,14 +384,14 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
             <div className="space-y-2">
               {!order.history?.length && <p className="text-sm text-muted-foreground">Chưa có lịch sử.</p>}
               {(order.history || []).slice().reverse().map((h, i) => (
-                <div key={i} className="rounded-md border p-3 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
+                <div key={i} className="min-w-0 rounded-md border p-3 text-sm">
+                  <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
                       <strong>{h.byName}</strong>
-                      <span className="text-muted-foreground">{h.action}</span>
+                      <span className="min-w-0 break-words text-muted-foreground">{h.action}</span>
                       {h.forced && <span className="text-xs text-destructive">(ép)</span>}
                     </div>
-                    <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString("vi-VN")}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{new Date(h.at).toLocaleString("vi-VN")}</span>
                   </div>
                   {h.fromStatus && h.toStatus && (
                     <div className="mt-1 text-xs flex items-center gap-1">
