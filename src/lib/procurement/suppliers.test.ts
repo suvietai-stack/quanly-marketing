@@ -1,7 +1,7 @@
 import { describe,expect,it } from 'vitest';
 import {
   supplierStats,supplierFollowUpOverdue,supplierStatusLabels,
-  formatSupplierPrice,supplierGroupNames,type MasterSupplier,
+  formatSupplierPrice,supplierGroupNames,supplierServiceNames,type MasterSupplier,
 } from './suppliers';
 
 function supplier(changes:Partial<MasterSupplier>={}):MasterSupplier {
@@ -27,14 +27,13 @@ describe('shared procurement supplier master',()=>{
     ],'2026-11-16')).toMatchObject({total:3,active:1,potential:1,overdue:1,products:5});
     expect(supplierFollowUpOverdue(supplier({status:'archived',next_follow_up:'2026-11-11'}),'2026-11-16')).toBe(false);
   });
-  it('renders standardized group codes as shared labels without changing stored keys',()=>{
-    const groups=[
-      {code:'blank',name:'Phôi'},{code:'print',name:'In ấn'},
-      {code:'process',name:'Gia công'},
-    ];
-    expect(supplierGroupNames(['blank','print','process'],groups))
+  it('renders operational groups and product categories independently',()=>{
+    const productGroups=[{code:'custom-000023',name:'Bát đĩa'}];
+    expect(supplierServiceNames(['blank','print','process']))
       .toEqual(['Phôi','In ấn','Gia công']);
-    expect(supplierGroupNames(['unknown'],groups)).toEqual(['unknown']);
+    expect(supplierGroupNames(['custom-000023'],productGroups))
+      .toEqual(['Bát đĩa']);
+    expect(supplierGroupNames(['unknown'],productGroups)).toEqual(['unknown']);
   });
   it('keeps six service capability codes separate from product taxonomy codes',()=>{
     const supplierA=supplier({service_groups:['blank','print','process'],category:['custom-000023']});
