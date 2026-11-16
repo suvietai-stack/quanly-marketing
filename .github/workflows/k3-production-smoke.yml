@@ -16,14 +16,15 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/k3-smoke
           for attempt in 1 2 3 4; do
-            curl -fsSL --max-time 35 -D /tmp/k3-smoke/headers               "${APP_ORIGIN}/k3-center" -o /tmp/k3-smoke/index.html
+            curl --compressed -fsSL --max-time 35 -D /tmp/k3-smoke/headers               "${APP_ORIGIN}/k3-center" -o /tmp/k3-smoke/index.html
             echo "Published response headers:"
             grep -iE '^(HTTP/|x-deployment-id:|location:)' /tmp/k3-smoke/headers || true
-            grep -oE '/assets/[^" ]+\.js' /tmp/k3-smoke/index.html               | sort -u > /tmp/k3-smoke/assets.txt || true
+            grep -aoE '/assets/[^" ]+\.js' /tmp/k3-smoke/index.html               | sort -u > /tmp/k3-smoke/assets.txt || true
+            echo "Detected asset links: $(wc -l < /tmp/k3-smoke/assets.txt)"
             found=0
             while IFS= read -r asset; do
-              curl -fsSL --max-time 30 "${APP_ORIGIN}${asset}" -o /tmp/k3-smoke/asset.js || continue
-              if grep -Fq '/k3-center' /tmp/k3-smoke/asset.js                   && grep -Fq '3K Showroom' /tmp/k3-smoke/asset.js; then
+              curl --compressed -fsSL --max-time 30 "${APP_ORIGIN}${asset}" -o /tmp/k3-smoke/asset.js || continue
+              if grep -aFq '/k3-center' /tmp/k3-smoke/asset.js                   && grep -aFq '3K Showroom' /tmp/k3-smoke/asset.js; then
                 found=1
                 break
               fi
