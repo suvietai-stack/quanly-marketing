@@ -18,7 +18,7 @@ const config = (): OrgConfig => ({
     { id: "team", name: "Real group", kind: "team", parent_id: "dept", active: true },
     { id: BTC_CENTER, name: "Showroom", kind: "block", active: true },
     { id: RETAIL_SYSTEM, name: "Bán Lẻ", kind: "system", parent_id: BTC_CENTER, active: true },
-    { id: "store", name: "Store", kind: "department", parent_id: RETAIL_SYSTEM, active: true },
+    { id: "store", name: "Showroom Hà Nội", kind: "department", parent_id: RETAIL_SYSTEM, active: true },
   ],
 });
 const roles = [
@@ -47,6 +47,23 @@ it("uses four independent B2B IDs and BTC director at block, never retail system
   ]);
   expect(centerPositionDefinitions(config(), RETAIL_SYSTEM)).toEqual([]);
 });
+it("creates showroom positions only for true active showroom departments", () => {
+  const c = config();
+  c.units.push(
+    { id: "retail-storage", name: "Kho hàng", kind: "department", parent_id: RETAIL_SYSTEM, active: true },
+    { id: "direct-store", name: "Showroom Hải Phòng", kind: "department", parent_id: BTC_CENTER, active: true },
+  );
+  expect(centerPositionDefinitions(c, "store").map((p) => p.roleId)).toEqual([
+    "role-v2-showroom-manager", "role-v2-showroom-staff",
+  ]);
+  expect(centerPositionDefinitions(c, "direct-store").map((p) => p.roleId)).toEqual([
+    "role-v2-showroom-manager", "role-v2-showroom-staff",
+  ]);
+  expect(centerPositionDefinitions(c, "retail-storage")).toEqual([]);
+  c.units = c.units.map((u) => u.id === RETAIL_SYSTEM ? { ...u, active: false } : u);
+  expect(centerPositionDefinitions(c, "store")).toEqual([]);
+});
+
 it("creates only empty titles with original unit target and no personnel changes", () => {
   const c = config();
   const result = centerPositionSetup(c, BTC_CENTER, roles, []);

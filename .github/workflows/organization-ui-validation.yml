@@ -5,6 +5,11 @@ on:
     paths:
       - 'src/components/OrgChart.tsx'
       - 'src/components/BaseOrganization.tsx'
+      - 'src/lib/orgChart.ts'
+      - 'src/lib/orgCenters.ts'
+      - 'src/lib/basePermissions/centerPositions.ts'
+      - 'src/lib/basePermissions/centerPositions.test.ts'
+      - 'src/lib/distribution/**'
       - '.github/workflows/organization-ui-validation.yml'
   workflow_dispatch:
 permissions:
@@ -24,4 +29,8 @@ jobs:
       - run: bunx tsc --noEmit
       - run: >-
           bunx eslint src/components/OrgChart.tsx src/components/BaseOrganization.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
-      - run: bunx vitest run src/lib/orgChart.test.ts
+      - run: >-
+          bunx vitest run src/lib/orgChart.test.ts
+          src/lib/basePermissions/centerPositions.test.ts
+          src/lib/distribution/hierarchy.test.ts
+          src/lib/distribution/centersHierarchy.test.ts
