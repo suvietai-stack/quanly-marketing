@@ -1,0 +1,31 @@
+name: Showroom live module validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/showroom/**'
+      - 'src/routes/showroom.tsx'
+      - 'src/lib/auth.ts'
+      - 'src/lib/navigation.ts'
+      - 'src/lib/navigation.test.ts'
+      - 'src/routeTree.gen.ts'
+      - 'drizzle/migrations/0397_showroom_module_read.sql'
+      - '.github/workflows/showroom-live-validation.yml'
+  pull_request:
+    paths:
+      - 'src/lib/showroom/**'
+      - 'src/routes/showroom.tsx'
+      - 'src/lib/navigation.ts'
+      - 'src/routeTree.gen.ts'
+      - 'drizzle/migrations/0397_showroom_module_read.sql'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/navigation.test.ts src/lib/showroom/positionSetup.test.ts
+      - run: bunx tsc --noEmit
+      - run: bun run build
