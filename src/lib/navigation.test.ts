@@ -19,6 +19,19 @@ describe('Presentation-only navigation', () => {
     expect(groups.find(g => g.label === 'Marketing')?.items.find(i => i.to === '/settings/kpi-v2')?.label).toBe('KPI của tôi');
     expect(groups.find(g => g.label === 'Kinh doanh')?.items.map(i => i.to)).toEqual(['/biz/goals', '/biz/products']);
   });
+  it('has one procurement supplier master, visible to eligible commercial roles only', () => {
+    const entries=navigationGroups.flatMap(g=>g.items).filter(i=>i.to==='/procurement/suppliers');
+    expect(entries).toHaveLength(1);
+    expect(navigationGroups.find(g=>g.label==='Mua Hàng & Giao Vận')?.items
+      .some(i=>i.to==='/procurement/suppliers')).toBe(true);
+    expect(navigationGroups.find(g=>g.label==='Showroom')?.items
+      .some(i=>i.to.includes('suppliers'))).toBe(false);
+    expect(paths(access(['supplier.master.view']))).toContain('/procurement/suppliers');
+    expect(paths(access())).not.toContain('/procurement/suppliers');
+    expect(paths(access(['showroom.view']))).not.toContain('/procurement/suppliers');
+    expect(activeNavigationPath(navigationGroups,'/procurement/suppliers'))
+      .toBe('/procurement/suppliers');
+  });
   it('keeps executive central 3K analytic-only, personal work in area modules', () => {
     expect(paths(access(['k3hub.use']))).not.toContain('/biz/3k');
     expect(paths(access(['k3hub.center']))).toContain('/k3-center');
