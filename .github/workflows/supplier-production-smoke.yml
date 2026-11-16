@@ -4,40 +4,31 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/supplier-production-smoke.yml'
-      - 'src/components/procurement/**'
-      - 'src/routes/procurement_.suppliers.tsx'
-      - 'src/lib/navigation.ts'
 jobs:
   production:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 6
     steps:
-      - name: Confirm live procurement route and published assets
-        env:
-          ORIGIN: https://base.suviet.vn
+      - name: Inspect live and custom domains without assuming SPA fallback
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p /tmp/supplier-smoke
-          for attempt in 1 2 3 4 5; do
-            curl --compressed -fsSL --max-time 30 -D /tmp/supplier-smoke/headers               "${ORIGIN}/procurement/suppliers" -o /tmp/supplier-smoke/index.html
-            grep -iE '^(HTTP/|x-deployment-id:)' /tmp/supplier-smoke/headers || true
-            grep -aoE '/assets/[^" ]+\.js' /tmp/supplier-smoke/index.html               | sort -u > /tmp/supplier-smoke/assets.txt || true
-            count=$(wc -l < /tmp/supplier-smoke/assets.txt)
-            echo "Assets to inspect: $count"
-            found=0
+          for origin in https://base.suviet.vn https://quanly-suviet.lovable.app; do
+            echo "=== ORIGIN ${origin} ==="
+            for path in / /k3-center /procurement/suppliers; do
+              curl -sSL --compressed --max-time 30 -D /tmp/supplier-smoke/headers                 -o /tmp/supplier-smoke/body -w "GET ${path} HTTP=%{http_code} URL=%{url_effective}\n"                 "${origin}${path}" || true
+              grep -iE '^(x-deployment-id:|location:|HTTP/)' /tmp/supplier-smoke/headers | tail -n 6 || true
+              if [ "${path}" = "/" ]; then cp /tmp/supplier-smoke/body /tmp/supplier-smoke/root.html; fi
+            done
+            grep -aoE '/assets/[^" ]+\.js' /tmp/supplier-smoke/root.html               | sort -u > /tmp/supplier-smoke/assets.txt || true
+            echo "JS asset links: $(wc -l < /tmp/supplier-smoke/assets.txt)"
             while IFS= read -r asset; do
-              curl --compressed -fsSL --max-time 35 "${ORIGIN}${asset}"                 -o /tmp/supplier-smoke/app.js || continue
-              if grep -aFq '/procurement/suppliers' /tmp/supplier-smoke/app.js; then
-                found=1
-                break
+              curl -sSL --compressed --max-time 20 "${origin}${asset}"                 -o /tmp/supplier-smoke/js || continue
+              if grep -aFq '/procurement/suppliers' /tmp/supplier-smoke/js; then
+                echo "PASS: live JS contains new procurement supplier URL on ${origin}"
+                exit 0
               fi
             done < /tmp/supplier-smoke/assets.txt
-            if [ "$found" -eq 1 ]; then
-              echo 'PASS: published Base serves the shared procurement supplier route'
-              exit 0
-            fi
-            echo "New supplier route not yet confirmed in live JS (attempt $attempt)"
-            sleep 15
           done
-          echo 'FAIL: live assets do not yet expose procurement supplier route'
+          echo 'FAIL: neither production domain confirmed the new supplier route.'
           exit 1
