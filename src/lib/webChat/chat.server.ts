@@ -43,18 +43,18 @@ export async function guest(request: Request) {
   if (!safePage(input.page,auth.website.domain)) return Response.json({error:'Tên miền chưa được kết nối'},{status:403});
   const hash=await sha256(`${auth.website.id}:${input.token}`);
   const touchPresence=async()=>{
-    if(!input.session)return; // Older plugin payloads are still valid.
-    await rpc('wc_presence_ping',{p_site:auth.website.id,p_hash:hash,p_session:input.session,p_chat_open:input.chatOpen===true,p_leaving:input.leaving===true});
+    if(!input.session)return false; // Older plugin payloads are still valid.
+    return !!(await rpc('wc_presence_ping',{p_site:auth.website.id,p_hash:hash,p_session:input.session,p_chat_open:input.chatOpen===true,p_leaving:input.leaving===true}));
   };
   if(input.action==='config'){
-    await touchPresence(); // Reconnect an existing visitor without creating a conversation.
+    const tracked=await touchPresence(); // Reconnect without creating a conversation.
     const {knowledge:_,tone:__,goals:___,...appearance}=auth.settings;
-    return Response.json({appearance},{headers:{'Cache-Control':'no-store'}});
+    return Response.json({appearance,tracked},{headers:{'Cache-Control':'no-store'}});
   }
   if(!await rpc('wc_rate_hit',{p_bucket:`visitor:${hash}`,p_limit:40}))return Response.json({error:'Vui lòng chờ một chút rồi thử lại'},{status:429});
   if(input.action==='presence'){
-    await touchPresence();
-    return Response.json({ok:true},{headers:{'Cache-Control':'no-store'}});
+    const tracked=await touchPresence();
+    return Response.json({ok:true,tracked},{headers:{'Cache-Control':'no-store'}});
   }
   const received=await rpc('wc_receive',{p_site:auth.website.id,p_hash:hash,p_request:input.request,p_text:input.action==='send'?input.text:null,p_page:safePage(input.page,auth.website.domain)});
   await touchPresence(); // Sending/opening creates the conversation first, then records activity.
@@ -65,7 +65,7 @@ export async function guest(request: Request) {
   const {data:messages,error:me}=await db.from('wc_messages').select('id,role,body,state,created_at').eq('conversation_id',c.id).order('created_at',{ascending:false}).order('id',{ascending:false}).limit(100);
   if(me)throw new Error('Không đọc được tin nhắn');
   const {knowledge:_,tone:__,goals:___,...appearance}=auth.settings;
-  return Response.json({appearance,mode:c.mode,error:c.error,messages:(messages??[]).reverse()},{headers:{'Cache-Control':'no-store'}});
+  return Response.json({appearance,tracked:true,mode:c.mode,error:c.error,messages:(messages??[]).reverse()},{headers:{'Cache-Control':'no-store'}});
 }
 
 export async function processConversation(id: string, website: any, settings: z.infer<typeof settingsSchema>) {
