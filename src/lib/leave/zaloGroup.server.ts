@@ -5,6 +5,7 @@ import { baseUrl } from "@/lib/zalo.server";
 import { groupMessage, groupSummary, type GroupEvent, type GroupMsgData } from "./zaloGroupMessage";
 
 const MAX_ATTEMPTS = 3;
+const STALE_SENDING_MS = 2 * 60_000;
 
 async function db() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -45,18 +46,25 @@ export async function processLeaveGroup(limit = 10) {
   const cfg = await leaveGroupConfig();
   if (!cfg?.enabled || !cfg.group_id) return { processed: 0, skipped: "disabled" };
   const d = await db();
+  // A crashed sender may have reached Zalo: quarantine stale claims, NEVER auto-resend.
+  await d.from("leave_zalo_group_events")
+    .update({ status: "unknown", error: "Tiến trình gửi gián đoạn; kiểm tra Zalo trước khi gửi lại" })
+    .eq("status", "sending")
+    .lt("started_at", new Date(Date.now() - STALE_SENDING_MS).toISOString());
   const { data: rows } = await d.from("leave_zalo_group_events")
     .select("id, request_id, event, attempts").eq("status", "pending").lt("attempts", MAX_ATTEMPTS)
     .order("created_at").limit(limit);
   let processed = 0;
   for (const ev of rows ?? []) {
-    // CLAIM nguyên tử: chỉ một tiến trình nhận được bản ghi
+    // Atomically transition out of pending BEFORE calling Zalo. Attempts alone
+    // cannot claim ownership because another worker can increment again.
     const { data: got } = await d.from("leave_zalo_group_events")
-      .update({ attempts: ev.attempts + 1 })
+      .update({ status: "sending", attempts: ev.attempts + 1, started_at: new Date().toISOString(), error: null })
       .eq("id", ev.id).eq("status", "pending").eq("attempts", ev.attempts).select("id");
     if (!got?.length) continue;
     const mark = (patch: Record<string, unknown>) =>
-      d.from("leave_zalo_group_events").update(patch).eq("id", ev.id).eq("attempts", ev.attempts + 1);
+      d.from("leave_zalo_group_events").update(patch).eq("id", ev.id)
+        .eq("status", "sending").eq("attempts", ev.attempts + 1);
 
     const { data: r } = await d.from("leave_requests").select("*").eq("id", ev.request_id).maybeSingle();
     if (!stillValid(ev.event as GroupEvent, r)) {
@@ -85,7 +93,10 @@ export async function processLeaveGroup(limit = 10) {
       submitted_at: r.submitted_at,
     };
     const link = `${await baseUrl()}/leave?open=${r.id}`;
-    const res = await postGroup(cfg.group_id, groupMessage(ev.event as GroupEvent, msgData, link));
+    // An exception after dispatch may mean Zalo accepted the message. Do not
+    // retry without a human checking the group first.
+    const res = await postGroup(cfg.group_id, groupMessage(ev.event as GroupEvent, msgData, link))
+      .catch(() => ({ ok: false, ambiguous: true, code: -9, message: "Không xác minh được kết quả gửi Zalo" }));
     processed++;
     await mark({
       summary: groupSummary(msgData),
