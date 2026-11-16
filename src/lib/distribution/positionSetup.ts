@@ -39,8 +39,8 @@ export function distributionDefinitions(config: OrgConfig, unitId: string) {
   const unit = config.units.find((u) => u.id === unitId);
   return DISTRIBUTION_POSITION_ROLES.filter(
     (p) =>
-      unitId === DISTRIBUTION_UNIT ||
-      p.level === 0 ||
+      (unitId === DISTRIBUTION_UNIT && p.level === 3) ||
+      (p.level === 0 && ["department", "team"].includes(unit?.kind ?? "")) ||
       (unit?.kind === "department" && p.level === 2) ||
       (unit?.kind === "team" && p.level === 1),
   );

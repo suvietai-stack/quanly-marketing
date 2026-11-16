@@ -53,17 +53,22 @@ const setup = (): OrgConfig => ({
 
 describe("Distribution empty-position setup", () => {
   it("uses four independent exact-name Roles, in rank order", () => {
-    const { next, commands } = distributionPositionSetup(setup(), DISTRIBUTION_UNIT, roles);
-    expect(next.titles.slice(1).map((t) => t.name)).toEqual([
+    const center = distributionPositionSetup(setup(), DISTRIBUTION_UNIT, roles);
+    const department = distributionPositionSetup(center.next, "dept", roles);
+    const team = distributionPositionSetup(department.next, "team", roles);
+    expect(DISTRIBUTION_POSITION_ROLES.map((p) => p.name)).toEqual([
       "Giám đốc Kinh doanh Phân Phối",
       "Trưởng phòng Phân phối",
       "Trưởng nhóm Phân phối",
       "Nhân viên phân phối",
     ]);
-    expect(next.titles.slice(1).map((t) => t.level)).toEqual([3, 2, 1, 0]);
-    expect(commands.map((c) => c.data.role_id)).toEqual([
+    expect(DISTRIBUTION_POSITION_ROLES.map((p) => p.level)).toEqual([3, 2, 1, 0]);
+    expect(
+      [...center.commands, ...department.commands, ...team.commands].map((c) => c.data.role_id),
+    ).toEqual([
       "role-v2-distribution-director",
       "role-v2-distribution-head",
+      "role-v2-distribution-staff",
       "role-v2-distribution-team",
       "role-v2-distribution-staff",
     ]);
@@ -79,12 +84,6 @@ describe("Distribution empty-position setup", () => {
     expect(next.titles.slice(1).every((t) => t.capacity === 0)).toBe(true);
     expect([...organizationCommands(before, next), ...commands].map((c) => c.action)).toEqual([
       "title",
-      "title",
-      "title",
-      "title",
-      "position_role",
-      "position_role",
-      "position_role",
       "position_role",
     ]);
   });
@@ -124,21 +123,21 @@ describe("Distribution empty-position setup", () => {
     expect(missingDistributionPositions(twice.next, DISTRIBUTION_UNIT)).toBe(false);
   });
   it("refuses even ended history on an existing position", () => {
-    const c = distributionPositionSetup(setup(), DISTRIBUTION_UNIT, roles).next;
+    const c = distributionPositionSetup(setup(), "dept", roles).next;
     const title = c.titles.find((t) => t.code === "distribution-head");
     if (!title) throw new Error("Missing fixture title");
     c.memberships.push({
       id: "ended",
       user_id: "old-user",
-      unit_id: DISTRIBUTION_UNIT,
+      unit_id: "dept",
       title_id: title.id,
       active: false,
     });
-    expect(() => distributionPositionSetup(c, DISTRIBUTION_UNIT, roles)).toThrow(/lịch sử/);
+    expect(() => distributionPositionSetup(c, "dept", roles)).toThrow(/lịch sử/);
   });
   it("does not silently repair customized titles", () => {
-    const c = distributionPositionSetup(setup(), DISTRIBUTION_UNIT, roles).next;
+    const c = distributionPositionSetup(setup(), "dept", roles).next;
     c.titles = c.titles.map((t) => (t.code === "distribution-head" ? { ...t, level: 5 } : t));
-    expect(() => distributionPositionSetup(c, DISTRIBUTION_UNIT, roles)).toThrow(/cấu hình khác/);
+    expect(() => distributionPositionSetup(c, "dept", roles)).toThrow(/cấu hình khác/);
   });
 });

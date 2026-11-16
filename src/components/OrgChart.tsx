@@ -102,6 +102,7 @@ function UnitCard({ node, query, actions, onOpen, open, onToggle, horizontal }: 
         <div className="min-w-0">
           <p className="break-words text-sm font-semibold">{node.name} {node.inactive && <Badge variant="secondary">Ngừng</Badge>}</p>
           <p className="text-[11px] opacity-80">{KIND_LABELS[node.kind] ?? node.kind} · {count} nhân sự trong nhánh{node.children.length > 0 ? ` · ${node.children.length} đơn vị trực thuộc` : ''}</p>
+          {node.visualHierarchy && <Badge variant="outline" className="mt-1 whitespace-normal">Cơ cấu live chờ chuyển đổi</Badge>}
         </div>
         <span className="flex shrink-0 items-center gap-1">
           {actions.canManage && actions.onManageUnit && (

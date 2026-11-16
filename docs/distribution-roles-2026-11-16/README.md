@@ -4,7 +4,8 @@ Four separate V2 Position Roles, exact requested names, centrally editable. Cand
 
 ## Implementation
 - `/organization` → Distribution unit drawer → titles → preview empty Distribution positions; role catalog read happens only on explicit action.
-- Root system offers all four levels (3/2/1/0), department head/staff, real team lead/staff. No invented team, staff or appointment. Empty titles have capacity 0 (no new headcount cap).
+- Center offers director only, department head/staff, real team lead/staff. Without a real team, no team unit or lead appointment is fabricated; the team Role remains ready in the catalog. Empty titles have capacity 0 (no new headcount cap).
+- Organization chart promotes the original Distribution node to a company-level peer visually, titled Trung tâm Kinh doanh Phân Phối; its original stable ID, real departments, holders and action targets are preserved. A pending-live-cutover badge distinguishes this display from a completed organizational migration. No config projection is submitted to org_change.
 - Missing/invalid catalog Role blocks preview. Existing occupied/history-bearing titles block automatic rebinding. Existing generic Biz titles, slots, memberships and Sales Roles remain unchanged.
 - `org_change` creates canonical titles and bindings atomically with existing preview/apply/audit/revision checks. No live call was made. Only apply after seed approval/QA.
 
@@ -18,3 +19,6 @@ Current holders still receive Sales Roles through their original `(unit,title)` 
 `candidate.sql` is outside migrations and is NOT applied. Use official snapshot/backup before approved execution and save private preflight results; no personnel backup is stored in Git. Existing Role audit trigger records seed inserts. No mutation of pre-existing rows on rerun. `rollback.sql` archives unused records, preserves audit, refuses all known references; never run against previously existing/customized Roles without comparing the private preflight snapshot. It is not a rollback of an occupied cutover.
 
 Type/build use harness checks; targeted Vitest runs separately. Signed-in empty-title preview/apply and employee/manager effective readback remain unverified until approved seed and an authorized session are available. No publish.
+
+## Latest hierarchy QA
+90/90 tests across hierarchy, empty positions, staged Role SQL, navigation, organizational history and subtree scope pass. Automated preview build reports OK. New-file ESLint passes; existing chart files pass non-format rules (their existing formatting is unchanged). Dedicated tsc/build commands were not run under the environment's automatic-build requirement. Signed-in visual QA remains unverified; no staff were created or moved. The Role candidate SHA remains unchanged; `hierarchy-preflight.sql` adds read-only audit queries, not a live transfer implementation.

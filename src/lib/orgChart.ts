@@ -1,11 +1,12 @@
 import type { OrgConfig, Unit } from '@/lib/basePermissions/types';
 import { titleKind, titleLevel, unitTitles } from '@/lib/orgStructure';
 import { effectivePositionHolders } from '@/lib/basePermissions/positionHolders';
+import { distributionVisualHierarchy } from '@/lib/distribution/hierarchy';
 
 export interface ChartPerson { id: string; name: string; title?: string; duties?: string }
 /** Ô chức danh trong một bộ phận — hiển thị kể cả khi chưa có người. */
 export interface ChartSlot { id: string; titleId?: string; title: string; manager: boolean; level: number; capacity: number; holders: ChartPerson[] }
-export interface ChartNode { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean }
+export interface ChartNode { id: string; name: string; kind: 'company' | 'block' | 'system' | 'department' | 'team'; leader?: ChartPerson; leaderLabel?: string; leaderCode?: string; biz?: { systemId?: string; departmentId?: string; teamId?: string }; people: ChartPerson[]; slots?: ChartSlot[]; children: ChartNode[]; inactive?: boolean; visualHierarchy?: boolean }
 export interface ExecutiveSlot { code: string; name: string; level: number; holder?: ChartPerson }
 
 /** One recursive tree for every organizational category; source is never a UI branch. */
@@ -34,9 +35,9 @@ export function buildOrganizationTree(config: OrgConfig, staff: { id: string; na
     const virtual: Unit = { ...company };
     const node = make(virtual, new Set());
     node.children = [...node.children, ...roots.filter(u => u.id !== company.id).map(u => make(u, new Set([company.id])))];
-    return [node];
+    return distributionVisualHierarchy([node]);
   }
-  return roots.map(u => make(u, new Set()));
+  return distributionVisualHierarchy(roots.map(u => make(u, new Set())));
 }
 
 /** Tổng nhân sự của một nhánh, không tính trùng người xuất hiện ở nhiều cấp. */

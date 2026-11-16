@@ -1,4 +1,5 @@
 # Roadmap — Role/personal permissions 510/510
+- [x] Distribution four-level visual hierarchy: existing stable-ID center is a company peer in chart only; director at center, head at department, lead at real team, staff at actual department/team; 90 regression tests pass, no live reparent.
 - [x] Distribution four exact-name Position Roles: catalog seed SQL staged with preflight/SHA/guarded rollback; empty-position preview/apply implemented with live catalog verification, zero assignment changes; no live apply.
 - [ ] Distribution Role seed and signed-in position QA: requires separate exact-SHA approval and a valid Super Admin session; no live Roles/titles created.
 - [ ] Distribution occupied-position cutover: reconcile Biz source/title/slot linkage, historical attribution and permission reductions before separately approved transactional mapping; never rewrite historical appointments.
