@@ -1,5 +1,6 @@
 import {Checkbox} from "@/components/ui/checkbox";
 import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
 import {permissionControl,type EditorPolicy} from "@/lib/basePermissions/permissionEditor";
 import {DESIGN_FLOWS} from "@/lib/orders/design";
 
@@ -45,6 +46,11 @@ export function DesignRolePermissionGroups({value,onChange,policy,source,baselin
   const next=value.filter(k=>!editable.includes(k));
   onChange(on?[...new Set([...next,...editable])]:next);
  }
+ const applyPreset=(steps:string[])=>{
+  if(disabled)return;
+  const grants=steps.flatMap(actionKeys).filter(canChange);
+  onChange([...new Set([...value,...grants])]);
+ };
  const count=actions.filter(a=>actionState(a[0])).length;
  return <section className="space-y-3 rounded-lg border p-3 sm:p-4" aria-label="Quyền Thiết kế theo tác vụ">
   <div><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Thiết kế — tích theo tác vụ</h3><Badge variant="secondary">{count}/{actions.length} nhóm thao tác</Badge></div>
@@ -55,7 +61,17 @@ export function DesignRolePermissionGroups({value,onChange,policy,source,baselin
     <Checkbox checked={has("order.create")||has("order."+f.key+".create")} disabled={disabled||!allCreateEditable} onCheckedChange={v=>setCreate(f.key,v===true)}/>{f.label}
    </label>)}
   </div>
-  <div className="border-t pt-3 space-y-2"><p className="text-sm font-medium">2. Các tác vụ xử lý chung</p>
+  <div className="border-t pt-3 space-y-3"><p className="text-sm font-medium">2. Các tác vụ xử lý chung</p>
+   <div className="flex flex-wrap gap-2" aria-label="Tích nhanh tác vụ theo vai trò">
+    <Button type="button" size="sm" variant="outline" disabled={disabled}
+     onClick={()=>applyPreset(["view","take","update_draft","submit","resubmit","deliver"])}>
+     + Tích nhanh người thực hiện
+    </Button>
+    <Button type="button" size="sm" variant="outline" disabled={disabled}
+     onClick={()=>applyPreset(["view","approve","request_changes","complete"])}>
+     + Tích nhanh người duyệt
+    </Button>
+   </div>
    <div className="grid gap-2 sm:grid-cols-2">{actions.map(([key,label])=>{
     const editable=actionKeys(key).some(canChange);
     return <label key={key} className="flex items-start gap-2 text-sm min-h-9">

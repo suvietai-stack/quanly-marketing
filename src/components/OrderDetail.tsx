@@ -225,7 +225,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
             {order.revisions ? <span className="text-xs text-muted-foreground">Sửa: {order.revisions} lần</span> : null}
           </DialogTitle>
           <div className="text-xs text-muted-foreground">
-            {designLabel(order.workflowKind)} · {s.brands.find((b) => b.id === order.brandId)?.name} · {order.type} · Nguồn: {order.source}
+            {designLabel(order.workflowKind)} · {s.brands.find((b) => b.id === order.brandId)?.name || 'Không gắn thương hiệu'} · {order.workCategoryName || order.type} · Nguồn: {order.source}
           </div>
         </DialogHeader>
 
