@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Plus,
@@ -41,6 +41,10 @@ export function Crm() {
   const [archived, setArchived] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [open, setOpen] = useState("");
+  useEffect(() => {
+    const customer = new URLSearchParams(window.location.search).get("customer");
+    if (customer && /^[0-9a-f-]{36}$/i.test(customer)) setOpen(customer);
+  }, []);
   const [create, setCreate] = useState(false);
   const [care, setCare] = useState<{ customer: Customer; schedule?: Schedule }>();
   const catalogs = useQuery(catalogsQuery(uid));
