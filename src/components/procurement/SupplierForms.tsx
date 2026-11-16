@@ -1,17 +1,18 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { LoaderCircle, Save } from 'lucide-react';
+import { LoaderCircle, Plus, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
-  supplierSave, supplierProductSave, supplierContactAdd,
+  supplierSave, supplierProductSave, supplierContactAdd, supplierProductGroupAdd,
   type SupplierFull, type SupplierProduct, type SupplierSavePayload,
-  type ProductSavePayload, type SupplierContactChannel,
-  supplierStatusLabels, supplierChannelLabels,
+  type ProductSavePayload, type SupplierContactChannel, type SupplierProductGroup,
+  supplierStatusLabels, supplierChannelLabels, supplierGroupNames,
 } from '@/lib/procurement/suppliers';
 
 function FormField({id,label,children,description}:{
@@ -24,11 +25,15 @@ function FormField({id,label,children,description}:{
   </div>;
 }
 
-export function SupplierEditDialog({open,onOpenChange,supplier,canManage,onSaved}:{
+export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
+  groups,canManageGroups,onGroupsChanged,onSaved}:{
   open:boolean;
   onOpenChange:(open:boolean)=>void;
   supplier:SupplierFull | null;
   canManage:boolean;
+  groups:SupplierProductGroup[];
+  canManageGroups:boolean;
+  onGroupsChanged:()=>void;
   onSaved:(id:string)=>void;
 }) {
   const [state,setState] = useState<SupplierSavePayload>(()=>({
@@ -45,13 +50,30 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,onSaved
     next_follow_up:supplier?.next_follow_up ?? '',
     revision:supplier?.revision,
   }));
-  const [categories,setCategories] = useState((supplier?.category ?? []).join(', '));
+  const [categories,setCategories] = useState<string[]>(supplier?.category ?? []);
+  const [newGroupName,setNewGroupName] = useState('');
+  const [addedGroups,setAddedGroups] = useState<SupplierProductGroup[]>([]);
+  const allGroups = [...groups, ...addedGroups.filter(g=>!groups.some(item=>item.code===g.code))];
+  const addGroup = useMutation({
+    mutationFn:()=>supplierProductGroupAdd(newGroupName.trim()),
+    onSuccess:group=>{
+      setAddedGroups(current=>[...current,group]);
+      setCategories(current=>[...new Set([...current,group.code])]);
+      setNewGroupName('');
+      toast.success('Đã thêm nhóm sản phẩm vào danh mục chung.');
+      onGroupsChanged();
+    },
+    onError:e=>toast.error(e instanceof Error?e.message:'Không thêm được nhóm sản phẩm.'),
+  });
+  const toggleGroup = (code:string,checked:boolean) =>
+    setCategories(current=>checked
+      ? [...new Set([...current,code])]
+      : current.filter(x=>x!==code));
   const update=(field:keyof SupplierSavePayload,value:string)=>
     setState(current=>({...current,[field]:value}));
   const save=useMutation({
     mutationFn:()=>supplierSave(supplier?.id ?? null,{
-      ...state, category:[...new Set(categories.split(/[,;\n]/)
-        .map(x=>x.trim()).filter(Boolean))].slice(0,12),
+      ...state, category:categories,
     }),
     onSuccess:id=>{
       toast.success(supplier?'Đã cập nhật nhà cung cấp.':'Đã tạo hồ sơ nhà cung cấp.');
@@ -73,11 +95,36 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,onSaved
               value={state.name} onChange={e=>update('name',e.target.value)}
               placeholder="Ví dụ: Xưởng gốm, nhà nhập khẩu…"/>
           </FormField>
-          <FormField id="supplier-categories" label="Nhóm sản phẩm">
-            <Input id="supplier-categories" value={categories}
-              onChange={e=>setCategories(e.target.value)}
-              placeholder="Bát đĩa, bình hoa, đồ trang trí…"/>
-          </FormField>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Nhóm sản phẩm (tích chọn nhiều nhóm)</Label>
+            <div className="grid max-h-52 grid-cols-2 gap-2 overflow-y-auto rounded-lg border bg-muted/15 p-3 sm:grid-cols-3">
+              {allGroups.map(group=><label key={group.code}
+                className="flex cursor-pointer items-start gap-2 rounded-md p-1.5 text-sm hover:bg-muted/60">
+                <Checkbox checked={categories.includes(group.code)}
+                  onCheckedChange={checked=>toggleGroup(group.code,checked===true)}
+                  aria-label={group.name}/>
+                <span>{group.name}</span>
+              </label>)}
+              {!allGroups.length && <p className="col-span-full text-xs text-muted-foreground">
+                Chưa có nhóm sản phẩm trong danh mục.
+              </p>}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Đã chọn {categories.length}/12 nhóm.
+              {categories.length>0&&` ${supplierGroupNames(categories,allGroups).join(' · ')}`}
+            </p>
+            {canManageGroups && <div className="flex flex-wrap gap-2">
+              <Input value={newGroupName} maxLength={80} className="min-w-40 flex-1"
+                aria-label="Tên nhóm sản phẩm mới"
+                onChange={e=>setNewGroupName(e.target.value)}
+                placeholder="Thêm nhóm mới vào danh mục dùng chung"/>
+              <Button type="button" size="sm" variant="outline"
+                disabled={newGroupName.trim().length<2||addGroup.isPending}
+                onClick={()=>addGroup.mutate()}>
+                <Plus className="mr-1 h-4 w-4"/>Thêm nhóm
+              </Button>
+            </div>}
+          </div>
           <FormField id="supplier-contact" label="Người liên hệ">
             <Input id="supplier-contact" maxLength={160} value={state.contact_name}
               onChange={e=>update('contact_name',e.target.value)} placeholder="Họ tên người liên hệ"/>
@@ -128,7 +175,7 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,onSaved
         </p>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={()=>onOpenChange(false)}>Hủy</Button>
-          <Button type="submit" disabled={save.isPending||!state.name.trim()}>
+          <Button type="submit" disabled={save.isPending||categories.length>12||!state.name.trim()}>
             {save.isPending?<LoaderCircle className="mr-2 h-4 w-4 animate-spin"/>:<Save className="mr-2 h-4 w-4"/>}
             Lưu hồ sơ
           </Button>
