@@ -66,9 +66,9 @@ export function MobileLauncher({ groups, userId, area, accessReady = true, name 
     const parent = groups.find(g => g.items.some(i => i.to === item.to));
     const Icon = item.icon;
     return <div key={item.to || item.label} className="launcher-app relative min-w-0">
-      <Button asChild variant="ghost" className="launcher-tile h-full min-h-28 w-full flex-col justify-start gap-2 whitespace-normal rounded-2xl px-1 pb-2 pt-3 text-center">
-        {item.comingSoon ? <span aria-disabled="true"><span className="launcher-icon launcher-tone-muted"><Icon /></span><span className="block text-xs mt-3 leading-relaxed">{item.label}</span><span className="block text-[10px] text-muted-foreground mt-1">Sắp ra mắt</span></span> :
-          <Link to={item.to} search={item.to === '/' ? { view: 'dashboard' } : {}}><span className={`launcher-icon ${tones[parent?.label ?? ''] ?? 'launcher-tone-primary'}`}><Icon /></span><span className="text-xs leading-relaxed font-medium break-words">{item.label}</span></Link>}
+      <Button asChild variant="ghost" className="launcher-tile h-full min-h-32 w-full flex-col justify-start gap-2 whitespace-normal rounded-2xl px-2 pb-3 pt-3 text-center">
+        {item.comingSoon ? <span aria-disabled="true"><span className="launcher-icon launcher-tone-muted"><Icon /></span><span className="block mt-3 text-sm leading-snug">{item.label}</span><span className="block text-[10px] text-muted-foreground mt-1">Sắp ra mắt</span></span> :
+          <Link to={item.to} search={item.to === '/' ? { view: 'dashboard' } : {}}><span className={`launcher-icon ${tones[parent?.label ?? ''] ?? 'launcher-tone-primary'}`}><Icon /></span><span className="text-sm leading-snug font-medium break-words">{item.label}</span></Link>}
       </Button>
     </div>;
   };
