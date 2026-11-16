@@ -1,0 +1,35 @@
+name: Shared supplier master validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/procurement/**'
+      - 'src/lib/procurement/**'
+      - 'src/routes/procurement_.suppliers.tsx'
+      - 'src/routes/showroom_.suppliers.tsx'
+      - 'src/routes/order-tracking.index.tsx'
+      - 'src/lib/auth.ts'
+      - 'src/lib/navigation.ts'
+      - 'src/lib/navigation.test.ts'
+      - 'src/routeTree.gen.ts'
+      - 'drizzle/migrations/0408_procurement_shared_supplier_master.sql'
+      - 'drizzle/migrations/0409_procurement_shared_supplier_rpc.sql'
+      - 'drizzle/migrations/0410_supplier_master_cutover_cleanup.sql'
+      - '.github/workflows/supplier-master-validation.yml'
+  pull_request:
+    paths:
+      - 'src/components/procurement/**'
+      - 'src/lib/procurement/**'
+      - 'src/routes/procurement_.suppliers.tsx'
+      - 'src/lib/navigation.ts'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx vitest run src/lib/navigation.test.ts src/lib/procurement/suppliers.test.ts
+      - run: bunx tsc --noEmit
+      - run: bun run build
