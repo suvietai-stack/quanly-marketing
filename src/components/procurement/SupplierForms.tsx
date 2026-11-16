@@ -185,13 +185,14 @@ export function SupplierEditDialog({open,onOpenChange,supplier,canManage,
   </Dialog>;
 }
 
-export function SupplierProductDialog({open,onOpenChange,supplierId,product,canManage,canViewCost,onSaved}:{
+export function SupplierProductDialog({open,onOpenChange,supplierId,product,canManage,canViewCost,groups,onSaved}:{
   open:boolean;
   onOpenChange:(open:boolean)=>void;
   supplierId:string;
   product:SupplierProduct|null;
   canManage:boolean;
   canViewCost:boolean;
+  groups:SupplierProductGroup[];
   onSaved:()=>void;
 }) {
   const [state,setState]=useState<ProductSavePayload>(()=>({
@@ -218,7 +219,7 @@ export function SupplierProductDialog({open,onOpenChange,supplierId,product,canM
     <DialogContent className="max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{product?'Sửa sản phẩm cung ứng':'Thêm sản phẩm của nhà cung cấp'}</DialogTitle>
-        <DialogDescription>Danh mục phục vụ tìm nguồn hàng Showroom; chưa phải tồn kho hay đơn đặt mua.</DialogDescription>
+        <DialogDescription>Danh mục nguồn hàng dùng chung; chưa phải tồn kho hay đơn đặt mua.</DialogDescription>
       </DialogHeader>
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
@@ -230,9 +231,15 @@ export function SupplierProductDialog({open,onOpenChange,supplierId,product,canM
             <Input id="supplier-product-sku" maxLength={80} value={state.sku}
               onChange={e=>set('sku',e.target.value)} placeholder="SKU nhà cung cấp"/>
           </FormField>
-          <FormField id="supplier-product-category" label="Nhóm hàng">
-            <Input id="supplier-product-category" maxLength={120}
-              value={state.category} onChange={e=>set('category',e.target.value)}/>
+          <FormField id="supplier-product-category" label="Nhóm sản phẩm">
+            <select id="supplier-product-category" value={state.category}
+              onChange={e=>set('category',e.target.value)}
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+              <option value="">Chưa phân nhóm</option>
+              {groups.map(group=><option key={group.code} value={group.code}>{group.name}</option>)}
+              {state.category && !groups.some(g=>g.code===state.category) &&
+                <option value={state.category}>{state.category} (nhóm cũ)</option>}
+            </select>
           </FormField>
           <FormField id="supplier-product-unit" label="Đơn vị tính *">
             <Input id="supplier-product-unit" required maxLength={40}
