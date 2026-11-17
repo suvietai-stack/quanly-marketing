@@ -1,5 +1,5 @@
 import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {useQuery} from '@tanstack/react-query';
 import { useStore, fmtDate, type DesignOrder, type OrderStatus, type OrderHistoryEntry, ORDER_STATUSES, ORDER_TYPES, ORDER_SOURCES, ORDER_PRIORITIES } from "@/lib/store";
 import { useCurrentUser, type PermissionKey } from "@/lib/auth";
@@ -30,10 +30,20 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const found = orderId ? s.orders.find((o) => o.id === orderId) : null;
   const [draft, setDraft] = useState<Partial<DesignOrder>>({});
   const [reviewNote, setReviewNote] = useState("");
+  const [forceTarget, setForceTarget] = useState<OrderStatus | "">("");
+  const [forceReason, setForceReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [uploading,setUploading]=useState(false);
   const [activeTab, setActiveTab] = useState("workflow");
+
+  useEffect(() => {
+    setDraft({});
+    setForceTarget("");
+    setForceReason("");
+    setSaveError("");
+    setActiveTab("workflow");
+  }, [orderId]);
   const team=useQuery({queryKey:['design-team-access',user?.id],enabled:!!user?.id,
     queryFn:async()=>{const {data,error}=await (supabase as any).rpc('design_team_access');if(error)throw error;return !!data;},staleTime:60000,retry:1});
 
@@ -73,14 +83,22 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   async function persist(patch: Partial<DesignOrder>) {
     if(saving)return false;setSaving(true);setSaveError('');
     try {await saveDesignOrder(order.id,patch,order);await s.reload();setDraft({});return true;}
-    catch(e){setSaveError(e instanceof Error?e.message:'Không lưu được Order');return false;}finally{setSaving(false);}
+    catch(e){
+      const message = e instanceof Error ? e.message : 'Không lưu được Job';
+      setSaveError(message);
+      toast.error('Không lưu được Job', { description: message });
+      return false;
+    }finally{setSaving(false);}
   }
   async function transition(toStatus: OrderStatus, action: string, extra: Partial<DesignOrder> = {}, note?: string, forced?: boolean) {
     const history = pushHistory(action, order.status, toStatus, note, forced);
-    if(!await persist({ ...draft, status: toStatus, history, ...extra }))return;
+    // A forced transition is a single auditable state change, not a save of unrelated
+    // unsaved form fields. It must not be rejected due to a stale draft.
+    if(!await persist({ ...(forced ? {} : draft), status: toStatus, history, ...extra }))return false;
     setDraft({});
     setReviewNote("");
     toast.success(action);
+    return true;
   }
 
   async function saveOnly() {
@@ -267,7 +285,10 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 <DesignAssigneePicker flow={o.workflowKind} value={order.assignee} valueId={order.assigneeId}
                   onChange={(name,id)=>{
                     if(!name||!id)return;
-                    if(name === (o.reviewer||o.requester)){toast.error('Người thực hiện phải khác người duyệt.');return;}
+                    if(name === (o.reviewer||o.requester)){
+                      toast.error('Người thực hiện trùng người duyệt. Hãy chọn người duyệt khác trước khi phân công.');
+                      return;
+                    }
                     if(name===order.assignee && id===order.assigneeId)return;
                     const now=new Date().toISOString();
                     const action=order.assignee
@@ -275,7 +296,11 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                       : 'Bổ sung người thực hiện: '+name;
                     const next='Chờ nhận việc' as OrderStatus;
                     const history=pushHistory(action,order.status,next);
-                    void persist({assignee:name,assigneeId:id,assignedBy:userName,assignedAt:now,status:next,history});
+                    void persist({
+                      ...(draft.reviewer !== undefined ? {reviewer:draft.reviewer} : {}),
+                      assignee:name,assigneeId:id,assignedBy:userName,assignedAt:now,status:next,history,
+                    })
+                      .then(ok => { if (ok) toast.success('Đã phân công người thực hiện'); });
                   }}
                   required disabled={saving||uploading||!canTransfer} label={order.assignee?'Chuyển người thực hiện':'Chọn người thực hiện'}/>
                 <p className="text-xs text-muted-foreground">Người tạo phải chọn nhân viên khi tạo Job. Sau đó, nhân viên Thiết kế đang thực hiện được chuyển Job cho đồng nghiệp. Mọi lần chuyển đều lưu lịch sử.</p>
@@ -363,14 +388,30 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               </div>
 
               {canForce && (
-                <div className="border-t pt-3">
-                  <Label className="text-xs">Khôi phục nghiệp vụ (quản trị đặc biệt)</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Select value={order.status} onValueChange={(v) => transition(v as OrderStatus, "Ép chuyển trạng thái", {}, undefined, true)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{ORDER_STATUSES.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2 border-t pt-3">
+                  <Label htmlFor="design-force-status" className="text-xs">Ép chuyển trạng thái (có ghi lịch sử)</Label>
+                  <Select value={forceTarget} onValueChange={(v) => setForceTarget(v as OrderStatus)} disabled={saving || uploading}>
+                    <SelectTrigger id="design-force-status" aria-label="Trạng thái muốn chuyển"><SelectValue placeholder="Chọn trạng thái đích" /></SelectTrigger>
+                    <SelectContent>{ORDER_STATUSES.filter(st => st !== order.status).map(st => <SelectItem key={st} value={st}>{st}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <Input
+                    value={forceReason}
+                    onChange={(e) => setForceReason(e.target.value)}
+                    placeholder="Lý do ép trạng thái (bắt buộc)"
+                    aria-label="Lý do ép chuyển trạng thái"
+                    disabled={saving || uploading}
+                  />
+                  <Button className="min-h-11 w-full sm:w-auto" variant="destructive"
+                    disabled={saving || uploading || !forceTarget || forceTarget === order.status || forceReason.trim().length < 3}
+                    onClick={async () => {
+                      if (!forceTarget || forceReason.trim().length < 3) return;
+                      if (await transition(forceTarget, 'Ép chuyển trạng thái', {}, forceReason.trim(), true)) {
+                        setForceTarget('');
+                        setForceReason('');
+                      }
+                    }}>
+                    Xác nhận ép chuyển trạng thái
+                  </Button>
                 </div>
               )}
             </CardContent></Card>
