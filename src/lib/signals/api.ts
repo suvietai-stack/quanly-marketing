@@ -120,9 +120,19 @@ export async function signalHistory(id: string, offset = 0): Promise<{ notes: Si
 }
 
 export async function salesList(): Promise<{ id: string; full_name: string }[]> {
-  const { data, error } = await db.rpc("signal_sales_list");
-  if (error) throw error;
-  return data ?? [];
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
+  try{
+    const {data,error}=await db.rpc("signal_sales_list").abortSignal(controller.signal);
+    if(error)throw new Error(error.message);
+    return data??[];
+  }catch(error){
+    if(controller.signal.aborted)
+      throw new Error("Dịch vụ danh sách Sale không phản hồi trong 12 giây. Kiểm tra kết nối rồi thử lại.");
+    throw error;
+  }finally{
+    clearTimeout(timeout);
+  }
 }
 
 /** Chỉ đối chiếu trong những tín hiệu người dùng được phép xem (RLS). */
