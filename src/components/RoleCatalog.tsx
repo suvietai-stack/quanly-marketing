@@ -32,7 +32,6 @@ export function RoleCatalog({canManage}:{canManage:boolean}) {
  if(q.error)return <div role="alert"><p className="text-destructive">{q.error.message}</p><Button variant="outline" onClick={()=>q.refetch()}>Thử lại</Button></div>;
  const catalog=q.data; const editAllowed=canManage&&isSuperAdmin&&user?.status==='Đang hoạt động';
  const roles=catalog.roles.filter(r=>r.role_kind===filter && r.catalog_state==='standard'
-   && (r.id.startsWith('role-v2-')||r.id.startsWith('role-custom-'))
    && (filter!=='position'||roleArea==='all'||r.catalog_group===roleArea)
    && `${r.name} ${r.id}`.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')));
  const label=(key:string)=>PERMISSIONS.find(p=>p.key===key)?.label??key;
