@@ -14,20 +14,18 @@ export function DesignWorkflowSummary({ order }: { order: DesignOrder }) {
   const currentLabel = cancelled ? "Đã hủy" : stages[index]?.label ?? "Nhận việc";
 
   return (
-    <section className="min-w-0 rounded-lg border border-border/75 px-3 py-2.5 sm:px-4 sm:py-3"
+    <section className="relative min-w-0 rounded-lg border border-border/75 px-3 py-2.5 sm:px-4 sm:py-3"
       aria-label="Tiến trình công việc">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pr-24 text-sm">
           <span className="text-muted-foreground">Tiến độ</span>
           <strong className="font-semibold">
             {cancelled ? "Job đã hủy" : `Bước ${index + 1}/${stages.length} · ${currentLabel}`}
           </strong>
-        </div>
-        <details className="group text-xs text-muted-foreground">
-          <summary className="flex cursor-pointer select-none items-center gap-1 rounded px-1 py-1 hover:text-foreground">
-            Xem các bước <ChevronDown className="size-3.5 transition-transform group-open:rotate-180"/>
+        <details className="group absolute right-3 top-2 z-20 text-xs text-muted-foreground sm:right-4">
+          <summary className="flex cursor-pointer select-none items-center gap-1 rounded px-1 py-1.5 hover:text-foreground">
+            Các bước <ChevronDown className="size-3.5 transition-transform group-open:rotate-180"/>
           </summary>
-          <ol className="mt-1 grid gap-1.5 rounded-md border bg-muted/20 p-2 sm:grid-cols-5">
+          <ol className="absolute right-0 top-full grid w-[min(80vw,36rem)] grid-cols-2 gap-1.5 rounded-lg border bg-background p-2 shadow-lg sm:grid-cols-5">
             {stages.map((s, i) => (
               <li key={s.key} aria-current={s.key === stage ? "step" : undefined}
                 className={`flex min-w-0 items-center gap-1.5 rounded px-1 py-1 ${!cancelled && s.key === stage ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground"}`}>
