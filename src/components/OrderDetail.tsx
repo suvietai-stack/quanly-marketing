@@ -1,5 +1,5 @@
 import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {useQuery} from '@tanstack/react-query';
 import { useStore, fmtDate, type DesignOrder, type OrderStatus, type OrderHistoryEntry, ORDER_STATUSES, ORDER_TYPES, ORDER_SOURCES, ORDER_PRIORITIES } from "@/lib/store";
 import { useCurrentUser, type PermissionKey } from "@/lib/auth";
@@ -36,6 +36,14 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const [saveError, setSaveError] = useState('');
   const [uploading,setUploading]=useState(false);
   const [activeTab, setActiveTab] = useState("workflow");
+
+  useEffect(() => {
+    setDraft({});
+    setForceTarget("");
+    setForceReason("");
+    setSaveError("");
+    setActiveTab("workflow");
+  }, [orderId]);
   const team=useQuery({queryKey:['design-team-access',user?.id],enabled:!!user?.id,
     queryFn:async()=>{const {data,error}=await (supabase as any).rpc('design_team_access');if(error)throw error;return !!data;},staleTime:60000,retry:1});
 
@@ -277,7 +285,10 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 <DesignAssigneePicker flow={o.workflowKind} value={order.assignee} valueId={order.assigneeId}
                   onChange={(name,id)=>{
                     if(!name||!id)return;
-                    if(name === (o.reviewer||o.requester)){toast.error('Người thực hiện phải khác người duyệt.');return;}
+                    if(name === (o.reviewer||o.requester)){
+                      toast.error('Người thực hiện trùng người duyệt. Hãy chọn người duyệt khác trước khi phân công.');
+                      return;
+                    }
                     if(name===order.assignee && id===order.assigneeId)return;
                     const now=new Date().toISOString();
                     const action=order.assignee
@@ -285,7 +296,10 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                       : 'Bổ sung người thực hiện: '+name;
                     const next='Chờ nhận việc' as OrderStatus;
                     const history=pushHistory(action,order.status,next);
-                    void persist({assignee:name,assigneeId:id,assignedBy:userName,assignedAt:now,status:next,history})
+                    void persist({
+                      ...(draft.reviewer !== undefined ? {reviewer:draft.reviewer} : {}),
+                      assignee:name,assigneeId:id,assignedBy:userName,assignedAt:now,status:next,history,
+                    })
                       .then(ok => { if (ok) toast.success('Đã phân công người thực hiện'); });
                   }}
                   required disabled={saving||uploading||!canTransfer} label={order.assignee?'Chuyển người thực hiện':'Chọn người thực hiện'}/>
@@ -388,9 +402,9 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                     disabled={saving || uploading}
                   />
                   <Button className="min-h-11 w-full sm:w-auto" variant="destructive"
-                    disabled={saving || uploading || !forceTarget || forceTarget === order.status || !forceReason.trim()}
+                    disabled={saving || uploading || !forceTarget || forceTarget === order.status || forceReason.trim().length < 3}
                     onClick={async () => {
-                      if (!forceTarget || !forceReason.trim()) return;
+                      if (!forceTarget || forceReason.trim().length < 3) return;
                       if (await transition(forceTarget, 'Ép chuyển trạng thái', {}, forceReason.trim(), true)) {
                         setForceTarget('');
                         setForceReason('');
