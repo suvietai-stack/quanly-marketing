@@ -1,5 +1,5 @@
 import { expect,it } from 'vitest';
-import { designCan,designStats,designRange,designOverdue,statusAt,formatSeconds } from './design';
+import { designCan,designStats,designRange,designOverdue,statusAt,formatSeconds,selectedDesignAssigneeId } from './design';
 import type { DesignOrder } from '../store';
 const order=(patch:Partial<DesignOrder>={}):DesignOrder=>({id:'1',title:'Job',brandId:'b',type:'Banner website',source:'Web',status:'Hoàn thành',deadline:'2026-11-07',history:[{at:'2026-11-01T01:00:00Z',byName:'A',action:'Tạo',toStatus:'Cần giao người'},{at:'2026-11-07T01:00:00Z',byName:'B',action:'Nhận',toStatus:'Đang thực hiện'},{at:'2026-11-07T01:01:03Z',byName:'A',action:'Xong',toStatus:'Hoàn thành'}],...patch});
 const range={from:Date.parse('2026-11-07T00:00:00+07:00'),to:Date.parse('2026-11-07T23:59:59.999+07:00')};
@@ -12,3 +12,10 @@ it('historical period does not leak future completion',()=>{expect(statusAt(orde
 it('flow create never grants view-all and explicit flow limits replace legacy breadth per action',()=>{const permissions=['order.create','order.view','order.photo.view'];const can=(p:string)=>permissions.includes(p);expect(designCan(can,'photo','create')).toBe(true);expect(designCan(can,'order_mockup','view')).toBe(false);expect(designCan(can,'photo','view_all')).toBe(false);});
 it('all three flows keep product type separate and unknown stays unknown',()=>{expect(order({workflowKind:'photo'}).type).toBe('Banner website');expect(order().workflowKind).toBeUndefined();});
 it('Vietnam day starts at 17:00 UTC previous day and seconds stay precise',()=>{expect(designRange('day','','',Date.parse('2026-11-07T01:00:00Z')).from).toBe(Date.parse('2026-11-06T17:00:00Z'));expect(formatSeconds(63)).toBe('0 ngày 00:01:03');});
+it('legacy design jobs show the existing assignee by unique name without changing stored data',()=>{
+  const candidates=[{user_id:'staff-1',name:'Vũ Hạnh'},{user_id:'staff-2',name:'Nguyễn Thương'}];
+  expect(selectedDesignAssigneeId(candidates,undefined,'Vũ Hạnh')).toBe('staff-1');
+  expect(selectedDesignAssigneeId(candidates,'staff-2','Vũ Hạnh')).toBe('staff-2');
+  expect(selectedDesignAssigneeId(candidates,undefined,'Không tồn tại')).toBe('_');
+  expect(selectedDesignAssigneeId([...candidates,{user_id:'staff-3',name:'Vũ Hạnh'}],undefined,'Vũ Hạnh')).toBe('_');
+});
