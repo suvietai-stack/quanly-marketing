@@ -24,6 +24,7 @@ import {DesignReviewerPicker} from './DesignReviewerPicker';
 import {reviewerIsAssignee} from '@/lib/orders/reviewer';
 import { DesignJobChat, DesignJobChatTab } from '@/components/design/DesignJobChat';
 import {validDocumentUrl} from '@/lib/orders/catalogs';
+import {Sparkles} from 'lucide-react';
 
 export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   useRegisterAiRecord('design',open?orderId:null);
@@ -240,27 +241,36 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="design-mobile-dialog max-w-4xl max-h-[90dvh] overflow-x-hidden overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="design-dialog-title flex min-w-0 flex-wrap items-center gap-2 pr-8 text-left sm:gap-3">
-            <span className="min-w-0 break-words">{order.title}</span>
+      <DialogContent className="design-mobile-dialog max-h-[94dvh] w-[calc(100vw-1rem)] max-w-4xl space-y-3 overflow-x-hidden overflow-y-auto p-3 sm:p-5">
+        <DialogHeader className="space-y-1.5 border-b pb-3 pr-7 text-left">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <DialogTitle className="design-dialog-title min-w-0 break-words text-left text-lg font-semibold leading-6 sm:text-xl">
+              {order.title}
+            </DialogTitle>
             <StatusBadge value={order.status} />
-            {order.priority && <StatusBadge value={order.priority} />}
-            {order.revisions ? <span className="text-xs text-muted-foreground">Sửa: {order.revisions} lần</span> : null}
-          </DialogTitle>
-          <div className="design-dialog-meta text-sm leading-6 text-muted-foreground">
-            {designLabel(order.workflowKind)} · {s.brands.find((b) => b.id === order.brandId)?.name || 'Không gắn thương hiệu'} · {order.workCategoryName || order.type} · Nguồn: {order.source}
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div className="design-dialog-meta min-w-0 text-xs leading-5 text-muted-foreground">
+              {[
+                designLabel(order.workflowKind),
+                s.brands.find(b => b.id === order.brandId)?.name,
+                order.workCategoryName || order.type,
+                order.priority && order.priority !== 'Trung bình' ? `Ưu tiên ${order.priority}` : undefined,
+              ].filter(Boolean).join(' · ')}
+            </div>
+            <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 gap-1.5 px-2 text-xs text-muted-foreground" onClick={openRecordAi}>
+              <Sparkles className="size-3.5"/> Hỏi Đốm
+            </Button>
           </div>
         </DialogHeader>
 
-        <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={openRecordAi}>Hỏi Đốm về hồ sơ này</Button>
         <DesignWorkflowSummary order={order} />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="design-job-tabs grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
-            <TabsTrigger value="info" className="min-h-11 text-[13px] sm:text-sm">Thông tin</TabsTrigger>
-            <TabsTrigger value="workflow" className="min-h-11 text-[13px] sm:text-sm">Xử lý</TabsTrigger>
+          <TabsList className="design-job-tabs sticky top-0 z-10 flex h-auto w-full items-center gap-1 rounded-lg bg-background/95 p-1 shadow-sm backdrop-blur [&>[role=tab]]:min-w-0 [&>[role=tab]]:flex-1 [&>[role=tab]]:px-2">
+            <TabsTrigger value="info" className="min-h-9 text-xs sm:text-sm">Thông tin</TabsTrigger>
+            <TabsTrigger value="workflow" className="min-h-9 text-xs sm:text-sm">Xử lý</TabsTrigger>
             <DesignJobChatTab jobId={order.id} active={open} />
-            <TabsTrigger value="history" className="min-h-11 text-[13px] sm:text-sm">Lịch sử ({order.history?.length || 0})</TabsTrigger>
+            <TabsTrigger value="history" className="min-h-9 text-xs sm:text-sm">Lịch sử ({order.history?.length || 0})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
