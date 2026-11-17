@@ -18,3 +18,17 @@ it('one unit/title pair remains one position even with many staff and stale refe
   cfg.memberships = [row('a', 'u1'), row('b', 'u2'), row('missing', 'u3', { title_id: 'missing' })];
   expect(positionPairs(cfg).map(p => [p.unit.id, p.title.id])).toEqual([['department', 'staff']]);
 });
+it('does not offer obsolete global business titles or inactive team-lead positions in Role binding', () => {
+  const cfg=emptyConfig();
+  cfg.units=[{id:'department',name:'Phòng Phân Phối',kind:'department',active:true}];
+  cfg.titles=[
+    {id:'head',unit_id:'department',name:'Trưởng phòng Phân Phối',source:'canonical',active:true},
+    {id:'team-lead',unit_id:'department',name:'Trưởng nhóm Phân Phối',source:'canonical',active:false},
+    {id:'old',name:'Trưởng Nhóm',source:'biz_positions',active:true},
+  ];
+  cfg.memberships=[
+    row('old-appointment','u1',{title_id:'old',active:false}),
+    row('old-team','u2',{title_id:'team-lead',active:false}),
+  ];
+  expect(positionPairs(cfg).map(({unit,title})=>[unit.id,title.id])).toEqual([['department','head']]);
+});
