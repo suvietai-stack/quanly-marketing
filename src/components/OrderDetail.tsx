@@ -241,7 +241,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="design-mobile-dialog max-h-[94dvh] w-[calc(100vw-1rem)] max-w-4xl space-y-3 overflow-x-hidden overflow-y-auto p-3 sm:p-5">
+      <DialogContent className="design-mobile-dialog max-h-[94dvh] w-[calc(100vw-1rem)] max-w-4xl gap-3 overflow-x-hidden overflow-y-auto p-3 sm:p-5">
         <DialogHeader className="space-y-1.5 border-b pb-3 pr-7 text-left">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <DialogTitle className="design-dialog-title min-w-0 break-words text-left text-lg font-semibold leading-6 sm:text-xl">
