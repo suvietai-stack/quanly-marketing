@@ -20,6 +20,8 @@ import { DesignWorkflowSummary } from './DesignWorkflowSummary';
 import {DesignClassification} from './DesignClassification';
 import {DesignAttachments} from './DesignAttachments';
 import {DesignAssigneePicker} from './DesignAssigneePicker';
+import {DesignReviewerPicker} from './DesignReviewerPicker';
+import {reviewerIsAssignee} from '@/lib/orders/reviewer';
 import { DesignJobChat, DesignJobChatTab } from '@/components/design/DesignJobChat';
 import {validDocumentUrl} from '@/lib/orders/catalogs';
 
@@ -54,7 +56,9 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const setField = (patch: Partial<DesignOrder>) => setDraft((d) => ({ ...d, ...patch }));
   const userName = user?.fullName || user?.username || "—";
   const isOwner = !!user && (o.assigneeId ? o.assigneeId === user.id : (o.assignee === userName || o.assignee === user.username));
-  const isReviewer = !!user && (o.reviewer === userName || o.reviewer === user.username);
+  const isReviewer = !!user && (o.reviewerId
+    ? o.reviewerId === user.id
+    : (o.reviewer === userName || o.reviewer === user.username));
   const isRequester = !!user && (o.requester === userName || o.requester === user.username);
   // Default reviewer = requester if no reviewer specified
   const isApprover = isReviewer || (!o.reviewer && isRequester);
@@ -143,7 +147,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
     });
   }
   const effectiveReviewer = o.reviewer || o.requester;
-  const selfApproval = !!o.assignee && !!effectiveReviewer && o.assignee === effectiveReviewer;
+  const selfApproval = reviewerIsAssignee(o.reviewerId || (!o.reviewer?order.recordCreatedBy:undefined),
+    o.assigneeId,effectiveReviewer,o.assignee);
 
   if (status === "Đang thực hiện") {
     actions.push({
@@ -286,7 +291,8 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 <DesignAssigneePicker flow={o.workflowKind} value={order.assignee} valueId={order.assigneeId}
                   onChange={(name,id)=>{
                     if(!name||!id)return;
-                    if(name === (o.reviewer||o.requester)){
+                    if(reviewerIsAssignee(o.reviewerId || (!o.reviewer?order.recordCreatedBy:undefined),
+                        id,o.reviewer||o.requester,name)){
                       toast.error('Người thực hiện trùng người duyệt. Hãy chọn người duyệt khác trước khi phân công.');
                       return;
                     }
@@ -298,7 +304,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                     const next='Chờ nhận việc' as OrderStatus;
                     const history=pushHistory(action,order.status,next);
                     void persist({
-                      ...(draft.reviewer !== undefined ? {reviewer:draft.reviewer} : {}),
+                      ...(draft.reviewer !== undefined ? {reviewer:draft.reviewer,reviewerId:draft.reviewerId} : {}),
                       assignee:name,assigneeId:id,assignedBy:userName,assignedAt:now,status:next,history,
                     })
                       .then(ok => { if (ok) toast.success('Đã phân công người thực hiện'); });
@@ -306,17 +312,13 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                   required disabled={saving||uploading||!canTransfer} label={order.assignee?'Chuyển người thực hiện':'Chọn người thực hiện'}/>
                 <p className="text-xs text-muted-foreground">Người tạo phải chọn nhân viên khi tạo Job. Sau đó, nhân viên Thiết kế đang thực hiện được chuyển Job cho đồng nghiệp. Mọi lần chuyển đều lưu lịch sử.</p>
               </div>
-              <PersonSelect
-                label="Người duyệt"
-                value={o.reviewer || o.requester}
-                onChange={(v) => {
-                  if (v && o.assignee && v === o.assignee) {
-                    toast.error("Người duyệt không thể đồng thời là Người phụ trách. Vui lòng chọn người khác.");
-                    return;
-                  }
-                  setField({ reviewer: v });
-                }}
-                disabled={!(isAdmin || designCan(can,order.workflowKind,'edit_reviewer') || (isRequester && (order.status === "Cần giao người" || order.status === "Chờ nhận việc")))}
+              <DesignReviewerPicker
+                valueId={o.reviewerId || (!o.reviewer ? order.recordCreatedBy : undefined)}
+                valueName={o.reviewer || o.requester}
+                assigneeId={o.assigneeId}
+                onChange={(name,id) => setField({ reviewer:name, reviewerId:id })}
+                disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'edit_reviewer') || (isRequester && (order.status === "Cần giao người" || order.status === "Chờ nhận việc")))}
+                required
               />
 
               <div className="sm:col-span-2"><Label>Brief</Label>
