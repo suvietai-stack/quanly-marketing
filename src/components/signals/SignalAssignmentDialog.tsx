@@ -35,7 +35,10 @@ export function SignalAssignmentDialog({ actorId, currentId, currentName, custom
             {currentId && <option value="__unassign">Bỏ phân công — để trống người phụ trách</option>}
           </select>
         </div>
-        {sales.isError && <div role="alert" className="text-sm text-destructive">Không tải được danh sách Sale. <Button type="button" variant="outline" className="min-h-11" onClick={() => sales.refetch()}>Thử lại</Button></div>}
+        {sales.isError && <div role="alert" className="space-y-2 rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
+          <p>Không tải được danh sách Sale: {sales.error instanceof Error ? sales.error.message : 'Lỗi không xác định'}</p>
+          <Button type="button" variant="outline" className="min-h-11" onClick={() => void sales.refetch()}>Thử lại</Button>
+        </div>}
         {sales.isSuccess && !sales.data.length && <p role="status" className="text-sm text-muted-foreground">Chưa có tài khoản đủ quyền nhận tín hiệu.</p>}
         {valid && <p className="rounded-xl bg-muted p-3 text-sm break-words">{isRemoval ? 'Tín hiệu sẽ trở về chưa phân công.' : <>Người nhận mới: <strong>{target?.full_name}</strong></>}</p>}
         <DialogFooter className="gap-2"><Button type="button" variant="outline" className="min-h-11" disabled={busy} onClick={onClose}>Hủy</Button><Button type="submit" className="min-h-11" disabled={!valid || busy}>{busy ? 'Đang lưu…' : isRemoval ? 'Xác nhận bỏ phân công' : 'Xác nhận phân công'}</Button></DialogFooter>
