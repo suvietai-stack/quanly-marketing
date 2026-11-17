@@ -258,7 +258,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 order.priority && order.priority !== 'Trung bình' ? `Ưu tiên ${order.priority}` : undefined,
               ].filter(Boolean).join(' · ')}
             </div>
-            <Button type="button" variant="ghost" size="sm" className="h-8 shrink-0 gap-1.5 px-2 text-xs text-muted-foreground" onClick={openRecordAi}>
+            <Button type="button" variant="ghost" size="sm" className="min-h-10 shrink-0 gap-1.5 px-2 text-xs text-muted-foreground sm:min-h-8" onClick={openRecordAi}>
               <Sparkles className="size-3.5"/> Hỏi Đốm
             </Button>
           </div>
