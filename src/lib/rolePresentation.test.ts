@@ -13,4 +13,15 @@ describe('Role administration access remains independent of organization editing
   it('unknown names cannot acquire a privileged classification', () => {
     expect(roleFunctionGroup('SEO + Social + Video')).toBe('Khác');
   });
+  it('new B2B, Distribution, BTC and Showroom V2 roles are classified independently', () => {
+    expect(roleFunctionGroup('Nhân viên Kinh doanh B2B')).toBe('B2B');
+    expect(roleFunctionGroup('Giám đốc Trung tâm Kinh doanh Phân Phối')).toBe('Phân Phối');
+    expect(roleFunctionGroup('Giám đốc Trung tâm Kinh doanh BTC')).toBe('BTC');
+    expect(roleFunctionGroup('Cửa hàng trưởng')).toBe('Showroom');
+    expect(roleFunctionGroup('Trưởng phòng Thiết kế')).toBe('Thiết kế');
+  });
+  it('retired V1 role names are not presented as active roles', () => {
+    expect(roleFunctionGroup('Lead Kinh Doanh ĐH')).toBe('Khác');
+    expect(roleFunctionGroup('Designer / Chụp ảnh')).toBe('Khác');
+  });
 });
