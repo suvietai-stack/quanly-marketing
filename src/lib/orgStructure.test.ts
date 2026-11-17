@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { assignMany, assignSlot, endMembership, ensureDefaultStructure, isManagerTitle, membershipKind, missingDefaultStructure, orgConfigDiff, slotCapacity, slotHistory, slotHolders, titleHolders, titleKind, titleLevel, transferMembers, transferPreview, unassignSlot, unitDescendants, unitPath, unitTitles, DEFAULT_TITLES, DEFAULT_UNITS } from './orgStructure';
 import { emptyConfig } from './basePermissions/types';
 
-it('Business titles remain attached to Business descendants after its block gains a Company parent',()=>{
-  const c=emptyConfig();c.units=[{id:'org-company',kind:'company',name:'Công ty',active:true},{id:'biz-block',parent_id:'org-company',kind:'block',name:'Khối đã đổi tên',active:true},{id:'d',parent_id:'biz-block',kind:'department',name:'Phòng',active:true},{id:'m',parent_id:'org-company',kind:'block',name:'Marketing',active:true},{id:'md',parent_id:'m',kind:'department',name:'Phòng M',active:true}];c.titles=[{id:'sale',name:'Nhân viên Kinh doanh',source:'biz_positions',unit_kind:'department',active:true}];
-  expect(unitTitles(c,'d').map(t=>t.id)).toEqual(['sale']);expect(unitTitles(c,'md')).toEqual([]);
+it('old global business positions are hidden; canonical V2 positions remain unit-scoped',()=>{
+  const c=emptyConfig();c.units=[{id:'org-company',kind:'company',name:'Công ty',active:true},{id:'biz-block',parent_id:'org-company',kind:'block',name:'Khối đã đổi tên',active:true},{id:'d',parent_id:'biz-block',kind:'department',name:'Phòng',active:true},{id:'m',parent_id:'org-company',kind:'block',name:'Marketing',active:true},{id:'md',parent_id:'m',kind:'department',name:'Phòng M',active:true}];c.titles=[
+    {id:'sale',name:'Nhân viên Kinh doanh',source:'biz_positions',unit_kind:'department',active:true},
+    {id:'sale-v2',name:'Nhân viên Kinh doanh B2B',source:'canonical',unit_id:'d',active:true}
+  ];
+  expect(unitTitles(c,'d').map(t=>t.id)).toEqual(['sale-v2']);
+  expect(unitTitles(c,'md')).toEqual([]);
 });
 
 describe('ensureDefaultStructure', () => {
