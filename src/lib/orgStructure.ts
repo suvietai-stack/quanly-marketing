@@ -116,20 +116,9 @@ export function missingDefaultStructure(config: OrgConfig): boolean {
 
 /** Chức danh đang hoạt động gắn với một bộ phận (chức danh chung không có unit_id không thuộc ô nào). */
 export function unitTitles(config: OrgConfig, unitId: string): Title[] {
-  const unit = config.units.find(u => u.id === unitId);
-  // Chức danh Kinh doanh không gắn đơn vị chỉ hiển thị trong các đơn vị thuộc Khối Kinh doanh.
-  const inBizBlock = (() => {
-    let cur = unit;
-    const seen = new Set<string>();
-    while (cur && !seen.has(cur.id)) {
-      seen.add(cur.id);
-      if (cur.kind === 'block') return cur.id === 'biz-block' || cur.code === 'business' || cur.name.toLocaleLowerCase('vi').includes('kinh doanh');
-      const parentId = cur.parent_id;
-      cur = config.units.find(x => x.id === parentId);
-    }
-    return false;
-  })();
-  return config.titles.filter(t => t.active && (t.unit_id === unitId || (!t.unit_id && t.source === 'biz_positions' && inBizBlock && (t.unit_kind === unit?.kind || (t.unit_kind === 'individual' && ['department','team'].includes(unit?.kind ?? ''))))));
+  // Each unit owns its position titles; global business titles are retained
+  // for history only, never projected into unrelated centers or departments.
+  return config.titles.filter(t => t.active && t.unit_id === unitId && t.source !== 'biz_positions');
 }
 
 /** Người đang giữ một ô chức danh trong bộ phận. */
