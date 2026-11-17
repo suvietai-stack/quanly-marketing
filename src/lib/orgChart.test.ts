@@ -60,6 +60,24 @@ describe('visual root nesting and biz title scoping', () => {
     expect(dept.slots?.[0].holders).toEqual([]);
   });
 });
+it('keeps Trưởng nhóm hidden until a real team position is active, even with historical assignments', () => {
+  const cfg: OrgConfig={...emptyConfig(),
+    units:[{id:'center',name:'Trung tâm Phân Phối',kind:'system',active:true},
+           {id:'dept',name:'Phòng Phân Phối 1',kind:'department',parent_id:'center',active:true}],
+    titles:[
+      {id:'head',unit_id:'dept',name:'Trưởng phòng Phân Phối',kind:'manager',active:true,source:'canonical'},
+      {id:'staff',unit_id:'dept',name:'Nhân viên Phân Phối',kind:'staff',active:true,source:'canonical'},
+      {id:'team',unit_id:'dept',name:'Trưởng nhóm Phân Phối',kind:'manager',active:false,source:'canonical'},
+      {id:'legacy',name:'Trưởng Nhóm',kind:'manager',active:false,source:'biz_positions'},
+    ],
+    memberships:[{id:'old',unit_id:'dept',title_id:'team',user_id:'u1',
+                  active:false,ends_at:'2026-11-01T00:00:00Z'}]
+  };
+  const center=buildOrganizationTree(cfg,[{id:'u1',name:'Người cũ'}],'2026-11-17T00:00:00Z')[0];
+  expect(center.children[0].slots?.map(s=>s.title)).toEqual(['Trưởng phòng Phân Phối','Nhân viên Phân Phối']);
+  expect(center.children[0].people).toEqual([]);
+});
+
 describe('deduplicate staff within a unit by user ID', () => {
   const cfg: OrgConfig = { ...emptyConfig(), units: [
     { id: 'biz-unit', name: 'Kinh doanh', kind: 'department', active: true },

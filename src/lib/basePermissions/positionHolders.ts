@@ -8,12 +8,12 @@ export function effectivePositionHolders(rows: Membership[], unitId: string, tit
 }
 
 export function positionPairs(config: OrgConfig) {
-  const ids = [...config.titles.filter(t => t.active && t.unit_id).map(t => [t.unit_id, t.id]),
+  const ids = [...config.titles.filter(t => t.active && t.unit_id && t.source !== 'biz_positions').map(t => [t.unit_id, t.id]),
     ...config.memberships.filter(m => m.title_id).map(m => [m.unit_id, m.title_id])];
   const seen = new Set<string>();
   return ids.flatMap(([unitId, titleId]) => {
     const unit = config.units.find(u => u.id === unitId && u.active);
-    const title = config.titles.find(t => t.id === titleId && t.active);
+    const title = config.titles.find(t => t.id === titleId && t.active && t.source !== 'biz_positions');
     if (!unit || !title) return [];
     const key = JSON.stringify([unit.id, title.id]);
     if (seen.has(key)) return [];
