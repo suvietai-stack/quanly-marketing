@@ -47,7 +47,7 @@ function OrganizationWorkspace() {
   const { user, isSuperAdmin: isSA, can: canFn } = useCurrentUser();
   const accessRevision = useAuth(s => s.baseAccess && s.baseAccess.user_id === user?.id ? s.baseAccess.revision : undefined);
   const qc = useQueryClient();
-  const data = useQuery({ queryKey: organizationReadKey(user?.id, accessRevision), queryFn: baseOrgApi.read, enabled: !!user && user.status === 'Đang hoạt động', retry: retryOrganizationRead, retryDelay: organizationRetryDelay, staleTime: 30000, gcTime: 60000, refetchOnWindowFocus: true });
+  const data = useQuery({ queryKey: organizationReadKey(user?.id, accessRevision), queryFn: baseOrgApi.read, enabled: !!user && user.status === 'Đang hoạt động', retry: retryOrganizationRead, retryDelay: organizationRetryDelay, staleTime: 120000, gcTime: 600000, refetchOnWindowFocus: false });
   const [config, setConfig] = useState<OrgConfig>(emptyConfig);
   const [dirty, setDirty] = useState(false);
   const [staffId, setStaffId] = useState('');
@@ -68,7 +68,7 @@ function OrganizationWorkspace() {
   const [membershipMode, setMembershipMode] = useState(false);
   const [showroomRolePreview, setShowroomRolePreview] = useState(false);
   const [reason, setReason] = useState('');
-  useEffect(() => { const timer = setInterval(() => { if (section !== 'settings' && !dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 60000); return () => clearInterval(timer); }, [qc,user?.id,dirty,section]);
+  useEffect(() => { const timer = setInterval(() => { if (section !== 'settings' && !dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 300000); return () => clearInterval(timer); }, [qc,user?.id,dirty,section]);
   const effective = useQuery({ queryKey: effectiveReadKey(user?.id, staffId, accessRevision), queryFn: ({ signal }) => baseOrgApi.effective(staffId, signal), enabled: shouldReadStaffEffective(section, staffTab, staffId), retry: false, staleTime: 30000, gcTime: 60000 });
   useEffect(() => { if (data.data && !dirty) setConfig(structuredClone(data.data.config)); }, [data.data, dirty]);
   useEffect(() => { setDirty(false); setPreview(null); setAssigning(null); setChanging(null); setManageUnit(null); }, [accessRevision]);
