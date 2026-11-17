@@ -20,9 +20,13 @@ export function DesignAssigneePicker({flow,valueId,value,onChange,required=false
 }){
  const q=useDesignAssignees(flow);
  const entries=q.data??[];
+ // Older jobs store only a display name. Resolve a unique matching candidate for
+ // display, without writing or guessing an ID in the database.
+ const legacyMatches=!valueId&&value?entries.filter(p=>p.name===value):[];
+ const selectedId=valueId||(legacyMatches.length===1?legacyMatches[0].user_id:"_");
  return <div className="space-y-1.5">
   <Label>{label}{required?" *":""}</Label>
-  <Select value={valueId||"_"} disabled={disabled||!flow||q.isPending||q.isError}
+  <Select value={selectedId} disabled={disabled||!flow||q.isPending||q.isError}
     onValueChange={id=>{
      if(id==="_"){onChange(undefined,undefined);return;}
      const person=entries.find(x=>x.user_id===id);
