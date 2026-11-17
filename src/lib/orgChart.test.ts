@@ -39,12 +39,25 @@ describe('visual root nesting and biz title scoping', () => {
     expect(tree[0].id).toBe('co');
     expect(tree[0].children.map(c => c.id).sort()).toEqual(['biz', 'mkt']);
   });
-  it('chức danh Kinh doanh chung chỉ hiện trong đơn vị thuộc Khối Kinh doanh', () => {
+  it('never duplicates a legacy global sales title into a department', () => {
     const tree = buildOrganizationTree(cfg, []);
     const biz = tree[0].children.find(c => c.id === 'biz')!;
     const mkt = tree[0].children.find(c => c.id === 'mkt')!;
-    expect(biz.children[0].slots?.map(s => s.title)).toContain('Nhân viên Kinh doanh');
+    expect(biz.children[0].slots ?? []).toEqual([]);
     expect(mkt.children[0].slots ?? []).toEqual([]);
+  });
+
+  it('shows only the exact canonical V2 position of the department', () => {
+    const newer: OrgConfig = {
+      ...cfg,
+      titles: [...cfg.titles,
+        { id: 'role-b2b', name: 'Nhân viên Kinh doanh B2B',
+          unit_id: 'kd1', active: true, source: 'canonical', kind: 'staff', level: 0 }],
+    };
+    const tree = buildOrganizationTree(newer, []);
+    const dept = tree[0].children.find(c => c.id === 'biz')!.children[0];
+    expect(dept.slots?.map(s => s.title)).toEqual(['Nhân viên Kinh doanh B2B']);
+    expect(dept.slots?.[0].holders).toEqual([]);
   });
 });
 describe('deduplicate staff within a unit by user ID', () => {
