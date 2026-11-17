@@ -35,7 +35,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { effectiveReadKey, shouldReadStaffEffective } from '@/lib/basePermissions/workspacePolicy';
 import { organizationReadKey, organizationRetryDelay, retryOrganizationRead } from '@/lib/basePermissions/readPolicy';
 
-const sourceLabel: Record<string, string> = { common:'Quyền chung',default: 'Mặc định', direct: 'Trực tiếp', bundle: 'Bộ quyền', role: 'Role cũ', custom: 'Quyền riêng cũ', business: 'Kinh doanh', appointment_role: 'Role theo bổ nhiệm', marketing_appointment: 'Nhiệm vụ theo bổ nhiệm', marketing_specialty: 'Chuyên môn Marketing' };
+const sourceLabel: Record<string, string> = { common:'Quyền chung',default: 'Mặc định', direct: 'Trực tiếp', bundle: 'Bộ quyền', role: 'Role được cấp riêng', custom: 'Quyền cá nhân', business: 'Kinh doanh', appointment_role: 'Role theo bổ nhiệm', marketing_appointment: 'Nhiệm vụ theo bổ nhiệm', marketing_specialty: 'Chuyên môn Marketing' };
 function PermissionRow({ p }: { p: EffectivePermission }) {
   return <div className="border-b py-3 space-y-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-sm">{p.label}</span><Badge variant={p.allowed ? 'secondary' : 'outline'}>{p.allowed ? 'Được phép' : 'Không được phép'}</Badge></div><p className="text-xs text-muted-foreground">{p.module} · {p.tier === 0 ? 'Quản trị đặc quyền' : `Nấc ${p.tier}`} · {p.scope === 'own' ? 'Dữ liệu của mình' : 'Phạm vi nghiệp vụ hiện tại'}</p><p className="text-xs text-muted-foreground">{p.sources.length ? p.sources.map(s => `${sourceLabel[s.source_kind]}${s.source_name ? `: ${s.source_name}` : ''}${s.ends_at ? ` — đến ${new Date(s.ends_at).toLocaleString('vi-VN')}` : ''}`).join('; ') : sourceLabel[p.legacy.source.kind]}</p>{p.conflict && !p.bypass && <p className="text-xs text-destructive">Xung đột cho phép/từ chối — ưu tiên từ chối</p>}</div>;
 }
@@ -47,7 +47,7 @@ function OrganizationWorkspace() {
   const { user, isSuperAdmin: isSA, can: canFn } = useCurrentUser();
   const accessRevision = useAuth(s => s.baseAccess && s.baseAccess.user_id === user?.id ? s.baseAccess.revision : undefined);
   const qc = useQueryClient();
-  const data = useQuery({ queryKey: organizationReadKey(user?.id, accessRevision), queryFn: baseOrgApi.read, enabled: !!user && user.status === 'Đang hoạt động', retry: retryOrganizationRead, retryDelay: organizationRetryDelay, staleTime: 30000, gcTime: 60000, refetchOnWindowFocus: true });
+  const data = useQuery({ queryKey: organizationReadKey(user?.id, accessRevision), queryFn: baseOrgApi.read, enabled: !!user && user.status === 'Đang hoạt động', retry: retryOrganizationRead, retryDelay: organizationRetryDelay, staleTime: 120000, gcTime: 600000, refetchOnWindowFocus: false });
   const [config, setConfig] = useState<OrgConfig>(emptyConfig);
   const [dirty, setDirty] = useState(false);
   const [staffId, setStaffId] = useState('');
@@ -68,7 +68,7 @@ function OrganizationWorkspace() {
   const [membershipMode, setMembershipMode] = useState(false);
   const [showroomRolePreview, setShowroomRolePreview] = useState(false);
   const [reason, setReason] = useState('');
-  useEffect(() => { const timer = setInterval(() => { if (section !== 'settings' && !dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 60000); return () => clearInterval(timer); }, [qc,user?.id,dirty,section]);
+  useEffect(() => { const timer = setInterval(() => { if (section !== 'settings' && !dirty && document.visibilityState === 'visible') { void qc.invalidateQueries({ queryKey: ['base-org', user?.id] }); } }, 300000); return () => clearInterval(timer); }, [qc,user?.id,dirty,section]);
   const effective = useQuery({ queryKey: effectiveReadKey(user?.id, staffId, accessRevision), queryFn: ({ signal }) => baseOrgApi.effective(staffId, signal), enabled: shouldReadStaffEffective(section, staffTab, staffId), retry: false, staleTime: 30000, gcTime: 60000 });
   useEffect(() => { if (data.data && !dirty) setConfig(structuredClone(data.data.config)); }, [data.data, dirty]);
   useEffect(() => { setDirty(false); setPreview(null); setAssigning(null); setChanging(null); setManageUnit(null); }, [accessRevision]);
