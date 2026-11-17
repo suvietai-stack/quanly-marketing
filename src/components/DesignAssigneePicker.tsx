@@ -12,7 +12,7 @@ export function useDesignAssignees(flow:DesignFlow|undefined){
  return useQuery({
   queryKey:["design-assignable-staff",user?.id,flow],
   enabled:!!flow&&!!user?.id,
-  staleTime:30000,retry:false,
+  staleTime:120000,gcTime:600000,refetchOnWindowFocus:false,retry:false,
   queryFn:async({signal})=>{
    const controller=new AbortController();
    const abort=()=>controller.abort();
