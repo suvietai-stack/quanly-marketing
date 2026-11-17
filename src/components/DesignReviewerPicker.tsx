@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { useStore } from '@/lib/store';
-import { useCurrentUser } from '@/lib/auth';
+import { useAuth, useCurrentUser } from '@/lib/auth';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { reviewerAccountId } from '@/lib/orders/reviewer';
@@ -16,19 +15,19 @@ interface Props {
 
 /** Always chooses an actual, active account ID, never editable free text. */
 export function DesignReviewerPicker({ valueId, valueName, onChange, assigneeId, disabled, required = false }: Props) {
-  const people = useStore(s => s.people);
+  const users = useAuth(s => s.users);
   const { user } = useCurrentUser();
   const accounts = useMemo(() => {
-    const items = people
-      .filter(p => p.accountStatus === 'Đang hoạt động')
-      .map(p => ({ id: p.id, name: p.name, username: '' }));
+    const items = users
+      .filter(p => p.status === 'Đang hoạt động')
+      .map(p => ({ id: p.id, name: p.fullName || p.username, username: p.username }));
     // Authentication and the staff directory may resolve in different frames.
     // The creator must always be available as the default reviewer.
     if (user?.id && !items.some(p => p.id === user.id)) {
       items.push({ id: user.id, name: user.fullName || user.username || 'Tài khoản của tôi', username: user.username || '' });
     }
     return items.sort((a, b) => a.name.localeCompare(b.name, 'vi') || a.id.localeCompare(b.id));
-  }, [people, user?.id, user?.fullName, user?.username]);
+  }, [users, user?.id, user?.fullName, user?.username]);
   const selectedId = reviewerAccountId(accounts, valueId, valueName);
   const unresolved = !!(valueId || valueName) && !accounts.some(p => p.id === selectedId);
   const value = unresolved ? '__legacy__' : (selectedId || '__empty__');
