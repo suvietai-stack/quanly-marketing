@@ -68,7 +68,7 @@ export function DesignClassification({
         {products.map(c => {
           const checked = selected.includes(c.id);
           return <label key={c.id}
-            className={`flex min-h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-xs leading-4 transition-colors sm:text-sm ${checked ? 'border-primary/40 bg-primary/5' : 'border-border/70 hover:bg-muted/30'} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}>
+            className={`flex min-h-11 min-w-0 cursor-pointer items-center sm:min-h-10 gap-2 rounded-md border px-2.5 py-2 text-xs leading-4 transition-colors sm:text-sm ${checked ? 'border-primary/40 bg-primary/5' : 'border-border/70 hover:bg-muted/30'} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}>
             <Checkbox disabled={disabled} checked={checked}
               onCheckedChange={next => {
                 const ids = next ? [...selected, c.id] : selected.filter(id => id !== c.id);
