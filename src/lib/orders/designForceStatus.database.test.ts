@@ -86,7 +86,7 @@ it('Admin assigns an old unassigned Job with no assigneeId and preserves history
     const row=(await db.query<{data:any}>("SELECT data FROM orders WHERE id='old'")).rows[0].data;
     expect(row.assigneeId).toBe(DESIGNER);
     expect(row.history).toHaveLength(2);
-  }finally{await db.exec('RESET ROLE; ROLLBACK');}
+  }finally{await db.exec('ROLLBACK; RESET ROLE;');}
 });
 
 it('permissioned forced approval with reason is allowed and audited',async()=>{
@@ -97,7 +97,7 @@ it('permissioned forced approval with reason is allowed and audited',async()=>{
     const row=(await db.query<{data:any}>("SELECT data FROM orders WHERE id='self'")).rows[0].data;
     expect(row.status).toBe('Đã duyệt');
     expect(row.history.at(-1).forced).toBe(true);
-  }finally{await db.exec('RESET ROLE; ROLLBACK');}
+  }finally{await db.exec('ROLLBACK; RESET ROLE;');}
 });
 
 it('normal self-approval is still blocked',async()=>{
@@ -105,7 +105,7 @@ it('normal self-approval is still blocked',async()=>{
   try{
     await actAs(DESIGNER);
     await expect(change('self','Đã duyệt',false)).rejects.toThrow();
-  }finally{await db.exec('RESET ROLE; ROLLBACK');}
+  }finally{await db.exec('ROLLBACK; RESET ROLE;');}
 });
 
 it('forced approval requires a reason and valid force permission',async()=>{
@@ -113,10 +113,10 @@ it('forced approval requires a reason and valid force permission',async()=>{
   try{
     await actAs(DESIGNER);
     await expect(change('self','Đã duyệt',true)).rejects.toThrow('lý do');
-  }finally{await db.exec('RESET ROLE; ROLLBACK');}
+  }finally{await db.exec('ROLLBACK; RESET ROLE;');}
   await db.exec('BEGIN');
   try{
     await actAs(REVIEWER);
     await expect(change('self','Đã duyệt',true,'Lý do kiểm tra')).rejects.toThrow('Không có quyền ép');
-  }finally{await db.exec('RESET ROLE; ROLLBACK');}
+  }finally{await db.exec('ROLLBACK; RESET ROLE;');}
 });
