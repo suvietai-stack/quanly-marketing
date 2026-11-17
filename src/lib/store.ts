@@ -833,7 +833,8 @@ export interface DesignOrder {
   assignedAt?: string;
   assignee?: string;
   assigneeId?: ID;              // định danh ổn định người phụ trách (ID tài khoản)
-  reviewer?: string;
+  reviewer?: string;           // Tên hiển thị, giữ tương thích Job cũ
+  reviewerId?: ID;             // Tài khoản người duyệt (ID ổn định cho Job mới)
   deadline?: string;
   priority?: OrderPriority;
   brief?: string;
