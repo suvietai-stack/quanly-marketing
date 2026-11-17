@@ -39,6 +39,7 @@ export function DesignAssigneePicker({flow,valueId,value,onChange,required=false
  onChange:(name:string|undefined,id:string|undefined)=>void;required?:boolean;disabled?:boolean;label?:string
 }){
  const q=useDesignAssignees(flow);
+ const {user}=useCurrentUser();
  const entries=q.data??[];
  // Older jobs store only a display name; never guess among duplicate names.
  const selectedId=selectedDesignAssigneeId(entries,valueId,value);
@@ -57,7 +58,8 @@ export function DesignAssigneePicker({flow,valueId,value,onChange,required=false
     {valueId&&!entries.some(p=>p.user_id===valueId)&&<SelectItem value={valueId} disabled>{value||"Người cũ"} (không còn đủ điều kiện)</SelectItem>}
    </SelectContent>
   </Select>
-  {flow&&q.isPending&&<p role="status" className="text-xs text-muted-foreground">Đang tải nhân viên phù hợp…</p>}
+  {flow&&!!user?.id&&q.isPending&&<p role="status" className="text-xs text-muted-foreground">Đang tải nhân viên phù hợp…</p>}
+  {flow&&!user?.id&&<p role="alert" className="text-xs text-destructive">Chưa có phiên đăng nhập hợp lệ. Tải lại trang hoặc đăng nhập lại để chọn nhân viên.</p>}
   {!flow&&<p className="text-xs text-muted-foreground">Chọn hệ Thiết kế trước khi phân công.</p>}
   {q.isError&&<div role="alert" className="space-y-2 rounded-md border border-destructive/30 p-3 text-xs text-destructive">
     <p>Không tải được danh sách nhân viên: {q.error instanceof Error?q.error.message:"Lỗi không xác định"}</p>
