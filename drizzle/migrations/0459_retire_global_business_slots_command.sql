@@ -45,7 +45,7 @@ AS $function$
   VALUES (v->>'id',before_,auth.uid())
   ON CONFLICT (slot_id) DO NOTHING;
   UPDATE public.org_position_slots
-    SET active=false,revision=revision+1,updated_at=now()
+    SET active=false,revision=revision+1
     WHERE id=v->>'id' AND active;
   result_:=result_||jsonb_build_array(before_->>'unit_id');
   CONTINUE;
