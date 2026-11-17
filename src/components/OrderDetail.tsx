@@ -273,31 +273,48 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
             <TabsTrigger value="history" className="min-h-9 text-xs sm:text-sm">Lịch sử ({order.history?.length || 0})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="info" className="space-y-4 mt-4">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div><Label>Nhóm Thiết kế</Label><Select value={o.workflowKind || 'unknown'} disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))} onValueChange={v=>setField({workflowKind:v as DesignOrder['workflowKind']})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{!o.workflowKind && <SelectItem value="unknown">Chưa phân loại luồng</SelectItem>}{DESIGN_FLOWS.filter(f=>isAdmin || designCan(can,f.key,'assign')).map(f=><SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}</SelectContent></Select></div>
-              <div className="sm:col-span-2"><Label>Tên Job</Label>
-                <Input value={o.title} disabled={!canEdit} onChange={(e) => setField({ title: e.target.value })} /></div>
-              {o.workflowKind ? <DesignClassification flow={o.workflowKind} value={o} onChange={setField} disabled={!canEdit}/> : <p className="text-sm">Loại lịch sử: {o.type}</p>}
-              <div><Label>Nguồn yêu cầu</Label>
-                <Select value={o.source} onValueChange={(v) => setField({ source: v as any })} disabled={!canEdit}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ORDER_SOURCES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select></div>
-              <div><Label>Mức ưu tiên</Label>
-                <Select value={o.priority || "Trung bình"} onValueChange={(v) => setField({ priority: v as any })} disabled={!canEdit}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ORDER_PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                </Select></div>
-              <div><Label>Deadline</Label>
-                <Input type="date" value={o.deadline || ""} disabled={!canEdit} onChange={(e) => setField({ deadline: e.target.value })} /></div>
-              <div><Label>Kích thước</Label>
-                <Input value={o.size || ""} disabled={!canEdit} onChange={(e) => setField({ size: e.target.value })} placeholder="VD: 1920x1080" /></div>
-              <div><Label>Số lượng</Label>
-                <Input type="number" value={o.quantity ?? ""} disabled={!canEdit} onChange={(e) => setField({ quantity: e.target.value ? Number(e.target.value) : undefined })} /></div>
+          <TabsContent value="info" className="mt-3 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="min-w-0">
+                <Label>Tên Job</Label>
+                <Input value={o.title} disabled={!canEdit} onChange={e=>setField({title:e.target.value})}/>
+              </div>
+              <div className="min-w-0">
+                <Label>Hệ Thiết kế</Label>
+                <Select value={o.workflowKind || 'unknown'}
+                  disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'assign'))}
+                  onValueChange={v=>setField({workflowKind:v as DesignOrder['workflowKind']})}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>
+                    {!o.workflowKind && <SelectItem value="unknown">Chưa phân loại luồng</SelectItem>}
+                    {DESIGN_FLOWS.filter(f=>isAdmin||designCan(can,f.key,'assign')).map(f=>
+                      <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <PersonSelect label="Người yêu cầu" value={o.requester} onChange={(v) => setField({ requester: v })} disabled={!canEdit} />
-              <div className="sm:col-span-2 rounded-md border p-3 space-y-2">
+              {o.workflowKind
+                ? <DesignClassification flow={o.workflowKind} value={o} onChange={setField} disabled={!canEdit}/>
+                : <p className="text-sm">Loại lịch sử: {o.type}</p>}
+
+              <div>
+                <Label>Hạn hoàn thành</Label>
+                <Input type="date" value={o.deadline||""} disabled={!canEdit}
+                  onChange={e=>setField({deadline:e.target.value})}/>
+              </div>
+              <div>
+                <Label>Mức ưu tiên</Label>
+                <Select value={o.priority||"Trung bình"} disabled={!canEdit}
+                  onValueChange={v=>setField({priority:v as DesignOrder['priority']})}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>{ORDER_PRIORITIES.map(p=>
+                    <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+
+              <div className="sm:col-span-2 border-t pt-3">
+                <p className="mb-2 text-sm font-semibold">Phân công</p>
+                <div className="grid gap-3 sm:grid-cols-2">
                 <DesignAssigneePicker flow={o.workflowKind} value={order.assignee} valueId={order.assigneeId}
                   onChange={(name,id)=>{
                     if(!name||!id)return;
@@ -320,8 +337,6 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                       .then(ok => { if (ok) toast.success('Đã phân công người thực hiện'); });
                   }}
                   required disabled={saving||uploading||!canTransfer} label={order.assignee?'Chuyển người thực hiện':'Chọn người thực hiện'}/>
-                <p className="text-xs text-muted-foreground">Người tạo phải chọn nhân viên khi tạo Job. Sau đó, nhân viên Thiết kế đang thực hiện được chuyển Job cho đồng nghiệp. Mọi lần chuyển đều lưu lịch sử.</p>
-              </div>
               <DesignReviewerPicker
                 valueId={o.reviewerId || (!o.reviewer ? order.recordCreatedBy : undefined)}
                 valueName={o.reviewer || o.requester}
@@ -330,17 +345,47 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
                 disabled={saving || !(isAdmin || designCan(can,order.workflowKind,'edit_reviewer') || (isRequester && (order.status === "Cần giao người" || order.status === "Chờ nhận việc")))}
                 required
               />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Chuyển người thực hiện sẽ được ghi vào lịch sử Job.
+                </p>
+              </div>
 
-              <div className="sm:col-span-2"><Label>Brief</Label>
-                <Textarea rows={3} value={o.brief || ""} disabled={!canEdit} onChange={(e) => setField({ brief: e.target.value })} /></div>
-              <DesignAttachments orderId={order.id} flow={o.workflowKind} value={o.inputAttachments || []}
-                onChange={inputAttachments=>setField({inputAttachments})} disabled={!canEdit} onBusy={setUploading}/>
+              <div className="sm:col-span-2">
+                <Label>Brief · Nội dung yêu cầu</Label>
+                <Textarea rows={3} value={o.brief||""} disabled={!canEdit}
+                  onChange={e=>setField({brief:e.target.value})}/>
+              </div>
+              <DesignAttachments orderId={order.id} flow={o.workflowKind}
+                value={o.inputAttachments||[]} onChange={inputAttachments=>setField({inputAttachments})}
+                disabled={!canEdit} onBusy={setUploading}/>
+
               <details key={order.id} className="sm:col-span-2 overflow-hidden rounded-lg border">
                 <summary className="cursor-pointer select-none px-3 py-3 text-sm font-medium sm:px-4">
                   Thông tin bổ sung (tùy chọn)
                   {extraInfoCount>0&&<span className="ml-2 font-normal text-muted-foreground">· {extraInfoCount} mục đã lưu</span>}
                 </summary>
                 <div className="grid gap-3 border-t bg-muted/10 p-3 sm:grid-cols-2 sm:p-4">
+                  <div>
+                    <Label>Nguồn yêu cầu</Label>
+                    <Select value={o.source} onValueChange={v=>setField({source:v as DesignOrder['source']})} disabled={!canEdit}>
+                      <SelectTrigger><SelectValue/></SelectTrigger>
+                      <SelectContent>{ORDER_SOURCES.map(t=><SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Kích thước</Label>
+                    <Input value={o.size || ""} disabled={!canEdit}
+                      onChange={e=>setField({size:e.target.value})} placeholder="VD: 1920x1080"/>
+                  </div>
+                  <div>
+                    <Label>Số lượng</Label>
+                    <Input type="number" value={o.quantity ?? ""} disabled={!canEdit}
+                      onChange={e=>setField({quantity:e.target.value?Number(e.target.value):undefined})}/>
+                  </div>
+                  <PersonSelect label="Người yêu cầu" value={o.requester}
+                    onChange={v=>setField({requester:v})} disabled={!canEdit}/>
+
                   <div className="sm:col-span-2">
                     <Label>Yêu cầu phong cách</Label>
                     <Textarea rows={2} value={o.styleNote||''} disabled={!canEdit}
@@ -374,15 +419,16 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
               </details>
             </div>
 
-            <div className="flex flex-col items-stretch justify-between gap-3 pt-2 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-stretch justify-between gap-2 border-t pt-3 sm:flex-row sm:items-center">
               <div className="text-xs text-muted-foreground">
-                Tạo: {fmtDate(order.takenAt) === "—" ? "—" : ""}
                 {order.takenAt && <>Nhận: {fmtDate(order.takenAt)} · </>}
                 {order.submittedAt && <>Gửi duyệt: {fmtDate(order.submittedAt)} · </>}
                 {order.deliveredAt && <>Bàn giao: {fmtDate(order.deliveredAt)} · </>}
                 {order.completedAt && <>Hoàn thành: {fmtDate(order.completedAt)}</>}
               </div>
-              <Button onClick={saveOnly} disabled={saving || uploading || Object.keys(draft).length === 0}>{saving?'Đang lưu…':'Lưu thay đổi'}</Button>
+              <Button onClick={saveOnly} disabled={saving||uploading||Object.keys(draft).length===0}>
+                {saving?'Đang lưu…':'Lưu thay đổi'}
+              </Button>
             </div>
           </TabsContent>
 
