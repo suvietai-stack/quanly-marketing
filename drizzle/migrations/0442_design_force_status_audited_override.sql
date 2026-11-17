@@ -86,7 +86,9 @@ BEGIN
  END IF;
  IF coalesce(d->>'assignee','')<>'' AND (TG_OP='INSERT' OR d->>'assignee' IS DISTINCT FROM od->>'assignee' OR d->>'assigneeId' IS DISTINCT FROM od->>'assigneeId') AND NOT EXISTS(SELECT 1 FROM profiles p WHERE p.status='Đang hoạt động' AND (p.full_name=d->>'assignee' OR p.username=d->>'assignee') AND p.id::text=coalesce(d->>'assigneeId','') AND private.design_team_member(p.id) AND public.design_can(p.id,f,'take')) THEN RAISE EXCEPTION 'Chỉ chọn nhân viên Thiết kế/Chụp ảnh đang hoạt động và đủ quyền thực hiện'; END IF;
  IF (TG_OP='INSERT' OR d->>'assignee' IS DISTINCT FROM od->>'assignee') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester') THEN RAISE EXCEPTION 'Người thực hiện phải khác người duyệt Job' USING ERRCODE='22023'; END IF;
- IF st IN ('Chờ duyệt','Đã duyệt') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester') THEN RAISE EXCEPTION 'Người thực hiện không được đồng thời là người duyệt'; END IF;
+ IF st IN ('Chờ duyệt','Đã duyệt') AND coalesce(d->>'assignee','')<>'' AND d->>'assignee'=coalesce(nullif(d->>'reviewer',''),d->>'requester')
+   AND NOT (force_requested AND (admin OR (mgr AND public.design_can(u,f,'force_status'))))
+ THEN RAISE EXCEPTION 'Người thực hiện không được đồng thời là người duyệt'; END IF;
  NEW.data:=d||jsonb_build_object('status',st); NEW.updated_at:=now(); RETURN NEW;
 END $function$
 
