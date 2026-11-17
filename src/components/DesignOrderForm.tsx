@@ -247,7 +247,7 @@ export function DesignOrderFormFromContent({
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              4. Phân công &amp; deadline
+              3. Phân công &amp; deadline
             </h3>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
