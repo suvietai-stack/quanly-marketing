@@ -20,6 +20,8 @@ on:
       - 'src/lib/store.ts'
       - 'drizzle/migrations/0420_design_workflow_v2_zalo_groups.sql'
       - 'drizzle/migrations/0440_design_v2_performance.sql'
+      - 'drizzle/migrations/0441_design_head_dispatch_permissions.sql'
+      - 'drizzle/migrations/0442_design_force_status_audited_override.sql'
       - '.github/workflows/design-workflow-validation.yml'
 permissions:
   contents: read
@@ -36,7 +38,7 @@ jobs:
       - name: TypeScript
         run: bunx tsc --noEmit
       - name: Design and navigation regression
-        run: bunx vitest run src/lib/orders/design.test.ts src/lib/orders/workboard.test.ts src/lib/orders/zaloGroupMessage.test.ts src/lib/navigation.test.ts
+        run: bunx vitest run src/lib/orders/design.test.ts src/lib/orders/designForceStatus.database.test.ts src/lib/orders/designHeadPermissions.database.test.ts src/lib/orders/workboard.test.ts src/lib/orders/zaloGroupMessage.test.ts src/lib/navigation.test.ts
       - name: Production build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
