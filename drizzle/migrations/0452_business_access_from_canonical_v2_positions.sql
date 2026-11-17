@@ -53,6 +53,19 @@ AS $fn$
   );
 $fn$;
 
+CREATE OR REPLACE FUNCTION private.legacy_business_allowed(u uuid)
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+ SELECT (NOT private.legacy_reset_applies(u)
+     OR EXISTS(SELECT 1 FROM public.biz_appointments a
+               WHERE a.user_id=u AND a.status<>'cancelled' AND a.started_at<=now()
+                 AND (a.ended_at IS NULL OR a.ended_at>now())
+                 AND a.started_at > (SELECT max(reset_at) FROM private.legacy_reset_accounts WHERE user_id=u AND active))) OR private.biz_v2_member(u,false);
+$function$;
+
 CREATE OR REPLACE FUNCTION public.biz_participant(_actor uuid)
  RETURNS boolean
  LANGUAGE sql
