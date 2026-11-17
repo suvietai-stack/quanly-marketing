@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useStore, uid,
   ORDER_TYPES, ORDER_PRIORITIES,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { DesignAssigneePicker } from "@/components/DesignAssigneePicker";
+import { DesignReviewerPicker } from "@/components/DesignReviewerPicker";
 import {useDesignCatalogs} from '@/lib/orders/catalogs';
 import { saveDesignOrder } from '@/lib/orders/api';
 import { designCan } from '@/lib/orders/design';
@@ -45,7 +46,7 @@ export function DesignOrderFormFromContent({
 
 
   const defaultCreator = user?.fullName || user?.username || "";
-  const defaultReviewer = content.draftReviewer || defaultCreator;
+  // The creator is always the default approver. Content drafts do not override the account identity.
 
   const [title, setTitle] = useState(`Ảnh cho bài: ${content.title}`);
   const [type, setType] = useState<OrderType>("Ảnh bài web");
@@ -53,10 +54,14 @@ export function DesignOrderFormFromContent({
   const [deadline, setDeadline] = useState(
     suggestDeadline(content.publishDate) || content.deadline || "",
   );
-  const [requester, setRequester] = useState(defaultCreator);
   const [assignee, setAssignee] = useState<string>("");
   const [assigneeId, setAssigneeId] = useState<string>("");
-  const [reviewer, setReviewer] = useState<string>(defaultReviewer);
+  const [reviewerOverride,setReviewerOverride]=useState<{id:string;name:string}|null>(null);
+  const reviewerId=reviewerOverride?.id || user?.id || '';
+  const reviewer=reviewerOverride?.name || defaultCreator;
+  useEffect(() => {
+    if (open) setReviewerOverride(null);
+  }, [open, content.id]);
   const [brief, setBrief] = useState(
     `Thiết kế/chọn ảnh minh họa phục vụ bài content web "${content.title}".\n` +
     `Yêu cầu: ảnh phù hợp nội dung bài, đúng nhận diện thương hiệu${brand?.name ? ` "${brand.name}"` : ""}, có thể dùng để đăng lên website.\n` +
@@ -91,7 +96,8 @@ export function DesignOrderFormFromContent({
       (draftLink ? `\nLink bài viết: ${draftLink}` : "");
 
     if (!assignee || !assigneeId) {toast.error('Bắt buộc chọn nhân viên Thiết kế thực hiện.');return;}
-    if (reviewer.trim() === assignee) {toast.error('Người duyệt phải khác người thực hiện.');return;}
+    if (!reviewerId) {toast.error('Cần chọn tài khoản người duyệt hợp lệ.');return;}
+    if (reviewerId === assigneeId) {toast.error('Người duyệt phải khác người thực hiện.');return;}
     const categoryName:Record<string,string>={'Banner website':'Banner Website','Ảnh bài web':'Ảnh bài Web','Ảnh social':'Ảnh Social','Thumbnail video':'Thumbnail Video','Ảnh sản phẩm':'Ảnh sản phẩm','Catalogue / profile':'Catalogue / Profile','Ảnh Google Map':'Ảnh Google Map'};
     const cat=designCatalogs.data?.find(c=>c.workflow_kind==='marketing_design'&&c.kind==='work'&&c.active&&c.name===(categoryName[type]||'Khác'));
     if(!cat){toast.error('Không tải được loại ấn phẩm phù hợp.');return;}
@@ -111,7 +117,7 @@ export function DesignOrderFormFromContent({
       requester: defaultCreator,
       assignee: finalAssignee,
       assigneeId: finalAssignee && assigneeId ? assigneeId : undefined,
-      reviewer: reviewer || requester || defaultCreator || undefined,
+      reviewer, reviewerId,
       deadline: deadline || undefined,
       priority,
       brief: composedBrief,
@@ -252,11 +258,13 @@ export function DesignOrderFormFromContent({
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label>Người tạo order</Label>
-                <Input value={requester} onChange={(e) => setRequester(e.target.value)} />
+                <Input value={defaultCreator} disabled />
               </div>
               <div>
-                <Label>Người duyệt / xác nhận</Label>
-                <Input value={reviewer} onChange={(e) => setReviewer(e.target.value)} />
+                <DesignReviewerPicker valueId={reviewerId} valueName={reviewer}
+                  onChange={(name,id)=>setReviewerOverride({name,id})}
+                  assigneeId={assigneeId} disabled={saving} required />
+                {!reviewerOverride&&<p className="mt-1 text-xs text-muted-foreground">Mặc định là người tạo Order.</p>}
               </div>
               <div>
                 <DesignAssigneePicker flow="marketing_design" value={assignee} valueId={assigneeId} onChange={(v,id)=>{setAssignee(v||'');setAssigneeId(id||'');}} required disabled={saving} />
@@ -276,7 +284,7 @@ export function DesignOrderFormFromContent({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Hủy</Button>
-          <Button disabled={saving || !assigneeId} onClick={handleSubmit}>{saving?'Đang lưu…':'Tạo order'}</Button>
+          <Button disabled={saving || !assigneeId || !reviewerId || reviewerId===assigneeId} onClick={handleSubmit}>{saving?'Đang lưu…':'Tạo order'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
