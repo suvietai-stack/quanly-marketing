@@ -56,9 +56,7 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
           {slot.title}
           <Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge>
           {slot.manager && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
-          {slot.legacy && <Badge variant="outline" className="text-[10px] font-normal">Vị trí cũ</Badge>}
         </div>
-        {slot.legacy && slot.targetTitle && <p className="mt-1 text-xs text-muted-foreground">Cần chuyển sang: {slot.targetTitle}</p>}
         {holders.length > 0
           ? <ul className="space-y-1">{holders.map(p => (
             <li key={p.id}><Button variant="link" className="min-h-9 h-auto max-w-full justify-start p-0 text-left text-sm whitespace-normal break-words" onClick={() => onOpen(p)}>{p.name}</Button></li>
@@ -71,7 +69,7 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
             <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8 shrink-0" aria-label={`Thao tác ${slot.title}`}><MoreVertical className="h-4 w-4" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {actions.onAssign && !slot.legacy && (
+            {actions.onAssign && (
               <DropdownMenuItem onClick={() => actions.onAssign?.(ref)}>
                 <UserPlus className="h-4 w-4 mr-2" />Bổ nhiệm / Thêm nhân sự
               </DropdownMenuItem>
@@ -104,7 +102,6 @@ function UnitCard({ node, query, actions, onOpen, open, onToggle, horizontal }: 
         <div className="min-w-0">
           <p className="break-words text-sm font-semibold">{node.name} {node.inactive && <Badge variant="secondary">Ngừng</Badge>}</p>
           <p className="text-[11px] opacity-80">{node.visualHierarchy ? 'Trung tâm' : (KIND_LABELS[node.kind] ?? node.kind)} · {count} nhân sự trong nhánh{node.children.length > 0 ? ` · ${node.children.length} đơn vị trực thuộc` : ''}</p>
-          {node.visualHierarchy && <Badge variant="outline" className="mt-1 whitespace-normal">Cơ cấu live chờ chuyển đổi</Badge>}
           {node.hierarchyWarning && <p role="status" className="mt-1 break-words text-xs">{node.hierarchyWarning}</p>}
         </div>
         <span className="flex shrink-0 items-center gap-1">
@@ -121,21 +118,12 @@ function UnitCard({ node, query, actions, onOpen, open, onToggle, horizontal }: 
       {open && (
         <div className="space-y-0.5 px-1.5 py-2">
           {[true, false].map(manager => {
-            const slots = (node.slots ?? []).filter(s => !s.legacy && s.manager === manager);
+            const slots = (node.slots ?? []).filter(s => s.manager === manager);
             return slots.length ? <div key={String(manager)} className="min-w-0 border-b last:border-b-0 pb-2">
               <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">{manager ? 'Vị trí quản lý' : 'Vị trí nhân viên'}</p>
               {slots.map(s => <SlotRow key={s.id} unitId={node.id} unitName={node.name} slot={s} query={query} actions={actions} onOpen={onOpen} />)}
             </div> : null;
           })}
-          {(node.slots ?? []).some(s => s.legacy) && (
-            <details className="mx-1 my-2 rounded-lg border border-dashed p-2">
-              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Vị trí cũ cần chuyển đổi ({(node.slots ?? []).filter(s => s.legacy).length})</summary>
-              <p className="mt-1 text-xs text-muted-foreground">Giữ lịch sử và quyền hiện tại. Bổ nhiệm mới vào ô chuẩn.</p>
-              {(node.slots ?? []).filter(s => s.legacy).map(s =>
-                <SlotRow key={s.id} unitId={node.id} unitName={node.name} slot={s} query={query} actions={actions} onOpen={onOpen} />
-              )}
-            </details>
-          )}
           {people.map(p => <PersonButton key={p.id} person={p} onOpen={onOpen} />)}
           {!people.length && !(node.slots ?? []).length && <p className="px-2 py-1 text-xs text-muted-foreground">Chưa có nhân sự.</p>}
         </div>

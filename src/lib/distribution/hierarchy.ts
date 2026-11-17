@@ -21,23 +21,10 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
       if (node.id === BTC_CENTER)
         children = children.flatMap((child) => {
           if (child.id !== RETAIL_SYSTEM) return [child];
-          const occupied =
-            child.wrapperProtected ||
-            child.inactive ||
-            child.leader ||
-            child.people.length ||
-            child.slots?.length;
-          // Showroom is a direct child of BTC; history remains accessible as
-          // a separate sibling with the original unit ID and action target.
-          const legacy: ChartNode[] = occupied
-            ? [{
-                ...child,
-                name: "Bán Lẻ · Đơn vị lịch sử",
-                children: [],
-                hierarchyWarning: "Giữ đơn vị cũ để tra lịch sử/bổ nhiệm; không phải tầng trung gian.",
-              }]
-            : [];
-          return [...child.children, ...legacy];
+          // Retail/Showroom is directly under BTC on the active chart.
+          // Historical retail-wrapper records remain in the database and
+          // employee history, never as an extra live organizational level.
+          return child.children;
         });
       if (centers.has(node.id)) {
         promoted.push({
@@ -57,8 +44,8 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
   const prune = (nodes: ChartNode[]): ChartNode[] =>
     nodes.flatMap((node) => {
       const children = prune(node.children);
-      if (node.id === "biz-block" && !children.length && !node.wrapperProtected &&
-          !node.inactive && !node.leader && !node.people.length && !node.slots?.length)
+      if (node.id === "biz-block" && !children.length && !node.leader
+          && !node.people.length && !node.slots?.length)
         return [];
       return [{ ...node, children }];
     });
