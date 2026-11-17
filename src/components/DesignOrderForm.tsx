@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useStore, uid,
   ORDER_TYPES, ORDER_PRIORITIES,
@@ -59,6 +59,9 @@ export function DesignOrderFormFromContent({
   const [reviewerOverride,setReviewerOverride]=useState<{id:string;name:string}|null>(null);
   const reviewerId=reviewerOverride?.id || user?.id || '';
   const reviewer=reviewerOverride?.name || defaultCreator;
+  useEffect(() => {
+    if (open) setReviewerOverride(null);
+  }, [open, content.id]);
   const [brief, setBrief] = useState(
     `Thiết kế/chọn ảnh minh họa phục vụ bài content web "${content.title}".\n` +
     `Yêu cầu: ảnh phù hợp nội dung bài, đúng nhận diện thương hiệu${brand?.name ? ` "${brand.name}"` : ""}, có thể dùng để đăng lên website.\n` +
