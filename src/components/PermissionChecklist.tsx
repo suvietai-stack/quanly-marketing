@@ -16,19 +16,19 @@ import { DesignRolePermissionGroups } from './DesignRolePermissionGroups';
 
 export function PermissionChecklist(props: {
   value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; source?: string; disabled?: boolean; personal?: boolean; baseline?: string[]; effective?: EffectivePermission[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
-  denied?: string[]; baselineDenied?: string[]; onPersonalChange?: (allow: string[], deny: string[]) => void;
+  compact?: boolean; denied?: string[]; baselineDenied?: string[]; onPersonalChange?: (allow: string[], deny: string[]) => void;
 }) {
   return <RolePermissionChecklist {...props} source={props.personal ? 'personal' : props.source}/>;
 }
-function RolePermissionChecklist({ value, onChange, policy, source = 'position', disabled = false, personal = false, baseline = [], catalog = [], checks = [], effective, denied, baselineDenied = [], onPersonalChange }: {
+function RolePermissionChecklist({ value, onChange, policy, source = 'position', disabled = false, personal = false, baseline = [], catalog = [], checks = [], effective, denied, baselineDenied = [], onPersonalChange, compact = false }: {
   value: string[]; onChange: (v: string[]) => void; policy: EditorPolicy[]; source?: string; disabled?: boolean; personal?: boolean; baseline?: string[]; catalog?: CatalogPermission[]; checks?: {key:string;ready:boolean;reason:string}[];
-  effective?: EffectivePermission[]; denied?: string[]; baselineDenied?: string[]; onPersonalChange?: (allow: string[], deny: string[]) => void;
+  effective?: EffectivePermission[]; compact?: boolean; denied?: string[]; baselineDenied?: string[]; onPersonalChange?: (allow: string[], deny: string[]) => void;
 }) {
   const triState = personal && !!denied && !!onPersonalChange;
   const deny = denied ?? [];
   const effectiveNote = (key: string) => { const e = effective?.find(x => x.key === key); if (!e) return ''; const names = [...new Set(e.sources.filter(x => x.effect === e.decision || e.decision === 'DENY').map(x => x.source_name ?? x.source_kind))]; return `Hiện tại: ${e.allowed ? 'có quyền' : 'không có quyền'}${names.length ? ` · ${names.join(', ')}` : ''}`; };
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState(compact ? 'selected' : 'all');
   const available = rolePermissionPolicy(policy,source);
   const lookup = new Map(available.map(p => [p.key, p]));
   const merged = mergePermissionCatalog(catalog, PERMISSIONS);
@@ -44,11 +44,16 @@ function RolePermissionChecklist({ value, onChange, policy, source = 'position',
       <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1"><Search className="absolute left-3 top-3 size-4 text-muted-foreground"/><Input className="pl-9" aria-label={personal ? 'Tìm quyền bổ sung' : 'Tìm quyền trong ma trận'} placeholder="Tìm chức năng, quyền…" value={search} onChange={e => setSearch(e.target.value)}/></div>
       <Select value={filter} onValueChange={setFilter}><SelectTrigger className="w-36" aria-label="Lọc quyền đã chọn"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">Tất cả</SelectItem><SelectItem value="selected">Đã chọn</SelectItem><SelectItem value="unselected">Chưa chọn</SelectItem><SelectItem value="sensitive">Nhạy cảm</SelectItem>{triState && <SelectItem value="denied">Đang chặn</SelectItem>}</SelectContent></Select>
       <Badge variant="secondary">{value.length} quyền đã tích</Badge>{triState && <Badge variant="destructive">{deny.length} quyền chặn riêng</Badge>}
-      <Badge variant="outline">{new Set(definitions.map(p => p.group)).size} module · {definitions.length} quyền</Badge>
-      <Badge variant="outline">{definitions.filter(p=>lookup.has(p.key)).length} có thể cấp · {definitions.filter(p=>!lookup.has(p.key)).length} chưa khả dụng</Badge>
+      {!compact && <Badge variant="outline">{new Set(definitions.map(p => p.group)).size} module · {definitions.length} quyền</Badge>}
+      {!compact && <Badge variant="outline">{definitions.filter(p=>lookup.has(p.key)).length} có thể cấp · {definitions.filter(p=>!lookup.has(p.key)).length} chưa khả dụng</Badge>}
     </div>
     {missing.length > 0 && <details open className="border-l-2 border-warning bg-warning/10 px-3 py-2 text-sm"><summary className="cursor-pointer font-medium">{missing.length} quyền cần quyền truy cập đi kèm</summary><div className="space-y-2 pt-2">{missing.map(m => <div key={m.key}><p>{label(m.key)}: cần {m.parents.map(label).join(', ')}.</p><p className="text-xs text-muted-foreground">Có thể không dùng được chức năng nếu thiếu quyền truy cập. Điều kiện nghiệp vụ vẫn được kiểm tra riêng.</p><Button size="sm" variant="ghost" disabled={disabled || m.parents.some(k => !lookup.has(k))} onClick={() => onChange([...new Set([...value, ...m.parents])])}><Plus className="mr-1 size-3"/>Chọn quyền đi kèm</Button>{m.parents.some(k => !lookup.has(k)) && <p className="text-xs text-muted-foreground">Quyền đi kèm cần cấu hình an toàn trước.</p>}</div>)}</div></details>}
-    {!personal && <DesignRolePermissionGroups value={value} onChange={onChange} policy={policy} source={source} baseline={baseline} disabled={disabled}/>}
+    {!personal && (compact
+      ? <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm font-medium">Quy trình Thiết kế (mở rộng)</summary>
+          <div className="pt-3"><DesignRolePermissionGroups value={value} onChange={onChange} policy={policy} source={source} baseline={baseline} disabled={disabled}/></div>
+        </details>
+      : <DesignRolePermissionGroups value={value} onChange={onChange} policy={policy} source={source} baseline={baseline} disabled={disabled}/>
+    )}
     <div className="divide-y border-y">{groups.map(group => {
       const groupAll = permitted.filter(p => p.group === group);
       const bulkSafe = groupAll.length > 0 && groupAll.every(p => lookup.has(p.key) && lookup.get(p.key)?.scope !== 'unit' && !permissionRisk(p.key));
