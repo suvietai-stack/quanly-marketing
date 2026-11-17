@@ -12,6 +12,18 @@ export function designCan(can: (key: string) => boolean, flow: DesignFlow | unde
   return restricted ? !!flow && can(`order.${flow}.${action}`) : can(`order.${action}`);
 }
 export const designAny = (can: (key: string) => boolean, action: string) => can(`order.${action}`) || DESIGN_FLOWS.some(f => can(`order.${f.key}.${action}`));
+export function selectedDesignAssigneeId(
+  entries: ReadonlyArray<{ user_id: string; name: string }>,
+  storedId?: string,
+  storedName?: string,
+): string {
+  if (storedId) return storedId;
+  if (!storedName) return "_";
+  const matches = entries.filter(person => person.name === storedName);
+  // Never guess a legacy identity when multiple people share the same display name.
+  return matches.length === 1 ? matches[0].user_id : "_";
+}
+
 export const time = (value?: string) => value && Number.isFinite(Date.parse(value)) ? Date.parse(value) : undefined;
 export function eventTime(o: DesignOrder, status: OrderStatus, field?: string) {
   const explicit = field ? time((o as unknown as Record<string, string>)[field]) : undefined;
