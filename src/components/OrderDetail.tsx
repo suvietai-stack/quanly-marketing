@@ -231,6 +231,7 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
   const canEdit = isAdmin || (designCan(can,order.workflowKind,'edit') && (isRequester || isOwner || designCan(can,order.workflowKind,'assign')));
   const canForce = isAdmin || (designCan(can,order.workflowKind,'force_status') && designCan(can,order.workflowKind,'assign'));
   const canTransfer = isAdmin || designCan(can,order.workflowKind,'assign') || (!!team.data && isOwner) || (!order.assignee && isRequester);
+  const extraInfoCount = [o.styleNote,o.notes,o.refLink,o.draftLink,o.deliverLink,o.reviseLink,o.usedLink,o.refLinkObject].filter(v=>typeof v==='string'&&v.trim()).length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -320,25 +321,45 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: { orderId: st
 
               <div className="sm:col-span-2"><Label>Brief</Label>
                 <Textarea rows={3} value={o.brief || ""} disabled={!canEdit} onChange={(e) => setField({ brief: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Yêu cầu phong cách</Label>
-                <Textarea rows={2} value={o.styleNote || ""} disabled={!canEdit} onChange={(e) => setField({ styleNote: e.target.value })} /></div>
-
-              <div><Label>Link tư liệu đầu vào</Label>
-                <Input value={o.refLink || ""} disabled={!canEdit} onChange={(e) => setField({ refLink: e.target.value })} /></div>
-              <div><Label>Link file nháp</Label>
-                <Input value={o.draftLink || ""} disabled={!(isAdmin || designCan(can,order.workflowKind,'update_draft') || isOwner)} onChange={(e) => setField({ draftLink: e.target.value })} /></div>
-              <div><Label>Link file bàn giao</Label>
-                <Input value={o.deliverLink || ""} disabled={!(isAdmin || designCan(can,order.workflowKind,'deliver') || isOwner)} onChange={(e) => setField({ deliverLink: e.target.value })} /></div>
-              <div><Label>Link file chỉnh sửa</Label>
-                <Input value={o.reviseLink || ""} disabled={!(isAdmin || designCan(can,order.workflowKind,'update_draft') || isOwner)} onChange={(e) => setField({ reviseLink: e.target.value })} /></div>
-              <div><Label>Link sản phẩm đã dùng</Label>
-                <Input value={o.usedLink || ""} disabled={!canEdit} onChange={(e) => setField({ usedLink: e.target.value })} /></div>
-              <div><Label>Link đối tượng liên quan</Label>
-                <Input value={o.refLinkObject || ""} disabled={!canEdit} onChange={(e) => setField({ refLinkObject: e.target.value })} /></div>
-
-              <div className="sm:col-span-2"><Label>Ghi chú nội bộ</Label>
-                <Textarea rows={2} value={o.notes || ""} disabled={!canEdit} onChange={(e) => setField({ notes: e.target.value })} /></div>
-              <DesignAttachments orderId={order.id} flow={o.workflowKind} value={o.inputAttachments || []} onChange={inputAttachments=>setField({inputAttachments})} disabled={!canEdit} onBusy={setUploading}/>
+              <DesignAttachments orderId={order.id} flow={o.workflowKind} value={o.inputAttachments || []}
+                onChange={inputAttachments=>setField({inputAttachments})} disabled={!canEdit} onBusy={setUploading}/>
+              <details key={order.id} className="sm:col-span-2 overflow-hidden rounded-lg border">
+                <summary className="cursor-pointer select-none px-3 py-3 text-sm font-medium sm:px-4">
+                  Thông tin bổ sung (tùy chọn)
+                  {extraInfoCount>0&&<span className="ml-2 font-normal text-muted-foreground">· {extraInfoCount} mục đã lưu</span>}
+                </summary>
+                <div className="grid gap-3 border-t bg-muted/10 p-3 sm:grid-cols-2 sm:p-4">
+                  <div className="sm:col-span-2">
+                    <Label>Yêu cầu phong cách</Label>
+                    <Textarea rows={2} value={o.styleNote||''} disabled={!canEdit}
+                      onChange={e=>setField({styleNote:e.target.value})} placeholder="Có thể ghi chung trong Brief"/>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Ghi chú nội bộ</Label>
+                    <Textarea rows={2} value={o.notes||''} disabled={!canEdit}
+                      onChange={e=>setField({notes:e.target.value})}/>
+                  </div>
+                  <div className="sm:col-span-2 border-t pt-3">
+                    <p className="text-sm font-medium">Liên kết riêng của Job cũ</p>
+                    <p className="text-xs text-muted-foreground">Job mới thêm tài liệu, ảnh hoặc link ở mục đính kèm phía trên. Link cũ vẫn được giữ và chỉnh sửa tại đây.</p>
+                  </div>
+                  <div><Label>Link tư liệu đầu vào</Label>
+                    <Input value={o.refLink||''} disabled={!canEdit} onChange={e=>setField({refLink:e.target.value})}/></div>
+                  <div><Label>Link file nháp</Label>
+                    <Input value={o.draftLink||''} disabled={!(isAdmin||designCan(can,order.workflowKind,'update_draft')||isOwner)}
+                      onChange={e=>setField({draftLink:e.target.value})}/></div>
+                  <div><Label>Link file bàn giao</Label>
+                    <Input value={o.deliverLink||''} disabled={!(isAdmin||designCan(can,order.workflowKind,'deliver')||isOwner)}
+                      onChange={e=>setField({deliverLink:e.target.value})}/></div>
+                  <div><Label>Link file chỉnh sửa</Label>
+                    <Input value={o.reviseLink||''} disabled={!(isAdmin||designCan(can,order.workflowKind,'update_draft')||isOwner)}
+                      onChange={e=>setField({reviseLink:e.target.value})}/></div>
+                  <div><Label>Link sản phẩm đã dùng</Label>
+                    <Input value={o.usedLink||''} disabled={!canEdit} onChange={e=>setField({usedLink:e.target.value})}/></div>
+                  <div><Label>Link đối tượng liên quan</Label>
+                    <Input value={o.refLinkObject||''} disabled={!canEdit} onChange={e=>setField({refLinkObject:e.target.value})}/></div>
+                </div>
+              </details>
             </div>
 
             <div className="flex flex-col items-stretch justify-between gap-3 pt-2 sm:flex-row sm:items-center">

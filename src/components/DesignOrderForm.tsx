@@ -207,55 +207,47 @@ export function DesignOrderFormFromContent({
               <Label>Brief thiết kế</Label>
               <Textarea rows={5} value={brief} onChange={(e) => setBrief(e.target.value)} />
             </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Kích thước</Label>
-                <Input value={size} onChange={(e) => setSize(e.target.value)} placeholder="VD: 1200x630" />
+                <Input value={size} onChange={e=>setSize(e.target.value)} placeholder="VD: 1200x630"/>
               </div>
               <div>
                 <Label>Số lượng ảnh/file</Label>
                 <Input type="number" min={1} value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value) || 1)} />
+                  onChange={e=>setQuantity(Number(e.target.value)||1)}/>
               </div>
-              <div>
-                <Label>Yêu cầu phong cách</Label>
-                <Input value={styleNote} onChange={(e) => setStyleNote(e.target.value)}
-                  placeholder="VD: tối giản, hiện đại..." />
-              </div>
-            </div>
-            <div>
-              <Label>Chữ cần đưa vào ảnh (nếu có)</Label>
-              <Textarea rows={2} value={textInImage} onChange={(e) => setTextInImage(e.target.value)} />
-            </div>
-            <div>
-              <Label>Ghi chú</Label>
-              <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              3. Tài liệu liên quan
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <Label>Link bài viết</Label>
-                <Input value={draftLink} onChange={(e) => setDraftLink(e.target.value)} />
-              </div>
-              <div>
-                <Label>Link outline</Label>
-                <Input value={outlineLinkRef} onChange={(e) => setOutlineLinkRef(e.target.value)} />
+          <details className="rounded-lg border p-3 sm:p-4">
+            <summary className="cursor-pointer text-sm font-medium">Phong cách, ghi chú và tài liệu tham khảo (tùy chọn)</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label>Yêu cầu phong cách</Label>
+                <Input value={styleNote} onChange={e=>setStyleNote(e.target.value)}
+                  placeholder="Có thể mô tả trong Brief"/>
               </div>
               <div className="sm:col-span-2">
-                <Label>Link ảnh tham khảo / tài nguyên đầu vào</Label>
-                <Input value={refLink} onChange={(e) => setRefLink(e.target.value)} />
+                <Label>Chữ cần đưa vào ảnh</Label>
+                <Textarea rows={2} value={textInImage} onChange={e=>setTextInImage(e.target.value)}/>
               </div>
+              <div className="sm:col-span-2">
+                <Label>Ghi chú nội bộ</Label>
+                <Textarea rows={2} value={notes} onChange={e=>setNotes(e.target.value)}/>
+              </div>
+              <div><Label>Link bài viết</Label>
+                <Input value={draftLink} onChange={e=>setDraftLink(e.target.value)}/></div>
+              <div><Label>Link outline</Label>
+                <Input value={outlineLinkRef} onChange={e=>setOutlineLinkRef(e.target.value)}/></div>
+              <div className="sm:col-span-2"><Label>Link tài nguyên tham khảo</Label>
+                <Input value={refLink} onChange={e=>setRefLink(e.target.value)}/></div>
             </div>
-          </section>
+          </details>
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              4. Phân công &amp; deadline
+              3. Phân công &amp; deadline
             </h3>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
