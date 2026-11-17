@@ -2,7 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {supabase} from "@/integrations/supabase/client";
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@/components/ui/select";
 import {Label} from "@/components/ui/label";
-import type {DesignFlow} from "@/lib/orders/design";
+import {selectedDesignAssigneeId, type DesignFlow} from "@/lib/orders/design";
 export type DesignCandidate={user_id:string;name:string};
 export function useDesignAssignees(flow:DesignFlow|undefined){
  return useQuery({
@@ -20,10 +20,8 @@ export function DesignAssigneePicker({flow,valueId,value,onChange,required=false
 }){
  const q=useDesignAssignees(flow);
  const entries=q.data??[];
- // Older jobs store only a display name. Resolve a unique matching candidate for
- // display, without writing or guessing an ID in the database.
- const legacyMatches=!valueId&&value?entries.filter(p=>p.name===value):[];
- const selectedId=valueId||(legacyMatches.length===1?legacyMatches[0].user_id:"_");
+ // Older jobs store only a display name; never guess among duplicate names.
+ const selectedId=selectedDesignAssigneeId(entries,valueId,value);
  return <div className="space-y-1.5">
   <Label>{label}{required?" *":""}</Label>
   <Select value={selectedId} disabled={disabled||!flow||q.isPending||q.isError}
