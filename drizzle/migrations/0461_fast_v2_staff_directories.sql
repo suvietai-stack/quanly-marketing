@@ -1,7 +1,7 @@
 -- Fast Role V2 staff directories.
 -- Previously each designer/sales candidate ran expensive recursive permission
 -- resolution; a two-designer picker took ~6.9 seconds inside PostgreSQL.
--- Read current canonical appointment->Role V2 directly, while falling back to
+-- Read current unit-owned appointment->Role V2 directly (including 'base'\n-- canonical titles), while falling back to
 -- authoritative authorization if a person has custom overrides or a nonstandard
 -- source. No historical business title can grant a new appointment.
 CREATE OR REPLACE FUNCTION public.design_assignable_staff(_flow text)
@@ -30,7 +30,7 @@ BEGIN
       WHEN EXISTS(
         SELECT 1 FROM public.org_assignments a
         JOIN public.org_position_roles pr ON pr.unit_id=a.unit_id AND pr.title_id=a.title_id
-        JOIN public.org_titles t ON t.id=a.title_id AND t.active AND t.source='canonical'
+        JOIN public.org_titles t ON t.id=a.title_id AND t.active AND t.source <> 'biz_positions'
         JOIN public.app_roles r ON r.id=pr.role_id
         WHERE a.user_id=p.id AND a.status='active'
           AND a.starts_at<=now() AND (a.ends_at IS NULL OR a.ends_at>now())
@@ -68,7 +68,7 @@ BEGIN
     SELECT DISTINCT a.user_id
       FROM public.org_assignments a
       JOIN public.org_position_roles pr ON pr.unit_id=a.unit_id AND pr.title_id=a.title_id
-      JOIN public.org_titles t ON t.id=a.title_id AND t.active AND t.source='canonical'
+      JOIN public.org_titles t ON t.id=a.title_id AND t.active AND t.source <> 'biz_positions'
       JOIN public.app_roles r ON r.id=pr.role_id
      WHERE a.status='active' AND a.starts_at<=now()
        AND (a.ends_at IS NULL OR a.ends_at>now())
