@@ -15,7 +15,7 @@ beforeAll(async()=>{
     INSERT INTO public.app_roles(id,role_kind,catalog_generation,is_system,permissions)
       VALUES
       ('role-v2-design-head','position',2,false,ARRAY['order.view','leave.view_unit']::text[]),
-      ('role-v2-design-staff','position',2,false,ARRAY['order.marketing_design.force_status']::text[]),
+      ('role-v2-design-staff','position',2,false,ARRAY(SELECT 'order.test_' || n FROM generate_series(1,21) n) || ARRAY['order.marketing_design.force_status']::text[]),
       ('role-super-admin','position',2,true,ARRAY['settings.role']::text[]);
   `);
 });
@@ -35,6 +35,7 @@ it('head can assign and force all three Design flows without losing current role
     'order.marketing_design.assign','order.marketing_design.force_status',
     'order.order_mockup.assign','order.order_mockup.force_status'
   ]));
-  expect(byId['role-v2-design-staff']).toEqual(['order.marketing_design.force_status']);
+  expect(byId['role-v2-design-head']).toEqual(expect.arrayContaining(['order.test_1','order.test_21']));
+  expect(byId['role-v2-design-staff']).toEqual(expect.arrayContaining(['order.marketing_design.force_status','order.test_1']));
   expect(byId['role-super-admin']).toEqual(['settings.role']);
 });
