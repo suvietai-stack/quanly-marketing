@@ -22,7 +22,7 @@ export function DesignWorkflowSummary({ order }: { order: DesignOrder }) {
             {cancelled ? "Job đã hủy" : `Bước ${index + 1}/${stages.length} · ${currentLabel}`}
           </strong>
         <details className="group absolute right-3 top-2 z-20 text-xs text-muted-foreground sm:right-4">
-          <summary className="flex cursor-pointer select-none items-center gap-1 rounded px-1 py-1.5 hover:text-foreground">
+          <summary className="flex cursor-pointer select-none items-center gap-1 rounded px-1 py-2 hover:text-foreground">
             Các bước <ChevronDown className="size-3.5 transition-transform group-open:rotate-180"/>
           </summary>
           <ol className="absolute right-0 top-full grid w-[min(80vw,36rem)] grid-cols-2 gap-1.5 rounded-lg border bg-background p-2 shadow-lg sm:grid-cols-5">
