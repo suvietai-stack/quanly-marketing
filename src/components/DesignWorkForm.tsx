@@ -3,6 +3,7 @@ import { useStore, uid, type DesignOrder } from '@/lib/store';
 import { DesignClassification } from './DesignClassification';
 import { DesignAttachments } from './DesignAttachments';
 import { DesignAssigneePicker } from './DesignAssigneePicker';
+import { DesignReviewerPicker } from './DesignReviewerPicker';
 import { useDesignCatalogs, normalizeProducts } from '@/lib/orders/catalogs';
 import { useCurrentUser } from '@/lib/auth';
 import { DESIGN_FLOWS, designCan, designLabel, type DesignFlow } from '@/lib/orders/design';
@@ -32,7 +33,9 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
   const [deadline,setDeadline]=useState('');
   const [assignee,setAssignee]=useState('');
   const [assigneeId,setAssigneeId]=useState('');
-  const [reviewer,setReviewer]=useState(user?.fullName || user?.username || '');
+  const [reviewerOverride,setReviewerOverride]=useState<{id:string;name:string}|null>(null);
+  const reviewerId=reviewerOverride?.id || user?.id || '';
+  const reviewer=reviewerOverride?.name || user?.fullName || user?.username || '';
   const [specialty,setSpecialty]=useState<Record<string,string>>({});
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -42,7 +45,7 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
       ? ['Khách hàng / Đơn vị','Mã đơn hàng','Nội dung in','Vị trí in / trang trí','Yêu cầu kỹ thuật']
       : ['Mục đích sử dụng','Kênh sử dụng','Nội dung thiết kế','Kích thước / Định dạng'];
   const firstReady=!!kind && !!title.trim() && !!classification.workCategoryId && designCan(can,kind,'create');
-  const reviewerReady=!!assigneeId && !!assignee && !!reviewer.trim() && reviewer.trim()!==assignee;
+  const reviewerReady=!!assigneeId && !!assignee && !!reviewerId && reviewerId!==assigneeId;
   function goNext() {
     setError('');
     if(step===0){
@@ -66,7 +69,7 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
     try{
       await saveDesignOrder(id,{
         id,title:title.trim(),brandId:'',workflowKind:kind,type:'Khác',...classification,otherProducts:other,
-        source:'Task lẻ',requester:name,reviewer:reviewer.trim(),assignee,assigneeId,
+        source:'Task lẻ',requester:name,reviewer:reviewer.trim(),reviewerId,assignee,assigneeId,
         status:'Chờ nhận việc',brief,deadline:deadline || undefined,specialty,revisions:0,
         history:[{at:new Date().toISOString(),byId:user?.id,byName:name,action:'Tạo Job và giao trực tiếp',toStatus:'Chờ nhận việc'}],
       });
@@ -114,10 +117,10 @@ export function DesignWorkForm({ flow, onClose }: {flow?: DesignFlow; onClose:()
       <DesignAssigneePicker flow={kind} value={assignee} valueId={assigneeId}
         onChange={(name,id)=>{setAssignee(name||'');setAssigneeId(id||'');}}
         required disabled={busy||uploading}/>
-      <div className="space-y-1.5"><Label>Người duyệt *</Label>
-        <Input className="min-h-11" value={reviewer} onChange={e=>setReviewer(e.target.value)} placeholder="Chọn người xác nhận sản phẩm"/>
-        {assignee && reviewer.trim()===assignee&&<p className="text-xs text-destructive">Người duyệt phải khác người thực hiện.</p>}
-      </div>
+      <DesignReviewerPicker valueId={reviewerId} valueName={reviewer}
+        onChange={(name,id)=>setReviewerOverride({name,id})}
+        assigneeId={assigneeId} disabled={busy||uploading} required/>
+      {!reviewerOverride && <p className="text-xs text-muted-foreground">Mặc định người duyệt là tài khoản tạo Job; muốn đổi hãy chọn từ danh sách.</p>}
       <div className="space-y-1.5"><Label>Hạn hoàn thành</Label>
         <Input className="min-h-11" type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/>
       </div>
