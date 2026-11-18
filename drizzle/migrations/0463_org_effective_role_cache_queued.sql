@@ -167,40 +167,39 @@ $body$;
 -- Match the previous function's privileges. RPCs use it internally; no new public endpoint.
 REVOKE ALL ON FUNCTION private.base_tier1(uuid,text) FROM PUBLIC,anon,authenticated;
 
--- On an audited membership-only org_change, refresh only changed users.
--- Other snapshots remain invalid and always fall back to the live evaluator.
--- For structure/role edits, the cache remains invalid until each user's next sync;
--- authorization immediately falls back to the exact old evaluator.
+-- Audited membership-only changes update only affected staff, not all employees.
+-- Broader role/structure changes invalidate caches until the user's next login/focus sync.
+-- A stale snapshot is NEVER considered authoritative.
 CREATE OR REPLACE FUNCTION private.base_role_cache_org_event()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
 DECLARE
   actor_ uuid;
   affected uuid[];
 BEGIN
-  IF NOT (NEW.before_data ? 'memberships' AND NEW.after_data ? 'memberships')
+  IF NEW.before_data IS NULL OR NEW.after_data IS NULL
+    OR NOT (NEW.before_data ? 'memberships' AND NEW.after_data ? 'memberships')
     OR (NEW.before_data - 'memberships') IS DISTINCT FROM (NEW.after_data - 'memberships') THEN
     RETURN NULL;
   END IF;
   WITH old_members AS (
-    SELECT x->>'id' id,x->>'user_id' user_id,x payload
+    SELECT x->>'id' AS member_id,x->>'user_id' AS user_id,x AS payload
     FROM jsonb_array_elements(coalesce(NEW.before_data->'memberships','[]'::jsonb)) x
   ), new_members AS (
-    SELECT x->>'id' id,x->>'user_id' user_id,x payload
+    SELECT x->>'id' AS member_id,x->>'user_id' AS user_id,x AS payload
     FROM jsonb_array_elements(coalesce(NEW.after_data->'memberships','[]'::jsonb)) x
   )
-  SELECT coalesce(array_agg(DISTINCT user_id::uuid),'{}'::uuid[]) INTO STRICT affected
+  SELECT coalesce(array_agg(DISTINCT user_id::uuid),'{}'::uuid[])
+    INTO affected
   FROM (
-    SELECT coalesce(b.user_id,a.user_id) user_id FROM old_members a
-    FULL OUTER JOIN new_members b USING(id)
+    SELECT coalesce(b.user_id,a.user_id) AS user_id
+    FROM old_members a
+    FULL OUTER JOIN new_members b USING(member_id)
     WHERE a.payload IS DISTINCT FROM b.payload
   ) delta
-  WHERE user_id ~* '^[0-9a-f-]{36}
+  WHERE user_id ~* '^[0-9a-f-]{36}$';
 
-COMMENT ON TABLE private.base_role_effective_cache IS
-  'Server-authoritative fast decisions. Read only if epoch and next transition match. Client never writes.';
-;
-  -- Never promote previously cached rights for an unrelated user without recomputation.
-  FOREACH actor_ IN ARRAY affected LOOP
+  -- The epoch was invalidated by the canonical org source write before this deferred trigger.
+  FOR actor_ IN SELECT unnest(affected) LOOP
     PERFORM private.base_role_cache_refresh(actor_);
   END LOOP;
   RETURN NULL;
@@ -212,9 +211,7 @@ CREATE CONSTRAINT TRIGGER base_role_cache_org_event
 AFTER INSERT ON public.org_events DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION private.base_role_cache_org_event();
 
--- Existing users warm lazily at login; do not add multi-second work to migration or org_change.
--- Clear caches via the epoch on source writes, keeping live gates authoritative at all times.
-
-
+-- Do not warm every staff member on migration or on every change.
+-- The login/access refresh sync RPC warms one actor and read gates always fail closed.
 COMMENT ON TABLE private.base_role_effective_cache IS
-  'Server-authoritative fast decisions. Read only if epoch and next transition match. Client never writes.';
+  'Server-authoritative fast decisions; valid epoch and transition required; clients cannot write.';
