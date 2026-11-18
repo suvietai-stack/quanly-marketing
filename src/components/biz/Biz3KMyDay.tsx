@@ -363,6 +363,11 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
 
 export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void; actions?: { id: string; name: string }[] }) {
   const save = useK3TaskSave();
+  const uid = useAuth(s => s.currentUserId) ?? '';
+  const qc = useQueryClient();
+  const [uncertainPayload, setUncertainPayload] = useState<Record<string, unknown> | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const planSave=useK3PeriodMutation();
   const [actionId,setActionId]=useState((task as K3Task & { action_id?:string } | null)?.action_id??'none');
   const [requestKey]=useState(()=>crypto.randomUUID());
@@ -382,6 +387,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
   const focusBlocked = f.is_focus && !task?.is_focus && focusCount >= maxFocus;
   const submit = async () => {
+    setSaveError('');
     try {
       const payload={
         id: task?.id, revision: task?.revision, request_key: task ? undefined : requestKey, work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
@@ -392,19 +398,38 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
         links: f.link ? [{ ...(task?.links?.[0]??{}), url: f.link },...(task?.links?.slice(1)??[])] : task?.links?.slice(1)??[],
         action_id:actionId==='none'?null:actionId,
       };
-      if(actionId!=='none') await planSave.mutateAsync({kind:'task',payload:{...payload,action_id:actionId}});
-      else await save.mutateAsync(payload);
+      const original = uncertainPayload ?? payload;
+      if (original.action_id) await planSave.mutateAsync({ kind: 'task', payload: original });
+      else await save.mutateAsync(original);
       toast.success(task ? 'Đã lưu công việc.' : 'Đã thêm công việc.');
       onClose();
     } catch (e) {
-      toast.error(k3Error(e));
+      if (!task && isK3AmbiguousWrite(e)) {
+        setChecking(true);
+        const check = await checkK3TaskSave(uid, requestKey);
+        setChecking(false);
+        if (check.status === 'saved') {
+          void qc.invalidateQueries({ queryKey: ['k3_day', uid, date] });
+          toast.success('Công việc đã được lưu.'); onClose(); return;
+        }
+        setUncertainPayload(uncertainPayload ?? {
+          request_key: requestKey, work_date: date, name: f.name, start_time: f.start_time, end_time: f.end_time,
+          kpi_target: f.kpi_target === '' ? null : Number(f.kpi_target), kpi_unit: f.kpi_unit,
+          is_focus: f.is_focus, status: 'todo', progress: 0, kpi_actual: null,
+          how: f.how, place: f.place, note: f.note, problem: '', cause: '', solution: '',
+          links: f.link ? [{ url: f.link }] : [], action_id: actionId === 'none' ? null : actionId,
+        });
+        setSaveError('Chưa xác minh được công việc đã lưu hay chưa. Thử lại sẽ giữ nguyên nội dung và mã yêu cầu, không tạo trùng.');
+      } else {
+        setSaveError(k3Error(e));
+      }
     }
   };
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={(o) => !o && !save.isPending && !planSave.isPending && !checking && onClose()}>
       <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>{task ? 'Sửa công việc' : 'Thêm công việc'}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+        <fieldset disabled={!!uncertainPayload || save.isPending || planSave.isPending || checking} className="min-w-0 space-y-3">
           <div className="space-y-1">
             <Label htmlFor="k3t-name">Tên công việc *</Label>
             <Input id="k3t-name" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Gọi 10 khách hàng tiềm năng khu vực Hà Nội" />
@@ -432,10 +457,11 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
               <div className="space-y-1"><Label htmlFor="k3t-link">Link tài liệu</Label><Input id="k3t-link" type="url" value={f.link} onChange={(e) => set('link',e.target.value)} /></div>
             </div>
           )}
-        </div>
+        </fieldset>
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
-          <Button type="button" disabled={save.isPending || planSave.isPending || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : 'Lưu công việc'}</Button>
+          <Button type="button" variant="outline" disabled={save.isPending || planSave.isPending || checking} onClick={onClose}>Bỏ thay đổi</Button>
+          <Button type="button" disabled={save.isPending || planSave.isPending || checking || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : checking ? 'Đang xác minh…' : uncertainPayload ? 'Thử lưu lại an toàn' : 'Lưu công việc'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
