@@ -30,46 +30,62 @@ RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $bod
 $body$;
 REVOKE ALL ON FUNCTION private.base_tier1_uncached(uuid,text) FROM PUBLIC,anon,authenticated;
 
-CREATE OR REPLACE FUNCTION private.base_role_cache_rebuild()
+CREATE OR REPLACE FUNCTION private.base_role_cache_refresh(_user uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
 DECLARE
   snapshot jsonb;
   next_change timestamptz;
   new_epoch bigint;
-  account_id uuid;
   matches jsonb;
   results jsonb;
 BEGIN
-  SELECT epoch INTO STRICT new_epoch FROM private.base_role_cache_state WHERE id FOR UPDATE;
+  IF _user IS NULL OR NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=_user) THEN RETURN; END IF;
+  SELECT epoch INTO STRICT new_epoch FROM private.base_role_cache_state WHERE id;
   snapshot := private.base_config();
   next_change := private.base_next_transition(snapshot);
-  DELETE FROM private.base_role_effective_cache c
-    WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id=c.user_id);
-  FOR account_id IN SELECT id FROM public.profiles LOOP
-    matches := private.base_rules(account_id,snapshot);
-    SELECT coalesce(jsonb_object_agg(permission,decision),'{}'::jsonb)
-      INTO results
-    FROM (
-      SELECT x->>'permission' AS permission,
-        CASE WHEN bool_or(x->>'effect'='DENY') THEN 'DENY'
-          WHEN bool_or(x->>'effect'='ALLOW') THEN 'ALLOW'
-          ELSE 'NOT_CONFIGURED' END AS decision
-      FROM jsonb_array_elements(coalesce(matches,'[]'::jsonb)) AS r(x)
-      WHERE nullif(x->>'permission','') IS NOT NULL
-      GROUP BY x->>'permission'
-    ) checked;
-    INSERT INTO private.base_role_effective_cache(user_id,epoch,decisions,computed_at,valid_until)
-    VALUES(account_id,new_epoch,results,now(),next_change)
-    ON CONFLICT(user_id) DO UPDATE SET
-      epoch=excluded.epoch,
-      decisions=excluded.decisions,
-      computed_at=excluded.computed_at,
-      valid_until=excluded.valid_until;
-  END LOOP;
+  matches := private.base_rules(_user,snapshot);
+  SELECT coalesce(jsonb_object_agg(permission,decision),'{}'::jsonb)
+    INTO results
+  FROM (
+    SELECT x->>'permission' AS permission,
+      CASE WHEN bool_or(x->>'effect'='DENY') THEN 'DENY'
+        WHEN bool_or(x->>'effect'='ALLOW') THEN 'ALLOW'
+        ELSE 'NOT_CONFIGURED' END AS decision
+    FROM jsonb_array_elements(coalesce(matches,'[]'::jsonb)) AS r(x)
+    WHERE nullif(x->>'permission','') IS NOT NULL
+    GROUP BY x->>'permission'
+  ) checked;
+  INSERT INTO private.base_role_effective_cache(user_id,epoch,decisions,computed_at,valid_until)
+  VALUES(_user,new_epoch,results,now(),next_change)
+  ON CONFLICT(user_id) DO UPDATE SET
+    epoch=excluded.epoch,
+    decisions=excluded.decisions,
+    computed_at=excluded.computed_at,
+    valid_until=excluded.valid_until;
   UPDATE private.base_role_cache_state SET refreshed_at=now(),refresh_error=NULL WHERE id;
 END
 $body$;
-REVOKE ALL ON FUNCTION private.base_role_cache_rebuild() FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION private.base_role_cache_refresh(uuid) FROM PUBLIC,anon,authenticated;
+
+-- Self-only synchronizer, invoked at login/access refresh and not for every task.
+CREATE OR REPLACE FUNCTION public.base_role_cache_sync()
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
+DECLARE actor_ uuid:=auth.uid(); valid_ boolean;
+BEGIN
+  IF actor_ IS NULL OR NOT private.is_active(actor_) THEN
+    RAISE EXCEPTION 'Không có quyền đồng bộ phân quyền.' USING ERRCODE='42501';
+  END IF;
+  SELECT EXISTS(
+    SELECT 1 FROM private.base_role_effective_cache c
+    JOIN private.base_role_cache_state s ON s.id=true AND s.epoch=c.epoch
+    WHERE c.user_id=actor_ AND (c.valid_until IS NULL OR now()<c.valid_until)
+  ) INTO valid_;
+  IF NOT valid_ THEN PERFORM private.base_role_cache_refresh(actor_); END IF;
+  RETURN jsonb_build_object('ready',true,'updated',NOT valid_);
+END
+$body$;
+REVOKE ALL ON FUNCTION public.base_role_cache_sync() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.base_role_cache_sync() TO authenticated;
 
 -- Queue only once per SQL transaction even if org_change updates many source tables.
 -- The epoch changes in the same transaction; stale snapshots can never be reused after commit.
@@ -86,17 +102,10 @@ END
 $body$;
 REVOKE ALL ON FUNCTION private.base_role_cache_mark() FROM PUBLIC,anon,authenticated;
 
--- Deferred refresh reads the finished org/role transaction, never an intermediate assignment.
--- A refresh error must not roll back legitimate staff reassignment: epoch mismatch forces live fallback.
+-- Flush the per-transaction dirty marker; never rebuild every user's cache in an org write.
 CREATE OR REPLACE FUNCTION private.base_role_cache_flush()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
 BEGIN
-  BEGIN
-    PERFORM private.base_role_cache_rebuild();
-  EXCEPTION WHEN OTHERS THEN
-    UPDATE private.base_role_cache_state SET refresh_error=SQLSTATE WHERE id;
-    RAISE WARNING 'Role cache refresh failed; live permission resolver remains authoritative (%).', SQLSTATE;
-  END;
   DELETE FROM private.base_role_cache_queue WHERE transaction_id=NEW.transaction_id;
   RETURN NULL;
 END
@@ -116,7 +125,7 @@ BEGIN
     'public.org_assignments','public.org_units','public.org_titles',
     'public.org_position_roles','public.org_position_slots',
     'public.app_roles','public.user_roles','public.user_permission_overrides',
-    'public.base_org_state','public.base_title_role_links','public.base_permission_catalog',
+    'public.base_org_state','public.base_title_role_links',
     'public.mkt_specialties','public.mkt_staff_specialties',
     'public.biz_appointments','public.biz_department_members','public.biz_management_assignments',
     'public.biz_team_members','public.biz_member_affiliations',
@@ -158,8 +167,57 @@ $body$;
 -- Match the previous function's privileges. RPCs use it internally; no new public endpoint.
 REVOKE ALL ON FUNCTION private.base_tier1(uuid,text) FROM PUBLIC,anon,authenticated;
 
--- Warm cache on rollout. Source edits later atomically invalidate and refresh it.
-SELECT private.base_role_cache_rebuild();
+-- On an audited membership-only org_change, refresh only the changed users.
+-- All other caches are carried forward to the new epoch (their sources did not change).
+-- For structure/role edits, the cache remains invalid until each user's next sync;
+-- authorization immediately falls back to the exact old evaluator.
+CREATE OR REPLACE FUNCTION private.base_role_cache_org_event()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
+DECLARE
+  actor_ uuid;
+  current_epoch bigint;
+  affected uuid[];
+BEGIN
+  IF (NEW.before_data - 'memberships') IS DISTINCT FROM (NEW.after_data - 'memberships') THEN
+    RETURN NULL;
+  END IF;
+  SELECT epoch INTO current_epoch FROM private.base_role_cache_state WHERE id;
+  WITH old_members AS (
+    SELECT x->>'id' id,x->>'user_id' user_id,x payload
+    FROM jsonb_array_elements(coalesce(NEW.before_data->'memberships','[]'::jsonb)) x
+  ), new_members AS (
+    SELECT x->>'id' id,x->>'user_id' user_id,x payload
+    FROM jsonb_array_elements(coalesce(NEW.after_data->'memberships','[]'::jsonb)) x
+  )
+  SELECT coalesce(array_agg(DISTINCT user_id::uuid),'{}'::uuid[]) INTO STRICT affected
+  FROM (
+    SELECT coalesce(b.user_id,a.user_id) user_id FROM old_members a
+    FULL OUTER JOIN new_members b USING(id)
+    WHERE a.payload IS DISTINCT FROM b.payload
+  ) delta
+  WHERE user_id ~* '^[0-9a-f-]{36}
+
+COMMENT ON TABLE private.base_role_effective_cache IS
+  'Server-authoritative fast decisions. Read only if epoch and next transition match. Client never writes.';
+;
+  -- Preserve unchanged rows only for a pure membership change; no extra role computation.
+  UPDATE private.base_role_effective_cache SET epoch=current_epoch
+  WHERE NOT (user_id=ANY(affected));
+  FOREACH actor_ IN ARRAY affected LOOP
+    PERFORM private.base_role_cache_refresh(actor_);
+  END LOOP;
+  RETURN NULL;
+END
+$body$;
+REVOKE ALL ON FUNCTION private.base_role_cache_org_event() FROM PUBLIC,anon,authenticated;
+DROP TRIGGER IF EXISTS base_role_cache_org_event ON public.org_events;
+CREATE CONSTRAINT TRIGGER base_role_cache_org_event
+AFTER INSERT ON public.org_events DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION private.base_role_cache_org_event();
+
+-- Existing users warm lazily at login; do not add multi-second work to migration or org_change.
+-- Clear caches via the epoch on source writes, keeping live gates authoritative at all times.
+
 
 COMMENT ON TABLE private.base_role_effective_cache IS
   'Server-authoritative fast decisions. Read only if epoch and next transition match. Client never writes.';
