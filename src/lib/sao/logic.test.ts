@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { availableStars, giftAvailable, mayRedeem, mayCelebrate, friendlyReward, programActive } from './logic';
+import { availableStars, giftAvailable, mayRedeem, mayCelebrate, friendlyReward, programActive, rewardCheckDue, REWARD_CHECK_INTERVAL_MS } from './logic';
 describe('Sao availability', () => {
   it('holds 30 of 100 without subtracting the total', () => expect(availableStars(100, 30)).toBe(70));
   it('blocks spending held stars', () => expect(mayRedeem(100, 80, 30, 2, 0, true)).toBe(false));
@@ -13,6 +13,15 @@ describe('celebration safety', () => {
   it('does not interrupt editing', () => expect(mayCelebrate(true, true, false)).toBe(false));
   it('does not consume offline rewards', () => expect(mayCelebrate(false, false, false)).toBe(false));
   it('allows a visible idle session', () => expect(mayCelebrate(true, false, false)).toBe(true));
+});
+describe('background reward check load', () => {
+  const start = 1_800_000_000_000;
+  it('checks on first eligible observation', () => expect(rewardCheckDue(0, start)).toBe(true));
+  it('does not issue duplicate claim requests on focus and timer overlap', () => {
+    expect(rewardCheckDue(start, start + 15_000)).toBe(false);
+    expect(rewardCheckDue(start, start + REWARD_CHECK_INTERVAL_MS - 1)).toBe(false);
+    expect(rewardCheckDue(start, start + REWARD_CHECK_INTERVAL_MS)).toBe(true);
+  });
 });
 describe('friendly reward copy', () => {
   it('explains a won signal naturally', () => expect(friendlyReward('signal')).toContain('chốt thành công'));
