@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { interactionState, reminderDue, reminderStorageKey, INTERACTION_WINDOW, REMINDER_SNOOZE } from "./zaloReminder";
+import { interactionState, reminderDue, reminderStorageKey, INTERACTION_WINDOW, REMINDER_SNOOZE, ZALO_REMINDER_LINK_REFRESH_MS, ZALO_REMINDER_HEALTH_REFRESH_MS } from "./zaloReminder";
 
 const now = Date.parse("2026-10-19T04:23:00Z");
 const health = { connected: true, webhookConfigured: true };
 const link = (age: number) => ({ status: "active", last_interaction_at: new Date(now - age).toISOString() });
+describe("global reminder polling", () => {
+  it("does not call OA health and account-link RPCs every 30 seconds", () => {
+    expect(ZALO_REMINDER_LINK_REFRESH_MS).toBeGreaterThanOrEqual(180_000);
+    expect(ZALO_REMINDER_HEALTH_REFRESH_MS).toBeGreaterThanOrEqual(300_000);
+  });
+});
 describe("personal OA interaction reminders", () => {
   it("does not remind when more than 24 hours remain", () => expect(interactionState(link(INTERACTION_WINDOW - REMINDER_SNOOZE - 1), health, now)).toBe("fresh"));
   it("warns during the final 24 hours", () => expect(interactionState(link(6 * REMINDER_SNOOZE), health, now)).toBe("soon"));
