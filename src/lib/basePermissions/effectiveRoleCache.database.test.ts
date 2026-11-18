@@ -37,7 +37,7 @@ beforeAll(async () => {
          WHEN count(*) FILTER(WHERE effect='ALLOW')>0 THEN 'ALLOW'
          ELSE 'NOT_CONFIGURED' END FROM private.fixture_rules WHERE actor=$1 AND permission=$2$$;
   `);
-  await db.exec(readFileSync('drizzle/migrations/0463_org_effective_role_cache_queued.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0464_org_effective_role_cache_queued.sql', 'utf8'));
   await db.query('select set_config($1,$2,false)', ['test.actor', employee]);
   await db.exec(`
     INSERT INTO profiles(id,status) VALUES('${employee}','Đang hoạt động'),('${unrelated}','Đang hoạt động');
