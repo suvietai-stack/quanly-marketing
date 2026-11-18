@@ -1,0 +1,31 @@
+name: Organization effective Role cache safety
+on:
+  pull_request:
+    paths:
+      - 'drizzle/migrations/*org_effective_role_cache*'
+      - 'src/lib/basePermissions/**'
+      - 'src/lib/auth.ts'
+      - 'src/components/RoleCatalog.tsx'
+      - '.github/workflows/org-role-cache-validation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'drizzle/migrations/*org_effective_role_cache*'
+      - 'src/lib/basePermissions/**'
+      - 'src/lib/auth.ts'
+      - 'src/components/RoleCatalog.tsx'
+      - '.github/workflows/org-role-cache-validation.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Check Role denial, cache expiry and audited assignment
+        run: bunx vitest run src/lib/basePermissions/effectiveRoleCache.database.test.ts src/lib/basePermissions/orgPerformance.database.test.ts src/lib/basePermissions/positionRoles.database.test.ts src/lib/basePermissions/roleV2.database.test.ts
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Production build
+        run: bun run build
