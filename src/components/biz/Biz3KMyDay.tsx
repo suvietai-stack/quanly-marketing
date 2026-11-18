@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, MoreHorizontal, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
 import { Biz3KQuickCreate } from './Biz3KQuickCreate';
 import { useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
+import { checkK3TaskSave, isK3AmbiguousWrite } from '@/lib/biz/k3SaveRecovery';
 import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3IsComplete, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3AssignedAction, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -177,20 +178,49 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+/** One stable request per owner/KF/day while the UI is mounted; safe to press again after an uncertain timeout. */
+function useK3AddActionToDay(date: string) {
+  const uid = useAuth(s => s.currentUserId) ?? '';
+  const qc = useQueryClient();
+  const mutation = useK3PeriodMutation();
+  const keys = useRef(new Map<string, string>());
+  const [checking, setChecking] = useState(false);
+  const addAction = async (a: K3AssignedAction): Promise<boolean> => {
+    if (!uid) { toast.error('Vui lòng đăng nhập lại.'); return false; }
+    const identity = `${uid}:${date}:${a.id}`;
+    let key = keys.current.get(identity);
+    if (!key) { key = crypto.randomUUID(); keys.current.set(identity, key); }
+    try {
+      await mutation.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: key } });
+      return true;
+    } catch (e) {
+      if (isK3AmbiguousWrite(e)) {
+        setChecking(true);
+        const status = await checkK3TaskSave(uid, key);
+        setChecking(false);
+        if (status.status === 'saved') {
+          void qc.invalidateQueries({ queryKey: ['k3_day', uid, date] });
+          return true;
+        }
+        toast.error('Chưa xác nhận được việc ghi nhận KF. Bấm lại để thử cùng mã yêu cầu, không tạo trùng.');
+      } else {
+        toast.error(k3Error(e));
+      }
+      return false;
+    }
+  };
+  return { addAction, pending: mutation.isPending || checking };
+}
+
 /** KG đang thực hiện + KF cần làm hôm nay. Ô KG văn bản tự do đã bỏ; dữ liệu KG ngày cũ chỉ hiển thị như ghi chú lịch sử. */
 function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; enabled: boolean }) {
-  const planSave = useK3PeriodMutation();
+  const { addAction, pending } = useK3AddActionToDay(date);
   const goals = data?.active_goals ?? [];
   const actions = data?.assigned_actions ?? [];
   const legacyKg = data?.day?.kg;
   if (!goals.length && !actions.length && !hasText(legacyKg)) return null;
   const addToday = async (a: K3AssignedAction) => {
-    try {
-      await planSave.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: crypto.randomUUID() } });
-      toast.success('Đã thêm KF vào công việc hôm nay.');
-    } catch (e) {
-      toast.error(k3Error(e));
-    }
+    if (await addAction(a)) toast.success('Đã thêm KF vào công việc hôm nay.');
   };
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3">
@@ -220,7 +250,7 @@ function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; 
               </span>
               {a.already_today
                 ? <Badge variant="secondary">Đã có trong hôm nay</Badge>
-                : <Button type="button" size="sm" variant="outline" disabled={!enabled || planSave.isPending} onClick={() => addToday(a)}>Thêm vào hôm nay</Button>}
+                : <Button type="button" size="sm" variant="outline" disabled={!enabled || pending} onClick={() => addToday(a)}>Thêm vào hôm nay</Button>}
             </div>
           ))}
         </div>
@@ -234,14 +264,11 @@ function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; 
 
 /** Ghi nhận thực hiện: chọn KF đang tồn tại để thêm bản ghi thực thi vào ngày — không tạo KG/KF mới. */
 function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: string; actions: K3AssignedAction[]; onClose: () => void; onCreateNew: () => void }) {
-  const planSave = useK3PeriodMutation();
+  const { addAction, pending } = useK3AddActionToDay(date);
   const add = async (a: K3AssignedAction) => {
-    try {
-      await planSave.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: crypto.randomUUID() } });
+    if (await addAction(a)) {
       toast.success('Đã thêm KF vào công việc hôm nay. Cập nhật kết quả ngay trên thẻ công việc.');
       onClose();
-    } catch (e) {
-      toast.error(k3Error(e));
     }
   };
   return (
@@ -264,7 +291,7 @@ function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: str
               </span>
               {a.already_today
                 ? <Badge variant="secondary">Đã có trong hôm nay</Badge>
-                : <Button type="button" size="sm" variant="outline" disabled={planSave.isPending} onClick={() => add(a)}>Thêm vào hôm nay</Button>}
+                : <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => add(a)}>Thêm vào hôm nay</Button>}
             </div>
           ))}
         </div>
