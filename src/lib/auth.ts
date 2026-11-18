@@ -966,7 +966,7 @@ const accessAttemptAt: { base: number | null; biz: number | null } = { base: nul
 let orgRoleCacheUnavailable = false;
 function warmOwnServerRoleCache(uid: string): void {
   if (!uid || orgRoleCacheUnavailable) return;
-  void supabase.rpc('base_role_cache_sync' as never).then(({ error }) => {
+  void Promise.resolve(supabase.rpc('base_role_cache_sync' as never)).then(({ error }) => {
     if (error?.code === 'PGRST202') orgRoleCacheUnavailable = true;
   }).catch(() => undefined);
 }
