@@ -26,7 +26,14 @@ export function RoleCatalog({canManage}:{canManage:boolean}) {
  const [preview,setPreview]=useState<RolePreview|null>(null);
  const [reason,setReason]=useState(''); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
  const run=async(fn:()=>Promise<void>)=>{setBusy(true);setError('');try{await fn();}catch(e){setError(e instanceof Error?e.message:'Không thực hiện được thay đổi.');}finally{setBusy(false);}};
- const reload=async()=>{await qc.invalidateQueries({refetchType:'none'});await Promise.all([q.refetch(),useAuth.getState().reload()]);};
+ const reload=async()=>{
+   // The server save already invalidates this actor's rights. Refresh only the
+   // affected Role/organization views, not the entire Base query cache.
+   void qc.invalidateQueries({queryKey:['base-org',user?.id]});
+   void qc.invalidateQueries({queryKey:['base-effective']});
+   void qc.invalidateQueries({queryKey:['title-role-links']});
+   await q.refetch();
+ };
  const openEditor=(role?:CatalogRole)=>{setPreview(null);setError('');setReason('');setEditor({role,proposal:{name:role?.name??'',description:role?.description??'',role_kind:role?.role_kind??'position',catalog_group:role?.catalog_group??'Vận hành',permissions:role?.permissions??[],signal_scope_all:role?.signal_scope_all??false,signal_scope:role?.signal_scope??[]}});};
  if(q.isPending)return <p className="py-5 text-muted-foreground">Đang tải kho Role…</p>;
  if(q.error)return <div role="alert"><p className="text-destructive">{q.error.message}</p><Button variant="outline" onClick={()=>q.refetch()}>Thử lại</Button></div>;
