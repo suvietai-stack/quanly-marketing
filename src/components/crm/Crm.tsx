@@ -197,13 +197,14 @@ export function Crm() {
             >
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
-            {area === "mine" && (
+            {area === "mine" && can("biz.crm_use") && (
               <Button onClick={() => setCreate(true)}>
                 <Plus className="h-4 w-4" />
                 <span>Thêm khách</span>
               </Button>
             )}
           </div>
+          {area === "mine" && !can("biz.crm_use") && <p role="alert" className="text-sm text-muted-foreground">Tài khoản chưa có quyền CRM theo vị trí. Liên hệ người quản trị để cấp quyền sử dụng CRM.</p>}
           {view !== "customers" && (
             <div className="flex gap-2 overflow-x-auto">
               {[
