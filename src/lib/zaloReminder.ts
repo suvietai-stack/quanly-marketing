@@ -1,5 +1,8 @@
 export const INTERACTION_WINDOW = 7 * 24 * 60 * 60 * 1000;
 export const REMINDER_SNOOZE = 24 * 60 * 60 * 1000;
+// Seven-day reminder windows do not require constant, global 30-second RPCs.
+export const ZALO_REMINDER_LINK_REFRESH_MS = 180_000;
+export const ZALO_REMINDER_HEALTH_REFRESH_MS = 300_000;
 
 export type ReminderState = "unlinked" | "unknown" | "unavailable" | "fresh" | "soon" | "overdue";
 export function interactionState(link: { status: string; last_interaction_at: string | null } | null, health: { connected: boolean; webhookConfigured: boolean }, now: number): ReminderState {
