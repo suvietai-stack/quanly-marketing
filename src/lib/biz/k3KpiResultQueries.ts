@@ -33,7 +33,7 @@ export function useK3KpiResultSave() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
-      const { data, error } = await supabase.rpc('k3_kpi_result_save', { _payload: payload as never });
+      const { data, error } = await supabase.rpc('k3_kpi_result_save', { _payload: { ...payload, ack_only: true } as never });
       if (error) throw error;
       return data as unknown as K3ResultData;
     },
