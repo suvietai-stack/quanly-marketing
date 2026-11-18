@@ -200,7 +200,13 @@ BEGIN
 
   -- The epoch was invalidated by the canonical org source write before this deferred trigger.
   FOR actor_ IN SELECT unnest(affected) LOOP
-    PERFORM private.base_role_cache_refresh(actor_);
+    BEGIN
+      PERFORM private.base_role_cache_refresh(actor_);
+    EXCEPTION WHEN OTHERS THEN
+      -- No stale rights can be served: the original source write already bumped epoch.
+      UPDATE private.base_role_cache_state SET refresh_error=SQLSTATE WHERE id;
+      RAISE WARNING 'Role snapshot refresh deferred; live resolver remains active (%).',SQLSTATE;
+    END;
   END LOOP;
   RETURN NULL;
 END
