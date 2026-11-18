@@ -26,7 +26,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Scope parity and 3K write tests
-        run: bunx vitest run src/lib/k3Hub/accessFast.database.test.ts src/lib/k3Hub/area.test.ts src/lib/k3Hub/api.test.ts src/lib/biz/k3SaveRecovery.test.ts src/lib/biz/k3KpiResults.test.ts
+        run: bunx vitest run src/lib/k3Hub/accessFast.database.test.ts src/lib/biz/k3FastAck.database.test.ts src/lib/k3Hub/area.test.ts src/lib/k3Hub/api.test.ts src/lib/biz/k3SaveRecovery.test.ts src/lib/biz/k3KpiResults.test.ts
       - name: TypeScript
         run: bunx tsc --noEmit
       - name: Build
