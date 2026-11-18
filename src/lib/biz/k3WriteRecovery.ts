@@ -27,6 +27,19 @@ export async function reconcileK3Write(lookup: () => Promise<string | null>, ret
   }
 }
 
+/** Check the existing authorization-scoped 15-day trash RPC when a delete times out.
+ * Deletion of a sole action may be promoted to its parent goal: the action is still
+ * present as a child in the trash list, so match the original id, not the kind alone. */
+export function findK3DeletedRecord(id: string): Promise<K3WriteStatus> {
+  if (!id) return Promise.resolve({ state: 'unknown' });
+  return reconcileK3Write(async () => {
+    const { data, error } = await supabase.rpc('k3_trash_list', { _kind: 'all' });
+    if (error) throw error;
+    const rows = Array.isArray(data) ? data : [];
+    return rows.some((r) => r && typeof r === 'object' && 'id' in r && r.id === id) ? id : null;
+  });
+}
+
 /** Owner-filtered and still protected by k3_goals RLS. */
 export function findK3CreatedGoal(actorId: string, requestKey: string): Promise<K3WriteStatus> {
   if (!actorId || !requestKey) return Promise.resolve({ state: 'unknown' });
