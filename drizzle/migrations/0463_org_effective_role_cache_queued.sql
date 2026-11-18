@@ -221,3 +221,32 @@ FOR EACH ROW EXECUTE FUNCTION private.base_role_cache_org_event();
 -- The login/access refresh sync RPC warms one actor and read gates always fail closed.
 COMMENT ON TABLE private.base_role_effective_cache IS
   'Server-authoritative fast decisions; valid epoch and transition required; clients cannot write.';
+
+-- Chart-only read optimization: the old implementation rebuilt private.base_config()
+-- three times per request. Compute once and return the same names/keys/active flags.
+CREATE OR REPLACE FUNCTION public.base_org_chart_read()
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $body$
+DECLARE config_ jsonb;
+BEGIN
+  IF NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=auth.uid() AND status='Đang hoạt động') THEN
+    RAISE EXCEPTION 'Chỉ nhân sự đang hoạt động được xem sơ đồ tổ chức.';
+  END IF;
+  config_ := private.base_config();
+  RETURN jsonb_build_object(
+    'server_now', now(),
+    'units', coalesce(config_->'units','[]'::jsonb),
+    'titles', coalesce(config_->'titles','[]'::jsonb),
+    'members', coalesce((
+      SELECT jsonb_agg(jsonb_build_object(
+        'user_id',p.id,'name',p.full_name,'unit_id',m->>'unit_id',
+        'title_id',m->>'title_id','duties',m->>'duties',
+        'active',coalesce((m->>'active')::boolean,false),
+        'starts_at',m->>'starts_at','ends_at',m->>'ends_at'
+      ) ORDER BY sequence_)
+      FROM jsonb_array_elements(coalesce(config_->'memberships','[]'::jsonb))
+           WITH ORDINALITY AS memberships(m,sequence_)
+      JOIN public.profiles p ON p.id::text=m->>'user_id'
+    ),'[]'::jsonb)
+  );
+END
+$body$;
