@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'drizzle/migrations/*org_effective_role_cache*'
+      - 'drizzle/migrations/*role_cache*'
       - 'src/lib/basePermissions/**'
       - 'src/lib/auth.ts'
       - 'src/components/RoleCatalog.tsx'
@@ -11,6 +12,7 @@ on:
     branches: [main]
     paths:
       - 'drizzle/migrations/*org_effective_role_cache*'
+      - 'drizzle/migrations/*role_cache*'
       - 'src/lib/basePermissions/**'
       - 'src/lib/auth.ts'
       - 'src/components/RoleCatalog.tsx'
