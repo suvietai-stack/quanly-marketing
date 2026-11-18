@@ -42,3 +42,16 @@ export async function checkK3ResultSave(uid: string, requestKey: string): Promis
     return { status: 'unknown' };
   }
 }
+
+/** Daily execution writes have an owner-scoped UNIQUE(user_id, request_key) constraint. */
+export async function checkK3TaskSave(uid: string, requestKey: string): Promise<K3WriteCheck> {
+  if (!uid || !requestKey) return { status: 'unknown' };
+  try {
+    const { data, error } = await supabase.from('k3_tasks')
+      .select('id').eq('user_id', uid).eq('request_key', requestKey).maybeSingle();
+    if (error) return { status: 'unknown' };
+    return data?.id ? { status: 'saved', id: data.id } : { status: 'missing' };
+  } catch {
+    return { status: 'unknown' };
+  }
+}
