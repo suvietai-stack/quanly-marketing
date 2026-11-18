@@ -53,15 +53,15 @@ export type K3HubPolicy = {
   blocks: { id: string; name: string }[];
 };
 
-async function rpc<T>(name: string, args?: Record<string, unknown>): Promise<T> {
+async function rpc<T>(name: string, args?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   const query = args ? supabase.rpc(name as never, args as never) : supabase.rpc(name as never);
-  const { data, error } = await query;
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
   if (error) throw new Error(error.message);
   return data as unknown as T;
 }
 
-export const k3HubAccess = () => rpc<K3HubAccess>('k3hub_access_read');
-export const k3HubAreaChart = () => rpc<{ server_now: string; units: AreaUnit[]; members: AreaMember[] }>('base_org_chart_read');
+export const k3HubAccess = (signal?: AbortSignal) => rpc<K3HubAccess>('k3hub_access_read', undefined, signal);
+export const k3HubAreaChart = (signal?: AbortSignal) => rpc<{ server_now: string; units: AreaUnit[]; members: AreaMember[] }>('base_org_chart_read', undefined, signal);
 export const k3HubReport = (date: string, unit: string) =>
   rpc<K3HubReport>('k3hub_read', { _date: date, _unit: unit });
 export const k3HubDetails = (user: string, date: string, unit: string) =>
