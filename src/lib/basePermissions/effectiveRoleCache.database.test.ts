@@ -89,6 +89,27 @@ it('org membership event only refreshes the changed employee, never silently tru
   expect(await roleDecision(employee)).toBe('DENY');
 });
 
+it('reassigning an occupied position refreshes both the old and new holder', async () => {
+  await db.query('insert into private.fixture_rules values ($1,$2,$3)', [employee,'biz.crm_use','ALLOW']);
+  await serverSync();
+  await db.query('select set_config($1,$2,false)', ['test.actor',unrelated]);
+  await serverSync();
+  await db.query('delete from private.fixture_rules where actor=$1',[employee]);
+  await db.query('insert into private.fixture_rules values ($1,$2,$3)',[unrelated,'biz.crm_use','ALLOW']);
+  const previous=JSON.stringify({memberships:[{id:'slot',user_id:employee,active:true}],units:[]});
+  const updated=JSON.stringify({memberships:[{id:'slot',user_id:unrelated,active:true}],units:[]});
+  await db.exec('BEGIN');
+  await db.exec("UPDATE app_roles SET permissions=ARRAY['biz.crm_use'] WHERE id='position-role'");
+  await db.query('insert into org_events(before_data,after_data) values($1::jsonb,$2::jsonb)',[previous,updated]);
+  await db.exec('COMMIT');
+  const a=await stmt(`select decisions->>'biz.crm_use' value from private.base_role_effective_cache where user_id='${employee}'`);
+  const b=await stmt(`select decisions->>'biz.crm_use' value from private.base_role_effective_cache where user_id='${unrelated}'`);
+  expect(a).toBeNull();
+  expect(b).toBe('ALLOW');
+  expect(await roleDecision(employee)).toBe('NOT_CONFIGURED');
+  expect(await roleDecision(unrelated)).toBe('ALLOW');
+});
+
 it('expired snapshots and missing actors use the previous resolver, never stale grants',async () => {
   await db.query('insert into private.fixture_rules values ($1,$2,$3)',[employee,'biz.crm_use','ALLOW']);
   await serverSync();
