@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { checkK3QuickCreate, checkK3ResultSave, isK3AmbiguousWrite } from './k3SaveRecovery';
+import { checkK3QuickCreate, checkK3ResultSave, checkK3TaskSave, isK3AmbiguousWrite } from './k3SaveRecovery';
 
 const { from } = vi.hoisted(() => ({ from: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from } }));
@@ -57,6 +57,17 @@ describe('3K owner-scoped read-only reconciliation', () => {
     expect(from).toHaveBeenCalledWith('k3_kpi_result_versions');
     expect(chain.eq).toHaveBeenNthCalledWith(1, 'actor_id', uid);
     expect(chain.eq).toHaveBeenNthCalledWith(2, 'request_key', requestKey);
+  });
+  it('detects recorded daily KF execution by original owner request key', async () => {
+    const chain = mockedQuery({ data: { id: 'task-id' }, error: null });
+    expect(await checkK3TaskSave(uid, requestKey)).toEqual({ status: 'saved', id: 'task-id' });
+    expect(from).toHaveBeenCalledWith('k3_tasks');
+    expect(chain.eq).toHaveBeenNthCalledWith(1, 'user_id', uid);
+    expect(chain.eq).toHaveBeenNthCalledWith(2, 'request_key', requestKey);
+  });
+  it('does not declare a KF execution complete when its read failed', async () => {
+    mockedQuery({ data: null, error: { code: 'PGRST000' } });
+    expect(await checkK3TaskSave(uid, requestKey)).toEqual({ status: 'unknown' });
   });
   it('never probes data if the actor or request key is absent', async () => {
     expect(await checkK3ResultSave('', requestKey)).toEqual({ status: 'unknown' });
