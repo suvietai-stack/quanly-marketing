@@ -19,9 +19,9 @@ export const roleCatalogApi={
   if(error)throw new Error(error.message);
   // The audited server preview identifies receivers. Warm only them, after the
   // transaction commits; never delay Role save, and never authorize from this list.
-  if(affectedUsers.length) void supabase.rpc('base_role_cache_sync_users' as never,{
+  if(affectedUsers.length) void Promise.resolve(supabase.rpc('base_role_cache_sync_users' as never,{
     _users:affectedUsers as never,
-  }).then(()=>undefined).catch(()=>undefined);
+  } as never)).then(()=>undefined).catch(()=>undefined);
   void useAuth.getState().refreshBaseAccess(true).catch(()=>undefined);
   void useAuth.getState().refreshBizAccess(true).catch(()=>undefined);
  },
