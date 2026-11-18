@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ZaloLinkCard } from "@/components/ZaloUi";
 import { zaloMyLink, zaloReminderHealth } from "@/lib/zalo.functions";
-import { interactionState, reminderDue, reminderStorageKey, REMINDER_SNOOZE } from "@/lib/zaloReminder";
+import { interactionState, reminderDue, reminderStorageKey, REMINDER_SNOOZE, ZALO_REMINDER_LINK_REFRESH_MS, ZALO_REMINDER_HEALTH_REFRESH_MS } from "@/lib/zaloReminder";
 
 export function ZaloInteractionReminder({ userId }: { userId: string }) {
   const myLink = useServerFn(zaloMyLink);
@@ -14,8 +14,8 @@ export function ZaloInteractionReminder({ userId }: { userId: string }) {
   const [clock, setClock] = useState<number | null>(null);
   const [snoozedAt, setSnoozedAt] = useState(NaN);
   const [linkOpen, setLinkOpen] = useState(false);
-  const link = useQuery({ queryKey: ["zalo-reminder-link", userId], queryFn: () => myLink(), refetchInterval: 30_000, refetchOnWindowFocus: "always", retry: 1 });
-  const health = useQuery({ queryKey: ["zalo-reminder-health", userId], queryFn: () => getHealth(), refetchInterval: 60_000, refetchOnWindowFocus: "always", retry: 1 });
+  const link = useQuery({ queryKey: ["zalo-reminder-link", userId], queryFn: () => myLink(), refetchInterval: ZALO_REMINDER_LINK_REFRESH_MS, staleTime: 60_000, refetchOnWindowFocus: true, refetchIntervalInBackground: false, retry: 1 });
+  const health = useQuery({ queryKey: ["zalo-reminder-health", userId], queryFn: () => getHealth(), refetchInterval: ZALO_REMINDER_HEALTH_REFRESH_MS, staleTime: 180_000, refetchOnWindowFocus: true, refetchIntervalInBackground: false, retry: 1 });
 
   useEffect(() => {
     const sync = () => {
