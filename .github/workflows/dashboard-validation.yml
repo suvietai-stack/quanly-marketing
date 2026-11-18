@@ -35,6 +35,7 @@ jobs:
       # The existing codebase has a large formatting/no-explicit-any backlog.
       # Keep all other ESLint correctness rules active for this UI change.
       - name: Dashboard semantic lint (baseline exclusions)
-        run: bunx eslint src/routes/index.tsx src/components/kpi/PersonalKpi.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
+        run: |
+          bunx eslint src/routes/index.tsx src/components/kpi/PersonalKpi.tsx --rule 'prettier/prettier: off' --rule '@typescript-eslint/no-explicit-any: off'
       - name: Production build
         run: bun run build
