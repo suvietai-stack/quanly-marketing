@@ -72,6 +72,7 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
   const [correctionReason, setCorrectionReason] = useState('');
   const [uncertainPayload, setUncertainPayload] = useState<Record<string, unknown> | null>(null);
   const [saveError, setSaveError] = useState('');
+  const [checking, setChecking] = useState(false);
   const [f, setF] = useState({ value: data.daily?.value == null ? '' : String(data.kpi.measure === 'duration' && data.kpi.config?.duration_unit === 'hours' ? data.daily.value / 60 : data.daily.value), numerator: data.daily?.numerator?.toString() ?? '', denominator: data.daily?.denominator?.toString() ?? '', objects: data.daily?.objects?.join('\n') ?? '', completed: data.daily?.completed ?? [], evidence: data.daily?.evidence ?? '', note: data.daily?.note ?? '', problem: data.daily?.problem ?? '', cause: data.daily?.cause ?? '', solution: data.daily?.solution ?? '' });
   const [intervals, setIntervals] = useState(data.daily?.intervals ?? []);
   const measure = data.kpi.measure;
@@ -96,8 +97,8 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
     },
   });
   const set = (name: keyof typeof f, value: string) => setF((p) => ({ ...p, [name]: value }));
-  return <Dialog open onOpenChange={(o) => !o && !save.isPending && onClose()}><DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật kết quả · {data.kpi.name}</DialogTitle></DialogHeader>
-    <fieldset disabled={!!uncertainPayload || save.isPending} className="min-w-0 space-y-3">
+  return <Dialog open onOpenChange={(o) => !o && !save.isPending && !checking && onClose()}><DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật kết quả · {data.kpi.name}</DialogTitle></DialogHeader>
+    <fieldset disabled={!!uncertainPayload || save.isPending || checking} className="min-w-0 space-y-3">
     <p className="text-sm">Ngày {date}{measure !== 'binary' && <> · Mục tiêu {data.kpi.target ?? data.kpi.milestones?.length} {data.kpi.unit}</>}</p>
     {['cumulative', 'current', 'duration', 'frequency'].includes(measure) && !(measure === 'duration' && data.kpi.config?.duration_method === 'intervals') && <div className="space-y-1"><Label htmlFor="k3-result-value">{measure === 'current' ? 'Giá trị hiện tại' : measure === 'duration' ? `Thời lượng trong ngày (${data.kpi.config?.duration_unit === 'hours' ? 'giờ' : 'phút'})` : measure === 'frequency' ? 'Số lần hợp lệ trong ngày' : 'Tổng số lượng thực hiện trong ngày'}</Label><Input id="k3-result-value" type="number" inputMode="decimal" min={0} value={f.value} onChange={(e) => set('value', e.target.value)} /></div>}
     {measure === 'binary' && <div className="grid grid-cols-1 gap-2 min-[375px]:grid-cols-2 md:flex" role="group" aria-label="Kết quả hoàn thành">{[['0','Chưa hoàn thành'],['1','Đã hoàn thành']].map(([value,label])=><Button key={value} className="max-md:min-h-12" variant={f.value===value?'default':'outline'} aria-pressed={f.value===value} onClick={()=>set('value',value)}>{label}</Button>)}</div>}
@@ -113,7 +114,7 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
     {data.day_closed && <div className="space-y-1"><Label htmlFor="k3-correction">Lý do bổ sung / sửa sau chốt *</Label><Textarea id="k3-correction" value={correctionReason} onChange={(e) => setCorrectionReason(e.target.value)} /><p className="text-xs text-muted-foreground">Giữ bản chốt cũ, ghi lịch sử điều chỉnh và yêu cầu xác nhận lại.</p></div>}
     </fieldset>
     {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
-    <DialogFooter><Button variant="outline" disabled={save.isPending} onClick={onClose}>Bỏ thay đổi</Button><Button disabled={save.isPending} onClick={async () => {
+    <DialogFooter><Button variant="outline" disabled={save.isPending || checking} onClick={onClose}>Bỏ thay đổi</Button><Button disabled={save.isPending || checking} onClick={async () => {
       setSaveError('');
       const payload = uncertainPayload ?? { ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key, correction_reason: correctionReason };
       try {
@@ -123,7 +124,9 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
         toast.success('Đã lưu kết quả KPI.'); onClose();
       } catch (e) {
         if (isK3AmbiguousWrite(e)) {
+          setChecking(true);
           const check = await checkK3ResultSave(uid, key);
+          setChecking(false);
           if (check.status === 'saved') {
             void qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('k3_') });
             toast.success('Kết quả KPI đã được lưu.'); onClose(); return;
@@ -136,6 +139,6 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
           setSaveError(k3Error(e));
         }
       }
-    }}>{save.isPending ? 'Đang lưu…' : uncertainPayload ? 'Thử lưu lại an toàn' : 'Lưu kết quả'}</Button></DialogFooter>
+    }}>{save.isPending ? 'Đang lưu…' : checking ? 'Đang xác minh…' : uncertainPayload ? 'Thử lưu lại an toàn' : 'Lưu kết quả'}</Button></DialogFooter>
   </DialogContent></Dialog>;
 }
