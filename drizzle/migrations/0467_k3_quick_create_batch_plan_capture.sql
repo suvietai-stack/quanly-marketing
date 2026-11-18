@@ -11,12 +11,12 @@ DECLARE
 BEGIN
   trigger_def := pg_get_functiondef('private.k3_plan_changed()'::regprocedure);
   IF position('app.k3_quick_create_batch' IN trigger_def)=0 THEN
-    IF position(E'BEGIN\n FOR r IN SELECT' IN trigger_def)=0 THEN
+    IF trigger_def !~ 'BEGIN[[:space:]]+FOR r IN SELECT' THEN
       RAISE EXCEPTION '3K plan trigger changed; cannot safely batch quick-create.';
     END IF;
-    trigger_def := replace(trigger_def,
-      E'BEGIN\n FOR r IN SELECT',
-      E'BEGIN\n -- The quick-create RPC captures its affected staff once after its last write.\n IF current_setting(''app.k3_quick_create_batch'',true)=''on'' THEN RETURN NULL; END IF;\n FOR r IN SELECT');
+    trigger_def := regexp_replace(trigger_def,
+      'BEGIN[[:space:]]+FOR r IN SELECT',
+      E'BEGIN\\n -- The quick-create RPC captures its affected staff once after its last write.\\n IF current_setting(''app.k3_quick_create_batch'',true)=''on'' THEN RETURN NULL; END IF;\\n FOR r IN SELECT');
     EXECUTE trigger_def;
   END IF;
 
