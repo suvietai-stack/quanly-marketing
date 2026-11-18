@@ -961,6 +961,15 @@ const accessAttemptAt: { base: number | null; biz: number | null } = { base: nul
 
 // Index verified server decisions once per response instead of scanning the
 // permission catalog for every navigation item and action check.
+// Background, own-session server cache warm-up. Not used as a client authority and
+// never placed on the critical UI/login path. Older DB schema degrades cleanly.
+let orgRoleCacheUnavailable = false;
+function warmOwnServerRoleCache(uid: string): void {
+  if (!uid || orgRoleCacheUnavailable) return;
+  void supabase.rpc('base_role_cache_sync' as never).then(({ error }) => {
+    if (error?.code === 'PGRST202') orgRoleCacheUnavailable = true;
+  }).catch(() => undefined);
+}
 const effectivePermissionIndexes = new WeakMap<EffectiveAccess, Map<string, boolean>>();
 function verifiedPermission(access: EffectiveAccess, key: string): boolean | undefined {
   let index = effectivePermissionIndexes.get(access);
@@ -1027,6 +1036,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (get().currentUserId !== uid) return;
     const r = mergeAccess(get().baseAccess, accessAt.base, uid, { data: data as unknown as EffectiveAccess, error }, Date.now());
     accessAt.base = r.verifiedAt;
+    if (!r.failed) warmOwnServerRoleCache(uid);
     const bizFailed = get().bizAccessFailed;
     if (r.value !== get().baseAccess || r.failed !== get().baseAccessFailed)
       set({ baseAccess: r.value, baseAccessFailed: r.failed, accessSyncFailed: r.failed || bizFailed });
