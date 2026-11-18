@@ -43,7 +43,8 @@ describe('Mobile launcher shares live navigation visibility', () => {
   });
   it('keeps existing saved applications and their order when opening customization', () => {
     const saved = ['/leave', '/showroom/3k', '/orders'];
-    const draft = allowedPins(saved, groups(['leave.create', 'showroom.k3.use', 'order.view']));
+    // Design destinations require both a role permission and active design-team visibility.
+    const draft = allowedPins(saved, visibleNavigation({ can: p => ['leave.create', 'showroom.k3.use', 'order.view'].includes(p), isSuperAdmin: false, designTeam: true, isKpiAdmin: false, isKpiManager: false, kpiEnabled: true, hasAssignedApprovals: false, canApprove: false, pendingCount: 0 }));
     expect(draft).toEqual(['/leave', '/showroom/3k', '/orders']);
     const changed = movePin(draft, '/orders', -1);
     expect(changed).toEqual(['/leave', '/orders', '/showroom/3k']);
