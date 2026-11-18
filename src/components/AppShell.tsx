@@ -4,7 +4,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LogOut, User as UserIcon, PanelLeftClose, PanelLeftOpen, ClipboardCheck,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from '@tanstack/react-query';
 import {supabase} from '@/integrations/supabase/client';
 import { approvalsQuery } from '@/lib/biz/organizationQueries';
@@ -16,7 +16,8 @@ import { visibleNavigation } from "@/lib/navigation";
 import { MobileLauncher } from '@/components/MobileLauncher';
 import { MobileAppChrome } from '@/components/MobileAppChrome';
 import { ChatShortcut } from '@/components/chat/ChatShortcut';
-import { ChatPanel } from '@/components/chat/ChatPanel';
+// Chat history and thread UI are loaded only when the user opens Chat.
+const ChatPanel = lazy(() => import('@/components/chat/ChatPanel').then(mod => ({ default: mod.ChatPanel })));
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from "@/components/ZaloUi";
@@ -165,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <SheetTitle>Sứ Việt Chat</SheetTitle>
               <SheetDescription>Nhắn tin nhanh mà không rời công việc đang mở.</SheetDescription>
             </SheetHeader>
-            {chatOpen && user && <ChatPanel compact />}
+            {chatOpen && user && <Suspense fallback={<p className="text-sm text-muted-foreground">Đang mở trò chuyện…</p>}><ChatPanel compact /></Suspense>}
           </SheetContent>
         </Sheet>
       </div>
