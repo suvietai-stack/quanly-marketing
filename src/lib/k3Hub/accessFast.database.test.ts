@@ -84,8 +84,8 @@ beforeAll(async () => {
 
   const old = readFileSync('drizzle/migrations/0401_k3_hub_access_options.sql','utf8');
   const start = old.indexOf('CREATE OR REPLACE FUNCTION public.k3hub_access_read()');
-  const end = old.indexOf('$function$;',start)+'$function$;'.length;
-  if (start<0 || end<'$function$;'.length) throw new Error('Missing original source');
+  const end = old.indexOf('$fn$;',start)+'$fn$;'.length;
+  if (start<0 || end<'$fn$;'.length) throw new Error('Missing original source');
   await db.exec(old.slice(start,end).replace('public.k3hub_access_read()','public.k3hub_access_reference()'));
   await db.exec(readFileSync('drizzle/migrations/0465_k3hub_access_evaluate_once.sql','utf8'));
 },30000);
