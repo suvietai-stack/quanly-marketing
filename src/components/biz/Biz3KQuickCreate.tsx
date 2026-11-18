@@ -30,6 +30,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   const [discarding, setDiscarding] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<K3CreationMode>('basic');
   const submitting = useRef(false);
@@ -72,7 +73,9 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       onCreated?.(res.goal_id); onClose();
     } catch (e) {
       if (isK3AmbiguousWrite(e)) {
+        setChecking(true);
         const check = await checkK3QuickCreate(uid, requestKey);
+        setChecking(false);
         if (check.status === 'saved') {
           toast.success('Công việc đã được lưu.'); onCreated?.(check.id); onClose(); return;
         }
@@ -88,9 +91,9 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   };
   return <Dialog open onOpenChange={o => !o && close()}><DialogContent className="k3-mobile-dialog k3-quick-create flex max-h-[90dvh] max-w-2xl flex-col overflow-hidden">
     <DialogHeader><DialogTitle>Tạo công việc</DialogTitle></DialogHeader>
-    <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
+    <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || checking || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
     <div className="min-h-0 space-y-4 overflow-y-auto px-1 pb-2">
-      <fieldset disabled={mutation.isPending || retrying} className="min-w-0 space-y-4">
+      <fieldset disabled={mutation.isPending || checking || retrying} className="min-w-0 space-y-4">
       <div className="space-y-1"><Label htmlFor="k3q-name">Tên công việc *</Label><Input id="k3q-name" value={f.name} onChange={e => set('name', e.target.value)} aria-invalid={attempted && !f.name.trim()} placeholder="Soạn báo giá khách sạn Vinh Nghệ An" /></div>
       <div className="space-y-1"><Label htmlFor="k3q-end">Hạn hoàn thành *</Label><Input id="k3q-end" type="date" value={f.period_end} onChange={e => set('period_end', e.target.value)} aria-invalid={attempted && !f.period_end} />{attempted && !f.period_end && <p role="alert" className="text-sm text-destructive">Chưa chọn hạn hoàn thành.</p>}</div>
       {simple && <div className="space-y-2"><Label htmlFor="k3q-measure">Đo kết quả bằng cách nào? *</Label><Select value={['binary','cumulative'].includes(kpi.measure) ? kpi.measure : 'other'} onValueChange={v => { if(v==='other') setMode('advanced'); else choose(v as K3Measure); }}><SelectTrigger id="k3q-measure"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="binary">Có / Chưa</SelectItem><SelectItem value="cumulative">Số lượng</SelectItem><SelectItem value="other">Cách đo khác</SelectItem></SelectContent></Select>
@@ -115,7 +118,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
-    <DialogFooter className="shrink-0 border-t border-border pt-3"><Button variant="outline" onClick={close}>Bỏ thay đổi</Button><Button disabled={mutation.isPending} onClick={()=>submit(true)}>{mutation.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{retrying ? "Thử lưu lại an toàn" : "Lưu công việc"}</Button></DialogFooter>
+    <DialogFooter className="shrink-0 border-t border-border pt-3"><Button variant="outline" onClick={close}>Bỏ thay đổi</Button><Button disabled={mutation.isPending || checking} onClick={()=>submit(true)}>{mutation.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{checking ? "Đang xác minh…" : retrying ? "Thử lưu lại an toàn" : "Lưu công việc"}</Button></DialogFooter>
     {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={()=>setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
   </DialogContent></Dialog>;
 }
