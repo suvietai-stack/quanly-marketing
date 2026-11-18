@@ -250,3 +250,30 @@ BEGIN
   );
 END
 $body$;
+
+-- Optional post-save warm-up for the server-previewed receivers of a Role edit.
+-- Restrict to existing organization administrators; never accept a client-produced allowlist as an authorization grant.
+CREATE OR REPLACE FUNCTION public.base_role_cache_sync_users(_users uuid[])
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
+DECLARE uid uuid; n integer:=0;
+BEGIN
+  IF auth.uid() IS NULL OR NOT private.is_active(auth.uid()) OR NOT private.base_org_admin() THEN
+    RAISE EXCEPTION 'Không có quyền đồng bộ Role người khác.' USING ERRCODE='42501';
+  END IF;
+  IF coalesce(cardinality(_users),0)>100 THEN
+    RAISE EXCEPTION 'Danh sách đồng bộ vượt giới hạn.' USING ERRCODE='22023';
+  END IF;
+  FOR uid IN SELECT DISTINCT x FROM unnest(coalesce(_users,'{}'::uuid[])) AS x LOOP
+    BEGIN
+      PERFORM private.base_role_cache_refresh(uid);
+      n:=n+1;
+    EXCEPTION WHEN OTHERS THEN
+      UPDATE private.base_role_cache_state SET refresh_error=SQLSTATE WHERE id;
+      RAISE WARNING 'Affected Role snapshot not refreshed; live fallback stays active (%).',SQLSTATE;
+    END;
+  END LOOP;
+  RETURN n;
+END
+$body$;
+REVOKE ALL ON FUNCTION public.base_role_cache_sync_users(uuid[]) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.base_role_cache_sync_users(uuid[]) TO authenticated;
