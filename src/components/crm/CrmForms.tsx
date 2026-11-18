@@ -112,6 +112,7 @@ export function CustomerForm({
   const [error, setError] = useState("");
   const [retryPayload, setRetryPayload] = useState<Record<string, unknown> | null>(null);
   const [checking, setChecking] = useState(false);
+  const [validating, setValidating] = useState(false);
   const uid = useAuth(s => s.currentUserId) ?? "";
   const [duplicates, setDuplicates] = useState<{ id: string; name: string; code: string }[]>([]);
   const [confirmed, setConfirmed] = useState(false);
@@ -148,6 +149,7 @@ export function CustomerForm({
     let submitted: Record<string, unknown> | null = null;
     try {
       if (!retryPayload && !confirmed && !customer) {
+        setValidating(true);
         const d = await crmRpc<{ id: string; name: string; code: string }[]>("crm_duplicates", {
           _name: value("name"),
           _phone: value("phone"),
@@ -156,6 +158,7 @@ export function CustomerForm({
         if (d.length) {
           setDuplicates(d);
           setConfirmed(true);
+          toast.warning("Có khách hàng tương tự. Kiểm tra bên dưới trước khi xác nhận tạo mới.");
           return;
         }
       }
@@ -189,6 +192,7 @@ export function CustomerForm({
         setError(e instanceof Error ? e.message : "Chưa lưu được khách hàng.");
       }
     } finally {
+      setValidating(false);
       lock.current = false;
     }
   }
@@ -197,10 +201,10 @@ export function CustomerForm({
       title={customer ? "Sửa hồ sơ khách" : "Thêm khách hàng"}
       onClose={onClose}
       dirty={dirty}
-      busy={save.isPending || checking}
+      busy={save.isPending || checking || validating}
     >
       <form onSubmit={submit} className="space-y-4">
-        <fieldset disabled={save.isPending || checking || !!retryPayload} className="min-w-0 space-y-4">
+        <fieldset disabled={save.isPending || checking || validating || !!retryPayload} className="min-w-0 space-y-4">
         <div className="grid grid-cols-2 gap-2">
           {[
             ["organization", "Tổ chức / Đơn vị"],
@@ -363,14 +367,14 @@ export function CustomerForm({
             type="button"
             variant="outline"
             onClick={() => (dirty ? setDiscard(true) : onClose())}
-            disabled={save.isPending || checking}
+            disabled={save.isPending || checking || validating}
           >
             Hủy
           </Button>
           <Button
             className="flex-1"
             type="submit"
-            disabled={save.isPending || checking || !value("name").trim()}
+            disabled={save.isPending || checking || validating || !value("name").trim()}
           >
             {save.isPending ? "Đang lưu…" : checking ? "Đang xác minh…" : retryPayload ? "Thử lưu lại an toàn" : "Lưu khách hàng"}
           </Button>
