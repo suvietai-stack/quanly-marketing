@@ -15,6 +15,16 @@ describe('Base initial bundle boundaries', () => {
     expect(shell).toMatch(/lazy\(\(\)\s*=>\s*import\(['"]@\/components\/chat\/ChatPanel['"]\)/);
     expect(shell).toContain('chatOpen && user');
   });
+  it('does not block navigation on optional AI, Zalo and rewards modules', () => {
+    const shell = readFileSync('src/components/AppShell.tsx','utf8');
+    for (const name of ['ChipiAssistant','ZaloInteractionReminder','RewardPopup']) {
+      expect(shell).toContain(`import('@/components/${name === 'RewardPopup' ? 'sao/' : ''}${name}')`);
+      expect(shell).not.toMatch(new RegExp(`import \\{ ${name} \\} from`));
+    }
+    expect(shell).toContain('backgroundReadyFor === user.id');
+    expect(shell).toContain('1_200');
+    expect(shell).toContain("document.visibilityState === 'visible'");
+  });
   it('keeps session-token polling and employee presence independent', () => {
     const auth = readFileSync('src/components/AuthGate.tsx','utf8');
     const signal = readFileSync('src/components/signals/SignalsUi.tsx','utf8');
