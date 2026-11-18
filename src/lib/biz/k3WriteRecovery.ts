@@ -38,6 +38,17 @@ export function findK3CreatedGoal(actorId: string, requestKey: string): Promise<
   });
 }
 
+/** Read back the employee review using existing actor-scoped RLS and unique (user_id, request_key). */
+export function findK3SavedReview(actorId: string, date: string, requestKey: string): Promise<K3WriteStatus> {
+  if (!actorId || !date || !requestKey) return Promise.resolve({ state: 'unknown' });
+  return reconcileK3Write(async () => {
+    const { data, error } = await supabase.from('k3_employee_reviews')
+      .select('id').eq('user_id', actorId).eq('work_date', date).eq('request_key', requestKey).maybeSingle();
+    if (error) throw error;
+    return data?.id ?? null;
+  });
+}
+
 /** Version read uses the existing owner/goal-scoped RLS and unique (actor_id, request_key). */
 export function findK3SavedResult(actorId: string, requestKey: string): Promise<K3WriteStatus> {
   if (!actorId || !requestKey) return Promise.resolve({ state: 'unknown' });
