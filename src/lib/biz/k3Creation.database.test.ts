@@ -259,3 +259,48 @@ it('statement cancellation midway rolls back structure and permits retry of the 
  const retry=await create(p);expect(retry.duplicated).toBe(false);
  expect(await val(`SELECT count(*)::int v FROM k3_goals WHERE request_key='${p.request_key}'`)).toBe(1);
 });
+
+
+it('quick creation batches plan capture exactly once and ordinary edits still capture', async () => {
+  // Reproduce expensive AFTER triggers without touching real production data.
+  await db.exec(`
+    CREATE TABLE private.fixture_plan_capture_calls(user_id uuid NOT NULL);
+    CREATE OR REPLACE FUNCTION private.k3_plan_capture(_user uuid) RETURNS void
+      LANGUAGE plpgsql AS $fn$
+    BEGIN INSERT INTO private.fixture_plan_capture_calls VALUES(_user); END $fn$;
+    CREATE OR REPLACE FUNCTION private.k3_plan_changed() RETURNS trigger
+      LANGUAGE plpgsql AS $fn$
+    DECLARE r jsonb;
+    BEGIN
+     FOR r IN SELECT value FROM jsonb_array_elements(jsonb_build_array(to_jsonb(NEW))) LOOP
+       PERFORM private.k3_plan_capture(NEW.user_id);
+     END LOOP;
+     RETURN NULL;
+    END $fn$;
+    CREATE TRIGGER fixture_plan_goal AFTER INSERT OR UPDATE ON k3_goals
+      FOR EACH ROW EXECUTE FUNCTION private.k3_plan_changed();
+    CREATE TRIGGER fixture_plan_action AFTER INSERT OR UPDATE ON k3_actions
+      FOR EACH ROW EXECUTE FUNCTION private.k3_plan_changed();
+  `);
+  await as(staff);
+  const before = await create(payload({name:'Fixture trước tối ưu'}));
+  expect(before.goal_id).toBeTruthy();
+  const baseline = await val<number>('SELECT count(*)::int v FROM private.fixture_plan_capture_calls');
+  expect(baseline).toBeGreaterThan(1);
+  await db.exec('DELETE FROM private.fixture_plan_capture_calls');
+  await db.exec(readFileSync('drizzle/migrations/0467_k3_quick_create_batch_plan_capture.sql','utf8'));
+
+  const p = payload({name:'Fixture sau tối ưu',save_valid:true});
+  const saved = await create(p);
+  expect(saved.goal_id).toBeTruthy();
+  expect((await create(p)).duplicated).toBe(true);
+  expect(await val<number>('SELECT count(*)::int v FROM private.fixture_plan_capture_calls')).toBe(1);
+  expect(await val<number>(`SELECT count(*)::int v FROM k3_actions WHERE goal_id='${saved.goal_id}'`)).toBe(1);
+  expect(await val<number>(`SELECT count(*)::int v FROM k3_kpis WHERE action_id IN (SELECT id FROM k3_actions WHERE goal_id='${saved.goal_id}')`)).toBe(1);
+
+  const actionId = await val<string>(`SELECT id v FROM k3_actions WHERE goal_id='${saved.goal_id}'`);
+  await db.exec(`UPDATE k3_actions SET name='Đã điều chỉnh' WHERE id='${actionId}'`);
+  expect(await val<number>('SELECT count(*)::int v FROM private.fixture_plan_capture_calls')).toBe(2);
+  const flag = await val<string>(`SELECT current_setting('app.k3_quick_create_batch',true) v`);
+  expect(flag).not.toBe('on');
+});
