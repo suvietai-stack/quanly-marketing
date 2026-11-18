@@ -85,7 +85,7 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
     value: f.value === '' ? null : Number(f.value),
     numerator: f.numerator === '' ? null : Number(f.numerator),
     denominator: f.denominator === '' ? null : Number(f.denominator),
-    objects: f.objects.split('\\n').filter(s => s.trim()),
+    objects: f.objects.split('\n').filter(s => s.trim()),
     completed: f.completed, intervals, user_id: uid, work_date: date,
   }), [data.daily?.id, data.daily?.revision, f.value, f.numerator, f.denominator, f.objects, f.completed, intervals, uid, date]);
   const [debouncedPreview, setDebouncedPreview] = useState(previewInput);
