@@ -48,7 +48,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [backgroundReadyFor, setBackgroundReadyFor] = useState<string | null>(null);
   useEffect(() => {
     if (!user?.id) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let timer: number | undefined;
     const schedule = () => {
       if (document.visibilityState !== 'visible') return;
       if (timer) window.clearTimeout(timer);
