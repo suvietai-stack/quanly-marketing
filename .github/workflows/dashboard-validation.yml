@@ -1,5 +1,12 @@
 name: Dashboard validation
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/routes/index.tsx'
+      - 'src/styles.css'
+      - 'src/components/kpi/PersonalKpi.tsx'
+      - '.github/workflows/dashboard-validation.yml'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
