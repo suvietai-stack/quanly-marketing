@@ -37,7 +37,18 @@ beforeAll(async () => {
          WHEN count(*) FILTER(WHERE effect='ALLOW')>0 THEN 'ALLOW'
          ELSE 'NOT_CONFIGURED' END FROM private.fixture_rules WHERE actor=$1 AND permission=$2$$;
   `);
-  await db.exec(readFileSync('drizzle/migrations/0468_org_effective_role_cache_queued.sql', 'utf8'));
+  // Each stage is independently commit-safe in production; exercise the
+  // exact ordered upgrade in the isolated database before enabling the resolver.
+  for (const name of [
+    '0468_org_effective_role_cache_queued.sql',
+    '0469_role_cache_org_sources.sql',
+    '0470_role_cache_role_sources.sql',
+    '0471_role_cache_marketing_business_sources.sql',
+    '0472_role_cache_business_appointment_sources.sql',
+    '0473_role_cache_business_structure_sources.sql',
+    '0474_role_cache_profile_and_audit.sql',
+    '0475_role_cache_activation_and_fast_chart.sql',
+  ]) await db.exec(readFileSync(`drizzle/migrations/${name}`, 'utf8'));
   await db.query('select set_config($1,$2,false)', ['test.actor', employee]);
   await db.exec(`
     INSERT INTO profiles(id,status) VALUES('${employee}','Đang hoạt động'),('${unrelated}','Đang hoạt động');
