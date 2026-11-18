@@ -40,7 +40,7 @@ import { SignalAssignmentDialog } from './SignalAssignmentDialog';
 import { SignalToCrm } from './SignalToCrm';
 import { signalPage, signalCounts, signalById, listParams, changeToken } from '@/lib/signals/paged';
 import { matchesSignalStatus, signalStatusTabs, SIGNAL_SORT_OPTIONS } from '@/lib/signals/listPriority';
-import { observedSignalChange } from '@/lib/signals/polling';
+import { observedSignalChange, SIGNAL_TOKEN_POLL_INTERVAL_MS } from '@/lib/signals/polling';
 
 function SignalCustomerName({ name, onOpen }: { name: string; onOpen: () => void }) {
   return <Button asChild variant="link" className="h-auto min-h-11 md:min-h-0 justify-start whitespace-normal p-0 text-left font-semibold leading-tight select-text">
@@ -182,7 +182,7 @@ export function SignalsPage() {
   useEffect(()=>setDesktopPage(0),[signature]);
   const counts=useQuery({queryKey:['sig:counts',p.userId,params],queryFn:({signal})=>signalCounts(params,signal),enabled:!!p.userId,staleTime:30000,retry:false,refetchOnWindowFocus:false});
   const pages=useInfiniteQuery({queryKey:['sig:page',p.userId,params,sort,mobile,desktopPage],initialPageParam:0,queryFn:({pageParam,signal})=>signalPage(params,sort,mobile?pageParam:desktopPage*40,mobile?30:40,signal),getNextPageParam:(last,all)=>last.rows.length===30?all.length*30:undefined,enabled:!!p.userId&&viewportReady,staleTime:30000,retry:false,refetchOnWindowFocus:false});
-  const token=useQuery({queryKey:['sig:token',p.userId],queryFn:({signal})=>changeToken(signal),enabled:!!p.userId&&pages.isSuccess&&counts.isSuccess&&!pages.isFetching&&!counts.isFetching,staleTime:60000,refetchInterval:q=>q.state.status==='error'?false:90000,refetchIntervalInBackground:false,retry:false,refetchOnWindowFocus:true});
+  const token=useQuery({queryKey:['sig:token',p.userId],queryFn:({signal})=>changeToken(signal),enabled:!!p.userId&&pages.isSuccess&&counts.isSuccess&&!pages.isFetching&&!counts.isFetching,staleTime:60000,refetchInterval:q=>q.state.status==='error'?false:SIGNAL_TOKEN_POLL_INTERVAL_MS,refetchIntervalInBackground:false,retry:false,refetchOnWindowFocus:true});
   const previousToken=useRef<{userId:string|null;token:string|undefined}>({userId:p.userId,token:undefined});
   const qc=useQueryClient();
   useEffect(()=>{
