@@ -10,6 +10,7 @@ on:
       - 'src/lib/presence*'
       - 'src/lib/signals/polling*'
       - 'src/lib/performance/**'
+      - 'scripts/base-load-inventory.mjs'
       - '.github/workflows/base-load-performance.yml'
   push:
     branches: [main]
@@ -32,6 +33,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Session, Signals and bundle-boundary regression tests
         run: bunx vitest run src/lib/presence.test.ts src/lib/performance/entryBoundary.test.ts src/lib/signals/polling.test.ts src/lib/auth.flows.test.ts
+      - name: Audit all source modules for redundant polling and full refetches
+        run: node scripts/base-load-inventory.mjs
       - name: TypeScript
         run: bunx tsc --noEmit
       - name: Production build
