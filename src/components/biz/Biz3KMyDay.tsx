@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AlertTriangle, CalendarDays, CheckCircle2, CircleDashed, ClipboardCheck, History, Loader2, MoreHorizontal, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { k3DayQuery, useK3Summary, useK3TaskDelete, useK3TaskSave, useK3TaskUpdate } from '@/lib/biz/k3Queries';
 import { Biz3KQuickCreate } from './Biz3KQuickCreate';
 import { useK3PeriodMutation } from '@/lib/biz/k3PeriodQueries';
+import { checkK3TaskSave, isK3AmbiguousWrite } from '@/lib/biz/k3SaveRecovery';
 import { K3_STATUS, K3_TIME_HINT, hasText, k3Counts, k3DisplayStatus, k3IsComplete, k3Error, k3LateFlags, k3NeedsConfirmation, k3ProgressLabel, type K3AssignedAction, type K3DayData, type K3Settings, type K3Status, type K3Task } from '@/lib/biz/k3';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -177,20 +178,49 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+/** One stable request per owner/KF/day while the UI is mounted; safe to press again after an uncertain timeout. */
+function useK3AddActionToDay(date: string) {
+  const uid = useAuth(s => s.currentUserId) ?? '';
+  const qc = useQueryClient();
+  const mutation = useK3PeriodMutation();
+  const keys = useRef(new Map<string, string>());
+  const [checking, setChecking] = useState(false);
+  const addAction = async (a: K3AssignedAction): Promise<boolean> => {
+    if (!uid) { toast.error('Vui lòng đăng nhập lại.'); return false; }
+    const identity = `${uid}:${date}:${a.id}`;
+    let key = keys.current.get(identity);
+    if (!key) { key = crypto.randomUUID(); keys.current.set(identity, key); }
+    try {
+      await mutation.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: key } });
+      return true;
+    } catch (e) {
+      if (isK3AmbiguousWrite(e)) {
+        setChecking(true);
+        const status = await checkK3TaskSave(uid, key);
+        setChecking(false);
+        if (status.status === 'saved') {
+          void qc.invalidateQueries({ queryKey: ['k3_day', uid, date] });
+          return true;
+        }
+        toast.error('Chưa xác nhận được việc ghi nhận KF. Bấm lại để thử cùng mã yêu cầu, không tạo trùng.');
+      } else {
+        toast.error(k3Error(e));
+      }
+      return false;
+    }
+  };
+  return { addAction, pending: mutation.isPending || checking };
+}
+
 /** KG đang thực hiện + KF cần làm hôm nay. Ô KG văn bản tự do đã bỏ; dữ liệu KG ngày cũ chỉ hiển thị như ghi chú lịch sử. */
 function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; enabled: boolean }) {
-  const planSave = useK3PeriodMutation();
+  const { addAction, pending } = useK3AddActionToDay(date);
   const goals = data?.active_goals ?? [];
   const actions = data?.assigned_actions ?? [];
   const legacyKg = data?.day?.kg;
   if (!goals.length && !actions.length && !hasText(legacyKg)) return null;
   const addToday = async (a: K3AssignedAction) => {
-    try {
-      await planSave.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: crypto.randomUUID() } });
-      toast.success('Đã thêm KF vào công việc hôm nay.');
-    } catch (e) {
-      toast.error(k3Error(e));
-    }
+    if (await addAction(a)) toast.success('Đã thêm KF vào công việc hôm nay.');
   };
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3">
@@ -220,7 +250,7 @@ function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; 
               </span>
               {a.already_today
                 ? <Badge variant="secondary">Đã có trong hôm nay</Badge>
-                : <Button type="button" size="sm" variant="outline" disabled={!enabled || planSave.isPending} onClick={() => addToday(a)}>Thêm vào hôm nay</Button>}
+                : <Button type="button" size="sm" variant="outline" disabled={!enabled || pending} onClick={() => addToday(a)}>Thêm vào hôm nay</Button>}
             </div>
           ))}
         </div>
@@ -234,14 +264,11 @@ function GoalSection({ date, data, enabled }: { date: string; data?: K3DayData; 
 
 /** Ghi nhận thực hiện: chọn KF đang tồn tại để thêm bản ghi thực thi vào ngày — không tạo KG/KF mới. */
 function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: string; actions: K3AssignedAction[]; onClose: () => void; onCreateNew: () => void }) {
-  const planSave = useK3PeriodMutation();
+  const { addAction, pending } = useK3AddActionToDay(date);
   const add = async (a: K3AssignedAction) => {
-    try {
-      await planSave.mutateAsync({ kind: 'task', payload: { name: a.name, action_id: a.id, work_date: date, request_key: crypto.randomUUID() } });
+    if (await addAction(a)) {
       toast.success('Đã thêm KF vào công việc hôm nay. Cập nhật kết quả ngay trên thẻ công việc.');
       onClose();
-    } catch (e) {
-      toast.error(k3Error(e));
     }
   };
   return (
@@ -264,7 +291,7 @@ function LogExecutionDialog({ date, actions, onClose, onCreateNew }: { date: str
               </span>
               {a.already_today
                 ? <Badge variant="secondary">Đã có trong hôm nay</Badge>
-                : <Button type="button" size="sm" variant="outline" disabled={planSave.isPending} onClick={() => add(a)}>Thêm vào hôm nay</Button>}
+                : <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => add(a)}>Thêm vào hôm nay</Button>}
             </div>
           ))}
         </div>
@@ -336,6 +363,11 @@ export function TaskCard({ task, settings, onEdit, onUpdate, onDelete }: { task:
 
 export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions }: { date: string; task: K3Task | null; focusCount: number; maxFocus: number; onClose: () => void; actions?: { id: string; name: string }[] }) {
   const save = useK3TaskSave();
+  const uid = useAuth(s => s.currentUserId) ?? '';
+  const qc = useQueryClient();
+  const [uncertainPayload, setUncertainPayload] = useState<Record<string, unknown> | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const planSave=useK3PeriodMutation();
   const [actionId,setActionId]=useState((task as K3Task & { action_id?:string } | null)?.action_id??'none');
   const [requestKey]=useState(()=>crypto.randomUUID());
@@ -355,6 +387,7 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
   const focusBlocked = f.is_focus && !task?.is_focus && focusCount >= maxFocus;
   const submit = async () => {
+    setSaveError('');
     try {
       const payload={
         id: task?.id, revision: task?.revision, request_key: task ? undefined : requestKey, work_date: task?.work_date ?? date, name: f.name, start_time: f.start_time, end_time: f.end_time,
@@ -365,19 +398,38 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
         links: f.link ? [{ ...(task?.links?.[0]??{}), url: f.link },...(task?.links?.slice(1)??[])] : task?.links?.slice(1)??[],
         action_id:actionId==='none'?null:actionId,
       };
-      if(actionId!=='none') await planSave.mutateAsync({kind:'task',payload:{...payload,action_id:actionId}});
-      else await save.mutateAsync(payload);
+      const original = uncertainPayload ?? payload;
+      if (original.action_id) await planSave.mutateAsync({ kind: 'task', payload: original });
+      else await save.mutateAsync(original);
       toast.success(task ? 'Đã lưu công việc.' : 'Đã thêm công việc.');
       onClose();
     } catch (e) {
-      toast.error(k3Error(e));
+      if (!task && isK3AmbiguousWrite(e)) {
+        setChecking(true);
+        const check = await checkK3TaskSave(uid, requestKey);
+        setChecking(false);
+        if (check.status === 'saved') {
+          void qc.invalidateQueries({ queryKey: ['k3_day', uid, date] });
+          toast.success('Công việc đã được lưu.'); onClose(); return;
+        }
+        setUncertainPayload(uncertainPayload ?? {
+          request_key: requestKey, work_date: date, name: f.name, start_time: f.start_time, end_time: f.end_time,
+          kpi_target: f.kpi_target === '' ? null : Number(f.kpi_target), kpi_unit: f.kpi_unit,
+          is_focus: f.is_focus, status: 'todo', progress: 0, kpi_actual: null,
+          how: f.how, place: f.place, note: f.note, problem: '', cause: '', solution: '',
+          links: f.link ? [{ url: f.link }] : [], action_id: actionId === 'none' ? null : actionId,
+        });
+        setSaveError('Chưa xác minh được công việc đã lưu hay chưa. Thử lại sẽ giữ nguyên nội dung và mã yêu cầu, không tạo trùng.');
+      } else {
+        setSaveError(k3Error(e));
+      }
     }
   };
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <Dialog open onOpenChange={(o) => !o && !save.isPending && !planSave.isPending && !checking && onClose()}>
       <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
         <DialogHeader><DialogTitle>{task ? 'Sửa công việc' : 'Thêm công việc'}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+        <fieldset disabled={!!uncertainPayload || save.isPending || planSave.isPending || checking} className="min-w-0 space-y-3">
           <div className="space-y-1">
             <Label htmlFor="k3t-name">Tên công việc *</Label>
             <Input id="k3t-name" value={f.name} onChange={(e) => set('name', e.target.value)} placeholder="Gọi 10 khách hàng tiềm năng khu vực Hà Nội" />
@@ -405,10 +457,11 @@ export function TaskDialog({ date, task, focusCount, maxFocus, onClose, actions 
               <div className="space-y-1"><Label htmlFor="k3t-link">Link tài liệu</Label><Input id="k3t-link" type="url" value={f.link} onChange={(e) => set('link',e.target.value)} /></div>
             </div>
           )}
-        </div>
+        </fieldset>
+        {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Bỏ thay đổi</Button>
-          <Button type="button" disabled={save.isPending || planSave.isPending || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : 'Lưu công việc'}</Button>
+          <Button type="button" variant="outline" disabled={save.isPending || planSave.isPending || checking} onClick={onClose}>Bỏ thay đổi</Button>
+          <Button type="button" disabled={save.isPending || planSave.isPending || checking || !f.name.trim()} onClick={submit}>{save.isPending || planSave.isPending ? 'Đang lưu…' : checking ? 'Đang xác minh…' : uncertainPayload ? 'Thử lưu lại an toàn' : 'Lưu công việc'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

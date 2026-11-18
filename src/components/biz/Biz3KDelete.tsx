@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { k3Error } from '@/lib/biz/k3';
+import { isK3AmbiguousWrite } from '@/lib/biz/k3SaveRecovery';
 import { useAuth } from '@/lib/auth';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -18,9 +19,10 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const [target, setTarget] = useState<DeleteTarget | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inFlight = useRef(false);
-  const close = () => { if (!inFlight.current) { setTarget(null); setError(null); } };
+  const close = () => { if (!inFlight.current) { setTarget(null); setError(null); setUncertain(false); } };
   const remove = async () => {
     if (!target || inFlight.current) return;
     const selected = target;
@@ -31,7 +33,10 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
       const { error: rpcError } = await supabase.rpc('k3_soft_delete', { _kind: selected.kind, _id: selected.id });
       if (rpcError) throw rpcError;
     } catch (err) {
-      setError(k3Error(err));
+      const ambiguous = isK3AmbiguousWrite(err);
+      setUncertain(ambiguous);
+      if (ambiguous) void qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('k3_') });
+      setError(ambiguous ? 'Chưa xác minh được trạng thái xóa. Hãy đóng và kiểm tra danh sách / Thùng rác trước khi thử lại.' : k3Error(err));
       inFlight.current = false;
       setBusy(false);
       return;
@@ -51,6 +56,7 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
   return <DeleteContext.Provider value={selected => {
     if (inFlight.current) return;
     setError(null);
+    setUncertain(false);
     setTarget({ ...selected });
   }}>
     {children}
@@ -63,7 +69,7 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
         {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy} onClick={close}>Quay lại</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground" disabled={busy} onClick={e => { e.preventDefault(); void remove(); }}>{busy ? 'Đang xóa…' : 'Xóa'}</AlertDialogAction>
+          <AlertDialogAction className="bg-destructive text-destructive-foreground" disabled={busy || uncertain} onClick={e => { e.preventDefault(); void remove(); }}>{busy ? 'Đang xóa…' : 'Xóa'}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

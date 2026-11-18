@@ -26,5 +26,5 @@ export function useK3PeriodMutation() {
     else {const names={goal:'k3_goal_save',action:'k3_action_save',task:'k3_plan_task_save',settings:'k3_period_settings_save'} as const;
       result=await supabase.rpc(names[input.kind],{_payload:input.payload as never});}
     if(result.error) throw result.error; return result.data;
-  },onSuccess:()=>qc.invalidateQueries({predicate:q=>String(q.queryKey[0]).startsWith('k3_')})});
+  },onSuccess:()=>{ void qc.invalidateQueries({predicate:q=>String(q.queryKey[0]).startsWith('k3_') && q.queryKey[0] !== 'k3_preview'}); }});
 }
