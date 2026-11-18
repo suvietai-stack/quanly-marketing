@@ -8,7 +8,7 @@ import { Biz3K } from '@/components/biz/Biz3K';
 import { K3HubTimingDashboard } from '@/components/k3Hub/K3HubTimingDashboard';
 import { PageHeader } from '@/components/AppShell';
 import {
-  K3_HUB_STATES, k3HubAccess, k3HubAreaChart, k3HubReport, k3HubDetails, k3HubFeedbackSave,
+  K3_HUB_STATES, k3HubAccessWithSignal, k3HubAreaChartWithSignal, k3HubReport, k3HubDetails, k3HubFeedbackSave,
   k3HubPolicyRead, k3HubPolicySave, k3HubTotals,
   type K3HubPerson, type K3HubPolicy, type K3HubState,
 } from '@/lib/k3Hub/api';
@@ -42,7 +42,7 @@ export function K3CommonWorkspace({ title, initialUnit, central = false, restric
   const [unitOverride, setUnitOverride] = useState<string | null>(null);
   const access = useQuery({
     queryKey: ['k3hub-access', user?.id],
-    queryFn: ({ signal }) => k3HubAccess(signal),
+    queryFn: ({ signal }) => k3HubAccessWithSignal(signal),
     enabled: !!user?.id && user.status === 'Đang hoạt động',
     staleTime: 90_000,
     refetchOnWindowFocus: false,
@@ -51,7 +51,7 @@ export function K3CommonWorkspace({ title, initialUnit, central = false, restric
   const data = access.data;
   const chart = useQuery({
     queryKey: ['k3hub-area-chart', user?.id],
-    queryFn: ({ signal }) => k3HubAreaChart(signal),
+    queryFn: ({ signal }) => k3HubAreaChartWithSignal(signal),
     enabled: restrictToArea && !!user?.id && user.status === 'Đang hoạt động',
     staleTime: 90_000, refetchOnWindowFocus: false, retry: 1,
   });
