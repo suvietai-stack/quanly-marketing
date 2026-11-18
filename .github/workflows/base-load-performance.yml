@@ -4,6 +4,10 @@ on:
     paths:
       - 'src/routes/__root.tsx'
       - 'src/components/AppShell.tsx'
+      - 'src/components/ZaloInteractionReminder.tsx'
+      - 'src/components/sao/RewardPopup.tsx'
+      - 'src/lib/sao/**'
+      - 'src/lib/zaloReminder*'
       - 'src/components/AuthGate.tsx'
       - 'src/components/signals/**'
       - 'src/lib/auth.ts'
@@ -32,7 +36,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: Session, Signals and bundle-boundary regression tests
-        run: bunx vitest run src/lib/presence.test.ts src/lib/performance/entryBoundary.test.ts src/lib/signals/polling.test.ts src/lib/auth.flows.test.ts
+        run: bunx vitest run src/lib/presence.test.ts src/lib/performance/entryBoundary.test.ts src/lib/signals/polling.test.ts src/lib/auth.flows.test.ts src/lib/sao/logic.test.ts src/lib/zaloReminder.test.ts
       - name: Audit all source modules for redundant polling and full refetches
         run: node scripts/base-load-inventory.mjs
       - name: TypeScript
