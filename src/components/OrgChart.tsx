@@ -56,7 +56,9 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
           {slot.title}
           <Badge variant="outline" className="text-[10px] font-normal">Cấp {slot.level}</Badge>
           {slot.manager && <Badge variant="secondary" className="text-[10px] font-normal">Quản lý</Badge>}
+          {slot.legacy && <Badge variant="outline" className="text-[10px] font-normal">Lịch sử</Badge>}
         </div>
+        {slot.legacy && slot.targetTitle && <p className="text-xs text-muted-foreground">Vị trí chuẩn hiện tại: {slot.targetTitle}</p>}
         {holders.length > 0
           ? <ul className="space-y-1">{holders.map(p => (
             <li key={p.id}><Button variant="link" className="min-h-9 h-auto max-w-full justify-start p-0 text-left text-sm whitespace-normal break-words" onClick={() => onOpen(p)}>{p.name}</Button></li>
@@ -69,7 +71,7 @@ function SlotRow({ unitId, unitName, slot, query, actions, onOpen }: { unitId: s
             <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-8 sm:w-8 shrink-0" aria-label={`Thao tác ${slot.title}`}><MoreVertical className="h-4 w-4" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {actions.onAssign && (
+            {!slot.legacy && actions.onAssign && (
               <DropdownMenuItem onClick={() => actions.onAssign?.(ref)}>
                 <UserPlus className="h-4 w-4 mr-2" />Bổ nhiệm / Thêm nhân sự
               </DropdownMenuItem>

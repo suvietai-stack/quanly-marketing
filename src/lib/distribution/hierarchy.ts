@@ -21,10 +21,16 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
       if (node.id === BTC_CENTER)
         children = children.flatMap((child) => {
           if (child.id !== RETAIL_SYSTEM) return [child];
-          // Retail/Showroom is directly under BTC on the active chart.
-          // Historical retail-wrapper records remain in the database and
-          // employee history, never as an extra live organizational level.
-          return child.children;
+          // Keep the active showroom directly under BTC. Only reveal the old
+          // Retail wrapper when it contains recorded positions, holders,
+          // historical appointments or metadata that must remain inspectable.
+          return child.wrapperProtected
+            ? [...child.children, {
+                ...child,
+                children: [],
+                hierarchyWarning: "Đơn vị lịch sử — chỉ xem, không bổ nhiệm mới.",
+              }]
+            : child.children;
         });
       if (centers.has(node.id)) {
         promoted.push({
@@ -45,7 +51,7 @@ export function distributionVisualHierarchy(roots: ChartNode[]): ChartNode[] {
     nodes.flatMap((node) => {
       const children = prune(node.children);
       if (node.id === "biz-block" && !children.length && !node.leader
-          && !node.people.length && !node.slots?.length)
+          && !node.people.length && !node.slots?.length && !node.wrapperProtected)
         return [];
       return [{ ...node, children }];
     });
