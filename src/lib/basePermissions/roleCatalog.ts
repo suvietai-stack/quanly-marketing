@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/lib/auth';
 import type { Json } from '@/integrations/supabase/types';
 import type { OrgCommand } from './commands';
 export type RoleKind='common'|'position'|'marketing_task'|'system';
@@ -11,7 +12,19 @@ export interface RolePreview {id:string;action:string;role_id:string;before:Cata
 export const roleCatalogApi={
  async read(context?:{signal?:AbortSignal}):Promise<RoleCatalog>{const request=supabase.rpc('role_catalog_read');const {data,error}=await(context?.signal?request.abortSignal(context.signal):request);if(error)throw new Error(error.message);return data as unknown as RoleCatalog;},
  async preview(action:'create'|'edit'|'archive'|'delete',roleId?:string,proposal?:RoleProposal):Promise<RolePreview>{const {data,error}=await supabase.rpc('role_catalog_change',{_phase:'preview',_action:action,_role_id:roleId,_proposed:proposal as unknown as Json});if(error)throw new Error(error.message);return data as unknown as RolePreview;},
- async apply(id:string,reason:string){const {error}=await supabase.rpc('role_catalog_change',{_phase:'apply',_preview:id,_confirmation:'ÁP DỤNG ROLE',_reason:reason});if(error)throw new Error(error.message);},
+ async apply(id:string,reason:string,affectedUsers:string[]=[]){
+  const {error}=await supabase.rpc('role_catalog_change',{
+    _phase:'apply',_preview:id,_confirmation:'ÁP DỤNG ROLE',_reason:reason,
+  });
+  if(error)throw new Error(error.message);
+  // The audited server preview identifies receivers. Warm only them, after the
+  // transaction commits; never delay Role save, and never authorize from this list.
+  if(affectedUsers.length) void supabase.rpc('base_role_cache_sync_users' as never,{
+    _users:affectedUsers as never,
+  }).then(()=>undefined).catch(()=>undefined);
+  void useAuth.getState().refreshBaseAccess(true).catch(()=>undefined);
+  void useAuth.getState().refreshBizAccess(true).catch(()=>undefined);
+ },
 };
 export function slotConversionCommands(catalog:RoleCatalog,ids:string[]):OrgCommand[]{return [...new Set(ids)].flatMap(id=>{
  void catalog; void id;
