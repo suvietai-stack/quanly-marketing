@@ -167,21 +167,20 @@ $body$;
 -- Match the previous function's privileges. RPCs use it internally; no new public endpoint.
 REVOKE ALL ON FUNCTION private.base_tier1(uuid,text) FROM PUBLIC,anon,authenticated;
 
--- On an audited membership-only org_change, refresh only the changed users.
--- All other caches are carried forward to the new epoch (their sources did not change).
+-- On an audited membership-only org_change, refresh only changed users.
+-- Other snapshots remain invalid and always fall back to the live evaluator.
 -- For structure/role edits, the cache remains invalid until each user's next sync;
 -- authorization immediately falls back to the exact old evaluator.
 CREATE OR REPLACE FUNCTION private.base_role_cache_org_event()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $body$
 DECLARE
   actor_ uuid;
-  current_epoch bigint;
   affected uuid[];
 BEGIN
-  IF (NEW.before_data - 'memberships') IS DISTINCT FROM (NEW.after_data - 'memberships') THEN
+  IF NOT (NEW.before_data ? 'memberships' AND NEW.after_data ? 'memberships')
+    OR (NEW.before_data - 'memberships') IS DISTINCT FROM (NEW.after_data - 'memberships') THEN
     RETURN NULL;
   END IF;
-  SELECT epoch INTO current_epoch FROM private.base_role_cache_state WHERE id;
   WITH old_members AS (
     SELECT x->>'id' id,x->>'user_id' user_id,x payload
     FROM jsonb_array_elements(coalesce(NEW.before_data->'memberships','[]'::jsonb)) x
@@ -200,9 +199,7 @@ BEGIN
 COMMENT ON TABLE private.base_role_effective_cache IS
   'Server-authoritative fast decisions. Read only if epoch and next transition match. Client never writes.';
 ;
-  -- Preserve unchanged rows only for a pure membership change; no extra role computation.
-  UPDATE private.base_role_effective_cache SET epoch=current_epoch
-  WHERE NOT (user_id=ANY(affected));
+  -- Never promote previously cached rights for an unrelated user without recomputation.
   FOREACH actor_ IN ARRAY affected LOOP
     PERFORM private.base_role_cache_refresh(actor_);
   END LOOP;
