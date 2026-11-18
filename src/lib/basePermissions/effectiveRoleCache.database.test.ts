@@ -16,7 +16,7 @@ beforeAll(async () => {
     CREATE SCHEMA auth;
     CREATE ROLE anon;
     CREATE ROLE authenticated;
-    CREATE TABLE profiles (id uuid PRIMARY KEY, status text NOT NULL, is_system_admin boolean DEFAULT false);
+    CREATE TABLE profiles (id uuid PRIMARY KEY, status text NOT NULL, is_system_admin boolean DEFAULT false, full_name text NOT NULL DEFAULT 'Staff');
     CREATE TABLE org_events (id uuid DEFAULT gen_random_uuid(), before_data jsonb, after_data jsonb);
     CREATE TABLE app_roles (id text PRIMARY KEY, permissions text[] NOT NULL DEFAULT '{}');
     CREATE TABLE private.fixture_rules (actor uuid NOT NULL,permission text NOT NULL,effect text NOT NULL);
@@ -98,4 +98,17 @@ it('expired snapshots and missing actors use the previous resolver, never stale 
   expect(await roleDecision(employee)).toBe('DENY');
   await db.query('select set_config($1,$2,false)',['test.actor','']);
   await expect(serverSync()).rejects.toThrow('Không có quyền');
+});
+
+it('read-only org chart returns the same units, titles and member shape without rebuilding config three times',async()=>{
+  await db.exec(`CREATE TABLE IF NOT EXISTS private.fixture_org_config(payload jsonb)`);
+  await db.exec(`CREATE OR REPLACE FUNCTION private.base_config() RETURNS jsonb LANGUAGE sql STABLE AS
+    $$SELECT coalesce((SELECT payload FROM private.fixture_org_config LIMIT 1),'{}'::jsonb)$$`);
+  const config = {units:[{id:'marketing',name:'Marketing'}],titles:[{id:'designer',name:'Thiết kế'}],memberships:[{id:'membership',user_id:employee,unit_id:'marketing',title_id:'designer',duties:'Design',active:true}]};
+  await db.query('insert into private.fixture_org_config(payload) values($1::jsonb)',[JSON.stringify(config)]);
+  const result = await stmt('select public.base_org_chart_read() value');
+  expect(result.units).toEqual(config.units);
+  expect(result.titles).toEqual(config.titles);
+  expect(result.members).toEqual([{user_id:employee,name:'Staff',unit_id:'marketing',title_id:'designer',duties:'Design',active:true,starts_at:null,ends_at:null}]);
+  await db.exec('delete from private.fixture_org_config');
 });
