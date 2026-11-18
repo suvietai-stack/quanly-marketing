@@ -1,0 +1,45 @@
+name: Base global load and idle-network performance
+on:
+  pull_request:
+    paths:
+      - 'src/routes/__root.tsx'
+      - 'src/components/AppShell.tsx'
+      - 'src/components/ZaloInteractionReminder.tsx'
+      - 'src/components/sao/RewardPopup.tsx'
+      - 'src/lib/sao/**'
+      - 'src/lib/zaloReminder*'
+      - 'src/components/AuthGate.tsx'
+      - 'src/components/signals/**'
+      - 'src/lib/auth.ts'
+      - 'src/lib/presence*'
+      - 'src/lib/signals/polling*'
+      - 'src/lib/performance/**'
+      - 'scripts/base-load-inventory.mjs'
+      - '.github/workflows/base-load-performance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/routes/__root.tsx'
+      - 'src/components/AppShell.tsx'
+      - 'src/components/AuthGate.tsx'
+      - 'src/components/signals/**'
+      - 'src/lib/auth.ts'
+      - 'src/lib/presence*'
+      - 'src/lib/signals/polling*'
+      - 'src/lib/performance/**'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Session, Signals and bundle-boundary regression tests
+        run: bunx vitest run src/lib/presence.test.ts src/lib/performance/entryBoundary.test.ts src/lib/signals/polling.test.ts src/lib/auth.flows.test.ts src/lib/sao/logic.test.ts src/lib/zaloReminder.test.ts
+      - name: Audit all source modules for redundant polling and full refetches
+        run: node scripts/base-load-inventory.mjs
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Production build
+        run: bun run build

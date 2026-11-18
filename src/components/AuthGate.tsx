@@ -3,6 +3,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
 import { useQueryClient } from '@tanstack/react-query';
+import { PRESENCE_HEARTBEAT_MS, shouldTouchPresence } from '@/lib/presence';
 import { Button } from '@/components/ui/button';
 
 const PUBLIC_PATHS = ["/login", "/register", "/chinh-sach-bao-mat", "/reset-password"];
@@ -30,20 +31,25 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     initStore();
   }, [init, initStore]);
 
-  // Presence heartbeat: ping every 60s while signed-in; also on focus/visibility.
+  // One visible heartbeat per interval, not one write per timer tick or focus.
+  // Hidden mobile tabs never update profile presence merely for staying open.
   useEffect(() => {
     if (!currentUserId || currentUser?.status !== 'Đang hoạt động') return;
-    let last = 0; // focus + visibilitychange cùng lúc: chỉ ghi nhận hiện diện tối đa 1 lần/30s
-    const touch = () => { const now = Date.now(); if (now - last < 30_000) return; last = now; touchPresence(); };
+    let lastAttempt = 0;
+    const touch = () => {
+      const now = Date.now();
+      if (!shouldTouchPresence(lastAttempt, now, document.visibilityState === 'visible')) return;
+      lastAttempt = now; // coalesce visibility and focus and don't overlap attempts
+      void touchPresence();
+    };
     touch();
-    const iv = setInterval(() => { last = 0; touch(); }, 60_000);
-    const onVis = () => { if (!document.hidden) touch(); };
-    window.addEventListener("focus", onVis);
-    document.addEventListener("visibilitychange", onVis);
+    const iv = window.setInterval(touch, PRESENCE_HEARTBEAT_MS);
+    window.addEventListener("focus", touch);
+    document.addEventListener("visibilitychange", touch);
     return () => {
-      clearInterval(iv);
-      window.removeEventListener("focus", onVis);
-      document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(iv);
+      window.removeEventListener("focus", touch);
+      document.removeEventListener("visibilitychange", touch);
     };
   }, [currentUserId, currentUser?.status, touchPresence]);
 

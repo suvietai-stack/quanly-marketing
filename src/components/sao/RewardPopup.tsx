@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { chipiAssets } from '@/assets/chipi/states';
 import { claimCelebration, type Celebration } from '@/lib/sao/api';
-import { mayCelebrate, friendlyReward } from '@/lib/sao/logic';
+import { mayCelebrate, friendlyReward, rewardCheckDue, REWARD_CHECK_INTERVAL_MS } from '@/lib/sao/logic';
 
 export function RewardPopup({ userId }: { userId: string }) {
   const [reward, setReward] = useState<Celebration | null>(null);
@@ -15,10 +15,14 @@ export function RewardPopup({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   useEffect(() => {
     let live = true;
+    let lastAttempt = 0;
     const check = async () => {
       const editing = Boolean(document.activeElement?.matches('input,textarea,[contenteditable="true"]'));
       const modal = Boolean(document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"]'));
-      if (busy.current || !mayCelebrate(document.visibilityState === 'visible', editing, modal)) return;
+      const now = Date.now();
+      if (busy.current || !mayCelebrate(document.visibilityState === 'visible', editing, modal) ||
+          !rewardCheckDue(lastAttempt, now)) return;
+      lastAttempt = now;
       busy.current = true;
       try {
         const result = await claimCelebration();
@@ -26,10 +30,9 @@ export function RewardPopup({ userId }: { userId: string }) {
       } catch { /* Leave unread rewards for the next successful request. */ }
       finally { busy.current = false; }
     };
-    const timer = window.setInterval(check, 15000);
+    const timer = window.setInterval(check, REWARD_CHECK_INTERVAL_MS);
     const initial = window.setTimeout(check, 1800);
-    let lastVisible = 0; // quay lại tab liên tục: kiểm tra Sao tối đa 1 lần/15s
-    const onVisible = () => { const now = Date.now(); if (now - lastVisible < 15000) return; lastVisible = now; void check(); };
+    const onVisible = () => { void check(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => { live = false; clearInterval(timer); clearTimeout(initial); document.removeEventListener('visibilitychange', onVisible); };
   }, [userId, queryClient]);
