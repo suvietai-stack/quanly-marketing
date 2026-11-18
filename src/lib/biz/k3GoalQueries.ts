@@ -72,6 +72,6 @@ export function useK3GoalMutation() {
       if (result.error) throw result.error;
       return result.data;
     },
-    onSuccess: () => qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }),
+    onSuccess: () => { void qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') && q.queryKey[0] !== 'k3_preview' }); },
   });
 }
