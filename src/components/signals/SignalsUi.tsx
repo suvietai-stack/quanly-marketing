@@ -103,20 +103,8 @@ const refreshSignals = async (qc: ReturnType<typeof useQueryClient>) => {
   if (failed) toast.error("Đã lưu nhưng chưa làm mới được danh sách.", { action: { label: "Thử lại", onClick: () => void refreshSignals(qc) } });
 };
 
-/** Xóa dữ liệu tín hiệu khi đăng xuất hoặc đổi tài khoản (không cần tải lại trang). */
-export function SignalCacheGuard() {
-  const { user } = useCurrentUser();
-  const qc = useQueryClient();
-  const prev = useRef<string | null | undefined>(undefined);
-  const uid = user?.id ?? null;
-  useEffect(() => {
-    if (prev.current !== undefined && prev.current !== uid) {
-      qc.removeQueries({ predicate: (q) => String(q.queryKey[0]).startsWith(SIG) });
-    }
-    prev.current = uid;
-  }, [uid, qc]);
-  return null;
-}
+// Keep the old named export for lazy feature consumers.
+export { SignalCacheGuard } from './SignalCacheGuard';
 
 export function useUserName() {
   const users = useAuth((s) => s.users);
