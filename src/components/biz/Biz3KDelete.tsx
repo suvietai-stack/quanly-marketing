@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { k3Error } from '@/lib/biz/k3';
+import { findK3DeletedRecord, isAmbiguousK3WriteFailure } from '@/lib/biz/k3WriteRecovery';
 import { useAuth } from '@/lib/auth';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -19,8 +20,34 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
   const [target, setTarget] = useState<DeleteTarget | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uncertain, setUncertain] = useState(false);
   const inFlight = useRef(false);
   const close = () => { if (!inFlight.current) { setTarget(null); setError(null); } };
+  const finishDeleted = (selected: DeleteTarget) => {
+    setTarget(null);
+    setUncertain(false);
+    setError(null);
+    selected.onDeleted?.();
+    toast.success('Đã chuyển vào Thùng rác. Có thể khôi phục trong 15 ngày.');
+    // The delete has committed; refresh errors must never trigger another write.
+    void qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('k3_') });
+  };
+  const verifyDeleted = async () => {
+    if (!target || inFlight.current) return;
+    const selected = target;
+    inFlight.current = true;
+    setBusy(true);
+    try {
+      const status = await findK3DeletedRecord(selected.id);
+      if (status.state === 'saved') { finishDeleted(selected); return; }
+      setError(status.state === 'unknown'
+        ? 'Không thể kiểm tra Thùng rác lúc này. Chưa xác nhận thao tác xóa.'
+        : 'Chưa thấy công việc trong Thùng rác. Có thể thử lại thao tác xóa.');
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  };
   const remove = async () => {
     if (!target || inFlight.current) return;
     const selected = target;
@@ -28,29 +55,31 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     setError(null);
     try {
+      if (uncertain) {
+        const prior = await findK3DeletedRecord(selected.id);
+        if (prior.state === 'saved') { finishDeleted(selected); return; }
+      }
       const { error: rpcError } = await supabase.rpc('k3_soft_delete', { _kind: selected.kind, _id: selected.id });
       if (rpcError) throw rpcError;
+      finishDeleted(selected);
     } catch (err) {
-      setError(k3Error(err));
+      if (isAmbiguousK3WriteFailure(err)) {
+        setUncertain(true);
+        const status = await findK3DeletedRecord(selected.id);
+        if (status.state === 'saved') { finishDeleted(selected); return; }
+        setError('Máy chủ phản hồi quá lâu. Chưa xác nhận đã xóa; hãy kiểm tra Thùng rác trước khi thử lại.');
+      } else {
+        setError(k3Error(err));
+      }
+    } finally {
       inFlight.current = false;
       setBusy(false);
-      return;
-    }
-    // Delete already committed: cache refresh failure must not invite a second write.
-    setTarget(null);
-    inFlight.current = false;
-    setBusy(false);
-    selected.onDeleted?.();
-    toast.success('Đã chuyển vào Thùng rác. Có thể khôi phục trong 15 ngày.');
-    try {
-      await qc.invalidateQueries({ predicate: q => String(q.queryKey[0]).startsWith('k3_') });
-    } catch {
-      toast.error('Đã xóa công việc nhưng danh sách chưa cập nhật. Vui lòng tải lại.');
     }
   };
   return <DeleteContext.Provider value={selected => {
     if (inFlight.current) return;
     setError(null);
+    setUncertain(false);
     setTarget({ ...selected });
   }}>
     {children}
@@ -61,9 +90,10 @@ export function K3DeleteProvider({ children }: { children: ReactNode }) {
           <AlertDialogDescription className="break-words">Công việc “{target?.name}” sẽ không còn trong danh sách của bạn. Có thể khôi phục trong 15 ngày.</AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
+        {uncertain && <button type="button" disabled={busy} className="text-left text-sm underline text-primary" onClick={() => { void verifyDeleted(); }}>Kiểm tra đã vào Thùng rác chưa</button>}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy} onClick={close}>Quay lại</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground" disabled={busy} onClick={e => { e.preventDefault(); void remove(); }}>{busy ? 'Đang xóa…' : 'Xóa'}</AlertDialogAction>
+          <AlertDialogAction className="bg-destructive text-destructive-foreground" disabled={busy} onClick={e => { e.preventDefault(); void remove(); }}>{busy ? 'Đang xử lý…' : uncertain ? 'Thử xóa lại' : 'Xóa'}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

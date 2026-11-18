@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { History, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { k3Error } from '@/lib/biz/k3';
+import { findK3SavedResult, isAmbiguousK3WriteFailure } from '@/lib/biz/k3WriteRecovery';
 import { k3KpiResultQuery, useK3KpiResultSave, type K3ResultData } from '@/lib/biz/k3KpiResultQueries';
 import { K3_MEASURE_LABELS } from '@/lib/biz/k3KpiResults';
 import { Button } from '@/components/ui/button';
@@ -66,15 +67,88 @@ export function Biz3KKpiResult({ kpiId, date, showStatus = true, readOnly = fals
 function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: string; onClose: () => void }) {
   const uid = useAuth((s) => s.currentUserId) ?? '';
   const save = useK3KpiResultSave();
-  const [key] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [uncertain, setUncertain] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const frozenPayload = useRef<Record<string, unknown> | null>(null);
+  const submitting = useRef(false);
   const [correctionReason, setCorrectionReason] = useState('');
   const [f, setF] = useState({ value: data.daily?.value == null ? '' : String(data.kpi.measure === 'duration' && data.kpi.config?.duration_unit === 'hours' ? data.daily.value / 60 : data.daily.value), numerator: data.daily?.numerator?.toString() ?? '', denominator: data.daily?.denominator?.toString() ?? '', objects: data.daily?.objects?.join('\n') ?? '', completed: data.daily?.completed ?? [], evidence: data.daily?.evidence ?? '', note: data.daily?.note ?? '', problem: data.daily?.problem ?? '', cause: data.daily?.cause ?? '', solution: data.daily?.solution ?? '' });
   const [intervals, setIntervals] = useState(data.daily?.intervals ?? []);
   const measure = data.kpi.measure;
   const daily = { ...f, intervals, id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0, value: f.value === '' ? null : Number(f.value), numerator: f.numerator === '' ? null : Number(f.numerator), denominator: f.denominator === '' ? null : Number(f.denominator), objects: f.objects.split('\n').filter((s) => s.trim()), user_id: uid, work_date: date };
-  const previewQuery = useQuery({ queryKey: ['k3_preview', uid, data.kpi.id, date, daily], retry: false, queryFn: async () => { const { data: result, error } = await supabase.rpc('k3_kpi_result_preview', { _kpi: data.kpi.id, _date: date, _payload: daily as never }); if (error) throw error; return result as unknown as K3TypedMetric; } });
+  // Preview only depends on measurement fields. Never refetch on notes, VNGB text,
+  // evidence or corrections; debounce typing to protect the measured-KPI RPC.
+  const previewInput = useMemo(() => ({
+    id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0,
+    value: f.value === '' ? null : Number(f.value),
+    numerator: f.numerator === '' ? null : Number(f.numerator),
+    denominator: f.denominator === '' ? null : Number(f.denominator),
+    objects: f.objects.split('\n').filter(s => s.trim()),
+    completed: f.completed, intervals, user_id: uid, work_date: date,
+  }), [data.daily?.id, data.daily?.revision, f.value, f.numerator, f.denominator, f.objects, f.completed, intervals, uid, date]);
+  const [debouncedPreview, setDebouncedPreview] = useState(previewInput);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedPreview(previewInput), 400);
+    return () => clearTimeout(timer);
+  }, [previewInput]);
+  const previewQuery = useQuery({
+    queryKey: ['k3_preview', uid, data.kpi.id, date, debouncedPreview],
+    retry: false, staleTime: 30_000, refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const { data: result, error } = await supabase.rpc('k3_kpi_result_preview', {
+        _kpi: data.kpi.id, _date: date, _payload: debouncedPreview as never,
+      });
+      if (error) throw error;
+      return result as unknown as K3TypedMetric;
+    },
+  });
   const set = (name: keyof typeof f, value: string) => setF((p) => ({ ...p, [name]: value }));
-  return <Dialog open onOpenChange={(o) => !o && onClose()}><DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật kết quả · {data.kpi.name}</DialogTitle></DialogHeader>
+  const finishSaved = () => { toast.success('Đã xác nhận kết quả KPI được lưu.'); onClose(); };
+  const verifySaved = async () => {
+    if (checking || save.isPending) return;
+    setChecking(true);
+    const status = await findK3SavedResult(uid, key);
+    setChecking(false);
+    if (status.state === 'saved') { finishSaved(); return; }
+    setSaveError(status.state === 'unknown'
+      ? 'Chưa thể kiểm tra trạng thái lưu. Hãy thử kiểm tra hoặc lưu lại cùng mã yêu cầu.'
+      : 'Chưa thấy phiên bản kết quả mới. Có thể thử lưu lại an toàn, không nhân đôi kết quả.');
+  };
+  const submitResult = async () => {
+    if (submitting.current || checking) return;
+    submitting.current = true;
+    setSaveError('');
+    try {
+      if (!uncertain && data.day_closed && !correctionReason.trim()) throw new Error('Nhập lý do bổ sung hoặc sửa sau chốt.');
+      if (!uncertain && measure === 'binary' && f.value === '') throw new Error('Chọn Đã hoàn thành hoặc Chưa hoàn thành.');
+      const payload = frozenPayload.current ?? { ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key, correction_reason: correctionReason };
+      frozenPayload.current = payload;
+      await save.mutateAsync(payload);
+      finishSaved();
+    } catch (e) {
+      if (isAmbiguousK3WriteFailure(e)) {
+        setUncertain(true);
+        setChecking(true);
+        const status = await findK3SavedResult(uid, key);
+        setChecking(false);
+        if (status.state === 'saved') { finishSaved(); return; }
+        setSaveError(status.state === 'unknown'
+          ? 'Không thể xác minh kết quả vừa lưu. Giữ nguyên yêu cầu để tránh ghi trùng.'
+          : 'Máy chủ phản hồi quá lâu. Chưa thấy kết quả được lưu; có thể thử lại cùng yêu cầu.');
+      } else {
+        frozenPayload.current = null;
+        setUncertain(false);
+        setKey(crypto.randomUUID());
+        setSaveError(k3Error(e));
+      }
+    } finally {
+      submitting.current = false;
+    }
+  };
+  return <Dialog open onOpenChange={(o) => !o && !submitting.current && !checking && onClose()}><DialogContent className="k3-mobile-dialog max-h-[90dvh] max-w-lg overflow-y-auto"><DialogHeader><DialogTitle>Cập nhật kết quả · {data.kpi.name}</DialogTitle></DialogHeader>
+    <fieldset disabled={save.isPending || checking || uncertain} className="space-y-3 min-w-0">
     <p className="text-sm">Ngày {date}{measure !== 'binary' && <> · Mục tiêu {data.kpi.target ?? data.kpi.milestones?.length} {data.kpi.unit}</>}</p>
     {['cumulative', 'current', 'duration', 'frequency'].includes(measure) && !(measure === 'duration' && data.kpi.config?.duration_method === 'intervals') && <div className="space-y-1"><Label htmlFor="k3-result-value">{measure === 'current' ? 'Giá trị hiện tại' : measure === 'duration' ? `Thời lượng trong ngày (${data.kpi.config?.duration_unit === 'hours' ? 'giờ' : 'phút'})` : measure === 'frequency' ? 'Số lần hợp lệ trong ngày' : 'Tổng số lượng thực hiện trong ngày'}</Label><Input id="k3-result-value" type="number" inputMode="decimal" min={0} value={f.value} onChange={(e) => set('value', e.target.value)} /></div>}
     {measure === 'binary' && <div className="grid grid-cols-1 gap-2 min-[375px]:grid-cols-2 md:flex" role="group" aria-label="Kết quả hoàn thành">{[['0','Chưa hoàn thành'],['1','Đã hoàn thành']].map(([value,label])=><Button key={value} className="max-md:min-h-12" variant={f.value===value?'default':'outline'} aria-pressed={f.value===value} onClick={()=>set('value',value)}>{label}</Button>)}</div>}
@@ -84,10 +158,13 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
     {measure === 'distinct' && <div><Label htmlFor="k3-result-objects">Định danh đối tượng (mỗi dòng một mã)</Label><Textarea id="k3-result-objects" rows={4} value={f.objects} onChange={(e) => set('objects', e.target.value)} /></div>}
     {measure === 'milestone' && <div className="space-y-2">{data.kpi.milestones?.map((m) => <label key={m} className="flex items-center gap-2 text-sm"><Checkbox checked={f.completed.includes(m)} onCheckedChange={(v) => setF((p) => ({ ...p, completed: v === true ? [...p.completed, m] : p.completed.filter((x) => x !== m) }))} />{data.kpi.config?.milestones?.find((x) => x.id === m)?.name ?? m}</label>)}</div>}
     {(data.kpi.config?.evidence_required || measure === 'milestone' || f.evidence) ? <div className="space-y-1"><Label htmlFor="k3-result-evidence">Bằng chứng / nguồn *</Label><Input id="k3-result-evidence" value={f.evidence} onChange={(e) => set('evidence', e.target.value)} /></div> : <details><summary className="cursor-pointer text-sm">Thêm bằng chứng</summary><Input className="mt-2" aria-label="Bằng chứng / nguồn" value={f.evidence} onChange={e=>set('evidence',e.target.value)} /></details>}
-    <div className="border-y border-border py-2"><p className="text-sm font-medium">Kết quả mới: {previewQuery.data ? k3MetricDisplay(measure, previewQuery.data, data.kpi.target, data.kpi.unit ?? '') : previewQuery.error ? 'Chưa đủ dữ liệu hợp lệ' : 'Đang tính…'}</p><p className="text-xs text-muted-foreground">{data.daily ? 'Thay thế tổng kết quả ngày đã ghi.' : 'Kết quả ngày chưa chốt.'}</p></div>
+    <div className="border-y border-border py-2"><p className="text-sm font-medium">Kết quả mới: {debouncedPreview !== previewInput ? 'Đang tính…' : previewQuery.data ? k3MetricDisplay(measure, previewQuery.data, data.kpi.target, data.kpi.unit ?? '') : previewQuery.error ? 'Chưa đủ dữ liệu hợp lệ' : 'Đang tính…'}</p><p className="text-xs text-muted-foreground">{data.daily ? 'Thay thế tổng kết quả ngày đã ghi.' : 'Kết quả ngày chưa chốt.'}</p></div>
     <details open={!!f.note} className="md:hidden"><summary className="cursor-pointer text-sm">Ghi chú</summary><Textarea aria-label="Ghi chú" className="mt-2" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} /></details><div className="hidden md:block"><Label htmlFor="k3-result-note">Ghi chú</Label><Textarea id="k3-result-note" rows={2} value={f.note} onChange={(e) => set('note', e.target.value)} /></div>
     <details><summary className="text-sm">Vấn đề – Nguyên nhân – Giải pháp</summary><div className="mt-2 space-y-2">{(['problem', 'cause', 'solution'] as const).map((name, i) => <Textarea key={name} aria-label={['Vấn đề', 'Nguyên nhân', 'Giải pháp'][i]} rows={2} value={f[name]} onChange={(e) => set(name, e.target.value)} />)}</div></details>
     {data.day_closed && <div className="space-y-1"><Label htmlFor="k3-correction">Lý do bổ sung / sửa sau chốt *</Label><Textarea id="k3-correction" value={correctionReason} onChange={(e) => setCorrectionReason(e.target.value)} /><p className="text-xs text-muted-foreground">Giữ bản chốt cũ, ghi lịch sử điều chỉnh và yêu cầu xác nhận lại.</p></div>}
-    <DialogFooter><Button variant="outline" onClick={onClose}>Bỏ thay đổi</Button><Button disabled={save.isPending} onClick={async () => { try { if(data.day_closed && !correctionReason.trim()) throw new Error('Nhập lý do bổ sung hoặc sửa sau chốt.'); if(measure==='binary' && f.value==='') throw new Error('Chọn Đã hoàn thành hoặc Chưa hoàn thành.'); await save.mutateAsync({ ...daily, kpi_id: data.kpi.id, revision: data.daily?.revision ?? 0, request_key: key, correction_reason: correctionReason }); toast.success('Đã lưu kết quả KPI.'); onClose(); } catch (e) { toast.error(k3Error(e)); } }}>{save.isPending ? 'Đang lưu…' : 'Lưu kết quả'}</Button></DialogFooter>
+    </fieldset>
+    {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+    {uncertain && <div className="space-y-2 rounded-xl border p-3 text-sm"><p>Đang giữ nguyên nội dung và mã lưu để không ghi trùng kết quả.</p><Button type="button" size="sm" variant="outline" disabled={save.isPending || checking} onClick={verifySaved}>{checking ? 'Đang kiểm tra…' : 'Kiểm tra trạng thái lưu'}</Button></div>}
+    <DialogFooter><Button variant="outline" disabled={save.isPending || checking} onClick={onClose}>Bỏ thay đổi</Button><Button disabled={save.isPending || checking} onClick={submitResult}>{checking ? 'Đang xác minh…' : save.isPending ? 'Đang lưu…' : uncertain ? 'Thử lưu lại an toàn' : 'Lưu kết quả'}</Button></DialogFooter>
   </DialogContent></Dialog>;
 }

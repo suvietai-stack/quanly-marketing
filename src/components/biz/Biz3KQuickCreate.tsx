@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { useAuth } from '@/lib/auth';
+import { findK3CreatedGoal, isAmbiguousK3WriteFailure } from '@/lib/biz/k3WriteRecovery';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { k3Error } from '@/lib/biz/k3';
@@ -23,7 +25,9 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   variant: 'personal' | 'team'; defaultDate: string; onClose: () => void; onCreated?: (goalId: string) => void;
 }) {
   const mutation = useK3GoalMutation();
-  const [requestKey] = useState(() => crypto.randomUUID());
+  const actorId = useAuth(s => s.currentUserId) ?? '';
+  const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
+  const [checking, setChecking] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -47,11 +51,30 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   };
   const choose = (measure: K3Measure) => setKfs(prev => prev.map((k,i) => i === 0 ? { ...k, kpis: k.kpis.map((p,j) => j === 0 ? { ...p, measure, condition: 'gte', config: { ...p.config, ...(measure === 'frequency' || measure === 'streak' ? { cycle: measure === 'streak' ? 'day' as const : 'week' as const } : {}), ...(measure === 'duration' ? { duration_unit: 'minutes' as const, duration_method: 'total' as const } : {}) } } : p) } : k));
   const changeFirst = (field: 'target' | 'unit', value: string) => setKfs(prev => prev.map((k,i) => i === 0 ? { ...k, kpis: k.kpis.map((p,j) => j === 0 ? { ...p, [field]: value } : p) } : k));
-  const close = () => { if (f.name || f.expected_result || f.description || kfs.some(k => k.name)) setDiscarding(true); else onClose(); };
+  const close = () => {
+    if (submitting.current || checking || mutation.isPending) return;
+    if (retrying || f.name || f.expected_result || f.description || kfs.some(k => k.name)) setDiscarding(true);
+    else onClose();
+  };
+  const finishSaved = (goalId: string, duplicated = false) => {
+    toast.success(duplicated ? 'Công việc đã được lưu trước đó.' : 'Đã xác nhận công việc đã lưu.');
+    onCreated?.(goalId);
+    onClose();
+  };
+  const verifySaved = async () => {
+    if (checking || mutation.isPending) return;
+    setChecking(true);
+    const status = await findK3CreatedGoal(actorId, requestKey);
+    setChecking(false);
+    if (status.state === 'saved') { finishSaved(status.id, true); return; }
+    setError(status.state === 'unknown'
+      ? 'Chưa thể kiểm tra trạng thái lưu. Giữ nguyên yêu cầu và thử kiểm tra hoặc lưu lại.'
+      : 'Chưa thấy công việc đã lưu. Có thể thử lưu lại an toàn bằng đúng mã yêu cầu cũ.');
+  };
   const submit = async (valid: boolean) => {
     if (submitting.current) return;
     setAttempted(true);
-    const validation = creationError(f.name, f.period_start, f.period_end, kfs, f.expected_result, f.start_time, f.due_time);
+    const validation = retrying ? '' : creationError(f.name, f.period_start, f.period_end, kfs, f.expected_result, f.start_time, f.due_time);
     if (validation) { setError(validation); return; }
     setError('');
     submitting.current = true;
@@ -65,20 +88,30 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       };
       attemptedPayload.current = payload;
       const res = await mutation.mutateAsync({ kind: 'quick_create', payload }) as { goal_id: string; duplicated?: boolean };
-      toast.success(res.duplicated ? 'Công việc đã được lưu trước đó.' : valid ? 'Đã lưu công việc.' : 'Đã lưu nháp công việc.');
-      onCreated?.(res.goal_id); onClose();
+      finishSaved(res.goal_id, !!res.duplicated);
     } catch (e) {
-      const code = e && typeof e === 'object' && 'code' in e ? String(e.code) : '';
-      if (code && code !== '57014') { attemptedPayload.current = null; setRetrying(false); }
-      else setRetrying(true);
-      setError(k3Error(e));
+      if (isAmbiguousK3WriteFailure(e)) {
+        setRetrying(true);
+        setChecking(true);
+        const status = await findK3CreatedGoal(actorId, requestKey);
+        setChecking(false);
+        if (status.state === 'saved') { finishSaved(status.id, true); return; }
+        setError(status.state === 'unknown'
+          ? 'Lưu có thể đã thành công nhưng chưa kiểm tra được. Giữ nguyên yêu cầu để tránh tạo trùng.'
+          : 'Máy chủ phản hồi quá lâu. Chưa thấy công việc được lưu; hãy thử lại bằng chính yêu cầu này.');
+      } else {
+        attemptedPayload.current = null;
+        setRequestKey(crypto.randomUUID());
+        setRetrying(false);
+        setError(k3Error(e));
+      }
     } finally { submitting.current = false; }
   };
   return <Dialog open onOpenChange={o => !o && close()}><DialogContent className="k3-mobile-dialog k3-quick-create flex max-h-[90dvh] max-w-2xl flex-col overflow-hidden">
     <DialogHeader><DialogTitle>Tạo công việc</DialogTitle></DialogHeader>
-    <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
+    <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || checking || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || checking || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
     <div className="min-h-0 space-y-4 overflow-y-auto px-1 pb-2">
-      <fieldset disabled={mutation.isPending || retrying} className="min-w-0 space-y-4">
+      <fieldset disabled={mutation.isPending || checking || retrying} className="min-w-0 space-y-4">
       <div className="space-y-1"><Label htmlFor="k3q-name">Tên công việc *</Label><Input id="k3q-name" value={f.name} onChange={e => set('name', e.target.value)} aria-invalid={attempted && !f.name.trim()} placeholder="Soạn báo giá khách sạn Vinh Nghệ An" /></div>
       <div className="space-y-1"><Label htmlFor="k3q-end">Hạn hoàn thành *</Label><Input id="k3q-end" type="date" value={f.period_end} onChange={e => set('period_end', e.target.value)} aria-invalid={attempted && !f.period_end} />{attempted && !f.period_end && <p role="alert" className="text-sm text-destructive">Chưa chọn hạn hoàn thành.</p>}</div>
       {simple && <div className="space-y-2"><Label htmlFor="k3q-measure">Đo kết quả bằng cách nào? *</Label><Select value={['binary','cumulative'].includes(kpi.measure) ? kpi.measure : 'other'} onValueChange={v => { if(v==='other') setMode('advanced'); else choose(v as K3Measure); }}><SelectTrigger id="k3q-measure"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="binary">Có / Chưa</SelectItem><SelectItem value="cumulative">Số lượng</SelectItem><SelectItem value="other">Cách đo khác</SelectItem></SelectContent></Select>
@@ -102,9 +135,13 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       </div>}
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {retrying && <div className="rounded-xl border p-3 text-sm space-y-2">
+        <p>Yêu cầu lưu đang được giữ nguyên để chống tạo trùng. Không cần nhập lại dữ liệu.</p>
+        <Button type="button" size="sm" variant="outline" disabled={mutation.isPending || checking} onClick={verifySaved}>{checking ? 'Đang kiểm tra…' : 'Kiểm tra trạng thái lưu'}</Button>
+      </div>}
     </div>
-    <DialogFooter className="shrink-0 border-t border-border pt-3"><Button variant="outline" onClick={close}>Bỏ thay đổi</Button><Button disabled={mutation.isPending} onClick={()=>submit(true)}>{mutation.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Lưu công việc</Button></DialogFooter>
-    {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={()=>setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
+    <DialogFooter className="shrink-0 border-t border-border pt-3"><Button variant="outline" disabled={mutation.isPending || checking} onClick={close}>Bỏ thay đổi</Button><Button disabled={mutation.isPending || checking} onClick={()=>submit(true)}>{(mutation.isPending || checking) && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{checking ? 'Đang xác minh…' : retrying ? 'Thử lưu lại an toàn' : 'Lưu công việc'}</Button></DialogFooter>
+    {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle></DialogHeader>{retrying && <p className="text-sm text-destructive">Chưa xác định máy chủ đã lưu hay chưa. Đóng form có thể làm mất dữ liệu đang nhập; không tạo yêu cầu mới nếu chưa kiểm tra danh sách công việc.</p>}<DialogFooter><Button variant="outline" onClick={()=>setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
   </DialogContent></Dialog>;
 }
 

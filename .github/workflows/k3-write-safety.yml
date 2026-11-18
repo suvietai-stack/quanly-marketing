@@ -1,0 +1,27 @@
+name: 3K write safety validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/biz/k3*.ts'
+      - 'src/components/biz/Biz3K*.tsx'
+      - '.github/workflows/k3-write-safety.yml'
+  pull_request:
+    paths:
+      - 'src/lib/biz/k3*.ts'
+      - 'src/components/biz/Biz3K*.tsx'
+      - '.github/workflows/k3-write-safety.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: 3K write, creation and KPI regression tests
+        run: bunx vitest run src/lib/biz/k3WriteRecovery.test.ts src/lib/biz/k3Creation.test.ts src/lib/biz/k3Creation.database.test.ts src/lib/biz/k3KpiResults.test.ts
+      - name: Typecheck
+        run: bunx tsc --noEmit
+      - name: Production build
+        run: bun run build

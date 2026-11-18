@@ -52,7 +52,7 @@ export const k3UserDayQuery = (uid: string, user: string, date: string) => query
 
 function useK3Invalidate() {
   const qc = useQueryClient();
-  return () => qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') });
+  return () => { void qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); };
 }
 
 export function useK3DaySave() {

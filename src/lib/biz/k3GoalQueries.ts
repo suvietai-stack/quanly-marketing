@@ -72,6 +72,7 @@ export function useK3GoalMutation() {
       if (result.error) throw result.error;
       return result.data;
     },
-    onSuccess: () => qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }),
+    // Do not keep the write pending while unrelated active 3K reads refresh.
+    onSuccess: () => { void qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); },
   });
 }
