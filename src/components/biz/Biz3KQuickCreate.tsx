@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { k3Error } from '@/lib/biz/k3';
+import { useAuth } from '@/lib/auth';
+import { checkK3QuickCreate, isK3AmbiguousWrite } from '@/lib/biz/k3SaveRecovery';
 import { type K3MemberSearchRow } from '@/lib/biz/k3Goals';
 import { useK3GoalMutation } from '@/lib/biz/k3GoalQueries';
 import { MemberPicker } from './Biz3KMemberPicker';
@@ -23,6 +25,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   variant: 'personal' | 'team'; defaultDate: string; onClose: () => void; onCreated?: (goalId: string) => void;
 }) {
   const mutation = useK3GoalMutation();
+  const uid = useAuth(s => s.currentUserId) ?? '';
   const [requestKey] = useState(() => crypto.randomUUID());
   const [discarding, setDiscarding] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -47,7 +50,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   };
   const choose = (measure: K3Measure) => setKfs(prev => prev.map((k,i) => i === 0 ? { ...k, kpis: k.kpis.map((p,j) => j === 0 ? { ...p, measure, condition: 'gte', config: { ...p.config, ...(measure === 'frequency' || measure === 'streak' ? { cycle: measure === 'streak' ? 'day' as const : 'week' as const } : {}), ...(measure === 'duration' ? { duration_unit: 'minutes' as const, duration_method: 'total' as const } : {}) } } : p) } : k));
   const changeFirst = (field: 'target' | 'unit', value: string) => setKfs(prev => prev.map((k,i) => i === 0 ? { ...k, kpis: k.kpis.map((p,j) => j === 0 ? { ...p, [field]: value } : p) } : k));
-  const close = () => { if (f.name || f.expected_result || f.description || kfs.some(k => k.name)) setDiscarding(true); else onClose(); };
+  const close = () => { if (submitting.current) return; if (retrying || f.name || f.expected_result || f.description || kfs.some(k => k.name)) setDiscarding(true); else onClose(); };
   const submit = async (valid: boolean) => {
     if (submitting.current) return;
     setAttempted(true);
@@ -68,10 +71,19 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       toast.success(res.duplicated ? 'Công việc đã được lưu trước đó.' : valid ? 'Đã lưu công việc.' : 'Đã lưu nháp công việc.');
       onCreated?.(res.goal_id); onClose();
     } catch (e) {
-      const code = e && typeof e === 'object' && 'code' in e ? String(e.code) : '';
-      if (code && code !== '57014') { attemptedPayload.current = null; setRetrying(false); }
-      else setRetrying(true);
-      setError(k3Error(e));
+      if (isK3AmbiguousWrite(e)) {
+        const check = await checkK3QuickCreate(uid, requestKey);
+        if (check.status === 'saved') {
+          toast.success('Công việc đã được lưu.'); onCreated?.(check.id); onClose(); return;
+        }
+        // Preserve the original payload and key: an in-flight request may still commit.
+        setRetrying(true);
+        setError(check.status === 'missing'
+          ? 'Chưa thấy công việc được lưu. Có thể thử lưu lại an toàn bằng cùng yêu cầu, không tạo trùng.'
+          : 'Chưa kiểm tra được trạng thái lưu. Hãy thử lưu lại an toàn; hệ thống sẽ giữ nguyên mã yêu cầu để tránh tạo trùng.');
+      } else {
+        attemptedPayload.current = null; setRetrying(false); setError(k3Error(e));
+      }
     } finally { submitting.current = false; }
   };
   return <Dialog open onOpenChange={o => !o && close()}><DialogContent className="k3-mobile-dialog k3-quick-create flex max-h-[90dvh] max-w-2xl flex-col overflow-hidden">
@@ -103,7 +115,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
-    <DialogFooter className="shrink-0 border-t border-border pt-3"><Button variant="outline" onClick={close}>Bỏ thay đổi</Button><Button disabled={mutation.isPending} onClick={()=>submit(true)}>{mutation.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Lưu công việc</Button></DialogFooter>
+    <DialogFooter className="shrink-0 border-t border-border pt-3"><Button variant="outline" onClick={close}>Bỏ thay đổi</Button><Button disabled={mutation.isPending} onClick={()=>submit(true)}>{mutation.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}{retrying ? "Thử lưu lại an toàn" : "Lưu công việc"}</Button></DialogFooter>
     {discarding && <Dialog open onOpenChange={setDiscarding}><DialogContent><DialogHeader><DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle></DialogHeader><DialogFooter><Button variant="outline" onClick={()=>setDiscarding(false)}>Tiếp tục soạn</Button><Button variant="destructive" onClick={onClose}>Bỏ thay đổi</Button></DialogFooter></DialogContent></Dialog>}
   </DialogContent></Dialog>;
 }
