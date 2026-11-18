@@ -16,7 +16,7 @@ BEGIN
     END IF;
     trigger_def := regexp_replace(trigger_def,
       'BEGIN[[:space:]]+FOR r IN SELECT',
-      E'BEGIN\\n -- The quick-create RPC captures its affected staff once after its last write.\\n IF current_setting(''app.k3_quick_create_batch'',true)=''on'' THEN RETURN NULL; END IF;\\n FOR r IN SELECT');
+      E'BEGIN\n -- The quick-create RPC captures its affected staff once after its last write.\n IF current_setting(''app.k3_quick_create_batch'',true)=''on'' THEN RETURN NULL; END IF;\n FOR r IN SELECT');
     EXECUTE trigger_def;
   END IF;
 
