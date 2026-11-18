@@ -1,0 +1,26 @@
+name: Business deadline notification performance
+on:
+  pull_request:
+    paths:
+      - 'drizzle/migrations/0476_biz_deadline_notify_skip_idle_scans.sql'
+      - 'src/lib/biz/deadlineAutoNotify.database.test.ts'
+      - '.github/workflows/biz-deadline-performance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'drizzle/migrations/0476_biz_deadline_notify_skip_idle_scans.sql'
+      - 'src/lib/biz/deadlineAutoNotify.database.test.ts'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Database logic and Vietnam milestone regression
+        run: bunx vitest run src/lib/biz/deadlineAutoNotify.database.test.ts src/lib/biz/deadline.test.ts
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Production build
+        run: bun run build
