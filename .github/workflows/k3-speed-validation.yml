@@ -1,0 +1,33 @@
+name: 3K fast access and save validation
+on:
+  pull_request:
+    paths:
+      - 'drizzle/migrations/*k3hub_access_evaluate_once.sql'
+      - 'drizzle/migrations/*k3_kpi_result_ack_fast_path.sql'
+      - 'src/lib/k3Hub/**'
+      - 'src/components/k3Hub/**'
+      - 'src/lib/biz/k3KpiResultQueries.ts'
+      - '.github/workflows/k3-speed-validation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'drizzle/migrations/*k3hub_access_evaluate_once.sql'
+      - 'drizzle/migrations/*k3_kpi_result_ack_fast_path.sql'
+      - 'src/lib/k3Hub/**'
+      - 'src/components/k3Hub/**'
+      - 'src/lib/biz/k3KpiResultQueries.ts'
+      - '.github/workflows/k3-speed-validation.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Scope parity and 3K write tests
+        run: bunx vitest run src/lib/k3Hub/accessFast.database.test.ts src/lib/k3Hub/area.test.ts src/lib/k3Hub/api.test.ts src/lib/biz/k3SaveRecovery.test.ts src/lib/biz/k3KpiResults.test.ts
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Build
+        run: bun run build
