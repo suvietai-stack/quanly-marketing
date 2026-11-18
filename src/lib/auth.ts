@@ -1179,13 +1179,14 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (!uid) return;
     const nowIso = new Date().toISOString();
     try {
-      await supabase.from("profiles").update({ last_seen_at: nowIso }).eq("id", uid);
-      // Optimistic local update (avoid full reload)
+      const { error } = await supabase.from("profiles").update({ last_seen_at: nowIso }).eq("id", uid);
+      if (error || get().currentUserId !== uid) return;
+      // Update locally only after PostgreSQL confirms success.
       set((s) => ({
         users: s.users.map((u) => (u.id === uid ? { ...u, lastSeenAt: nowIso } : u)),
       }));
-    } catch (e) {
-      // silent
+    } catch {
+      // Presence is best-effort and must never block the current screen.
     }
   },
 
