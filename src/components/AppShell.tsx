@@ -21,9 +21,9 @@ const ChatPanel = lazy(() => import('@/components/chat/ChatPanel').then(mod => (
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from "@/components/ZaloUi";
-import { ZaloInteractionReminder } from "@/components/ZaloInteractionReminder";
-import { ChipiAssistant } from "@/components/ChipiAssistant";
-import { RewardPopup } from '@/components/sao/RewardPopup';
+const ZaloInteractionReminder = lazy(() => import('@/components/ZaloInteractionReminder').then(m => ({ default: m.ZaloInteractionReminder })));
+const ChipiAssistant = lazy(() => import('@/components/ChipiAssistant').then(m => ({ default: m.ChipiAssistant })));
+const RewardPopup = lazy(() => import('@/components/sao/RewardPopup').then(m => ({ default: m.RewardPopup })));
 import { useAuth, useCurrentUser } from "@/lib/auth";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -43,6 +43,27 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [chatOpen, setChatOpen] = useState(false);
   const navigate = useNavigate();
   const { user, role, can, isSuperAdmin } = useCurrentUser();
+  // These widgets do not gate navigation or business actions. Let the primary
+  // workspace render before requesting their code and background APIs.
+  const [backgroundReadyFor, setBackgroundReadyFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    let timer: number | undefined;
+    const schedule = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (document.visibilityState === 'visible') setBackgroundReadyFor(user.id);
+      }, 1_200);
+    };
+    schedule();
+    document.addEventListener('visibilitychange', schedule);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', schedule);
+    };
+  }, [user?.id]);
+  const backgroundReady = !!user && backgroundReadyFor === user.id;
   const approvalAccessByPermission = isSuperAdmin || [
     'leave.approve','leave.cancel_handle','biz.approval_view',
     'biz.goal_approve','biz.report_approve',
@@ -154,12 +175,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={<NotificationBell />} approvals={approvalsEligible ? { count: approvalCenter.data?.todo.length ?? 0 } : undefined} onMenu={() => setOpen(true)} />
         <main className="base-app-content min-w-0 flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 max-w-[1600px] w-full mx-auto">
-          {user && <ZaloInteractionReminder key={user.id} userId={user.id} />}
+          {backgroundReady && user && <Suspense fallback={null}><ZaloInteractionReminder key={user.id} userId={user.id} /></Suspense>}
           {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} name={user.fullName} area={search.area} accessReady={launcherAccessReady} /> : children}
         </main>
         {user && <AccessSyncNotice />}
-        {user && <ChipiAssistant key={user.id} userId={user.id} />}
-        {user && <RewardPopup key={`sao-${user.id}`} userId={user.id} />}
+        {backgroundReady && user && <Suspense fallback={null}><ChipiAssistant key={user.id} userId={user.id} /></Suspense>}
+        {backgroundReady && user && <Suspense fallback={null}><RewardPopup key={`sao-${user.id}`} userId={user.id} /></Suspense>}
         <Sheet open={chatOpen} onOpenChange={setChatOpen}>
           <SheetContent side="right" className="flex h-full w-[min(94vw,480px)] flex-col gap-3 overflow-y-auto p-3 sm:max-w-[480px]">
             <SheetHeader className="pr-10 text-left">
