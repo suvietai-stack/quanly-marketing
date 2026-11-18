@@ -37,6 +37,6 @@ export function useK3KpiResultSave() {
       if (error) throw error;
       return data as unknown as K3ResultData;
     },
-    onSuccess: () => qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }),
+    onSuccess: () => { void qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') && q.queryKey[0] !== 'k3_preview' }); },
   });
 }
