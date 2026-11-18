@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { History, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -78,7 +78,32 @@ function KpiResultDialog({ data, date, onClose }: { data: K3ResultData; date: st
   const [intervals, setIntervals] = useState(data.daily?.intervals ?? []);
   const measure = data.kpi.measure;
   const daily = { ...f, intervals, id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0, value: f.value === '' ? null : Number(f.value), numerator: f.numerator === '' ? null : Number(f.numerator), denominator: f.denominator === '' ? null : Number(f.denominator), objects: f.objects.split('\n').filter((s) => s.trim()), user_id: uid, work_date: date };
-  const previewQuery = useQuery({ queryKey: ['k3_preview', uid, data.kpi.id, date, daily], retry: false, queryFn: async () => { const { data: result, error } = await supabase.rpc('k3_kpi_result_preview', { _kpi: data.kpi.id, _date: date, _payload: daily as never }); if (error) throw error; return result as unknown as K3TypedMetric; } });
+  // Preview only depends on measurement fields. Never refetch on notes, VNGB text,
+  // evidence or corrections; debounce typing to protect the measured-KPI RPC.
+  const previewInput = useMemo(() => ({
+    id: data.daily?.id ?? '', revision: data.daily?.revision ?? 0,
+    value: f.value === '' ? null : Number(f.value),
+    numerator: f.numerator === '' ? null : Number(f.numerator),
+    denominator: f.denominator === '' ? null : Number(f.denominator),
+    objects: f.objects.split('\\n').filter(s => s.trim()),
+    completed: f.completed, intervals, user_id: uid, work_date: date,
+  }), [data.daily?.id, data.daily?.revision, f.value, f.numerator, f.denominator, f.objects, f.completed, intervals, uid, date]);
+  const [debouncedPreview, setDebouncedPreview] = useState(previewInput);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedPreview(previewInput), 400);
+    return () => clearTimeout(timer);
+  }, [previewInput]);
+  const previewQuery = useQuery({
+    queryKey: ['k3_preview', uid, data.kpi.id, date, debouncedPreview],
+    retry: false, staleTime: 30_000, refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const { data: result, error } = await supabase.rpc('k3_kpi_result_preview', {
+        _kpi: data.kpi.id, _date: date, _payload: debouncedPreview as never,
+      });
+      if (error) throw error;
+      return result as unknown as K3TypedMetric;
+    },
+  });
   const set = (name: keyof typeof f, value: string) => setF((p) => ({ ...p, [name]: value }));
   const finishSaved = () => { toast.success('Đã xác nhận kết quả KPI được lưu.'); onClose(); };
   const verifySaved = async () => {
