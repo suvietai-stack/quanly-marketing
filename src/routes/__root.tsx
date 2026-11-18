@@ -1,6 +1,6 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SignalCacheGuard } from "@/components/signals/SignalsUi";
+import { SignalCacheGuard } from "@/components/signals/SignalCacheGuard";
 import {
   Outlet,
   Link,
