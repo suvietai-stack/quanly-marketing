@@ -37,6 +37,7 @@ export function useK3KpiResultSave() {
       if (error) throw error;
       return data as unknown as K3ResultData;
     },
-    onSuccess: () => qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }),
+    // Do not keep the write pending while unrelated active 3K reads refresh.
+    onSuccess: () => { void qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith('k3_') }); },
   });
 }
