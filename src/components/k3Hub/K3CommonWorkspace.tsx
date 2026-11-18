@@ -42,17 +42,18 @@ export function K3CommonWorkspace({ title, initialUnit, central = false, restric
   const [unitOverride, setUnitOverride] = useState<string | null>(null);
   const access = useQuery({
     queryKey: ['k3hub-access', user?.id],
-    queryFn: k3HubAccess,
+    queryFn: ({ signal }) => k3HubAccess(signal),
     enabled: !!user?.id && user.status === 'Đang hoạt động',
-    staleTime: 30_000,
+    staleTime: 90_000,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
   const data = access.data;
   const chart = useQuery({
     queryKey: ['k3hub-area-chart', user?.id],
-    queryFn: k3HubAreaChart,
+    queryFn: ({ signal }) => k3HubAreaChart(signal),
     enabled: restrictToArea && !!user?.id && user.status === 'Đang hoạt động',
-    staleTime: 30_000, retry: 1,
+    staleTime: 90_000, refetchOnWindowFocus: false, retry: 1,
   });
   const areaIds = useMemo(() => areaUnitIds(chart.data?.units ?? [], initialUnit), [chart.data, initialUnit]);
   const options = (data?.units ?? []).filter(u => !restrictToArea || areaIds.has(u.id));
