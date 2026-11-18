@@ -91,7 +91,7 @@ export function Biz3KQuickCreate({ variant, defaultDate, onClose, onCreated }: {
   };
   return <Dialog open onOpenChange={o => !o && close()}><DialogContent className="k3-mobile-dialog k3-quick-create flex max-h-[90dvh] max-w-2xl flex-col overflow-hidden">
     <DialogHeader><DialogTitle>Tạo công việc</DialogTitle></DialogHeader>
-    <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || checking || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
+    <Tabs value={mode} onValueChange={switchMode}><TabsList className="grid w-full grid-cols-2"><TabsTrigger disabled={mutation.isPending || checking || retrying} value="basic">Cơ bản</TabsTrigger><TabsTrigger disabled={mutation.isPending || checking || retrying} value="advanced">Nâng cao</TabsTrigger></TabsList></Tabs>
     <div className="min-h-0 space-y-4 overflow-y-auto px-1 pb-2">
       <fieldset disabled={mutation.isPending || checking || retrying} className="min-w-0 space-y-4">
       <div className="space-y-1"><Label htmlFor="k3q-name">Tên công việc *</Label><Input id="k3q-name" value={f.name} onChange={e => set('name', e.target.value)} aria-invalid={attempted && !f.name.trim()} placeholder="Soạn báo giá khách sạn Vinh Nghệ An" /></div>
