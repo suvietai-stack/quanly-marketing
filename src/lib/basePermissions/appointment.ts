@@ -46,7 +46,7 @@ export function appointmentDraft(config: OrgConfig, unitId: string, titleId: str
 export function endAppointment(config: OrgConfig, id: string, at = new Date().toISOString()): OrgConfig {
   const m = config.memberships.find(x => x.id === id);
   if (!m || !m.active) throw new Error('Phân công không còn hiệu lực.');
-  return {...config,memberships:config.memberships.map(x=>x.id!==id?x: x.starts_at && x.starts_at>at ? {...x,active:false,status:'cancelled'} : {...x,active:false,ends_at:at})};
+  return {...config,memberships:config.memberships.map(x=>x.id!==id?x: x.starts_at && Date.parse(x.starts_at)>Date.parse(at) ? {...x,active:false,status:'cancelled'} : {...x,active:false,ends_at:at})};
 }
 
 export function changeAppointmentSpecialties(config: OrgConfig, id: string, specialties: string[], at = new Date().toISOString()): OrgConfig {
