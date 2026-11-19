@@ -6,7 +6,7 @@ import { CHIPI_SIZES, CHIPI_CHAT_LINES, validChipiSize, chipiGreeting, chipiGree
 import { ChipiNoticeIcon } from "@/components/ChipiNoticeIcon";
 import { ChipiAiPanel } from "@/components/ai/ChipiAiPanel";
 import { Button } from "@/components/ui/button";
-import { NotificationBell, notificationText } from "@/components/ZaloUi";
+import { NotificationBell, notificationText } from "@/components/NotificationBell";
 import { chipiAssets } from "@/assets/chipi/states";
 import { chipiState, chipiDisplayState, CHIPI_PLAY_INTERVAL_MS, CHIPI_PLAY_DURATION_MS, currentChipiNotice, newChipiNotice, type ChipiNotice, type ChipiDecoration } from "@/lib/chipi";
 

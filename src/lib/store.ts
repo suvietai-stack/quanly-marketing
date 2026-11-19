@@ -1218,7 +1218,7 @@ const storeLoads = createCoalescer<string>((uid) => useStore.getState()._load(ui
 
 async function loadAllFromSupabase(previous: Pick<State, CollectionKey | "plans" | "topics">) {
   const failures: string[] = [];
-  const results = await Promise.all(
+  const collectionReads = Promise.all(
     COLLECTION_KEYS.map(async (key) => {
       const table = TABLE_FOR[key];
       let data: any[];
@@ -1251,9 +1251,10 @@ async function loadAllFromSupabase(previous: Pick<State, CollectionKey | "plans"
       return [key, items] as const;
     }),
   );
-  const cat = await readAllPages<any>((from, to, signal) => (supabase as any).from("catalogs")
+  const catalogRead = readAllPages<any>((from, to, signal) => (supabase as any).from("catalogs")
     .select("scope, items").order("scope").range(from, to).abortSignal(signal))
     .then(data => ({ data, error: null as unknown })).catch(error => ({ data: null, error }));
+  const [results, cat] = await Promise.all([collectionReads, catalogRead]);
   const retainCatalog = cat.error && isTransientStoreRead(cat.error);
   const catMap: Record<string, string[]> = { plans: retainCatalog ? previous.plans : [], topics: retainCatalog ? previous.topics : [] };
   if (cat.error) failures.push("catalogs");

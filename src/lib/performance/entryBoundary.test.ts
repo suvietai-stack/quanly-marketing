@@ -25,6 +25,17 @@ describe('Base initial bundle boundaries', () => {
     expect(shell).toContain('1_200');
     expect(shell).toContain("document.visibilityState === 'visible'");
   });
+  it('loads notification settings and Excel only when requested', () => {
+    const shell = readFileSync('src/components/AppShell.tsx', 'utf8');
+    const bell = readFileSync('src/components/NotificationBell.tsx', 'utf8');
+    const report = readFileSync('src/routes/order-quotes.report.tsx', 'utf8');
+    expect(shell).toContain('from "@/components/NotificationBell"');
+    expect(bell).not.toMatch(/from ["']@\/components\/(ZaloUi|PushSettings)["']/);
+    expect(bell).toContain('import("@/components/PushSettings")');
+    expect(bell).toContain('import("@/components/ZaloUi")');
+    expect(report).not.toMatch(/from ["']xlsx["']/);
+    expect(report).toContain('await import("xlsx")');
+  });
   it('keeps session-token polling and employee presence independent', () => {
     const auth = readFileSync('src/components/AuthGate.tsx','utf8');
     const signal = readFileSync('src/components/signals/SignalsUi.tsx','utf8');
