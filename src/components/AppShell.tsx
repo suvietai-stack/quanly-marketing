@@ -20,7 +20,7 @@ import { ChatShortcut } from '@/components/chat/ChatShortcut';
 const ChatPanel = lazy(() => import('@/components/chat/ChatPanel').then(mod => ({ default: mod.ChatPanel })));
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { NotificationBell } from "@/components/ZaloUi";
+import { NotificationBell } from "@/components/NotificationBell";
 const ZaloInteractionReminder = lazy(() => import('@/components/ZaloInteractionReminder').then(m => ({ default: m.ZaloInteractionReminder })));
 const ChipiAssistant = lazy(() => import('@/components/ChipiAssistant').then(m => ({ default: m.ChipiAssistant })));
 const RewardPopup = lazy(() => import('@/components/sao/RewardPopup').then(m => ({ default: m.RewardPopup })));
@@ -137,7 +137,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     </DropdownMenu>
   );
 
-  const Sidebar = (mini: boolean) => (
+  const Sidebar = (mini: boolean, desktop = false) => (
     <aside className={cn("flex h-full flex-col bg-sidebar text-sidebar-foreground", mini ? "w-16" : "w-72")}>
       <div className={cn("flex items-center gap-2 py-5 border-b border-sidebar-border", mini ? "px-3" : "px-5")}>
         <BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />
@@ -155,7 +155,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               {approvalBadge && <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold flex items-center justify-center">{approvalBadge}</span>}
             </Link>
           </Button>
-        )}<ChatShortcut onClick={() => setChatOpen(true)}/><div className="hidden md:block"><NotificationBell /></div></>}
+        )}<ChatShortcut onClick={() => setChatOpen(true)}/></>}
+        {viewportReady && !mobile && desktop && <div className={mini ? "hidden" : "hidden md:block"}><NotificationBell /></div>}
         <Button variant="ghost" size="icon" className="hidden md:inline-flex shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={() => setCollapsed(v => !v)} title={mini ? 'Mở rộng menu' : 'Thu gọn menu'} aria-label={mini ? 'Mở rộng menu' : 'Thu gọn menu'}>{mini ? <PanelLeftOpen /> : <PanelLeftClose />}</Button>
       </div>
     </aside>
@@ -163,7 +164,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="base-app-shell flex min-h-screen w-full bg-background">
-      <div className="hidden md:block sticky top-0 h-screen">{Sidebar(collapsed)}</div>
+      <div className="hidden md:block sticky top-0 h-screen">{Sidebar(collapsed, true)}</div>
 
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
@@ -173,7 +174,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={<NotificationBell />} approvals={approvalsEligible ? { count: approvalCenter.data?.todo.length ?? 0 } : undefined} onMenu={() => setOpen(true)} />
+        <MobileAppChrome groups={visibleGroups} userId={user?.id} name={user?.fullName} brandName={brand.app_name} logo={<BrandMark b={brand} className="h-9 w-9 shrink-0 rounded-lg" />} notifications={mobile ? <NotificationBell /> : null} approvals={approvalsEligible ? { count: approvalCenter.data?.todo.length ?? 0 } : undefined} onMenu={() => setOpen(true)} />
         <main className="base-app-content min-w-0 flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 max-w-[1600px] w-full mx-auto">
           {backgroundReady && user && <Suspense fallback={null}><ZaloInteractionReminder key={user.id} userId={user.id} /></Suspense>}
           {path === '/' && !viewportReady ? <div className="h-48 animate-pulse rounded-lg bg-muted" aria-label="Đang tải trang chủ" /> : launcher && user ? <MobileLauncher groups={visibleGroups} userId={user.id} name={user.fullName} area={search.area} accessReady={launcherAccessReady} /> : children}

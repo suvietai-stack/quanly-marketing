@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { getDashboardContext } from '@/lib/performance/dashboard.functions';
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useShallow } from "zustand/react/shallow";
 import { useStore, isOverdue, fmtDate } from "@/lib/store";
 import { useCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/AppShell";
@@ -127,13 +128,28 @@ function Overview() {
 // ============ Mine ============
 
 function useMyWork() {
-  const s = useStore();
+  const s = useStore(useShallow(({ brands, tasks, webContents, socialPosts, videos, orders }) => ({
+    brands, tasks, webContents, socialPosts, videos, orders,
+  })));
   const { user, can, isSuperAdmin } = useCurrentUser();
   const mine = useMemo(() => buildMyNames(user as any), [user]);
 
-  const brandName = (id?: string) => s.brands.find((b) => b.id === id)?.name;
+  const viewTasks = isSuperAdmin || can("task.view") || can("task.view_mine") || can("task.view_all") || can("task.view_created_by_me");
+  const approveTasks = isSuperAdmin || can("task.approve_completion");
+  const viewWebContent = isSuperAdmin || can("web.content_view");
+  const approveOutline = can("web.outline_approve");
+  const approveWebContent = can("web.post_approve");
+  const viewSocialPosts = isSuperAdmin || can("social.post_view");
+  const approveSocialPosts = can("social.post_approve");
+  const viewVideos = isSuperAdmin || can("video.view");
+  const approveScripts = can("video.script_approve");
+  const approveVideos = can("video.approve");
+  const viewOrders = isSuperAdmin || can("order.view");
+  const approveOrders = can("order.approve");
 
   const items = useMemo(() => {
+    const namesByBrand = new Map(s.brands.map((brand) => [brand.id, brand.name]));
+    const brandName = (id?: string) => id === undefined ? undefined : namesByBrand.get(id);
     const out: { mine: WorkItem[]; toReview: WorkItem[]; needsFix: WorkItem[]; waiting: WorkItem[]; overdue: WorkItem[]; doneRecent: WorkItem[] } = {
       mine: [], toReview: [], needsFix: [], waiting: [], overdue: [], doneRecent: [],
     };
@@ -142,7 +158,7 @@ function useMyWork() {
     weekAgo.setDate(weekAgo.getDate() - 7);
 
     // ---- Tasks ----
-    if (isSuperAdmin || can("task.view") || can("task.view_mine") || can("task.view_all") || can("task.view_created_by_me")) {
+    if (viewTasks) {
       const PENDING_OWN_TASK = new Set(["Đã giao", "Đang làm", "Cần sửa"]);
       for (const t of s.tasks) {
         const asAssignee = isMineByNames(t.assignee, mine);
@@ -165,14 +181,14 @@ function useMyWork() {
         if (asAssignee && PENDING_OWN_TASK.has(t.status)) out.mine.push(wi);
         if (asAssignee && t.status === "Cần sửa") out.needsFix.push(wi);
         if (t.status === "Chờ xác nhận") {
-          if ((asApprover || asReporter) && (isSuperAdmin || can("task.approve_completion"))) out.toReview.push(wi);
+          if ((asApprover || asReporter) && approveTasks) out.toReview.push(wi);
           else if (asAssignee) out.waiting.push(wi);
         }
       }
     }
 
     // ---- Web Contents ----
-    if (isSuperAdmin || can("web.content_view")) {
+    if (viewWebContent) {
       for (const c of s.webContents) {
         const asWriter = isMineByNames(c.writer, mine);
         const asOutlineReviewer = isMineByNames(c.outlineReviewer, mine);
@@ -196,17 +212,17 @@ function useMyWork() {
         if (asWriter && PENDING_OWN_CONTENT_STATUSES.has(c.status)) out.mine.push(wi);
         if (c.status.includes("Cần sửa") && asWriter) out.needsFix.push(wi);
         // To-review
-        if (c.status === "Chờ duyệt outline" && (asOutlineReviewer || (isSuperAdmin && can("web.outline_approve")))) {
-          if (asOutlineReviewer && can("web.outline_approve")) out.toReview.push(wi);
+        if (c.status === "Chờ duyệt outline" && asOutlineReviewer && approveOutline) {
+          out.toReview.push(wi);
         }
-        if (c.status === "Chờ duyệt bài" && asDraftReviewer && can("web.post_approve")) out.toReview.push(wi);
+        if (c.status === "Chờ duyệt bài" && asDraftReviewer && approveWebContent) out.toReview.push(wi);
         // Waiting on others (I am writer but it's at a reviewer)
         if (asWriter && WAIT_OTHERS_CONTENT.has(c.status)) out.waiting.push(wi);
       }
     }
 
     // ---- Social Posts ----
-    if (isSuperAdmin || can("social.post_view")) {
+    if (viewSocialPosts) {
       for (const p of s.socialPosts) {
         const asWriter = isMineByNames(p.writer, mine);
         const asDesigner = isMineByNames(p.designer, mine);
@@ -228,13 +244,13 @@ function useMyWork() {
         if (isOverdue(p.scheduledDate, p.status)) out.overdue.push(wi);
         if ((asWriter || asDesigner) && PENDING_OWN_SOCIAL_STATUSES.has(p.status)) out.mine.push(wi);
         if (p.status === "Cần sửa" && (asWriter || asDesigner)) out.needsFix.push(wi);
-        if (p.status === "Chờ duyệt" && asReviewer && can("social.post_approve")) out.toReview.push(wi);
+        if (p.status === "Chờ duyệt" && asReviewer && approveSocialPosts) out.toReview.push(wi);
         if ((asWriter || asDesigner) && WAIT_OTHERS_SOCIAL.has(p.status)) out.waiting.push(wi);
       }
     }
 
     // ---- Videos ----
-    if (isSuperAdmin || can("video.view")) {
+    if (viewVideos) {
       for (const v of s.videos) {
         const asOwner = isMineByNames(v.owner, mine);
         const asReviewer = isMineByNames(v.reviewer, mine);
@@ -254,14 +270,14 @@ function useMyWork() {
         if (isOverdue(v.deadline || v.scriptDeadline, v.status)) out.overdue.push(wi);
         if (asOwner && PENDING_OWN_VIDEO_STATUSES.has(v.status)) out.mine.push(wi);
         if (v.status.includes("Cần sửa") && asOwner) out.needsFix.push(wi);
-        if (v.status === "Chờ duyệt kịch bản" && asReviewer && can("video.script_approve")) out.toReview.push(wi);
-        if (v.status === "Chờ duyệt video" && asReviewer && can("video.approve")) out.toReview.push(wi);
+        if (v.status === "Chờ duyệt kịch bản" && asReviewer && approveScripts) out.toReview.push(wi);
+        if (v.status === "Chờ duyệt video" && asReviewer && approveVideos) out.toReview.push(wi);
         if (asOwner && WAIT_OTHERS_VIDEO.has(v.status)) out.waiting.push(wi);
       }
     }
 
     // ---- Orders ----
-    if (isSuperAdmin || can("order.view")) {
+    if (viewOrders) {
       for (const o of s.orders) {
         const asAssignee = isMineByNames(o.assignee, mine);
         const asReviewer = isMineByNames(o.reviewer, mine);
@@ -283,14 +299,18 @@ function useMyWork() {
         if (isOverdue(o.deadline, o.status)) out.overdue.push(wi);
         if (asAssignee && PENDING_OWN_ORDER_STATUSES.has(o.status)) out.mine.push(wi);
         if (o.status === "Cần sửa" && asAssignee) out.needsFix.push(wi);
-        if (o.status === "Chờ duyệt" && asReviewer && can("order.approve")) out.toReview.push(wi);
+        if (o.status === "Chờ duyệt" && asReviewer && approveOrders) out.toReview.push(wi);
         if ((asRequester || asAssigner) && WAIT_OTHERS_ORDER.has(o.status)) out.waiting.push(wi);
       }
     }
 
     // De-dup helper: identical id across sections is fine
     return out;
-  }, [s, mine, can, isSuperAdmin]);
+  }, [
+    s, mine, viewTasks, approveTasks, viewWebContent, approveOutline, approveWebContent,
+    viewSocialPosts, approveSocialPosts, viewVideos, approveScripts, approveVideos,
+    viewOrders, approveOrders,
+  ]);
 
   return items;
 }

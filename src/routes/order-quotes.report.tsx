@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
-import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowUpDown, Download, Search, SlidersHorizontal, X } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -76,7 +75,7 @@ function Report() {
   const exportXlsx = async () => {
     try {
       const data = baseFilter(await oqApi.report(bounds.from, bounds.to, applied.basis, true), applied);
-      doExport(data, applied, range, mode);
+      await doExport(data, applied, range, mode);
     } catch (e) { toast.error((e as Error).message); }
   };
 
@@ -522,7 +521,8 @@ function DetailList({ drill, measure, onBack }: { drill: NonNullable<Drill>; mea
 }
 
 // ================= Excel =================
-function doExport(rows: Row[], f: Applied, range: [string, string], mode: Mode) {
+async function doExport(rows: Row[], f: Applied, range: [string, string], mode: Mode) {
+  const XLSX = await import("xlsx");
   const f2 = (s: string) => s.split("-").reverse().join("/");
   const vn = (iso: string | null) => (iso ? vnDateTime(iso) : "");
   const title = `Báo cáo Hỏi Giá & Tiến Độ · ${f2(range[0])} – ${f2(range[1])} · ${BASIS_LABEL[f.basis]}`;
