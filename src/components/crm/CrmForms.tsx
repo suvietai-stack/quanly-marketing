@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { checkCrmCustomerCreated, isAmbiguousCrmWrite } from "@/lib/crm/saveRecovery";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -108,6 +110,10 @@ export function CustomerForm({
   }));
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState("");
+  const [retryPayload, setRetryPayload] = useState<Record<string, unknown> | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const uid = useAuth(s => s.currentUserId) ?? "";
   const [duplicates, setDuplicates] = useState<{ id: string; name: string; code: string }[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [discard, setDiscard] = useState(false);
@@ -140,8 +146,10 @@ export function CustomerForm({
     if (lock.current) return;
     lock.current = true;
     setError("");
+    let submitted: Record<string, unknown> | null = null;
     try {
-      if (!confirmed && !customer) {
+      if (!retryPayload && !confirmed && !customer) {
+        setValidating(true);
         const d = await crmRpc<{ id: string; name: string; code: string }[]>("crm_duplicates", {
           _name: value("name"),
           _phone: value("phone"),
@@ -150,15 +158,41 @@ export function CustomerForm({
         if (d.length) {
           setDuplicates(d);
           setConfirmed(true);
+          toast.warning("Có khách hàng tương tự. Kiểm tra bên dưới trước khi xác nhận tạo mới.");
           return;
         }
       }
-      const id = await save.mutateAsync({ ...data, request_key: key.current });
+      submitted = retryPayload ?? { ...data, request_key: key.current };
+      const id = await save.mutateAsync(submitted);
       toast.success("Đã lưu khách hàng");
       onSaved(String(id));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Chưa lưu được khách hàng.");
+      if (submitted && isAmbiguousCrmWrite(e)) {
+        if (!customer) {
+          setChecking(true);
+          const check = await checkCrmCustomerCreated(uid, key.current);
+          setChecking(false);
+          if (check.status === "saved") {
+            toast.success("Khách hàng đã được lưu thành công.");
+            onSaved(check.id);
+            return;
+          }
+          // A missing row does not prove an in-flight request cannot still commit.
+          setRetryPayload(submitted);
+          setError(check.status === "missing"
+            ? "Chưa thấy khách hàng được lưu. Có thể thử lại an toàn; mã yêu cầu cũ được giữ để tránh tạo trùng."
+            : "Chưa xác minh được kết quả lưu. Hãy thử lưu lại an toàn bằng chính yêu cầu trước đó, không nhập lại khách hàng.");
+        } else {
+          // Edits have revision checks, not idempotency keys. Do not claim that
+          // an update succeeded or automatically replay a potentially committed edit.
+          setError("Chưa xác minh được hồ sơ đã cập nhật chưa. Hãy mở lại hồ sơ kiểm tra trước khi thử sửa tiếp.");
+        }
+      } else {
+        if (retryPayload) setRetryPayload(null);
+        setError(e instanceof Error ? e.message : "Chưa lưu được khách hàng.");
+      }
     } finally {
+      setValidating(false);
       lock.current = false;
     }
   }
@@ -167,9 +201,10 @@ export function CustomerForm({
       title={customer ? "Sửa hồ sơ khách" : "Thêm khách hàng"}
       onClose={onClose}
       dirty={dirty}
-      busy={save.isPending}
+      busy={save.isPending || checking || validating}
     >
       <form onSubmit={submit} className="space-y-4">
+        <fieldset disabled={save.isPending || checking || validating || !!retryPayload} className="min-w-0 space-y-4">
         <div className="grid grid-cols-2 gap-2">
           {[
             ["organization", "Tổ chức / Đơn vị"],
@@ -308,6 +343,7 @@ export function CustomerForm({
             </Field>
           </div>
         </details>
+        </fieldset>
         {duplicates.length > 0 && (
           <div className="border-l-2 border-warning pl-3 text-sm">
             <p>Đã có hồ sơ tương tự trong phạm vi của bạn:</p>
@@ -331,16 +367,16 @@ export function CustomerForm({
             type="button"
             variant="outline"
             onClick={() => (dirty ? setDiscard(true) : onClose())}
-            disabled={save.isPending}
+            disabled={save.isPending || checking || validating}
           >
             Hủy
           </Button>
           <Button
             className="flex-1"
             type="submit"
-            disabled={save.isPending || !value("name").trim()}
+            disabled={save.isPending || checking || validating || !value("name").trim()}
           >
-            {save.isPending ? "Đang lưu…" : "Lưu khách hàng"}
+            {save.isPending ? "Đang lưu…" : checking ? "Đang xác minh…" : retryPayload ? "Thử lưu lại an toàn" : "Lưu khách hàng"}
           </Button>
         </div>
       </form>

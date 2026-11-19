@@ -5,7 +5,7 @@ import type { Catalog, ReadData, DetailData, Person, ReportData, Template } from
 import type { DynamicFilter } from './fields';
 export async function crmRpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
   const { data, error } = await supabase.rpc(fn as never, args as never);
-  if (error) throw new Error(error.message);
+  if (error) throw error; // Keep PostgreSQL/network codes for safe timeout reconciliation.
   return data as T;
 }
 export const catalogsQuery = (uid: string) =>
@@ -82,9 +82,11 @@ export function useCrmMutation(fn: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => crmRpc<unknown>(fn, { _data: data }),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("crm_") });
-      if (fn === "crm_access_save") await useAuth.getState().refreshBizAccess(true);
+    onSuccess: () => {
+      // Persisted write already succeeded: refresh queries in the background,
+      // never hold the Save button hostage to slower reports or a failed refetch.
+      void qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("crm_") });
+      if (fn === "crm_access_save") void useAuth.getState().refreshBizAccess(true).catch(() => undefined);
     },
   });
 }
