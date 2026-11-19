@@ -138,7 +138,11 @@ export function titleHolders(config: OrgConfig, titleId: string): Membership[] {
   return config.memberships.filter(m => membershipEffective(m) && m.title_id === titleId);
 }
 
-export const membershipEffective = (m: Membership, now = new Date().toISOString()): boolean => m.active && m.status !== 'cancelled' && (!m.starts_at || m.starts_at <= now) && (!m.ends_at || m.ends_at > now);
+export function membershipEffective(m: Membership, now = new Date().toISOString()): boolean {
+  if (!m.active || m.status === 'cancelled') return false;
+  const at = Date.parse(now);
+  return (!m.starts_at || Date.parse(m.starts_at) <= at) && (!m.ends_at || Date.parse(m.ends_at) > at);
+}
 const nowIso = () => new Date().toISOString();
 
 /**
