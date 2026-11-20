@@ -11,6 +11,7 @@ export async function crmRpc<T>(fn: string, args: Record<string, unknown> = {}):
 export const catalogsQuery = (uid: string) =>
   queryOptions({
     queryKey: ["crm_catalogs", uid],
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("crm_catalogs")
@@ -32,19 +33,24 @@ export const crmReadQuery = (uid: string, mine = true, owner = "", search = "", 
         _search: search,
         _archived: archived,
       }),
-    refetchInterval: 60000,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 export const crmDetailQuery = (uid: string, id: string) =>
   queryOptions({
     queryKey: ["crm_detail", uid, id],
     queryFn: () => crmRpc<DetailData>("crm_detail", { _id: id }),
+    staleTime: 30_000,
     enabled: !!id,
   });
 export const crmPeopleQuery = (uid: string) =>
-  queryOptions({ queryKey: ["crm_people", uid], queryFn: () => crmRpc<Person[]>("crm_people") });
+  queryOptions({ queryKey: ["crm_people", uid], staleTime: 5 * 60_000, queryFn: () => crmRpc<Person[]>("crm_people") });
 export const crmTemplatesQuery = (uid: string) =>
   queryOptions({
     queryKey: ["crm_templates", uid],
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("crm_templates").select("*").order("name");
       if (error) throw error;
@@ -61,6 +67,7 @@ export const crmReportQuery = (
 ) =>
   queryOptions({
     queryKey: ["crm_report", uid, start, end, mine, filters,dynamic],
+    staleTime: 60_000,
     queryFn: () =>
       crmRpc<ReportData>("crm_report_dynamic", {
         _filters:dynamic.filter(f=>f.id),
