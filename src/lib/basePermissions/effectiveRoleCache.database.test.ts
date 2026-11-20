@@ -20,6 +20,18 @@ beforeAll(async () => {
     CREATE TABLE org_events (id uuid DEFAULT gen_random_uuid(), before_data jsonb, after_data jsonb);
     CREATE TABLE app_roles (id text PRIMARY KEY, permissions text[] NOT NULL DEFAULT '{}');
     CREATE TABLE private.fixture_rules (actor uuid NOT NULL,permission text NOT NULL,effect text NOT NULL);
+    CREATE TABLE base_permission_catalog (key text PRIMARY KEY);
+    CREATE TABLE base_org_state (id boolean PRIMARY KEY DEFAULT true,revision integer NOT NULL DEFAULT 1);
+    INSERT INTO base_org_state(id,revision) VALUES(true,1);
+    INSERT INTO base_permission_catalog(key) VALUES('biz.crm_use');
+    CREATE FUNCTION private.is_super_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $fn$ SELECT false $fn$;
+    CREATE FUNCTION private.base_staff_effective(uuid,jsonb) RETURNS jsonb LANGUAGE sql STABLE AS $fn$
+      SELECT coalesce(jsonb_agg(jsonb_build_object('key',permission,'allowed',effect='ALLOW') ORDER BY permission),'[]'::jsonb)
+      FROM private.fixture_rules WHERE actor=$1
+    $fn$;
+    CREATE FUNCTION public.base_permissions_effective(uuid) RETURNS jsonb LANGUAGE sql STABLE AS $fn$
+      SELECT jsonb_build_object('permissions','[]'::jsonb)
+    $fn$;
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
       AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
     CREATE FUNCTION private.is_active(uuid) RETURNS boolean LANGUAGE sql STABLE
@@ -48,6 +60,7 @@ beforeAll(async () => {
     '0473_role_cache_business_structure_sources.sql',
     '0474_role_cache_profile_and_audit.sql',
     '0475_role_cache_activation_and_fast_chart.sql',
+    '0477_base_navigation_snapshot_fast_path.sql',
   ]) await db.exec(readFileSync(`drizzle/migrations/${name}`, 'utf8'));
   await db.query('select set_config($1,$2,false)', ['test.actor', employee]);
   await db.exec(`
@@ -130,6 +143,40 @@ it('expired snapshots and missing actors use the previous resolver, never stale 
   expect(await roleDecision(employee)).toBe('DENY');
   await db.query('select set_config($1,$2,false)',['test.actor','']);
   await expect(serverSync()).rejects.toThrow('Không có quyền');
+});
+
+
+it('reuses cached menu decisions and still falls back on epoch revocation', async () => {
+  await db.query('insert into private.fixture_rules values ($1,$2,$3)',[employee,'biz.crm_use','ALLOW']);
+  await serverSync();
+  const fromCache = await stmt(`select nav_permissions value from private.base_role_effective_cache where user_id='${employee}'`);
+  const menu = await stmt('select public.base_permissions_navigation() value');
+  expect(fromCache).toEqual([{key:'biz.crm_use',allowed:true}]);
+  expect(menu.permissions).toEqual(fromCache);
+  expect(menu.revision).toBe(1);
+  await db.query('delete from private.fixture_rules where actor=$1',[employee]);
+  await db.query('insert into private.fixture_rules values($1,$2,$3)',[employee,'biz.crm_use','DENY']);
+  await db.exec("UPDATE app_roles SET permissions=ARRAY['biz.crm_use'] WHERE id='position-role'");
+  // The previously cached allow must never survive a source invalidation.
+  const changed = await stmt('select public.base_permissions_navigation() value');
+  expect(changed.permissions).toEqual([{key:'biz.crm_use',allowed:false}]);
+  await serverSync();
+  const refreshed = await stmt('select public.base_permissions_navigation() value');
+  expect(refreshed.permissions).toEqual(changed.permissions);
+});
+
+it('invalidates cached menu snapshot after catalog changes',async()=>{
+  await db.query('insert into private.fixture_rules values ($1,$2,$3)',[employee,'biz.crm_use','ALLOW']);
+  await serverSync();
+  const before = await stmt('select epoch value from private.base_role_cache_state where id=true');
+  await db.exec("INSERT INTO base_permission_catalog(key) VALUES('new.navigation.permission') ON CONFLICT DO NOTHING");
+  const after = await stmt('select epoch value from private.base_role_cache_state where id=true');
+  expect(after).toBeGreaterThan(before);
+  expect(await roleDecision(employee)).toBe('ALLOW');
+  const current = await stmt(`select epoch value from private.base_role_effective_cache where user_id='${employee}'`);
+  expect(current).toBeLessThan(after);
+  const menu = await stmt('select public.base_permissions_navigation() value');
+  expect(menu.permissions).toEqual([{key:'biz.crm_use',allowed:true}]);
 });
 
 it('read-only org chart returns the same units, titles and member shape without rebuilding config three times',async()=>{
