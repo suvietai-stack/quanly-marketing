@@ -79,3 +79,12 @@ describe("expense lines (bảng kê khoản chi)", () => {
     expect(l.unit).toBe("");
   });
 });
+
+describe("frValidate salary advance type", () => {
+  it("requires a type only when the catalog has active types", () => {
+    const base = { amount: 100, title: "Lý do", salaryPeriod: "2026-12" };
+    expect(frValidate("salary_advance", { ...base, salaryTypeRequired: true })).toMatch(/phân loại/);
+    expect(frValidate("salary_advance", { ...base, salaryTypeRequired: true, paymentTypeId: "t1" })).toBeNull();
+    expect(frValidate("salary_advance", { ...base, salaryTypeRequired: false })).toBeNull();
+  });
+});

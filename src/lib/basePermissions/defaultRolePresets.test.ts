@@ -96,3 +96,19 @@ it('business-only Sales draft preserves all existing rights and adds no approval
   expect(salesBusinessDraft(stored, [])?.added).toEqual([]);
   expect(salesBusinessDraft(role('role-v2-task-content-web', []), policy)).toBeUndefined();
 });
+it('Kế toán proposes settings for Payment, Advance and Salary advance; only Kế toán trưởng adds approval', () => {
+  const accountant = defaultRolePresets.find(p => p.roleId === 'role-v2-accountant')!;
+  const chief = defaultRolePresets.find(p => p.roleId === 'role-v2-account-chief')!;
+  for (const kind of ['advance', 'payment', 'salary']) {
+    for (const action of ['view_scope', 'pay', 'report', 'settings']) {
+      const key = `fr.${kind}.${action}`;
+      expect(accountant.keys).toContain(key);
+      expect(chief.keys).toContain(key);
+    }
+    expect(accountant.keys).not.toContain(`fr.${kind}.approve`);
+    expect(chief.keys).toContain(`fr.${kind}.approve`);
+  }
+  expect(accountant.keys).toContain('fr.salary.deduct');
+  const financeRoles = new Set(['role-v2-accountant', 'role-v2-account-chief']);
+  for (const p of defaultRolePresets) if (!financeRoles.has(p.roleId)) expect(p.keys.filter(k => k.startsWith('fr.'))).toEqual([]);
+});

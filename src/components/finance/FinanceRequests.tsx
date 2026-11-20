@@ -1,7 +1,7 @@
 import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, FileText, Paperclip, Trash2, ArrowUp, ArrowDown, X } from "lucide-react";
+import { Plus, Search, FileText, Paperclip, Trash2, ArrowUp, ArrowDown, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/auth";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { frApi, type FrRequest, type FrStep, type FrTypeWithUsage, type FrSettleOption } from "@/lib/financeRequests/api";
+import { frApi, type FrRequest, type FrStep, type FrTypeKind, type FrTypeWithUsage, type FrSettleOption } from "@/lib/financeRequests/api";
 import {
   FR_KIND_LABEL, FR_STATUS_LABEL, FR_STATUS_VARIANT, FR_QUICK_FILTERS, quickFilterStatuses,
   vnd, parseAmount, fmtAmountInput, frEditable, frCancellable, frRemainingToPay,
@@ -22,6 +22,7 @@ import {
 } from "@/lib/financeRequests/logic";
 import { ExpenseLinesEditor, ExpenseLinesView } from "@/components/finance/ExpenseLines";
 import { FinanceZaloSettings } from "@/components/finance/FinanceZaloSettings";
+import { frExportRows, frExportLineRows, frExportFileName, frExportTitle } from "@/lib/financeRequests/export";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
@@ -99,6 +100,33 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
 
   const rows = tab === "mine" ? mine.data ?? [] : tab === "all" ? all.data ?? [] : tab === "todo" ? todo.data ?? [] : [];
   const loading = (tab === "mine" && mine.isLoading) || (tab === "all" && all.isLoading) || (tab === "todo" && (pendingSteps.isLoading || todo.isLoading));
+  const [exporting, setExporting] = useState(false);
+  // Xuất đúng danh sách đang xem (tab + bộ lọc + tìm kiếm); dữ liệu đọc qua RLS nên không vượt phạm vi được xem.
+  const exportExcel = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const list = tab === "todo" ? rows : await frApi.listAll(kind, { statuses, q: q || undefined, mine: tab === "mine", uid });
+      if (!list.length) { toast.error("Không có đề nghị nào để xuất."); return; }
+      const [names, types, lines] = await Promise.all([
+        frApi.profiles([...new Set<string>(list.map((r) => r.requester_id))]),
+        frApi.paymentTypes(kind),
+        kind === "payment" ? frApi.linesFor(list.map((r) => r.id)) : Promise.resolve([]),
+      ]);
+      const lk = {
+        names: Object.fromEntries(names.map((p) => [p.id, p.full_name ?? ""])),
+        types: Object.fromEntries(types.map((t) => [t.id, t.name])),
+      };
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+      const tabLabel = tab === "mine" ? "Đề nghị của tôi" : tab === "all" ? "Tất cả" : "Chờ tôi xử lý";
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(frExportRows(kind, list, lk)), "Đề nghị");
+      if (kind === "payment") XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(frExportLineRows(list, lines)), "Bảng kê");
+      wb.Props = { Title: `${frExportTitle(kind)} — ${tabLabel}` };
+      XLSX.writeFile(wb, frExportFileName(kind));
+      toast.success(`Đã xuất ${list.length} đề nghị`);
+    } catch (e) { toast.error(errMsg(e)); } finally { setExporting(false); }
+  };
 
   return (
     <div className="finance-requests-mobile space-y-4 pb-24 min-w-0">
@@ -121,6 +149,9 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Tìm theo mã, nội dung…" value={qText} onChange={(e) => setQText(e.target.value)} />
             </div>
+            <Button variant="outline" disabled={exporting || loading} onClick={exportExcel} aria-label="Xuất Excel">
+              <Download className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">{exporting ? "Đang xuất…" : "Xuất Excel"}</span>
+            </Button>
           </div>
           {tab !== "todo" && (
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -212,8 +243,8 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
   const [busy, setBusy] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
 
-  const typeKind = kind === "advance" ? "advance" : "payment";
-  const types = useQuery({ queryKey: ["fr", "types", typeKind], queryFn: () => frApi.paymentTypes(typeKind), enabled: open && kind !== "salary_advance" });
+  const typeKind: FrTypeKind = kind;
+  const types = useQuery({ queryKey: ["fr", "types", typeKind], queryFn: () => frApi.paymentTypes(typeKind), enabled: open });
   const settleOpts = useQuery({ queryKey: ["fr", "settle-opts"], queryFn: frApi.settleOptions, enabled: open && kind === "payment" });
   const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog, enabled: open && kind === "payment" });
   const selectedType = (types.data ?? []).find((t) => t.id === typeId);
@@ -231,7 +262,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
       setAmount(fmtAmountInput(String(editing.amount)));
       setTitle(editing.title); setDetail(editing.detail ?? ""); setDesiredDate(editing.desired_date ?? "");
       setPayeeName(editing.payee_name ?? ""); setPayeeInfo(editing.payee_info ?? ""); setNote(editing.note ?? "");
-      setTypeId((kind === "advance" ? editing.advance_type_id : editing.payment_type_id) ?? ""); setAdvanceId(editing.advance_id ?? "");
+      setTypeId((kind === "payment" ? editing.payment_type_id : editing.advance_type_id) ?? ""); setAdvanceId(editing.advance_id ?? "");
       setOtherLabel(editing.other_label ?? "");
       setSupplierName(editing.supplier_name ?? ""); setSupplierTax(editing.supplier_tax ?? "");
       setSupplierBank(editing.supplier_bank ?? ""); setInvoiceNo(editing.invoice_no ?? "");
@@ -263,7 +294,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
     amount: effectiveAmount, title, detail, desired_date: desiredDate || null,
     payee_name: payeeName, payee_info: payeeInfo, note,
     payment_type_id: kind === "payment" ? typeId || null : null,
-    advance_type_id: kind === "advance" ? typeId || null : null,
+    advance_type_id: kind !== "payment" ? typeId || null : null,
     other_label: isOther ? otherLabel.trim() : null,
     advance_id: isSettle ? advanceId || null : null,
     supplier_name: supplierName, supplier_tax: supplierTax, supplier_bank: supplierBank,
@@ -282,6 +313,7 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
     const err = frValidate(kind, {
       amount: effectiveAmount, title, paymentTypeId: typeId, payeeName,
       advanceId, salaryPeriod, isSettle, isOther, otherLabel,
+      salaryTypeRequired: kind === "salary_advance" && (types.data ?? []).some((t) => t.active),
     });
     if (err) return toast.error(err);
     setBusy(true);
@@ -398,6 +430,21 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
               <ExpenseLinesEditor lines={lines} onChange={setLines} catalog={catalog.data ?? []} />
             </Field>
           )}
+          {kind === "salary_advance" && typeOptions.length > 0 && (
+            <>
+              <Field label="Phân loại tạm ứng lương *">
+                <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+                  <option value="">— Chọn loại —</option>
+                  {typeOptions.map((t) => <option key={t.id} value={t.id}>{t.name}{t.active ? "" : " (đã ngừng)"}</option>)}
+                </select>
+              </Field>
+              {isOther && (
+                <Field label="Nhập loại cụ thể *">
+                  <Input maxLength={200} value={otherLabel} onChange={(e) => setOtherLabel(e.target.value)} />
+                </Field>
+              )}
+            </>
+          )}
           {kind === "salary_advance" && (
             <Field label="Kỳ lương dự kiến khấu trừ *">
               <Input type="month" value={salaryPeriod} onChange={(e) => setSalaryPeriod(e.target.value)} />
@@ -453,8 +500,8 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   const steps = useQuery({ queryKey: ["fr", "steps", id], queryFn: () => frApi.steps(id) });
   const events = useQuery({ queryKey: ["fr", "events", id], queryFn: () => frApi.events(id) });
   const reqLines = useQuery({ queryKey: ["fr", "lines", id], queryFn: () => frApi.lines(id), enabled: kind === "payment" });
-  const detailTypeKind = kind === "advance" ? "advance" : "payment";
-  const types = useQuery({ queryKey: ["fr", "types", detailTypeKind], queryFn: () => frApi.paymentTypes(detailTypeKind), enabled: kind !== "salary_advance" });
+  const detailTypeKind: FrTypeKind = kind;
+  const types = useQuery({ queryKey: ["fr", "types", detailTypeKind], queryFn: () => frApi.paymentTypes(detailTypeKind) });
   const [comment, setComment] = useState("");
   const [payOpen, setPayOpen] = useState(false);
   const [deductOpen, setDeductOpen] = useState(false);
@@ -471,7 +518,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
   if (!r) return <Sheet open onOpenChange={(o) => !o && onClose()}><SheetContent className="fr-mobile-sheet w-full sm:max-w-xl overflow-y-auto"><p className="p-4 text-sm text-muted-foreground">Đang tải…</p></SheetContent></Sheet>;
 
   const isOwner = r.requester_id === uid;
-  const typeName = (types.data ?? []).find((t) => t.id === (kind === "advance" ? r.advance_type_id : r.payment_type_id))?.name;
+  const typeName = (types.data ?? []).find((t) => t.id === (kind === "payment" ? r.payment_type_id : r.advance_type_id))?.name;
   const currentStep = (steps.data ?? []).find((s) => s.step_no === r.current_step);
   const canDecide = r.status === "pending" && !!currentStep &&
     (currentStep.approver_id === uid || (currentStep.perm ? canDecidePerm(currentStep.perm) : false)) &&
@@ -504,7 +551,7 @@ function RequestDetail({ id, kind, uid, canPay, canDeduct, isSuperAdmin, onClose
             {r.detail && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.detail}</p>}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <span className="text-muted-foreground">Ngày tạo</span><span>{fmtDateTime(r.created_at)}</span>
-              {typeName && <><span className="text-muted-foreground">{kind === "advance" ? "Loại tạm ứng" : "Loại thanh toán"}</span><span>{typeName}{r.other_label ? ` — ${r.other_label}` : ""}</span></>}
+              {typeName && <><span className="text-muted-foreground">{FR_TYPE_LABEL[kind]}</span><span>{typeName}{r.other_label ? ` — ${r.other_label}` : ""}</span></>}
               {r.desired_date && <><span className="text-muted-foreground">Ngày mong muốn</span><span>{fmtDate(r.desired_date)}</span></>}
               {r.payee_name && <><span className="text-muted-foreground">Người nhận tiền</span><span>{r.payee_name}</span></>}
               {r.payee_info && <><span className="text-muted-foreground">Thông tin nhận</span><span>{r.payee_info}</span></>}
@@ -745,7 +792,7 @@ function ReportTab({ kind }: { kind: FrKind }) {
           {(d.by_requester as any[]).length === 0 && <p className="text-sm text-muted-foreground">Chưa có dữ liệu.</p>}
         </div>
       </div>
-      {kind !== "salary_advance" && Array.isArray(d.by_type) && d.by_type.length > 0 && (
+      {Array.isArray(d.by_type) && d.by_type.some((t: any) => t.name !== "Chưa phân loại") && (
         <div className="rounded-lg border p-3 space-y-2">
           <div className="font-semibold text-sm">Theo loại</div>
           {(d.by_type as any[]).map((t) => (
@@ -863,7 +910,7 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
         </div>
       )}
 
-      {kind !== "salary_advance" && <TypeCatalogManager kind={kind === "advance" ? "advance" : "payment"} />}
+      <TypeCatalogManager kind={kind} />
       {kind === "payment" && <LineCatalogManager />}
 
       <FinanceZaloSettings kind={kind} />
@@ -873,7 +920,9 @@ function SettingsTab({ kind, onSaved }: { kind: FrKind; onSaved: () => void }) {
   );
 }
 
-function TypeCatalogManager({ kind }: { kind: "payment" | "advance" }) {
+const FR_TYPE_LABEL: Record<FrTypeKind, string> = { advance: "Loại tạm ứng", payment: "Loại thanh toán", salary_advance: "Phân loại tạm ứng lương" };
+
+function TypeCatalogManager({ kind }: { kind: FrTypeKind }) {
   const qc = useQueryClient();
   const types = useQuery({ queryKey: ["fr", "types-usage", kind], queryFn: () => frApi.typesWithUsage(kind) });
   const [editing, setEditing] = useState<FrTypeWithUsage | "new" | null>(null);
@@ -881,7 +930,7 @@ function TypeCatalogManager({ kind }: { kind: "payment" | "advance" }) {
     qc.invalidateQueries({ queryKey: ["fr", "types-usage", kind] });
     qc.invalidateQueries({ queryKey: ["fr", "types"] });
   };
-  const label = kind === "advance" ? "loại tạm ứng" : "loại thanh toán";
+  const label = FR_TYPE_LABEL[kind].replace(/^\S+/, (w) => w.toLowerCase());
   const move = async (t: FrTypeWithUsage, dir: -1 | 1) => {
     const list = types.data ?? [];
     const i = list.findIndex((x) => x.id === t.id);
@@ -940,7 +989,7 @@ function TypeCatalogManager({ kind }: { kind: "payment" | "advance" }) {
 }
 
 function TypeEditDialog({ kind, editing, count, onClose, onSaved }: {
-  kind: "payment" | "advance"; editing: FrTypeWithUsage | null; count: number;
+  kind: FrTypeKind; editing: FrTypeWithUsage | null; count: number;
   onClose: () => void; onSaved: () => void;
 }) {
   const [name, setName] = useState(editing?.name ?? "");
@@ -958,7 +1007,7 @@ function TypeEditDialog({ kind, editing, count, onClose, onSaved }: {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="fr-mobile-dialog max-w-md">
-        <DialogHeader><DialogTitle>{editing ? "Sửa" : "Thêm"} {kind === "advance" ? "loại tạm ứng" : "loại thanh toán"}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{editing ? "Sửa" : "Thêm"} {FR_TYPE_LABEL[kind].replace(/^\S+/, (w) => w.toLowerCase())}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <Field label="Tên loại *"><Input maxLength={200} value={name} onChange={(e) => setName(e.target.value)} /></Field>
           <Field label="Mô tả (nếu cần)"><Input maxLength={500} value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
@@ -972,10 +1021,22 @@ function TypeEditDialog({ kind, editing, count, onClose, onSaved }: {
 function LineCatalogManager() {
   const qc = useQueryClient();
   const catalog = useQuery({ queryKey: ["fr", "line-catalog"], queryFn: frApi.lineCatalog });
+  const usage = useQuery({ queryKey: ["fr", "line-catalog-usage"], queryFn: frApi.lineCatalogUsage });
   const [name, setName] = useState("");
   const [renaming, setRenaming] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const refresh = () => qc.invalidateQueries({ queryKey: ["fr", "line-catalog"] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["fr", "line-catalog"] });
+    qc.invalidateQueries({ queryKey: ["fr", "line-catalog-usage"] });
+  };
+  const remove = async (c: { id: string; name: string }) => {
+    if (!window.confirm(`Xóa khoản chi mẫu "${c.name}"?`)) return;
+    try {
+      await frApi.deleteLineCatalog(c.id);
+      refresh();
+      toast.success("Đã xóa khoản chi mẫu");
+    } catch (e) { toast.error(errMsg(e)); }
+  };
   const add = async () => {
     if (!name.trim()) return;
     setBusy(true);
@@ -1017,6 +1078,9 @@ function LineCatalogManager() {
             <Button size="sm" variant="outline" onClick={() => rename(c)}>Lưu</Button>
           )}
           <Button size="sm" variant="outline" onClick={() => toggle(c)}>{c.active ? "Ẩn" : "Hiện"}</Button>
+          <Button size="sm" variant="outline" disabled={(usage.data?.[c.id] ?? 0) > 0}
+            title={(usage.data?.[c.id] ?? 0) > 0 ? "Đã dùng trong bảng kê — chỉ có thể ẩn" : "Xóa khoản chi mẫu"}
+            onClick={() => remove(c)}>Xóa</Button>
         </div>
       ))}
       <div className="flex gap-2">
