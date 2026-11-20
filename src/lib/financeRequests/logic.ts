@@ -144,8 +144,6 @@ export function frValidate(kind: FrKind, v: {
   if (kind === "payment") {
     if (!v.paymentTypeId) return "Vui lòng chọn loại thanh toán.";
     if (!v.payeeName?.trim()) return "Vui lòng nhập đối tượng nhận tiền.";
-    if (v.isSettle && !v.advanceId)
-      return "Vui lòng chọn khoản tạm ứng cần quyết toán.";
   }
   if (kind === "advance" && !v.paymentTypeId) return "Vui lòng chọn loại tạm ứng.";
   if (v.isOther && !v.otherLabel?.trim()) return "Vui lòng nhập loại cụ thể khi chọn Khác.";
