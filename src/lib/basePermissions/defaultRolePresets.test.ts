@@ -2,7 +2,6 @@ import { expect, it, vi } from 'vitest';
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
 import { defaultRolePresets, defaultRoleImpact, salesBusinessDraft } from './defaultRolePresets';
 import type { CatalogRole } from './roleCatalog';
-import { PERMISSIONS } from '@/lib/auth';
 import type { EditorPolicy } from './permissionEditor';
 const policy: EditorPolicy[] = [...new Set(defaultRolePresets.flatMap(p => [...p.keys]))].map(key => ({ key, scope: 'assigned', personal: false, position_ready: true, task_ready: true }));
 const role = (id: string, permissions: string[], is_system = false): CatalogRole => ({ id, name: id, permissions, is_system, role_kind: id.startsWith('role-v2-task-') ? 'marketing_task' : 'position', catalog_state: 'standard', receivers: 2, description: '', catalog_group: '', signal_scope_all: false, signal_scope: [], references: { positions: [], titles: [], direct: 0, specialties: [] }, permission_checks: [] });
@@ -98,13 +97,11 @@ it('business-only Sales draft preserves all existing rights and adds no approval
   expect(salesBusinessDraft(role('role-v2-task-content-web', []), policy)).toBeUndefined();
 });
 it('Kế toán proposes settings for Payment, Advance and Salary advance; only Kế toán trưởng adds approval', () => {
-  const catalog = new Set(PERMISSIONS.map(p => p.key));
   const accountant = defaultRolePresets.find(p => p.roleId === 'role-v2-accountant')!;
   const chief = defaultRolePresets.find(p => p.roleId === 'role-v2-account-chief')!;
   for (const kind of ['advance', 'payment', 'salary']) {
     for (const action of ['view_scope', 'pay', 'report', 'settings']) {
       const key = `fr.${kind}.${action}`;
-      expect(catalog.has(key)).toBe(true);
       expect(accountant.keys).toContain(key);
       expect(chief.keys).toContain(key);
     }

@@ -25,7 +25,7 @@ CREATE TABLE notifications(id uuid DEFAULT gen_random_uuid(),recipient_id uuid,k
     ('${approver}','fr.advance.approve'),('${approver}','fr.payment.approve'),('${approver}','fr.salary.approve'),
     ('${accountant}','fr.advance.pay'),('${accountant}','fr.payment.pay'),('${accountant}','fr.salary.pay'),('${accountant}','fr.salary.deduct'),
     ('${admin}','fr.advance.settings'),('${admin}','fr.payment.settings'),('${admin}','fr.salary.settings')`);
-  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group', '0290_fr_type_catalogs'])
+  for (const f of ['0284_finance_requests_schema', '0285_finance_requests_rpcs', '0287_finance_requests_decide_null_safe', '0288_finance_payment_lines', '0289_fr_zalo_group', '0290_fr_type_catalogs', '0477_fr_salary_types_and_line_catalog_delete'])
     await db.exec(readFileSync(`drizzle/migrations/${f}.sql`, 'utf8'));
   settleTypeId = await scalar("select id v from fr_payment_types where name='Quyết toán/hoàn ứng tạm ứng'");
   advanceTypeId = await scalar("select id v from fr_payment_types where kind='advance' and name='Tạm ứng mua vật tư'");
@@ -348,4 +348,58 @@ it('report groups by dynamic type including usage counts', async () => {
   const row = (r.by_type as any[]).find((t) => t.name === 'Tạm ứng mua vật tư');
   expect(Number(row.count)).toBe(1);
   expect(Number(row.paid)).toBe(2000000);
+});
+
+it('salary advance types: managed by salary settings, validated by kind, delete only when unused', async () => {
+  await actor(accountant);
+  await expect(db.query("select fr_types_with_usage('salary_advance')")).rejects.toThrow('quyền');
+  await expect(db.query("select fr_type_save(null,'salary_advance','Sửa nhà',null,true,9)")).rejects.toThrow('quyền');
+  await actor(admin);
+  const seeded = await scalar("select fr_types_with_usage('salary_advance') v");
+  expect((seeded as any[]).map((t) => t.name)).toEqual(['Chi tiêu cá nhân/gia đình', 'Y tế, ốm đau', 'Học tập', 'Khác']);
+  const typeId = await scalar("select fr_type_save(null,'salary_advance','Sửa nhà',null,true,9) v");
+  const unusedId = await scalar("select fr_type_save(null,'salary_advance','Tạm thời',null,true,10) v");
+  await db.query('select fr_type_delete($1)', [unusedId]);
+  expect(await scalar('select count(*)::int v from fr_payment_types where id=$1', [unusedId])).toBe(0);
+  await actor(staff2);
+  const advTypeId = await scalar("select id v from fr_payment_types where kind='advance' and name='Tạm ứng mua vật tư'");
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['salary_advance', payload({ amount: 100, title: 'Lý do', salary_period: '2026-12', advance_type_id: advTypeId })])).rejects.toThrow('không hợp lệ');
+  const otherId = await scalar("select id v from fr_payment_types where kind='salary_advance' and sys_code='other'");
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['salary_advance', payload({ amount: 100, title: 'Lý do', salary_period: '2026-12', advance_type_id: otherId })])).rejects.toThrow('loại cụ thể');
+  const reqId = await scalar('select fr_save(null,$1,$2,null) v', ['salary_advance', payload({ amount: 300, title: 'Sửa mái', salary_period: '2026-12', advance_type_id: typeId })]);
+  expect(await scalar('select advance_type_id v from fr_requests where id=$1', [reqId])).toBe(typeId);
+  // Không chọn loại vẫn lưu được (tương thích giao diện cũ)
+  expect(await scalar('select fr_save(null,$1,$2,null) v', ['salary_advance', payload({ amount: 100, title: 'Không loại', salary_period: '2026-12' })])).toBeTruthy();
+  await actor(admin);
+  await expect(db.query('select fr_type_delete($1)', [typeId])).rejects.toThrow('chỉ có thể ngừng');
+  await expect(db.query('select fr_type_delete($1)', [otherId])).rejects.toThrow('hệ thống');
+  await db.query("select fr_type_save($1,'salary_advance','Sửa nhà',null,false,9)", [typeId]);
+  await actor(staff2);
+  await expect(db.query('select fr_save(null,$1,$2,null)', ['salary_advance', payload({ amount: 100, title: 'X', salary_period: '2026-12', advance_type_id: typeId })])).rejects.toThrow('ngừng sử dụng');
+  // Đề nghị đang giữ loại đã ngừng vẫn sửa được
+  expect(await scalar('select fr_save($1,$2,$3,null) v', [reqId, 'salary_advance', payload({ amount: 350, title: 'Sửa mái', salary_period: '2026-12', advance_type_id: typeId })])).toBe(reqId);
+  await actor(admin);
+  const r = await scalar("select fr_report('salary_advance',null,null) v");
+  expect((r.by_type as any[]).find((t) => t.name === 'Sửa nhà')?.count).toBe(1);
+});
+
+it('line catalog delete: payment settings only, blocked once used in a request', async () => {
+  await actor(admin);
+  const unused = await scalar("select fr_line_catalog_save(null,'Mẫu chưa dùng',true,50) v");
+  const used = await scalar("select fr_line_catalog_save(null,'Mẫu đã dùng',true,51) v");
+  const tid = await scalar("select id v from fr_payment_types where kind='payment' and sys_code is null and active order by sort limit 1");
+  await actor(staff2);
+  await db.query('select fr_save(null,$1,$2,null)', ['payment', payload({
+    title: 'Chi có mẫu', payment_type_id: tid, payee_name: 'X',
+    lines: [{ name: 'Mẫu đã dùng', catalog_id: used, qty: 1, unit_price: 100 }],
+  })]);
+  await expect(db.query('select fr_line_catalog_delete($1)', [unused])).rejects.toThrow('quyền');
+  await expect(db.query('select fr_line_catalog_usage()')).rejects.toThrow('quyền');
+  await actor(admin);
+  const usage = await scalar('select fr_line_catalog_usage() v');
+  expect(Number(usage[used])).toBe(1);
+  expect(Number(usage[unused])).toBe(0);
+  await expect(db.query('select fr_line_catalog_delete($1)', [used])).rejects.toThrow('chỉ có thể ẩn');
+  await db.query('select fr_line_catalog_delete($1)', [unused]);
+  expect(await scalar('select count(*)::int v from fr_line_catalog where id=$1', [unused])).toBe(0);
 });

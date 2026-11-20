@@ -20,3 +20,11 @@
 ## Để kế toán cài đặt được (cần chủ dự án duyệt)
 1. Duyệt và áp dụng `docs/role-permission-full-2026-11-12/candidate.sql` đúng SHA trong `SHA256SUMS`.
 2. Super Admin mở Role "Kế toán" (và "Kế toán trưởng"), áp gợi ý hoặc tick các quyền `fr.*` rồi lưu qua preview/apply có audit.
+
+## Bổ sung: kế toán tự quản lý danh mục (migration 0477 — chưa áp dụng)
+- **Phân loại Tạm Ứng Lương**: danh mục mới trong `fr_payment_types` (kind `salary_advance`), quản lý ở tab Cài đặt Tạm Ứng Lương giống Loại tạm ứng: thêm, sửa, đổi thứ tự, ngừng/dùng lại, xóa khi chưa dùng; "Khác" (sys_code) chỉ ngừng dùng và bắt buộc nhập loại cụ thể. Quyền `fr.salary.settings`.
+  - Lưu vào `fr_requests.advance_type_id` (không thêm cột). Máy chủ kiểm loại đúng kind, chặn loại đã ngừng cho đề nghị mới; không bắt buộc ở máy chủ để giao diện cũ vẫn gửi được, giao diện mới bắt buộc chọn khi có loại đang dùng. Báo cáo "Theo loại" hiện cho cả Tạm Ứng Lương.
+  - Gợi ý ban đầu: Chi tiêu cá nhân/gia đình, Y tế/ốm đau, Học tập, Khác. Kế toán sửa/xóa tùy ý.
+  - Tin nhắn nhóm Zalo Tạm Ứng Lương không đổi (chỉ mã + trạng thái).
+- **Khoản chi mẫu (Thanh toán)**: thêm nút Xóa (`fr_line_catalog_delete`), chỉ khi chưa có dòng bảng kê nào dùng; đã dùng thì chỉ Ẩn. `fr_line_catalog_usage` cho số lần dùng. Quyền `fr.payment.settings`.
+- Kiểm thử: `fr.database.test.ts` 22/22 (PGlite, chạy kèm 0477), logic/permission tests đạt.

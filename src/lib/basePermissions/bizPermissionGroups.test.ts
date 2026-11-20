@@ -14,3 +14,9 @@ it('default Roles propose only scoped view/submission business keys, never appro
   const allowed = new Set(['biz.view_own', 'biz.view_dept', 'biz.goal_submit', 'biz.plan_submit', 'biz.report_submit']);
   for (const p of defaultRolePresets) expect(p.keys.filter(k => bizSubgroupOf(k) && !allowed.has(k))).toEqual([]);
 });
+it('every finance-request key suggested to accountant Roles exists in the permission catalog', () => {
+  const catalog = new Set(PERMISSIONS.map(p => p.key));
+  const fr = [...new Set(defaultRolePresets.flatMap(p => [...p.keys]).filter(k => k.startsWith('fr.')))];
+  expect(fr.length).toBe(16);
+  expect(fr.filter(k => !catalog.has(k))).toEqual([]);
+});

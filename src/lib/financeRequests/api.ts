@@ -38,7 +38,7 @@ export type FrStep = {
 };
 
 export type FrEvent = { id: string; request_id: string; actor_id: string | null; action: string; payload: any; created_at: string };
-export type FrTypeKind = "payment" | "advance";
+export type FrTypeKind = "payment" | "advance" | "salary_advance";
 export type FrPaymentType = { id: string; name: string; active: boolean; sort: number; kind?: FrTypeKind; sys_code?: string | null; description?: string | null };
 export type FrTypeWithUsage = FrPaymentType & { usage: number };
 export type FrLineCatalog = { id: string; name: string; active: boolean; sort: number };
@@ -72,6 +72,8 @@ export const frApi = {
   lineCatalog: () => sel<FrLineCatalog[]>(db.from("fr_line_catalog").select("*").order("sort").order("name")),
   saveLineCatalog: (id: string | null, name: string, active: boolean, sort: number) =>
     rpc<string>("fr_line_catalog_save", { _id: id, _name: name, _active: active, _sort: sort }),
+  deleteLineCatalog: (id: string) => rpc("fr_line_catalog_delete", { _id: id }),
+  lineCatalogUsage: () => rpc<Record<string, number>>("fr_line_catalog_usage", {}),
   settings: () => sel<FrSettings[]>(db.from("fr_settings").select("*")),
   settleOptions: () => rpc<FrSettleOption[]>("fr_settle_options", {}),
   save: (id: string | null, kind: FrKind, payload: Record<string, unknown>, requestKey: string) =>

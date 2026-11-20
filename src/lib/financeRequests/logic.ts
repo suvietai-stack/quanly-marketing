@@ -136,6 +136,8 @@ export function validateLines(ls: FrLine[]): string | null {
 export function frValidate(kind: FrKind, v: {
   amount: number; title: string; paymentTypeId?: string; payeeName?: string;
   advanceId?: string; salaryPeriod?: string; isSettle?: boolean; isOther?: boolean; otherLabel?: string;
+  /** Tạm Ứng Lương: bắt buộc chọn phân loại khi danh mục có loại đang dùng. */
+  salaryTypeRequired?: boolean;
 }): string | null {
   if (!v.amount || v.amount <= 0) return "Số tiền phải lớn hơn 0.";
   if (!v.title.trim()) return kind === "salary_advance" ? "Vui lòng nhập lý do tạm ứng." : "Vui lòng nhập mục đích/nội dung.";
@@ -147,6 +149,7 @@ export function frValidate(kind: FrKind, v: {
   }
   if (kind === "advance" && !v.paymentTypeId) return "Vui lòng chọn loại tạm ứng.";
   if (v.isOther && !v.otherLabel?.trim()) return "Vui lòng nhập loại cụ thể khi chọn Khác.";
+  if (kind === "salary_advance" && v.salaryTypeRequired && !v.paymentTypeId) return "Vui lòng chọn phân loại tạm ứng lương.";
   if (kind === "salary_advance" && !v.salaryPeriod?.trim()) return "Vui lòng chọn kỳ lương dự kiến khấu trừ.";
   return null;
 }
