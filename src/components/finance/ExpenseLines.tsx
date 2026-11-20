@@ -1,7 +1,9 @@
 // Bảng kê khoản chi dùng chung (Đề Nghị Thanh Toán; có thể tái dùng cho Đề Nghị Tạm Ứng).
 // Desktop: bảng nhập trực tiếp. Mobile: danh sách thẻ thu gọn + form thêm/sửa trong Dialog.
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy } from "lucide-react";
+import { toast } from "sonner";
+import { expenseLinesTsv } from "@/lib/financeRequests/copyTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +15,18 @@ import {
 import type { FrLineCatalog, FrRequestLine } from "@/lib/financeRequests/api";
 
 const fmtQty = (q: number) => (Number.isInteger(q) ? String(q) : String(q));
+
+/** Clipboard TSV: một hàng Excel cho mỗi khoản chi, các giá trị cách nhau bằng tab. */
+async function copyExpenseTable(lines: { name: string; unit: string | null; qty: number; unit_price: number; line_total?: number }[]) {
+  if (!lines.length) { toast.error("Bảng kê chưa có khoản chi để sao chép."); return; }
+  try {
+    await navigator.clipboard.writeText(expenseLinesTsv(lines));
+    toast.success("Đã sao chép bảng kê. Mở Excel và dán vào ô A1 (Ctrl+V).");
+  } catch {
+    toast.error("Không thể sao chép. Hãy cấp quyền clipboard cho trình duyệt.");
+  }
+}
+
 
 /** Khớp tên nhập tay với danh mục (không bắt buộc; tự nhập vẫn hợp lệ). */
 const matchCatalog = (name: string, catalog: FrLineCatalog[]) =>
@@ -38,6 +52,11 @@ export function ExpenseLinesEditor({ lines, onChange, catalog }: {
 
   return (
     <div className="fr-expense-lines space-y-2">
+      <div className="flex justify-end">
+        <Button type="button" size="sm" variant="outline" onClick={() => copyExpenseTable(lines.filter((l) => !isBlankLine(l)).map((l) => ({ ...l, line_total: lineTotal(l) })))}>
+          <Copy className="h-4 w-4 mr-1.5" />Sao chép bảng
+        </Button>
+      </div>
       {/* Desktop: bảng nhập nhanh */}
       <div className="hidden md:block rounded-lg border overflow-hidden">
         <table className="w-full text-sm">
@@ -245,7 +264,12 @@ export function ExpenseLinesView({ lines }: { lines: FrRequestLine[] }) {
   const total = lines.reduce((s, l) => s + Number(l.line_total), 0);
   return (
     <div className="fr-expense-lines space-y-2">
-      <div className="font-semibold text-sm">Bảng kê khoản chi</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="font-semibold text-sm">Bảng kê khoản chi</div>
+        <Button type="button" size="sm" variant="outline" onClick={() => copyExpenseTable(lines.map((l) => ({ name: l.name, unit: l.unit, qty: Number(l.qty), unit_price: Number(l.unit_price), line_total: Number(l.line_total) })))}>
+          <Copy className="h-4 w-4 mr-1.5" />Sao chép bảng
+        </Button>
+      </div>
       {/* Desktop */}
       <div className="hidden md:block rounded-lg border overflow-hidden">
         <table className="w-full text-sm">
