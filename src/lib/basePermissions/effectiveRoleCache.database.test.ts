@@ -24,14 +24,14 @@ beforeAll(async () => {
     CREATE TABLE base_org_state (id boolean PRIMARY KEY DEFAULT true,revision integer NOT NULL DEFAULT 1);
     INSERT INTO base_org_state(id,revision) VALUES(true,1);
     INSERT INTO base_permission_catalog(key) VALUES('biz.crm_use');
-    CREATE FUNCTION private.is_super_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $ SELECT false $;
-    CREATE FUNCTION private.base_staff_effective(uuid,jsonb) RETURNS jsonb LANGUAGE sql STABLE AS $
+    CREATE FUNCTION private.is_super_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $fn$ SELECT false $fn$;
+    CREATE FUNCTION private.base_staff_effective(uuid,jsonb) RETURNS jsonb LANGUAGE sql STABLE AS $fn$
       SELECT coalesce(jsonb_agg(jsonb_build_object('key',permission,'allowed',effect='ALLOW') ORDER BY permission),'[]'::jsonb)
       FROM private.fixture_rules WHERE actor=$1
-    $;
-    CREATE FUNCTION public.base_permissions_effective(uuid) RETURNS jsonb LANGUAGE sql STABLE AS $
+    $fn$;
+    CREATE FUNCTION public.base_permissions_effective(uuid) RETURNS jsonb LANGUAGE sql STABLE AS $fn$
       SELECT jsonb_build_object('permissions','[]'::jsonb)
-    $;
+    $fn$;
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
       AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
     CREATE FUNCTION private.is_active(uuid) RETURNS boolean LANGUAGE sql STABLE
