@@ -46,6 +46,7 @@ export type PermissionGroup =
   | "Quản trị Kinh doanh"
   | "Quản lý 3K"
   | "CRM Khách Hàng"
+  | "CRM Dữ liệu tổng"
   | "Sale Work Zalo"
   | "Cơ cấu tổ chức"
   | "Showroom"
@@ -74,6 +75,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P("inbox.assign", "Phân công hội thoại", "Hộp thư"),
   P("inbox.resolve", "Đóng / mở lại hội thoại", "Hộp thư"),
   P("inbox.manage", "Quản lý quyền truy cập Page", "Hộp thư"),
+  P('crm.database.view', 'Xem toàn bộ database khách hàng CRM', 'CRM Dữ liệu tổng'),
   P('biz.crm_use', 'Sử dụng CRM cá nhân', 'CRM Khách Hàng'),
   P('biz.crm_view_scope', 'Xem CRM nhân viên trong phạm vi', 'CRM Khách Hàng'),
   P('biz.crm_edit_other', 'Sửa hộ khách trong phạm vi', 'CRM Khách Hàng'),
