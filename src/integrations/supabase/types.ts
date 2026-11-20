@@ -12215,6 +12215,11 @@ export type Database = {
       }
       base_permissions_effective: { Args: { _user?: string }; Returns: Json }
       base_permissions_navigation: { Args: never; Returns: Json }
+      base_role_cache_sync: { Args: never; Returns: Json }
+      base_role_cache_sync_users: {
+        Args: { _users: string[] }
+        Returns: number
+      }
       base_title_roles_read: { Args: never; Returns: Json }
       base_title_roles_save: {
         Args: {
@@ -14182,8 +14187,6 @@ export type Database = {
         }[]
       }
       signal_sales_report: { Args: { _filter?: Json }; Returns: Json }
-      standard_role_catalog_consolidate: { Args: never; Returns: Json }
-      standard_role_catalog_setup: { Args: never; Returns: Json }
       supplier_master_contact_add: {
         Args: {
           _channel: string
