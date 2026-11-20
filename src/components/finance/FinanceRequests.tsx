@@ -375,13 +375,14 @@ function RequestForm({ kind, open, editing, onClose, onSaved }: {
                 </Field>
               )}
               {isSettle && (
-                <Field label="Khoản tạm ứng cần quyết toán *">
+                <Field label="Liên kết khoản tạm ứng (không bắt buộc)">
                   <select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={advanceId} onChange={(e) => setAdvanceId(e.target.value)}>
-                    <option value="">— Chọn khoản tạm ứng —</option>
+                    <option value="">— Không liên kết khoản tạm ứng —</option>
                     {(settleOpts.data ?? []).map((o: FrSettleOption) => (
                       <option key={o.id} value={o.id}>{o.code} — {o.title} (còn {vnd(o.remaining)})</option>
                     ))}
                   </select>
+                  <p className="text-xs text-muted-foreground">Không liên kết vẫn có thể gửi hoàn ứng; chỉ khi liên kết, số tiền mới được tự động đối trừ vào khoản tạm ứng đã chọn sau khi chi xong.</p>
                 </Field>
               )}
               <Field label="Đối tượng nhận tiền *">
