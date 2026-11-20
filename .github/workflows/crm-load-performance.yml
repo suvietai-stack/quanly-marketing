@@ -1,0 +1,27 @@
+name: CRM read performance safety
+on:
+  pull_request:
+    paths:
+      - 'src/lib/crm/queries.ts'
+      - 'src/lib/crm/loadPerformance.test.ts'
+      - '.github/workflows/crm-load-performance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/lib/crm/queries.ts'
+      - 'src/lib/crm/loadPerformance.test.ts'
+      - '.github/workflows/crm-load-performance.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: CRM loading and data safety
+        run: bunx vitest run src/lib/crm/loadPerformance.test.ts src/lib/crm/logic.test.ts src/lib/crm/fields.test.ts src/lib/crm/classification.test.ts src/lib/crm/locations.test.ts
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Production build
+        run: bun run build
