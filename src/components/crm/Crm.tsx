@@ -24,10 +24,12 @@ import { CrmModal, CustomerForm, InteractionForm } from "./CrmForms";
 import { CrmDetail } from "./CrmDetail";
 import { CrmReports } from "./CrmReports";
 import { CrmSettings } from "./CrmSettings";
+import { CrmDatabase } from "./CrmDatabase";
 import { DynamicFilters } from './CrmFields';
 import type { DynamicFilter } from '@/lib/crm/fields';
 export function Crm() {
-  const { user: u, can } = useCurrentUser();
+  const { user: u, can, isSuperAdmin } = useCurrentUser();
+  const canDatabase = isSuperAdmin || can("crm.database.view");
   const uid = u?.id || "";
   const [area, setArea] = useState("mine");
   const [view, setView] = useState("today");
@@ -49,9 +51,10 @@ export function Crm() {
   const [care, setCare] = useState<{ customer: Customer; schedule?: Schedule }>();
   const catalogs = useQuery(catalogsQuery(uid));
   const people = useQuery(crmPeopleQuery(uid));
-  const read = useQuery(
-    crmReadQuery(uid, area === "mine", area === "manage" ? owner : "", search, archived,group,segment,priority,dynamic),
-  );
+  const read = useQuery({
+    ...crmReadQuery(uid, area === "mine", area === "manage" ? owner : "", search, archived,group,segment,priority,dynamic),
+    enabled: area !== "database",
+  });
   const cats = catalogs.data || [];
   const data = read.data;
   const now = data?.server_now || new Date().toISOString();
@@ -105,11 +108,14 @@ export function Crm() {
                   ]
                 : []),
               ...(can("biz.crm_settings") ? [{ id: "settings", name: "Cài đặt CRM" }] : []),
+              ...(canDatabase ? [{ id: "database", name: "Toàn bộ dữ liệu khách hàng" }] : []),
             ]}
           />
         </div>
       </div>
-      {area === "settings" ? (
+      {area === "database" ? (
+        canDatabase ? <CrmDatabase uid={uid} catalogs={cats} /> : <p role="alert">Bạn không có quyền xem dữ liệu CRM toàn công ty.</p>
+      ) : area === "settings" ? (
         <CrmSettings uid={uid} catalogs={cats} />
       ) : area === "reports" || view === "report" ? (
         <>
