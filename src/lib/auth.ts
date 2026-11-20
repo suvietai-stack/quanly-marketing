@@ -82,6 +82,7 @@ export const PERMISSIONS: PermissionDef[] = [
   P('biz.crm_transfer', 'Bàn giao khách trong phạm vi', 'CRM Khách Hàng'),
   P('biz.crm_export', 'Xuất dữ liệu CRM', 'CRM Khách Hàng'),
   P('biz.crm_archive', 'Lưu trữ và khôi phục khách', 'CRM Khách Hàng'),
+  P('crm.customer.delete', 'Xóa khách chưa phát sinh nghiệp vụ', 'CRM Khách Hàng'),
   P('biz.crm_settings', 'Cài đặt danh mục CRM', 'CRM Khách Hàng'),
   P('biz.crm_access', 'Cấp quyền nghiệp vụ CRM', 'CRM Khách Hàng'),
   P('sao.program_manage', 'Quản lý chương trình thưởng Sao', 'Sao Sứ Việt'),
