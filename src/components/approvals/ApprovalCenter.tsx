@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { AlertCircle, RefreshCw, Search, ClipboardCheck, Clock3 } from 'lucide-react';
 import { useCurrentUser } from '@/lib/auth';
 import {
-  approvalCenterQuery, filterItems, sortTodo, sourceGroup, waitingText, vnd, dateText,
+  approvalCenterQuery, filterItems, sortTodo, sortRecent, sourceGroup, waitingText, vnd, dateText,
   parseApprovalUrl, groupLabel, type ApprovalGroup, type ApprovalItem,
 } from '@/lib/approvals/api';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 type Tab = 'todo' | 'mine' | 'done';
+
+/** Hiển thị dần để danh sách dài (hàng trăm hồ sơ) không dựng cả nghìn thẻ/dòng một lúc. */
+const PAGE_SIZE = 60;
 
 const TAB_LABELS: Record<Tab, string> = { todo: 'Chờ tôi', mine: 'Đang trình', done: 'Đã xử lý' };
 
@@ -57,7 +60,7 @@ function ItemCard({ item, now, tab }: { item: ApprovalItem; now: string; tab: Ta
         {tab === 'done' ? (
           <>{item.action && <span className="font-medium text-foreground">{item.action}</span>}{item.acted_at && <span>{dateText(item.acted_at)}</span>}</>
         ) : (
-          <>{item.step_label && <span>{item.step_label}</span>}{item.waiting_since && <span>Chờ {waitingText(item.waiting_since, now)}</span>}</>
+          <>{item.step_label && <span>{item.step_label}</span>}{waitingText(item.waiting_since, now) && <span>Chờ {waitingText(item.waiting_since, now)}</span>}</>
         )}
       </div>
       <OpenButton item={item} tab={tab} full />
@@ -82,9 +85,9 @@ function ItemRow({ item, now, tab }: { item: ApprovalItem; now: string; tab: Tab
       </td>
       <td className="py-3 pr-4 align-top whitespace-nowrap text-sm">
         {tab === 'done' ? (
-          <>{item.action && <p className="font-medium">{item.action}</p>}<p className="text-xs text-muted-foreground">{dateText(item.acted_at)}</p></>
+          <>{item.action && <p className="font-medium">{item.action}</p>}{item.acted_at && <p className="text-xs text-muted-foreground">{dateText(item.acted_at)}</p>}</>
         ) : (
-          <>{item.step_label && <p>{item.step_label}</p>}<p className="text-xs text-muted-foreground">Chờ {waitingText(item.waiting_since, now)}</p></>
+          <>{item.step_label && <p>{item.step_label}</p>}{waitingText(item.waiting_since, now) && <p className="text-xs text-muted-foreground">Chờ {waitingText(item.waiting_since, now)}</p>}</>
         )}
       </td>
       <td className="py-3 pr-4 align-top">
@@ -107,15 +110,18 @@ export function ApprovalCenter() {
   const [search, setSearch] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [group, setGroup] = useState<ApprovalGroup | 'all'>('all');
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
   const data = query.data;
   const now = data?.server_now ?? new Date().toISOString();
   const rawItems = useMemo(() => {
     if (!data) return [];
     const list = tab === 'todo' ? data.todo : tab === 'mine' ? data.mine : data.done;
-    return tab === 'todo' ? sortTodo(list) : list;
+    return tab === 'todo' ? sortTodo(list) : sortRecent(list, tab === 'mine' ? 'waiting_since' : 'acted_at');
   }, [data, tab]);
   const items = useMemo(() => filterItems(rawItems, search, group).filter(i => tab !== 'todo' || !overdueOnly || i.overdue), [rawItems, search, group, overdueOnly, tab]);
+  useEffect(() => setLimit(PAGE_SIZE), [tab, search, group, overdueOnly]);
+  const visible = useMemo(() => items.slice(0, limit), [items, limit]);
   const hasFilters = !!search.trim() || group !== 'all' || (tab === 'todo' && overdueOnly);
   const resetFilters = () => {setSearch('');setGroup('all');setOverdueOnly(false);};
   const chooseTab = (next: Tab) => {setTab(next);setGroup('all');setOverdueOnly(false);};
@@ -193,7 +199,7 @@ export function ApprovalCenter() {
 
       {/* Mobile: card gọn */}
       <div className="grid gap-3 md:hidden">
-        {items.map((i) => <ItemCard key={`${i.source}:${i.id}`} item={i} now={now} tab={tab} />)}
+        {visible.map((i) => <ItemCard key={`${i.source}:${i.id}`} item={i} now={now} tab={tab} />)}
       </div>
 
       {/* Desktop: bảng gọn */}
@@ -211,9 +217,16 @@ export function ApprovalCenter() {
               </tr>
             </thead>
             <tbody className="px-4">
-              {items.map((i) => <ItemRow key={`${i.source}:${i.id}`} item={i} now={now} tab={tab} />)}
+              {visible.map((i) => <ItemRow key={`${i.source}:${i.id}`} item={i} now={now} tab={tab} />)}
             </tbody>
           </table>
+        </div>
+      )}
+      {items.length > visible.length && (
+        <div className="flex justify-center">
+          <Button variant="outline" className="min-h-11 rounded-xl" onClick={() => setLimit((n) => n + PAGE_SIZE)}>
+            Xem thêm ({items.length - visible.length} hồ sơ)
+          </Button>
         </div>
       )}
     </div>
