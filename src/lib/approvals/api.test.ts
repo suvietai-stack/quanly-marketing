@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortTodo, filterItems, waitingText, badgeText, sourceGroup, vnd, parseApprovalUrl, type ApprovalItem } from './api';
+import { sortTodo, sortRecent, time, filterItems, waitingText, badgeText, sourceGroup, vnd, parseApprovalUrl, type ApprovalItem } from './api';
 
 const item = (patch: Partial<ApprovalItem> = {}): ApprovalItem => ({
   source: 'finance', id: '1', title: 'Đề nghị thanh toán', requester: 'Nguyễn Văn A', url: '/finance/payment?open=1', ...patch,
@@ -90,5 +90,23 @@ describe('parseApprovalUrl', () => {
     expect(parseApprovalUrl('https://evil.example/x')).toBeNull();
     expect(parseApprovalUrl('//evil.example/x')).toBeNull();
     expect(parseApprovalUrl('')).toBeNull();
+  });
+});
+
+describe('time / sortRecent', () => {
+  it('parses Postgres text timestamps that Safari rejects', () => {
+    expect(time('2026-11-20 06:38:29.123+00')).toBe(Date.parse('2026-11-20T06:38:29.123Z'));
+    expect(time('2026-11-20 13:38:29+07')).toBe(Date.parse('2026-11-20T06:38:29Z'));
+    expect(time('2026-11-20T06:38:29Z')).toBe(Date.parse('2026-11-20T06:38:29Z'));
+    expect(time('không phải ngày')).toBeUndefined();
+    expect(waitingText('2026-11-20 05:38:29+00', '2026-11-20T06:38:29Z')).toBe('1 giờ');
+  });
+  it('orders newest first across mixed formats, missing last', () => {
+    const items = [
+      item({ id: 'iso', acted_at: '2026-11-20T06:00:00Z' }),
+      item({ id: 'none' }),
+      item({ id: 'pg', acted_at: '2026-11-20 07:00:00+00' }),
+    ];
+    expect(sortRecent(items, 'acted_at').map((i) => i.id)).toEqual(['pg', 'iso', 'none']);
   });
 });

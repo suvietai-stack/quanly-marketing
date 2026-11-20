@@ -35,8 +35,10 @@ export interface ApprovalCenterData {
 
 export const approvalCenterQuery = (uid: string, executiveFallback = false) => queryOptions({
   queryKey: ['approval_center', uid, executiveFallback],
-  staleTime: 0,
-  refetchInterval: 30000,
+  // The aggregate touches every module; keep it fresh without re-running it on
+  // every remount/focus. Decisions on module pages invalidate via their own refetch.
+  staleTime: 20_000,
+  refetchInterval: 60_000,
   queryFn: async ({ signal }) => {
     // Full cross-module aggregation is authoritative. When it is too slow,
     // executives can still act on their assigned HR/finance cases through a
@@ -92,11 +94,23 @@ export const sourceGroup = (source: ApprovalSource): ApprovalGroup =>
             : source === 'task' ? 'task'
               : source === 'sao' ? 'sao' : 'order';
 
-const time = (v?: string) => {
+/**
+ * Một số nguồn trả timestamptz dạng văn bản Postgres ("2026-11-20 06:38:29.1+00"),
+ * Safari không đọc được → mất "Chờ …" và sai thứ tự. Chuẩn hóa về ISO trước khi parse.
+ */
+export const time = (v?: string) => {
   if (!v) return undefined;
-  const t = new Date(v).getTime();
+  let s = v.trim();
+  if (/^\d{4}-\d{2}-\d{2} \d/.test(s)) s = s.replace(' ', 'T');
+  if (/[+-]\d{2}$/.test(s)) s += ':00';
+  const t = new Date(s).getTime();
   return Number.isFinite(t) ? t : undefined;
 };
+
+/** Mới nhất trước theo trường thời gian (an toàn với định dạng văn bản khác nhau giữa nguồn). */
+export function sortRecent(items: ApprovalItem[], field: 'waiting_since' | 'acted_at'): ApprovalItem[] {
+  return [...items].sort((a, b) => (time(b[field]) ?? -Infinity) - (time(a[field]) ?? -Infinity));
+}
 
 /** Ưu tiên: quá hạn → chờ lâu nhất → mới hơn. */
 export function sortTodo(items: ApprovalItem[]): ApprovalItem[] {
