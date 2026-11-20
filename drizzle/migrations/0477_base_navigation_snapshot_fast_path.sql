@@ -60,7 +60,7 @@ BEGIN
   -- Successful per-user refreshes must not serialize all logins through
   -- a write lock on the global epoch row. Epoch only changes on source writes.
 END
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.base_permissions_navigation()
@@ -105,7 +105,7 @@ BEGIN
     'permissions',private.base_staff_effective(u,c_)
   );
 END
-$function$
+$function$;
 
 
 REVOKE ALL ON FUNCTION private.base_role_cache_refresh(uuid) FROM PUBLIC,anon,authenticated;
