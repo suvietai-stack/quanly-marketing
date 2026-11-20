@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   Pencil,
   Archive,
+  Trash2,
   ArrowRightLeft,
   ExternalLink,
 } from "lucide-react";
@@ -128,6 +129,37 @@ export function CrmDetail({
         schedule={schedule}
         onClose={() => setForm("")}
       />
+    );
+  if (form === "delete")
+    return (
+      <CrmModal title="Xóa khách hàng" onClose={() => { setForm(""); setError(""); setReason(""); }} busy={busy}>
+        <p className="text-sm text-destructive">
+          Xóa vĩnh viễn hồ sơ chưa có lịch sử chăm sóc hoặc liên kết nghiệp vụ.
+          Nếu đã có dữ liệu nghiệp vụ, hãy sử dụng Lưu trữ.
+        </p>
+        <p className="text-sm font-semibold">{c.name} ({c.code})</p>
+        <Field label="Lý do xóa (bắt buộc)">
+          <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Nhập lý do xóa khách" maxLength={500} />
+        </Field>
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        <Button variant="destructive" disabled={busy || reason.trim().length < 5}
+          onClick={async () => {
+            if (!window.confirm(`Xóa vĩnh viễn khách "${c.name}"? Không thể hoàn tác.`)) return;
+            setBusy(true);
+            try {
+              await crmRpc("crm_customer_delete", { _id: id, _revision: c.revision, _reason: reason.trim() });
+              await qc.invalidateQueries({ predicate: (query) => String(query.queryKey[0]).startsWith("crm_") });
+              toast.success("Đã xóa hồ sơ khách hàng.");
+              onClose();
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "Không thể xóa hồ sơ.");
+            } finally {
+              setBusy(false);
+            }
+          }}>
+          <Trash2 className="mr-2 h-4 w-4" />Xác nhận xóa khách
+        </Button>
+      </CrmModal>
     );
   if (form === "action")
     return (
@@ -258,6 +290,11 @@ export function CrmDetail({
                 <ArrowRightLeft className="h-4 w-4" />
                 <Archive className="h-4 w-4" />
                 Bàn giao / Lưu trữ
+              </Button>
+            )}
+            {can("crm.customer.delete") && (
+              <Button variant="destructive" onClick={() => { setReason(""); setError(""); setForm("delete"); }}>
+                <Trash2 className="mr-1.5 h-4 w-4" />Xóa khách
               </Button>
             )}
           </div>
