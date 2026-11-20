@@ -14,6 +14,11 @@ const designer = ['order.view', 'order.view_mine', 'order.take', 'order.update_d
 const supply = ['oq.view_own', 'oq.accept', 'oq.reply_price', 'oq.reply_progress', 'oq.report_own', 'ot.view_own', 'ot.task_view', 'ot.task_update', 'ot.reschedule_reply'];
 const packing = ['ot.view_own', 'ot.task_view', 'ot.accept', 'ot.task_update', 'ot.stage_update', 'ot.reschedule_reply'];
 const finance = ['finance.incoming.view', 'finance.incoming.manual_view'];
+// Đề nghị Tài chính: Kế toán xem phạm vi, chi tiền, báo cáo và Cài đặt cả ba chức năng; Kế toán trưởng thêm Phê duyệt.
+// fr.*.settings là quyền quản trị: chỉ Super Admin được thêm vào Role, máy chủ vẫn kiểm sig_can từng RPC.
+const frKinds = ['advance', 'payment', 'salary'] as const;
+const financeRequests = [...frKinds.flatMap(k => [`fr.${k}.view_scope`, `fr.${k}.pay`, `fr.${k}.report`, `fr.${k}.settings`]), 'fr.salary.deduct'];
+const financeRequestApprove = frKinds.map(k => `fr.${k}.approve`);
 export const defaultRolePresets = [
   { roleId: 'role-v2-sales-director', name: 'Giám đốc Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...positionPersonal, ...sales, ...salesManagedBiz, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
   { roleId: 'role-v2-sales-head', name: 'Trưởng phòng Kinh doanh', group: 'Kinh doanh', kind: 'position', keys: [...positionPersonal, ...sales, ...salesPersonalBiz, ...salesManagedBiz, 'biz.crm_view_scope', 'leave.view_unit', 'ot.view_unit'] },
@@ -30,8 +35,8 @@ export const defaultRolePresets = [
   { roleId: 'role-v2-purchasing', name: 'Thu mua', group: 'Cung ứng', kind: 'position', keys: [...positionPersonal, ...supply, 'ot.reschedule_propose'] },
   { roleId: 'role-v2-supply-chain', name: 'Nhân viên Cung ứng', group: 'Cung ứng', kind: 'position', keys: [...positionPersonal, ...supply] },
   { roleId: 'role-v2-proc-head', name: 'Quản lý Mua hàng & Giao vận', group: 'Cung ứng', kind: 'position', keys: [...positionPersonal, ...supply, 'leave.view_unit', 'ot.view_unit'] },
-  { roleId: 'role-v2-accountant', name: 'Kế toán', group: 'Tài chính', kind: 'position', keys: [...positionPersonal, ...finance, 'finance.incoming.manual_create'] },
-  { roleId: 'role-v2-account-chief', name: 'Kế toán trưởng', group: 'Tài chính', kind: 'position', keys: [...positionPersonal, ...finance, 'finance.incoming.view_totals', 'finance.incoming.manual_create'] },
+  { roleId: 'role-v2-accountant', name: 'Kế toán', group: 'Tài chính', kind: 'position', keys: [...positionPersonal, ...finance, 'finance.incoming.manual_create', ...financeRequests] },
+  { roleId: 'role-v2-account-chief', name: 'Kế toán trưởng', group: 'Tài chính', kind: 'position', keys: [...positionPersonal, ...finance, 'finance.incoming.view_totals', 'finance.incoming.manual_create', ...financeRequests, ...financeRequestApprove] },
   { roleId: 'role-v2-account-stock', name: 'Kế toán kho', group: 'Tài chính', kind: 'position', keys: [...positionPersonal, ...finance] },
   { roleId: 'role-v2-executive', name: 'Giám đốc Điều hành', group: 'Quản trị & Điều hành', kind: 'position', keys: [...positionPersonal] },
   { roleId: 'role-v2-deputy-exec', name: 'Phó Giám đốc Điều hành', group: 'Quản trị & Điều hành', kind: 'position', keys: [...positionPersonal] },
