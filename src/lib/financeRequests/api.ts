@@ -89,6 +89,27 @@ export const frApi = {
     rpc("fr_settings_save", { _kind: kind, _flow: flow, _limits: limits }),
   report: (kind: FrKind, from: string | null, to: string | null) =>
     rpc<any>("fr_report", { _kind: kind, _from: from, _to: to }),
+  /** Toàn bộ đề nghị theo bộ lọc, đọc từng trang 1000 dòng (giới hạn mỗi lần đọc của máy chủ). */
+  listAll: async (kind: FrKind, opts: { statuses?: FrStatus[]; q?: string; mine?: boolean; uid?: string } = {}) => {
+    const out: FrRequest[] = [];
+    for (let from = 0; from < 20000; from += 1000) {
+      let q = db.from("fr_requests").select("*").eq("kind", kind).order("created_at", { ascending: false }).order("id").range(from, from + 999);
+      if (opts.statuses?.length) q = q.in("status", opts.statuses);
+      if (opts.mine && opts.uid) q = q.eq("requester_id", opts.uid);
+      if (opts.q) q = q.or(`code.ilike.%${opts.q}%,title.ilike.%${opts.q}%`);
+      const page = await sel<FrRequest[]>(q);
+      out.push(...page);
+      if (page.length < 1000) break;
+    }
+    return out;
+  },
+  /** Bảng kê của nhiều đề nghị (RLS fr_can_view vẫn lọc). */
+  linesFor: async (requestIds: string[]) => {
+    const out: FrRequestLine[] = [];
+    for (let i = 0; i < requestIds.length; i += 200)
+      out.push(...await sel<FrRequestLine[]>(db.from("fr_request_lines").select("*").in("request_id", requestIds.slice(i, i + 200))));
+    return out;
+  },
   profiles: (ids: string[]) =>
     ids.length ? sel<{ id: string; full_name: string | null }[]>(db.from("profiles").select("id,full_name").in("id", ids)) : Promise.resolve([]),
 };

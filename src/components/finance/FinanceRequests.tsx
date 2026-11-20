@@ -1,7 +1,7 @@
 import { openRecordAi, useRegisterAiRecord } from '@/lib/aiSuviet/useRecordContext';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, FileText, Paperclip, Trash2, ArrowUp, ArrowDown, X } from "lucide-react";
+import { Plus, Search, FileText, Paperclip, Trash2, ArrowUp, ArrowDown, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/auth";
@@ -22,6 +22,7 @@ import {
 } from "@/lib/financeRequests/logic";
 import { ExpenseLinesEditor, ExpenseLinesView } from "@/components/finance/ExpenseLines";
 import { FinanceZaloSettings } from "@/components/finance/FinanceZaloSettings";
+import { frExportRows, frExportLineRows, frExportFileName, frExportTitle } from "@/lib/financeRequests/export";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
@@ -99,6 +100,33 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
 
   const rows = tab === "mine" ? mine.data ?? [] : tab === "all" ? all.data ?? [] : tab === "todo" ? todo.data ?? [] : [];
   const loading = (tab === "mine" && mine.isLoading) || (tab === "all" && all.isLoading) || (tab === "todo" && (pendingSteps.isLoading || todo.isLoading));
+  const [exporting, setExporting] = useState(false);
+  // Xuất đúng danh sách đang xem (tab + bộ lọc + tìm kiếm); dữ liệu đọc qua RLS nên không vượt phạm vi được xem.
+  const exportExcel = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const list = tab === "todo" ? rows : await frApi.listAll(kind, { statuses, q: q || undefined, mine: tab === "mine", uid });
+      if (!list.length) { toast.error("Không có đề nghị nào để xuất."); return; }
+      const [names, types, lines] = await Promise.all([
+        frApi.profiles([...new Set<string>(list.map((r) => r.requester_id))]),
+        frApi.paymentTypes(kind),
+        kind === "payment" ? frApi.linesFor(list.map((r) => r.id)) : Promise.resolve([]),
+      ]);
+      const lk = {
+        names: Object.fromEntries(names.map((p) => [p.id, p.full_name ?? ""])),
+        types: Object.fromEntries(types.map((t) => [t.id, t.name])),
+      };
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+      const tabLabel = tab === "mine" ? "Đề nghị của tôi" : tab === "all" ? "Tất cả" : "Chờ tôi xử lý";
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(frExportRows(kind, list, lk)), "Đề nghị");
+      if (kind === "payment") XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(frExportLineRows(list, lines)), "Bảng kê");
+      wb.Props = { Title: `${frExportTitle(kind)} — ${tabLabel}` };
+      XLSX.writeFile(wb, frExportFileName(kind));
+      toast.success(`Đã xuất ${list.length} đề nghị`);
+    } catch (e) { toast.error(errMsg(e)); } finally { setExporting(false); }
+  };
 
   return (
     <div className="finance-requests-mobile space-y-4 pb-24 min-w-0">
@@ -121,6 +149,9 @@ export function FinanceRequests({ kind }: { kind: FrKind }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Tìm theo mã, nội dung…" value={qText} onChange={(e) => setQText(e.target.value)} />
             </div>
+            <Button variant="outline" disabled={exporting || loading} onClick={exportExcel} aria-label="Xuất Excel">
+              <Download className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">{exporting ? "Đang xuất…" : "Xuất Excel"}</span>
+            </Button>
           </div>
           {tab !== "todo" && (
             <div className="flex gap-2 overflow-x-auto pb-1">

@@ -28,3 +28,8 @@
   - Tin nhắn nhóm Zalo Tạm Ứng Lương không đổi (chỉ mã + trạng thái).
 - **Khoản chi mẫu (Thanh toán)**: thêm nút Xóa (`fr_line_catalog_delete`), chỉ khi chưa có dòng bảng kê nào dùng; đã dùng thì chỉ Ẩn. `fr_line_catalog_usage` cho số lần dùng. Quyền `fr.payment.settings`.
 - Kiểm thử: `fr.database.test.ts` 22/22 (PGlite, chạy kèm 0477), logic/permission tests đạt.
+
+## Bổ sung: Xuất Excel (chỉ frontend, không đổi DB)
+- Nút "Xuất Excel" ở tab Đề nghị của tôi / Chờ tôi xử lý / Tất cả của cả ba chức năng; xuất đúng danh sách đang xem (bộ lọc trạng thái + tìm kiếm), đọc từng trang 1000 dòng.
+- Dữ liệu đọc qua bảng `fr_requests`/`fr_request_lines` có RLS `fr_can_view`, nên không vượt phạm vi được xem; tab Tất cả vẫn cần `fr.<kind>.view_scope`.
+- File: sheet "Đề nghị" (mã, ngày theo giờ VN, người đề nghị, loại, số tiền dạng số, trạng thái, đã chi, còn lại…); Thanh toán thêm sheet "Bảng kê".
