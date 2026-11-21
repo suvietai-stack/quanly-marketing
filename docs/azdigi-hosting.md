@@ -47,3 +47,14 @@ Mỗi lần merge vào `main`, workflow build và đẩy bundle vào nhánh `dep
 Chỉ sau khi chạy thử ổn: thêm `base.suviet.vn` vào cùng app, trỏ DNS về IP hosting,
 bật SSL. Cron Supabase gọi `https://base.suviet.vn/api/public/zalo/dispatch-cron`,
 webhook Zalo/Meta/Casso cũng dùng tên miền này nên không cần sửa URL.
+
+## Automatic deploy (set up 2026-11-21)
+
+Every push to `main` runs `.github/workflows/azdigi-deploy.yml`, which builds the
+Node bundle and pushes it to the `deploy-azdigi` branch. On the hosting, a cron
+job runs `~/bin/base-autodeploy.sh` every 2 minutes: when `deploy-azdigi` has a
+new commit it resets `~/base-deploy-src`, rsyncs it into `~/base-suviet-app`
+(keeping `tmp/`) and touches `tmp/restart.txt`. Deploys are logged to
+`~/base-autodeploy.log`. No SSH key or GitHub secret is needed.
+
+So a change merged into `main` is live on base.suviet.vn about 3–5 minutes later.
