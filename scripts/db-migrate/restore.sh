@@ -10,7 +10,9 @@ WORK="$(mktemp -d)"
 # Schemas Supabase creates and manages itself. App schemas are everything else.
 MANAGED='^(auth|storage|realtime|_realtime|supabase_functions|supabase_migrations|extensions|graphql|graphql_public|vault|pgsodium|pgsodium_masks|net|cron|pgbouncer|_analytics|pg_catalog|information_schema|topology|tiger|tiger_data)$'
 # Auth/storage/cron rows we carry over as data only.
-AUTH_DATA='^(users|identities|mfa_factors|mfa_challenges|mfa_amr_claims)$'
+# Sessions are not copied (everyone signs in again), so session-bound MFA rows
+# (mfa_amr_claims, mfa_challenges) are skipped too.
+AUTH_DATA='^(users|identities|mfa_factors)$'
 
 pg_restore -l "$B" > "$WORK/toc.txt"
 echo "== Backup TOC summary =="
@@ -83,6 +85,9 @@ for line in open(f"{work}/toc.txt"):
         out["late"].append(line); continue
     if schema == "-" or not managed.match(schema):
         out["app"].append(line)
+# Auth tables keep their foreign keys, so parents must load first.
+AUTH_ORDER = ["users", "identities", "mfa_factors"]
+out["auth_data"].sort(key=lambda l: next((i for i, n in enumerate(AUTH_ORDER) if f" auth {n} " in l), 99))
 for k, v in out.items():
     open(f"{work}/{k}.list", "w").writelines(v)
 PYEOF
@@ -91,6 +96,7 @@ wc -l "$WORK"/*.list
 # Replica mode: user triggers (audit, notification outbox, auth->profile) and FK
 # checks do not fire while rows are copied, so nothing is duplicated or sent.
 export PGOPTIONS="-c session_replication_role=replica"
+echo "session_replication_role via this connection: $(q 'show session_replication_role' 2>&1)"
 R() { pg_restore --no-owner --exit-on-error -d "$T" "$@" "$B"; }
 echo "== 1/5 auth users (data only, before app triggers exist) =="
 R --data-only -L "$WORK/auth_data.list"
