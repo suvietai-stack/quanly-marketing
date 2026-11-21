@@ -31,7 +31,20 @@ jobs:
         env:
           MIGRATION_BACKUP_URL: ${{ secrets.MIGRATION_BACKUP_URL }}
         run: |
-          curl -fsSL -o "$RUNNER_TEMP/db.backup" "$MIGRATION_BACKUP_URL"
+          curl -fsSL -o "$RUNNER_TEMP/db.download" "$MIGRATION_BACKUP_URL"
+          ls -lh "$RUNNER_TEMP/db.download"; sha256sum "$RUNNER_TEMP/db.download"
+          # Lovable's export download comes wrapped in a .zip: unpack it if so.
+          if head -c 4 "$RUNNER_TEMP/db.download" | grep -q $'PK\x03\x04'; then
+            mkdir -p "$RUNNER_TEMP/db-unzip"
+            unzip -o -q "$RUNNER_TEMP/db.download" -d "$RUNNER_TEMP/db-unzip"
+            find "$RUNNER_TEMP/db-unzip" -type f -exec ls -l {} \;
+            f=$(find "$RUNNER_TEMP/db-unzip" -type f -printf '%s %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+            mv "$f" "$RUNNER_TEMP/db.backup"
+            rm -rf "$RUNNER_TEMP/db-unzip" "$RUNNER_TEMP/db.download"
+          else
+            mv "$RUNNER_TEMP/db.download" "$RUNNER_TEMP/db.backup"
+          fi
+          head -c 5 "$RUNNER_TEMP/db.backup" | grep -q PGDMP || { echo "Not a pg custom-format backup"; exit 1; }
           ls -lh "$RUNNER_TEMP/db.backup"; sha256sum "$RUNNER_TEMP/db.backup"
       - name: Inspect / restore
         env:
@@ -41,4 +54,4 @@ jobs:
         run: scripts/db-migrate/restore.sh "${{ inputs.mode }}"
       - name: Remove backup from runner
         if: always()
-        run: rm -f "$RUNNER_TEMP/db.backup"
+        run: rm -rf "$RUNNER_TEMP/db.backup" "$RUNNER_TEMP/db.download" "$RUNNER_TEMP/db-unzip"
