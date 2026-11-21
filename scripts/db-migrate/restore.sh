@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Restore a Lovable Cloud database export (pg custom format) into an EMPTY
 # Supabase project, then compare per-table row counts with the backup.
-# Usage: restore.sh inspect|restore|cron  (env: BACKUP_FILE, TARGET_DB_URL for restore)
+# Usage: restore.sh inspect|restore|cron|storage  (env: BACKUP_FILE, TARGET_DB_URL for restore)
 set -euo pipefail
 MODE="${1:-inspect}"
 B="${BACKUP_FILE:?BACKUP_FILE required}"
@@ -32,6 +32,51 @@ echo "-- cron jobs: $(awk -F'\t' '$1=="cron.job"{print $2}' "$WORK/backup_counts
 echo "-- storage objects (files are NOT in the backup): $(awk -F'\t' '$1=="storage.objects"{print $2}' "$WORK/backup_counts.tsv")"
 
 [ "$MODE" = "inspect" ] && { cp "$WORK"/*.tsv "$WORK"/toc.txt "${OUT_DIR:-.}/" 2>/dev/null || true; exit 0; }
+
+if [ "$MODE" = "storage" ]; then
+  # Copy Storage files: the backup only has the object list, so files are
+  # fetched from the old project's public URLs and uploaded to the new one.
+  # Without TARGET_SERVICE_ROLE_KEY this is a dry run that only lists.
+  pg_restore --data-only -n storage -t buckets -t objects -f "$WORK/st.sql" "$B"
+  python3 - "$WORK/st.sql" > "$WORK/objects.tsv" <<'PYEOF'
+import sys
+cur, cols, pub = None, [], {}
+out = []
+for l in open(sys.argv[1]).read().split("\n"):
+    if l.startswith("COPY storage."):
+        cur = l.split()[1]; cols = [c.strip().strip('"') for c in l[l.index("(")+1:l.index(")")].split(",")]; continue
+    if cur and l == "\\.": cur = None; continue
+    if cur:
+        d = dict(zip(cols, l.split("\t")))
+        if cur == "storage.buckets": pub[d["id"]] = d.get("public") == "t"
+        else: out.append((d["bucket_id"], d["name"], (d.get("metadata") or "")))
+import collections, json
+c = collections.Counter(b for b, _, _ in out)
+for b in sorted(set(pub) | set(c)):
+    sys.stderr.write(f"-- bucket {b}: public={pub.get(b)} objects={c.get(b,0)}\n")
+for b, n, m in out:
+    try: mt = json.loads(m.replace("\\\\", "\\")).get("mimetype", "application/octet-stream")
+    except Exception: mt = "application/octet-stream"
+    print(f"{b}\t{'1' if pub.get(b) else '0'}\t{mt}\t{n}")
+PYEOF
+  [ -n "${TARGET_SERVICE_ROLE_KEY:-}" ] || { echo "dry run: TARGET_SERVICE_ROLE_KEY not set"; exit 0; }
+  : "${SOURCE_SUPABASE_URL:?}" "${TARGET_SUPABASE_URL:?}"
+  ok=0; fail=0
+  while IFS=$'\t' read -r b p mt n; do
+    enc=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$n")
+    f="$WORK/obj"
+    if [ "$p" = "1" ] && curl -fsS -o "$f" "$SOURCE_SUPABASE_URL/storage/v1/object/public/$b/$enc"; then
+      if curl -fsS -o /dev/null -X POST -H "Authorization: Bearer $TARGET_SERVICE_ROLE_KEY" -H "apikey: $TARGET_SERVICE_ROLE_KEY" \
+           -H "Content-Type: $mt" -H "x-upsert: true" --data-binary @"$f" "$TARGET_SUPABASE_URL/storage/v1/object/$b/$enc"; then
+        ok=$((ok+1)); continue
+      fi
+    fi
+    fail=$((fail+1)); echo "NOT COPIED: $b/$n (public=$p)"
+  done < "$WORK/objects.tsv"
+  rm -f "$WORK/obj"
+  echo "storage copied=$ok not_copied=$fail"
+  exit 0
+fi
 
 T="${TARGET_DB_URL:?TARGET_DB_URL required}"
 q() { psql "$T" -v ON_ERROR_STOP=1 -At -c "$1"; }
