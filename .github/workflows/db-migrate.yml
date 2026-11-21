@@ -11,7 +11,7 @@ on:
         required: true
         default: inspect
         type: choice
-        options: [inspect, restore, cron]
+        options: [inspect, restore, cron, storage]
 permissions:
   contents: read
 jobs:
@@ -50,6 +50,9 @@ jobs:
         env:
           BACKUP_FILE: ${{ runner.temp }}/db.backup
           TARGET_DB_URL: ${{ secrets.MIGRATION_TARGET_DB_URL }}
+          TARGET_SERVICE_ROLE_KEY: ${{ secrets.MIGRATION_TARGET_SERVICE_ROLE_KEY }}
+          SOURCE_SUPABASE_URL: https://vipbucgcgkvuvzgqpftp.supabase.co
+          TARGET_SUPABASE_URL: https://qhfziehibhmqkpknqxle.supabase.co
           OUT_DIR: ${{ runner.temp }}
         run: scripts/db-migrate/restore.sh "${{ inputs.mode }}"
       - name: Remove backup from runner
