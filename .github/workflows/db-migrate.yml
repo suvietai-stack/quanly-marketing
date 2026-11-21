@@ -11,7 +11,7 @@ on:
         required: true
         default: inspect
         type: choice
-        options: [inspect, restore]
+        options: [inspect, restore, cron]
 permissions:
   contents: read
 jobs:

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Restore a Lovable Cloud database export (pg custom format) into an EMPTY
 # Supabase project, then compare per-table row counts with the backup.
-# Usage: restore.sh inspect|restore  (env: BACKUP_FILE, TARGET_DB_URL for restore)
+# Usage: restore.sh inspect|restore|cron  (env: BACKUP_FILE, TARGET_DB_URL for restore)
 set -euo pipefail
 MODE="${1:-inspect}"
 B="${BACKUP_FILE:?BACKUP_FILE required}"
@@ -35,6 +35,43 @@ echo "-- storage objects (files are NOT in the backup): $(awk -F'\t' '$1=="stora
 
 T="${TARGET_DB_URL:?TARGET_DB_URL required}"
 q() { psql "$T" -v ON_ERROR_STOP=1 -At -c "$1"; }
+
+if [ "$MODE" = "cron" ]; then
+  # cron.job cannot be written directly on Supabase; recreate each job with
+  # cron.schedule(). Commands are printed with tokens redacted.
+  pg_restore --data-only -t job -n cron -f "$WORK/cron.sql" "$B"
+  python3 - "$WORK/cron.sql" > "$WORK/cron_apply.sql" <<'PYEOF'
+import re, sys
+lines = open(sys.argv[1]).read().split("\n")
+cols, rows, inblk = [], [], False
+for l in lines:
+    if l.startswith("COPY cron.job "):
+        cols = [c.strip().strip('"') for c in l[l.index("(")+1:l.index(")")].split(",")]
+        inblk = True; continue
+    if inblk:
+        if l == "\\.": break
+        rows.append(l)
+def unesc(v):
+    if v == "\\N": return None
+    return re.sub(r"\\(.)", lambda m: {"n": "\n", "t": "\t", "r": "\r", "\\": "\\"}.get(m.group(1), m.group(1)), v)
+def red(c):
+    c = re.sub(r"eyJ[\w-]+\.[\w-]+\.[\w-]+", "<JWT>", c)
+    return re.sub(r"[A-Za-z0-9_\-]{32,}", "<TOKEN>", c)
+for r in rows:
+    d = dict(zip(cols, (unesc(v) for v in r.split("\t"))))
+    name = d.get("jobname") or f"job_{d['jobid']}"
+    sys.stderr.write(f"-- {name} | {d['schedule']} | active={d.get('active')}\n   {red(d['command'])}\n")
+    tag = "$cronq$"
+    assert tag not in d["command"]
+    print(f"select cron.unschedule(jobid) from cron.job where jobname = {tag}{name}{tag};")
+    print(f"select cron.schedule({tag}{name}{tag}, {tag}{d['schedule']}{tag}, {tag}{d['command']}{tag});")
+    if d.get("active") == "f":
+        print(f"select cron.alter_job((select jobid from cron.job where jobname = {tag}{name}{tag}), active := false);")
+PYEOF
+  psql "$T" -v ON_ERROR_STOP=1 -q -o /dev/null -f "$WORK/cron_apply.sql"
+  echo "cron jobs now: $(q 'select count(*) from cron.job')"
+  exit 0
+fi
 
 echo "== Safety: target must be empty =="
 N=$(q "select count(*) from pg_tables where schemaname='public'")
