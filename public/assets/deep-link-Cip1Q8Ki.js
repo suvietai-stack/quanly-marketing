@@ -1,0 +1,1 @@
+function a(e){if(typeof window>"u")return null;try{return new URLSearchParams(window.location.search).get(e)}catch{return null}}function t(e,r){if(!(typeof window>"u"))try{const n=new URL(window.location.href);r?n.searchParams.set(e,r):n.searchParams.delete(e),window.history.replaceState(null,"",n)}catch{}}export{a as r,t as s};

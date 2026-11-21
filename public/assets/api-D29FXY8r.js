@@ -1,0 +1,1 @@
+import{s as n}from"./index-F5_qjrtn.js";function o(r){const{id:t,recordCreatedAt:e,recordUpdatedAt:d,recordCreatedBy:a,...s}=r;return JSON.parse(JSON.stringify(s))}async function c(r,t,e){const{data:d,error:a}=await n.rpc("design_order_save",{_id:r,_patch:o(t),_expected:e?o(e):void 0});if(a)throw new Error(a.message);return d}export{o as orderPayload,c as saveDesignOrder};

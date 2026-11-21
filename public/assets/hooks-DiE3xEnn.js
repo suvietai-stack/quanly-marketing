@@ -1,0 +1,1 @@
+import{e as o,b as p}from"./index-F5_qjrtn.js";import{o as r}from"./api-BMfG1JdZ.js";function u(){const a=o({queryKey:["ot","people"],queryFn:r.people,staleTime:6e4}),t=p.useMemo(()=>new Map((a.data??[]).map(e=>[e.id,e.full_name])),[a.data]);return{list:a.data??[],name:e=>e?t.get(e)??"—":"—"}}export{u};

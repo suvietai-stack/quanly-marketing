@@ -1,0 +1,4 @@
+const VAPID_PUBLIC_KEY = "BCcKuWnowOBjiuuVTPRIkHLAqjQDkJ_BpWVo88zvfHFTTM4P4HV-kYVKDTfrwvZ4PJMClsrG6rPdAm_srouSmEY";
+export {
+  VAPID_PUBLIC_KEY as V
+};
